@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 from pathlib import Path
 
@@ -116,24 +117,164 @@ def from_cpu_prestage(receipt_path: Path) -> dict:
     return {"gates": gates}
 
 
+def _assembly_json(path: Path) -> tuple[dict, str]:
+    """Read one regular receipt, preserving its exact content identity."""
+    if any(part.is_symlink() for part in (path, *path.parents)) or not path.is_file():
+        raise ValueError(
+            "assembly input must be a regular non-symlink file: " + str(path)
+        )
+
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError("duplicate JSON key: " + key)
+            value[key] = item
+        return value
+
+    raw = path.read_bytes()
+    value = json.loads(raw, object_pairs_hook=unique)
+    if not isinstance(value, dict):
+        raise ValueError("assembly input root must be an object")
+    return value, hashlib.sha256(raw).hexdigest()
+
+
+def _assembly_artifact(artifact: Path) -> str:
+    if (
+        any(part.is_symlink() for part in (artifact, *artifact.parents))
+        or not artifact.is_file()
+    ):
+        raise ValueError("artifact must be a regular non-symlink file")
+    with artifact.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def from_scaffold(
+    scaffold_path: Path, receipt_paths: list[Path], artifact: Path, source_sha: str
+) -> dict:
+    """Assemble existing PASS receipts; never execute the scaffold or sign bytes."""
+    if not isinstance(source_sha, str) or not HEX_COMMIT.fullmatch(source_sha):
+        raise ValueError("assembly requires a full lowercase source SHA")
+    digest = _assembly_artifact(artifact)
+    scaffold, scaffold_sha = _assembly_json(scaffold_path)
+    if (
+        scaffold.get("schema") != "jope.rel07.gate-command-scaffold/v1"
+        or scaffold.get("qualification_handoff") != "NOT_EXECUTABLE"
+        or scaffold.get("candidate_sha256")
+        not in ("${JOPE_REL07_ARTIFACT_SHA256}", digest)
+    ):
+        raise ValueError("unsupported or mismatched command scaffold")
+    commands = scaffold.get("gates")
+    if not isinstance(commands, list) or len(commands) != len(RELEASE_GATE_IDS):
+        raise ValueError("scaffold requires exactly 28 release gates")
+    ids = []
+    for row in commands:
+        if not isinstance(row, dict) or set(row) != {"id", "argv", "timeout_seconds"}:
+            raise ValueError("invalid scaffold command row")
+        gate, argv, timeout = row["id"], row["argv"], row["timeout_seconds"]
+        if not isinstance(gate, str) or gate not in RELEASE_GATE_IDS or gate in ids:
+            raise ValueError("unknown or duplicate scaffold gate")
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or any(not isinstance(arg, str) or not arg or "\0" in arg for arg in argv)
+            or type(timeout) not in (int, float)
+            or not math.isfinite(timeout)
+            or timeout <= 0
+        ):
+            raise ValueError("invalid scaffold argv or timeout")
+        ids.append(gate)
+    if len(receipt_paths) != len(RELEASE_GATE_IDS):
+        raise ValueError("assembly requires exactly 28 gate receipts")
+    rows = {}
+    inputs = [(scaffold_path, scaffold_sha)]
+    count_keys = {"collected", "executed", "passed", "failed", "skipped", "excluded"}
+    for path in receipt_paths:
+        result, receipt_sha = _assembly_json(path)
+        gate = result.get("id")
+        if not isinstance(gate, str) or gate not in ids or gate in rows:
+            raise ValueError("unknown or duplicate receipt gate")
+        if (
+            result.get("schema") != "jope.rel07.gate-execution/v1"
+            or result.get("source_sha") != source_sha
+            or result.get("artifact_sha256") != digest
+        ):
+            raise ValueError("receipt schema/source/artifact does not match assembly")
+        counts = result.get("counts")
+        if (
+            result.get("status") != "PASS"
+            or not isinstance(counts, dict)
+            or set(counts) != count_keys
+            or any(type(n) is not int or n < 0 for n in counts.values())
+            or not counts["collected"] == counts["executed"] == counts["passed"] > 0
+            or any(counts[key] for key in ("failed", "skipped", "excluded"))
+        ):
+            raise ValueError(
+                "receipt must PASS with positive complete execution: " + gate
+            )
+        rows[gate] = {
+            "id": gate,
+            "status": "PASS",
+            "artifact_sha256": digest,
+            "evidence": (
+                f"receipt={path.absolute()}; receipt_sha256={receipt_sha}; "
+                f"source_sha={source_sha}; scaffold={scaffold_path.absolute()}; "
+                f"scaffold_sha256={scaffold_sha}"
+            ),
+        }
+        inputs.append((path, receipt_sha))
+    for path, expected in inputs:
+        if _assembly_json(path)[1] != expected:
+            raise ValueError("assembly input changed: " + str(path))
+    if _assembly_artifact(artifact) != digest:
+        raise ValueError("artifact changed during assembly")
+    return {
+        "artifact_sha256": digest,
+        "gates": [rows[gate] for gate in RELEASE_GATE_IDS],
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     inputs = parser.add_mutually_exclusive_group(required=True)
     inputs.add_argument("--gate-results", type=Path)
     inputs.add_argument("--cpu-prestage", type=Path)
+    inputs.add_argument(
+        "--scaffold",
+        type=Path,
+        help="assemble existing receipts, without executing commands",
+    )
+    parser.add_argument("--gate-receipt", type=Path, action="append", default=[])
+    parser.add_argument(
+        "--source-sha", help="exact source shared by all 28 gate receipts"
+    )
     parser.add_argument("--artifact", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
-        receipt = (
-            from_cpu_prestage(args.cpu_prestage)
-            if args.cpu_prestage
-            else from_gate_results(args.gate_results, args.artifact)
-        )
+        if args.scaffold:
+            if args.artifact is None or args.source_sha is None:
+                raise ValueError("--scaffold requires --artifact and --source-sha")
+            receipt = from_scaffold(
+                args.scaffold, args.gate_receipt, args.artifact, args.source_sha
+            )
+        else:
+            if args.gate_receipt or args.source_sha is not None:
+                raise ValueError("--gate-receipt and --source-sha require --scaffold")
+            receipt = (
+                from_cpu_prestage(args.cpu_prestage)
+                if args.cpu_prestage
+                else from_gate_results(args.gate_results, args.artifact)
+            )
         if args.output.exists() or args.output.is_symlink():
             raise ValueError("output must be a new path")
+        if any(part.is_symlink() for part in args.output.parents):
+            raise ValueError("output parents must not contain symlinks")
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(receipt, indent=2) + "\n")
+        if any(part.is_symlink() for part in args.output.parents):
+            raise ValueError("output parents must not contain symlinks")
+        with args.output.open("x", encoding="utf-8") as stream:
+            stream.write(json.dumps(receipt, indent=2) + "\n")
     except (OSError, ValueError, json.JSONDecodeError) as error:
         parser.error(str(error))
     print(
