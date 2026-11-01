@@ -1,0 +1,50 @@
+{
+  "wave": "H174",
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "beta1": 0.9,
+  "beta2": 0.999,
+  "gradient_clip_l2": 1.0,
+  "updates": 40,
+  "snapshot_steps": [
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    34,
+    36,
+    38,
+    40
+  ],
+  "selection_steps": [
+    0,
+    10,
+    20,
+    30,
+    40
+  ],
+  "swag_population_diagonal": true,
+  "swag_rank": 10,
+  "rank_deviation_snapshots": "last 10 of the 16, centered on the all-16 mean",
+  "posterior_samples": 16,
+  "covariance_scales": [
+    0.5,
+    1.0
+  ],
+  "covariance_scale_semantics": "multiplier of covariance; sqrt(scale) multiplies deviations",
+  "same_standard_normals_across_scales": true,
+  "seed_rule": "sha256(seed:H174-SWAG-SAMPLES-v1) first 64 bits masked to 31 bits",
+  "sample_dtype": "float32",
+  "adapter_parameter_count": 29211,
+  "adapter_tensor_count": 47,
+  "trajectory_count": 15,
+  "optimizer_updates_total": 600
+}

@@ -41,6 +41,9 @@ class M5Tests(unittest.TestCase):
         bundle.mkdir()
         (golden / "index.json").write_text('{"synthetic":true}')
         (bundle / "jope.safetensors").write_bytes(b"synthetic weights")
+        (bundle / "release-catalog.json").write_text(
+            '{"synthetic":true,"signed":false}'
+        )
         self.inputs = m5.Inputs(golden, bundle)
         self.ctx = common.Context(
             "M5",
@@ -54,7 +57,7 @@ class M5Tests(unittest.TestCase):
         patch.object(common, "ROOT", self.repo).start()
         patch.object(m5, "INDEX_SHA256", common.sha256(golden / "index.json")).start()
         patch.object(
-            m5, "WEIGHTS_SHA256", common.sha256(bundle / "jope.safetensors")
+            m5, "R882_CATALOG_SHA256", common.sha256(bundle / "release-catalog.json")
         ).start()
         patch.dict(os.environ, {"CARGO_BUILD_JOBS": "4"}).start()
         self.calls = []
@@ -70,6 +73,10 @@ class M5Tests(unittest.TestCase):
     def run_child(self, args, **kwargs):
         self.assertEqual(args[:3], ["nice", "-n", "10"])
         self.assertEqual(kwargs["env"]["CARGO_BUILD_JOBS"], "4")
+        self.assertEqual(
+            kwargs["env"]["JOPE_RNK10_SIGNED_BUNDLE_DIR"], str(self.inputs.bundle)
+        )
+        self.assertNotIn("JOPE_PARITY_BUNDLE_DIR", kwargs["env"])
         self.calls.append(args)
         bare = args[3:]
         if bare[:2] == ["git", "rev-parse"]:
@@ -160,6 +167,7 @@ class M5Tests(unittest.TestCase):
             result["causal"]["sha256"], common.sha256(Path(result["causal"]["report"]))
         )
         self.assertEqual(result["causal"]["fixture_index_sha256"], m5.INDEX_SHA256)
+        self.assertEqual(result["causal"]["adapter_bundle_digest"], m5.R882_DIGEST)
         self.assertEqual(self.test_calls, 1)
         self.assertIn("--ignored", m5.command())
         self.assertIn("--exact", m5.command())
@@ -272,7 +280,7 @@ class M5Tests(unittest.TestCase):
     def test_unpinned_missing_or_changed_fixtures_refuse(self):
         for path in [
             self.inputs.golden / "index.json",
-            self.inputs.bundle / "jope.safetensors",
+            self.inputs.bundle / "release-catalog.json",
         ]:
             original = path.read_bytes()
             path.write_bytes(b"changed")
@@ -332,7 +340,8 @@ class M5Tests(unittest.TestCase):
             "JOPE_REL07_SOURCE_SHA": self.ctx.source_sha,
             "JOPE_REL07_RESULT": str(self.ctx.result),
             "JOPE_GOLDEN_DIR": str(self.inputs.golden),
-            "JOPE_PARITY_BUNDLE_DIR": str(self.inputs.bundle),
+            "JOPE_RNK10_SIGNED_BUNDLE_DIR": str(self.inputs.bundle),
+            "JOPE_PARITY_BUNDLE_DIR": "stale-legacy-input",
         }
         bindings.update(environment or {})
         with (
@@ -362,7 +371,7 @@ class M5Tests(unittest.TestCase):
                 ],
                 {
                     "JOPE_GOLDEN_DIR": "wrong-relative-golden",
-                    "JOPE_PARITY_BUNDLE_DIR": "wrong-relative-bundle",
+                    "JOPE_RNK10_SIGNED_BUNDLE_DIR": "wrong-relative-bundle",
                 },
             ),
             0,
@@ -373,13 +382,13 @@ class M5Tests(unittest.TestCase):
         self.assertEqual(
             self.invoke_main(
                 ["--bundle-dir", str(self.inputs.bundle)],
-                {"JOPE_PARITY_BUNDLE_DIR": ""},
+                {"JOPE_RNK10_SIGNED_BUNDLE_DIR": ""},
             ),
             0,
         )
 
     def test_missing_environment_inputs_refuse_before_any_child(self):
-        for name in ["JOPE_GOLDEN_DIR", "JOPE_PARITY_BUNDLE_DIR"]:
+        for name in ["JOPE_GOLDEN_DIR", "JOPE_RNK10_SIGNED_BUNDLE_DIR"]:
             with self.subTest(name=name):
                 self.assertEqual(self.invoke_main(environment={name: ""}), 2)
                 self.assertEqual(self.calls, [])
@@ -388,12 +397,25 @@ class M5Tests(unittest.TestCase):
     def test_environment_paths_still_require_absolute_pinned_regular_inputs(self):
         for name, value in [
             ("JOPE_GOLDEN_DIR", "relative-golden"),
-            ("JOPE_PARITY_BUNDLE_DIR", str(self.root / "missing-bundle")),
+            ("JOPE_RNK10_SIGNED_BUNDLE_DIR", str(self.root / "missing-bundle")),
         ]:
             with self.subTest(name=name):
                 self.assertEqual(self.invoke_main(environment={name: value}), 2)
                 self.assertEqual(self.calls, [])
                 self.assertFalse(self.ctx.result.exists())
+
+    def test_legacy_raw_weight_environment_cannot_replace_signed_bundle(self):
+        self.assertEqual(
+            self.invoke_main(
+                environment={
+                    "JOPE_RNK10_SIGNED_BUNDLE_DIR": "",
+                    "JOPE_PARITY_BUNDLE_DIR": str(self.inputs.bundle),
+                }
+            ),
+            2,
+        )
+        self.assertEqual(self.calls, [])
+        self.assertFalse(self.ctx.result.exists())
 
     def test_main_catches_provider_refusals_as_exit_two(self):
         args = [

@@ -306,7 +306,10 @@ fn round_admission_fixture(causal_measurements_only: bool) {
         dataset_id: "ds_21fbfe8b53dbcd605d79486b".parse().unwrap(),
         problem_digest: "a".repeat(64),
         bundle_digest: if causal_measurements_only {
-            super::super::cuda::release::R882.strip_prefix("sha256:").unwrap().into()
+            super::super::cuda::release::R882
+                .strip_prefix("sha256:")
+                .unwrap()
+                .into()
         } else {
             BUNDLE.strip_prefix("sha256:").unwrap().into()
         },
@@ -339,14 +342,21 @@ fn round_admission_fixture(causal_measurements_only: bool) {
         mut serving_disconnected_changes,
     ) = (0, 0, 0, 0);
     let mut max_kl = 0.0_f64;
-    let weights = if causal_measurements_only { None } else { Some(fixtures.weights()) };
+    let weights = if causal_measurements_only {
+        None
+    } else {
+        Some(fixtures.weights())
+    };
     let causal_bundle = if causal_measurements_only {
         let root = PathBuf::from(
             env::var_os("JOPE_RNK10_SIGNED_BUNDLE_DIR")
                 .expect("M5 requires an externally staged signed r882 bundle"),
         );
         let verified = super::super::cuda::release::load_r882_release(&root).unwrap();
-        assert_eq!(verified.digest().to_string(), super::super::cuda::release::R882);
+        assert_eq!(
+            verified.digest().to_string(),
+            super::super::cuda::release::R882
+        );
         Some(verified)
     } else {
         None

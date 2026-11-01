@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "archive_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H174/luna_ns_hbaseline-t0253/1805690690605994/H174-attempts-incomplete.zip",
+  "archive_version": "9C_4tFfJtBKf1B81nyJRkc97X4Bq7TEF",
+  "manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H174/luna_ns_hbaseline-t0253/1805690690605994/manifest.json",
+  "manifest_version": "cIvMs13nd_vHWki3iIeLrzRrkOy_HWIh",
+  "archive_sha256": "1805690690605994bcb2092c3ab55effe58a39273f276151af6987a270d5d259",
+  "manifest_sha256": "21794b50710b0ee8a51b85c86ac2a07047335e7c1c829b32d180edbfdc410707",
+  "members_readback_verified": 30,
+  "attempt1_evidence": "/home/ubuntu/jope-data/h174/run",
+  "attempt2_evidence": "/home/ubuntu/jope-data/h174/run2",
+  "reviewed_source_heads": [
+    "007cf7919793be3fd7b98c7a7fde7d349660cb94",
+    "20a07fd54f05c3c99af80889017ed92babf0c74f"
+  ],
+  "exact_version_byte_readback": true
+}

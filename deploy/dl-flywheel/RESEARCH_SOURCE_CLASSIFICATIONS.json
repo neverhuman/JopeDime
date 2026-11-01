@@ -4431,6 +4431,70 @@
         "role": "research",
         "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h174_swag/analysis.py": {
+      "bytes": 8046,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "5c49bd20a3865ca3bb3a2833c4701b95b66cb00d0e295640751b461a9c701c4c"
+    },
+    "python:research/flywheel_selfplay/h174_swag/treatment.py": {
+      "bytes": 6366,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "48ee6dce13cd8ccb608162b2a11d0d7cc6eef251dda5c5a7638953f64ae9374d"
+    },
+    "python:research/flywheel_selfplay/h174_swag/runner.py": {
+      "bytes": 39305,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "fb33e03e266c34ab16f72de16a92cb8d8a87cad78e5db720aa0cd3727d33bcd7"
+    },
+    "python:research/flywheel_selfplay/h174_swag/monitor.py": {
+      "bytes": 5480,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "6f8e7d28a730daaf6b59009e8168c19de2a2ab494cfbeded5efcc73964d1c4aa"
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/monitor.py": {
+      "bytes": 5850,
+      "sha256": "52806f32db92dd98af7748b1961ccd10e28877cb2079e3f5b2ae187da4c1553d",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/runner.py": {
+      "bytes": 49831,
+      "sha256": "f5cefaa52c5a3bff7e8a4377ccc1c69104d1910d197ae624a545b5d7f2def6a8",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/runtime.py": {
+      "bytes": 10004,
+      "sha256": "4c4342bcb8de9a9c157dc400ba062e061742f90e2cac96a4a61546ec498be05e",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/science.py": {
+      "bytes": 20882,
+      "sha256": "ea469183ebf623ed19e7d859630b89c32c663eed5f68a69e49b1d0f07a84eb6a",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
