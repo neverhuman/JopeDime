@@ -1671,6 +1671,10 @@
       "reason": "REL-07 PR1382 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_release_command_scaffold.py": {
+      "reason": "REL-07 PR1454 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:ops/s3_shard_cache/test_s3_shard_cache.py": {
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
@@ -2107,6 +2111,10 @@
     },
     "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
       "reason": "H169 owner-directed optimizer-geometry continuation wave on the r882 adapter; data-free controls only, no checkpoint, corpus, sealed or holdout data in the fixture suite; offline research.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
+      "reason": "H170 owner-directed one-cycle AdamW continuation (CTRL,OC3,OC15,mean-LR-matched control): data-free schedule application, inactive-gradient handling, drift, family selection/median inference, pseudoreplication and guarded launch controls. Research only; no product or sealed qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -5383,13 +5391,13 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h170_onecycle/test_h170.py": {
-      "role": "research",
-      "reason": "H170 owner-directed one-cycle AdamW continuation (CTRL,OC3,OC15,mean-LR-matched control): data-free schedule application, inactive-gradient handling, drift, family selection/median inference, pseudoreplication and guarded launch controls. Research only; no product or sealed qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
+  "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
+    "reason": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards.",
+    "role": "research"
+  },
   "schema": "jope.regression-test-inventory/v1",
   "subsystems": {
     "encoders": {
@@ -5474,9 +5482,5 @@
         "W6"
       ]
     }
-  },
-  "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
-    "reason": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards.",
-    "role": "research"
   }
 }

@@ -34,9 +34,7 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
         cls.scaffold = json.loads(SCAFFOLD.read_text(encoding="utf-8"))
 
     def test_every_release_gate_has_exactly_one_provider_command(self):
-        self.assertEqual(
-            self.scaffold["schema"], "jope.rel07.gate-command-scaffold/v1"
-        )
+        self.assertEqual(self.scaffold["schema"], "jope.rel07.gate-command-scaffold/v1")
         self.assertEqual(self.scaffold["qualification_handoff"], "NOT_EXECUTABLE")
         rows = self.scaffold["gates"]
         ids = [row["id"] for row in rows]
@@ -61,18 +59,26 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
             *expected_argv["A5"],
         ]
         expected_argv["D1"] += [
-            "--macos-receipt", "${JOPE_REL07_D1_MACOS_RECEIPT}",
-            "--macos-receipt-sha256", "${JOPE_REL07_D1_MACOS_RECEIPT_SHA256}",
+            "--macos-receipt",
+            "${JOPE_REL07_D1_MACOS_RECEIPT}",
+            "--macos-receipt-sha256",
+            "${JOPE_REL07_D1_MACOS_RECEIPT_SHA256}",
         ]
         expected_argv["M2"] += [
-            "--golden-dir", "${JOPE_GOLDEN_DIR}",
-            "--golden-index-sha256", "${JOPE_GOLDEN_INDEX_SHA256}",
-            "--parity-bundle-dir", "${JOPE_PARITY_BUNDLE_DIR}",
-            "--parity-report-dir", "${JOPE_PARITY_REPORT_DIR}",
+            "--golden-dir",
+            "${JOPE_GOLDEN_DIR}",
+            "--golden-index-sha256",
+            "${JOPE_GOLDEN_INDEX_SHA256}",
+            "--parity-bundle-dir",
+            "${JOPE_PARITY_BUNDLE_DIR}",
+            "--parity-report-dir",
+            "${JOPE_PARITY_REPORT_DIR}",
         ]
         expected_argv["M5"] += [
-            "--golden-dir", "${JOPE_GOLDEN_DIR}",
-            "--bundle-dir", "${JOPE_PARITY_BUNDLE_DIR}",
+            "--golden-dir",
+            "${JOPE_GOLDEN_DIR}",
+            "--bundle-dir",
+            "${JOPE_PARITY_BUNDLE_DIR}",
         ]
         self.assertEqual(actual_argv, expected_argv)
 
@@ -93,7 +99,9 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
         self.assertEqual(
             self.scaffold["candidate_sha256"], "${JOPE_REL07_ARTIFACT_SHA256}"
         )
-        per_gate = {row["id"]: json.dumps(row["argv"]) for row in self.scaffold["gates"]}
+        per_gate = {
+            row["id"]: json.dumps(row["argv"]) for row in self.scaffold["gates"]
+        }
         self.assertIn("JOPE_REL07_A5_MANIFEST", per_gate["A5"])
         self.assertIn("JOPE_REL07_D1_MACOS_RECEIPT", per_gate["D1"])
         self.assertIn("JOPE_GOLDEN_INDEX_SHA256", per_gate["M2"])
@@ -111,7 +119,9 @@ class ReleaseCommandScaffoldTests(unittest.TestCase):
         with self.subTest("candidate digest placeholder"):
             from tempfile import NamedTemporaryFile
 
-            with NamedTemporaryFile(mode="w", suffix=".json", encoding="utf-8") as stream:
+            with NamedTemporaryFile(
+                mode="w", suffix=".json", encoding="utf-8"
+            ) as stream:
                 json.dump(executable, stream)
                 stream.flush()
                 with self.assertRaisesRegex(ValueError, "invalid artifact_sha256"):
