@@ -796,6 +796,48 @@ class M3FullTests(unittest.TestCase):
             with self.subTest(section=section), self.assertRaises(ProviderError):
                 full.reference_pins(bad)
 
+    def test_paired_current_historical_comparison_must_match_top_level(self):
+        for same_verdict in (False, True):
+            report = self.paired_report()
+            proposer = report["clauses"]["r0_proposer"]
+            if same_verdict:
+                current = json.loads(
+                    json.dumps(
+                        proposer["paired_diagnostic"]["historical_current_comparison"]
+                    )
+                )
+                for row in current["strata"][:2]:
+                    row["native_counts"]["champion_retrieval"] -= 1
+                    row["native_counts"]["edit_parameter"] += 1
+                proposer["paired_diagnostic"]["historical_current_comparison"] = current
+            else:
+                proposer.update(
+                    passed=True,
+                    strata=full_report()["clauses"]["r0_proposer"]["strata"],
+                )
+                report.update(status="NUMERICAL_PASS")
+                report["counts"].update(passed=4, failed=0)
+            with (
+                self.subTest(same_verdict=same_verdict),
+                self.assertRaises(ProviderError),
+            ):
+                full.gate_payload(self.ctx, report, self.pin)
+
+    def test_consistent_paired_historical_success_remains_accepted(self):
+        report = self.paired_report()
+        proposer = report["clauses"]["r0_proposer"]
+        proposer.update(
+            passed=True, strata=full_report()["clauses"]["r0_proposer"]["strata"]
+        )
+        proposer["paired_diagnostic"]["historical_current_comparison"] = dict(
+            passed=True, strata=json.loads(json.dumps(proposer["strata"]))
+        )
+        report.update(status="NUMERICAL_PASS")
+        report["counts"].update(passed=4, failed=0)
+        self.assertEqual(
+            full.gate_payload(self.ctx, report, self.pin)["status"], "PASS"
+        )
+
     def test_full_cli_requires_paired_arguments_and_separate_modes(self):
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(m3.main(["--full-inputs", "/missing"]), 2)

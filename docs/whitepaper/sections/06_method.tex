@@ -18,8 +18,8 @@ record in \cref{sec:method-status}.
 \cref{box:searchone}: a frozen encoder reads the board and $\writer$ writes
 a complete program, as AlphaGo's policy proposed a move
 \citep{silver2016mastering}. The problem--program map $\mapv$ supplies the
-training-side ranking score. Proposed game day omits that map and permits
-only the writer's single draw.
+seed ranking during training, without conditioning or screening the writer.
+Proposed game day omits that map and permits only the writer's single draw.
 
 \begin{figure*}[t]
   \centering
@@ -34,11 +34,11 @@ only the writer's single draw.
 \subsection{Reading the board}\label{sub:method-board}
 
 The reference regression encoder turns the board of \cref{sec:game}
-into 2,048 numbers, $z_p=\encP(p)$, in three blocks.
+into \num{2048} numbers, $z_p=\encP(p)$, in three blocks.
 The first summarizes a pretrained row encoder's embeddings across rows,
 independent of row order (512 values). The second projects the hidden
 state of a pretrained third-party tabular regressor that reads the training
-rows and labels (1,024; third-party provenance pending; restricted; redistribution prohibited). The third passes the
+rows and labels (\num{1024}; third-party provenance pending; restricted; redistribution prohibited). The third passes the
 scaled targets through two frozen windows (512).
 
 The reference encoder is pinned by hash and stays fixed during writer
@@ -82,11 +82,11 @@ non-padding token embeddings, including \texttt{BOS}, the fixed engine and
 task header, and \texttt{EOS}. Pooling discards token order, limiting its
 ability to distinguish compositions built from the same tokens.
 
-The map's own two-layer context network projects the 2,048-value $z_p$
+The map's own two-layer context network projects the \num{2048}-value $z_p$
 to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
 as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$, and
 $|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
-Four two-layer heads receive this same 1,536-value interaction vector;
+Four two-layer heads receive this same \num{1536}-value interaction vector;
 their mean gives $\mapv(z_p,z_w)$ with parameters $\psi$.
 Native ranking losses supervise that mean jointly, without separate
 targets or bootstrap samples. Training applies dropout of 0.05 in each
@@ -138,9 +138,11 @@ Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
 scored survivor weight while scored survivors remain.
 
-Native assembly reserves ten tail slots for cut teachers or fallbacks
-and six for random exploration. Teacher-first execution prioritizes
-retained cut teachers. The reference layout is in \cref{alg:selfplay}.
+Native assembly takes up to ten same-cut teachers, then cross-cut teachers
+up to a 16-seed tail. Random fallbacks fill to ten slots if needed; random
+exploration fills the remaining slots. The standalone seed writer instead
+uses 16 random programs. Teacher-first execution prioritizes retained cut
+teachers; \cref{alg:selfplay} leaves the tail route-dependent.
 
 This search role is separate from the writer loss, which weights programs
 by referee rank. The program-only control tests context-sensitive ranking;
@@ -157,7 +159,7 @@ a change in proposal quality requires the matched ablation in
 \For{each round}
   \For{each sampled training problem $p$}
     \State $z_p \gets \encP(p)$; keep the first 64 distinct valid draws from $\writer(\cdot\mid z_p)$ \Comment{$T=1$; grammar-uniform fill if short}
-    \State verified search, seeded with the drafts and 16 random exploration programs, proposes more programs \Comment{the teacher}
+    \State verified search, seeded with the 64 drafts and 16 tail seeds (teachers/fallbacks and random exploration), proposes more programs \Comment{the teacher}
     \State $\referee$ fits and scores each distinct program on 5 inner folds \Comment{stillborn: no score}
     \State \textbf{if} a program strictly beats $\inc{p}$ \textbf{then} it becomes $\inc{p}$ \Comment{board ratchet}
     \State add every scored program to the list $G_p$ \Comment{winners and also-rans}
@@ -246,7 +248,7 @@ predictions agreeing within
 $10^{-9}\max(1,|\hat y|)$.
 
 One earlier leaderboard entry for our search selected each dataset's best
-test-scored outcome from a ledger of 63,108 evaluations; we exclude it as test selection (\cref{app:incidents}).
+test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as test selection (\cref{app:incidents}).
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 

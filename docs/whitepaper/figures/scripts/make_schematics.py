@@ -7,7 +7,7 @@ Contains zero fabricated empirical results:
   vertical question-mark interval ('?', tested in Section 7).
 - fig3_game_loop.pdf: Schematic of the innovation game loop (top blue row:
   game-day search=1 deployment; dashed box: training-only referee & ratchets).
-- fig5_network.pdf: Architectural schematic of the 27.8M step-60,000 reference
+- fig5_network.pdf: Architectural schematic of the 27.8M historical reference
   checkpoint showing the frozen 2,048-value encoder, grammar-masked writer
   pi_theta, and separate training-only ranking map v_psi (with explicit note
   that v_psi has no influence path into pi_theta's draw).
@@ -202,7 +202,7 @@ def make_fig3_game_loop() -> None:
 
 
 def make_fig5_network() -> None:
-    """Schematic: Writer pi_theta and separate ranking map v_psi in step-60,000 checkpoint."""
+    """Schematic: Writer pi_theta and separate ranking map v_psi in historical reference checkpoint."""
     fig, ax = plt.subplots(figsize=(7.0, 2.6))
     fig.subplots_adjust(left=0.005, right=0.995, bottom=0.005, top=0.995)
     ax.set_xlim(0.0, 1.0)
@@ -225,7 +225,7 @@ def make_fig5_network() -> None:
     y_top, h_top = 0.67, 0.215
     _draw_box(ax, 0.03, y_top, 0.295, h_top, "Frozen encoder $\\phi_{\\mathrm{P}}(p)$\n2,048 values (512+1,024+512)\n30 s cap; hash-pinned", "#ffffff", "#2563eb", "#1e3a8a", fontsize=7.6)
     _draw_box(ax, 0.365, y_top, 0.32, h_top, "Program writer $\\pi_\\theta(w \\mid z_p)$\n6-block causal Transformer\n$\\leq 128$ grammar tokens ($T=1$)", "#dbeafe", "#1d4ed8", "#1e3a8a", fontsize=7.6, bold=True)
-    _draw_box(ax, 0.725, y_top, 0.245, h_top, "1 program $w$\nLower to Python/Rust,\nfit & predict $\\hat{y}$", "#ffffff", "#2563eb", "#1e3a8a", fontsize=7.6)
+    _draw_box(ax, 0.725, y_top, 0.245, h_top, "1 program $w$\nParse & fit on train rows,\npredict $\\hat{y}$ (export gated)", "#ffffff", "#2563eb", "#1e3a8a", fontsize=7.6)
 
     _draw_arrow(ax, 0.325, y_top + h_top / 2, 0.365, y_top + h_top / 2, color="#1d4ed8", lw=1.1)
     _draw_arrow(ax, 0.685, y_top + h_top / 2, 0.725, y_top + h_top / 2, color="#1d4ed8", lw=1.1)
@@ -257,13 +257,13 @@ def make_fig5_network() -> None:
     # Row 2 inside training box: Writer update + explicit non-steering boundary note
     y_low, h_low = 0.045, 0.20
     _draw_box(ax, 0.03, y_low, 0.455, h_low, "Writer supervision $\\mathcal{L}_{\\mathrm{writer}}$\nWeights each sampled move by $0.05 + \\rho_w^4$\ndirectly from referee percentiles $\\rho_w$", "#ecfdf5", "#059669", "#065f46", fontsize=7.5)
-    _draw_box(ax, 0.515, y_low, 0.455, h_low, "Reference checkpoint boundary:\n$v_\\psi$ ranks drafts; search weights parents by rank;\nnever screens or conditions $\\pi_\\theta$'s draws", "#fff1f2", "#e11d48", "#881337", fontsize=7.3, ls="--")
+    _draw_box(ax, 0.515, y_low, 0.455, h_low, "Reference checkpoint boundary:\n$v_\\psi$ ranks 64 drafts (route-specific parent weight);\nnever screens or conditions $\\pi_\\theta$'s draws", "#fff1f2", "#e11d48", "#881337", fontsize=7.3, ls="--")
 
     # Arrow from Referee down to Writer supervision, and from Writer supervision straight up through vertical gap x=0.33 to Writer
     _draw_arrow(ax, 0.45, y_mid, 0.39, y_low + h_low, color="#059669", ls="--", lw=1.0)
     _draw_arrow(ax, 0.33, y_low + h_low, 0.37, y_top, color="#059669", ls="--", lw=1.05, rad=0.05)
 
-    fig.savefig(OUT / "fig5_network.pdf")
+    fig.savefig(OUT / "fig5_network.pdf", metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
 
 

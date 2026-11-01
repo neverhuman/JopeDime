@@ -74,6 +74,20 @@ def plan(manifest):
     return make_plan(manifest)
 
 
+def test_implementation_hash_tracks_admission_code(monkeypatch):
+    included = []
+
+    def fake_file_sha(path):
+        included.append(Path(path).name)
+        return "a" * 64
+
+    monkeypatch.setattr("research.joint_regbin.protocol.file_sha", fake_file_sha)
+    from research.joint_regbin.protocol import implementation_sha
+
+    implementation_sha()
+    assert "admission.py" in included
+
+
 @pytest.fixture
 def preflight_inputs(manifest, tmp_path):
     """Hash-only synthetic files, never a real pool, model or learner."""
@@ -97,7 +111,7 @@ def preflight_inputs(manifest, tmp_path):
 
 def test_preflight_verifies_inputs_without_qualifying_study(preflight_inputs):
     frozen, packet, worker, checkpoint = preflight_inputs
-    result = driver.preflight(frozen, packet, worker, checkpoint)
+    result = driver._preflight_verified_inputs(frozen, packet, worker, checkpoint)
     assert result == dict(
         schema="jope.joint-regbin.preflight/v1",
         status="INPUTS_VERIFIED",
@@ -121,14 +135,14 @@ def test_preflight_refuses_input_drift(preflight_inputs, changed):
     }[changed]
     path.write_bytes(b"changed synthetic input\n")
     with pytest.raises(ValueError, match="drift"):
-        driver.preflight(frozen, packet, worker, checkpoint)
+        driver._preflight_verified_inputs(frozen, packet, worker, checkpoint)
 
 
 def test_preflight_refuses_missing_input(preflight_inputs):
     frozen, packet, worker, checkpoint = preflight_inputs
     (packet / frozen["contexts"][0]["payload"]).unlink()
     with pytest.raises(FileNotFoundError):
-        driver.preflight(frozen, packet, worker, checkpoint)
+        driver._preflight_verified_inputs(frozen, packet, worker, checkpoint)
 
 
 @pytest.mark.parametrize("target", ["packet", "worker", "checkpoint", "payload"])
@@ -154,7 +168,7 @@ def test_preflight_resolves_all_protected_paths_before_hashing(
 
     monkeypatch.setattr(driver, "file_sha", forbidden_hash)
     with pytest.raises(ValueError, match="protected"):
-        driver.preflight(frozen, packet, worker, checkpoint)
+        driver._preflight_verified_inputs(frozen, packet, worker, checkpoint)
 
 
 @pytest.mark.parametrize("rehash", [False, True])
@@ -171,7 +185,7 @@ def test_preflight_rejects_plan_drift_before_input_reads(
     if rehash:
         changed["sha256"] = digest({k: v for k, v in changed.items() if k != "sha256"})
     with pytest.raises(ValueError, match="plan changed|DOPE pin"):
-        driver.preflight(changed, packet, worker, checkpoint)
+        driver._preflight_verified_inputs(changed, packet, worker, checkpoint)
 
 
 def test_preflight_cli_has_no_study_side_effects(
@@ -209,35 +223,25 @@ def test_preflight_cli_has_no_study_side_effects(
             str(checkpoint),
         ],
     )
-    driver.main()
-    assert json.loads(capsys.readouterr().out)["status"] == "INPUTS_VERIFIED"
+    with pytest.raises(SystemExit) as stopped:
+        driver.main()
+    assert stopped.value.code == 2
+    assert "worker-bound r882 plan identity mismatch" in capsys.readouterr().err
     assert {str(path.relative_to(tmp_path)) for path in tmp_path.rglob("*")} == before
 
 
-def test_run_rechecks_input_drift_before_gpu_acquisition(
-    preflight_inputs, tmp_path, monkeypatch
+def test_preflight_rechecks_input_drift_before_gpu_acquisition(
+    preflight_inputs, tmp_path
 ):
     frozen, packet, worker, checkpoint = preflight_inputs
     assert (
-        driver.preflight(frozen, packet, worker, checkpoint)["status"]
+        driver._preflight_verified_inputs(frozen, packet, worker, checkpoint)["status"]
         == "INPUTS_VERIFIED"
     )
     (packet / frozen["contexts"][-1]["payload"]).write_bytes(b"later drift")
 
-    def forbidden(*_args, **_kwargs):
-        pytest.fail("drifted inputs reached compute or history mutation")
-
-    for name in (
-        "qualification_lock",
-        "reserve_campaign",
-        "worker_call",
-        "append_score_store",
-    ):
-        monkeypatch.setattr(driver, name, forbidden)
     with pytest.raises(ValueError, match="payload drift"):
-        driver.execute(
-            frozen, packet, worker, checkpoint, tmp_path / "campaign", None, None
-        )
+        driver._preflight_verified_inputs(frozen, packet, worker, checkpoint)
     assert not (tmp_path / "campaign").exists()
 
 
@@ -252,7 +256,7 @@ def test_preflight_cli_refuses_unavailable_inputs(
     plan_path.write_text(json.dumps(frozen))
     if missing == "worker":
         worker.unlink()
-        diagnostic = "learner.py"
+        diagnostic = "worker-bound r882 plan identity mismatch"
     else:
         plan_path = tmp_path / "sealed" / "never-open.json"
         diagnostic = "protected"

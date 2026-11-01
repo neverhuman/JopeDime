@@ -1,16 +1,13 @@
 % Admission refresh: figures/data/live_admissions.csv; historical summaries: rounds.csv.
 % These tables report development observations, not sealed evaluation results.
-\subsection{Where training stands}\label{sec:method-status}
-% Figures 5--7 are defined before the text so that they are placed ahead of
-% Section 7; defined later, they push the Results floats away from their
-% subsections, retaining sufficient float space.
-
+% Figures 5--7 are defined before the subsection heading so that they land on
+% the opening page of Section 6.8 ahead of Section 7.
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_validation.pdf}
-  \caption{\textbf{Adapter validation and admissions.} All 1,889 retained
-  rounds, 775--2663: grey candidate utility, blue recorded best. Stars mark
-  strict gains; hollow diamonds mark accepted ties.}
+  \caption{\textbf{Adapter validation and admissions.} The \num{1889}-round window,
+  775--2663: grey candidate utility, blue recorded best; stars mark strict gains,
+  hollow diamonds accepted ties. \Cref{app:latest-admissions} extends through round 2837.}
   \label{fig:fw-validation}
 \end{figure}
 
@@ -39,6 +36,9 @@
   \cref{fig:fw-validation}, not one-proposal deployment accuracy or cost.}
   \label{fig:fw-telemetry}
 \end{figure*}
+
+\subsection{Where training stands}\label{sec:method-status}
+
 
 The retained CSVs summarize a later regression admission record (\cref{fig:fw-validation}), separate
 from the historical reference above. An adapter is the trainable
@@ -85,17 +85,6 @@ pools, revealed-history inputs and utility normalization.}
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_live_development.pdf}
-  \caption{\textbf{Program-incumbent events and validation summaries.}
-  Top: logged strict improvements to training-program incumbents per round.
-  Bottom: candidate adapter validation pool utility. Both panels cover the
-  same 20 consecutive rounds, 2644--2663. These are development measurements;
-  independent first-proposal comparisons remain required.}
-  \label{fig:fw-program-promotions}
-\end{figure}
-
-\begin{figure}[t]
-  \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_recent_development.pdf}
   \caption{\textbf{Program promotions and adapter utility in an additional window.}
   Top: cumulative logged strict improvements to training-program incumbents,
@@ -110,7 +99,7 @@ pools, revealed-history inputs and utility normalization.}
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_target_progress.pdf}
   \caption{\textbf{Historical GP target progress.} First-to-last reported
-  best development RMSE at 1,000 evaluations per search, grouped by search
+  best development RMSE at \num{1000} evaluations per search, grouped by search
   arm. Lower is better; unchanged scores are included. The arms shared
   incumbent and teacher seeds, and elapsed time varied. These counts do
   not measure independent discoveries or a learned-policy advantage.}
@@ -126,8 +115,8 @@ program to the adapter's training pool.
 
 The admission prefix covers \num{1889} consecutive rounds, 775--2663.
 Four rows are marked accepted: two strict best increases and two ties.
-The recorded best remains 1.1378. After the accepted tie at round 882,
-all \num{1781} subsequent rounds are rejected (\cref{fig:fw-validation}; see \cref{app:acceptance-over-rounds} for the isolated recorded-best trajectory and cumulative acceptance rate).
+Within this 775--2663 window, the recorded best remains 1.1378. After the tie
+at round 882, all \num{1781} remaining rounds in that window are rejected (\cref{fig:fw-validation}; see \cref{app:acceptance-over-rounds} for the isolated recorded-best trajectory and cumulative acceptance rate).
 Comparisons across harnesses need matched data, normalization and scoring
 protocols.
 
@@ -146,7 +135,7 @@ The shorter retained windows give more detailed operating views. Rounds
 2005--2024 appear in \cref{fig:fw-recent-development}, with cumulative
 journaled strict program promotions counted from zero for that window.
 The adapter panel separates candidate validation utility from the recorded
-best. Rounds 2082--2101 follow in \cref{fig:fw-followup-development}.
+best. Rounds 2082--2101 follow in \cref{fig:fw-followup-development} (\cref{app:flywheel-telemetry}).
 
 Historical GP target scores provide a separate view in
 \cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover
@@ -166,7 +155,7 @@ Shared seeds prevent treating their matching outcomes as independent discoveries
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_target_history.pdf}
   \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
-  arm for one historical dataset/cut, at 1,000 evaluations per search.
+  arm for one historical dataset/cut, at \num{1000} evaluations per search.
   RMSE is in historical evaluator units; lower is better. The arms shared
   incumbent and teacher seeds, and elapsed time varied. This selected
   development example does not establish a learned-policy advantage.}
@@ -182,17 +171,28 @@ count independent tasks or distinct programs.
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_shortfall.pdf}
   \caption{\textbf{Candidate gaps to the recorded best.} Cumulative share
-  of the same 1,889 admission rounds as \cref{fig:fw-validation}, against
+  of the same \num{1889} admission rounds as \cref{fig:fw-validation}, against
   recorded best minus candidate validation utility. The best is logged
   after admission, so zero includes strict gains and ties. Repeated
   adaptive rounds are not independent trials.}
   \label{fig:fw-admission-shortfall}
 \end{figure}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_development.pdf}
+  \caption{\textbf{Program-incumbent events and validation summaries.}
+  Top: logged strict improvements to training-program incumbents per round.
+  Bottom: candidate adapter validation pool utility. Both panels cover the
+  same 20 consecutive rounds, 2644--2663. These are development measurements;
+  independent first-proposal comparisons remain required.}
+  \label{fig:fw-program-promotions}
+\end{figure}
+
 The retained window at rounds 2343--2362 appears in
-\cref{fig:fw-later-development} (appendix). It records 22 strict training-program
+\cref{fig:fw-later-development} (\cref{app:flywheel-telemetry}). It records 22 strict training-program
 improvements and no adapter admission. The logged best remains 1.1378,
-labeled round 882 in these records. The 20 completed rounds total 1730.1
+labeled round 882 in these records. The 20 completed rounds total \num{1730.1}
 seconds of logged wall time: 41.6 rounds and 45.8 program promotions per
 hour, including qualification waits. These program-event rates apply to
 2343--2362, not all admission rounds through 2663 or one-proposal deployment.
@@ -219,4 +219,3 @@ Program-incumbent gains, adapter admissions and historical target scores
 measure different outcomes. \Cref{sec:results} specifies the independent
 comparisons needed to test whether training improves the writer's first
 proposal on new families.
-\FloatBarrier

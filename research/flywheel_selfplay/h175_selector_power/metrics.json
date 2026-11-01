@@ -1,0 +1,4057 @@
+{
+ "wave": "H175",
+ "status": "COMPLETE",
+ "verdict": "MIXED",
+ "source_commit": "9cd28fc563d92e9696178957e387f8cb8d31bb0e",
+ "manifest_sha256": "0ecd794774d3077d1ddda89051ace0595e7dd127f72da93b84df153c1eeeeb9c",
+ "seeds": [
+  175101,
+  175102,
+  175103
+ ],
+ "fold_seed": 175140,
+ "boot_seed": 175141,
+ "optimizer_updates": 0,
+ "model_trainable_parameters": 0,
+ "model_state_before_sha256": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+ "model_state_after_sha256": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+ "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+ "baseline_mean": 1.1377941898164525,
+ "available_historical_studies": 6,
+ "typical_study_max_inner_B_gain": 0.02814887903781732,
+ "selector_decisions_per_rule": 168000,
+ "serving_promotion": false,
+ "headroom": {
+  "24": {
+   "TRAIN": {
+    "contexts": 1219,
+    "families": 205,
+    "equal_family_headroom": {
+     "per_seed": [
+      0.3201666770804776,
+      0.31582900887231286,
+      0.3253626794676648
+     ],
+     "median": 0.3201666770804776,
+     "ci95": [
+      0.2568728085443197,
+      0.3933241393700645
+     ]
+    },
+    "oracle_elo": {
+     "r882": 1500.0,
+     "per_seed": [
+      1988.7429291276048,
+      1940.1152962269653,
+      1958.531245137219
+     ],
+     "median": 1958.531245137219,
+     "ci95": [
+      1933.432766237145,
+      1988.1323112486477
+     ],
+     "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+    },
+    "context_gap_quantiles_by_seed": [
+     [
+      0.0,
+      0.01168860502718383,
+      0.061993503813422335,
+      0.23866977344590418,
+      0.8114396585590399,
+      3.691837235219602,
+      12.658446890402814
+     ],
+     [
+      0.0,
+      0.008892378404118162,
+      0.054191274086034635,
+      0.23503609971879313,
+      0.7881207268412651,
+      3.678343687126699,
+      12.468550320393694
+     ],
+     [
+      0.0,
+      0.00923312154967626,
+      0.05485416749958272,
+      0.21869387039329574,
+      0.8235044534986631,
+      3.7195191133430576,
+      13.430627939072613
+     ]
+    ],
+    "family_gap_quantiles_by_seed": [
+     [
+      0.0010215104905017813,
+      0.0536062455420202,
+      0.13677661367954458,
+      0.33404568279687086,
+      0.7358455330162539,
+      3.084251067425397,
+      3.7560880031210866
+     ],
+     [
+      0.0,
+      0.05362775221112178,
+      0.14712617150683022,
+      0.3642127004227188,
+      0.7460695698033093,
+      2.717020613486981,
+      3.7559927391813943
+     ],
+     [
+      0.0028936762941500936,
+      0.051737029719807516,
+      0.1286621501093303,
+      0.42801962494562834,
+      0.8003269701750949,
+      2.6969016358697053,
+      5.584865060409307
+     ]
+    ],
+    "oracle_optimal_contexts_by_seed": [
+     142,
+     167,
+     166
+    ],
+    "failure_contexts_by_seed": [
+     18,
+     22,
+     23
+    ],
+    "avoidable_failures_by_seed": [
+     18,
+     22,
+     23
+    ],
+    "baseline_family_utility_by_seed": [
+     1.3732805423819339,
+     1.3683299052612965,
+     1.3688980685150476
+    ]
+   },
+   "DLVal": {
+    "contexts": 91,
+    "families": 19,
+    "equal_family_headroom": {
+     "per_seed": [
+      0.2929207240165971,
+      0.18216904166809547,
+      0.22149435419253902
+     ],
+     "median": 0.22149435419253902,
+     "ci95": [
+      0.11849463630260075,
+      0.352190097537304
+     ]
+    },
+    "oracle_elo": {
+     "r882": 1500.0,
+     "per_seed": [
+      1913.5891580341925,
+      1952.3789062137237,
+      1852.470175901744
+     ],
+     "median": 1913.5891580341925,
+     "ci95": [
+      1835.3410359506104,
+      2000.4769356147563
+     ],
+     "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+    },
+    "context_gap_quantiles_by_seed": [
+     [
+      0.0,
+      0.0027422902887332956,
+      0.040268020024743445,
+      0.3009545446013706,
+      0.9139024231729005,
+      2.7452440611032243,
+      3.1343185760086745
+     ],
+     [
+      0.0,
+      0.004527025604159185,
+      0.025134583310777336,
+      0.17425645687396585,
+      0.6243140546796302,
+      1.5833648308181234,
+      2.5036797564685283
+     ],
+     [
+      0.0,
+      0.0043876620319557025,
+      0.0294116823547097,
+      0.22209576625773653,
+      0.7274420622890494,
+      1.7534054093504863,
+      2.7023245086575365
+     ]
+    ],
+    "family_gap_quantiles_by_seed": [
+     [
+      0.006682100626510756,
+      0.031650039696752806,
+      0.17177504732318286,
+      0.5540459704028224,
+      0.7748018572443116,
+      0.8037238652212861,
+      0.8091917065646577
+     ],
+     [
+      0.007941389707072855,
+      0.03523668522601435,
+      0.08260279426245556,
+      0.22283562610496957,
+      0.4571955612972166,
+      0.8416343042601986,
+      0.9039890922920332
+     ],
+     [
+      0.0,
+      0.025845508392908306,
+      0.09250391104002302,
+      0.2645273019265389,
+      0.6660645653668774,
+      0.9387324142717954,
+      0.9800349121966907
+     ]
+    ],
+    "oracle_optimal_contexts_by_seed": [
+     16,
+     13,
+     18
+    ],
+    "failure_contexts_by_seed": [
+     3,
+     1,
+     1
+    ],
+    "avoidable_failures_by_seed": [
+     3,
+     1,
+     1
+    ],
+    "baseline_family_utility_by_seed": [
+     1.0484129701128393,
+     1.151413785090603,
+     1.121141358738941
+    ]
+   },
+   "note": "Full-pool 3 seed baseline/oracle utilities are identical; 24 slates vary only by prespecified sampling. No independent model replications.",
+   "MDE80": {
+    "context": {
+     "STRICT": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.05,
+      "gain": 0.015834306207683856,
+      "headroom_percent": 4.945644672354119,
+      "gain_ci95": [
+       0.01281268541627302,
+       0.01953510038349481
+      ],
+      "headroom_percent_ci95": [
+       4.720035343965167,
+       5.290025006024406
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     },
+     "H168_NEW": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.05,
+      "gain": 0.015834306207683856,
+      "headroom_percent": 4.945644672354119,
+      "gain_ci95": [
+       0.01281268541627302,
+       0.01953510038349481
+      ],
+      "headroom_percent_ci95": [
+       4.720035343965167,
+       5.290025006024406
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     }
+    },
+    "family": {
+     "STRICT": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.2,
+      "gain": 0.06395704693361139,
+      "headroom_percent": 19.976172260280244,
+      "gain_ci95": [
+       0.05066967924435128,
+       0.07889123441597562
+      ],
+      "headroom_percent_ci95": [
+       19.154175864126085,
+       20.607098608745016
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     },
+     "H168_NEW": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.05,
+      "gain": 0.016364437817484215,
+      "headroom_percent": 5.111224555505764,
+      "gain_ci95": [
+       0.012822492110455917,
+       0.02096602976542179
+      ],
+      "headroom_percent_ci95": [
+       4.753953192836378,
+       5.526909609043626
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     }
+    }
+   }
+  },
+  "full": {
+   "TRAIN": {
+    "contexts": 1219,
+    "families": 205,
+    "equal_family_headroom": {
+     "per_seed": [
+      0.4671873852282529,
+      0.4671873852282529,
+      0.4671873852282529
+     ],
+     "median": 0.4671873852282529,
+     "ci95": [
+      0.3604084791498247,
+      0.5967979884298824
+     ]
+    },
+    "oracle_elo": {
+     "r882": 1500.0,
+     "per_seed": [
+      2601.892187609501,
+      2601.892187609501,
+      2601.892187609501
+     ],
+     "median": 2601.892187609501,
+     "ci95": [
+      2471.747894116396,
+      2913.407144807248
+     ],
+     "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+    },
+    "context_gap_quantiles_by_seed": [
+     [
+      0.0,
+      0.039280289851045674,
+      0.1045556759188494,
+      0.33419394974648176,
+      1.1197198288316206,
+      6.273407808508476,
+      14.97576124548291
+     ],
+     [
+      0.0,
+      0.039280289851045674,
+      0.1045556759188494,
+      0.33419394974648176,
+      1.1197198288316206,
+      6.273407808508476,
+      14.97576124548291
+     ],
+     [
+      0.0,
+      0.039280289851045674,
+      0.1045556759188494,
+      0.33419394974648176,
+      1.1197198288316206,
+      6.273407808508476,
+      14.97576124548291
+     ]
+    ],
+    "family_gap_quantiles_by_seed": [
+     [
+      0.0027132491185927893,
+      0.07043581701828616,
+      0.18068907148148125,
+      0.4941427560030121,
+      1.1241848857886492,
+      3.5240342880133513,
+      7.941867772928371
+     ],
+     [
+      0.0027132491185927893,
+      0.07043581701828616,
+      0.18068907148148125,
+      0.4941427560030121,
+      1.1241848857886492,
+      3.5240342880133513,
+      7.941867772928371
+     ],
+     [
+      0.0027132491185927893,
+      0.07043581701828616,
+      0.18068907148148125,
+      0.4941427560030121,
+      1.1241848857886492,
+      3.5240342880133513,
+      7.941867772928371
+     ]
+    ],
+    "oracle_optimal_contexts_by_seed": [
+     4,
+     4,
+     4
+    ],
+    "failure_contexts_by_seed": [
+     17,
+     17,
+     17
+    ],
+    "avoidable_failures_by_seed": [
+     17,
+     17,
+     17
+    ],
+    "baseline_family_utility_by_seed": [
+     1.3853554329931828,
+     1.3853554329931828,
+     1.3853554329931828
+    ]
+   },
+   "DLVal": {
+    "contexts": 91,
+    "families": 19,
+    "equal_family_headroom": {
+     "per_seed": [
+      0.25098514159841545,
+      0.25098514159841545,
+      0.25098514159841545
+     ],
+     "median": 0.25098514159841545,
+     "ci95": [
+      0.1250158756413021,
+      0.41495491855875893
+     ]
+    },
+    "oracle_elo": {
+     "r882": 1500.0,
+     "per_seed": [
+      2394.119537474722,
+      2394.119537474722,
+      2394.119537474722
+     ],
+     "median": 2394.119537474722,
+     "ci95": [
+      2212.2848374662917,
+      2811.592846746177
+     ],
+     "interpretation": "expected family-weighted wins of randomized counterfactual policy, not Elo of mean utility"
+    },
+    "context_gap_quantiles_by_seed": [
+     [
+      0.0,
+      0.03515954586516207,
+      0.10041860226581256,
+      0.30339402096817314,
+      0.7284714620483383,
+      1.8505399991220353,
+      2.060389729644185
+     ],
+     [
+      0.0,
+      0.03515954586516207,
+      0.10041860226581256,
+      0.30339402096817314,
+      0.7284714620483383,
+      1.8505399991220353,
+      2.060389729644185
+     ],
+     [
+      0.0,
+      0.03515954586516207,
+      0.10041860226581256,
+      0.30339402096817314,
+      0.7284714620483383,
+      1.8505399991220353,
+      2.060389729644185
+     ]
+    ],
+    "family_gap_quantiles_by_seed": [
+     [
+      0.008902283611806273,
+      0.04856992273631433,
+      0.14978290466025448,
+      0.2958312771785456,
+      0.43542740720136713,
+      1.2990932604004266,
+      1.4008763273647364
+     ],
+     [
+      0.008902283611806273,
+      0.04856992273631433,
+      0.14978290466025448,
+      0.2958312771785456,
+      0.43542740720136713,
+      1.2990932604004266,
+      1.4008763273647364
+     ],
+     [
+      0.008902283611806273,
+      0.04856992273631433,
+      0.14978290466025448,
+      0.2958312771785456,
+      0.43542740720136713,
+      1.2990932604004266,
+      1.4008763273647364
+     ]
+    ],
+    "oracle_optimal_contexts_by_seed": [
+     1,
+     1,
+     1
+    ],
+    "failure_contexts_by_seed": [
+     0,
+     0,
+     0
+    ],
+    "avoidable_failures_by_seed": [
+     0,
+     0,
+     0
+    ],
+    "baseline_family_utility_by_seed": [
+     1.153615276991245,
+     1.153615276991245,
+     1.153615276991245
+    ]
+   },
+   "note": "Full-pool 3 seed baseline/oracle utilities are identical; 24 slates vary only by prespecified sampling. No independent model replications.",
+   "MDE80": {
+    "context": {
+     "STRICT": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.05,
+      "gain": 0.02280187032608344,
+      "headroom_percent": 4.880669094895011,
+      "gain_ci95": [
+       0.017640358535396868,
+       0.02925698504458184
+      ],
+      "headroom_percent_ci95": [
+       4.741688896672374,
+       5.062416222621063
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     },
+     "H168_NEW": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.02,
+      "gain": 0.009354894888994205,
+      "headroom_percent": 2.0023860199957455,
+      "gain_ci95": [
+       0.007143444216097768,
+       0.011880013596199427
+      ],
+      "headroom_percent_ci95": [
+       1.9042533805679454,
+       2.0748086842299887
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     }
+    },
+    "family": {
+     "STRICT": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.2,
+      "gain": 0.09467790954714358,
+      "headroom_percent": 20.265510700997837,
+      "gain_ci95": [
+       0.07216901837061505,
+       0.12161850289488915
+      ],
+      "headroom_percent_ci95": [
+       19.702178276600954,
+       20.726064619375546
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     },
+     "H168_NEW": {
+      "status": "GRID_DETECTED",
+      "fraction": 0.05,
+      "gain": 0.024480203210851318,
+      "headroom_percent": 5.239911004637051,
+      "gain_ci95": [
+       0.01826688994593485,
+       0.03245895529798221
+      ],
+      "headroom_percent_ci95": [
+       4.856435437254197,
+       5.6374988351786515
+      ],
+      "right_censored_bootstrap_fraction": 0.0,
+      "CI_scope": "Conditional family bootstrap of grid crossing; null upper endpoint means right censored, not zero."
+     }
+    }
+   }
+  }
+ },
+ "power_and_false_admission_summary_fractions": [
+  0,
+  0.02,
+  0.05,
+  0.2
+ ],
+ "power_and_false_admission": [
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": 0.006466026594924401,
+    "ci95": [
+     0.005209108152240153,
+     0.007942133092594682
+    ]
+   },
+   "injected_elo": {
+    "median": 1505.9060653124216,
+    "ci95": [
+     1505.7467656683937,
+     1506.1402348869647
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.521,
+      "ci95": [
+       0.515317073170732,
+       0.5230731707317077
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.48300000000000004,
+      0.535
+     ],
+     "selected_gain": {
+      "median": 0.003266882634596223,
+      "ci95": [
+       0.0025897295624042775,
+       0.003976209378289138
+      ]
+     },
+     "selected_elo": {
+      "median": 1502.9776385207226,
+      "ci95": [
+       1502.8864701655575,
+       1503.1566974712598
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 1554,
+     "admitted_nonpositive_A_fraction": 0.012226512226512226
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.778,
+      "ci95": [
+       0.7754634146341469,
+       0.7811219512195124
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.7430000000000001,
+      0.8160000000000001
+     ],
+     "selected_gain": {
+      "median": 0.005156507871209832,
+      "ci95": [
+       0.004021185960514714,
+       0.0061747849220688475
+      ]
+     },
+     "selected_elo": {
+      "median": 1504.5690442164778,
+      "ci95": [
+       1504.4289043204342,
+       1504.7940982876844
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2336,
+     "admitted_nonpositive_A_fraction": 0.01113013698630137
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": 0.015834306207683856,
+    "ci95": [
+     0.01281256707678112,
+     0.019535186800132335
+    ]
+   },
+   "injected_elo": {
+    "median": 1514.9096891373533,
+    "ci95": [
+     1514.551877235313,
+     1515.3438813873
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.983,
+      "ci95": [
+       0.9817804878048787,
+       0.9843414634146348
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.9779999999999999,
+      0.991
+     ],
+     "selected_gain": {
+      "median": 0.015639459338407755,
+      "ci95": [
+       0.012567173065517261,
+       0.019264219761975763
+      ]
+     },
+     "selected_elo": {
+      "median": 1514.7175549323922,
+      "ci95": [
+       1514.3008160801096,
+       1515.1025965566196
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2943,
+     "admitted_nonpositive_A_fraction": 0.0
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.9889999999999999,
+      "ci95": [
+       0.9878048780487811,
+       0.9903414634146349
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.9840000000000001,
+      0.994
+     ],
+     "selected_gain": {
+      "median": 0.015727169659426783,
+      "ci95": [
+       0.01268502757302115,
+       0.01938713916987303
+      ]
+     },
+     "selected_elo": {
+      "median": 1514.7859816454504,
+      "ci95": [
+       1514.4102609769993,
+       1515.1955003586575
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2968,
+     "admitted_nonpositive_A_fraction": 0.0
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": 0.0644108935397891,
+    "ci95": [
+     0.05153314611225723,
+     0.07938009534474665
+    ]
+   },
+   "injected_elo": {
+    "median": 1560.5468456398696,
+    "ci95": [
+     1559.24699180299,
+     1562.069273425424
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 1.0,
+      "ci95": [
+       1.0000000000000007,
+       1.0000000000000007
+      ]
+     },
+     "admission_fold_block_ci95": [
+      1.0,
+      1.0
+     ],
+     "selected_gain": {
+      "median": 0.0644108935397891,
+      "ci95": [
+       0.05153314611225723,
+       0.07938009534474665
+      ]
+     },
+     "selected_elo": {
+      "median": 1560.5468456398696,
+      "ci95": [
+       1559.24699180299,
+       1562.069273425424
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 3000,
+     "admitted_nonpositive_A_fraction": 0.0
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 1.0,
+      "ci95": [
+       1.0000000000000007,
+       1.0000000000000007
+      ]
+     },
+     "admission_fold_block_ci95": [
+      1.0,
+      1.0
+     ],
+     "selected_gain": {
+      "median": 0.0644108935397891,
+      "ci95": [
+       0.05153314611225723,
+       0.07938009534474665
+      ]
+     },
+     "selected_elo": {
+      "median": 1560.5468456398696,
+      "ci95": [
+       1559.24699180299,
+       1562.069273425424
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 3000,
+     "admitted_nonpositive_A_fraction": 0.0
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": -0.011671804044043886,
+    "ci95": [
+     -0.014995281206865442,
+     -0.008548797552517175
+    ]
+   },
+   "injected_elo": {
+    "median": 1496.6988244835109,
+    "ci95": [
+     1496.4063945453054,
+     1496.9909666946019
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.003,
+      "ci95": [
+       0.0021951219512195124,
+       0.0032926829268292686
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.005
+     ],
+     "selected_gain": {
+      "median": -2.2658484055654086e-05,
+      "ci95": [
+       -3.672789320213158e-05,
+       -3.5317171856772486e-06
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.993221430386,
+      "ci95": [
+       1499.986442860767,
+       1499.9991526787985
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.003092783505154639,
+      "ci95": [
+       0.002263012320844858,
+       0.0033945184812672873
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      195,
+      193,
+      194
+     ],
+     "admitted_decisions": 7,
+     "admitted_nonpositive_A_fraction": 0.8571428571428571
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.08899999999999998,
+      "ci95": [
+       0.08587804878048784,
+       0.09136585365853665
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.062000000000000006,
+      0.10700000000000001
+     ],
+     "selected_gain": {
+      "median": -0.0008593834898191477,
+      "ci95": [
+       -0.0011013572021850535,
+       -0.0006178167883706409
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.7039899279969,
+      "ci95": [
+       1499.6516093722519,
+       1499.7598469117934
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.08186528497409327,
+      "ci95": [
+       0.07729444304752325,
+       0.08317957790976871
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      195,
+      193,
+      194
+     ],
+     "admitted_decisions": 259,
+     "admitted_nonpositive_A_fraction": 0.888030888030888
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": -0.029465552150382764,
+    "ci95": [
+     -0.03889504307225518,
+     -0.021918138158017672
+    ]
+   },
+   "injected_elo": {
+    "median": 1491.6688388139614,
+    "ci95": [
+     1491.047199957414,
+     1492.3503263280338
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.001,
+      "ci95": [
+       0.000731707317073171,
+       0.0012682926829268297
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.002
+     ],
+     "selected_gain": {
+      "median": -1.8099339059490022e-05,
+      "ci95": [
+       -4.012550132065084e-05,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.9916680081822,
+      "ci95": [
+       1499.9833277092846,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.001,
+      "ci95": [
+       0.000731707317073171,
+       0.0012682926829268297
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      199,
+      200
+     ],
+     "admitted_decisions": 3,
+     "admitted_nonpositive_A_fraction": 1.0
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.05199999999999999,
+      "ci95": [
+       0.04636585365853662,
+       0.05656097560975614
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.028,
+      0.09000000000000001
+     ],
+     "selected_gain": {
+      "median": -0.0015258705102829334,
+      "ci95": [
+       -0.0019809878006340296,
+       -0.001056549306648915
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.5788216224626,
+      "ci95": [
+       1499.5035165112927,
+       1499.6493963317905
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.05199999999999999,
+      "ci95": [
+       0.046108591739183635,
+       0.05590243902439025
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      199,
+      200
+     ],
+     "admitted_decisions": 155,
+     "admitted_nonpositive_A_fraction": 0.9548387096774194
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": -0.11953643463883526,
+    "ci95": [
+     -0.15717534198946126,
+     -0.0890455429903656
+    ]
+   },
+   "injected_elo": {
+    "median": 1466.5168459798415,
+    "ci95": [
+     1463.8585162858092,
+     1468.8458778845295
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.006,
+      "ci95": [
+       0.004707317073170734,
+       0.00734146341463415
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.016
+     ],
+     "selected_gain": {
+      "median": -0.0007196054591083183,
+      "ci95": [
+       -0.0011439037310599556,
+       -0.0003517791490262951
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.8222342116014,
+      "ci95": [
+       1499.747540949665,
+       1499.880484162959
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.006,
+      "ci95": [
+       0.004707317073170734,
+       0.00734146341463415
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 20,
+     "admitted_nonpositive_A_fraction": 1.0
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": 0.006422679961260115,
+    "ci95": [
+     0.004948661743322194,
+     0.008245145361183568
+    ]
+   },
+   "injected_elo": {
+    "median": 1506.194100640939,
+    "ci95": [
+     1505.753429348555,
+     1506.4539454296876
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.008,
+      "ci95": [
+       0.007195121951219517,
+       0.008878048780487811
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.003,
+      0.014
+     ],
+     "selected_gain": {
+      "median": 5.771967156514576e-05,
+      "ci95": [
+       1.2673575716882657e-05,
+       9.878167002625791e-05
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0440607027217,
+      "ci95": [
+       1500.0220303512724,
+       1500.07286962441
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      4,
+      4,
+      3
+     ],
+     "admitted_decisions": 22,
+     "admitted_nonpositive_A_fraction": 0.4090909090909091
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.47800000000000004,
+      "ci95": [
+       0.47487804878048817,
+       0.48112195121951257
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.461,
+      0.4860000000000001
+     ],
+     "selected_gain": {
+      "median": 0.003009596602235911,
+      "ci95": [
+       0.0022589450183096867,
+       0.003961778059499486
+      ]
+     },
+     "selected_elo": {
+      "median": 1503.0058001935734,
+      "ci95": [
+       1502.7278597632817,
+       1503.232579838971
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      4,
+      4,
+      3
+     ],
+     "admitted_decisions": 1433,
+     "admitted_nonpositive_A_fraction": 0.4424284717376134
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": 0.016364437817484215,
+    "ci95": [
+     0.012822478869939598,
+     0.020966040865224217
+    ]
+   },
+   "injected_elo": {
+    "median": 1515.3034997986858,
+    "ci95": [
+     1514.744734073444,
+     1515.8512238240974
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.15000000000000002,
+      "ci95": [
+       0.14565853658536593,
+       0.15448780487804886
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.138,
+      0.17800000000000002
+     ],
+     "selected_gain": {
+      "median": 0.0026343326718015667,
+      "ci95": [
+       0.0019218502696262219,
+       0.0034727278415403427
+      ]
+     },
+     "selected_elo": {
+      "median": 1502.3176101578626,
+      "ci95": [
+       1502.1526566804546,
+       1502.5425731122714
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      1
+     ],
+     "admitted_decisions": 468,
+     "admitted_nonpositive_A_fraction": 0.13247863247863248
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.8080000000000002,
+      "ci95": [
+       0.8068780487804884,
+       0.8090975609756104
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.795,
+      0.8150000000000001
+     ],
+     "selected_gain": {
+      "median": 0.013585719607749376,
+      "ci95": [
+       0.010233314259321719,
+       0.017232507181211987
+      ]
+     },
+     "selected_elo": {
+      "median": 1512.3884343520224,
+      "ci95": [
+       1511.8707082651315,
+       1512.859632060669
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      1
+     ],
+     "admitted_decisions": 2422,
+     "admitted_nonpositive_A_fraction": 0.1263418662262593
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": 0.06395704693361139,
+    "ci95": [
+     0.050669317304701054,
+     0.0788915353822141
+    ]
+   },
+   "injected_elo": {
+    "median": 1560.7050765552135,
+    "ci95": [
+     1559.158831788296,
+     1562.5987930389308
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.9759999999999998,
+      "ci95": [
+       0.9750975609756105,
+       0.9768048780487811
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.9709999999999999,
+      0.979
+     ],
+     "selected_gain": {
+      "median": 0.06263263054553912,
+      "ci95": [
+       0.04943486186871712,
+       0.07686164089029418
+      ]
+     },
+     "selected_elo": {
+      "median": 1559.0210779676283,
+      "ci95": [
+       1557.6173603333248,
+       1560.9748218939803
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2926,
+     "admitted_nonpositive_A_fraction": 0.0003417634996582365
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 1.0,
+      "ci95": [
+       1.0000000000000002,
+       1.0000000000000004
+      ]
+     },
+     "admission_fold_block_ci95": [
+      1.0,
+      1.0
+     ],
+     "selected_gain": {
+      "median": 0.06395704693361139,
+      "ci95": [
+       0.050648101311786355,
+       0.07886160766353728
+      ]
+     },
+     "selected_elo": {
+      "median": 1560.7050765552135,
+      "ci95": [
+       1559.120487682477,
+       1562.5887728933308
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2999,
+     "admitted_nonpositive_A_fraction": 0.00033344448149383126
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": -0.011546758379373575,
+    "ci95": [
+     -0.01479413025307123,
+     -0.008949824510345017
+    ]
+   },
+   "injected_elo": {
+    "median": 1496.4556667647892,
+    "ci95": [
+     1496.1753776855867,
+     1496.8951872703733
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      190,
+      191,
+      193
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.03900000000000001,
+      "ci95": [
+       0.035731707317073196,
+       0.04339024390243905
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.023,
+      0.065
+     ],
+     "selected_gain": {
+      "median": -0.000446196304899292,
+      "ci95": [
+       -0.0007332588945350105,
+       -0.00022281892496801744
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.9003428402498,
+      "ci95": [
+       1499.8415496782466,
+       1499.9281669595955
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.03052631578947368,
+      "ci95": [
+       0.02919167411569403,
+       0.033786906290115555
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      190,
+      191,
+      193
+     ],
+     "admitted_decisions": 127,
+     "admitted_nonpositive_A_fraction": 0.9606299212598425
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": -0.030980684117483025,
+    "ci95": [
+     -0.04069457316832825,
+     -0.023011770782544384
+    ]
+   },
+   "injected_elo": {
+    "median": 1491.3161611690834,
+    "ci95": [
+     1490.706846555029,
+     1492.155723420312
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      196,
+      197,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.05500000000000001,
+      "ci95": [
+       0.05278048780487807,
+       0.05714634146341468
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.03200000000000001,
+      0.08000000000000002
+     ],
+     "selected_gain": {
+      "median": -0.0014368163350158005,
+      "ci95": [
+       -0.0020682890781666434,
+       -0.0010735071990920387
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.5668414240283,
+      "ci95": [
+       1499.4603669984604,
+       1499.6426418802835
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.05177664974619288,
+      "ci95": [
+       0.049671907886591544,
+       0.05388139160579423
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      196,
+      197,
+      200
+     ],
+     "admitted_decisions": 166,
+     "admitted_nonpositive_A_fraction": 0.9578313253012049
+    }
+   }
+  },
+  {
+   "slate": "24",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": -0.12295051333518497,
+    "ci95": [
+     -0.16354345998576197,
+     -0.09016391013296651
+    ]
+   },
+   "injected_elo": {
+    "median": 1465.9514430873537,
+    "ci95": [
+     1463.6303957524415,
+     1468.5249914706285
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 1,
+     "admitted_nonpositive_A_fraction": 1.0
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.019999999999999997,
+      "ci95": [
+       0.016000000000000004,
+       0.0242439024390244
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.006,
+      0.05
+     ],
+     "selected_gain": {
+      "median": -0.0017961416346987079,
+      "ci95": [
+       -0.002578770856006388,
+       -0.0012328975058533247
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.4017435669605,
+      "ci95": [
+       1499.2118451798049,
+       1499.57718768849
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.019999999999999997,
+      "ci95": [
+       0.016000000000000004,
+       0.0242439024390244
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 59,
+     "admitted_nonpositive_A_fraction": 0.9830508474576272
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": 0.009354894888994205,
+    "ci95": [
+     0.007143405011579265,
+     0.011880149441365177
+    ]
+   },
+   "injected_elo": {
+    "median": 1506.8095559345002,
+    "ci95": [
+     1506.691157611943,
+     1507.0203588256345
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.657,
+      "ci95": [
+       0.6502189024390246,
+       0.6602932926829272
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.635,
+      0.668
+     ],
+     "selected_gain": {
+      "median": 0.005790543574843601,
+      "ci95": [
+       0.0045555702277721545,
+       0.007348875759891303
+      ]
+     },
+     "selected_elo": {
+      "median": 1504.387877055151,
+      "ci95": [
+       1504.2853115018693,
+       1504.5827154569515
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 1960,
+     "admitted_nonpositive_A_fraction": 0.007142857142857143
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.8740000000000001,
+      "ci95": [
+       0.870804878048781,
+       0.8770487804878054
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.848,
+      0.892
+     ],
+     "selected_gain": {
+      "median": 0.00802947576249873,
+      "ci95": [
+       0.006179567188644885,
+       0.01026254143327849
+      ]
+     },
+     "selected_elo": {
+      "median": 1505.9005187418313,
+      "ci95": [
+       1505.773236500517,
+       1506.1061549996762
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2616,
+     "admitted_nonpositive_A_fraction": 0.0061162079510703364
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": 0.02280187032608344,
+    "ci95": [
+     0.017640298133583403,
+     0.029257016540607937
+    ]
+   },
+   "injected_elo": {
+    "median": 1517.1912756964982,
+    "ci95": [
+     1516.9716768330768,
+     1517.454564247922
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.996,
+      "ci95": [
+       0.9951951219512198,
+       0.9967804878048784
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.99,
+      0.999
+     ],
+     "selected_gain": {
+      "median": 0.02273452850069783,
+      "ci95": [
+       0.017576209973543762,
+       0.02917690532274568
+      ]
+     },
+     "selected_elo": {
+      "median": 1517.1299655601615,
+      "ci95": [
+       1516.8919763036279,
+       1517.375965378737
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2986,
+     "admitted_nonpositive_A_fraction": 0.0
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.9989999999999999,
+      "ci95": [
+       0.9987317073170734,
+       0.9992682926829272
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.998,
+      1.0
+     ],
+     "selected_gain": {
+      "median": 0.02277855344306268,
+      "ci95": [
+       0.01762655400654979,
+       0.02920984112122262
+      ]
+     },
+     "selected_elo": {
+      "median": 1517.1765528389649,
+      "ci95": [
+       1516.9584507085438,
+       1517.4417325443887
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2997,
+     "admitted_nonpositive_A_fraction": 0.0
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "oracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": 0.09385849279659406,
+    "ci95": [
+     0.07195884760253594,
+     0.11999841438059432
+    ]
+   },
+   "injected_elo": {
+    "median": 1569.871406716748,
+    "ci95": [
+     1569.4852040898354,
+     1570.473487170809
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 1.0,
+      "ci95": [
+       1.0000000000000007,
+       1.0000000000000007
+      ]
+     },
+     "admission_fold_block_ci95": [
+      1.0,
+      1.0
+     ],
+     "selected_gain": {
+      "median": 0.09385849279659406,
+      "ci95": [
+       0.07195884760253594,
+       0.11999841438059432
+      ]
+     },
+     "selected_elo": {
+      "median": 1569.871406716748,
+      "ci95": [
+       1569.4852040898354,
+       1570.473487170809
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 3000,
+     "admitted_nonpositive_A_fraction": 0.0
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 1.0,
+      "ci95": [
+       1.0000000000000007,
+       1.0000000000000007
+      ]
+     },
+     "admission_fold_block_ci95": [
+      1.0,
+      1.0
+     ],
+     "selected_gain": {
+      "median": 0.09385849279659406,
+      "ci95": [
+       0.07195884760253594,
+       0.11999841438059432
+      ]
+     },
+     "selected_elo": {
+      "median": 1569.871406716748,
+      "ci95": [
+       1569.4852040898354,
+       1570.473487170809
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 3000,
+     "admitted_nonpositive_A_fraction": 0.0
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": -0.011816457206199957,
+    "ci95": [
+     -0.01569455274463058,
+     -0.008805938532038864
+    ]
+   },
+   "injected_elo": {
+    "median": 1497.1138925323296,
+    "ci95": [
+     1496.785279165796,
+     1497.465565447735
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.002,
+      "ci95": [
+       0.0016341463414634148,
+       0.002073170731707317
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.002
+     ],
+     "selected_gain": {
+      "median": -1.5039986083969254e-05,
+      "ci95": [
+       -3.499200006371448e-05,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.997410962995,
+      "ci95": [
+       1499.9907736135801,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0020202020202020206,
+      "ci95": [
+       0.0016506528701650655,
+       0.0021187484602118753
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      194,
+      198,
+      193
+     ],
+     "admitted_decisions": 4,
+     "admitted_nonpositive_A_fraction": 0.75
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.09400000000000001,
+      "ci95": [
+       0.09221951219512202,
+       0.09587804878048788
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.084,
+      0.109
+     ],
+     "selected_gain": {
+      "median": -0.0011606404413840507,
+      "ci95": [
+       -0.0015040408437826495,
+       -0.0007511171483816128
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.765546741722,
+      "ci95": [
+       1499.6952656282506,
+       1499.8122172661917
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.08393782383419691,
+      "ci95": [
+       0.08158726146846962,
+       0.08611146215089095
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      194,
+      198,
+      193
+     ],
+     "admitted_decisions": 275,
+     "admitted_nonpositive_A_fraction": 0.850909090909091
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": -0.02960242859854076,
+    "ci95": [
+     -0.039892695052536016,
+     -0.021973648032805
+    ]
+   },
+   "injected_elo": {
+    "median": 1492.8538871923286,
+    "ci95": [
+     1492.0985466869365,
+     1493.6257872504073
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.056999999999999995,
+      "ci95": [
+       0.05382926829268297,
+       0.06024390243902444
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.037000000000000005,
+      0.079
+     ],
+     "selected_gain": {
+      "median": -0.001968802747291831,
+      "ci95": [
+       -0.0027487459813397637,
+       -0.0013386255318065807
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.5577645504752,
+      "ci95": [
+       1499.4721173083383,
+       1499.6389963184524
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.056999999999999995,
+      "ci95": [
+       0.05382926829268297,
+       0.06024390243902444
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 178,
+     "admitted_nonpositive_A_fraction": 0.9550561797752809
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "context",
+   "direction": "random_nonoracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": -0.11760160131540007,
+    "ci95": [
+     -0.15717253557757283,
+     -0.08659725199242108
+    ]
+   },
+   "injected_elo": {
+    "median": 1471.6785680383114,
+    "ci95": [
+     1468.7502636403306,
+     1474.5733081103942
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.004,
+      "ci95": [
+       0.002926829268292684,
+       0.005170731707317074
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.012
+     ],
+     "selected_gain": {
+      "median": -0.0007961223317456282,
+      "ci95": [
+       -0.0017217521112606788,
+       -0.00021908409663994665
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.8973329114124,
+      "ci95": [
+       1499.8487531559524,
+       1499.9556568568732
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.004,
+      "ci95": [
+       0.002926829268292684,
+       0.005170731707317074
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 13,
+     "admitted_nonpositive_A_fraction": 1.0
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": 0.009826053790712982,
+    "ci95": [
+     0.007108004041646507,
+     0.012741690659435902
+    ]
+   },
+   "injected_elo": {
+    "median": 1507.0744149204793,
+    "ci95": [
+     1506.6268553034097,
+     1507.3762341464585
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.008,
+      "ci95": [
+       0.007195121951219517,
+       0.008878048780487811
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.003,
+      0.014
+     ],
+     "selected_gain": {
+      "median": 7.480708237338039e-05,
+      "ci95": [
+       1.7155505823247797e-05,
+       0.00012218307961663486
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0508392724614,
+      "ci95": [
+       1500.025419636095,
+       1500.0847321218446
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      4,
+      4,
+      3
+     ],
+     "admitted_decisions": 22,
+     "admitted_nonpositive_A_fraction": 0.4090909090909091
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.5130000000000001,
+      "ci95": [
+       0.510926829268293,
+       0.5150975609756101
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.497,
+      0.524
+     ],
+     "selected_gain": {
+      "median": 0.00504029377906728,
+      "ci95": [
+       0.003645694306605763,
+       0.006820250847083312
+      ]
+     },
+     "selected_elo": {
+      "median": 1503.738525423292,
+      "ci95": [
+       1503.3995187789828,
+       1503.947013130816
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      4,
+      4,
+      3
+     ],
+     "admitted_decisions": 1519,
+     "admitted_nonpositive_A_fraction": 0.4371296905859118
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": 0.024480203210851318,
+    "ci95": [
+     0.018266785498769374,
+     0.032459334040721814
+    ]
+   },
+   "injected_elo": {
+    "median": 1517.5536221837083,
+    "ci95": [
+     1516.9615808525643,
+     1518.0463808644595
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.15000000000000002,
+      "ci95": [
+       0.14565853658536593,
+       0.15448780487804886
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.138,
+      0.17800000000000002
+     ],
+     "selected_gain": {
+      "median": 0.004013871467100504,
+      "ci95": [
+       0.0027474740502997936,
+       0.0055659587760122625
+      ]
+     },
+     "selected_elo": {
+      "median": 1502.6589458404542,
+      "ci95": [
+       1502.4725250055344,
+       1502.9250218923996
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      1
+     ],
+     "admitted_decisions": 472,
+     "admitted_nonpositive_A_fraction": 0.13347457627118645
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.8330000000000001,
+      "ci95": [
+       0.8313658536585372,
+       0.8347073170731713
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.8240000000000001,
+      0.846
+     ],
+     "selected_gain": {
+      "median": 0.020410516883295992,
+      "ci95": [
+       0.015270236795356112,
+       0.027449683076995756
+      ]
+     },
+     "selected_elo": {
+      "median": 1514.7777136226823,
+      "ci95": [
+       1514.1801203475213,
+       1515.1783930142064
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      1
+     ],
+     "admitted_decisions": 2501,
+     "admitted_nonpositive_A_fraction": 0.12594962015193922
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "oracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": 0.09467790954714358,
+    "ci95": [
+     0.07216890620773532,
+     0.12161855061770543
+    ]
+   },
+   "injected_elo": {
+    "median": 1570.078231141754,
+    "ci95": [
+     1569.215802240432,
+     1571.3266928910384
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.9759999999999998,
+      "ci95": [
+       0.9750975609756105,
+       0.9768048780487811
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.9709999999999999,
+      0.979
+     ],
+     "selected_gain": {
+      "median": 0.09266914228814672,
+      "ci95": [
+       0.070628879561076,
+       0.11816754254497039
+      ]
+     },
+     "selected_elo": {
+      "median": 1568.4546019459283,
+      "ci95": [
+       1567.4565090482486,
+       1569.6213381619998
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2926,
+     "admitted_nonpositive_A_fraction": 0.0003417634996582365
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 1.0,
+      "ci95": [
+       1.0000000000000002,
+       1.0000000000000004
+      ]
+     },
+     "admission_fold_block_ci95": [
+      1.0,
+      1.0
+     ],
+     "selected_gain": {
+      "median": 0.09467790954714358,
+      "ci95": [
+       0.07214114778931331,
+       0.12159320373242954
+      ]
+     },
+     "selected_elo": {
+      "median": 1569.9988310668064,
+      "ci95": [
+       1569.18230978371,
+       1571.2896293203753
+      ]
+     },
+     "false_admission_given_nonpositive_gain": null,
+     "nonpositive_draws_by_seed": [
+      0,
+      0,
+      0
+     ],
+     "admitted_decisions": 2999,
+     "admitted_nonpositive_A_fraction": 0.00033344448149383126
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.0,
+   "injected_gain": {
+    "median": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   },
+   "injected_elo": {
+    "median": 1500.0,
+    "ci95": [
+     1500.0000000000002,
+     1500.0000000000002
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.02,
+   "injected_gain": {
+    "median": -0.011284274298441215,
+    "ci95": [
+     -0.014577221581899778,
+     -0.008466356775837448
+    ]
+   },
+   "injected_elo": {
+    "median": 1497.1423558854315,
+    "ci95": [
+     1496.830305524091,
+     1497.5741846507508
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      182,
+      188,
+      190
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.045000000000000005,
+      "ci95": [
+       0.04297560975609757,
+       0.04702439024390245
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.033,
+      0.056
+     ],
+     "selected_gain": {
+      "median": -0.0005830165468166644,
+      "ci95": [
+       -0.0008293839566145153,
+       -0.00021487859143127618
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.909336629366,
+      "ci95": [
+       1499.8491768166334,
+       1499.9463363234693
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.037894736842105266,
+      "ci95": [
+       0.035763799743260584,
+       0.04005134788189987
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      182,
+      188,
+      190
+     ],
+     "admitted_decisions": 145,
+     "admitted_nonpositive_A_fraction": 0.9103448275862069
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.05,
+   "injected_gain": {
+    "median": -0.02937129324151725,
+    "ci95": [
+     -0.039478969420624295,
+     -0.021402430205451652
+    ]
+   },
+   "injected_elo": {
+    "median": 1493.0233161813562,
+    "ci95": [
+     1492.237542736946,
+     1493.8877585357711
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      198,
+      199,
+      199
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.060000000000000005,
+      "ci95": [
+       0.05651219512195124,
+       0.06326829268292686
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.042,
+      0.07800000000000001
+     ],
+     "selected_gain": {
+      "median": -0.0015080656481452953,
+      "ci95": [
+       -0.0021493547761382726,
+       -0.0011335095675336516
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.5694775385061,
+      "ci95": [
+       1499.4864399070698,
+       1499.6554267518934
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.05858585858585859,
+      "ci95": [
+       0.05532540752543206,
+       0.06149297856614935
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      198,
+      199,
+      199
+     ],
+     "admitted_decisions": 173,
+     "admitted_nonpositive_A_fraction": 0.9479768786127167
+    }
+   }
+  },
+  {
+   "slate": "full",
+   "variant": "family",
+   "direction": "random_nonoracle",
+   "fraction": 0.2,
+   "injected_gain": {
+    "median": -0.11908526785108321,
+    "ci95": [
+     -0.16093629186582445,
+     -0.08596312964839715
+    ]
+   },
+   "injected_elo": {
+    "median": 1471.9384331138726,
+    "ci95": [
+     1468.872818319234,
+     1474.8487725087944
+    ]
+   },
+   "rules": {
+    "STRICT": {
+     "admission": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.0,
+      0.0
+     ],
+     "selected_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "selected_elo": {
+      "median": 1500.0,
+      "ci95": [
+       1500.0000000000002,
+       1500.0000000000002
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.0,
+      "ci95": [
+       0.0,
+       0.0
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 0,
+     "admitted_nonpositive_A_fraction": null
+    },
+    "H168_NEW": {
+     "admission": {
+      "median": 0.014,
+      "ci95": [
+       0.01229268292682927,
+       0.014926829268292693
+      ]
+     },
+     "admission_fold_block_ci95": [
+      0.004,
+      0.019000000000000003
+     ],
+     "selected_gain": {
+      "median": -0.0015842893902374283,
+      "ci95": [
+       -0.002285323016587661,
+       -0.0008989212694733256
+      ]
+     },
+     "selected_elo": {
+      "median": 1499.566830347917,
+      "ci95": [
+       1499.4880246226903,
+       1499.687623186492
+      ]
+     },
+     "false_admission_given_nonpositive_gain": {
+      "median": 0.014,
+      "ci95": [
+       0.01229268292682927,
+       0.014926829268292693
+      ]
+     },
+     "nonpositive_draws_by_seed": [
+      200,
+      200,
+      200
+     ],
+     "admitted_decisions": 32,
+     "admitted_nonpositive_A_fraction": 1.0
+    }
+   }
+  }
+ ],
+ "historical": [
+  {
+   "wave": "H160",
+   "sha256": "5ba56143ebed499dd9132ba375fa0ba432f86b0cdd6956bf0327cecfcbcf87cd",
+   "source_status": "PREREGISTERED_NOT_EXECUTED",
+   "explicit_incomplete": true,
+   "calibration_leak": false,
+   "status": "NO_REPLAYABLE_INNER_B_GAINS",
+   "verdict_threshold_eligible": false,
+   "count": 0,
+   "max_unconstrained_inner_B_gain": null,
+   "median_extracted_gain": null
+  },
+  {
+   "wave": "H161",
+   "sha256": "23c5d07d18537f9792f48c58fde36e14fac742c5ce949e240443be9514163645",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "EXTRACTED",
+   "verdict_threshold_eligible": true,
+   "count": 4,
+   "max_unconstrained_inner_B_gain": 0.028484443605566994,
+   "median_extracted_gain": 0.027832577649681993
+  },
+  {
+   "wave": "H162",
+   "sha256": "487f36038b30258046c3ecfec78015bfb9f45db1b2a632d97adb93a085a39193",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "EXTRACTED",
+   "verdict_threshold_eligible": true,
+   "count": 60,
+   "max_unconstrained_inner_B_gain": 0.030191,
+   "median_extracted_gain": 0.0
+  },
+  {
+   "wave": "H163",
+   "sha256": "184ab23ce80c1a544be53de34b0bf72aefb5eed601bcc04c3da2e00502822cb8",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "NO_REPLAYABLE_INNER_B_GAINS",
+   "verdict_threshold_eligible": false,
+   "count": 0,
+   "max_unconstrained_inner_B_gain": null,
+   "median_extracted_gain": null
+  },
+  {
+   "wave": "H164",
+   "sha256": "5e289027d512293a5e8a51fec5554655d5852d086535001931ea544d9a8656f5",
+   "source_status": "PREREGISTERED_NOT_EXECUTED",
+   "explicit_incomplete": true,
+   "calibration_leak": false,
+   "status": "NO_REPLAYABLE_INNER_B_GAINS",
+   "verdict_threshold_eligible": false,
+   "count": 0,
+   "max_unconstrained_inner_B_gain": null,
+   "median_extracted_gain": null
+  },
+  {
+   "wave": "H165",
+   "sha256": "3dc169024deb7e8342412c258a9835cf18ec9c7e1e723080756e387dac87229e",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "EXTRACTED",
+   "verdict_threshold_eligible": true,
+   "count": 60,
+   "max_unconstrained_inner_B_gain": 0.035818420248311424,
+   "median_extracted_gain": 0.000647595690395167
+  },
+  {
+   "wave": "H166",
+   "sha256": "4602eb0105d875c1ca65a25f54d2070fba55eb1cc20fd19bcc31075a4c21d357",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "EXTRACTED",
+   "verdict_threshold_eligible": true,
+   "count": 60,
+   "max_unconstrained_inner_B_gain": 0.025117978042756336,
+   "median_extracted_gain": 0.0026089133755619136
+  },
+  {
+   "wave": "H167",
+   "sha256": "3cefb221dfb25865017b3f833c966804de414fe93e860e6ac86afe018a836622",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "EXTRACTED",
+   "verdict_threshold_eligible": true,
+   "count": 60,
+   "max_unconstrained_inner_B_gain": 0.017286333062594514,
+   "median_extracted_gain": 0.0004684002167707378
+  },
+  {
+   "wave": "H168",
+   "sha256": "93d984456282e8cca982a58d7d50a1d96fe2af456a8892cee0fcc2688bdac9da",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "NO_REPLAYABLE_INNER_B_GAINS",
+   "verdict_threshold_eligible": false,
+   "count": 0,
+   "max_unconstrained_inner_B_gain": null,
+   "median_extracted_gain": null
+  },
+  {
+   "wave": "H169",
+   "sha256": "0b498bf786d8d694dd94ac687a60f91f76625abec7c261a2d1ed66381a5fb675",
+   "source_status": "COMPLETE_DIAGNOSTIC_LEAK_BIASED",
+   "explicit_incomplete": false,
+   "calibration_leak": true,
+   "status": "NO_REPLAYABLE_INNER_B_GAINS",
+   "verdict_threshold_eligible": false,
+   "count": 0,
+   "max_unconstrained_inner_B_gain": null,
+   "median_extracted_gain": null
+  },
+  {
+   "wave": "H170",
+   "sha256": "37dc9cbbe5453bfe3be21ad688ca2454fa54e990319cd6eba5a9337e396dbc5e",
+   "source_status": "COMPLETE",
+   "explicit_incomplete": false,
+   "calibration_leak": false,
+   "status": "EXTRACTED",
+   "verdict_threshold_eligible": true,
+   "count": 60,
+   "max_unconstrained_inner_B_gain": 0.027813314470067647,
+   "median_extracted_gain": 0.0
+  },
+  {
+   "wave": "H171",
+   "status": "UNAVAILABLE_AT_PREREG"
+  },
+  {
+   "wave": "H172",
+   "status": "UNAVAILABLE_AT_PREREG"
+  },
+  {
+   "wave": "H173",
+   "status": "UNAVAILABLE_AT_PREREG"
+  },
+  {
+   "wave": "H174",
+   "status": "UNAVAILABLE_AT_PREREG"
+  }
+ ],
+ "raw_metrics_sha256": "89320699ac9a6d736cde7cd063fe6c3123bb22f6119f6874c3f0afcf23f9e567",
+ "raw_simulation_metrics_sha256": "e7f6d80cac8f18472667f84d5c932688efd318d957ee31839d87c406f0ff157f",
+ "independent_audit": {
+  "status": "PASS",
+  "wave": "H175",
+  "native_reference_cost_vectors": 91,
+  "exact_baseline_mean": 1.1377941898164525,
+  "candidate_utility_labels": 1509119,
+  "independent_counterfactual_cases": 56,
+  "selector_B_locks": 840,
+  "bootstrap_decisions_per_rule": 168000,
+  "all_scalar_1000_draw_selector_CIs_and_decisions_bit_exact": true,
+  "all_injections_A_family_panels_and_10k_CI_Elo_false_admission_MDE_replayed": true,
+  "whole_model_matches_private_r882": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+  "DOPE_frozen": true,
+  "optimizer_updates": 0,
+  "GPU": false,
+  "utc": "2026-11-01T11:20:35.246235+00:00"
+ },
+ "historical_audit": {
+  "status": "PASS",
+  "independent_source_JSON_paths": 304,
+  "typical_study_max_inner_B_gain": 0.02814887903781732,
+  "available_studies": 6,
+  "preregistered_verdict": "MIXED",
+  "zero_optimizer_updates": true
+ },
+ "H159_reconciliation": {
+  "status": "PASS",
+  "posthoc_descriptive_only": true,
+  "not_used_for_H175_selection_or_verdict": true,
+  "H159_metrics_sha256": "d55d439f4dd6eb6143da107ff1cd0ba977c528fde07bb96febe4ed4816b4fedd",
+  "matched_failure_contexts_and_native_choices_and_plain_costs": 17,
+  "H175_unrestricted_oracle_avoidable": 17,
+  "H159_best_predicted_gate_valid_candidate_available": 17,
+  "H159_veto_grid_avoided": 0,
+  "H159_any_threshold_avoided": 16,
+  "interpretation": "H159 0/17 meant avoidable by its tested fail-logit VETO GRID, not absence of a better/valid candidate. All same17 native failure IDs/choices/plain costs match H175, and H159 already records valid alternatives. H175 unrestricted true-utility oracle avoids17/17. Different policy classes explain the shorthand discrepancy; no rerun or new optimization required."
+ },
+ "S3_custody": {
+  "status": "PASS",
+  "archive": {
+   "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H175/codex-t0330/005b086b35ac1d4c/H175-evidence.zip",
+   "version_id": "AN7B0QZ8W7jN14c40ThkmcuPIUidWbD9",
+   "sha256": "005b086b35ac1d4c17ec2629469709382aeead26918929645957bd120d63c366",
+   "bytes": 116124698,
+   "actual_versioned_byte_readback": true
+  },
+  "manifest": {
+   "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H175/codex-t0330/005b086b35ac1d4c/manifest.json",
+   "version_id": "cGaJmNsjCXYikZkjK7r4m3MCd04WE.Kt",
+   "sha256": "b182577b8a6c480c469407c55b312b3aa401c6e2b082c65efc6bedd8baf41c01",
+   "bytes": 190443,
+   "actual_versioned_byte_readback": true
+  },
+  "member_count": 1018,
+  "fresh_exact_version_restore_all_member_hashes": true,
+  "optimizer_updates": 0,
+  "verdict": "MIXED"
+ },
+ "limitations": [
+  "Oracle injections use outcomes pointwise and are not deployable learned policies.",
+  "Nonnegative oracle gains give optimistic power; they omit the mixed-sign per-family errors of real training.",
+  "One counterfactual candidate differs from best-of-four snapshot selection; no empirical calibrated familywise-error claim.",
+  "10k family CIs condition on fixed folds/decisions and 200 Monte Carlo draws; additional five-fold block intervals expose fold dependence.",
+  "H160-H174 availability is fixed at prereg; missing live/unreplayable studies excluded, not zero-filled.",
+  "Synthetic policies, no synthetic datasets; frozen historical r882 and reused TRAIN/Val cannot establish external generalization."
+ ],
+ "next_step": {
+  "studies": [
+   "H177 pooled cross-fit same margin",
+   "H178 exact-rule counterfactual calibration gate"
+  ],
+  "authority": "DECISIONS_20261029.md 2026-11-01T11:28Z and hwave_t0440_h175_closeout_tokcodex.md",
+  "family_MDE_div_sqrt5_planning_only": {
+   "24": 0.028602460916739906,
+   "full": 0.04234124834299788
+  },
+  "heuristic_is_not_measured_pooled_power": true,
+  "margin": 0.001,
+  "LCB95_required": true,
+  "ties_reject": true,
+  "live_rule_unchanged": true,
+  "H168_NEW_rejected_by_owner": true,
+  "H177_lift_requires_H178_calibration_pass": true
+ }
+}

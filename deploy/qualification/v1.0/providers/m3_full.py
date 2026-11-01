@@ -1000,6 +1000,12 @@ def gate_payload(ctx, report, input_pin):
                 == validate_strata(comparison.get("strata"), 1024),
                 "historical comparisons must remain explicit and count-derived",
             )
+        current = diagnostic["historical_current_comparison"]
+        require(
+            proposer["passed"] == current["passed"]
+            and proposer["strata"] == current["strata"],
+            "top-level proposer differs from retained historical-current comparison",
+        )
     passed = sum(value["passed"] for value in clauses.values())
     counts = dict(
         collected=4, executed=4, passed=passed, failed=4 - passed, skipped=0, excluded=0

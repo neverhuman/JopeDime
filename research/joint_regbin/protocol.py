@@ -48,6 +48,7 @@ def implementation_sha():
             name: file_sha(root / name)
             for name in (
                 "protocol.py",
+                "admission.py",
                 "driver.py",
                 "report.py",
                 "preregistration.json",

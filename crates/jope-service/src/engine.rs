@@ -232,6 +232,12 @@ impl InProcessEngine {
         home: impl AsRef<Path>,
         executable: impl AsRef<Path>,
     ) -> Result<Self, EngineError> {
+        #[cfg(unix)]
+        let ranker = crate::proposal::from_self().map_err(|error| {
+            EngineError::Runtime(format!("embedded proposal integrity: {error:#}"))
+        })?;
+        #[cfg(not(unix))]
+        let ranker: Option<crate::run::learned::AdmittedRanker> = None;
         let home = home.as_ref();
         let lock = Arc::new(EngineLock::acquire(home)?);
         let store = Arc::new(Store::open(home)?);
@@ -240,7 +246,10 @@ impl InProcessEngine {
             home: home.canonicalize()?,
             executable: executable.as_ref().to_path_buf(),
             runs: Mutex::new(None),
-            activity: Arc::new(EngineActivity::default()),
+            activity: Arc::new(EngineActivity {
+                ranker: ranker.map(Arc::new),
+                ..EngineActivity::default()
+            }),
             _lock: lock,
         })
     }
@@ -550,7 +559,8 @@ async fn serve_locked(
     engine: InProcessEngine,
     idle_exit: Duration,
 ) -> Result<(), EngineError> {
-    serve_with_activity(home, engine, idle_exit, Arc::new(EngineActivity::default())).await
+    let activity = Arc::clone(&engine.activity);
+    serve_with_activity(home, engine, idle_exit, activity).await
 }
 
 async fn serve_with_activity(
