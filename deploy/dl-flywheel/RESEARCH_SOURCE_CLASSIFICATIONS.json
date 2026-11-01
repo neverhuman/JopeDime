@@ -4937,8 +4937,8 @@
       }
     },
     "python:research/flywheel_selfplay/h187_robust_family/monitor.py": {
-      "bytes": 5208,
-      "sha256": "827f6809ac42835e33b668731b4e13023259efe3f4bce800a5eac5070511d022",
+      "bytes": 6334,
+      "sha256": "97cdb5c0cdacacf1229d0317b69f98c029c4e684a381b5b7af1d894777999bfa",
       "classification": {
         "role": "research",
         "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
@@ -4953,8 +4953,8 @@
       }
     },
     "python:research/flywheel_selfplay/h187_robust_family/runner.py": {
-      "bytes": 25534,
-      "sha256": "7c296f5e8966cc3e5548f5411feac37ab2ed8314d26b8f0590a814b6de702168",
+      "bytes": 25611,
+      "sha256": "150fe320963c433763a30705396eb78db78d70800f21af732f4b713773a1e5b1",
       "classification": {
         "role": "research",
         "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"

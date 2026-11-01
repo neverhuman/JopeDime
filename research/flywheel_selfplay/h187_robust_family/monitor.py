@@ -16,15 +16,37 @@ HOST_CORES = os.sysconf("SC_NPROCESSORS_ONLN")
 LOAD_LIMIT = 0.85 * HOST_CORES
 
 
-def violations(sample):
+def next_load_streak(previous, sample):
+    return previous + 1 if sample["load"] > LOAD_LIMIT else 0
+
+
+def violations(sample, load_streak=None, host=None):
+    host = host or socket.gethostname().split(".")[0]
+    required = 3 if host == "xbabe2" else 1
+    load_streak = (
+        (required if sample["load"] > LOAD_LIMIT else 0)
+        if load_streak is None
+        else load_streak
+    )
     return [
         reason
         for bad, reason in [
-            (sample["load"] > LOAD_LIMIT, "load>85% of host online cores"),
+            (load_streak >= required, "sustained load>85% of host online cores"),
             (sample["cpu"] > 85, "host CPU>85%"),
             (sample["available"] < 16 * 2**30, "MemAvailable<16GiB"),
-            (sample["free"] < 40_000_000_000, "disk free<40GB"),
-            (sample["disk_used_fraction"] >= 0.938, "disk user-visible used>=93.8%"),
+            (
+                sample["free"]
+                < (80_000_000_000 if host == "xbabe1" else 40_000_000_000),
+                "disk free floor",
+            ),
+            (
+                host == "xbabe2" and sample["disk_used_fraction"] >= 0.938,
+                "disk user-visible used>=93.8%",
+            ),
+            (
+                host == "xbabe1" and sample.get("output_bytes", 0) >= 1_000_000_000,
+                "xbabe1 output>=1GB",
+            ),
             (sample["rss"] >= 6_000_000_000, "aggregate RSS>=6GB"),
             (sample["threads"] > 4, "aggregate threads>4"),
         ]
@@ -32,7 +54,7 @@ def violations(sample):
     ]
 
 
-def snapshot(child=None):
+def snapshot(child=None, output=None):
     disk = psutil.disk_usage("/home/ubuntu")
     tree = [psutil.Process()]
     if child is not None:
@@ -49,6 +71,9 @@ def snapshot(child=None):
         except psutil.NoSuchProcess:
             pass
     return dict(
+        output_bytes=sum(p.stat().st_size for p in output.rglob("*") if p.is_file())
+        if output is not None and output.exists()
+        else 0,
         load=os.getloadavg()[0],
         cpu=psutil.cpu_percent(),
         available=psutil.virtual_memory().available,
@@ -68,10 +93,10 @@ def main():
     ap.add_argument("--smoke", action="store_true")
     args = ap.parse_args()
     if (
-        socket.gethostname().split(".")[0] != "xbabe2"
+        socket.gethostname().split(".")[0] not in ("xbabe1", "xbabe2")
         or os.getpriority(os.PRIO_PROCESS, 0) != 19
     ):
-        raise RuntimeError("CPU xbabe2/nice19 only")
+        raise RuntimeError("CPU xbabe1/xbabe2/nice19 only")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     resources = args.output.with_suffix(".resources.jsonl")
     if resources.exists() or args.output.exists():
@@ -79,11 +104,14 @@ def main():
     psutil.cpu_percent()
     time.sleep(1)
     initial = snapshot()
-    if violations(initial):
-        raise RuntimeError("prelaunch resource refusal: " + repr(violations(initial)))
+    load_streak = next_load_streak(0, initial)
+    if violations(initial, load_streak):
+        raise RuntimeError(
+            "prelaunch resource refusal: " + repr(violations(initial, load_streak))
+        )
     started = time.monotonic()
     if not args.smoke:
-        with Path("/home/ubuntu/jope_plan/ns/receipts/H187_attempt.claim").open(
+        with Path("/home/ubuntu/jope_plan/ns/receipts/H187_attempt-002.claim").open(
             "x"
         ) as f:
             json.dump(
@@ -132,11 +160,13 @@ def main():
             start_new_session=True,
         )
         while child.poll() is None:
-            sample = snapshot(child)
+            sample = snapshot(child, args.output)
+            load_streak = next_load_streak(load_streak, sample)
+            sample["load_streak"] = load_streak
             sample["elapsed"] = time.monotonic() - started
             samples.write(json.dumps(sample) + "\n")
             samples.flush()
-            reasons = violations(sample)
+            reasons = violations(sample, load_streak)
             if sample["elapsed"] > 3 * 3600:
                 reasons.append("3h hard wall deadline")
             if reasons:
