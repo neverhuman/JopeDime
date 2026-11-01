@@ -7768,6 +7768,22 @@
       ],
       "scope": "A packaged copy alone in an empty directory with an empty environment: version, doctor, fit with bounded selection, predict, fit-predict parity, verify-self and licenses; every exit status 2-7; a damaged manifest, frame or executable region; a promised but unexecutable method; an unpackaged build. RNK-12 executes explicit CUDA refusal in text/JSON with no native input/fitting/output work, and positive CPU/auto fits with actual receipt placement."
     },
+    "target:jope-appliance/test/store_transport": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [],
+        "source": "crates/jope-appliance/tests/store_transport.rs",
+        "test": true
+      },
+      "dispositions": [],
+      "lanes": [
+        "rust-check",
+        "rust-test",
+        "full-default"
+      ],
+      "scope": "Integration proof for the store-bound in-process shared API: committed TRAIN registration, bounded CPU run, status, event page, and durable run/event records in one temporary local store."
+    },
     "target:jope-appliance/test/system": {
       "discovery": {
         "doctest": false,
