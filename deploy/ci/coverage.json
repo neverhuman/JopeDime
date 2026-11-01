@@ -4299,6 +4299,16 @@
       "lanes": [],
       "scope": "REL-07 A2 provider controls over synthetic child responses: candidate/source binding, exact API schema/error/decimal selectors, execution counts, path and drift refusals. No real release gate is executed."
     },
+    "python:deploy/qualification/v1.0/test_provider_a4/test_a4.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 PR1406 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
+    },
     "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
       "discovery": {
         "kind": "python-family"
