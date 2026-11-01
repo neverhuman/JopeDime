@@ -42,13 +42,20 @@ fn direct_session_emits_raw_product_and_companion_values() -> anyhow::Result<()>
     assert_eq!(run.outcome, SessionOutcome::Complete);
     let receipt = &run.final_snapshot.receipt;
     assert_eq!(receipt.embedding, receipt.consumer_embedding);
-    let event: serde_json::Value = serde_json::from_slice(&events)?;
-    assert_eq!(event["embedding"], event["consumer"]["embedding"]);
-    assert_eq!(
-        event["consumer"]["receipt"]["input_conditioning_digest"],
-        event["receipt"]["conditioning_digest"]
-    );
-    assert_eq!(event["receipt"]["version"], 0);
+    let events = serde_json::Deserializer::from_slice(&events)
+        .into_iter::<serde_json::Value>()
+        .collect::<serde_json::Result<Vec<_>>>()?;
+    assert_eq!(events.len(), 2);
+    for event in &events {
+        assert_eq!(event["embedding"], event["consumer"]["embedding"]);
+        assert_eq!(
+            event["consumer"]["receipt"]["input_conditioning_digest"],
+            event["receipt"]["conditioning_digest"]
+        );
+        assert_eq!(event["receipt"]["version"], 0);
+    }
+    assert!(events[0]["receipt"]["outcome"].is_null());
+    assert_eq!(events[1]["receipt"]["outcome"], "complete");
     Ok(())
 }
 
@@ -86,8 +93,14 @@ fn omitted_consumer_keeps_historical_event_and_receipt_fields() -> anyhow::Resul
     let session = start_training_with_options(input(), encoder, &args, SessionOptions::default())?;
     let mut events = Vec::new();
     let run = collect(session, |snapshot| write_snapshot(&mut events, snapshot))?;
-    let event: serde_json::Value = serde_json::from_slice(&events)?;
-    assert!(event.get("consumer").is_none());
+    let events = serde_json::Deserializer::from_slice(&events)
+        .into_iter::<serde_json::Value>()
+        .collect::<serde_json::Result<Vec<_>>>()?;
+    assert_eq!(events.len(), 2);
+    for event in &events {
+        assert!(event.get("consumer").is_none());
+    }
+    assert_eq!(events[1]["receipt"]["outcome"], "complete");
     let receipt = serde_json::to_value(run.final_snapshot.receipt)?;
     assert!(receipt.get("consumer").is_none());
     assert!(receipt.get("consumer_embedding").is_none());

@@ -6,15 +6,13 @@
 % Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-The method has two distinct development stages. First, the offline
-multi-dataset reference trains a neural program writer and a separate
-ranking map from search-scored lists. The architecture and training rule
-below describe that reference; proposed deployment asks its writer for
-one new program. Second, \cref{sec:method-status} examines a closed-loop
-admission ratchet whose inspected implementation uses heuristic edits,
-retrieval and grammar proposals with adapter-only updates. Its retained
-logs do not qualify the reference writer or establish transfer between
-the stages.
+The costs in \cref{sec:price} attach to two distinct learning tasks. The
+offline reference trains a neural program writer and a separate ranking
+map on search-scored lists; proposed deployment asks for one new program.
+\Cref{sec:method-status} separately examines an adapter-only loop with
+heuristic, retrieval and grammar proposals. That implementation does not
+retrain a program writer, and its logs do not establish transfer from the
+reference. We first specify the writer and map, then the admission record.
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
@@ -23,7 +21,6 @@ the stages.
 a complete program, as AlphaGo's policy proposed a move
 \citep{silver2016mastering}. The problem--program map $\mapv$ supplies the
 seed ranking during training, without conditioning or screening the writer.
-Proposed game day omits that map and permits only the writer's single draw.
 
 \begin{figure*}[t]
   \centering
@@ -222,8 +219,8 @@ ranking targets.
 The reference procedure uses two ratchets (\cref{sec:game}). A program
 displaces a board's incumbent only by strictly beating it.
 
-Under the reference admission rule, a retrained writer faces 16 cuts with
-three seeds each. It replaces the serving writer
+The proposed reference admission test calls for 16 cuts with three seeds
+each. A challenger may replace the serving writer
 only if its mean log error ratio favors it. It must also win at least as
 many cuts as it loses and fail no more often.
 %
