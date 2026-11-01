@@ -1,10 +1,9 @@
 {
   "schema": "whitepaper.round-throughput.v1",
   "csv_sha256": "f2ccfb9e5dff3c29a8e188bc2ff4430bf7bef2e721daba3d870859db0146d002",
-  "generator_sha256": "b5612f4d2892d869a9ea9d8d77c8eee2b41520addffc0c0408f15a8f5f60bbf5",
+  "generator_sha256": "84e7f77f91203060276dcdd6fcc7d1db87be60b2d0fb2f458c4c9122f5f8570f",
   "source_snapshot": {
     "at": "2026-11-01T06:54:28.875479+00:00",
-    "host": "xbabe1",
     "round_window": [
       2696,
       2715
@@ -18,8 +17,7 @@
         "selected_rows": 20,
         "source_prefix": {
           "name": "summary.jsonl",
-          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/summary.jsonl",
-          "inode": 62570245,
+          "path": "summary.jsonl",
           "observed_bytes": 3358805,
           "prefix_bytes": 3358805,
           "prefix_sha256": "733877348d00608d72fafa4654d6b2a581b13b41f4312a2e6bcfc437de683ab6",
@@ -35,8 +33,7 @@
         "selected_rows": 20,
         "source_prefix": {
           "name": "adapter_admissions.jsonl",
-          "path": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/adapter_admissions.jsonl",
-          "inode": 62570224,
+          "path": "adapter_admissions.jsonl",
           "observed_bytes": 1015133,
           "prefix_bytes": 1015133,
           "prefix_sha256": "ea3e163ed076a178c52f9f0cc3f2ad229016abfc839e95d1d192c28807bb01da",
