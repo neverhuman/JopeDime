@@ -391,6 +391,26 @@ fn export(
         }
         let pipeline = model.math_pipeline().map_err(|_| unavailable())?;
         let retains = bundle::retains_training_data(&pipeline.state.model);
+        for language in &languages {
+            let LanguageExport::Exported { language, .. } = language else {
+                continue;
+            };
+            let name = language_name(*language);
+            let usage = match language {
+                Language::Python => "Run `python3 predictor.py --self-check` to verify the embedded checks. Import `predict_rows` for prediction batches.",
+                Language::Rust => "Run `rustc --edition=2021 --test predictor.rs -o predictor-self-check` and `./predictor-self-check` to verify the embedded checks. Include the source as a module and call `predict_cells` for prediction batches.",
+                _ => "Import the fitted predictor module using the prediction input contract for the bundled model.",
+            };
+            let privacy = if retains {
+                "\nPrivacy notice: this fitted model retains training rows in its learned state. Treat the bundle as containing training data.\n"
+            } else {
+                ""
+            };
+            entries.insert(
+                format!("src/{name}/README.md"),
+                format!("# {name} fitted predictor\n\n{usage}\n\nPass raw feature cells in the bundled input-schema order; do not include the target column. The predictor applies its fitted preprocessing. Model identity: {}. Refit mode: {}.\n{privacy}", model.id(), serde_json::to_string(&request.refit).map_err(|_| integrity())?).into_bytes(),
+            );
+        }
         let archive_manifest = BundleManifest {
             schema_version: bundle::BUNDLE_SCHEMA_VERSION,
             model_object_digest: hash(model.manifest_bytes()),
