@@ -1,0 +1,37 @@
+{
+  "schema": "whitepaper.latest-round-clock-source/v1",
+  "csv_sha256": "14a5f7a8a6bace9d18c7bad132fe563cd0737ddd0a82b6e38f6cb26178168f64",
+  "capture": {
+    "at": "2026-11-01T16:51:44.691869+00:00",
+    "selection": "Latest20 consecutive completed summary rounds also present in stable admission prefix, without outcome selection",
+    "round_window": [
+      3033,
+      3052
+    ],
+    "rows": 20,
+    "projection_sha256": "5c1c88e30d62fc1af7d1a761d6c085dca0f79ae74789c3d787558f63c209d7fa",
+    "stable_prefix_rereads_verified": true,
+    "journal_verification": {
+      "all20_summary_counts_matched": true,
+      "window_program_events": 8,
+      "prefix_sha256": "8004eb2fc6b46ff167c8f9cab7a1126fd3802fad2b36f79cd7f1d1cd74b97a04",
+      "prefix_bytes": 10237092,
+      "source_rows": 2829
+    }
+  },
+  "source_prefixes": {
+    "summary": {
+      "prefix_bytes": 3358390,
+      "prefix_sha256": "e7fca012efa6d582e834c500975b4458b82f4bb0aac46823986e7e98f887fccf",
+      "source_rows": 20,
+      "trailing_incomplete_bytes_omitted": 0
+    },
+    "admission": {
+      "prefix_bytes": 1196312,
+      "prefix_sha256": "7e66ffa43f456c7282ab3896ee41fdacf4b3754584329875ff22719e3c60d109",
+      "source_rows": 2278,
+      "trailing_incomplete_bytes_omitted": 0
+    }
+  },
+  "scope": "A separate adaptive training-search window. Program-incumbent events are distinct from adapter admissions; completed-round wall time is not per-program or serving throughput. No independent first-proposal claim."
+}
