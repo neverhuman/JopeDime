@@ -378,6 +378,12 @@ def build_binary_panel_packet(
 
 
 BINARY_TRAIN_ADMISSION_SCHEMA = "jope.joint-regbin.binary-train-admission/v1"
+BINARY_TRAIN_CANDIDATE_MANIFEST_SHA256 = (
+    "0fa17ee3ddf2a16a84dc90d6a6d19c6467bb1497597b68c86a279e0ac0055a06"
+)
+BINARY_PANEL_MANIFEST_SHA256 = (
+    "5ebe5b429314a536a3aa9e9cb7783a9b97409835031e7d4fafc4e05a6cd02531"
+)
 OWNER_ALIAS_EXPANSION_SHA256 = (
     "114c57bf328c3556315a4b69f2f230ee0987086bda5ee1043aa50016ad9147b4"
 )
@@ -434,12 +440,15 @@ def build_binary_train_admission(
     family_review = json.loads(family_review_path.read_text(encoding="utf-8"))
 
     catalog_sha = hashlib.sha256(catalog_bytes).hexdigest()
+    candidate_manifest_sha = sha256_file(candidate_path)
+    panel_sha = sha256_file(panel_packet)
     owner_alias_sha = sha256_file(owner_alias_path)
     if (
         candidate.get("schema") != "jope.joint-regbin.binary-s3-train-pool/v1"
         or candidate.get("status") != "TRAIN_POOL_CANDIDATES_NOT_ADMITTED"
         or candidate.get("eligibility_verified") is not False
         or candidate.get("catalog_sha256") != catalog_sha
+        or candidate_manifest_sha != BINARY_TRAIN_CANDIDATE_MANIFEST_SHA256
         or catalog.get("inventory", {}).get("source_catalog", "").find("LATEST=v246")
         < 0
     ):
@@ -470,8 +479,27 @@ def build_binary_train_admission(
         or owner_alias.get("payloads_opened") != 0
     ):
         raise ValueError("owner P2 exclusion expansion is incomplete or has an overlap")
-    if panel.get("schema") != "jope.joint-regbin/v1":
-        raise ValueError("binary panel packet schema mismatch")
+    panel_rows = panel.get("contexts", [])
+    if (
+        panel_sha != BINARY_PANEL_MANIFEST_SHA256
+        or panel.get("schema") != "jope.joint-regbin/v1"
+        or panel.get("catalog_sha256") != catalog_sha
+        or panel.get("admission_status") != "PARTIAL_PANEL_ONLY"
+        or panel.get("eligibility_verified") is not False
+        or panel.get("binary_panel_datasets") != 240
+        or panel.get("binary_panel_families") != 233
+        or len(panel_rows) != 240
+        or len({row.get("dataset") for row in panel_rows}) != 240
+        or any(
+            row.get("task") != "binary"
+            or row.get("role") != "panel"
+            or row.get("source_split") != "train"
+            or row.get("origin") != "real"
+            or row.get("has_meta_test") is not False
+            for row in panel_rows
+        )
+    ):
+        raise ValueError("binary panel packet is not the pinned train-only panel")
 
     candidate_rows = candidate.get("datasets", [])
     candidate_by_id = {row.get("dataset"): row for row in candidate_rows}
@@ -490,11 +518,7 @@ def build_binary_train_admission(
         raise ValueError(
             "family review inventory differs from the binary candidate pool"
         )
-    panel_ids = {
-        row["dataset"]
-        for row in panel.get("contexts", [])
-        if row.get("task") == "binary"
-    }
+    panel_ids = {row["dataset"] for row in panel_rows}
     safe_families = {
         family
         for family, component in components.items()
@@ -562,7 +586,6 @@ def build_binary_train_admission(
         }
         records.append(record)
 
-    panel_sha = sha256_file(panel_packet)
     return {
         "schema": BINARY_TRAIN_ADMISSION_SCHEMA,
         "admission_status": "ADMITTED_BINARY_TRAIN_SUBSET",
@@ -570,7 +593,7 @@ def build_binary_train_admission(
         "full_binary_pool_admitted": False,
         "full_joint_eligibility_verified": False,
         "catalog_sha256": catalog_sha,
-        "candidate_manifest_sha256": sha256_file(candidate_path),
+        "candidate_manifest_sha256": candidate_manifest_sha,
         "family_review_sha256": family_review_sha,
         "owner_alias_expansion_sha256": owner_alias_sha,
         "owner_identity_manifest_sha256": candidate["exclusion_manifest_sha256"],
