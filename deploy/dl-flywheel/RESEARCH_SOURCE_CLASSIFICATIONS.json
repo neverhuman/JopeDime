@@ -5271,12 +5271,12 @@
       "sha256": "eb60e02e0291f7cba75d3f5b7302555ae7f8ed1707e7afad68d1b56ef85424fb"
     },
     "python:research/flywheel_selfplay/h197_pcgc/runner.py": {
-      "bytes": 30249,
+      "bytes": 30452,
       "classification": {
         "role": "research",
-        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+        "reason": "H197 CPU runner for the preregistered adapter continuation; exact merged-source binding, independent H197 local source validation, B lock before A, and guarded one-attempt protocol; no serving promotion."
       },
-      "sha256": "3f4aadea63d73086a7489b86d2adca1f1ea23b2de48059e6a9f1919130f10d22"
+      "sha256": "76c02491aaa2335af3c9f0f143ac63c9913171f3b361af524e52481e8946a086"
     },
     "python:research/flywheel_selfplay/h197_pcgc/treatment.py": {
       "bytes": 5506,
@@ -5285,6 +5285,14 @@
         "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
       },
       "sha256": "38c917f0dc00961272d99c2ee9de13e3fd246613a8c00c5c09695a772fbe66be"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/source_pins.py": {
+      "bytes": 874,
+      "classification": {
+        "role": "research",
+        "reason": "H197 read-only local source hash validation confined to the study directory; independently tested path confinement and mismatch refusal."
+      },
+      "sha256": "92dc24bb84a1a378e59d4b2c1f69d39f24f7645dfdb79d00e91138408657063a"
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

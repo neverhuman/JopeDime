@@ -5524,7 +5524,7 @@
     },
     "python:research/flywheel_selfplay/h197_pcgc/test_h197.py": {
       "role": "research",
-      "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      "reason": "H197 data-free controls for independent TRAIN-family folds, frozen FIT-only per-context clipping calibration, matched arms, immutable B-before-A lock, strict family bootstrap/verdict, resource guards, and local manifest-source pin path confinement; no corpus/checkpoint reads or model passes in fixtures."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

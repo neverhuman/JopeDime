@@ -11,9 +11,21 @@ import torch
 
 import analysis
 import design
+import source_pins
 import treatment
 
 ROOT = Path(__file__).resolve().parents[3]
+
+
+def test_local_source_pins_resolve_from_study_root(tmp_path):
+    source = tmp_path / "PREREG.md"
+    source.write_text("registered source\n")
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    assert source_pins.verify(tmp_path, {"PREREG.md": digest}) is None
+    with pytest.raises(RuntimeError, match="source pin mismatch"):
+        source_pins.verify(tmp_path, {"PREREG.md": "0" * 64})
+    with pytest.raises(RuntimeError, match="unsafe H197 source path"):
+        source_pins.verify(tmp_path, {"../outside": digest})
 
 
 def test_independent_family_folds_are_closed_and_reproducible():

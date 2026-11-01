@@ -42,6 +42,7 @@ finally:
     else:
         sys.modules["design"] = _previous_design
 tx = load_local_module("h197_treatment", HERE / "treatment.py")
+source_pins = load_local_module("h197_source_pins", HERE / "source_pins.py")
 
 
 def sha(path):
@@ -335,7 +336,10 @@ def main():
         or pins.get("dry_fit_batches") != 5
     ):
         raise RuntimeError("H197 frozen bounds mismatch")
-    base.verify(pins)
+    shared_pins = dict(pins)
+    shared_pins["source_sha256"] = {}
+    base.verify(shared_pins)
+    source_pins.verify(HERE, pins["source_sha256"])
     head = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=HERE, text=True
     ).strip()

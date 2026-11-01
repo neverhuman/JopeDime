@@ -2,21 +2,36 @@
   "schema": "jope.hwave-closeout/v1",
   "wave": "H197",
   "status": "INCOMPLETE",
-  "attempts": 1,
-  "attempt_consumed": true,
-  "science_started": false,
-  "science_reason": "runner import failed before checkpoint/corpus loading, reference replay, or optimizer updates",
-  "error": "ModuleNotFoundError: No module named 'h182_base'",
-  "elapsed_seconds": 1.7704121919814497,
-  "exit_code": 1,
-  "monitor_resource_violations": [],
-  "postmortem_findings": ["H197 repository-root resolution was one parent too high", "H189 generic analysis/treatment imports collided with H197 module names; corrected with isolated H197 module loading"],
-  "optimizer_updates": 0,
+  "authorized_attempts": 2,
+  "attempts_consumed": 2,
+  "attempts": [
+    {
+      "attempt": 1,
+      "elapsed_seconds": 1.770412189,
+      "exit_code": 1,
+      "error": "ModuleNotFoundError: No module named 'h182_base'",
+      "monitor_resource_violations": [],
+      "checkpoint_deserialized": false,
+      "optimizer_updates": 0
+    },
+    {
+      "attempt": 2,
+      "elapsed_seconds": 2.253341689,
+      "exit_code": 1,
+      "error": "RuntimeError: source pin mismatch: PREREG.md",
+      "monitor_resource_violations": [],
+      "pinned_files_hashed": true,
+      "checkpoint_deserialized": false,
+      "model_loaded": false,
+      "outcome_panels_read": false,
+      "optimizer_updates": 0
+    }
+  ],
   "trajectories_completed": 0,
   "science_metrics": null,
   "decision": "NOT_EVALUABLE",
   "adoption": false,
   "serving_promotion": false,
-  "launch_commit": "33aa7fd2544cb4395d1c06f3e083be87a7502960",
-  "prereg_pr": 1616
+  "prereg_pr": 1616,
+  "attempt2_source_commit": "6cd8732d726e240fcb47a5a28772e95f0fedc572"
 }
