@@ -5189,6 +5189,62 @@
         "role": "research",
         "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h196_tta/s3_arrays.py": {
+      "bytes": 2486,
+      "sha256": "10807c57276a164781c23eacfe3e29112069a48c984164c7a22d7eb0f2966af4",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/parents.py": {
+      "bytes": 513,
+      "sha256": "ca1a983c6bc13334e4e7ad691d3733dd49e52047f7de673e8726e23c9f39f01c",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/engine.py": {
+      "bytes": 5899,
+      "sha256": "575881872e37567f4cbffb67bc7913d7b8e4bcf003926acb2d7c59899aa5f8e2",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/analysis.py": {
+      "bytes": 6106,
+      "sha256": "b7edc2b3dfd9b13bd31e24a8e33b939192736d906f3f2037e5b236daa0130101",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/treatment.py": {
+      "bytes": 3648,
+      "sha256": "ddc6c912d900e77c6a07e270770be3630d6e82e681f6a903bfdd3c02e0288e2b",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/monitor.py": {
+      "bytes": 6157,
+      "sha256": "6d44503031df1f7a8684d8e13de3f86f7038880b423d8bcfee4bfbaf4c79e5c9",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/runner.py": {
+      "bytes": 13878,
+      "sha256": "f95df2ac87bed61fef4d811218fe7f9060e61e94d783d82f3101ba08cd81bd8d",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
