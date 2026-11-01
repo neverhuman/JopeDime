@@ -70,6 +70,90 @@ def manifest(path):
     return value, commands, hashlib.sha256(raw).hexdigest()
 
 
+def provider_commands(repo):
+    """Return discovered commands and missing gate IDs without inventing rows."""
+    provider_dir = repo / "deploy/qualification/v1.0/providers"
+    if provider_dir.is_symlink() or not provider_dir.is_dir():
+        raise ValueError("provider directory must be a regular, non-symlink directory")
+    supported = {gate.lower() for gate in RELEASE_GATE_IDS}
+    unexpected = []
+    for path in provider_dir.glob("*.py"):
+        if path.stem == "common":
+            continue
+        if path.stem not in supported:
+            unexpected.append(path.name)
+        elif path.is_symlink() or not path.is_file():
+            raise ValueError(
+                "provider must be a regular, non-symlink file: " + path.name
+            )
+    if unexpected:
+        raise ValueError(
+            "unregistered provider modules: " + ", ".join(sorted(unexpected))
+        )
+    if (provider_dir / "d2.py").exists() or (provider_dir / "d2.py").is_symlink():
+        raise ValueError(
+            "D2 speed-gate provider discovery requires a separate owner-defined policy"
+        )
+
+    commands = []
+    missing = []
+    for gate in RELEASE_GATE_IDS:
+        relative = Path("deploy/qualification/v1.0/providers") / (gate.lower() + ".py")
+        path = repo / relative
+        if path.is_symlink():
+            raise ValueError("provider must not be a symlink: " + str(relative))
+        if not path.is_file():
+            missing.append(gate)
+            continue
+        commands.append(
+            dict(
+                id=gate,
+                argv=["python3", "-B", relative.as_posix()],
+                timeout_seconds=3600,
+            )
+        )
+    return commands, missing
+
+
+def provider_manifest(repo, artifact):
+    """Build the exact command manifest from registered, merged gate providers."""
+    repo = repo.resolve()
+    source = cpu.identity(repo, require_clean=True)
+    source_sha = source["main_sha"]
+    artifact = artifact.absolute()
+    if artifact.is_symlink() or not artifact.is_file():
+        raise ValueError("candidate must be a regular, non-symlink file")
+    artifact_sha = cpu.digest(artifact)
+    commands, missing = provider_commands(repo)
+    if missing:
+        raise ValueError(
+            "provider inventory is incomplete; missing: " + ", ".join(missing)
+        )
+    return dict(
+        schema="jope.rel07.gate-commands/v1",
+        source_sha=source_sha,
+        artifact_sha256=artifact_sha,
+        gates=commands,
+    )
+
+
+def write_provider_manifest(repo, artifact, output):
+    """Retain the generated manifest beside gate evidence before execution."""
+    repo = repo.resolve()
+    evidence = output.absolute()
+    if evidence.resolve().is_relative_to(repo):
+        raise ValueError("gate evidence must be outside the tested checkout")
+    if evidence.exists() or evidence.is_symlink():
+        raise ValueError("gate evidence output must be new")
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    path = evidence.with_name(evidence.name + ".gate-commands.json")
+    if path.exists() or path.is_symlink():
+        raise ValueError("generated gate manifest path must be new: " + str(path))
+    value = provider_manifest(repo, artifact)
+    path.write_text(json.dumps(value, indent=2) + "\n")
+    return path
+
+
 def verify_inputs(repo, artifact, source, digest):
     if cpu.git(repo, "rev-parse", "HEAD") != source or cpu.git(
         repo, "status", "--porcelain", "--untracked-files=all"
@@ -243,6 +327,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     inputs = parser.add_mutually_exclusive_group(required=True)
     inputs.add_argument("--manifest", type=Path)
+    inputs.add_argument(
+        "--providers",
+        action="store_true",
+        help="discover the complete provider set and retain its command manifest beside evidence",
+    )
     inputs.add_argument("--cpu-prestage", type=Path)
     parser.add_argument("--repo", type=Path)
     parser.add_argument("--artifact", type=Path)
@@ -275,10 +364,15 @@ def main():
         else:
             if not args.repo or not args.artifact:
                 raise ValueError("execution requires --repo and --artifact")
+            commands_path = args.manifest
+            if args.providers:
+                commands_path = write_provider_manifest(
+                    args.repo.resolve(), args.artifact, args.output
+                )
             receipt, code = execute(
                 args.repo.resolve(),
                 args.artifact.absolute(),
-                args.manifest,
+                commands_path,
                 args.output.absolute(),
             )
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
