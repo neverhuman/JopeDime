@@ -264,4 +264,57 @@ pub struct RunSnapshot {
     pub event_watermark: DecimalU64,
     pub warnings: Vec<Warning>,
     pub completion_reason: Option<CompletionReason>,
+    /// Present only for engine evaluations using the versioned Q1 receipt path.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evaluation_receipt: Option<EvaluationReceipt>,
+}
+
+/// Durable, request-bound result from one engine evaluation.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct EvaluationReceipt {
+    pub schema: String,
+    pub request_sha256: String,
+    pub identity: EvaluationIdentity,
+    pub charged: u64,
+    pub attempts: Vec<EvaluationAttempt>,
+    pub champion_program: Option<String>,
+    pub adapter: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct EvaluationIdentity {
+    pub source_commit: String,
+    pub plan_sha256: String,
+    pub pins: BTreeMap<String, String>,
+    pub dataset_id: String,
+    pub dataset_sha256: String,
+    pub cut_sha256: String,
+    pub guidance: String,
+    pub metric: String,
+    pub seed: u64,
+    pub requested_budget: u64,
+    pub dataset_binding_sha256: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct EvaluationAttempt {
+    pub attempt: u64,
+    pub outcome: EvaluationAttemptOutcome,
+    pub fold_scores: Vec<f64>,
+    pub loss: Option<f64>,
+    pub program_sha256: Option<String>,
+    pub failure: Option<EvaluationFailure>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum EvaluationAttemptOutcome {
+    Completed,
+    Failed,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct EvaluationFailure {
+    pub code: String,
+    pub reason: String,
 }

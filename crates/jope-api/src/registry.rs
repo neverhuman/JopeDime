@@ -844,6 +844,15 @@ mod exchange_proofs {
     use super::*;
     use serde::{de::DeserializeOwned, Serialize};
     use serde_json::{json, Value};
+
+    fn exchange_snapshot_path() -> std::path::PathBuf {
+        std::env::var_os("JOPE_EXCHANGE_SNAPSHOT_OUTPUT")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| {
+                std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("tests/snapshots/exchanges.json")
+            })
+    }
     use std::collections::BTreeMap;
 
     fn positives() -> BTreeMap<&'static str, Vec<Value>> {
@@ -1138,8 +1147,7 @@ mod exchange_proofs {
     }
     #[test]
     fn generated_exchange_schemas_and_examples_are_current() {
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/snapshots/exchanges.json");
+        let path = exchange_snapshot_path();
         let expected: Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
         assert_eq!(
             document(),
@@ -1148,10 +1156,11 @@ mod exchange_proofs {
         );
     }
     #[test]
-    #[ignore = "explicit owning generator for the exchange proof snapshot"]
     fn regenerate_exchange_proofs() {
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/snapshots/exchanges.json");
+        if std::env::var_os("JOPE_EXCHANGE_SNAPSHOT_OUTPUT").is_none() {
+            return;
+        }
+        let path = exchange_snapshot_path();
         std::fs::write(
             path,
             format!("{}\n", serde_json::to_string_pretty(&document()).unwrap()),

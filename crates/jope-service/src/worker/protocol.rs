@@ -64,6 +64,9 @@ pub enum WorkerFailure {
 pub struct Response {
     pub attempt: Attempt,
     pub scores: Vec<f64>,
+    /// Per-fold objective values; omitted by older workers and non-native engines.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fold_scores: Vec<f64>,
     pub predictions_digest: String,
     pub wall_ms: u64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -75,6 +78,7 @@ impl Response {
         Self {
             attempt,
             scores: Vec::new(),
+            fold_scores: Vec::new(),
             predictions_digest: String::new(),
             wall_ms,
             failure: Some(failure),
@@ -87,6 +91,7 @@ impl Response {
         } else {
             !self.scores.is_empty()
                 && self.scores.iter().all(|v| v.is_finite())
+                && self.fold_scores.iter().all(|v| v.is_finite() && *v >= 0.0)
                 && self.predictions_digest.len() == 64
                 && self
                     .predictions_digest
@@ -99,5 +104,6 @@ impl Response {
 /// Evaluator output; the worker checks finiteness and the digest before responding.
 pub struct Scores {
     pub values: Vec<f64>,
+    pub fold_scores: Vec<f64>,
     pub predictions_digest: String,
 }
