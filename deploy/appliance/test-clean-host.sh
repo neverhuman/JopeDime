@@ -111,7 +111,7 @@ method=$(jq -r .method.selected "$work/fit.json")
 run predict --model model.jope --input rows.csv --output predictions.csv
 run fit-predict --train train.csv --target y --input rows.csv --output again.csv --method "$method"
 cmp "$work/predictions.csv" "$work/again.csv"
-[ "$(wc -l < "$work/predictions.csv")" = 4 ]
+[ "$(awk 'END { print NR }' "$work/predictions.csv")" = 4 ]
 
 echo "== self-verification and notices"
 run verify-self --json > "$work/verify-self.json"
