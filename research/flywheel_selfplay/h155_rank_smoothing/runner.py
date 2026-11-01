@@ -62,7 +62,9 @@ def pinned_sources():
     runtime.__file__ = str(REPO / BASE / "runtime.py")
     sys.modules[runtime.__name__] = runtime
     exec(compile(code["runtime.py"], runtime.__file__, "exec"), runtime.__dict__)
-    runtime.HERE = REPO  # Guard Git reads survive removal of the parent's source export.
+    runtime.HERE = (
+        REPO  # Guard Git reads survive removal of the parent's source export.
+    )
     primitives = {
         "np": np,
         "torch": torch,
