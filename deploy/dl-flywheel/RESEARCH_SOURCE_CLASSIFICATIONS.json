@@ -4680,6 +4680,38 @@
         "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     },
+    "python:research/flywheel_selfplay/h192_margin_gate/analysis.py": {
+      "bytes": 11090,
+      "sha256": "9f76b0b0f32aea68ed7b663256b77380a32703e4c0bb1b456091c516bf1fe181",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/monitor.py": {
+      "bytes": 5250,
+      "sha256": "df695fa9656076360cf6b71270ba2a4699f7832bf5596066cd5110284169aac7",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/runner.py": {
+      "bytes": 31868,
+      "sha256": "40c46967d3882bfb4d40a6756a2f639e635568557249b7e4c74e8a9fc38fe908",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/treatment.py": {
+      "bytes": 13293,
+      "sha256": "534ed8e9700797f0bbae00166e50cfd739c85caa90d4e1479c3700b58577de15",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
     "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
       "bytes": 5200,
       "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
