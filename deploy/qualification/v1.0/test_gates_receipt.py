@@ -94,10 +94,20 @@ class GatesReceiptTests(unittest.TestCase):
         receipt = runner.from_gate_results(results, artifact)
 
         self.assertEqual(receipt["signed_bytes_sha256"], digest)
+        self.assertEqual(receipt["artifact_sha256"], digest)
         self.assertEqual(
             [row["id"] for row in receipt["gates"]], runner.RELEASE_GATE_IDS
         )
+        self.assertTrue(
+            all(
+                set(row) == {"id", "status", "evidence", "artifact_sha256"}
+                for row in receipt["gates"]
+            )
+        )
         self.assertTrue(all(row["status"] == "PASS" for row in receipt["gates"]))
+        self.assertTrue(
+            all(row["artifact_sha256"] == digest for row in receipt["gates"])
+        )
 
     def test_pass_results_without_artifact_are_refused(self) -> None:
         results = self.root / "results.json"
