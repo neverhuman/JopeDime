@@ -1,0 +1,176 @@
+"""Prospective H153 statistics: equal-family gains, median over three seeds."""
+
+import hashlib
+import random
+import numpy as np
+
+SEEDS = (153101, 153102, 153103)
+FOLD_SEED = 153140
+ARMS = ("CTRL", "SAM", "ASAM")
+DROPPED = ()
+DRAWS = 10000
+BOOT_SEED = 153141
+HOLM_M = 2  # Two prespecified SAM contrasts.
+
+
+def folds(rows):
+    if not rows or len({r["context_sha256"] for r in rows}) != len(rows):
+        raise ValueError("unique contexts required")
+    if any(
+        r["dl_split"] != "DL-Train"
+        or r.get("has_meta_test") is True
+        or r.get("source_split") not in ("train", "inner")
+        for r in rows
+    ):
+        raise ValueError("DL-Train inner rows only")
+    fams = sorted({r["family_id"] for r in rows})
+    return [
+        sorted(x.tolist())
+        for x in np.array_split(np.random.default_rng(FOLD_SEED).permutation(fams), 5)
+    ]
+
+
+def batch_plan(fit_ids, orders, seed):
+    """H140 paired stream: 20 rounds, consume 8 draws but retain first 2 steps."""
+    if seed not in SEEDS or not fit_ids:
+        raise ValueError("registered seed and fit contexts required")
+    ids = tuple(sorted(fit_ids))
+    sampler = seed * 1_000_003 + 10_007
+    plan = []
+    for rnd in range(1, 21):
+        rng = np.random.RandomState((sampler + rnd * 104729) % 2**32)
+        rot = rnd % len(ids)
+        rotated = ids[rot:] + ids[:rot]
+        for step in range(8):
+            stream = int.from_bytes(
+                hashlib.sha256(
+                    f"flywheel-batch/v1:{sampler}:{rnd}:{step}".encode()
+                ).digest()[:8],
+                "little",
+            )
+            cids = random.Random(stream).choices(rotated, k=16)
+            indexes = []
+            for cid in cids:
+                order = orders[cid]
+                k = min(48, 192, len(order))
+                rest = order[k:] if len(order) > k else order
+                indexes.append(
+                    np.concatenate(
+                        [
+                            order[:k],
+                            rng.choice(rest, 192 - k, replace=len(rest) < 192 - k),
+                        ]
+                    )
+                )
+            if step < 2:
+                plan.append((stream, cids, indexes))
+    return plan
+
+
+def family_matrix(rows, values):
+    values = np.asarray(values, dtype=np.float64)
+    if values.shape != (3, len(rows)) or not np.isfinite(values).all():
+        raise ValueError("all three complete finite seed panels required")
+    families = sorted({r["family_id"] for r in rows})
+    if len({r["context_sha256"] for r in rows}) != len(rows):
+        raise ValueError("duplicate context")
+    return families, np.stack(
+        [
+            values[:, [i for i, r in enumerate(rows) if r["family_id"] == f]].mean(
+                axis=1
+            )
+            for f in families
+        ],
+        axis=1,
+    )
+
+
+def contrast(rows, values, reference):
+    fams, delta = family_matrix(rows, np.asarray(values) - np.asarray(reference))
+    gains = delta.mean(axis=1)
+    ix = np.random.default_rng(BOOT_SEED).integers(0, len(fams), (DRAWS, len(fams)))
+    boot = np.median(delta[:, ix].mean(axis=2), axis=0)
+    # The family contribution vector comes from the seed defining the median point estimate.
+    mid = sorted(range(3), key=lambda i: (gains[i], SEEDS[i]))[1]
+    positive = np.maximum(delta[mid], 0)
+    share = (
+        float(np.sort(positive)[-3:].sum() / positive.sum()) if positive.sum() else 1.0
+    )
+    score = np.where(delta > 0, 1.0, np.where(delta < 0, 0.0, 0.5))
+
+    def elo(x):
+        wins = x.sum(axis=-1)
+        n = x.shape[-1]
+        return 1500 + 400 * np.log10((wins + 0.01) / (n - wins + 0.01))
+
+    elo_draws = np.median(elo(score[:, ix]), axis=0)
+    return dict(
+        families=len(fams),
+        per_seed_gain=gains.tolist(),
+        median_gain=float(np.median(gains)),
+        ci95=np.quantile(boot, [0.025, 0.975]).tolist(),
+        p_one_sided=float((1 + (boot <= 0).sum()) / (DRAWS + 1)),
+        seeds_beating=int((gains > 0).sum()),
+        median_seed=SEEDS[mid],
+        top3_positive_share=share,
+        elo=float(np.median(elo(score))),
+        elo_ci95=np.quantile(elo_draws, [0.025, 0.975]).tolist(),
+    )
+
+
+def dose_check(drifts, utilities):
+    if set(drifts) != set(ARMS) or set(utilities) != set(ARMS):
+        raise ValueError("complete registered arm inventory required")
+    values = {a: np.asarray(v, dtype=float) for a, v in drifts.items()}
+    panels = {a: np.asarray(v, dtype=np.float64) for a, v in utilities.items()}
+    if any(
+        v.shape != (3,) or not np.isfinite(v).all() or (v <= 0).any()
+        for v in values.values()
+    ):
+        raise ValueError("three finite positive drifts per arm required")
+    if any(v.shape != (3, 91) or not np.isfinite(v).all() for v in panels.values()):
+        raise ValueError("three complete finite 91-context utility panels required")
+    med = {a: float(np.median(v)) for a, v in values.items()}
+    ctrl = med["CTRL"]
+    result = {}
+    for arm in ("SAM", "ASAM"):
+        relative = abs(med[arm] - ctrl) / ctrl
+        drift_within_five_percent = 0.95 * ctrl <= med[arm] <= 1.05 * ctrl
+        identical_utilities = bool(np.array_equal(panels[arm], panels["CTRL"]))
+        invalid = drift_within_five_percent and identical_utilities
+        result[arm] = dict(
+            median_adapter_l2_drift=med[arm],
+            control_median_adapter_l2_drift=ctrl,
+            relative_difference=relative,
+            drift_within_five_percent=drift_within_five_percent,
+            identical_utilities=identical_utilities,
+            status="DOSE_INVALID" if invalid else "DOSE_VALID",
+        )
+    return result
+
+
+def decide(contrasts, drifts, utilities):
+    doses = dose_check(drifts, utilities)
+    if set(contrasts) != {"SAM", "ASAM"}:
+        raise ValueError("both registered paired contrasts are required")
+    p = {arm: float(contrasts[arm]["p_one_sided"]) for arm in ("SAM", "ASAM")}
+    result = {}
+    adjusted = 0.0
+    for rank, arm in enumerate(sorted(p, key=lambda a: (p[a], a))):
+        adjusted = max(adjusted, min(1.0, p[arm] * (2 - rank)))
+        v = contrasts[arm]
+        gates = dict(
+            margin=v["median_gain"] > 0.001,
+            ci=v["ci95"][0] > 0,
+            two_seeds=v["seeds_beating"] >= 2,
+            concentration=v["top3_positive_share"] <= 0.8,
+            holm_adjusted_p=adjusted < 0.05,
+            dose=doses[arm]["status"] == "DOSE_VALID",
+        )
+        result[arm] = dict(
+            holm_adjusted_p=adjusted,
+            gates=gates,
+            dose=doses[arm],
+            advance=all(gates.values()),
+        )
+    return result
