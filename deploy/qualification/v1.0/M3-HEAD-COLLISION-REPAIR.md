@@ -6,11 +6,14 @@ legal, novel preferred head remains. Pinned TRAIN call 130 demonstrates an
 intra-batch repeat; independent review also identified the memo/parent paths.
 
 Keep the first weighted draw. If its canonical key is in `seen` or `memo`, scan
-the remaining finite preferred-head pool in existing cyclic order and accept
+the remaining finite preferred-head pool in a uniform random order and accept
 the first legal, novel alternative. Preserve language, byte-limit, memo and
 uniqueness filtering, and count every attempt. Exhaustion continues the existing
 schedule. An invalid or oversized first candidate keeps single-attempt filtering.
-There are no new random draws, seed offsets, quotas, weights or model changes.
+The first shared draw and main RNG position stay unchanged. A cloned ChaCha
+state uses a distinct stream for each typed slot (current stream plus step + 1)
+to shuffle alternatives, preserving conditional pool weights without lookahead
+reuse. No round/admission seed, clock offset, quota, weight or model changes.
 
 This intentionally changes conditional collision handling, rather than claiming
 Python RNG-stream identity. The policy and the review-driven extension to all
@@ -20,6 +23,8 @@ retries and choosing heads or seeds by observed costs are excluded.
 The call-130 regression preserves its row-free parent, landmarks, retrieved pair
 and seed/round. It covers repeated draws, a memoized first choice with novel
 alternatives, deterministic replay, accounting and exhausted memo alternatives.
+A data-free three-head control proves conditional weights, permutation and
+shared-RNG invariance; cyclic fallback would overweight the next head.
 A separate near-byte-limit parent control requires oversized replacements to be
 filtered without aborting the round. The merged shared-Delete RNG correction is
 preserved. Existing tests retain language and parent invariants.

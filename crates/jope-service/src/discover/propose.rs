@@ -198,6 +198,23 @@ fn delete_stage(transforms: &mut Vec<Stage>, rng: &mut ChaCha12Rng) -> Option<us
     Some(removed)
 }
 
+// A cyclic successor would double its weight when the preceding head is
+// known. A uniform permutation preserves the preferred pool's conditional
+// weights. Give each typed slot a separate non-main stream; the shared RNG
+// position and first draw stay unchanged, without reusing future main bits.
+fn head_retry_order(first: usize, length: usize, step: usize, rng: &ChaCha12Rng) -> Vec<usize> {
+    let mut remaining: Vec<_> = (0..length).filter(|&i| i != first).collect();
+    let mut fork = rng.clone();
+    fork.set_stream(rng.get_stream().wrapping_add(step as u64 + 1));
+    for i in (1..remaining.len()).rev() {
+        let j = index(&mut fork, i + 1);
+        remaining.swap(i, j);
+    }
+    let mut order = vec![first];
+    order.extend(remaining);
+    order
+}
+
 fn uniform(rng: &mut ChaCha12Rng, low: f64, high: f64) -> f64 {
     let unit = (rng.next_u64() >> 11) as f64 / ((1_u64 << 53) as f64);
     low + (high - low) * unit
@@ -484,20 +501,21 @@ impl Proposer {
                         let first_dsl = assemble(parsed.stages.clone(), heads[first].clone());
                         let collision = memo_key(&first_dsl)
                             .is_ok_and(|key| seen.contains(&key) || memo.contains(&key));
-                        let limit = if collision { heads.len() } else { 1 };
+                        let order = if collision {
+                            head_retry_order(first, heads.len(), step, &rng)
+                        } else {
+                            vec![first]
+                        };
                         // A repeated known key should not consume this typed
                         // mutation slot while a legal, novel head is available.
                         // Keep the initial weighted draw and RNG position; the
-                        // finite pool scan has no new randomness or quota.
-                        for offset in 0..limit {
+                        // finite retry order preserves the pool's weights.
+                        for (offset, head_index) in order.into_iter().enumerate() {
                             if offset > 0 {
                                 *batch.attempts.entry(family).or_default() += 1;
                             }
                             self.offer(
-                                assemble(
-                                    parsed.stages.clone(),
-                                    heads[(first + offset) % heads.len()].clone(),
-                                ),
+                                assemble(parsed.stages.clone(), heads[head_index].clone()),
                                 family,
                                 provenance.clone(),
                                 memo,
@@ -660,6 +678,34 @@ mod tests {
             self.called.borrow_mut().push((*raw, family.into(), limit));
             Ok(self.records.iter().take(limit).cloned().collect())
         }
+    }
+
+    #[test]
+    fn retry_head_order_preserves_uniform_weights_and_the_shared_rng() {
+        let mut counts = [0usize; 3];
+        for seed in 0..1024 {
+            let mut rng = round_rng(seed, 0);
+            let mut expected = rng.clone();
+            let order = head_retry_order(0, 3, 1, &rng);
+            assert_eq!(order[0], 0);
+            let mut sorted = order.clone();
+            sorted.sort_unstable();
+            assert_eq!(sorted, vec![0, 1, 2]);
+            assert_eq!(order, head_retry_order(0, 3, 1, &rng));
+            counts[*order.iter().find(|&&i| i != 0).unwrap()] += 1;
+            assert_eq!(rng.next_u64(), expected.next_u64());
+        }
+        // Conditional on the first head being known, B/C retain equal weights.
+        // A cyclic scan always chooses B and fails this data-free control.
+        assert!(
+            counts[1].abs_diff(counts[2]) < 256,
+            "biased retry weights: {counts:?}"
+        );
+        let rng = round_rng(42, 0);
+        assert_ne!(
+            head_retry_order(0, 13, 1, &rng),
+            head_retry_order(0, 13, 6, &rng)
+        );
     }
 
     #[test]
