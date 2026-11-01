@@ -101,6 +101,13 @@ class E1Tests(unittest.TestCase):
             self.assertIn(e1.command(crate, test), self.calls)
             self.assertIn("--exact", e1.command(crate, test))
 
+    def test_http_capability_selector_matches_current_test_name(self):
+        expected = (
+            "jope-service",
+            "http::runs::tests::javascript_python_and_rust_plan_uses_the_declared_capability_intersection",
+        )
+        self.assertEqual(sum(test == expected for test in e1.TESTS), 1)
+
     def test_zero_collected_cases_never_pass(self):
         self.output_override = "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 500 filtered out\n"
         with self.assertRaises(ProviderError):
