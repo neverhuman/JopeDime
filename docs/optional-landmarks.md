@@ -38,6 +38,8 @@ features and 64×17 column inputs. Duplicate observations are idempotent. New co
 unchanged can emit a receipt update at the same embedding version. Cancellation or worker
 failure retains the last valid snapshot and records the outcome. A terminal native computation
 may still have partial coverage; coverage and completion describe different facts.
+JSONL streams and collection callbacks also finish with that snapshot and its explicit terminal
+outcome. This final metadata event reuses the last embedding version and does not rerun inference.
 
 The CLI flags are shared by `jope encode`, pipeline search commands, and appliance fit and
 fit-predict. `--landmark-events PATH` writes progressive JSON lines; `--landmark-receipt PATH`

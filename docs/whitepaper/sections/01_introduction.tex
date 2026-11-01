@@ -59,9 +59,8 @@ Automated research systems already couple proposals to tests
 \Cref{sub:anatomy-where,sec:road} compare how they generate, judge and
 retain useful work.
 
-Keeping a winning program preserves an output. Training a proposer on
-those outcomes may preserve a capability that
-transfers to a new problem.
+Keeping a winning program preserves a result. Training on its evaluation
+asks whether that result can improve proposals for a new problem.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{keyidea}
@@ -153,9 +152,8 @@ Zero analogy concerns the additional training feedback from the referee.
 \end{explainer}
 
 \paragraph{Contributions.}
-We formulate algorithm invention as a game and design a learner for it,
-instantiated for tabular prediction tasks whose moves are programs in a
-typed language of learning primitives.
+We formulate algorithm invention as a game and give a tabular-regression
+reference whose moves are typed programs of learning primitives.
 \begin{enumerate}[leftmargin=*,itemsep=2pt,topsep=3pt,label=\arabic*.]
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
@@ -189,7 +187,8 @@ First-proposal quality on unseen families and single-candidate deployment
 remain unqualified. \Cref{sec:results} specifies the independent comparisons
 required before claiming an advantage.
 
-\Cref{sec:anatomy} separates innovation's roles. We trace their AI building
-blocks (\cref{sec:road}), then define the game and learner.
-The outcomes of those comparisons will bound the claims in
-\cref{sec:meaning}.
+We first separate innovation's roles (\cref{sec:anatomy}), then trace the
+AI methods that connect them (\cref{sec:road}). The game and learner make
+those roles into a proposal-and-evaluation contract
+(\cref{sec:game,sec:method}); its measured outcomes will bound the claims
+in \cref{sec:meaning}.

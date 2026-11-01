@@ -14469,6 +14469,16 @@
       "lanes": [],
       "scope": "H184 data-free controls: registered constants/arms, five-fold family cross-fit, bit-exact equality of the PRIOR+KERNEL+ATTN decomposition with the pinned live adapter delta on a synthetic adapter (skipped where the asset is absent), sum refusal and output-level ablation semantics, component init structure, attribution labels with Holm m=3 and lift shares, axis=0 paired family bootstrap, strict ADVANCE gates with the +0.001 tie, identical-arm Elo 1500, launch review binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
     },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/test_h188.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H188 data-free controls: registered constants/arms, per-seed reshuffled family folds covering every family once in B and once in A, bit-exact identity of the replayed kernel with the live KERNEL term (and with the pinned live delta where present), rank-normalized and Huber-winsorized residual semantics, kernel-only replacement and unit-norm anchor features, the H177-derived m=3 pooled-B selector with the +0.001 tie, B-admission plus A-confirmation verdict, axis=0 paired bootstrap, identical-arm Elo 1500, launch binding and supervisor guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
     "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
       "discovery": {
         "kind": "python-family"
@@ -14518,6 +14528,26 @@
       ],
       "lanes": [],
       "scope": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/test_h185.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H185 data-free controls: FIT-only batch construction and 205-family 3/1/1 fold coverage, StageOrderGuard requiring fsynced pooled_b_selection_lock.json before Stage-2 A/DL-Val scoring, RENS5 member initializations matching ENS5 with 5 distinct member hashes per seed, imported H177_DECISION_RULE and H178 calibration receipt gating, axis=0 paired family bootstrap seed reduction, -2.0 pick counting, and xbabe2 supervisor/launch guards. No checkpoint, corpus or model passes in the fixture suite; offline research only."
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/test_h186.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
     }
   },
   "lanes": {

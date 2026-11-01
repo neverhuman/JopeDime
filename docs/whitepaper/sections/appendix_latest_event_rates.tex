@@ -1,16 +1,6 @@
-\subsection{Program-event rates over completed-round time}\label{app:latest-event-rates}
-
-A read-only capture retains the latest 20 consecutive completed summaries,
-rounds 2933--2952, matched to their admission records. They report
-7 strict training-program incumbent events over \num{1814.51}\,s
-of logged round time: 13.89 events per hour, with 0 adapter admissions.
-\Cref{fig:fw-latest-event-rates} shows every round, including zero-event
-rounds. The horizontal clock sums each completed round's full logged wall
-time; the cumulative event count starts at zero for this window.
-
-\begin{figure*}[t]
+\begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_latest_event_rates.pdf}
+  \includegraphics[width=\linewidth,height=1.42in,keepaspectratio]{figures/fig_fw_latest_event_rates.pdf}
   \caption{\textbf{Program-event counts and rates on the completed-round clock.}
   All 20 consecutive summaries from rounds 2933--2952. Left: cumulative
   logged strict improvements to training-program incumbents. Right:
@@ -21,6 +11,16 @@ time; the cumulative event count starts at zero for this window.
   independent first-proposal improvement or deployment cost.}
   \label{fig:fw-latest-event-rates}
 \end{figure*}
+
+\subsection{Program-event rates over completed-round time}\label{app:latest-event-rates}
+
+A read-only capture retains the latest 20 consecutive completed summaries,
+rounds 2933--2952, matched to their admission records. They report
+7 strict training-program incumbent events over \num{1814.51}\,s
+of logged round time: 13.89 events per hour, with 0 adapter admissions.
+\Cref{fig:fw-latest-event-rates} shows every round, including zero-event
+rounds. The horizontal clock sums each completed round's full logged wall
+time; the cumulative event count starts at zero for this window.
 
 The running rate divides cumulative events by cumulative completed-round
 time; each per-round rate uses only that round's events and duration.

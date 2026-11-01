@@ -39,6 +39,7 @@ class D1Tests(unittest.TestCase):
             "a" * 40,
             self.result,
         )
+        self.macos_artifact_sha256 = "f" * 64
         self.mac_receipt = self.root / "macos-d1.json"
         self.write_macos_receipt()
         self.mac_digest = d1.sha256(self.mac_receipt)
@@ -62,8 +63,11 @@ class D1Tests(unittest.TestCase):
             "gate_id": "D1",
             "platform": "macos-arm64",
             "status": "PASS",
+            "target_triple": "aarch64-apple-darwin",
+            "profile": "full",
+            "features": ["embedded", "engine", "mcp", "client"],
             "source_sha": self.ctx.source_sha,
-            "artifact_sha256": self.ctx.artifact_sha256,
+            "artifact_sha256": self.macos_artifact_sha256,
             "checks": {
                 "network_disabled": True,
                 "toolchain_absent": True,
@@ -140,7 +144,11 @@ class D1Tests(unittest.TestCase):
             contextlib.redirect_stderr(io.StringIO()),
         ):
             return d1.qualify(
-                self.ctx, self.mac_receipt, self.mac_digest, run=self.run_child
+                self.ctx,
+                self.mac_receipt,
+                self.mac_digest,
+                self.macos_artifact_sha256,
+                run=self.run_child,
             )
 
     def test_both_bound_platform_legs_produce_candidate_bound_pass(self):
@@ -155,6 +163,14 @@ class D1Tests(unittest.TestCase):
         )
         self.assertEqual(
             result["platforms"]["macos-arm64"]["receipt_sha256"], self.mac_digest
+        )
+        self.assertEqual(
+            result["platforms"]["macos-arm64"]["artifact_sha256"],
+            self.macos_artifact_sha256,
+        )
+        self.assertNotEqual(
+            result["platforms"]["linux-x86_64"]["artifact_sha256"],
+            self.macos_artifact_sha256,
         )
         self.assertTrue(
             any(
@@ -179,7 +195,7 @@ class D1Tests(unittest.TestCase):
                 {
                     key: value
                     for key, value in os.environ.items()
-                    if not key.startswith("JOPE_REL07_D1_MACOS_RECEIPT")
+                    if not key.startswith("JOPE_REL07_D1_MACOS_")
                 },
                 clear=True,
             ),
@@ -190,20 +206,34 @@ class D1Tests(unittest.TestCase):
 
     def test_wrong_receipt_hash_or_candidate_binding_refuses(self):
         with self.assertRaisesRegex(ProviderError, "SHA-256 differs"):
-            d1.verify_macos_receipt(self.ctx, self.mac_receipt, "0" * 64)
+            d1.verify_macos_receipt(
+                self.ctx, self.mac_receipt, "0" * 64, self.macos_artifact_sha256
+            )
         self.write_macos_receipt(artifact_sha256="f" * 64)
         wrong_binding_digest = d1.sha256(self.mac_receipt)
-        with self.assertRaisesRegex(ProviderError, "candidate SHA-256 differs"):
-            d1.verify_macos_receipt(self.ctx, self.mac_receipt, wrong_binding_digest)
+        with self.assertRaisesRegex(ProviderError, "manifest binding"):
+            d1.verify_macos_receipt(
+                self.ctx,
+                self.mac_receipt,
+                wrong_binding_digest,
+                "e" * 64,
+            )
 
     def test_macos_receipt_must_be_regular_and_stable_while_read(self):
         alias = self.root / "macos-d1-link.json"
         alias.symlink_to(self.mac_receipt)
         with self.assertRaisesRegex(ProviderError, "non-symlink"):
-            d1.verify_macos_receipt(self.ctx, alias, self.mac_digest)
+            d1.verify_macos_receipt(
+                self.ctx, alias, self.mac_digest, self.macos_artifact_sha256
+            )
         with patch.object(d1, "sha256", side_effect=[self.mac_digest, "f" * 64]):
             with self.assertRaisesRegex(ProviderError, "changed while being verified"):
-                d1.verify_macos_receipt(self.ctx, self.mac_receipt, self.mac_digest)
+                d1.verify_macos_receipt(
+                    self.ctx,
+                    self.mac_receipt,
+                    self.mac_digest,
+                    self.macos_artifact_sha256,
+                )
 
     def test_incomplete_macos_assertions_never_pass(self):
         self.write_macos_receipt(checks={"network_disabled": True})
@@ -226,6 +256,32 @@ class D1Tests(unittest.TestCase):
                     self.invoke()
                 self.assertFalse(self.result.exists())
                 self.assertFalse(any(call[0] == "bash" for call in self.calls))
+
+    def test_macos_receipt_requires_native_full_profile_identity(self):
+        self.write_macos_receipt(target_triple="x86_64-unknown-linux-gnu")
+        self.mac_digest = d1.sha256(self.mac_receipt)
+        with self.assertRaisesRegex(ProviderError, "native full-profile build"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+        self.assertFalse(any(call[0] == "bash" for call in self.calls))
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux host refusal check")
+    def test_darwin_recipe_refuses_before_creating_evidence_on_linux(self):
+        evidence = self.root / "darwin-build-evidence"
+        completed = subprocess.run(
+            [
+                "bash",
+                str(HERE / "build-d1-darwin-arm64.sh"),
+                self.ctx.source_sha,
+                str(evidence),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("native Darwin arm64 host", completed.stderr)
+        self.assertFalse(evidence.exists())
 
     def test_linux_driver_failure_never_emits_result(self):
         self.linux_exit = 1

@@ -515,6 +515,16 @@ class RoleManifestAdmissionTests(unittest.TestCase):
         verify_worker_bound_plan(plan, catalog_path=catalog_path)
         self.assertEqual(plan["initial_checkpoint_sha256"], R882_CHECKPOINT_SHA256)
         self.assertEqual(plan["learner_start"]["worker_sha256"], plan["learner_sha256"])
+        self.assertEqual(
+            plan["learner_start"]["worker_qualification_sha256"],
+            evidence["worker"]["qualification_sha256"],
+        )
+        self.assertEqual(
+            plan["role_admission"]["evidence"]["worker"][
+                "qualification_receipt_bytes_b64"
+            ],
+            evidence["worker"]["qualification_receipt_bytes_b64"],
+        )
         self.assertEqual(len(plan["jobs"]), 54)
         for seed in protocol.DEFAULTS["seeds"]:
             for fold in (0, 1, 2, 3, 4, "full"):
@@ -576,6 +586,55 @@ class RoleManifestAdmissionTests(unittest.TestCase):
                 for blocker in manifest["blockers"]
             )
         )
+
+    def test_worker_qualification_requires_receipt_bytes_even_with_valid_digest(
+        self,
+    ) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        evidence["worker"].pop("qualification_receipt_bytes_b64")
+
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+
+        self.assertIs(manifest["eligibility_verified"], False)
+        self.assertIn(
+            "worker qualification receipt bytes are missing or invalid",
+            manifest["blockers"],
+        )
+        with self.assertRaisesRegex(ValueError, "incomplete JRB inputs"):
+            make_worker_bound_plan(manifest, catalog_path=catalog_path)
+
+    def test_not_qualified_worker_disposition_cannot_enable_complete_roles(
+        self,
+    ) -> None:
+        catalog_path, contexts, families, evidence = self._fixture()
+        evidence["worker"] = {
+            "status": "NOT_QUALIFIED",
+            "is_worker_qualification_receipt": False,
+            "sha256": None,
+            "qualified": False,
+            "tasks": list(protocol.TASKS),
+            "actual_optimizer_updates": None,
+            "parameters_changed": None,
+            "dope_sha256": protocol.DOPE,
+            "qualification_sha256": None,
+            "qualification_receipt_bytes_b64": None,
+        }
+
+        manifest = build_role_manifest(catalog_path, contexts, families, evidence)
+
+        self.assertIs(manifest["eligibility_verified"], False)
+        for blocker in (
+            "worker source hash is missing or invalid",
+            "two-task worker qualification is not verified",
+            "worker qualification has no positive optimizer updates",
+            "worker qualification has no changed-parameter proof",
+            "worker qualification receipt bytes are missing or invalid",
+            "worker qualification receipt hash is missing or invalid",
+        ):
+            with self.subTest(blocker=blocker):
+                self.assertIn(blocker, manifest["blockers"])
+        with self.assertRaisesRegex(ValueError, "incomplete JRB inputs"):
+            make_worker_bound_plan(manifest, catalog_path=catalog_path)
 
     def test_role_manifest_rejects_noncanonical_catalog_bucket(self) -> None:
         catalog_path, contexts, families, evidence = self._fixture()
