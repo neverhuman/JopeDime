@@ -1,11 +1,11 @@
 //! Process ownership and lifecycle for the shared JopeDime engine.
 
 use axum::{
+    Router,
     extract::{Extension, Request},
-    http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode},
+    http::{HeaderMap, HeaderName, HeaderValue, StatusCode, header},
     response::IntoResponse,
     routing::post,
-    Router,
 };
 use std::{
     fs::{self, File, OpenOptions},
@@ -543,6 +543,39 @@ fn single_header(headers: &HeaderMap, name: HeaderName) -> Option<&HeaderValue> 
 pub fn serve(idle_exit: Option<Duration>) -> Result<(), EngineError> {
     let home = jope_paths::jopedime_home();
     let engine = InProcessEngine::open(&home)?;
+    serve_engine(home, engine, idle_exit)
+}
+
+/// Internal opt-in for the owner's frozen r782 Q1 evaluator. Authentication is
+/// not quality qualification or permission to launch a sealed-data study.
+#[cfg(feature = "research")]
+pub fn serve_q1_qualification(release: &Path) -> Result<usize, EngineError> {
+    let home = jope_paths::jopedime_home();
+    let (engine, forwards) = open_q1_engine(&home, release)?;
+    serve_engine(home, engine, None)?;
+    Ok(forwards.load(std::sync::atomic::Ordering::Relaxed))
+}
+
+#[cfg(feature = "research")]
+fn open_q1_engine(
+    home: &Path,
+    release: &Path,
+) -> Result<(InProcessEngine, Arc<std::sync::atomic::AtomicUsize>), EngineError> {
+    // Authenticate before lock acquisition, store creation or daemon publication.
+    let bundle = crate::ranker::cuda::release::load_r782_release(release)
+        .map_err(|error| EngineError::Runtime(format!("frozen r782 integrity: {error:#}")))?;
+    let ranker = crate::run::learned::AdmittedRanker::r782(bundle)
+        .map_err(|error| EngineError::Runtime(format!("frozen r782 admission: {error:#}")))?;
+    let forwards = ranker.execution_counter();
+    let engine = InProcessEngine::open_with_ranker(home, std::env::current_exe()?, ranker)?;
+    Ok((engine, forwards))
+}
+
+fn serve_engine(
+    home: PathBuf,
+    engine: InProcessEngine,
+    idle_exit: Option<Duration>,
+) -> Result<(), EngineError> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
@@ -758,6 +791,26 @@ fn _active_run(activity: &Arc<EngineActivity>) -> ActivityGuard {
 mod tests {
     use super::*;
     use std::sync::Barrier;
+
+    #[cfg(feature = "research")]
+    #[test]
+    fn q1_release_refusal_precedes_home_creation() {
+        let directory = tempfile::tempdir().unwrap();
+        let home = directory.path().join("engine");
+        let release = directory.path().join("untrusted");
+        for present in [false, true] {
+            if present {
+                std::fs::create_dir(&release).unwrap();
+                std::fs::write(release.join("release-catalog.json"), b"untrusted").unwrap();
+            }
+            let error = match open_q1_engine(&home, &release) {
+                Ok(_) => panic!("untrusted r782 release admitted"),
+                Err(error) => error,
+            };
+            assert!(error.to_string().contains("frozen r782 integrity"));
+            assert!(!home.exists());
+        }
+    }
 
     #[test]
     fn only_one_process_can_hold_the_home_lock_and_busy_reports_its_owner() {

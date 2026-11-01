@@ -6,21 +6,21 @@ use crate::{
         admission::{AdmissionProgram, MeasuredAlgorithm, RevealedRule, ServingAdmissionSlate},
         bundle::VerifiedBundle,
         cuda::{
-            release::{R782, R882},
             FusedForward,
+            release::{R782, R882},
         },
         featurizer::Featurizer,
         landmarks, proj16,
         stage1b::TokenProjection,
     },
 };
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use jope_api::Placement;
 use jope_runtime::backend::DeviceRequest;
 use rand_chacha::ChaCha12Rng;
 use std::sync::{
-    atomic::{AtomicUsize, Ordering},
     Arc,
+    atomic::{AtomicUsize, Ordering},
 };
 
 /// Only a trusted embedding installs this capability, after release verification.
@@ -105,7 +105,7 @@ impl AdmittedRanker {
             forwards: Arc::clone(&self.forwards),
         })
     }
-    #[cfg(test)]
+    #[cfg(any(test, feature = "research"))]
     pub(crate) fn execution_counter(&self) -> Arc<AtomicUsize> {
         Arc::clone(&self.forwards)
     }
