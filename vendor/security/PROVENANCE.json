@@ -1,5 +1,5 @@
 {
-  "bytes": 12751080,
+  "bytes": 13212501,
   "crates": [
     {
       "archive_sha256": "5ecb245093b0f791b89d3420c3df9c6d49c60ab63ba54db896bf8a3baf486706",
@@ -18,6 +18,24 @@
         "path_in_vcs": "candle-core"
       },
       "version": "0.11.0"
+    },
+    {
+      "archive_sha256": "829d955a0bb380ef178a640b91779e3987da38c9aea133b20614cfed8cdea9c6",
+      "archive_url": "https://static.crates.io/crates/crossterm/crossterm-0.28.1.crate",
+      "directory": "crossterm-0.28.1",
+      "manifest_candidate_sha256": "7f4ae4f6ce523c485f2e9e4a2fc37abd76e88438bfc1b74ed0e89c6808893b3b",
+      "manifest_upstream_sha256": "7f4ae4f6ce523c485f2e9e4a2fc37abd76e88438bfc1b74ed0e89c6808893b3b",
+      "name": "crossterm",
+      "repository": "https://github.com/crossterm-rs/crossterm",
+      "retained_bytes": 461421,
+      "retained_files": 73,
+      "upstream_vcs": {
+        "git": {
+          "sha1": "492b764f9f132d302903ff6f2f55e96c1b8cd0ec"
+        },
+        "path_in_vcs": ""
+      },
+      "version": "0.28.1"
     },
     {
       "archive_sha256": "ab96b703d31950f1aeddded248bc95543c9efc7ac9c4a21fda8703a83ee35451",
@@ -376,7 +394,7 @@
       "scope": "Manifest-only existing-vendor followup; all ratatui Rust bytes unchanged. Root Cargo.lock records the dependency resolution; compilation, behavior and advisory qualification are recorded separately."
     }
   ],
-  "files": 797,
+  "files": 870,
   "input_lock_sha256": "b98d1380009be88ca4234c8a39f78fcb8e889ba8902d3df34c9803dbd9035342",
   "max_file": {
     "bytes": 1284391,
@@ -553,6 +571,20 @@
       "path": "third_party/pytorch/Declarations-v2.9.0.yaml",
       "reason": "Historical PyTorch operator-generation YAML; not used by published Cargo build scripts or runtime. Generated Rust/C++ bindings, generator source, PyTorchLICENSE/README retained. Restore from pinned official crate archive.",
       "sha256": "7e33807c1ff0f4d3610907202419881b4456e935668952c3bc01a2a475900e67"
+    },
+    {
+      "bytes": 33199,
+      "crate": "crossterm-0.28.1",
+      "path": "Cargo.lock",
+      "reason": "Published-crate metadata unused by the workspace build; normalized Cargo.toml and the root Cargo.lock are authoritative. Restore from pinned official crate archive.",
+      "sha256": "5cd3db9427cd5db6ddde1fd11e017a25cc56e679090e3b79f51a36ca4b830b08"
+    },
+    {
+      "bytes": 3551,
+      "crate": "crossterm-0.28.1",
+      "path": "Cargo.toml.orig",
+      "reason": "Published-crate metadata unused by the workspace build; normalized Cargo.toml and the root Cargo.lock are authoritative. Restore from pinned official crate archive.",
+      "sha256": "fd60055229e5fa390564e31611a160fa4fdf50d61359660facfd47b4b884a105"
     }
   ],
   "pending": [
@@ -1353,6 +1385,517 @@
       "changed": false,
       "path": "vendor/security/candle-core-0.11.0/tests/test_with_key.pt",
       "upstream_sha256": "2775d95f17d2630e2534e3ae09462624955031407a67f0f3b52115c49601b747"
+    },
+    {
+      "bytes": 94,
+      "candidate_sha256": "89573fdb00c356940be74ac7f79c08e71c67178f1623e4302c9039b086270d9d",
+      "changed": false,
+      "path": "vendor/security/crossterm-0.28.1/.cargo_vcs_info.json",
+      "upstream_sha256": "89573fdb00c356940be74ac7f79c08e71c67178f1623e4302c9039b086270d9d"
+    },
+    {
+      "bytes": 13,
+      "candidate_sha256": "6cc385a2abfc73f78ae45956cf1ee09402ea4a020698c8ab4f800241f37e5c7b",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/.github/CODEOWNERS",
+      "upstream_sha256": "875729c522b35ca48eca2db1dee7b8e4d9f369f13f92994ac287e0df8e1a0902"
+    },
+    {
+      "bytes": 516,
+      "candidate_sha256": "a23b6d434d98fc4a50b9f015348b06d050779f652404516e98908b926c63a20e",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/.github/ISSUE_TEMPLATE/bug_report.md",
+      "upstream_sha256": "28c6b3dc306bef9958e0f76a25cc0df5ae762b57cd26ca4a479f1471982ae279"
+    },
+    {
+      "bytes": 548,
+      "candidate_sha256": "6caf05f162d471c9c78613d92241e4b3e68b2b822ab6964360ac7bed18b3508a",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/.github/ISSUE_TEMPLATE/feature_request.md",
+      "upstream_sha256": "bdb318bad28b9aeee677cec71aa3818ba482ceb6b7e4745d6cda37cd9d9befea"
+    },
+    {
+      "bytes": 2782,
+      "candidate_sha256": "d85e587c62b4eb0aa77a9716c2aa1611cb8434d9edf9ad18c4518cb4183299ac",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/.github/workflows/crossterm_test.yml",
+      "upstream_sha256": "e5f454209d16fee5aeabe82ff336dba0d2bc678f09e59dc6fdb2f57b453a1d83"
+    },
+    {
+      "bytes": 58,
+      "candidate_sha256": "b246ce829c3831f4787904b58e2df9b4302a5195dd35d70aca9dbdd5273879dd",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/.gitignore",
+      "upstream_sha256": "187cd13134be31e6fa457b83bae023129b77a81bf3c0a44bd954ec05de58afe5"
+    },
+    {
+      "bytes": 962,
+      "candidate_sha256": "79d558ee7119becf4f49511046b1412e1760eb59541a229506a3d038bdca10a2",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/.travis.yml",
+      "upstream_sha256": "37db6d13f57492a2fe5e3707c486dd9c66d919e9b48544321cbae66bde77f138"
+    },
+    {
+      "bytes": 35686,
+      "candidate_sha256": "e104cedc1a163ccfe04c90c6b7e92077d6edcd7e4a51117696586ecd336bf894",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/CHANGELOG.md",
+      "upstream_sha256": "8f4351d3806899646479208d459967ba05e8bc755b71efbf546c9ec38fb35cee"
+    },
+    {
+      "bytes": 3617,
+      "candidate_sha256": "7f4ae4f6ce523c485f2e9e4a2fc37abd76e88438bfc1b74ed0e89c6808893b3b",
+      "changed": false,
+      "path": "vendor/security/crossterm-0.28.1/Cargo.toml",
+      "upstream_sha256": "7f4ae4f6ce523c485f2e9e4a2fc37abd76e88438bfc1b74ed0e89c6808893b3b"
+    },
+    {
+      "bytes": 1062,
+      "candidate_sha256": "3fea97e00df9a8e30027f4298d6941b6970c542ffd49de68b4a2bcafedcbfe02",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/LICENSE",
+      "upstream_sha256": "aca4760f2a5eba9ce9d4448fe7cd3fcf98245a8315ede59ebd0c6085dd542e61"
+    },
+    {
+      "bytes": 8136,
+      "candidate_sha256": "71f491e27152b7edc63ca1fd3b9ecf89ace3854e837a538434f37d09ef9b3a0c",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/README.md",
+      "upstream_sha256": "eac9fcaeffc105d382da098e14e4a5e252b58697a4b65b3720f26be23dbb3efb"
+    },
+    {
+      "bytes": 5,
+      "candidate_sha256": "3c4dbff9eeda9410a0b9eb423472981db8997d666388b4cd2424700c3974d64b",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/docs/.gitignore",
+      "upstream_sha256": "ef43404f817a9a1206fb1a2240b205bff2a9a0d6e8d48e394b89df3ad06facfd"
+    },
+    {
+      "bytes": 2004,
+      "candidate_sha256": "c0a7b6c6d41ae98325a9adbf6c64b953fb23d382907f91b7b2308c977cd044e4",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/docs/CONTRIBUTING.md",
+      "upstream_sha256": "fc6ff43426735c16f2d061f0f791c84885a84f1cba317b6cdf706e068d3282e8"
+    },
+    {
+      "bytes": 9472,
+      "candidate_sha256": "badfec371826c1b6ccab04bbe82edbe547c3f1f2f4ebe23e6e12b64a210550d2",
+      "changed": false,
+      "path": "vendor/security/crossterm-0.28.1/docs/crossterm_c.png",
+      "upstream_sha256": "badfec371826c1b6ccab04bbe82edbe547c3f1f2f4ebe23e6e12b64a210550d2"
+    },
+    {
+      "bytes": 12334,
+      "candidate_sha256": "31cbc36cd519e5c8cd3e1c0b098dc0226f983c0b0fbfb834e0063988b69ad1e7",
+      "changed": false,
+      "path": "vendor/security/crossterm-0.28.1/docs/crossterm_full.png",
+      "upstream_sha256": "31cbc36cd519e5c8cd3e1c0b098dc0226f983c0b0fbfb834e0063988b69ad1e7"
+    },
+    {
+      "bytes": 6926,
+      "candidate_sha256": "5efb9b9946520ee99696178c339c5a7532486af160e49346fc39a199712720d1",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/docs/crossterm_full.svg",
+      "upstream_sha256": "dc07a8e9dc83fdb3ea0118ed0db3f1b1a8aa45cce1d83b4626a04fd16a4b0268"
+    },
+    {
+      "bytes": 655,
+      "candidate_sha256": "d682b35bd44b182fd384353c132b99fbed1ca83914bf79d654aee11b76f4efe9",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/docs/know-problems.md",
+      "upstream_sha256": "e74dc9f17bfeb1cfc911f5e8c7ad469feeaab5b2223db09bb5cf1ebc49bc7cc4"
+    },
+    {
+      "bytes": 1447,
+      "candidate_sha256": "23517da96201f6b67dc3cd3b0ea370de5527c31d54f60a2714d60f4b8ae13463",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/README.md",
+      "upstream_sha256": "861e27b9390b6e8c0c2d793c2cb572c71bf8d75cce5cbdd0715b6fd01c55932f"
+    },
+    {
+      "bytes": 1771,
+      "candidate_sha256": "4ae0061737b850b855bee43e15977f80830f899326b2c28b1215a1e7e8a219b9",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/event-match-modifiers.rs",
+      "upstream_sha256": "55ede83c117598c192c33949ce98b45e85fc3a8350b2aeb49f2e8ad0dd0bb444"
+    },
+    {
+      "bytes": 1548,
+      "candidate_sha256": "651f3ce32033fe2f432f4e6361448800aca17a4ceb8ee27ecfc0018f7bdffbd5",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/event-poll-read.rs",
+      "upstream_sha256": "24966ed38172a13c4c0ea3c19583341769059970d1f30c300028c1206c884f4b"
+    },
+    {
+      "bytes": 1003,
+      "candidate_sha256": "333e8600a1f5aa71f6eb8926a6b1d68def884ed18846cd1854cfc38ae0a26591",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/event-read-char-line.rs",
+      "upstream_sha256": "b3e7a2d19cd85ce0c9cadb1e15436a4226952d4209ba42d5adb380e0882856ce"
+    },
+    {
+      "bytes": 2903,
+      "candidate_sha256": "a4b16d0f717551cc6d04425ef18cda57c0a0600123c4963471bf60e0134a4b91",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/event-read.rs",
+      "upstream_sha256": "4fff1254c699acde7053a09718309239ec92a10a7ccdf7ef0684ca558fabc90e"
+    },
+    {
+      "bytes": 1914,
+      "candidate_sha256": "2c188dc2b2469864fef447c26cbf96df767bfa7cec595e9d9450041e94b626b7",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/event-stream-async-std.rs",
+      "upstream_sha256": "69df926c39191c481910b9fecbb5d53a2fbf65dcfd986cadd71cd0be3cf66bb5"
+    },
+    {
+      "bytes": 1894,
+      "candidate_sha256": "c94b1c8b6d7d7b50b54f09c3add7b900a7f2374c83841b4ee38e561c6694ef95",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/event-stream-tokio.rs",
+      "upstream_sha256": "f48f4b5cb8bcaa6af5d402e380d609ac930cd4c0b7498aae84f7349ee52699d1"
+    },
+    {
+      "bytes": 378,
+      "candidate_sha256": "23eabedb24a42351367eac52d01e76eff94315736e8bdb4d8baea1be9fd94b64",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/is_tty.rs",
+      "upstream_sha256": "ce663372b6ccca58bb291dc5723b350283fe7a2729de91a414c64834966dac49"
+    },
+    {
+      "bytes": 1260,
+      "candidate_sha256": "55c3223f986d2cc9df9f866f20b0b08a34512e397908d9feabe1c3ecc8493c78",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/key-display.rs",
+      "upstream_sha256": "49cc333b46f91c887167352b4c5e9e95eae2a5d142855f1e576b3130f1f56531"
+    },
+    {
+      "bytes": 2170,
+      "candidate_sha256": "1750245223741115bff2031e2c8292cb02a5899545ec7c32eb7b0f9f66cf8452",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/examples/stderr.rs",
+      "upstream_sha256": "21cfd50ba139521c8606e0bdd8ce0a47a39cce3235eb848e613faf7eb50033ef"
+    },
+    {
+      "bytes": 1788,
+      "candidate_sha256": "448fb698820e6ec484ca9af2fb1787bd116151bd7ecc094619fb6d6fb82c26f0",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/ansi_support.rs",
+      "upstream_sha256": "36b902490d60259d99f88a2b45555d2d9d13f2c344cb3693c6a81442670f632b"
+    },
+    {
+      "bytes": 10668,
+      "candidate_sha256": "c02719a4f87a53bdca53be3f2bfba21b0dcaa76cbec3f2980a47fe3391d33e54",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/command.rs",
+      "upstream_sha256": "258952122d533c076ab610561988ba8e48aa9ca96e9fef2e868101649c0e3969"
+    },
+    {
+      "bytes": 14949,
+      "candidate_sha256": "7ce886a1773eeeeed53604ff6f36aeaaa78fbd9ada6fffde884e71f42bbcc5b3",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/cursor.rs",
+      "upstream_sha256": "df85b3021035e63a24b824b2f413440a06c7d50f0452e23653a19c8186df5b73"
+    },
+    {
+      "bytes": 531,
+      "candidate_sha256": "ba420a9c7e3d7a5f3c63d9477e6f203b41ffd179e905783b0d6e99453a097e17",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/cursor/sys.rs",
+      "upstream_sha256": "447f839bb2968a808f8d5bd763516a1bff9024e38fe4d852c57f3cdb4ee070e1"
+    },
+    {
+      "bytes": 1655,
+      "candidate_sha256": "58a01b9ff63dabf2643bcdf061a30c53004ea3a2901ac63df32295ad0d7a49f4",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/cursor/sys/unix.rs",
+      "upstream_sha256": "e048206557e41c2090437d2b2b30c0485d17db9bb90e726e44d2e8d3ec5d5d63"
+    },
+    {
+      "bytes": 9065,
+      "candidate_sha256": "c9efa8f6ace2a30bd5bcfdfdb9f488cf6470030a21c877f7f93c2176f158b015",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/cursor/sys/windows.rs",
+      "upstream_sha256": "b0be6b4fb4725b1e280d08866d11b8877d16cdbc9dc5eee36c54197178dfe3e3"
+    },
+    {
+      "bytes": 47009,
+      "candidate_sha256": "87b16e2ea267479ee043458b2f58aff6610c63f1e86b94161f4c38953aeda513",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event.rs",
+      "upstream_sha256": "9cd606b7ca3ebb39f85b7f7821aace5ab36245647f54c0f4dc150356ac1bc8ef"
+    },
+    {
+      "bytes": 3664,
+      "candidate_sha256": "b0a03035eacfd0afab05b5a2fdc49cce91338a0a5a6a070acb0c53fbec18edce",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/filter.rs",
+      "upstream_sha256": "1f490e7d41fdc68cb83ba572dfceb0743778e253c1d2e34530a98d8950f81729"
+    },
+    {
+      "bytes": 14016,
+      "candidate_sha256": "402b39ac6f7fae74b9df4bab190bede71bc939a93bb913b2c7fb6be027eba55e",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/read.rs",
+      "upstream_sha256": "2bbdb789505ed8e931cb1237d22e314ea1f86b77f52a470b96aa8b0e8a423c84"
+    },
+    {
+      "bytes": 910,
+      "candidate_sha256": "6cfc4352a947939a1a6995301c6d62a39aeb30ca38d25024f9a0b73a686d28fe",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/source.rs",
+      "upstream_sha256": "9c01d1b5731425847d5abb3b82b3d6707043861112b0f3042798bd8e22f30fb6"
+    },
+    {
+      "bytes": 283,
+      "candidate_sha256": "eae47fa335a8e687bbe3361c7ec67db16f2ced39b98c8849df48bd177b2c1f25",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/source/unix.rs",
+      "upstream_sha256": "253ed074fbe63e7270fc19e5c85186407c3a91454f43291c29cf5717575c74a6"
+    },
+    {
+      "bytes": 9114,
+      "candidate_sha256": "25f49dfe58ac56d6ecb8f8d40dac40229202ff63dad5b89c4ef972c72099faba",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/source/unix/mio.rs",
+      "upstream_sha256": "57f4a90b828444fcc6dd7199a73907bbbccf2df4b7808f9e8a0a4b0771e12e39"
+    },
+    {
+      "bytes": 9717,
+      "candidate_sha256": "761ce3367e87d587cb0a9411b6cdcb8b72a55130b440c49f6cb73a2529166d97",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/source/unix/tty.rs",
+      "upstream_sha256": "97a28bf55b72120cf122116fdd4998298d3667373aaaeaf21454c4fa3271cc58"
+    },
+    {
+      "bytes": 3538,
+      "candidate_sha256": "a001ff36a047bf0b1292de5a90231e4b3099031b37730a16729feaa71f6e8c00",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/source/windows.rs",
+      "upstream_sha256": "5b9cfd03310f527328c1c0ddf763321496342d019cdd28695929804f0231f681"
+    },
+    {
+      "bytes": 4946,
+      "candidate_sha256": "7a1260d2146dee9e476f1d4da43132829bbc05f4352539be45c17aaa413580e9",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/stream.rs",
+      "upstream_sha256": "1df7f35a1842d54b6a8d2b82c96661305d7bd87bbdf123ce6670c62fec5f3cb1"
+    },
+    {
+      "bytes": 239,
+      "candidate_sha256": "83178ce09bde11cebbd0e88d4b8bfa04b9ca09c063e9fe6ddc42b0a9f7f30f94",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys.rs",
+      "upstream_sha256": "3ec336b2d4c36cfc895fc7cf586e92f7763473130ca99e8168bead1ba3918d1a"
+    },
+    {
+      "bytes": 105,
+      "candidate_sha256": "d59069208030bf35a8c49868f0afaef619b65f761abd7249c267f97226cc9d4a",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/unix.rs",
+      "upstream_sha256": "d651928295213cd12a4df7edeb0c8be5a4e4487345fc9f2c2ff59d6411047cf2"
+    },
+    {
+      "bytes": 53707,
+      "candidate_sha256": "016bb53ef3654af83bfac2eea52a6a50cc38b546a1b35234c23426f2a8688891",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/unix/parse.rs",
+      "upstream_sha256": "bb00e7eccb1ad01083565e1ad6e282a1e61fe5d7130e5a7f9a7038319474c300"
+    },
+    {
+      "bytes": 247,
+      "candidate_sha256": "ee4a3919a6efd345c36b439646b34d8d653949d002b0151816b7dc75a5037a00",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/unix/waker.rs",
+      "upstream_sha256": "fe7a1e77718306e9f84b77337f4e9ea9990bed4cf533036228508316363add0e"
+    },
+    {
+      "bytes": 992,
+      "candidate_sha256": "b804a0fc038efd7e4c330c728631c4fb993f61462b7c95922dbcca347ef26d83",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/unix/waker/mio.rs",
+      "upstream_sha256": "cbc89c146a004ad689db7f17e3cfc9ce6198c115f31e519d25c68a441db3ecb4"
+    },
+    {
+      "bytes": 653,
+      "candidate_sha256": "ce88dd899de0dfb864c3746aa50d33c7cdd6a7a6a2a2c4b0be8ec6b40c1ef27a",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/unix/waker/tty.rs",
+      "upstream_sha256": "90ab97263c27303cb9013263b519ca911e51828ca6bbfec837db18d09ec0ab39"
+    },
+    {
+      "bytes": 1659,
+      "candidate_sha256": "7dac602a97be6ddb3549503f243538b9f26f1f2fbadf72676b4159271cf886ac",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/windows.rs",
+      "upstream_sha256": "130d7da62a0af8b1cf7c55bd8bf78fa0272a9a44803704dac6416db993d30d81"
+    },
+    {
+      "bytes": 15188,
+      "candidate_sha256": "ae94dac1df1ea51f5568413c6c52eadace7cc2271e52dc44528295591c72f1dc",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/windows/parse.rs",
+      "upstream_sha256": "15afbd3b84edfa2a72f9587f591ce9f7dfe99f1cb85db8b45037c0b70c0346ae"
+    },
+    {
+      "bytes": 2459,
+      "candidate_sha256": "758b62859494a4899bbc5cac5cbda4fb64546fbf86f61158a392287a2b93f803",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/windows/poll.rs",
+      "upstream_sha256": "232c69f9c9aa058189a418cdaee82134feaf6ef91f89cea8eaaeb5b4cfd722fc"
+    },
+    {
+      "bytes": 1116,
+      "candidate_sha256": "482694d0c7c4958389888cf4936ef232726f98c01456537ae85cad28fab50f46",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/sys/windows/waker.rs",
+      "upstream_sha256": "a145d8ccf6b7747eb4e9499bdade2616a997539da4f4691f4c14bd4c4d6a472b"
+    },
+    {
+      "bytes": 2570,
+      "candidate_sha256": "3925941551c65ee91d73c9a6329ae04a4e25993a3592dfab02d3eb866ada6004",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/event/timeout.rs",
+      "upstream_sha256": "cbe518ad2cb666b588f593b4b84704eb4480e49d9bd3f28c72d696dae6e7b5e7"
+    },
+    {
+      "bytes": 10593,
+      "candidate_sha256": "85070938a40a79731381fd850516f751132b93335302b2dd00a177a17a28c1cc",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/lib.rs",
+      "upstream_sha256": "e03d2fea1683e5b3758f114a9f819f7c090b5de4954f614eb42d7cb86cf3039e"
+    },
+    {
+      "bytes": 11979,
+      "candidate_sha256": "604cb27d415b5ad60bcd95924286bf49d96da8ed186819886c806d3a04157aa4",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/macros.rs",
+      "upstream_sha256": "4f36ad05d7f07252cc20f7cb963fe2679808f1b3ddefd22960fab3e0275982c8"
+    },
+    {
+      "bytes": 18122,
+      "candidate_sha256": "bdf2465c098113fcd4ac7124b3ac62778d5590d474fd1c8ce4cf3cbd084abcde",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style.rs",
+      "upstream_sha256": "48dcb57f9f060da821ffd9e0299e04b7efdb6dd64fef054a33caaea29e79484f"
+    },
+    {
+      "bytes": 3955,
+      "candidate_sha256": "b6fcf6c4078b3766dd357a519ec188f78a64566fd805c93c9bc64bf1a521a64d",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/attributes.rs",
+      "upstream_sha256": "627da6384421a713b91c2a818de7ac60061f912439da3ef7723a509f94b3f7e4"
+    },
+    {
+      "bytes": 1115,
+      "candidate_sha256": "d66fe8512fb24a3c6da1e5643d3de67f490095dc1ecb0b9de7ab6483d96cf53e",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/content_style.rs",
+      "upstream_sha256": "d24e77a730db29e2ce977a7e183988304b6177831d4798fd4c54161ddd331324"
+    },
+    {
+      "bytes": 1880,
+      "candidate_sha256": "a2767a96d4cf32ebc34291be68e3f34b51f3f92bb15800e157eaea3ee6bfcfbe",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/styled_content.rs",
+      "upstream_sha256": "05365bbcfb62321680854ba7dda0f70e6d8ff3107119630065b53eafb9e7d8f9"
+    },
+    {
+      "bytes": 6733,
+      "candidate_sha256": "513a0606ac5bbcfcaa5ae2a24d800719df91df978d3c460266b2a71ce120eecd",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/stylize.rs",
+      "upstream_sha256": "aed3f94e18d9ac7f43d463e11c42d3ba1e6a5900bb554b4bca3385787fb16503"
+    },
+    {
+      "bytes": 40,
+      "candidate_sha256": "903a72d85b9e8f8338c07e1fed63bbe60b17c4f55717235a991e644ec9fe23c8",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/sys.rs",
+      "upstream_sha256": "0a54100dd55febb0d5922f23c8946f77d8197c5be5e82124836649fdc1426a70"
+    },
+    {
+      "bytes": 8406,
+      "candidate_sha256": "faed0c37988eb4c8dfae350ad7e467e1b99fe9bf93e3f4e4d0f0b68f7d625971",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/sys/windows.rs",
+      "upstream_sha256": "6b7f7b269c22ddd5e7b7a3c69886c78001509c2cc97a37a4da1d9ed0fadb5f3d"
+    },
+    {
+      "bytes": 138,
+      "candidate_sha256": "a67aa3d3a6d3aa0146da820c48d1cbed707126e1ba29aef24aa9aa711f07cb3e",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/types.rs",
+      "upstream_sha256": "94921c5588fcffc51d43ccb2826a31a26678ce8582c2772e6ff9d5a72b90f065"
+    },
+    {
+      "bytes": 6136,
+      "candidate_sha256": "f1fb3b1f2c721c4c85a2b9fed7a94e52ef91f8d20e362192aebf8a1cf5fb28be",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/types/attribute.rs",
+      "upstream_sha256": "b2ce7bc21cc750d3e46930313b5323e63fcfabc084ad70f3ca042e5671133e54"
+    },
+    {
+      "bytes": 16782,
+      "candidate_sha256": "8726a8c7bdc3923d581af8080ff7b064fb10df2cad93f3ad0cc09c58f2f17956",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/types/color.rs",
+      "upstream_sha256": "5e84dba4521ba97d9cdb3d3c68c90d706f68c37e41d2befdf27a2a5543fb0ba4"
+    },
+    {
+      "bytes": 9868,
+      "candidate_sha256": "e03130834362f5b0f4e89decd269204a101a3f6abb83e3f9684c02a9cd3008dd",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/types/colored.rs",
+      "upstream_sha256": "b19b7a522f5d992ab12cb42ce7f234e812a66aa675af7db5f1143c67a1fc036f"
+    },
+    {
+      "bytes": 6116,
+      "candidate_sha256": "413d455e4ea18e34bb034cd751b2bafe526de142609d6953f4b31c6fdeaadf81",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/style/types/colors.rs",
+      "upstream_sha256": "2657c90f74bb7f4478d75feeea9dfab64c9d4dca095238f6fa13baf2833fb7cb"
+    },
+    {
+      "bytes": 17532,
+      "candidate_sha256": "5430654a512812e1803a17d3f47357ed9b039dccde38d2ed31b9efc5b152580a",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/terminal.rs",
+      "upstream_sha256": "740e1511180a7136b35a59bac237e7aaad58a63be3275faf8dddd27d66403a95"
+    },
+    {
+      "bytes": 728,
+      "candidate_sha256": "aac896a84c47fb830f71f3cf3627db6a4ca67e51c289a54297ee66b6b191e9e9",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/terminal/sys.rs",
+      "upstream_sha256": "b77c654d581eb939b00e77d565d950c2f6045eb9b64480b21c1b20538665bb14"
+    },
+    {
+      "bytes": 4095,
+      "candidate_sha256": "dfe7c23834cb47ca9531db0bb6b20c4ff6fc433ce3b433e0ce3da4d8ad1ede74",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/terminal/sys/file_descriptor.rs",
+      "upstream_sha256": "d215ff60394ec2150c2df6340343d84a3922570c1feba813663742d0eb85d13f"
+    },
+    {
+      "bytes": 9767,
+      "candidate_sha256": "a96da6325edc3a8f0136e25184d464aaba10f850c591a6eb37281a4c28716c1b",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/terminal/sys/unix.rs",
+      "upstream_sha256": "972f68814571a2ed6f6a741565bef98437d2493d90fcc189fd713de0a6ac3552"
+    },
+    {
+      "bytes": 13950,
+      "candidate_sha256": "9854180b52eca2335d329ab5a0382c2f88a8ee20f7f7c18b0211210a39617508",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/terminal/sys/windows.rs",
+      "upstream_sha256": "60b47ae9b6a9c3185c8820906df43c21c0329e8f444409bb6fc68f97a6946061"
+    },
+    {
+      "bytes": 1540,
+      "candidate_sha256": "2586695bed85f0b8aa84f49dd80fe973f4a78258d43d37a0bb709e87f74394d0",
+      "changed": true,
+      "path": "vendor/security/crossterm-0.28.1/src/tty.rs",
+      "upstream_sha256": "9452b86a2dbaa35eadab5615aa9eed131954bcf2ed9e1f83e7c5b73e57a9bdc8"
     },
     {
       "bytes": 98,
@@ -2566,6 +3109,13 @@
       "upstream_sha256": "f14ce5eca5147bd03d62626e71fa078d447b8bb612d9f202793b3954f64eca4e"
     },
     {
+      "bytes": 32772,
+      "candidate_sha256": "f9bdd072b58ce413100ab7647fc29efbfd4eb216f929a4d793b090a36224e5bf",
+      "changed": false,
+      "path": "vendor/security/pulp-0.22.3/src/x86.rs",
+      "upstream_sha256": "f9bdd072b58ce413100ab7647fc29efbfd4eb216f929a4d793b090a36224e5bf"
+    },
+    {
       "bytes": 31849,
       "candidate_sha256": "d6c74c4b71d0a2620e27de68acb1d8ee17f3389fbaa7367801e1e8f7cac33735",
       "changed": false,
@@ -2592,13 +3142,6 @@
       "changed": false,
       "path": "vendor/security/pulp-0.22.3/src/x86/v4.rs",
       "upstream_sha256": "327416276779c58c991373ada9de91c2827e956935e0c827232f544d5b269e75"
-    },
-    {
-      "bytes": 32772,
-      "candidate_sha256": "f9bdd072b58ce413100ab7647fc29efbfd4eb216f929a4d793b090a36224e5bf",
-      "changed": false,
-      "path": "vendor/security/pulp-0.22.3/src/x86.rs",
-      "upstream_sha256": "f9bdd072b58ce413100ab7647fc29efbfd4eb216f929a4d793b090a36224e5bf"
     },
     {
       "bytes": 94,
@@ -2727,6 +3270,13 @@
       "upstream_sha256": "4e42e0b9e6ad66220c997337e5082975576134547422c8f48152f7d7fad0e899"
     },
     {
+      "bytes": 435,
+      "candidate_sha256": "6e767af224df363b27ec36eaa28392bf7d9af0053cc8b3727ceec06e93672418",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/benches/main.rs",
+      "upstream_sha256": "6e767af224df363b27ec36eaa28392bf7d9af0053cc8b3727ceec06e93672418"
+    },
+    {
       "bytes": 2223,
       "candidate_sha256": "371b7a99c70b1c663c0577130c71f8fc68863f599187a7c5ebf85e98da3e4fff",
       "changed": false,
@@ -2788,13 +3338,6 @@
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/benches/main/table.rs",
       "upstream_sha256": "603ff9990471c47f636085a7f5b5616fdd718318fe5aba4017807e27aafcbe89"
-    },
-    {
-      "bytes": 435,
-      "candidate_sha256": "6e767af224df363b27ec36eaa28392bf7d9af0053cc8b3727ceec06e93672418",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/benches/main.rs",
-      "upstream_sha256": "6e767af224df363b27ec36eaa28392bf7d9af0053cc8b3727ceec06e93672418"
     },
     {
       "bytes": 5579,
@@ -2993,6 +3536,13 @@
       "upstream_sha256": "9db994c62cd4d5a1a9f6dea71345cfb9a085f8597bbc6845eafb39af3fccabdc"
     },
     {
+      "bytes": 205,
+      "candidate_sha256": "f74c5a7725fbfeaf9467b5df1f6e8d8af837edddea7793fd4260316435038eae",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/examples/demo2/tabs.rs",
+      "upstream_sha256": "f74c5a7725fbfeaf9467b5df1f6e8d8af837edddea7793fd4260316435038eae"
+    },
+    {
       "bytes": 6324,
       "candidate_sha256": "98f9ae5da08b07d6bf8e91dc659d34d6f427d6e02e65cf975a7d094f48f5348e",
       "changed": false,
@@ -3026,13 +3576,6 @@
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/examples/demo2/tabs/weather.rs",
       "upstream_sha256": "6739af7d62c9794ec4540d4e00b4f7df6e0ea5c3daf4e02b9c9bc1ded158e215"
-    },
-    {
-      "bytes": 205,
-      "candidate_sha256": "f74c5a7725fbfeaf9467b5df1f6e8d8af837edddea7793fd4260316435038eae",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/examples/demo2/tabs.rs",
-      "upstream_sha256": "f74c5a7725fbfeaf9467b5df1f6e8d8af837edddea7793fd4260316435038eae"
     },
     {
       "bytes": 3961,
@@ -3469,6 +4012,13 @@
       "upstream_sha256": "1c3d53ca10ba201e126d023ae75b2e36a9409a7ab07d1a6bc1032efd6287d09e"
     },
     {
+      "bytes": 17530,
+      "candidate_sha256": "3b94049c030b3d82f031443913cf5764d976866525f8b990a804b72f774887ad",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/backend.rs",
+      "upstream_sha256": "3b94049c030b3d82f031443913cf5764d976866525f8b990a804b72f774887ad"
+    },
+    {
       "bytes": 28648,
       "candidate_sha256": "9f12a1e104cb0ce8d67a297a42a4c1d8c3a1330aba368bd67c00fee33343e698",
       "changed": false,
@@ -3497,11 +4047,11 @@
       "upstream_sha256": "f61256bcbc39b53bafefe27d453dffa2e0e169278c13277ffbe3fd0d0fceb75f"
     },
     {
-      "bytes": 17530,
-      "candidate_sha256": "3b94049c030b3d82f031443913cf5764d976866525f8b990a804b72f774887ad",
+      "bytes": 155,
+      "candidate_sha256": "9985708dcea0ebe27cee914547477c53e5113b11d98d6943c6d047bae0f706eb",
       "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/backend.rs",
-      "upstream_sha256": "3b94049c030b3d82f031443913cf5764d976866525f8b990a804b72f774887ad"
+      "path": "vendor/security/ratatui-0.29.0/src/buffer.rs",
+      "upstream_sha256": "9985708dcea0ebe27cee914547477c53e5113b11d98d6943c6d047bae0f706eb"
     },
     {
       "bytes": 2711,
@@ -3525,11 +4075,11 @@
       "upstream_sha256": "0f255d1972107d9518e4ffa88e0c579230284d637443eaaf995911ba497d6616"
     },
     {
-      "bytes": 155,
-      "candidate_sha256": "9985708dcea0ebe27cee914547477c53e5113b11d98d6943c6d047bae0f706eb",
+      "bytes": 430,
+      "candidate_sha256": "a485424bb8e614817a245f43b400af0ac3de97b0428a84d12d3cb813a37b1af3",
       "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/buffer.rs",
-      "upstream_sha256": "9985708dcea0ebe27cee914547477c53e5113b11d98d6943c6d047bae0f706eb"
+      "path": "vendor/security/ratatui-0.29.0/src/layout.rs",
+      "upstream_sha256": "a485424bb8e614817a245f43b400af0ac3de97b0428a84d12d3cb813a37b1af3"
     },
     {
       "bytes": 832,
@@ -3581,13 +4131,6 @@
       "upstream_sha256": "e1c4d7da7745e753fbe1792dedd875a2a2f7bf69903bbb2fbf5c8f4fac1cd5db"
     },
     {
-      "bytes": 12146,
-      "candidate_sha256": "0f8a6d2f2a7681e32c74aa2703a7aa9f867267eec944bb7e21e630993dd59b8f",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/layout/rect/iter.rs",
-      "upstream_sha256": "0f8a6d2f2a7681e32c74aa2703a7aa9f867267eec944bb7e21e630993dd59b8f"
-    },
-    {
       "bytes": 19754,
       "candidate_sha256": "8e53de549dcbd8d6f05159022cb214985b2c32df50c01d940d81a5dc4a39c410",
       "changed": false,
@@ -3595,18 +4138,18 @@
       "upstream_sha256": "8e53de549dcbd8d6f05159022cb214985b2c32df50c01d940d81a5dc4a39c410"
     },
     {
+      "bytes": 12146,
+      "candidate_sha256": "0f8a6d2f2a7681e32c74aa2703a7aa9f867267eec944bb7e21e630993dd59b8f",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/layout/rect/iter.rs",
+      "upstream_sha256": "0f8a6d2f2a7681e32c74aa2703a7aa9f867267eec944bb7e21e630993dd59b8f"
+    },
+    {
       "bytes": 1655,
       "candidate_sha256": "4b8745831c8e7160cd9f5f8dccca32e32460eae9bf13a309a0b3547d2806afef",
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/src/layout/size.rs",
       "upstream_sha256": "4b8745831c8e7160cd9f5f8dccca32e32460eae9bf13a309a0b3547d2806afef"
-    },
-    {
-      "bytes": 430,
-      "candidate_sha256": "a485424bb8e614817a245f43b400af0ac3de97b0428a84d12d3cb813a37b1af3",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/layout.rs",
-      "upstream_sha256": "a485424bb8e614817a245f43b400af0ac3de97b0428a84d12d3cb813a37b1af3"
     },
     {
       "bytes": 16232,
@@ -3623,11 +4166,25 @@
       "upstream_sha256": "f1240e100d838edaf149615a32dd7d53ef890350096ab4c59ee8aafc2c911807"
     },
     {
+      "bytes": 30924,
+      "candidate_sha256": "d6bc70c60726dc728ddd354d649fd1f28e8334c1b94b1b6c455291a2cb4973d6",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/style.rs",
+      "upstream_sha256": "d6bc70c60726dc728ddd354d649fd1f28e8334c1b94b1b6c455291a2cb4973d6"
+    },
+    {
       "bytes": 29622,
       "candidate_sha256": "4e4a8b9aefa39a055201ae9296519588a68dfcd697d6bda926450f4f52857c32",
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/src/style/color.rs",
       "upstream_sha256": "4e4a8b9aefa39a055201ae9296519588a68dfcd697d6bda926450f4f52857c32"
+    },
+    {
+      "bytes": 118,
+      "candidate_sha256": "9bbbdad7d24270d6769c6940e7564425a294c0746c3eec2d99b4afc96b7a47b1",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/style/palette.rs",
+      "upstream_sha256": "9bbbdad7d24270d6769c6940e7564425a294c0746c3eec2d99b4afc96b7a47b1"
     },
     {
       "bytes": 25804,
@@ -3644,13 +4201,6 @@
       "upstream_sha256": "fb0d8a846a2fb808b036e71023195432a94859a9d66940f920ef7593a917212f"
     },
     {
-      "bytes": 118,
-      "candidate_sha256": "9bbbdad7d24270d6769c6940e7564425a294c0746c3eec2d99b4afc96b7a47b1",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/style/palette.rs",
-      "upstream_sha256": "9bbbdad7d24270d6769c6940e7564425a294c0746c3eec2d99b4afc96b7a47b1"
-    },
-    {
       "bytes": 2268,
       "candidate_sha256": "0f5fdae7bc82b8de5a83ba1c3697f9fce26e4bc5f9573b18c4dd4f1b6ea03d27",
       "changed": false,
@@ -3665,11 +4215,11 @@
       "upstream_sha256": "6b8115848f52980fbb9401ef5258459cfa445345a8932f645792a5d89dd544a2"
     },
     {
-      "bytes": 30924,
-      "candidate_sha256": "d6bc70c60726dc728ddd354d649fd1f28e8334c1b94b1b6c455291a2cb4973d6",
+      "bytes": 6570,
+      "candidate_sha256": "cb83352675b0dc7a1042f55f8de738a64dbf932ede1066a33b7f1b970fecf9d3",
       "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/style.rs",
-      "upstream_sha256": "d6bc70c60726dc728ddd354d649fd1f28e8334c1b94b1b6c455291a2cb4973d6"
+      "path": "vendor/security/ratatui-0.29.0/src/symbols.rs",
+      "upstream_sha256": "cb83352675b0dc7a1042f55f8de738a64dbf932ede1066a33b7f1b970fecf9d3"
     },
     {
       "bytes": 13692,
@@ -3686,11 +4236,11 @@
       "upstream_sha256": "5cb14a0b3246aa5c3aa0c8da3425fc817ceee97d3b470cfcf5a72b5f8264b34a"
     },
     {
-      "bytes": 6570,
-      "candidate_sha256": "cb83352675b0dc7a1042f55f8de738a64dbf932ede1066a33b7f1b970fecf9d3",
+      "bytes": 1538,
+      "candidate_sha256": "467ea936763261031973d20e2c8de06cd1358ee52597674774a16ccc950df70c",
       "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/symbols.rs",
-      "upstream_sha256": "cb83352675b0dc7a1042f55f8de738a64dbf932ede1066a33b7f1b970fecf9d3"
+      "path": "vendor/security/ratatui-0.29.0/src/terminal.rs",
+      "upstream_sha256": "467ea936763261031973d20e2c8de06cd1358ee52597674774a16ccc950df70c"
     },
     {
       "bytes": 10730,
@@ -3721,11 +4271,11 @@
       "upstream_sha256": "64e33f6829c1bb9421019586e52c47c7ad76be35563818514766d351bf240c69"
     },
     {
-      "bytes": 1538,
-      "candidate_sha256": "467ea936763261031973d20e2c8de06cd1358ee52597674774a16ccc950df70c",
+      "bytes": 2388,
+      "candidate_sha256": "23ed6e02aee0793666bfa136095480e71dfe00971c20a3e547385229365405a1",
       "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/terminal.rs",
-      "upstream_sha256": "467ea936763261031973d20e2c8de06cd1358ee52597674774a16ccc950df70c"
+      "path": "vendor/security/ratatui-0.29.0/src/text.rs",
+      "upstream_sha256": "23ed6e02aee0793666bfa136095480e71dfe00971c20a3e547385229365405a1"
     },
     {
       "bytes": 2422,
@@ -3763,11 +4313,18 @@
       "upstream_sha256": "d2291f94cef1e59d7541acb1c74288001201ef3171551962463617022fe514fc"
     },
     {
-      "bytes": 2388,
-      "candidate_sha256": "23ed6e02aee0793666bfa136095480e71dfe00971c20a3e547385229365405a1",
+      "bytes": 27072,
+      "candidate_sha256": "99b71804270c80e60c3d515af730a3dd13c6eb810ad0d2e6cb4b0b3e7f791223",
       "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/text.rs",
-      "upstream_sha256": "23ed6e02aee0793666bfa136095480e71dfe00971c20a3e547385229365405a1"
+      "path": "vendor/security/ratatui-0.29.0/src/widgets.rs",
+      "upstream_sha256": "99b71804270c80e60c3d515af730a3dd13c6eb810ad0d2e6cb4b0b3e7f791223"
+    },
+    {
+      "bytes": 44698,
+      "candidate_sha256": "e212387439652e81d719e23bc40e00debc8c670ae979bb4cc761e8ab7a7add1b",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/widgets/barchart.rs",
+      "upstream_sha256": "e212387439652e81d719e23bc40e00debc8c670ae979bb4cc761e8ab7a7add1b"
     },
     {
       "bytes": 7266,
@@ -3784,11 +4341,11 @@
       "upstream_sha256": "8de383c9cf533280636aea987c97ad7e62a1625e29081ed114910fd3f4b55c01"
     },
     {
-      "bytes": 44698,
-      "candidate_sha256": "e212387439652e81d719e23bc40e00debc8c670ae979bb4cc761e8ab7a7add1b",
+      "bytes": 60750,
+      "candidate_sha256": "1e5b9ec77355790a3ce870b57045d3da9fc430370772b0b24c4a79ff413c9d80",
       "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/widgets/barchart.rs",
-      "upstream_sha256": "e212387439652e81d719e23bc40e00debc8c670ae979bb4cc761e8ab7a7add1b"
+      "path": "vendor/security/ratatui-0.29.0/src/widgets/block.rs",
+      "upstream_sha256": "1e5b9ec77355790a3ce870b57045d3da9fc430370772b0b24c4a79ff413c9d80"
     },
     {
       "bytes": 5614,
@@ -3805,13 +4362,6 @@
       "upstream_sha256": "d7d168b9d54711bf69db69d4886d284036ee91ffc2d29927df2c30cfc851d580"
     },
     {
-      "bytes": 60750,
-      "candidate_sha256": "1e5b9ec77355790a3ce870b57045d3da9fc430370772b0b24c4a79ff413c9d80",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/widgets/block.rs",
-      "upstream_sha256": "1e5b9ec77355790a3ce870b57045d3da9fc430370772b0b24c4a79ff413c9d80"
-    },
-    {
       "bytes": 4906,
       "candidate_sha256": "0d190eef55ca8ef8d50cf73aad7b712d3c029d2e1f0f8c66ec8d98d3d84d4af2",
       "changed": false,
@@ -3824,6 +4374,13 @@
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/src/widgets/calendar.rs",
       "upstream_sha256": "be6d3e2a56b76b10f580b39b0492c7ae82e15722e107fddf0998de6d684981ed"
+    },
+    {
+      "bytes": 32290,
+      "candidate_sha256": "2c606a0fdc8bb1c1ab66c9ce29a6d54042d2a2c5278ee52a9512fa414a8fbf78",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/widgets/canvas.rs",
+      "upstream_sha256": "2c606a0fdc8bb1c1ab66c9ce29a6d54042d2a2c5278ee52a9512fa414a8fbf78"
     },
     {
       "bytes": 1925,
@@ -3868,13 +4425,6 @@
       "upstream_sha256": "5cc8a134510cbc29995e1d47d9e86fe063e90048a92bd6524c876d5c148f828d"
     },
     {
-      "bytes": 32290,
-      "candidate_sha256": "2c606a0fdc8bb1c1ab66c9ce29a6d54042d2a2c5278ee52a9512fa414a8fbf78",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/widgets/canvas.rs",
-      "upstream_sha256": "2c606a0fdc8bb1c1ab66c9ce29a6d54042d2a2c5278ee52a9512fa414a8fbf78"
-    },
-    {
       "bytes": 53801,
       "candidate_sha256": "1413e237cd7b17ebc8dc448f3449d3f80df5e0a148bb7ee1e9c0455d117d83b3",
       "changed": false,
@@ -3894,6 +4444,13 @@
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/src/widgets/gauge.rs",
       "upstream_sha256": "a871f36009b7465b5e77dd3f3380cbac6178f105682227389f126e29154bcf89"
+    },
+    {
+      "bytes": 141,
+      "candidate_sha256": "61cf0a81a1756f9be84c52f3933116bd590a3e35f59dad72166286c99148a25a",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/widgets/list.rs",
+      "upstream_sha256": "61cf0a81a1756f9be84c52f3933116bd590a3e35f59dad72166286c99148a25a"
     },
     {
       "bytes": 9964,
@@ -3922,13 +4479,6 @@
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/src/widgets/list/state.rs",
       "upstream_sha256": "21970293beb4315d601bb6249277c98e3f666beab0248fdd8cf672895035cdc5"
-    },
-    {
-      "bytes": 141,
-      "candidate_sha256": "61cf0a81a1756f9be84c52f3933116bd590a3e35f59dad72166286c99148a25a",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/widgets/list.rs",
-      "upstream_sha256": "61cf0a81a1756f9be84c52f3933116bd590a3e35f59dad72166286c99148a25a"
     },
     {
       "bytes": 5952,
@@ -3966,6 +4516,13 @@
       "upstream_sha256": "f2a8a520497d9c00d0556ffdba1c51b55ff7c1ea3c092860f2184438411e31f9"
     },
     {
+      "bytes": 176,
+      "candidate_sha256": "740adad69fc09eec4b64b72707417f533b308bd695a49eca3c1da19e0e7737a4",
+      "changed": false,
+      "path": "vendor/security/ratatui-0.29.0/src/widgets/table.rs",
+      "upstream_sha256": "740adad69fc09eec4b64b72707417f533b308bd695a49eca3c1da19e0e7737a4"
+    },
+    {
       "bytes": 6210,
       "candidate_sha256": "5576698b5ce893ba2b61973ec9483fe137f026d66276e46e51db7a58765c357c",
       "changed": false,
@@ -4001,25 +4558,11 @@
       "upstream_sha256": "e8f6d85ed65e676421bfac44a86e41d8ec20990d1f4162f0d14dffff0d55060b"
     },
     {
-      "bytes": 176,
-      "candidate_sha256": "740adad69fc09eec4b64b72707417f533b308bd695a49eca3c1da19e0e7737a4",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/widgets/table.rs",
-      "upstream_sha256": "740adad69fc09eec4b64b72707417f533b308bd695a49eca3c1da19e0e7737a4"
-    },
-    {
       "bytes": 20599,
       "candidate_sha256": "cc259be4989f27517d99f5523e24828a68af282d2d9690e3c4782ac14025e471",
       "changed": false,
       "path": "vendor/security/ratatui-0.29.0/src/widgets/tabs.rs",
       "upstream_sha256": "cc259be4989f27517d99f5523e24828a68af282d2d9690e3c4782ac14025e471"
-    },
-    {
-      "bytes": 27072,
-      "candidate_sha256": "99b71804270c80e60c3d515af730a3dd13c6eb810ad0d2e6cb4b0b3e7f791223",
-      "changed": false,
-      "path": "vendor/security/ratatui-0.29.0/src/widgets.rs",
-      "upstream_sha256": "99b71804270c80e60c3d515af730a3dd13c6eb810ad0d2e6cb4b0b3e7f791223"
     },
     {
       "bytes": 2075,
@@ -4295,27 +4838,6 @@
       "upstream_sha256": "5cf6987046c7f1a32c8ea61528438311e1f8a6003efaf038e95ee87d5ffc96c2"
     },
     {
-      "bytes": 4190,
-      "candidate_sha256": "5e3dfe6c37d99face010555ddbee4aeaf86326ffda33834bde6bb823a6673fbe",
-      "changed": false,
-      "path": "vendor/security/tch-0.26.0/examples/jit/README.md",
-      "upstream_sha256": "5e3dfe6c37d99face010555ddbee4aeaf86326ffda33834bde6bb823a6673fbe"
-    },
-    {
-      "bytes": 1073,
-      "candidate_sha256": "f95f8c7f8e17d2d48f546723c9dcd347504f7e0af56d88dd8968d3be3e479e1d",
-      "changed": false,
-      "path": "vendor/security/tch-0.26.0/examples/jit/main.rs",
-      "upstream_sha256": "f95f8c7f8e17d2d48f546723c9dcd347504f7e0af56d88dd8968d3be3e479e1d"
-    },
-    {
-      "bytes": 229,
-      "candidate_sha256": "d6e57912e48abce72ef364b781d87bb0b0d367f800cffe4a84b7597f908d78cf",
-      "changed": false,
-      "path": "vendor/security/tch-0.26.0/examples/jit/resnet.py",
-      "upstream_sha256": "d6e57912e48abce72ef364b781d87bb0b0d367f800cffe4a84b7597f908d78cf"
-    },
-    {
       "bytes": 1804,
       "candidate_sha256": "f051686f643f3df136667a69a418f9d3d9455d66307b3ffc62c307c17feca810",
       "changed": false,
@@ -4377,6 +4899,27 @@
       "changed": false,
       "path": "vendor/security/tch-0.26.0/examples/jit-train/resnet.py",
       "upstream_sha256": "4c1fba01663d8cf36fc18b98ba478049bfc945a26e7fd9e89369ea7db297a6f7"
+    },
+    {
+      "bytes": 4190,
+      "candidate_sha256": "5e3dfe6c37d99face010555ddbee4aeaf86326ffda33834bde6bb823a6673fbe",
+      "changed": false,
+      "path": "vendor/security/tch-0.26.0/examples/jit/README.md",
+      "upstream_sha256": "5e3dfe6c37d99face010555ddbee4aeaf86326ffda33834bde6bb823a6673fbe"
+    },
+    {
+      "bytes": 1073,
+      "candidate_sha256": "f95f8c7f8e17d2d48f546723c9dcd347504f7e0af56d88dd8968d3be3e479e1d",
+      "changed": false,
+      "path": "vendor/security/tch-0.26.0/examples/jit/main.rs",
+      "upstream_sha256": "f95f8c7f8e17d2d48f546723c9dcd347504f7e0af56d88dd8968d3be3e479e1d"
+    },
+    {
+      "bytes": 229,
+      "candidate_sha256": "d6e57912e48abce72ef364b781d87bb0b0d367f800cffe4a84b7597f908d78cf",
+      "changed": false,
+      "path": "vendor/security/tch-0.26.0/examples/jit/resnet.py",
+      "upstream_sha256": "d6e57912e48abce72ef364b781d87bb0b0d367f800cffe4a84b7597f908d78cf"
     },
     {
       "bytes": 2793,
@@ -6186,6 +6729,14 @@
     ],
     "source_files": 553,
     "unchanged": 548
+  },
+  "terminal_event_readiness_patch": {
+    "behavior_changed_files": [
+      "vendor/security/crossterm-0.28.1/src/event/source/unix/mio.rs"
+    ],
+    "input_lock_sha256": "cbddfd5ea6cefd7fe7456e5f65ca9a22f209d93d559a03e24512f96538f61fda",
+    "normalization": "CRLF to LF in retained text; trailing spaces removed from upstream Markdown. All other retained files equal upstream after that declared normalization.",
+    "scope": "Add existing crossterm 0.28.1 source without changing dependency versions or features. Preserve unprocessed Mio readiness across early returns. Existing source_preservation counts describe the preceding twenty-crate import. Local proof does not qualify the sealed REL-07 RC."
   },
   "utc": "2026-10-21T14:16:55.096976+00:00"
 }

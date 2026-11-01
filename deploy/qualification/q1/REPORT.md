@@ -152,3 +152,16 @@ catalog). The plan also needs a cut identity per dataset, and that identity depe
 on the evaluator protocol the backend freezes. The published `cohort.json` and
 `inputs-manifest.json` are the non-sealed candidate set
 (`qualification_eligible=false`), not the Q1 cohort.
+
+## R19 pre-run subgroup disposition — 2026-11-01
+
+Owner ruling [R19](PREREG-AMENDMENT-R19.md) permits the existing roster's four
+distinct wide families for this run. Q1 remains **NOT RUN / UNKNOWN**. No empirical
+effect, interval or subgroup verdict is supplied by this amendment.
+
+| Subgroup | Frozen family count and reporting status | Effect / interval |
+|---|---|---|
+| wide | 4/5 families, below preregistered minimum, descriptive only, no subgroup verdict | UNKNOWN — Q1 NOT RUN |
+
+Small, large and narrow retain their original inferential requirements. Any later
+overall decision must identify R19; it cannot claim a wide subgroup verdict.
