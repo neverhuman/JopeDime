@@ -5349,6 +5349,30 @@
         "reason": "H200 xbabe1-only supervisor enforcing nice 19, four-core, memory, RSS, load, disk, deadline and output guards for one attempt."
       },
       "sha256": "078c8d4221d51d6024e0e48a1429cf76c29d8aac3f6716c040d9664f9d5188d4"
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/analysis.py": {
+      "bytes": 8730,
+      "sha256": "51d54087125d824479e842705d3e1308a31e11a9e68fd0b041a3a0cb7c3cf292",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/monitor.py": {
+      "bytes": 4683,
+      "sha256": "55ccae8a383ccd0d02f1f4efa5b665cc629ba869dbc8b052d34c12e414a615b8",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/runner.py": {
+      "bytes": 13494,
+      "sha256": "0e7457d31dc2403e22ce43babf9348c3f87f735a0c0ecb4d142c84262d9c0c1b",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
