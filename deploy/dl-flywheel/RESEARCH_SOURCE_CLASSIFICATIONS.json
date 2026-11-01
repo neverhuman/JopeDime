@@ -5271,20 +5271,20 @@
       "sha256": "eb60e02e0291f7cba75d3f5b7302555ae7f8ed1707e7afad68d1b56ef85424fb"
     },
     "python:research/flywheel_selfplay/h197_pcgc/runner.py": {
-      "bytes": 31929,
+      "bytes": 31977,
       "classification": {
         "role": "research",
-        "reason": "H197 CPU fixed-step adapter continuation runner with exact source binding, H197-rooted local pin verification, FIT-only training, immutable B-before-A lock, and verify-only preflight requiring full pinned corpus and exact native 91/91 DL-Val with zero updates; research only."
+        "reason": "H197 CPU fixed-step continuation runner with exact source binding, H197-rooted local pin verification, full-corpus zero-update preflight, FIT-only training, B lock before A, and guarded single-attempt protocol; research only."
       },
-      "sha256": "4db54c8f390c1a23ceec3ed42294c8492570f21af822dda98b77f1af1e38ed80"
+      "sha256": "9ebd2249a21246becf88bf893905f7e8a36c259478b1f74db22eda3ef92c96d3"
     },
     "python:research/flywheel_selfplay/h197_pcgc/treatment.py": {
-      "bytes": 5506,
+      "bytes": 5606,
       "classification": {
         "role": "research",
-        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+        "reason": "H197 per-context gradient clipping and JSON-safe permutation encoding for the within-batch shuffled-factor placebo; research only."
       },
-      "sha256": "38c917f0dc00961272d99c2ee9de13e3fd246613a8c00c5c09695a772fbe66be"
+      "sha256": "cfe8e5c1cc5d9e1c8431aad4c6a4098097afa8a7386b14d79f3711016b803cb8"
     },
     "python:research/flywheel_selfplay/h197_pcgc/source_pins.py": {
       "bytes": 874,

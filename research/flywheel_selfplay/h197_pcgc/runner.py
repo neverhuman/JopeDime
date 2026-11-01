@@ -285,7 +285,9 @@ def train_arm(
             "assigned_clip_factors": None
             if assigned_factors is None
             else assigned_factors.tolist(),
-            "factor_permutation": permutation if actual_factors is not None else None,
+            "factor_permutation": tx.permutation_to_json(permutation)
+            if actual_factors is not None
+            else None,
             "fit_context_ids": cids,
             "candidate_indices": [
                 np.asarray(ix, dtype=np.int64).tolist() for ix in indexes

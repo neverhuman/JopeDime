@@ -109,6 +109,12 @@ def test_clip_then_average_and_within_batch_factor_shuffle():
     shuffled, order = treatment.shuffle_factors(factors, 197150)
     assert sorted(shuffled.tolist()) == sorted(factors.tolist())
     assert sorted(order.tolist()) == [0, 1]
+    assert (
+        json.loads(
+            json.dumps({"factor_permutation": treatment.permutation_to_json(order)})
+        )["factor_permutation"]
+        == order.tolist()
+    )
     treatment.set_gradients([p, q], aggregate)
     assert [p.grad.item(), q.grad.item()] == pytest.approx([1.5, 1.5])
 
