@@ -1965,6 +1965,10 @@
       "reason": "Owner-requested H146 data-free controls for the Lookahead adapter-continuation executor and its readout; no corpus/checkpoint reads or optimizer updates in the fixture suite; offline research only.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
+      "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -2157,8 +2161,20 @@
       "reason": "Pytest proofs for the HWV-04 / H09 conditional DSL-residual-around-tree experiment harness (protocol, arms and result-record shape); offline research analysis outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/h145/test_h145.py": {
+      "reason": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only.",
+      "role": "research"
+    },
+    "python:research/h148/test_h148.py": {
+      "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
+      "role": "research"
+    },
     "python:research/joint_regbin/test_study.py": {
       "reason": "Synthetic CPU protocol fixtures for the joint regression/binary study (protected packet-root refusal); no learner, GPU, dataset or score history; offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:test-support/qlt01/test_production_backend_acceptance.py": {
+      "reason": "QLT-01 F01 production receipt adapter acceptance controls (malformed family identity and receipt champion consistency).",
       "role": "research"
     },
     "python:tools/ops/test_install_jope_diskd.py": {
@@ -2986,6 +3002,13 @@
       "subsystems": [
         "export",
         "fitting"
+      ]
+    },
+    "target:jope-appliance/test/store_transport": {
+      "role": "regression",
+      "subsystems": [
+        "orchestration",
+        "storage"
       ]
     },
     "target:jope-appliance/test/system": {
@@ -5188,18 +5211,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/h145/test_h145.py": {
-      "reason": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only.",
-      "role": "research"
-    },
-    "python:research/h148/test_h148.py": {
-      "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h149_wd_dose/test_h149.py": {
-      "role": "research",
-      "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
