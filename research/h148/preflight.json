@@ -1,0 +1,65 @@
+{
+  "status": "PASS",
+  "constructor_only": true,
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "tests": {
+    "host": "xbabe4",
+    "executed": 12,
+    "failed": 0,
+    "numpy": "2.4.6",
+    "command": "data-free unittest in read-only jope-elo-worker:arm64,1CPU/768MB/nice19"
+  },
+  "smoke": {
+    "status": "PASS",
+    "optimizer_updates": 0,
+    "scored_contexts": 0,
+    "adapter_tensors": 47,
+    "trainable_parameters": 29211,
+    "census": {
+      "adapter_dropout_modules": [],
+      "adapter_attention_dropout": [
+        {
+          "name": "mm_cross_attn",
+          "p": 0.0
+        },
+        {
+          "name": "traj_cross_attn",
+          "p": 0.0
+        }
+      ],
+      "modality_dropout_attribute": 0.1,
+      "effective_encoder": "_sync_free_encode_context_and_candidates",
+      "adapter_training": false,
+      "dope_training": false
+    },
+    "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "packages": {
+      "numpy": "1.26.4",
+      "torch": "2.7.0",
+      "psutil": "7.1.0"
+    }
+  },
+  "resource_summary": {
+    "peak_aggregate_rss_bytes": 932188160,
+    "peak_total_threads": 2,
+    "min_free_bytes": 643426594816
+  },
+  "audit": {
+    "protected_reads": 0,
+    "refused": []
+  },
+  "evidence": "/home/ubuntu/jope_plan/evidence/H148/",
+  "hashes": {
+    "/home/ubuntu/jope_plan/evidence/H148/attempt/smoke-monitor.json": "75fbe737aa077995884f5b3deca863fc8d9370ddb0a13b34748c4152bd560355",
+    "/home/ubuntu/jope-data/h148/smoke/smoke.json": "2a6aa4b08e33d3430b9728067dcb4cc1935607c8117516073aa4baa0cadaa07d",
+    "/home/ubuntu/jope_plan/evidence/H148/data-free-tests-xbabe4.log": "8d022c4512cfd6fe007f947c16990ad0ef61e632cb28ca91e361937eb8354072",
+    "/home/ubuntu/jope_plan/evidence/H148/data-free-tests-xbabe4-final.log": "4367af7af72ff0f796a03db40638181ac47afe76dee66840b9203b6d0a9b24d4"
+  },
+  "smoke_source_note": "Constructor/inference/monitor source unchanged since smoke; subsequent edits add one data-free guard test and conservative 1e-12 threshold-tie rule in statistics/preregistration. No smoke/model repetition.",
+  "constructor_source_sha256": {
+    "run.py": "48e1ca28c4c66fa9c56e82a19622ab04aebba7fbf51ec56889c7703d05851e54",
+    "monitor.py": "abef50e2807acc87494005a8fd05463ba72681e297807547d04d48fb43724cb2"
+  }
+}

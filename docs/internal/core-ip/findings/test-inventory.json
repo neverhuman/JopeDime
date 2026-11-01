@@ -5199,6 +5199,10 @@
     "python:research/h145/test_h145.py": {
       "reason": "H145 data-free controls for disjoint family-fold selection/assessment, duplicate/nonfinite refusal, equal-family weighting, exact Elo ties, canonical Bradley-Terry bootstrap equivalence with repeated-family multiplicity, and lexical exclusion of DL-Val outcome subtrees. These controls do not train or qualify a model; offline research only.",
       "role": "research"
+    },
+    "python:research/h148/test_h148.py": {
+      "reason": "H148 data-free checkpoint-selection scientific controls; no product/native/GPU qualification.",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
