@@ -5427,6 +5427,10 @@
     "python:research/flywheel_selfplay/h176_data_scaling/test_h176.py": {
       "role": "research",
       "reason": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only."
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
+      "role": "research",
+      "reason": "H179 data-free controls for grouped family separation, independent member seeds, score averaging before argmin, FIT-only batch construction, Holm/verdict boundaries, timing-only budget selection, and CPU/resource guards. Synthetic fixtures only; no study data or checkpoint loaded."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
