@@ -56,7 +56,8 @@ def package(path: Path, code: Path, source: str = SOURCE) -> None:
         "features": FEATURES,
         "artifact": "jopedime",
         "artifact_sha256": sha(executable),
-        "signed": False,
+        "release_signed": False,
+        "development_signed": False,
     }
     (path / "DEV-BUILD.json").write_text(json.dumps(metadata), encoding="utf-8")
 
@@ -112,6 +113,21 @@ class D1DarwinDevTests(unittest.TestCase):
                 stream.write(b"tamper")
             with self.assertRaisesRegex(d1.D1DevError, "not an intact"):
                 d1.validate_dev_candidate(candidate, SOURCE)
+
+    def test_development_key_fixture_is_explicitly_dev_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            candidate = Path(tmp) / "candidate"
+            candidate.mkdir()
+            package(candidate, Path(__file__))
+            metadata_path = candidate / "DEV-BUILD.json"
+            metadata = json.loads(metadata_path.read_text())
+            metadata["profile"] = "fixture"
+            metadata["development_signed"] = True
+            metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+            _, accepted = d1.validate_dev_candidate(candidate, SOURCE)
+            self.assertEqual(accepted["profile"], "fixture")
+            self.assertTrue(accepted["development_signed"])
 
 
 if __name__ == "__main__":

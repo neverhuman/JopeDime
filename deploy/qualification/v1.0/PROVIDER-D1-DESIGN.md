@@ -34,31 +34,32 @@ qualify an RC.
 
 ## Native DEV-BUILD rehearsal
 
-To exercise the Darwin binary and D1 clean-host checks before an RC2 exists, build and wrap the
-base executable as an explicitly unsigned development package. Run both commands from a clean,
-native arm64 checkout at the exact source SHA, with evidence directories outside the checkout:
+To exercise D1 before an RC2 exists, build the repository's native development fixture package.
+The fixture has a deterministic development-key signature and is never a release-signed
+candidate. Run from a clean native arm64 checkout at the exact source SHA; keep all generated
+output in an external evidence directory. The existing `test-clean-host-macos.sh --build-fixture`
+path builds and verifies the fixture package in the lane's reused Cargo target. Copy the resulting
+`jopedime` file and current `d1_macos_dev.py` helper into the external evidence directory, then
+run:
 
 ```bash
-nice -n 19 bash deploy/qualification/v1.0/build-d1-darwin-arm64.sh \
-  <40-lowercase-hex-source-sha> /absolute/evidence/REL-07/D1-darwin-build
-nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py package \
+nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py package-fixture \
   --source-sha <40-lowercase-hex-source-sha> \
-  --base-executable /absolute/evidence/REL-07/D1-darwin-build/jopedime-darwin-arm64-code \
-  --build-record /absolute/evidence/REL-07/D1-darwin-build/darwin-build.json \
+  --fixture-package /absolute/evidence/REL-07/D1-fixture/jopedime \
   --out /absolute/evidence/REL-07/D1-dev-package
 nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py run \
   --candidate /absolute/evidence/REL-07/D1-dev-package \
   --out /absolute/evidence/REL-07/D1-dev-run
 ```
 
-When the helper is staged outside a clean source checkout, pass `--repo-root <checkout>` before
-the `package` or `run` subcommand. The run executes the existing macOS network-denied clean-host
-driver, then checks local fit/prediction and non-empty Python, Rust and JavaScript exports. Its
-v2-shaped receipt is labeled `DEV-BUILD`, has `qualification: NOT_QUALIFIED`, and is not accepted
-as a signed-candidate D1 receipt (`providers/d1.py` requires `status: PASS`). The rehearsal runs
-its own synthetic discovery, local fit, prediction and exports inside the network-denied sandbox;
-the generic REL-04 driver requires an authenticated release package and is not used. It does not
-sign or qualify RC2.
+`package-fixture` requires `--repo-root <checkout>` before the subcommand when staged outside the
+source checkout. It verifies the native arm64 package's embedded source identity and development-key
+trust, then labels the copied package `DEV-BUILD` with `release_signed: false` and
+`development_signed: true`. `run` executes network-denied discovery, synthetic local fit,
+prediction and non-empty Python, Rust and JavaScript exports with no toolchain on `PATH`. Its
+v2-shaped receipt is labeled `DEV-BUILD`, has `qualification: NOT_QUALIFIED`, and is rejected by
+the signed-candidate provider (`providers/d1.py` requires `status: PASS`). It does not sign or
+qualify RC2.
 
 ## Aggregate invocation
 
