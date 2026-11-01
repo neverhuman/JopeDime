@@ -7,9 +7,16 @@ import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 
-from common import ROOT, Context, ProviderError, context, rust_counts, sha256, verify_candidate
+from common import (
+    ROOT,
+    Context,
+    ProviderError,
+    context,
+    rust_counts,
+    sha256,
+    verify_candidate,
+)
 
 
 TEST = "r1_sigkill_at_public_blob_and_journal_boundaries_recovers_atomic_records_and_sequences"
@@ -66,9 +73,7 @@ def child_environment() -> dict[str, str]:
     return env
 
 
-def check_binding(
-    ctx: Context, run, env: dict[str, str]
-) -> None:
+def check_binding(ctx: Context, run, env: dict[str, str]) -> None:
     for args, expected in (
         (["git", "rev-parse", "HEAD"], ctx.source_sha),
         (["git", "status", "--porcelain", "--untracked-files=all"], ""),
@@ -82,7 +87,9 @@ def check_binding(
             env=env,
         )
         if result.returncode != 0 or result.stdout.strip() != expected:
-            raise ProviderError("R1 requires the clean candidate-pinned source checkout")
+            raise ProviderError(
+                "R1 requires the clean candidate-pinned source checkout"
+            )
     if sha256(ctx.artifact) != ctx.artifact_sha256:
         raise ProviderError("candidate bytes changed during R1")
 
@@ -101,16 +108,20 @@ def check_result_path(ctx: Context) -> None:
         raise ProviderError("R1 evidence must be outside the source checkout")
 
 
-def validate_output(output: str) -> None:
+def validate_output(output: str, errors: str = "") -> None:
+    """libtest reports on stdout; the system harness reports CAS cuts on stderr."""
     if rust_counts(output) != SINGLE_PASS:
         raise ProviderError("R1 requires exactly one passing exact system-test case")
     if f"test {TEST} ... ok" not in output:
         raise ProviderError("R1 exact crash-consistency test did not report success")
-    missing = sorted(line for line in EXPECTED_INTERNAL_CUTS if line not in output)
+    streams = output + "\n" + errors
+    missing = sorted(line for line in EXPECTED_INTERNAL_CUTS if line not in streams)
     if missing:
         raise ProviderError("R1 did not report every internal CAS SIGKILL cut")
-    if output.count("INT02 CAS round=") != len(EXPECTED_INTERNAL_CUTS):
-        raise ProviderError("R1 internal CAS cut count differs from the required matrix")
+    if streams.count("INT02 CAS round=") != len(EXPECTED_INTERNAL_CUTS):
+        raise ProviderError(
+            "R1 internal CAS cut count differs from the required matrix"
+        )
 
 
 def qualify(ctx: Context, run=None) -> int:
@@ -142,7 +153,7 @@ def qualify(ctx: Context, run=None) -> int:
     check_binding(ctx, child, env)
     if completed.returncode != 0:
         return completed.returncode
-    validate_output(completed.stdout)
+    validate_output(completed.stdout, completed.stderr)
     check_result_path(ctx)
     payload = {
         "schema": "jope.rel07.gate-execution/v1",
