@@ -183,8 +183,16 @@ else:
         ("recent_development.csv", "Rounds 2005–2024"),
         ("followup_development.csv", "Rounds 2082–2101"),
         ("later_development.csv", "Rounds 2343–2362"),
-        ("live_development.csv", "Rounds 2644–2663"),
+        ("subsequent_window.csv", "Rounds 2508–2527"),
     ]
+    # Authenticate every panel input before constructing or replacing outputs.
+    figure_inputs = {}
+    for csv_name, _ in window_specs:
+        input_path = FIGURES / "data" / csv_name
+        input_hash = hashlib.sha256(input_path.read_bytes()).hexdigest()
+        source = json.loads(input_path.with_suffix(".provenance.json").read_text())
+        assert input_hash == source["csv_sha256"], f"CSV hash mismatch: {csv_name}"
+        figure_inputs[csv_name] = input_hash
     fig, axes = plt.subplots(2, 4, figsize=(6.8, 2.85), sharex="col", sharey="row")
     for col, (csv_name, title_prefix) in enumerate(window_specs):
         with (FIGURES / "data" / csv_name).open() as stream:
@@ -196,7 +204,13 @@ else:
         has_wall = "completed_round_wall_seconds" in w_rows[0]
         w_wall = sum(float(r["completed_round_wall_seconds"]) for r in w_rows) if has_wall else None
         w_adm = sum(int(r["adapter_accepted"]) for r in w_rows)
+        assert len(w_rows) == 20
         assert w_rounds == list(range(w_rounds[0], w_rounds[-1] + 1))
+        assert all(v >= 0 for v in w_counts)
+        assert all(math.isfinite(v) for v in w_cand + w_best)
+        if has_wall:
+            assert all(math.isfinite(float(r["completed_round_wall_seconds"]))
+                       and float(r["completed_round_wall_seconds"]) > 0 for r in w_rows)
         assert w_adm == 0
         ax_top = axes[0, col]
         ax_bot = axes[1, col]
@@ -234,5 +248,14 @@ if PROVENANCE.exists():
     provenance["figure_sha256"] = hashlib.sha256(OUTPUT.read_bytes()).hexdigest()
     provenance["extraction_script_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     provenance["matplotlib_version"] = matplotlib.__version__
+    if not wide:
+        provenance["figure_input_sha256"] = figure_inputs
+        provenance["figure_definition"] = {
+            "columns": [title for _, title in window_specs],
+            "top": "Strict training-program incumbent events per completed round",
+            "bottom": "Candidate and recorded-best adapter validation pool utility",
+            "selection": "Four separate complete 20-round windows; no interpolation across gaps",
+            "omitted_duplicate": "Rounds 2644–2663 are shown only in the main-text rate/utility figure",
+        }
     PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 print(f"{len(rows)} summary rounds; {sum(counts)} strict program promotions")
