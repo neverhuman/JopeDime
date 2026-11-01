@@ -55,7 +55,33 @@ fn the_committed_lock_is_current() {
     assert!(acknowledgement.contains("REL-07 T0115 D3"));
     assert!(acknowledgement.contains("Internal qualification and rehearsal candidates only"));
     assert!(acknowledgement.contains("Public distribution | Excluded"));
-    // The accepted closure's five tensor files, as the specification inventories them.
+    let r882 = full
+        .components
+        .iter()
+        .find(|component| component.id == "r882-regression-adapter")
+        .expect("the full profile resolves the owner-selected r882 adapter");
+    assert_eq!(r882.bundle_id, "r882-regression");
+    assert_eq!(r882.files.len(), 1);
+    assert_eq!(r882.files[0].path, "jope.safetensors");
+    assert_eq!(
+        r882.files[0].sha256,
+        "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c"
+    );
+    assert_eq!(r882.files[0].bytes, 7_499_888);
+    let r882_manifest: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(repo.join("models/bundles/r882-regression.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        r882_manifest["export"]["bundle_digest"],
+        "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc"
+    );
+    assert!(!full
+        .components
+        .iter()
+        .any(|component| component.bundle_id == "policy-step-60000"));
+
+    // Three encoder tensors plus the pinned r882 safetensors adapter remain in the closure.
     let tensors: u64 = full
         .components
         .iter()
@@ -63,7 +89,7 @@ fn the_committed_lock_is_current() {
         .filter(|f| f.path.ends_with(".safetensors"))
         .map(|f| f.bytes)
         .sum();
-    assert_eq!(tensors, 438_062_296);
+    assert_eq!(tensors, 325_949_288);
 }
 
 fn write_profile(dir: &Path, name: &str, body: &str) -> PathBuf {

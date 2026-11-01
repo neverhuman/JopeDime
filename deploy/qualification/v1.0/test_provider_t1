@@ -2,6 +2,7 @@
 """Data-free T1-provider controls; fixture children are not release results."""
 
 import contextlib
+from dataclasses import replace
 import hashlib
 import importlib
 import io
@@ -170,6 +171,96 @@ class T1Tests(unittest.TestCase):
             self.invoke()
         self.assertEqual(self.ctx.result.read_bytes(), b"prior receipt")
         self.assertEqual(self.test_calls, 0)
+
+    def test_duplicate_mixed_and_extra_named_case_output_is_refused(self):
+        original = self.run_child
+        for mode in ["duplicate", "mixed", "extra-case", "failed-label"]:
+            self.test_calls = 0
+
+            def child(args, mode=mode, **kwargs):
+                if args[:2] == ["cargo", "test"]:
+                    name = t1.TESTS[self.test_calls]
+                    summary = "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n"
+                    self.output_override = f"test {name} ... ok\n" + summary
+                    if mode == "duplicate":
+                        self.output_override += summary
+                    elif mode == "mixed":
+                        self.output_override += "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out\n"
+                    elif mode == "extra-case":
+                        self.output_override = (
+                            f"test {name} ... ok\ntest other::case ... ok\n" + summary
+                        )
+                    else:
+                        self.output_override = self.output_override.replace(
+                            "result: ok.", "result: FAILED."
+                        )
+                return original(args, **kwargs)
+
+            self.run_child = child
+            with self.subTest(mode=mode), self.assertRaises(ProviderError):
+                self.invoke()
+            self.assertEqual(self.test_calls, 1)
+            self.assertFalse(self.ctx.result.exists())
+
+    def test_same_byte_candidate_symlink_replacement_is_refused(self):
+        saved = self.root / "same-bytes"
+        saved.write_bytes(self.artifact.read_bytes())
+
+        def substitute():
+            if not self.artifact.is_symlink():
+                self.artifact.unlink()
+                self.artifact.symlink_to(saved)
+
+        self.after_test = substitute
+        with self.assertRaisesRegex(ProviderError, "no symlinks"):
+            self.invoke()
+        self.assertEqual(self.test_calls, 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_valid_nocapture_interleaving_passes_all_three_cases(self):
+        original = self.run_child
+
+        def child(args, **kwargs):
+            if args[:2] == ["cargo", "test"]:
+                name = t1.TESTS[self.test_calls]
+                self.output_override = (
+                    f"test {name} ... diagnostic from the selected case\nok\n\n"
+                    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n"
+                )
+            return original(args, **kwargs)
+
+        self.run_child = child
+        self.assertEqual(self.invoke(), 0)
+        self.assertEqual(self.test_calls, 3)
+        self.assertEqual(json.loads(self.ctx.result.read_text())["counts"]["passed"], 3)
+
+    def test_nonfiles_and_relative_inputs_refuse_before_child_calls(self):
+        directory = self.root / "directory"
+        directory.mkdir()
+        fifo = self.root / "fifo"
+        os.mkfifo(fifo)
+        for path in [directory, fifo, Path("relative")]:
+            with self.subTest(path=path), self.assertRaises(ProviderError):
+                t1.qualify(replace(self.ctx, artifact=path), run=self.run_child)
+        self.assertEqual(self.calls, [])
+
+    def test_symlinked_input_or_evidence_parent_is_refused(self):
+        alias = self.root / "alias"
+        alias.symlink_to(self.root, target_is_directory=True)
+        for ctx in [
+            replace(self.ctx, artifact=alias / self.artifact.name),
+            replace(self.ctx, result=alias / "new.json"),
+        ]:
+            with self.subTest(ctx=ctx), self.assertRaises(ProviderError):
+                t1.qualify(ctx, run=self.run_child)
+        self.assertEqual(self.calls, [])
+
+    def test_result_created_during_child_is_retained_and_stops_next_case(self):
+        self.after_test = lambda: self.ctx.result.write_bytes(b"existing evidence")
+        with self.assertRaises(ProviderError):
+            self.invoke()
+        self.assertEqual(self.test_calls, 1)
+        self.assertEqual(self.ctx.result.read_bytes(), b"existing evidence")
 
 
 if __name__ == "__main__":
