@@ -103,6 +103,14 @@ fn trusted() -> Vec<jope_assets::TrustedKey> {
     vec![development_key()]
 }
 
+#[cfg(target_os = "macos")]
+#[test]
+fn open_self_resolves_the_running_executable_on_macos() {
+    // Cargo's test executable is not an asset package; reaching it proves the
+    // portable executable lookup succeeded and correctly reports no footer.
+    assert!(Package::open_self().unwrap().is_none());
+}
+
 #[test]
 fn round_trip_returns_every_asset_exactly_and_covers_every_byte() {
     let dir = tempfile::tempdir().unwrap();

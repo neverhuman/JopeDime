@@ -1,4 +1,39 @@
 {
+  "a6": {
+    "amendment": "AMENDMENT_A6.md",
+    "attempts_disclosed_through": 12,
+    "closeout": {
+      "attempt": 13,
+      "cells_completed": 0,
+      "custody_receipt_sha256": "f7afe8fad12b1ee9bad080250c2b723fa5a01d222644076dab55cf88a8fc9303",
+      "expected_family_utility_rounded": 1.1377942,
+      "host": "xbabe2",
+      "observed_family_utility_rounded": 1.1255361,
+      "optimizer_updates": 0,
+      "retry_authorized": false,
+      "run_manifest_sha256": "37aee7ef8fcf8a9b876e37ad304f91fc5ff45d25f37e4bc0bddf9e7141ddad9f",
+      "s3_custody_blocker": "AWS credentials unavailable",
+      "s3_custody_uploaded": false,
+      "status": "INCOMPLETE_BASELINE_UTILITY_MISMATCH"
+    },
+    "launch_budget_seconds": 14400,
+    "merge_receipt_schema": "jope.h133.a6.merge_receipt/v1",
+    "owner_rulings": [
+      "h133_t1630.md",
+      "h133_t1715.md"
+    ],
+    "qualification_lock_deviation_attempt": 12,
+    "regression_gate_family_utility_exact": 1.1377942,
+    "seed_135_replaced_by": 138,
+    "unscored_optimizer_updates": {
+      "attempt_010_CONTROL_seed133": 40,
+      "attempt_012_LOWLR_LONG_seed133": 100
+    }
+  },
+  "a6_executor_sha256": {
+    "launcher.py": "d5cbb5f7fb62e6853847b4c85b62fab5bdd1522c6c05225e0e88aa0276c3794e",
+    "runner.py": "0143f42efc3d20f962fe02065c601e0ddde69bedd4bbf1cb024fa6a045b966c1"
+  },
   "arms": {
     "CONTROL": {
       "lr": 0.0001,
@@ -89,7 +124,7 @@
     "updates_per_trajectory": 160
   },
   "custody": "/home/ubuntu/jope-rescue-20260921/h133-optim-geometry",
-  "execution_gate": "Main study execution only after preregistration merge; unchanged-r882 fold-0 exact regression-first gate before main arm cells",
+  "execution_gate": "A6 must merge; exact r882 regression must match family utility 1.1377942 before any treatment cell",
   "fold": {
     "assessment_contexts": 245,
     "assessment_families": 41,
@@ -109,7 +144,7 @@
   "fold_seed": 133100,
   "hypothesis": "LOWLR_LONG (AdamW LR x0.25 for 160 updates) or SGDM with fit-drift-matched fixed LR can improve family utility while limiting harm versus unchanged r882.",
   "planned_main_optimizer_updates": 720,
-  "prereg_sha256": "40d40118255b308b3da5ad4f11c5c79c73f7bbdbdd0d8605aa68d8b102d125af",
+  "prereg_sha256": "c068e0a33af650378cede0d545f480b53b99a31aae90eca1ab769c90f597a8d4",
   "primary": {
     "admission": {
       "all_three_seed_mean_gains_strictly_gt": 0.0,
@@ -138,6 +173,15 @@
     "cpu_only": true,
     "disk_used_percent_strictly_below": 93.8,
     "dl_val_outer_sealed_holdout_payload_reads": 0,
+    "load_mem_policy": {
+      "four_hour_wall_budget_includes_pause_time": true,
+      "other_resource_guards": "hard_abort",
+      "pause_sigstop_if_load1_gt": 86.7,
+      "pause_sigstop_if_mem_available_bytes_lt": 32212254720,
+      "resume_conditions_stable_seconds": 60,
+      "resume_sigcont_if_load1_lt": 80.0,
+      "resume_sigcont_if_mem_available_bytes_gte": 36507222016
+    },
     "max_load1": 86.7,
     "max_rss_bytes": 6442450944,
     "max_scratch_bytes": 2147483648,
@@ -157,12 +201,12 @@
   "seed_use_verified_unused": [
     133,
     134,
-    135
+    138
   ],
   "seeds": [
     133,
     134,
-    135
+    138
   ],
   "source": {
     "contexts": 1219,
@@ -172,7 +216,7 @@
     "train_only_export_sha256": "ffe506f68d7aade13a7eef6f0cf55d6e79b200dd5e742f8f035dccd0ee27e3ff"
   },
   "source_base": "b140c2adc17786e73ca5c13e2fb589a0be0f6c55",
-  "status": "READY_FOR_PREREGISTRATION_NOT_RUN",
+  "status": "A6_ATTEMPT_013_INCOMPLETE_REGRESSION_MISMATCH_NO_TREATMENT",
   "train_only_export_sha256": "ffe506f68d7aade13a7eef6f0cf55d6e79b200dd5e742f8f035dccd0ee27e3ff",
   "wave": "H133"
 }

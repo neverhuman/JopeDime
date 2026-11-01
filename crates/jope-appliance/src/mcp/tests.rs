@@ -601,7 +601,7 @@ async fn invalid_arguments_side_effect_guards_notifications_and_version_exclusio
             wire.tool("unknown_tool", json!({})).await["error"]["code"],
             -32602
         );
-        let result=wire.tool("model_export",json!({"run_id":RUN,"kind":"bundle","languages":["rust"],"out_dir":"/must-not-be-written","idempotency_key":"blocked"})).await;
+        let result=wire.tool("model_export",json!({"run_id":RUN,"kind":"bundle","languages":["rust"],"out_dir":"/nonexistent-jope-parent/must-not-be-written","idempotency_key":"blocked"})).await;
         assert_eq!(result["result"]["isError"], true);
         assert_eq!(wire.backend.requests.lock().unwrap().len(), count);
         wire.finish("invalid").await;
@@ -891,6 +891,49 @@ async fn generated_input_and_success_error_output_schemas_validate_actual_wire_v
             .iter()
             .find(|tool| tool["name"] == name)
             .unwrap();
+        if name == "run_start" {
+            // The generated DecimalU64 schemas use ECMA-262's end-of-input
+            // look-ahead. The Rust regex crate cannot parse that syntax directly;
+            // the shared schema validator must translate it without weakening the
+            // full-string constraint.
+            let mut pending = vec![&schema["inputSchema"]];
+            let mut checked_end_lookaheads = 0;
+            while let Some(node) = pending.pop() {
+                match node {
+                    Value::Object(fields) => {
+                        if let Some(Value::String(pattern)) = fields.get("pattern") {
+                            if pattern.contains("(?![\\s\\S])") {
+                                let pattern_schema = json!({"type": "string", "pattern": pattern});
+                                assert!(
+                                    jope_datasets::schema::validate(
+                                        &pattern_schema,
+                                        &json!("0")
+                                    )
+                                    .is_empty(),
+                                    "generated DecimalU64 pattern rejected a valid value: {pattern}"
+                                );
+                                assert!(
+                                    !jope_datasets::schema::validate(
+                                        &pattern_schema,
+                                        &json!("0\n")
+                                    )
+                                    .is_empty(),
+                                    "generated DecimalU64 pattern accepted a trailing newline: {pattern}"
+                                );
+                                checked_end_lookaheads += 1;
+                            }
+                        }
+                        pending.extend(fields.values());
+                    }
+                    Value::Array(items) => pending.extend(items),
+                    _ => {}
+                }
+            }
+            assert!(
+                checked_end_lookaheads > 0,
+                "run_start input schema did not expose a DecimalU64 look-ahead pattern"
+            );
+        }
         let errors = jope_datasets::schema::validate(&schema["inputSchema"], &args);
         assert!(errors.is_empty(), "{name} input: {errors:?}");
         let result = wire.tool(name, args).await;

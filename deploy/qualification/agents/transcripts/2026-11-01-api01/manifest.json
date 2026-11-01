@@ -1,0 +1,84 @@
+{
+  "schema": "mcp05.named-client-transcript-package/v1",
+  "runtime_source": "72ed48163b5deb911e3b8e49ba9f860b793cf600",
+  "runtime_binary_sha256": "ff0aad38bdc953fc905f7826609d5459a0bda9e8937d93a901acaf7ca88184f7",
+  "gemini_disposition": "WATCHER_PROVISIONAL_WAIVER_NOT_INSTALLED",
+  "a5": "NOT_QUALIFIED",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 2342,
+      "sha256": "7545708e78d3d83522c1dc2597b542b6435d9ea9dc47805f2ce27ffb3fda9b8d"
+    },
+    {
+      "path": "TEST-INVENTORY-V6.json",
+      "bytes": 14823,
+      "sha256": "d2f30372148b10b270d84a586293b8c5e36f158570af0630ebe0e19711a98661"
+    },
+    {
+      "path": "claude/client-tools.jsonl",
+      "bytes": 19155,
+      "sha256": "29450de2644501f519c79e1d9f795db33fbfd8b82ec14735f6d232fa9c71f0e0"
+    },
+    {
+      "path": "claude/prompt.txt",
+      "bytes": 3659,
+      "sha256": "c2276714e2e94abf224b43e57edaeeae42dcaf4fa6caa65fa29133abf4ea584b"
+    },
+    {
+      "path": "claude/result.json",
+      "bytes": 5393,
+      "sha256": "f24c5537c44f2bed6e5058639d6cfc917310ae32bef6adb93d237e1eb6ebb001"
+    },
+    {
+      "path": "claude/wire.jsonl",
+      "bytes": 229970,
+      "sha256": "f5eb73ffea76c86a45dd66572923e05b2bb237d50d8e4d8a7f0cc6ff30ac8092"
+    },
+    {
+      "path": "codex/client-tools.jsonl",
+      "bytes": 21458,
+      "sha256": "426472b9cf2852c2fca94f5f897b52a3b0fa626014a60b0810a8026576f2a186"
+    },
+    {
+      "path": "codex/export-retry-supplement/capture/wire.jsonl",
+      "bytes": 208577,
+      "sha256": "91882828d629d9f409e548cae965cd760a596d3439e62b4c133efbfe00e4e9af"
+    },
+    {
+      "path": "codex/export-retry-supplement/client-tools.jsonl",
+      "bytes": 4523,
+      "sha256": "7549a4e9f766abfdbe2fab04a23914b430bd08c81507d6a7bfcdfdb9e66acb71"
+    },
+    {
+      "path": "codex/export-retry-supplement/prompt.txt",
+      "bytes": 1158,
+      "sha256": "fc16ea4c6c76c3e18bb53132237016d28234270a04ec30636a5b92b5ddacc4d7"
+    },
+    {
+      "path": "codex/export-retry-supplement/result.json",
+      "bytes": 1632,
+      "sha256": "4e0678dc1a3a152ce3a764cff7ee917062121668fbdd5e8777739e16773b80b9"
+    },
+    {
+      "path": "codex/prompt.txt",
+      "bytes": 3652,
+      "sha256": "36fbb07314e8889e44b2d5f91d9842217d23ff6a36ef7b85aa9fa3d4d61b4da2"
+    },
+    {
+      "path": "codex/result.json",
+      "bytes": 7215,
+      "sha256": "caf781dd091cbfbf4ec5515759bf8d3831c7b17154688fa5de9ce30fef354644"
+    },
+    {
+      "path": "codex/wire.jsonl",
+      "bytes": 233019,
+      "sha256": "a6c6101538c80a05433043450e93b7a0bdb9c7714e496103525fbdcbaa68b70b"
+    },
+    {
+      "path": "gemini-waiver.json",
+      "bytes": 470,
+      "sha256": "1ef4a2a9af654e44c71c74ceb52db57ead5dfd1c2611f20c4b291df169de02dd"
+    }
+  ]
+}

@@ -439,7 +439,7 @@ stateDiagram-v2
 | `cancelled` | Terminal. The best committed model stays available. | |
 | `failed` | Terminal. `failure` carries a catalog code; the best committed model stays available. | |
 
-**Crash recovery.** On engine start, any run in `running` or `pausing` is moved to `paused{interrupted:true}` at its last committed round; `tmp/` is emptied; every artifact referenced by a committed record is verified. `\continue` resumes. Uncommitted work did not happen and is recomputed with the same seeds (§5.6).
+**Crash recovery.** On engine start, any run in `running` or `pausing` is moved to `paused{interrupted:true}` at its last committed round; `tmp/` is emptied; every artifact referenced by a committed record is verified. `\continue` resumes. Uncommitted work did not happen and is recomputed with the same seeds (§5.6). Continue retains the original plan, binary identity and remaining budget; its state change and retry response commit together. An interrupted finalization attempt retains an unknown outcome. Automatic replay cannot reread its assessment rows; an explicit Continue can authorize a new finalization attempt after durably retaining the prior unknown attempt.
 
 **Fencing.** Each evaluation dispatch carries `(run_id, round, slot, attempt)`. A result for a revoked `attempt` (cancel, pause deadline, crash) is discarded. An effort change does not revoke in-flight attempts.
 
@@ -552,7 +552,7 @@ finalize: refit champion on FIT -> HOLDOUT score; refit on FIT+HOLDOUT -> export
 ### 5.6 Determinism contract
 
 - **Guarantee.** Given the same `ProblemDigest`, `BundleDigest`, seed, `budget.evaluations`, planned `R`, plan limits and binary version, the champion, its `ModelDigest` and the **deterministic projection** of the durable event log are bit-identical regardless of how many workers are alive, pauses, crashes, recoveries and client reconnects.
-- **Deterministic projection:** every durable event with `time` removed, and without warnings marked `host: true` (warnings caused by the host, such as memory pressure or disk space).
+- **Deterministic projection (owner ruling `rulings_t1900` R2, 2026-10-31):** every durable event with top-level `run_id` and `time`, and `body.budget_used.wall_seconds`, removed, and without warnings marked `host: true` (warnings caused by the host, such as memory pressure or disk space). Experiment IDs derive from `ProblemDigest` plus evaluation ordinal; `ModelDigest` derives from predictor semantics. Per-run provenance and measured operational accounting remain in the original events, snapshots and run receipts, outside the canonical digest.
 - **Why it holds:** evaluations are pure functions of `(DSL, data matrix, folds, seed)`; budget is counted at admission; RNG streams are derived as `sha256(seed ‖ round)`; results are applied in `(round, slot)` order; per-worker memory limits are fixed in the plan, not derived from the live worker count; fits use a fixed per-worker thread count.
 - **Explicit exception:** an evaluation that hits its wall-clock or memory limit is inherently machine-dependent. Every such evaluation is recorded in the run receipt under `nondeterminism` (count and experiment IDs), so a reader knows exactly when the guarantee was not in force.
 - A wall-clock budget (`budget.wall_seconds` or an effort time cap) stops at a round boundary that can differ between machines; the receipt records `budget_bound_by: time | evaluations`.

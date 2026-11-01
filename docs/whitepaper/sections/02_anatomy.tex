@@ -6,7 +6,7 @@
 % Table 1 is defined at the start of the section so that the full-width
 % float can reach the top of the page where Section 2.2 discusses it.
 \begin{table*}[t]
-  \caption{\textbf{A four-part reading of traditions of discovery.} A dash marks a pillar outside a tradition's scope: Wallas analyzed a single act of thought. For Darwin and Campbell, the aim is a criterion set by the environment. Engineering is the design--build--test--learn cycle \citep{nielsen2016engineering}; AlphaGo Zero follows \citet{silver2017mastering}; \EZ{} is defined in \cref{sec:game,sec:method}.}
+  \caption{\textbf{A four-part reading of traditions of discovery.} A dash marks a pillar outside a tradition's scope: Wallas analyzed a single act of thought. For Darwin and Campbell, the aim is a criterion set by the environment. Engineering is the design--build--test--learn cycle \citep{nielsen2016engineering}; AlphaGo Zero follows \citet{silver2017mastering}; \EZ{} is the reference design (\cref{sec:game,sec:method}).}
   \label{tab:pillars}
   \centering
   \small
@@ -29,9 +29,9 @@
 \end{table*}
 
 We organize innovation into four roles: aim, variation, judgment and
-retention. They connect a proposed program to its evaluation and to what
-the next attempt can learn. We call judgment learned before the next attempt
-\emph{taste}, and ask whether it can improve the first proposal.
+retention. Together they connect a proposal, its evaluation and what the
+next attempt retains. We call judgment learned before a try \emph{taste},
+and ask whether it can improve the first proposal.
 
 \subsection{Novelty is free}\label{sub:anatomy-novelty}
 
@@ -126,14 +126,12 @@ improves algorithm invention must be measured in the innovation game.
 
 Machines do not remove the pillars; they move them (\cref{tab:where}). The most ambitious swarm design fits the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, the map is retention; the model of reality, the twins and the laboratories are faster and better judgment; and the agents supply variation and critique.
 
-Agent search and learning from a referee are complementary. A search can
-retain programs, revise its context or update its proposer; calling it a
-swarm does not determine which of these it does. The comparison in
-\cref{tab:where} therefore isolates a common deployment setting in which
-search leaves the proposer's weights fixed. \EZ{} instead aims to use
-training evaluations to improve the proposer before a new problem arrives.
-Both approaches still need a reliable referee, and the cost of training
-must be counted alongside any saving at deployment.
+Agent search can retain programs, revise its context or update its
+proposer. The label \emph{swarm} does not specify which it does. The
+comparison in \cref{tab:where} isolates deployment with fixed proposer
+weights; \EZ{} aims to improve the proposer through training before a new
+problem arrives. Both need a reliable referee, and training costs belong
+in any account of deployment savings.
 
 \begin{table}[t]
   \caption{\textbf{Where feedback can be retained.} The agent-search column describes

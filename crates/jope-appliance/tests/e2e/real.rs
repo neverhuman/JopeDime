@@ -1,5 +1,5 @@
-//! Real native runs and actual transports. The five-surface case shares one
-//! idempotent run; it does not claim determinism of independently created runs.
+//! Real native runs through all five transports: same-run retries retain raw
+//! values, and five distinct runs are compared under the accepted R2 field map.
 use super::*;
 use anyhow::{bail, ensure, Context, Result};
 use jope_client::{Http, InProcess, RunResult, Transport};
@@ -85,7 +85,8 @@ fn spec(dataset: jope_api::ids::DatasetId) -> RunSpec {
     spec.guidance = jope_api::Guidance::Auto;
     spec.device = "auto".into();
     spec.seed = DecimalU64(73);
-    spec.budget.wall_seconds = Some(DecimalU64(30));
+    spec.budget.evaluations = Some(DecimalU64(1));
+    spec.budget.wall_seconds = Some(DecimalU64(120));
     spec
 }
 fn initialize(home: &Path, bytes: &[u8]) -> Result<(Arc<InProcessEngine>, RunSpec)> {
@@ -147,7 +148,7 @@ fn batch_command(home: &Path, spec: &RunSpec) -> Command {
             "--effort",
             "fast",
             "--budget",
-            r#"{"evaluations":"4","wall_seconds":"30"}"#,
+            r#"{"evaluations":"1","wall_seconds":"120"}"#,
             "--landmarks",
             "none",
             "--guidance",
@@ -442,6 +443,7 @@ fn terminal(
     csv: &Path,
     id: &jope_api::ids::RunId,
     projection: &Projection,
+    key: &str,
 ) -> Result<String> {
     // Read expectations from the committed journal, independently of the renderer.
     // Public transcript scores use three decimal places (§6.2).
@@ -490,11 +492,20 @@ fn terminal(
             }
         }
     });
-    let commands=format!("\\landmarks none\n\\lang rust\n\\target target --task regression\n\\effort fast --evals 4 --time 30s\n\\open {}\n\\run --seed 73 --idempotency-key {KEY}\n\\attach {id}\n",csv.display());
+    let attach = if key == KEY {
+        format!("\\attach {id}\n")
+    } else {
+        String::new()
+    };
+    let commands=format!("\\landmarks none\n\\lang rust\n\\target target --task regression\n\\effort fast --evals 1 --time 120s\n\\open {}\n\\run --seed 73 --idempotency-key {key}\n{attach}",csv.display());
     writer.write_all(commands.as_bytes())?;
     writer.flush()?;
     let deadline = Instant::now() + Duration::from_secs(40);
-    let marker = format!("run {id} started");
+    let marker = if key == KEY {
+        format!("run {id} started")
+    } else {
+        " started".into()
+    };
     let mut bytes = vec![];
     let result = (|| -> Result<String> {
         loop {
@@ -612,6 +623,35 @@ fn ndjson_receipt(
     Ok(())
 }
 
+fn wait_complete<T: Transport>(client: &T, run: &jope_api::ids::RunId) -> Result<()> {
+    let deadline = Instant::now() + Duration::from_secs(150);
+    loop {
+        let snapshot = client.run_status(run)?;
+        if snapshot.state == jope_api::RunState::Completed {
+            return Ok(());
+        }
+        ensure!(
+            snapshot.state != jope_api::RunState::Failed,
+            "independent run failed"
+        );
+        ensure!(Instant::now() < deadline, "independent run timed out");
+        thread::sleep(Duration::from_millis(25));
+    }
+}
+
+fn start_independent<T: Transport>(
+    client: &T,
+    spec: &RunSpec,
+    key: &str,
+    surface: Surface,
+) -> Result<SurfaceCapture> {
+    let RunResult::Started(snapshot) = client.run_start(spec, Some(key))? else {
+        bail!("independent run returned a dry plan")
+    };
+    wait_complete(client, &snapshot.run_id)?;
+    capture(client, surface, &snapshot.run_id)
+}
+
 pub(super) fn shared_run_surfaces() -> Result<()> {
     let bytes = input()?;
     let (server, spec) = Server::start(&bytes)?;
@@ -659,7 +699,7 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     );
     let csv = server.home.path().join("original-label.csv");
     fs::write(&csv, &bytes)?;
-    let transcript = terminal(server.home.path(), &csv, id, &captures[0].projection)?;
+    let transcript = terminal(server.home.path(), &csv, id, &captures[0].projection, KEY)?;
     ensure!(
         transcript.contains(&format!("run {id} started")),
         "PTY omitted actual run result"
@@ -673,6 +713,81 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
         "surface retries created duplicate runs"
     );
     assert_equivalent(&captures).map_err(anyhow::Error::msg)?;
+    let mut independent = vec![captures[0].clone()];
+    independent.push(start_independent(
+        &server.client,
+        &spec,
+        "int01-independent-http",
+        Surface::LoopbackHttp,
+    )?);
+    independent.push(start_independent(
+        &inproc,
+        &spec,
+        "int01-independent-inproc",
+        Surface::InProcess,
+    )?);
+    let mut args = serde_json::to_value(&spec)?;
+    args["idempotency_key"] = json!("int01-independent-mcp");
+    let started: RunSnapshot = serde_json::from_value(rpc.tool("run_start", args)?)?;
+    wait_complete(&server.client, &started.run_id)?;
+    let snapshot =
+        serde_json::from_value(rpc.tool("run_status", json!({"run_id":started.run_id}))?)?;
+    let page = rpc.tool(
+        "run_events",
+        json!({"run_id":started.run_id,"after":"0","limit":256}),
+    )?;
+    independent.push(
+        SurfaceCapture::from_observation(
+            Surface::Mcp,
+            snapshot,
+            serde_json::from_value(page["events"].clone())?,
+        )
+        .map_err(anyhow::Error::msg)?,
+    );
+    let first_run_terminal = terminal(
+        server.home.path(),
+        &csv,
+        id,
+        &captures[0].projection,
+        "int01-independent-terminal",
+    )?;
+    let inventory = server.client.runs()?;
+    let existing: Vec<_> = independent
+        .iter()
+        .map(|c| &c.projection.events[0].run_id)
+        .collect();
+    let new_runs: Vec<_> = inventory
+        .runs
+        .iter()
+        .filter(|r| !existing.contains(&&r.run_id))
+        .collect();
+    ensure!(
+        new_runs.len() == 1 && inventory.runs.len() == 5 && inventory.next_after.is_none(),
+        "independent surfaces did not create exactly five runs"
+    );
+    let terminal_id = &new_runs[0].run_id;
+    ensure!(
+        first_run_terminal.contains(&format!("run {terminal_id} started")),
+        "terminal did not initiate its independent run"
+    );
+    independent.push(capture(&server.client, Surface::Terminal, terminal_id)?);
+    for capture in &independent {
+        let value = serde_json::to_value(capture.projection.events.last().unwrap())?;
+        ensure!(
+            value["body"]["nondeterminism"]["count"] == "0",
+            "independent S1 run hit a limit exception"
+        );
+    }
+    assert_independent_equivalent(&independent).map_err(anyhow::Error::msg)?;
+    if let Some(root) = std::env::var_os("JOPE_INT01_RECEIPTS") {
+        let root = PathBuf::from(root);
+        fs::write(root.join("independent-terminal.txt"), first_run_terminal)?;
+        let raw: Vec<_> = independent.iter().map(|c| json!({"surface":c.surface.name(),"champion":c.projection.champion,"scores":c.projection.scores,"events":c.projection.events,"r2_projection":canonical_events(&c.projection.events)})).collect();
+        fs::write(
+            root.join("independent-five-surfaces.json"),
+            serde_json::to_vec_pretty(&raw)?,
+        )?;
+    }
     ensure!(
         captures[0]
             .projection

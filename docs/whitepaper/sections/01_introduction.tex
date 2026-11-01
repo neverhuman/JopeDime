@@ -146,9 +146,8 @@ Zero analogy concerns the additional training feedback from the referee.
 \end{figure}
 
 \paragraph{Engineered intelligence.}
-Each of the four pillars in \cref{sec:anatomy} is a specified component of
-\EZ{} that can be inspected and tested: aim, variation, judgment and
-retention. The aim is a declared task and metric. Variation comes from a
+The reference design makes each of the four pillars in \cref{sec:anatomy}
+an inspectable component of \EZ{}: aim, variation, judgment and retention. The aim is a declared task and metric. Variation comes from a
 grammar-constrained program writer. Judgment is a referee that scores each
 program on folds withheld from its fit. Retention uses two ratchets. A
 board's incumbent changes only on strict improvement. A retrained
@@ -172,9 +171,9 @@ typed language of learning primitives.
     on many boards (\cref{sec:game}).
   \item \textbf{The economics of algorithmic self-play:} a cost model for
     training and for the cost per verified improvement (\cref{sec:price}).
-  \item \textbf{\EZ{}:} a learner with a frozen problem encoder, a grammar-constrained
-    program writer and a separate problem--program map, trained by expert
-    iteration on referee scores, with safeguards against reward hacking
+  \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,
+    a grammar-constrained program writer and a separate problem--program map,
+    plus an expert-iteration procedure and safeguards against reward hacking
     (\cref{sec:method}).
   \item \textbf{An evaluation protocol for the single-proposal claim:}
     paired comparisons with frozen algorithms whose receipts record the
@@ -184,15 +183,15 @@ typed language of learning primitives.
 \end{enumerate}
 
 \paragraph{What is and is not established.}
-The paper separates three kinds of evidence. The game, the learner and the
-evaluation protocol are specified here. Retained admission and program-promotion
-logs from later adapter training describe development behavior
-(\cref{sec:method-status}). The inspected loop optimizes only a ranking
+The game, learner and evaluation protocol are specified here. Retained
+admission and program-promotion logs describe later adapter training
+(\cref{sec:method-status}). The inspected loop trains only a ranking
 adapter and has no neural program writer; binding that source to these
-records remains pending. These records do not measure first-proposal
-quality on unseen problem families. For deployment, \cref{sec:results}
-specifies the comparisons. Their outcomes are not yet reported; we claim no
-advantage until they are.
+records remains pending. The native proposal path builds a search pool.
+Neither establishes first-proposal quality on unseen problem families.
+Single-candidate deployment still requires qualification. For deployment,
+\cref{sec:results} specifies the comparisons. Their outcomes are not yet
+reported; we claim no advantage until they are.
 
 \Cref{sec:anatomy} separates innovation's roles. We trace their AI building
 blocks (\cref{sec:road}), then define the game and learner.

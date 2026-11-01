@@ -712,6 +712,7 @@ struct StartCommand {
     identity: crate::idempotency::RequestIdentity,
     input_roots: Vec<BlobRef>,
     warnings: Vec<jope_api::Warning>,
+    resume: bool,
 }
 
 impl Discovery {
@@ -730,6 +731,7 @@ impl Discovery {
             identity,
             input_roots,
             warnings,
+            resume: false,
         });
         #[cfg(feature = "research")]
         {
@@ -738,6 +740,29 @@ impl Discovery {
         #[cfg(not(feature = "research"))]
         {
             Self::open_inner(store, plan, start)
+        }
+    }
+    /// Resume an owned paused run and atomically retain its public retry receipt.
+    pub(crate) fn continue_command(
+        store: Arc<Store>,
+        plan: Plan,
+        journal: Arc<EventLog>,
+        identity: crate::idempotency::RequestIdentity,
+    ) -> Result<Self> {
+        let command = Some(StartCommand {
+            journal,
+            identity,
+            input_roots: vec![],
+            warnings: vec![],
+            resume: true,
+        });
+        #[cfg(feature = "research")]
+        {
+            Self::open_inner(store, plan, None, command)
+        }
+        #[cfg(not(feature = "research"))]
+        {
+            Self::open_inner(store, plan, command)
         }
     }
     /// The caller exclusively owns this run and supplies a fresh worker pool on
@@ -783,10 +808,17 @@ impl Discovery {
             .map(|s| Arc::clone(&s.journal))
             .unwrap_or_else(|| Arc::new(EventLog::new(Arc::clone(&store))));
         let old = log.snapshot(&plan.run_id)?;
-        ensure!(
-            start.is_none() || old.is_none(),
-            "command cannot recreate an existing run"
-        );
+        if let Some(command) = &start {
+            ensure!(
+                if command.resume {
+                    old.as_ref()
+                        .is_some_and(|snapshot| snapshot.state == RunState::Paused)
+                } else {
+                    old.is_none()
+                },
+                "command requires a new run or an explicitly continued paused run"
+            );
+        }
         let (mut checkpoint, mut snapshot) = if let Some(snapshot) = &old {
             let record = store
                 .get(&RecordKey::Run(plan.run_id.clone()))?
@@ -921,7 +953,10 @@ impl Discovery {
                     if let Some(start) = &start {
                         tx.record_new_command(
                             &start.identity,
-                            crate::idempotency::CommandOutcome::json(201, initial_response)?,
+                            crate::idempotency::CommandOutcome::json(
+                                if start.resume { 200 } else { 201 },
+                                initial_response,
+                            )?,
                         )?;
                     }
                     Ok(())
@@ -967,8 +1002,8 @@ impl Discovery {
         }
     }
 
-    /// Search events only contain deterministic values. Elapsed wall usage is
-    /// available in the snapshot/receipt; DSC-09 owns run.finished/finalization.
+    /// Canonical event projection under owner ruling rulings_t1900 R2 (§5.6).
+    /// Operational envelopes and receipts retain run identity and elapsed usage.
     pub fn projection(&self) -> Result<Value> {
         let mut after = 0;
         let mut values = vec![];
@@ -980,10 +1015,23 @@ impl Discovery {
             after = page.next_after.0;
             for event in page.events {
                 let mut value = serde_json::to_value(event)?;
-                value
-                    .as_object_mut()
-                    .context("event is not an object")?
-                    .remove("time");
+                let envelope = value.as_object_mut().context("event is not an object")?;
+                envelope.remove("run_id");
+                envelope.remove("time");
+                if let Some(warnings) = value
+                    .get_mut("body")
+                    .and_then(|body| body.get_mut("warnings"))
+                    .and_then(Value::as_array_mut)
+                {
+                    warnings.retain(|warning| warning.get("host") != Some(&Value::Bool(true)));
+                }
+                if let Some(budget) = value
+                    .get_mut("body")
+                    .and_then(|body| body.get_mut("budget_used"))
+                    .and_then(Value::as_object_mut)
+                {
+                    budget.remove("wall_seconds");
+                }
                 if value
                     .get("body")
                     .and_then(|b| b.get("host"))
@@ -4021,19 +4069,13 @@ mod tests {
             .parent()
             .unwrap()
             .to_path_buf();
-        let mut libraries: Vec<_> = fs::read_dir(&deps)
-            .unwrap()
-            .filter_map(|p| p.ok())
-            .map(|p| p.path())
-            .filter(|p| {
-                p.file_name()
-                    .unwrap()
-                    .to_string_lossy()
-                    .starts_with("libjope_service-")
-                    && p.extension().is_some_and(|e| e == "rlib")
-            })
-            .collect();
-        libraries.sort_by_key(|p| std::cmp::Reverse(fs::metadata(p).unwrap().modified().unwrap()));
+        let library = std::env::var_os("JOPE_DSC_SERVICE_RLIB")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| deps.parent().unwrap().join("libjope_service.rlib"));
+        assert!(
+            library.is_file(),
+            "build the current service with cargo build -p jope-service --all-targets --locked"
+        );
         let source = directory.join("native-worker.rs");
         let binary = directory.join("native-worker");
         let pids = directory.join("worker-pids");
@@ -4044,24 +4086,44 @@ mod tests {
             ""=>"",_=>panic!("unknown owned fixture fault"),
         };
         fs::write(&source,format!("fn main() {{ std::fs::write(std::path::Path::new({:?}).join(std::process::id().to_string()), b\"native\").unwrap(); jope_service::worker::serve(1, |request,matrix| {{ {} jope_service::discover::r#loop::evaluate_native(request,matrix) }}).unwrap(); }}",pids,fault)).unwrap();
-        for library in libraries {
-            let output = Command::new("rustc")
-                .arg("--edition=2021")
-                .arg("--crate-name=dsc08_native_worker")
-                .arg(&source)
-                .arg("-L")
-                .arg(format!("dependency={}", deps.display()))
-                .arg("--extern")
-                .arg(format!("jope_service={}", library.display()))
-                .arg("-o")
-                .arg(&binary)
-                .output()
-                .unwrap();
-            if output.status.success() {
-                return binary;
-            }
+        let compiler = std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into());
+        let output = Command::new(&compiler)
+            .arg("--edition=2021")
+            .arg("--crate-name=dsc08_native_worker")
+            .arg(&source)
+            .arg("-L")
+            .arg(format!("dependency={}", deps.display()))
+            .arg("--extern")
+            .arg(format!("jope_service={}", library.display()))
+            .arg("-o")
+            .arg(&binary)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "exact current service artifact could not link native worker: {}\n{}",
+            library.display(),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        if let Some(receipt) = std::env::var_os("JOPE_DSC_RECEIPT_DIR") {
+            let compiler_version = Command::new(&compiler).arg("-vV").output().unwrap();
+            ensure_worker_receipt(&PathBuf::from(receipt), &library, &compiler_version.stdout);
         }
-        panic!("current jope-service library could not link native worker; build the library first with cargo build -p jope-service --locked");
+        binary
+    }
+
+    fn ensure_worker_receipt(receipt: &Path, library: &Path, compiler: &[u8]) {
+        fs::create_dir_all(receipt).unwrap();
+        fs::write(
+            receipt.join("native-worker-build.json"),
+            serde_json::to_vec_pretty(&json!({
+                "library": library, "sha256": digest(&fs::read(library).unwrap()),
+                "compiler": String::from_utf8_lossy(compiler),
+                "source": std::env::var("JOPE_BUILD_SOURCE_SHA").unwrap_or_default(),
+            }))
+            .unwrap(),
+        )
+        .unwrap();
     }
 
     fn pool(binary: &Path, workers: usize) -> ProcessExecutor {
@@ -4223,7 +4285,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "dedicated native process gate: first cargo build -p jope-service --locked, then run this exact test with --ignored"]
+    #[ignore = "dedicated native process gate: first cargo build -p jope-service --all-targets --locked, then run this exact test with --ignored"]
     fn real_native_workers_preserve_projection_across_capacity_pause_and_sigkill() {
         let directory = tempfile::tempdir().unwrap();
         let mut p = plan(directory.path(), 80, Effort::Medium, 25);

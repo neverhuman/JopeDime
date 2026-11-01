@@ -1,0 +1,13 @@
+This is an authorized actual Codex MCP-05 export-retry continuation.
+Use ONLY jopedime MCP tools. No shell/files/web, extra agents, source/auth changes.
+The same private store already has completed run run_01M6A892CCY9KCHNJ5CWGK4KKW.
+Do NOT call run_start or dataset_register, create another run, or fit anything.
+1. run_status {}: confirm exactly this one completed run.
+2. Call model_export with these EXACT original arguments and original key:
+{"run_id": "run_01M6A892CCY9KCHNJ5CWGK4KKW", "kind": "bundle", "languages": ["rust"], "out_dir": "/home/ubuntu/jope-data/mcp05-named-t1745/materialized-72ed48163b5d/codex/exported", "idempotency_key": "mcp05-t1745-codex-export"}
+3. Wait for that successful reply, then repeat the IDENTICAL model_export arguments.
+4. run_status {} again: confirm exactly the original one run remains.
+Stop. Keep real errors; no force, changed output directory, fabricated IDs or fallback.
+The observer captured the existing six-file tree before this client was launched.
+These are additional retries of the original export; there is zero new fit budget.
+Finish with a concise factual summary; no unwaived three-client A5 claim.

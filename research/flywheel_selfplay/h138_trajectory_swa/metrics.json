@@ -1,0 +1,405 @@
+{
+  "wave": "H138",
+  "status": "COMPLETE",
+  "optimizer_updates": 0,
+  "primary": {
+    "status": "COMPLETE",
+    "reference_family_utility": 1.3853554329931828,
+    "reference_context_utility": 1.423073434552299,
+    "reference_failure_count": 17,
+    "reference_elo": 1500,
+    "contexts": 1219,
+    "families": 205,
+    "fold_seeds": [
+      138181,
+      138182,
+      138183
+    ],
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 138100,
+    "permutation_draws": 10000,
+    "permutation_seed": 138101,
+    "arms": {
+      "SWA4_UNIFORM": {
+        "median_gain": 0.0035958544197280083,
+        "gain_by_fold_seed": [
+          0.0035958544197280083,
+          0.0035958544197280083,
+          0.0035958544197280083
+        ],
+        "fold_mean_gains": {
+          "138181": [
+            0.0004829130060114902,
+            -0.0019000279878234063,
+            0.0007525822860836164,
+            0.018713288209051535,
+            -6.94834146831959e-05
+          ],
+          "138182": [
+            0.0004460877301292553,
+            0.005138581945943837,
+            0.0004452669325612664,
+            -0.00046198545293927494,
+            0.012411320942944956
+          ],
+          "138183": [
+            -0.001459285474855044,
+            -0.0002154570931342945,
+            0.013026303398954353,
+            0.0009621642389507655,
+            0.005665547028724258
+          ]
+        },
+        "family_bootstrap_ci95": [
+          -0.00039396499972773897,
+          0.010193992547764857
+        ],
+        "family_median_gain": 0.0,
+        "family_balanced_utility": 1.3889512874129106,
+        "context_mean_utility": 1.427349867153607,
+        "family_harm_count": 12,
+        "family_harm_fraction": 0.05853658536585366,
+        "failure_count": 15,
+        "median_elo": 1503.3893923240769,
+        "elo_ci95": [
+          1486.4359737540108,
+          1520.3589791438599
+        ],
+        "family_wins": 14,
+        "family_ties": 179,
+        "family_losses": 12,
+        "top10_families": [
+          "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d",
+          "fam-9d401960b74664cce5959ef1416545475436313dc7d42ad9bbd1b0cc377bb633",
+          "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243",
+          "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+          "fam-6c740f1d2707fd1599f03edadc0dc1da80cfe396ee3777a9e7c60bc41ab39aae",
+          "fam-51a20e2322f149368a1393d370f00e2d8b0f669d142cfeaf246fbd44138791a5",
+          "fam-65e9a1feefccedcabfbb090915ea74ef327e9820344fee36ed245a5c8a04278c",
+          "fam-86168798b0342fec9d7c77fe91ab4b3dd9a0937737a4dbf2dcd98bbca252746c",
+          "fam-b0825c3109bf4c088dab0eca4d192793304163a6d16d9632bc56c52d927f645f",
+          "fam-1da061ab1d3fa6405eece0b05ff65730456c00acaaff82fe9a4258a7e1e93715"
+        ],
+        "top10_signed_share": 1.0288776033926281,
+        "top10_absolute_share": 0.9259068747874217,
+        "fold_seed_correlations": [
+          {
+            "seeds": [
+              138181,
+              138182
+            ],
+            "pearson": 0.9999999999999998,
+            "identical": true
+          },
+          {
+            "seeds": [
+              138181,
+              138183
+            ],
+            "pearson": 0.9999999999999998,
+            "identical": true
+          },
+          {
+            "seeds": [
+              138182,
+              138183
+            ],
+            "pearson": 0.9999999999999998,
+            "identical": true
+          }
+        ],
+        "identical_to_reference": false,
+        "holm": {
+          "p": 0.127987201279872,
+          "adjusted_p": 0.38396160383961603,
+          "threshold": 0.016666666666666666,
+          "passed": false
+        },
+        "gates": {
+          "median_gt_001": true,
+          "ci_lower_gt_zero": false,
+          "holm": false,
+          "all_fold_seeds_positive": true,
+          "harm_le_10pct": true,
+          "not_tied": true
+        },
+        "passed": false
+      },
+      "SWA2_LATE": {
+        "median_gain": -0.00022620311012145548,
+        "gain_by_fold_seed": [
+          -0.00022620311012145548,
+          -0.00022620311012145548,
+          -0.00022620311012145548
+        ],
+        "fold_mean_gains": {
+          "138181": [
+            0.0,
+            -9.971566976334933e-05,
+            -0.0010499481400017214,
+            0.0,
+            1.86482591577933e-05
+          ],
+          "138182": [
+            -0.0001555250309482919,
+            5.580936118494255e-05,
+            1.86482591577933e-05,
+            0.0,
+            -0.0010499481400017214
+          ],
+          "138183": [
+            -0.00118682491179222,
+            0.0,
+            0.0,
+            0.0,
+            5.580936118494255e-05
+          ]
+        },
+        "family_bootstrap_ci95": [
+          -0.0006847195927172323,
+          2.605339630553568e-05
+        ],
+        "family_median_gain": 0.0,
+        "family_balanced_utility": 1.3851292298830613,
+        "context_mean_utility": 1.4228832309527304,
+        "family_harm_count": 2,
+        "family_harm_fraction": 0.00975609756097561,
+        "failure_count": 17,
+        "median_elo": 1500.0,
+        "elo_ci95": [
+          1493.220570099493,
+          1506.779429900507
+        ],
+        "family_wins": 2,
+        "family_ties": 201,
+        "family_losses": 2,
+        "top10_families": [
+          "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+          "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b",
+          "fam-f8d77f25147b1e9bac6e6f82d09b61c76d21ae0bc44642415d229c3893648e40",
+          "fam-e206c7e62d6f15e6c3e27b51c211e772569482db8583b739d9638a63e3eb53d8",
+          "fam-00cf8b3d9a7356ea40a9ce15cb45db7ebef16d9051de7cd108735d092edfebde",
+          "fam-0287dafa15cdbdcc1de09f4b5d7e79a6286320ffaf59d1c8d853a311d3adc011",
+          "fam-041175e1cd532c7b17b3341dd5d8c580f8fc295d6b5fe24dcd4ffde542a2cb8f",
+          "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d",
+          "fam-05f1db1bdd534b918923f63a394105a92581ab2da55f8c4fe11df0ec23195e70",
+          "fam-0658c26b9cc16e3035b5d23d26609a6da9d404a9abe307ad86b866e5456dcf2a"
+        ],
+        "top10_signed_share": 1.0,
+        "top10_absolute_share": 1.0,
+        "fold_seed_correlations": [
+          {
+            "seeds": [
+              138181,
+              138182
+            ],
+            "pearson": 1.0,
+            "identical": true
+          },
+          {
+            "seeds": [
+              138181,
+              138183
+            ],
+            "pearson": 1.0,
+            "identical": true
+          },
+          {
+            "seeds": [
+              138182,
+              138183
+            ],
+            "pearson": 1.0,
+            "identical": true
+          }
+        ],
+        "identical_to_reference": false,
+        "holm": {
+          "p": 0.8153184681531847,
+          "adjusted_p": 0.8153184681531847,
+          "threshold": 0.05,
+          "passed": false
+        },
+        "gates": {
+          "median_gt_001": false,
+          "ci_lower_gt_zero": false,
+          "holm": false,
+          "all_fold_seeds_positive": false,
+          "harm_le_10pct": true,
+          "not_tied": true
+        },
+        "passed": false
+      },
+      "EMA_0.5": {
+        "median_gain": 0.0009587561153096368,
+        "gain_by_fold_seed": [
+          0.0009587561153096368,
+          0.0009587561153096368,
+          0.0009587561153096368
+        ],
+        "fold_mean_gains": {
+          "138181": [
+            0.0004718687458690115,
+            -0.0019959048411698527,
+            0.00018838141765924088,
+            0.006023528653236846,
+            0.00010590660095293895
+          ],
+          "138182": [
+            0.0005840383281480989,
+            0.0049024261993769296,
+            0.0004646255966169446,
+            -0.0004916390491101526,
+            -0.0006656704984836368
+          ],
+          "138183": [
+            -0.0012838954592189092,
+            -0.0004462032136682295,
+            0.0,
+            0.0008888817910404227,
+            0.0056349974583949
+          ]
+        },
+        "family_bootstrap_ci95": [
+          -0.0006855418067549624,
+          0.00348306204438233
+        ],
+        "family_median_gain": 0.0,
+        "family_balanced_utility": 1.3863141891084922,
+        "context_mean_utility": 1.4252440702387341,
+        "family_harm_count": 9,
+        "family_harm_fraction": 0.04390243902439024,
+        "failure_count": 16,
+        "median_elo": 1500.0,
+        "elo_ci95": [
+          1486.4359737540108,
+          1513.5640262459892
+        ],
+        "family_wins": 9,
+        "family_ties": 187,
+        "family_losses": 9,
+        "top10_families": [
+          "fam-9d401960b74664cce5959ef1416545475436313dc7d42ad9bbd1b0cc377bb633",
+          "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243",
+          "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+          "fam-6c740f1d2707fd1599f03edadc0dc1da80cfe396ee3777a9e7c60bc41ab39aae",
+          "fam-86168798b0342fec9d7c77fe91ab4b3dd9a0937737a4dbf2dcd98bbca252746c",
+          "fam-65e9a1feefccedcabfbb090915ea74ef327e9820344fee36ed245a5c8a04278c",
+          "fam-b0825c3109bf4c088dab0eca4d192793304163a6d16d9632bc56c52d927f645f",
+          "fam-1da061ab1d3fa6405eece0b05ff65730456c00acaaff82fe9a4258a7e1e93715",
+          "fam-080d0150fe9b57e7f0dd910275d2e0fb297455bacac55b2e7b0bfb1fafe2139c",
+          "fam-1fe5d12e3bc0b502c611ef7d3467b4d0bf99271f330b172ab5f16d182eaee00b"
+        ],
+        "top10_signed_share": 1.0213181841136758,
+        "top10_absolute_share": 0.9518382446522127,
+        "fold_seed_correlations": [
+          {
+            "seeds": [
+              138181,
+              138182
+            ],
+            "pearson": 1.0,
+            "identical": true
+          },
+          {
+            "seeds": [
+              138181,
+              138183
+            ],
+            "pearson": 1.0,
+            "identical": true
+          },
+          {
+            "seeds": [
+              138182,
+              138183
+            ],
+            "pearson": 1.0,
+            "identical": true
+          }
+        ],
+        "identical_to_reference": false,
+        "holm": {
+          "p": 0.281971802819718,
+          "adjusted_p": 0.563943605639436,
+          "threshold": 0.025,
+          "passed": false
+        },
+        "gates": {
+          "median_gt_001": false,
+          "ci_lower_gt_zero": false,
+          "holm": false,
+          "all_fold_seeds_positive": true,
+          "harm_le_10pct": true,
+          "not_tied": true
+        },
+        "passed": false
+      }
+    },
+    "selected_arm": null,
+    "arm_correlations": [
+      {
+        "arms": [
+          "SWA4_UNIFORM",
+          "SWA2_LATE"
+        ],
+        "pearson": 0.08227626344386976
+      },
+      {
+        "arms": [
+          "SWA4_UNIFORM",
+          "EMA_0.5"
+        ],
+        "pearson": 0.3821279225169567
+      },
+      {
+        "arms": [
+          "SWA2_LATE",
+          "EMA_0.5"
+        ],
+        "pearson": 0.19593196615986497
+      }
+    ],
+    "verdict": "NO_ADVANCE",
+    "interpretation": "Fixed retained DL-Train-exposed checkpoints. Five-fold grouped evaluation for each seed, zero refits. All seeds cover the same205 families and their identical vectors are not independent replications; bootstrap/sign-flip unit is one family.",
+    "harm_definition": "Strictly negative family mean gain, no tolerance; exact ties are not gains."
+  },
+  "secondary": null,
+  "verdict": "NO_ADVANCE",
+  "serving_promotion": false,
+  "source_commit": "198053105abacf632837414252bb9d2d49a02bee",
+  "custody": {
+    "manifest": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H138/astra-t1742/manifest.json",
+      "version_id": "pTaY7_LeCiGFPve6eqovHcicLu2t0ayk",
+      "sha256": "379d29fb8616fa67f9dcc4fb22ed5b1771b024a07feac33a290296e0a213d4af",
+      "bytes": 25141,
+      "verified_utc": "2026-11-01T00:27:08.115157+00:00"
+    },
+    "archive": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H138/astra-t1742/numerical-evidence.npz",
+      "version_id": "_Hxx_e0tJ.Ss14.YOAPzrBeSVbTGvKnL",
+      "sha256": "27afd51b08fb70671824183dc689bae1283cd39cfea2733e3d19253e3749b198",
+      "bytes": 26971573,
+      "verified_utc": "2026-11-01T00:27:05.217375+00:00"
+    },
+    "archive_members_verified": 52
+  },
+  "resources": {
+    "status": "PASS",
+    "samples": 4138,
+    "max_threads": 1,
+    "peak_rss": 949440512,
+    "min_free_bytes": 143551389696,
+    "max_scratch": 358908931,
+    "wall_seconds": 1241.9826805312186,
+    "pause_intervals": []
+  },
+  "cleanup_custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H138/astra-t1742/cleanup.json",
+    "version_id": "AcQ7C6Rh4oFvLgPmCWYQOa8pg2M7Kl_6",
+    "sha256": "1702f6eebc217fc04a30401c4dcff05df11a3ea3f2a2c5e5c5e26d6610b0cf51",
+    "bytes": 576622,
+    "verified_utc": "2026-11-01T00:29:00.867938+00:00"
+  }
+}

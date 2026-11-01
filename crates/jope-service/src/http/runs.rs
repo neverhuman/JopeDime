@@ -18,7 +18,7 @@ use crate::{
     governor::{Governor, Requirements},
     idempotency::{CommandOutcome, RequestIdentity},
     ranker::admission::{resolve_unqualified, GuidanceUnavailableReason},
-    store::{RecordKey, Store},
+    store::{Record, RecordKey, Store},
     telemetry::{Sensors, SystemSensors},
 };
 use axum::{
@@ -43,6 +43,21 @@ const WORKER_RAM: u64 = 1024 * 1024 * 1024;
 const MODEL_LIMIT: u64 = 16 * 1024 * 1024;
 type Result<T> = std::result::Result<T, Box<Problem>>;
 
+#[cfg(all(feature = "failpoints", debug_assertions))]
+#[derive(Clone, Debug)]
+struct Pub06InternalValues {
+    dsl: String,
+    operator: String,
+    lineage: String,
+    round: String,
+    fail_after_seed: bool,
+}
+
+#[cfg(all(feature = "failpoints", debug_assertions))]
+type Pub06Injection = Option<Pub06InternalValues>;
+#[cfg(not(all(feature = "failpoints", debug_assertions)))]
+type Pub06Injection = ();
+
 pub(crate) struct RunService {
     store: Arc<Store>,
     pub(crate) journal: Arc<EventLog>,
@@ -56,6 +71,19 @@ pub(crate) struct RunService {
     _lease: Arc<EngineLock>,
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
+struct Continuation {
+    search: SearchPlan,
+    finalization: FinalizationRequest,
+}
+
+fn continuation_key(run: &jope_api::ids::RunId) -> RecordKey {
+    RecordKey::Command {
+        principal: "public-run-continuation.v1".into(),
+        idempotency_key: run.to_string(),
+    }
+}
+
 struct Prepared {
     public: Plan,
     search: SearchPlan,
@@ -67,12 +95,26 @@ struct Prepared {
 
 /// Establish a bounded native baseline before considering expensive mutations.
 /// The existing research/native starter order remains unchanged.
-struct CpuRunSpace;
+struct CpuRunSpace {
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    pub06_values: Option<Pub06InternalValues>,
+}
 impl SearchSpace for CpuRunSpace {
     fn canonical(&self, dsl: &str) -> anyhow::Result<String> {
         NativeSpace.canonical(dsl)
     }
     fn seeds(&self) -> anyhow::Result<Vec<String>> {
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        if let Some(values) = &self.pub06_values {
+            // The test-only values live on the real SearchSpace used by the worker.
+            // Touch each field during seed generation without changing the valid program.
+            std::hint::black_box((
+                values.dsl.as_str(),
+                values.operator.as_str(),
+                values.lineage.as_str(),
+                values.round.as_str(),
+            ));
+        }
         Ok(vec![self.canonical("(pipe X (standardize) (ridge))")?])
     }
     fn propose(
@@ -81,6 +123,14 @@ impl SearchSpace for CpuRunSpace {
         count: usize,
         rng: &mut rand_chacha::ChaCha12Rng,
     ) -> anyhow::Result<Vec<String>> {
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        if self
+            .pub06_values
+            .as_ref()
+            .is_some_and(|values| values.fail_after_seed)
+        {
+            anyhow::bail!("PUB-06 test worker failure after internal-value injection");
+        }
         NativeSpace.propose(parents, count, rng)
     }
 }
@@ -404,7 +454,12 @@ impl RunService {
         })
     }
 
-    fn start(self: &Arc<Self>, spec: RunSpec, identity: RequestIdentity) -> Response {
+    fn start(
+        self: &Arc<Self>,
+        spec: RunSpec,
+        identity: RequestIdentity,
+        _pub06_values: Pub06Injection,
+    ) -> Response {
         let _guard = match self.admission.lock() {
             Ok(guard) => guard,
             Err(_) => return response(&io("Run admission lock is poisoned.")),
@@ -467,44 +522,28 @@ impl RunService {
             max_input_bytes: self.config.limits.max_dataset_bytes.value,
             max_model_bytes: MODEL_LIMIT,
         };
-        let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
-        let owner = Arc::clone(self);
-        let activity = self.activity.begin_run();
-        if let Err(error) = std::thread::Builder::new()
-            .name("jope-run".into())
-            .spawn(move || {
-                let _activity = activity;
-                if let Ok((mut discovery, request)) = receiver.recv() {
-                    let result = (|| -> anyhow::Result<()> {
-                        let executor = ProcessExecutor::new(
-                            &owner.executable,
-                            1,
-                            &owner.home.join("worker-scratch"),
-                        )?;
-                        while discovery.completed().is_none() {
-                            discovery.advance(
-                                &CpuRunSpace,
-                                &HeuristicAdmission,
-                                &executor,
-                                1,
-                                usize::MAX,
-                            )?;
-                        }
-                        Finalizer::with_journal(
-                            Arc::clone(&owner.store),
-                            Arc::clone(&owner.journal),
-                        )
-                        .finalize(&request, &executor)?;
-                        Ok(())
-                    })();
-                    if let Err(error) = result {
-                        owner.fail(&request.run_id, &error.to_string());
-                    }
-                }
-            })
-        {
+        // This context precedes the first run commit, so every visible run can
+        // resume from its original immutable plan and partition provenance.
+        let context = Continuation {
+            search: prepared.search.clone(),
+            finalization: request.clone(),
+        };
+        let persisted = self.store.transaction(|tx| {
+            tx.put(
+                &continuation_key(&prepared.search.run_id),
+                &Record::metadata(
+                    serde_json::to_value(&context)?,
+                    vec![fit.clone(), holdout.clone()],
+                ),
+            )
+        });
+        if let Err(error) = persisted {
             return response(&io(error));
         }
+        let sender = match self.worker_sender(_pub06_values, false) {
+            Ok(sender) => sender,
+            Err(error) => return response(&error),
+        };
         let discovery = match Discovery::start_command(
             Arc::clone(&self.store),
             prepared.search,
@@ -522,6 +561,136 @@ impl RunService {
         match self.store.idempotent_receipt(&identity) {
             Ok(Some(receipt)) => receipt.into_response(),
             Ok(None) => response(&io("Committed run receipt missing.")),
+            Err(error) => error.into_response(),
+        }
+    }
+
+    fn worker_sender(
+        self: &Arc<Self>,
+        _pub06_values: Pub06Injection,
+        explicit_continue: bool,
+    ) -> Result<mpsc::SyncSender<(Discovery, FinalizationRequest)>> {
+        let (sender, receiver) = mpsc::sync_channel::<(Discovery, FinalizationRequest)>(1);
+        let owner = Arc::clone(self);
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        let run_space = CpuRunSpace {
+            pub06_values: _pub06_values,
+        };
+        #[cfg(not(all(feature = "failpoints", debug_assertions)))]
+        let run_space = CpuRunSpace {};
+        let activity = self.activity.begin_run();
+        if let Err(error) = std::thread::Builder::new()
+            .name("jope-run".into())
+            .spawn(move || {
+                let _activity = activity;
+                if let Ok((mut discovery, request)) = receiver.recv() {
+                    let result = (|| -> anyhow::Result<()> {
+                        let executor = ProcessExecutor::new(
+                            &owner.executable,
+                            1,
+                            &owner.home.join("worker-scratch"),
+                        )?;
+                        while discovery.completed().is_none() {
+                            discovery.advance(
+                                &run_space,
+                                &HeuristicAdmission,
+                                &executor,
+                                1,
+                                usize::MAX,
+                            )?;
+                        }
+                        let finalizer = Finalizer::with_journal(
+                            Arc::clone(&owner.store),
+                            Arc::clone(&owner.journal),
+                        );
+                        if explicit_continue {
+                            finalizer.finalize_after_explicit_continue(&request, &executor)?;
+                        } else {
+                            finalizer.finalize(&request, &executor)?;
+                        }
+                        Ok(())
+                    })();
+                    if let Err(error) = result {
+                        owner.fail(&request.run_id, &error.to_string());
+                    }
+                }
+            })
+        {
+            return Err(io(error));
+        }
+        Ok(sender)
+    }
+
+    fn continue_run(
+        self: &Arc<Self>,
+        run: jope_api::ids::RunId,
+        expected_revision: Option<u64>,
+        identity: RequestIdentity,
+    ) -> Response {
+        let _guard = match self.admission.lock() {
+            Ok(guard) => guard,
+            Err(_) => return response(&io("Run admission lock is poisoned.")),
+        };
+        match self.store.idempotent_receipt(&identity) {
+            Ok(Some(receipt)) => return receipt.into_response(),
+            Ok(None) => {}
+            Err(error) => return error.into_response(),
+        }
+        let attempt = (|| -> Result<()> {
+            let snapshot = self
+                .journal
+                .snapshot(&run)
+                .map_err(io)?
+                .ok_or_else(|| issue(ErrorCode::NotFound, "Run does not exist."))?;
+            if expected_revision.is_some_and(|revision| revision != snapshot.revision.0) {
+                return Err(issue(
+                    ErrorCode::RevisionConflict,
+                    "Re-read the snapshot and retry.",
+                ));
+            }
+            if snapshot.state != RunState::Paused || self.activity.active_runs() != 0 {
+                return Err(issue(
+                    ErrorCode::RevisionConflict,
+                    "Continue requires an idle backend and a paused run.",
+                ));
+            }
+            let context = self
+                .store
+                .get(&continuation_key(&run))
+                .map_err(io)?
+                .ok_or_else(|| {
+                    unavailable("Original continuation context is unavailable for this run.")
+                })?;
+            let context: Continuation = serde_json::from_value(context.data).map_err(io)?;
+            if context.search.run_id != run
+                || context.finalization.run_id != run
+                || context.search.binary_version != self.binary
+            {
+                return Err(unavailable(
+                    "Continuation requires the original binary and run identity.",
+                ));
+            }
+            #[cfg(all(feature = "failpoints", debug_assertions))]
+            let injection = None;
+            #[cfg(not(all(feature = "failpoints", debug_assertions)))]
+            let injection = ();
+            let sender = self.worker_sender(injection, true)?;
+            let discovery = Discovery::continue_command(
+                Arc::clone(&self.store),
+                context.search,
+                Arc::clone(&self.journal),
+                identity.clone(),
+            )
+            .map_err(io)?;
+            sender.send((discovery, context.finalization)).map_err(io)?;
+            Ok(())
+        })();
+        if let Err(error) = attempt {
+            return response(&error);
+        }
+        match self.store.idempotent_receipt(&identity) {
+            Ok(Some(receipt)) => receipt.into_response(),
+            Ok(None) => response(&io("Committed continue receipt missing.")),
             Err(error) => error.into_response(),
         }
     }
@@ -559,7 +728,10 @@ impl RunService {
             )?;
             Ok(())
         })();
-        eprintln!("run {run} failed: {detail}; failure journal: {result:?}");
+        let diagnostic = format!("run {run} failed: {detail}; failure journal: {result:?}");
+        #[cfg(all(feature = "failpoints", debug_assertions))]
+        crate::pub06_test::record_log(diagnostic.clone());
+        eprintln!("{diagnostic}");
     }
 }
 
@@ -568,6 +740,37 @@ pub(super) async fn start(
     request: Request<Body>,
 ) -> Response {
     let headers = request.headers().clone();
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    let pub06_values = match (
+        headers.get("x-pub06-test-dsl"),
+        headers.get("x-pub06-test-operator"),
+        headers.get("x-pub06-test-lineage"),
+        headers.get("x-pub06-test-round"),
+    ) {
+        (None, None, None, None) => None,
+        (Some(dsl), Some(operator), Some(lineage), Some(round)) => {
+            let parse = |value: &axum::http::HeaderValue| value.to_str().ok().map(str::to_owned);
+            match (parse(dsl), parse(operator), parse(lineage), parse(round)) {
+                (Some(dsl), Some(operator), Some(lineage), Some(round)) => {
+                    Some(Pub06InternalValues {
+                        dsl,
+                        operator,
+                        lineage,
+                        round,
+                        fail_after_seed: headers
+                            .get("x-pub06-test-fail-after-seed")
+                            .is_some_and(|value| value == "1"),
+                    })
+                }
+                _ => return response(&invalid("Invalid PUB-06 test injection values.")),
+            }
+        }
+        _ => {
+            return response(&invalid(
+                "PUB-06 test injection values must be supplied together.",
+            ))
+        }
+    };
     // The in-process bridge uses an absolute URI; a listener receives origin
     // form. Authority is authenticated separately and is not command identity.
     let target = request
@@ -601,7 +804,118 @@ pub(super) async fn start(
         Ok(value) => value,
         Err(error) => return error.into_response(),
     };
-    match tokio::task::spawn_blocking(move || service.start(spec, identity)).await {
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    let leak_value = std::env::var_os("JOPE_PUB06_TEST_LEAK")
+        .and_then(|_| pub06_values.as_ref().map(|values| values.dsl.clone()));
+    #[cfg(not(all(feature = "failpoints", debug_assertions)))]
+    let pub06_values = ();
+    let result = match tokio::task::spawn_blocking(move || {
+        service.start(spec, identity, pub06_values)
+    })
+    .await
+    {
+        Ok(value) => value,
+        Err(error) => response(&io(error)),
+    };
+    #[cfg(all(feature = "failpoints", debug_assertions))]
+    if let Some(value) = leak_value {
+        if let Ok(value) = axum::http::HeaderValue::from_str(&value) {
+            let mut result = result;
+            result.headers_mut().insert("x-pub06-test-leak", value);
+            return result;
+        }
+    }
+    result
+}
+
+pub(super) async fn control(
+    Extension(service): Extension<Arc<RunService>>,
+    path: std::result::Result<axum::extract::Path<String>, axum::extract::rejection::PathRejection>,
+    request: Request<Body>,
+) -> Response {
+    let Ok(axum::extract::Path(run)) = path else {
+        return response(&invalid("Invalid run path."));
+    };
+    let Ok(run) = run.parse::<jope_api::ids::RunId>() else {
+        return response(&invalid("Invalid run id."));
+    };
+    let headers = request.headers().clone();
+    let target = request
+        .uri()
+        .path_and_query()
+        .map(|v| v.as_str().to_owned())
+        .unwrap_or_default();
+    let mut keys = headers.get_all("idempotency-key").iter();
+    let Some(key) = keys.next().and_then(|v| v.to_str().ok()) else {
+        return response(&invalid("Idempotency-Key is required."));
+    };
+    if keys.next().is_some() {
+        return response(&invalid("Idempotency-Key must occur once."));
+    }
+    let content_type = headers
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.split(';').next())
+        .map(|v| v.trim().to_ascii_lowercase());
+    if !content_type.as_deref().is_some_and(|v| {
+        v == "application/json" || (v.starts_with("application/") && v.ends_with("+json"))
+    }) {
+        return response(&invalid("Expected JSON content type."));
+    }
+    let bytes = match axum::body::to_bytes(request.into_body(), 1024 * 1024).await {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Invalid control body.")),
+    };
+    // Preserve explicit nulls in retry identity; reject duplicate JSON keys.
+    let value: Value = match jope_runtime::strict_json::decode(&bytes) {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Invalid control JSON.")),
+    };
+    let body: jope_api::registry::RunControlRequest = match serde_json::from_value(value.clone()) {
+        Ok(value) => value,
+        Err(_) => return response(&invalid("Expected a valid run control request.")),
+    };
+    let jope_api::registry::RunControlRequest::Continue { expected_revision } = body else {
+        return response(&unavailable(
+            "This bounded backend currently supports explicit continue only.",
+        ));
+    };
+    let mut preconditions = headers.get_all("if-match").iter();
+    let raw_if_match = preconditions.next();
+    if preconditions.next().is_some() {
+        return response(&invalid("If-Match must occur once."));
+    }
+    let if_match = match raw_if_match.map(|v| {
+        v.to_str()
+            .ok()
+            .and_then(|s| s.trim_matches('"').parse::<u64>().ok())
+    }) {
+        None => None,
+        Some(Some(value)) => Some(value),
+        Some(None) => return response(&invalid("Invalid If-Match revision.")),
+    };
+    if if_match
+        .zip(expected_revision)
+        .is_some_and(|(a, b)| a != b.0)
+    {
+        return response(&invalid("Revision preconditions disagree."));
+    }
+    let identity = match RequestIdentity::new(
+        "local-engine-owner",
+        key,
+        8,
+        &target,
+        raw_if_match.and_then(|v| v.to_str().ok()),
+        &value,
+    ) {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+    match tokio::task::spawn_blocking(move || {
+        service.continue_run(run, if_match.or(expected_revision.map(|v| v.0)), identity)
+    })
+    .await
+    {
         Ok(value) => value,
         Err(error) => response(&io(error)),
     }
@@ -779,6 +1093,24 @@ mod tests {
         let listed = super::tests::app(&engine).oneshot(list).await.unwrap();
         assert_eq!(listed.status(), StatusCode::OK);
         assert_eq!(body(listed).await, json!({"runs":[],"next_after":null}));
+        for raw in [
+            r#"{"action":"continue","action":"continue"}"#,
+            r#"{"action":"continue","unexpected":true}"#,
+            r#"{"action":"continue","expected_revision":"-1"}"#,
+        ] {
+            let request = Request::builder()
+                .method("POST")
+                .uri("/v1/runs/run_01ARZ3NDEKTSV4RRFFQ69G5FAV/control")
+                .header(header::HOST, "127.0.0.1:31234")
+                .header(header::AUTHORIZATION, format!("Bearer {}", "ab".repeat(32)))
+                .header(header::CONTENT_TYPE, "application/json")
+                .header("idempotency-key", "bad-continue")
+                .body(Body::from(raw))
+                .unwrap();
+            let reply = super::tests::app(&engine).oneshot(request).await.unwrap();
+            assert_eq!(reply.status(), StatusCode::BAD_REQUEST);
+            assert_eq!(body(reply).await["code"], "INVALID_INPUT");
+        }
         assert!(!_directory.path().join("worker-scratch").exists());
     }
 

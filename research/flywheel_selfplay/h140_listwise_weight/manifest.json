@@ -1,0 +1,50 @@
+{
+  "admitted_arms": [],
+  "arms": [
+    "L0.1",
+    "L0.5",
+    "L1.0",
+    "L1.0_nofail"
+  ],
+  "cells_completed": 12,
+  "cells_runner_sha256": "fee6b6f56245d41274124d5875abe82f978a24341561c1837fdce27f52bdbf7e",
+  "complete": true,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "executed_source_commit": "17118d28a9a0c12ab36a93be7193a09887566f7c",
+  "fold_manifest_sha256": "0b4aa9b485f6eaec27f95b5242e48fcc6b47e918420c2689b7121705959de482",
+  "fold_seed": 140140,
+  "gpu_seconds": 0.0,
+  "holdout_reads": 0,
+  "live_flywheel_writes": 0,
+  "metrics_sha256": "3fb95040565cfbb96c9919340318571570e6bd86de86716bb883bfb0e8ffc1b6",
+  "optimizer_updates": 480,
+  "outer_test_reads": 0,
+  "owner": "rd_argon",
+  "planned_optimizer_updates": 480,
+  "prereg_sha256": "d829d63d291065fd71ea8cf4eeccdd97fca7e09e5baac80d4c918ee92ebdfe04",
+  "primary_treatments": [
+    "L0.5",
+    "L1.0",
+    "L1.0_nofail"
+  ],
+  "r882_path": "/home/ubuntu/jope-data/h140/inputs/round-882.pt",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "reference_path": "/home/ubuntu/jope-data/h140/inputs/best_dev_checkpoint.json",
+  "reference_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+  "regression_receipt_sha256": "ca2deb79cdd229cc7410b40ee8511eeec3e6be650fb58950a43e529ea7994be1",
+  "runner_path": "/home/ubuntu/jope-rescue-20260921/h140-listwise-weight/run_h140_cpu.py",
+  "runner_sha256": "685984309a994df4b7c3cbedf2d1c97e27ecf41e4aaadadf01fac9d09bbc84cc",
+  "schema": "jope.h140.manifest/v1",
+  "sealed_metatest_reads": 0,
+  "seeds": [
+    140101,
+    140102,
+    140103
+  ],
+  "status": "COMPLETE",
+  "trainable_parameters": 29211,
+  "trainable_tensors": 47,
+  "verdict": "NO_ADMISSION",
+  "wave": "H140"
+}
