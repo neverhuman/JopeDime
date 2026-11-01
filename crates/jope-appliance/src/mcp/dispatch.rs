@@ -314,6 +314,19 @@ fn execute_inner<T: Transport>(
             Ok(serde_json::to_value(algorithm)?)
         }
         13 => {
+            let output = args
+                .get("out_dir")
+                .map(|v| {
+                    let text = v
+                        .as_str()
+                        .filter(|v| !v.is_empty())
+                        .ok_or_else(|| invalid("out_dir must be a nonempty path"))?;
+                    let path = Path::new(text);
+                    jope_client::files::validate_export_destination(path)
+                        .map_err(|e| invalid(e.to_string()))?;
+                    Ok::<_, jope_client::Error>(path)
+                })
+                .transpose()?;
             let (run, alg) = run(args)?;
             let alg = match alg {
                 Some(alg) => alg,
@@ -326,15 +339,11 @@ fn execute_inner<T: Transport>(
                 client,
                 request(0, &[("id", &run)])?.json(&body)?,
             )?)?;
-            if let Some(output) = args.get("out_dir") {
-                let output = output
-                    .as_str()
-                    .filter(|v| !v.is_empty())
-                    .ok_or_else(|| invalid("out_dir must be a nonempty path"))?;
+            if let Some(output) = output {
                 jope_client::files::download_export_artifact(
                     client,
                     &manifest.artifact_id,
-                    Path::new(output),
+                    output,
                     false,
                 )
                 .map_err(|error| invalid(error.to_string()))?;
@@ -533,4 +542,27 @@ pub fn read_resource<T: Transport>(
         return Err("resource exceeds limit".into());
     }
     Ok(("application/json".into(), text))
+}
+
+#[cfg(test)]
+mod export_destination_tests {
+    use super::*;
+    struct NoCalls;
+    impl Transport for NoCalls {
+        fn execute(&self, _: Request) -> jope_client::Result<jope_client::transport::Response> {
+            panic!("invalid destination reached the engine")
+        }
+    }
+    #[test]
+    fn empty_export_destination_is_rejected_before_any_transport_call() {
+        let op = jope_api::registry::OPERATIONS
+            .iter()
+            .find(|v| v.id == 13)
+            .unwrap();
+        let args = json!({"run_id":RunId::new(), "algorithm_id":"alg_0001", "kind":"bundle", "languages":["rust"], "out_dir":"", "idempotency_key":"retry"});
+        let Outcome::Failure(problem) = execute(&NoCalls, &Resources::default(), op, args) else {
+            panic!("empty destination succeeded")
+        };
+        assert_eq!(problem["code"], "INVALID_INPUT");
+    }
 }
