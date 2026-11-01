@@ -230,10 +230,10 @@ pub fn fit_transform_and_extract_bundle_high(
     if rows > 1_024 {
         return Err(RecipeError::FitSampleOverLimit);
     }
-    build_high_unbounded(x, rows, features, y)
+    build_high_full_table(x, rows, features, y)
 }
 
-fn build_high_unbounded(
+fn build_high_full_table(
     x: &[f32],
     rows: usize,
     features: usize,
@@ -1518,7 +1518,7 @@ fn inter_descriptors(
 #[cfg(test)]
 mod tests {
     use super::{
-        assemble_vector, build_high_unbounded, compare_sampled_to_full,
+        assemble_vector, build_high_full_table, compare_sampled_to_full,
         fit_transform_and_extract_bundle_high, pad_ranker_columns, summarize_latency,
         AgreementError, AgreementSummary, LandmarkOutput, BUILDING_BLOCK_WIDTH, INTERACTION_WIDTH,
         RANKER_COLUMN_COUNT, RANKER_COLUMN_WIDTH, RAW_COLUMN_WIDTH, REPORT_WIDTH, TABLE_WIDTH,
@@ -1981,7 +1981,7 @@ mod tests {
                 .unwrap();
         let sampled_ms = started.elapsed().as_secs_f64() * 1_000.0;
         let started = Instant::now();
-        let full = build_high_unbounded(&full_x, full_rows, features, &full_y).unwrap();
+        let full = build_high_full_table(&full_x, full_rows, features, &full_y).unwrap();
         let full_ms = started.elapsed().as_secs_f64() * 1_000.0;
         assert!(indices.len() <= 1_024 && full_rows > indices.len());
 
