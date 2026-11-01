@@ -32,6 +32,35 @@ package must then run through the macOS clean-host leg to produce a
 `jope.rel07.d1-platform-leg/v2` receipt before D1 can pass. This recipe does not sign, stage, or
 qualify an RC.
 
+## Native DEV-BUILD rehearsal
+
+To exercise D1 before an RC2 exists, build the repository's native development fixture package.
+The fixture has a deterministic development-key signature and is never a release-signed
+candidate. Run from a clean native arm64 checkout at the exact source SHA; keep all generated
+output in an external evidence directory. The existing `test-clean-host-macos.sh --build-fixture`
+path builds and verifies the fixture package in the lane's reused Cargo target. Copy the resulting
+`jopedime` file and current `d1_macos_dev.py` helper into the external evidence directory, then
+run:
+
+```bash
+nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py package \
+  --source-sha <40-lowercase-hex-source-sha> \
+  --fixture-package /absolute/evidence/REL-07/D1-fixture/jopedime \
+  --out /absolute/evidence/REL-07/D1-dev-package
+nice -n 19 python3 -B deploy/appliance/d1_macos_dev.py run \
+  --candidate /absolute/evidence/REL-07/D1-dev-package \
+  --out /absolute/evidence/REL-07/D1-dev-run
+```
+
+`package` requires `--repo-root <checkout>` before the subcommand when staged outside the
+source checkout. It verifies the native arm64 package's embedded source identity and development-key
+trust, then labels the copied package `DEV-BUILD` with `release_signed: false` and
+`development_signed: true`. `run` executes network-denied discovery, synthetic local fit,
+prediction and non-empty Python, Rust and JavaScript exports with no toolchain on `PATH`. Its
+v2-shaped receipt is labeled `DEV-BUILD`, has `qualification: NOT_QUALIFIED`, and is rejected by
+the signed-candidate provider (`providers/d1.py` requires `status: PASS`). It does not sign or
+qualify RC2.
+
 ## Aggregate invocation
 
 Pass the external Mac receipt and both independent bindings in the release gate command manifest:

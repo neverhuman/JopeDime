@@ -247,6 +247,7 @@ class ReleaseGates(unittest.TestCase):
                 }
             )
         )
+        inputs_path, inputs_sha256 = self.candidate_input_file()
         output = self.root / "candidate-run-output"
         with (
             mock.patch(
@@ -257,8 +258,10 @@ class ReleaseGates(unittest.TestCase):
                     str(candidate),
                     "--repo",
                     str(self.repo),
-                    "--provider-inputs",
-                    str(self.input_file()),
+                    "--inputs",
+                    str(inputs_path),
+                    "--inputs-sha256",
+                    inputs_sha256,
                     "--output",
                     str(output),
                 ],
@@ -272,6 +275,8 @@ class ReleaseGates(unittest.TestCase):
         self.assertTrue(summary["all_pass"])
         self.assertEqual(len(table["gates"]), 28)
         self.assertEqual({row["status"] for row in table["gates"]}, {"PASS"})
+        run = json.loads((output / "execution.json").read_text())
+        self.assertEqual(run["candidate_inputs_sha256"], inputs_sha256)
         self.assertEqual(
             next(row for row in table["gates"] if row["id"] == "A5")["argv"][-1],
             "deploy/qualification/v1.0/a5_run.py",
@@ -348,6 +353,115 @@ class ReleaseGates(unittest.TestCase):
             sum(row["status"] == "NOT_RUN" for row in table["gates"]), 23
         )
         self.assertTrue(all(row["reason"] for row in table["gates"]))
+
+    def test_candidate_input_file_is_sha_pinned_and_uses_established_schema(self):
+        path, digest = self.candidate_input_file()
+        bindings, observed = runner.candidate_input_bindings(
+            path, digest
+        )
+        self.assertEqual(set(bindings), set(runner.INPUT_FIELDS))
+        self.assertEqual(observed, digest)
+        with self.assertRaisesRegex(ValueError, "do not match"):
+            runner.candidate_input_bindings(
+                path,
+                "0" * 64,
+            )
+
+    def test_unbound_candidate_inputs_block_only_their_four_gate_rows(self):
+        worker = (
+            "import json,os\nfrom pathlib import Path\n"
+            "p=Path(os.environ['JOPE_REL07_RESULT'])\n"
+            "counts=dict(collected=1,executed=1,passed=1,failed=0,skipped=0,excluded=0)\n"
+            "p.write_text(json.dumps(dict(schema='jope.rel07.gate-execution/v1',"
+            "id=os.environ['JOPE_REL07_GATE_ID'],status='PASS',"
+            "source_sha=os.environ['JOPE_REL07_SOURCE_SHA'],"
+            "artifact_sha256=os.environ['JOPE_REL07_ARTIFACT_SHA256'],counts=counts)))\n"
+        )
+        self.commit_providers({gate: worker for gate in runner.RELEASE_GATE_IDS})
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        bindings = {
+            "M3": {
+                "full_inputs": str(self.root / "full-inputs.json"),
+                "full_inputs_sha256": "c" * 64,
+            }
+        }
+        commands, missing = runner.provider_commands(self.repo, bindings)
+        self.assertEqual(missing, [])
+        for command in commands:
+            if command["id"] in runner.INPUT_FIELDS and command["id"] not in bindings:
+                command["blocked_reason"] = "required provider inputs are unbound: fixture"
+        manifest_path = self.root / "partial-input-manifest.json"
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.gate-commands/v1",
+                    "source_sha": source,
+                    "artifact_sha256": self.sha,
+                    "gates": commands,
+                }
+            )
+        )
+        output = self.root / "partial-input-run"
+        receipt, code = runner.execute(self.repo, self.artifact, manifest_path, output)
+        table = json.loads((output / "status_table.json").read_text())
+        self.assertEqual(code, 1)
+        self.assertEqual(len(receipt["gates"]), 28)
+        self.assertEqual(
+            sum(row["status"] == "BLOCKED" for row in table["gates"]), 4
+        )
+        self.assertEqual(sum(row["status"] == "PASS" for row in table["gates"]), 24)
+        self.assertEqual(len(json.loads((output / "execution.json").read_text())["checks"]), 24)
+
+    def test_source_ancestor_rule_rejects_non_ancestor_and_accepts_ancestor(self):
+        self.commit_providers(
+            {gate: "# ancestor fixture\n" for gate in runner.RELEASE_GATE_IDS}
+        )
+        head = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "--allow-empty",
+                "-qm",
+                "advance main after candidate source",
+            ],
+            check=True,
+        )
+        main = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            ["git", "-C", str(self.repo), "update-ref", "refs/remotes/origin/main", main],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(self.repo), "reset", "--hard", head], check=True
+        )
+        self.assertTrue(runner.source_is_ancestor(self.repo, head, main))
+        manifest = runner.provider_manifest(self.repo, self.artifact, self.bindings())
+        self.assertEqual(manifest["source_sha"], head)
+        tree = runner.cpu.git(self.repo, "rev-parse", "HEAD^{tree}")
+        unrelated = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit-tree",
+                tree,
+                "-m",
+                "unrelated root fixture",
+            ],
+            text=True,
+        ).strip()
+        self.assertFalse(runner.source_is_ancestor(self.repo, unrelated, main))
 
     def test_provider_discovery_lists_merged_modules_and_refuses_incomplete_inventory(
         self,
@@ -560,6 +674,18 @@ class ReleaseGates(unittest.TestCase):
             )
         )
         return path
+
+    def candidate_input_file(self, gates=None):
+        path = self.root / "candidate-inputs.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.provider-inputs/v1",
+                    "gates": self.bindings() if gates is None else gates,
+                }
+            )
+        )
+        return path, hashlib.sha256(path.read_bytes()).hexdigest()
 
     def commit_providers(self, providers):
         folder = self.repo / "deploy/qualification/v1.0/providers"

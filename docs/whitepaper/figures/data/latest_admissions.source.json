@@ -1,22 +1,38 @@
 {
   "schema": "whitepaper.latest-admissions-source/v1",
   "capture": {
-    "at": "2026-11-01T15:55:20.610459+00:00",
-    "observed_bytes": 1179590,
-    "prefix_bytes": 1179590,
-    "prefix_sha256": "07ce4191e6dbfc97c2ea3f9e51fadf0ff040c4a30ffa2a46f40db208443545d6",
-    "trailing_incomplete_bytes_omitted": 0,
-    "source_rows": 2247,
+    "observed_bytes": 1275062,
+    "prefix_bytes": 1274525,
+    "prefix_sha256": "99b274373bf4fb3f8350e9fd4c4887ebc4be76bca8c9df91c04f0f3dfc090065",
+    "source_rows": 2423,
     "first_round": 775,
-    "last_round": 3021
+    "last_round": 3197,
+    "trailing_incomplete_bytes_omitted": 0,
+    "complete_rows_after_matched_cutoff_omitted": 1
   },
+  "at": "2026-11-01T21:18:10.575322+00:00",
   "stable_prefix_reread_verified": true,
   "evaluation_identity_sha256": [
     "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6"
   ],
-  "csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
-  "selection": "Every complete admission row in stable prefix, in log order; no outcome selection or deduplication",
-  "field_mapping": "candidate/previous best/post-decision best utility, acceptance/action and best-round identity as logged",
+  "csv_sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
+  "selection": "Every complete admission from the published anchor through latest admission also present in the stable retained summary prefix; one later complete admission excluded pending its matching summary. No outcome selection or deduplication.",
+  "field_mapping": "Candidate, previous-best, retained-best utility, acceptance and best-round identity are logged fields. Decision tag is derived from logged acceptance and exact Decimal candidate-minus-prior-best utility.",
   "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",
-  "scope": "Adaptive development admissions; independent first-proposal and deployment evaluation remain required"
+  "scope": "Adaptive development admissions; independent first-proposal and deployment evaluation remain required",
+  "summary_crosscheck": {
+    "rows": 20,
+    "round_window": [
+      3178,
+      3197
+    ],
+    "all_retained_summaries_match": true,
+    "prefix_sha256": "56172e9fd04669876412300f1f62dc5a28cbb147fc8251d827f845b39c9f2b8d"
+  },
+  "prior_ledger": {
+    "rows": 2247,
+    "last_round": 3021,
+    "csv_sha256": "8593b87e632bd729ab41e6fecb63ce6cb8fe62b1ce4b9d74564dfef629c48e50",
+    "all_fields_overlap_exact": true
+  }
 }

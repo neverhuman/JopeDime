@@ -242,6 +242,14 @@ class D1Tests(unittest.TestCase):
             self.invoke()
         self.assertFalse(self.result.exists())
 
+    def test_dev_build_receipt_cannot_qualify_d1(self):
+        self.write_macos_receipt(status="DEV-BUILD")
+        self.mac_digest = d1.sha256(self.mac_receipt)
+        with self.assertRaisesRegex(ProviderError, "leg did not PASS"):
+            self.invoke()
+        self.assertFalse(self.result.exists())
+        self.assertFalse(any(call[0] == "bash" for call in self.calls))
+
     def test_macos_exports_require_exact_json_true_values(self):
         checks = json.loads(self.mac_receipt.read_text(encoding="utf-8"))["checks"]
         invalid_exports = (

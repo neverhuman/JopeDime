@@ -44,6 +44,63 @@ def cases():
     return result
 
 
+def fingerprint_baseline_control(scanner, config, root, evidence):
+    """Keep an inherited finding ignored while rejecting a replacement on the same line."""
+    directory = evidence / "fingerprint-baseline"
+    source = directory / "source"
+    source.mkdir(parents=True)
+
+    def git(*args):
+        return subprocess.run(
+            ["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", *args],
+            cwd=source, capture_output=True, text=True, check=True, timeout=20,
+        )
+
+    git("init", "-q", "-b", "main")
+    first = hashlib.sha256(b"synthetic inherited credential fingerprint").hexdigest()
+    credential = source / "config.txt"
+    credential.write_text(f'api_key = "A7Q9{first}K3R2"\n')
+    git("add", "config.txt")
+    git("commit", "-qm", "synthetic inherited finding")
+
+    report = directory / "report.json"
+    scanned = subprocess.run(
+        [scanner, "detect", "--redact=100", "--no-banner", "--config", str(config),
+         "--source", str(source), "--log-opts=HEAD", "--report-format", "json",
+         "--report-path", str(report)],
+        cwd=source, capture_output=True, text=True, timeout=20,
+    )
+    findings = json.loads(report.read_text()) if report.exists() else []
+    report_safe = bool(findings) and all(
+        first not in json.dumps(finding) and "REDACTED" in finding.get("Secret", "")
+        for finding in findings
+    )
+    initial_red = scanned.returncode == 1 and len(findings) == 1 and report_safe
+    (source / ".gitleaksignore").write_text(findings[0]["Fingerprint"] + "\n" if findings else "")
+    git("add", ".gitleaksignore")
+    git("commit", "-qm", "baseline one inherited fingerprint")
+
+    def full_scan():
+        return subprocess.run(
+            ["bash", str(root / "deploy/ci/secret-scan.sh"), str(source)],
+            cwd=root, capture_output=True, text=True, timeout=20,
+        )
+
+    inherited_green = full_scan().returncode == 0
+    second = hashlib.sha256(b"synthetic replacement credential fingerprint").hexdigest()
+    credential.write_text(f'api_key = "B8R2{second}Q1M6"\n')
+    git("add", "config.txt")
+    git("commit", "-qm", "synthetic new finding at the same line")
+    replacement_red = full_scan().returncode == 1
+    return {
+        "source": "synthetic-only Git history; no repository findings or live credential inputs",
+        "initial_finding_red": initial_red,
+        "inherited_fingerprint_green": inherited_green,
+        "new_finding_same_file_line_red": replacement_red,
+        "secret_report_redacted": report_safe,
+    }
+
+
 def main():
     root = Path(__file__).resolve().parents[2]
     parser = argparse.ArgumentParser(description=__doc__)
@@ -80,7 +137,12 @@ def main():
         expected = 1 if should_detect else 0
         passed = result.returncode == expected and bool(findings) == should_detect
         records.append({"case": label, "expected_detection": should_detect, "exit_code": result.returncode, "finding_rules": sorted({finding["RuleID"] for finding in findings}), "passed": passed})
-    receipt = {"scanner_version": version, "scanner_sha256": hashlib.sha256(Path(scanner).read_bytes()).hexdigest(), "config_sha256": hashlib.sha256(config.read_bytes()).hexdigest(), "source": "synthetic controls only; no repository/history or real credential reads", "cases": records, "passed": sum(case["passed"] for case in records), "failed": sum(not case["passed"] for case in records)}
+    baseline = fingerprint_baseline_control(scanner, config, root, evidence)
+    baseline_ok = all(baseline[name] for name in (
+        "initial_finding_red", "inherited_fingerprint_green",
+        "new_finding_same_file_line_red", "secret_report_redacted",
+    ))
+    receipt = {"scanner_version": version, "scanner_sha256": hashlib.sha256(Path(scanner).read_bytes()).hexdigest(), "config_sha256": hashlib.sha256(config.read_bytes()).hexdigest(), "source": "synthetic controls only; no repository/history or real credential reads", "cases": records, "passed": sum(case["passed"] for case in records), "failed": sum(not case["passed"] for case in records) + (not baseline_ok), "fingerprint_baseline_control": baseline}
     (evidence / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
     print(json.dumps(receipt, indent=2))
     print(f"Evidence: {evidence}")

@@ -2124,6 +2124,16 @@
       "lanes": [],
       "scope": "Manual post-build regression for the sealed Dope GPU edition: fresh Rust CPU fast inference on all three tasks, cleared thread environment and sampled process thread bounds. Execution needs no GPU; building the packaged edition requires the CUDA feature toolchain. Static mapping is not execution or latency evidence."
     },
+    "python:deploy/appliance/test_d1_macos_dev.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Synthetic D1 Darwin development-package identity and receipt controls; native DEV-BUILD execution is separately recorded and never qualifies the signed release gate."
+    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "discovery": {
         "kind": "python-family"
