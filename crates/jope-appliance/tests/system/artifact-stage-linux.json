@@ -1,0 +1,552 @@
+{
+  "execution": {
+    "binary_sha256": "de225c0dc15329dd40ff10faa9d561a77878fcf2f428c7cd7d500e8d8488288a",
+    "command": [
+      "/home/ubuntu/jope_plan/evidence/dsc08-t2210/artifacts/linux-no-run-failpoints-attempt2/deps/system-ab791c0879829733",
+      "live_terminal_attach_and_mcp_reconnect_preserve_the_same_run_projection",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "compiler": "rustc 1.97.1 (8bab26f4f 2026-07-14)\nbinary: rustc\ncommit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452\ncommit-date: 2026-07-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.1\nLLVM version: 22.1.6\n",
+    "exit": 0,
+    "library_sha256": "a6be943c3adbb4fba31914120817a2ae84a043b5c068db4aebdf8e9544d16e0a",
+    "nice": 10
+  },
+  "input": {
+    "dataset": "21fbfe8b53dbcd60",
+    "rows": 96,
+    "selected_train_sha256": "d4acd766bb7052f6c005b961236c9999b449913ba8c519fb86190848b5c86293",
+    "source_split": "train",
+    "train_sha256": "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
+  },
+  "limits": [
+    "Nine traced publication occurrences include FIT/internal-assessment input blobs and model publications; no per-blob category inferred.",
+    "The normal internal assessment split is formed only from the approved TRAIN fixture; no external holdout/test/sealed payload is accessed.",
+    "This receipt covers the five real-engine CAS hooks. Dedicated later-prefix fixture cuts are separately reported.",
+    "Source-bound operational evidence is not a signed-release, learned-Continue or scientific-lift qualification."
+  ],
+  "negative_controls": {
+    "names": [
+      "abort_is_not_SIGKILL",
+      "missing_occurrence",
+      "incomplete_continuation",
+      "staging_not_clean",
+      "cleanup_error",
+      "wrong_source"
+    ],
+    "rejected": 6
+  },
+  "platform": {
+    "machine": "x86_64",
+    "system": "Linux"
+  },
+  "publication_cases": [
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 1,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 2,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 3,
+      "prefix_events": 0,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 4,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 5,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 6,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 7,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 8,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_write",
+      "ordinal": 9,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 1,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 2,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 3,
+      "prefix_events": 0,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 4,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 5,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 6,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 7,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 8,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_file_sync",
+      "ordinal": 9,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 1,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 2,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 3,
+      "prefix_events": 0,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 4,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 5,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 6,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 7,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 8,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_hash_verify",
+      "ordinal": 9,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 1,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 2,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 3,
+      "prefix_events": 0,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 4,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 5,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 6,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 7,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 8,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_rename",
+      "ordinal": 9,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 1,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 2,
+      "prefix_events": 0,
+      "recovered_state": "not-created",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 3,
+      "prefix_events": 0,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 4,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 5,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 6,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 7,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 8,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    },
+    {
+      "completed_state": "completed",
+      "continued_sequences": 10,
+      "hook": "after_directory_sync",
+      "ordinal": 9,
+      "prefix_events": 9,
+      "recovered_state": "paused",
+      "signal": -9,
+      "staging_clean": true
+    }
+  ],
+  "recorded_at": "2026-11-01T04:56:39.131531+00:00",
+  "result": {
+    "all_continuations_completed": true,
+    "all_reference_integrity_verified": true,
+    "all_signal_exits": -9,
+    "all_staging_clean": true,
+    "cleanup_errors": [],
+    "engine_cuts": 61,
+    "hooks": [
+      "after_write",
+      "after_file_sync",
+      "after_hash_verify",
+      "after_rename",
+      "after_directory_sync"
+    ],
+    "occurrences_per_publication_hook": 9,
+    "parent_open_files_max": 5,
+    "publication_cuts": 45,
+    "r4": true,
+    "s2": true
+  },
+  "schema": "jopedime.int02.linux-artifact-stages/v1",
+  "scope": "Bounded real-engine CAS publication cuts over admitted TRAIN; no release or quality claim",
+  "source": "6adc02e3cf3a60b90dbcebbde277c516931504bb",
+  "source_receipts": {
+    "baseline": {
+      "bytes": 6610,
+      "location": "xbabe1:/home/ubuntu/jope_plan/evidence/dsc08-t2210/results/6adc02e3cf3a60b90dbcebbde277c516931504bb/live/live/boundary-baseline.json",
+      "sha256": "82f9ebe0a17bb3ec95d5e9f8b5a2845a37435210758dbf94b57507b820ac4288"
+    },
+    "cases": {
+      "bytes": 124255,
+      "location": "xbabe1:/home/ubuntu/jope_plan/evidence/dsc08-t2210/results/6adc02e3cf3a60b90dbcebbde277c516931504bb/live/live/engine-boundary-cases.json",
+      "sha256": "03c3fe7beb81b99c115363d869f75b37531caf4a3aa2456a8bb54562403b0b13"
+    },
+    "execution": {
+      "bytes": 934,
+      "location": "xbabe1:/home/ubuntu/jope_plan/evidence/dsc08-t2210/results/6adc02e3cf3a60b90dbcebbde277c516931504bb/live/receipt.json",
+      "sha256": "59200bdfd41fd159a675ab9d201f366bad234318bc8f08c8afb8ecc29cd857ec"
+    },
+    "report": {
+      "bytes": 4001,
+      "location": "xbabe1:/home/ubuntu/jope_plan/evidence/dsc08-t2210/results/6adc02e3cf3a60b90dbcebbde277c516931504bb/live/live/report.json",
+      "sha256": "640d916ce901d432ab17a1f053347dc4291fc1821c01eda2afa2949e6ecab7c4"
+    },
+    "worker_build": {
+      "bytes": 505,
+      "location": "xbabe1:/home/ubuntu/jope_plan/evidence/dsc08-t2210/results/6adc02e3cf3a60b90dbcebbde277c516931504bb/workers/worker/native-worker-build.json",
+      "sha256": "3842cdf1398ccac05620099ea99c8ef3b6b35ab0608c124b9313679239b29d83"
+    },
+    "workers": {
+      "bytes": 950,
+      "location": "xbabe1:/home/ubuntu/jope_plan/evidence/dsc08-t2210/results/6adc02e3cf3a60b90dbcebbde277c516931504bb/workers/receipt.json",
+      "sha256": "3f5072233f950ac0d0b4efdc85b104be27557a761edd5f818ee8a934100d31d1"
+    }
+  }
+}
