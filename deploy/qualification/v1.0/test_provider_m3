@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""Data-free M3 controls; partial source assertions never qualify release M3."""
+
+import contextlib
+import hashlib
+import importlib
+import io
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE / "providers"))
+m3 = importlib.import_module("m3")
+common = importlib.import_module("common")
+Context, ProviderError = common.Context, common.ProviderError
+
+
+class M3Tests(unittest.TestCase):
+    def setUp(self):
+        root = Path(os.environ.get("JOPE_QUALIFICATION_TEST_TMP", HERE / "target"))
+        root.mkdir(parents=True, exist_ok=True)
+        self.tmp = tempfile.TemporaryDirectory(prefix="m3-", dir=root)
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.repo = self.root / "checkout"
+        self.repo.mkdir()
+        self.artifact = self.root / "candidate"
+        self.artifact.write_bytes(b"controlled M3 fixture; not a release")
+        self.ctx = Context(
+            "M3",
+            self.artifact,
+            hashlib.sha256(self.artifact.read_bytes()).hexdigest(),
+            "a" * 40,
+            self.root / "result.json",
+        )
+        self.calls = []
+        self.test_calls = 0
+        self.source = self.ctx.source_sha
+        self.dirty = ""
+        self.output_override = None
+        self.returncode = 0
+        self.after_test = lambda: None
+        self.addCleanup(patch.stopall)
+        patch.object(m3, "ROOT", self.repo).start()
+
+    def run_child(self, args, **kwargs):
+        self.calls.append(args)
+        if args[:2] == ["git", "rev-parse"]:
+            output = self.source
+        elif args[:2] == ["git", "status"]:
+            output = self.dirty
+        elif args[0] == "cargo" and args[1] == "run":
+            if "inspect" in args:
+                output = json.dumps(
+                    {
+                        "manifest": {
+                            "profile": "full",
+                            "scope": "release",
+                            "source": {"sha40": self.ctx.source_sha},
+                        }
+                    }
+                )
+            else:
+                output = json.dumps({"schema": "jope.appliance-verify/v1", "ok": True})
+        else:
+            self.test_calls += 1
+            test = m3.TESTS[self.test_calls - 1]
+            self.after_test()
+            if self.output_override is not None:
+                output = self.output_override
+            else:
+                output = (
+                    f"running 1 test\ntest {test} ... ok\n"
+                    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 400 filtered out\n"
+                )
+                if test == m3.FREQUENCY_DIAGNOSTIC:
+                    report = {
+                        "schema": "jopedime.dsc06-generated-frequency-diagnostic/v1",
+                        "population_comparable_to_reference": False,
+                        "m3_qualified": False,
+                    }
+                    # The real --nocapture shape: the diagnostic interrupts the case line.
+                    output = (
+                        f"running 1 test\ntest {test} ... "
+                        f"{m3.DIAGNOSTIC_PREFIX}{json.dumps(report)}\nok\n\n"
+                        "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 400 filtered out\n"
+                    )
+            return subprocess.CompletedProcess(args, self.returncode, output, "")
+        return subprocess.CompletedProcess(args, 0, output, "")
+
+    def invoke(self):
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            return m3.qualify(self.ctx, run=self.run_child)
+
+    def test_partial_source_controls_never_emit_pass_receipt(self):
+        with self.assertRaisesRegex(
+            ProviderError, "M3 remains not qualified; missing evidence"
+        ):
+            self.invoke()
+        self.assertEqual(self.test_calls, len(m3.TESTS))
+        self.assertFalse(self.ctx.result.exists())
+        self.assertIn("full historical feat412 corpus", str(m3.INCOMPLETE))
+        self.assertIn(m3.command(m3.TESTS[0]), self.calls)
+
+    def test_zero_collected_tests_refuse_before_incomplete_result(self):
+        self.output_override = "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 400 filtered out\n"
+        with self.assertRaisesRegex(ProviderError, "exactly one passing case"):
+            self.invoke()
+        self.assertEqual(self.test_calls, 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_wrong_test_name_cannot_substitute_for_a_clause(self):
+        self.output_override = "test other::case ... ok\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 400 filtered out\n"
+        with self.assertRaisesRegex(ProviderError, "exactly one passing case"):
+            self.invoke()
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_failed_assertion_short_circuits_and_has_no_receipt(self):
+        self.returncode = 42
+        self.assertEqual(self.invoke(), 42)
+        self.assertEqual(self.test_calls, 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_source_or_artifact_drift_refuses(self):
+        for source, dirty in [("b" * 40, ""), (self.ctx.source_sha, " M source.rs")]:
+            self.source, self.dirty = source, dirty
+            with (
+                self.subTest(source=source, dirty=dirty),
+                self.assertRaisesRegex(ProviderError, "clean, candidate-pinned"),
+            ):
+                self.invoke()
+        self.assertEqual(self.test_calls, 0)
+        self.dirty = ""
+        self.source = self.ctx.source_sha
+        self.after_test = lambda: self.artifact.write_bytes(b"changed")
+        with self.assertRaisesRegex(ProviderError, "candidate bytes changed"):
+            self.invoke()
+        self.assertEqual(self.test_calls, 1)
+        self.assertFalse(self.ctx.result.exists())
+
+    def test_interleaved_nocapture_case_block_is_one_pass_but_failed_is_not(self):
+        name = m3.FREQUENCY_DIAGNOSTIC
+        real = f"running 1 test\ntest {name} ... {m3.DIAGNOSTIC_PREFIX}{{}}\nok\n\ntest result: ok. 1 passed"
+        self.assertTrue(m3.exact_case_passed(real, name))
+        self.assertFalse(
+            m3.exact_case_passed(real.replace("\nok\n", "\nFAILED\n"), name)
+        )
+        self.assertFalse(m3.exact_case_passed(real + f"\ntest {name} ... ok\n", name))
+        report = {
+            "schema": "jopedime.dsc06-generated-frequency-diagnostic/v1",
+            "population_comparable_to_reference": False,
+            "m3_qualified": False,
+        }
+        parsed = m3._frequency_report(real.replace("{}", json.dumps(report)))
+        self.assertEqual(parsed["schema"], report["schema"])
+
+    def test_frequency_diagnostic_cannot_claim_comparable_m3_population(self):
+        report = json.dumps(
+            {
+                "schema": "jopedime.dsc06-generated-frequency-diagnostic/v1",
+                "population_comparable_to_reference": True,
+                "m3_qualified": False,
+            }
+        )
+        with self.assertRaisesRegex(ProviderError, "limited population"):
+            m3._frequency_report(f"{m3.DIAGNOSTIC_PREFIX}{report}\n")
+
+    def test_existing_result_is_never_overwritten(self):
+        self.ctx.result.write_bytes(b"prior evidence")
+        with self.assertRaisesRegex(ProviderError, "new regular file"):
+            self.invoke()
+        self.assertEqual(self.ctx.result.read_bytes(), b"prior evidence")
+        self.assertEqual(self.test_calls, 0)
+
+    def test_context_refuses_symlink_and_nonfile_candidates(self):
+        link = self.root / "candidate-link"
+        link.symlink_to(self.artifact)
+        directory = self.root / "candidate-directory"
+        directory.mkdir()
+        for candidate in (link, directory):
+            env = {
+                "JOPE_REL07_GATE_ID": "M3",
+                "JOPE_REL07_ARTIFACT": str(candidate),
+                "JOPE_REL07_ARTIFACT_SHA256": self.ctx.artifact_sha256,
+                "JOPE_REL07_SOURCE_SHA": self.ctx.source_sha,
+                "JOPE_REL07_RESULT": str(self.root / "new-result.json"),
+            }
+            with (
+                self.subTest(candidate=candidate),
+                patch.dict(os.environ, env),
+                self.assertRaisesRegex(ProviderError, "regular non-symlink file"),
+            ):
+                common.context("M3")
+
+    def test_evidence_path_inside_checkout_refuses(self):
+        from dataclasses import replace
+
+        self.ctx = replace(self.ctx, result=self.repo / "result.json")
+        with self.assertRaisesRegex(ProviderError, "outside the source checkout"):
+            self.invoke()
+        self.assertEqual(self.test_calls, 0)
+        self.assertFalse((self.repo / "result.json").exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

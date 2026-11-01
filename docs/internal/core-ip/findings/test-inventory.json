@@ -1607,6 +1607,18 @@
       "reason": "REL-07 signer-compatible gate-receipt adapter proofs (exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, and artifact SHA256 binding); no Rust build, GPU, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
+      "reason": "REL-07 PR1396 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_a2/test_a2.py": {
+      "reason": "REL-07 A2 provider orchestration controls; synthetic candidate/children only, no live release or scientific data execution",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_a5/test_a5.py": {
+      "reason": "REL-07 A5 named-client provider controls (manifest, sidecar and receipt refusal proofs over synthetic evidence); no live client, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_d2/test_d2.py": {
       "reason": "REL-07 D2 size-provider contract controls over synthetic size reports and candidate identities; no latency verdict, live candidate or release qualification.",
       "role": "infrastructure"
@@ -1625,6 +1637,10 @@
     },
     "python:deploy/qualification/v1.0/test_provider_s3/test_s3.py": {
       "reason": "REL-07 S3 leakage provider controls (binding, exact-selector and refusal proofs over synthetic child output); no real candidate, release or dataset job executes",
+      "role": "infrastructure"
+    },
+    "python:deploy/qualification/v1.0/test_provider_s4/test_s4.py": {
+      "reason": "REL-07 S4 orchestration controls with synthetic candidates/child output; actual custom-objective discovery and ranker-input assertions execute separately in the product.",
       "role": "infrastructure"
     },
     "python:deploy/qualification/v1.0/test_provider_t2/test_provider_t2.py": {
@@ -2051,6 +2067,18 @@
     },
     "python:research/flywheel_selfplay/h161_robust_fambal/test_h161.py": {
       "reason": "H161 robust per-context normalized/Huber loss + family-balanced sampling unit tests",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/test_h163.py": {
+      "reason": "H163 data-free controls for cost-vs-utility direction, candidate ordering and stable argmin ties, fixed family folds, shared-family median-seed bootstrap, strict selector admission, and canonical H145 Elo dominance; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/test_h164.py": {
+      "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h165_gradient_noise_dropout/test_h165.py": {
+      "reason": "H165 owner-directed gradient-noise/dropout continuation study; data-free selector, bootstrap and frozen-state controls. Research only; no product or sealed qualification. Restores classification omitted by prereg PR #1410.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -3317,6 +3345,10 @@
     },
     "target:jope-client/lib/jope_client": {
       "reason": "Empty skeleton crate registered by API-06; no behaviour or tests yet",
+      "role": "infrastructure"
+    },
+    "target:jope-client/test/a1_lite": {
+      "reason": "REL-07 A1 explicitly ignored no-engine background-candidate contract test; requires external verified candidate/source bindings and manual CPU execution, not a default-suite or release qualification claim.",
       "role": "infrastructure"
     },
     "target:jope-client/test/contract": {

@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 from unittest import mock
@@ -234,9 +234,100 @@ class ReleaseGates(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "missing: D2"):
             runner.provider_manifest(self.repo, self.artifact)
 
-        (provider_dir / "d2.py").write_text("# speed verdict fixture must not run\n")
-        with self.assertRaisesRegex(ValueError, "D2 speed-gate"):
-            runner.provider_commands(self.repo)
+        (provider_dir / "d2.py").write_text("# size-budget provider fixture\n")
+        subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "add size-budget D2 provider",
+            ],
+            check=True,
+        )
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "update-ref",
+                "refs/remotes/origin/main",
+                source,
+            ],
+            check=True,
+        )
+        commands, missing = runner.provider_commands(self.repo)
+        self.assertEqual([row["id"] for row in commands], runner.RELEASE_GATE_IDS)
+        self.assertEqual(missing, [])
+        d2_manifest = runner.provider_manifest(self.repo, self.artifact)
+        d2 = next(row for row in d2_manifest["gates"] if row["id"] == "D2")
+        self.assertEqual(
+            d2["argv"],
+            ["python3", "-B", "deploy/qualification/v1.0/providers/d2.py"],
+        )
+
+    def test_cli_dry_provider_discovery_reports_missing_ids_without_candidate(self):
+        provider_dir = self.repo / "deploy/qualification/v1.0/providers"
+        provider_dir.mkdir(parents=True)
+        for gate in ["M1", "D2"]:
+            (provider_dir / (gate.lower() + ".py")).write_text("# fixture\n")
+        subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-qm",
+                "partial provider inventory",
+            ],
+            check=True,
+        )
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "update-ref",
+                "refs/remotes/origin/main",
+                source,
+            ],
+            check=True,
+        )
+        with (
+            mock.patch(
+                "sys.argv",
+                [
+                    "release-gates",
+                    "--providers",
+                    "--dry-discovery",
+                    "--repo",
+                    str(self.repo),
+                ],
+            ),
+            redirect_stdout(StringIO()) as output,
+        ):
+            code = runner.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(code, 0)
+        self.assertEqual(report["source_sha"], source)
+        self.assertTrue(report["is_origin_main"])
+        self.assertEqual(report["found_provider_count"], 2)
+        self.assertEqual(report["missing_provider_count"], 26)
+        self.assertIn("D2", report["found"])
+        self.assertFalse(report["complete"])
 
     def test_cli_provider_discovery_refuses_before_creating_partial_evidence(self):
         output = self.root / "provider-discovery-output"
