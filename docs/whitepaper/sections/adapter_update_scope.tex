@@ -15,8 +15,10 @@ The caller supplies modality tokens and a mask. It separately zeros the
 584-entry context feature vector and both prior inputs, and supplies a
 fixed scale of 0.4208; zero context features do not mean absent modality
 tokens. Its objective combines regression to recorded costs and listwise
-matching, with a fixed target for failed gates. The reporting code averages
-the negative selected scores, assigning a fixed penalty to failed gates.
+matching; failed gates receive target cost $+2.0$. Reporting averages
+negative selected scores, with utility $-2.0$ for failed gates. The full-cohort
+route disables development-anchor margin projection; smaller-cohort runs can
+enable it. These routes require separate receipts.
 
 Separate adapter ablations on historically seen training families found a
 benefit from the revealed-outcome kernel even at random initialization,
