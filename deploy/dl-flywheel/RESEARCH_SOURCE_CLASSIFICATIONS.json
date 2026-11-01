@@ -4495,6 +4495,38 @@
         "role": "research",
         "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/protocol.py": {
+      "bytes": 8547,
+      "sha256": "de98f5824f2750fa89e21205d70ffa80f226224e4093cff746eb3b26e9b47197",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/power.py": {
+      "bytes": 21152,
+      "sha256": "c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/runner.py": {
+      "bytes": 10525,
+      "sha256": "276f0853e3e41452562aeae5c35a2a8f791ec085fc31a739a2ee7e0110749ff5",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/monitor.py": {
+      "bytes": 5212,
+      "sha256": "f9c057520bf6937ba36d8493a24bce156b04757d4e86f9903ba18fbbb5411a7d",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
