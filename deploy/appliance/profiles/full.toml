@@ -1,15 +1,16 @@
-# The full product: native methods plus the accepted step-60000 proposal path and its exact
+# The full product: native methods plus the owner-selected r882 regression adapter and its exact
 # encoder closure (SPECIFICATION.md §5.1). Neural alternatives (§6.2) join with their components
 # when their adapters land (P4).
 #
 # It is BLOCKED, and `jope-dist lock` records why (deploy/appliance/models.lock.json):
 #   * the Starlight foundation regressor remains `prohibited`; its explicit owner acknowledgement
 #     permits internal qualification/rehearsal candidates only, never public distribution;
-#   * the proposal method's runtime adapter is not compiled yet (P3).
+#   * the proposal method's runtime adapter is not compiled yet (P3). Its model input is the
+#     owner-selected round-882 JOPE safetensors export, pinned by SHA and bundle digest per T0210.
 # Rights are never edited to unblock it: resolve them at their source records.
 schema = "jope.appliance-profile/v1"
 name = "full"
-description = "Native methods plus the accepted step-60000 proposal closure (internal-restricted)."
+description = "Native methods plus the owner-selected r882 regression adapter (internal-restricted)."
 scope = "internal-restricted"
 redistribution = ["permitted", "internal", "prohibited"]
 methods = ["native", "proposal.step60000.regression"]
@@ -23,9 +24,9 @@ level = 19
 frame_mib = 16
 
 [[component]]
-id = "policy-step-60000"
-bundle = "policy-step-60000"
-files = ["policy.safetensors", "context_transforms.safetensors"]
+id = "r882-regression-adapter"
+bundle = "r882-regression"
+files = ["jope.safetensors"]
 role = "model"
 requires = ["hyperion-v5-arm-b", "starlight-foundation", "target-encoder", "governed-bundle"]
 

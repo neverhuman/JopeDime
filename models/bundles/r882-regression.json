@@ -1,0 +1,76 @@
+{
+  "schema": "jope.model-bundle/v2",
+  "bundle_id": "r882-regression",
+  "policy_version": "flywheel-r882",
+  "lineage": "Owner-selected flywheel r882 regression incumbent exported as JOPE safetensors; internal qualification/rehearsal only.",
+  "source_checkpoint": "/home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-882.pt",
+  "source_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "source_commit": "unresolved in upstream custody metadata",
+  "adapter": {
+    "method_id": "proposal.step60000.regression",
+    "owner_ruling": "lanes_t0115 D2",
+    "selection_metric": "val_reg",
+    "selection_value": 1.1377941898164525,
+    "round": 882,
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "live_loop_modified": false
+  },
+  "custody": {
+    "path": "/home/ubuntu/jope-data/RNK10-t2115-pin-20261101/round-882.pt",
+    "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "pointer_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "manifest_sha256": "cd0d02d81ab18cdca0f0b3f61e91221c54cdedfa23ba36b308030afacd7a7af1"
+  },
+  "files": [
+    {
+      "path": "jope.safetensors",
+      "sha256": "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c",
+      "bytes": 7499888,
+      "blob": "blobs/sha256/ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c",
+      "source_key": "custody/RNK10-t0140-t0200-rnk11/models/bundles/r882/jope.safetensors",
+      "kind": "policy",
+      "license": {
+        "schema": "jain.model-license/v1",
+        "component_id": "jope.safetensors",
+        "component_kind": "model",
+        "sha256": "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c",
+        "spdx_expression": "LicenseRef-Jain-Internal-Model",
+        "license_class": "internal",
+        "source_uri": "urn:jain:model-source:sha256:ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c",
+        "redistribution": "internal",
+        "model_lineage": "Owner-selected r882 JOPE safetensors export; source checkpoint remains custody-only.",
+        "notice_paths": [
+          "docs/notices/jain-governed-models.txt"
+        ],
+        "policy_eligibility": {
+          "eligible": true,
+          "open_only": false
+        }
+      }
+    }
+  ],
+  "signing": "none",
+  "bucket": "veox-jopedime-models-use2",
+  "published_at": "2026-11-01T07:26:00Z",
+  "publication_status": "external custody reference only; bytes not uploaded to the models S3 bucket; release signature handled separately by ENG:watcher",
+  "notices": [
+    {
+      "path": "docs/notices/jain-governed-models.txt",
+      "text": "Jain-governed model notice\n\nThese frozen artifacts are governed Jain release inputs. They are eligible for the\ndefault model policy but are not certified as open-source or open-weight models.\nRedistribution is permitted only as part of an approved Jain release bundle.\n"
+    }
+  ],
+  "export": {
+    "source_pr": 1452,
+    "source_head": "ac0fc393dc7aa39b05cda77e32a837146f70164a",
+    "bundle_digest": "sha256:057e50a9a741d30d541ed8af8339cec84a5157af621100cb70857052ef14dacc",
+    "jope_safetensors_sha256": "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c",
+    "jope_safetensors_bytes": 7499888,
+    "dope_safetensors_sha256": "0f5e98fa29cf9c45bfaac5a3cf001b13a0de37d7b6e154c582d7ec689b21a84d",
+    "release_catalog_sha256": "3af56a817bfae39b70f0b2f60668fe88fae178650ee596e1ba7a180acba1e0c6",
+    "release_catalog_bytes": 48885,
+    "export_receipt_sha256": "6db48e1195455da011777ee0019f3998f9370969c505afed09d56a319128aec8",
+    "quality_qualified": false,
+    "release_signature": "handled separately by ENG:watcher"
+  }
+}
