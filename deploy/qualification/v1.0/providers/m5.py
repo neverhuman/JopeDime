@@ -113,7 +113,7 @@ def causal_report(path: Path) -> dict:
     regular(path)
     report = json.loads(path.read_text())
     if (
-        report["schema"] != "jope.m5-causal/v2"
+        report["schema"] != "jope.m5-causal/v3"
         or report["consumer"] != "M5-causal"
         or report["device"] != "cpu"
     ):
@@ -138,6 +138,8 @@ def causal_report(path: Path) -> dict:
     if (
         details["contexts"] != 50
         or details["slates"] != 100
+        or details["admitted_order_comparison"] != "not_comparable_model_weights"
+        or details["admitted_order_mismatches"] is not None
         or details["quality_gate_granted"] is not False
         or details["Q1_ready"] is not False
         or serving["slates"] != 50
@@ -158,7 +160,6 @@ def causal_report(path: Path) -> dict:
         )
     expected_pass = (
         output_checks["invalid_cost_values"] == 0
-        and details["admitted_order_mismatches"] == 0
         and serving["landmark_only_changed_admission"] > 0
         and serving["fitness_changed_admission"] > 0
         and serving["disconnected_heuristic_mismatches"] > 0
