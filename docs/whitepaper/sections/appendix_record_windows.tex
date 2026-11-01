@@ -78,7 +78,7 @@ retained window.
 
 \begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
+  \includegraphics[width=\linewidth,height=1.60in,keepaspectratio]{figures/fig_fw_followup_development.pdf}
   \caption{\textbf{Program events and adapter validation in a follow-up window.}
   Left: journaled strict training-program incumbent improvements per round.
   Right: candidate adapter validation pool utility and the recorded best.
@@ -89,7 +89,7 @@ retained window.
 
 \begin{figure*}[!t]
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
+  \includegraphics[width=\linewidth,height=1.60in,keepaspectratio]{figures/fig_fw_later_development.pdf}
   \caption{\textbf{Continued program events and adapter validation.}
   Left: journaled strict training-program incumbent improvements per round.
   Right: candidate adapter validation pool utility and the recorded best.
@@ -100,7 +100,7 @@ retained window.
 
 \begin{figure}[!t]
   \centering
-  \includegraphics[width=\linewidth,height=2.35in,keepaspectratio]{figures/fig_fw_live_development.pdf}
+  \includegraphics[width=\linewidth,height=2.10in,keepaspectratio]{figures/fig_fw_live_development.pdf}
   \caption{\textbf{Program-incumbent events and validation summaries.}
   Top: logged strict improvements to training-program incumbents per round.
   Bottom: candidate adapter validation pool utility. Both panels cover the
@@ -120,6 +120,42 @@ retained window.
   \label{fig:fw-admission-shortfall}
 \end{figure}
 
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=1.35in,keepaspectratio]{figures/fig_fw_target_history.pdf}
+  \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
+  arm for one historical dataset/cut, at \num{1000} evaluations per search.
+  RMSE is in historical evaluator units; lower is better. The arms shared
+  incumbent and teacher seeds, and elapsed time varied. This selected
+  development example does not establish a learned-policy advantage.}
+  \label{fig:fw-target-history}
+\end{figure*}
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=1.45in,keepaspectratio]{figures/fig_fw_target_progress.pdf}
+  \caption{\textbf{Historical GP target progress.} First-to-last reported
+  best development RMSE at \num{1000} evaluations per search, grouped by search
+  arm. Lower is better; unchanged scores are included. The arms shared
+  incumbent and teacher seeds, and elapsed time varied. These counts do
+  not measure independent discoveries or a learned-policy advantage.}
+  \label{fig:fw-target-progress}
+\end{figure}
+
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_latest_event_rates.pdf}
+  \caption{\textbf{Program-event rate and round duration across retained windows.}
+  Each row is a separate capture of 20 consecutive completed rounds.
+  Left: strict training-program incumbent events divided by total logged
+  round time, with event counts shown. Right: total logged time divided
+  by 20, including all within-round work and waits. The five windows are
+  displayed separately; gaps are neither filled nor connected.
+  Program events are distinct from adapter admissions.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-latest-event-rates}
+\end{figure*}
+
 \paragraph{Retained operating windows.}
 The five 20-round program-event slices contain 15 events in rounds
 2005--2024, 10 in 2082--2101, 22 in 2343--2362, 15 in 2508--2527 and 21
@@ -137,29 +173,6 @@ For the adapter record in \cref{fig:fw-validation},
 \cref{fig:fw-admission-shortfall} summarizes candidate gaps to each round's
 recorded best. Each retained round contributes once; the curve does not
 count independent tasks or distinct programs.
-
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.42in,keepaspectratio]{figures/fig_fw_target_history.pdf}
-  \caption{\textbf{Post-hoc GP target trajectory.} All 71 generations per
-  arm for one historical dataset/cut, at \num{1000} evaluations per search.
-  RMSE is in historical evaluator units; lower is better. The arms shared
-  incumbent and teacher seeds, and elapsed time varied. This selected
-  development example does not establish a learned-policy advantage.}
-  \label{fig:fw-target-history}
-\end{figure*}
-
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_target_progress.pdf}
-  \caption{\textbf{Historical GP target progress.} First-to-last reported
-  best development RMSE at \num{1000} evaluations per search, grouped by search
-  arm. Lower is better; unchanged scores are included. The arms shared
-  incumbent and teacher seeds, and elapsed time varied. These counts do
-  not measure independent discoveries or a learned-policy advantage.}
-  \label{fig:fw-target-progress}
-\end{figure}
-\newpage
 
 Historical GP target scores provide a separate view in
 \cref{fig:fw-target-progress}. The 159 repeated dataset/cut/arm groups cover

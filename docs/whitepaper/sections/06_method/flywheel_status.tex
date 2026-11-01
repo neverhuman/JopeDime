@@ -1,5 +1,14 @@
 % Stage 2 owns these figures; the historical reference ends before this input.
-
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=1.65in,keepaspectratio]{figures/fig_fw_latest_admissions.pdf}
+  \caption{\textbf{Separate adapter admission trajectory.}
+  The captured prefix in \cref{tab:admission-ledger}: blue is post-decision
+  retained best; grey marks rejected candidates, red stars strict gains
+  and hollow diamonds exact ties. Decisions use unrounded logged values.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-latest-admissions}
+\end{figure*}
 \FloatBarrier
 \subsection{A separate adapter admission record}\label{sec:method-status}
 
@@ -15,37 +24,28 @@ an exact loop source, adapter, evaluation population or normalization, so
 cross-model comparisons and transfer remain unqualified. Retained windows
 are separate; unobserved gaps are not filled or joined into a learning curve.
 Independent comparisons belong to \cref{sec:results}.
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.65in,keepaspectratio]{figures/fig_fw_latest_admissions.pdf}
-  \caption{\textbf{Separate adapter admission trajectory.}
-  The captured prefix in \cref{tab:admission-ledger}: blue is post-decision
-  retained best; grey marks rejected candidates, red stars strict gains
-  and hollow diamonds exact ties. Decisions use unrounded logged values.
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-latest-admissions}
-\end{figure*}
 
 \input{sections/fig_rolling_margin_quantiles}
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_promotions_per_hour.pdf}
+  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
+  \label{fig:fw-promotions-per-hour}
+\end{figure*}
 
-
-
-
-
-
-
-
-
-
+\begin{figure*}[!t]
+  \centering
+  \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_round_throughput.pdf}
+  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
+  Both panels cover the same 20 completed summaries, rounds 2696--2715.
+  Left: candidate adapter validation utility and the recorded best.
+  Right: distinct training contexts divided by the full wall time of each
+  completed round. The rates include all work and waits inside that interval.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-round-throughput}
+\end{figure*}
 
 \input{sections/adapter_update_scope}
-
-
-
-
-
-
-
 
 
 
@@ -82,25 +82,6 @@ model and optimizer states.
 
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
-
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.60in,keepaspectratio]{figures/fig_fw_promotions_per_hour.pdf}
-  \caption{\textbf{Training-program promotions per hour and adapter validation trajectory.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero adapter admissions).}
-  \label{fig:fw-promotions-per-hour}
-\end{figure*}
-
-\begin{figure*}[!t]
-  \centering
-  \includegraphics[width=\linewidth,height=1.60in,keepaspectratio]{figures/fig_fw_round_throughput.pdf}
-  \caption{\textbf{Adapter utility and whole-round throughput in a later retained window.}
-  Both panels cover the same 20 completed summaries, rounds 2696--2715.
-  Left: candidate adapter validation utility and the recorded best.
-  Right: distinct training contexts divided by the full wall time of each
-  completed round. The rates include all work and waits inside that interval.
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-round-throughput}
-\end{figure*}
 
 \paragraph{The retained admission ledger.}
 \Cref{tab:admission-ledger} is the canonical chronology and count table.
