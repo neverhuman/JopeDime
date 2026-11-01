@@ -5,6 +5,7 @@ import hashlib
 import importlib.metadata
 import json
 import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
@@ -202,7 +203,13 @@ def main():
     audit = rt.Audit(allowed, output)
     sys.addaudithook(audit.check)
     started = time.monotonic()
-    counter = {"updates": 0}
+    counter = {"updates": 0, "completed": 0}
+
+    def interrupted(signum, _frame):
+        raise RuntimeError("guarded supervisor signal " + str(signum))
+
+    signal.signal(signal.SIGTERM, interrupted)
+    signal.signal(signal.SIGINT, interrupted)
     original_step = torch.optim.AdamW.step
     try:
         net, guard, names, frozen, fused = rt.build(pins["checkpoint"])
@@ -299,8 +306,23 @@ def main():
                 raise RuntimeError("optimizer escaped private adapter")
             if counter["updates"] >= pins["max_total_updates"]:
                 raise RuntimeError("optimizer update budget exhausted")
-            value = original_step(optimizer, *a, **kw)
             counter["updates"] += 1
+            save(
+                output / "optimizer-progress.json",
+                dict(
+                    optimizer_step_calls_started=counter["updates"],
+                    optimizer_step_calls_completed=counter["completed"],
+                ),
+            )
+            value = original_step(optimizer, *a, **kw)
+            counter["completed"] += 1
+            save(
+                output / "optimizer-progress.json",
+                dict(
+                    optimizer_step_calls_started=counter["updates"],
+                    optimizer_step_calls_completed=counter["completed"],
+                ),
+            )
             return value
 
         torch.optim.AdamW.step = counted_step
@@ -626,6 +648,7 @@ def main():
                 status="INCOMPLETE",
                 error=repr(exc),
                 optimizer_updates=counter["updates"],
+                optimizer_step_calls_completed=counter["completed"],
                 audit=audit.receipt(),
                 elapsed_seconds=time.monotonic() - started,
             ),

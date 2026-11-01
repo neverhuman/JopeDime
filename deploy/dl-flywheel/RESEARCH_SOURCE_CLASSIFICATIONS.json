@@ -4817,8 +4817,8 @@
       }
     },
     "python:research/flywheel_selfplay/h183_ensemble_distill/runner.py": {
-      "bytes": 25463,
-      "sha256": "ff8c835b03f67c5c1c429ea6493c09dc87de10ead915451f9ed2456ce7cfb210",
+      "bytes": 26337,
+      "sha256": "516619a3e230a39464d7b03c45ae638ca293195b58e008a0c03b142962cc4213",
       "classification": {
         "role": "research",
         "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
