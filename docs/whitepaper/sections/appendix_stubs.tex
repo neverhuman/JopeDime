@@ -62,28 +62,8 @@ Artifacts that violate held-out isolation belong in the audit record:
 % Section 6.8 development-window figures (Appendix D), defined in Appendix C
 % so Table 9 stays adjacent to Appendix A on p. 19 while the full-width
 % telemetry floats land on p. 20 at the start of Appendix D.
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_followup_development.pdf}
-  \caption{\textbf{Program events and adapter validation in a follow-up window.}
-  Left: journaled strict training-program incumbent improvements per round.
-  Right: candidate adapter validation pool utility and the recorded best.
-  Both panels cover the same 20 consecutive summary rounds, 2082--2101. The summaries
-  mark no adapter admission. Independent first-proposal and transfer tests
-  remain required.}
-  \label{fig:fw-followup-development}
-\end{figure*}
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_later_development.pdf}
-  \caption{\textbf{Continued program events and adapter validation.}
-  Left: journaled strict training-program incumbent improvements per round.
-  Right: candidate adapter validation pool utility and the recorded best.
-  Both panels cover all 20 consecutive rounds, 2343--2362, in this retained summary
-  window. The summaries mark no adapter admission. Independent
-  first-proposal comparisons remain required.}
-  \label{fig:fw-later-development}
-\end{figure*}
+
+
 
 These implementation specifications describe the historical reference
 checkpoint in \cref{sec:method}, separate from the later adapter snapshot
@@ -146,62 +126,11 @@ in \cref{sec:method-status}:
   measure learned or exercised capacity. Approximately \num{6.90} million parameters lie outside the writer's token
   generation path. Decoding bypasses them, but the native checkpoint loader
   still requires them.
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_completed_time.pdf}
-  \caption{\textbf{Training-program events and logged validation utility over time.}
-  Top: candidate and recorded-best validation pool utility. Bottom:
-  cumulative strict training-program incumbent events reported by round end.
-  Both panels use all 20 consecutive summaries from rounds 2343--2362.
-  The summaries mark no adapter admission. These development observations
-  do not establish independent first-proposal improvement.}
-  \label{fig:fw-completed-time}
-\end{figure}
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_event_distribution.pdf}
-  \caption{\textbf{Rounds grouped by training-program incumbent events.}
-  Every bar contains 20 completed-round summaries. Colored segments count
-  rounds with 0, 1, 2 or 3+ strict training-program incumbent events;
-  parentheses report total events in each window. These descriptive counts
-  are not a matched comparison or evidence of independent first-proposal
-  improvement.}
-  \label{fig:fw-event-distribution}
-\end{figure}
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_subsequent_window.pdf}
-  \caption{\textbf{Candidate gaps and training-program events in a subsequent window.}
-  Top: recorded best minus candidate validation pool utility, paired within
-  each completed round; zero marks the recorded best. Bottom: cumulative
-  journaled strict training-program incumbent events, reset for this
-  window. Both panels cover the same 20 completed summaries. The summaries
-  mark no adapter admission. Repeated development comparisons do not
-  establish independent first-proposal improvement.}
-  \label{fig:fw-subsequent-window}
-\end{figure}
-\begin{figure}[!t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_subsequent_utility.pdf}
-  \caption{\textbf{Logged utility in the same development window.}
-  The same 20 completed summaries from rounds 2508--2527 as in
-  \cref{fig:fw-subsequent-window}. The recorded-best line is labeled round
-  882 in the logs; these summaries record no adapter admission.
-  This alternate view adds no observations or independent first-proposal
-  comparison.}
-  \label{fig:fw-subsequent-utility}
-\end{figure}
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\linewidth]{figures/fig_fw_subsequent_rates.pdf}
-  \caption{\textbf{Work and training-program event rates in the subsequent window.}
-  Left: completed rounds per hour. Right: strict training-program incumbent
-  events per hour. Each step is an average over one completed round's logged
-  wall time; dashed lines are rates from whole-window totals. Both panels
-  use the same 20 summaries as \cref{fig:fw-subsequent-window}, with no new
-  observations. Program events do not count adapter admissions.}
-  \label{fig:fw-subsequent-rates}
-\end{figure*}
+
+
+
+
+
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
   The records describe AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
@@ -222,38 +151,62 @@ in \cref{sec:method-status}:
 
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
-The following diagnostics are grouped by question. Timing and event counts
-appear in \cref{app:development-time,app:event-counts}; later operating
-windows and rates follow in
-\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}.
-\Cref{app:acceptance-over-rounds,app:promotions-per-hour} distinguish adapter
-admissions from program-promotion rates. These earlier views reuse retained
-records. \Cref{app:latest-admissions} adds 174 captured rows through round 2837;
-none of these views adds independent evaluations. Binding the records to
-an exact loop, adapter and qualified runtime remains pending
-(\cref{sec:method-status}); first-proposal comparisons belong to
-\cref{sec:results}.
+The main text presents four views of admission and operating activity.
+This appendix supplies timing and event counts
+(\cref{app:development-time,app:event-counts}), later operating windows
+(\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}),
+and separate adapter-admission and program-promotion rates
+(\cref{app:acceptance-over-rounds,app:promotions-per-hour}).
+\Cref{app:latest-admissions} adds 174 captured rows through round 2837;
+earlier admission windows and historical GP comparisons appear in
+\cref{app:record-windows}. These views reuse retained records and add no
+independent evaluations. Binding the records to an exact loop, adapter and
+qualified runtime remains pending (\cref{sec:method-status});
+first-proposal comparisons belong to \cref{sec:results}.
 
 \subsection{Development measurements over completed-round time}\label{app:development-time}
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_completed_time.pdf}
+  \caption{\textbf{Training-program events and logged validation utility over time.}
+  Top: candidate and recorded-best validation pool utility. Bottom:
+  cumulative strict training-program incumbent events reported by round end.
+  Both panels use all 20 consecutive summaries from rounds 2343--2362.
+  The summaries mark no adapter admission. These development observations
+  do not establish independent first-proposal improvement.}
+  \label{fig:fw-completed-time}
+\end{figure}
 
 \Cref{fig:fw-completed-time} shows the same retained summaries as
 \cref{fig:fw-later-development}. The horizontal axis sums completed-round
 wall time, including qualification waits. Each point is an end-of-round
 summary; the event count starts from zero for this window.
 
+\FloatBarrier
 \input{sections/appendix_event_counts}
 
+\FloatBarrier
 \input{sections/appendix_subsequent_window}
 
+\FloatBarrier
 \input{sections/appendix_subsequent_utility}
 
+\FloatBarrier
 \input{sections/appendix_subsequent_rates}
 
+\FloatBarrier
 \input{sections/appendix_round_throughput}
 
+\FloatBarrier
 \input{sections/appendix_acceptance_over_rounds}
 
+\FloatBarrier
 \input{sections/appendix_promotions_per_hour}
 
+\FloatBarrier
 \input{sections/appendix_latest_admissions}
+
+\FloatBarrier
+\input{sections/appendix_record_windows}
 \FloatBarrier
