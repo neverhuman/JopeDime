@@ -5085,6 +5085,46 @@
       "migration": "New RNK-10 research-only source classification; no product runtime claim.",
       "bytes": 6193,
       "sha256": "c84a0468d709ed988f2c3a712129dc44bf2d6172bf3dd7e81107c15f223a10b8"
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/parents.py": {
+      "bytes": 1180,
+      "sha256": "f301880508e087f3c86e9928b99f53b371fd4cd74e8b1909fefa5a8271798890",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/analysis.py": {
+      "bytes": 8328,
+      "sha256": "bd5ee2b3d48eddd9dbce04a54ec6eef4fd8d50f1ba25bc279799c5fce0fc6c6e",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/treatment.py": {
+      "bytes": 2722,
+      "sha256": "3e1c0209f1eeb48960e23ee045bbb7855df6331c48692ffef443f24b4e482311",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/monitor.py": {
+      "bytes": 5989,
+      "sha256": "ac7e97f4df3c57ac7e53d74350ca2a734b3a9ebb06cd8885916f51a02e9cdc66",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/runner.py": {
+      "bytes": 13664,
+      "sha256": "065747356d78ad6dc7175661cb7a3faa3dbc9e4eca4243b8be1ecdb7407d8ae2",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
