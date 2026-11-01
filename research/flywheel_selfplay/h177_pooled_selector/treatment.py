@@ -41,8 +41,14 @@ def apply_optimizer_settings(optimizer, arm, step):
     return lr, beta1
 
 
+H178_CALIBRATION_GATE = (
+    "Any H177 ADMIT is lift only if H178 (gpu_tokbench_agy, calibration of this exact rule on the H175 bank) "
+    "shows null/harmful admission <= 0.05. Otherwise H177 is DIAGNOSTIC."
+)
+
+
 def validate_h175_power_anchor(anchor, smoke=False):
-    """Enforce that non-smoke execution waits for H175 closeout with SELECTOR_UNDERPOWERED or MIXED and a numeric MDE80."""
+    """Enforce that non-smoke execution waits for H175 closeout with SELECTOR_UNDERPOWERED or MIXED, both context and family-clustered MDE80s, and the H178 calibration gate."""
     if not isinstance(anchor, dict) or anchor.get("wave") != "H177":
         raise RuntimeError("invalid h175_power_anchor.json")
     if (
@@ -51,6 +57,33 @@ def validate_h175_power_anchor(anchor, smoke=False):
         or abs(float(anchor.get("family_count_ratio", 0.0)) - 5.0) > 1e-12
     ):
         raise RuntimeError("h175_power_anchor family ratio mismatch")
+    if anchor.get("h178_calibration_gate") != H178_CALIBRATION_GATE:
+        raise RuntimeError("h175_power_anchor missing exact H178 calibration gate")
+    mde41 = anchor.get("mde80_single_fold_41_family")
+    mde205 = anchor.get("expected_pooled_205_family_mde80")
+    if not isinstance(mde41, dict) or not isinstance(mde205, dict):
+        raise RuntimeError(
+            "h175_power_anchor must include both context and family_clustered MDE80 dictionaries"
+        )
+    for regime in ("context", "family_clustered"):
+        if not isinstance(mde41.get(regime), dict) or not isinstance(
+            mde205.get(regime), dict
+        ):
+            raise RuntimeError(f"missing {regime} MDE80 block in h175_power_anchor")
+        for slate in ("24_slate", "full_slate"):
+            v41 = mde41[regime].get(slate)
+            v205 = mde205[regime].get(slate)
+            if (
+                v41 is None
+                or v205 is None
+                or not math.isfinite(float(v41))
+                or not math.isfinite(float(v205))
+                or float(v41) <= 0.0
+                or float(v205) <= 0.0
+            ):
+                raise RuntimeError(
+                    f"non-positive or non-finite MDE80 for {regime}/{slate}"
+                )
     if smoke:
         return
     verdict = anchor.get("h175_verdict")

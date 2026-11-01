@@ -223,6 +223,12 @@ def holm(pvals):
     return result
 
 
+H178_CALIBRATION_GATE = (
+    "Any H177 ADMIT is lift only if H178 (gpu_tokbench_agy, calibration of this exact rule on the H175 bank) "
+    "shows null/harmful admission <= 0.05. Otherwise H177 is DIAGNOSTIC."
+)
+
+
 def expected_mde80_205fam(mde80_41fam, margin=0.001):
     """Project 205-family pooled-B MDE80 from H175's 41-family single-fold MDE80 via sqrt(41/205) = 1/sqrt(5) SE scaling."""
     if (
@@ -237,14 +243,21 @@ def expected_mde80_205fam(mde80_41fam, margin=0.001):
 
 
 def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
-    """Confirmatory pooled cross-fit selector over all 205 DL-Train families.
+    """Confirmatory pooled cross-fit selector over all 205 DL-Train families (reusable unchanged by H178).
 
-    - Requires exactly ONE prespecified candidate step per arm (shape (3, N_ctx)); multi-step arrays raise ValueError.
+    - Requires the exact 4 registered arms `{"CTRL", "ACC4", "ACC16", "OC15"}` (`m = 4` Holm multiplicity); single-panel `m = 1` shortcuts raise ValueError.
+    - Requires exactly ONE prespecified candidate step per arm (shape `(3, N_ctx)`); multi-step 3D arrays raise ValueError.
     - Averages the 3 seeds within each of the 205 families BEFORE running 10,000 paired family-bootstrap draws.
-    - Admits iff equal-family gain > 0.001 + 1e-12 AND lower 95% bound > 0.0 AND Holm-adjusted p < 0.05 across arms; ties reject.
+    - Admits iff equal-family gain > 0.001 + 1e-12 AND lower 95% bound > 0.0 AND 4-arm Holm-adjusted p < 0.05; ties reject.
     """
-    if not candidate_panels_by_arm:
-        raise ValueError("non-empty candidate_panels_by_arm required")
+    if not isinstance(candidate_panels_by_arm, dict) or set(
+        candidate_panels_by_arm
+    ) != set(ARMS):
+        raise ValueError(
+            f"exact 4-arm H177 multiplicity required ({list(ARMS)}); single-panel m=1 shortcuts forbidden"
+        )
+    arms_map = {arm: candidate_panels_by_arm[arm] for arm in ARMS}
+
     families = [r["family_id"] for r in rows]
     fams_sorted = sorted(set(families))
     n_fams = len(fams_sorted)
@@ -268,9 +281,7 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
 
     raw_decisions = {}
     pvals_all = {}
-    for arm, panel in candidate_panels_by_arm.items():
-        if arm not in PRESPECIFIED_CANDIDATE_STEP:
-            raise ValueError(f"unknown arm {arm}; prespecified arm required")
+    for arm, panel in arms_map.items():
         arr = np.asarray(panel, dtype=np.float64)
         if arr.ndim != 2 or arr.shape != (3, len(rows)):
             raise ValueError(
@@ -278,6 +289,7 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
             )
         if not np.isfinite(arr).all():
             raise ValueError(f"nonfinite candidate panel for arm {arm}")
+        cand_step = int(PRESPECIFIED_CANDIDATE_STEP[arm])
         fm_arm = np.stack([family_matrix(v, families)[1] for v in arr])  # (3, 205)
         diff_by_seed_fam = fm_arm - fm_base  # (3, 205)
         per_seed_gain = diff_by_seed_fam.mean(axis=1)  # (3,)
@@ -292,7 +304,7 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
         med_seed_ci95 = np.quantile(boot_med_seeds, [0.025, 0.975]).tolist()
         pvals_all[arm] = p_one_sided
         raw_decisions[arm] = dict(
-            prespecified_candidate_step=PRESPECIFIED_CANDIDATE_STEP[arm],
+            prespecified_candidate_step=cand_step,
             mean_gain=mean_gain,
             ci95=ci95,
             per_seed_gain=per_seed_gain.tolist(),
@@ -317,6 +329,7 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
         cand_step = d["prespecified_candidate_step"]
         decisions[arm] = dict(
             **d,
+            holm_multiplicity=4,
             holm_p=h_all,
             holm_p_treatments3=h_tr,
             unadjusted_admitted=unadj_ok,
@@ -326,6 +339,104 @@ def pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
             selected_step_unadjusted=cand_step if unadj_ok else 0,
         )
     return decisions
+
+
+def resolve_h177_verdict(
+    candidate_admitted, h178_receipt=None, expected_analysis_sha256=None
+):
+    """Separate H177 candidate admission from H178-gated lift qualification.
+
+    - If no treatment arm is admitted (`candidate_admitted == False`), returns `verdict = "NO_ADVANCE"`, `lift_qualified = False`.
+    - If a treatment arm is admitted (`candidate_admitted == True`), `verdict` is `"ADVANCE"` (`lift_qualified = True`)
+      ONLY when a verified H178 calibration receipt proves `null_and_harmful_admission_le_005 == True`,
+      `max_null_or_harmful_admission_rate <= 0.05`, `replayed_four_arm_holm_m == 4`, and matching `h177_analysis_sha256`.
+    - Otherwise emits `"DIAGNOSTIC_PENDING_H178"` (when `h178_receipt is None`) or `"DIAGNOSTIC"` (when H178 failed or mismatched).
+    """
+    admitted = bool(candidate_admitted)
+    if not admitted:
+        return dict(
+            candidate_admitted=False,
+            lift_qualified=False,
+            h178_calibration_status=(
+                "PENDING_H178" if h178_receipt is None else "EVALUATED_NO_ADMIT"
+            ),
+            verdict="NO_ADVANCE",
+        )
+    if h178_receipt is None:
+        return dict(
+            candidate_admitted=True,
+            lift_qualified=False,
+            h178_calibration_status="DIAGNOSTIC_PENDING_H178",
+            verdict="DIAGNOSTIC_PENDING_H178",
+        )
+    if not isinstance(h178_receipt, dict):
+        raise ValueError("h178_receipt must be a dict or None")
+    max_rate = h178_receipt.get("max_null_or_harmful_admission_rate")
+    rate_ok = (
+        max_rate is not None
+        and math.isfinite(float(max_rate))
+        and 0.0 <= float(max_rate) <= 0.05
+    )
+    sha_ok = (
+        expected_analysis_sha256 is None
+        or h178_receipt.get("h177_analysis_sha256") == expected_analysis_sha256
+    )
+    passed = bool(
+        h178_receipt.get("wave") == "H178"
+        and h178_receipt.get("status") == "COMPLETE"
+        and h178_receipt.get("null_and_harmful_admission_le_005") is True
+        and h178_receipt.get("replayed_four_arm_holm_m") == 4
+        and rate_ok
+        and sha_ok
+    )
+    if passed:
+        return dict(
+            candidate_admitted=True,
+            lift_qualified=True,
+            h178_calibration_status="PASS",
+            verdict="ADVANCE",
+        )
+    return dict(
+        candidate_admitted=True,
+        lift_qualified=False,
+        h178_calibration_status="DIAGNOSTIC_FAILED_H178",
+        verdict="DIAGNOSTIC",
+    )
+
+
+class H177DecisionRule:
+    """Single importable 4-arm decision-rule object for H177 and H178 calibration replay on the H175 counterfactual bank."""
+
+    wave = "H177"
+    arms = ARMS
+    holm_multiplicity = 4
+    margin = 0.001
+    eps = EPS
+    draws = DRAWS
+    boot_seed = BOOT_SEED
+    fold_seed = FOLD_SEED
+    candidate_step = CANDIDATE_STEP
+    pooled_b_families = 205
+    h178_calibration_gate = H178_CALIBRATION_GATE
+
+    def __call__(self, rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
+        return pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=seed)
+
+    def select(self, rows, r882_values, candidate_panels_by_arm, seed=BOOT_SEED):
+        return pooled_b_select(rows, r882_values, candidate_panels_by_arm, seed=seed)
+
+    def resolve_verdict(
+        self, candidate_admitted, h178_receipt=None, expected_analysis_sha256=None
+    ):
+        return resolve_h177_verdict(
+            candidate_admitted,
+            h178_receipt=h178_receipt,
+            expected_analysis_sha256=expected_analysis_sha256,
+        )
+
+
+H177_DECISION_RULE = H177DecisionRule()
+h177_decision_function = pooled_b_select
 
 
 def bt_ratings(wins, anchor=0, prior=0.01):
