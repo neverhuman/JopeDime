@@ -1,0 +1,68 @@
+{
+  "wave": "H171",
+  "owner": "gpu_fused_agy",
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "prereg_pr": 1459,
+  "prereg_merged_commit": "b362b1762350df99989618d51ac9d136a0343948",
+  "redteam_prereg_review_id": "5727448562",
+  "s3_bucket": "veox-jopedime-learning-use2",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H171/gpu_fused_agy-t0205/",
+  "local_evidence_dir": "/home/ubuntu/jope_plan/evidence/H171/run",
+  "objects": [
+    {
+      "name": "h171-evidence-bundle.tar.gz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H171/gpu_fused_agy-t0205/h171-evidence-bundle.tar.gz",
+      "version_id": "l_mv6VvvP1jZ76hO5PWjtBb49W1zyGeo",
+      "etag": "213694620db32dff7fe630320ba2a7a2",
+      "bytes": 33393659,
+      "sha256": "86704320032b06ad6fde290f0e30ba9c62f1438f1c9a54806d927324db626a60",
+      "readback_verified": true
+    },
+    {
+      "name": "metrics.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H171/gpu_fused_agy-t0205/metrics.json",
+      "version_id": "vlfVmeJ4dlj6rLv0QZEOBvHbeEJNgdAz",
+      "etag": "11f970dda652974137be4d090bf3d84b",
+      "bytes": 208246,
+      "sha256": "e07a09ed7ac1baa5524285b0e90abcfbc4fb370c7cd67733474588143d80da28",
+      "readback_verified": true
+    },
+    {
+      "name": "panels.npz",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H171/gpu_fused_agy-t0205/panels.npz",
+      "version_id": "b5oSAH4yFSM.UeB17S6K_uRzJBFJDvoS",
+      "etag": "35207014801784a7425009644ffd2a63",
+      "bytes": 66095,
+      "sha256": "168a48fc5347d47169c5658bfbe26b52e4b427b80c665fc601def7d301192c98",
+      "readback_verified": true
+    },
+    {
+      "name": "audit.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H171/gpu_fused_agy-t0205/audit.json",
+      "version_id": "v9OFOU4LvM9Op25Uyl9SkTVLFUu13CPV",
+      "etag": "fb219b95e82729de5ad3e30d4c142e44",
+      "bytes": 152636,
+      "sha256": "13439965075c72b44dff10e2ede210e6f4408443b99961998181c2d7944a630c",
+      "readback_verified": true
+    },
+    {
+      "name": "baseline.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H171/gpu_fused_agy-t0205/baseline.json",
+      "version_id": "AH_okn5OTN2ysfcmWHUVWDdj4vjoNCk6",
+      "etag": "af0445c3590d06307e4cb2813eb79261",
+      "bytes": 10781,
+      "sha256": "64fa9f657ff635a335d6e88d0cca4e29abc152b8bbeb71c28e99ae7ea06b3093",
+      "readback_verified": true
+    },
+    {
+      "name": "recount.json",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H171/gpu_fused_agy-t0205/recount.json",
+      "version_id": "jMfSiFyFvktNmrFJbsGv22.jtUfDSS3C",
+      "etag": "4aaa019e49e9dc660b7e2b7cc5edabbc",
+      "bytes": 826,
+      "sha256": "ed2bbbc8a5cc3b76849457f3f896822947ef52d5c76e017638b97dfa407a2a97",
+      "readback_verified": true
+    }
+  ]
+}
