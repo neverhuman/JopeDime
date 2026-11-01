@@ -2,7 +2,7 @@
 \begin{figure*}[!t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_admission_margins.pdf}
-  \caption{\textbf{Pre-decision validation margins across rounds 775--2837.} Left: candidate minus prior retained-best validation utility ($\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$) across all \num{2063} retained admission records in rounds 775--2837, zoomed around the $\Delta_r = 0$ admission threshold (round 785's $+0.0302$ gain is annotated off-scale). Right: round counts by pre-decision margin band on a symmetric log scale. Half of all six accepted rounds are exact ties ($\Delta_r = 0$ at rounds 782, 882 and 2795), two are sub-$10^{-3}$ gains ($+\num{1.99e-4}$ at round 859 and $+\num{5.73e-4}$ at round 2750), and 26 of the \num{2057} rejected candidates lie within $[-10^{-4}, 0)$ of a tie. This is development telemetry from the same retained window as \cref{fig:fw-latest-admissions}, not a Results claim or an independent first-proposal evaluation.}
+  \caption{\textbf{Pre-decision validation margins across rounds 775--2938.} Left: candidate minus prior retained-best validation utility ($\Delta_r = u_{\mathrm{cand},r} - u_{\mathrm{prev},r}$) across all \num{2164} retained admission records in rounds 775--2938, zoomed around the $\Delta_r = 0$ admission threshold (round 785's $+0.0302$ gain is annotated off-scale). Right: round counts by pre-decision margin band on a symmetric log scale. Half of all six accepted rounds are exact ties ($\Delta_r = 0$ at rounds 782, 882 and 2795), two are sub-$10^{-3}$ gains ($+\num{1.99e-4}$ at round 859 and $+\num{5.73e-4}$ at round 2750), and 26 of the \num{2158} rejected candidates lie within $[-10^{-4}, 0)$ of a tie. This is development telemetry from the same retained window as \cref{fig:fw-latest-admissions}, not a Results claim or an independent first-proposal evaluation.}
   \label{fig:fw-admission-margins}
 \end{figure*}
 \begin{figure*}[!t]
@@ -85,16 +85,17 @@ pools, revealed-history inputs and utility normalization.}
 
 
 \paragraph{One retained admission ledger.}
-\Cref{fig:fw-latest-admissions} covers all \num{2063} captured rounds,
-775--2837: six admissions and \num{2057} rejections. Strict gains occur at
+\Cref{fig:fw-latest-admissions} covers all \num{2164} captured rounds,
+775--2938: six admissions and \num{2158} rejections. Strict gains occur at
 rounds 785, 859 and 2750; exact ties occur at 782, 882 and 2795.
-The first \num{1889} rows end at round 2663. The final 174 add the gain at
+The first \num{1889} rows end at round 2663. The final 275 add the gain at
 2750 and tie at 2795. Round 2750 raises retained utility from 1.1378 to
 1.1384 (rounded), an increase of about $+\num{5.73e-4}$. A change in recorded best-round identity alone
 is not a utility gain. \Cref{fig:fw-admission-margins} separates those
 outcomes using candidate minus prior retained-best utility;
 \cref{app:latest-admissions} gives the margin distribution for this same
-ledger.
+ledger. The 101 records added after round 2837 are all rejections;
+the retained-best utility is unchanged through round 2938.
 
 Program-incumbent events count improvements to training programs, whereas
 adapter admissions concern the ranking adjustment.

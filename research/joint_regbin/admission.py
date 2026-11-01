@@ -645,6 +645,7 @@ def verify_binary_train_admission(
 
 
 ROLE_SCHEMA = "jope.joint-regbin.role-admission/v1"
+REAL_S3_BUCKET = "veox-jopedime-datasets-use2"
 DEFAULT_ROLE_CATALOG = Path.home() / "jope_plan/master/source/S3_DATASET_CATALOG.json"
 R882_CHECKPOINT_SHA256 = (
     "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
@@ -814,10 +815,8 @@ def build_role_manifest(
         protocol.relative_payload(row["payload"])
         _sha(row["payload_sha256"], "payload sha256")
         catalog_row = records.get(row["dataset"])
-        if catalog_row is None or catalog_row.get("origin") != "real":
-            raise ValueError(
-                "context dataset is absent from the pinned real-S3 catalog"
-            )
+        if catalog_row is None or catalog_row.get("s3_bucket") != REAL_S3_BUCKET:
+            raise ValueError("context dataset is not from the approved real S3 bucket")
         if catalog_row.get("task") != row["task"] or row["task"] not in protocol.TASKS:
             raise ValueError(
                 "catalog task differs or is outside JRB regression/binary scope"
