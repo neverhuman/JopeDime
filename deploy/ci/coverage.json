@@ -4329,6 +4329,16 @@
       "lanes": [],
       "scope": "REL-07 E2 export-parity provider controls: candidate/source binding, pinned toolchains, harness/registry/fixture identities, retained-evidence inventory, exact cell/module/calibration/raw-contract census and refusals; synthetic reports only, no release execution."
     },
+    "python:deploy/qualification/v1.0/test_provider_m2/test_m2.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 M2 CPU provider controls: candidate/source and fixture identity binding, exact real-replay selector and report requirements, drift/failure/coverage/admission refusals. Synthetic fixtures validate orchestration only; they do not qualify real M2 or CUDA."
+    },
     "python:deploy/qualification/v1.0/test_provider_r2/test_r2.py": {
       "discovery": {
         "kind": "python-family"
