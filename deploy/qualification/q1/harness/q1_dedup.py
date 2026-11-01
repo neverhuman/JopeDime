@@ -141,6 +141,8 @@ def make_plan(datasets, training_families, source_commit, evaluator_sha256=None)
     q1.require(
         evaluator_sha256 is None or q1.sha(evaluator_sha256), "evaluator hash syntax"
     )
+    if evaluator_sha256 is not None:
+        q1_bindings.validate_evaluator_pin(evaluator_sha256)
     return {
         "schema": "jope.q1-plan/v1",
         "mode": "qualification",
