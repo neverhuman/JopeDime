@@ -152,3 +152,33 @@ catalog). The plan also needs a cut identity per dataset, and that identity depe
 on the evaluator protocol the backend freezes. The published `cohort.json` and
 `inputs-manifest.json` are the non-sealed candidate set
 (`qualification_eligible=false`), not the Q1 cohort.
+
+## Owner ruling t2345 update — 2026-11-01
+
+**Authorization: GIVEN. Qualification: NOT RUN / UNKNOWN.** Jepson's owner ruling
+t2345 grants Q1 approval and directs submission of a Q1 plan to `signer_watch` and
+queueing Q1 through the pinned evaluator under `qualification.lock`, behind H157.
+This supersedes earlier statements that owner approval was pending; it does not
+provide the missing plan inputs below.
+
+No signer request or evaluator run was started. The candidate readiness JSON at
+`/home/ubuntu/jope_plan/evidence/QLT-04/res03-t2345/plan.json` is intentionally
+invalid under `q1.py validate_plan`: it has no dataset roster or exact
+training-family closure, and null evaluator, vocabulary, and protocol pins. The
+published cohort remains explicitly non-qualification-eligible and lacks
+per-dataset cut hashes. Submitting this candidate would request a signature over
+an invalid plan, not the final plan required by the owner signing rules. The
+admitted QLT-03 resolver and merged Q1 service route do not supply those
+identities or the production-qualified evaluator/M2/M3 receipts. No replacement
+qualified backend, frozen cohort/cut manifest, or final plan was present in the
+checked inputs.
+
+The pinned execution lock was held by H157 (PIDs 2486281 and 2486322) at the
+readiness check. This lane did not wait on, alter, or interrupt H157. Since no
+final signed plan exists, Q1 was not queued after the lock and no ledger/FIFO
+marker, evaluator request, sealed payload, or result was created or read. Effects,
+intervals, subgroup results, failures, compute, and guidance-default decision
+remain unknown. Next admissible action is to finalize and validate the exact plan
+from the qualified backend and authoritative cohort/cut/family inputs, submit
+that final artifact through `signer_watch`, then queue only the signed plan via
+the pinned evaluator when `qualification.lock` is available.
