@@ -72,9 +72,9 @@ the attempt.
 
 Before any optimizer update, evaluate two independent r882 copies on all 91
 DL-Val contexts. They must match exactly; the first reference comparison must
-reproduce native mean utility `1.1377941898164525` and all 91 context utilities
-within `1e-7`. Any mismatch ends the attempt before training; no tuning or
-retry.
+reproduce native mean utility `1.1377941898164525` and exactly match all 91
+context utilities (maximum absolute error `0.0`). Any mismatch ends the attempt
+before training; no tuning or retry.
 
 For each seed, score TR1 and each BOK8 candidate on the 41 inner-select
 families. Native utility is negative original fitness for the first

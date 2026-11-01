@@ -25,9 +25,11 @@ import numpy as np
 import science
 
 HERE = Path(__file__).resolve().parent
+REPO_ROOT = HERE.parents[2]
 PARENT = HERE.parent / "h146_lookahead_exec"
 H142_RUNNER = Path("/home/ubuntu/jope-rescue-20260921/h142-trust-region-listwise/run_h142_cpu.py")
 H142_RUNNER_SHA = "d5215234c2659d2a470ac95c0900827bfad79704b7fb5ac7fe952cdb633d4a8e"
+BOK_BOOTSTRAP_BASE_SEED = 157141
 
 
 def sha(path):
@@ -42,6 +44,32 @@ def save(path, value):
     Path(path).write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
 
 
+def input_path(name):
+    path = Path(name)
+    return path if path.is_absolute() else REPO_ROOT / path
+
+
+def disk_used_percent(blocks, free_blocks, available_blocks):
+    used = blocks - free_blocks
+    denominator = used + available_blocks
+    if blocks <= 0 or used < 0 or available_blocks < 0 or denominator <= 0:
+        raise ValueError("invalid filesystem block accounting")
+    return 100.0 * used / denominator
+
+
+def validate_baseline(actual, expected):
+    actual = np.asarray(actual, dtype=np.float64)
+    expected = np.asarray(expected, dtype=np.float64)
+    if actual.shape != (91,) or expected.shape != (91,):
+        raise RuntimeError("r882 baseline must contain exactly 91 context utilities")
+    if not np.isfinite(actual).all() or not np.isfinite(expected).all():
+        raise RuntimeError("r882 baseline contains nonfinite context utility")
+    max_abs_error = float(np.max(np.abs(actual - expected)))
+    if not np.array_equal(actual, expected):
+        raise RuntimeError("r882 91/91 exact native regression gate failed")
+    return max_abs_error
+
+
 def guard_resources(output):
     import psutil
 
@@ -49,8 +77,7 @@ def guard_resources(output):
     threads = len(list(Path("/proc/self/task").iterdir()))
     fs = os.statvfs(output)
     free = fs.f_bavail * fs.f_frsize
-    disk = os.statvfs("/")
-    used_pct = 100.0 * (disk.f_blocks - disk.f_bfree) / disk.f_blocks
+    used_pct = disk_used_percent(fs.f_blocks, fs.f_bfree, fs.f_bavail)
     load = os.getloadavg()[0]
     available = psutil.virtual_memory().available
     if rss >= 6_000_000_000 or threads > 4 or free < 40_000_000_000:
@@ -75,7 +102,8 @@ def import_parent():
 
 def verify(pins):
     for path, expected in pins["inputs"].items():
-        if sha(path) != expected:
+        resolved = input_path(path)
+        if sha(resolved) != expected:
             raise RuntimeError("input identity mismatch: " + path)
     for path, expected in pins["assets"].items():
         if sha(path) != expected:
@@ -227,9 +255,10 @@ def main():
     if sha(sealed_manifest) != pins["h150_sealed_identity_sha256"]:
         raise RuntimeError("sealed identity-only deny-list mismatch")
     h150 = json.loads(sealed_manifest.read_text())
-    packet_path = Path(pins["inputs"]["/home/ubuntu/jope-data/h50/input/selected.json"])
+    packet_path = input_path("/home/ubuntu/jope-data/h50/input/selected.json")
     packet = json.loads(packet_path.read_text())
-    source_manifest = json.loads(Path(pins["inputs"]["/home/ubuntu/jope-data/h50/input/source_manifest.json"]).read_text())
+    source_manifest_path = input_path("/home/ubuntu/jope-data/h50/input/source_manifest.json")
+    source_manifest = json.loads(source_manifest_path.read_text())
     if (source_manifest.get("source_manifest_sha256") != "3eb4a62acea512f528500b043299a5968e1c9b1d1b1759bbf77a426b9fa1ecc3"
             or source_manifest.get("excluded_dl_holdout_count") != 93
             or source_manifest.get("excluded_payloads_opened") != 0
@@ -259,9 +288,9 @@ def main():
     if len({r["family_id"] for r in inner_rows}) != 41 or len({r["family_id"] for r in fit_rows}) != 164:
         raise RuntimeError("family partition counts")
 
-    allowed = set(pins["inputs"])
-    allowed.update(str(rt.INPUT / "pools" / f"{r['context_sha256']}.npz") for r in train + val)
-    audit = rt.Audit(allowed, out)
+    allowed = {str(input_path(path).resolve()) for path in pins["inputs"]}
+    allowed.update(str((rt.INPUT / "pools" / f"{r['context_sha256']}.npz").resolve()) for r in train + val)
+    audit = identity_manifest_audit(rt, pins, out, allowed)
     sys.addaudithook(audit.check)
     started = time.monotonic()
     updates = 0
@@ -297,8 +326,7 @@ def main():
             raise RuntimeError("DL-Val evaluation identity mismatch")
         expected = np.asarray(ref["utility"]["per_context"], dtype=np.float64)
         actual = np.asarray(eval_base["values"], dtype=np.float64)
-        if actual.shape != (91,) or not np.isfinite(actual).all() or np.max(np.abs(actual - expected)) > 1e-7:
-            raise RuntimeError("r882 91/91 native regression gate failed")
+        reference_max_abs_error = validate_baseline(actual, expected)
         if abs(float(actual.mean()) - 1.1377941898164525) > 1e-7:
             raise RuntimeError("r882 mean differs from frozen H157 reference")
         del net
@@ -315,7 +343,7 @@ def main():
         save(out / "baseline.json", dict(status="PASS", context_count=91, family_count=19,
              mean=float(actual.mean()), per_context=actual.tolist(),
              two_copy_max_abs_diff=float(np.max(np.abs(np.asarray(baseline_b["values"]) - actual))),
-             reference_max_abs_diff=float(np.max(np.abs(actual - expected))),
+             reference_max_abs_diff=reference_max_abs_error,
              dope_sha256=rt.DOPE, frozen_sha256=frozen))
         initial = {k: v.detach().clone() for k, v in net.state_dict().items()}
         parameters = [p for p in net.parameters() if p.requires_grad]
@@ -386,7 +414,19 @@ def main():
                     tr1_choice = "TR1" if tr1_admit else "R882"
                 print(f"CANDIDATE seed={seed} id={arm} updates=40 drift_l2={drift:.8f} inner_median={float(np.median(inner_deltas)):.8f}", flush=True)
             bok_candidates = {f"bok-{i:02d}": arm_outputs[f"bok-{i:02d}"]["family_deltas"] for i in range(1, 9)}
-            bok_decision = science.choose_winner(bok_candidates, 157140 + 100 * seed_index)
+            bok_decision = science.choose_winner(
+                bok_candidates, BOK_BOOTSTRAP_BASE_SEED + 100 * seed_index
+            )
+            expected_bok_seeds = {
+                f"bok-{candidate_index:02d}": 157141 + 100 * seed_index + candidate_index
+                for candidate_index in range(1, 9)
+            }
+            actual_bok_seeds = {
+                name: score["bootstrap_seed"]
+                for name, score in bok_decision["candidates"].items()
+            }
+            if actual_bok_seeds != expected_bok_seeds:
+                raise RuntimeError("BOK8 bootstrap seed roster differs from preregistration")
             for candidate_id, item in arm_outputs.items():
                 score = tr1_score if candidate_id == "TR1" else bok_decision["candidates"][candidate_id]
                 candidate_receipt = out / f"seed{seed}-{candidate_id}.json"
@@ -417,6 +457,7 @@ def main():
             ))
 
         # All three seed choices and hashes are durable before any treatment DL-Val read.
+        restore_initial_state(net, initial, rt, guard, names, frozen)
         train_baseline = evaluate(train)["values"]
         val_panels = {"R882": [], "TR1": [], "BOK8": []}
         train_panels = {"R882": [], "TR1": [], "BOK8": []}
@@ -491,8 +532,6 @@ def main():
 
 
 def load_features(parent, rt, fused, train, val, torch):
-    import hashlib
-
     rows = train + val
     pools = {}
     projection = fused.get_w1_sign_matrix() / np.sqrt(412.0)
@@ -521,6 +560,50 @@ def checked_evaluate(parent, rt, net, guard, names, frozen, pools, tokens, masks
     result = parent.evaluate(net, pools, tokens, masks, rows)
     rt.check_frozen(net, guard, names, frozen)
     return result
+
+
+def restore_initial_state(net, initial, rt, guard, names, frozen):
+    net.load_state_dict(initial, strict=True)
+    rt.check_frozen(net, guard, names, frozen)
+    state = net.state_dict()
+    if state.keys() != initial.keys() or any(
+        not state[name].equal(expected) for name, expected in initial.items()
+    ):
+        raise RuntimeError("r882 baseline state was not restored exactly")
+
+
+def identity_manifest_audit(rt, pins, output, allowed):
+    identity_path = (HERE / pins["h150_sealed_identity_manifest"]).resolve()
+    identity_sha = pins["h150_sealed_identity_sha256"]
+    if sha(identity_path) != identity_sha:
+        raise RuntimeError("sealed identity-only deny-list mismatch")
+
+    class H157Audit(rt.Audit):
+        def check(self, event, args):
+            if event == "open" and isinstance(args[0], (str, bytes)):
+                path = Path(os.fsdecode(args[0])).resolve()
+                if path == identity_path:
+                    if getattr(self, "_checking_identity_hash", False):
+                        return
+                    mode = args[1]
+                    flags = args[2] if len(args) > 2 else 0
+                    write = (isinstance(mode, str) and any(x in mode for x in "wax+")) or (
+                        isinstance(flags, int)
+                        and flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC)
+                    )
+                    self._checking_identity_hash = True
+                    try:
+                        hash_matches = not write and sha(path) == identity_sha
+                    finally:
+                        self._checking_identity_hash = False
+                    if not hash_matches:
+                        self.refused.append(str(path))
+                        raise RuntimeError("identity-only manifest changed or opened for write")
+                    self.opened.add(str(path))
+                    return
+            return super().check(event, args)
+
+    return H157Audit(allowed, output)
 
 
 if __name__ == "__main__":

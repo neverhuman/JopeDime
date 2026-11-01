@@ -1,0 +1,72 @@
+{
+  "wave": "H159",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "hypothesis": "TRAIN-calibrated fail-logit veto at selection time (zero-update)",
+  "seeds": [
+    159101,
+    159102,
+    159103
+  ],
+  "fold_seed": 159140,
+  "bootstrap_seed": 159141,
+  "grid_t": [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    0.95
+  ],
+  "arms": [
+    "R882",
+    "VETO_FIX",
+    "VETO_CV",
+    "ORACLE_INFO"
+  ],
+  "optimizer_updates": 0,
+  "prereg_sha256": "e4bb5bc96fa3b24517af1237c1b8d00d35104b33fe4755648db6d4c0a2719d53",
+  "fold_manifest_sha256": "5ef9a1e27e2e63655dca08083378bafd62a22cb55ed2fa4d5772108ac3456133",
+  "executor_sha256": {
+    "runner.py": "9bad929580166755cdd939358b14bf4a59331d8187fbfb1c403536ef48d6ddb7",
+    "runtime.py": "3051b328f585f045e92a7f49d84243d05a0ec658839fb6e70533e763f3f7c48d",
+    "science.py": "0529fec8b4bfb2b9c19ff49eb826b2b02a95a014ff3e700ba6b3904df318d7c0",
+    "monitor.py": "e2c47878850e468361f6dc05137dd64b32da43dae239b0047dbfbcc716950d8c",
+    "test_h159.py": "3a9d7766dcb3470ca887b0aa6ef730fe0779f9472a5a389454f383817592f670"
+  },
+  "inputs": {
+    "/home/ubuntu/jope-data/h159/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h159/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+  },
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "smoke_custody_receipts": {
+    "smoke/smoke.json": "5e8011541fcea448f1a36d6d9e71f6b5a80c00395ec497873f9205474a089ce7",
+    "smoke/audit.json": "a47b4e4867d77aed1c061e7728c3cf7446e56a2ef6d7be0b917a5b036b258755",
+    "smoke-monitor.json": "8df9fc085b378ec36f10444cedcd2fddb52249d95b950b1a40a6d34dd8b4bdd4",
+    "smoke-resources.jsonl": "4d5ddfb6f9079f03a460001755fc72ece892e4b0556523f16fa5ba2b06db7a18"
+  }
+}
