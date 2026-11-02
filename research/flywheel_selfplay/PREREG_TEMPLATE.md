@@ -41,6 +41,24 @@ wave authorization and resource admission. H206 has the stricter queued
 pre-reservation disk gate (<=~88%, 40GB cache, ~50GB headroom); prereg/source
 preparation does not release that queue.
 
+Artifact retention (Jepson t16u, 2026-11-02): **save the gene, not the model**.
+Fit objects (`.pt`, `.pth`, `.ckpt`, `.safetensors`, pickled/joblib estimators and
+optimizer state) are NOT persisted by default. A wave's durable record is its
+gene: source commit, config/prereg sha256, seeds, input/fold manifest sha256,
+parent checkpoint id (e.g. r882 sha256), and per-fit scores/predictions. Persist
+those as compact JSON/JSONL or `.npz` panels, zstd-compress, upload to the
+wave's S3 prefix with VersionId+sha256 in the evidence manifest, then delete the
+local copy once the run is done. A model object may be kept only when the
+prereg names it (a promotion candidate, or a scored-inference input that cannot
+be regenerated bit-exactly); keep at most one per arm, record its sha256 and S3
+VersionId, and say in the prereg how to rebuild it (`runner.py --seed ...`).
+Fit caches and per-fold scratch go under the wave run dir's `cache/`, or another
+declared directory, and are deleted at wave close. Build trees use the shared
+off-root `CARGO_TARGET_DIR`, never a per-worktree `target/`. The wave closes
+only after a retention receipt has listed every deleted path, its bytes and
+sha256, and the S3 key or regeneration command that replaces it. See
+`xbabe2:~/ops/disk_steward/RETENTION_POLICY.md`.
+
 Native r882 91/91 exact and mean1.1377941898164525 precede candidate forwards.
 Use the declared 205-family pooled cross-fit LCB95>0 and harm<=10% gate; freeze
 selection before A and defer the final read to sanctioned sealed confirmation.
