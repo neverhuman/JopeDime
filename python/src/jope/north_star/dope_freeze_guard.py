@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import sys
 import types
 from dataclasses import dataclass
@@ -69,7 +71,87 @@ def _tensor_le_sha256(t: torch.Tensor) -> str:
     return h.hexdigest()
 
 
+def reject_research_dope_unfreeze(entrypoint: str) -> None:
+    """Serving/flywheel entrypoints must never consume the research environment."""
+    flag = os.environ.get("JOPE_RESEARCH_DOPE_UNFREEZE", "0")
+    if flag != "0":
+        raise DopeFreezeViolationError(
+            f"{entrypoint} refuses JOPE_RESEARCH_DOPE_UNFREEZE={flag!r}; use a dedicated research runner."
+        )
+
+
+def configure_research_dope(
+    fused_net: nn.Module,
+    *,
+    launch_metadata: dict,
+    research_run_id: str | None = None,
+    unfreeze: bool | None = None,
+) -> None:
+    """Explicit research-only optimizer opt-in; record the policy before training.
+
+    Call on a separate research model after the native frozen-baseline gate.
+    Keep DOPE in eval mode and its normalizer buffers/anchor frozen. This does
+    not relax snapshot_dope_weights or assert_optimizer_excludes_dope, which
+    remain strict serving/flywheel checks. Persist launch_metadata as launch.json.
+    """
+    flag = os.environ.get("JOPE_RESEARCH_DOPE_UNFREEZE", "0")
+    if flag not in ("0", "1") or (unfreeze is not None and type(unfreeze) is not bool):
+        raise DopeFreezeViolationError("research unfreeze requires a boolean or environment 0/1")
+    if unfreeze is False and flag == "1":
+        raise DopeFreezeViolationError("explicit frozen policy conflicts with research environment")
+    enabled = flag == "1" if unfreeze is None else unfreeze
+    run_id = research_run_id or os.environ.get("JOPE_RESEARCH_RUN_ID")
+    if enabled and (
+        not isinstance(run_id, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", run_id)
+    ):
+        raise DopeFreezeViolationError("DOPE unfreeze requires a valid research run id")
+    if not isinstance(launch_metadata, dict):
+        raise DopeFreezeViolationError("research policy requires launch metadata")
+    dope = getattr(fused_net, "dope_model", None)
+    anchor = getattr(fused_net, "gamenet_anchor", None)
+    if enabled and isinstance(dope, nn.Module) and isinstance(anchor, nn.Module):
+        if {id(p) for p in dope.parameters()} & {id(p) for p in anchor.parameters()}:
+            raise DopeFreezeViolationError("research DOPE and frozen anchor share parameters")
+    _lock_dope_weights_and_eval_mode(fused_net)
+    launch_metadata["dope_policy"] = {
+        "research_dope_unfreeze": enabled,
+        "research_run_id": run_id if enabled else None,
+        "entrypoint": "research",
+        "dope_eval_mode": True,
+        "serving_eligible": False,
+    }
+    if enabled:
+        fused_net._research_dope_run_id = run_id
+        for p in fused_net.dope_model.parameters():
+            p.requires_grad_(True)
+
+
+def assert_research_optimizer_policy(
+    optimizer: torch.optim.Optimizer, fused_net: nn.Module, *, research_run_id: str
+) -> bool:
+    """Permit DOPE parameters only on the explicitly configured research model."""
+    configured = getattr(fused_net, "_research_dope_run_id", None)
+    if configured is None:
+        return assert_optimizer_excludes_dope(optimizer, fused_net)
+    if research_run_id != configured:
+        raise DopeFreezeViolationError("optimizer research run id differs from model policy")
+    if any(sub.training for sub in fused_net.dope_model.modules()):
+        raise DopeFreezeViolationError("research DOPE must remain in eval mode")
+    anchor = getattr(fused_net, "gamenet_anchor", None)
+    if isinstance(anchor, nn.Module):
+        anchor_ids = {id(p) for p in anchor.parameters()}
+        if any(id(p) in anchor_ids for g in optimizer.param_groups for p in g["params"]):
+            raise DopeFreezeViolationError("research optimizer includes the frozen anchor")
+    return True
+
+
 def lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
+    """Strict serving/flywheel freeze; refuse the research opt-in environment."""
+    reject_research_dope_unfreeze("serving/flywheel freeze guard")
+    _lock_dope_weights_and_eval_mode(fused_net)
+
+
+def _lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
     """
     Freezes `fused_net.dope_model` parameters + normalizer buffers and installs a
     recursive `.train(mode)` hook on `dope_model` AND every nested submodule in
@@ -80,6 +162,7 @@ def lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
     if not hasattr(fused_net, "dope_model") or not isinstance(fused_net.dope_model, nn.Module):
         raise DopeFreezeViolationError("fused_net does not contain a valid `dope_model` submodule.")
 
+    fused_net._research_dope_run_id = None
     dope = fused_net.dope_model
     dope.eval()
     for p in dope.parameters():
@@ -109,9 +192,11 @@ def lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
         orig_fused_train(mode)
         for sub in net_self.dope_model.modules():
             sub.training = False
+        research = getattr(net_self, "_research_dope_run_id", None) is not None
         for p in net_self.dope_model.parameters():
-            p.requires_grad_(False)
-            p.grad = None
+            p.requires_grad_(research)
+            if not research:
+                p.grad = None
         if hasattr(net_self, "gamenet_anchor") and isinstance(net_self.gamenet_anchor, nn.Module):
             for sub in net_self.gamenet_anchor.modules():
                 sub.training = False
