@@ -48,7 +48,7 @@ meta-training cohort moments standardize each component block before
 concatenation and elementwise clipping to $[-32,32]$.
 
 The reference encoder is pinned by hash and stays fixed during writer
-training. Encoding is bounded at 30 seconds per problem. A context with any non-finite value is refused
+training. Encoding is bounded at 30\,s per problem. A context with any non-finite value is refused
 rather than imputed (\cref{app:training}). The input contract permits
 training-side task evidence only; final held-out labels and their derived
 statistics must stay outside the input closure. A context's recorded
@@ -90,7 +90,7 @@ ability to distinguish compositions built from the same tokens.
 
 The map's own two-layer context network projects the \num{2048}-value $z_p$
 to $r_z\in\mathbb{R}^{512}$. It joins three 512-value blocks: $z_w$
-as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$, and
+as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$ and
 $|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
 Four two-layer heads receive this same \num{1536}-value interaction vector;
 their mean gives the ranking logit $\mapv(z_p,z_w)$.
@@ -204,7 +204,7 @@ it joins the map and auxiliary terms in the combined objective
 \end{align}
 The writer loss in \cref{eq:writerLoss} is schematic: it displays the rank
 weights. The native implementation also smooths grammar-legal targets,
-averages token losses within each program, and normalizes by the sum of
+averages token losses within each program and normalizes by the sum of
 program weights (\cref{app:training}).
 
 Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
