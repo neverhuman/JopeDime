@@ -4908,9 +4908,10 @@
       },
       "dispositions": [],
       "lanes": [
-        "python"
+        "python",
+        "full-python"
       ],
-      "scope": "Maintained pytest family (#1702): the PR python lane runs `pytest -q tests -m \"not xbabe2\"`, which includes this file; it pins that each DataLoader worker reopens the tokenized corpus with verify=True. Not in the full-main explicit file list."
+      "scope": "Synthetic worker reopen control: the mmap collator repeats corpus integrity verification in a spawned worker; no live corpus or model evaluation."
     },
     "python:python/tests/test_durable_selfplay.py": {
       "discovery": {
@@ -5119,17 +5120,6 @@
         "full-python"
       ],
       "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
-    },
-    "python:python/tests/test_dime_score_worker_validation.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "scope": "Synthetic worker reopen control: the mmap collator repeats corpus integrity verification in a spawned worker; no live corpus or model evaluation."
     },
     "python:python/tests/test_training_corpus_contract.py": {
       "discovery": {
@@ -15165,6 +15155,16 @@
       ],
       "lanes": [],
       "scope": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/test_h229.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
     }
   },
   "lanes": {
