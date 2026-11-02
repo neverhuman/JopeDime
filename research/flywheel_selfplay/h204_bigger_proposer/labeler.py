@@ -41,9 +41,13 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_H50_INPUT_ROOT = Path("/home/ubuntu/jope-data/h50/input")
 DEFAULT_H58_CACHE_ROOT = Path("/home/ubuntu/jope-data/h58/cache")
 DEFAULT_R882_CKPT = Path("/home/ubuntu/jope-data/h51/ckpt/round-882.pt")
-DEFAULT_JRB01_MANIFEST = Path("/home/ubuntu/jope-data/jrb01/admitted_train_datasets.json")
+DEFAULT_JRB01_MANIFEST = Path(
+    "/home/ubuntu/jope-data/jrb01/admitted_train_datasets.json"
+)
 
-EXPECTED_DOPE_SHA256 = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+EXPECTED_DOPE_SHA256 = (
+    "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+)
 
 PINNED_INPUT_SHA256: dict[Path, str] = {
     DEFAULT_H50_INPUT_ROOT
@@ -137,7 +141,9 @@ class LocalLRUCache:
 
     def __init__(self, cache_dir: Path, max_bytes: int = MAX_LOCAL_CACHE_BYTES) -> None:
         if max_bytes <= 0 or max_bytes > MAX_LOCAL_CACHE_BYTES:
-            raise ValueError(f"max_bytes must be in (0, {MAX_LOCAL_CACHE_BYTES}], got {max_bytes}")
+            raise ValueError(
+                f"max_bytes must be in (0, {MAX_LOCAL_CACHE_BYTES}], got {max_bytes}"
+            )
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.max_bytes = int(max_bytes)
@@ -158,7 +164,9 @@ class LocalLRUCache:
     def evict_to_fit(self, incoming_bytes: int = 0) -> dict[str, int]:
         """Evict oldest-accessed files until `current_bytes() + incoming_bytes <= max_bytes`."""
         if incoming_bytes > self.max_bytes:
-            raise ValueError(f"Single payload ({incoming_bytes} B) exceeds cache cap ({self.max_bytes} B)")
+            raise ValueError(
+                f"Single payload ({incoming_bytes} B) exceeds cache cap ({self.max_bytes} B)"
+            )
         files: list[tuple[float, int, Path]] = []
         total = 0
         for p in self.cache_dir.rglob("*"):
@@ -245,7 +253,9 @@ class LabeledContextBatch:
     cand_gates: np.ndarray  # (N, K) float32
     full_cand_features: np.ndarray  # (N, 1152, 428) float32
     full_fitness: np.ndarray  # (N, 1152) float64
-    full_utilities: np.ndarray  # (N, 1152) float64 (higher is better: -fitness when gate else -2.0)
+    full_utilities: (
+        np.ndarray
+    )  # (N, 1152) float64 (higher is better: -fitness when gate else -2.0)
     full_gates: np.ndarray  # (N, 1152) float32
 
 
@@ -306,7 +316,11 @@ def check_jrb01_admission_status(
         payload = json.loads(jrb01_manifest_path.read_text(encoding="utf-8"))
         admitted_ids = payload.get("admitted_train_dataset_ids", [])
         sealed_overlap = payload.get("sealed_family_overlap_count", 0)
-        if isinstance(admitted_ids, list) and len(admitted_ids) > 0 and int(sealed_overlap) == 0:
+        if (
+            isinstance(admitted_ids, list)
+            and len(admitted_ids) > 0
+            and int(sealed_overlap) == 0
+        ):
             return {
                 "jrb01_ready": True,
                 "mode": "jrb01_d4_train_stream",
@@ -347,9 +361,13 @@ def evaluate_context_candidates_rust_cv(
     Content-binds the cache key to `sha256(jtt1_gz_bytes) + sha256(candidates_json)`.
     """
     if not (1 <= max_workers <= MAX_LABELER_WORKERS):
-        raise ValueError(f"max_workers must be in [1, {MAX_LABELER_WORKERS}], got {max_workers}")
+        raise ValueError(
+            f"max_workers must be in [1, {MAX_LABELER_WORKERS}], got {max_workers}"
+        )
     if not (8 <= len(programs) <= 16):
-        raise ValueError(f"Expected 8..16 candidate programs per context, got {len(programs)}")
+        raise ValueError(
+            f"Expected 8..16 candidate programs per context, got {len(programs)}"
+        )
 
     candidates: list[dict[str, Any]] = []
     for item in programs:
@@ -366,9 +384,19 @@ def evaluate_context_candidates_rust_cv(
         else:
             raise ValueError(f"Invalid candidate specification: {item!r}")
 
-    jtt1_gz = raw_jtt1_bytes if raw_jtt1_bytes[:2] == b"\x1f\x8b" else gzip.compress(raw_jtt1_bytes, mtime=0)
-    content_hash = sha256_bytes(jtt1_gz + json.dumps(candidates, sort_keys=True).encode("utf-8"))
-    bound_key = f"{cache_key}_{content_hash[:16]}.json" if cache_key else f"cv_{content_hash}.json"
+    jtt1_gz = (
+        raw_jtt1_bytes
+        if raw_jtt1_bytes[:2] == b"\x1f\x8b"
+        else gzip.compress(raw_jtt1_bytes, mtime=0)
+    )
+    content_hash = sha256_bytes(
+        jtt1_gz + json.dumps(candidates, sort_keys=True).encode("utf-8")
+    )
+    bound_key = (
+        f"{cache_key}_{content_hash[:16]}.json"
+        if cache_key
+        else f"cv_{content_hash}.json"
+    )
 
     cached = cache.get_bytes(bound_key)
     if cached is not None:
@@ -410,16 +438,22 @@ def load_h204_stage1_datasets(
     if not (8 <= k_candidates <= 16):
         raise ValueError(f"k_candidates must be in [8, 16], got {k_candidates}")
 
-    verified_digests = verify_input_closure_digests(verify_external_inputs=verify_digests)
+    verified_digests = verify_input_closure_digests(
+        verify_external_inputs=verify_digests
+    )
 
-    source_manifest = json.loads((h50_input_root / "source_manifest.json").read_text(encoding="utf-8"))
+    source_manifest = json.loads(
+        (h50_input_root / "source_manifest.json").read_text(encoding="utf-8")
+    )
     if (
         source_manifest.get("excluded_payloads_opened") != 0
         or source_manifest.get("outer_rows_delivered") != 0
     ):
         raise RuntimeError("Input closure violated in source_manifest.json")
 
-    selected = json.loads((h50_input_root / "selected.json").read_text(encoding="utf-8"))
+    selected = json.loads(
+        (h50_input_root / "selected.json").read_text(encoding="utf-8")
+    )
     train_rows = selected["train"]
     dev_rows = selected["dev"]
 
@@ -428,7 +462,10 @@ def load_h204_stage1_datasets(
     overlap = train_fams & val_fams
     if overlap:
         raise RuntimeError(f"Train/Val family leakage detected: {sorted(overlap)}")
-    if len(train_rows) != DL_TRAIN_EXPECTED_CONTEXTS or len(train_fams) != DL_TRAIN_EXPECTED_FAMILIES:
+    if (
+        len(train_rows) != DL_TRAIN_EXPECTED_CONTEXTS
+        or len(train_fams) != DL_TRAIN_EXPECTED_FAMILIES
+    ):
         raise RuntimeError(
             f"Unexpected DL-Train size: {len(train_rows)} contexts, {len(train_fams)} families"
         )
@@ -469,7 +506,9 @@ def load_h204_stage1_datasets(
     tr_full_utilities = np.zeros((n_tr, 1152), dtype=np.float64)
     tr_full_gates = np.zeros((n_tr, 1152), dtype=np.float32)
 
-    for local_i, (row, cid, cf_idx) in enumerate(zip(train_rows, tr_cids, tr_cf_indices, strict=True)):
+    for local_i, (row, cid, cf_idx) in enumerate(
+        zip(train_rows, tr_cids, tr_cf_indices, strict=True)
+    ):
         if (
             row.get("dl_split") != "DL-Train"
             or row.get("source_split") not in ("train", "inner")
@@ -486,7 +525,9 @@ def load_h204_stage1_datasets(
                 or struct.unpack_from("<I", table_bytes, 8)[0] != 0
                 or table_bytes[16] != 2
             ):
-                raise RuntimeError(f"Train-only JTT1 table identity/header mismatch for {cid}")
+                raise RuntimeError(
+                    f"Train-only JTT1 table identity/header mismatch for {cid}"
+                )
 
         pool_path = pools_dir / f"{cid}.npz"
         if verify_digests and sha256_file(pool_path) != row["pool_sha256"]:
@@ -553,7 +594,9 @@ def load_h204_stage1_datasets(
     val_full_utilities = np.zeros((n_val, 1152), dtype=np.float64)
     val_full_gates = np.zeros((n_val, 1152), dtype=np.float32)
 
-    for local_i, (row, cid, cf_idx) in enumerate(zip(dev_rows, val_cids, val_cf_indices, strict=True)):
+    for local_i, (row, cid, cf_idx) in enumerate(
+        zip(dev_rows, val_cids, val_cf_indices, strict=True)
+    ):
         pool_path = pools_dir / f"{cid}.npz"
         if verify_digests and sha256_file(pool_path) != row["pool_sha256"]:
             raise RuntimeError(f"Dev pool SHA-256 mismatch for {cid}")

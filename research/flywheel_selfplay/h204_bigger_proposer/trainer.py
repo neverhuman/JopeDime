@@ -84,7 +84,9 @@ from research.flywheel_selfplay.hwave_numeric_threads import (
     capture_numeric_threads,
 )
 
-FORBIDDEN_UNFREEZE_ENTRYPOINTS: frozenset[str] = frozenset({"serving", "flywheel", "production", "promotion"})
+FORBIDDEN_UNFREEZE_ENTRYPOINTS: frozenset[str] = frozenset(
+    {"serving", "flywheel", "production", "promotion"}
+)
 
 
 def read_proc_os_threads(pid: int | None = None) -> int:
@@ -92,7 +94,9 @@ def read_proc_os_threads(pid: int | None = None) -> int:
     target_pid = pid if pid is not None else os.getpid()
     status_path = Path(f"/proc/{target_pid}/status")
     if status_path.is_file():
-        for line in status_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        for line in status_path.read_text(
+            encoding="utf-8", errors="replace"
+        ).splitlines():
             if line.startswith("Threads:"):
                 parts = line.split()
                 if len(parts) >= 2:
@@ -103,7 +107,9 @@ def read_proc_os_threads(pid: int | None = None) -> int:
     return max(1, threading.active_count())
 
 
-def enforce_numeric_thread_limits(max_threads: int = MAX_NUMERIC_THREADS) -> dict[str, Any]:
+def enforce_numeric_thread_limits(
+    max_threads: int = MAX_NUMERIC_THREADS,
+) -> dict[str, Any]:
     """Enforce thread rule (b) via `#1730` `capture_numeric_threads` + `admit_numeric_threads`."""
     cap = max(1, min(int(max_threads), MAX_NUMERIC_THREADS))
     for var in (
@@ -185,7 +191,9 @@ def configure_dope_freeze_or_research_unfreeze(
             p.requires_grad_(False)
         object.__setattr__(net, "_step0_router", step0_router)
 
-    meta_holder: dict[str, Any] = launch_metadata if isinstance(launch_metadata, dict) else {}
+    meta_holder: dict[str, Any] = (
+        launch_metadata if isinstance(launch_metadata, dict) else {}
+    )
     before_sha256 = _hash_module_parameters(dope_mod)
     before_tensor_hashes = _hash_named_tensors(dope_mod)
 
@@ -200,7 +208,11 @@ def configure_dope_freeze_or_research_unfreeze(
                 research_run_id=env_run_id or None,
                 unfreeze=False,
             )
-            freeze_snapshot = snapshot_dope_weights(net) if hasattr(net, "step2_lm_mean_1x256") else None
+            freeze_snapshot = (
+                snapshot_dope_weights(net)
+                if hasattr(net, "step2_lm_mean_1x256")
+                else None
+            )
         finally:
             if prev_flag is None:
                 os.environ.pop("JOPE_RESEARCH_DOPE_UNFREEZE", None)
@@ -234,7 +246,9 @@ def configure_dope_freeze_or_research_unfreeze(
         research_run_id=env_run_id,
         unfreeze=True,
     )
-    trainable_count = sum(int(p.numel()) for p in dope_mod.parameters() if p.requires_grad)
+    trainable_count = sum(
+        int(p.numel()) for p in dope_mod.parameters() if p.requires_grad
+    )
     if trainable_count <= 0:
         raise RuntimeError("Research DOPE unfreeze enabled 0 trainable parameters")
 
@@ -275,8 +289,13 @@ def compute_live_tokens_10x32(
         and isinstance(routed.get("gates"), dict)
         and all(k in routed["gates"] for k in net.step3_gate_keys_14)
     ):
-        gates_14_raw = torch.stack([routed["gates"][k] for k in net.step3_gate_keys_14], dim=-1)
-    elif isinstance(routed.get("gates"), torch.Tensor) and routed["gates"].shape[-1] == 14:
+        gates_14_raw = torch.stack(
+            [routed["gates"][k] for k in net.step3_gate_keys_14], dim=-1
+        )
+    elif (
+        isinstance(routed.get("gates"), torch.Tensor)
+        and routed["gates"].shape[-1] == 14
+    ):
         gates_14_raw = routed["gates"]
     else:
         gates_14_raw = dope629[:, 512:526]
@@ -289,8 +308,13 @@ def compute_live_tokens_10x32(
                 and isinstance(r0.get("gates"), dict)
                 and all(k in r0["gates"] for k in net.step3_gate_keys_14)
             ):
-                g0 = torch.stack([r0["gates"][k] for k in net.step3_gate_keys_14], dim=-1)
-            elif isinstance(r0.get("gates"), torch.Tensor) and r0["gates"].shape[-1] == 14:
+                g0 = torch.stack(
+                    [r0["gates"][k] for k in net.step3_gate_keys_14], dim=-1
+                )
+            elif (
+                isinstance(r0.get("gates"), torch.Tensor)
+                and r0["gates"].shape[-1] == 14
+            ):
                 g0 = r0["gates"]
             else:
                 g0 = dope629[:, 512:526]
@@ -307,7 +331,9 @@ def compute_live_tokens_10x32(
         bb_pred = routed["bb_pred"]
 
     tail_0 = dope629[:, 565:629]
-    if hasattr(net.dope_model, "target_net") and hasattr(net.dope_model.target_net, "col_gate_head"):
+    if hasattr(net.dope_model, "target_net") and hasattr(
+        net.dope_model.target_net, "col_gate_head"
+    ):
         cgh = net.dope_model.target_net.col_gate_head
         raw_g_0 = torch.atanh(torch.clamp((tail_0 - 1.0) * 4.0, -0.999999, 0.999999))
         w_128 = cgh.weight[:, :128]
@@ -318,7 +344,8 @@ def compute_live_tokens_10x32(
             + (bias - bias.detach()).unsqueeze(0)
         )
         tail_64 = tail_0 + (
-            (1.0 + 0.25 * torch.tanh(raw_g_0 + delta_raw_g)) - (1.0 + 0.25 * torch.tanh(raw_g_0)).detach()
+            (1.0 + 0.25 * torch.tanh(raw_g_0 + delta_raw_g))
+            - (1.0 + 0.25 * torch.tanh(raw_g_0)).detach()
         )
     else:
         tail_64 = tail_0
@@ -341,14 +368,24 @@ def compute_live_tokens_10x32(
         tok2_0 = net._svd_slot_project(dope629, "svd_slot2_m2")
         tok4_0 = net._svd_slot_project(dope629, "svd_slot4_d629_mid")
         tok5_0 = net._svd_slot_project(dope629, "svd_slot5_d629_tail")
-    tok2 = cached_tokens_10x32[:, 2] + (net._svd_slot_project(d629_live, "svd_slot2_m2") - tok2_0)
-    tok4 = cached_tokens_10x32[:, 4] + (net._svd_slot_project(d629_live, "svd_slot4_d629_mid") - tok4_0)
-    tok5 = cached_tokens_10x32[:, 5] + (net._svd_slot_project(d629_live, "svd_slot5_d629_tail") - tok5_0)
+    tok2 = cached_tokens_10x32[:, 2] + (
+        net._svd_slot_project(d629_live, "svd_slot2_m2") - tok2_0
+    )
+    tok4 = cached_tokens_10x32[:, 4] + (
+        net._svd_slot_project(d629_live, "svd_slot4_d629_mid") - tok4_0
+    )
+    tok5 = cached_tokens_10x32[:, 5] + (
+        net._svd_slot_project(d629_live, "svd_slot5_d629_tail") - tok5_0
+    )
     kron_64 = (tok2[:, :8].unsqueeze(2) * tok0[:, :8].unsqueeze(1)).reshape(b_sz, 64)
     with torch.no_grad():
-        kron_64_0 = (cached_tokens_10x32[:, 2, :8].unsqueeze(2) * tok0[:, :8].unsqueeze(1)).reshape(b_sz, 64)
+        kron_64_0 = (
+            cached_tokens_10x32[:, 2, :8].unsqueeze(2) * tok0[:, :8].unsqueeze(1)
+        ).reshape(b_sz, 64)
         tok9_0 = net._svd_slot_project(kron_64_0, "svd_slot9_kron")
-    tok9 = cached_tokens_10x32[:, 9] + (net._svd_slot_project(kron_64, "svd_slot9_kron") - tok9_0)
+    tok9 = cached_tokens_10x32[:, 9] + (
+        net._svd_slot_project(kron_64, "svd_slot9_kron") - tok9_0
+    )
 
     return torch.stack(
         [
@@ -402,10 +439,14 @@ class R882AdapterContinuation(nn.Module):
             prog_412 = cand_features[:, :, :412]
         else:
             prog_412 = F.pad(cand_features, (0, 412 - feat_dim))
-        sos_prior = torch.zeros((b_sz, k_cand, 2), device=cand_features.device, dtype=cand_features.dtype)
+        sos_prior = torch.zeros(
+            (b_sz, k_cand, 2), device=cand_features.device, dtype=cand_features.dtype
+        )
         with torch.no_grad():
-            _, _, _, mm_adj_0 = self.baseline_adapter.encode_multimodal_context_and_candidates(
-                tokens_10x32, anchor_summary, prog_412, sos_prior
+            _, _, _, mm_adj_0 = (
+                self.baseline_adapter.encode_multimodal_context_and_candidates(
+                    tokens_10x32, anchor_summary, prog_412, sos_prior
+                )
             )
         _, _, _, mm_adj = self.adapter.encode_multimodal_context_and_candidates(
             tokens_10x32, anchor_summary, prog_412, sos_prior
@@ -435,7 +476,9 @@ class WiderBlockFormerProposer(nn.Module):
     ) -> None:
         super().__init__()
         if width not in (64, 128, 256, 512):
-            raise ValueError(f"Unsupported proposer width: {width} (expected 64, 128, 256, or 512)")
+            raise ValueError(
+                f"Unsupported proposer width: {width} (expected 64, 128, 256, or 512)"
+            )
         self.width = int(width)
         self.freeze_trunk = bool(freeze_trunk)
         n_heads = max(4, self.width // 32)
@@ -494,11 +537,17 @@ class WiderBlockFormerProposer(nn.Module):
         meta = torch.cat([context_summary, anchor_summary], dim=-1)
         meta_h = self.ctx_meta_proj(meta).unsqueeze(1)
 
-        attn_out, _ = self.cross_attn(query=cand_h, key=tok_h, value=tok_h, need_weights=False)
+        attn_out, _ = self.cross_attn(
+            query=cand_h, key=tok_h, value=tok_h, need_weights=False
+        )
         pooled_tok = tok_h.mean(dim=1, keepdim=True) + meta_h
-        bi_inter = self.bilinear_out(F.gelu(self.bilinear_ctx(pooled_tok) * self.bilinear_cand(cand_h)))
+        bi_inter = self.bilinear_out(
+            F.gelu(self.bilinear_ctx(pooled_tok) * self.bilinear_cand(cand_h))
+        )
 
-        anc_h = self.anchor_traj_proj(self.cand_norm(anchor_cand_features)).mean(dim=1, keepdim=True)
+        anc_h = self.anchor_traj_proj(self.cand_norm(anchor_cand_features)).mean(
+            dim=1, keepdim=True
+        )
         traj_cat = torch.cat([cand_h, anc_h.expand_as(cand_h)], dim=-1)
         traj_h = torch.tanh(self.traj_gate(traj_cat))
 
@@ -522,12 +571,16 @@ def load_cpu_exact_fused_network(
         ckpt_sha = sha256_file(r882_ckpt_path)
         expected_ckpt_sha = PINNED_INPUT_SHA256[r882_ckpt_path]
         if ckpt_sha != expected_ckpt_sha:
-            raise RuntimeError(f"round-882.pt SHA-256 mismatch: {ckpt_sha} != {expected_ckpt_sha}")
+            raise RuntimeError(
+                f"round-882.pt SHA-256 mismatch: {ckpt_sha} != {expected_ckpt_sha}"
+            )
         fused_py = h50_input_root / "cpu_exact_fused.py"
         fused_sha = sha256_file(fused_py)
         expected_fused_sha = PINNED_INPUT_SHA256[fused_py]
         if fused_sha != expected_fused_sha:
-            raise RuntimeError(f"cpu_exact_fused.py SHA-256 mismatch: {fused_sha} != {expected_fused_sha}")
+            raise RuntimeError(
+                f"cpu_exact_fused.py SHA-256 mismatch: {fused_sha} != {expected_fused_sha}"
+            )
 
     micro_py = "/home/ubuntu/JopeDimeMicro/python"
     if micro_py not in sys.path:
@@ -536,7 +589,9 @@ def load_cpu_exact_fused_network(
     if hasattr(research, "__path__") and micro_research not in research.__path__:
         research.__path__.append(micro_research)
 
-    spec = importlib.util.spec_from_file_location("h204_fused", h50_input_root / "cpu_exact_fused.py")
+    spec = importlib.util.spec_from_file_location(
+        "h204_fused", h50_input_root / "cpu_exact_fused.py"
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError("Failed to load cpu_exact_fused.py spec")
     fused = importlib.util.module_from_spec(spec)
@@ -545,7 +600,9 @@ def load_cpu_exact_fused_network(
     net = fused.FusedJopeNetwork(device=torch.device("cpu"), adapter_variant="h40b")
     ckpt = torch.load(r882_ckpt_path, map_location="cpu", weights_only=False)
     if ckpt.get("round") != 882:
-        raise RuntimeError(f"Expected round-882 checkpoint (round=882), got {ckpt.get('round')}")
+        raise RuntimeError(
+            f"Expected round-882 checkpoint (round=882), got {ckpt.get('round')}"
+        )
     if ckpt.get("dope_sha256") != EXPECTED_DOPE_SHA256:
         raise RuntimeError(
             f"Checkpoint dope_sha256 mismatch: {ckpt.get('dope_sha256')} != {EXPECTED_DOPE_SHA256}"
@@ -590,19 +647,31 @@ def compute_r882_base_scores_batch(
         res = net.adapter_10tok.predict_costs(
             ctx_feat=torch.zeros((1, 584), device=device, dtype=torch.float32),
             prog_412=torch.as_tensor(
-                full_cand_features[i : i + 1, :, :412], device=device, dtype=torch.float32
+                full_cand_features[i : i + 1, :, :412],
+                device=device,
+                dtype=torch.float32,
             ),
             proj_16=torch.as_tensor(
-                full_cand_features[i : i + 1, :, 412:], device=device, dtype=torch.float32
+                full_cand_features[i : i + 1, :, 412:],
+                device=device,
+                dtype=torch.float32,
             ),
-            base_prior_cost=torch.zeros((1, n_cand), device=device, dtype=torch.float32),
+            base_prior_cost=torch.zeros(
+                (1, n_cand), device=device, dtype=torch.float32
+            ),
             scale=torch.tensor([0.4208], device=device, dtype=torch.float32),
             sos_prior=torch.zeros((1, n_cand, 2), device=device, dtype=torch.float32),
-            mm_tokens_10x32=torch.as_tensor(tokens_10x32[i : i + 1], device=device, dtype=torch.float32),
+            mm_tokens_10x32=torch.as_tensor(
+                tokens_10x32[i : i + 1], device=device, dtype=torch.float32
+            ),
             mm_mask_10=torch.as_tensor(mask_10[i : i + 1], device=device).bool(),
             revealed_indices=torch.arange(4, device=device)[None],
-            revealed_raw_f=torch.as_tensor(full_fitness[i, :4], device=device, dtype=torch.float32)[None],
-            revealed_gate=torch.as_tensor(full_gates[i, :4], device=device, dtype=torch.float32)[None],
+            revealed_raw_f=torch.as_tensor(
+                full_fitness[i, :4], device=device, dtype=torch.float32
+            )[None],
+            revealed_gate=torch.as_tensor(
+                full_gates[i, :4], device=device, dtype=torch.float32
+            )[None],
         )
         out[i] = res["total_cost"][0].detach().cpu().numpy().astype(np.float64)
     return out
@@ -698,7 +767,10 @@ def train_and_eval_single_fold(
     else:
         net = base_net
 
-    run_id = os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip() or f"h204-{arm_name.lower()}-s{seed}"
+    run_id = (
+        os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip()
+        or f"h204-{arm_name.lower()}-s{seed}"
+    )
     os.environ["JOPE_RESEARCH_RUN_ID"] = run_id
     fold_launch_meta: dict[str, Any] = {"arm": arm_name, "seed": int(seed)}
 
@@ -760,10 +832,14 @@ def train_and_eval_single_fold(
             train_batch.dope629[tr_indices[:16]], dtype=torch.float32, device=device
         )
         sample_tok = torch.as_tensor(
-            train_batch.tokens_10x32[tr_indices[:16]], dtype=torch.float32, device=device
+            train_batch.tokens_10x32[tr_indices[:16]],
+            dtype=torch.float32,
+            device=device,
         )
         live_tok0 = compute_live_tokens_10x32(net, sample_d629, sample_tok)
-        step0_token_max_diff = float(torch.max(torch.abs(live_tok0 - sample_tok)).item())
+        step0_token_max_diff = float(
+            torch.max(torch.abs(live_tok0 - sample_tok)).item()
+        )
     if step0_token_max_diff > 1e-5:
         raise RuntimeError(
             f"Step-0 live token bridge discrepancy {step0_token_max_diff:.3e} > 1e-5 in arm {arm_name}!"
@@ -780,25 +856,43 @@ def train_and_eval_single_fold(
         perm = rng.permutation(tr_indices)
         for start in range(0, len(perm), batch_size):
             batch_idx = perm[start : start + batch_size]
-            t_d629 = torch.as_tensor(train_batch.dope629[batch_idx], dtype=torch.float32, device=device)
+            t_d629 = torch.as_tensor(
+                train_batch.dope629[batch_idx], dtype=torch.float32, device=device
+            )
             t_tok_cached = torch.as_tensor(
                 train_batch.tokens_10x32[batch_idx], dtype=torch.float32, device=device
             )
-            t_ctx = torch.as_tensor(train_batch.lm48_z[batch_idx], dtype=torch.float32, device=device)
-            t_anc = torch.as_tensor(train_batch.mask_10[batch_idx], dtype=torch.float32, device=device)
+            t_ctx = torch.as_tensor(
+                train_batch.lm48_z[batch_idx], dtype=torch.float32, device=device
+            )
+            t_anc = torch.as_tensor(
+                train_batch.mask_10[batch_idx], dtype=torch.float32, device=device
+            )
             t_cand_feat = torch.as_tensor(
                 train_batch.cand_features[batch_idx], dtype=torch.float32, device=device
             )
             t_anc_feat = torch.as_tensor(
-                train_batch.cand_features[batch_idx, :4, :], dtype=torch.float32, device=device
+                train_batch.cand_features[batch_idx, :4, :],
+                dtype=torch.float32,
+                device=device,
             )
-            t_base_sub = torch.as_tensor(train_sub_scores[batch_idx], dtype=torch.float32, device=device)
+            t_base_sub = torch.as_tensor(
+                train_sub_scores[batch_idx], dtype=torch.float32, device=device
+            )
             t_costs = torch.as_tensor(
-                -train_batch.cand_utilities[batch_idx], dtype=torch.float32, device=device
+                -train_batch.cand_utilities[batch_idx],
+                dtype=torch.float32,
+                device=device,
             )
-            t_gates = torch.as_tensor(train_batch.cand_gates[batch_idx], dtype=torch.float32, device=device)
+            t_gates = torch.as_tensor(
+                train_batch.cand_gates[batch_idx], dtype=torch.float32, device=device
+            )
 
-            t_tok = compute_live_tokens_10x32(net, t_d629, t_tok_cached) if unfreeze_dope else t_tok_cached
+            t_tok = (
+                compute_live_tokens_10x32(net, t_d629, t_tok_cached)
+                if unfreeze_dope
+                else t_tok_cached
+            )
             pred_scores = proposer(
                 tokens_10x32=t_tok,
                 context_summary=t_ctx,
@@ -822,7 +916,9 @@ def train_and_eval_single_fold(
                 step_grad_l2 = float(np.sqrt(grad_sq))
                 if step_grad_l2 > max_dope_data_grad_l2:
                     max_dope_data_grad_l2 = step_grad_l2
-                torch.nn.utils.clip_grad_norm_(net.dope_model.parameters(), max_norm=0.5)
+                torch.nn.utils.clip_grad_norm_(
+                    net.dope_model.parameters(), max_norm=0.5
+                )
             optimizer.step()
             optimizer_steps += 1
             loss_history.append(float(loss.detach().item()))
@@ -832,7 +928,9 @@ def train_and_eval_single_fold(
     dope_after_sha256 = _hash_module_parameters(net.dope_model)
     after_tensor_hashes = _hash_named_tensors(net.dope_model)
     changed_dope_tensors = sorted(
-        k for k, v in after_tensor_hashes.items() if dope_cfg["dope_before_tensor_hashes"].get(k) != v
+        k
+        for k, v in after_tensor_hashes.items()
+        if dope_cfg["dope_before_tensor_hashes"].get(k) != v
     )
     dope_weights_changed = bool(dope_after_sha256 != dope_cfg["dope_before_sha256"])
 
@@ -858,18 +956,36 @@ def train_and_eval_single_fold(
     with torch.no_grad():
         for start in range(0, len(va_indices), batch_size):
             b_idx = va_indices[start : start + batch_size]
-            t_d629 = torch.as_tensor(train_batch.dope629[b_idx], dtype=torch.float32, device=device)
-            t_tok_c = torch.as_tensor(train_batch.tokens_10x32[b_idx], dtype=torch.float32, device=device)
-            t_tok = compute_live_tokens_10x32(net, t_d629, t_tok_c) if unfreeze_dope else t_tok_c
-            t_ctx = torch.as_tensor(train_batch.lm48_z[b_idx], dtype=torch.float32, device=device)
-            t_anc = torch.as_tensor(train_batch.mask_10[b_idx], dtype=torch.float32, device=device)
+            t_d629 = torch.as_tensor(
+                train_batch.dope629[b_idx], dtype=torch.float32, device=device
+            )
+            t_tok_c = torch.as_tensor(
+                train_batch.tokens_10x32[b_idx], dtype=torch.float32, device=device
+            )
+            t_tok = (
+                compute_live_tokens_10x32(net, t_d629, t_tok_c)
+                if unfreeze_dope
+                else t_tok_c
+            )
+            t_ctx = torch.as_tensor(
+                train_batch.lm48_z[b_idx], dtype=torch.float32, device=device
+            )
+            t_anc = torch.as_tensor(
+                train_batch.mask_10[b_idx], dtype=torch.float32, device=device
+            )
             t_full_feat = torch.as_tensor(
-                train_batch.full_cand_features[b_idx], dtype=torch.float32, device=device
+                train_batch.full_cand_features[b_idx],
+                dtype=torch.float32,
+                device=device,
             )
             t_anc_feat = torch.as_tensor(
-                train_batch.full_cand_features[b_idx, :4, :], dtype=torch.float32, device=device
+                train_batch.full_cand_features[b_idx, :4, :],
+                dtype=torch.float32,
+                device=device,
             )
-            t_base_full = torch.as_tensor(train_full_scores[b_idx], dtype=torch.float32, device=device)
+            t_base_full = torch.as_tensor(
+                train_full_scores[b_idx], dtype=torch.float32, device=device
+            )
             preds = proposer(
                 tokens_10x32=t_tok,
                 context_summary=t_ctx,
@@ -878,24 +994,44 @@ def train_and_eval_single_fold(
                 anchor_cand_features=t_anc_feat,
                 base_scores=t_base_full,
             )
-            oof_scores[start : start + len(b_idx)] = preds.detach().cpu().numpy().astype(np.float64)
+            oof_scores[start : start + len(b_idx)] = (
+                preds.detach().cpu().numpy().astype(np.float64)
+            )
 
     val_scores = np.zeros((len(val_batch.context_ids), n_cand_full), dtype=np.float64)
     with torch.no_grad():
         for start in range(0, len(val_batch.context_ids), batch_size):
             end = min(len(val_batch.context_ids), start + batch_size)
-            t_d629 = torch.as_tensor(val_batch.dope629[start:end], dtype=torch.float32, device=device)
-            t_tok_c = torch.as_tensor(val_batch.tokens_10x32[start:end], dtype=torch.float32, device=device)
-            t_tok = compute_live_tokens_10x32(net, t_d629, t_tok_c) if unfreeze_dope else t_tok_c
-            t_ctx = torch.as_tensor(val_batch.lm48_z[start:end], dtype=torch.float32, device=device)
-            t_anc = torch.as_tensor(val_batch.mask_10[start:end], dtype=torch.float32, device=device)
+            t_d629 = torch.as_tensor(
+                val_batch.dope629[start:end], dtype=torch.float32, device=device
+            )
+            t_tok_c = torch.as_tensor(
+                val_batch.tokens_10x32[start:end], dtype=torch.float32, device=device
+            )
+            t_tok = (
+                compute_live_tokens_10x32(net, t_d629, t_tok_c)
+                if unfreeze_dope
+                else t_tok_c
+            )
+            t_ctx = torch.as_tensor(
+                val_batch.lm48_z[start:end], dtype=torch.float32, device=device
+            )
+            t_anc = torch.as_tensor(
+                val_batch.mask_10[start:end], dtype=torch.float32, device=device
+            )
             t_full_feat = torch.as_tensor(
-                val_batch.full_cand_features[start:end], dtype=torch.float32, device=device
+                val_batch.full_cand_features[start:end],
+                dtype=torch.float32,
+                device=device,
             )
             t_anc_feat = torch.as_tensor(
-                val_batch.full_cand_features[start:end, :4, :], dtype=torch.float32, device=device
+                val_batch.full_cand_features[start:end, :4, :],
+                dtype=torch.float32,
+                device=device,
             )
-            t_base_full = torch.as_tensor(val_full_scores[start:end], dtype=torch.float32, device=device)
+            t_base_full = torch.as_tensor(
+                val_full_scores[start:end], dtype=torch.float32, device=device
+            )
             preds = proposer(
                 tokens_10x32=t_tok,
                 context_summary=t_ctx,
@@ -944,13 +1080,19 @@ def run_arm_across_seeds(
     progress_callback: Any = None,
 ) -> dict[str, Any]:
     """Run 5-fold cross-fitting across all preregistered seeds for one arm."""
-    family_folds = assign_family_folds(train_batch.family_ids, n_folds=N_FOLDS, seed=FOLD_SEED)
-    ctx_folds = np.array([family_folds[f] for f in train_batch.family_ids], dtype=np.int64)
+    family_folds = assign_family_folds(
+        train_batch.family_ids, n_folds=N_FOLDS, seed=FOLD_SEED
+    )
+    ctx_folds = np.array(
+        [family_folds[f] for f in train_batch.family_ids], dtype=np.int64
+    )
 
     n_tr, k_cand = train_batch.cand_indices.shape
     train_sub_scores = np.zeros((n_tr, k_cand), dtype=np.float32)
     for i in range(n_tr):
-        train_sub_scores[i] = train_full_scores[i, train_batch.cand_indices[i]].astype(np.float32)
+        train_sub_scores[i] = train_full_scores[i, train_batch.cand_indices[i]].astype(
+            np.float32
+        )
 
     seed_records: list[dict[str, Any]] = []
     total_optimizer_steps = 0
@@ -1012,7 +1154,9 @@ def run_arm_across_seeds(
 
         oof_cand_utilities = np.zeros(n_tr, dtype=np.float64)
         for i in range(n_tr):
-            _, u_val = first_argmin_cost(oof_pred_scores[i], train_batch.full_utilities[i])
+            _, u_val = first_argmin_cost(
+                oof_pred_scores[i], train_batch.full_utilities[i]
+            )
             oof_cand_utilities[i] = u_val
 
         selector = evaluate_h178_selector(
@@ -1028,12 +1172,16 @@ def run_arm_across_seeds(
         raw_val_utilities = np.zeros(n_val, dtype=np.float64)
         raw_val_picks = np.zeros(n_val, dtype=np.int64)
         for i in range(n_val):
-            p_idx, u_val = first_argmin_cost(mean_val_scores[i], val_batch.full_utilities[i])
+            p_idx, u_val = first_argmin_cost(
+                mean_val_scores[i], val_batch.full_utilities[i]
+            )
             raw_val_picks[i] = p_idx
             raw_val_utilities[i] = u_val
 
         selected_val_utilities = (
-            val_r882_utilities.copy() if selector["fallback_to_r882"] else raw_val_utilities
+            val_r882_utilities.copy()
+            if selector["fallback_to_r882"]
+            else raw_val_utilities
         )
 
         raw_dl_val_stats = paired_family_bootstrap(
@@ -1090,16 +1238,22 @@ def run_h204_stage1(
 
     thread_info = enforce_numeric_thread_limits(MAX_NUMERIC_THREADS)
     if device_str.startswith("cuda") and not torch.cuda.is_available():
-        raise RuntimeError(f"Requested CUDA device {device_str!r}, but torch.cuda.is_available() is False!")
+        raise RuntimeError(
+            f"Requested CUDA device {device_str!r}, but torch.cuda.is_available() is False!"
+        )
     device = torch.device(device_str)
     gpu_name = torch.cuda.get_device_name(device) if device.type == "cuda" else "cpu"
 
-    run_id = os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip() or f"h204-{run_dir.name}"
+    run_id = (
+        os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip() or f"h204-{run_dir.name}"
+    )
     os.environ["JOPE_RESEARCH_RUN_ID"] = run_id
     os.environ["JOPE_RESEARCH_DOPE_UNFREEZE"] = "0"
 
     cache = LocalLRUCache(cache_dir=cache_dir)
-    base_net = load_cpu_exact_fused_network(DEFAULT_H50_INPUT_ROOT, DEFAULT_R882_CKPT, device=device)
+    base_net = load_cpu_exact_fused_network(
+        DEFAULT_H50_INPUT_ROOT, DEFAULT_R882_CKPT, device=device
+    )
 
     train_batch, val_batch, labeler_meta = load_h204_stage1_datasets(
         cache=cache,
@@ -1115,7 +1269,10 @@ def run_h204_stage1(
     )
     val_r882_picks = np.argmin(val_full_scores, axis=1)
     val_r882_utilities = np.array(
-        [val_batch.full_utilities[i, int(val_r882_picks[i])] for i in range(len(val_r882_picks))],
+        [
+            val_batch.full_utilities[i, int(val_r882_picks[i])]
+            for i in range(len(val_r882_picks))
+        ],
         dtype=np.float64,
     )
 
@@ -1131,13 +1288,18 @@ def run_h204_stage1(
     )
     train_r882_picks = np.argmin(train_full_scores, axis=1)
     train_r882_utilities = np.array(
-        [train_batch.full_utilities[i, int(train_r882_picks[i])] for i in range(len(train_r882_picks))],
+        [
+            train_batch.full_utilities[i, int(train_r882_picks[i])]
+            for i in range(len(train_r882_picks))
+        ],
         dtype=np.float64,
     )
 
     progress_path = run_dir / "progress.json"
 
-    def _on_progress(arm: str, seed: int, fold: int, total_optimizer_steps: int) -> None:
+    def _on_progress(
+        arm: str, seed: int, fold: int, total_optimizer_steps: int
+    ) -> None:
         snap = {
             "wave": WAVE,
             "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -1147,13 +1309,19 @@ def run_h204_stage1(
             "optimizer_steps_in_arm": int(total_optimizer_steps),
             "elapsed_sec": float(time.time() - t_start),
             "gpu_allocated_mib": (
-                float(torch.cuda.memory_allocated(device) / (1024**2)) if device.type == "cuda" else 0.0
+                float(torch.cuda.memory_allocated(device) / (1024**2))
+                if device.type == "cuda"
+                else 0.0
             ),
             "gpu_max_allocated_mib": (
-                float(torch.cuda.max_memory_allocated(device) / (1024**2)) if device.type == "cuda" else 0.0
+                float(torch.cuda.max_memory_allocated(device) / (1024**2))
+                if device.type == "cuda"
+                else 0.0
             ),
         }
-        progress_path.write_text(json.dumps(snap, indent=2, sort_keys=True), encoding="utf-8")
+        progress_path.write_text(
+            json.dumps(snap, indent=2, sort_keys=True), encoding="utf-8"
+        )
 
     arm_specs: list[tuple[str, int, bool, bool]] = [
         ("R882_CONT", 64, False, False),
@@ -1189,7 +1357,10 @@ def run_h204_stage1(
     control_best_gain = float(max(control_gains))
 
     raw_p_map_stage1 = {
-        arm: float(np.mean([s["dl_val"]["p_one_sided"] for s in arms_out[arm]["seeds"]])) for arm in arms_out
+        arm: float(
+            np.mean([s["dl_val"]["p_one_sided"] for s in arms_out[arm]["seeds"]])
+        )
+        for arm in arms_out
     }
     holm_p_map_stage1 = holm_bonferroni(raw_p_map_stage1)
 
@@ -1223,7 +1394,10 @@ def run_h204_stage1(
             )
 
     raw_p_map = {
-        arm: float(np.mean([s["dl_val"]["p_one_sided"] for s in arms_out[arm]["seeds"]])) for arm in arms_out
+        arm: float(
+            np.mean([s["dl_val"]["p_one_sided"] for s in arms_out[arm]["seeds"]])
+        )
+        for arm in arms_out
     }
     holm_p_map = holm_bonferroni(raw_p_map)
 

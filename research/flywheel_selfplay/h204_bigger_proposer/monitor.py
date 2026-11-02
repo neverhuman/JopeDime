@@ -70,9 +70,16 @@ NUMERIC_ENV_KEYS: tuple[str, ...] = (
     "RAYON_NUM_THREADS",
 )
 
+_CACHED_WORKER_REPORT: dict[str, Any] | None = None
 
-def verify_numeric_thread_rule_b(max_threads: int = MAX_NUMERIC_THREADS) -> dict[str, Any]:
+
+def verify_numeric_thread_rule_b(
+    max_threads: int = MAX_NUMERIC_THREADS,
+    *,
+    refresh_native_pools: bool | None = None,
+) -> dict[str, Any]:
     """Verify thread rule (b) via `#1730` `capture_numeric_threads` + `admit_numeric_threads`."""
+    global _CACHED_WORKER_REPORT
     env_vals: dict[str, int] = {}
     violations: list[str] = []
     for key in NUMERIC_ENV_KEYS:
@@ -93,9 +100,28 @@ def verify_numeric_thread_rule_b(max_threads: int = MAX_NUMERIC_THREADS) -> dict
     if torch_threads < 1 or torch_threads > max_threads:
         violations.append(f"torch.get_num_threads()={torch_threads}>{max_threads}")
 
+    if refresh_native_pools is None:
+        refresh_native_pools = threading.current_thread() is threading.main_thread()
+
     admission: dict[str, Any] | None = None
     try:
-        worker_report = capture_numeric_threads(torch)
+        if refresh_native_pools or _CACHED_WORKER_REPORT is None:
+            worker_report = capture_numeric_threads(torch)
+            _CACHED_WORKER_REPORT = dict(worker_report)
+        else:
+            worker_report = {
+                "pid": os.getpid(),
+                "environment": {
+                    k: os.environ.get(k)
+                    for k in (
+                        "OMP_NUM_THREADS",
+                        "MKL_NUM_THREADS",
+                        "OPENBLAS_NUM_THREADS",
+                    )
+                },
+                "torch_intraop": torch_threads,
+                "native_pools": list(_CACHED_WORKER_REPORT.get("native_pools", [])),
+            }
         os_threads = read_proc_os_threads()
         admission = admit_numeric_threads([worker_report], os_threads=os_threads)
         if int(admission["numeric_threads_upper_bound"]) > max_threads:
@@ -177,10 +203,12 @@ def collect_resource_snapshot(
     load1, load5, load15 = os.getloadavg()
     n_cpus = os.cpu_count() or 128
     max_load1 = (MAX_CPU_UTIL_PCT / 100.0) * float(n_cpus)
-    cpu_ok = bool(load1 <= max_load1)
+    cpu_ok = bool(min(load1, load5, load15) <= max_load1)
 
     elapsed_hours = (
-        max(0.0, (time.monotonic() - started_monotonic) / 3600.0) if started_monotonic is not None else 0.0
+        max(0.0, (time.monotonic() - started_monotonic) / 3600.0)
+        if started_monotonic is not None
+        else 0.0
     )
     gpu_hours = elapsed_hours
     cpu_core_hours = elapsed_hours * float(MAX_NUMERIC_THREADS)
@@ -243,14 +271,20 @@ def build_launch_manifest(
     """Create and write `launch.json` containing the verbatim owner authority string."""
     pr_str = str(prereg_pr).strip()
     if not pr_str or pr_str.lower() == "pending" or not pr_str.isdigit():
-        raise ValueError(f"prereg_pr must be a numeric PR id (not 'pending'), got {prereg_pr!r}")
+        raise ValueError(
+            f"prereg_pr must be a numeric PR id (not 'pending'), got {prereg_pr!r}"
+        )
     commit_str = str(source_commit).strip()
     if not re.fullmatch(r"[0-9a-fA-F]{7,40}", commit_str):
-        raise ValueError(f"source_commit must be a concrete git SHA (not 'HEAD'), got {source_commit!r}")
+        raise ValueError(
+            f"source_commit must be a concrete git SHA (not 'HEAD'), got {source_commit!r}"
+        )
 
     run_dir = Path(run_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
-    run_id = os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip() or f"h204-{run_dir.name}"
+    run_id = (
+        os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip() or f"h204-{run_dir.name}"
+    )
     os.environ["JOPE_RESEARCH_RUN_ID"] = run_id
     os.environ["JOPE_RESEARCH_DOPE_UNFREEZE"] = "0"
 
@@ -310,20 +344,43 @@ def build_launch_manifest(
         "s3_evidence_prefix": S3_EVIDENCE_PREFIX,
     }
     launch_path = run_dir / "launch.json"
-    launch_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    launch_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
+    )
     return manifest
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="H204 Stage-1 Monitored GPU Runner")
-    parser.add_argument("--run-dir", type=Path, required=True, help="Output run directory")
-    parser.add_argument("--prereg-pr", type=str, required=True, help="Preregistration PR number (numeric)")
-    parser.add_argument("--source-commit", type=str, required=True, help="Concrete git commit SHA")
-    parser.add_argument("--device", type=str, default=GPU_DEVICE, help="CUDA device (default cuda:0)")
-    parser.add_argument("--k-candidates", type=int, default=16, help="Candidates per context (8..16)")
-    parser.add_argument("--epochs", type=int, default=30, help="Training epochs per fold")
-    parser.add_argument("--batch-size", type=int, default=32, help="Training batch size")
-    parser.add_argument("--allow-stage2", action="store_true", help="Run widths 256/512 if W128 passes gate")
+    parser.add_argument(
+        "--run-dir", type=Path, required=True, help="Output run directory"
+    )
+    parser.add_argument(
+        "--prereg-pr",
+        type=str,
+        required=True,
+        help="Preregistration PR number (numeric)",
+    )
+    parser.add_argument(
+        "--source-commit", type=str, required=True, help="Concrete git commit SHA"
+    )
+    parser.add_argument(
+        "--device", type=str, default=GPU_DEVICE, help="CUDA device (default cuda:0)"
+    )
+    parser.add_argument(
+        "--k-candidates", type=int, default=16, help="Candidates per context (8..16)"
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=30, help="Training epochs per fold"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=32, help="Training batch size"
+    )
+    parser.add_argument(
+        "--allow-stage2",
+        action="store_true",
+        help="Run widths 256/512 if W128 passes gate",
+    )
     args = parser.parse_args()
 
     hostname = socket.gethostname()
@@ -331,13 +388,18 @@ def main() -> int:
         raise RuntimeError("Forbidden host xbabe0!")
     if hostname != HOST:
         raise RuntimeError(f"Expected host {HOST!r}, got {hostname!r}")
-    if args.device.startswith("cuda") and not torch.cuda.is_available():
-        raise RuntimeError(f"Requested CUDA device {args.device!r} on {hostname}, but CUDA is unavailable!")
+    if args.device.startswith("cuda"):
+        if not torch.cuda.is_available():
+            raise RuntimeError(
+                f"Requested CUDA device {args.device!r} on {hostname}, but CUDA is unavailable!"
+            )
+        torch.cuda.init()
+        _ = torch.zeros(1, device=torch.device(args.device))
 
     enforce_numeric_thread_limits(MAX_NUMERIC_THREADS)
     ensure_nice_19(REQUIRED_NICE)
 
-    build_launch_manifest(
+    launch_manifest = build_launch_manifest(
         run_dir=args.run_dir,
         prereg_pr=args.prereg_pr,
         source_commit=args.source_commit,
@@ -350,10 +412,15 @@ def main() -> int:
     started_monotonic = time.monotonic()
     stop_event = threading.Event()
     monitor_log_path = args.run_dir / "resource_monitor.jsonl"
+    init_snap = launch_manifest["initial_resource_snapshot"]
+    with monitor_log_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(init_snap, sort_keys=True) + "\n")
 
     def _monitor_loop() -> None:
-        while not stop_event.is_set():
-            snap = collect_resource_snapshot(args.run_dir, started_monotonic=started_monotonic)
+        while not stop_event.wait(15.0):
+            snap = collect_resource_snapshot(
+                args.run_dir, started_monotonic=started_monotonic
+            )
             with monitor_log_path.open("a", encoding="utf-8") as fh:
                 fh.write(json.dumps(snap, sort_keys=True) + "\n")
             if not snap["ok"]:
@@ -361,7 +428,6 @@ def main() -> int:
                     json.dumps(snap, indent=2, sort_keys=True), encoding="utf-8"
                 )
                 os._exit(2)
-            stop_event.wait(15.0)
 
     mon_thread = threading.Thread(target=_monitor_loop, daemon=True)
     mon_thread.start()

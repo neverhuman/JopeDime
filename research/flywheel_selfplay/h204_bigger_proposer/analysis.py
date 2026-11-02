@@ -128,8 +128,12 @@ R882_EXPECTED_DL_VAL_PICKS: tuple[int, ...] = (
     1,
     172,
 )
-R882_EXPECTED_DL_VAL_PICKS_SHA256 = "460560e44b8d77e445f18db063601c8d02f748718376fa355d6997e0c3624d96"
-R882_EXPECTED_DL_VAL_UTILITIES_SHA256 = "77fd7f5963905a1aa0fd321f4ae04fe24328961357aa745efb18bbe0ebfec8e9"
+R882_EXPECTED_DL_VAL_PICKS_SHA256 = (
+    "460560e44b8d77e445f18db063601c8d02f748718376fa355d6997e0c3624d96"
+)
+R882_EXPECTED_DL_VAL_UTILITIES_SHA256 = (
+    "77fd7f5963905a1aa0fd321f4ae04fe24328961357aa745efb18bbe0ebfec8e9"
+)
 
 SEEDS: tuple[int, ...] = (204101, 204102, 204103)
 FOLD_SEED = 204140
@@ -151,7 +155,9 @@ ALL_ARMS: tuple[str, ...] = (
     "PROPOSER_W512",
 )
 
-S3_EVIDENCE_PREFIX = "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/"
+S3_EVIDENCE_PREFIX = (
+    "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/"
+)
 S3_DATASETS_BUCKET = "s3://veox-jopedime-datasets-use2"
 
 # Common promotion / stage gates
@@ -220,7 +226,9 @@ def verify_r882_native_parity(
     abs_diff = abs(mean_u - expected_mean) if np.isfinite(mean_u) else float("inf")
 
     exact_pick_matches = (
-        int(np.sum(picks_arr == expected_picks_arr)) if picks_arr.shape == expected_picks_arr.shape else 0
+        int(np.sum(picks_arr == expected_picks_arr))
+        if picks_arr.shape == expected_picks_arr.shape
+        else 0
     )
     picks_exact_91_of_91 = bool(
         picks_arr.shape == expected_picks_arr.shape and exact_pick_matches == expected_n
@@ -228,7 +236,9 @@ def verify_r882_native_parity(
     picks_sha256 = sha256_bytes(picks_arr.tobytes())
     utilities_sha256 = sha256_bytes(arr.tobytes())
 
-    passed = bool(n_ctx == expected_n and finite_all and abs_diff <= atol and picks_exact_91_of_91)
+    passed = bool(
+        n_ctx == expected_n and finite_all and abs_diff <= atol and picks_exact_91_of_91
+    )
     return {
         "passed": passed,
         "n_contexts": n_ctx,
@@ -250,8 +260,14 @@ def first_argmin_cost(scores: np.ndarray, outcomes: np.ndarray) -> tuple[int, fl
     """Fixed-dev-cost-argmin-negative-fitness/v1: pick `int(np.argmin(scores))` and return its outcome."""
     scores_arr = np.asarray(scores, dtype=np.float64)
     outcomes_arr = np.asarray(outcomes, dtype=np.float64)
-    if scores_arr.ndim != 1 or outcomes_arr.ndim != 1 or scores_arr.shape[0] != outcomes_arr.shape[0]:
-        raise ValueError(f"Invalid shapes for first_argmin_cost: {scores_arr.shape} vs {outcomes_arr.shape}")
+    if (
+        scores_arr.ndim != 1
+        or outcomes_arr.ndim != 1
+        or scores_arr.shape[0] != outcomes_arr.shape[0]
+    ):
+        raise ValueError(
+            f"Invalid shapes for first_argmin_cost: {scores_arr.shape} vs {outcomes_arr.shape}"
+        )
     if not np.all(np.isfinite(scores_arr)):
         raise ValueError("Non-finite candidate scores encountered")
     pick_idx = int(np.argmin(scores_arr))
@@ -405,7 +421,10 @@ def evaluate_arm_gate(
 
     # Paired pooled-family bootstrap across the seed-averaged family gain vector
     fam_gain_rows = [
-        np.asarray(s["dl_val"].get("family_gains", [s["dl_val"]["mean_gain"]]), dtype=np.float64)
+        np.asarray(
+            s["dl_val"].get("family_gains", [s["dl_val"]["mean_gain"]]),
+            dtype=np.float64,
+        )
         for s in seed_results
     ]
     pooled_fam_gains = np.mean(np.stack(fam_gain_rows, axis=0), axis=0)

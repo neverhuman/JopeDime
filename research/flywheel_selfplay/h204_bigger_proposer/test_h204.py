@@ -180,7 +180,9 @@ def test_prereg_and_manifest_contain_verbatim_authority(tmp_path: Path) -> None:
         )
 
 
-def test_dope_freeze_guard_default_and_research_opt_in(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_dope_freeze_guard_default_and_research_opt_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     net = _DummyFusedNet()
 
     # 1. Default path: DOPE remains frozen and in eval mode
@@ -194,13 +196,18 @@ def test_dope_freeze_guard_default_and_research_opt_in(monkeypatch: pytest.Monke
     assert all(not p.requires_grad for p in net.dope_model.parameters())
     opt_frozen = torch.optim.AdamW(net.adapter_10tok.mm_proj.parameters(), lr=1e-3)
     assert assert_optimizer_excludes_dope(opt_frozen, net) is True
-    assert assert_research_optimizer_policy(opt_frozen, net, research_run_id="h204-unit") is True
+    assert (
+        assert_research_optimizer_policy(opt_frozen, net, research_run_id="h204-unit")
+        is True
+    )
 
     # 2. Serving and flywheel entrypoints strictly refuse unfreeze even if env is set
     monkeypatch.setenv("JOPE_RESEARCH_DOPE_UNFREEZE", "1")
     monkeypatch.setenv("JOPE_RESEARCH_RUN_ID", "h204-unit-test")
     for mode in ("serving", "flywheel", "production", "promotion"):
-        with pytest.raises(DopeFreezeViolationError, match="refuses JOPE_RESEARCH_DOPE_UNFREEZE"):
+        with pytest.raises(
+            DopeFreezeViolationError, match="refuses JOPE_RESEARCH_DOPE_UNFREEZE"
+        ):
             configure_dope_freeze_or_research_unfreeze(
                 net, request_research_unfreeze=True, entrypoint_mode=mode
             )
@@ -231,8 +238,15 @@ def test_dope_freeze_guard_default_and_research_opt_in(monkeypatch: pytest.Monke
     net.train(True)
     assert all(not sub.training for sub in net.dope_model.modules())
     assert all(not p.requires_grad for p in net.gamenet_anchor.parameters())
-    opt_research = torch.optim.AdamW(net.dope_model.parameters(), lr=1e-5, weight_decay=0.0)
-    assert assert_research_optimizer_policy(opt_research, net, research_run_id="h204-unit-test") is True
+    opt_research = torch.optim.AdamW(
+        net.dope_model.parameters(), lr=1e-5, weight_decay=0.0
+    )
+    assert (
+        assert_research_optimizer_policy(
+            opt_research, net, research_run_id="h204-unit-test"
+        )
+        is True
+    )
 
 
 def test_thread_rule_b_enforcement_and_verification() -> None:
@@ -249,7 +263,9 @@ def test_thread_rule_b_enforcement_and_verification() -> None:
     assert check["admission"]["numeric_threads_upper_bound"] <= 4
 
 
-def test_proposer_ranking_loss_prefers_lower_predicted_cost_for_lower_target_cost() -> None:
+def test_proposer_ranking_loss_prefers_lower_predicted_cost_for_lower_target_cost() -> (
+    None
+):
     # Target costs: candidate 0 has lower cost (0.0) than candidate 1 (1.0)
     target_costs = torch.tensor([[0.0, 1.0]], dtype=torch.float32)
     cand_gates = torch.tensor([[1.0, 1.0]], dtype=torch.float32)
@@ -257,17 +273,25 @@ def test_proposer_ranking_loss_prefers_lower_predicted_cost_for_lower_target_cos
     good_preds = torch.tensor([[0.0, 1.0]], dtype=torch.float32)
     bad_preds = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
 
-    loss_good = float(compute_proposer_ranking_loss(good_preds, target_costs, cand_gates).item())
-    loss_bad = float(compute_proposer_ranking_loss(bad_preds, target_costs, cand_gates).item())
+    loss_good = float(
+        compute_proposer_ranking_loss(good_preds, target_costs, cand_gates).item()
+    )
+    loss_bad = float(
+        compute_proposer_ranking_loss(bad_preds, target_costs, cand_gates).item()
+    )
     assert loss_good < loss_bad
 
 
-def test_wider_proposer_shapes_and_r882_continuation(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_wider_proposer_shapes_and_r882_continuation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("JOPE_RESEARCH_DOPE_UNFREEZE", "1")
     monkeypatch.setenv("JOPE_RESEARCH_RUN_ID", "h204-shape-test")
 
     for w in (64, 128, 256, 512):
-        prop = WiderBlockFormerProposer(width=w, cand_dim=42, ctx_sum_dim=48, anc_sum_dim=10)
+        prop = WiderBlockFormerProposer(
+            width=w, cand_dim=42, ctx_sum_dim=48, anc_sum_dim=10
+        )
         tok = torch.randn(4, 10, 32)
         ctx = torch.randn(4, 48)
         anc = torch.ones(4, 10)
@@ -298,7 +322,9 @@ def test_wider_proposer_shapes_and_r882_continuation(monkeypatch: pytest.MonkeyP
     vec256 = torch.randn(n_tr, 256)
     with torch.no_grad():
         routed = net.dope_model.router(vec256, level="high")
-        gates_14 = torch.stack([routed["gates"][k] for k in net.step3_gate_keys_14], dim=-1)
+        gates_14 = torch.stack(
+            [routed["gates"][k] for k in net.step3_gate_keys_14], dim=-1
+        )
         tail_64 = torch.ones(n_tr, 64)
         d629 = torch.cat(
             [
@@ -316,7 +342,9 @@ def test_wider_proposer_shapes_and_r882_continuation(monkeypatch: pytest.MonkeyP
         tok2 = net._svd_slot_project(d629, "svd_slot2_m2")
         tok4 = net._svd_slot_project(d629, "svd_slot4_d629_mid")
         tok5 = net._svd_slot_project(d629, "svd_slot5_d629_tail")
-        kron_64 = (tok2[:, :8].unsqueeze(2) * tok0[:, :8].unsqueeze(1)).reshape(n_tr, 64)
+        kron_64 = (tok2[:, :8].unsqueeze(2) * tok0[:, :8].unsqueeze(1)).reshape(
+            n_tr, 64
+        )
         tok9 = net._svd_slot_project(kron_64, "svd_slot9_kron")
         tokens_10x32 = torch.stack(
             [
@@ -414,7 +442,9 @@ def test_wider_proposer_shapes_and_r882_continuation(monkeypatch: pytest.MonkeyP
 
 
 def test_labeler_lru_cache_and_rust_evaluator_signature_binding(tmp_path: Path) -> None:
-    idx = select_candidate_subset_indices(n_total=1152, k_candidates=16, seed=204101, context_idx=3)
+    idx = select_candidate_subset_indices(
+        n_total=1152, k_candidates=16, seed=204101, context_idx=3
+    )
     assert len(idx) == 16
     assert list(idx[:4]) == [0, 1, 2, 3]
     assert len(set(idx.tolist())) == 16
@@ -491,7 +521,9 @@ def test_analysis_parity_exact_pick_vector_and_promotion_gates() -> None:
 
     r882 = np.zeros(40, dtype=np.float64)
     cand = np.full(40, 0.02, dtype=np.float64)
-    boot = paired_family_bootstrap(r882, cand, fams, n_boot=500, seed=204141, higher_is_better=True)
+    boot = paired_family_bootstrap(
+        r882, cand, fams, n_boot=500, seed=204141, higher_is_better=True
+    )
     assert boot["mean_gain"] == pytest.approx(0.02)
     assert boot["ci95_low"] > 0.0
     assert boot["elo_lift"] > 10.0
@@ -503,13 +535,22 @@ def test_analysis_parity_exact_pick_vector_and_promotion_gates() -> None:
     p_adj = holm_bonferroni({"A": 0.01, "B": 0.04})
     assert p_adj["A"] <= p_adj["B"]
 
-    seed_results = [{"seed": s, "fallback_rate": 0.0, "dl_val": boot} for s in (204101, 204102, 204103)]
-    gate_pass = evaluate_arm_gate(seed_results, control_best_gain=0.005, holm_adjusted_p=0.01)
+    seed_results = [
+        {"seed": s, "fallback_rate": 0.0, "dl_val": boot}
+        for s in (204101, 204102, 204103)
+    ]
+    gate_pass = evaluate_arm_gate(
+        seed_results, control_best_gain=0.005, holm_adjusted_p=0.01
+    )
     assert gate_pass["passed"] is True
 
     # If Holm-adjusted p > 0.05, gate must fail
-    gate_fail_p = evaluate_arm_gate(seed_results, control_best_gain=0.005, holm_adjusted_p=0.12)
+    gate_fail_p = evaluate_arm_gate(
+        seed_results, control_best_gain=0.005, holm_adjusted_p=0.12
+    )
     assert gate_fail_p["passed"] is False
 
-    idx, val = first_argmin_cost(np.array([0.5, 0.2, 0.2, 0.9]), np.array([1.0, 2.0, 3.0, 4.0]))
+    idx, val = first_argmin_cost(
+        np.array([0.5, 0.2, 0.2, 0.9]), np.array([1.0, 2.0, 3.0, 4.0])
+    )
     assert idx == 1 and val == 2.0
