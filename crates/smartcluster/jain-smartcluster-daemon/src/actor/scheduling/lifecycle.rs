@@ -1,6 +1,5 @@
 use super::super::mps::allocation_uses_mps;
 use super::*;
-use crate::actor::mps::allocation_uses_mps;
 
 impl DaemonActor {
     pub(crate) fn reject_before_attempt(

@@ -119,16 +119,10 @@ mod helper;
 mod launch;
 mod lifecycle;
 
-#[cfg(test)]
-use helper::parse_helper_arguments;
 pub use helper::run_exec_helper;
 pub(super) use launch::terminate_failed_launch;
 pub use launch::{ExecutionAllocation, Executor, LaunchPlan, WorkloadResolver};
-#[cfg(test)]
-use launch::{cuda_visible_devices, reserved_environment_name};
 pub(super) use lifecycle::LaunchGuard;
-#[cfg(test)]
-use lifecycle::signal_process_group;
 pub use lifecycle::{
     CancelOutcome, ProcessWaiter, RunningParts, RunningWorkload, WorkloadInput, WorkloadIo,
     WorkloadOutput, WorkloadOutputOwned,

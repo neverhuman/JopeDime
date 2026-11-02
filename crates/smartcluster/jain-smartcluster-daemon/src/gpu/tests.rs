@@ -1,5 +1,3 @@
-use super::*;
-
 #[test]
 fn visible_devices_filters_empty_and_disabled_values() {
     assert!(parse_visible_devices("").is_empty());
