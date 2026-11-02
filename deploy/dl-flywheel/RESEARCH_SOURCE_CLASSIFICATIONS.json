@@ -5989,6 +5989,46 @@
         "role": "research",
         "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/protocol.py": {
+      "bytes": 4622,
+      "sha256": "fcc1903e97e0d56685040432ef1e30d4d699cb7e04d152f346960b4b1fa11522",
+      "classification": {
+        "role": "research",
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/backend.py": {
+      "bytes": 8018,
+      "sha256": "88e3de0e9b36c5084c7572a890c5634c104fa426e08adf2e33c584d2144760d2",
+      "classification": {
+        "role": "research",
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/analysis.py": {
+      "bytes": 5162,
+      "sha256": "f071a481944eb62fdea52ba83662a3ac29822466b155e7c787f68ca3bdcae9a6",
+      "classification": {
+        "role": "research",
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/launcher.py": {
+      "bytes": 8809,
+      "sha256": "f84b5c6b298e758d7574bb420f84df921a7dc2d0a160b972f56dcaf3d360802a",
+      "classification": {
+        "role": "research",
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/runner.py": {
+      "bytes": 12521,
+      "sha256": "b95c447958fdeaf1c50a18317211cb44971c4f9a3be2bf3819f5de3f5c6bceca",
+      "classification": {
+        "role": "research",
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
