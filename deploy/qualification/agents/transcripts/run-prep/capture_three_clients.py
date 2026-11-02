@@ -716,8 +716,7 @@ def run_capture(args: argparse.Namespace) -> dict:
                                 if client_exit == 0:
                                     drain_group(
                                         active_client,
-                                        time.monotonic()
-                                        + NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS,
+                                        client_deadline,
                                         raise_if_sigint_pending,
                                         capture_dir / "capture.json",
                                     )
