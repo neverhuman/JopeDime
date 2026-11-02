@@ -144,7 +144,7 @@ pub fn counts_lines(rows: &[Row]) -> (Vec<String>, usize) {
     (lines, no_test)
 }
 
-fn counts_row_kind(line: &str) -> String {
+pub(super) fn counts_row_kind(line: &str) -> String {
     split_row(line)
         .into_iter()
         .next()

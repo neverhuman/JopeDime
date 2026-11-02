@@ -62,15 +62,11 @@ mod tests;
 pub use check::check;
 pub use experiments::check_experiments;
 pub use figures::check_svg_figures;
-pub(super) use paper::{
-    accounted, field, ledger, normalize, numbers, printed_numbers, re, Claim, Printed, REPLAY_JSON,
-    SAMECUT_CSV, SVG_PATHS,
-};
 pub use paper::{
     check_paper, EXPERIMENTS_JSONL, EXPERIMENTS_README, EXPERIMENTS_SYNTHESIS, LEDGER, README,
     TRACE, WRITEUP,
 };
+pub(super) use paper::{field, re, REPLAY_JSON, SAMECUT_CSV, SVG_PATHS};
 pub use readme::{check_readme, glance, Glance};
-pub(super) use readme::{grouped, words};
 pub use source_validation::check_sources;
-pub(super) use source_validation::{is_lower_hex, sha256_hex, source_file};
+pub(super) use source_validation::{is_lower_hex, sha256_hex};

@@ -122,7 +122,7 @@ fn sorted_strings(value: &Value, context: &str) -> Result<Value> {
 }
 
 /// `value[key]` on a metadata object; refuses where Python raised (missing key, not a dict).
-fn field<'a>(value: &'a Value, key: &str, context: &str) -> Result<&'a Value> {
+pub(crate) fn field<'a>(value: &'a Value, key: &str, context: &str) -> Result<&'a Value> {
     py::subscript(value, key).map_err(|e| raised(context, e))
 }
 

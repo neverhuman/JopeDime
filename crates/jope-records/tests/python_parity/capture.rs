@@ -260,7 +260,7 @@ fn capture_parity_tree() {
 
 /// Malformed inputs the Python accepted (exit status 0) and the port refuses, by fixture and case.
 /// Being stricter than the Python is allowed; being more permissive never is.
-const RUST_STRICTER: &[(&str, &str, &str)] = &[
+pub(super) const RUST_STRICTER: &[(&str, &str, &str)] = &[
     (
         "coverage/negative-validate.json",
         "scope-bigint",
@@ -377,7 +377,7 @@ const RUST_STRICTER: &[(&str, &str, &str)] = &[
 /// README cases where both refuse with an explicit message and the port's words differ (round
 /// five): the Python counted the reports it globbed or found none, the port refuses the entry
 /// itself.
-const README_MESSAGE_DIFFERS: &[(&str, &str, &str)] = &[
+pub(super) const README_MESSAGE_DIFFERS: &[(&str, &str, &str)] = &[
     (
         "readme/negative-r5.json",
         "readme-r5-report-name-not-utf8",
@@ -393,7 +393,7 @@ const README_MESSAGE_DIFFERS: &[(&str, &str, &str)] = &[
 /// Cases where the Python refused an integer of more than 4300 digits and the port refuses the
 /// text earlier, because it is outside the strict number grammar: the refusal is not required to
 /// carry CPython's message about the limit.
-const REFUSED_BEFORE_THE_LIMIT: &[(&str, &str, &str)] = &[(
+pub(super) const REFUSED_BEFORE_THE_LIMIT: &[(&str, &str, &str)] = &[(
     "readme/negative-r3.json",
     "csv-int-underscores-4301-digits",
     "`_` separators are outside the strict number grammar, which refuses the text before it counts digits",

@@ -44,7 +44,7 @@ mod validation;
 mod workflow;
 
 pub use discovery::{default_features, discover, discover_from, metadata_from_stdout};
-pub(super) use discovery::{field, iterate, kind, raised, relative, strings};
+pub(super) use discovery::{field, iterate, raised, strings};
 pub use report::{discover_document, discover_report, validate_report, validate_text};
 pub use validation::{counts, validate};
 pub use workflow::workflow_jobs;

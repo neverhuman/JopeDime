@@ -1,3 +1,4 @@
+use super::bins::{abspath, rel, relpath};
 use super::*;
 
 fn row(kind: &str, new: &str, test: &str, status: &str) -> Row {

@@ -33,6 +33,9 @@ fn sha256_hex(bytes: &[u8]) -> String {
     out.iter().map(|b| format!("{b:02x}")).collect()
 }
 
+#[path = "wire_contract/adapters.rs"]
 mod adapters;
+#[path = "wire_contract/canonical_vectors.rs"]
 mod canonical_vectors;
+#[path = "wire_contract/conformance.rs"]
 mod conformance;

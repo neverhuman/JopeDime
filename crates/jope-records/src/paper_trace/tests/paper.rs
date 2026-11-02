@@ -1,3 +1,4 @@
+use super::super::paper::{normalize, numbers, printed_numbers};
 use super::*;
 
 #[test]

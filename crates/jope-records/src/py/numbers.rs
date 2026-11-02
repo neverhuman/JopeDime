@@ -1,5 +1,3 @@
-use super::*;
-
 /// Python `str.isspace` for one character (Unicode White_Space plus U+001C..U+001F).
 pub fn is_space(c: char) -> bool {
     c.is_whitespace() || ('\u{1c}'..='\u{1f}').contains(&c)

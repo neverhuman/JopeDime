@@ -1,6 +1,6 @@
 use super::*;
 
-fn is_one_of(value: Option<&Value>, set: &[&str]) -> bool {
+pub(super) fn is_one_of(value: Option<&Value>, set: &[&str]) -> bool {
     value
         .and_then(Value::as_str)
         .is_some_and(|s| set.contains(&s))

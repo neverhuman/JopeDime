@@ -1,3 +1,4 @@
+use super::workspace::{verify_baseline_md_consistency, verify_file_inventories_and_pins};
 use super::*;
 
 /// Verify `BASELINE.md` and `FILE_MAP.i01.json` in `repo`.

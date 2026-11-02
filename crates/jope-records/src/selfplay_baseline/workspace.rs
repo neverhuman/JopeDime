@@ -234,7 +234,7 @@ pub(super) fn verify_workspace_and_schemas_with_snapshot(
     ))
 }
 
-fn verify_file_inventories_and_pins(
+pub(super) fn verify_file_inventories_and_pins(
     snapshot: &mut BaselineSnapshot<'_>,
     file_map: &Dict,
 ) -> Result<()> {
@@ -389,7 +389,7 @@ fn verify_file_inventories_and_pins(
     Ok(())
 }
 
-fn verify_baseline_md_consistency(baseline_md: &str, file_map: &Dict) -> Result<()> {
+pub(super) fn verify_baseline_md_consistency(baseline_md: &str, file_map: &Dict) -> Result<()> {
     let mut table_cells: Vec<String> = Vec::new();
     for (line_idx, line) in baseline_md.lines().enumerate() {
         if line.trim_start().starts_with('|') {

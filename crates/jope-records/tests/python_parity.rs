@@ -228,8 +228,11 @@ fn check(name: &str, want: &(i64, String, String), ok: bool, stdout: &str) {
     assert_eq!(want.2, "", "{name}: the Python wrote nothing on stderr");
 }
 
+#[path = "python_parity/capture.rs"]
 mod capture;
+#[path = "python_parity/negative.rs"]
 mod negative;
+#[path = "python_parity/process.rs"]
 mod process;
 
 use capture::copy_tree;

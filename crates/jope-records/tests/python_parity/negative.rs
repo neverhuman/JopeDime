@@ -1,3 +1,5 @@
+use super::capture::{README_MESSAGE_DIFFERS, REFUSED_BEFORE_THE_LIMIT, RUST_STRICTER};
+use super::process::{apply_modes, tree_extras};
 use super::*;
 
 /// What the port did with one input.
@@ -26,7 +28,7 @@ impl Rust {
 }
 
 /// The negative cases of a fixture, by name.
-fn negative(rel: &str) -> Vec<(String, Value)> {
+pub(super) fn negative(rel: &str) -> Vec<(String, Value)> {
     let doc = json(rel);
     assert!(
         doc.get("source").and_then(Value::as_str).is_some()
@@ -127,7 +129,7 @@ pub(crate) fn compare(case: &Value, rust: &Rust, stricter: bool) -> Result<(), S
 /// to it: the fixture, the case, the Python's exit status and message (its exception line, the
 /// first line it printed on stderr, or the first line of its report) and the port's (its refusal,
 /// or the first line of its report). The custody runs keep this table; the test never reads it.
-fn record(rel: &str, name: &str, case: &Value, rust: &Rust) {
+pub(super) fn record(rel: &str, name: &str, case: &Value, rust: &Rust) {
     let Some(path) = std::env::var_os("JOPE_NEGATIVE_REPORT") else {
         return;
     };
@@ -193,7 +195,7 @@ fn replay(rel: &str, base: &str, count: usize, run: &dyn Fn(&Value, &str) -> Rus
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
-fn discovered_items() -> Dict {
+pub(super) fn discovered_items() -> Dict {
     json("coverage/discovered.json")
         .get("items")
         .and_then(Value::as_dict)

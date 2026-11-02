@@ -1,3 +1,4 @@
+use super::source_validation::has_unsafe_path_component;
 use super::*;
 
 fn slugify_markdown_heading(heading_text: &str) -> String {

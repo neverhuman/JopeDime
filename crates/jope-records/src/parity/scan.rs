@@ -1,3 +1,4 @@
+use super::matrix::counts_row_kind;
 use super::*;
 
 /// What the check reads from the tree besides the matrix.

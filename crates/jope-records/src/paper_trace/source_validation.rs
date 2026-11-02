@@ -1,6 +1,6 @@
 use super::*;
 
-fn has_unsafe_path_component(path: &str) -> bool {
+pub(super) fn has_unsafe_path_component(path: &str) -> bool {
     let p = Path::new(path);
     p.is_absolute()
         || p.components().any(|c| {
