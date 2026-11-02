@@ -535,8 +535,8 @@ crates/jope-campaigns/src/commands/train_only_redteam_execution.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution/candidate_and_evaluation.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution/legacy_and_archive.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution/screening_and_search.rs
-crates/jope-campaigns/src/commands/train_only_redteam_execution/smart_execution.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution/selection.rs
+crates/jope-campaigns/src/commands/train_only_redteam_execution/smart_execution.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution/validation_and_tests.rs
 crates/jope-campaigns/src/commands/train_only_redteam_results.rs
 crates/jope-campaigns/src/commands/train_only_study.rs
@@ -578,6 +578,8 @@ crates/jope-campaigns/src/hyperion_router/finalizer.rs
 crates/jope-campaigns/src/hyperion_router/policy.rs
 crates/jope-campaigns/src/hyperion_router/strategy.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign.rs
+crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/budget.rs
+crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy.rs
 crates/jope-campaigns/src/jope_dlgp_best5/compare.rs
 crates/jope-campaigns/src/jope_dlgp_best5/contracts.rs
 crates/jope-campaigns/src/jope_dlgp_best5/contracts/evidence.rs
