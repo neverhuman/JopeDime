@@ -1629,7 +1629,10 @@ impl<'a> FileReader<'a> {
         self.columns.iter().position(|c| c.name == name)
     }
 
-    /// Footer statistics as typed values. None means absent, never a fabricated zero.
+    /// Returns decoded footer statistics for this column chunk when they are present.
+    ///
+    /// Legacy files without footer statistics return `None`; see
+    /// `retention_pack::optional_statistics_preserve_legacy_distilled_bytes_and_reader`.
     pub fn statistics(&self, group: usize, col: usize) -> Result<Option<&ColumnStatistics>> {
         let chunk = self
             .row_groups
