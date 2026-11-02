@@ -696,4 +696,5 @@ pub fn resolve_unqualified(
 }
 
 #[cfg(test)]
+#[path = "admission/tests.rs"]
 mod tests;

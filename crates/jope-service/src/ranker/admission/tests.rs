@@ -67,7 +67,11 @@ impl AdmissionSlateFixture {
     }
 }
 
+#[path = "tests/cpu_adapter.rs"]
 mod cpu_adapter;
+#[path = "tests/guidance.rs"]
 mod guidance;
+#[path = "tests/selection.rs"]
 mod selection;
+#[path = "tests/slate.rs"]
 mod slate;

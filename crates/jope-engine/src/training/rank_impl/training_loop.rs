@@ -3,6 +3,7 @@ use anyhow::ensure;
 use serde_json::json;
 
 #[macro_use]
+#[path = "training_loop/steps.rs"]
 mod steps;
 
 macro_rules! training_loop {

@@ -5,6 +5,9 @@ use super::{
     RANKER_COLUMN_WIDTH, RAW_COLUMN_WIDTH, REPORT_WIDTH, TABLE_WIDTH, VECTOR_WIDTH,
 };
 
+#[path = "tests/basic.rs"]
 mod basic;
+#[path = "tests/full.rs"]
 mod full;
+#[path = "tests/golden.rs"]
 mod golden;
