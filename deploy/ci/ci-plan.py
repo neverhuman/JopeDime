@@ -21,11 +21,16 @@ FILTERS = {
 GATES = {"rust-check": "rust", "rust-test": "rust", "emitters": "emitters", "inputs": "inputs", "python": "python", "e2e-smoke": "e2e"}
 
 
-def classify(paths, event):
+def classify(paths, event, trusted_pr=True):
     if event not in ("pull_request", "workflow_dispatch"):
         raise ValueError(f"unsupported fast CI event: {event}")
     gates = {name: event == "workflow_dispatch" or any(re.search(pattern, path) for path in paths) for name, pattern in FILTERS.items()}
-    return {lane: gates[GATES[lane]] if lane in GATES else True for lane in LANES}, gates
+    lanes = {lane: gates[GATES[lane]] if lane in GATES else True for lane in LANES}
+    # Hygiene executes security tooling on a self-hosted runner with Docker access. Fork PR
+    # source is intentionally excluded at job admission and represented in the signed plan.
+    if event == "pull_request" and not trusted_pr:
+        lanes["hygiene"] = False
+    return lanes, gates
 
 
 def main():
@@ -33,13 +38,17 @@ def main():
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     event = os.environ["GITHUB_EVENT_NAME"]
+    trusted_pr = True
+    if event == "pull_request":
+        payload = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+        trusted_pr = payload.get("pull_request", {}).get("head", {}).get("repo", {}).get("full_name") == os.environ.get("GITHUB_REPOSITORY")
     base = os.environ.get("BASE_SHA", "")
     if event == "pull_request" and not re.fullmatch(r"[a-f0-9]{40}", base):
         raise ValueError("PR path classification requires full base SHA")
     paths = subprocess.check_output(["git", "diff", "--name-only", "-z", base, "HEAD"], text=True).split("\0") if base else []
     paths = sorted(set(paths) - {""})
-    lanes, gates = classify(paths, event)
-    plan = {"schema": "jope.ci-plan/v1", "event": event, "base_sha": base,
+    lanes, gates = classify(paths, event, trusted_pr)
+    plan = {"schema": "jope.ci-plan/v1", "event": event, "trusted_pr": trusted_pr, "base_sha": base,
             "source_sha": os.environ["JOPE_SOURCE_SHA"], "checkout_sha": os.environ["GITHUB_SHA"],
             "run_id": os.environ["GITHUB_RUN_ID"], "attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
             "paths": paths, "lanes": lanes}

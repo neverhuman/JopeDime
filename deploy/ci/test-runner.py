@@ -1190,6 +1190,18 @@ class WorkflowAdmissionTests(unittest.TestCase):
         self.assertIn('CARGO_TARGET_DIR: ${{ github.workspace }}/target/typescript-cargo', parity)
         self.assertIn('repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}', parity)
 
+    def test_fork_pull_request_hygiene_skips_privileged_runner(self):
+        workflow = (ROOT/'.github/workflows/ci.yml').read_text()
+        hygiene = self.job(workflow, 'hygiene')
+        self.assertIn("github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository", hygiene)
+        self.assertNotIn('runs-on: [self-hosted', hygiene)
+        self.assertIn("&& 'ubuntu-24.04' || 'xbabe1-ci'", hygiene)
+        aggregate = self.job(workflow, 'aggregate')
+        collect = aggregate.split('      - name: Collect hygiene evidence', 1)[1].split('      - name:', 1)[0]
+        self.assertIn("github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository", collect)
+        self.assertIn('HYGIENE_REQUIRED:', aggregate)
+        self.assertIn('test "$HYGIENE_RESULT" = "$expected"', aggregate)
+
     def test_nonmain_manual_source_cannot_reach_privileged_ci_jobs(self):
         workflow = (ROOT/'.github/workflows/ci.yml').read_text()
         dispatch = self.job(workflow, 'changes-dispatch')

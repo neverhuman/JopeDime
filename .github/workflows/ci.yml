@@ -127,8 +127,9 @@ jobs:
   hygiene:
     # Release security checks require an actually empty tool HOME. Rosetta
     # creates .cache/rosetta when jq starts; retain the checks on native Linux.
-    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
-    runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
+    # Apply the source ownership guard before runner allocation.
+    if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
+    runs-on: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && 'ubuntu-24.04' || 'xbabe1-ci' }}
     # Headroom for the three bounded evidence-publication attempts, each of which can stall for
     # about two minutes on a blackholed connection before it resets.
     timeout-minutes: 20
@@ -514,6 +515,7 @@ jobs:
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/changes/
           into: target/ci-download/${{ github.run_id }}/${{ github.run_attempt }}
       - name: Collect hygiene evidence
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: ./.github/actions/download-ci-evidence
         with:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-hygiene
@@ -664,6 +666,8 @@ jobs:
           GO_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
           JANKURAI_AUDIT_RESULT: ${{ needs.jankurai-audit.result }}
           JANKURAI_AUDIT_REQUIRED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          HYGIENE_RESULT: ${{ needs.hygiene.result }}
+          HYGIENE_REQUIRED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           NEEDS_JSON: ${{ toJson(needs) }}
           TYPESCRIPT_RESULT: ${{ needs.typescript.result }}
           TYPESCRIPT_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
@@ -684,6 +688,9 @@ jobs:
           expected=skipped
           if [ "$JANKURAI_AUDIT_REQUIRED" = true ]; then expected=success; fi
           test "$JANKURAI_AUDIT_RESULT" = "$expected"
+          expected=skipped
+          if [ "$HYGIENE_REQUIRED" = true ]; then expected=success; fi
+          test "$HYGIENE_RESULT" = "$expected"
           # UI, publication, language and export evidence are independently verified above.
           python3 deploy/ci/aggregate-evidence.py filter-needs \
             --input "$output/all-needs.json" --output "$output/needs.json" \
