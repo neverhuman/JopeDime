@@ -556,30 +556,28 @@ impl Ledger {
 // Keep this statement fixed: `key` is data and is supplied only through the
 // rusqlite parameter binding below, never interpolated into SQL text.
 const CONTEXT_COUNTS_SQL: &str = "SELECT strict_commits,attempted,
-        (SELECT count(*) FROM coverage_requests WHERE context=?1 AND state='reserved') +
-        (SELECT count(*) FROM coverage_plans WHERE context=?1),
+        (SELECT count(*) FROM coverage_requests WHERE context=?1 AND state='reserved'),
         (SELECT count(*) FROM coverage_requests WHERE context=?1 AND state='unknown'),ready_at,
         (SELECT count(*) FROM coverage_plans WHERE context=?1)
         FROM coverage_contexts WHERE identity=?1";
 
 fn context_counts(tx: &rusqlite::Transaction<'_>, key: &str) -> Result<Counts> {
-    Ok(tx.query_row(
-        CONTEXT_COUNTS_SQL,
-        rusqlite::params![key],
-        |r| {
+    Ok(
+        tx.query_row(CONTEXT_COUNTS_SQL, rusqlite::params![key], |r| {
             let attempted: u64 = r.get(1)?;
+            let reserved: u64 = r.get(2)?;
             let pending_plans: u64 = r.get(5)?;
             Ok(Counts {
                 unique_strict_commits: r.get(0)?,
                 attempted,
                 selection_exposure: attempted.saturating_add(pending_plans),
-                in_flight: r.get(2)?,
+                in_flight: reserved.saturating_add(pending_plans),
                 unknown: r.get(3)?,
                 ready_at: r.get(4)?,
                 selected_in_population: false,
             })
-        },
-    )?)
+        })?,
+    )
 }
 
 /// Read and bind a frozen selection on both controller and rank paths.
