@@ -466,3 +466,46 @@ def test_frozen_gate_recipe_matches_h210_and_h217():
             return body.replace("H226", "H210").replace("H217", "H210")
 
         assert block(h226) == block(h210) == block(h217), name
+
+
+def test_closeout_readme_reconciles_metrics_resources_and_custody_replay():
+    readme = (HERE / "README.md").read_text()
+    metrics_path = HERE / "metrics.json"
+    custody_path = HERE / "custody.json"
+    assert (
+        runner.sha(metrics_path)
+        == "5d74d13ebf1e11984bd99058848a26d6297f75287de90bf8d5fd5d043ee3d8f3"
+    )
+    assert (
+        runner.sha(custody_path)
+        == "cd5e5822a0d7770166f12cf8871c5911f2a24f1c80c7102953acf1681b9aa3d2"
+    )
+    m = json.loads(metrics_path.read_text())
+    val = m["descriptive_base_comparison_from_saved_smoke"][
+        "dl_val_91_contexts_19_families"
+    ]
+    assert val["r3175_vs_r882_native_equal_family_contrast"]["ci95"] == [
+        -0.00645137774296966,
+        0.002692315338785731,
+    ]
+    assert val["r3175_vs_r882_native_equal_family_contrast"]["harm_families"] == 1
+    assert val["r3175_vs_r882_plateau"]["ci95"] == [
+        -0.0066668236369076,
+        0.00290733477716234,
+    ]
+    for token in (
+        "[-0.006451, +0.002692]",
+        "5.26%` (`1/19`)",
+        "[0.000000, +0.000245]",
+        "1502.41` `[1497.52, 1507.75]",
+        "1077.789049994899 s",
+        "300.79945918009616 s",
+        "977,838,080 B",
+        "1.1441300444495006",
+        "59,802,333,184 B",
+        "445,921,017,856 B",
+        "911.93 s",
+        "6YSADvHFQJgfL43IueLP0yr7kyRF5RXP",
+        "069fdd50340c8a0234cafeae9ee0e96701a5b19482965625bfdcbb445260f85b",
+    ):
+        assert token in readme, token

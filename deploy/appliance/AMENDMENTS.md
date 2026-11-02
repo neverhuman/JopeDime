@@ -472,3 +472,25 @@ The regenerated model lock, required-asset closure assertion, 36 passing package
 tests, build/features/source receipts, fixture comparison and unsigned stage bytes
 are retained under `/home/ubuntu/jope_plan/evidence/REL-07/res08-t0940/`, with build
 receipts at `xbabe1:/home/ubuntu/remote_tests/evidence/REL-07/res08-t0940/`.
+
+## A20 — Account HTTPS follow-through
+
+The original browser candidate proposed client-scoped TLS policy exceptions. Those exceptions
+are superseded by main PR1796: ureq/zip are optional behind `client`, and authenticated HTTPS
+requires the explicit `cloud-tls` feature. The browser PR adopts that merged architecture and
+removes its proposed TLS/native package exceptions. Inference appliance fences remain unchanged.
+The installed development CLI retains its previously verified source; new connected development
+source builds select `--features cloud-tls`. No new shipping TLS policy admission is claimed.
+
+## A21 — Measured development fixture size after inherited main growth
+
+Hosted end-to-end packaging reached a valid development-signed package and failed the old A18 size baseline. A paired same-host Linux/Rust1.97.1 dist-ci build confirms the old limit was already exceeded before the connected CLI changes:
+
+| Source | Code bytes | Package bytes |
+| --- | ---: | ---: |
+| pre-PR1659 main88f1f64b1cfd1ae2b037016c829afb456bd651fa |8,144,488|8,267,461|
+| browser candidate d321cbb68f6f085592fe62c99974454ce26eadfc |8,144,648|8,268,941|
+
+The candidate adds160 code bytes, absorbed by existing package alignment. Its1,480-byte net package increase is exactly the increase in compressed third-party notices (18,588 ->20,068B). The103,220 raw model bytes,86,376 stored model bytes, manifest length and signature/footer length are unchanged. The prior main's1,070,888-byte code increase over A18 predates this integration; individual intervening changes have not been separately attributed. That inherited growth is recorded explicitly rather than attributed to browser prediction or silently hidden.
+
+Both packages pass cryptographic verification with the development key; dynamic dependencies remain libc/libgcc/libm only. Complete code/package hashes, source pins, commands' profiles and attribution are in `measurements/browser-predict-fixture-20261102.json`; raw build/pack/size/verify receipts are retained under `/home/ubuntu/jopedime-readiness-20261101/browser-pack-measurements/`. Only the measured fixture baseline moves to8,144,648/8,268,941B, retaining5% tolerance. No native-only/fused/release budget, REL07 hard ceiling, release key or production deployment changes. This is a development CI qualification, not a release.

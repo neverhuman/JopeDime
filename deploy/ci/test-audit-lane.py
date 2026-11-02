@@ -14,7 +14,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 FAKE = r'''
 #!/usr/bin/env python3
-import hashlib, json, os, pathlib, sys
+import hashlib, json, os, pathlib, sys, tomllib
 mode = os.environ["AUDIT_TEST_MODE"]
 if sys.argv[1:] == ["--version"]:
     print("jankurai 1.7.4" if mode == "version" else "jankurai 1.7.5")
@@ -34,12 +34,25 @@ report = {
     "standard_version": "0.9.0", "paper_edition": "2026.05-ed8",
     "scope": {"mode": "full", "paths": []},
     "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111",
-    "policy": {"minimum_score": floor, "mode": "standard", "fail_on": ["critical", "high"]},
+    "policy": {"minimum_score": floor, "mode": "standard", "fail_on": ["critical", "high"], "advisory_on": ["low", "medium"]},
     "score": 52 if low else 94, "raw_score": 52 if low else 94,
     "decision": {"status": "fail" if failed else "pass", "passed": not failed,
                  "minimum_score": floor, "hard_findings": int(failed), "soft_findings": 0},
     "findings": [{"severity": "high", "hardness": "hard"}] if failed else [],
 }
+policy_file = source / "agent/audit-policy.toml"
+if policy_file.exists():
+    policy_bytes = policy_file.read_bytes()
+    configured = tomllib.loads(policy_bytes.decode())
+    advisory = sorted(set(configured.get("advisory_on", ["medium", "low"])) - {"critical", "high"})
+    report["policy"]["advisory_on"] = advisory
+    binding = {"format": "jankurai-effective-audit-policy-v1",
+               "source_sha256": "sha256:" + hashlib.sha256(policy_bytes).hexdigest(),
+               "minimum_score": floor, "fail_on": ["critical", "high"], "advisory_on": advisory,
+               "auditor_version": "1.7.5", "schema_version": "1.9.0", "standard_version": "0.9.0"}
+    report["policy_fingerprint"] = "sha256:" + hashlib.sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+if mode == "advisory":
+    report["policy"]["advisory_on"] = ["info"]
 if mode == "severity":
     report["findings"] = [{"severity": "critical", "hardness": "soft"}]
     report["decision"]["soft_findings"] = 1
@@ -134,17 +147,63 @@ class AuditLaneTests(unittest.TestCase):
         self.auditor.write_text(FAKE.lstrip())
         self.auditor.chmod(0o755)
 
-    def run_audit(self, mode, report_only=False, output=None, exceptions="pass"):
+    def run_audit(self, mode, report_only=False, output=None, exceptions="pass", source_sha=None):
         self.output = output or self.base / ("report-" + mode + ("-report-only" if report_only else ""))
         env = dict(os.environ, JANKURAI_BIN=str(self.auditor), AUDIT_TEST_MODE=mode,
                    AUDIT_TEST_EXCEPTIONS=exceptions,
                    AUDIT_TEST_EXCEPTION_ARGS=str(self.base / "exception-args.txt"))
         for key in ("JOPE_SOURCE_SHA", "GITHUB_STEP_SUMMARY", "JOPE_AUDIT_REPORT_ONLY"):
             env.pop(key, None)
+        if source_sha is not None:
+            env["JOPE_SOURCE_SHA"] = source_sha
         if report_only:
             env["JOPE_AUDIT_REPORT_ONLY"] = "1"
         return subprocess.run(["bash", "ops/ci/jankurai.sh", str(self.output)],
                               cwd=self.repo, env=env, capture_output=True, text=True)
+
+    def test_captured_repository_policy_is_bound_in_the_effective_fingerprint(self):
+        policy = self.repo / "agent/audit-policy.toml"
+        policy.parent.mkdir()
+        policy.write_text('minimum_score = 85\nfail_on = ["critical", "high"]\nadvisory_on = ["medium", "low", "info"]\n[scan]\nextra_excluded_paths = ["target"]\n')
+        subprocess.run(["git", "add", "agent/audit-policy.toml"], cwd=self.repo, check=True)
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                        "commit", "-qm", "captured repository policy"], cwd=self.repo, check=True)
+        result = self.run_audit("failed", report_only=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        verification = json.loads((self.output / "audit-verification.json").read_text())
+        report = json.loads((self.output / "repo-score.json").read_text())
+        self.assertEqual(report["policy_fingerprint"], verification["policy_fingerprint"])
+        self.assertFalse(verification["audit_passed"])
+        self.assertNotEqual(0, self.run_audit("policy", report_only=True).returncode)
+        self.assertNotEqual(0, self.run_audit("advisory", report_only=True).returncode)
+
+    def test_synthetic_merge_identity_requires_the_reviewed_tree(self):
+        reviewed = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.repo, text=True).strip()
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                        "commit", "--allow-empty", "-qm", "synthetic identical-tree checkout"], cwd=self.repo, check=True)
+        result = self.run_audit("pass", source_sha=reviewed)
+        self.assertEqual(0, result.returncode, result.stderr)
+        manifest = json.loads((self.output / "input/SOURCE_MANIFEST.json").read_text())
+        self.assertNotEqual(manifest["source_sha"], manifest["checkout_sha"])
+        self.assertEqual(manifest["source_tree_sha"], manifest["tree_sha"])
+        spec = importlib.util.spec_from_file_location("merge_audit_verifier", ROOT / "deploy/ci/verify-audit-report.py")
+        verifier = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(verifier)
+        manifest_path = self.output / "input/SOURCE_MANIFEST.json"
+        invalid = dict(manifest)
+        invalid.pop("source_tree_sha")
+        manifest_path.write_text(json.dumps(invalid))
+        with self.assertRaisesRegex(ValueError, "attestation"):
+            verifier.validate(self.output, 0, hashlib.sha256(manifest_path.read_bytes()).hexdigest())
+        invalid["source_tree_sha"] = "0" * 40
+        manifest_path.write_text(json.dumps(invalid))
+        with self.assertRaisesRegex(ValueError, "source tree differs"):
+            verifier.validate(self.output, 0, hashlib.sha256(manifest_path.read_bytes()).hexdigest())
+        (self.repo / "README.md").write_text("different source tree\n")
+        subprocess.run(["git", "add", "README.md"], cwd=self.repo, check=True)
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                        "commit", "-qm", "unreviewed tree"], cwd=self.repo, check=True)
+        self.assertNotEqual(0, self.run_audit("pass", output=self.base / "wrong-tree", source_sha=reviewed).returncode)
 
     def test_honest_failed_gate_retains_failure_and_reports(self):
         result = self.run_audit("failed")
@@ -185,6 +244,13 @@ class AuditLaneTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("verify_audit_report", ROOT / "deploy/ci/verify-audit-report.py")
         verifier = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(verifier)
+        for workflow_name, job in (("ci.yml", "jankurai-audit"), ("full-main.yml", "audit")):
+            workflow = (ROOT / ".github/workflows" / workflow_name).read_text()
+            block = workflow.split("\n  " + job + ":\n", 1)[1]
+            unlock = block.split("      - name: Leave the persistent workspace deletable for the next checkout\n", 1)[1]
+            self.assertTrue(unlock.startswith("        if: always()\n        run: "))
+            command = unlock.split("        run: ", 1)[1].splitlines()[0]
+            self.assertEqual("if [ -d target/full-audit ]; then chmod -R u+w target/full-audit; fi", command)
         workflow = (ROOT / ".github/workflows/full-main.yml").read_text()
         block = workflow.split("\n  audit:\n", 1)[1]
         unlock = block.split("      - name: Leave the persistent workspace deletable for the next checkout\n", 1)[1]

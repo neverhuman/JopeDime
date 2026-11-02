@@ -1,0 +1,53 @@
+{
+  "schema": "jope.appliance-fixture-size-measurement/v1",
+  "observed_at": "2026-11-02",
+  "host": "xbabe0",
+  "target": "x86_64-unknown-linux-gnu",
+  "rustc": "1.97.1",
+  "profile": "fixture",
+  "cargo_profile": "dist-ci",
+  "features": [
+    "embedded",
+    "dev-keys"
+  ],
+  "scope": "development only; no release signing, tag or production qualification",
+  "previous_budget": {
+    "base_executable_bytes": 7073600,
+    "final_executable_bytes": 7188517,
+    "tolerance_percent": 5
+  },
+  "baseline": {
+    "source_commit": "88f1f64b1cfd1ae2b037016c829afb456bd651fa",
+    "code_sha256": "bc660f610ea0418506c9e6d286e2c77fa7486bd5372064e285596114d98e1d3f",
+    "package_sha256": "eb47e0f9066a238da3f19ef96d05b2fe8cdeb750ecbc916a70bb1022c0d57a70",
+    "base_executable_bytes": 8144488,
+    "final_executable_bytes": 8267461
+  },
+  "candidate": {
+    "source_commit": "d321cbb68f6f085592fe62c99974454ce26eadfc",
+    "code_sha256": "815d439fb3c50237f0e48705e131debae5661c6220e58ba621eb821ddecfc390",
+    "package_sha256": "950d34fc380525ce9d671148555721226229d8e3595a32446c33eec3051ba351",
+    "base_executable_bytes": 8144648,
+    "final_executable_bytes": 8268941
+  },
+  "attribution": {
+    "prior_main_code_growth_over_old_budget_bytes": 1070888,
+    "prior_main_growth_individual_changes": "not separately attributed; already present before connected CLI PR1659",
+    "candidate_code_delta_bytes": 160,
+    "candidate_package_delta_bytes": 1480,
+    "third_party_notices_compressed_delta_bytes": 1480,
+    "model_bytes_unchanged": 103220,
+    "code_alignment_absorbs_160_byte_code_delta": true
+  },
+  "validation": {
+    "both_package_verifications": "PASS using development key",
+    "minimal_dynamic_libraries": [
+      "libc.so.6",
+      "libgcc_s.so.1",
+      "libm.so.6"
+    ],
+    "dependency_fence": "PASS; minimal and GPU inference selections contain no TLS/native-crypto",
+    "tolerance_unchanged_percent": 5,
+    "release_profile_budgets": "unchanged"
+  }
+}

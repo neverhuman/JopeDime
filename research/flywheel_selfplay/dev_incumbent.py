@@ -732,6 +732,24 @@ def project_score_margins(parameters, constraints, max_passes=2, tolerance=1e-6)
     }
 
 
+def restart_proposal_optimizer(optimizer, rejection_streak, after_rejections=0):
+    """Optionally clear proposal moments; the saved incumbent remains untouched."""
+    if any(type(v) is not int or v < 0 for v in (rejection_streak, after_rejections)):
+        raise ValueError("optimizer restart counts must be nonnegative integers")
+    before = max((int(v["step"]) for v in optimizer.state.values() if "step" in v), default=0)
+    restarted = after_rejections > 0 and rejection_streak >= after_rejections
+    if restarted:
+        optimizer.state.clear()
+    return {
+        "version": "proposal-adam-restart/v1",
+        "after_rejections": after_rejections,
+        "consecutive_rejections": rejection_streak,
+        "restarted": restarted,
+        "optimizer_step_before": before,
+        "optimizer_step_after": 0 if restarted else before,
+    }
+
+
 def warm_restart_adapter(model, optimizer, seed, round_idx):
     """Perturb only trainable adapter tensors; reset LR independently of restored LR.
 

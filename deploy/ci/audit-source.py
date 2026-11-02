@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath
 import subprocess
 import tarfile
@@ -15,6 +16,14 @@ def snapshot(repo, output):
     def git(*args):
         return subprocess.check_output(["git", "-C", str(repo), *args], env=env)
     head = git("rev-parse", "HEAD").decode().strip()
+    source_sha = os.environ.get("JOPE_SOURCE_SHA", head)
+    if re.fullmatch(r"[0-9a-f]{40}", source_sha) is None:
+        raise ValueError("reviewed audit source requires a full commit SHA")
+    git("rev-parse", "--verify", source_sha + "^{commit}")
+    source_tree = git("rev-parse", source_sha + "^{tree}").decode().strip()
+    tree = git("rev-parse", head + "^{tree}").decode().strip()
+    if source_tree != tree:
+        raise ValueError("captured checkout differs from the reviewed source tree")
     dirty = git("diff", "--name-only", "-z", "HEAD", "--").split(b"\0")
     unexpected = [p for p in dirty if p and p != b"AGENT_CHAT.md"]
     if unexpected:
@@ -60,7 +69,7 @@ def snapshot(repo, output):
         raise ValueError("source HEAD changed while snapshot was being bound")
     with archive.open("rb") as archive_stream:
         archive_sha256 = hashlib.file_digest(archive_stream, "sha256").hexdigest()
-    manifest = {"schema": "jope.audit-product-input/v1", "source_sha": os.environ.get("JOPE_SOURCE_SHA", head), "checkout_sha": head,
+    manifest = {"schema": "jope.audit-product-input/v1", "source_sha": source_sha, "checkout_sha": head, "source_tree_sha": source_tree,
                 "tree_sha": git("rev-parse", head + "^{tree}").decode().strip(),
                 "archive_sha256": archive_sha256,
                 "files": files, "file_count": len(files), "input_bytes": sum(row["bytes"] for row in files),

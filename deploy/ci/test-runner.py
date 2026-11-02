@@ -27,6 +27,49 @@ container = load('verify-container')
 
 class RunnerTests(unittest.TestCase):
 
+    def test_selected_jobs_survive_the_optional_classifier_ancestor(self):
+        workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+        blocks = dict(re.findall(r'^  ([a-z][a-z0-9-]*):\n(.*?)(?=^  [a-z][a-z0-9-]*:|\Z)', workflow, re.M | re.S))
+        downstream = {name: block for name, block in blocks.items() if re.search(r'^    needs: changes$', block, re.M)}
+        self.assertTrue(downstream)
+        # Both real event routes skip one ancestor. Actions implicitly adds
+        # success() unless a job condition contains an explicit status function.
+        for event in ('pull_request', 'workflow_dispatch'):
+            for name, block in downstream.items():
+                with self.subTest(event=event, job=name):
+                    condition = re.search(r'^    if: (.+)$', block, re.M)
+                    expression = condition.group(1) if condition else ''
+                    has_status = bool(re.search(r'\b(?:always|cancelled|success|failure)\(', expression))
+                    self.assertTrue(has_status, 'selected job inherits a skipped classifier ancestor and never runs')
+                    self.assertIn("needs.changes.result == 'success'", expression,
+                                  'failed classifier must never authorize execution')
+                    self.assertIn('!cancelled()', expression, 'canceled cohorts must stop selected work')
+
+
+    def test_reusable_concurrency_cannot_cancel_its_caller(self):
+        workflows = ROOT / '.github/workflows'
+        for caller in ('ci.yml', 'full-main.yml'):
+            source = (workflows / caller).read_text()
+            caller_name = re.search(r'^name: (.+)$', source, re.M).group(1)
+            parent = re.search(r'^concurrency:\n  group: (.+)$', source, re.M).group(1)
+            children = re.findall(r'uses: \./\.github/workflows/([\w.-]+\.ya?ml)', source)
+            for ref, pr in (('refs/heads/feature', ''), ('refs/pull/1716/merge', '1716'), ('refs/heads/main', '')):
+                def resolve(value):
+                    values = {'github.workflow': caller_name, 'github.ref': ref,
+                              'github.sha': 'a' * 40,
+                              'github.event.pull_request.number || github.ref': pr or ref}
+                    for expression, result in values.items():
+                        value = value.replace('${{ ' + expression + ' }}', result)
+                    self.assertNotIn('${{', value, 'test must resolve every concurrency expression')
+                    return value
+                for child in children:
+                    text = (workflows / child).read_text()
+                    group = re.search(r'^concurrency:\n  group: (.+)$', text, re.M)
+                    if group is not None:
+                        with self.subTest(caller=caller, child=child, ref=ref):
+                            self.assertNotEqual(resolve(parent), resolve(group.group(1)),
+                                                'reusable workflow can cancel its own caller')
+
     def test_cargo_target_selector_covers_the_approved_build_inventory(self):
         inventory = """source deploy/runner/common.sh
 for host in xbabe0 xbabe1 xbabe2 xbabe3 xbabe4; do
@@ -1131,6 +1174,20 @@ class WorkflowAdmissionTests(unittest.TestCase):
         match = re.search(rf'^  {re.escape(name)}:\n(.*?)(?=^  [A-Za-z0-9_-]+:|\Z)', text, re.M | re.S)
         self.assertIsNotNone(match, f'missing workflow job {name}')
         return match.group(1)
+
+    def test_typescript_pr_parity_uses_disposable_runner(self):
+        workflow = (ROOT/'.github/workflows/typescript.yml').read_text()
+        admission = self.job(workflow, 'trust-admission')
+        parity = self.job(workflow, 'typescript-parity')
+        self.assertIn('PR_BASE_REPOSITORY_ID', admission)
+        self.assertIn('PR_HEAD_REPOSITORY_ID', admission)
+        self.assertIn("github.workflow_ref", admission)
+        self.assertIn('runs-on: ubuntu-24.04', parity)
+        self.assertNotIn('self-hosted', parity)
+        self.assertNotIn('runner-provenance', parity)
+        self.assertIn('RUNNER_ENVIRONMENT: ${{ runner.environment }}', parity)
+        self.assertIn('CARGO_TARGET_DIR: ${{ github.workspace }}/target/typescript-cargo', parity)
+        self.assertIn('repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}', parity)
 
     def test_nonmain_manual_source_cannot_reach_privileged_ci_jobs(self):
         workflow = (ROOT/'.github/workflows/ci.yml').read_text()

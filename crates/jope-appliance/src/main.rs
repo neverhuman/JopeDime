@@ -12,6 +12,7 @@ mod bootstrap;
 mod cli;
 #[cfg(feature = "client")]
 mod cloud;
+mod cloud_events;
 #[path = "cmd/mod.rs"]
 mod cmd;
 #[path = "cmd/common.rs"]

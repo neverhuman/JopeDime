@@ -43,9 +43,9 @@ tolerance_percent = 5
 
 # PR lane: `--profile dist-ci` (thin LTO, 16 codegen units), `embedded,dev-keys`.
 [profile.fixture]
-base_executable_bytes = 7073600
-final_executable_bytes = 7188517
-note = "dist-ci runtime Search commentary + feat-math W1-W9 HPC hotpaths plus 0.1 MiB of generated fixture tensors and notices (A18)"
+base_executable_bytes = 8144648
+final_executable_bytes = 8268941
+note = "A21: measured Linux dist-ci development fixture; pre-CLI main already8144488/8267461B, candidate adds160B code and1480B compressed notices; models unchanged,5% tolerance retained. See measurements/browser-predict-fixture-20261102.json."
 
 # Release: `--profile dist` (fat LTO, one codegen unit, stripped), `embedded`.
 [profile.native-only]

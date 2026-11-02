@@ -2540,6 +2540,7 @@ dependencies = [
  "jope-runtime",
  "jope-service",
  "portable-pty",
+ "rand 0.8.8",
  "ratatui",
  "rmcp",
  "rustls",
