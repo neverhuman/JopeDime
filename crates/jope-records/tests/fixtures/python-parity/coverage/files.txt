@@ -1075,6 +1075,8 @@ crates/jope-datasets/src/paths.rs
 crates/jope-datasets/src/regression_release.rs
 crates/jope-datasets/src/repo.rs
 crates/jope-datasets/src/schema.rs
+crates/jope-datasets/src/split_integrity_manifest.rs
+crates/jope-datasets/src/split_integrity_partition.rs
 crates/jope-datasets/src/staging_disposition.rs
 crates/jope-datasets/src/store.rs
 crates/jope-datasets/src/store/tests.rs
