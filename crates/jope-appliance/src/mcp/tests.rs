@@ -25,6 +25,20 @@ const VERSIONS: [&str; 4] = ["2024-11-05", "2025-06-18", "2025-11-25", "2026-07-
 const TRAIN: &str = include_str!("fixtures/train.csv");
 const TRAIN_SHA: &str = "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1";
 
+#[test]
+fn stdio_boundary_accepts_synchronous_callers() {
+    assert!(ensure_stdio_runtime_context().is_ok());
+}
+
+#[tokio::test]
+async fn stdio_boundary_rejects_async_runtime_callers() {
+    let adapter = Adapter::new(Client(Arc::new(Fixture::default())));
+    let error = adapter.serve_stdio().unwrap_err();
+    assert!(error
+        .to_string()
+        .contains("cannot run inside an async runtime"));
+}
+
 #[derive(Default)]
 struct Fixture {
     requests: Mutex<Vec<Value>>,
