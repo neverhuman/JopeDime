@@ -14953,6 +14953,26 @@
       ],
       "lanes": [],
       "scope": "H215 data-free controls for native kappa0 identity, within-context ensemble disagreement, nested family roles,600-member/24000-update plan, actual CPU optimizer/forward proof, exact four-arm calibrated selector, complete study lock order, FIFO preservation/exclusivity, resource/swap guards, SIGALRM reentry, S3 exact-version refusal and exact-open-PR admission; no corpus/GPU qualification."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_h214.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H214 data-free controls: exact16 parent-first dedup/FPS ordering, equal-family median-over-seed bootstrap, strict gain/margin and Holm1, exact-head smoke, TEMP16 NOT_RUN refusal, instantaneous/sustained/invalid resource guards."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H214 synthetic runtime adapter proof: family-disjoint TRAIN bank/parent tie, only selected16-wide panels evaluated, explicit context identity with feature-only records, exact native order/coverage and no timeout-to-gate-failure relabel. No actual data/model/Rust worker."
     }
   },
   "lanes": {
