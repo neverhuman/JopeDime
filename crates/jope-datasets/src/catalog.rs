@@ -67,10 +67,14 @@ impl DatasetTask {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Origin {
+#[schemars(rename = "Origin")]
+pub enum DatasetOrigin {
     Real,
     Synthetic,
 }
+
+/// Compatibility name for the dataset's source category.
+pub type Origin = DatasetOrigin;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
