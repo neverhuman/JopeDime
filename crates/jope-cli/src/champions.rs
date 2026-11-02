@@ -4,11 +4,27 @@ use crate::admission::verified_datasets;
 use crate::kernel::{search_validated_dataset, unsupported_regression_reason, SearchReport};
 use crate::router::{dataset_embedding, fit_centroid_router, RouterArtifact};
 use crate::schema::Dataset;
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use serde::Serialize;
 use std::{fs, path::Path};
 
-const S3_CLOSED: &str = "live S3 champion pull/push is not implemented for this command; host credentials do not enable this route. Use --local.";
+/// An explicitly unsupported champion operation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum UnsupportedChampionOperation {
+    /// Live S3 champion access has no authorized backend in this command.
+    LiveS3,
+}
+
+impl std::fmt::Display for UnsupportedChampionOperation {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::LiveS3 => formatter
+                .write_str("live S3 champion access is unavailable in this command; use --local"),
+        }
+    }
+}
+
+impl std::error::Error for UnsupportedChampionOperation {}
 
 #[derive(Debug, Serialize, Clone)]
 /// One admitted dataset's selected genome and validation score.
@@ -60,7 +76,7 @@ pub struct TrainStepReport {
 
 /// Return the current explicit refusal for unsupported live S3 champion operations.
 pub fn refuse_s3() -> Result<ChampionBank> {
-    bail!("{S3_CLOSED}")
+    Err(UnsupportedChampionOperation::LiveS3.into())
 }
 
 /// Search the admitted snapshot once. No catalog or fixture path is reopened after admission.
