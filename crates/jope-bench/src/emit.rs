@@ -22,14 +22,17 @@ pub const PROTOCOL: &str = "same-cut";
 
 /// Which stage's number becomes the row value.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Stage {
+pub enum BenchmarkEmitStage {
     /// Screen cut ladder metric, every method.
     Screen,
     /// Pooled out-of-fold ladder metric, finalists only; others are `missing`.
     Deep,
 }
 
-impl Stage {
+/// Backward-compatible name for the stage emitted by the benchmark reporter.
+pub type Stage = BenchmarkEmitStage;
+
+impl BenchmarkEmitStage {
     /// Track suffix.
     pub fn suffix(self) -> &'static str {
         match self {
@@ -56,7 +59,7 @@ pub fn score_rows(
     reports: &[(PathBuf, Report)],
     root: &Path,
     track_id: &str,
-    stage: Stage,
+    stage: BenchmarkEmitStage,
 ) -> Result<Vec<ScoreRow>> {
     let task = common_task(reports)?;
     let (metric, _) = task.ladder_metric();
@@ -87,7 +90,7 @@ pub fn score_rows(
                 _ => String::new(),
             };
             let (value, status, notes) = match stage {
-                Stage::Screen => match method.screen.metrics.get(metric) {
+                BenchmarkEmitStage::Screen => match method.screen.metrics.get(metric) {
                     Some(v) => (
                         py_repr(*v),
                         "ok",
@@ -104,7 +107,7 @@ pub fn score_rows(
                             .unwrap_or_default(),
                     ),
                 },
-                Stage::Deep => match method.deep.as_ref() {
+                BenchmarkEmitStage::Deep => match method.deep.as_ref() {
                     Some(deep) => match deep.oof.get(metric) {
                         Some(v) => (
                             py_repr(*v),
@@ -154,7 +157,7 @@ pub fn score_rows(
 pub fn write_track(
     track_root: &Path,
     track_base: &str,
-    stage: Stage,
+    stage: BenchmarkEmitStage,
     reports: &[(PathBuf, Report)],
     reports_root: &Path,
 ) -> Result<PathBuf> {
