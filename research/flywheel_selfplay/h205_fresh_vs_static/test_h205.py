@@ -7,9 +7,118 @@ from pathlib import Path
 import subprocess
 import sys
 
-import numpy as np
-import pytest
-import torch
+
+def _run_h205_deadline_controls(scratch):
+    """Execute only the committed stdlib/fake-clock tests, before research imports."""
+    import ast
+    import hashlib
+    import inspect
+    import itertools
+    import json
+    from pathlib import Path
+    import tempfile
+    import sys
+
+    import pytest
+
+    source = Path(__file__).resolve()
+    tree = ast.parse(source.read_text())
+    nodes = [
+        n
+        for n in tree.body
+        if isinstance(n, ast.FunctionDef)
+        and (n.name.startswith("_h205_f5_") or n.name.startswith("test_h205_f5_"))
+    ]
+    scope = {
+        "__file__": str(source),
+        "Path": Path,
+        "json": json,
+        "hashlib": hashlib,
+        "pytest": pytest,
+    }
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), "exec"), scope)
+    scratch = Path(scratch)
+    scratch.mkdir(parents=True, exist_ok=True)
+    results = []
+    for name, function in scope.items():
+        if not name.startswith("test_h205_f5_"):
+            continue
+        arguments = []
+        for mark in getattr(function, "pytestmark", []):
+            if mark.name == "parametrize":
+                names = [value.strip() for value in mark.args[0].split(",")]
+                arguments.append(
+                    [
+                        dict(zip(names, (value,) if len(names) == 1 else value))
+                        for value in mark.args[1]
+                    ]
+                )
+        for parameter_sets in itertools.product(*arguments):
+            params = {
+                key: value for group in parameter_sets for key, value in group.items()
+            }
+            with tempfile.TemporaryDirectory(
+                prefix="h205-f5-", dir=scratch
+            ) as directory:
+                if "tmp_path" in inspect.signature(function).parameters:
+                    params["tmp_path"] = Path(directory)
+                try:
+                    function(**params)
+                    results.append({"test": name, "status": "PASS"})
+                except KeyboardInterrupt:
+                    raise
+                except BaseException as exc:
+                    results.append(
+                        {
+                            "test": name,
+                            "status": "FAIL",
+                            "error": f"{type(exc).__name__}: {exc}",
+                        }
+                    )
+    passed = sum(row["status"] == "PASS" for row in results)
+    prohibited = [
+        name
+        for name in sys.modules
+        if name.split(".")[0] in {"torch", "numpy", "analysis", "runner", "psutil"}
+    ]
+    if prohibited:
+        results.append(
+            {
+                "test": "prohibited_import_guard",
+                "status": "FAIL",
+                "error": str(prohibited),
+            }
+        )
+        passed = sum(row["status"] == "PASS" for row in results)
+    print(
+        json.dumps(
+            {
+                "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                "scope": "AST-only committed fake-clock controls; no research/model/native/S3 imports or calls",
+                "prohibited_imports": prohibited,
+                "passed": passed,
+                "failed": len(results) - passed,
+                "cases": results,
+            },
+            indent=2,
+        )
+    )
+    return 0 if results and passed == len(results) else 1
+
+
+if __name__ == "__main__":
+    import sys as _deadline_control_sys
+
+    if (
+        len(_deadline_control_sys.argv) == 3
+        and _deadline_control_sys.argv[1] == "--deadline-controls"
+    ):
+        raise SystemExit(_run_h205_deadline_controls(_deadline_control_sys.argv[2]))
+
+
+import numpy as np  # noqa: E402 -- standalone controls exit before research imports
+import pytest  # noqa: E402
+import torch  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
@@ -2235,7 +2344,9 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
     assert (real_intake_dir / "train.csv").is_file()
     assert (real_intake_dir / "manifest.json").is_file()
 
-    def _mock_s3_get(bucket, key, dest_path, aws_profile="veox-jepson-prod"):
+    def _mock_s3_get(
+        bucket, key, dest_path, aws_profile="veox-jepson-prod", deadline_spec=None
+    ):
         dest_p = Path(dest_path)
         dest_p.parent.mkdir(parents=True, exist_ok=True)
         if key.endswith("manifest.json"):
@@ -2364,7 +2475,12 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
     )
 
     def _failing_s3_put(
-        bucket, key, src_path, aws_profile="veox-jepson-prod", replay_dest_path=None
+        bucket,
+        key,
+        src_path,
+        aws_profile="veox-jepson-prod",
+        replay_dest_path=None,
+        deadline_spec=None,
     ):
         if key.endswith("pool.npz"):
             raise RuntimeError("simulated S3 VersionId replay failure on pool.npz")
@@ -2400,7 +2516,12 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
     events_c = []
 
     def _recording_s3_put(
-        bucket, key, src_path, aws_profile="veox-jepson-prod", replay_dest_path=None
+        bucket,
+        key,
+        src_path,
+        aws_profile="veox-jepson-prod",
+        replay_dest_path=None,
+        deadline_spec=None,
     ):
         src_p = Path(src_path)
         events_c.append(f"s3_put:{src_p.name}")
@@ -2448,8 +2569,9 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
         verify_worker_sha256=False,
         use_train_padding_bridge=True,
     )
-    assert res_c["status"] == "PASS"
-    assert res_c["seam_qualified"] is True
+    assert res_c["status"] == "PENDING_FINAL_ACCOUNTING"
+    assert res_c["seam_qualified"] is False
+    assert res_c["operation_succeeded"] is True
     assert res_c["context_sha256"] == stat.TARGET_SAME_S3_TRAIN_CONTEXT_SHA256
     assert res_c["context_sha256"] != stat.HISTORICAL_LOCAL_S1PROD_REPLAY_CONTEXT_SHA256
     assert res_c["s1_prod_context_bundle"]["train_rows"] == 1000
@@ -2489,3 +2611,560 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
         "s3_put:s3_pre_consumption_custody_receipt.json",
         "consume:verified_s3_replay",
     ]
+
+
+def _h205_f5_sources():
+    """Load exact source AST with stdlib only; never import the research/model modules."""
+    import ast
+    import types
+
+    here = Path(__file__).resolve().parent
+    tree = ast.parse((here / "monitor.py").read_text())
+    keep = []
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.Assign)):
+            keep.append(node)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            if isinstance(node, ast.Import) and any(
+                n.name == "psutil" for n in node.names
+            ):
+                continue
+            keep.append(node)
+    mon_ns = {"__file__": str(here / "monitor.py")}
+    exec(compile(ast.Module(body=keep, type_ignores=[]), "monitor.py", "exec"), mon_ns)
+    monitor = types.SimpleNamespace(**mon_ns)
+    runner_tree = ast.parse((here / "runner.py").read_text())
+    selected = [
+        n
+        for n in runner_tree.body
+        if isinstance(n, ast.FunctionDef)
+        and n.name
+        in {
+            "sha",
+            "_run_bounded_subprocess",
+            "_s3_get_object_with_version",
+            "_s3_put_create_only_and_verify",
+            "consume_single_fresh_context_in_inherited_engine",
+        }
+    ]
+    import os
+    import tempfile
+
+    runner = {
+        "mon": types.SimpleNamespace(**mon_ns),
+        "Path": Path,
+        "hashlib": hashlib,
+        "json": json,
+        "os": os,
+        "tempfile": tempfile,
+    }
+    exec(
+        compile(ast.Module(body=selected, type_ignores=[]), "runner.py", "exec"), runner
+    )
+    return mon_ns, runner, runner_tree, monitor
+
+
+def _h205_f5_ledger(tmp_path):
+    state = {
+        "schema": "h205-campaign-accounting/v1",
+        "history_complete": True,
+        "baseline_elapsed_seconds": 2021.039296863135,
+        "campaign_cap_seconds": 25200.0,
+        "source_evidence": ["SYNTHETIC_RECONCILED_HISTORY"],
+        "completed": {},
+        "pending": None,
+    }
+    path = tmp_path / "accounting.json"
+    path.write_text(json.dumps(state))
+    return path, hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), -1.0, 0.0])
+def test_h205_f5_invalid_timeout_refuses_before_call(invalid):
+    mon_ns, _, _, _ = _h205_f5_sources()
+    deadline = mon_ns["compute_shared_process_deadline"](
+        100.0, requested_remaining_seconds=10.0
+    )
+    with pytest.raises(RuntimeError):
+        mon_ns["remaining_subprocess_timeout"](101.0, deadline, invalid)
+
+
+@pytest.mark.parametrize("elapsed", [1.0, 9.0, 10.0])
+def test_h205_f5_native_aws_timeout_is_remaining_window(elapsed):
+    import types
+
+    mon_ns, run_ns, _, _ = _h205_f5_sources()
+    clock = [100.0 + elapsed]
+    deadline = mon_ns["compute_shared_process_deadline"](
+        100.0, requested_remaining_seconds=10.0
+    )
+    calls = []
+    run_ns["time"] = types.SimpleNamespace(monotonic=lambda: clock[0])
+    run_ns["subprocess"] = types.SimpleNamespace(
+        run=lambda *a, **kw: calls.append(kw) or "OK"
+    )
+    if elapsed == 10.0:
+        with pytest.raises(RuntimeError):
+            run_ns["_run_bounded_subprocess"](["INERT"], deadline_spec=deadline)
+        assert calls == []
+    else:
+        assert (
+            run_ns["_run_bounded_subprocess"](["INERT"], deadline_spec=deadline) == "OK"
+        )
+        assert calls[0]["timeout"] == 10.0 - elapsed
+
+
+def test_h205_f5_subprocess_late_completion_never_returns_success():
+    import types
+
+    mon_ns, run_ns, _, _ = _h205_f5_sources()
+    clock = [109.0]
+    deadline = mon_ns["compute_shared_process_deadline"](
+        100.0, requested_remaining_seconds=10.0
+    )
+    run_ns["time"] = types.SimpleNamespace(monotonic=lambda: clock[0])
+
+    def fake_call(*args, **kwargs):
+        assert kwargs["timeout"] == 1.0
+        clock[0] = 111.0
+        return "LATE_SUCCESS"
+
+    run_ns["subprocess"] = types.SimpleNamespace(run=fake_call)
+    with pytest.raises(RuntimeError):
+        run_ns["_run_bounded_subprocess"](["INERT"], deadline_spec=deadline)
+
+
+@pytest.mark.parametrize(
+    "operation,delay", [("get", 0.1), ("put", 0.1), ("get", 2.0), ("put", 2.0)]
+)
+def test_h205_f5_actual_aws_helpers_keep_identity_and_bound_calls(
+    tmp_path, operation, delay
+):
+    import types
+
+    mon_ns, run_ns, _, _ = _h205_f5_sources()
+    clock = [109.0]
+    calls = []
+    body = b"SYNTHETIC_ONLY"
+    source = tmp_path / "source"
+    source.write_bytes(body)
+    deadline = mon_ns["compute_shared_process_deadline"](
+        100.0, requested_remaining_seconds=10.0
+    )
+
+    def fake_aws(command, **kwargs):
+        calls.append((command, kwargs["timeout"]))
+        assert 0.0 < kwargs["timeout"] <= 110.0 - clock[0]
+        if "get-object" in command:
+            Path(command[-1]).write_bytes(body)
+        clock[0] += delay
+        return types.SimpleNamespace(
+            stdout=json.dumps({"VersionId": "SYNTHETIC_VERSION"})
+        )
+
+    run_ns["subprocess"] = types.SimpleNamespace(run=fake_aws)
+    run_ns["time"] = types.SimpleNamespace(monotonic=lambda: clock[0])
+
+    def invoke():
+        if operation == "get":
+            return run_ns["_s3_get_object_with_version"](
+                "INERT", "INERT", tmp_path / "replay", deadline_spec=deadline
+            )
+        return run_ns["_s3_put_create_only_and_verify"](
+            "INERT",
+            "INERT",
+            source,
+            replay_dest_path=tmp_path / "replay",
+            deadline_spec=deadline,
+        )
+
+    if delay > 1.0:
+        with pytest.raises(RuntimeError):
+            invoke()
+    else:
+        result = invoke()
+        assert result["version_id"] == "SYNTHETIC_VERSION"
+        if operation == "put":
+            assert "--if-none-match" in calls[0][0] and "--version-id" in calls[1][0]
+            assert result["local_sha256"] == hashlib.sha256(body).hexdigest()
+
+
+def test_h205_f5_failed_terminal_commit_preserves_pending_and_blocks_restart(tmp_path):
+    mon_ns, _, _, _ = _h205_f5_sources()
+    path, digest = _h205_f5_ledger(tmp_path)
+    mon_ns["begin_accounted_invocation"](path, digest, "crashed", 100.0)
+    before = path.read_bytes()
+
+    def failed_fsync(*args):
+        raise OSError("SYNTHETIC_FSYNC_FAILURE")
+
+    mon_ns["_accounting_save"] = failed_fsync
+    with pytest.raises(OSError):
+        mon_ns["finish_accounted_invocation"](path, "crashed", 111.0, "INCOMPLETE")
+    assert path.read_bytes() == before
+    with pytest.raises(RuntimeError):
+        mon_ns["begin_accounted_invocation"](
+            path, hashlib.sha256(before).hexdigest(), "next", 120.0
+        )
+
+
+@pytest.mark.parametrize("bad", ["json", "flags"])
+def test_h205_f5_bootstrap_refusal_is_unknown_not_a_zero_cost_pass(tmp_path, bad):
+    import types
+
+    mon_ns, _, _, _ = _h205_f5_sources()
+    launch = tmp_path / "malformed.json"
+    launch.write_text("{" if bad == "json" else "{}")
+    output = tmp_path / "work"
+    args = types.SimpleNamespace(
+        output=output,
+        launch=launch,
+        smoke=bad == "flags",
+        construct_single_regression_context=True,
+    )
+    parser = types.SimpleNamespace(
+        add_argument=lambda *a, **kw: None, parse_args=lambda: args
+    )
+    mon_ns["argparse"] = types.SimpleNamespace(ArgumentParser=lambda: parser)
+    mon_ns["PROCESS_START_MONOTONIC"] = 100.0
+    mon_ns["time"] = types.SimpleNamespace(monotonic=lambda: 105.0)
+    with pytest.raises(json.JSONDecodeError if bad == "json" else RuntimeError):
+        mon_ns["main"]()
+    refusal = json.loads(output.with_suffix(".admission-refusal.json").read_text())
+    assert refusal["observed_elapsed_lower_bound_seconds"] == 5.0
+    assert (
+        refusal["terminal_tail_seconds"] is None
+        and refusal["history_reconciliation_required"] is True
+    )
+    assert refusal["seam_qualified"] is False
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "process_start_monotonic",
+        "prior_elapsed_seconds",
+        "campaign_cap_seconds",
+        "remaining_budget_seconds",
+        "hard_deadline_monotonic",
+    ],
+)
+def test_h205_f5_nonfinite_deadline_identity_refuses(field):
+    mon_ns, _, _, _ = _h205_f5_sources()
+    deadline = mon_ns["compute_shared_process_deadline"](
+        100.0, requested_remaining_seconds=10.0
+    )
+    deadline[field] = float("nan")
+    with pytest.raises(RuntimeError):
+        mon_ns["enforce_shared_process_deadline"](101.0, deadline)
+
+
+@pytest.mark.parametrize("failure", [False, True])
+def test_h205_f5_full_startup_failure_tail_and_once_only_carry(tmp_path, failure):
+    import types
+
+    mon_ns, _, _, _ = _h205_f5_sources()
+    path, digest = _h205_f5_ledger(tmp_path)
+    clock = [110.0]  # Ten seconds of imports/setup precede ledger admission.
+    mon_ns["time"] = types.SimpleNamespace(monotonic=lambda: clock[0])
+    launch = {
+        "campaign_ledger_path": str(path),
+        "campaign_ledger_sha256": digest,
+        "accounting_invocation_id": "one",
+        "remaining_wall_budget_seconds": 100.0,
+    }
+
+    def fake_observe(deadline, identity):
+        assert deadline["process_start_monotonic"] == 100.0 and identity == "one"
+        clock[0] += 3.0  # Fake forward/transport.
+        clock[0] += 7.0  # Fake final upload, summary printing, child exit/log closure.
+        if failure:
+            raise ValueError("SYNTHETIC_FAILURE")
+        return {"operation_succeeded": True, "exit_code": 0}
+
+    if failure:
+        with pytest.raises(ValueError, match="SYNTHETIC_FAILURE"):
+            mon_ns["run_accounted_observation"](launch, 100.0, fake_observe)
+    else:
+        result = mon_ns["run_accounted_observation"](launch, 100.0, fake_observe)
+        assert result["status"] == "PENDING_FINAL_ACCOUNTING"
+        assert result["seam_qualified"] is False
+    state = json.loads(path.read_text())
+    record = state["completed"]["one"]
+    assert record["elapsed_seconds"] == 20.0
+    assert (
+        state["history_complete"] is False
+        and state["unreconciled_tail"]["seconds"] is None
+    )
+    before = path.read_bytes()
+    assert (
+        mon_ns["finish_accounted_invocation"](path, "one", 999.0, "ignored") == record
+    )
+    assert path.read_bytes() == before
+    with pytest.raises(RuntimeError):
+        mon_ns["begin_accounted_invocation"](
+            path, hashlib.sha256(before).hexdigest(), "two", 130.0
+        )
+    # An explicit synthetic owner reconciliation charges the known two-second
+    # supervisor tail; it does not reset the prior window or create a production ledger.
+    state["completed"]["one"]["elapsed_seconds"] += 2.0
+    state["source_evidence"].append("SYNTHETIC_FULL_EXIT_OBSERVATION_PLUS_2S")
+    state["history_complete"] = True
+    state["unreconciled_tail"] = None
+    path.write_text(json.dumps(state))
+    next_admission = mon_ns["begin_accounted_invocation"](
+        path, hashlib.sha256(path.read_bytes()).hexdigest(), "two", 130.0
+    )
+    assert next_admission["prior_elapsed_seconds"] == 2021.039296863135 + 22.0
+
+
+@pytest.mark.parametrize(
+    "bad", ["missing", "stale", "pending", "history", "nan", "floor", "cap"]
+)
+def test_h205_f5_unreconciled_or_invalid_ledger_refuses(tmp_path, bad):
+    mon_ns, _, _, _ = _h205_f5_sources()
+    path, digest = _h205_f5_ledger(tmp_path)
+    state = json.loads(path.read_text())
+    if bad == "missing":
+        path.unlink()
+    elif bad == "stale":
+        digest = "0" * 64
+    else:
+        if bad == "pending":
+            state["pending"] = {"invocation_id": "old", "process_start_monotonic": 1.0}
+        elif bad == "history":
+            state["history_complete"] = False
+        elif bad == "nan":
+            state["baseline_elapsed_seconds"] = float("nan")
+        elif bad == "floor":
+            state["baseline_elapsed_seconds"] = 0.0
+        elif bad == "cap":
+            state["campaign_cap_seconds"] = 99999.0
+        path.write_text(json.dumps(state))
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(RuntimeError):
+        mon_ns["begin_accounted_invocation"](path, digest, "new", 100.0)
+
+
+def test_h205_f5_expiry_at_worker_exit_is_charged_and_unqualified(tmp_path):
+    import types
+
+    mon_ns, _, _, _ = _h205_f5_sources()
+    path, digest = _h205_f5_ledger(tmp_path)
+    clock = [100.0]
+    mon_ns["time"] = types.SimpleNamespace(monotonic=lambda: clock[0])
+    launch = {
+        "campaign_ledger_path": str(path),
+        "campaign_ledger_sha256": digest,
+        "accounting_invocation_id": "late",
+        "remaining_wall_budget_seconds": 10.0,
+    }
+
+    def late_exit(*args):
+        clock[0] = 111.0
+        return {"exit_code": 0, "operation_succeeded": True}
+
+    with pytest.raises(RuntimeError):
+        mon_ns["run_accounted_observation"](launch, 100.0, late_exit)
+    state = json.loads(path.read_text())
+    assert state["completed"]["late"]["elapsed_seconds"] == 11.0
+    assert state["completed"]["late"]["status"] == "INCOMPLETE"
+
+
+@pytest.mark.parametrize("delay", [0.1, 20.0])
+def test_h205_f5_actual_final_upload_tail_checks_deadline_before_publication(
+    tmp_path, delay
+):
+    import ast
+    import types
+
+    mon_ns, _, runner_tree, _ = _h205_f5_sources()
+    function = next(
+        n
+        for n in runner_tree.body
+        if isinstance(n, ast.FunctionDef)
+        and n.name == "construct_and_consume_single_regression_context"
+    )
+    begin = next(
+        i
+        for i, n in enumerate(function.body)
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "custody_upload" for t in n.targets)
+    )
+    end = next(
+        i
+        for i, n in enumerate(function.body)
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "summary" for t in n.targets)
+    )
+    clock = [109.0]
+
+    def fake_upload(*a, **kw):
+        clock[0] += delay
+        return {"SYNTHETIC": True}
+
+    scope = dict(
+        mon=types.SimpleNamespace(**mon_ns),
+        time=types.SimpleNamespace(monotonic=lambda: clock[0]),
+        deadline_spec=mon_ns["compute_shared_process_deadline"](
+            100.0, requested_remaining_seconds=10.0
+        ),
+        _s3_put_create_only_and_verify=fake_upload,
+        s3_bucket="INERT",
+        s3_prefix="INERT",
+        bundle_dir=tmp_path,
+        replay_dir=tmp_path,
+        t_start=100.0,
+        stat=types.SimpleNamespace(
+            verify_single_context_regression_seam_bundle=lambda *a, **kw: {
+                "SYNTHETIC": True
+            }
+        ),
+        nq0_enc={"csv_sha256": "fake", "train_matrix_sha256": "fake", "nt": 1},
+        expected_eval_bin_sha="fake",
+        roster={
+            "forbidden_cids": [],
+            "forbidden_families": [],
+            "forbidden_datasets": [],
+        },
+    )
+    code = compile(
+        ast.Module(body=function.body[begin:end], type_ignores=[]),
+        "actual_final_tail",
+        "exec",
+    )
+    if delay > 1.0:
+        with pytest.raises(RuntimeError):
+            exec(code, scope)
+    else:
+        exec(code, scope)
+        assert scope["verified_bundle"] == {"SYNTHETIC": True}
+    assert (
+        "summary" not in scope
+    )  # No qualified result was constructed by this prepublication slice.
+
+
+@pytest.mark.parametrize("expiry", ["forward", "backward", "none"])
+def test_h205_f5_actual_consumer_pre_step_checks_without_model_or_optimizer(expiry):
+    import contextlib
+    import types
+
+    mon_ns, run_ns, _, _ = _h205_f5_sources()
+    clock = [100.0]
+    steps = []
+
+    class FakeParameter:
+        requires_grad = True
+
+        def __init__(self, value=1.0):
+            self.value = value
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def clone(self):
+            return FakeParameter(self.value)
+
+        def numel(self):
+            return 29211
+
+        @property
+        def device(self):
+            return "INERT"
+
+        def to(self, device):
+            return self
+
+        def copy_(self, other):
+            self.value = other.value
+
+    parameter = FakeParameter()
+
+    class FakeLoss:
+        def backward(self):
+            if expiry == "backward":
+                clock[0] = 111.0
+
+        def detach(self):
+            return self
+
+        def cpu(self):
+            return self
+
+        def item(self):
+            return 0.5
+
+    class FakeOptimizer:
+        def zero_grad(self, **kwargs):
+            pass
+
+        def step(self):
+            steps.append("FAKE_STEP")
+            parameter.value += 1.0
+
+    def forward(*args):
+        if expiry == "forward":
+            clock[0] = 111.0
+        return "INERT"
+
+    engine = types.SimpleNamespace(
+        pools={"new": {"gate": [], "fitness": []}},
+        guard=None,
+        names=None,
+        frozen=None,
+        batch=lambda *a: ({}, None, None, None, None),
+        anchored=lambda *a: None,
+        forward=forward,
+    )
+    run_ns.update(
+        time=types.SimpleNamespace(monotonic=lambda: clock[0]),
+        np=types.SimpleNamespace(
+            where=lambda *a: [], argsort=lambda *a, **kw: list(range(24))
+        ),
+        stat=types.SimpleNamespace(
+            SLATE_CANDIDATES=24,
+            SEEDS=[1],
+            h177_analysis=types.SimpleNamespace(
+                fit_slates=lambda *a: {"new": list(range(24))}
+            ),
+        ),
+        torch=types.SimpleNamespace(
+            optim=types.SimpleNamespace(AdamW=lambda *a, **kw: FakeOptimizer()),
+            isfinite=lambda *a: types.SimpleNamespace(all=lambda: True),
+            no_grad=contextlib.nullcontext,
+        ),
+        parameter_digest=lambda values: str(next(iter(values.values())).value),
+        ingest_verified_fresh_rows_into_engine=lambda *a, **kw: {
+            "historical_contexts_preserved": True
+        },
+    )
+    args = (
+        engine,
+        types.SimpleNamespace(named_parameters=lambda: [("adapter", parameter)]),
+        types.SimpleNamespace(
+            check_frozen=lambda *a: None, DOPE="INERT", loss=lambda *a: FakeLoss()
+        ),
+        {"context_sha256": "new", "dataset_id": "synthetic", "family_id": "synthetic"},
+        set(),
+    )
+    deadline = mon_ns["compute_shared_process_deadline"](
+        100.0, requested_remaining_seconds=10.0
+    )
+    if expiry == "none":
+        result = run_ns["consume_single_fresh_context_in_inherited_engine"](
+            *args, deadline_spec=deadline
+        )
+        assert (
+            result["optimizer_steps"] == 1
+            and steps == ["FAKE_STEP"]
+            and parameter.value == 1.0
+        )
+    else:
+        with pytest.raises(RuntimeError):
+            run_ns["consume_single_fresh_context_in_inherited_engine"](
+                *args, deadline_spec=deadline
+            )
+        assert steps == [] and parameter.value == 1.0
