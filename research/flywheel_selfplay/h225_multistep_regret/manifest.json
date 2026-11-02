@@ -1,0 +1,209 @@
+{
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "/home/ubuntu/jope-data/h196/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0",
+    "threadpoolctl": "3.6.0"
+  },
+  "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
+  "source_manifest": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
+  "checkpoint": "/home/ubuntu/jope-data/h196/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "runtime_sha256": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+  "schema": "jope.h225.multistep-regret/v1",
+  "wave": "H225",
+  "owner": "sol_v1_dsc01",
+  "status": "PREREGISTERED_NOT_RUN",
+  "authority": "/home/ubuntu/nudges/hw_t1405_dsc01_h225.md",
+  "answer": "/home/ubuntu/nudges/hw_t1402_dsc01_h225_answer.md",
+  "parent_commit": "fcda9bd38096c9039728c3de9feea944dd20f272",
+  "base_backend_path": "research/flywheel_selfplay/h222_lipschitz_adapter/backend.py",
+  "base_backend_sha256": "cd50c64809d21bef1ff658aa65afd77bc172e9b023b7d19c7d4187f1e04898e2",
+  "runtime_path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+  "seeds": [
+    225101,
+    225102,
+    225103
+  ],
+  "fold_seeds": {
+    "225101": 225141,
+    "225102": 225142,
+    "225103": 225143
+  },
+  "arms": [
+    "R882",
+    "MSCR",
+    "MSTOP1",
+    "MSCR_SHUF"
+  ],
+  "primary": "MSCR",
+  "temperature": 0.2,
+  "configs": [
+    {
+      "name": "m8-lr0.5",
+      "steps": 8,
+      "lr_scale": 0.5,
+      "replica": 0
+    },
+    {
+      "name": "m8-lr1",
+      "steps": 8,
+      "lr_scale": 1.0,
+      "replica": 0
+    },
+    {
+      "name": "m8-lr2",
+      "steps": 8,
+      "lr_scale": 2.0,
+      "replica": 0
+    },
+    {
+      "name": "m32-lr0.5",
+      "steps": 32,
+      "lr_scale": 0.5,
+      "replica": 0
+    },
+    {
+      "name": "m32-lr1",
+      "steps": 32,
+      "lr_scale": 1.0,
+      "replica": 0
+    },
+    {
+      "name": "m32-lr2",
+      "steps": 32,
+      "lr_scale": 2.0,
+      "replica": 0
+    },
+    {
+      "name": "m32-lr1-rep1",
+      "steps": 32,
+      "lr_scale": 1.0,
+      "replica": 1
+    },
+    {
+      "name": "m32-lr1-rep2",
+      "steps": 32,
+      "lr_scale": 1.0,
+      "replica": 2
+    }
+  ],
+  "fit_inventory": {
+    "outer_proposals": 120,
+    "inner_cv_fits": 240,
+    "outer_fit_refits": 120,
+    "all_train_refits": 0,
+    "total_fits": 360,
+    "optimizer_updates": 8280
+  },
+  "smoke": {
+    "fits": 1,
+    "updates": 2
+  },
+  "total_update_cap": 8282,
+  "baseline": {
+    "contexts": 91,
+    "bit_exact": true,
+    "native_mean": 1.1377941898164525
+  },
+  "endpoint": "fixed-dev-cost-argmin-negative-fitness/v1; first argmin full candidate pool; failed gate=-2",
+  "training": {
+    "recipe": "H144/H140 AdamW lr1e-4*scale, WD1e-4, smoothL1+0.1KL(T0.2), clip1, eval mode, math attention",
+    "contexts_per_batch": 16,
+    "candidates_per_context": 192,
+    "top_candidates": 48,
+    "sampler": "uniform family then uniform context; same prefix across M/lr; replica-specific fresh streams",
+    "replicas": "two fresh-minibatch replicas of M32/lr1, median LR at longer registered step count"
+  },
+  "selection": {
+    "outer": "A=k, B=(k+1)%5, FIT=three remaining family folds",
+    "inner": "for FIT fold j, train on remaining two FIT folds; canonical exclusion triples shared only when FIT training set and stream identical",
+    "regret": "u*=max full-pool utility; gap_i=u*-u_i; softmax(-cost_i/0.2) weighted gap",
+    "score": "mean within-family then equal-family mean over three inner OOF FIT folds",
+    "rule": "best mean improvement; adopt only paired family bootstrap LCB95>0 vs r882; zero ties fallback; candidate score ties choose fixed grid order",
+    "MSTOP1": "same policy/streams/proposals; score replaced by discrete native utility",
+    "MSCR_SHUF": "permute candidate gap labels within each FIT family before selection; same costs and true endpoints",
+    "bootstrap_draws": 10000,
+    "forbidden": "A/B labels never in optimizer or selection of their outer cell; no candidate A/Val scoring before global fsynced selection lock"
+  },
+  "readout": {
+    "primary": "median seed pooled-A equal-family native gain; paired family-cluster percentile95/bootstrap10000; LCB>0, all3 seeds positive, each seed harm<=.10",
+    "harm": "fraction of family mean paired native gains < -0.01, inherited H217 definition",
+    "plateau": "per-seed mean native utility across five selected outer cells on91 Val contexts; median context-mean gain>.002 and paired family-bootstrap LCB95>0; all3 signs positive",
+    "all_train_refits": "none; H217-style outer-cell utility averaging for Val, not a single deployable checkpoint",
+    "diagnostic": "all120 outer proposal native Val values scored only after selection lock; exact distinct float value count",
+    "comparisons": "MSCR-MSTOP1 paired-A gain/CI; MSCR_SHUF report-only",
+    "elo": "paired family Bradley-Terry vs r8821500; prior.01; exact ties half wins; perseed/median",
+    "forbidden": [
+      "AUC",
+      "speed verdicts",
+      "holdout/sealed/meta-test",
+      "live checkpoint writes"
+    ]
+  },
+  "resources": {
+    "host": "xbabe2",
+    "nice": 19,
+    "affinity_max": 4,
+    "numeric_threads": 1,
+    "max_process_tree_rss": 4294967296,
+    "min_available_ram": 21474836480,
+    "min_free_disk": 300000000000,
+    "load5_pause_above": 60,
+    "load_guard": "independent supervisor SIGSTOP/SIGCONT only its owned worker session; cooperative check also waits; load never aborts or resets deadline",
+    "hard_rss_violation": "terminate owned worker to enforce hard memory cap; no retry",
+    "compute_stop": "2026-11-02T19:00:00Z",
+    "hard_closeout": "2026-11-02T19:30:00Z",
+    "full_attempts": 1,
+    "smoke_attempts": 1
+  },
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H225/dsc01-t1405/",
+  "protected_reads": 0,
+  "fold_manifest_sha256": "54dbdf0f07e91e54854671a87463148f91831c33abc8bd9e06f2b3e2752204a6",
+  "parent_modules": {
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686",
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "research/flywheel_selfplay/h222_lipschitz_adapter/backend.py": "cd50c64809d21bef1ff658aa65afd77bc172e9b023b7d19c7d4187f1e04898e2"
+  },
+  "source_sha256": {
+    "custody.py": "39ce6e25a3fc56dccaf253a53aa3070a96ada51f2ba4f0246cb001fadb30e9f5",
+    "backend.py": "7c751e2057a443a9b531ebd27771f26c35e227cac1d21f3805eb5830ce20dadd",
+    "test_h225.py": "2fa179f247980589ddfd41a6e39485dcfe41be44b54a8d6a6d91f937624ba3b7",
+    "science.py": "0c93a6408fddd74a924dd0f03f44f03008dd0acd2deaba09bcfea676c1ad05e2",
+    "PREREG.md": "bbb0c88117a56c3bfa3f38898bafb850afaf8103815b02d9270b0a70c8750b12",
+    "monitor.py": "11e13723847533ef7d5ab7824e112d9654a9fea63fe090e1e71e47bc91fcbf34",
+    "fold_manifest.json": "54dbdf0f07e91e54854671a87463148f91831c33abc8bd9e06f2b3e2752204a6",
+    "README.md": "03f831e4d9f515aec79abc7c589857a94368dd3520fb1030277332e9844a9fc5",
+    "runner.py": "a5642759d04fb476524bbfc9d44afbd6defadcd85964ea495cc7b1a03eaa2735"
+  }
+}

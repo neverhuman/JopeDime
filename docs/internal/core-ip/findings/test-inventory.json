@@ -2359,6 +2359,10 @@
       "reason": "H224 data-free OOF FIT label/C/threshold boundaries, unchanged H217 reference gate AST, family folds, strict plateau tie correction, CPU affinity/RSS/load/disk/RAM stops and exact-version S3 recovery; no study qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h225_multistep_regret/test_h225.py": {
+      "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
