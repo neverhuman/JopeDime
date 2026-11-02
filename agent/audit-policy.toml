@@ -214,6 +214,11 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/readonly_snapshot.py",
   # P38: joblib models are emitted with producer-generated identity pins and consumed only by trusted pipeline code.
   "python/src/jope/target_maker/artifact_pins.py",
+  # HLT-033 exact false positives: these runners execute only source blobs from
+  # an explicitly bound immutable Git commit; see the fingerprint-level review.
+  "research/flywheel_selfplay/h222_lipschitz_adapter/runner.py",
+  "research/flywheel_selfplay/h224_learned_switch_gate/runner.py",
+  "research/flywheel_selfplay/h225_multistep_regret/runner.py",
 # Additional current-main exact-path exceptions retain their existing rationale
   # in the P5 and streaming evidence registers referenced above.
 ]
