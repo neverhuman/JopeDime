@@ -27,6 +27,30 @@ container = load('verify-container')
 
 class RunnerTests(unittest.TestCase):
 
+    def test_reusable_concurrency_cannot_cancel_its_caller(self):
+        workflows = ROOT / '.github/workflows'
+        for caller in ('ci.yml', 'full-main.yml'):
+            source = (workflows / caller).read_text()
+            caller_name = re.search(r'^name: (.+)$', source, re.M).group(1)
+            parent = re.search(r'^concurrency:\n  group: (.+)$', source, re.M).group(1)
+            children = re.findall(r'uses: \./\.github/workflows/([\w.-]+\.ya?ml)', source)
+            for ref, pr in (('refs/heads/feature', ''), ('refs/pull/1716/merge', '1716'), ('refs/heads/main', '')):
+                def resolve(value):
+                    values = {'github.workflow': caller_name, 'github.ref': ref,
+                              'github.sha': 'a' * 40,
+                              'github.event.pull_request.number || github.ref': pr or ref}
+                    for expression, result in values.items():
+                        value = value.replace('${{ ' + expression + ' }}', result)
+                    self.assertNotIn('${{', value, 'test must resolve every concurrency expression')
+                    return value
+                for child in children:
+                    text = (workflows / child).read_text()
+                    group = re.search(r'^concurrency:\n  group: (.+)$', text, re.M)
+                    if group is not None:
+                        with self.subTest(caller=caller, child=child, ref=ref):
+                            self.assertNotEqual(resolve(parent), resolve(group.group(1)),
+                                                'reusable workflow can cancel its own caller')
+
     def test_cargo_target_selector_covers_the_approved_build_inventory(self):
         inventory = """source deploy/runner/common.sh
 for host in xbabe0 xbabe1 xbabe2 xbabe3 xbabe4; do
