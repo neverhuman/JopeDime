@@ -5,13 +5,17 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Task {
+#[schemars(rename = "Task")]
+pub enum ApiRunTask {
     Auto,
     Regression,
     Binary,
     /// Reserved in the v1 vocabulary; runtime support is deferred by t525u.
     Multiclass,
 }
+
+/// Backwards-compatible public name for the run request task vocabulary.
+pub type Task = ApiRunTask;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -41,12 +45,16 @@ pub enum Guidance {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum LandmarkMode {
+#[schemars(rename = "LandmarkMode")]
+pub enum ApiRunLandmarkMode {
     Full,
     None,
     /// The plan handler refuses this with CAPABILITY_UNAVAILABLE in v1.
     Progressive,
 }
+
+/// Backwards-compatible public name for run landmark selection.
+pub type LandmarkMode = ApiRunLandmarkMode;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -85,14 +93,14 @@ pub struct Budget {
 pub struct RunSpec {
     pub dataset: DatasetId,
     pub target: String,
-    pub task: Task,
+    pub task: ApiRunTask,
     pub ignore_columns: Vec<String>,
     pub test_dataset: Option<DatasetId>,
     pub split: SplitSpec,
     pub objective: ObjectiveSpec,
     pub effort: Effort,
     pub budget: Budget,
-    pub landmarks: LandmarkMode,
+    pub landmarks: ApiRunLandmarkMode,
     pub guidance: Guidance,
     pub languages: Vec<Language>,
     pub require_all_languages: bool,
@@ -105,23 +113,27 @@ pub struct RunSpec {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ResolvedTask {
-    pub value: Task,
+    pub value: ApiRunTask,
     pub inferred: bool,
     pub reason: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Direction {
+#[schemars(rename = "Direction")]
+pub enum ApiObjectiveDirection {
     Minimize,
     Maximize,
 }
+
+/// Backwards-compatible public name for an objective's optimization direction.
+pub type Direction = ApiObjectiveDirection;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ResolvedObjective {
     pub name: String,
     pub digest: String,
-    pub direction: Direction,
+    pub direction: ApiObjectiveDirection,
     pub fitting: String,
 }
 
@@ -151,7 +163,7 @@ pub struct ResolvedGuidance {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ResolvedLandmarks {
-    pub mode: LandmarkMode,
+    pub mode: ApiRunLandmarkMode,
     pub sample_rows: u32,
 }
 
@@ -317,4 +329,26 @@ pub enum EvaluationAttemptOutcome {
 pub struct EvaluationFailure {
     pub code: String,
     pub reason: String,
+}
+
+#[cfg(test)]
+mod api_enum_domain_tests {
+    use super::{
+        ApiObjectiveDirection, ApiRunLandmarkMode, ApiRunTask, Direction, LandmarkMode, Task,
+    };
+    use schemars::JsonSchema;
+
+    #[test]
+    fn legacy_run_enum_names_keep_wire_and_schema_contracts() {
+        let task: Task = ApiRunTask::Regression;
+        let landmarks: LandmarkMode = ApiRunLandmarkMode::Progressive;
+        let direction: Direction = ApiObjectiveDirection::Minimize;
+
+        assert_eq!(serde_json::to_value(task).unwrap(), "regression");
+        assert_eq!(serde_json::to_value(landmarks).unwrap(), "progressive");
+        assert_eq!(serde_json::to_value(direction).unwrap(), "minimize");
+        assert_eq!(ApiRunTask::schema_name(), "Task");
+        assert_eq!(ApiRunLandmarkMode::schema_name(), "LandmarkMode");
+        assert_eq!(ApiObjectiveDirection::schema_name(), "Direction");
+    }
 }
