@@ -25,6 +25,7 @@ figs:
 	python3 figures/scripts/make_latest_admissions_figure.py
 	python3 figures/scripts/make_latest_event_rates_figure.py
 	python3 figures/scripts/make_latest_event_rates_figure.py --round-clock-only
+	python3 figures/scripts/make_latest_event_rates_figure.py --current-program-clock
 	python3 figures/scripts/make_candidate_retained_trace.py
 	python3 figures/scripts/make_candidate_retained_trace.py --recent
 	python3 figures/scripts/make_admission_block_rates.py
