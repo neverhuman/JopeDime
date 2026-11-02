@@ -91,6 +91,7 @@ assets/same-cut/v2/track/results/jope-same-cut-v1-deep/scores.csv
 assets/same-cut/v2/track/results/jope-same-cut-v1-screen/scores.csv
 assets/same-cut/v2/track/tracks/jope-same-cut-v1-deep/track.json
 assets/same-cut/v2/track/tracks/jope-same-cut-v1-screen/track.json
+benchmarks/jope-bench/adapters/_common.py
 benchmarks/panel-selection.json
 benchmarks/panel.json
 benchmarks/prepare.py
@@ -269,7 +270,6 @@ crates/jope-arena/src/scores.rs
 crates/jope-arena/src/verify.rs
 crates/jope-arena/tests/elo_regression.rs
 crates/jope-bench/Cargo.toml
-benchmarks/jope-bench/adapters/_common.py
 crates/jope-bench/adapters/_panel.py
 crates/jope-bench/adapters/catboost_adapter.py
 crates/jope-bench/adapters/lightgbm_adapter.py
@@ -508,11 +508,17 @@ crates/jope-campaigns/src/bin/jope_v3_control.rs
 crates/jope-campaigns/src/bin/scq_runs_gc.rs
 crates/jope-campaigns/src/bin/search-v3.rs
 crates/jope-campaigns/src/campaign.rs
+crates/jope-campaigns/src/campaign/artifacts.rs
+crates/jope-campaigns/src/campaign/file_io.rs
+crates/jope-campaigns/src/campaign/population.rs
+crates/jope-campaigns/src/campaign/run.rs
+crates/jope-campaigns/src/campaign/tests.rs
+crates/jope-campaigns/src/campaign_evaluator.rs
 crates/jope-campaigns/src/commands/binary_cv.rs
 crates/jope-campaigns/src/commands/exact_cv.rs
-crates/jope-campaigns/src/commands/single_fold_proof.rs
 crates/jope-campaigns/src/commands/jain_regressor.rs
 crates/jope-campaigns/src/commands/mod.rs
+crates/jope-campaigns/src/commands/single_fold_proof.rs
 crates/jope-campaigns/src/commands/train_only_redteam.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution/candidate_and_evaluation.rs
@@ -535,7 +541,6 @@ crates/jope-campaigns/src/encoder_v2_store.rs
 crates/jope-campaigns/src/encoder_v2_worker.rs
 crates/jope-campaigns/src/epoch6.rs
 crates/jope-campaigns/src/epoch6_wave.rs
-crates/jope-campaigns/src/campaign_evaluator.rs
 crates/jope-campaigns/src/followup.rs
 crates/jope-campaigns/src/four_task.rs
 crates/jope-campaigns/src/freshness_protocol.rs
@@ -583,14 +588,14 @@ crates/jope-campaigns/src/selfplay_expansion.rs
 crates/jope-campaigns/src/selfplay_ingest.rs
 crates/jope-campaigns/src/selfplay_registry.rs
 crates/jope-campaigns/src/selfplay_runtime.rs
+crates/jope-campaigns/src/selfplay_shadow/causal_evidence.rs
 crates/jope-campaigns/src/selfplay_shadow/contracts.rs
 crates/jope-campaigns/src/selfplay_shadow/flywheel.rs
 crates/jope-campaigns/src/selfplay_shadow/mod.rs
 crates/jope-campaigns/src/selfplay_shadow/policy.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence.rs
 crates/jope-campaigns/src/selfplay_shadow/state.rs
 crates/jope-campaigns/src/selfplay_shadow/store.rs
-crates/jope-campaigns/src/selfplay_shadow/causal_evidence.rs
-crates/jope-campaigns/src/selfplay_shadow/promotion_evidence.rs
 crates/jope-campaigns/src/spec_drift.rs
 crates/jope-campaigns/src/spec_policy.rs
 crates/jope-campaigns/src/task.rs
@@ -813,6 +818,8 @@ crates/jope-engine/examples/select_cohort.rs
 crates/jope-engine/examples/verify_binary_preparation.rs
 crates/jope-engine/examples/verify_prepared.rs
 crates/jope-engine/manifests/champion-import-v44.sha256
+crates/jope-engine/manifests/dataset-provenance/origin-approval.json
+crates/jope-engine/manifests/dataset-provenance/preparation-controls.json
 crates/jope-engine/manifests/foundation-spec.json
 crates/jope-engine/manifests/hyperion-batch-spec.json
 crates/jope-engine/manifests/hyperion-concurrent-spec.json
@@ -825,8 +832,6 @@ crates/jope-engine/manifests/opportunistic-proposals-v44.sha256
 crates/jope-engine/manifests/opportunistic-proposals-v53.json
 crates/jope-engine/manifests/opportunistic-proposals-v53.sha256
 crates/jope-engine/manifests/provenance-decisions.json
-crates/jope-engine/manifests/dataset-provenance/origin-approval.json
-crates/jope-engine/manifests/dataset-provenance/preparation-controls.json
 crates/jope-engine/manifests/target-spec.json
 crates/jope-engine/native/runtime.cpp
 crates/jope-engine/rust-toolchain.parallel-legacy.toml
