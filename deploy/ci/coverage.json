@@ -4857,6 +4857,17 @@
       "lanes": [],
       "scope": "Research/tools test-named script; static discovery only, not a collected maintained pytest family."
     },
+    "python:python/tests/test_auto_fuse.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "scope": "NS24 auto-fuse harness (tools/auto_fuse.py) CPU unit tests: tensor-state digest byte identity (pre-fix known answer), 0-D non-byte tensors, name/dtype/value binding, DOPE freeze summary with BatchNorm buffers, and released-checkpoint pin/finiteness/envelope refusals on synthetic checkpoints; no GPU P2 evaluation or real-checkpoint qualification."
+    },
     "python:python/tests/test_context_proposals.py": {
       "discovery": {
         "kind": "python-family"
@@ -6171,6 +6182,16 @@
       ],
       "lanes": [],
       "scope": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification."
+    },
+    "python:research/flywheel_selfplay/h226_gated025_r3175/test_h226.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H226 (frozen GATED_025 recipe on the retained-best r3175 base) data-free controls: cyclic cells and minimal fit plan, H124 seed folds and a fresh fold manifest, family-preserving shuffles, BT-Elo orientation, H129 blend/disagreement definitions, FIT-only tau choice with base fallback, primary and r882/r3175 plateau verdict rules, frozen H210/H217 gate recipe, xbabe2-only host, nice 19, source binding before the claim, load pause hysteresis and the capped absolute deadline; not study outcomes."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {

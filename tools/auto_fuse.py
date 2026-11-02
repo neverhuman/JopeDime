@@ -55,7 +55,9 @@ def tensor_state_sha(state: dict[str, torch.Tensor]) -> str:
             raise TypeError(f"non-tensor state item: {name}")
         cpu = tensor.detach().cpu().contiguous()
         meta = json.dumps([name, str(cpu.dtype), list(cpu.shape)], separators=(",", ":")).encode()
-        raw = cpu.view(torch.uint8).numpy().tobytes()
+        # A byte view of a 0-D tensor with a wider dtype (BatchNorm's int64 num_batches_tracked) is
+        # refused, so flatten first; the bytes of every other tensor stay the same and the shape is in meta.
+        raw = cpu.reshape(-1).view(torch.uint8).numpy().tobytes()
         h.update(len(meta).to_bytes(8, "little"))
         h.update(meta)
         h.update(len(raw).to_bytes(8, "little"))
@@ -144,6 +146,13 @@ def load_released_dope(path: Path) -> tuple[dict[str, torch.Tensor], str]:
         or not all(isinstance(v, torch.Tensor) for v in state.values())
     ):
         raise ValueError("released DOPE checkpoint has no tensor model_state_dict")
+    nonfinite = sorted(
+        name
+        for name, value in state.items()
+        if (value.is_floating_point() or value.is_complex()) and not bool(torch.isfinite(value).all())
+    )
+    if nonfinite:
+        raise ValueError(f"released DOPE checkpoint has non-finite tensors: {', '.join(nonfinite)}")
     return state, digest
 
 
