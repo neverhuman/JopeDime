@@ -126,6 +126,12 @@ crates/feat-math/src/advanced_v3/fitted_portable.rs.txt
 crates/feat-math/src/advanced_v3/fitted_portable/scalar.rs
 crates/feat-math/src/advanced_v3/grammar.rs
 crates/feat-math/src/advanced_v3/heads/mod.rs
+crates/feat-math/src/advanced_v3/heads/extra_trees.rs
+crates/feat-math/src/advanced_v3/heads/gam.rs
+crates/feat-math/src/advanced_v3/heads/logistic.rs
+crates/feat-math/src/advanced_v3/heads/multiclass.rs
+crates/feat-math/src/advanced_v3/heads/portfolio.rs
+crates/feat-math/src/advanced_v3/heads/tab_boost.rs
 crates/feat-math/src/advanced_v3/input.rs
 crates/feat-math/src/advanced_v3/interfaces.rs
 crates/feat-math/src/advanced_v3/pipeline.rs
