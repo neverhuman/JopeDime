@@ -15,15 +15,22 @@ function call(name, value) {
   return JSON.parse(new TextDecoder().decode(new Uint8Array(k.memory.buffer, k.browser_output(), k.browser_output_len())));
 }
 let rows = 0;
-for (const name of ['ridge', 'gpr', 'binary']) {
+const fixtures = ['ridge', 'gpr', 'binary', 'multiclass'];
+for (const format of ['appliance', 'bound']) {
+  for (const map of ['tie', 'positive', 'negative', 'mapped']) fixtures.push(`platt_${format}_${map}`);
+}
+for (const name of fixtures) {
   const fixture = JSON.parse(fs.readFileSync(path.join(fixtureRoot, name + '.json')));
   const loaded = call('browser_load', fixture.envelope);
   assert(loaded.ok, JSON.stringify(loaded));
   for (const probe of fixture.probes) {
     const result = call('browser_predict', { values: probe.values });
     assert(result.ok, JSON.stringify(result));
-    if (name === 'binary') {
+    if (Object.hasOwn(probe, 'probabilities')) {
+      assert.equal(result.result.kind, 'classification');
+      assert.equal(result.result.label, probe.label, `${name}: native/WASM class label differs`);
       assert.deepEqual(result.result.classes, probe.classes);
+      assert.equal(result.result.probabilities.length, probe.probabilities.length);
       result.result.probabilities.forEach((p, index) => assert(Math.abs(p - probe.probabilities[index]) <= 1e-10));
     } else { assert(Math.abs(result.result.value - probe.expected) <= 1e-9 * Math.max(1, Math.abs(probe.expected)), `${name}: native/WASM prediction differs`); }
     rows++;

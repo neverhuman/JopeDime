@@ -7,7 +7,8 @@ refitted and no model-supplied JavaScript, WASM, host import or executable sourc
 
 Build: `rustup target add wasm32-unknown-unknown`, then `bash web/browser-predict/build.sh`.
 Verify: `bash web/browser-predict/check.sh` runs native contracts and Node/WASM parity over
-native-generated ridge and composite-GPR fixtures, missing/out-of-range cells, corruption,
+native-generated ridge, composite-GPR, binary/categorical, multiclass and Platt-calibrated
+appliance/bound fixtures, including exact class order, tied labels, missing/out-of-range cells, corruption,
 stale-model refusal and message limits. The cloud app separately verifies actual browsers,
 owner-scoped transfer, its CSP/worker integration and the public development journey.
 
@@ -29,7 +30,8 @@ Admission is bounded to 32 MiB of decoded model parts and 256 columns, one predi
 8 KiB per cell and 512 MiB maximum linear memory. Current native decoders are reused;
 unrecognized formats/capabilities and bound classification objects without a saved class
 mapping are explicitly refused. Native appliance class-labelled predictions retain their
-native probability output. Parallel native execution is disabled in this single worker.
+native probability output and first-class tie policy. Stored Platt maps are applied through
+the complete model object, including bound objects with their saved class order. Parallel native execution is disabled in this single worker.
 
 The builder reuses an installed wasm32 standard library. On native-only, immutable runner images, it installs the same pinned Rust version plus wasm32 into the lane target cache, without changing the shared toolchain. Standard rustup distribution checks authenticate the downloaded components.
 

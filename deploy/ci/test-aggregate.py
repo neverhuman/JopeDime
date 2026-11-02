@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import copy
+from collections import Counter
 import json
 import re
 import shutil
@@ -10,6 +11,35 @@ import unittest
 import aggregate
 from receipt import digest
 from results import counts
+
+
+class BrowserRoutingTests(unittest.TestCase):
+    def test_browser_only_changes_require_the_typescript_rust_gate(self):
+        for path in ('web/browser-predict/src/lib.rs',
+                     'web/browser-predict/src/future_module.rs',
+                     'web/browser-predict/Cargo.toml',
+                     'web/browser-predict/Cargo.lock',
+                     'web/browser-predict/build.sh',
+                     'web/browser-predict/check.sh',
+                     'web/browser-predict/check.mjs'):
+            with self.subTest(path=path):
+                lanes, gates = aggregate.plan_module.classify([path], 'pull_request')
+                self.assertTrue(gates['rust'], 'typescript.yml is selected by the rust output')
+                self.assertTrue(lanes['rust-check'])
+                self.assertTrue(lanes['rust-test'])
+
+    def test_browser_prefix_does_not_select_unrelated_web_paths(self):
+        for path in ('README.md', 'web/training-dashboard/README.md',
+                     'web/browser-predictor/src/lib.rs'):
+            with self.subTest(path=path):
+                lanes, gates = aggregate.plan_module.classify([path], 'pull_request')
+                self.assertFalse(gates['rust'])
+                self.assertFalse(lanes['rust-check'])
+
+    def test_manual_dispatch_still_selects_all_lanes(self):
+        lanes, gates = aggregate.plan_module.classify([], 'workflow_dispatch')
+        self.assertTrue(all(lanes.values()))
+        self.assertTrue(all(gates.values()))
 
 
 class AggregateTests(unittest.TestCase):
@@ -77,10 +107,14 @@ class AggregateTests(unittest.TestCase):
     def test_valid_complete_execution(self):
         self.assertEqual([], self.verify()['errors'])
 
-    def test_all_nine_receipt_units_match_actual_workflow_producer_commands(self):
+    def test_all_receipt_units_match_event_specific_workflow_producers(self):
         workflow = (aggregate.ROOT / '.github/workflows/ci.yml').read_text()
         producers = re.findall(r'python3 deploy/ci/receipt.py --lane ([a-z0-9-]+)[^\n]* -- bash ([a-zA-Z0-9_./-]+) ([a-z0-9-]+)$', workflow, re.M)
-        self.assertEqual(len(aggregate.plan_module.LANES), len(producers))
+        # PR and manual events have mutually exclusive classifier producers,
+        # while both emit the same single logical changes receipt.
+        expected = Counter({lane: 2 if lane == 'changes' else 1
+                            for lane in aggregate.plan_module.LANES})
+        self.assertEqual(expected, Counter(lane for lane, _, _ in producers))
         self.assertEqual(set(aggregate.plan_module.LANES), {lane for lane, _, _ in producers})
         commands = {}
         for lane, path, argument in producers:

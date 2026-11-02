@@ -89,7 +89,15 @@ impl Loaded {
             let target = model.input.target.name.clone();
             (Predictor::Math(model), columns, target, "regression".to_owned(), "Values outside the training range are clamped. Blank inputs use the model's saved missing-value policy.")
         } else {
-            let (schema, target, task) = if format == model_object::APPLIANCE {
+            let (schema, target, task) = if let Some(input) = object.calibrated_input()? {
+                // Read only the input contract here. The complete object must keep
+                // its stored calibration and class order during prediction.
+                let (target, task) = match input.header {
+                    Some(header) => (header.target, header.task),
+                    None => ("Prediction".to_owned(), "binary".to_owned()),
+                };
+                (input.schema.columns, target, task)
+            } else if format == model_object::APPLIANCE {
                 let fitted = object.fitted()?;
                 (
                     fitted.model.schema.columns.clone(),
@@ -178,12 +186,16 @@ impl Loaded {
                                 && values[0].iter().all(|v| v.is_finite()),
                             "model returned invalid class probabilities"
                         );
-                        let best = values[0]
-                            .iter()
-                            .enumerate()
-                            .max_by(|a, b| a.1.total_cmp(b.1))
-                            .context("empty class probabilities")?
-                            .0;
+                        ensure!(!classes.is_empty(), "empty class probabilities");
+                        // Match native api::predictions_csv: keep the first
+                        // class when probabilities tie, including signed zero.
+                        let best = values[0].iter().enumerate().fold(0, |best, (i, p)| {
+                            if *p > values[0][best] {
+                                i
+                            } else {
+                                best
+                            }
+                        });
                         Ok(
                             json!({"kind":"classification","label":classes[best],"classes":classes,"probabilities":values[0]}),
                         )
@@ -452,14 +464,258 @@ mod tests {
             .unwrap();
         assert_eq!(actual["classes"], json!(classes));
         assert_eq!(actual["probabilities"], json!(probabilities[0]));
+        let native_csv = String::from_utf8(
+            jope_runtime::api::predictions_csv(&Predictions::Probabilities {
+                classes: classes.clone(),
+                values: probabilities.clone(),
+            })
+            .unwrap(),
+        )
+        .unwrap();
+        let native_label = native_csv
+            .lines()
+            .nth(1)
+            .unwrap()
+            .split(',')
+            .next()
+            .unwrap();
+        assert_eq!(actual["label"], json!(native_label));
         if let Ok(directory) = std::env::var("JOPE_BROWSER_FIXTURES") {
-            let fixture = json!({"envelope":serde_json::from_slice::<Value>(&envelope(&object)).unwrap(),"probes":[{"values":values,"classes":classes,"probabilities":probabilities[0]}]});
+            let fixture = json!({"envelope":serde_json::from_slice::<Value>(&envelope(&object)).unwrap(),"probes":[{"values":values,"classes":classes,"probabilities":probabilities[0],"label":native_label}]});
             std::fs::write(
                 std::path::Path::new(&directory).join("binary.json"),
                 serde_json::to_vec_pretty(&fixture).unwrap(),
             )
             .unwrap();
         }
+    }
+
+    fn classification_fixture(
+        kind: jope_runtime::task::TaskKind,
+        labels: &[&str],
+        family: &str,
+        x: &[&str],
+        y: &[f64],
+    ) -> jope_runtime::fitted::FittedModel {
+        use feat_math::advanced_v3::{ColumnSpec, DataSchema, RowSemantics};
+        use jope_runtime::{
+            budget::BudgetRecord,
+            fitted::{CreatedBy, FitRecord, FittedModel},
+            methods::{native::fit_native, registry::rust_methods},
+        };
+        let method = rust_methods(kind)
+            .unwrap()
+            .into_iter()
+            .find(|method| method.family == family)
+            .unwrap();
+        let schema = DataSchema {
+            columns: vec![ColumnSpec::numeric("x")],
+            row_semantics: RowSemantics::Iid,
+        };
+        let train = RawTable::new(
+            vec!["x".into()],
+            x.iter().map(|value| vec![(*value).to_owned()]).collect(),
+        )
+        .unwrap();
+        let labels = labels
+            .iter()
+            .map(|label| (*label).to_owned())
+            .collect::<Vec<_>>();
+        let model = fit_native(&method, kind, &schema, &labels, &train, y).unwrap();
+        let budget = BudgetRecord {
+            time_limit_seconds: None,
+            consumed_seconds: 0.0,
+            threads: 1,
+            enforcement: "test",
+        };
+        FittedModel::new(FitRecord {
+            method: &method,
+            kind,
+            classes: &labels,
+            target: "class",
+            schema: &schema,
+            model,
+            rows: train.rows.len(),
+            fitting_input_sha256: "a".repeat(64),
+            training_file_sha256: "b".repeat(64),
+            selection: None,
+            budget: &budget,
+            created_by: CreatedBy {
+                source_sha40: "a".repeat(40),
+                ..Default::default()
+            },
+        })
+        .unwrap()
+    }
+
+    fn classification_probe(object: &ModelObject, values: Vec<Option<&str>>) -> Value {
+        let loaded = Loaded::load(&envelope(object)).unwrap();
+        let table = RawTable::new(
+            loaded.columns.clone(),
+            vec![values
+                .iter()
+                .map(|value| value.unwrap_or_default().to_owned())
+                .collect()],
+        )
+        .unwrap();
+        let expected = object.predict(&table).unwrap();
+        let native_csv =
+            String::from_utf8(jope_runtime::api::predictions_csv(&expected).unwrap()).unwrap();
+        // These deliberately ordered fixture labels contain no CSV metacharacters.
+        let native_label = native_csv
+            .lines()
+            .nth(1)
+            .unwrap()
+            .split(',')
+            .next()
+            .unwrap();
+        let Predictions::Probabilities {
+            classes,
+            values: probabilities,
+        } = expected
+        else {
+            panic!("classification fixture did not return probabilities");
+        };
+        let actual = loaded
+            .predict(&serde_json::to_vec(&json!({"values":values})).unwrap())
+            .unwrap();
+        assert_eq!(actual["kind"], "classification");
+        assert_eq!(actual["classes"], json!(classes));
+        assert_eq!(actual["probabilities"], json!(probabilities[0]));
+        assert_eq!(actual["label"], json!(native_label));
+        json!({"values":values,"classes":classes,"probabilities":probabilities[0],"label":native_label})
+    }
+
+    fn write_classification_fixture(name: &str, object: &ModelObject, probes: &[Value]) {
+        if let Ok(directory) = std::env::var("JOPE_BROWSER_FIXTURES") {
+            let directory = std::path::Path::new(&directory);
+            std::fs::create_dir_all(directory).unwrap();
+            let fixture = json!({
+                "envelope":serde_json::from_slice::<Value>(&envelope(object)).unwrap(),
+                "probes":probes,
+                "source":"complete native ModelObject::predict and api::predictions_csv; deterministic synthetic fixture",
+            });
+            std::fs::write(
+                directory.join(format!("{name}.json")),
+                serde_json::to_vec_pretty(&fixture).unwrap(),
+            )
+            .unwrap();
+        }
+    }
+
+    #[test]
+    fn calibrated_appliance_and_bound_objects_preserve_maps_class_order_and_tied_labels() {
+        use jope_runtime::{
+            model_object::calibration_platt::{Calibration, Sigmoid, SCHEMA},
+            task::TaskKind,
+        };
+        feat_math::set_parallel_enabled(false);
+        let fitted = classification_fixture(
+            TaskKind::Binary,
+            &["z-negative", "a-positive"],
+            "logit_ridge",
+            &["-2", "-1", "0", "1", "2", "3"],
+            &[0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
+        );
+        for (format, object) in [
+            ("appliance", ModelObject::from_fitted(&fitted).unwrap()),
+            ("bound", ModelObject::from_bound(&fitted.model).unwrap()),
+        ] {
+            for (name, intercept, slope) in [
+                ("tie", 0.0, 0.0),
+                ("positive", 2.0, 0.0),
+                ("negative", -2.0, 0.0),
+                ("mapped", -0.4, 1.7),
+            ] {
+                let calibrated = object
+                    .with_platt_calibration(Calibration {
+                        schema: SCHEMA.into(),
+                        score_kind: "native-positive-probability/v1".into(),
+                        class_order: ["z-negative".into(), "a-positive".into()],
+                        fitting_rows: 6,
+                        cross_fit_folds: 2,
+                        sigmoid: Sigmoid {
+                            intercept,
+                            slope,
+                            scale: 1.0,
+                            center: 0.0,
+                        },
+                    })
+                    .unwrap();
+                calibrated.verify_executable().unwrap();
+                assert!(calibrated.fitted().is_err());
+                assert!(calibrated.bound().is_err());
+                let loaded = Loaded::load(&envelope(&calibrated)).unwrap();
+                assert_eq!(loaded.description["task"], "binary");
+                assert_eq!(
+                    loaded.description["target"],
+                    if format == "appliance" {
+                        "class"
+                    } else {
+                        "Prediction"
+                    }
+                );
+                let probes = vec![
+                    classification_probe(&calibrated, vec![Some("-1")]),
+                    classification_probe(&calibrated, vec![Some("2")]),
+                    classification_probe(&calibrated, vec![None]),
+                ];
+                if name == "tie" {
+                    assert_eq!(probes[0]["probabilities"], json!([0.5, 0.5]));
+                    assert_eq!(probes[0]["label"], "z-negative");
+                } else if name == "positive" {
+                    assert_eq!(probes[0]["label"], "a-positive");
+                } else if name == "negative" {
+                    assert_eq!(probes[0]["label"], "z-negative");
+                } else {
+                    let query = RawTable::new(vec!["x".into()], vec![vec!["2".into()]]).unwrap();
+                    let Predictions::Probabilities { values: raw, .. } =
+                        fitted.predict(&query).unwrap()
+                    else {
+                        panic!("binary fixture did not return probabilities");
+                    };
+                    assert_ne!(
+                        probes[1]["probabilities"][1].as_f64().unwrap().to_bits(),
+                        raw[0][1].to_bits()
+                    );
+                }
+                write_classification_fixture(
+                    &format!("platt_{format}_{name}"),
+                    &calibrated,
+                    &probes,
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn multiclass_ties_and_non_ties_match_native_csv_class_order() {
+        use jope_runtime::task::TaskKind;
+        feat_math::set_parallel_enabled(false);
+        let fitted = classification_fixture(
+            TaskKind::Multiclass,
+            &["z-first", "a-second", "m-third"],
+            "multiclass_nearest_centroid",
+            &["-2", "-2", "0", "0", "2", "2"],
+            &[0.0, 0.0, 1.0, 1.0, 2.0, 2.0],
+        );
+        let object = ModelObject::from_fitted(&fitted).unwrap();
+        let probes = ["-1", "1", "-2", "0", "2"]
+            .into_iter()
+            .map(|value| classification_probe(&object, vec![Some(value)]))
+            .collect::<Vec<_>>();
+        assert_eq!(probes[0]["probabilities"][0], probes[0]["probabilities"][1]);
+        assert!(
+            probes[0]["probabilities"][0].as_f64().unwrap()
+                > probes[0]["probabilities"][2].as_f64().unwrap()
+        );
+        assert_eq!(probes[0]["label"], "z-first");
+        assert_eq!(probes[1]["probabilities"][1], probes[1]["probabilities"][2]);
+        assert_eq!(probes[1]["label"], "a-second");
+        assert_eq!(probes[2]["label"], "z-first");
+        assert_eq!(probes[3]["label"], "a-second");
+        assert_eq!(probes[4]["label"], "m-third");
+        write_classification_fixture("multiclass", &object, &probes);
     }
 
     #[test]
