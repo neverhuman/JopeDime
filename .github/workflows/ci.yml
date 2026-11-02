@@ -11,13 +11,6 @@ on:
         type: string
         required: false
         default: ""
-      runner_pool:
-        description: "Use native Linux workers while Mac capacity is unavailable"
-        type: choice
-        options:
-          - auto
-          - native
-        default: auto
 permissions:
   contents: read
   pull-requests: read
@@ -68,9 +61,9 @@ jobs:
 
   changes-dispatch:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    # Candidate refs are refused below. Trusted-main dispatch keeps the admitted native
-    # runner and exact deployed-policy proof.
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # Classification is unprivileged and hosted; downstream self-hosted jobs still perform
+    # their own runner provenance and resource admission before executing candidate work.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       rust: ${{ steps.lane.outputs.rust }}
@@ -78,16 +71,13 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
-      runner_pool: ${{ inputs.runner_pool == 'native' && 'jope-ci' || steps.provenance.outputs.runner-pool }}
+      runner_pool: jope-ci
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Runner provenance
-        id: provenance
-        uses: ./.github/actions/runner-provenance
       - name: Run declared lane and retain receipt
         id: lane
         run: |

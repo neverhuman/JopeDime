@@ -1018,9 +1018,9 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIn('runs-on: ubuntu-24.04', pr_classifier)
         self.assertFalse(any('runs-on:' in line and 'self-hosted' in line for line in pr_classifier.splitlines()))
         self.assertIn("if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'", dispatch_classifier)
-        self.assertIn('runs-on: [self-hosted, linux, x64, jope-ci]', dispatch_classifier)
-        self.assertIn('./.github/actions/runner-provenance', dispatch_classifier)
-        self.assertIn("inputs.runner_pool == 'native' && 'jope-ci'", dispatch_classifier)
+        self.assertIn('runs-on: ubuntu-24.04', dispatch_classifier)
+        self.assertNotIn('./.github/actions/runner-provenance', dispatch_classifier)
+        self.assertIn('runner_pool: jope-ci', dispatch_classifier)
         ui = workflow.split('\n  observatory-ui:', 1)[1].split('\n  typescript:', 1)[0]
         self.assertIn('raw_results="$RUNNER_TEMP/jope-observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/raw"', ui)
         self.assertIn('node --input-type=module "$raw_results/tests.json"', ui)
@@ -1136,8 +1136,8 @@ class WorkflowAdmissionTests(unittest.TestCase):
         workflow = (ROOT/'.github/workflows/ci.yml').read_text()
         dispatch = self.job(workflow, 'changes-dispatch')
         self.assertIn("if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'", dispatch)
-        self.assertIn('runs-on: [self-hosted, linux, x64, jope-ci]', dispatch)
-        self.assertIn('uses: ./.github/actions/runner-provenance', dispatch)
+        self.assertIn('runs-on: ubuntu-24.04', dispatch)
+        self.assertNotIn('uses: ./.github/actions/runner-provenance', dispatch)
 
         refusal = self.job(workflow, 'reject-untrusted-dispatch')
         self.assertIn("if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'", refusal)
@@ -1152,6 +1152,12 @@ class WorkflowAdmissionTests(unittest.TestCase):
             block = self.job(workflow, name)
             self.assertIn("github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'", block,
                           f'{name} must be skipped on non-main dispatch')
+        for name in ('hygiene', 'jankurai-audit', 'rust-check', 'rust-test', 'emitters',
+                     'inputs', 'python', 'e2e-smoke', 'observatory-ui', 'aggregate'):
+            if name == 'paper':
+                continue
+            self.assertIn('uses: ./.github/actions/runner-provenance', self.job(workflow, name),
+                          f'{name} must retain per-job runner admission')
 
         # Other self-hosted test jobs require the classifier's successful outputs, so they
         # inherit its fail-closed refusal through the default needs-success condition.
