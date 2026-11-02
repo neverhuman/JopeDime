@@ -3,7 +3,8 @@
 This controller replaces only the abandoned dispatch loop. It calls the frozen
 maintained preflight, request, worker_call, admit_result and score-store APIs.
 No monkeypatch, plan rekey, completed-unit replay, new campaign or budget reset.
-The qualified learner's in-unit guards remain unchanged; only a proven configure-
+The explicit, CPU-qualified resource-policy wrapper removes the base learner's
+in-unit CPU-spike abort while preserving GPU memory safety. Only a configure-
 phase headroom refusal (no execution/checkpoint/response) may retry after 120s.
 """
 
@@ -34,11 +35,17 @@ RULE = Path("/home/ubuntu/nudges/lanes_t0430_rulings.md")
 RULE_SHA = "9f37306a25cafb0d213625d999c1d255bd8139425794ab2e5e82db15583da038"
 PLAN_SHA = "96310d6916d79c411a0fc4c53d2824ac678140f95b22520d6fd9fc3b0936abb3"
 WORKER_SHA = "558780bb5d91318864991ca398b9c63c4b31a12d1c8f3dd04ae26db7655b9918"
+RESOURCE_WORKER = ROOT / "research/joint_regbin/learner_resource.py"
+RESOURCE_SHA = "e6fc667e4fbc1c20b16bf2edc785eaae4b448ef3baeacc35a74173209795cf31"
+RESOURCE_QUALIFICATION = OUT / "RESOURCE-QUALIFICATION.json"
+RESOURCE_QUALIFICATION_SHA = (
+    "908e3d40cea04201a99482624e312c3554c442a236d4b9a4a4b30b153ca5e40b"
+)
 STORE_MODULE = Path("/home/ubuntu/jope_plan/scores/score_store.py")
 STORE = Path("/home/ubuntu/jope_plan/scores/history.jsonl")
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT))
-from research.joint_regbin import driver, learner, protocol  # noqa: E402
+from research.joint_regbin import driver, learner, learner_resource, protocol  # noqa: E402
 from research.flywheel_selfplay import qualification_lock_fifo as fifo  # noqa: E402
 
 QUEUE = Path("/home/ubuntu/jope_plan/qualification.queue")
@@ -142,6 +149,22 @@ def usage():
     )
 
 
+def amended_deadline(campaign, prior_execution_seconds, resumed_at):
+    """T0430 permits 30min infrastructure extension, never a new 6h budget."""
+    original = campaign["deadline_unix"]
+    if (
+        campaign["plan_sha256"] != PLAN_SHA
+        or campaign["wall_seconds"] != 21600
+        or original != campaign["started_unix"] + 21600
+        or not 0 < prior_execution_seconds < 21600
+    ):
+        raise ValueError("original reservation/execution charge differs")
+    effective = original + 1800
+    if prior_execution_seconds + max(0, effective - resumed_at) > 21600:
+        raise ValueError("deadline amendment would reset the active execution budget")
+    return effective
+
+
 def oldest_ticket():
     live = []
     for path in QUEUE.iterdir():
@@ -193,6 +216,8 @@ def main():
     assert protocol.file_sha(RULE) == RULE_SHA
     assert protocol.file_sha(WORKER) == WORKER_SHA
     learner.verify_sources()
+    assert protocol.file_sha(RESOURCE_WORKER) == RESOURCE_SHA
+    learner_resource.qualification(RESOURCE_QUALIFICATION, RESOURCE_QUALIFICATION_SHA)
     plan = read(PLAN)
     assert plan["sha256"] == PLAN_SHA and read(STUDY / "plan.json") == plan
     campaign_path = driver.CAMPAIGNS / (PLAN_SHA + ".json")
@@ -200,7 +225,11 @@ def main():
     assert campaign["plan_sha256"] == PLAN_SHA and campaign["output"] == str(STUDY)
     assert campaign["wall_seconds"] == plan["config"]["wall_seconds"] == 21600
     assert campaign["deadline_unix"] == campaign["started_unix"] + 21600
-    deadline = campaign["deadline_unix"]
+    prior_execution_seconds = (
+        datetime.datetime.fromisoformat(read(OLD / "STUDY-EXIT.json")["utc"])
+        - datetime.datetime.fromisoformat(read(OLD / "DISPATCH.json")["utc"])
+    ).total_seconds()
+    deadline = amended_deadline(campaign, prior_execution_seconds, time.time())
     monotonic_deadline = time.monotonic() + max(0, deadline - time.time())
     preflight = driver.preflight(plan, PACKET, WORKER, CHECKPOINT)
     initial_files = {
@@ -255,8 +284,14 @@ def main():
             authority=str(RULE),
             authority_sha256=RULE_SHA,
             plan_sha256=PLAN_SHA,
+            resource_wrapper_sha256=RESOURCE_SHA,
+            resource_qualification_sha256=RESOURCE_QUALIFICATION_SHA,
             preflight=preflight,
-            original_deadline_unix=deadline,
+            original_deadline_unix=campaign["deadline_unix"],
+            effective_deadline_unix=deadline,
+            deadline_amendment_seconds=1800,
+            prior_execution_seconds=prior_execution_seconds,
+            maximum_total_execution_seconds=21600,
             original_started_unix=campaign["started_unix"],
             budget_reset=False,
         ),
@@ -306,7 +341,8 @@ def main():
             "LOCK_ACQUIRED_JRB_FIRST",
             pid=os.getpid(),
             authority_sha256=RULE_SHA,
-            original_deadline_unix=deadline,
+            original_deadline_unix=campaign["deadline_unix"],
+            effective_deadline_unix=deadline,
             completed_frozen_jobs=finished,
             fifo_ticket=str(ticket),
         )
@@ -352,6 +388,8 @@ def main():
                             os.environ,
                             JOPE_QUALIFICATION_LOCK_FD=str(lock_fd),
                             JOPE_JRB_DEVICE="cuda:0",
+                            JOPE_JRB_RESOURCE_QUALIFICATION=str(RESOURCE_QUALIFICATION),
+                            JOPE_JRB_RESOURCE_QUALIFICATION_SHA256=RESOURCE_QUALIFICATION_SHA,
                             CUDA_VISIBLE_DEVICES="0",
                             CUBLAS_WORKSPACE_CONFIG=":4096:8",
                             OMP_NUM_THREADS="4",
@@ -370,7 +408,7 @@ def main():
                             env.pop(key, None)
                         argv = [
                             sys.executable,
-                            str(WORKER),
+                            str(RESOURCE_WORKER),
                             "--request",
                             str(req),
                             "--response",
@@ -434,6 +472,19 @@ def main():
                             continue
                         break
                     check_budget()
+                    amendment = read(response.with_suffix(".resource-amendment.json"))
+                    assert amendment == dict(
+                        schema="jope.jrb01.resource-amendment-response/v1",
+                        base_learner_sha256=WORKER_SHA,
+                        wrapper_sha256=RESOURCE_SHA,
+                        qualification_sha256=RESOURCE_QUALIFICATION_SHA,
+                        authority_sha256=RULE_SHA,
+                        request_sha256=protocol.file_sha(req),
+                        response_sha256=protocol.file_sha(response),
+                        plan_sha256=PLAN_SHA,
+                        job_id=job["id"],
+                        phase=phase,
+                    ), "missing/invalid effective-resource provenance"
                     result = read(response)
                     if phase == "train":
                         assert result["actual_budget"] == protocol.expected_counts(
