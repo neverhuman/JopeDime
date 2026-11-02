@@ -138,3 +138,17 @@ implementation hash, Cargo.lock hash and identity digest are unchanged; the eval
 fixture changes only its generation SHA. The transition is registered in
 `rustunsafe_authority_lineage_rebaseline.v1.json`. No known-identity row is added because this
 work has no shipped receipt proving a new identity existed.
+
+## Current identity transition: fitted runtime moved to Rust (2026-11-02)
+
+P23 ports the fitted-language runtime from `crates/feat-math/cpp/fitted_runtime.cpp` to Rust,
+removing C++ from the product runtime surface while retaining the C++ implementation as a
+test-only parity oracle. The change follows merged P36 and the `rustunsafe` authority lineage
+transition above. The evaluator implementation hash advances from
+`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` to
+`16aac298b60de23bb39f72df83c6d09dfb4af181681059bc39b0cc5c380faf56`; the identity digest
+advances from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` to
+`8f737124ae20328d0e9cd92a48d3373bad9cc0ecceafa4453ade90584cb2fc15`. The DSL ABI, emitted
+bytes and Cargo.lock hash are unchanged. The transition is registered in
+`prodlang_rust_runtime_identity_rebaseline.v1.json`. No known-identity row is added because
+this change has no shipped receipt proving the new identity existed.
