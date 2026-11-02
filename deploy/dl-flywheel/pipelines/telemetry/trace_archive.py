@@ -299,9 +299,10 @@ def main():
     quota, period = (cg/'cpu.max').read_text().split()
     need(quota != 'max' and int(quota) <= int(period) and int((cg/'memory.max').read_text()) <= 512*1024**2 and
          int((cg/'memory.swap.max').read_text()) == 0 and os.environ.get('CUDA_VISIBLE_DEVICES') == '', 'CPU1/512MiB/swap0/noGPU')
-    old = subprocess.run(['systemctl', '--user', 'show', 'jopedime-hpc-archive-20261009-v1',
-                          '-p', 'MainPID', '-p', 'ControlGroup'], capture_output=True, text=True).stdout
-    need('MainPID=0' in old and 'ControlGroup=\n' in old, 'old archiver physically retired')
+    retired_unit_status = subprocess.run(['systemctl', '--user', 'show', 'jopedime-hpc-archive-20261009-v1',
+                                          '-p', 'MainPID', '-p', 'ControlGroup'], capture_output=True, text=True).stdout
+    need('MainPID=0' in retired_unit_status and 'ControlGroup=\n' in retired_unit_status,
+         'archiver unit physically retired')
     # Lock an existing directory without writing historical log or receipt files.
     lock = os.open(Path(c['logs_root'])/'archive-v1', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
