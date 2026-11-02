@@ -3,11 +3,14 @@
 use super::ThemeToken;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Language {
+pub enum HighlightLanguage {
     Rust,
     Python,
     JavaScript,
 }
+
+/// Compatibility name for callers using the original lexer language type.
+pub type Language = HighlightLanguage;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Span<'a> {
@@ -25,7 +28,7 @@ struct MarkedRange {
 /// Split source into text spans tagged with the matching theme token.
 ///
 /// This is a display lexer, not a parser. Unknown syntax is returned unchanged without a token.
-pub fn highlight(source: &str, language: Language) -> Vec<Span<'_>> {
+pub fn highlight(source: &str, language: HighlightLanguage) -> Vec<Span<'_>> {
     let bytes = source.as_bytes();
     let mut ranges: Vec<MarkedRange> = Vec::new();
     let mut index = 0;
@@ -95,10 +98,16 @@ fn push_range(ranges: &mut Vec<MarkedRange>, start: usize, end: usize, token: Op
     ranges.push(MarkedRange { start, end, token });
 }
 
-fn scan_comment(bytes: &[u8], index: usize, language: Language) -> Option<(usize, ThemeToken)> {
+fn scan_comment(
+    bytes: &[u8],
+    index: usize,
+    language: HighlightLanguage,
+) -> Option<(usize, ThemeToken)> {
     let line_comment = match language {
-        Language::Rust | Language::JavaScript => bytes.get(index..index + 2) == Some(b"//"),
-        Language::Python => bytes.get(index) == Some(&b'#'),
+        HighlightLanguage::Rust | HighlightLanguage::JavaScript => {
+            bytes.get(index..index + 2) == Some(b"//")
+        }
+        HighlightLanguage::Python => bytes.get(index) == Some(&b'#'),
     };
     if line_comment {
         let mut end = index;
@@ -108,13 +117,13 @@ fn scan_comment(bytes: &[u8], index: usize, language: Language) -> Option<(usize
         return Some((end, ThemeToken::CodeComment));
     }
 
-    let block_comment = matches!(language, Language::Rust | Language::JavaScript)
+    let block_comment = matches!(language, HighlightLanguage::Rust | HighlightLanguage::JavaScript)
         && bytes.get(index..index + 2) == Some(b"/*");
     if !block_comment {
         return None;
     }
 
-    let rust_nested = language == Language::Rust;
+    let rust_nested = language == HighlightLanguage::Rust;
     let mut depth = 1usize;
     let mut end = index + 2;
     while end < bytes.len() {
@@ -134,8 +143,8 @@ fn scan_comment(bytes: &[u8], index: usize, language: Language) -> Option<(usize
     Some((end, ThemeToken::CodeComment))
 }
 
-fn scan_raw_rust_string(bytes: &[u8], index: usize, language: Language) -> Option<usize> {
-    if language != Language::Rust || bytes.get(index) != Some(&b'r') {
+fn scan_raw_rust_string(bytes: &[u8], index: usize, language: HighlightLanguage) -> Option<usize> {
+    if language != HighlightLanguage::Rust || bytes.get(index) != Some(&b'r') {
         return None;
     }
     let mut cursor = index + 1;
@@ -160,17 +169,23 @@ fn scan_raw_rust_string(bytes: &[u8], index: usize, language: Language) -> Optio
     Some(bytes.len())
 }
 
-fn scan_quoted_string(bytes: &[u8], index: usize, language: Language) -> Option<(usize, bool)> {
+fn scan_quoted_string(
+    bytes: &[u8],
+    index: usize,
+    language: HighlightLanguage,
+) -> Option<(usize, bool)> {
     let quote = *bytes.get(index)?;
     let is_quote =
-        matches!(quote, b'\'' | b'"') || (language == Language::JavaScript && quote == b'`');
+        matches!(quote, b'\'' | b'"')
+            || (language == HighlightLanguage::JavaScript && quote == b'`');
     if !is_quote {
         return None;
     }
 
     let triple =
-        language == Language::Python && bytes.get(index..index + 3) == Some(&[quote, quote, quote]);
-    if language == Language::Rust && quote == b'\'' {
+        language == HighlightLanguage::Python
+            && bytes.get(index..index + 3) == Some(&[quote, quote, quote]);
+    if language == HighlightLanguage::Rust && quote == b'\'' {
         let end = scan_char_literal(bytes, index);
         return Some((end.unwrap_or(index + 1), end.is_some()));
     }
@@ -308,9 +323,9 @@ fn char_width(first_byte: u8) -> usize {
     }
 }
 
-fn is_keyword(identifier: &str, language: Language) -> bool {
+fn is_keyword(identifier: &str, language: HighlightLanguage) -> bool {
     match language {
-        Language::Rust => matches!(
+        HighlightLanguage::Rust => matches!(
             identifier,
             "as" | "async"
                 | "await"
@@ -366,7 +381,7 @@ fn is_keyword(identifier: &str, language: Language) -> bool {
                 | "char"
                 | "str"
         ),
-        Language::Python => matches!(
+        HighlightLanguage::Python => matches!(
             identifier,
             "and"
                 | "as"
@@ -404,7 +419,7 @@ fn is_keyword(identifier: &str, language: Language) -> bool {
                 | "yield"
                 | "None"
         ),
-        Language::JavaScript => matches!(
+        HighlightLanguage::JavaScript => matches!(
             identifier,
             "async"
                 | "await"
@@ -453,7 +468,7 @@ fn is_keyword(identifier: &str, language: Language) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{highlight, Language, Span};
+    use super::{highlight, HighlightLanguage, Span};
     use crate::terminal::ThemeToken;
 
     fn expected<'a>(items: &[(&'a str, Option<ThemeToken>)]) -> Vec<Span<'a>> {
@@ -470,7 +485,7 @@ mod tests {
     fn rust_golden_keywords_numbers_strings_and_comments() {
         let source = "fn add(x: i32) -> i32 { // sum\n    let n = 42; \"ok\"\n}";
         assert_eq!(
-            highlight(source, Language::Rust),
+            highlight(source, HighlightLanguage::Rust),
             expected(&[
                 ("fn", Some(ThemeToken::CodeKeyword)),
                 (" add(x: ", None),
@@ -494,7 +509,7 @@ mod tests {
     fn python_golden_keywords_numbers_strings_and_comments() {
         let source = "def area(x):\n    return x * 2.5 # scale";
         assert_eq!(
-            highlight(source, Language::Python),
+            highlight(source, HighlightLanguage::Python),
             expected(&[
                 ("def", Some(ThemeToken::CodeKeyword)),
                 (" area(x):\n    ", None),
@@ -511,7 +526,7 @@ mod tests {
     fn javascript_golden_keywords_numbers_strings_and_block_comments() {
         let source = "const value = 12; /* cached */ return `ok`;";
         assert_eq!(
-            highlight(source, Language::JavaScript),
+            highlight(source, HighlightLanguage::JavaScript),
             expected(&[
                 ("const", Some(ThemeToken::CodeKeyword)),
                 (" value = ", None),
@@ -530,9 +545,9 @@ mod tests {
     #[test]
     fn unterminated_strings_are_returned_as_string_spans_without_panicking() {
         for (source, language) in [
-            ("let text = \"open", Language::Rust),
-            ("text = 'open", Language::Python),
-            ("const text = `open", Language::JavaScript),
+            ("let text = \"open", HighlightLanguage::Rust),
+            ("text = 'open", HighlightLanguage::Python),
+            ("const text = `open", HighlightLanguage::JavaScript),
         ] {
             let spans = highlight(source, language);
             assert_eq!(
@@ -549,7 +564,7 @@ mod tests {
     #[test]
     fn rust_raw_strings_nested_comments_and_lifetimes_are_safe() {
         let source = "let s = r##\"raw\"##; /* outer /* inner */ end */ 'a";
-        let spans = highlight(source, Language::Rust);
+        let spans = highlight(source, HighlightLanguage::Rust);
         assert!(spans.iter().any(|span| {
             span.text == "r##\"raw\"##" && span.token == Some(ThemeToken::CodeString)
         }));
