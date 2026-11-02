@@ -1937,6 +1937,10 @@
         "training"
       ]
     },
+    "python:python/tests/test_dime_score_worker_validation.py": {
+      "role": "regression",
+      "subsystems": ["training"]
+    },
     "python:python/tests/test_training_corpus_contract.py": {
       "role": "regression",
       "subsystems": [
