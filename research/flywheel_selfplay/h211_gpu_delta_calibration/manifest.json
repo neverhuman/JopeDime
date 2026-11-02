@@ -48,7 +48,7 @@
   "wave": "H211",
   "status": "PREREGISTERED_NOT_RUN",
   "owner": "rd_astra",
-  "source_base": "ebc57d7f3f03a3bf78de111d356d2141da2682d8",
+  "source_base": "abf062b3cf1ecc24bb40f999b0a534bdfa04aad5",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
   "catalog": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
   "source_manifest": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
