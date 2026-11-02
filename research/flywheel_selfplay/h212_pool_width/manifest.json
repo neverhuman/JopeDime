@@ -68,7 +68,8 @@
     "best_dev_reference_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
     "r882_owned_copy_path": "/home/ubuntu/jope-data/h51/ckpt/round-882.pt",
     "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
-    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "jtt1_cache_payload_semantics": "gzip contains training_cv_envelope(raw), not raw table bytes"
   },
   "source_pins": {
     "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
@@ -77,7 +78,10 @@
     "micro_rust_evaluator": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
     "micro_model": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
     "micro_phase12_model": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
-    "dope_model": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952"
+    "dope_model": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "h58_prepare_cache": "be0ab8b8aefee8aca2fe96417b6b009d7d4fdaf8c50c02c0eca03db4ad2bd386",
+    "h58_base_module": "abacf87c9efc116e3923e918e5521a14bf25be789b10d5245fc9186309df6fbb",
+    "h58_envelope_source": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0"
   },
   "proposal_protocol": {
     "generator": "propose_flywheel_candidates",
@@ -135,5 +139,16 @@
       212150,
       212151
     ]
+  },
+  "supplemental_reporting": {
+    "estimand": "median over three seed-level equal-family mean gains; bootstrap shared family resamples across seeds",
+    "bootstrap_draws": 10000,
+    "bootstrap_p": "(1 + count(bootstrap median <= 0)) / 10001",
+    "holm_family": [
+      "N32_vs_N16",
+      "N64_vs_N16"
+    ],
+    "holm_m": 2,
+    "decision_role": "descriptive only; does not change per-seed N64 gates"
   }
 }

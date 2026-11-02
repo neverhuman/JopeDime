@@ -24,13 +24,20 @@
     "dope_receipt_sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2"
   },
   "failure": {
+    "H58_base_source_sha256": "abacf87c9efc116e3923e918e5521a14bf25be789b10d5245fc9186309df6fbb",
     "H58_decompressed_bytes": 181937,
+    "H58_decompressed_equals_training_cv_envelope": true,
     "H58_decompressed_sha256": "9dd0ed4e72bcbccce5baadfcd7fd381334065499d7ebda3f1109f0f7dc832330",
+    "H58_envelope_source_sha256": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
     "H58_gzip_file_sha256": "6bd7cb7bbd9f9d7794a4b83587fb32986871013faa8a57b16f7d0a436eba07e1",
     "H58_gzip_manifest_sha256": "6bd7cb7bbd9f9d7794a4b83587fb32986871013faa8a57b16f7d0a436eba07e1",
+    "H58_prepare_cache_source_sha256": "be0ab8b8aefee8aca2fe96417b6b009d7d4fdaf8c50c02c0eca03db4ad2bd386",
+    "classification": "RUNNER_DEFECT_FALSE_POSITIVE",
     "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "expected_semantics": "gzip payload equals pinned training_cv_envelope(raw), not raw table bytes",
     "identity_matches_gzip_manifest": true,
     "identity_matches_selected": false,
+    "raw_selected_table_hash_matches": true,
     "selected_source_file_bytes": 180817,
     "selected_source_file_sha256": "c7397751da253966dd6f2ff04eb384cd5ee0c412ec8634d90440d5727dceedcb",
     "selected_train_record_sha256": "c7397751da253966dd6f2ff04eb384cd5ee0c412ec8634d90440d5727dceedcb",
@@ -51,7 +58,14 @@
     "online_cores": 128,
     "swap_free_bytes": 26611712
   },
-  "next_step": "No efficacy conclusion. Repair/revalidate the pinned H58 TRAIN cache seam under owner direction; any new science run requires a new H-wave ID because H212 allowed one attempt.",
+  "next_step": "Merge the envelope identity fix and attempt-001 correction, then launch owner-authorized D1 attempt-002 from the exact merged commit by 09:30Z.",
+  "owner_deviation_D1": {
+    "attempt": "attempt-002",
+    "authorized_at_utc": "2026-11-02T08:30:00Z",
+    "authorized_by": "ENG H-wave loop owner nudge hw_t0125_luna.md",
+    "scope": "same preregistered design and guards; fresh attempt root; no attempt-001 receipt mutation",
+    "status": "AUTHORIZED; AWAITING FIX MERGE"
+  },
   "preregistration": {
     "merged_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
     "pr": 1762,
@@ -68,7 +82,7 @@
     "train_treatment_utility_scored": 0,
     "validation_baseline_contexts": 91
   },
-  "reason": "First TRAIN JTT1 source failed content identity check before proposal generation or candidate evaluation; registered one attempt is consumed and no retry is authorized.",
+  "reason": "Attempt 001 stopped on a runner false-positive: it compared H58 CV-envelope bytes to the selected raw TRAIN table SHA instead of verifying raw-table identity and envelope equality.",
   "schema": "jope.h212.pool-width-closeout/v1",
   "status": "INCOMPLETE",
   "treatment": {
