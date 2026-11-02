@@ -1,18 +1,36 @@
-# H211 — guarded GPU improvement-head rerun
+# H211 — INCOMPLETE after host-load guard
 
-**PREREGISTERED, NOT RUN.** H209 passed its native baseline but stopped before
-training when SIGALRM reentered buffered resource logging. H211 preserves the
-same scientific hypothesis and gates, adds the tested reentry guard, and uses
-fresh seeds and a new one-hour, one-attempt budget.
+The single attempt stopped at 2026-11-02 08:15:53 UTC: load1 **106.101** exceeded
+**86.7** (85% of 102 effective CPUs). This is **INCOMPLETE, no scientific verdict**.
+The hypothesis was never evaluated on A; no retry or budget reset occurred.
 
-[PREREG.md](PREREG.md) states the full protocol and explicit owner authorization
-to launch after an exact-head PR is open. [manifest.json](manifest.json) pins
-inputs, source and resource limits; [fold_manifest.json](fold_manifest.json)
-freezes the splits. [provenance.json](provenance.json) retains real-S3 provenance.
-No H209 budget is reset and no existing attempt is resumed.
+- Executed source: `ddfca6624f0a1977116ec39edc7fa40c65b7dca1`.
+- Worker time: 1,249.643 s; supervisor time: 1,255.022 s.
+- Optimizer updates: **2,724 / 3,840**; 21 complete saved heads and B panels,
+  plus 36 updates of the next head whose state was not persisted.
+- Native91 utilities passed bit-exact at **1.1377941898164525**.
+- No global fitted-head/selection lock; no A scoring. Gain, adoption, Elo and U4
+  are unmeasured (null with reasons in [metrics.json](metrics.json)).
+- Per-head loss/gradient/state-change proofs remained in RAM until the global
+  lock and were lost on abort. Saved checkpoint bytes do not replace those proofs.
+- At refusal: CPU32%, available RAM79,493,812,224B, disk93.183325%, RSS1,950,064,640B;
+  the instantaneous load1 limit was the failing gate. GPU and lock are released.
 
-Actual CUDA training: 30 heads / 3,840 updates on xbabe2 GPU0, disk<=93.8%,
-one numeric thread, exclusive qualification lock. Native91 parity precedes
-updates; all B choices lock before A. No result or serving qualification exists.
-Acceptance: both H209/H211 CPU suites, Ruff, five records gates, source pins,
-exact PR identity, then fresh GPU/resource/attempt admission. No self-merge.
+[PREREG.md](PREREG.md) preserves the hypothesis/setup: frozen r882/DOPE, separate
+GPU utility-delta head, raw vs B-gated selections and shuffled-label control on
+historical real-S3 TRAIN pools. The execution code, seeds and folds are unchanged.
+H213 is a separately authorized prospective study with fresh seeds and a sustained
+load rule; H211 is not resumed. No scientific rejection or serving promotion is inferred.
+
+Custody: **46 exact-VersionId S3 objects re-read and rehashed**, including 21 heads
+and 21 B panels; **56 runtime archive members recovered and individually rehashed**.
+No new A evaluation, model inference or B outcome analysis was performed for closeout.
+
+`s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H211/astra-t0040/closeout-t0125/manifest.json`
+
+VersionId `YCYXKEun40dkPlWnxeC.8lG6nqWnx3hq`; SHA256
+`0d36f6b637eb37caf528ffc758c8f60bf2eff159575b2a513946cb51b576afb6`.
+
+[manifest.json](manifest.json) binds custody; historical source hashes refer to the
+executed commit. Local small receipts remain in
+`/home/ubuntu/jope-rescue-20260921/h211-astra/closeout-t0125/`.
