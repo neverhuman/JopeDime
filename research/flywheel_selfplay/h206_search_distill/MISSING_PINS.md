@@ -1,62 +1,44 @@
-# H206 execution bindings still required
+# H206 qualification bindings
 
-This file distinguishes implemented CPU interfaces from qualified scientific
-execution. Conditional launch authority was received in gbw_0108_gpu_fused_redteam_codex.md;
-no H206 execution is admitted and no scientific run has started. Model/data/
-native91/study/runtime gates remain unresolved.
+[bindings.json](bindings.json) records recovered identities. The original r882
+checkpoint, four parameter assets, native S1 binary, existing native91 reference
+and ledger-registration snapshot have non-null S3 VersionIds with exact-version
+GET/body-SHA verification. Model/reference bytes match the retained H183 custody
+members and merged H170 pins. No weights or dataset payloads are in Git.
 
-| Binding | Current identity / exact missing artifact | Owner / next action |
-| --- | --- | --- |
-| Initialization checkpoint | r882 body SHA0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64 from h170_onecycle/manifest.json; original S3 bucket/key/VersionId plus exact-version GET receipt absent here | H206 model qualification; use the original r882 custody, never H204 fitted weights |
-| Full encoder/teacher state | encoder_state_sha256 and anchor_state_sha256 for the actual loaded r882 initialization are unmeasured; source hashes do not substitute | H206: verified factory loading the exact checkpoint and transitive asset closure, then state_hash |
-| Encoder source/assets | inherited cpu_exact_fused.py source is pinned by this source manifest; model/projection/DOPE asset ObjectRefs and host package closure still require qualification | H206 model factory; historical h170_onecycle/manifest.json is a starting inventory, not current runtime proof |
-| TRAIN role contract | normalized h206-role-contract-v1 plus h206-exclusion-contract-v1 ObjectRefs/hashes; per-cell FIT/B/A, reference205 families, dataset-family links and all protected aliases | rd_argon now owns the released regression data seam (COORD06:25); TEL/sol_v1_jrb01 remain separate JRB owners |
-| Original TRAIN/cut | original allowed TRAIN key+VersionId+bodySHA and two-fold membership-byte SHA, before any body fetch | Regression producer supplies approved TRAIN-only JTT1; full-JRB metadata/worker flags are not invented |
-| Native tensor transport | versioned NPZ/specs for vec256(1,256), col_lm(1,64,17), original tokens(1,10,32), mask(1,10), program(256,412), projection(256,16), ctx_feat(1,584), scale(1), base_prior_cost(1,256), sos_prior(1,256,2), revealed_indices/raw_f/gate(1,4) | Regression producer + H206 qualified encoder/acquisition adapter; tokens/masks alone cannot unfreeze DOPE |
-| Program/feature acquisition | approved parent/champion banks, TRAIN-derived landmark48, feature-name/W1 projection identities and byte-linked256-DSL features | H206: propose_slate invokes the real inherited generator; its fixture produces256 distinct proposals, but no production bank is read |
-| Native environment/input qualification | S1 binary e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8 and metric source7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45 known; real admitted-context receipts still absent | H206: bounded actual TRAIN qualification after source/input admission |
-| Native format seam | nq0 TRAIN body ->10 query rows derived exclusively from TRAIN X, zero query y; min50 TRAIN/min25 per fold, p<=512, cells<=16M | Source/Rust-parser review and a generated CPU fixture succeed; raw first shape refusal and timing-inclusive comparison failure retained. Exact scientific replay excludes only timestamp/duration observations |
-| Native91 reference | best_dev_checkpoint.json SHA30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a known; approved exact-version91-vector/pick reference and genuine full r882 replay on target are missing | H206: 91/91 and mean1.1377941898164525 exact BEFORE candidate scoring; never replace with fixture proof |
-| Cumulative ledger | canonical campaign-ledger ObjectRef/path and reconciled setup/helper/fixture costs missing; BudgetLedger refuses to create/reset it | H206/coordinator: reconcile retained costs against the original400CPU-core-hour/18GPU-hour caps; no renewed budget. All observed H206 GPU/scientific updates remain0 |
-| GPU phase/study binding | actual device-reservation supervisor, three-seed/five-fold/four-arm study wiring and calibrated global B selection/lock remain to bind and qualify | H206; implemented CPU round rejects CUDA models, run_round never calls A; evaluate_fixed requires a durable checkpoint-bound B lock for A |
-| Queue/resource release | later explicit owner queue-release; source/prereg/open-PR identities; fresh GPU exclusivity, <=88% before40GB reserve, >=50GB headroom and <93.8% after reserve | Existing H206 queue and disk steward. No source or fixture result releases it |
+The actual r882 checkpoint has338 tensors. Its full/anchor/DOPE tensor-map hashes
+are recorded using the H206 state-hash algorithm. This is a weights-only CPU
+decode, not a constructed-Fused state check or native91 scorer replay. The DOPE
+map hash uses a different algorithm from the historical c51a56d0 composite; the
+historical identity is not replaced. Native91 binds91 contexts/19 families,
+ordered utility/pick hashes and mean1.1377941898164525. It is the existing,
+repeatedly selected DL-Val reference, not independent scientific evidence.
 
-Scope consumes hash-pinned normalized role documents; it is not an admission
-producer or a replacement for the regression producer's trusted proof.
-A new actor/slate does not become a new independent family. Round manifests
-separate component-level novelty, repeated contexts, new native calls and cache
-hits. Frozen scope/reference identities survive model and optimizer resume.
+The study identity is the already preregistered H206 / H206-QUEUED-PREREG with
+fixed seeds, folds, arms, architecture and budgets. Its configuration is hashed;
+there is no runtime qualification receipt. Queue/source/model/data/study gates
+remain closed and no scientific optimizer or GPU worker has started.
 
-The controlled integration uses original inherited Fused methods with generated
-fixture state, a controlled subprocess native boundary, and real AdamW updates.
-It does not load the real r882/DOPE weights or a real dataset. The separate actual
-Rust protocol fixture also uses generated data, not scientific TRAIN evidence.
+| Missing artifact or qualification | Owner / exact next action |
+| --- | --- |
+| Approved normalized h206-role-contract-v1 and h206-exclusion-contract-v1 ObjectRefs, FIT/B/A family/component roles and global protected aliases | rd_argon regression producer + H206 consumer: provide trusted hash-bound roles before fetching any body; TEL/sol_v1_jrb01 retain JRB ownership |
+| Original allowed S3 TRAIN key/VersionId/bodySHA; matching two-fold cut, derived nq0 JTT1 and row/cut/dtype witness | rd_argon: corrected same-original-TRAIN packet; merged H2051758 is held and its historical local replay is not this proof |
+| Versioned vec256(1,256), col_lm(1,64,17), tokens(1,10,32), mask(1,10), program(256,412), projection(256,16), ctx_feat(1,584), scale/prior/reveal arrays derived from those same permitted rows | rd_argon + H206 acquisition: tokens alone do not provide the live DOPE ABI; persist and exact-GET verify before any update |
+| Approved parent/champion bank and TRAIN-derived landmark48/feature/W1 identities | H206 acquisition: inherited proposal generation is tested; no production bank/closure has been admitted |
+| Constructed Fused model/anchor state equality and approved transitive package/asset/bank closure | H206 model factory: recovered checkpoint tensor-map hashes are expected identities, not loaded-factory proof; do not instantiate an unfiltered bank as an admission shortcut |
+| Genuine r882 native91 full-vector/pick replay and source-bound scorer/batch/input identities | H206 native qualification: reference ObjectRef, context/pool/table hash list and vector/pick identities are recovered; actual target-host full scorer replay remains NOT_RUN |
+| Complete CUDA supervisor, three-seed/five-fold/four-arm k1/16/64/256 study and fixed calibrated pooled selector | H206 study/controller: CPU round still rejects CUDA. Prereg ID/configuration alone is not runtime implementation or qualification |
+| Authoritative cumulative source/setup/helper/wait/publication CPU costs | H206 canonical coordinator: ledger now REGISTERED at xbabe3:/home/ubuntu/jope_plan/evidence/H206/campaign-ledger.json, accounting UNRECONCILED. Known measured lower bound is preserved; CPU used/remaining stay null and all unmeasured allowance is conservatively held. Reconcile without resetting400CPUh/18GPUh |
+| Receiving source merge and fresh resource admission | Assigned merger super_merger_codex reviews/merges the pin follow-up. H206 launches only from merged qualified source, exclusive3090, <=88% before40GB cache reserve, >=50GB headroom and <93.8% after reserve; no guard relaxation |
 
+The bounded S3 metadata search examined the H206 and H205 experiment prefixes
+without truncation. H206 held only the recovered custody objects; the H205
+corrective source owner remains active under SOURCE/DATA/OPTIMIZER HOLD. No
+qualified H206 TRAIN/role/tensor packet was found there. This is a scoped search,
+not a claim that the whole bucket contains no possible historical input.
 
-## Original S3 body versus native representation
-
-The current native consumer accepts a TRAIN-only JTT1 representation. When the
-original approved object is S3 train.csv, this representation is derived, not
-byte-identical to that CSV. A producer must bind BOTH ObjectRefs and a verified
-row/cut/dtype transformation witness, plus derivation of vec256/col_lm and the
-other consumed arrays from those same permitted rows. A different local teacher
-TRAIN body with an S3 CSV hash attached is not that proof. The current source
-qualification does not establish a CSV-to-native/encoder derivation adapter;
-that binding and its consumer-side verification remain unqualified. Do not
-classify a producer packet as H206-ready until it fulfils this contract.
-
-rd_argon owns the released regression producer. Its current draft feedback is
-check-20261102T0742Z/H205-DRAFT-DATA-BINDING.md: actual same-TRAIN derivation and
-persist/GET-verify BEFORE engine update are required. H206's controlled fixtures
-exercise the persistence-before-update failure case, but do not replace the
-producer's genuine original-body proof. No unmerged producer source is imported.
-
-
-## Conditional launch-window nudge received
-
-gbw_0108_gpu_fused_redteam_codex.md reports an available disk/GPU window and
-authorizes launch after source closure, fresh resources and the other existing
-gates. It does not supply the missing model, original-TRAIN derivation, native91,
-study/GPU-phase or canonical-ledger identities above. Those remain actual holds;
-no model override, fabricated admission or budget reset is permitted. After the
-executor PR is opened, check readiness and report exact unresolved identities.
+Original S3 CSV and derived native JTT1 are different bodies. Attaching a CSV
+hash to an unrelated local teacher does not establish row/cut/tensor derivation.
+Persist teacher outcomes and exact-version readback before learning. Context
+novelty is measured against canonical reference-family components, never CIDs
+alone. Fixture proofs remain distinct from actual model/data qualification.

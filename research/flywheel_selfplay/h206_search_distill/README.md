@@ -38,3 +38,27 @@ Run launch.sh --plan to inspect the queued metadata. --execute remains refused.
 The CPU round interface also refuses CUDA models: the GPU phase controller and
 full study/qualification bindings have not been supplied. No verdict, positive
 lift, completed scientific endpoint or serving promotion is claimed.
+
+## Recovered custody and reproducible source checks
+
+[bindings.json](bindings.json) binds the actual r882 checkpoint/assets, native
+binary, native91 reference and canonical-ledger registration. Every S3 identity
+has an exact-version GET/SHA receipt outside Git under
+`/home/ubuntu/jope_plan/evidence/H206/pins-20261102T0835Z/`.
+The ledger is UNRECONCILED and blocks reservations; it does not grant a new
+budget. [MISSING_PINS.md](MISSING_PINS.md) identifies remaining artifacts/owners.
+
+Run these from the repository root. The integration deliberately requires CUDA
+hidden, one numeric thread per library, and an owned pytest directory outside
+the checkout and `/tmp`. Pytest owns the selected scratch directory.
+
+```bash
+mkdir -p /home/ubuntu/jope_plan/evidence/H206
+H206_TEST_TMP=$(mktemp -d /home/ubuntu/jope_plan/evidence/H206/pytest-review-XXXXXX)
+nice -n 19 env CUDA_VISIBLE_DEVICES= OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=python/src:. python3 -B -m pytest -q -p no:cacheprovider --basetemp="$H206_TEST_TMP" research/flywheel_selfplay/h206_search_distill/test_h206.py
+nice -n 19 ruff check --config python/pyproject.toml research/flywheel_selfplay/h206_search_distill
+nice -n 19 ruff format --check --config python/pyproject.toml research/flywheel_selfplay/h206_search_distill
+```
+
+The explicit Python Ruff configuration uses the repository line-length/style;
+running Ruff with its unrelated root defaults is a different check.
