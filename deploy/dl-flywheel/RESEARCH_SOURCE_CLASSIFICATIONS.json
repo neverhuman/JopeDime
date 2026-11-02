@@ -1,5 +1,37 @@
 {
   "items": {
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py": {
+        "bytes": 2167,
+        "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
+        "classification": {
+          "role": "research",
+          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h231_coswr_gated025_retest/gate.py": {
+        "bytes": 11854,
+        "sha256": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e",
+        "classification": {
+          "role": "research",
+          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h231_coswr_gated025_retest/runner.py": {
+        "bytes": 21390,
+        "sha256": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e",
+        "classification": {
+          "role": "research",
+          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py": {
+        "bytes": 9112,
+        "sha256": "ebbb7644a388437a510d65d405c927346e2151bc454922d2dff72d761059b3bd",
+        "classification": {
+          "role": "research",
+          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+        }
+      },
     "python:deploy/dl-flywheel/_successor_fixture_runner.py": {
       "bytes": 7749,
       "classification": {
@@ -5815,38 +5847,6 @@
         "role": "research"
       },
       "sha256": "c293080c8332b0a507e95545506f3f5e1dccb24903f8c8307bd71030c9b99acc"
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py": {
-      "bytes": 2167,
-      "classification": {
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
-        "role": "research"
-      },
-      "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d"
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/gate.py": {
-      "bytes": 11854,
-      "classification": {
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
-        "role": "research"
-      },
-      "sha256": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e"
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py": {
-      "bytes": 9112,
-      "classification": {
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
-        "role": "research"
-      },
-      "sha256": "ebbb7644a388437a510d65d405c927346e2151bc454922d2dff72d761059b3bd"
-    },
-    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/runner.py": {
-      "bytes": 21390,
-      "classification": {
-        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
-        "role": "research"
-      },
-      "sha256": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e"
     },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
