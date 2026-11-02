@@ -1,7 +1,7 @@
 {
   "schema": "whitepaper.round-throughput.v1",
   "csv_sha256": "a583a4b0790bb2e009adea2f667b62609aa26967b4383101c840d8348317c229",
-  "generator_sha256": "4171511b8550fe8c69e56fe304d7ae9439c30f1e000537f56c3bb5a073bb296a",
+  "generator_sha256": "58b14b2f17e3c25a91511b15a9a2379eae9a9c37e388207e13cf714872a8211c",
   "source_snapshot": {
     "captured_at": "2026-11-02T09:54:33.778963+00:00",
     "round_window": [

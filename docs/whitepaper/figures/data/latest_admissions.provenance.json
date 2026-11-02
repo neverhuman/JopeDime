@@ -1,9 +1,20 @@
 {
   "schema": "whitepaper.latest-admissions-figure/v1",
+  "rendering": {
+    "canvas_inches": [
+      7.0,
+      1.65
+    ],
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "minimum_text_size_pt": 8.5,
+    "axis_label_size_pt": 9,
+    "fixed_canvas_no_tight_crop": true
+  },
   "source_receipt_sha256": "00efb299a509d911ccf4292e8bedf5cf30beb55f991ee5a63bdb083c6daa552d",
   "csv_sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
-  "generator_sha256": "34e4628fb96e776dd56b1266119b676c974eb73a52c8218bff1df85840fa10ff",
-  "figure_sha256": "da1d0b02343868c965c6e6c9a62445f0574dcf9c44e5fe318f936bf4f2981f3e",
+  "generator_sha256": "3e107633e25d8539debe1699560ae4f24dbc400e06b08cd019457d68cb81b73b",
+  "figure_sha256": "2b0a252b545b50ac2462c226b85353be710cd5840142f914bf38dbebc89a5e07",
   "round_window": [
     775,
     3197

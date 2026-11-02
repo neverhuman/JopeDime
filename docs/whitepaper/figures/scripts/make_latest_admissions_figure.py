@@ -12,6 +12,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 from matplotlib.ticker import MaxNLocator
 
 FIGURES = Path(__file__).resolve().parent.parent
@@ -144,20 +145,21 @@ def plot():
         assert all(
             Decimal(old[k]) == Decimal(new[k]) for k in ["candidate_val", "best_val"]
         )
+    font_path = font_manager.findfont("Liberation Serif", fallback_to_default=False)
     plt.rcParams.update(
         {
-            "font.family": "serif",
-            "font.size": 8,
-            "axes.labelsize": 8,
-            "xtick.labelsize": 7.2,
-            "ytick.labelsize": 7.2,
-            "legend.fontsize": 7.2,
+            "font.family": "Liberation Serif",
+            "font.size": 9,
+            "axes.labelsize": 9,
+            "xtick.labelsize": 8.5,
+            "ytick.labelsize": 8.5,
+            "legend.fontsize": 8.5,
             "axes.spines.top": False,
             "axes.spines.right": False,
             "pdf.fonttype": 42,
         }
     )
-    fig, ax = plt.subplots(figsize=(6.8, 2.55))
+    fig, ax = plt.subplots(figsize=(7.0, 1.65))
     ax.scatter(
         [rounds[i] for i in rejected],
         [float(candidates[i]) for i in rejected],
@@ -165,7 +167,7 @@ def plot():
         color="#7c858e",
         alpha=0.45,
         linewidths=0,
-        label=f"Rejected candidates ({len(rejected):,})",
+        label=f"Rejected ({len(rejected):,})",
     )
     ax.step(
         rounds,
@@ -173,7 +175,7 @@ def plot():
         where="post",
         color="#0b5394",
         lw=1.25,
-        label="Retained best (post-decision)",
+        label="Retained best",
     )
     ax.scatter(
         [rounds[i] for i in gains],
@@ -182,7 +184,7 @@ def plot():
         marker="*",
         color="#c92a2a",
         zorder=5,
-        label=f"Accepted strict gains ({len(gains)})",
+        label=f"Strict gains ({len(gains)})",
     )
     ax.scatter(
         [rounds[i] for i in ties],
@@ -193,7 +195,7 @@ def plot():
         edgecolors="#d9480f",
         lw=1,
         zorder=6,
-        label=f"Accepted exact ties ({len(ties)})",
+        label=f"Exact ties ({len(ties)})",
     )
     if gains:
         i = gains[-1]
@@ -202,7 +204,7 @@ def plot():
             xy=(rounds[i], float(bests[i])),
             xytext=(0.64, 0.52),
             textcoords="axes fraction",
-            fontsize=7,
+            fontsize=8.5,
             ha="center",
             arrowprops=dict(arrowstyle="->", color="#c92a2a", lw=0.7),
             bbox=dict(facecolor="white", edgecolor="none", alpha=0.9),
@@ -214,7 +216,7 @@ def plot():
             xy=(rounds[i], float(bests[i])),
             xytext=(0.84, 0.25),
             textcoords="axes fraction",
-            fontsize=7,
+            fontsize=8.5,
             ha="center",
             arrowprops=dict(arrowstyle="->", color="#d9480f", lw=0.7),
             bbox=dict(facecolor="white", edgecolor="none", alpha=0.9),
@@ -225,20 +227,24 @@ def plot():
         xlim=(rounds[0] - 12, rounds[-1] + 12),
     )
     ax.xaxis.set_major_locator(MaxNLocator(nbins=8, integer=True))
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 4, 5, 10]))
     ax.grid(axis="y", alpha=0.22, lw=0.4)
     ax.legend(
-        loc="lower left",
+        loc="lower left", bbox_to_anchor=(0, 1.01),
         frameon=True,
         facecolor="white",
         framealpha=0.9,
         edgecolor="none",
-        ncol=2,
+        ncol=4, borderaxespad=0, columnspacing=1.2, handlelength=1.5,
     )
     fig.tight_layout(pad=0.5)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     provenance = dict(
         schema="whitepaper.latest-admissions-figure/v1",
+        rendering=dict(canvas_inches=[7.0, 1.65], font_family="Liberation Serif",
+                       font_file_sha256=sha(Path(font_path)), minimum_text_size_pt=8.5,
+                       axis_label_size_pt=9, fixed_canvas_no_tight_crop=True),
         source_receipt_sha256=sha(SOURCE),
         csv_sha256=sha(DATA),
         generator_sha256=sha(Path(__file__)),

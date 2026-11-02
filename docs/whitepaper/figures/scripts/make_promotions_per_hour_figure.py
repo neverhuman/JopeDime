@@ -12,6 +12,8 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
+from matplotlib.ticker import MaxNLocator
 
 FIGURES = Path(__file__).resolve().parent.parent
 DATA = FIGURES / "data/promotions_per_hour.csv"
@@ -142,21 +144,22 @@ total_promos = sum(promos)
 window_rate = Decimal(3600) * total_promos / total_wall
 assert abs(window_rate - rolling_rates[-1]) < Decimal("1e-10")
 
+font_path = font_manager.findfont("Liberation Serif", fallback_to_default=False)
 plt.rcParams.update(
     {
-        "font.family": "serif",
-        "font.size": 8,
-        "axes.labelsize": 8,
-        "xtick.labelsize": 7.2,
-        "ytick.labelsize": 7.2,
-        "legend.fontsize": 7.0,
+        "font.family": "Liberation Serif",
+        "font.size": 9,
+        "axes.labelsize": 9,
+        "xtick.labelsize": 8.5,
+        "ytick.labelsize": 8.5,
+        "legend.fontsize": 8.5,
         "pdf.fonttype": 42,
         "axes.spines.top": False,
         "axes.spines.right": False,
     }
 )
 
-fig, axes = plt.subplots(1, 2, figsize=(6.8, 2.2))
+fig, axes = plt.subplots(1, 2, figsize=(7.0, 1.50))
 
 # Left panel: Promotions per hour over rounds
 axes[0].bar(
@@ -166,7 +169,7 @@ axes[0].bar(
     color="#d0bfff",
     edgecolor="#5f3dc4",
     linewidth=0.5,
-    label="per-round rate",
+    label="per round",
     zorder=2,
 )
 axes[0].plot(
@@ -176,7 +179,7 @@ axes[0].plot(
     color="#5f3dc4",
     ms=2.7,
     lw=1.1,
-    label="logged rolling rate (≤20 rds)",
+    label="rolling (≤20 rds)",
     zorder=4,
 )
 axes[0].axhline(
@@ -184,14 +187,13 @@ axes[0].axhline(
     color="#2b8a3e",
     ls="--",
     lw=0.85,
-    label=f"window rate ({float(window_rate):.1f}/hr)",
+    label=f"window ({float(window_rate):.1f}/hr)",
     zorder=3,
 )
-axes[0].set_title("Training-program promotions per hour", loc="left", fontsize=8)
+axes[0].set_title("Training-program promotions per hour", loc="left", fontsize=9)
 axes[0].set_xlabel("round (retained window 2644–2663)")
 axes[0].set_ylabel("promotions per hour")
 axes[0].set_ylim(0, max(float(v) for v in round_rates) * 1.18)
-axes[0].legend(loc="upper right", frameon=False, handlelength=1.4)
 
 # Right panel: Candidate validation utility vs recorded best over rounds
 axes[1].plot(
@@ -211,13 +213,12 @@ axes[1].step(
     lw=1.15,
     label="recorded best (round 882)",
 )
-axes[1].set_title("Candidate vs. recorded-best validation", loc="left", fontsize=8)
+axes[1].set_title("Candidate vs. recorded-best validation", loc="left", fontsize=9)
 axes[1].set_xlabel("round (retained window 2644–2663)")
 axes[1].set_ylabel("validation pool utility")
 axes[1].ticklabel_format(axis="y", style="plain", useOffset=False)
 vals = [float(v) for v in candidates + bests]
 axes[1].set_ylim(min(vals) - 0.004, max(vals) + 0.0014)
-axes[1].legend(loc="lower left", frameon=False, handlelength=1.4)
 
 xticks = list(dict.fromkeys([rounds[0], *rounds[5::5], rounds[-1]]))
 for ax in axes:
@@ -225,13 +226,26 @@ for ax in axes:
     ax.set_xlim(rounds[0] - 0.5, rounds[-1] + 0.5)
     ax.grid(axis="y", alpha=0.22, linewidth=0.4)
     ax.set_axisbelow(True)
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 4, 5, 10]))
 
-fig.tight_layout(pad=0.45, w_pad=1.2)
+handles, labels = [], []
+for ax in axes:
+    panel_handles, panel_labels = ax.get_legend_handles_labels()
+    handles.extend(panel_handles)
+    labels.extend(panel_labels)
+fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.52, 1.0),
+           ncol=5, frameon=False, handlelength=1.4, columnspacing=1.1,
+           borderaxespad=0.25)
+axes[0].yaxis.set_major_locator(MaxNLocator(nbins=3, steps=[1, 2, 2.5, 5, 10]))
+fig.tight_layout(pad=0.45, w_pad=1.2, rect=(0, 0, 1, 0.83))
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 
 provenance = {
     "schema": "whitepaper.promotions-per-hour/v1",
+    "rendering": {"canvas_inches": [7.0, 1.50], "font_family": "Liberation Serif",
+                  "font_file_sha256": sha(Path(font_path)), "minimum_text_size_pt": 8.5,
+                  "axis_label_size_pt": 9, "fixed_canvas_no_tight_crop": True},
     "source_csv": "figures/data/live_development.csv",
     "source_csv_sha256": sha(PARENT_CSV),
     "parent_provenance": "figures/data/live_development.provenance.json",
