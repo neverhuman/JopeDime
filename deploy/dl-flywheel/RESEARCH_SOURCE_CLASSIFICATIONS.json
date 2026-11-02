@@ -5581,6 +5581,30 @@
         "role": "research",
         "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/analysis.py": {
+      "bytes": 13529,
+      "sha256": "dfa22e9e7165d9e1356619e3ea7635122dde9190088bc5b969bbd7ddfa0a1824",
+      "classification": {
+        "role": "research",
+        "reason": "H216 CPU inference-only random-init lottery with B-locked strict-margin selection (q10>0.005), family-shuffled B placebo, diagnostic ORACLE_A ceiling, frozen DOPE/r882 and zero updates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/parents.py": {
+      "bytes": 1151,
+      "sha256": "7072249c7b471240f2b561df1540bcc3b43eea6c9172d95c91e9ab70def5330a",
+      "classification": {
+        "role": "research",
+        "reason": "H216 CPU inference-only random-init lottery with B-locked strict-margin selection (q10>0.005), family-shuffled B placebo, diagnostic ORACLE_A ceiling, frozen DOPE/r882 and zero updates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/runner.py": {
+      "bytes": 31108,
+      "sha256": "f7326b7df4fb21bb036507c3d0da2ddcb7fb5179b51047624af446be2ca38b43",
+      "classification": {
+        "role": "research",
+        "reason": "H216 CPU inference-only random-init lottery with B-locked strict-margin selection (q10>0.005), family-shuffled B placebo, diagnostic ORACLE_A ceiling, frozen DOPE/r882 and zero updates; no serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
