@@ -7,10 +7,7 @@ use std::{
     collections::BTreeMap,
     fs,
     io::{Read, Write},
-    os::{
-        fd::AsRawFd,
-        unix::{fs::MetadataExt, net::UnixStream},
-    },
+    os::unix::{fs::MetadataExt, net::UnixStream},
     path::{Path, PathBuf},
 };
 
@@ -503,27 +500,21 @@ impl WorkerIdentity {
     }
 }
 
-pub fn peer_credentials(stream: &UnixStream) -> Result<libc::ucred> {
-    let mut peer = std::mem::MaybeUninit::<libc::ucred>::uninit();
-    let mut length = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
-    ensure!(
-        // SAFETY: stream owns a live socket; peer is aligned writable ucred storage
-        // and length advertises its exact capacity. Both success and returned size are
-        // checked before the peer value escapes; the syscall retains neither pointer.
-        unsafe {
-            libc::getsockopt(
-                stream.as_raw_fd(),
-                libc::SOL_SOCKET,
-                libc::SO_PEERCRED,
-                peer.as_mut_ptr().cast(),
-                &mut length,
-            )
-        } == 0
-            && length as usize == std::mem::size_of::<libc::ucred>(),
-        "resident peer credentials unavailable"
-    );
-    // SAFETY: getsockopt succeeded and returned the exact ucred size.
-    Ok(unsafe { peer.assume_init() })
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PeerCredentials {
+    pub pid: libc::pid_t,
+    pub uid: libc::uid_t,
+    pub gid: libc::gid_t,
+}
+
+pub fn peer_credentials(stream: &UnixStream) -> Result<PeerCredentials> {
+    let peer = nix::sys::socket::getsockopt(stream, nix::sys::socket::sockopt::PeerCredentials)
+        .map_err(|_| anyhow::anyhow!("resident peer credentials unavailable"))?;
+    Ok(PeerCredentials {
+        pid: peer.pid(),
+        uid: peer.uid(),
+        gid: peer.gid(),
+    })
 }
 
 pub fn connect_rank(

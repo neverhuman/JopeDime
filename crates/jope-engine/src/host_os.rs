@@ -64,9 +64,8 @@ mod tests {
 
     #[test]
     fn identity_matches_libc() {
-        // SAFETY: geteuid and getppid have no preconditions.
-        let (euid, ppid) = unsafe { (libc::geteuid(), libc::getppid()) };
-        assert_eq!(effective_uid(), euid);
-        assert_eq!(parent_pid(), ppid as u32);
+        let (euid, ppid) = (nix::unistd::geteuid(), nix::unistd::getppid());
+        assert_eq!(effective_uid(), euid.as_raw());
+        assert_eq!(parent_pid(), ppid.as_raw() as u32);
     }
 }
