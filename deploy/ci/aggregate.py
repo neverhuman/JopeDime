@@ -158,7 +158,7 @@ def verify(mapping, plan, needs, receipts, expected):
     if plan.get("schema") != "jope.ci-plan/v1":
         reject("unsupported path plan")
     try:
-        planned, _ = plan_module.classify(plan["paths"], plan["event"])
+        planned, _ = plan_module.classify(plan["paths"], plan["event"], plan.get("trusted_pr", True))
         if planned != plan.get("lanes"):
             reject("path plan differs from declared filters")
     except (ValueError, KeyError, TypeError) as exc:
@@ -173,7 +173,8 @@ def verify(mapping, plan, needs, receipts, expected):
         if not planned[lane]:
             if result != "skipped" or any(unit in receipts for unit in lane_units(lane)):
                 reject(f"{lane}: exclusion requires skipped job and no execution receipt")
-            inventory[lane] = {"status": "skipped-by-path", "tests": None}
+            reason = "skipped-by-trust-policy" if lane == "hygiene" and plan.get("event") == "pull_request" and not plan.get("trusted_pr", True) else "skipped-by-path"
+            inventory[lane] = {"status": reason, "tests": None}
             continue
         if result != "success":
             reject(f"{lane}: job result {result}")

@@ -41,6 +41,11 @@ class BrowserRoutingTests(unittest.TestCase):
         self.assertTrue(all(lanes.values()))
         self.assertTrue(all(gates.values()))
 
+    def test_fork_pr_excludes_only_privileged_hygiene_lane(self):
+        lanes, _ = aggregate.plan_module.classify(['deploy/ci/ci-plan.py'], 'pull_request', trusted_pr=False)
+        self.assertFalse(lanes['hygiene'])
+        self.assertTrue(all(selected for name, selected in lanes.items() if name != 'hygiene'))
+
 
 class AggregateTests(unittest.TestCase):
     def setUp(self):
@@ -300,6 +305,18 @@ class AggregateTests(unittest.TestCase):
         self.assertEqual([], self.verify()['errors'])
         self.plan['paths'] = ['crates/jope-cli/src/main.rs']
         self.assertEqual('failed', self.verify()['status'])
+
+    def test_fork_pr_trust_exclusion_is_explicit_and_aggregates(self):
+        self.expected['event'] = 'pull_request'
+        self.plan.update(event='pull_request', trusted_pr=False, paths=['deploy/ci/ci-plan.py'])
+        self.plan['lanes'], _ = aggregate.plan_module.classify(self.plan['paths'], 'pull_request', trusted_pr=False)
+        for unit, candidates in self.receipts.items():
+            candidates[0][1]['event'] = 'pull_request'
+        self.receipts.pop('hygiene')
+        self.needs['hygiene']['result'] = 'skipped'
+        result = self.verify()
+        self.assertEqual([], result['errors'])
+        self.assertEqual('skipped-by-trust-policy', result['lanes']['hygiene']['status'])
 
     def test_panel_adapter_changes_require_python_execution(self):
         for name in ('_panel.py', 'test_panel.py', 'xgboost_adapter.py',
