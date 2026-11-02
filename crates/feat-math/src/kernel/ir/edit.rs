@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
-pub enum EditKind {
+pub enum IrEditKind {
     NoOp,
     ReplaceHead {
         site: usize,
@@ -343,3 +343,6 @@ pub fn legal_edits(
     }
     Ok(result)
 }
+
+/// Compatibility alias for the domain-specific `IrEditKind` type.
+pub type EditKind = IrEditKind;

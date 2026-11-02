@@ -35,13 +35,13 @@ impl ExactF64 {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum Value {
+pub enum CanonicalValue {
     Int(i64),
     Float(ExactF64),
     Bool(bool),
     Text(String),
 }
-impl Value {
+impl CanonicalValue {
     pub fn from_legacy(value: &ParamValue) -> Result<Self> {
         let result = match value {
             ParamValue::Int(v) => Self::Int(*v),
@@ -234,3 +234,6 @@ impl ProgramIdV2 {
         })
     }
 }
+
+/// Compatibility alias for the domain-specific `CanonicalValue` type.
+pub type Value = CanonicalValue;

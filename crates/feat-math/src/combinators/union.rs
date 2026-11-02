@@ -145,7 +145,7 @@ impl ExactScalar {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Action {
+pub enum UnionAction {
     Column(ColumnRef),
     Union(Vec<usize>),
     Route {
@@ -681,3 +681,6 @@ impl Program {
         Ok(matrix)
     }
 }
+
+/// Compatibility alias for the domain-specific `UnionAction` type.
+pub type Action = UnionAction;

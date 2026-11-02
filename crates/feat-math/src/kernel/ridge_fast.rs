@@ -36,7 +36,7 @@ fn standardized(x: &Rows, n: usize, p: usize, means: &[f64], scales: &[f64]) -> 
 /// Why a certified route refuses an input. The caller then refits with the legacy authority,
 /// [`crate::heads::RidgeModel::fit`], whose result is always defined.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Refusal {
+pub enum RidgeRefusal {
     Shape(&'static str),
     NonFinite(&'static str),
     /// A pivot before its square root was not finite or fell below `lambda / 2`; in exact
@@ -403,6 +403,9 @@ fn dot(a: &[f64], b: &[f64]) -> f64 {
     }
     sum
 }
+
+/// Compatibility alias for the domain-specific `RidgeRefusal` type.
+pub type Refusal = RidgeRefusal;
 
 #[cfg(test)]
 mod tests {
