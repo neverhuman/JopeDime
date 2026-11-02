@@ -1539,6 +1539,9 @@ crates/jope-records/src/test_inventory.rs
 crates/jope-records/tests/records/claims.rs
 crates/jope-records/tests/records/cli.rs
 crates/jope-records/tests/records/dispositions.rs
+crates/jope-records/tests/records/dispositions/mutations.rs
+crates/jope-records/tests/records/dispositions/stages.rs
+crates/jope-records/tests/records/dispositions/synthetic_identity.rs
 crates/jope-records/tests/records/elo_history.rs
 crates/jope-records/tests/records/elo_history/committed_record.rs
 crates/jope-records/tests/records/elo_history/decoding.rs
