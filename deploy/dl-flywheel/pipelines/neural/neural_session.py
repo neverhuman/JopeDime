@@ -15,6 +15,7 @@ from jope_flywheel.program_io import need,create,bound,sha,tick,remaining
 from jope_flywheel.batch_stream import BatchStream,Waiting
 from jope_flywheel.s3_library import BUCKET,PREFIX
 from neural_core import ProposalTrie,context_batch,to_device,evaluation,optimizer_update,checkpoint,normalize_contexts
+from neural_loop import MandatoryResolver,measured_games,game_summary
 
 
 def publish_progress(root,obj):
@@ -22,91 +23,6 @@ def publish_progress(root,obj):
     fd=os.open(root,os.O_RDONLY)
     try:os.fsync(fd)
     finally:os.close(fd)
-
-
-class MandatoryResolver:
-    """Only a completed, independently read-back S3 result returns measured data."""
-    def __init__(self,queue,observer,worker,inputs,store,deadline,bindings):
-        self.queue,self.observer,self.worker,self.inputs,self.store,self.deadline=queue,observer,worker,inputs,store,deadline
-        self.rows=[];self.bindings=bindings
-    def resolve(self,row,decoded,checkpoint_sha256,step):
-        variant=row['data_run']['variant_identity'];phase='training'if row['partition']=='train'else'validation'
-        cid=row['data_run']['context_id'];binding=self.bindings[cid]
-        # Use the pinned preflight descriptor to capture the emission first.
-        # ProgramObserver then performs the fresh role/input check inside its
-        # durable observed/error boundary, so role drift cannot erase attempts.
-        req={'variant_identity':variant,'context':binding['context'],'descriptor_sha256':binding['descriptor_sha256'],
-            'dsl':decoded['program']['dsl'],'phase':phase,'checkpoint_sha256':checkpoint_sha256,
-            'step':step,'producer':'PolicyLM-autoregressive-finite-trie-v1'}
-        result={'phase':phase,'data_run_id':row['data_run_id'],'context_id':cid,'variant_identity':variant,
-                'program_sha256':decoded['program']['program_sha256'],'state':'observing','actual_execution':False,'published':False,'cache_hit':False}
-        self.rows.append(result)
-        try:
-            first=self.observer.observe(req);result['observation']=first;result['evaluation_key']=first['evaluation_key']
-            if first['state']=='ready':result['cache_hit']=True;last=first
-            else:
-                need(first['state']=='pending','only pending work or verified ready')
-                ev=self.worker.once();result['evaluation_work']=ev
-                need(ev['state']=='completed'and ev['stage']=='evaluate'and ev['job']=='gp-evaluate-'+first['evaluation_key'],'exact evaluation must complete')
-                er=json.loads(bound(ev['receipt']));result['actual_execution']=er['state']=='executed'
-                pub=self.worker.once();result['publication_work']=pub
-                need(pub['state']=='completed'and pub['stage']=='publish'and pub['job']=='gp-publish-'+first['evaluation_key'],'exact publication must complete')
-                pr=json.loads(bound(pub['receipt']));result['published']=pr['state']=='published'
-                last=self.observer.observe(req);result['readback']=last
-                need(last['state']=='ready','exact versioned S3 readback required before benchmark use')
-            tick(self.deadline);entry=self.store.lookup(first['evaluation_key'])
-            need(entry is not None,'authoritative result must remain readable')
-            ref=self.store.client.head_object(Bucket=BUCKET,Key=PREFIX+first['evaluation_key']+'/record.json')
-            record={'bucket':BUCKET,'key':PREFIX+first['evaluation_key']+'/record.json','version_id':ref.get('VersionId'),
-                    'sha256':ref.get('Metadata',{}).get('sha256'),'bytes':ref['ContentLength']}
-            body,_=self.store.get_version(record);need(json.loads(body)==entry,'exact wrapper reference matches verified result')
-            result.update(state='ready',measurement=last['measurement'],record=record)
-            return result
-        except BaseException as error:
-            result.update(state='failed',error=type(error).__name__+': '+str(error)[:1000],numeric_score=None)
-            raise
-    def counts(self):
-        return {'model_generated_programs':len(self.rows),'novel_programs_executed':sum(r['actual_execution']for r in self.rows),
-                'cache_hits':sum(r['cache_hit']for r in self.rows),'published_results':sum(r['published']for r in self.rows),
-                'failed_programs':sum(r['state']=='failed'for r in self.rows)}
-
-
-def measured_games(result,pool,seed):
-    """Actual same-context geometric RMSE comparisons, no model predictions."""
-    need(result['state']=='ready','only verified ready results have games')
-    cid=result['context_id'];candidates=sorted(pool[cid],key=lambda x:x['program_sha256'])
-    need(candidates,'frozen completed fixed-panel comparison pool')
-    def metric(row):
-        values=row['measurement']['inner_fold_rmse'];need(len(values)==2 and all(math.isfinite(v)and v>=0 for v in values),'two actual RMSEs')
-        # log form avoids product overflow; zeros are represented exactly as -inf.
-        return -math.inf if min(values)==0 else sum(math.log(v)for v in values)/2
-    random_pick=random.Random(seed).choice(candidates);best=min(candidates,key=lambda x:(metric(x),x['program_sha256']))
-    own=metric(result);games=[]
-    for kind,other in [('random_fixed_panel',random_pick),('best_fixed_panel',best)]:
-        theirs=metric(other);win=0.5 if own==theirs else float(own<theirs)
-        games.append({'context_id':cid,'data_run_id':result['data_run_id'],'phase':result['phase'],'opponent':kind,
-             'program_sha256':result['program_sha256'],'opponent_program_sha256':other['program_sha256'],
-             'outcome':win,'metric':'geometric mean of two measured inner-fold RMSEs; lower is better',
-             'rmse':result['measurement']['inner_fold_rmse'],'opponent_rmse':other['measurement']['inner_fold_rmse'],
-             'result_ref':result['record'],'opponent_ref':other['record'],'comparison_seed':seed})
-    return games
-
-
-def game_summary(games):
-    answer={}
-    for opponent in ('random_fixed_panel','best_fixed_panel'):
-        phases={}
-        for phase in ('training','validation'):
-            rows=[r for r in games if r['opponent']==opponent and r['phase']==phase]
-            rating=1500.
-            for r in rows:rating+=16.*(r['outcome']-1./(1.+10.**((1500.-rating)/400.)))
-            phases[phase]={'games':len(rows),'contexts':len({r['context_id']for r in rows}),
-                'wins':sum(r['outcome']==1 for r in rows),'ties':sum(r['outcome']==.5 for r in rows),'losses':sum(r['outcome']==0 for r in rows),
-                'score_rate':None if not rows else sum(r['outcome']for r in rows)/len(rows),
-                'elo':None if not rows else rating,'elo_definition':'Policy starts1500; fixed opponent1500; K16; chronological games, qualification-only',
-                'independent_test_claim':False}
-        answer[opponent]=phases
-    return answer
 
 
 def continue_training(config,loaded,batch_manifest,pool,resolver,root,deadline,config_sha,*,resume,progress_extra=None,fresh_admission=None):
