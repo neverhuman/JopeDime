@@ -1,0 +1,31 @@
+{
+  "wave": "H232",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H232",
+    "status": "COMPLETE",
+    "arms": [
+      "r882",
+      "CONTROL",
+      "LION",
+      "LION_LR3"
+    ],
+    "seeds": [
+      232101,
+      232102,
+      232103
+    ],
+    "optimizer_updates": 1800,
+    "complete_cells": 15,
+    "baseline_mean": 1.1377941898164525,
+    "primary_dlval": "summarize(DL-Val91 policy-mixture panel): contrasts {ARM_minus_r882, ARM_minus_CONTROL} with per_seed_gain, median_gain, ci95, positive_seeds, p_one_sided, holm_p, advance; median_elo, elo_ci95",
+    "secondary_oof": "same summary on the 1,219-context family OOF panel",
+    "descriptive_unconstrained": "B-best step without gates",
+    "selections": "per cell",
+    "step40_drift": "per arm",
+    "verdict": "ADVANCE iff any of LION/LION_LR3 advances on primary_dlval, else NO_ADVANCE"
+  }
+}
