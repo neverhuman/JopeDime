@@ -237,13 +237,19 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
     args.client_plan.write_text(json.dumps(plan), encoding="utf-8")
 
     class ShiftedTime:
-        calls = 0
+        client_finished = False
+        phase = 0
 
         @staticmethod
         def monotonic():
-            ShiftedTime.calls += 1
             now = time.monotonic()
-            return now if ShiftedTime.calls == 1 else now + 2
+            if not ShiftedTime.client_finished:
+                return now
+            if ShiftedTime.phase == 0:
+                ShiftedTime.phase = 1
+                return now - 2
+            ShiftedTime.phase = 2
+            return now + 2
 
         @staticmethod
         def sleep(seconds):
@@ -255,6 +261,7 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
         process = original_popen(command, *positional, **kwargs)
         if command[0] == str(client):
             assert process.wait(timeout=5) == 0
+            ShiftedTime.client_finished = True
         return process
 
     drain_calls = []
