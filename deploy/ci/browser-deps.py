@@ -122,6 +122,35 @@ def download(package, path, archives):
         time.sleep(BACKOFF_SECONDS * attempt)
 
 
+def hermetic_fontconfig(runtime, fontcache):
+    config = ET.Element("fontconfig")
+    ET.SubElement(config, "dir").text = str(runtime / "usr/share/fonts")
+    ET.SubElement(config, "cachedir").text = str(fontcache)
+    base = runtime / "etc/fonts/fonts.conf"
+    if not base.exists():
+        return config  # Generic non-browser dependency locks need no font rules.
+    dropins = runtime / "etc/fonts/conf.d"
+    sources = [base] + (sorted(dropins.glob("*.conf")) if dropins.is_dir() else [])
+    for path in sources:
+        if path.name in ("50-user.conf", "51-local.conf"):
+            continue
+        if path.is_symlink() and Path(os.readlink(path)).is_absolute():
+            target = Path(os.readlink(path))
+            if not target.is_relative_to("/usr/share/fontconfig/conf.avail") or ".." in target.parts:
+                raise ValueError("font configuration escapes the verified runtime")
+            resolved = (runtime / target.relative_to("/")).resolve(strict=True)
+        else:
+            resolved = path.resolve(strict=True)
+        if not resolved.is_relative_to(runtime.resolve()):
+            raise ValueError("font configuration escapes the verified runtime")
+        for node in ET.parse(resolved).getroot():
+            if node.tag in ("match", "alias", "selectfont"):
+                if any(child.tag in ("include", "dir", "cachedir") for child in node.iter()):
+                    raise ValueError("font rule imports ambient configuration")
+                config.append(node)
+    return config
+
+
 def prepare(cache, receipt, lock_path=None):
     if platform.machine() != "x86_64":
         raise ValueError("Ubuntu browser dependency lock is amd64 only")
@@ -175,9 +204,7 @@ def prepare(cache, receipt, lock_path=None):
         fontcache = cache / ("font-cache-" + identity)
         fontcache.mkdir(exist_ok=True)
         fontconfig = cache / ("fontconfig-" + identity + ".xml")
-        config = ET.Element("fontconfig")
-        ET.SubElement(config, "dir").text = str(runtime / "usr/share/fonts")
-        ET.SubElement(config, "cachedir").text = str(fontcache)
+        config = hermetic_fontconfig(runtime, fontcache)
         ET.ElementTree(config).write(fontconfig, encoding="utf-8", xml_declaration=True)
         proof = {"schema": "jope.browser-dependencies/v1", "lock_sha256": identity,
                  "packages": len(paths), "package_bytes": sum(p["size"] for p in lock["packages"]),

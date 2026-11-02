@@ -122,8 +122,13 @@ def validate(output, audit_exit, expected_manifest):
     require(manifest["schema"] == "jope.audit-product-input/v1", "unknown input manifest")
     for field in ("source_sha", "checkout_sha", "tree_sha"):
         require(re.fullmatch(r"[0-9a-f]{40}", manifest[field]) is not None, f"invalid {field}")
-    require(manifest["source_sha"] == manifest["checkout_sha"],
-            "logical audit source must equal the captured checkout")
+    source_tree = manifest.get("source_tree_sha")
+    if source_tree is None:
+        require(manifest["source_sha"] == manifest["checkout_sha"],
+                "distinct audit identities require a reviewed source tree attestation")
+        source_tree = manifest["tree_sha"]  # Original same-commit v1 receipts.
+    require(isinstance(source_tree, str) and re.fullmatch(r"[0-9a-f]{40}", source_tree) is not None
+            and source_tree == manifest["tree_sha"], "reviewed audit source tree differs from checkout")
     archive = regular(output / "input/source.tar")
     require(digest(archive) == manifest["archive_sha256"], "input archive changed during audit")
     source = output / "input/source"
@@ -167,7 +172,7 @@ def validate(output, audit_exit, expected_manifest):
         "audit_exit": audit_exit, "score": report["score"], "minimum_score": 85,
         "hard_findings": hard, "soft_findings": soft,
         "source_sha": manifest["source_sha"], "checkout_sha": manifest["checkout_sha"],
-        "tree_sha": manifest["tree_sha"], "file_count": len(files),
+        "tree_sha": manifest["tree_sha"], "source_tree_sha": source_tree, "file_count": len(files),
         "manifest_sha256": expected_manifest, "input_reverified_after_audit": True,
         "policy_fingerprint": fingerprint,
         "reports": {name: digest(output / name) for name in REPORTS},

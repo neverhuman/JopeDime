@@ -147,13 +147,15 @@ class AuditLaneTests(unittest.TestCase):
         self.auditor.write_text(FAKE.lstrip())
         self.auditor.chmod(0o755)
 
-    def run_audit(self, mode, report_only=False, output=None, exceptions="pass"):
+    def run_audit(self, mode, report_only=False, output=None, exceptions="pass", source_sha=None):
         self.output = output or self.base / ("report-" + mode + ("-report-only" if report_only else ""))
         env = dict(os.environ, JANKURAI_BIN=str(self.auditor), AUDIT_TEST_MODE=mode,
                    AUDIT_TEST_EXCEPTIONS=exceptions,
                    AUDIT_TEST_EXCEPTION_ARGS=str(self.base / "exception-args.txt"))
         for key in ("JOPE_SOURCE_SHA", "GITHUB_STEP_SUMMARY", "JOPE_AUDIT_REPORT_ONLY"):
             env.pop(key, None)
+        if source_sha is not None:
+            env["JOPE_SOURCE_SHA"] = source_sha
         if report_only:
             env["JOPE_AUDIT_REPORT_ONLY"] = "1"
         return subprocess.run(["bash", "ops/ci/jankurai.sh", str(self.output)],
@@ -174,6 +176,34 @@ class AuditLaneTests(unittest.TestCase):
         self.assertFalse(verification["audit_passed"])
         self.assertNotEqual(0, self.run_audit("policy", report_only=True).returncode)
         self.assertNotEqual(0, self.run_audit("advisory", report_only=True).returncode)
+
+    def test_synthetic_merge_identity_requires_the_reviewed_tree(self):
+        reviewed = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.repo, text=True).strip()
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                        "commit", "--allow-empty", "-qm", "synthetic identical-tree checkout"], cwd=self.repo, check=True)
+        result = self.run_audit("pass", source_sha=reviewed)
+        self.assertEqual(0, result.returncode, result.stderr)
+        manifest = json.loads((self.output / "input/SOURCE_MANIFEST.json").read_text())
+        self.assertNotEqual(manifest["source_sha"], manifest["checkout_sha"])
+        self.assertEqual(manifest["source_tree_sha"], manifest["tree_sha"])
+        spec = importlib.util.spec_from_file_location("merge_audit_verifier", ROOT / "deploy/ci/verify-audit-report.py")
+        verifier = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(verifier)
+        manifest_path = self.output / "input/SOURCE_MANIFEST.json"
+        invalid = dict(manifest)
+        invalid.pop("source_tree_sha")
+        manifest_path.write_text(json.dumps(invalid))
+        with self.assertRaisesRegex(ValueError, "attestation"):
+            verifier.validate(self.output, 0, hashlib.sha256(manifest_path.read_bytes()).hexdigest())
+        invalid["source_tree_sha"] = "0" * 40
+        manifest_path.write_text(json.dumps(invalid))
+        with self.assertRaisesRegex(ValueError, "source tree differs"):
+            verifier.validate(self.output, 0, hashlib.sha256(manifest_path.read_bytes()).hexdigest())
+        (self.repo / "README.md").write_text("different source tree\n")
+        subprocess.run(["git", "add", "README.md"], cwd=self.repo, check=True)
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                        "commit", "-qm", "unreviewed tree"], cwd=self.repo, check=True)
+        self.assertNotEqual(0, self.run_audit("pass", output=self.base / "wrong-tree", source_sha=reviewed).returncode)
 
     def test_honest_failed_gate_retains_failure_and_reports(self):
         result = self.run_audit("failed")

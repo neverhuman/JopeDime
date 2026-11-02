@@ -1,7 +1,7 @@
 {
   "schema": "jope.chromium-ubuntu24.04-dependencies/v1",
   "architecture": "amd64",
-  "source": "Ubuntu noble signed InRelease package indices; apt solver with empty installed status, no recommends; payload URLs pinned to official Ubuntu snapshot 20261023T000000Z; package versions, sizes and SHA-256 values unchanged",
+  "source": "Base packages from Ubuntu noble signed InRelease indices and apt solver with empty installed status, no recommends; payload URLs pinned to official Ubuntu snapshot 20261023T000000Z. fonts-dejavu-core 2.37-8 additionally pinned to the size and SHA-256 published at https://packages.ubuntu.com/noble/all/fonts-dejavu-core/download for complete reproducible UI glyph coverage.",
   "packages": [
     {
       "url": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2%7e24.04.1_amd64.deb",
@@ -644,6 +644,12 @@
       "filename": "liblzma5_5.6.1+really5.4.5-1ubuntu0.4_amd64.deb",
       "size": 127704,
       "sha256": "5bcf5da2339331e21d3f42a831e82c61c54c6b2f29804010e8d59abd0ae52167"
+    },
+    {
+      "url": "https://snapshot.ubuntu.com/ubuntu/20261023T000000Z/pool/main/f/fonts-dejavu/fonts-dejavu-core_2.37-8_all.deb",
+      "filename": "fonts-dejavu-core_2.37-8_all.deb",
+      "sha256": "40049660c194f3b8a2541fc7369efebb10e9f94bdac836a2f38fafedd10fa73a",
+      "size": 835172
     }
   ]
 }
