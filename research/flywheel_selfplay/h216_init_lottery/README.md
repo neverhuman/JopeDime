@@ -44,6 +44,12 @@ Per-seed equal-family utility gains on `A` (`205` families):
 - **`PLACEBO` adopted a non-`r882` initialization in `7 / 15` cells** (because family-shuffling broke correlated family tail risk across candidates on `B`), resulting in nearly `4x` higher family harm on `A` (`47 / 205 = 22.93%` vs `12 / 205 = 5.85%` for `LOTTERY16`) and lower median utility gain (`+0.000991` vs `+0.004441`).
 - **Diagnostic `ORACLE_A` ceiling:** Even choosing the best single untrained adapter per `(seed, outer)` in hindsight on `A_outer` yields `+0.028345` (`95% CI [-0.000624, +0.061806]`) while harming `74 / 205` (`36.10%`) families. A single random `adapter_10tok` initialization induces family-heterogeneous cost shifts that help some families while hurting others; unlike multi-adapter cost averaging (`RENS10`), picking one untrained ticket cannot capture the variance-reduction benefit of an ensemble.
 
+## Red-team notes (H-wave routine, 2026-11-02 ~11:05Z)
+
+- **Deviation D1 (process, disclosed):** the full 3-seed run was launched from the committed prereg `b3bdbd847` while PR #1809 was still open, instead of after its merge (hw_t0325 step 2). `PREREG.md`, `runner.py`, `analysis.py`, `parents.py` and `test_h216.py` are byte-identical between `b3bdbd847` and the closeout commit `5ff5ced54`; only README, manifest and metrics changed. The B-selection lock was written before any A read. No effect on the verdict.
+- **Shared partition caveat:** all three replicate seeds reuse the H183/H213 outer-fold manifest by design, so seed agreement is not independent replication of the fold split. All 3 non-r882 adoptions fell on outer fold 1 (one per seed), which is a fold effect, not seed-robust evidence.
+- **Checks:** DOPE c51a56d0 before/after, native91 bit-exact 1.1377941898164525, 0 optimizer updates, no sealed/holdout/meta-test rows, no GPU. Ties reject; the verdict stands as NO_ADVANCE.
+
 ## Verdict and next step
 
 - **Verdict:** **NO_ADVANCE** (`advance_candidate = false`, `serving_promotion = false`).
