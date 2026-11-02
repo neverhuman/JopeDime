@@ -1,0 +1,74 @@
+{
+  "schema": "jope.research-audit-manifest/v1",
+  "created_utc": "2026-11-02T03:48:54.297359+00:00",
+  "kind": "operational_audit_not_new_scientific_study",
+  "source_snapshot_main": "8ddc9b42683ceec96583bb0cf14cf2ebb2f75701",
+  "git_destination": "research/flywheel_selfplay/research_restore_20261101/",
+  "archive": {
+    "verified_utc": "2026-11-02T03:48:02.898880+00:00",
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/research_restore_20261101/20261102T0348Z/audit-evidence-20261102T0348Z.tar.gz",
+    "version_id": "JOFHG6njidka2P3I66HXWMeEpUXz5T63",
+    "bytes": 4577305,
+    "sha256": "3d4dac2dbc156f40017a6e4d133b9bf5511fdac4dba8eacffc9fdd9c2ceb0c89",
+    "create_only": true,
+    "exact_version_full_payload_sha256_verified": true,
+    "archive_members_verified": 42,
+    "s3_put": {
+      "ETag": "\"03cebacaac3381eba7e6ea7fcabc316d\"",
+      "ChecksumCRC64NVME": "j7YAcrRV/A4=",
+      "ChecksumType": "FULL_OBJECT",
+      "ServerSideEncryption": "AES256",
+      "VersionId": "JOFHG6njidka2P3I66HXWMeEpUXz5T63"
+    },
+    "scope": "audit evidence archive only; no scientific training result or full-corpus validation"
+  },
+  "summary_files": [
+    {
+      "path": "README.md",
+      "bytes": 2436,
+      "sha256": "2934d22268f849ddb45619b99f5d80014c99a17e66b1eb6779e40ef8c233bc32"
+    },
+    {
+      "path": "WORKPLAN.md",
+      "bytes": 33103,
+      "sha256": "d9aeea692be3380e74b1a32af780efb9860fe4da14340c9c09b573873f73f6d6"
+    },
+    {
+      "path": "fleet/READINESS.md",
+      "bytes": 5568,
+      "sha256": "3c45a4526fc34c0373b0de5d5b3799cd1a205cec0752c5d1680e925ded79cbe4"
+    },
+    {
+      "path": "history/HISTORY_AUDIT_RECEIPT.json",
+      "bytes": 1770,
+      "sha256": "bf4cfefbec3aae8a982d2231521b54b325b5703ae79a98e428544ede632eb8a0"
+    },
+    {
+      "path": "history/RESEARCH_SYNTHESIS.md",
+      "bytes": 15011,
+      "sha256": "aa678c1aa2269232efd87dc2911f5079ef75891146adeeefe9bed0e4e609f311"
+    },
+    {
+      "path": "history/research-history-index.json",
+      "bytes": 825091,
+      "sha256": "ecdabd8533cc82acef4036be98a9456bff71477ce0c6f40dba758b246d3af312"
+    },
+    {
+      "path": "metrics.json",
+      "bytes": 2250,
+      "sha256": "c707246ae5ba90ad8c0a1d04b9436263369e2bf9ae1da47147a4d39c611f6540"
+    },
+    {
+      "path": "s3/REPORT.md",
+      "bytes": 10311,
+      "sha256": "0910e6bda1fb46dbed49eaf5d8d058a5fd75aee9ef7ea16419f9fef11b24d876"
+    }
+  ],
+  "limits": [
+    "Full S3 corpus not rehashed; five source/evidence HEADs are metadata verification only.",
+    "This audit archive was independently exact-version downloaded and every member hash checked.",
+    "Source readiness, scientific launch, optimizer progress, result, PR and merged-main are separate milestones.",
+    "Live source owners and launch budgets remain unchanged; no serving or live-loop changes."
+  ]
+}
