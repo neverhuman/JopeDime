@@ -454,6 +454,8 @@ crates/jope-campaigns/src/bin/jope_capacity.rs
 crates/jope-campaigns/src/bin/jope_causal_evidence.rs
 crates/jope-campaigns/src/bin/jope_causal_pair_repair.rs
 crates/jope-campaigns/src/bin/jope_compile_cache.rs
+crates/jope-campaigns/src/bin/jope_compile_cache/build.rs
+crates/jope-campaigns/src/bin/jope_compile_cache/replay.rs
 crates/jope-campaigns/src/bin/jope_dlgp_best5.rs
 crates/jope-campaigns/src/bin/jope_dlgp_best5_worker.rs
 crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor.rs

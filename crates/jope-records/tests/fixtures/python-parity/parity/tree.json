@@ -1244,6 +1244,8 @@
   "crates/jope-campaigns/src/bin/jope_causal_evidence.rs": true,
   "crates/jope-campaigns/src/bin/jope_causal_pair_repair.rs": true,
   "crates/jope-campaigns/src/bin/jope_compile_cache.rs": true,
+  "crates/jope-campaigns/src/bin/jope_compile_cache/build.rs": true,
+  "crates/jope-campaigns/src/bin/jope_compile_cache/replay.rs": true,
   "crates/jope-campaigns/src/bin/jope_dlgp_best5.rs": true,
   "crates/jope-campaigns/src/bin/jope_dlgp_best5_worker.rs": true,
   "crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor.rs": true,
