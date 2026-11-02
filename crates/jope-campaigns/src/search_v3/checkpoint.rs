@@ -368,24 +368,24 @@ fn publish_exact_file(path: &Path, bytes: &[u8], read_only: bool) -> Result<(), 
             path.display()
         ));
     }
-    let temporary = path.with_extension(format!("tmp.{}", std::process::id()));
+    let staging_path = path.with_extension(format!("tmp.{}", std::process::id()));
     {
         let mut file = OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(&temporary)
-            .map_err(io_error("create immutable temporary file"))?;
+            .open(&staging_path)
+            .map_err(io_error("create immutable publication staging file"))?;
         file.write_all(bytes)
-            .map_err(io_error("write immutable temporary file"))?;
+            .map_err(io_error("write immutable publication staging file"))?;
         file.sync_all()
-            .map_err(io_error("fsync immutable temporary file"))?;
+            .map_err(io_error("fsync immutable publication staging file"))?;
     }
-    match fs::hard_link(&temporary, path) {
+    match fs::hard_link(&staging_path, path) {
         Ok(()) => {}
         Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
             let existing = fs::read(path).map_err(io_error("read concurrent immutable file"))?;
             if existing != bytes {
-                let _ = fs::remove_file(&temporary);
+                let _ = fs::remove_file(&staging_path);
                 return Err(format!(
                     "immutable publication conflict at {}",
                     path.display()
@@ -393,14 +393,15 @@ fn publish_exact_file(path: &Path, bytes: &[u8], read_only: bool) -> Result<(), 
             }
         }
         Err(error) => {
-            let _ = fs::remove_file(&temporary);
+            let _ = fs::remove_file(&staging_path);
             return Err(format!(
                 "publish immutable file {}: {error}",
                 path.display()
             ));
         }
     }
-    fs::remove_file(&temporary).map_err(io_error("remove immutable temporary file"))?;
+    fs::remove_file(&staging_path)
+        .map_err(io_error("remove immutable publication staging file"))?;
     if read_only {
         #[cfg(unix)]
         {
