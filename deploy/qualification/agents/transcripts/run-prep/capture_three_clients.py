@@ -262,7 +262,8 @@ def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
     return None
 
 
-NORMAL_EXIT_DRAIN_MAX_SECONDS = 2.0
+# MCP recorders can need several seconds after client EOF to flush their receipt.
+NORMAL_EXIT_DRAIN_MAX_SECONDS = 15.0
 
 
 def _group_has_live_members(pgid: int) -> bool:

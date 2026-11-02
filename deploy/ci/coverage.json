@@ -4269,6 +4269,16 @@
       "lanes": [],
       "scope": "REL-07 PR1436 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 Codex normal-exit recorder drain regression. Synthetic same-process-group recorder fixture only; no named client or candidate execution."
+    },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "discovery": {
         "kind": "python-family"
