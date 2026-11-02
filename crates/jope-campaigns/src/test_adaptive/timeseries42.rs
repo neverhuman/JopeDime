@@ -791,7 +791,7 @@ fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<String> {
     Ok(sha256_bytes(&bytes))
 }
 
-fn replace_stale_artifact(path: &Path, bytes: &[u8], stale_stem: &str) -> Result<String> {
+fn replace_outdated_artifact(path: &Path, bytes: &[u8], outdated_stem: &str) -> Result<String> {
     if path.exists() {
         if fs::read(path)? == bytes {
             return Ok(sha256_bytes(bytes));
@@ -799,19 +799,19 @@ fn replace_stale_artifact(path: &Path, bytes: &[u8], stale_stem: &str) -> Result
         let prior = fs::read(path)?;
         let prior_sha256 = sha256_bytes(&prior);
         let archive = path.with_file_name(format!(
-            "{stale_stem}.stale-{}.v1.json",
+            "{outdated_stem}.outdated-{}.v1.json",
             &prior_sha256[..16]
         ));
         immutable_or_equal(&archive, &prior)?;
-        fs::remove_file(path).with_context(|| format!("remove stale {}", path.display()))?;
+        fs::remove_file(path).with_context(|| format!("remove outdated {}", path.display()))?;
     }
     immutable_write(path, bytes)?;
     Ok(sha256_bytes(bytes))
 }
 
-fn write_current_json<T: Serialize>(path: &Path, value: &T, stale_stem: &str) -> Result<String> {
+fn write_current_json<T: Serialize>(path: &Path, value: &T, outdated_stem: &str) -> Result<String> {
     let bytes = canonical_json(value)?;
-    replace_stale_artifact(path, &bytes, stale_stem)
+    replace_outdated_artifact(path, &bytes, outdated_stem)
 }
 
 fn load_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<T> {
@@ -3398,7 +3398,7 @@ fn load_generation_slots(
         || manifest.shards.len() != SHARDS
     {
         bail!(
-            "TimeSeries42 generation artifact is stale or invalid for {} generation {}",
+            "TimeSeries42 generation artifact is outdated or invalid for {} generation {}",
             spec.dataset_hash,
             generation
         );
@@ -3686,15 +3686,15 @@ fn final_result_path(root: &Path, dataset_hash: &str) -> PathBuf {
     dataset_root(root, dataset_hash).join("final-result.v1.json")
 }
 
-fn archive_stale_final_result(path: &Path) -> Result<()> {
+fn archive_outdated_final_result(path: &Path) -> Result<()> {
     if !path.is_file() {
         return Ok(());
     }
     let bytes = fs::read(path)?;
     let sha256 = sha256_bytes(&bytes);
-    let archive = path.with_file_name(format!("final-result.stale-{}.v1.json", &sha256[..16]));
+    let archive = path.with_file_name(format!("final-result.outdated-{}.v1.json", &sha256[..16]));
     immutable_or_equal(&archive, &bytes)?;
-    fs::remove_file(path).with_context(|| format!("remove stale {}", path.display()))?;
+    fs::remove_file(path).with_context(|| format!("remove outdated {}", path.display()))?;
     Ok(())
 }
 
@@ -3739,7 +3739,7 @@ fn load_reusable_dataset_result(
             Ok(Some(result))
         }
         Ok(_) | Err(_) => {
-            archive_stale_final_result(&final_path)?;
+            archive_outdated_final_result(&final_path)?;
             Ok(None)
         }
     }
@@ -3882,7 +3882,7 @@ fn load_reusable_gen30_dataset_result(
     {
         Ok(Some(result))
     } else {
-        archive_stale_final_result(&final_result_path(root, &spec.dataset_hash))?;
+        archive_outdated_final_result(&final_result_path(root, &spec.dataset_hash))?;
         Ok(None)
     }
 }
@@ -4160,7 +4160,7 @@ fn load_reusable_winall_dataset_result(
     {
         Ok(Some(result))
     } else {
-        archive_stale_final_result(&final_result_path(root, &spec.dataset_hash))?;
+        archive_outdated_final_result(&final_result_path(root, &spec.dataset_hash))?;
         Ok(None)
     }
 }
@@ -4813,7 +4813,7 @@ fn rebuild_summary(
             &manifest.release_binary_sha256,
         ) {
             bail!(
-                "TimeSeries42 dataset result is stale for {}",
+                "TimeSeries42 dataset result is outdated for {}",
                 spec.dataset_hash
             );
         }
@@ -5826,7 +5826,7 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
     }
 
     #[test]
-    fn stale_cancelled_jobs_are_retryable_not_terminal_failures() {
+    fn outdated_cancelled_jobs_are_retryable_not_terminal_failures() {
         let error = retryable_scq_stall_error(
             "job",
             "was already cancelled and has no local shard receipt",
@@ -6232,7 +6232,7 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
     }
 
     #[test]
-    fn base_generation_loader_rejects_stale_artifacts() {
+    fn base_generation_loader_rejects_outdated_artifacts() {
         let dir = tempdir().unwrap();
         let spec = test_spec(0.5);
         let campaign_sha256 = "a".repeat(64);
@@ -6240,7 +6240,7 @@ dependency diagnostics:\n  xbabe1: smoke TimeSeries42 staged node xbabe1: smoke 
         let error = load_generation_slots(dir.path(), "base-run", &campaign_sha256, &spec, 0)
             .unwrap_err()
             .to_string();
-        assert!(error.contains("stale or invalid"));
+        assert!(error.contains("outdated or invalid"));
     }
 
     #[test]
