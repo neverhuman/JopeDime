@@ -284,7 +284,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evergreen.py",
       "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
       "path": "deploy/dl-flywheel/jope_flywheel/evergreen.py",
-      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+      "sha256": "6b114674baac1c05b351f44ea57b6037d352105002eb9393cfa894603f3bc5bd"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
@@ -6807,6 +6807,24 @@
       "origin_sha256": "fc7a3e521f403a09c69bc33728577679fd5a9d7bd2a1af5fe03be95a5bece29c",
       "path": "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_baseline.py",
       "sha256": "fa5d6205250e369b89b68383e7cb2fc11477eac72522df3065fdf1e7e27a9deb"
+    },
+    {
+      "origin": "FASTLANE t205 shared implementation extracted from canonical evergreen.py",
+      "origin_sha256": "3ef89eae37adfad250c6d5a3ea875c9c65273138b0c306796aee97cab7dc6169",
+      "path": "deploy/dl-flywheel/jope_flywheel/evergreen_source.py",
+      "sha256": "3ef89eae37adfad250c6d5a3ea875c9c65273138b0c306796aee97cab7dc6169"
+    },
+    {
+      "origin": "FASTLANE t205 shared implementation extracted from canonical evergreen.py",
+      "origin_sha256": "d05d4674cbba3238723f1e34ea8be69e6d8d3ee4ad728ed3b057c23b81f69e07",
+      "path": "deploy/dl-flywheel/jope_flywheel/evergreen_recipes.py",
+      "sha256": "d05d4674cbba3238723f1e34ea8be69e6d8d3ee4ad728ed3b057c23b81f69e07"
+    },
+    {
+      "origin": "FASTLANE t205 shared implementation extracted from canonical evergreen.py",
+      "origin_sha256": "1c72a512b04e1d6aaaff0b6eed10805b1b961dffdb914b5c05eaab1cde330a3c",
+      "path": "deploy/dl-flywheel/jope_flywheel/evergreen_expansion.py",
+      "sha256": "1c72a512b04e1d6aaaff0b6eed10805b1b961dffdb914b5c05eaab1cde330a3c"
     }
   ],
   "schema": "jope.flywheel-source-map/v1",
