@@ -22,7 +22,7 @@ const HISTORY_ENTRIES: usize = 1000;
 compile_error!("Linux history-file flags are only verified for x86_64 and aarch64");
 
 /// Client help/dispatch wiring belongs to TUI-09.
-pub const HISTORY_HELP: &str = "History keeps up to 1,000 entries in $JOPEDIME_HOME/history (0600). Inline JSON objectives over 1,024 bytes are omitted. To clear it, close the client and remove that history file.";
+pub const HISTORY_HELP: &str = "History keeps up to 1,000 entries in $JOPEDIME_HOME/history (0600). Login commands and inline JSON objectives over 1,024 bytes are omitted. To clear it, close the client and remove that history file.";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug, PartialEq, Eq)]
@@ -30,7 +30,6 @@ pub enum ComposerAction {
     None,
     Submit(String),
     ExitRequested,
-    Interrupt,
     Redraw,
 }
 
@@ -360,6 +359,10 @@ impl Composer {
             Event::Key(key) if key.kind != KeyEventKind::Release => key,
             _ => return Ok(ComposerAction::None),
         };
+        // Exit takes precedence over completion, history search, and unsent text.
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            return Ok(ComposerAction::ExitRequested);
+        }
         if let Some(action) = self.search_key(key)? {
             return Ok(action);
         }
@@ -414,12 +417,6 @@ impl Composer {
                     return Ok(ComposerAction::ExitRequested);
                 }
                 self.edit(self.cursor..self.next(), "")?;
-            }
-            KeyCode::Char('c') if ctrl => {
-                if self.text.is_empty() {
-                    return Ok(ComposerAction::Interrupt);
-                }
-                self.set_text("")?;
             }
             KeyCode::Char('w') if ctrl => self.edit(self.word_back(true)..self.cursor, "")?,
             KeyCode::Char('u') if ctrl => self.edit(self.home()..self.cursor, "")?,
@@ -761,6 +758,9 @@ fn remember(text: &str) -> bool {
     }
     let command = text.trim_start_matches(['\\', '/']);
     let name = command.split_whitespace().next().unwrap_or("");
+    if name.eq_ignore_ascii_case("login") {
+        return false;
+    }
     if name.eq_ignore_ascii_case("objective")
         || name.eq_ignore_ascii_case("fitness")
         || text.starts_with('{')
@@ -837,6 +837,12 @@ mod pty;
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn login_input_is_not_persisted_in_history() {
+        assert!(!super::remember("/login accidentally-pasted-credential"));
+        assert!(!super::remember("\\login https://example.test"));
+        assert!(super::remember("/open data.csv"));
+    }
     use super::*;
     use ratatui::crossterm::event::KeyEvent;
     #[cfg(target_os = "linux")]
@@ -938,14 +944,17 @@ mod tests {
         );
         assert_eq!(
             key(&mut c, KeyCode::Char('c'), KeyModifiers::CONTROL),
-            ComposerAction::Interrupt
+            ComposerAction::ExitRequested
         );
         c.set_text("e\u{301}x").unwrap();
         key(&mut c, KeyCode::Home, KeyModifiers::NONE);
         key(&mut c, KeyCode::Char('d'), KeyModifiers::CONTROL);
         assert_eq!(c.text(), "x");
-        key(&mut c, KeyCode::Char('c'), KeyModifiers::CONTROL);
-        assert_eq!(c.text(), "");
+        assert_eq!(
+            key(&mut c, KeyCode::Char('c'), KeyModifiers::CONTROL),
+            ComposerAction::ExitRequested
+        );
+        assert_eq!(c.text(), "x");
         c.set_text("one two three").unwrap();
         key(&mut c, KeyCode::Char('b'), KeyModifiers::ALT);
         assert_eq!(&c.text()[c.cursor_byte()..], "three");
@@ -953,6 +962,29 @@ mod tests {
         assert_eq!(&c.text()[c.cursor_byte()..], "two three");
         key(&mut c, KeyCode::Char('f'), KeyModifiers::ALT);
         assert_eq!(&c.text()[c.cursor_byte()..], " three");
+    }
+    #[test]
+    fn ctrl_c_exits_with_a_draft_completion_or_history_search() {
+        let mut c = Composer::default();
+        c.set_text("unsent draft").unwrap();
+        assert_eq!(
+            key(&mut c, KeyCode::Char('c'), KeyModifiers::CONTROL),
+            ComposerAction::ExitRequested
+        );
+        assert_eq!(c.text(), "unsent draft");
+        c.set_text("\\o").unwrap();
+        key(&mut c, KeyCode::Tab, KeyModifiers::NONE);
+        assert!(c.completion().is_some());
+        assert_eq!(
+            key(&mut c, KeyCode::Char('c'), KeyModifiers::CONTROL),
+            ComposerAction::ExitRequested
+        );
+        key(&mut c, KeyCode::Char('r'), KeyModifiers::CONTROL);
+        assert!(c.search.is_some());
+        assert_eq!(
+            key(&mut c, KeyCode::Char('c'), KeyModifiers::CONTROL),
+            ComposerAction::ExitRequested
+        );
     }
     #[test]
     fn completion_cycles_original_token_and_replaces_quoted_suffix() {
@@ -1312,7 +1344,8 @@ mod tests {
             assert_eq!(typed[field], after[field], "{field}");
         }
         assert!(after["events"].as_u64().unwrap() >= typed["events"].as_u64().unwrap() + 18);
-        session.type_text("\x03\\o\t").unwrap();
+        // Clear both draft lines with editing keys; Ctrl-C now exits.
+        session.type_text("\x05\x15\x7f\x15\\o\t").unwrap();
         let menu = snapshot(&mut session, 3);
         assert!(!menu["menu"].is_null());
         std::thread::sleep(Duration::from_millis(440));
@@ -1321,7 +1354,7 @@ mod tests {
             assert_eq!(menu[field], menu_after[field], "{field}");
         }
         assert!(menu_after["events"].as_u64().unwrap() >= menu["events"].as_u64().unwrap() + 18);
-        session.type_text("\x03\x04").unwrap();
+        session.type_text("\x03").unwrap();
         let _ = session
             .wait_for_text("COMPOSER_RESTORED", Duration::from_secs(10))
             .unwrap();

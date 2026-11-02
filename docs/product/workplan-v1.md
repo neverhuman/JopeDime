@@ -938,7 +938,7 @@ Develop against the TUI-11 fake transport.
 **Do:** Wire the terminal to the real client:
 - the draft `RunSpec` edited by draft commands, each validated by a dry run;
 - `\run`;
-- the Ctrl-C ladder and quit semantics from spec §6.5;
+- immediate Ctrl-C exit and quit semantics from spec §6.5 (owner direction, 2026-11-01);
 - `jopedime attach` replay from the watermark;
 - the header showing the engine mode.
 

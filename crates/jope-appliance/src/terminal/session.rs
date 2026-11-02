@@ -13,19 +13,19 @@ use jope_client::{
 use ratatui::{
     backend::CrosstermBackend,
     crossterm::{
-        event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
+        event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
         terminal,
     },
-    layout::{Constraint, Layout},
-    text::Line,
-    widgets::{Paragraph, Widget},
-    Terminal, TerminalOptions, Viewport,
+    Terminal,
 };
 use std::{
     io::{self, IsTerminal},
     path::PathBuf,
     str::FromStr,
-    sync::mpsc,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc, Arc,
+    },
     thread,
     time::{Duration, Instant},
 };
@@ -96,8 +96,18 @@ struct Session {
     event_sender: mpsc::Sender<PublicEvent>,
     activity: String,
     message: Option<String>,
-    ctrl_c_at: Option<Instant>,
     exit_requested: bool,
+    screen: crate::terminal::screen::Screen,
+    cloud_events: mpsc::Receiver<Vec<String>>,
+    cloud_sender: mpsc::Sender<Vec<String>>,
+    login_cancel: Option<Arc<AtomicBool>>,
+    run_lists: mpsc::Receiver<anyhow::Result<(Vec<crate::terminal::runs::Entry>, String)>>,
+    run_list_sender: mpsc::Sender<anyhow::Result<(Vec<crate::terminal::runs::Entry>, String)>>,
+    cloud_busy: Arc<AtomicBool>,
+    auto_sync: Option<(RunId, (String, String))>,
+    last_sync: Instant,
+    synced_terminal: mpsc::Receiver<RunId>,
+    synced_terminal_sender: mpsc::Sender<RunId>,
 }
 
 impl Session {
@@ -108,7 +118,12 @@ impl Session {
         version: String,
     ) -> anyhow::Result<Self> {
         let (event_sender, events) = mpsc::channel();
+        let (cloud_sender, cloud_events) = mpsc::channel();
+        let (run_list_sender, run_lists) = mpsc::channel();
+        let (synced_terminal_sender, synced_terminal) = mpsc::channel();
         let history = home.join("history");
+        let mut screen = crate::terminal::screen::Screen::default();
+        screen.cloud_label = crate::cloud::account_label();
         let composer = crate::terminal::composer::Composer::with_history(history)?;
         Ok(Self {
             client,
@@ -121,46 +136,125 @@ impl Session {
             event_sender,
             activity: "Type \\help for commands".into(),
             message: None,
-            ctrl_c_at: None,
             exit_requested: false,
+            screen,
+            cloud_events,
+            cloud_sender,
+            login_cancel: None,
+            run_lists,
+            run_list_sender,
+            cloud_busy: Arc::new(AtomicBool::new(false)),
+            auto_sync: None,
+            last_sync: Instant::now(),
+            synced_terminal,
+            synced_terminal_sender,
         })
     }
 
     fn run(&mut self) -> anyhow::Result<()> {
         let width = terminal::size().map(|size| size.0).unwrap_or(80);
-        let inline = !crate::terminal::line_mode::required(
+        let fullscreen = !crate::terminal::line_mode::required(
             false,
             std::env::var("TERM").ok().as_deref(),
-            std::env::var_os("NO_COLOR").is_some(),
+            false, // NO_COLOR controls styling; it does not disable the full-screen UI.
             width,
         );
-        let guard = crate::terminal::restore::TerminalGuard::acquire(inline)?;
-        if !inline {
+        let guard = if fullscreen {
+            crate::terminal::restore::TerminalGuard::acquire_fullscreen()?
+        } else {
+            crate::terminal::restore::TerminalGuard::acquire(false)?
+        };
+        if !fullscreen {
             return self.line_mode(&guard);
         }
-        let mut terminal = Terminal::with_options(
-            CrosstermBackend::new(io::stdout()),
-            TerminalOptions {
-                viewport: Viewport::Inline(8),
-            },
-        )?;
+        let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
         let mut last_draw = None;
         loop {
             if guard.signal().is_some() {
+                guard.leave_inline()?;
+                self.leave();
                 return Ok(());
             }
             let width = terminal::size().map(|size| size.0).unwrap_or(80);
-            if width < 40 {
+            if width < 40 || terminal::size().is_ok_and(|(_, rows)| rows < 12) {
                 terminal.clear()?;
                 drop(terminal);
                 guard.leave_inline()?;
+                let retained = self.screen_lines();
+                crate::terminal::line_mode::LineMode::new(io::stdout()).transcript(&retained)?;
                 return self.line_mode(&guard);
             }
+            while let Ok(result) = self.run_lists.try_recv() {
+                if let Some(browser) = &mut self.screen.browser {
+                    match result {
+                        Ok((entries, notice)) => browser.replace(entries, notice),
+                        Err(error) => browser.notice = format!("Refresh failed: {error:#}"),
+                    }
+                }
+                last_draw = None;
+            }
+            self.tick_sync();
+            while let Ok(lines) = self.cloud_events.try_recv() {
+                for line in lines {
+                    self.screen.push(&line);
+                }
+                self.screen.cloud_label = crate::cloud::account_label();
+                last_draw = None;
+            }
             while let Ok(event) = self.events.try_recv() {
-                self.on_event(event, width, &mut terminal)?;
+                for line in self.handle_event(event, usize::from(width)) {
+                    self.screen.push(&line);
+                }
+                last_draw = None;
             }
             if event::poll(INPUT_LATENCY)? {
                 let input = event::read()?;
+                last_draw = None;
+                if matches!(&input, Event::Key(key) if key.kind != KeyEventKind::Release && key.code == KeyCode::Left)
+                    && self.composer.text().is_empty()
+                    && self.screen.browser.is_none()
+                {
+                    self.refresh_runs();
+                    continue;
+                }
+                let exit_key = matches!(&input, Event::Key(key) if key.modifiers.contains(KeyModifiers::CONTROL) && (key.code == KeyCode::Char('c') || (key.code == KeyCode::Char('d') && self.composer.text().is_empty())));
+                if self.screen.browser.is_some() && !exit_key {
+                    let action = self.screen.browser.as_mut().unwrap().handle(&input);
+                    match action {
+                        crate::terminal::runs::Action::None => {}
+                        crate::terminal::runs::Action::Close => self.screen.browser = None,
+                        crate::terminal::runs::Action::Refresh => self.refresh_runs(),
+                        crate::terminal::runs::Action::Attach(run) => {
+                            match self.attach(run, Some(DecimalU64(0))) {
+                                Ok(()) => self.screen.browser = None,
+                                Err(error) => {
+                                    self.screen.browser.as_mut().unwrap().notice = error.to_string()
+                                }
+                            }
+                        }
+                        crate::terminal::runs::Action::Fetch(id) => {
+                            let sender = self.cloud_sender.clone();
+                            thread::spawn(move || {
+                                let _ = sender.send(vec![crate::cloud::fetch_model(&id)
+                                    .unwrap_or_else(|error| format!("Download: {error:#}"))]);
+                            });
+                            self.screen.browser.as_mut().unwrap().notice =
+                                "Downloading model; r refreshes availability".into();
+                        }
+                        crate::terminal::runs::Action::Open(url) => {
+                            if let Err(error) = open_cloud_url(&url) {
+                                self.screen.browser.as_mut().unwrap().notice = error.to_string();
+                            }
+                        }
+                    }
+                    self.draw(&mut terminal)?;
+                    continue;
+                }
+                if self.screen.handle_scroll(&input) {
+                    self.draw(&mut terminal)?;
+                    last_draw = Some(Instant::now());
+                    continue;
+                }
                 let columns = self.draft.columns.clone();
                 let run_ids = self
                     .snapshot
@@ -177,20 +271,28 @@ impl Session {
                 };
                 match self.composer.handle(input, &completion)? {
                     crate::terminal::composer::ComposerAction::Submit(text) => {
+                        self.screen.follow();
+                        let first = text
+                            .split_whitespace()
+                            .next()
+                            .unwrap_or("")
+                            .trim_start_matches(['/', '\\']);
+                        self.screen.push(&if first.eq_ignore_ascii_case("login") {
+                            "> /login".into()
+                        } else {
+                            format!("> {text}")
+                        });
                         for line in self.execute(&text) {
-                            terminal.insert_before(1, |buffer| {
-                                Paragraph::new(crate::terminal::sanitize_user_string(&line))
-                                    .render(buffer.area, buffer);
-                            })?;
+                            self.screen.push(&line);
                         }
                         if self.exit_requested {
+                            guard.leave_inline()?;
+                            self.leave();
                             return Ok(());
                         }
                     }
-                    crate::terminal::composer::ComposerAction::Interrupt => {
-                        self.interrupt()?;
-                    }
                     crate::terminal::composer::ComposerAction::ExitRequested => {
+                        guard.leave_inline()?;
                         self.leave();
                         return Ok(());
                     }
@@ -243,7 +345,7 @@ impl Session {
             })?;
         let mut output = crate::terminal::line_mode::LineMode::new(io::stdout());
         output.transcript(&[format!(
-            "JopeDime {} · engine {}",
+            "JAIN by VEOX · Powered by JopeDime {} · engine {}",
             self.version, self.engine_mode
         )])?;
         let width = terminal::size().map(|size| size.0).unwrap_or(80);
@@ -254,6 +356,28 @@ impl Session {
                 return Ok(());
             }
             let width = usize::from(terminal::size().map(|size| size.0).unwrap_or(80));
+            self.tick_sync();
+            while let Ok(lines) = self.cloud_events.try_recv() {
+                output.transcript(&lines)?;
+            }
+            while let Ok(result) = self.run_lists.try_recv() {
+                match result {
+                    Ok((entries, notice)) => {
+                        let mut lines = vec![notice];
+                        lines.extend(entries.into_iter().map(|row| {
+                            format!(
+                                "{} · {} · {} · {}",
+                                row.id,
+                                row.status,
+                                row.availability(),
+                                row.cloud_url.as_deref().unwrap_or("local only")
+                            )
+                        }));
+                        output.transcript(&lines)?;
+                    }
+                    Err(error) => output.transcript(&[format!("Run refresh: {error:#}")])?,
+                }
+            }
             while let Ok(event) = self.events.try_recv() {
                 output.transcript(&self.handle_event(event, width))?;
             }
@@ -276,31 +400,92 @@ impl Session {
                 }
             }
             if self.exit_requested {
+                self.leave();
                 return Ok(());
             }
         }
     }
 
     fn draw(&mut self, terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> io::Result<()> {
-        let header = format!("JopeDime {} · engine {}", self.version, self.engine_mode);
         let width = usize::from(terminal.size()?.width);
         let (status, activity) = self.status_lines(width);
         terminal.draw(|frame| {
-            let area = frame.area();
-            let rows = Layout::vertical([
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Min(3),
-            ])
-            .split(area);
-            frame.render_widget(Paragraph::new(header), rows[0]);
-            frame.render_widget(Paragraph::new(status), rows[1]);
-            frame.render_widget(Paragraph::new(activity), rows[2]);
-            let input = rows[3];
-            self.composer.draw(frame, input);
+            self.screen
+                .draw(frame, &self.composer, &self.version, &status, &activity);
         })?;
         Ok(())
+    }
+
+    fn refresh_runs(&mut self) {
+        self.screen
+            .browser
+            .get_or_insert_with(Default::default)
+            .notice = "Loading runs...".into();
+        let client = self.client.clone();
+        let sender = self.run_list_sender.clone();
+        thread::spawn(move || {
+            let _ = sender.send(crate::cloud::run_entries(&client));
+        });
+    }
+    fn background_sync(&mut self, runs: Vec<RunId>, owner: Option<(String, String)>) {
+        if self.cloud_busy.swap(true, Ordering::SeqCst) {
+            return;
+        }
+        let busy = Arc::clone(&self.cloud_busy);
+        let done = self.synced_terminal_sender.clone();
+        let client = self.client.clone();
+        let sender = self.cloud_sender.clone();
+        thread::spawn(move || {
+            let result = (|| -> anyhow::Result<Vec<String>> {
+                let version = client.system_info()?.version;
+                let mut lines = Vec::new();
+                for run in runs {
+                    let snapshot = client.run_status(&run)?;
+                    lines.push(crate::cloud::sync_snapshot_for(
+                        &snapshot,
+                        &version,
+                        owner.as_ref(),
+                    )?);
+                    if matches!(
+                        snapshot.state,
+                        RunState::Completed | RunState::Cancelled | RunState::Failed
+                    ) {
+                        let _ = done.send(run);
+                    }
+                }
+                Ok(lines)
+            })();
+            busy.store(false, Ordering::SeqCst);
+            let _ = sender.send(result.unwrap_or_else(|error| vec![format!("Sync: {error:#}")]));
+        });
+    }
+
+    fn tick_sync(&mut self) {
+        while let Ok(run) = self.synced_terminal.try_recv() {
+            if self
+                .auto_sync
+                .as_ref()
+                .is_some_and(|(current, _)| current == &run)
+            {
+                self.auto_sync = None;
+            }
+        }
+        if self.last_sync.elapsed() >= Duration::from_secs(5) {
+            if let Some((run, owner)) = self.auto_sync.clone() {
+                let same =
+                    crate::cloud::connection().is_ok_and(|c| (c.origin, c.account_id) == owner);
+                if !same {
+                    self.auto_sync = None;
+                } else if !self.cloud_busy.load(Ordering::SeqCst) {
+                    self.background_sync(vec![run], Some(owner));
+                }
+            }
+            self.last_sync = Instant::now();
+        }
+    }
+
+    fn screen_lines(&self) -> Vec<String> {
+        self.screen.transcript()
     }
 
     fn status_lines(&self, width: usize) -> (String, String) {
@@ -321,19 +506,145 @@ impl Session {
         if input.is_empty() {
             return Ok(Vec::new());
         }
+        let mut words = input.split_whitespace();
+        match words.next() {
+            Some("/login" | "\\login") => {
+                if let Some(cancel) = self.login_cancel.take() {
+                    cancel.store(true, Ordering::SeqCst);
+                }
+                let workspace = words
+                    .next()
+                    .map(str::to_owned)
+                    .unwrap_or_else(crate::cloud::default_workspace);
+                anyhow::ensure!(
+                    words.next().is_none(),
+                    "usage: /login [https://workspace-origin]"
+                );
+                crate::cloud::origin(&workspace)?;
+                let cancel = Arc::new(AtomicBool::new(false));
+                crate::cloud::spawn_login(
+                    workspace,
+                    self.cloud_sender.clone(),
+                    Arc::clone(&cancel),
+                );
+                self.login_cancel = Some(cancel);
+                return Ok(vec![
+                    "Starting browser login; Ctrl-C exits without stopping background runs.".into(),
+                ]);
+            }
+            Some("/logout" | "\\logout") => {
+                self.auto_sync = None;
+                if let Some(cancel) = self.login_cancel.take() {
+                    cancel.store(true, Ordering::SeqCst);
+                }
+                let sender = self.cloud_sender.clone();
+                thread::spawn(move || {
+                    let message = crate::cloud::logout()
+                        .unwrap_or_else(|error| format!("Sign out: {error:#}"));
+                    let _ = sender.send(vec![message]);
+                });
+                return Ok(vec!["Signing this CLI out...".into()]);
+            }
+            Some("/runs" | "\\runs") => {
+                self.refresh_runs();
+                return Ok(vec!["Loading runs...".into()]);
+            }
+            Some("/sync" | "\\sync") => {
+                let c = crate::cloud::connection()?;
+                anyhow::ensure!(c.may_publish, "this account token is read-only");
+                let owner = (c.origin, c.account_id);
+                let runs = if let Some(run) = words.next() {
+                    vec![RunId::from_str(run)?]
+                } else if let Some(snapshot) = &self.snapshot {
+                    vec![snapshot.run_id.clone()]
+                } else {
+                    crate::terminal::runs::local_runs(&self.client)?
+                        .into_iter()
+                        .map(|r| r.run_id)
+                        .collect()
+                };
+                anyhow::ensure!(words.next().is_none(), "usage: /sync [RUN]");
+                if let Some(run) = runs.first().filter(|_| runs.len() == 1) {
+                    self.auto_sync = Some((run.clone(), owner.clone()));
+                }
+                self.background_sync(runs, Some(owner));
+                return Ok(vec![
+                    "Synchronizing run metadata. Dataset rows and model bytes stay local.".into(),
+                ]);
+            }
+            Some("/publish" | "\\publish") => {
+                let args = crate::terminal::commands::tokenize(
+                    input
+                        .split_once(char::is_whitespace)
+                        .map(|(_, rest)| rest)
+                        .unwrap_or(""),
+                    false,
+                )?;
+                let mut index = 0;
+                let run = if args.first().is_some_and(|a| a != "--model") {
+                    index += 1;
+                    RunId::from_str(&args[0])?
+                } else {
+                    self.snapshot
+                        .as_ref()
+                        .ok_or_else(|| anyhow::anyhow!("attach a run or specify its ID"))?
+                        .run_id
+                        .clone()
+                };
+                let model = if args.len() == index {
+                    None
+                } else {
+                    anyhow::ensure!(
+                        args.len() == index + 2 && args[index] == "--model",
+                        "usage: /publish [RUN] [--model PATH]"
+                    );
+                    Some(PathBuf::from(&args[index + 1]))
+                };
+                if self.cloud_busy.swap(true, Ordering::SeqCst) {
+                    return Ok(vec!["A cloud operation is already in progress.".into()]);
+                }
+                let sender = self.cloud_sender.clone();
+                let busy = Arc::clone(&self.cloud_busy);
+                thread::spawn(move || {
+                    let result = if let Some(model) = model {
+                        crate::cloud::publish_model(&run.to_string(), &model)
+                    } else {
+                        crate::cloud::publish_best(&run.to_string())
+                    };
+                    busy.store(false, Ordering::SeqCst);
+                    let _ = sender.send(vec![result.unwrap_or_else(|e| format!("Publish: {e:#}"))]);
+                });
+                return Ok(vec!["Publishing the selected fitted model explicitly. Fitted state can include training rows.".into()]);
+            }
+            Some("/fetch" | "\\fetch") => {
+                let run = words
+                    .next()
+                    .ok_or_else(|| anyhow::anyhow!("usage: /fetch CLOUD_UUID"))?
+                    .to_owned();
+                anyhow::ensure!(words.next().is_none(), "usage: /fetch CLOUD_UUID");
+                let sender = self.cloud_sender.clone();
+                thread::spawn(move || {
+                    let _ = sender.send(vec![crate::cloud::fetch_model(&run)
+                        .unwrap_or_else(|error| format!("Download: {error:#}"))]);
+                });
+                return Ok(vec![
+                    "Downloading and verifying the selected cloud model...".into(),
+                ]);
+            }
+            _ => {}
+        }
         let parsed = crate::terminal::commands::parse(input)?;
         let args = parsed.arguments;
         let messages = match parsed.command.name {
             "\\help" => vec![if args.first().is_some_and(|arg| arg == "history") {
                 crate::terminal::composer::HISTORY_HELP.to_owned()
             } else {
-                "\\open PATH · \\target COLUMN · \\plan · \\run · \\attach RUN · \\quit".into()
+                "/login [URL] · /logout · /sync [RUN] · /publish [RUN] · /fetch UUID · Left: runs · \\open PATH · \\target COLUMN · \\plan · \\run · \\attach RUN · \\quit".into()
             }],
             "\\quit" => {
                 if args.iter().any(|arg| arg == "--pause") {
                     self.control("pause")?;
                 }
-                self.leave();
                 self.exit_requested = true;
                 vec!["session closed; run continues in the background".into()]
             }
@@ -566,6 +877,12 @@ impl Session {
             RunResult::Started(snapshot) => {
                 let run = snapshot.run_id.clone();
                 self.attach(run.clone(), Some(snapshot.event_watermark))?;
+                if let Ok(c) = crate::cloud::connection() {
+                    if c.may_publish {
+                        self.auto_sync = Some((run.clone(), (c.origin, c.account_id)));
+                        self.last_sync = Instant::now() - Duration::from_secs(5);
+                    }
+                }
                 Ok(vec![format!("run {run} started")])
             }
             RunResult::Plan(_) => anyhow::bail!("run request returned a dry-run plan"),
@@ -649,40 +966,6 @@ impl Session {
         Ok(())
     }
 
-    fn interrupt(&mut self) -> anyhow::Result<()> {
-        if self.snapshot.as_ref().is_some_and(|snapshot| {
-            matches!(
-                snapshot.state,
-                RunState::Running | RunState::Pausing | RunState::Paused
-            )
-        }) {
-            let now = Instant::now();
-            let cancel = self
-                .ctrl_c_at
-                .is_some_and(|previous| now.duration_since(previous) <= Duration::from_secs(2));
-            let already_paused = self
-                .snapshot
-                .as_ref()
-                .is_some_and(|snapshot| snapshot.state == RunState::Paused);
-            if cancel {
-                self.control("cancel")?;
-            } else if !already_paused {
-                self.control("pause")?;
-            }
-            self.ctrl_c_at = Some(now);
-            self.message = Some(if cancel {
-                "cancelling; current best model is kept".into()
-            } else if already_paused {
-                "run is paused — Ctrl-C again within 2 s cancels".into()
-            } else {
-                "pausing — Ctrl-C again within 2 s cancels".into()
-            });
-        } else {
-            self.message = Some("\\quit or Ctrl-D to exit".into());
-        }
-        Ok(())
-    }
-
     fn handle_event(&mut self, event: PublicEvent, width: usize) -> Vec<String> {
         update_snapshot_from_event(&mut self.snapshot, &event);
         crate::terminal::cards::render_transcript(
@@ -691,24 +974,6 @@ impl Session {
             crate::terminal::Theme::from_env(crate::terminal::ThemeMode::Auto),
             crate::terminal::symbols_from_env(),
         )
-    }
-
-    fn on_event(
-        &mut self,
-        event: PublicEvent,
-        width: u16,
-        terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    ) -> io::Result<()> {
-        let lines = self.handle_event(event, usize::from(width));
-        terminal.insert_before(lines.len().max(1) as u16, |buffer| {
-            let lines = if lines.is_empty() {
-                vec![Line::from("event")]
-            } else {
-                lines.into_iter().map(Line::from).collect()
-            };
-            Paragraph::new(lines).render(buffer.area, buffer);
-        })?;
-        Ok(())
     }
 
     fn leave(&self) {
@@ -757,8 +1022,7 @@ fn accept_line(
         &crate::terminal::complete::CompletionData::default(),
     )? {
         crate::terminal::composer::ComposerAction::Submit(text) => Ok(Some(text)),
-        crate::terminal::composer::ComposerAction::Interrupt
-        | crate::terminal::composer::ComposerAction::ExitRequested
+        crate::terminal::composer::ComposerAction::ExitRequested
         | crate::terminal::composer::ComposerAction::Redraw
         | crate::terminal::composer::ComposerAction::None => {
             unreachable!("plain line Enter submits the current composer text")
@@ -786,6 +1050,24 @@ fn plan_lines(plan: Plan) -> Vec<String> {
         "plan validated: {:?} · {} rows · {} · digest {}",
         plan.task.value, plan.rows.total.0, plan.objective.name, plan.plan_digest
     )]
+}
+
+fn open_cloud_url(url: &str) -> anyhow::Result<()> {
+    anyhow::ensure!(
+        url.starts_with("https://") && !url.chars().any(char::is_control),
+        "invalid cloud URL"
+    );
+    #[cfg(target_os = "macos")]
+    let command = "open";
+    #[cfg(not(target_os = "macos"))]
+    let command = "xdg-open";
+    std::process::Command::new(command)
+        .arg(url)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .spawn()?;
+    Ok(())
 }
 
 #[cfg(test)]

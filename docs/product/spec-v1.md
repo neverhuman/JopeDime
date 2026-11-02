@@ -416,7 +416,7 @@ Derived digests: the **objective digest** (part of `ProblemDigest`) and the **`p
 ```mermaid
 stateDiagram-v2
     [*] --> running: run_start (validated before the run exists)
-    running --> pausing: pause or Ctrl-C
+    running --> pausing: pause
     pausing --> paused: round committed
     paused --> running: continue
     running --> completed: budget reached or converged
@@ -651,21 +651,21 @@ The “validation-pool fixed-8-program” item cited by FUP-04 assignment has no
 
 ---
 
-## 6. Human experience: the inline terminal
+## 6. Human experience: the full-screen terminal
 
 ### 6.1 Launch rules
 
 | Invocation | Behavior |
 | --- | --- |
-| `jopedime` in an interactive TTY | Inline session connected to the background engine (started if needed) |
-| `jopedime data.csv` in a TTY | Inline session with `\open data.csv` already run |
-| `jopedime attach [RUN]` | Inline session showing `RUN` (or the most recent active run), replaying from its start |
+| `jopedime` in an interactive TTY | Full-screen session connected to the background engine (started if needed) |
+| `jopedime data.csv` in a TTY | Full-screen session with `\open data.csv` already run |
+| `jopedime attach [RUN]` | Full-screen session showing `RUN` (or the most recent active run), replaying from its start |
 | `jopedime` with stdin or stdout not a TTY | Prints usage to stderr and exits 2; never starts an invisible TUI |
-| `--plain`, `NO_COLOR`, `TERM=dumb`, or width < 40 columns | Line-mode session: same commands and transcript, no viewport redraws, no color |
+| `--plain`, `TERM=dumb`, width < 40 columns, or height < 12 rows | Line-mode session: same commands and transcript, no viewport redraws, no color |
 
 ### 6.2 Layout
 
-Ratatui `Viewport::Inline` with a 6–10 line live region at the bottom; everything else is printed into the terminal's native scrollback with `insert_before`, so users scroll, search and copy with their normal terminal.
+Owner direction, 2026-11-01: use a full-screen alternate-screen session. The opening view has a large creative ASCII **JAIN** wordmark, **JAIN by VEOX**, and **Powered by JopeDime**. A scrolling transcript sits above the bottom composer. Page Up/Down and mouse wheel browse output; End follows live output. New events preserve the history view and pending draft, with a new-lines indicator. The client restores the previous screen, cursor, mouse and input modes on exit. `NO_COLOR` selects monochrome; narrow/short or dumb terminals use line mode. The illustrative transcript below describes card content rather than the superseded inline layout.
 
 ```text
  JopeDime 1.0.0 · bundle h40b (cpu) · engine background (pid 4182, idle exit 30m)
@@ -704,7 +704,7 @@ Ratatui `Viewport::Inline` with a 6–10 line live region at the bottom; everyth
 2. One activity line: the current public hypothesis (reasoning on) or the current phase.
 3. The composer (1–4 lines, grows with multi-line input), with an inline completion menu above it when open.
 
-**Transcript cards** (printed once, never redrawn): plan; first model; improvement (metric, delta, one-line description, optional 4–6 line excerpt in the primary language); warnings raised and cleared; reasoning lines; exports (path, files, parity status); run finished (reason, champion, HOLDOUT and TEST scores). Experiments that did not improve are summarized at most every 10 seconds ("12 experiments in the last 10 s, no improvement") rather than printed one per line.
+**Transcript cards** (retained in the bounded scrolling view): plan; first model; improvement (metric, delta, one-line description, optional 4–6 line excerpt in the primary language); warnings raised and cleared; reasoning lines; exports (path, files, parity status); run finished (reason, champion, HOLDOUT and TEST scores). Experiments that did not improve are summarized at most every 10 seconds ("12 experiments in the last 10 s, no improvement") rather than printed one per line.
 
 ### 6.3 Commands (24)
 
@@ -746,10 +746,11 @@ Backslash is canonical; `/` is accepted as a silent alias. Engine-backed command
 
 ### 6.5 Interrupts and exit
 
+Interactive exit behavior follows the owner direction of 2026-11-01. On macOS use Control-C; Command-C remains the terminal emulator’s copy shortcut. Explicit `\pause` and `\cancel` commands control runs.
+
 | Input | Composer has text | Composer empty, run active | Composer empty, nothing active |
 | --- | --- | --- | --- |
-| Ctrl-C | Clear the draft | Request `\pause`; status shows "pausing — Ctrl-C again within 2 s cancels" | Hint: "\quit or Ctrl-D to exit" |
-| Ctrl-C twice within 2 s | — | `\cancel` (best model kept) | — |
+| Ctrl-C | Exit immediately | Exit; the run continues in the background engine | Exit |
 | Ctrl-D | Delete char | Same as `\quit` | Exit |
 | `\quit` | — | Leave; the run continues in the background engine. Prints `jopedime attach RUN` and `jopedime control RUN pause`. `\quit --pause` pauses first | Exit |
 | SIGHUP (terminal closed), SIGTERM | — | Client exits; the run continues | Exit |

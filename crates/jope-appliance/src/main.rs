@@ -10,6 +10,8 @@
 
 mod bootstrap;
 mod cli;
+#[cfg(feature = "client")]
+mod cloud;
 #[path = "cmd/mod.rs"]
 mod cmd;
 #[path = "cmd/common.rs"]
@@ -1063,6 +1065,10 @@ fn main() -> ExitCode {
             }
             Err(error) => report(Err(error)),
         },
+        #[cfg(feature = "client")]
+        Command::Auth { command } => report(cloud::auth_command(command)),
+        #[cfg(feature = "client")]
+        Command::Cloud { command } => report(cloud::cloud_command(command)),
         Command::Methods { task, json } => report(methods_value(task.as_deref()).map(|value| {
             if json.json {
                 print_json(&value);

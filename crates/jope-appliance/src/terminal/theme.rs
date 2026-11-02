@@ -12,6 +12,8 @@ pub mod composer;
 pub mod highlight;
 pub mod line_mode;
 pub mod restore;
+pub mod runs;
+pub mod screen;
 pub mod status;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

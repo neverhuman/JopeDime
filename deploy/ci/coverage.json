@@ -4895,6 +4895,16 @@
       ],
       "scope": "Maintained pytest family: PR execution selects not xbabe2; full-main CPU uses this explicit file list and reports excluded host-only cases. Full-main selects this maintained file explicitly; xbabe2-marked tests remain deselected."
     },
+    "python:python/tests/test_dime_score_worker_validation.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Maintained pytest family (#1702): the PR python lane runs `pytest -q tests -m \"not xbabe2\"`, which includes this file; it pins that each DataLoader worker reopens the tokenized corpus with verify=True. Not in the full-main explicit file list."
+    },
     "python:python/tests/test_policy_training_contract.py": {
       "discovery": {
         "kind": "python-family"

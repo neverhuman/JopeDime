@@ -1210,6 +1210,10 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gov03_axum["base_commit"],
         "1e1229abcdc50f360721c5c3cc6912b58734e30e"
     );
+    assert_eq!(
+        gov04_portable_pty["base_commit"],
+        "3df2979abf861502f69f3fa70e7871952bbf0c06"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1260,6 +1264,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &rnk09_ruzstd,
         &res09_candle,
         &gov03_axum,
+        &gov04_portable_pty,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
