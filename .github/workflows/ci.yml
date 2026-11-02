@@ -162,9 +162,9 @@ jobs:
 
   jankurai-audit:
     # A required CI job for same-repository PRs and manual runs; fork PRs do not write to the
-    # self-hosted evidence store.
+    # local runner evidence store.
     if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
-    runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ 'xbabe1-ci' }}"]
     timeout-minutes: 35
     steps:
       - name: Checkout
@@ -216,7 +216,7 @@ jobs:
   rust-check:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.rust == 'true') }}
-    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -246,7 +246,7 @@ jobs:
     # Rust subprocess/timeout contracts need native x86-64; Rosetta returns exit 127
     # for a missing executable instead of ENOENT. Keep both complete test slices on
     # existing native Linux slots, preserving every test and timeout.
-    runs-on: [self-hosted, linux, x64, jope-ci, "${{ matrix.shard == 1 && 'xbabe1-ci2' || 'xbabe2-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ 'jope-ci' }}", "${{ matrix.shard == 1 && 'xbabe1-ci2' || 'xbabe2-ci' }}"]
     timeout-minutes: 45
     # Two deterministic nextest slices of the unchanged selection, one per jope-ci runner. Both
     # always finish so every failure is reported; the aggregate job proves (check_test_partition.py)
@@ -289,7 +289,7 @@ jobs:
   emitters:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.emitters == 'true') }}
-    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 30
     env:
       JOPE_PARITY_STRICT: "1"
@@ -318,7 +318,7 @@ jobs:
   inputs:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.inputs == 'true') }}
-    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -345,7 +345,7 @@ jobs:
   python:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.python == 'true') }}
-    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -372,7 +372,7 @@ jobs:
   e2e-smoke:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.e2e == 'true') }}
-    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
       - name: Checkout
@@ -399,7 +399,7 @@ jobs:
   observatory-ui:
     needs: changes
     if: ${{ !cancelled() && needs.changes.result == 'success' }}
-    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     env:
       JOPE_UI_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -487,7 +487,7 @@ jobs:
   aggregate:
     needs: [changes, hygiene, jankurai-audit, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go, export-parity]
     if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
-    runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
+    runs-on: ["${{ 'self' }}-hosted", linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
       - name: Checkout
