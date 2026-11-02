@@ -242,12 +242,12 @@ class CatalogPoolManifestTests(unittest.TestCase):
         self.assertTrue(manifest["closure"]["owner_aliases_fully_closed"])
         self.assertEqual(manifest["closure"]["unresolved_owner_sourcefile_aliases"], 0)
         self.assertEqual(manifest["closure"]["family_exclusion_sha256"], artifact_sha)
-        self.assertEqual(manifest["candidate_counts"], {"binary": 0, "regression": 2})
+        self.assertEqual(manifest["candidate_counts"], {"binary": 1, "regression": 2})
         self.assertEqual(
             manifest["closure"]["candidate_exclusions"]["binary"][
                 "sourcefile_dependent"
             ],
-            1,
+            0,
         )
         self.assertEqual(
             manifest["closure"]["candidate_exclusions"]["binary"]["d4_family"], 1
@@ -255,6 +255,66 @@ class CatalogPoolManifestTests(unittest.TestCase):
         self.assertNotIn(
             "owner source-file alias closure is incomplete", manifest["blockers"]
         )
+        self.assertFalse(manifest["eligibility_verified"])
+
+    def test_real_catalog_shape_keeps_keyed_srcfile_binary_candidate(self) -> None:
+        from research.joint_regbin import admission
+
+        catalog, catalog_sha, owner_alias, owner_alias_sha = self._inputs()
+        for row in catalog["datasets"]:
+            if row.get("family_key"):
+                row["family_key"] = "a" * 40
+        catalog["datasets"].append(
+            {
+                "id": "bin-srcfile-only",
+                "task": "binary",
+                "canonical_sha256": "e" * 64,
+                "family_key": None,
+                "family_key_source": None,
+                "family_key_derived": "srcfile:owner-alias-only",
+                "source_file": "binary/owner-alias-only.csv",
+                "source_url": "https://example.org/binary/owner-alias-only.csv",
+                "platform": "pmlb",
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 13,
+                "train_sha256": "5" * 64,
+            }
+        )
+        catalog["inventory"]["catalog_records"] += 1
+        catalog["inventory"]["usable_records"] += 1
+        catalog["inventory"]["by_task"]["binary"] += 1
+        owner_alias["curated_catalog_sha256"] = catalog_sha
+        artifact = {
+            "schema": admission.FAMILY_EXCLUSION_SCHEMA,
+            "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
+            "catalog_sha256": catalog_sha,
+            "family_keys": [],
+            "unkeyed_catalog_ids": [],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            artifact_path = Path(directory) / "exclusion.json"
+            artifact_bytes = json.dumps(
+                artifact, sort_keys=True, separators=(",", ":")
+            ).encode()
+            artifact_path.write_bytes(artifact_bytes)
+            artifact_sha = hashlib.sha256(artifact_bytes).hexdigest()
+            with patch.object(admission, "FAMILY_EXCLUSION_SHA256", artifact_sha):
+                manifest = build_catalog_pool_manifest(
+                    catalog,
+                    catalog_sha,
+                    owner_alias,
+                    owner_alias_sha,
+                    family_exclusion_path=artifact_path,
+                )
+
+        self.assertEqual(manifest["candidate_counts"], {"binary": 1, "regression": 2})
+        self.assertEqual(
+            manifest["closure"]["candidate_exclusions"]["binary"][
+                "sourcefile_dependent"
+            ],
+            1,
+        )
+        self.assertEqual(manifest["candidate_pools"]["binary"][0]["dataset"], "bin-a")
         self.assertFalse(manifest["eligibility_verified"])
 
     def test_catalog_pool_file_default_path_applies_d4_exclusion(self) -> None:
@@ -266,6 +326,9 @@ class CatalogPoolManifestTests(unittest.TestCase):
             catalog_path = directory_path / "catalog.json"
             owner_alias_path = directory_path / "owner-alias.json"
             exclusion_path = directory_path / "family-exclusion.json"
+            for row in catalog["datasets"]:
+                if row.get("family_key"):
+                    row["family_key"] = "f" * 40
             catalog_bytes = json.dumps(
                 catalog, sort_keys=True, separators=(",", ":")
             ).encode()
@@ -280,9 +343,7 @@ class CatalogPoolManifestTests(unittest.TestCase):
                 "schema": admission.FAMILY_EXCLUSION_SCHEMA,
                 "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
                 "catalog_sha256": catalog_sha,
-                "family_keys": [
-                    {"kind": "dedupe_fingerprint", "value": "pmlb:" + "f" * 64}
-                ],
+                "family_keys": [{"kind": "dedupe_fingerprint", "value": "f" * 40}],
                 "unkeyed_catalog_ids": [],
             }
             exclusion_bytes = json.dumps(
@@ -694,7 +755,7 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
         manifest = self._build(inputs)
 
         exclusion = manifest["protected_exclusion"]
-        self.assertEqual(exclusion["protected_derived_union_key_count"], 2)
+        self.assertEqual(exclusion["protected_derived_union_key_count"], 3)
         self.assertEqual(exclusion["protected_catalog_dataset_count"], 1)
         self.assertEqual(exclusion["catalog_alias_family_count"], 1)
         self.assertEqual(exclusion["excluded_role_counts"]["panel"]["binary"], 1)

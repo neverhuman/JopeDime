@@ -337,6 +337,17 @@ def review_catalog_families(records: list[dict]) -> dict:
         )
         attrs["provenance"] = provenance
         keys = set(family_keys.derive(attrs)[0])
+        catalog_family_key = row.get("family_key")
+        if (
+            row.get("family_key_source") == "provenance.dedupe_fingerprint"
+            and isinstance(catalog_family_key, str)
+            and re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", catalog_family_key)
+        ):
+            # The shared family-key policy namespaces fingerprints by source
+            # (for example, ``pmlb:<fingerprint>``). The owner-pinned D4
+            # artifact stores the catalog's raw fingerprint, so retain that
+            # exact alias as well for exclusion joins.
+            keys.add(("dedupe_fingerprint", catalog_family_key))
         srcfile = _srcfile_key(row)
         if srcfile:
             keys.add(("srcfile", srcfile))
@@ -576,6 +587,7 @@ def build_catalog_pool_manifest(
         if (
             family_exclusion is not None
             and row["task"] == "binary"
+            and not row.get("family_key")
             and _srcfile_key(row) is not None
         ):
             candidate_exclusions["binary"]["sourcefile_dependent"] += 1
