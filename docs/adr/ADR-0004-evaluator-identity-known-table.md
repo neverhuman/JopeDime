@@ -199,3 +199,19 @@ regeneration records the fitted runtime source change; the DSL ABI, emitted byte
 and known-identity table remain unchanged. The transition is registered in
 `prodlang_rust_runtime_identity_rebaseline.v1.json`. No shipped receipt or behavior rebaseline
 is claimed.
+## Current identity transition: P21 campaign family split contract (2026-11-02)
+
+P21 moved the stable source-family train/validation assignment used by self-play
+expansion into the reusable `jope-datasets` contract. Adding that crate as a
+direct campaign dependency changes `Cargo.lock` and therefore the recorded
+evaluator identity, even though evaluator calculations, DSL ABI and emitted
+behavior fixtures are unchanged. The transition advances implementation hash
+`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` to
+`42f65ee246ac36f0b88d6284cc68437e79d69f6b8c7630e9963e865853cf8f61`, Cargo.lock
+hash `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401` to
+`5f919275e2480127a0893d8ceb623a4623472c018d9a33398beb81328e7a19b8`, and
+identity digest `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d`
+to `a2a8538e5b83e741ebbef94ffbec279a8346a35dc42d02fca798749ad64e0a5b`. The
+identity-only regeneration is bound to source commit
+`942453867de2c6335343b51118c744d1d235fcff`. No known-identity row is added
+because this change has no shipped receipt proving that the new identity existed.
