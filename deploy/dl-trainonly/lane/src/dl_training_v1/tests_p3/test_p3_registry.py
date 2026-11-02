@@ -126,9 +126,9 @@ class LoadRegistry(fx.P3Case):
         reg = holdout.load_registry(p, s)                        # an unresolved contextless family is legal
         self.assertNotIn(self.fid, holdout.pool_members(reg.families))
         self.rejects(self.mutated(lambda d: d.update(retired_family_ids={self.fid: fx.fid("p002")})), "retired")
-        self.rejects(self.mutated(lambda d: d.update(retired_family_ids={fx.fid("old"): fx.fid("nowhere")})), "retired")
+        self.rejects(self.mutated(lambda d: d.update(retired_family_ids={fx.fid("retired"): fx.fid("nowhere")})), "retired")
         self.rejects(self.mutated(lambda d: d.update(retired_family_ids=[])), "retired_family_ids")
-        p, s = self.write(self.mutated(lambda d: d.update(retired_family_ids={fx.fid("old"): self.fid})))
+        p, s = self.write(self.mutated(lambda d: d.update(retired_family_ids={fx.fid("retired"): self.fid})))
         holdout.load_registry(p, s)
 
     def test_pool_predicate(self):
