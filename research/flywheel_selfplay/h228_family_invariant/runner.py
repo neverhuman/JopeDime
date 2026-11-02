@@ -50,8 +50,10 @@ def source(repo, commit, path):
     )
 
 
-def load_module(repo, commit, path, name, expected):
+def load_module(repo, commit, path, name, expected, fallback_commit=None):
     data = source(repo, commit, path)
+    if digest(data) != expected and fallback_commit is not None:
+        data = source(repo, fallback_commit, path)
     if digest(data) != expected:
         raise RuntimeError("source hash mismatch: " + path)
     mod = types.ModuleType(name)
@@ -423,6 +425,7 @@ def run(args):
         thread_path,
         "h228_numeric",
         pins["parent_sources"][thread_path],
+        fallback_commit=pins.get("source_base"),
     )
     runtime_path = "research/flywheel_selfplay/h146_lookahead_exec/runtime.py"
     rt = load_module(
@@ -431,6 +434,7 @@ def run(args):
         runtime_path,
         "h228_runtime",
         pins["parent_sources"][runtime_path],
+        fallback_commit=pins.get("source_base"),
     )
     rt.HERE = (
         args.repo
@@ -655,7 +659,12 @@ def run(args):
 
         def parent_module(path, name):
             return load_module(
-                args.repo, args.commit, path, name, pins["parent_sources"][path]
+                args.repo,
+                args.commit,
+                path,
+                name,
+                pins["parent_sources"][path],
+                fallback_commit=pins.get("source_base"),
             )
 
         treatment = parent_module(
