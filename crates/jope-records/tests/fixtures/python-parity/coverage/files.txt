@@ -1363,6 +1363,10 @@ crates/jope-engine/src/native_loop/bounded/census/admission.rs
 crates/jope-engine/src/native_loop/bounded/contract.rs
 crates/jope-engine/src/native_loop/bounded/controller.rs
 crates/jope-engine/src/native_loop/bounded/controller/coordinator.rs
+crates/jope-engine/src/native_loop/bounded/controller/coordinator/dispatch.rs
+crates/jope-engine/src/native_loop/bounded/controller/coordinator/polling.rs
+crates/jope-engine/src/native_loop/bounded/controller/coordinator/recovery.rs
+crates/jope-engine/src/native_loop/bounded/controller/coordinator/results.rs
 crates/jope-engine/src/native_loop/bounded/controller/operations.rs
 crates/jope-engine/src/native_loop/bounded/controller/replay.rs
 crates/jope-engine/src/native_loop/bounded/controller/types.rs
