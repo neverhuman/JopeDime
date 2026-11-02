@@ -16,7 +16,7 @@ Host: xbabe2-class dev box, CPython 3.12.3 (`python/.python-version`), uv 0.9 li
 
 ## Per-file status
 
-`fixed-import` = the file only needed the new package layout (its `scripts/`, `tools/` or `sys.path` assumption was replaced by `jope.research` / `jope.tools` package paths; conftest.py exposes `src/`, `src/jope/research`, `src/jope/tools`). `xbabe2` counts tests marked `@pytest.mark.xbabe2` inside the file; no test was deleted and no whole file is marked.
+`fixed-import` = the file only needed the new package layout (its `scripts/`, `tools/` or `sys.path` assumption was replaced by `python/test-support/jope/research` / `jope.tools` paths; conftest.py exposes `src/`, `test-support/jope/research`, `src/jope/tools`). `xbabe2` counts tests marked `@pytest.mark.xbabe2` inside the file; no test was deleted and no whole file is marked.
 
 | Test file | collected | passes | xbabe2 | status | xbabe2 reason |
 |---|---:|---:|---:|---|---|
@@ -75,9 +75,9 @@ None of the 8 needs a GPU or SCQ per se; all are host-path dependencies of the o
 
 | Location | Before | After |
 |---|---|---|
-| `python/tests/*.py` (35 files) + `tests/engine/*.py` (3) | 30 `sys.path.insert(...)`/`syspath_prepend` lines (incl. two `/home/ubuntu/jope-prime/src`), `Path(__file__).parents[1] / "scripts"` in 35 files, `tools/*.py` loaded by relative path in the 3 engine tests | 0 hacks; `Path(jope.research.__file__).parent` for the research drivers that the tests still load with `spec_from_file_location` (same module identity as before), `from jope.tools import experiment_scheduler / opportunistic_proposals(_v2) / test_report_cycle` in `tests/engine` |
+| `python/tests/*.py` (35 files) + `tests/engine/*.py` (3) | 30 `sys.path.insert(...)`/`syspath_prepend` lines (incl. two `/home/ubuntu/jope-prime/src`), `Path(__file__).parents[1] / "scripts"` in 35 files, `tools/*.py` loaded by relative path in the 3 engine tests | 0 hacks; `python/test-support/jope/research` for the research drivers that the tests still load with `spec_from_file_location` (same module identity as before), `from jope.tools import experiment_scheduler / opportunistic_proposals(_v2) / test_report_cycle` in `tests/engine` |
 | moved inputs referenced by tests | `<repo>/systemd`, `<repo>/manifests/...`, `tests/fixtures/conditionality_gate_parity.json` | `deploy/systemd/selfplay`, `crates/jope-campaigns/manifests/...`, `crates/jope-campaigns/tests/fixtures/...` |
-| `src/jope/research/` | 23 sites in 15 files | 18 sites in 12 files: the 4 self-directory inserts removed, `workspace_sync` imports `jope.tools.kernel_*` instead of `<repo>/parallel/tools`; `external_fixture_index` resolves the repository root (`parents[4]`) and `crates/jope-campaigns/manifests` |
+| `test-support/jope/research/` | 23 sites in 15 files | 18 sites in 12 files: the 4 self-directory inserts removed, `workspace_sync` imports `jope.tools.kernel_*` instead of `<repo>/parallel/tools`; `external_fixture_index` resolves the repository root (`parents[4]`) and `crates/jope-campaigns/manifests` |
 | `src/jope/tools/` | 16 sites in 12 files | 15 sites in 11 files: `export_grammar` no longer inserts `/home/ubuntu/jope-prime/src` (uses the installed package, writes to `crates/jope-engine/assets/grammar`) |
 | `src/jope/{chimera,encoders,elo_bench,elo_replica}` | 10 sites in 7 files | unchanged |
 
@@ -92,7 +92,7 @@ Also open: the ops tooling imports siblings by bare name (523 lines in 205 `src/
 ## Other layout fixes
 
 - `python/prime.toml`: `jope.prime_config.load_config()` runs at import time in ten modules (`signatures`, `dev_pools`, `gp_factory`, `gp_interop`, `data.active`, `data.target_encoding`, `self_play`, `validation_gp_study`, `full_cv_meta_selector_v2`, `selector_calibration`) and reads `<package root>/prime.toml`. The file is the historical one (`python/legacy/jope-prime-meta/prime.toml`) with `prime.root = "."` so Prime-owned outputs land under `python/prime/`; the `[legacy]` inputs stay xbabe2 host paths and `JOPE_PRIME_CONFIG` overrides the file.
-- `jope.research`, `jope.tools`, `jope.tools.seed_dispatch` gained `__init__.py` (B10).
+- `jope.tools` and `jope.tools.seed_dispatch` gained `__init__.py` (B10); import-only research drivers now live outside the runtime package under `python/test-support/jope/research`.
 - `pyproject.toml`: `.python-version` = 3.12 (host interpreter; the `research` extra's autogluon marker is `< 3.13`); `addopts = "-q"` dropped so `pytest -q` prints its summary line; no dependency was added (B22 scan unchanged — the three tests that reached a missing `sklearn` do so through the old state plane and are xbabe2, not a dev dependency).
 
 ## ruff policy (src/ and tests/)
@@ -100,6 +100,6 @@ Also open: the ops tooling imports siblings by bare name (523 lines in 205 `src/
 - 601 safe auto-fixes applied (import sorting, unused imports, `typing` -> `collections.abc`, quoted annotations, `datetime.UTC`, `import a,b` split, `not x is y`); verified that no removed import was re-exported anywhere; `__init__.py` re-exports are exempt from F401.
 - 16 F841 sites fixed by hand (dead pure assignments dropped, side-effecting calls kept as expression statements); `validator.py` uses `capture_output=True`; two prose `# noqa:` comments ruff rejects became plain comments; one one-line `for` in `tests/engine` split.
 - Ignored with reasons in `pyproject.toml`: `B905 B023 B007 B904 E731 E741 UP031 UP028 UP042` (opinion rules the inherited code violates on purpose or that need a semantic review: 117 `zip(strict=)`, 405 printf-style formats, 37 loop-variable closures); per-file for `src/jope/tools/**` and `src/jope/chimera/**`: `E701 E702 E402 UP022` (the compressed several-statements-per-line ops style; reformatting is out of scope).
-- Excluded: `src/jope/research` (import-checked only), `legacy/`, and the three grammar sources `grammars/featmath.py`, `policy/tokens.py`, `policy/automaton.py`, which are pinned by sha256 in `crates/jope-engine/assets/grammar/featmath.json` (`vocab_sha256 8d55fee4…`) — the first lint pass changed two of them and moved `vocab_sha256`; they were restored byte-identically and the pin check is part of the receipts above.
+- Excluded: `test-support/jope/research` (import-checked only), `legacy/`, and the three grammar sources `grammars/featmath.py`, `policy/tokens.py`, `policy/automaton.py`, which are pinned by sha256 in `crates/jope-engine/assets/grammar/featmath.json` (`vocab_sha256 8d55fee4…`) — the first lint pass changed two of them and moved `vocab_sha256`; they were restored byte-identically and the pin check is part of the receipts above.
 
 Head at the time of writing: `bd8b578` (the commit adding this file follows).

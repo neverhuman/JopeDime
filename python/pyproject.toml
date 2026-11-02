@@ -64,11 +64,7 @@ manifest-path = "../crates/jope-telemetry/Cargo.toml"
 python-source = "src"
 module-name = "jope._telemetry"
 features = ["python"]
-# Research drivers remain available in the source distribution and editable test tree,
-# but are not part of an installed runtime wheel.
-exclude = [
-  { path = "src/jope/research/**", format = "wheel" },
-]
+# Research drivers live under test-support/jope/research, outside the runtime source tree.
 
 [tool.ruff]
 line-length = 110
@@ -77,7 +73,7 @@ target-version = "py311"
 # sha256 in crates/jope-engine/assets/grammar/featmath.json (vocab_sha256 8d55fee4...): any byte change,
 # even a lint fix, invalidates the frozen vocabulary the Rust consumers verify, so ruff never touches them.
 extend-exclude = [
-  "src/jope/research",
+  "test-support/jope/research",
   "legacy",
   "src/jope/grammars/featmath.py",
   "src/jope/policy/tokens.py",
