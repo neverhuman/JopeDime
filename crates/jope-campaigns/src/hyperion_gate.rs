@@ -43,6 +43,7 @@ mod folds;
 mod model;
 mod precomputed;
 mod scoring;
+mod scoring_view;
 #[cfg(test)]
 mod tests;
 
@@ -59,6 +60,7 @@ use precomputed::{
     require_frozen_precomputed_dataset_binding,
 };
 pub use scoring::*;
+pub(super) use scoring_view::score_view;
 
 use cache_registry::{precomputed_fold_encoding, sidecars_for_view, StageExecution};
 use cache_types::{FoldEncoding, PrecomputedTrainFeatureBlocks, RegressionTable};

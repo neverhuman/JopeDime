@@ -607,6 +607,7 @@ crates/jope-campaigns/src/hyperion_gate/folds.rs
 crates/jope-campaigns/src/hyperion_gate/model.rs
 crates/jope-campaigns/src/hyperion_gate/precomputed.rs
 crates/jope-campaigns/src/hyperion_gate/scoring.rs
+crates/jope-campaigns/src/hyperion_gate/scoring_view.rs
 crates/jope-campaigns/src/hyperion_gate/tests.rs
 crates/jope-campaigns/src/hyperion_router.rs
 crates/jope-campaigns/src/hyperion_router/activation.rs
