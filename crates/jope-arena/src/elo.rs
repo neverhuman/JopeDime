@@ -39,27 +39,9 @@ fn elo_scale() -> f64 {
 }
 
 /// Whether lower or higher metric values win.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum EloDirection {
-    /// Higher is better (`roc_auc`, `macro_f1`).
-    Maximize,
-    /// Lower is better (`rmse`, `mase`).
-    Minimize,
-}
-
-/// Compatibility path; the concrete enum has a domain-specific name.
-pub type Direction = EloDirection;
-
-impl EloDirection {
-    /// The JSON spelling.
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Maximize => "maximize",
-            Self::Minimize => "minimize",
-        }
-    }
-}
+pub use jope_api::Direction;
+/// Compatibility path; all runtime objective directions share the API enum.
+pub type EloDirection = Direction;
 
 /// The reporter's `config.json` `elo` block.
 #[derive(Clone, Debug, Deserialize, PartialEq)]

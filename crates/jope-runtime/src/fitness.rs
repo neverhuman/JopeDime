@@ -36,15 +36,9 @@ pub fn schema() -> serde_json::Value {
     .expect("committed fitness schema")
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum FitnessDirection {
-    Minimize,
-    Maximize,
-}
-
-/// Compatibility path; the concrete enum has a domain-specific name.
-pub type Direction = FitnessDirection;
+pub use jope_api::Direction;
+/// Compatibility path; all runtime objective directions share the API enum.
+pub type FitnessDirection = Direction;
 
 /// Every parameter is part of the serialized objective identity.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

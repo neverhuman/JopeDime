@@ -319,7 +319,7 @@ mod tests {
             schema: FITNESS_VERSION.into(),
             metric: Metric::Logloss,
             class_order: ["no".into(), "yes".into()],
-            aggregation: Aggregation::Mean,
+            aggregation: Aggregation::Mean {},
             undefined: UndefinedPolicy::FailCandidate,
             threshold: None,
             cost_matrix: None,
