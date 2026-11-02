@@ -43,6 +43,8 @@ extra_excluded_paths = [
   # Ciaudit HLT-043 sha256:09d1f247...: this exact copy is byte-pinned by the
   # hpc_verified_v5 provenance; its path-scoped Jankurai disposition is documented.
   "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
+  # Ciaudit HLT-043 sha256:fac8174f...: exact hash-pinned package copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/evidence.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",
