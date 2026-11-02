@@ -21,7 +21,7 @@ allowed_non_product_paths = [
 ]
 
 [queues]
-adapter_paths = ["crates/jope-client/src/transport.rs", "crates/jope-client/src/http.rs"]
+adapter_paths = ["crates/jope-client/src/transport.rs", "crates/jope-client/src/http.rs", "crates/jope-engine/src/sealed_storage.rs"]
 event_contract_paths = ["crates/jope-engine/src/resident_protocol.rs", "crates/jope-engine/src/resident_protocol/artifacts.rs", "crates/jope-engine/src/resident_protocol/dispatch.rs"]
 generated_type_paths = ["schemas/jope.api.v1.openapi.json"]
 client_markers = [
