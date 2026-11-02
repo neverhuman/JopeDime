@@ -436,7 +436,8 @@ pub struct GenSummary {
     pub proj16_unique_frac: Option<f64>,
     pub proj16_mean_hamming: Option<f64>,
     pub op_counts: BTreeMap<u32, u64>,
-    pub op_entropy_nats: Option<f64>,
+    #[serde(rename = "op_entropy_nats")]
+    pub op_entropy_nat: Option<f64>,
     pub op_entropy_norm: Option<f64>,
     pub ops_distinct: u32,
     pub ops_unused: Option<u32>,
@@ -456,7 +457,7 @@ pub struct GenSummary {
 impl GenSummary {
     /// Returns generation entropy in natural logarithmic units.
     pub fn op_entropy_nat(&self) -> Option<f64> {
-        self.op_entropy_nats
+        self.op_entropy_nat
     }
 }
 
@@ -481,7 +482,7 @@ pub(crate) fn test_gen_summary(context: &str, generation: u32, unique: f64) -> G
         proj16_unique_frac: None,
         proj16_mean_hamming: None,
         op_counts: Default::default(),
-        op_entropy_nats: None,
+        op_entropy_nat: None,
         op_entropy_norm: None,
         ops_distinct: 0,
         ops_unused: None,
@@ -574,7 +575,7 @@ impl Tracker {
             }
         }
         let total_ops: u64 = op_counts.values().sum();
-        let op_entropy_nats = (total_ops > 0).then(|| {
+        let op_entropy_nat = (total_ops > 0).then(|| {
             -op_counts
                 .values()
                 .map(|&k| {
@@ -584,7 +585,7 @@ impl Tracker {
                 .sum::<f64>()
         });
         let ops_distinct = op_counts.len() as u32;
-        let op_entropy_norm = match (op_entropy_nats, self.cfg.op_vocab_size) {
+        let op_entropy_norm = match (op_entropy_nat, self.cfg.op_vocab_size) {
             (Some(h), Some(v)) if v > 1 => Some(h / (v as f64).ln()),
             _ => None,
         };
@@ -658,7 +659,7 @@ impl Tracker {
             proj16_unique_frac,
             proj16_mean_hamming,
             op_counts,
-            op_entropy_nats,
+            op_entropy_nat,
             op_entropy_norm,
             ops_distinct,
             ops_unused,
@@ -919,6 +920,16 @@ impl SplitMix64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn entropy_field_rename_preserves_telemetry_wire_key() {
+        let mut summary = test_gen_summary("test", 1, 0.5);
+        summary.op_entropy_nat = Some(0.75);
+
+        let value = serde_json::to_value(summary).expect("serialize generation summary");
+        assert_eq!(value["op_entropy_nats"], 0.75);
+        assert!(value.get("op_entropy_nat").is_none());
+    }
 
     #[test]
     fn parse_matches_python_reference_cases() {
