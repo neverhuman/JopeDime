@@ -626,6 +626,7 @@ paths = [
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_native.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_inputs.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/verified_cache.py",
