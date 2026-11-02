@@ -31,6 +31,21 @@ fn bind_parent_death(command: &mut Command) {
 
 struct Ranks(Vec<std::process::Child>);
 
+/// A rank may not have published its first heartbeat yet. Once a receipt exists,
+/// read and parse failures are errors rather than an empty progress record.
+fn read_rank_receipt(path: &Path) -> Result<Option<serde_json::Value>> {
+    let bytes = match fs::read(path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(error).with_context(|| format!("read rank receipt {}", path.display()))
+        }
+    };
+    serde_json::from_slice(&bytes)
+        .map(Some)
+        .with_context(|| format!("parse rank receipt {}", path.display()))
+}
+
 pub(crate) fn bind_proposal_protocol(spec: &mut serde_json::Value) {
     spec["sampling_protocol"] = "pure-v4".into();
     spec["pure_prediction_protocol"] = crate::proposal_population::PURE_PROTOCOL.into();
@@ -335,20 +350,32 @@ pub fn propose_with_generation(
         let mut complete = true;
         let mut ranks = Vec::new();
         for (rank, child) in children.0.iter_mut().enumerate() {
-            let r: serde_json::Value =
-                read_json(&output.join(format!("rank-{rank}.json"))).unwrap_or_default();
+            let receipt_path = output.join(format!("rank-{rank}.json"));
+            let mut receipt = read_rank_receipt(&receipt_path)?;
             match child.try_wait()? {
-                Some(s) => ensure!(s.success(), "proposal rank {rank} failed: {s}"),
+                Some(s) => {
+                    ensure!(s.success(), "proposal rank {rank} failed: {s}");
+                    if receipt.is_none() {
+                        // The child can publish its final receipt between our file read and
+                        // wait check; re-read before treating successful exit as corruption.
+                        receipt = read_rank_receipt(&receipt_path)?;
+                    }
+                    ensure!(
+                        receipt.is_some(),
+                        "proposal rank {rank} exited successfully without a receipt: {}",
+                        receipt_path.display()
+                    );
+                }
                 None => {
                     complete = false;
-                    let age = r["timestamp"]
-                        .as_u64()
-                        .map(|t| crate::telemetry::now().saturating_sub(t))
-                        .unwrap_or(begun.elapsed().as_secs());
+                    let age = match receipt.as_ref().and_then(|r| r["timestamp"].as_u64()) {
+                        Some(timestamp) => crate::telemetry::now().saturating_sub(timestamp),
+                        None => begun.elapsed().as_secs(),
+                    };
                     ensure!(age < 600, "proposal rank {rank} heartbeat timeout");
                 }
             }
-            ranks.push(r);
+            ranks.push(receipt.unwrap_or(serde_json::Value::Null));
         }
         write_json(
             &root.join("runs/encoding-service.json"),
@@ -1298,6 +1325,23 @@ mod proposal_protocol_tests {
             .unwrap_err()
             .to_string()
             .contains("proposal run identity absent"));
+
+        // Missing rank progress is an expected startup state; malformed persisted
+        // progress is not. Keep both cases distinct from each other and from I/O errors.
+        let rank_path = output.join("rank-0.json");
+        assert!(read_rank_receipt(&rank_path).unwrap().is_none());
+        fs::write(&rank_path, br#"{"timestamp":17}"#).unwrap();
+        assert_eq!(
+            read_rank_receipt(&rank_path).unwrap(),
+            Some(serde_json::json!({"timestamp":17}))
+        );
+        fs::write(&rank_path, b"{").unwrap();
+        assert!(read_rank_receipt(&rank_path)
+            .unwrap_err()
+            .to_string()
+            .contains("parse rank receipt"));
+        let directory_error = read_rank_receipt(output).unwrap_err();
+        assert!(format!("{directory_error:#}").contains("read rank receipt"));
     }
 }
 
