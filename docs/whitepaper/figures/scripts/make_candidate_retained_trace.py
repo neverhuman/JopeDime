@@ -160,7 +160,7 @@ def main():
             s=48,
             c="#b62828",
             zorder=5,
-            label="strict admission" if args.recent else "accepted strict gain",
+            label="strict gain" if args.recent else "accepted strict gain",
         )
     for first, last in spans:
         if not args.recent and last - first + 1 >= 50:
