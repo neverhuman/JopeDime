@@ -428,4 +428,13 @@ fn a_store_location_names_the_backend_and_prefix_object_store_opens() {
         assert!(S::parse(&Url::parse(url).unwrap()).is_err(), "{url}");
         assert!(StoreLocation::parse(url).is_err(), "{url}");
     }
+    for url in [
+        "s3://example-bucket/run//item",
+        "s3a://example-bucket/run//item",
+    ] {
+        assert!(
+            StoreLocation::parse(url).is_err(),
+            "invalid prefix must not become a bucket-root store: {url}"
+        );
+    }
 }
