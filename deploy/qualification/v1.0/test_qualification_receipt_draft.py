@@ -136,9 +136,20 @@ class QualificationReceiptTests(unittest.TestCase):
         self.assertNotIn("Q1", GATES)
         qualification = self.receipt["qualification"]
         self.assertFalse(qualification["raw_all_pass"])
-        self.assertFalse(qualification["release_qualified"])
-        self.assertIsNone(qualification["owner_release_approval"])
-        self.assertIsNone(qualification["aggregate_signature"])
+        pending = "GATES_ADMITTED_PENDING_OWNER_RELEASE_APPROVAL"
+        if qualification["status"] == pending:
+            self.assertFalse(qualification["release_qualified"])
+            self.assertIsNone(qualification["owner_release_approval"])
+            self.assertIsNone(qualification["aggregate_signature"])
+        else:
+            self.assertEqual(qualification["status"], "OWNER_APPROVED_SCOPED_V1_0_0")
+            self.assertTrue(qualification["release_qualified"])
+            for name in ("owner_release_approval", "aggregate_signature"):
+                evidence = qualification[name]
+                self.assertEqual(set(evidence), {"path", "sha256", "bytes"})
+                self.assertTrue(evidence["path"].startswith("/"))
+                self.assertRegex(evidence["sha256"], r"^[0-9a-f]{64}$")
+                self.assertGreater(evidence["bytes"], 0)
 
     def test_incomplete_forged_or_out_of_scope_receipts_are_rejected(self):
         def gate(receipt, name):
@@ -191,7 +202,9 @@ class QualificationReceiptTests(unittest.TestCase):
             ),
             (
                 "forged release qualification",
-                lambda r: r["qualification"].update(release_qualified=True),
+                lambda r: r["qualification"].update(
+                    release_qualified=not r["qualification"]["release_qualified"]
+                ),
             ),
         ]
         for name, mutate in mutations:
@@ -212,7 +225,11 @@ class QualificationReceiptTests(unittest.TestCase):
             "A5 **PASS**",
             "guidance default is **OFF**",
             "OWNER-R21",
-            "OWNER RELEASE APPROVAL PENDING",
+            (
+                "OWNER RELEASE APPROVED"
+                if self.receipt["qualification"]["release_qualified"]
+                else "OWNER RELEASE APPROVAL PENDING"
+            ),
             "Q1 outcome",
             "internal-restricted",
             "58/1,024",

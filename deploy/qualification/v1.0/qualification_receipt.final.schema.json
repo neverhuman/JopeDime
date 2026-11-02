@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:jope:rel07-qualification-receipt:v1",
-  "title": "Completed RC4 gate evidence; owner release approval pending",
+  "title": "Completed RC4 gate evidence with explicit pending or delegated approved release state",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -529,7 +529,10 @@
       ],
       "properties": {
         "status": {
-          "const": "GATES_ADMITTED_PENDING_OWNER_RELEASE_APPROVAL"
+          "enum": [
+            "GATES_ADMITTED_PENDING_OWNER_RELEASE_APPROVAL",
+            "OWNER_APPROVED_SCOPED_V1_0_0"
+          ]
         },
         "gates_admitted": {
           "const": true
@@ -538,15 +541,63 @@
           "const": false
         },
         "release_qualified": {
-          "const": false
+          "type": "boolean"
         },
         "owner_release_approval": {
-          "type": "null"
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/evidence"
+            }
+          ]
         },
         "aggregate_signature": {
-          "type": "null"
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/evidence"
+            }
+          ]
         }
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "GATES_ADMITTED_PENDING_OWNER_RELEASE_APPROVAL"
+            },
+            "release_qualified": {
+              "const": false
+            },
+            "owner_release_approval": {
+              "type": "null"
+            },
+            "aggregate_signature": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "OWNER_APPROVED_SCOPED_V1_0_0"
+            },
+            "release_qualified": {
+              "const": true
+            },
+            "owner_release_approval": {
+              "$ref": "#/$defs/evidence"
+            },
+            "aggregate_signature": {
+              "$ref": "#/$defs/evidence"
+            }
+          }
+        }
+      ]
     },
     "q1": {
       "type": "object",

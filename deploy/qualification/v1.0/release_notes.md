@@ -1,10 +1,13 @@
 # JopeDime v1.0.0 — completed RC4 gate evidence
 
-**OWNER RELEASE APPROVAL PENDING / NOT RELEASED.** The final gate evidence is
-recorded in `qualification_receipt.json`; OWNER release approval and the
-aggregate release signature remain unset. Candidate runtime source is RC4
-`ccaf14b210b3b55a350218e60f6b49ef76524cf3`, tree
-`2e4324f0bb387ece970664eac193a7ef6a8eb05c`, scope `internal-restricted`.
+**OWNER RELEASE APPROVED / SIGNATURE VERIFIED / NOT PUBLISHED.** Delegated
+owner review admits the exact RC4 v1.0.0 qualification scope and records the
+aggregate qualification/provenance signature in qualification_receipt.json.
+Candidate runtime source remains RC4
+ccaf14b210b3b55a350218e60f6b49ef76524cf3, tree
+2e4324f0bb387ece970664eac193a7ef6a8eb05c, scope internal-restricted.
+This approval certifies the frozen candidate evidence; it does not certify
+an unbuilt current-fastlane binary, publish assets, merge main or promote serving.
 
 ## Completed candidate-bound run
 
@@ -33,9 +36,10 @@ and head replacement remains within 3.0 pp in all three views. The ±2.0 pp
 criterion remains unchanged for future releases; the waiver expires at v1.0.1.
 REL-07-F01 records the separate future-release correction and qualification.
 
-The receipt preserves `all_pass=false` semantics. The legacy signing watcher
-requires 28 literal PASS rows and needs ENG adjudication of this owner waiver.
-No verdict was relabelled to satisfy that instrument.
+The receipt preserves raw_all_pass=false semantics. The delegated owner
+accepted the existing version-limited waiver and signed the final admitted
+qualification/provenance message through the sanctioned release instrument.
+Public-key verification passed; no raw verdict was relabelled.
 
 ## Guidance and Q1
 
@@ -54,15 +58,16 @@ The receipt binds QLT02's final receipt and REPORT at fastlane commit
 and delegated OWNER-R21 disposition, and GOV03's independent handoff. Known
 returned charges are 1,440; the 522 failed-unit charges, prior interrupted work
 and total physical charges remain unknown. No retry, budget reset, learned
-promotion, successful Q1 signature or aggregate release approval is inferred.
+promotion or successful Q1 signature is inferred. The separate REL-07 owner
+approval retains this incomplete Q1 disposition and guidance OFF.
 
 ## Candidate artifacts and limits
 
 The source-bound RC4 full Linux x86-64, full Darwin arm64 and fused CPU Linux
 x86-64 envelopes have retained seal/signature receipts. Their identities and
 byte counts are recorded in `qualification_receipt.json`. Candidate envelope
-signatures establish custody; final release approval and aggregate signing
-remain separate.
+signatures establish custody; the separate delegated owner release approval
+and aggregate qualification/provenance signature are now bound by the receipt.
 
 - Windows native-host qualification is waived for v1.0.0 and is not described
   as a qualified shipped platform.
@@ -74,3 +79,16 @@ remain separate.
   grant unrestricted redistribution of embedded assets.
 - A prior Darwin worker-CV report recorded 58/1,024 parity failures. This Linux
   controller does not supersede or relabel that native-worker report.
+
+## Delegated owner release decision
+
+API01 reviewed source a6dc6698e1dd4e29de7a40cf80d92c32784a9b27 and the
+immutable c13c5742 qualification payload under the explicit t2226 delegation.
+The owner decision, final signed message, signature and public verification
+receipts are hash-bound through qualification.owner_release_approval and
+qualification.aggregate_signature. The exact final message SHA-256 is
+f5147e2b539352d2337a4cad23716f1df26b8e77ecdbd9c5ae089c868ec2b01f;
+its detached signature SHA-256 is
+fff0350179dba6157dc8a3e83114a59fc332ad6fb4f7cb802d0e76c142720fe6.
+The original pre-approval evidence remains immutable. Master-merge build/test
+validation remains deferred by the owner hold; this is no current-head CI claim.
