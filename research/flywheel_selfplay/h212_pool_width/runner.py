@@ -31,9 +31,15 @@ R882 = Path.home() / "jope-data/h51/ckpt/round-882.pt"
 MICRO = Path.home() / "JopeDimeMicro"
 H124_PATH = REPO / "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py"
 H139_PATH = REPO / "research/flywheel_selfplay/h139_selection_audit/runner.py"
+H58_PREPARE_CACHE_PATH = REPO / "research/flywheel_selfplay/h58/prepare_cache.py"
+H58_BASE_PATH = REPO / "research/flywheel_selfplay/run_fused_closed_loop.py"
+H58_ENVELOPE_PATH = REPO / "research/flywheel_selfplay/automatic_promotion.py"
 GENERATOR_PATH = MICRO / "python/rust_evaluator.py"
 H124_SHA = "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a"
 H139_SHA = "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+H58_PREPARE_CACHE_SHA = "be0ab8b8aefee8aca2fe96417b6b009d7d4fdaf8c50c02c0eca03db4ad2bd386"
+H58_BASE_SHA = "abacf87c9efc116e3923e918e5521a14bf25be789b10d5245fc9186309df6fbb"
+H58_ENVELOPE_SHA = "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0"
 GENERATOR_SHA = "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
 R882_SHA = "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
 DOPE_SHA = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
@@ -174,6 +180,16 @@ def load_source(path: Path, name: str, expected_sha: str):
     return module
 
 
+def validate_train_cv_envelope(
+    raw_table: bytes, cached_envelope: bytes, expected_raw_sha: str, envelope_fn
+) -> None:
+    """Check raw TRAIN identity and exact bytes of the pinned H58 CV envelope."""
+    if hashlib.sha256(raw_table).hexdigest() != expected_raw_sha:
+        raise ValueError("raw TRAIN table SHA256 does not match selected record")
+    if cached_envelope != envelope_fn(raw_table):
+        raise ValueError("cached TRAIN bytes do not match pinned CV envelope")
+
+
 def verify_launch(launch_path: Path) -> dict:
     launch = json.loads(Path(launch_path).read_text())
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
@@ -212,6 +228,9 @@ def verify_inputs() -> dict:
         path = {
             "h124_runner": H124_PATH,
             "h139_runner": H139_PATH,
+            "h58_prepare_cache": H58_PREPARE_CACHE_PATH,
+            "h58_base_module": H58_BASE_PATH,
+            "h58_envelope_source": H58_ENVELOPE_PATH,
             "repo_rust_evaluator": REPO / "research/flywheel_selfplay/rust_evaluator.py",
             "micro_rust_evaluator": GENERATOR_PATH,
             "micro_model": MICRO / "python/model.py",
@@ -310,15 +329,20 @@ def run(root: Path, launch_path: Path) -> dict:
         raise RuntimeError("owned r882 checkpoint copy does not match the frozen SHA")
     root = Path(root)
     expected_parent = Path.home() / "jope-data/h212"
-    if root.parent != expected_parent or root.name != "attempt-001" or root.exists():
-        raise RuntimeError("H212 permits one fresh attempt-001 under ~/jope-data/h212")
+    if root.parent != expected_parent or root.name != "attempt-002" or root.exists():
+        raise RuntimeError("owner-authorized D1 requires one fresh attempt-002 under ~/jope-data/h212")
     launch_guard = guard(None)
     root.mkdir(parents=True)
     started = time.monotonic()
     deadline = started + MAX_WALL
     paused = 0.0
     progress_path = root / "progress.jsonl"
-    metrics = {"schema": "jope.h212.pool-width-metrics/v1", "status": "INCOMPLETE"}
+    metrics = {
+        "schema": "jope.h212.pool-width-metrics/v1",
+        "status": "INCOMPLETE",
+        "attempt": root.name,
+        "source_commit": launch["source_commit"],
+    }
     try:
         h139 = load_source(H139_PATH, "h212_h139", H139_SHA)
         h124 = h139.load_h124()
@@ -364,6 +388,9 @@ def run(root: Path, launch_path: Path) -> dict:
 
         # Treatment data is accessed only after baseline parity passes.
         generator = load_source(GENERATOR_PATH, "h212_gp_generator", GENERATOR_SHA)
+        h58_envelope = load_source(
+            H58_ENVELOPE_PATH, "h212_h58_envelope", H58_ENVELOPE_SHA
+        )
         generator.EVAL_SCRATCH_ROOT = root / "rust_eval"
         cache_manifest = json.loads((CACHE / "cache_manifest.json").read_text())
         if cache_manifest.get("excluded_payloads_opened") != 0 or cache_manifest.get("dope_sha256_after") != DOPE_SHA:
@@ -409,6 +436,17 @@ def run(root: Path, launch_path: Path) -> dict:
                     parents = [champion_by_cid[cid]]
                     stream = stat.stream_seed(seed, cid)
                     pool = train_pools[cid]
+                    jtt = CACHE / "jtt1_gz" / f"{cid}.jtt1.gz"
+                    if cid not in zipped or sha(jtt) != zipped[cid]:
+                        raise RuntimeError(f"H58 train-only JTT1 source mismatch: {cid}")
+                    raw_table = (INPUT / "tables" / f"{cid}.jtt1").read_bytes()
+                    cached_envelope = gzip.decompress(jtt.read_bytes())
+                    validate_train_cv_envelope(
+                        raw_table,
+                        cached_envelope,
+                        row["train_only_jtt1_sha256"],
+                        h58_envelope.training_cv_envelope,
+                    )
                     with np.load(pool["path"], allow_pickle=False) as archive:
                         known = {x.decode("ascii") if isinstance(x, bytes) else str(x)
                                  for x in archive["program_sha256"].tolist()}
@@ -431,11 +469,6 @@ def run(root: Path, launch_path: Path) -> dict:
                             [p["program_sha256"].encode("ascii") for p in raw], dtype="S64"
                         )
                     novel = list(union_by_sha.values())
-                    jtt = CACHE / "jtt1_gz" / f"{cid}.jtt1.gz"
-                    if cid not in zipped or sha(jtt) != zipped[cid]:
-                        raise RuntimeError(f"H58 train-only JTT1 source mismatch: {cid}")
-                    if hashlib.sha256(gzip.decompress(jtt.read_bytes())).hexdigest() != row["train_only_jtt1_sha256"]:
-                        raise RuntimeError(f"decompressed TRAIN JTT1 identity mismatch: {cid}")
                     results = generator.evaluate_gp_batch_rust(
                         str(jtt), novel, run_outer_test=False, max_workers=4, timeout_s=25.0
                     )
@@ -536,20 +569,35 @@ def run(root: Path, launch_path: Path) -> dict:
         decision = stat.decide(primary, elo_lowers)
         pooled = {}
         for width in (32, 64):
-            gain = np.mean(
-                [
-                    np.array(
+            seed_family_gains = []
+            for seed in stat.SEEDS:
+                seed_family_gains.append(
+                    np.asarray(
                         [
-                            np.mean([utility_panels[s][width][i] - utility_panels[s][16][i]
-                                     for i, fam in enumerate(families) if fam == family])
+                            np.mean([
+                                utility_panels[seed][width][i]
+                                for i, family_id in enumerate(families)
+                                if family_id == family
+                            ])
+                            - np.mean([
+                                utility_panels[seed][16][i]
+                                for i, family_id in enumerate(families)
+                                if family_id == family
+                            ])
                             for family in sorted(set(families))
-                        ]
+                        ],
+                        dtype=np.float64,
                     )
-                    for s in stat.SEEDS
-                ],
-                axis=0,
+                )
+            pooled[f"N{width}_vs_N16"] = stat.pooled_seed_gain_stats(
+                np.stack(seed_family_gains), bootstrap_ix
             )
-            pooled[f"N{width}_vs_N16"] = stat.family_gain_stats(gain, bootstrap_ix)
+        holm_adjusted = stat.holm(
+            {
+                name: pooled[name]["p_one_sided_median_le_zero"]
+                for name in ("N32_vs_N16", "N64_vs_N16")
+            }
+        )
         save_panel = root / "candidate-panels.npz"
         np.savez_compressed(save_panel, **arrays)
         metrics = {
@@ -557,7 +605,7 @@ def run(root: Path, launch_path: Path) -> dict:
             "status": "COMPLETE",
             "verdict": decision["verdict"],
             "failed_gates": decision["failed_gates"],
-            "attempt": "attempt-001",
+            "attempt": root.name,
             "source_commit": launch["source_commit"],
             "prereg_sha256": sha(HERE / "PREREG.md"),
             "baseline_parity": parity,
@@ -568,6 +616,7 @@ def run(root: Path, launch_path: Path) -> dict:
             "primary_width": stat.PRIMARY_WIDTH,
             "family_statistics": summary,
             "pooled_family_statistics": pooled,
+            "pooled_holm_m2": holm_adjusted,
             "elo": elo_by_seed,
             "optimizer_updates": 0,
             "dope_sha256_before": DOPE_SHA,

@@ -72,9 +72,48 @@ def family_gain_stats(gain, bootstrap_indices) -> dict:
         "family_median_gain": float(np.median(g)),
         "family_mean_gain": float(np.mean(g)),
         "ci95": [float(x) for x in np.quantile(draws, [0.025, 0.975])],
+        "p_one_sided_median_le_zero": float((1 + np.sum(draws <= 0.0)) / (len(draws) + 1)),
         "harm_count": int(np.sum(g < 0.0)),
         "harm_fraction": float(np.mean(g < 0.0)),
         "win_tie_loss": [int(np.sum(g > 0.0)), int(np.sum(g == 0.0)), int(np.sum(g < 0.0))],
+    }
+
+
+def holm(p_values: dict[str, float]) -> dict[str, float]:
+    """Holm step-down adjusted p-values, returned under the original contrast keys."""
+    if not p_values or any(not np.isfinite(p) or p < 0.0 or p > 1.0 for p in p_values.values()):
+        raise ValueError("nonempty finite p-values in [0, 1] required")
+    order = sorted(p_values, key=lambda key: (p_values[key], key))
+    adjusted, running, count = {}, 0.0, len(order)
+    for rank, key in enumerate(order):
+        running = max(running, min(1.0, (count - rank) * p_values[key]))
+        adjusted[key] = running
+    return adjusted
+
+
+def pooled_seed_gain_stats(seed_family_gain, bootstrap_indices) -> dict:
+    """Median of three equal-family seed means with a paired family bootstrap."""
+    values = np.asarray(seed_family_gain, dtype=np.float64)
+    ix = np.asarray(bootstrap_indices, dtype=np.int64)
+    if values.shape != (len(SEEDS), 205) or not np.isfinite(values).all():
+        raise ValueError("finite three-seed by 205-family gain matrix required")
+    if ix.ndim != 2 or ix.shape[1] != 205 or (ix < 0).any() or (ix >= 205).any():
+        raise ValueError("bootstrap indices must sample 205 registered families")
+    seed_draw_means = values[:, ix].mean(axis=2)
+    draws = np.median(seed_draw_means, axis=0)
+    pooled_family_gain = values.mean(axis=0)
+    return {
+        "seed_family_mean_gain": [float(x) for x in values.mean(axis=1)],
+        "median_over_three_seed_family_means": float(np.median(values.mean(axis=1))),
+        "ci95": [float(x) for x in np.quantile(draws, [0.025, 0.975])],
+        "p_one_sided_median_le_zero": float((1 + np.sum(draws <= 0.0)) / (len(draws) + 1)),
+        "pooled_family_mean_gain": float(np.mean(pooled_family_gain)),
+        "harm_fraction": float(np.mean(pooled_family_gain < 0.0)),
+        "win_tie_loss": [
+            int(np.sum(pooled_family_gain > 0.0)),
+            int(np.sum(pooled_family_gain == 0.0)),
+            int(np.sum(pooled_family_gain < 0.0)),
+        ],
     }
 
 
