@@ -58,7 +58,7 @@ pub mod var {
 }
 
 #[cfg(test)]
-use roots::{absolute_env_path, default_jopedime_home, env_path, find_marker, select_home};
+use roots::{default_jopedime_home, find_marker, select_home};
 mod roots;
 pub use roots::{
     jope_home, jope_registry, jope_state, jopedime_home, legacy_root, quant_root, scq_root,
