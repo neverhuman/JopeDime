@@ -64,7 +64,7 @@ Locations below identify the retained pre-fix report. Closure requires the stric
 | C046 | `crates/jope-engine/src/controller.rs:1342` | `zombie_processes` | ProposalOptions/TrainingOptions group inputs; parent-death fixture explicitly waits for its child. |
 | C047 | `crates/jope-engine/src/native_loop.rs:1843` | `too_many_arguments` | ParentEvidence groups unchanged checkpoint/train/comparison evidence. |
 | C048 | `crates/jope-engine/src/native_observer/science.rs:496` | `too_many_arguments` | GraphLocation groups unchanged root/state/worker. |
-| C049 | `crates/jope-campaigns/src/recovery_contracts.rs:1220` | `too_many_arguments` | RollbackBundleEvidence groups unchanged bundle hashes, files and artifacts. |
+| C049 | `crates/jope-campaigns/src/recovery_contracts/rollback_v2/evidence.rs:227` | `too_many_arguments` | RollbackBundleEvidence groups unchanged bundle hashes, files and artifacts. |
 | C050 | `crates/jope-engine/src/eval_registry/authority.rs:4089` | `too_many_arguments` | FitInputs and CompletionArtifacts group payloads; verified process/runtime/fit and completion checks remain in their receiving constructors. |
 | C051 | `crates/jope-campaigns/src/selfplay_shadow/policy/evaluation.rs:382` | `too_many_arguments` | EvaluationIdentity groups evaluator and protocol. |
 
