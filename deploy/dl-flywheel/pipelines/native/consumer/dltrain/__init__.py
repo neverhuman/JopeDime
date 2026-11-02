@@ -3,9 +3,12 @@ from pathlib import Path as _Path
 
 __version__ = "0.1.0"
 
-# Keep one native import entry point, but resolve every dltrain module from the
-# canonical continuous consumer package in the same checked source tree.
-_shared = _Path(__file__).resolve().parents[4] / "pipelines" / "continuous" / "consumer" / "dltrain"
-if _shared.is_symlink() or not _shared.is_dir():
-    raise ImportError(f"shared dltrain source package is unavailable: {_shared}")
-__path__.append(str(_shared))
+# Keep native imports first, then continuous-owned modules, then frozen shared
+# grammar modules removed from the duplicate continuous package.
+_root = _Path(__file__).resolve().parents[4]
+_shared = _root / "pipelines" / "continuous" / "consumer" / "dltrain"
+_canonical = _root.parent / "dl-trainonly" / "lane" / "src" / "dl_training_v1" / "dltrain"
+for _source in (_shared, _canonical):
+    if _source.is_symlink() or not _source.is_dir():
+        raise ImportError(f"shared dltrain source package is unavailable: {_source}")
+    __path__.append(str(_source))

@@ -2,9 +2,9 @@
 
 Per the 2026-10-18 stack ruling (`JEPSON_RULING_20261018T1940Z_stack_rust_jankurai.md`), JopeDime standardizes on **Rust** for all backend, CLI, tooling, verification, and compute workloads, and **Vite + TypeScript + React** for web UI.
 
-- **Total tracked `.py` files audited**: `1,166` (`340,381` LOC)
+- **Total tracked `.py` files audited**: `1,163` (`335,305` LOC)
   - **`keep-with-reason`**: `205` files (`96,946` LOC) — documented with 1-line justifications in [`PYTHON_EXCEPTIONS.md`](PYTHON_EXCEPTIONS.md).
-  - **`port-to-Rust`**: `961` files (`243,443` LOC) — scheduled for incremental replacement by Rust binaries/subcommands on spare worker capacity without interrupting active release lanes.
+  - **`port-to-Rust`**: `958` files (`238,367` LOC) — scheduled for incremental replacement by Rust binaries/subcommands on spare worker capacity without interrupting active release lanes.
 - **Total tracked `.sh` files audited**: `87` (`9,824` LOC)
 
 ## Spare-Worker Rust Porting Tracker Tasks (`PORT-RUST-01..07`)
@@ -13,7 +13,7 @@ Porting executes exclusively on spare worker capacity, never preempting active r
 
 | Task ID | Scope / Subtree | Target Rust Crate | Files to Port (`.py` + `.sh`) | Total LOC | Execution Policy |
 | --- | --- | --- | ---: | ---: | --- |
-| `PORT-RUST-01` | `deploy/dl-flywheel/**` pure orchestration, S3/archive & manifest pipelines | `crates/jope-engine` & `crates/jope-cli` | 620 | 110,981 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
+| `PORT-RUST-01` | `deploy/dl-flywheel/**` pure orchestration, S3/archive & manifest pipelines | `crates/jope-engine` & `crates/jope-cli` | 617 | 105,905 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-02` | `deploy/dl-trainonly/**` manifest binding, feature reduction & lane verifiers | `crates/jope-cli` & `crates/feat-math` | 166 | 81,892 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-03` | `deploy/ci/**`, `deploy/runner/**`, `deploy/*.py` & CI shell wrappers | `crates/jope-records` & `crates/jope-cli` | 63 | 10,360 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-04` | `python/src/jope/**` non-Torch campaign, corpus, selfplay & runtime orchestration | `crates/jope-engine` & `crates/jope-cli` | 98 | 36,221 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
@@ -21,7 +21,7 @@ Porting executes exclusively on spare worker capacity, never preempting active r
 | `PORT-RUST-06` | `crates/**`, `benchmarks/**` & developer shell scripts | `crates/jope-bench` & `build.rs` | 58 | 7,335 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-07` | `docs/internal/**` & `python/legacy/**` publication/figure verification tools | `crates/jope-records` | 22 | 2,559 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 
-## Complete Python File Inventory (`1,166` `.py` Files)
+## Complete Python File Inventory (`1,163` `.py` Files)
 
 | Path | LOC | Purpose | Disposition | Reason / Target Tracker Task |
 | --- | ---: | --- | --- | --- |
@@ -112,13 +112,10 @@ Porting executes exclusively on spare worker capacity, never preempting active r
 | `deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py` | 576 | C10b revision 2 private CPU fixtures: repeatable closed-epoch adoption, refusals, crash reconciliation, restar | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_overlay_components.py` | 416 | C10b revision 6 private CPU fixtures: native-result overlay components through the boundary inbox. | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/__init__.py` | 2 | dltrain: research-only DL training lane for GP program generation (PLAN dltrain-audit-v1, route DL-D1=A). | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/automaton.py` | 2500 | PLAN §5 P4 grammar automaton over the lossless DSL tokenizer (design: P4 "automaton" section). | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/common.py` | 238 | Shared helpers for the dltrain research lane (PLAN §5 P0 step 3). Standard library only. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/dsl_tokenizer.py` | 1328 | PLAN §5 P4 lossless tokenizer over canonical GenomeIr text (design: P4 "tokenizer" section). | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/labels.py` | 492 | Train-only label rules (PLAN §6.3, §5 P5 "Labels" and "Outcome classes", §5 P7 test 2, §6.3.2 baseline arm). | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py` | 331 | PolicyLM and its canonical identities (PLAN §6.3.1 model, §6.3.2 Optimization, §6.6 checkpoint closure and | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/objective.py` | 507 | Training objectives (PLAN §6.3.2 successor-v1 and the lineage-B baseline-objective arm), the masked CE primiti | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
-| `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/oracle.py` | 2338 | PLAN §5 P4 canonicalizer oracle (also used by P10 and P11). | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/sampler.py` | 884 | PLAN §5 P7 sampler: the train-only corpus view, fitted sampler statistics, the counter-based family-uniform ma | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `deploy/dl-flywheel/pipelines/continuous/continuous_cli.py` | 116 | Immutable continuous research runner under an inherited global deadline. | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `deploy/dl-flywheel/pipelines/continuous/continuous_runner.py` | 196 | One persistent resumed model; immutable parent, durable new epochs/outbox. | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
@@ -916,7 +913,7 @@ Porting executes exclusively on spare worker capacity, never preempting active r
 | `deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_normalizers.py` | 580 | P6 spec tests T13-T20 (+ the T39 hygiene scan) for dltrain.normalizers: train_fit-only refits (DL-D4a), canoni | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |
 | `deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_review_findings.py` | 750 | P6 tests for the 2026-10-05 review findings: train-only leakage (TOL-01..TOL-11) and adoption binding (AB-1..A | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |
 | `deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/__init__.py` | 0 | Module ` init ` in `deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale` | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |
-| `deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_check.py` | 961 | Synthetic tests for dltrain.scale_check (UPSTREAM-SCALE-01 counterfactual check). numpy and fractions only. | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |
+| `deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_check.py` | 958 | Synthetic tests for dltrain.scale_check (UPSTREAM-SCALE-01 counterfactual check). numpy and fractions only. | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |
 | `deploy/dl-trainonly/lane/src/dl_training_v1/tests_scale/test_scale_real.py` | 126 | Read-only real-data checks of dltrain.scale_check: the spec A oracle fold replicates Codex bit for bit, the sp | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |
 | `deploy/dl-trainonly/lane/src/dl_training_v1/tools/l7a_fetch.py` | 141 | L7a: re-fetch the original T1 sources (owner-typed 2026-10-05T18:34Z, receipt owner-decisions-20261005T183423Z | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |
 | `deploy/dl-trainonly/lane/src/dl_training_v1/tools/p0_receipt.py` | 71 | Assemble the P0 receipt (PLAN §5 P0) from the individual P0 receipts, then publish its custody copy under PREF | `port-to-Rust` | `PORT-RUST-02`: Port trainonly manifest/hash/reduction/verification utility to Rust (`jope-cli`). |

@@ -21,8 +21,11 @@ class DecoderTests(unittest.TestCase):
   self.assertNotEqual(rows[0]['trie_sha256'],expected['trie_sha256']) # explicitly versioned compact catalog
  def test_deterministic_multirow_traces_and_native_program_membership(self):
   shared=Path(__file__).resolve().parents[1]/'pipelines/continuous/consumer/dltrain'
+  frozen=Path(__file__).resolve().parents[1].parent/'dl-trainonly/lane/src/dl_training_v1/dltrain'
+  frozen_names={'automaton.py','common.py','oracle.py'}
   for module,name in ((A,'automaton.py'),(C,'common.py'),(T,'dsl_tokenizer.py'),(L,'labels.py'),(M,'model.py'),(O,'objective.py'),(R,'oracle.py'),(S,'sampler.py')):
-   self.assertEqual(Path(module.__file__).resolve(),shared/name)
+   owner=frozen if name in frozen_names else shared
+   self.assertEqual(Path(module.__file__).resolve(),owner/name)
   a,meta=self.trie.decode_many(self.net,self.z,seeds=[1,2,3,4],temperature=.7,deadline=time.time()+10);b,_=self.trie.decode_many(self.net,self.z,seeds=[1,2,3,4],temperature=.7,deadline=time.time()+10)
   self.assertEqual(a,b);self.assertEqual(len(a),4);self.assertLess(meta['forward_calls'],meta['tokens_generated'])
   for r in a:self.assertIn(r['program'],self.programs);self.assertEqual(T.detokenize(r['tokens'],self.vocab),r['program']['dsl'])
