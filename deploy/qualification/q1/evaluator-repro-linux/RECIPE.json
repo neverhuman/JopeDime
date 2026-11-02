@@ -1,0 +1,39 @@
+{
+  "schema": "jope.q1-linux-evaluator-recipe/v1",
+  "source_commit": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+  "source_tree": "2e4324f0bb387ece970664eac193a7ef6a8eb05c",
+  "target": "x86_64-unknown-linux-gnu",
+  "profile": "dev",
+  "command": [
+    "cargo",
+    "+1.97.1",
+    "build",
+    "--locked",
+    "--no-default-features",
+    "-p",
+    "jope-appliance",
+    "--features",
+    "research",
+    "--bin",
+    "jopedime",
+    "--message-format=json",
+    "-j",
+    "4"
+  ],
+  "environment": {
+    "CARGO_BUILD_JOBS": "4",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "line-tables-only",
+    "CUDA_VISIBLE_DEVICES": "",
+    "TMPDIR": "/mnt/jope-build-native/jope-targets/api01-verify/target/tmp",
+    "RUSTFLAGS": "-C target-cpu=x86-64 --remap-path-prefix=/home/ubuntu/JopeDime/.agent/worktrees/api01-verify=/jopedime --remap-path-prefix=/home/ubuntu/.cargo=/cargo --remap-path-prefix=/home/ubuntu/.rustup=/rustup --remap-path-prefix=/mnt/jope-build-native/jope-targets/api01-verify/target=/jopedime/target",
+    "JOPE_BUILD_SOURCE_SHA": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+    "SOURCE_DATE_EPOCH": "1793577764"
+  },
+  "compiler": "rustc 1.97.1 (8bab26f4f 2026-07-14)\nbinary: rustc\ncommit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452\ncommit-date: 2026-07-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.1\nLLVM version: 22.1.6\n",
+  "cargo": "cargo 1.97.1 (c980f4866 2026-06-30)\nrelease: 1.97.1\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:OpenSSL/3.6.2)\nssl: OpenSSL 3.6.2 7 Apr 2026\nos: Ubuntu 24.4.0 (noble) [64-bit]\n",
+  "CARGO_TARGET_DIR": "unset",
+  "RUSTC_WRAPPER": "unset",
+  "RUSTC_WORKSPACE_WRAPPER": "unset",
+  "GPU": false
+}
