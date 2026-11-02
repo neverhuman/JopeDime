@@ -811,8 +811,8 @@ crates/jope-engine/manifests/opportunistic-proposals-v44.sha256
 crates/jope-engine/manifests/opportunistic-proposals-v53.json
 crates/jope-engine/manifests/opportunistic-proposals-v53.sha256
 crates/jope-engine/manifests/provenance-decisions.json
-crates/jope-engine/manifests/provenance-review-v2.json
-crates/jope-engine/manifests/provenance-review-v3.json
+crates/jope-engine/manifests/dataset-provenance/origin-approval.json
+crates/jope-engine/manifests/dataset-provenance/preparation-controls.json
 crates/jope-engine/manifests/target-spec.json
 crates/jope-engine/native/runtime.cpp
 crates/jope-engine/rust-toolchain.parallel-legacy.toml
