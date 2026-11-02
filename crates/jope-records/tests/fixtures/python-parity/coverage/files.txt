@@ -276,6 +276,8 @@ crates/hyperion/src/hyperion_v7/sweep/mod.rs
 crates/hyperion/src/hyperion_v7/sweep/orig_v2.rs
 crates/hyperion/src/hyperion_v7/sweep/patch.rs
 crates/hyperion/src/hyperion_v7/sweep/tests.rs
+crates/hyperion/src/hyperion_v7/sweep/tests/embedding.rs
+crates/hyperion/src/hyperion_v7/sweep/tests/streaming.rs
 crates/hyperion/src/hyperion_v7/sweep/types.rs
 crates/hyperion/src/hyperion_v7/sweep/validate.rs
 crates/hyperion/src/hyperion_v7/weights.rs
