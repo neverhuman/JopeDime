@@ -4,7 +4,7 @@ Callers must not expose a generated candidate to scoring/training before this
 function returns. A ready research measurement still cannot be an optimizer
 reward without a separate frozen-manifest admission decision.
 """
-from dataclasses import asdict
+import dataclasses
 import json
 import time
 import uuid
@@ -81,7 +81,7 @@ class ProgramObserver:
                  'exact emission envelope fields')
             need(type(request['producer']) is str and 0 < len(request['producer']) <= 200, 'named producer required')
             context, _, descriptor = self.inputs.describe(request['variant_identity'])
-            need(request['context'] == asdict(context) and request['descriptor_sha256'] == digest(descriptor), 'producer input/context binding')
+            need(request['context'] == dataclasses.asdict(context) and request['descriptor_sha256'] == digest(descriptor), 'producer input/context binding')
             self.journal.register(context,descriptor)
             result = self.gate.ensure(context,request['dsl'],phase=request['phase'],
                 checkpoint_sha256=request['checkpoint_sha256'],step=request['step'])
