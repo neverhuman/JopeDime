@@ -1,0 +1,95 @@
+{
+  "schema": "jope.h214.pool-diversity/v1",
+  "status": "PREREGISTRATION_ONLY",
+  "owner": "luna_v1_res08",
+  "authority": "/home/ubuntu/nudges/hw_t0200_res08.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H214_claim.txt",
+  "arms": [
+    "NATIVE16",
+    "FPS16",
+    "TEMP16"
+  ],
+  "scored_width": 16,
+  "parent_slot": 0,
+  "new_proposals_scored": 15,
+  "native_generation_width": 16,
+  "fps_generation_width": 64,
+  "temperature": 2,
+  "temperature_reference": 1,
+  "reviewed_temperature_source_sha256": null,
+  "seeds": [
+    214101,
+    214102,
+    214103
+  ],
+  "bootstrap": {
+    "seed": 214150,
+    "draws": 10000,
+    "cluster": "DL-Val family",
+    "shared_across_seeds_and_contrasts": true,
+    "ci_quantiles": [
+      0.025,
+      0.975
+    ]
+  },
+  "cohort": {
+    "source": "H50/H58 real-S3; H212 content-pinned packet",
+    "train_contexts": 1219,
+    "train_families": 205,
+    "primary_contexts": 91,
+    "primary_families": 19,
+    "primary_split": "DL-Val",
+    "sealed_holdout_meta_test_reads": 0,
+    "outer_rows_delivered": 0
+  },
+  "frozen": {
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "checkpoint_copy": "/home/ubuntu/jope-data/h214/input/round-882.pt",
+    "optimizer_updates": 0
+  },
+  "upstream": {
+    "h212_manifest": "../h212_pool_width/manifest.json",
+    "proposer_source_sha256": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "h212_smoke_merged": true,
+    "smoke_pass_at_launch_head_required": true,
+    "h212_manifest_sha256": "2c957d9a10d9971c1308a7ebdab9d14849b4ce08c5688b1b3101dd43b9fa1ca2",
+    "h212_smoke_fix_pr": 1784,
+    "h212_runner_sha256": "8c27d619d3bbc4b8c3772e6acf91fa0ae0e1b51d4d35a029ca52fe57853ce7c1"
+  },
+  "prelaunch_resolutions": [
+    "merged H212 smoke and real PASS at exact merged H214 head",
+    "reviewed native temperature hook/source pin; current pinned API has none",
+    "coordinator records fixed16-total interpretation versus H2124+16 control"
+  ],
+  "decision": {
+    "median_gain_gt": 0,
+    "lcb95_gt": 0.001546,
+    "holm_m": 2,
+    "holm_adjusted_p_lt": 0.05,
+    "ties": "REJECT",
+    "incomplete_arm": "INCOMPLETE; never drop or reduce m"
+  },
+  "resources": {
+    "host": "xbabe1",
+    "nice": 19,
+    "numeric_threads_max": 4,
+    "evaluator_workers_max": 4,
+    "CUDA_VISIBLE_DEVICES": "",
+    "attempts": 1,
+    "wall_seconds_max": 7200,
+    "root_disk_used_fraction_max": 0.938,
+    "disk_free_min_bytes": 40000000000,
+    "mem_available_min_bytes": 17179869184,
+    "aggregate_rss_max_bytes": 6000000000,
+    "host_cpu_pct_max": 85,
+    "load_fraction_max": 0.85,
+    "high_load1_or_cpu_sustained_seconds": 300,
+    "load5_stop": "immediate"
+  },
+  "outcome": {
+    "status": "NOT_RUN",
+    "attempts_consumed": 0,
+    "utility_readouts": 0
+  }
+}

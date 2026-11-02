@@ -14915,6 +14915,16 @@
       ],
       "lanes": [],
       "scope": "H213 CPU-only data-free controls: unchanged H211 science, gradient/forward and role controls, exact native vector, S3 custody, SIGALRM reentry, exact PR admission; separate monotonic300s load1/CPU clocks, one-sample spike/recovery/301s refusal in worker and supervisor and instantaneous load5/memory. No scientific outcome or GPU fixture."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_h214.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H214 synthetic controls: fixed16-parent-first dedup, normalized-proj16 farthest-point ordering/ties, equal-family median-over-seed estimator and shared bootstrap, strict margin/Holm acceptance, exact-head smoke and native-temperature refusal, instantaneous and sustained host guards. No study data, checkpoint or utility readout."
     }
   },
   "lanes": {

@@ -1,0 +1,13 @@
+{
+  "schema": "jope.h214.pool-diversity-metrics/v1",
+  "status": "NOT_RUN",
+  "verdict": "INCOMPLETE",
+  "attempts_consumed": 0,
+  "utility_readouts": 0,
+  "optimizer_updates": 0,
+  "median_gain": null,
+  "ci95": null,
+  "elo_vs_r882": null,
+  "elo_vs_NATIVE16": null,
+  "reason": "Preregistration only; merged exact-head H212 smoke and reviewed native temperature capability required"
+}
