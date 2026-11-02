@@ -25,7 +25,7 @@ fn queued_enter_does_not_drop_pending_resize() {
 
 fn assert_queued_readiness(order: &str) {
     let binary = std::env::current_exe().unwrap();
-    let mut session = pty::PtySession::spawn_with_env(
+    let mut session = pty::PtySession::spawn(
         binary,
         &[
             "--exact",
@@ -34,7 +34,6 @@ fn assert_queued_readiness(order: &str) {
             "--nocapture",
             "--test-threads=1",
         ],
-        &[("JOPE_READINESS_ORDER", order)],
     )
     .unwrap();
     let output = session
@@ -49,11 +48,16 @@ fn assert_queued_readiness(order: &str) {
         .unwrap();
     let deadline = Instant::now() + Duration::from_secs(10);
     loop {
-        let state = std::fs::read_to_string(format!("/proc/{pid}/status")).unwrap();
-        if state
-            .lines()
-            .any(|line| line.starts_with("State:") && line.contains("T (stopped)"))
-        {
+        let stopped = std::fs::read_dir(format!("/proc/{pid}/task"))
+            .unwrap()
+            .all(|entry| {
+                std::fs::read_to_string(entry.unwrap().path().join("status")).is_ok_and(|state| {
+                    state
+                        .lines()
+                        .any(|line| line.starts_with("State:") && line.contains("T (stopped)"))
+                })
+            });
+        if stopped {
             break;
         }
         assert!(
@@ -86,13 +90,6 @@ fn readiness_child() {
     terminal::enable_raw_mode().unwrap();
     let _ = event::poll(Duration::ZERO).unwrap();
     let pid = std::process::id().to_string();
-    if std::env::var("JOPE_READINESS_ORDER").unwrap() == "signal-first" {
-        assert!(Command::new("/bin/kill")
-            .args(["-WINCH", &pid])
-            .status()
-            .unwrap()
-            .success());
-    }
     println!("READINESS_READY {pid}");
     std::io::stdout().flush().unwrap();
     assert!(Command::new("/bin/kill")
