@@ -197,7 +197,13 @@ pub(super) fn run_terminal(shared: &Arc<RwLock<Dashboard>>, refresh_ms: u64) -> 
 
     let mut ui = UiState::default();
     loop {
-        let snapshot = shared.read().map(|value| value.clone()).unwrap_or_default();
+        let snapshot = match shared.read() {
+            Ok(value) => value.clone(),
+            Err(_poisoned) => {
+                let poisoned_fallback: Dashboard = Dashboard::default();
+                poisoned_fallback
+            }
+        };
         terminal.draw(|frame| tui_render::render(frame, &snapshot, refresh_ms, ui))?;
         if event::poll(cadence)? {
             if let Event::Key(key) = event::read()? {
