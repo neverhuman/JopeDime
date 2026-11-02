@@ -2327,6 +2327,10 @@
       "reason": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the reviewed product baseline.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/test_hwave_numeric_threads.py": {
+      "role": "research",
+      "reason": "Prospective H-wave numeric-thread admission controls: runtime numeric caps and native pools, multiworker bound, CUDA/OS overhead diagnostics and unknown-evidence refusal. Data-free CPU research fixtures; not a live GPU or serving qualification."
+    },
     "python:research/flywheel_selfplay/test_phase3_gates.py": {
       "reason": "Owner-requested pytest proofs for the flywheel Phase 3 fail-closed gatekeeper (#459): round qualification and comparison, deterministic verification sampling and miss-to-training-pair conversion; research flywheel outside the reviewed product baseline.",
       "role": "research"
