@@ -18,10 +18,12 @@ from __future__ import annotations
 import argparse
 import ctypes
 import hashlib
+import importlib.util
 import io
 import json
 import os
 import re
+import stat
 import struct
 import subprocess
 import sys
@@ -35,6 +37,8 @@ import torch
 FROZEN_DOPE_COMPOSITE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schemas/jope.fused-bundle.v1.schema.json"
 CUSTODY_PATH = Path(__file__).resolve().parent / "custody"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MAX_PINNED_BYTES = 128 * 1024 * 1024
 PAYLOADS = {"dope.safetensors", "jope.safetensors", "featurizer.json", "bank.jsonl.zst"}
 MODEL_PRIOR_BANK_METADATA = {
     "role": "model_prior",
@@ -462,7 +466,104 @@ def compute_bundle_digest(manifest, files):
     return "sha256:" + digest.hexdigest()
 
 
-def _pinned_bytes(custody, original, expected, size=None):
+def _external_rows(custody):
+    """Validate EXTERNAL.json against the original custody manifest and Git pins."""
+    verifier_path = Path(__file__).resolve().parent / "custody/verify_custody.py"
+    spec = importlib.util.spec_from_file_location("_jope_custody_verifier", verifier_path)
+    if spec is None or spec.loader is None:
+        raise ExportError("cannot load custody verifier")
+    verifier = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verifier)
+    try:
+        manifest = json.loads((Path(custody) / "MANIFEST.json").read_bytes())
+        document = json.loads((Path(custody) / "EXTERNAL.json").read_bytes())
+        expected, _ = verifier._manifest_entries(manifest)
+        entries = verifier._external_entries(document, expected)
+        for row in entries.values():
+            commit = row["recovery_commit"]
+            git_path = row["git_path"]
+            object_id = row["git_object_id"]
+            if (
+                not isinstance(commit, str)
+                or not re.fullmatch(r"[0-9a-f]{40}", commit)
+                or not isinstance(object_id, str)
+                or not re.fullmatch(r"[0-9a-f]{40}", object_id)
+                or not isinstance(git_path, str)
+                or git_path != "research/flywheel_selfplay/custody/files/" + row["path"].lstrip("/")
+            ):
+                raise ValueError("invalid immutable external Git pin")
+            actual = subprocess.check_output(
+                ["git", "-C", str(REPO_ROOT), "rev-parse", "--verify", f"{commit}:{git_path}"],
+                stderr=subprocess.PIPE,
+                text=True,
+            ).strip()
+            if actual != object_id:
+                raise ValueError("external Git object identity differs from custody pin")
+        return entries
+    except (OSError, KeyError, TypeError, AttributeError, json.JSONDecodeError, ValueError, subprocess.CalledProcessError) as error:
+        raise ExportError(f"invalid external custody pins: {error}") from error
+
+
+def _read_checked(stream, expected, size, label):
+    if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
+        raise ExportError("invalid pinned SHA-256")
+    if size is not None and (not isinstance(size, int) or isinstance(size, bool) or size < 0 or size > MAX_PINNED_BYTES):
+        raise ExportError("invalid or oversized pinned byte count")
+    chunks = []
+    total = 0
+    while chunk := stream.read(min(1024 * 1024, MAX_PINNED_BYTES + 1 - total)):
+        chunks.append(chunk)
+        total += len(chunk)
+        if total > MAX_PINNED_BYTES:
+            raise ExportError(f"oversized pinned input: {label}")
+    data = b"".join(chunks)
+    if sha256(data) != expected or (size is not None and len(data) != size):
+        raise ExportError(f"pinned input hash/length mismatch: {label}")
+    return data
+
+
+def _cache_bytes(root, expected, size):
+    root = Path(root)
+    if not root.is_absolute():
+        raise ExportError("external cache root must be absolute")
+    target = root / "sha256" / expected
+    for component in reversed(target.parents):
+        try:
+            mode = component.lstat().st_mode
+        except OSError as error:
+            raise ExportError("missing external cache path") from error
+        if stat.S_ISLNK(mode):
+            raise ExportError("symlink in external cache path")
+        if component == root and not stat.S_ISDIR(mode):
+            raise ExportError("external cache root is not a directory")
+    try:
+        mode = target.lstat().st_mode
+    except OSError as error:
+        raise ExportError("missing external cache payload") from error
+    if stat.S_ISLNK(mode) or not stat.S_ISREG(mode):
+        raise ExportError("external cache payload is not a regular file")
+    if target.stat().st_size > MAX_PINNED_BYTES or (size is not None and target.stat().st_size != size):
+        raise ExportError("external cache payload size differs from pin")
+    with target.open("rb") as stream:
+        return _read_checked(stream, expected, size, target.name)
+
+
+def _git_bytes(row, expected, size):
+    command = ["git", "-C", str(REPO_ROOT), "cat-file", "blob", row["git_object_id"]]
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        data = _read_checked(process.stdout, expected, size, row["git_path"])
+        error = process.stderr.read().decode(errors="replace")
+        if process.wait() != 0:
+            raise ExportError(f"cannot read pinned Git recovery blob: {error.strip()}")
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+    return data
+
+
+def _pinned_bytes(custody, original, expected, size=None, external_root=None, external_rows=None):
     parts = PurePosixPath(original).parts
     if (
         not isinstance(original, str)
@@ -470,25 +571,39 @@ def _pinned_bytes(custody, original, expected, size=None):
         or any(part in ("", ".", "..") for part in original.split("/")[1:])
     ):
         raise ExportError("unsafe custody source path")
+    relative = Path(*parts[1:])
+    if external_rows is None:
+        external_rows = _external_rows(custody)
+    external = external_rows.get(relative)
+    if external is not None:
+        if external["sha256"] != expected or external["bytes"] != size:
+            raise ExportError("external pin differs from requested custody pin")
+        if external_root is not None:
+            return _cache_bytes(external_root, expected, size)
+        return _git_bytes(external, expected, size)
+
     path = custody / "files"
     for part in parts[1:]:
         path = path / part
         if path.is_symlink():
             raise ExportError("symlink in pinned source path")
-    if not path.is_file() or path.stat().st_size > 128 * 1024 * 1024:
+    try:
+        mode = path.lstat().st_mode
+    except OSError as error:
+        raise ExportError(f"missing pinned input: {path.name}") from error
+    if path.is_symlink() or not stat.S_ISREG(mode) or path.stat().st_size > MAX_PINNED_BYTES:
         raise ExportError(f"missing or oversized pinned input: {path.name}")
-    data = path.read_bytes()
-    if sha256(data) != expected or (size is not None and len(data) != size):
-        raise ExportError(f"pinned input hash/length mismatch: {path.name}")
-    return data
+    with path.open("rb") as stream:
+        return _read_checked(stream, expected, size, path.name)
 
 
-def load_inputs(custody=CUSTODY_PATH):
+def load_inputs(custody=CUSTODY_PATH, external_root=None):
     """Read committed custody copies only; restricted pickle load after byte pins."""
     custody = Path(custody)
     manifest_data = (custody / "MANIFEST.json").read_bytes()
     checkpoint_data = (custody / "CHECKPOINT.json").read_bytes()
     manifest, pin = read_json(manifest_data), read_json(checkpoint_data)
+    external_rows = _external_rows(custody)
     checkpoint_hash = pin["checkpoint"]["sha256"]
     if (
         manifest["checkpoint_sha256"] != checkpoint_hash
@@ -505,7 +620,7 @@ def load_inputs(custody=CUSTODY_PATH):
         if len(entries) != 1:
             raise ExportError(f"exactly one pinned source required: {basename}")
         row = entries[0]
-        data = _pinned_bytes(custody, row["path"], row["sha256"], row["bytes"])
+        data = _pinned_bytes(custody, row["path"], row["sha256"], row["bytes"], external_root, external_rows)
         sources[basename] = sha256(data)
         return data
 
@@ -674,13 +789,14 @@ def _publish_directory(staging, output):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--custody", type=Path, default=CUSTODY_PATH)
+    parser.add_argument("--external-root", type=Path, help="cache containing sha256/<pinned SHA-256> files")
     parser.add_argument("--metadata", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     torch.set_num_threads(4)
     try:
         manifest = export_bundle(
-            **load_inputs(args.custody), metadata=read_json(args.metadata.read_bytes()), output=args.output
+            **load_inputs(args.custody, external_root=args.external_root), metadata=read_json(args.metadata.read_bytes()), output=args.output
         )
     except (
         ExportError,
