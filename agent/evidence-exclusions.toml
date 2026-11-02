@@ -1,6 +1,186 @@
 # Exact-path, receipt-bound source exclusions. The checker validates every byte hash.
 
 [[evidence_exclusion]]
+path = "crates/feat-math/src/emit_py.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/emit_py.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "b465a7a7d6289f6958dd01edba20b0848807e0ccb6ce3e52cc7cb9909b54a26d"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/emit_rs.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/emit_rs.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "9bc59434154194c41f73ad82b6528e5249876a825276dc0b1e5d2331afc60430"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/evolve.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/evolve.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "e265badddde9447f80016c082fd9afe33a795804a179c11a17b824472ccfc0de"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/full_rust.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/full_rust.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "2e376ec098eb1c2f352f2be41e7e75e0f73f674fceefce075bb47866aa82654f"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/gpr.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/gpr.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "c407b48d45453dddeab322fa13b4b4f4849f28f60340cc6f7206ecff61b005bb"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/heads.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/heads.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "ec605bbbdc3ba746f24bd53eb65ca3c8e6e7c82e7103876b21f3761c41f68f98"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/kernel/lexicase.rs"
+reason = "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json records SHA-256 e2f6f70045f0e7df61c6d94a0f9a9acf2e4c6693320210c9d3cf192f209a72c2 for crates/feat-math/src/kernel/lexicase.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json"
+sha256 = "e2f6f70045f0e7df61c6d94a0f9a9acf2e4c6693320210c9d3cf192f209a72c2"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/math_expr/evolution/v2/refinement/lm.rs"
+reason = "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json records SHA-256 4a34736e4ea310712c94c46c5470a1826a0ada802c332c7be123fb47441b8cbd for crates/feat-math/src/math_expr/evolution/v2/refinement/lm.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json"
+sha256 = "4a34736e4ea310712c94c46c5470a1826a0ada802c332c7be123fb47441b8cbd"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/portfolio.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/portfolio.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "338ad94d54f8ade984d9d27733d2c5ec1cc0dca498b77f7a8430d49f620685fb"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/registry.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/registry.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/frozen_pins.v1.json"
+sha256 = "337700af92862c8ef79f81ed04283870d3953333577896c37ac1fa883ffaf38c"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/router_policy.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/router_policy.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "0996e2eee6d4fb854a6eb8fd880783c1a2868ce40a980916c308c84db09b8d59"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/tokens.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/tokens.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "f8b6198ac4bdb4a5f9aad1af1b2035192a6490737580857fc181a2019fc0a30b"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/src/transpile.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/feat-math/src/transpile.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "28a1a997d73a9a6981c20c53cafbf80f06d5b212f6d6d3d25292eeafef5ffeed"
+
+[[evidence_exclusion]]
+path = "crates/feat-math/tests/golden.rs"
+reason = "crates/feat-math/tests/legacy_v2_freeze.rs records the source hash used by the compatibility freeze for crates/feat-math/tests/golden.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/legacy_v2_freeze.rs"
+sha256 = "f6a7cab70280b0c174b98b5802893b5b3e411a0421875feb77213a13b2e3728d"
+
+[[evidence_exclusion]]
+path = "crates/jope-automl/src/Gemini4_argon_high.rs"
+reason = "assets/automl-elo/v1/SOURCE_COUNTS.json records SHA-256 d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3 for crates/jope-automl/src/Gemini4_argon_high.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "assets/automl-elo/v1/SOURCE_COUNTS.json"
+sha256 = "d5cd85fcf5e2bea8513d7c8665ba9f17b5fc4b70cd1570fdcedd569c376053d3"
+
+[[evidence_exclusion]]
+path = "crates/jope-bench/regressors/Opus5p5_Extra.rs"
+reason = "assets/automl-elo/v1/SOURCE_COUNTS.json records SHA-256 2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834 for crates/jope-bench/regressors/Opus5p5_Extra.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "assets/automl-elo/v1/SOURCE_COUNTS.json"
+sha256 = "2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834"
+
+[[evidence_exclusion]]
+path = "crates/jope-bench/src/panel/demo.rs"
+reason = "docs/internal/asm-manual/data/product-language-source-pins.json records SHA-256 00751a3094b42c6f742cffed5f7804803977f47d9f2837b161421e884f7efdfc for crates/jope-bench/src/panel/demo.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/internal/asm-manual/data/product-language-source-pins.json"
+sha256 = "00751a3094b42c6f742cffed5f7804803977f47d9f2837b161421e884f7efdfc"
+
+[[evidence_exclusion]]
+path = "crates/jope-campaigns/manifests/advanced-v3/recovery-evidence/portable-xlang/ref.cpp"
+reason = "The reconciliation inventory records the immutable portable-language evidence source hash; changing these bytes would invalidate that inventory."
+receipt = "crates/jope-campaigns/manifests/advanced-v3/reconciliation-inventory-20260722T045728Z.v1.json"
+sha256 = "a841d5099231a6f19c5b7a09c290d3b7e11396a7488ac4ae89e3445363c7a7da"
+
+[[evidence_exclusion]]
+path = "crates/jope-campaigns/src/campaign_evaluator.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/jope-campaigns/src/campaign_evaluator.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "b52ef8f4f41ed1b3e77e15b4b2cc54f485122dcd72718a6ae5bf349a094e54c6"
+
+[[evidence_exclusion]]
+path = "crates/jope-campaigns/src/commands/exact_cv.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json records the source hash used by the compatibility freeze for crates/jope-campaigns/src/commands/exact_cv.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json"
+sha256 = "8662b33e58d5ac956fd0a858927bdf024f199938c17a4d4c816bdf6907b4a4c7"
+
+[[evidence_exclusion]]
+path = "crates/jope-campaigns/src/encoder_v2_identity.rs"
+reason = "docs/release/jankurai-v1-findings.json records SHA-256 28a29cbdd8188c1e2891f7ec6f67095ad63840cba2b1d4ccabb970431918716d for crates/jope-campaigns/src/encoder_v2_identity.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/release/jankurai-v1-findings.json"
+sha256 = "28a29cbdd8188c1e2891f7ec6f67095ad63840cba2b1d4ccabb970431918716d"
+
+[[evidence_exclusion]]
+path = "crates/jope-campaigns/src/four_task.rs"
+reason = "crates/jope-campaigns/manifests/advanced-v3/state-freeze-20260806T155549Z.v1.json records SHA-256 0dd37e9084c058c86b3387082a5d60fb6ae2d40d47cd54e3933e3711896df05d for crates/jope-campaigns/src/four_task.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "crates/jope-campaigns/manifests/advanced-v3/state-freeze-20260806T155549Z.v1.json"
+sha256 = "0dd37e9084c058c86b3387082a5d60fb6ae2d40d47cd54e3933e3711896df05d"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/manifests/champion-import-v44.sha256"
+reason = "The current versioned-manifest exception receipt records this service-consumed checksum sidecar digest; edits would invalidate the frozen manifest identity."
+receipt = "docs/release/jankurai-reporot-manifest-exceptions-20261102.md"
+sha256 = "4977c3d84c5d86baefe89acac30d1df094d71932e59ead3fc1f2d133066bffd9"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/manifests/hyperion-concurrent-v30.sha256"
+reason = "The current versioned-manifest exception receipt records this service-consumed checksum sidecar digest; edits would invalidate the frozen manifest identity."
+receipt = "docs/release/jankurai-reporot-manifest-exceptions-20261102.md"
+sha256 = "98a2dfff5b5a5a4bd684c213780df590ac8ec2cae76d64ef517608e714604ee1"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/manifests/opportunistic-proposals-v53.json"
+reason = "The paired SHA-256 manifest binds the immutable v53 proposal manifest bytes; migration is defined by adding a new manifest version."
+receipt = "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256"
+sha256 = "ccca20be93f74471c55e2f67eb60d011aff7bb8710af2b057ffacff533131c90"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256"
+reason = "The current versioned-manifest exception receipt records this sidecar digest and the live consumers require the versioned checksum unchanged."
+receipt = "docs/release/jankurai-reporot-manifest-exceptions-20261102.md"
+sha256 = "75bc8045972ca9204a0cafaa8213bfcc6a036752aee0629ef47cfcbf456fb78b"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/src/gp/selection_replay.rs"
+reason = "docs/internal/clover/gp-config.main944.json records the source hash for crates/jope-engine/src/gp/selection_replay.rs in replay configuration snapshots; changing bytes changes the recorded replay identity."
+receipt = "docs/internal/clover/gp-config.main944.json"
+sha256 = "bd70baf39316e0dcc4dce3ba6baa313c2c5f1e1b16c2bd62ef73841f7ef28fa8"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/src/native_graph.rs"
+reason = "docs/qualification/optional-landmarks-closeout-checkpoint.json records SHA-256 cc593adc2d8e1ee3b3732cb9b079a6f0bc76e84d8da58f0fec30b8f88f7084f4 for crates/jope-engine/src/native_graph.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/qualification/optional-landmarks-closeout-checkpoint.json"
+sha256 = "cc593adc2d8e1ee3b3732cb9b079a6f0bc76e84d8da58f0fec30b8f88f7084f4"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/src/teaching_store.rs"
+reason = "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json records the source hash used by the compatibility freeze for crates/jope-engine/src/teaching_store.rs; changing the bytes invalidates that frozen evaluator identity."
+receipt = "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json"
+sha256 = "a5c4f64ac6e47f70b1bd05ad067e29796dd4fdfe3f7867ba076d1206f1d6ab6f"
+
+[[evidence_exclusion]]
+path = "crates/jope-engine/tests/objective_fixtures.rs"
+reason = "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json records SHA-256 c324eedff1d2526a32f09af664d73e229104dd5270338ec3a7df995a9a6f884f for crates/jope-engine/tests/objective_fixtures.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/plans/algorithmic-selfplay-20261017/FILE_MAP.i01.json"
+sha256 = "c324eedff1d2526a32f09af664d73e229104dd5270338ec3a7df995a9a6f884f"
+
+[[evidence_exclusion]]
 path = "vendor/security/candle-core-0.11.0/src/backprop.rs"
 reason = "vendor/security/PROVENANCE.json records the exact candidate and upstream SHA-256 for vendor/security/candle-core-0.11.0/src/backprop.rs; bytes remain frozen to preserve upstream provenance and reproducibility."
 receipt = "vendor/security/PROVENANCE.json"
