@@ -38,11 +38,14 @@ pub struct ReceiptArgs {
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Freshness {
+pub enum ReceiptFreshness {
     Dated,
     NotMarkedStale,
     Unknown,
 }
+
+/// Compatibility name retained for callers of the original research-view API.
+pub type Freshness = ReceiptFreshness;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -59,7 +62,7 @@ pub struct ReceiptStatus {
     pub producer_status: Option<String>,
     pub source_sha: Option<String>,
     pub recorded_at_utc: Option<String>,
-    pub freshness: Freshness,
+    pub freshness: ReceiptFreshness,
     pub execution_evidence: ExecutionEvidence,
 }
 
@@ -128,12 +131,12 @@ pub fn evaluate_receipts(
         let freshness = match (recorded_at.as_deref(), stale_before_utc) {
             (Some(recorded), Some(cutoff)) => {
                 match (utc_second_key(recorded), utc_second_key(cutoff)) {
-                    (Some(recorded), Some(cutoff)) if recorded < cutoff => Freshness::Dated,
-                    (Some(_), Some(_)) => Freshness::NotMarkedStale,
-                    _ => Freshness::Unknown,
+                    (Some(recorded), Some(cutoff)) if recorded < cutoff => ReceiptFreshness::Dated,
+                    (Some(_), Some(_)) => ReceiptFreshness::NotMarkedStale,
+                    _ => ReceiptFreshness::Unknown,
                 }
             }
-            _ => Freshness::Unknown,
+            _ => ReceiptFreshness::Unknown,
         };
         output.push(ReceiptStatus {
             task: first_string(receipt, &[&["task_id"], &["task"]]),

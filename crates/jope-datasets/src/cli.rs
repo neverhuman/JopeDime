@@ -21,7 +21,7 @@ use std::process::ExitCode;
 )]
 pub struct Cli {
     #[command(subcommand)]
-    pub cmd: Cmd,
+    pub cmd: DatasetsCommand,
 }
 
 #[derive(Clone, Copy, ValueEnum)]
@@ -31,7 +31,7 @@ pub enum Which {
 }
 
 #[derive(Subcommand)]
-pub enum Cmd {
+pub enum DatasetsCommand {
     /// Enumerate, hash and de-duplicate a source tree; upload unless --dry-run.
     Ingest {
         #[arg(long, value_enum)]
@@ -112,6 +112,9 @@ pub enum Cmd {
         action: StagingAction,
     },
 }
+
+/// Compatibility name retained for callers of the original datasets CLI API.
+pub type Cmd = DatasetsCommand;
 
 #[derive(Subcommand)]
 pub enum StagingAction {
@@ -462,7 +465,7 @@ pub fn exec(cli: Cli) -> ExitCode {
 
 pub fn run(cli: Cli) -> Result<ExitCode> {
     match cli.cmd {
-        Cmd::Ingest {
+        DatasetsCommand::Ingest {
             source,
             root,
             dry_run,
@@ -487,7 +490,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             print!("{}", ingest::describe(&summary));
             Ok(ExitCode::SUCCESS)
         }
-        Cmd::Fetch {
+        DatasetsCommand::Fetch {
             selector,
             offline,
             print_registry,
@@ -540,7 +543,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 ExitCode::FAILURE
             })
         }
-        Cmd::Verify {
+        DatasetsCommand::Verify {
             quick,
             catalog,
             repo,
@@ -598,7 +601,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 ExitCode::SUCCESS
             })
         }
-        Cmd::Link { from, only, task } => {
+        DatasetsCommand::Link { from, only, task } => {
             let cache = Cache::from_env();
             let task = match task {
                 Some(t) => {
@@ -624,7 +627,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                 ExitCode::FAILURE
             })
         }
-        Cmd::Schema { which } => {
+        DatasetsCommand::Schema { which } => {
             let v = match which {
                 Which::Catalog => crate::catalog::derived_catalog_schema(),
                 Which::Collection => crate::catalog::derived_collection_schema(),
@@ -632,7 +635,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             println!("{}", serde_json::to_string_pretty(&v)?);
             Ok(ExitCode::SUCCESS)
         }
-        Cmd::RegressionRelease { action } => run_release(action),
-        Cmd::StagingDisposition { action } => run_staging(action),
+        DatasetsCommand::RegressionRelease { action } => run_release(action),
+        DatasetsCommand::StagingDisposition { action } => run_staging(action),
     }
 }
