@@ -83,5 +83,7 @@ fn store_url(dir: &Path) -> String {
     format!("file://{}", dir.display())
 }
 
+#[path = "roundtrip/cli.rs"]
 mod cli;
+#[path = "roundtrip/publish.rs"]
 mod publish;
