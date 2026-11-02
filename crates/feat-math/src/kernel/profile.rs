@@ -146,7 +146,7 @@ pub struct ExpressionArmWeight {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Arm {
+pub enum KernelMutationArm {
     ParameterJitter,
     Insert,
     Delete,
@@ -157,9 +157,12 @@ pub enum Arm {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub struct ArmWeight {
-    pub arm: Arm,
+    pub arm: KernelMutationArm,
     pub weight: u32,
 }
+
+/// Compatibility alias for the kernel mutation operator arm.
+pub type Arm = KernelMutationArm;
 
 /// Revision-three pipeline operators. ExprCross always takes a second parent.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -178,15 +181,15 @@ pub enum PipelineArm {
     ExprCross,
 }
 
-impl From<Arm> for PipelineArm {
-    fn from(arm: Arm) -> Self {
+impl From<KernelMutationArm> for PipelineArm {
+    fn from(arm: KernelMutationArm) -> Self {
         match arm {
-            Arm::ParameterJitter => Self::ParameterJitter,
-            Arm::Insert => Self::Insert,
-            Arm::Delete => Self::Delete,
-            Arm::AdjacentSwap => Self::AdjacentSwap,
-            Arm::HeadReplacement => Self::HeadReplacement,
-            Arm::Simplify => Self::Simplify,
+            KernelMutationArm::ParameterJitter => Self::ParameterJitter,
+            KernelMutationArm::Insert => Self::Insert,
+            KernelMutationArm::Delete => Self::Delete,
+            KernelMutationArm::AdjacentSwap => Self::AdjacentSwap,
+            KernelMutationArm::HeadReplacement => Self::HeadReplacement,
+            KernelMutationArm::Simplify => Self::Simplify,
         }
     }
 }
@@ -609,29 +612,29 @@ fn redraw_domains(v2: bool) -> BTreeMap<&'static str, DomainRow> {
 fn arms(v2: bool) -> Vec<ArmWeight> {
     let mut out = vec![
         ArmWeight {
-            arm: Arm::ParameterJitter,
+            arm: KernelMutationArm::ParameterJitter,
             weight: 2,
         },
         ArmWeight {
-            arm: Arm::Insert,
+            arm: KernelMutationArm::Insert,
             weight: 1,
         },
         ArmWeight {
-            arm: Arm::Delete,
+            arm: KernelMutationArm::Delete,
             weight: 1,
         },
         ArmWeight {
-            arm: Arm::AdjacentSwap,
+            arm: KernelMutationArm::AdjacentSwap,
             weight: 1,
         },
         ArmWeight {
-            arm: Arm::HeadReplacement,
+            arm: KernelMutationArm::HeadReplacement,
             weight: 1,
         },
     ];
     if v2 {
         out.push(ArmWeight {
-            arm: Arm::Simplify,
+            arm: KernelMutationArm::Simplify,
             weight: 1,
         });
     }
@@ -939,12 +942,12 @@ mod tests {
                     .map(|draw| draw.arm)
                     .collect::<Vec<_>>(),
                 [
-                    Arm::ParameterJitter,
-                    Arm::Insert,
-                    Arm::Delete,
-                    Arm::AdjacentSwap,
-                    Arm::HeadReplacement,
-                    Arm::Simplify
+                    KernelMutationArm::ParameterJitter,
+                    KernelMutationArm::Insert,
+                    KernelMutationArm::Delete,
+                    KernelMutationArm::AdjacentSwap,
+                    KernelMutationArm::HeadReplacement,
+                    KernelMutationArm::Simplify
                 ]
             );
             assert_eq!(

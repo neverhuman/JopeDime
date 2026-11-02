@@ -17,7 +17,7 @@ pub const DEFAULT_POLICY_JSON: &str = include_str!("policy.v1.json");
 /// What kind of bytes a prefix holds. The action for each kind is decided in code.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum Kind {
+pub enum RetentionPolicyKind {
     /// The `Encoding` case of `Kind`.
     Encoding,
     /// The `DatasetPayload` case of `Kind`.
@@ -44,7 +44,10 @@ pub enum Kind {
     Review,
 }
 
-impl Kind {
+/// Compatibility name for callers that used the original retention-policy API.
+pub type Kind = RetentionPolicyKind;
+
+impl RetentionPolicyKind {
     /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {

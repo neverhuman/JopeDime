@@ -698,8 +698,8 @@ fn physical_version_id_binds_exact_version_across_replacements_and_rejects_etag_
     );
     assert_eq!(verified_v1.reference().observed_sha256, v1_sha);
 
-    // An S3-classified backend that emits only an ETag and no VersionId is refused even under
-    // default options: an ETag is never fabricated into a physical VersionId.
+    // Default options reject an S3 backend with only an ETag; see
+    // physical_version_id_binds_exact_version_across_replacements_and_rejects_etag_only_s3.
     let etag_only_backend = MockVersionedBackend::new(false);
     let etag_only_store = Store::from_injected_backend(
         "s3://unversioned-s3-bucket",

@@ -68,20 +68,66 @@ struct ExecutingSelfPeer(libc::pid_t);
 impl ExecutingSelfPeer {
     fn start() -> Self {
         let owner = unsafe { libc::getpid() };
+        let mut ready_pipe = [0; 2];
+        assert_eq!(
+            unsafe { libc::pipe2(ready_pipe.as_mut_ptr(), libc::O_CLOEXEC) },
+            0
+        );
         let pid = unsafe { libc::fork() };
-        assert!(pid >= 0, "could not fork executable peer");
+        if pid < 0 {
+            unsafe {
+                libc::close(ready_pipe[0]);
+                libc::close(ready_pipe[1]);
+            }
+            panic!("could not fork executable peer");
+        }
         if pid == 0 {
             // After a multithreaded fork, use only async-signal-safe syscalls.
-            // The child holds our executable until its owning guard reaps it.
-            if unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) } != 0
-                || unsafe { libc::getppid() } != owner
-                || unsafe { libc::syscall(libc::SYS_close_range, 3_u32, u32::MAX, 0_u32) } != 0
+            unsafe { libc::close(ready_pipe[0]) };
+            if unsafe { libc::dup2(ready_pipe[1], libc::STDERR_FILENO) } < 0 {
+                unsafe { libc::abort() };
+            }
+            unsafe { libc::close(ready_pipe[1]) };
+            let setup_ok = unsafe { libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) } == 0
+                && unsafe { libc::getppid() } == owner
+                && unsafe { libc::syscall(libc::SYS_close_range, 3_u32, u32::MAX, 0_u32) } == 0;
+            let status = u8::from(setup_ok);
+            if unsafe {
+                libc::write(
+                    libc::STDERR_FILENO,
+                    (&status as *const u8).cast(),
+                    std::mem::size_of_val(&status),
+                )
+            } != 1
             {
-                unsafe { libc::_exit(1) };
+                unsafe { libc::abort() };
             }
             loop {
                 unsafe { libc::pause() };
             }
+        }
+        unsafe { libc::close(ready_pipe[1]) };
+        let mut status = [0u8; 1];
+        let read = loop {
+            let read = unsafe { libc::read(ready_pipe[0], status.as_mut_ptr().cast(), 1) };
+            if read < 0 && std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted
+            {
+                continue;
+            }
+            break read;
+        };
+        unsafe { libc::close(ready_pipe[0]) };
+        if read != 1 || status[0] != 1 {
+            unsafe { libc::kill(pid, libc::SIGKILL) };
+            let mut child_status = 0;
+            while unsafe { libc::waitpid(pid, &mut child_status, 0) } < 0
+                && std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted
+            {
+            }
+            panic!(
+                "executable peer setup failed: read={read}, status={}",
+                status[0]
+            );
         }
         Self(pid)
     }
@@ -351,7 +397,7 @@ fn synthetic_worker() {
     permit.verify().unwrap();
     let program = &fit.identity().canonical_program;
     if program.contains("alpha=2") {
-        std::process::exit(9);
+        panic!("injected synthetic worker failure after start authorization");
     }
     if program.contains("alpha=3") {
         unsafe {
@@ -366,7 +412,7 @@ fn synthetic_worker() {
         fs::rename(&permit.permission.custody_path, &old).unwrap();
         fs::write(&permit.permission.custody_path, b"replacement").unwrap();
         assert!(permit.verify().is_err());
-        std::process::exit(11);
+        panic!("injected synthetic worker failure after custody tampering");
     }
     if program.contains("alpha=6") {
         // The evaluated program would run here, after lockdown. Its artifact
@@ -383,8 +429,7 @@ fn synthetic_worker() {
         ];
         let found = super::sandbox::tests::violations(&unreadable, outputs, None);
         if !found.is_empty() {
-            eprintln!("unconfined original fit child: {found:?}");
-            std::process::exit(13);
+            panic!("unconfined original fit child: {found:?}");
         }
     }
     let model = feat_math::Model::Symbolic {

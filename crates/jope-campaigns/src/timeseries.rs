@@ -961,7 +961,7 @@ mod tests {
     }
 
     #[test]
-    fn direct_reduction_unavailable_lags_are_nan_not_fabricated() {
+    fn direct_reduction_marks_unavailable_lags_and_checks_observed_values() {
         let data = fixture_data();
         let reduction = make_direct_reduction(&data).unwrap();
         let names = &reduction.feature_names;

@@ -1,6 +1,6 @@
 use std::{
     fs,
-    os::unix::process::CommandExt,
+    os::unix::process::{CommandExt, ExitStatusExt},
     process::{Child, Command},
     thread,
     time::{Duration, Instant},
@@ -28,7 +28,8 @@ from pathlib import Path
 root = Path(sys.argv[sys.argv.index('--root') + 1])
 def stop(sig, frame):
     (root / 'terminated').write_text(str(sig))
-    sys.exit(0)
+    signal.signal(sig, signal.SIG_DFL)
+    os.kill(os.getpid(), sig)
 signal.signal(signal.SIGTERM, stop)
 (root / 'identity.json').write_text(json.dumps({'pid': os.getpid(), 'args': sys.argv[1:]}))
 while True:
@@ -81,7 +82,7 @@ while True:
     );
     loop {
         if let Some(status) = process.0.try_wait().unwrap() {
-            assert!(status.success());
+            assert_eq!(status.signal(), Some(libc::SIGTERM));
             break;
         }
         assert!(

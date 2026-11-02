@@ -20,7 +20,8 @@ pub struct HistoricalBudgetAccounting {
     pub original_approved_candidate_budget: u64,
     pub original_authorization_count: u64,
     pub physical_starts: Option<u64>,
-    /// Explicit unresolved originals, not fabricated zero-cost/completed work.
+    /// Unresolved original identities are retained; see
+    /// `tests::initial_bootstrap_preserves_original_static_budget_and_unknown_identities`.
     pub unknown_or_held: BTreeMap<String, NativeGrantArtifact>,
     pub source_closure: Vec<NativeGrantArtifact>,
     pub authority_recovery_receipt_sha256: String,

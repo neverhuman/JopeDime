@@ -608,7 +608,7 @@ fn synthetic_executor() {
         .unwrap();
     std::thread::sleep(Duration::from_millis(preparation_delay));
     if std::env::var("JOPE_SYNTHETIC_MODE").unwrap() == "prepare_failed" {
-        std::process::exit(9);
+        panic!("injected synthetic executor preparation failure");
     }
     let mut a = Authority::open(&root, &witness).unwrap();
     let f = fit();
@@ -629,7 +629,7 @@ fn synthetic_executor() {
     )
     .unwrap();
     match std::env::var("JOPE_SYNTHETIC_MODE").unwrap().as_str() {
-        "failed" => std::process::exit(9),
+        "failed" => panic!("injected synthetic executor execution failure"),
         "timeout" => std::thread::sleep(Duration::from_secs(30)),
         "signal" => unsafe {
             libc::raise(libc::SIGTERM);
@@ -696,6 +696,10 @@ fn failed_exit_signal_and_timeout_cannot_be_cleared_by_result_files() {
     for mode in ["failed", "signal", "timeout"] {
         let fixture = Fixture::new(true);
         let (mut a, f, _, observed) = run_child(&fixture, mode);
+        if mode == "failed" {
+            assert!(observed.exit_code.is_some_and(|code| code != 0));
+            assert!(observed.signal.is_none());
+        }
         let sha = a
             .complete_observed(
                 &f,
