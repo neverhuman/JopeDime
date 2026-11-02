@@ -1088,6 +1088,7 @@ crates/jope-engine/src/gp/handoff.rs
 crates/jope-engine/src/gp/lineage.rs
 crates/jope-engine/src/gp/lineage/tests.rs
 crates/jope-engine/src/gp/outer_release.rs
+crates/jope-engine/src/gp/outer_release/helpers.rs
 crates/jope-engine/src/gp/outer_release_cli.rs
 crates/jope-engine/src/gp/paired.rs
 crates/jope-engine/src/gp/selection_replay.rs
