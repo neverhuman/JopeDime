@@ -57,7 +57,7 @@ Artifacts that violate held-out isolation belong in the audit record:
   all comparative claims.
   \item \textbf{Input-closure and canary checks.} Before benchmark release,
   the evaluation protocol requires passing receipts for an inner-fold label-poison test,
-  a sealed canary check, and a train-only input-closure audit verifying that
+  a sealed canary check and a train-only input-closure audit verifying that
   held-out test targets and their derived statistics do not enter board
   encoding or candidate generation. The final pre-registration and audit receipts belong to the evaluation
   record in \cref{sub:results-protocol}; they are not reproduced here.
@@ -116,7 +116,7 @@ qualification pending. The separate adapter snapshot is in
   The global-batch route uses separate reductions.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
   The network has \num{27796494} parameters in total (six
-  decoder blocks, width \num{512}, four attention heads, prefix context token,
+  decoder blocks, width \num{512}, four attention heads, prefix context token
   and maximum length \num{128} tokens over the \num{401}-token grammar).
   Each of the writer $\writer$ and ranking-map $\mapv$ token tables allocates \num{657} rows:
   \num{401} grammar rows plus \num{256} reserved rows. The reserved rows
@@ -138,7 +138,7 @@ qualification pending. The separate adapter snapshot is in
   (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
   The final evaluation protocol requires candidate isolation with \texttt{seccomp}
-  and Landlock, \texttt{cgroup} memory limits with swap disabled, and native versus
+  and Landlock, \texttt{cgroup} memory limits with swap disabled and native versus
   emitted-code agreement within $10^{-9}\max(1, |\hat{y}|)$. Isolation and
   parity receipts from the final evaluator belong to the same evaluation
   record.
@@ -166,7 +166,7 @@ The scope statement in \cref{sec:method-status} applies throughout this appendix
   \includegraphics[width=\linewidth,height=2.10in,keepaspectratio]{figures/fig_fw_recent_development.pdf}
   \caption{\textbf{Training-program promotions and adapter validation across four 20-round windows.}
   Columns show four separate 20-round summary windows: rounds 2005--2024 (15 events),
-  2082--2101 (10 events), 2343--2362 (22 events over 28.8\,min of completed-round wall time),
+  2082--2101 (10 events), 2343--2362 (22 events over 28.8\,min of completed-round wall time)
   and 2508--2527 (15 events over 28.9\,min). Top row: strict training-program incumbent
   promotions per completed round. Bottom row: candidate adapter validation pool utility (grey)
   and the post-decision recorded best (blue, 1.1378 from round 882). Every window records zero
