@@ -3785,49 +3785,8 @@
       "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/__init__.py",
       "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/__init__.py",
-      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/augmentation.py",
-      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/augmentation.py",
-      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/batch_stream.py",
-      "origin_sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/batch_stream.py",
-      "sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/evergreen.py",
-      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/evergreen.py",
-      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/evidence.py",
-      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/evidence.py",
-      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/native_variant_snapshot.py",
-      "origin_sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/native_variant_snapshot.py",
-      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/paper_archive.py",
-      "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/paper_archive.py",
-      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/program_gate.py",
-      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_gate.py",
-      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+      "sha256": "4aec2eee1b90f261f9ebf50791bb7da669e44a2fb815f009f0e49ced687c08f8",
+      "normalization": "P28: extend the hpc_verified_v4 package namespace to the canonical deploy/dl-flywheel/jope_flywheel implementation; package-specific modules remain local."
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/program_inputs.py",
@@ -3836,82 +3795,10 @@
       "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
     },
     {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/program_io.py",
-      "origin_sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_io.py",
-      "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/program_observer.py",
-      "origin_sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_observer.py",
-      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/program_worker.py",
-      "origin_sha256": "5f8abee94e683dbcfbaded17ae480056595148de00c5666567c15d77802014c1",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_worker.py",
-      "sha256": "5f8abee94e683dbcfbaded17ae480056595148de00c5666567c15d77802014c1"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/protocol.py",
-      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/protocol.py",
-      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/queue.py",
-      "origin_sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/queue.py",
-      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/s3_library.py",
-      "origin_sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/s3_library.py",
-      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/score_join.py",
-      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/score_join.py",
-      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/target_noise.py",
-      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/target_noise.py",
-      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/timing.py",
-      "origin_sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/timing.py",
-      "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/training_admission.py",
-      "origin_sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_admission.py",
-      "sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/training_snapshot.py",
-      "origin_sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_snapshot.py",
-      "sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09"
-    },
-    {
       "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/training_snapshot_kumos.py",
       "origin_sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_snapshot_kumos.py",
       "sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2"
-    },
-    {
-      "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/training_snapshot_native.py",
-      "origin_sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2",
-      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_snapshot_native.py",
-      "sha256": "fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2"
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/native_corpus_authority.py",
