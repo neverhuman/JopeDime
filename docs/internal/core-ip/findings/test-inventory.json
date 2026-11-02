@@ -2135,6 +2135,146 @@
       "reason": "H170 owner-directed one-cycle AdamW continuation (CTRL,OC3,OC15,mean-LR-matched control): data-free schedule application, inactive-gradient handling, drift, family selection/median inference, pseudoreplication and guarded launch controls. Research only; no product or sealed qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h171_grad_accum/test_h171.py": {
+      "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/test_h173.py": {
+      "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+      "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/test_h175.py": {
+      "reason": "H175 data-free controls for zero-update selector-power/headroom audit: role-local injections and no out-of-fold payload access, scalar bootstrap bit parity, ties, correct nonoracle interpretation, family weighting, grid MDE censoring, and reduced whole-pipeline replay. Offline research only; no native/GPU/product qualification. Includes explicit historical-schema and poisoned outer-panel controls.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/test_h176.py": {
+      "reason": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/test_h177.py": {
+      "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/test_h178.py": {
+      "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
+      "reason": "H179 data-free controls for grouped family separation, independent member seeds, score averaging before argmin, FIT-only batch construction, Holm/verdict boundaries, timing-only budget selection, CPU/resource guards, and seed-varying non-degenerate paired-family bootstrap retaining all 10,000 draws. Synthetic fixtures only; no study data or checkpoint loaded.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/test_h180.py": {
+      "reason": "Owner-requested H180 data-free controls for the adapter-contribution ablation and fresh-init update-budget dose (anchor-only scorer proof, prefix trajectory, axis=0 bootstrap, no-A-leak, verdicts, guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/test_h181.py": {
+      "reason": "H181 zero-update covariate-adjusted estimator research fixtures; no production promotion",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/test_h182.py": {
+      "reason": "H182 synthetic-only controls for 20 distinct member seeds per outer seed, ENS5/ENS10/ENS20 nested prefixes, score averaging before argmin, FIT/A/B isolation, axis=0 10,000-draw family bootstrap, strict Holm/verdict gates, four-hour timing plan, and resource bounds. No study data or checkpoint loaded.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/test_h183.py": {
+      "reason": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/test_h184.py": {
+      "reason": "Owner-requested H184 data-free controls for the adapter-structure component ablation under random weights (live-delta decomposition, ablations, attribution/Holm, bootstrap, gates, guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/test_h185.py": {
+      "reason": "Owner-requested H185 data-free controls for the power-aware 205-family pooled cross-fit confirmatory test of FRESH160, ENS5, and RENS5 vs R882 (FIT-only training, B lock before A, RENS5==ENS5 inits, distinct member init hashes, imported H177_DECISION_RULE + H178 receipt, axis=0 bootstrap seed reduction, and host guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/test_h186.py": {
+      "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/test_h187.py": {
+      "reason": "H187 research-only paired robust-loss/equal-family fresh adapter fixture tests; no serving promotion",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/test_h188.py": {
+      "reason": "Owner-requested H188 data-free controls for the kernel-input ablation on the r882 adapter (bit-exact kernel replay, residual transforms, anchor features, m=3 pooled-B selector, verdict, guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h189_swa_ema/test_h189.py": {
+      "reason": "H189 synthetic/data-free design and selector controls for the adapter weight-averaging (SWA/EMA) preregistration; no production promotion",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h190_ens10_indep_folds/test_h190.py": {
+      "reason": "H190 synthetic/data-free design and selector controls for ENS10/RENS10 confirmation with independent fold seeds per outer seed; no production promotion",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/test_h191.py": {
+      "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/test_h192.py": {
+      "reason": "Owner-requested H192 data-free controls for strict-margin confidence-gated adapter selection (gate, tau=0 identity, FIT-only grid, lock before A, partitions, pooled rule, H178 gate); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/test_h193.py": {
+      "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/test_h194.py": {
+      "reason": "H194 CPU research-only invalid-margin continuation controls; no serving promotion",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/test_h195.py": {
+      "reason": "Owner-requested H195 data-free controls for the BLEND_025 prospective confirmation (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF permutation, H129 blend, contrast/harm/margin gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h196_tta/test_custody.py": {
+      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h196_tta/test_h196.py": {
+      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h196_tta/test_protocol.py": {
+      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/test_h197.py": {
+      "reason": "H197 data-free checks for independent TRAIN folds, matched clipping arms, local pin and zero-update preflight guards, plus strict JSON round-trips of 40-step traces for all arms, 60 FIT receipts, 15 cell calibrations, three per-seed summaries, aggregate A/Elo metrics, DL-Val, B lock, counters, audit and failure records through the production writer; no corpus/checkpoint reads or model passes in fixtures.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h198_ttt/test_h198.py": {
+      "reason": "H198 data-free checks for per-context test-time training on revealed candidates only: leakage masking of unrevealed labels, per-context reset and trajectory-prefix equivalence, shuffle-control derangement, independent fold seeds with the stage-1 B-only lock, verdict gates with axis-0 bootstrap, and the launch contract; no corpus/checkpoint reads in fixtures.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/test_h199.py": {
+      "reason": "Owner-requested H199 data-free controls for BLEND_025 on the flywheel native protocol (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF, registered lambda dose, native gates incl. 3/3 seeds and exact ties as zero, harm gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/test_h200.py": {
+      "reason": "H200 data-free protocol checks: exact unused seeds and 20-model-per-seed exclusion plan; strict nested lambda margin/ties; average-tie rank orientation; deterministic within-context shuffle; xbabe1-only host guard that refuses xbabe0/2/3 before input reads; native ties and CPU resource limits. No cohort, checkpoint, or outcome data opened.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/test_h201.py": {
+      "reason": "H201 data-free host-before-input exclusion, paired family bootstrap and weighting, sequential SMA versus observed-incumbent screen, joint-null candidate dependence, family split exclusion, BT reference and strict verdict controls; no corpus/checkpoint reads, model passes or optimizer calls in fixtures.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/test_h202.py": {
+      "reason": "H202 data-free host-before-read/resource, stable current-top5 logistic inversion/gradient sign, zero-inversion loss, within-context shuffle, DOPE/anchor gradient masking and optimizer exclusion, fresh FIT/B/A folds, family-balanced paired sampling, durable B lock, lossless XOR and strict median/verdict controls; no corpus or model-checkpoint reads in fixtures.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/test_h203.py": {
+      "reason": "Owner-requested H203 data-free controls for the outcome-free gated BLEND_025 (cells, minimal 45-fit plan, H124 folds per fold seed, fold manifest, fixed-lambda blend, zgap and disagreement gate statistics, tau grid, FIT-only tau selection with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB/p/harm verdict, Elo orientation, xbabe1-only host admission); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py": {
+      "reason": "Owner-requested H205 data-free controls for fresh vs static data and static teacher across 50 rounds from r882 (verbatim t2022 authority and H204/H205/H206/H207 wave separation, thread rule (b) distinguishing <=4 numeric threads from exempt CUDA runtime/driver helper threads while retaining CPU/RSS/disk/nice/flywheel-PID guards, 205-family 5-fold cross-fit partition and 50-round equal-compute schedule, native r882 91/91 exact parity gate before candidate forward, H178 per-round pooled selector with LCB95>0 and <=10% family harm cap, JRB-01 ADMISSION PASS gate for FRESH arm, and smoke runner); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
@@ -2299,6 +2439,10 @@
       "reason": "RNK-10 metadata-only H-wave packet scaffold tests; synthetic metadata only, no training/evaluation data, outcome reads or launch authorization.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
+      "reason": "Synthetic offline controls for the trainer objective and fail-closed roster authentication; pinned batched M5 fixture dimensions exercise the complete 50-context runner loop and fitness reversal axis; deterministic descriptive whole-family dev-Elo interval controls. No candidate/model/data outcome evaluation or qualification claim.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/rnk10_r882_acceptance/test_import_checkpoint.py": {
       "reason": "RNK-10 r882 checkpoint importer unit controls (pinned round and DOPE identity enforcement, non-tensor rejection, int64 grid index contract).",
       "role": "research"
@@ -2361,6 +2505,10 @@
     },
     "python:research/h166/test_h166.py": {
       "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; data-free target-similarity kernel, rank-aligned slate mixing, None-grad guard, and cross-fit selector controls. Research only; no product/sealed qualification.",
+      "role": "research"
+    },
+    "python:research/h172/test_h172.py": {
+      "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification.",
       "role": "research"
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
@@ -5423,155 +5571,19 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h171_grad_accum/test_h171.py": {
-      "role": "research",
-      "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
-    },
-    "python:research/h172/test_h172.py": {
-      "role": "research",
-      "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; data-free inner-CV selector, L-BFGS convergence, None-grad guard, and placebo leak controls. Research only; no product/sealed qualification."
-    },
-    "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
-      "role": "research",
-      "reason": "Synthetic offline controls for the trainer objective and fail-closed roster authentication; pinned batched M5 fixture dimensions exercise the complete 50-context runner loop and fitness reversal axis; deterministic descriptive whole-family dev-Elo interval controls. No candidate/model/data outcome evaluation or qualification claim."
-    },
-    "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
-      "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h173_hard_context_reweight/test_h173.py": {
-      "role": "research",
-      "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
-    },
-    "python:research/flywheel_selfplay/h175_selector_power/test_h175.py": {
-      "role": "research",
-      "reason": "H175 data-free controls for zero-update selector-power/headroom audit: role-local injections and no out-of-fold payload access, scalar bootstrap bit parity, ties, correct nonoracle interpretation, family weighting, grid MDE censoring, and reduced whole-pipeline replay. Offline research only; no native/GPU/product qualification. Includes explicit historical-schema and poisoned outer-panel controls."
-    },
-    "python:research/flywheel_selfplay/h177_pooled_selector/test_h177.py": {
-      "role": "research",
-      "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
-    },
-    "python:research/flywheel_selfplay/h176_data_scaling/test_h176.py": {
-      "role": "research",
-      "reason": "H176 data-free controls for nested family-fraction data scaling, role isolation, zero-update baseline alignment, deterministic paired fitting, context-level Elo aggregation, and resource guards. No study data/checkpoint loaded by unit tests; diagnostic research only."
-    },
-    "python:research/flywheel_selfplay/h180_adapter_ablation/test_h180.py": {
-      "reason": "Owner-requested H180 data-free controls for the adapter-contribution ablation and fresh-init update-budget dose (anchor-only scorer proof, prefix trajectory, axis=0 bootstrap, no-A-leak, verdicts, guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h184_adapter_components/test_h184.py": {
-      "reason": "Owner-requested H184 data-free controls for the adapter-structure component ablation under random weights (live-delta decomposition, ablations, attribution/Holm, bootstrap, gates, guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h188_kernel_inputs/test_h188.py": {
-      "reason": "Owner-requested H188 data-free controls for the kernel-input ablation on the r882 adapter (bit-exact kernel replay, residual transforms, anchor features, m=3 pooled-B selector, verdict, guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h192_margin_gate/test_h192.py": {
-      "reason": "Owner-requested H192 data-free controls for strict-margin confidence-gated adapter selection (gate, tau=0 identity, FIT-only grid, lock before A, partitions, pooled rule, H178 gate); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h179_deep_ensemble/test_h179.py": {
-      "role": "research",
-      "reason": "H179 data-free controls for grouped family separation, independent member seeds, score averaging before argmin, FIT-only batch construction, Holm/verdict boundaries, timing-only budget selection, CPU/resource guards, and seed-varying non-degenerate paired-family bootstrap retaining all 10,000 draws. Synthetic fixtures only; no study data or checkpoint loaded."
-    },
-    "python:research/flywheel_selfplay/h178_pooled_calibration/test_h178.py": {
-      "role": "research",
-      "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
-    },
-    "python:research/flywheel_selfplay/h182_ensemble_size_dose/test_h182.py": {
-      "role": "research",
-      "reason": "H182 synthetic-only controls for 20 distinct member seeds per outer seed, ENS5/ENS10/ENS20 nested prefixes, score averaging before argmin, FIT/A/B isolation, axis=0 10,000-draw family bootstrap, strict Holm/verdict gates, four-hour timing plan, and resource bounds. No study data or checkpoint loaded."
-    },
-    "python:research/flywheel_selfplay/h181_covariate_selector/test_h181.py": {
-      "role": "research",
-      "reason": "H181 zero-update covariate-adjusted estimator research fixtures; no production promotion"
-    },
-    "python:research/flywheel_selfplay/h183_ensemble_distill/test_h183.py": {
-      "role": "research",
-      "reason": "H183 data-free controls: FIT/A/B isolation and poisoned outer targets, distinct initial member/student seeds, softmax of ten mean teacher costs, fixed detached KL T=.2 with .5/.5 weights, common 40/80 student prefix, axis=0 paired family bootstrap, strict DIST10 primary Holm m2 gate, RENS10 diagnostic, ragged native choices and resource/timing caps. No study data/checkpoint/optimizer updates."
-    },
-    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/test_h185.py": {
-      "reason": "Owner-requested H185 data-free controls for the power-aware 205-family pooled cross-fit confirmatory test of FRESH160, ENS5, and RENS5 vs R882 (FIT-only training, B lock before A, RENS5==ENS5 inits, distinct member init hashes, imported H177_DECISION_RULE + H178 receipt, axis=0 bootstrap seed reduction, and host guards); no checkpoint/corpus reads or model passes in the fixture suite; offline research only.",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h186_kernel_sweep/test_h186.py": {
-      "role": "research",
-      "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-    },
-    "python:research/flywheel_selfplay/h187_robust_family/test_h187.py": {
-      "role": "research",
-      "reason": "H187 research-only paired robust-loss/equal-family fresh adapter fixture tests; no serving promotion"
-    },
-    "python:research/flywheel_selfplay/h189_swa_ema/test_h189.py": {
-      "role": "research",
-      "reason": "H189 synthetic/data-free design and selector controls for the adapter weight-averaging (SWA/EMA) preregistration; no production promotion"
-    },
-    "python:research/flywheel_selfplay/h191_nested_kernel/test_h191.py": {
-      "role": "research",
-      "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-    },
-    "python:research/flywheel_selfplay/h190_ens10_indep_folds/test_h190.py": {
-      "role": "research",
-      "reason": "H190 synthetic/data-free design and selector controls for ENS10/RENS10 confirmation with independent fold seeds per outer seed; no production promotion"
-    },
-    "python:research/flywheel_selfplay/h193_invalid_veto/test_h193.py": {
-      "role": "research",
-      "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-    },
-    "python:research/flywheel_selfplay/h194_invalid_margin/test_h194.py": {
-      "role": "research",
-      "reason": "H194 CPU research-only invalid-margin continuation controls; no serving promotion"
-    },
-    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/test_h195.py": {
-      "reason": "Owner-requested H195 data-free controls for the BLEND_025 prospective confirmation (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF permutation, H129 blend, contrast/harm/margin gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h196_tta/test_custody.py": {
-      "role": "research",
-      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-    },
-    "python:research/flywheel_selfplay/h196_tta/test_h196.py": {
-      "role": "research",
-      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-    },
-    "python:research/flywheel_selfplay/h196_tta/test_protocol.py": {
-      "role": "research",
-      "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/test_h197.py": {
-      "role": "research",
-      "reason": "H197 data-free checks for independent TRAIN folds, matched clipping arms, local pin and zero-update preflight guards, plus strict JSON round-trips of 40-step traces for all arms, 60 FIT receipts, 15 cell calibrations, three per-seed summaries, aggregate A/Elo metrics, DL-Val, B lock, counters, audit and failure records through the production writer; no corpus/checkpoint reads or model passes in fixtures."
-    },
-    "python:research/flywheel_selfplay/h198_ttt/test_h198.py": {
-      "role": "research",
-      "reason": "H198 data-free checks for per-context test-time training on revealed candidates only: leakage masking of unrevealed labels, per-context reset and trajectory-prefix equivalence, shuffle-control derangement, independent fold seeds with the stage-1 B-only lock, verdict gates with axis-0 bootstrap, and the launch contract; no corpus/checkpoint reads in fixtures."
-    },
-    "python:research/flywheel_selfplay/h199_blend025_native/test_h199.py": {
-      "reason": "Owner-requested H199 data-free controls for BLEND_025 on the flywheel native protocol (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF, registered lambda dose, native gates incl. 3/3 seeds and exact ties as zero, harm gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
-      "role": "research"
-    },
-    "python:research/flywheel_selfplay/h200_nested_blend/test_h200.py": {
-      "role": "research",
-      "reason": "H200 data-free protocol checks: exact unused seeds and 20-model-per-seed exclusion plan; strict nested lambda margin/ties; average-tie rank orientation; deterministic within-context shuffle; xbabe1-only host guard that refuses xbabe0/2/3 before input reads; native ties and CPU resource limits. No cohort, checkpoint, or outcome data opened."
-    },
-    "python:research/flywheel_selfplay/h201_strict_admission/test_h201.py": {
-      "role": "research",
-      "reason": "H201 data-free host-before-input exclusion, paired family bootstrap and weighting, sequential SMA versus observed-incumbent screen, joint-null candidate dependence, family split exclusion, BT reference and strict verdict controls; no corpus/checkpoint reads, model passes or optimizer calls in fixtures."
-    },
-    "python:research/flywheel_selfplay/h202_hard_negative/test_h202.py": {
-      "role": "research",
-      "reason": "H202 data-free host-before-read/resource, stable current-top5 logistic inversion/gradient sign, zero-inversion loss, within-context shuffle, DOPE/anchor gradient masking and optimizer exclusion, fresh FIT/B/A folds, family-balanced paired sampling, durable B lock, lossless XOR and strict median/verdict controls; no corpus or model-checkpoint reads in fixtures."
-    },
-    "python:research/flywheel_selfplay/h203_blend025_gated/test_h203.py": {
-      "reason": "Owner-requested H203 data-free controls for the outcome-free gated BLEND_025 (cells, minimal 45-fit plan, H124 folds per fold seed, fold manifest, fixed-lambda blend, zgap and disagreement gate statistics, tau grid, FIT-only tau selection with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB/p/harm verdict, Elo orientation, xbabe1-only host admission); no checkpoint/corpus reads or model passes in the fixtures",
-      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
   "python:research/flywheel_selfplay/h169_optimizer_geometry/test_h169.py": {
     "reason": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards.",
+    "role": "research"
+  },
+  "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
+    "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
+    "role": "research"
+  },
+  "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
+    "reason": "Synthetic offline controls for the trainer objective and fail-closed roster authentication; pinned batched M5 fixture dimensions exercise the complete 50-context runner loop and fitness reversal axis; deterministic descriptive whole-family dev-Elo interval controls. No candidate/model/data outcome evaluation or qualification claim.",
     "role": "research"
   },
   "schema": "jope.regression-test-inventory/v1",
@@ -5658,13 +5670,5 @@
         "W6"
       ]
     }
-  },
-  "python:research/flywheel_selfplay/rnk10_m5_causal/test_objective.py": {
-    "reason": "Synthetic offline controls for the trainer objective and fail-closed roster authentication; pinned batched M5 fixture dimensions exercise the complete 50-context runner loop and fitness reversal axis; deterministic descriptive whole-family dev-Elo interval controls. No candidate/model/data outcome evaluation or qualification claim.",
-    "role": "research"
-  },
-  "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
-    "reason": "H174 data-free controls: SWAG moment/sample construction, deterministic paired posterior draws, FIT-only trajectory scope, binary family selector, raw B cost/choice/utility lock replay, and fused adapter API keyword contract. Research only; no study data, checkpoint, product, sealed qualification or serving promotion.",
-    "role": "research"
   }
 }
