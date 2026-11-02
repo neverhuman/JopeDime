@@ -513,7 +513,6 @@ def run(root: Path, launch_path: Path) -> dict:
         candidate_gate = np.zeros((len(stat.SEEDS), len(train), 112), dtype=bool)
         proposal_sha_by_width = np.full((len(stat.SEEDS), len(train), len(stat.WIDTHS), 64), b"", dtype="S64")
         families = [row["family_id"] for row in train]
-        generator.EVAL_SCRATCH_ROOT.mkdir(parents=True)
         with torch_context():
             for seed in stat.SEEDS:
                 for index, row in enumerate(train):
