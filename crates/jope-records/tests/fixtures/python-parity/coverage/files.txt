@@ -507,6 +507,12 @@ crates/jope-campaigns/src/commands/jain_regressor.rs
 crates/jope-campaigns/src/commands/mod.rs
 crates/jope-campaigns/src/commands/train_only_redteam.rs
 crates/jope-campaigns/src/commands/train_only_redteam_execution.rs
+crates/jope-campaigns/src/commands/train_only_redteam_execution/candidate_and_evaluation.rs
+crates/jope-campaigns/src/commands/train_only_redteam_execution/legacy_and_archive.rs
+crates/jope-campaigns/src/commands/train_only_redteam_execution/screening_and_search.rs
+crates/jope-campaigns/src/commands/train_only_redteam_execution/smart_execution.rs
+crates/jope-campaigns/src/commands/train_only_redteam_execution/selection.rs
+crates/jope-campaigns/src/commands/train_only_redteam_execution/validation_and_tests.rs
 crates/jope-campaigns/src/commands/train_only_redteam_results.rs
 crates/jope-campaigns/src/commands/train_only_study.rs
 crates/jope-campaigns/src/core.rs
