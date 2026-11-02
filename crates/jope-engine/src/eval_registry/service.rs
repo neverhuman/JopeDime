@@ -2003,7 +2003,7 @@ fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result<()> {
             iov_len: 1,
         };
         let mut control = [0usize; 8];
-        let mut msg = libc::msghdr {
+        let mut msg: libc::msghdr = libc::msghdr {
             msg_name: std::ptr::null_mut(),
             msg_namelen: 0,
             msg_iov: std::ptr::null_mut(),
@@ -2054,7 +2054,7 @@ fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
             iov_len: 1,
         };
         let mut control = [0usize; 8];
-        let mut msg = libc::msghdr {
+        let mut msg: libc::msghdr = libc::msghdr {
             msg_name: std::ptr::null_mut(),
             msg_namelen: 0,
             msg_iov: std::ptr::null_mut(),
