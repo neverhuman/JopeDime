@@ -1,0 +1,976 @@
+use super::*;
+use crate::math_pipeline::{NumericColumn, PipelineState, TargetScale, INPUT_PART, PIPELINE_PART};
+use std::collections::BTreeMap;
+use std::process::Command;
+
+// Real catalog v246 dataset b4c8807a75fc190f, TRAIN blob only. No outer-test rows.
+// s3://veox-jopedime-datasets-use2/blobs/sha256/782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1
+const TRAIN: &str = r#"0.392630965,0.430275381,0.430894703,0.12725848,0.360910535,0.64234072,0.693609476,0.579903841,0.505381107,0.69527173,0.582644641,0.5773651,0.405602932
+0.532239497,0.324855298,0,0.272702694,0.0432448462,0.122006744,0.130229235,0.423766315,0.0293887053,0.75315696,0,0.880756497,1
+0.88658607,0.473776519,0.739836991,0.290895343,0.0643178821,0.822988451,0.687003195,0.984539568,0.761445224,0.0731142461,0.648760319,0.719476581,0.565164447
+0.114277489,0.382564455,0.752032399,0.090887025,0.526813567,0.742386162,0.539474308,0.938393354,0.617167652,0.662819445,0.859504104,0.347767889,0.422655284
+0.408175021,0.558849335,0.829268336,0.45453915,0.316212088,0.782663882,0.434365064,0.881171227,0.740591943,0.642971337,0.561983466,0.1910301,0.339829475
+0.189407021,0.309770226,0.367886305,0.363631308,0.296831459,0.308776051,0.355381072,0.305160969,0.416478246,0.835775375,0.512396693,0.261981696,0.420219243
+0.102763385,0.174179971,0.778455317,0.21818018,0.535733581,0.665172696,0.484818637,0.710756838,0.655283988,0.277088135,0.921487629,0.450724959,0.369062126
+0.822107077,0.773197711,0.908536494,0.45453915,0.0365236998,0.84244597,0.688308239,0.603560925,0.82356292,0.79825902,0.863636374,0.326938272,0.397076726
+0.282383412,0.517277658,0.556910694,0.599983335,0.402099937,0.568185449,0.65837121,0.641646266,0.561009467,0.542055309,0.648760319,0.671366394,0.393422663
+0.305123776,0.213997543,1,0.145451143,0.197167844,0.708773315,0.541624963,0.768193126,0.693888068,0.192443401,0.719008267,0.130075127,0
+1,1,0.833333492,1,0.0193282682,1,0.898360729,1,1,0.308720618,0.454545468,0.283314794,0.237515226
+0.160621762,0.23031047,0.249999806,0.254523903,0.601590395,0.516470432,0.582751989,0.466739893,0.437724054,0.839140177,0.446280986,0.878900409,0.311814874
+0.900978684,0.281880379,0.855690539,0.309081078,0,0.909259915,0.753536522,0.814094543,0.958069861,0.260106772,0.797520638,0.372082263,0.258221686
+0.205526769,0.0280652512,0.530487716,0.799998641,0.173617244,0.570154846,0.518912315,0.64190495,0.488903433,0.474720091,0.516528904,0.456496716,0.428745419
+0.158606797,0.0387651287,0.182927072,0.399995834,1,0.114793263,0.0579076372,0.418282688,0.169862658,0.563431859,0.533057868,0.209798709,0.345919609
+0.204951063,0.103841431,0.792682946,0.490903676,0.523491383,0.665682733,0.645152509,0.370122582,0.776554227,0.904096305,0.950413227,0.599517882,0.278928131
+0.387449622,0.30503419,0.78861779,0.309074134,0.509860694,0.608530283,0.451485544,0.662896037,0.708410084,0.553323686,1,0.650197566,0.464068204
+0.367012084,0.286265582,0.924796224,0.109079689,0.0870680586,0.902512968,0.63376081,0.859470963,0.862631083,0.747068584,0.657024801,0.153011963,0.274056017
+0.486183077,0.551482201,0.699187219,0.927264035,0.161958084,0.781150758,0.752020597,0.474855214,0.877674222,0.557997108,0.859504104,0.347767889,0.293544471
+0.263385147,0.140852481,0.723577201,0.181822598,0.391995251,0.663917363,0.493468851,0.502018988,0.718742073,0.730278254,0.834710717,0.4485493,0.401948839
+0.873344839,0.554113328,0.959349453,0.618176043,0.207016751,0.925042927,1,0.939120531,0.890241802,0,0.719008267,0.327552319,0.313032895
+0.828727663,0.402210146,0.61382097,0.745455325,0.0333997682,0.759799778,0.896631718,0.580347061,0.621512294,0.533041358,0.871900797,0.394919485,0.381242394
+0.36557284,0.109279074,0.152438968,0.0363645181,0.389253587,0.037192557,0.201275483,0,0.265883029,0.495052397,0.425619841,0.515321374,0.54202193
+0.24582614,0.469566733,0.743902087,0,0.317109227,0.78819716,0.579324722,0.863871396,0.563951254,1,0.690082669,0.35882771,0.414129108
+0.374208391,0.231362924,0.0955286622,0.363631308,0.0852978751,0.31474036,0.239869252,0.429203749,0.290933728,0.98757869,0.119834714,1,0.651644349
+"#;
+
+fn training() -> (Vec<Vec<f64>>, Vec<f64>) {
+    assert_eq!(
+        crate::sha256_hex(TRAIN.as_bytes()),
+        "782acd17eed2bfc7acfa4438be076fb63026763e6578661cfc284c2f3f9a21e1"
+    );
+    let rows: Vec<Vec<f64>> = TRAIN
+        .lines()
+        .map(|l| l.split(',').map(|v| v.parse().unwrap()).collect())
+        .collect();
+    let y = rows.iter().map(|r| *r.last().unwrap()).collect();
+    (
+        rows.into_iter()
+            .map(|mut r| {
+                r.pop();
+                r
+            })
+            .collect(),
+        y,
+    )
+}
+
+fn fitted(dsl: &str) -> (GenomeIr, Model) {
+    let (x, y) = training();
+    let genome = GenomeIr::parse(dsl).unwrap();
+    let model = feat_math::model::fit(&genome, &x, &y).unwrap();
+    (genome, model)
+}
+
+fn run_rust(name: &str, source: &str) {
+    // One reused lane target; preserve generated source and executables as proof artifacts.
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target/fitted-rs-proof")
+        .join(name);
+    std::fs::create_dir_all(&dir).unwrap();
+    let program = dir.join("predictor.rs");
+    let executable = dir.join("predictor");
+    std::fs::write(&program, source).unwrap();
+    let version = Command::new("rustc").arg("--version").output().unwrap();
+    eprintln!("{}", String::from_utf8_lossy(&version.stdout));
+    let compile = Command::new("rustc")
+        .args([
+            "--edition=2021",
+            "-C",
+            "codegen-units=1",
+            "-C",
+            "opt-level=0",
+            "-D",
+            "warnings",
+        ])
+        .arg(&program)
+        .arg("-o")
+        .arg(&executable)
+        .output()
+        .unwrap();
+    assert!(
+        compile.status.success(),
+        "{name}: rustc failed: {}",
+        String::from_utf8_lossy(&compile.stderr)
+    );
+    let output = Command::new(&executable).output().unwrap();
+    assert!(
+        output.status.success(),
+        "{name}: predictor failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    eprintln!("{name}: {}", String::from_utf8_lossy(&output.stdout));
+}
+
+#[test]
+fn fitted_module_docs_compile_and_run_as_a_plain_rust_module() {
+    let (genome, model) = fitted("(pipe X (standardize) (ridge))");
+    let source = emit(&genome, &model, 12).unwrap();
+    assert!(source.starts_with("//! Fitted, std-only Rust prediction module"));
+    assert!(source.contains("`mod predictor;`"));
+    assert!(source.contains("predictor::predict_numeric(&rows)"));
+    assert!(source.contains("centers each column by its training mean"));
+    assert!(!source.contains("train.csv"));
+    assert!(!source.contains("test_features.csv"));
+    assert!(!source.contains("Usage: ./model"));
+    assert!(!source.contains("fn main()"));
+
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target/fitted-rs-proof/module-usage");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("predictor.rs"), source).unwrap();
+    let consumer = dir.join("consumer.rs");
+    std::fs::write(
+            &consumer,
+            "mod predictor;\nfn main() {\n    let rows = vec![vec![0.5; 12]];\n    let predictions = predictor::predict_numeric(&rows).expect(\"fitted prediction\");\n    assert_eq!(predictions.len(), 1);\n    assert!(predictions[0].is_finite());\n}\n",
+        )
+        .unwrap();
+    let executable = dir.join("consumer");
+    let compile = Command::new("rustc")
+        .args(["--edition=2021"])
+        .arg(&consumer)
+        .arg("-o")
+        .arg(&executable)
+        .output()
+        .unwrap();
+    assert!(
+        compile.status.success(),
+        "plain rustc consumer compile failed: {}",
+        String::from_utf8_lossy(&compile.stderr)
+    );
+    let output = Command::new(executable).output().unwrap();
+    assert!(
+        output.status.success(),
+        "plain rustc consumer failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+fn numeric_case(index: usize, dsl: &str, test: &[Vec<f64>]) -> String {
+    let (genome, model) = fitted(dsl);
+    let expected = model.predict(&test.to_vec()).unwrap();
+    let source = emit(&genome, &model, 12).unwrap_or_else(|e| panic!("{dsl}: {e:#}"));
+    assert_eq!(
+        source,
+        emit(&genome, &model, 12).unwrap(),
+        "deterministic {dsl}"
+    );
+    assert!(!source.contains("fn main()"));
+    let rows = literal("", "Vec<Vec<f64>>", &json!(test)).unwrap();
+    let expected = literal("", "Vec<f64>", &json!(expected)).unwrap();
+    format!("mod c{index} {{\n{source}\n}}\nfn check{index}() {{ let rows = {rows}; let expected: Vec<f64> = {expected}; let got = c{index}::predict_numeric(&rows).unwrap(); assert_eq!(got.len(), expected.len()); for (i,(a,b)) in got.iter().zip(&expected).enumerate() {{ assert!((a-b).abs() <= 1e-12+1e-10*b.abs(), \"case {index} row {{i}}: {{a}} vs {{b}}\"); }} assert!(c{index}::predict_numeric(&[]).unwrap().is_empty()); assert!(c{index}::predict_numeric(&[vec![0.0;11]]).is_err()); assert!(c{index}::predict_numeric(&[vec![f64::NAN;12]]).is_err()); }}\n")
+}
+
+#[test]
+fn rustc_replays_every_legacy_recipe_operation_head_and_target() {
+    // Inventory is cross-checked against EXP-01 below. Every legacy recipe branch occurs.
+    let operations = [
+        "standardize",
+        "robust_scale",
+        "rank",
+        "blom",
+        "quantile_bins bins=4",
+        "bin_onehot bins=3",
+        "hinge knots=3",
+        "winsor_clip",
+        "cheb degree=3",
+        "poly_interact",
+        "rff_cos n=5",
+        "rff_sin n=5",
+        "rand_proj k=4",
+        "landmark_dist k=4 gamma=0.8",
+        "oblique_hinge n=4",
+        "row_stats",
+        "pair_prod topk=4",
+        "target_bin_encode bins=4",
+        "sigmoid",
+        "step t=0.5",
+        "norm_row",
+        "polar",
+        "lag k=2",
+        "roll k=2",
+        "fft_mag k=4",
+        "row_spectral",
+        "row_diff_stats",
+        "svd_project k=4 iters=3",
+        "nystrom k=4 gamma=0.8",
+        "symlog c=0.4",
+        "select_corr k=4",
+        "impute strategy=mean add_indicator=true",
+        "pair_ratio topk=4",
+        "spline knots=3",
+        "map expr=\"sin(x)\"",
+        "derive expr=\"c0*c1\"",
+    ];
+    let heads = [
+        "ridge",
+        "ridge_gcv",
+        "elasticnet sweeps=4",
+        "gbm rounds=4 depth=2 min_leaf=2",
+        "histgbm2 rounds=4 leaves=4 min_leaf=2",
+        "ensemble rounds=4 min_leaf=2",
+        "krr m=50",
+        "gpr m=50 steps=1",
+        "gpr m=50 steps=1 kernel=\"rbf+linear\"",
+        "ksmooth k=4 gamma=0.8",
+        "stack",
+        "portfolio preset=core",
+    ];
+    let mut dsls = vec!["(pipe X (ridge))".to_owned()];
+    // Test both replacement and appending, because the recipe carries that flag, not state.
+    for op in operations {
+        for append in [false, true] {
+            dsls.push(format!("(pipe X ({op} append={append}) (ridge))"));
+        }
+    }
+    dsls.extend(heads.into_iter().map(|h| format!("(pipe X ({h}))")));
+    dsls.extend(
+        ["rank_gauss", "log1p", "winsor", "zscore"]
+            .map(|kind| format!("(pipe X (target kind={kind}) (standardize) (ridge))")),
+    );
+    dsls.push(
+        "(pipe X (robust_scale append=true) (hinge knots=3 append=true) (elasticnet sweeps=4))"
+            .into(),
+    );
+    dsls.extend(
+        [
+            "(pipe X (norm_features) (ridge))",
+            "(pipe X (winsor_moments) (ridge))",
+            "(pipe X (ensemble_ridge_gbm rounds=4 min_leaf=2))",
+            "(pipe X (histgbm rounds=4 min_leaf=2))",
+            "(pipe X (logistic))",
+        ]
+        .map(str::to_owned),
+    );
+    let mut covered = std::collections::BTreeSet::new();
+    for dsl in &dsls {
+        if let GenomeIr::Pipeline(pipeline) = GenomeIr::parse(dsl).unwrap() {
+            covered.extend(pipeline.stages.into_iter().map(|s| s.op));
+        }
+    }
+    let registry = feat_math::evolve::api::capability::Registry::current();
+    use feat_math::evolve::api::capability::{CapabilityKind, Language};
+    let admitted: Vec<_> = registry
+        .entries
+        .iter()
+        .filter(|row| {
+            matches!(row.kind, CapabilityKind::Operation | CapabilityKind::Head)
+                && row.supported[&Language::Rust]
+        })
+        .map(|row| row.name)
+        .collect();
+    eprintln!("Rust registry: {admitted:?}");
+    let missing: Vec<_> = admitted
+        .iter()
+        .filter(|name| !covered.contains(**name))
+        .collect();
+    assert!(missing.is_empty(), "registry cases missing: {missing:?}");
+    let (mut test, _) = training();
+    test.extend([
+        vec![-0.0; 12],
+        vec![0.0; 12],
+        vec![1.5; 12],
+        vec![-0.5; 12],
+        vec![0.5; 12],
+    ]);
+    let mut program = String::new();
+    for (i, dsl) in dsls.iter().enumerate() {
+        program.push_str(&numeric_case(i, dsl, &test));
+    }
+    program.push_str("fn main() {\n");
+    for i in 0..dsls.len() {
+        program.push_str(&format!("check{i}();\n"));
+    }
+    program.push_str(&format!(
+        "println!(\"{} recipes, {} prediction rows, abs1e-12+rel1e-10\"); }}",
+        dsls.len(),
+        dsls.len() * test.len()
+    ));
+    run_rust("all-recipes", &program);
+}
+
+fn pipeline() -> MathPipeline {
+    let (_, model) = fitted("(pipe X (robust_scale append=true) (ridge))");
+    let mut names = (0..14)
+        .map(|i| NumericColumn {
+            name: format!("x{i}"),
+            min: -2.0,
+            max: 2.0,
+            constant: false,
+        })
+        .collect::<Vec<_>>();
+    names[0].name = "unicode\"\\\nλ\u{2028}".into();
+    names[4].constant = true;
+    names[4].max = names[4].min;
+    let input = InputContract::new(
+        names,
+        vec![13, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        TargetScale {
+            name: "label".into(),
+            min: 1e10 + 0.25,
+            scale: 1e-5,
+        },
+    )
+    .unwrap();
+    MathPipeline::decode(
+        &BTreeMap::from([
+            (INPUT_PART.into(), serde_json::to_vec(&input).unwrap()),
+            (
+                PIPELINE_PART.into(),
+                serde_json::to_vec(&PipelineState {
+                    dsl: "(pipe X (robust_scale append=true) (ridge))".into(),
+                    model,
+                })
+                .unwrap(),
+            ),
+        ]),
+        PIPELINE_PART,
+    )
+    .unwrap()
+}
+
+#[test]
+fn raw_cells_match_f64_engine_with_missing_tokens_extremes_and_named_columns() {
+    let mut p = pipeline();
+    let tokens = [
+        None,
+        Some(""),
+        Some("NA"),
+        Some("n/a"),
+        Some("null"),
+        Some("none"),
+        Some("NaN"),
+        Some("?"),
+        Some("#N/A"),
+        Some("true"),
+        Some("yes"),
+        Some("false"),
+        Some("no"),
+        Some("inf"),
+        Some("-inf"),
+        Some("1e999"),
+        Some("unknown category"),
+        Some("-0.0"),
+        Some("1.0000000000000002"),
+        Some("1.7976931348623157e308"),
+        Some("-1.7976931348623157e308"),
+        Some("\u{2003}0.12345678901234567\u{2003}"),
+        Some("\u{feff}1"),
+        Some("0x1"),
+        Some("1_0"),
+    ];
+    let rows: Vec<_> = tokens.iter().map(|v| vec![*v; 14]).collect();
+    let mut program = String::new();
+    for i in 0..3 {
+        if i == 1 {
+            p.input.target.scale = 1.0;
+            p.input.target.min = -0.0;
+        }
+        if i == 2 {
+            p.input.target.scale = 1e-13;
+            p.input.target.min = -0.0;
+        }
+        let source = emit_pipeline(&p).unwrap();
+        let expected = p.predict_cells(&rows).unwrap();
+        let rows_source = format!(
+            "vec![{}]",
+            tokens
+                .iter()
+                .map(|v| format!("vec![{v:?};14]"))
+                .collect::<Vec<_>>()
+                .join(",")
+        );
+        let expected_source = literal("", "Vec<f64>", &json!(expected)).unwrap();
+        program.push_str(&format!("mod c{i} {{\n{source}\n}}\nfn check{i}() {{ let rows={rows_source};let expected:Vec<f64>={expected_source};let got=c{i}::predict_cells(&rows).unwrap();assert_eq!(got.len(),expected.len());for (a,b) in got.iter().zip(&expected) {{assert!((a-b).abs()<=1e-12+1e-10*b.abs());assert_eq!(a.to_bits(),b.to_bits());}} let names=&[{}];let mut reversed=names.to_vec();reversed.reverse();let reordered:Vec<_>=rows.iter().map(|r|r.iter().copied().rev().collect()).collect();assert_eq!(c{i}::predict_table(&reversed,&reordered).unwrap(),got);assert!(c{i}::predict_cells(&[vec![None;13]]).is_err());assert!(c{i}::predict_table(&[],&rows).is_err());assert!(c{i}::predict_cells(&[]).unwrap().is_empty()); }}\n",p.input.columns.iter().map(|c|format!("{:?}",c.name)).collect::<Vec<_>>().join(",")));
+    }
+    program.push_str("fn main(){check0();check1();check2();println!(\"75 raw rows: exact f64 bits, signed zero, selected order, constant target and named columns\");}");
+    run_rust("raw-input", &program);
+}
+
+#[test]
+fn invalid_pairings_legacy_input_and_nonfinite_constants_are_refused() {
+    let (g, mut m) = fitted("(pipe X (step t=0.5) (ridge))");
+    assert!(emit(&g, &m, 0).is_err());
+    assert!(emit(&g, &m, 11).is_err());
+    assert!(emit(
+        &GenomeIr::parse("(pipe X (step t=0.25) (ridge))").unwrap(),
+        &m,
+        12
+    )
+    .is_err());
+    assert!(emit(
+        &GenomeIr::parse("(pipe X (sigmoid) (ridge))").unwrap(),
+        &m,
+        12
+    )
+    .is_err());
+    assert!(emit(
+        &GenomeIr::parse("(pipe X (step t=0.5 append=true) (ridge))").unwrap(),
+        &m,
+        12
+    )
+    .is_err());
+    assert!(emit(&GenomeIr::parse("(pipe X (ridge))").unwrap(), &m, 12).is_err());
+    assert!(emit(
+        &GenomeIr::parse("(pipe X (step t=0.5) (elasticnet))").unwrap(),
+        &m,
+        12
+    )
+    .is_err());
+    if let Model::Pipeline { head, .. } = &mut m {
+        if let FittedHead::Ridge(r) = head.as_mut() {
+            r.w[0] = f64::NAN;
+        }
+    }
+    assert!(emit(&g, &m, 12).is_err());
+    let (valid, mut malformed) = fitted("(pipe X (ridge))");
+    if let Model::Pipeline { head, .. } = &mut malformed {
+        if let FittedHead::Ridge(r) = head.as_mut() {
+            r.w.pop();
+        }
+    }
+    assert!(emit(&valid, &malformed, 12).is_err());
+    let mut p = pipeline();
+    p.input.prediction_version = 1;
+    assert!(emit_pipeline(&p).is_err());
+    p.input.prediction_version = 2;
+    p.input.selected[0] = 999;
+    assert!(emit_pipeline(&p).is_err());
+}
+
+#[test]
+fn generated_prediction_refuses_nonfinite_output_instead_of_zero() {
+    let (g, mut m) = fitted("(pipe X (ridge))");
+    if let Model::Pipeline { head, .. } = &mut m {
+        if let FittedHead::Ridge(r) = head.as_mut() {
+            r.w.fill(f64::MAX);
+            r.w[2] = -f64::MAX;
+            r.scales.fill(1.0);
+            r.means.fill(0.0);
+        }
+    }
+    let source = emit(&g, &m, 12).unwrap();
+    run_rust("nonfinite", &format!("{source}\nfn main() {{assert!(predict_numeric(&[vec![f64::MAX;12]]).is_err());println!(\"nonfinite output refused\");}}"));
+}
+#[test]
+fn tree_decision_flip_rate_is_zero_for_golden_and_random_rows() {
+    use feat_math::boost2::BoostNode;
+    use feat_math::heads::GbmNode;
+    let (mut rows, _) = training();
+    rows.extend([vec![-0.0; 12], vec![1.5; 12], vec![-0.5; 12]]);
+    let mut seed = 731u64;
+    rows.extend((0..1000).map(|_| {
+        (0..12)
+            .map(|_| {
+                seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+                (seed >> 11) as f64 / ((1u64 << 53) as f64) * 2.0 - 0.5
+            })
+            .collect::<Vec<_>>()
+    }));
+    let mut program = String::new();
+    let mut cases = 0;
+    for dsl in [
+        "(pipe X (gbm rounds=4 depth=2 min_leaf=2))",
+        "(pipe X (histgbm2 rounds=4 leaves=4 min_leaf=2))",
+    ] {
+        let (genome, model) = fitted(dsl);
+        let Model::Pipeline { head, .. } = &model else {
+            unreachable!()
+        };
+        // Probe each real fitted tree separately, replacing only leaf values with their
+        // node indices. This makes the actual engine/emitted routing decisions observable;
+        // it is not a score/model-quality evaluation or a second routing implementation.
+        let probes: Vec<FittedHead> = match head.as_ref() {
+            FittedHead::Gbm(fitted) => fitted
+                .trees
+                .iter()
+                .map(|tree| {
+                    let mut fitted = fitted.clone();
+                    let mut tree = tree.clone();
+                    for (i, node) in tree.iter_mut().enumerate() {
+                        if let GbmNode::Leaf(value) = node {
+                            *value = i as f64;
+                        }
+                    }
+                    fitted.init = 0.0;
+                    fitted.lr = 1.0;
+                    fitted.trees = vec![tree];
+                    FittedHead::Gbm(fitted)
+                })
+                .collect(),
+            FittedHead::HistGbm2(fitted) => fitted
+                .bags
+                .iter()
+                .flatten()
+                .map(|tree| {
+                    let mut fitted = fitted.clone();
+                    let mut tree = tree.clone();
+                    for (i, node) in tree.iter_mut().enumerate() {
+                        if let BoostNode::Leaf(value) = node {
+                            *value = i as f64;
+                        }
+                    }
+                    fitted.init = 0.0;
+                    fitted.lr = 1.0;
+                    fitted.bags = vec![vec![tree]];
+                    FittedHead::HistGbm2(fitted)
+                })
+                .collect(),
+            _ => unreachable!(),
+        };
+        assert!(!probes.is_empty());
+        for head in probes {
+            let model = Model::Pipeline {
+                target: None,
+                ops: Vec::new(),
+                head: Box::new(head),
+            };
+            let source = emit(&genome, &model, 12).unwrap();
+            let expected = model.predict(&rows).unwrap();
+            let x = literal("", "Vec<Vec<f64>>", &json!(rows)).unwrap();
+            let y = literal("", "Vec<f64>", &json!(expected)).unwrap();
+            program.push_str(&format!("mod c{cases} {{\n{source}\n}}\nfn check{cases}() {{let rows={x};let expected:Vec<f64>={y};assert_eq!(c{cases}::predict_numeric(&rows).unwrap(),expected,\"leaf decision flip\");}}\n"));
+            cases += 1;
+        }
+    }
+    program.push_str("fn main(){");
+    for i in 0..cases {
+        program.push_str(&format!("check{i}();"));
+    }
+    program.push_str(&format!("println!(\"{cases} trees: 0 golden / 0 randomized row decision flips ({} row-tree decisions)\");}}",cases*rows.len()));
+    run_rust("tree-decisions", &program);
+}
+
+#[test]
+fn emitted_self_checks_replay_caller_rows_and_reject_perturbed_outputs() {
+    let (train, targets) = training();
+    let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+    let model = feat_math::model::fit(&genome, &train, &targets).unwrap();
+    let inputs = train[0].clone();
+    let expected = model.predict(&vec![inputs.clone()]).unwrap()[0];
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target/fitted-self-check-proof");
+    std::fs::create_dir_all(&root).unwrap();
+
+    let js_checks = [crate::fitted_js::CheckRow {
+        inputs: inputs.clone(),
+        expected,
+    }];
+    let js = crate::fitted_js::emit_with_checks(&genome, &model, 12, &js_checks).unwrap();
+    let js_path = root.join("predictor.mjs");
+    std::fs::write(&js_path, js).unwrap();
+    assert!(Command::new("node")
+        .arg(&js_path)
+        .arg("--self-check")
+        .status()
+        .unwrap()
+        .success());
+    let bad_js = crate::fitted_js::emit_with_checks(
+        &genome,
+        &model,
+        12,
+        &[crate::fitted_js::CheckRow {
+            inputs: inputs.clone(),
+            expected: expected + 10.0,
+        }],
+    )
+    .unwrap();
+    std::fs::write(&js_path, bad_js).unwrap();
+    assert!(!Command::new("node")
+        .arg(&js_path)
+        .arg("--self-check")
+        .status()
+        .unwrap()
+        .success());
+
+    let py_checks = [crate::fitted_py::CheckRow {
+        inputs: inputs.clone(),
+        expected,
+    }];
+    let py = crate::fitted_py::emit_with_checks(&genome, &model, 12, &py_checks).unwrap();
+    let py_path = root.join("predictor.py");
+    std::fs::write(&py_path, py).unwrap();
+    assert!(Command::new("python3")
+        .arg(&py_path)
+        .arg("--self-check")
+        .status()
+        .unwrap()
+        .success());
+    let bad_py = crate::fitted_py::emit_with_checks(
+        &genome,
+        &model,
+        12,
+        &[crate::fitted_py::CheckRow {
+            inputs: inputs.clone(),
+            expected: expected + 10.0,
+        }],
+    )
+    .unwrap();
+    std::fs::write(&py_path, bad_py).unwrap();
+    assert!(!Command::new("python3")
+        .arg(&py_path)
+        .arg("--self-check")
+        .status()
+        .unwrap()
+        .success());
+
+    let rs_checks = [CheckRow {
+        inputs: inputs.clone(),
+        expected,
+    }];
+    let rs = emit_with_checks(&genome, &model, 12, &rs_checks).unwrap();
+    let rs_path = root.join("predictor.rs");
+    let rs_test = root.join("predictor-test");
+    std::fs::write(&rs_path, rs).unwrap();
+    assert!(Command::new("rustc")
+        .args(["--edition=2021", "--test"])
+        .arg(&rs_path)
+        .arg("-o")
+        .arg(&rs_test)
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new(&rs_test).status().unwrap().success());
+    let bad_rs = emit_with_checks(
+        &genome,
+        &model,
+        12,
+        &[CheckRow {
+            inputs,
+            expected: expected + 10.0,
+        }],
+    )
+    .unwrap();
+    std::fs::write(&rs_path, bad_rs).unwrap();
+    assert!(Command::new("rustc")
+        .args(["--edition=2021", "--test"])
+        .arg(&rs_path)
+        .arg("-o")
+        .arg(&rs_test)
+        .status()
+        .unwrap()
+        .success());
+    assert!(!Command::new(&rs_test).status().unwrap().success());
+}
+
+#[test]
+fn calibrated_emitters_match_engine_and_binding_floor() {
+    let (train, targets) = training();
+    let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+    let model = feat_math::model::fit(&genome, &train, &targets).unwrap();
+    let raw = model.predict(&train).unwrap();
+    let affine: Vec<_> = raw.iter().map(|v| 0.7 + 1.2 * v).collect();
+    let (low_index, low_value) = affine
+        .iter()
+        .enumerate()
+        .min_by(|a, b| a.1.total_cmp(b.1))
+        .unwrap();
+    let (high_index, high_value) = affine
+        .iter()
+        .enumerate()
+        .max_by(|a, b| a.1.total_cmp(b.1))
+        .unwrap();
+    let lower = (low_value + high_value) / 2.0;
+    let transform = OutputTransform {
+        intercept: 0.7,
+        slope: 1.2,
+        lower: Some(lower),
+    };
+    let input_rows = [train[low_index].clone(), train[high_index].clone()];
+    let checks_js: Vec<_> = input_rows
+        .iter()
+        .zip([low_index, high_index])
+        .map(|(inputs, index)| crate::fitted_js::CheckRow {
+            inputs: inputs.clone(),
+            expected: transform.apply(raw[index]),
+        })
+        .collect();
+    let checks_py: Vec<_> = input_rows
+        .iter()
+        .zip([low_index, high_index])
+        .map(|(inputs, index)| crate::fitted_py::CheckRow {
+            inputs: inputs.clone(),
+            expected: transform.apply(raw[index]),
+        })
+        .collect();
+    let checks_rs: Vec<_> = input_rows
+        .iter()
+        .zip([low_index, high_index])
+        .map(|(inputs, index)| CheckRow {
+            inputs: inputs.clone(),
+            expected: transform.apply(raw[index]),
+        })
+        .collect();
+    assert!(transform.apply(raw[low_index]) == lower);
+    assert!(transform.apply(raw[high_index]) > lower);
+
+    assert_eq!(
+        crate::fitted_js::emit(&genome, &model, 12).unwrap(),
+        crate::fitted_js::emit_calibrated(&genome, &model, 12, Some(&OutputTransform::IDENTITY))
+            .unwrap()
+    );
+    assert_eq!(
+        crate::fitted_py::emit(&genome, &model, 12).unwrap(),
+        crate::fitted_py::emit_calibrated(&genome, &model, 12, Some(&OutputTransform::IDENTITY))
+            .unwrap()
+    );
+    assert_eq!(
+        emit(&genome, &model, 12).unwrap(),
+        emit_calibrated(&genome, &model, 12, Some(&OutputTransform::IDENTITY)).unwrap()
+    );
+
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target/fitted-calibration-proof");
+    std::fs::create_dir_all(&root).unwrap();
+    let js_path = root.join("predictor.mjs");
+    std::fs::write(
+        &js_path,
+        crate::fitted_js::emit_calibrated_with_checks(
+            &genome,
+            &model,
+            12,
+            Some(&transform),
+            &checks_js,
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert!(Command::new("node")
+        .arg(&js_path)
+        .arg("--self-check")
+        .status()
+        .unwrap()
+        .success());
+    let py_path = root.join("predictor.py");
+    std::fs::write(
+        &py_path,
+        crate::fitted_py::emit_calibrated_with_checks(
+            &genome,
+            &model,
+            12,
+            Some(&transform),
+            &checks_py,
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert!(Command::new("python3")
+        .arg(&py_path)
+        .arg("--self-check")
+        .status()
+        .unwrap()
+        .success());
+    let rs_path = root.join("predictor.rs");
+    let rs_test = root.join("predictor-test");
+    std::fs::write(
+        &rs_path,
+        emit_calibrated_with_checks(&genome, &model, 12, Some(&transform), &checks_rs).unwrap(),
+    )
+    .unwrap();
+    assert!(Command::new("rustc")
+        .args(["--edition=2021", "--test"])
+        .arg(&rs_path)
+        .arg("-o")
+        .arg(&rs_test)
+        .status()
+        .unwrap()
+        .success());
+    assert!(Command::new(&rs_test).status().unwrap().success());
+}
+
+#[test]
+fn integral_calibration_constants_compile_and_match_engine() {
+    let (train, targets) = training();
+    let genome = GenomeIr::parse("(pipe X (ridge))").unwrap();
+    let model = feat_math::model::fit(&genome, &train, &targets).unwrap();
+    let raw = model.predict(&train).unwrap();
+    let mut sorted = raw.clone();
+    sorted.sort_by(f64::total_cmp);
+    // An integral intercept that puts the zero floor inside the prediction range.
+    let centre = -(4.0 * sorted[sorted.len() / 2]).round();
+    let transforms = [
+        // calibration::floor_only for a log-error objective: identity plus a zero floor.
+        OutputTransform {
+            intercept: 0.0,
+            slope: 1.0,
+            lower: Some(0.0),
+        },
+        // The shift family keeps a unit slope.
+        OutputTransform {
+            intercept: -1.0,
+            slope: 1.0,
+            lower: Some(-2.0),
+        },
+        OutputTransform {
+            intercept: centre,
+            slope: 4.0,
+            lower: Some(0.0),
+        },
+        OutputTransform {
+            intercept: 3.0,
+            slope: 1.0,
+            lower: None,
+        },
+        OutputTransform {
+            intercept: -0.0,
+            slope: 2.0,
+            lower: Some(-0.0),
+        },
+    ];
+    let binding = raw.iter().filter(|p| centre + 4.0 * **p < 0.0).count();
+    assert!(
+        binding > 0 && binding < raw.len(),
+        "zero floor must bind on some rows"
+    );
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target/fitted-calibration-integral-proof");
+    std::fs::create_dir_all(&root).unwrap();
+    for (index, transform) in transforms.iter().enumerate() {
+        let checks: Vec<_> = train
+            .iter()
+            .zip(&raw)
+            .map(|(inputs, prediction)| CheckRow {
+                inputs: inputs.clone(),
+                expected: transform.apply(*prediction),
+            })
+            .collect();
+        let source =
+            emit_calibrated_with_checks(&genome, &model, 12, Some(transform), &checks).unwrap();
+        let rs_path = root.join(format!("predictor-{index}.rs"));
+        let rs_test = root.join(format!("predictor-{index}-test"));
+        std::fs::write(&rs_path, &source).unwrap();
+        assert!(
+            Command::new("rustc")
+                .args(["--edition=2021", "--test"])
+                .arg(&rs_path)
+                .arg("-o")
+                .arg(&rs_test)
+                .status()
+                .unwrap()
+                .success(),
+            "{transform:?} does not compile"
+        );
+        assert!(
+            Command::new(&rs_test).status().unwrap().success(),
+            "{transform:?} self-check failed"
+        );
+        if index == 0 {
+            assert!(source.contains("(0.0 + 1.0 * pred).max(0.0)"));
+        }
+    }
+}
+
+#[test]
+fn platt_emitters_match_engine_probabilities_in_node_python_and_rustc() {
+    let (genome, model) = fitted("(pipe X (ridge))");
+    let mut calibration = crate::model_object::calibration_platt::cross_fit(
+        &[0.1, 0.2, 0.8, 0.9],
+        &["cold", "cold", "hot", "hot"],
+        ["cold", "hot"],
+        &[0, 1, 0, 1],
+    )
+    .unwrap()
+    .calibration;
+    calibration.sigmoid.scale = 0.7;
+    calibration.sigmoid.center = 0.1;
+    let scores = [0.0, 0.2, 0.75, 1.0];
+    let dir =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/fitted-platt-proof");
+    std::fs::create_dir_all(&dir).unwrap();
+    let no_calibration = ExportCalibration::default();
+    assert_eq!(
+        crate::fitted_js::emit_with_platt(&genome, &model, 12, &no_calibration).unwrap(),
+        crate::fitted_js::emit(&genome, &model, 12).unwrap()
+    );
+    assert_eq!(
+        crate::fitted_py::emit_with_platt(&genome, &model, 12, &no_calibration).unwrap(),
+        crate::fitted_py::emit(&genome, &model, 12).unwrap()
+    );
+    assert_eq!(
+        crate::fitted_rs::emit_with_platt(&genome, &model, 12, &no_calibration).unwrap(),
+        crate::fitted_rs::emit(&genome, &model, 12).unwrap()
+    );
+
+    for (intercept, slope) in [(-0.35, 2.4), (1000.0, 2.4), (-1000.0, 0.0)] {
+        calibration.sigmoid.intercept = intercept;
+        calibration.sigmoid.slope = slope;
+        let expected = scores
+            .iter()
+            .map(|score| calibration.apply(*score).unwrap())
+            .collect::<Vec<_>>();
+        let export = ExportCalibration {
+            output: None,
+            platt: Some(calibration.clone()),
+        };
+
+        let mut js = crate::fitted_js::emit_with_platt(&genome, &model, 12, &export).unwrap();
+        assert!(js.contains("const PLATT_CLASS_ORDER=Object.freeze([\"cold\",\"hot\"])"));
+        js.push_str(
+            "\nfor(const s of [0,0.2,0.75,1]) console.log(JSON.stringify(fittedPlatt(s)));\n",
+        );
+        let js_path = dir.join("predictor.js");
+        std::fs::write(&js_path, js).unwrap();
+        let js_output = Command::new("node").arg(&js_path).output().unwrap();
+        assert!(
+            js_output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&js_output.stderr)
+        );
+        assert_probability_pairs(&String::from_utf8_lossy(&js_output.stdout), &expected);
+
+        let py = crate::fitted_py::emit_with_platt(&genome, &model, 12, &export).unwrap();
+        assert!(py.contains("PLATT_CLASS_ORDER = [\"cold\",\"hot\"]"));
+        let py_path = dir.join("predictor.py");
+        std::fs::write(&py_path, py).unwrap();
+        let py_output = Command::new("python3")
+                .args([
+                    "-c",
+                    "import runpy,sys; m=runpy.run_path(sys.argv[1],run_name='platt_test'); [print(repr(m['fitted_platt'](s))) for s in [0,0.2,0.75,1]]",
+                ])
+                .arg(&py_path)
+                .output()
+                .unwrap();
+        assert!(
+            py_output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&py_output.stderr)
+        );
+        assert_probability_pairs(&String::from_utf8_lossy(&py_output.stdout), &expected);
+
+        let mut rs = crate::fitted_rs::emit_with_platt(&genome, &model, 12, &export).unwrap();
+        assert!(rs.contains("pub const PLATT_CLASS_ORDER: [&str; 2] = [\"cold\", \"hot\"]"));
+        rs.push_str("\nfn main() { for s in [0.0,0.2,0.75,1.0] { let p=fitted_platt(s).unwrap(); println!(\"{:?}\",p); } }\n");
+        let rs_path = dir.join("predictor.rs");
+        let rs_binary = dir.join("predictor");
+        std::fs::write(&rs_path, rs).unwrap();
+        let compile = Command::new("rustc")
+            .args(["--edition=2021", "-D", "warnings"])
+            .arg(&rs_path)
+            .arg("-o")
+            .arg(&rs_binary)
+            .output()
+            .unwrap();
+        assert!(
+            compile.status.success(),
+            "{}",
+            String::from_utf8_lossy(&compile.stderr)
+        );
+        let rs_output = Command::new(&rs_binary).output().unwrap();
+        assert!(rs_output.status.success());
+        assert_probability_pairs(&String::from_utf8_lossy(&rs_output.stdout), &expected);
+    }
+}
+
+fn assert_probability_pairs(output: &str, expected_positive: &[f64]) {
+    let rows = output.lines().collect::<Vec<_>>();
+    assert_eq!(rows.len(), expected_positive.len(), "{output}");
+    for (line, expected) in rows.iter().zip(expected_positive) {
+        let values: Vec<f64> = line
+            .trim_matches(|ch| ch == '[' || ch == ']' || ch == '(' || ch == ')')
+            .split(|ch: char| ch == ',' || ch.is_whitespace())
+            .filter(|part| !part.is_empty())
+            .map(|part| part.parse().unwrap())
+            .collect();
+        assert_eq!(values.len(), 2, "{line}");
+        assert!((values[0] - (1.0 - expected)).abs() < 1e-14, "{line}");
+        assert!((values[1] - expected).abs() < 1e-14, "{line}");
+    }
+}
