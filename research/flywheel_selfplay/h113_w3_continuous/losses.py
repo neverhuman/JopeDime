@@ -3,101 +3,17 @@
 from __future__ import annotations
 
 import math
+from pathlib import Path
+from runpy import run_path
 
-STATES = {"completed_pass", "completed_gate_fail", "timeout", "error", "unknown"}
-FIELDS = {"status", "fitness", "logratio", "gate", "revealed"}
-
-
-def targets(rows, *, top_resolved=True):
-    """Build detached target values from caller-admitted rows; never infer completion."""
-    if not rows or any(not r or len(r) != len(rows[0]) for r in rows):
-        raise ValueError("nonempty rectangular slates required")
-    output = []
-    for slate in rows:
-        records = []
-        for row in slate:
-            if set(row) != FIELDS or row["status"] not in STATES:
-                raise ValueError(
-                    "closed row fields and explicit execution state required"
-                )
-            if type(row["revealed"]) is not bool or row["gate"] not in (
-                None,
-                True,
-                False,
-            ):
-                raise ValueError("explicit boolean masks required")
-            if row["gate"] is not None and type(row["gate"]) is not bool:
-                raise ValueError("gate must be boolean or null")
-            for name in ("fitness", "logratio"):
-                v = row[name]
-                if v is not None and (
-                    type(v) not in (int, float) or not math.isfinite(v)
-                ):
-                    raise ValueError(
-                        "measured components must be finite numbers or null"
-                    )
-            completed = row["status"] in {"completed_pass", "completed_gate_fail"}
-            if not completed and any(
-                row[k] is not None for k in ("fitness", "logratio", "gate")
-            ):
-                raise ValueError(
-                    "uncompleted rows must have null supervision components"
-                )
-            passed = row["status"] == "completed_pass"
-            if completed and row["gate"] is not None and row["gate"] != passed:
-                raise ValueError("recorded gate contradicts completion state")
-            active = completed and not row["revealed"]
-            gate_known = active and row["gate"] is not None
-            quality_known = active and row["logratio"] is not None
-            residual_known = (
-                gate_known and passed and quality_known and row["fitness"] is not None
-            )
-            rank_known = gate_known and (not passed or row["fitness"] is not None)
-            records.append(
-                {
-                    "rank_mask": rank_known,
-                    "gate_mask": gate_known,
-                    "quality_mask": quality_known,
-                    "residual_mask": residual_known,
-                    "gate": float(passed) if gate_known else 0.0,
-                    "cost": (float(row["fitness"]) if passed else 2.0)
-                    if rank_known
-                    else 0.0,
-                    "quality": float(row["logratio"]) if quality_known else 0.0,
-                    "residual": float(row["fitness"] - 0.9 * row["logratio"])
-                    if residual_known
-                    else 0.0,
-                    "regret": 0.0,
-                }
-            )
-        passing = sorted(r["cost"] for r in records if r["rank_mask"] and r["gate"])
-        if passing:
-            center = passing[0]
-            if top_resolved:
-                scale = max(passing[min(16, len(passing)) - 1] - center, 0.05)
-            else:
-                mean = sum(passing) / len(passing)
-                scale = max(
-                    math.sqrt(sum((v - mean) ** 2 for v in passing) / len(passing)),
-                    0.05,
-                )
-        else:
-            center, scale = 0.0, 0.05
-        if not math.isfinite(scale) or any(
-            not math.isfinite(r[k])
-            for r in records
-            for k in ("cost", "quality", "residual")
-        ):
-            raise ValueError("derived target or scale overflow")
-        for r in records:
-            if r["rank_mask"]:
-                r["regret"] = (
-                    min(6.0, max(0.0, (r["cost"] - center) / scale))
-                    if r["gate"]
-                    else 8.0
-                )
-        output.append({"rows": records, "scale": scale, "passing_count": len(passing)})
-    return output
+# H141 retains the byte-pinned canonical target builder used by both W3 waves.
+targets = run_path(
+    str(
+        Path(__file__).resolve().parents[1]
+        / "h141_w3_retention"
+        / "w3_losses.py"
+    )
+)["targets"]
 
 
 def _tensor(value, shape=None):
