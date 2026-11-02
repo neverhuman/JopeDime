@@ -1204,9 +1204,9 @@ impl Supervisor {
                     },
                 )
                 .optional()?
-                .context("stale retirement active-attempt audit failed")?;
+                .context("retirement active-attempt audit failed")?;
             if active.1 != *state || (state == "submitted" && active.2.as_deref() != Some(job_id)) {
-                bail!("stale retirement active-attempt audit failed");
+                bail!("retirement active-attempt audit failed");
             }
             if transaction.execute(
                 "UPDATE attempts SET state='superseded_unstarted',
@@ -1215,7 +1215,7 @@ impl Supervisor {
                 params![retirement_sha256, job_id, timestamp, active.0, state],
             )? != 1
             {
-                bail!("stale retirement lost active attempt");
+                bail!("retirement lost active attempt");
             }
             transaction.execute(
                 "INSERT INTO events(
@@ -1236,7 +1236,7 @@ impl Supervisor {
                 params![timestamp, task, dataset, semantic, protocol, state],
             )? != 1
             {
-                bail!("stale retirement lost pair ownership");
+                bail!("retirement lost pair ownership");
             }
         }
         transaction.commit()?;
@@ -1376,7 +1376,7 @@ impl Supervisor {
         let preview_sha256 = preview
             .get("preview_receipt_sha256")
             .and_then(Value::as_str)
-            .context("automatic stale retirement preview lacks receipt SHA-256")?;
+            .context("automatic retirement preview lacks receipt SHA-256")?;
         let idempotency_key =
             auto_retirement_idempotency_key(&self.state.active_epoch, preview_sha256)?;
         let result = self.apply_stale_retirement(preview_sha256, &idempotency_key)?;
@@ -1527,7 +1527,7 @@ fn serve(
     }
     if socket_path.exists() {
         fs::remove_file(&socket_path)
-            .with_context(|| format!("remove stale socket {}", socket_path.display()))?;
+            .with_context(|| format!("remove prior socket {}", socket_path.display()))?;
     }
     if let Some(parent) = socket_path.parent() {
         fs::create_dir_all(parent)?;
@@ -1807,7 +1807,7 @@ fn content_hash(value: &Value) -> Result<String> {
 
 fn auto_retirement_idempotency_key(epoch: &str, preview_sha256: &str) -> Result<String> {
     if epoch.is_empty() || !is_sha256(preview_sha256) {
-        bail!("automatic stale retirement lacks deterministic provenance");
+        bail!("automatic retirement lacks deterministic provenance");
     }
     Ok(format!(
         "auto-stale-retirement-{}",
