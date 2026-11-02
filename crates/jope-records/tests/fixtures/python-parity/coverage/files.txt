@@ -1386,6 +1386,10 @@ crates/jope-learning/src/progress/remote.rs
 crates/jope-learning/src/progress/tests/cadence.rs
 crates/jope-learning/src/progress/tests/census.rs
 crates/jope-learning/src/progress/tests/encoding.rs
+crates/jope-learning/src/progress/tests/encoding/canonical.rs
+crates/jope-learning/src/progress/tests/encoding/domains.rs
+crates/jope-learning/src/progress/tests/encoding/hwm.rs
+crates/jope-learning/src/progress/tests/encoding/identity.rs
 crates/jope-learning/src/progress/tests/faults.rs
 crates/jope-learning/src/progress/tests/faults/cases.rs
 crates/jope-learning/src/progress/tests/fixture.rs
