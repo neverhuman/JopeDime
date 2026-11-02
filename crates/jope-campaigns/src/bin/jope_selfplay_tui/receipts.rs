@@ -141,7 +141,7 @@ pub(super) fn ingest_receipt_dir(root: &Path, dir: &Path, state: &mut SlowState)
                     node: string_at(&row, &["node"]).unwrap_or(&done_node).to_owned(),
                     wave,
                     valid,
-                    kind: EventKind::Eval,
+                    kind: TuiEventKind::Eval,
                 },
             );
         }
