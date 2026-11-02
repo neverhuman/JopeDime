@@ -176,6 +176,9 @@ extra_excluded_paths = [
   # Exact HLT-019 false positive: Rust uses op_entropy_nat while serde keeps
   # the op_entropy_nats wire key required for pre-1.0 compatibility.
   "crates/jope-telemetry/src/gp.rs",
+  # Exact HLT-019 false positive: the pinned KL reference fixture says “nats”
+  # as a logarithmic unit, not as a NATS streaming client; see docs/streaming.md.
+  "deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py",
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
   # P38: pinned research artifacts load only inputs whose complete identity is checked.
   # P38: in-memory SQLite fixtures bind row values; only fixed table/placeholder syntax is composed.
