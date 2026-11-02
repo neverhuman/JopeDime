@@ -64,9 +64,110 @@
   ],
   "cumulative_budget_ledger": {
     "total_elapsed_wall_seconds": 1970.9372255061753,
+    "regression_seam_cpu_elapsed_seconds": 50.10207135695964,
+    "total_elapsed_including_regression_seam_seconds": 2021.039296863135,
     "campaign_wall_budget_cap_seconds": 25200.0,
     "remaining_wall_budget_seconds": 23229.062774493825,
+    "remaining_wall_budget_after_regression_seam_seconds": 23178.960703136865,
     "budget_reset": false
+  },
+  "single_regression_context_milestone": {
+    "status": "PASS",
+    "causal_h205_claim_status": "NOT_QUALIFIED_NO_ADVANCE",
+    "run_id": "regression-seam-20261102T0752Z",
+    "local_dir": "/home/ubuntu/jope-data/h205/regression-seam-20261102T0752Z",
+    "dataset_id": "1db3750d4ceccab9",
+    "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+    "family_key": "e70bef3cf802dadb1f22458c1e1c6bb553a5d9f3",
+    "context_sha256": "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45",
+    "view_id": "1db3750d4ceccab9__r0__f0__rowselraw1_84a908fcde0e",
+    "allowed_roster_datasets": 1928,
+    "allowed_roster_families": 1928,
+    "roster_sha256": "2e9dcee92e5c4b807b6e1fb23ed88ec0e1aba48ac00cc9921a2e45d509868845",
+    "source_train_s3": {
+      "bucket": "veox-jopedime-datasets-use2",
+      "key": "blobs/sha256/6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d",
+      "version_id": "xJwIN6naH0sfM_uMuEBwd63AV2A8H.6_",
+      "size_bytes": 67040,
+      "sha256": "6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d"
+    },
+    "source_manifest_s3": {
+      "bucket": "veox-jopedime-datasets-use2",
+      "key": "datasets/1db3750d4ceccab9/manifest.json",
+      "version_id": "9nTZwIaM1feUD0HpgMd1sktu.vmZd6f0",
+      "size_bytes": 1507,
+      "sha256": "28253e606e580b6566e93ceefa49fedb7216799595ee6228939dcf66e7c072de"
+    },
+    "pure_s3_train_csv_nq0_protocol_check": {
+      "jtt1_nq0_sha256": "92e097d578e382862e1be8c5e2fe95d2a2e4c030f5615a9249d6591bfe2fa055",
+      "raw_csv_features_sha256": "4c32fbdf2c58fd49c315dd978647079bc97be066a834e949f156648894cee231",
+      "returncode": 1,
+      "stderr": "Error: \"S1 requires exactly two inner folds and an admitted shape\"",
+      "nq0_refused_by_header_guard": true,
+      "rust_source_pin": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567"
+    },
+    "s1_prod_context_bundle": {
+      "candidates_count": 1152,
+      "labels_sha256": "fc0925e83187741d7f56ec7a1083d2ddd477e7bf8d7a722963754b4654990ec8",
+      "programs_sha256": "843a4f4a69af9478bb9971f3c05aa6224665c9e520f1b9c3af869e23d2650c57",
+      "features_sha256": "d59c2d162ff09b265fe9d2eb883795a39b49323726c2e263e44796782c469dc8",
+      "outer_test_rows_decoded": 0
+    },
+    "engine_consumption": {
+      "used_old_1310_fallback": false,
+      "historical_contexts_preserved": 1310,
+      "slate_candidates": 24,
+      "loss_value": 50.041358947753906,
+      "optimizer_steps": 1,
+      "trainable_parameters": 29211,
+      "adapter_sha256_before": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+      "adapter_sha256_after": "54de3483d939402f04d980f86e2050e33da6e288333ddb7887686bbc5d3df1ce",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    },
+    "s3_bundle_custody": {
+      "bucket": "veox-jopedime-learning-use2",
+      "prefix": "experiments/rd_breakthrough_20261101/H205/regression-seam/fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45-20261102T075310Z/",
+      "s3_custody_receipt_version_id": "5C85hyOLoj7kdc_z7lCA5lvjROZVemyZ",
+      "s3_custody_receipt_sha256": "8b8015dcc3788b8beda5ef5adf3fb21e67a2c87265fc94a862c8f141232fbff5",
+      "verified_members": [
+        {
+          "name": "context_manifest.json",
+          "version_id": "5vtJt30oEZYgTIjMbg.HveBfJxLSBa7W",
+          "size_bytes": 2081,
+          "local_sha256": "fa83a92768d61f61b40ed9883ee1cf229dd6e9c2a56501c0a17f66688235d3f3",
+          "downloaded_version_sha256": "fa83a92768d61f61b40ed9883ee1cf229dd6e9c2a56501c0a17f66688235d3f3"
+        },
+        {
+          "name": "native_evaluator_receipt.json",
+          "version_id": "UkjpgA3veVOoTYFnwC43EsO8oCBsFlMl",
+          "size_bytes": 2728,
+          "local_sha256": "f2a8aba0ac26bda046ccd3f918801a05a30e0651f915af3365f875279802d272",
+          "downloaded_version_sha256": "f2a8aba0ac26bda046ccd3f918801a05a30e0651f915af3365f875279802d272"
+        },
+        {
+          "name": "pool.npz",
+          "version_id": "Y0UVRoysS.IcUmiqGMDiufYskES3WVaX",
+          "size_bytes": 2290018,
+          "local_sha256": "027c53236e032de72f8811fa3017142a4c3db243cb540b34a18b89279886fdfb",
+          "downloaded_version_sha256": "027c53236e032de72f8811fa3017142a4c3db243cb540b34a18b89279886fdfb"
+        },
+        {
+          "name": "features.npz",
+          "version_id": "W.kxyUsGg3htRcyA2lPTS10GiPXEO2jp",
+          "size_bytes": 9924,
+          "local_sha256": "4fc3d001040010066ce1091d5625cd21cfac2bd941e4287eb43d49f8df97c204",
+          "downloaded_version_sha256": "4fc3d001040010066ce1091d5625cd21cfac2bd941e4287eb43d49f8df97c204"
+        },
+        {
+          "name": "engine_consumption_receipt.json",
+          "version_id": "OEUdq4EqZcvkQIHRI3hTDwgJz4qhbTnM",
+          "size_bytes": 1078,
+          "local_sha256": "5a65faf4d895ca4afc4cacb2a785255c2c72c3b7d578a2901c93b2394c30164a",
+          "downloaded_version_sha256": "5a65faf4d895ca4afc4cacb2a785255c2c72c3b7d578a2901c93b2394c30164a"
+        }
+      ]
+    }
   },
   "s3_terminal_custody": {
     "bucket": "veox-jopedime-learning-use2",

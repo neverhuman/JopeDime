@@ -222,6 +222,33 @@ def test_terminal_closeout_and_missing_panel_ledger_recorded():
         assert m["local_sha256"] == m["downloaded_version_sha256"]
         assert len(m["local_sha256"]) == 64
 
+    seam = metrics["single_regression_context_milestone"]
+    assert seam["status"] == "PASS"
+    assert seam["causal_h205_claim_status"] == "NOT_QUALIFIED_NO_ADVANCE"
+    assert seam["dataset_id"] == "1db3750d4ceccab9"
+    assert (
+        seam["context_sha256"]
+        == "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45"
+    )
+    assert seam["allowed_roster_datasets"] == 1928
+    assert seam["allowed_roster_families"] == 1928
+    assert (
+        seam["pure_s3_train_csv_nq0_protocol_check"]["nq0_refused_by_header_guard"]
+        is True
+    )
+    assert seam["s1_prod_context_bundle"]["outer_test_rows_decoded"] == 0
+    assert (
+        seam["engine_consumption"]["adapter_sha256_before"]
+        != seam["engine_consumption"]["adapter_sha256_after"]
+    )
+    assert (
+        seam["engine_consumption"]["dope_sha256_before"]
+        == seam["engine_consumption"]["dope_sha256_after"]
+    )
+    for m in seam["s3_bundle_custody"]["verified_members"]:
+        assert m["local_sha256"] == m["downloaded_version_sha256"]
+        assert len(m["local_sha256"]) == 64
+
 
 def test_thread_rule_b_distinguishes_numeric_from_cuda_helper_threads():
     classified = mon.classify_thread_names(
@@ -992,3 +1019,376 @@ def test_runner_smoke_mode(tmp_path):
     assert smoke["authority"] == stat.AUTHORITY_STRING
     assert smoke["optimizer_updates"] == 0
     assert smoke["numeric_threads"] <= 4
+
+
+def test_allowed_regression_train_roster_and_exclusion_refusals():
+    """Verify regression-only roster construction, empty-exclusion refusal, null-family refusal, and host catalog closure."""
+    with pytest.raises(RuntimeError, match="empty exclusion set refused"):
+        stat.build_allowed_regression_train_roster(
+            caller_excluded_families=set(), verify_hashes=False
+        )
+    with pytest.raises(RuntimeError, match="empty exclusion set refused"):
+        stat.build_allowed_regression_train_roster(
+            caller_excluded_datasets=[], verify_hashes=False
+        )
+
+    syn_catalog = [
+        dict(
+            id="ds_allowed_1",
+            name="Allowed 1",
+            task="regression",
+            family_key="fk_ok_1",
+            train_rows=100,
+            features=5,
+            categorical_features=0,
+            train_sha256="1" * 64,
+        ),
+        dict(
+            id="ds_null_fk",
+            name="Null FK",
+            task="regression",
+            family_key=None,
+            train_rows=100,
+            features=5,
+            categorical_features=0,
+            train_sha256="2" * 64,
+        ),
+        dict(
+            id="ds_binary",
+            name="Binary Task",
+            task="binary",
+            family_key="fk_bin",
+            train_rows=100,
+            features=5,
+            categorical_features=0,
+            train_sha256="3" * 64,
+        ),
+        dict(
+            id="ds_excl_fam",
+            name="Excluded Fam",
+            task="regression",
+            family_key="fk_sealed",
+            train_rows=100,
+            features=5,
+            categorical_features=0,
+            train_sha256="4" * 64,
+        ),
+    ]
+    syn_fpool = {
+        "ds_allowed_1": "fam_ok_1",
+        "ds_null_fk": "fam_null_fk",
+        "ds_binary": "fam_bin",
+        "ds_excl_fam": "fam_sealed",
+    }
+    roster_syn = stat.build_allowed_regression_train_roster(
+        verify_hashes=False,
+        caller_excluded_families={"fam_sealed"},
+        caller_excluded_datasets={"ds_explicit_excl"},
+        catalog_override=syn_catalog,
+        family_by_dataset_override=syn_fpool,
+    )
+    assert roster_syn["status"] == "PASS"
+    assert roster_syn["allowed_datasets_count"] == 1
+    assert roster_syn["skipped_missing_family_count"] == 1
+    assert roster_syn["records"][0]["dataset_id"] == "ds_allowed_1"
+
+    # Candidate checks: valid passes; null family, binary, bad role, and excluded family fail
+    ok_cand = stat.verify_single_regression_train_candidate(
+        dict(
+            dataset_id="ds_allowed_1",
+            family_id="fam_ok_1",
+            family_key="fk_ok_1",
+            task="regression",
+            role="regression_train",
+            source_split="train",
+            dl_split="DL-Train",
+            has_meta_test=False,
+        ),
+        roster_syn,
+    )
+    assert ok_cand["status"] == "PASS"
+
+    with pytest.raises(RuntimeError, match="missing or null family_id"):
+        stat.verify_single_regression_train_candidate(
+            dict(
+                dataset_id="ds_allowed_1",
+                family_id=None,
+                family_key="fk_ok_1",
+                task="regression",
+            ),
+            roster_syn,
+        )
+    with pytest.raises(RuntimeError, match="non-regression task refused"):
+        stat.verify_single_regression_train_candidate(
+            dict(
+                dataset_id="ds_allowed_1",
+                family_id="fam_ok_1",
+                family_key="fk_ok_1",
+                task="binary",
+                role="regression_train",
+                source_split="train",
+                dl_split="DL-Train",
+            ),
+            roster_syn,
+        )
+    with pytest.raises(RuntimeError, match="invalid role or split cut"):
+        stat.verify_single_regression_train_candidate(
+            dict(
+                dataset_id="ds_allowed_1",
+                family_id="fam_ok_1",
+                family_key="fk_ok_1",
+                task="regression",
+                role="panel",
+                source_split="train",
+                dl_split="DL-Train",
+            ),
+            roster_syn,
+        )
+    with pytest.raises(RuntimeError, match="forbidden family/dataset overlap"):
+        stat.verify_single_regression_train_candidate(
+            dict(
+                dataset_id="ds_excl_fam",
+                family_id="fam_sealed",
+                family_key="fk_sealed",
+                task="regression",
+                role="regression_train",
+                source_split="train",
+                dl_split="DL-Train",
+            ),
+            roster_syn,
+        )
+
+    if stat.S3_DATASET_CATALOG_PATH.is_file():
+        real_roster = stat.build_allowed_regression_train_roster(verify_hashes=True)
+        assert real_roster["allowed_datasets_count"] == 1928
+        assert real_roster["allowed_families_count"] == 1928
+        target_ok = stat.verify_single_regression_train_candidate(
+            dict(
+                dataset_id=stat.TARGET_REGRESSION_DATASET_ID,
+                family_id=stat.TARGET_REGRESSION_FAMILY_ID,
+                family_key=stat.TARGET_REGRESSION_FAMILY_KEY,
+                context_sha256=stat.TARGET_REGRESSION_CONTEXT_SHA256,
+                task="regression",
+                role="regression_train",
+                source_split="train",
+                dl_split="DL-Train",
+                has_meta_test=False,
+            ),
+            real_roster,
+        )
+        assert target_ok["status"] == "PASS"
+
+
+def test_encode_train_only_jtt1_and_nq0_protocol_check(tmp_path):
+    """Verify pure train-only JTT1 encoding (`nq = 0`) and exact `bootstrap.s1main --fit-s1` `nq < 10` header refusal."""
+    csv_path = tmp_path / "train.csv"
+    lines = ["x0,x1,x2,x3,x4,target"]
+    for i in range(20):
+        lines.append(f"{i * 0.1:.4f},{i * 0.2:.4f},1.0,2.0,3.0,{i * 1.5 + 0.5:.4f}")
+    csv_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    csv_sha = run_mod.sha(csv_path)
+
+    jtt1_path = tmp_path / "train_nq0.jtt1"
+    enc = stat.encode_train_only_jtt1_from_csv(
+        csv_path, out_jtt1_path=jtt1_path, expected_csv_sha256=csv_sha
+    )
+    assert enc["status"] == "PASS"
+    assert enc["nt"] == 20
+    assert enc["nq"] == 0
+    assert enc["p"] == 5
+    assert enc["k"] == 2
+    assert enc["outer_test_rows_decoded"] == 0
+    assert enc["fold_sizes"] == [10, 10]
+    assert jtt1_path.is_file()
+
+    with pytest.raises(RuntimeError, match="train CSV SHA256 mismatch"):
+        stat.encode_train_only_jtt1_from_csv(csv_path, expected_csv_sha256="f" * 64)
+
+    if stat.EVALUATOR_BINARY_PATH.is_file():
+        probe = stat.probe_s1main_nq0_protocol_blocker(jtt1_path)
+        assert probe["header"] == dict(nt=20, nq=0, p=5, k=2)
+        assert probe["returncode"] != 0
+        assert probe["nq0_refused_by_header_guard"] is True
+
+
+def test_single_context_regression_seam_bundle_verifier_and_negative_counterexamples(
+    tmp_path,
+):
+    """Verify `verify_single_context_regression_seam_bundle` and all negative rejection counterexamples."""
+    bdir = tmp_path / "bundle_ok"
+    bdir.mkdir(parents=True, exist_ok=True)
+
+    cid = hashlib.sha256(b"fresh_reg_ctx_001").hexdigest()
+    train_sha = hashlib.sha256(b"fresh_reg_train_csv_001").hexdigest()
+    ds_id = "fresh_ds_001"
+    fam_id = "fresh_fam_001"
+    fam_key = "fresh_fk_001"
+
+    dsl_list = [
+        f"(pipe X (standardize append=true) (winsor_clip q={0.05 + 0.005 * i:.4f}) (ridge_gcv))"
+        for i in range(stat.SLATE_CANDIDATES)
+    ]
+    feat_names = [f"f_{i}" for i in range(stat.PROGRAM_DIM)]
+    feat_names[0] = "steps"
+    feat_names[1] = "dsl_characters"
+    feat_names[2] = "estimator.ridge_gcv"
+    prog_mat, proj16_mat = run_mod.featurize_dsl_412_and_proj16(
+        dsl_list, feature_names=feat_names
+    )
+    fitness = np.linspace(0.6, 1.2, stat.SLATE_CANDIDATES, dtype=np.float64)
+    gate_arr = np.ones(stat.SLATE_CANDIDATES, dtype=bool)
+    tok = np.full((stat.TOKEN_STEPS, stat.TOKEN_DIM), 0.25, dtype=np.float32)
+    msk = np.ones(stat.TOKEN_STEPS, dtype=bool)
+    d629 = np.zeros(629, dtype=np.float32)
+    lm48 = np.zeros(48, dtype=np.float32)
+    ctx584 = np.zeros(584, dtype=np.float32)
+
+    pool_path = bdir / "pool.npz"
+    feat_path = bdir / "features.npz"
+    np.savez(
+        pool_path,
+        program=prog_mat,
+        proj16=proj16_mat,
+        fitness=fitness,
+        gate=gate_arr,
+        tokens_10x32=tok,
+        mask_10=msk,
+    )
+    np.savez(
+        feat_path,
+        tokens_10x32=tok,
+        mask_10=msk,
+        dope629=d629,
+        lm48_z=lm48,
+        ctx_feat_584=ctx584,
+    )
+
+    labels_sha = hashlib.sha256(fitness.tobytes() + gate_arr.tobytes()).hexdigest()
+    programs_sha = hashlib.sha256(prog_mat.tobytes()).hexdigest()
+    features_sha = hashlib.sha256(tok.tobytes() + msk.tobytes()).hexdigest()
+    pool_sha = run_mod.sha(pool_path)
+    feat_npz_sha = run_mod.sha(feat_path)
+
+    eval_rec = dict(
+        status="PASS",
+        evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
+        evaluator_binary_sha256=stat.EVALUATOR_BINARY_SHA256,
+        context_sha256=cid,
+        dataset_id=ds_id,
+        labels_sha256=labels_sha,
+        programs_sha256=programs_sha,
+        features_sha256=features_sha,
+        dope_sha256=stat.DOPE_SHA256,
+        r882_sha256=stat.R882_SHA256,
+        outer_test_rows_decoded=0,
+        live_s1main_slate24_verification=dict(
+            status="PASS",
+            evaluated_candidates=24,
+            max_abs_fitness_diff=0.0,
+            gate_exact_match=True,
+        ),
+    )
+    manifest = dict(
+        dataset_id=ds_id,
+        family_id=fam_id,
+        family_key=fam_key,
+        family_aliases=[fam_id, fam_key],
+        context_sha256=cid,
+        task="regression",
+        role="regression_train",
+        source_split="train",
+        dl_split="DL-Train",
+        has_meta_test=False,
+        outer_test_rows_decoded=0,
+        train_sha256=train_sha,
+        pool_sha256=pool_sha,
+        features_npz_sha256=feat_npz_sha,
+    )
+    s3_rec = dict(
+        status="PASS",
+        source_train_object=dict(
+            bucket="veox-jopedime-datasets-use2",
+            key=f"blobs/sha256/{train_sha}",
+            version_id="ver_src_001",
+            sha256=train_sha,
+        ),
+        uploaded_bundle_objects=[
+            dict(
+                name="pool.npz",
+                version_id="ver_pool_001",
+                local_sha256=pool_sha,
+                downloaded_version_sha256=pool_sha,
+            )
+        ],
+    )
+    eng_rec = dict(
+        status="PASS",
+        ingested_context_sha256=cid,
+        dataset_id=ds_id,
+        used_old_1310_fallback=False,
+        optimizer_steps=1,
+        trainable_parameters=29211,
+        adapter_sha256_before="a" * 64,
+        adapter_sha256_after="b" * 64,
+        dope_sha256_before=stat.DOPE_SHA256,
+        dope_sha256_after=stat.DOPE_SHA256,
+        loss_value=0.45,
+    )
+
+    run_mod.save(bdir / "context_manifest.json", manifest)
+    run_mod.save(bdir / "native_evaluator_receipt.json", eval_rec)
+    run_mod.save(bdir / "s3_custody_receipt.json", s3_rec)
+    run_mod.save(bdir / "engine_consumption_receipt.json", eng_rec)
+
+    res = stat.verify_single_context_regression_seam_bundle(
+        bdir,
+        forbidden_cids={"9" * 64},
+        forbidden_families={"old_static_fam"},
+        forbidden_datasets={"old_static_ds"},
+    )
+    assert res["status"] == "PASS"
+    assert res["context_sha256"] == cid
+
+    # 1. Empty exclusion sets refused
+    with pytest.raises(RuntimeError, match="empty exclusion set refused"):
+        stat.verify_single_context_regression_seam_bundle(bdir, forbidden_cids=set())
+    with pytest.raises(RuntimeError, match="empty exclusion set refused"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir, forbidden_families=set()
+        )
+
+    # 2. Old-1310 CID / family / dataset overlap refused
+    with pytest.raises(RuntimeError, match="overlaps forbidden/historical CIDs"):
+        stat.verify_single_context_regression_seam_bundle(bdir, forbidden_cids={cid})
+    with pytest.raises(RuntimeError, match="overlaps forbidden families"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir, forbidden_families={fam_id}
+        )
+    with pytest.raises(RuntimeError, match="overlaps forbidden datasets"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir, forbidden_datasets={ds_id}
+        )
+
+    # 3. Wrong evaluator / encoder hash refused
+    bad_eval = dict(eval_rec, dope_sha256="c" * 64)
+    run_mod.save(bdir / "native_evaluator_receipt.json", bad_eval)
+    with pytest.raises(RuntimeError, match="failed evaluator/encoder/identity check"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir,
+            forbidden_cids={"9" * 64},
+            forbidden_families={"old_static_fam"},
+            forbidden_datasets={"old_static_ds"},
+        )
+    run_mod.save(bdir / "native_evaluator_receipt.json", eval_rec)
+
+    # 4. Old-1310 fallback or unchanged adapter digest in engine_consumption_receipt refused
+    bad_eng = dict(eng_rec, adapter_sha256_after=eng_rec["adapter_sha256_before"])
+    run_mod.save(bdir / "engine_consumption_receipt.json", bad_eng)
+    with pytest.raises(RuntimeError, match="failed consumption or parameter-delta"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir,
+            forbidden_cids={"9" * 64},
+            forbidden_families={"old_static_fam"},
+            forbidden_datasets={"old_static_ds"},
+        )
+    run_mod.save(bdir / "engine_consumption_receipt.json", eng_rec)

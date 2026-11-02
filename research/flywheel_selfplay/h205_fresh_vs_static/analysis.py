@@ -1,10 +1,15 @@
 """H205 statistical analysis, equal-compute 50-round schedule, H178 per-round pooled selector, and common gate."""
 
+import csv
+import gzip
 import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import struct
+import subprocess
 import sys
+import tempfile
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
@@ -849,4 +854,821 @@ def evaluate_h205_common_gate(
         primary_contrasts=contrasts,
         sealed_confirmation_eligible=candidate_advance,
         verdict="CANDIDATE" if candidate_advance else "NO_ADVANCE",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Disjoint Regression-Only Data Construction Seam (H205 Owner Scope)
+# ---------------------------------------------------------------------------
+
+S3_DATASET_CATALOG_PATH = Path(
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json"
+)
+S3_DATASET_CATALOG_SHA256 = (
+    "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+)
+FAMILY_KEY_POOL_MANIFEST_PATH = Path(
+    "/home/ubuntu/jope_plan/evidence/JRB-01/tel-t1510/family-key-pool-manifest.json"
+)
+FAMILY_KEY_POOL_MANIFEST_SHA256 = (
+    "e42c31d3fda53545900c0064f2685f78506149fdad49251de6994d7f030124f4"
+)
+JRB01_SEALED_EXCLUSION_PATH = Path(
+    "/home/ubuntu/jope_plan/master/approved/JRB01_SEALED_FAMILY_EXCLUSION.json"
+)
+JRB01_SEALED_EXCLUSION_SHA256 = (
+    "ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651"
+)
+H150_SEALED_FAMILY_MANIFEST_PATH = (
+    ROOT
+    / "research/flywheel_selfplay/h150_w5_provenance_unblock/sealed_family_manifest.json"
+)
+H150_SEALED_FAMILY_MANIFEST_SHA256 = (
+    "0314599fe06515d3f3e976c0d435cbe4e9fbe26738014bd89470f525702f983b"
+)
+D4_ROLE_CANDIDATE_MANIFEST_PATH = Path(
+    "/home/ubuntu/jope_plan/evidence/JRB-01/tel-t1510/d4-role-candidate-manifest.json"
+)
+D4_ROLE_CANDIDATE_MANIFEST_SHA256 = (
+    "4a96c3952cb3df19934d342bfe0fdf546bb19de1c56f7acabc253fd68bff4ac0"
+)
+SELECTED_JSON_PATH = Path("/home/ubuntu/jope-data/h50/input/selected.json")
+SELECTED_JSON_SHA256 = (
+    "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+)
+HISTORICAL_COHORT_JSON_PATH = Path(
+    "/home/ubuntu/jope-evidence/dope-lift-20261021/cohort.json"
+)
+HISTORICAL_COHORT_JSON_SHA256 = (
+    "329c8cd92c13a67185dc3eacc6b02c59d92be06189035b7f9400d5d35a6e2d94"
+)
+HISTORICAL_RANKING_IDENTITIES_PATH = Path(
+    "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study/ranking-identities.jsonl.gz"
+)
+HISTORICAL_RANKING_IDENTITIES_SHA256 = (
+    "d4a63f698d00706439bf95327a86909c6b0c3f9938936bc362e54c3e31d21eab"
+)
+EVALUATOR_BINARY_PATH = Path(
+    "/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/binaries/bootstrap.s1main"
+)
+EVALUATOR_BINARY_SHA256 = (
+    "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8"
+)
+PROGRAM_FEATURE_NAMES_PATH = Path(
+    "/home/ubuntu/jope-evidence/dope-lift-20261021/corrected-study/program-feature-names.json"
+)
+PROGRAM_FEATURE_NAMES_SHA256 = (
+    "c4e4373d1bc7e99bc38e44eb4acda22d0f9ecc9e332fa8cb9c6a0b463fe37962"
+)
+
+# Pinned target dataset & context for the single-context regression seam milestone
+TARGET_REGRESSION_DATASET_ID = "1db3750d4ceccab9"
+TARGET_REGRESSION_FAMILY_ID = (
+    "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0"
+)
+TARGET_REGRESSION_FAMILY_KEY = "e70bef3cf802dadb1f22458c1e1c6bb553a5d9f3"
+TARGET_REGRESSION_TRAIN_SHA256 = (
+    "6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d"
+)
+TARGET_REGRESSION_CONTEXT_SHA256 = (
+    "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45"
+)
+TARGET_REGRESSION_VIEW_ID = "1db3750d4ceccab9__r0__f0__rowselraw1_84a908fcde0e"
+TARGET_REGRESSION_S1_INPUT_SHA256 = (
+    "eafffab9dd483f2f132ad665bee0549a9218ea8e96481db2cc88ac3dac2617bf"
+)
+TARGET_REGRESSION_TRAINING_BLOCK_SHA256 = (
+    "2ad53cd8323023aef82cdab74d62e69582747fe58f45ff9a32f1ad7450979cc8"
+)
+TARGET_REGRESSION_TEACHER_GZ_SHA256 = (
+    "b0bc4a216499b0ae876600f265aeccbb6de02deb10fce5f543f91eb4416808f3"
+)
+TARGET_REGRESSION_TEACHER_RAW_SHA256 = (
+    "fb4709fd6ed8feee0f7d28e98dd9914e36aee7104ea0aab1a07875b90009f231"
+)
+TARGET_REGRESSION_SUMMARY_TAR_GZ_SHA256 = (
+    "8eceac827857a53de1f30041495756767708b1e2e31a5c6667790c6e93b0db7c"
+)
+
+
+def _normalize_nonempty_key(val, label="family_key"):
+    if val is None or not isinstance(val, str) or not val.strip():
+        raise RuntimeError(f"missing or null {label} refused")
+    return val.strip()
+
+
+def build_allowed_regression_train_roster(
+    catalog_path=S3_DATASET_CATALOG_PATH,
+    family_pool_path=FAMILY_KEY_POOL_MANIFEST_PATH,
+    jrb01_sealed_path=JRB01_SEALED_EXCLUSION_PATH,
+    h150_sealed_path=H150_SEALED_FAMILY_MANIFEST_PATH,
+    d4_roles_path=D4_ROLE_CANDIDATE_MANIFEST_PATH,
+    selected_path=SELECTED_JSON_PATH,
+    cohort_path=HISTORICAL_COHORT_JSON_PATH,
+    ranking_identities_path=HISTORICAL_RANKING_IDENTITIES_PATH,
+    *,
+    verify_hashes=True,
+    caller_excluded_families=None,
+    caller_excluded_datasets=None,
+    catalog_override=None,
+    family_by_dataset_override=None,
+):
+    """Build the deterministic source-bound allowed regression TRAIN roster for H205.
+
+    Fail-closed contract:
+    1. If a caller supplies `caller_excluded_families` or `caller_excluded_datasets` and it is empty,
+       raises `RuntimeError("empty exclusion set refused")`.
+    2. Verifies pinned SHA256 digests of the catalog, family-key pool, JRB-01 sealed exclusion,
+       H150 sealed family manifest, D4 role manifest, and historical cohorts (`selected.json`,
+       `cohort.json`, `ranking-identities.jsonl.gz`) when `verify_hashes=True`.
+    3. Excludes the union of all sealed/protected families & datasets, all D4 role-manifest datasets
+       and their families (`panel`, `regression_val`, `binary_train`, `regression_train`), and all
+       historical contexts, datasets, and families (`selected.json`, `cohort.json`,
+       `ranking-identities.jsonl.gz`).
+    4. Refuses any candidate with `None`/empty `family_key` or `family_id`, non-regression task,
+       or missing `train_sha256`.
+    """
+    if caller_excluded_families is not None and len(caller_excluded_families) == 0:
+        raise RuntimeError(
+            "empty exclusion set refused: caller_excluded_families is empty"
+        )
+    if caller_excluded_datasets is not None and len(caller_excluded_datasets) == 0:
+        raise RuntimeError(
+            "empty exclusion set refused: caller_excluded_datasets is empty"
+        )
+
+    if verify_hashes and catalog_override is None:
+        pinned_checks = [
+            (catalog_path, S3_DATASET_CATALOG_SHA256, "S3_DATASET_CATALOG.json"),
+            (
+                family_pool_path,
+                FAMILY_KEY_POOL_MANIFEST_SHA256,
+                "family-key-pool-manifest.json",
+            ),
+            (
+                jrb01_sealed_path,
+                JRB01_SEALED_EXCLUSION_SHA256,
+                "JRB01_SEALED_FAMILY_EXCLUSION.json",
+            ),
+            (
+                h150_sealed_path,
+                H150_SEALED_FAMILY_MANIFEST_SHA256,
+                "sealed_family_manifest.json",
+            ),
+            (
+                d4_roles_path,
+                D4_ROLE_CANDIDATE_MANIFEST_SHA256,
+                "d4-role-candidate-manifest.json",
+            ),
+            (selected_path, SELECTED_JSON_SHA256, "selected.json"),
+            (cohort_path, HISTORICAL_COHORT_JSON_SHA256, "cohort.json"),
+            (
+                ranking_identities_path,
+                HISTORICAL_RANKING_IDENTITIES_SHA256,
+                "ranking-identities.jsonl.gz",
+            ),
+        ]
+        for p, expected_sha, label in pinned_checks:
+            if not Path(p).is_file():
+                raise RuntimeError(f"required roster input missing: {label} ({p})")
+            actual_sha = _file_sha256(p)
+            if actual_sha != expected_sha:
+                raise RuntimeError(
+                    f"pinned SHA256 mismatch for {label}: {actual_sha} != {expected_sha}"
+                )
+
+    if catalog_override is not None:
+        cat_datasets = list(catalog_override)
+    else:
+        cat_obj = json.loads(Path(catalog_path).read_text(encoding="utf-8"))
+        cat_datasets = list(cat_obj.get("datasets", ()))
+
+    if family_by_dataset_override is not None:
+        family_by_dataset = dict(family_by_dataset_override)
+    else:
+        fpool_obj = json.loads(Path(family_pool_path).read_text(encoding="utf-8"))
+        family_by_dataset = dict(fpool_obj.get("family_by_dataset", {}))
+
+    forbidden_families = set()
+    forbidden_datasets = set()
+    forbidden_cids = set()
+
+    if caller_excluded_families is not None:
+        for fk in caller_excluded_families:
+            forbidden_families.add(
+                _normalize_nonempty_key(fk, "caller_excluded_family")
+            )
+    if caller_excluded_datasets is not None:
+        for ds in caller_excluded_datasets:
+            forbidden_datasets.add(
+                _normalize_nonempty_key(ds, "caller_excluded_dataset")
+            )
+
+    if catalog_override is None:
+        jrb_sealed = json.loads(Path(jrb01_sealed_path).read_text(encoding="utf-8"))
+        for fk in jrb_sealed.get("excluded_family_keys", ()):
+            forbidden_families.add(
+                _normalize_nonempty_key(fk, "jrb01_excluded_family_key")
+            )
+        for ds in jrb_sealed.get("excluded_dataset_ids", ()):
+            ds_norm = _normalize_nonempty_key(ds, "jrb01_excluded_dataset_id")
+            forbidden_datasets.add(ds_norm)
+            if ds_norm in family_by_dataset and family_by_dataset[ds_norm]:
+                forbidden_families.add(str(family_by_dataset[ds_norm]).strip())
+
+        h150_sealed = json.loads(Path(h150_sealed_path).read_text(encoding="utf-8"))
+        for fk in h150_sealed.get("protected_family_ids", ()):
+            forbidden_families.add(
+                _normalize_nonempty_key(fk, "h150_protected_family_id")
+            )
+        for key_list in ("sealed_dataset_ids", "audit_holdout_dataset_ids"):
+            for ds in h150_sealed.get(key_list, ()):
+                ds_norm = _normalize_nonempty_key(ds, key_list)
+                forbidden_datasets.add(ds_norm)
+                if ds_norm in family_by_dataset and family_by_dataset[ds_norm]:
+                    forbidden_families.add(str(family_by_dataset[ds_norm]).strip())
+
+        d4_roles = json.loads(Path(d4_roles_path).read_text(encoding="utf-8"))
+        for role_name, entries in d4_roles.get("roles", {}).items():
+            for entry in entries:
+                ds_id = str(entry.get("dataset_id", "")).strip()
+                fk = str(entry.get("family_key", "")).strip()
+                if ds_id:
+                    forbidden_datasets.add(ds_id)
+                    if ds_id in family_by_dataset and family_by_dataset[ds_id]:
+                        forbidden_families.add(str(family_by_dataset[ds_id]).strip())
+                if fk:
+                    forbidden_families.add(fk)
+
+        selected_obj = json.loads(Path(selected_path).read_text(encoding="utf-8"))
+        for split_key in ("train", "dev"):
+            for row in selected_obj.get(split_key, ()):
+                cid = str(row.get("context_sha256", "")).strip()
+                if cid:
+                    forbidden_cids.add(cid)
+                ds_h = str(
+                    row.get("dataset_hash") or row.get("dataset_id") or ""
+                ).strip()
+                if ds_h:
+                    forbidden_datasets.add(ds_h)
+                    if ds_h in family_by_dataset and family_by_dataset[ds_h]:
+                        forbidden_families.add(str(family_by_dataset[ds_h]).strip())
+                forbidden_families |= _row_family_aliases(row)
+
+        cohort_rows = json.loads(Path(cohort_path).read_text(encoding="utf-8"))
+        for row in cohort_rows:
+            cid = str(row.get("context_sha256", "")).strip()
+            if cid:
+                forbidden_cids.add(cid)
+            ds_h = str(row.get("dataset_hash") or row.get("dataset_id") or "").strip()
+            if ds_h:
+                forbidden_datasets.add(ds_h)
+                if ds_h in family_by_dataset and family_by_dataset[ds_h]:
+                    forbidden_families.add(str(family_by_dataset[ds_h]).strip())
+            forbidden_families |= _row_family_aliases(row)
+
+        with gzip.open(ranking_identities_path, "rt", encoding="utf-8") as gz_in:
+            for line in gz_in:
+                if not line.strip():
+                    continue
+                r = json.loads(line)
+                cid = str(r.get("context_sha256", "")).strip()
+                if cid:
+                    forbidden_cids.add(cid)
+
+    if not forbidden_families or not forbidden_datasets:
+        raise RuntimeError(
+            "empty exclusion set refused: computed forbidden closure is empty"
+        )
+
+    # Propagate catalog-level family aliases for any forbidden dataset
+    for d in cat_datasets:
+        ds_id = str(d.get("id", "")).strip()
+        fk = d.get("family_key")
+        fpool_fk = family_by_dataset.get(ds_id)
+        if ds_id in forbidden_datasets:
+            if isinstance(fk, str) and fk.strip():
+                forbidden_families.add(fk.strip())
+            if isinstance(fpool_fk, str) and fpool_fk.strip():
+                forbidden_families.add(fpool_fk.strip())
+
+    allowed_records = []
+    skipped_missing_family = 0
+    for d in cat_datasets:
+        if d.get("task") != "regression":
+            continue
+        ds_id = str(d.get("id", "")).strip()
+        if not ds_id:
+            raise RuntimeError("catalog regression entry missing dataset id")
+        raw_fk = d.get("family_key")
+        pool_fk = family_by_dataset.get(ds_id)
+        if raw_fk is None or not isinstance(raw_fk, str) or not raw_fk.strip():
+            skipped_missing_family += 1
+            continue
+        if pool_fk is None or not isinstance(pool_fk, str) or not pool_fk.strip():
+            skipped_missing_family += 1
+            continue
+        raw_fk = raw_fk.strip()
+        pool_fk = pool_fk.strip()
+        aliases = {raw_fk, pool_fk, f"dedupe:{raw_fk}", f"dedupe:{pool_fk}"}
+        if ds_id in forbidden_datasets or (aliases & forbidden_families):
+            continue
+        train_sha = str(d.get("train_sha256", "")).strip()
+        train_rows = int(d.get("train_rows", 0))
+        features = int(d.get("features", 0))
+        if not _is_hex64(train_sha) or train_rows <= 0 or features <= 0:
+            continue
+        allowed_records.append(
+            dict(
+                dataset_id=ds_id,
+                name=str(d.get("name", "")),
+                task="regression",
+                role="regression_train",
+                source_split="train",
+                dl_split="DL-Train",
+                has_meta_test=False,
+                family_id=pool_fk,
+                family_key=raw_fk,
+                family_aliases=sorted(aliases),
+                train_rows=train_rows,
+                features=features,
+                categorical_features=int(d.get("categorical_features", 0)),
+                train_sha256=train_sha,
+                s3_bucket=str(d.get("s3_bucket", "veox-jopedime-datasets-use2")),
+            )
+        )
+
+    allowed_records.sort(key=lambda r: (r["family_id"], r["dataset_id"]))
+    roster_bytes = json.dumps(allowed_records, sort_keys=True).encode("utf-8")
+    roster_sha256 = hashlib.sha256(roster_bytes).hexdigest()
+    distinct_fams = {r["family_id"] for r in allowed_records}
+
+    return dict(
+        status="PASS",
+        wave=WAVE,
+        allowed_datasets_count=len(allowed_records),
+        allowed_families_count=len(distinct_fams),
+        skipped_missing_family_count=skipped_missing_family,
+        forbidden_datasets_count=len(forbidden_datasets),
+        forbidden_family_aliases_count=len(forbidden_families),
+        forbidden_cids_count=len(forbidden_cids),
+        roster_sha256=roster_sha256,
+        forbidden_datasets=forbidden_datasets,
+        forbidden_families=forbidden_families,
+        forbidden_cids=forbidden_cids,
+        records=allowed_records,
+    )
+
+
+def verify_single_regression_train_candidate(candidate_row, roster_bundle):
+    """Fail-closed check that a single candidate dataset/context row is admitted for H205 regression TRAIN."""
+    if not isinstance(candidate_row, dict):
+        raise RuntimeError("candidate_row must be a dict")
+    if not isinstance(roster_bundle, dict) or roster_bundle.get("status") != "PASS":
+        raise RuntimeError("roster_bundle must be a PASS allowed-roster dict")
+
+    forbidden_fams = roster_bundle.get("forbidden_families")
+    forbidden_ds = roster_bundle.get("forbidden_datasets")
+    forbidden_cids = roster_bundle.get("forbidden_cids")
+    if not forbidden_fams or not forbidden_ds:
+        raise RuntimeError(
+            "empty exclusion set refused in verify_single_regression_train_candidate"
+        )
+
+    fam_id = _normalize_nonempty_key(
+        candidate_row.get("family_id") or candidate_row.get("family"), "family_id"
+    )
+    fam_key = _normalize_nonempty_key(
+        candidate_row.get("family_key") or fam_id, "family_key"
+    )
+    ds_id = _normalize_nonempty_key(
+        candidate_row.get("dataset_id") or candidate_row.get("dataset"), "dataset_id"
+    )
+    if candidate_row.get("task") != "regression":
+        raise RuntimeError(
+            f"non-regression task refused for {ds_id}: {candidate_row.get('task')!r}"
+        )
+    role = str(candidate_row.get("role", "regression_train")).strip()
+    if (
+        role != "regression_train"
+        or candidate_row.get("source_split") != "train"
+        or candidate_row.get("dl_split") != "DL-Train"
+        or bool(candidate_row.get("has_meta_test", False))
+    ):
+        raise RuntimeError(
+            f"invalid role or split cut refused for {ds_id}: role={role!r}"
+        )
+
+    cid = str(candidate_row.get("context_sha256", "")).strip()
+    if cid and not _is_hex64(cid):
+        raise RuntimeError(f"invalid context_sha256 for {ds_id}: {cid!r}")
+    if cid and forbidden_cids and cid in forbidden_cids:
+        raise RuntimeError(
+            f"forbidden context_sha256 overlap refused: {cid} is in historical cohort"
+        )
+
+    aliases = _row_family_aliases(candidate_row) | {
+        fam_id,
+        fam_key,
+        f"dedupe:{fam_id}",
+        f"dedupe:{fam_key}",
+    }
+    if ds_id in forbidden_ds or (aliases & set(forbidden_fams)):
+        raise RuntimeError(
+            f"forbidden family/dataset overlap refused for {ds_id} ({fam_id})"
+        )
+
+    allowed_by_ds = {r["dataset_id"]: r for r in roster_bundle.get("records", ())}
+    if ds_id not in allowed_by_ds:
+        raise RuntimeError(
+            f"dataset {ds_id} is not present in the allowed regression TRAIN roster"
+        )
+    return dict(
+        status="PASS",
+        dataset_id=ds_id,
+        family_id=fam_id,
+        family_key=fam_key,
+        context_sha256=cid,
+        roster_sha256=roster_bundle["roster_sha256"],
+    )
+
+
+def encode_train_only_jtt1_from_csv(
+    csv_path, out_jtt1_path=None, expected_csv_sha256=None
+):
+    """Encode a verified regression TRAIN CSV into a pure train-only JTT1 (`nq = 0`, `k = 2`).
+
+    Never reads or invents any test/query rows (`nq == 0`, `outer_test_rows_decoded == 0`)
+    and never re-cuts `train.csv` into an arbitrary pseudo-test split.
+    """
+    p = Path(csv_path)
+    if not p.is_file():
+        raise RuntimeError(f"train CSV missing: {p}")
+    actual_sha = _file_sha256(p)
+    if expected_csv_sha256 is not None and actual_sha != expected_csv_sha256:
+        raise RuntimeError(
+            f"train CSV SHA256 mismatch: {actual_sha} != {expected_csv_sha256}"
+        )
+
+    with p.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        header = next(reader, None)
+        if not header or len(header) < 2:
+            raise RuntimeError(f"invalid train CSV header in {p}")
+        rows = []
+        for line_idx, row in enumerate(reader):
+            if not row:
+                continue
+            if len(row) != len(header):
+                raise RuntimeError(
+                    f"row {line_idx} column count mismatch in {p}: {len(row)} != {len(header)}"
+                )
+            rows.append([float(v) if v != "" else float("nan") for v in row])
+
+    mat = np.asarray(rows, dtype="<f8")
+    if mat.ndim != 2 or mat.shape[0] < 4 or mat.shape[1] < 2:
+        raise RuntimeError(f"invalid train CSV matrix shape {mat.shape} in {p}")
+    nt = int(mat.shape[0])
+    width = int(mat.shape[1] - 1)
+    y = mat[:, -1]
+    if not np.isfinite(y).all():
+        raise RuntimeError(f"non-finite target values in train CSV {p}")
+
+    # Deterministic 2-fold inner CV assignment sorted by target (alternating parity)
+    order = np.argsort(y, kind="mergesort")
+    folds = np.zeros(nt, dtype=np.uint8)
+    folds[order[1::2]] = 1
+
+    header_bytes = struct.pack("<4sIIIB", b"JTT1", nt, 0, width, 2)
+    payload_bytes = (
+        header_bytes
+        + folds.tobytes()
+        + np.ascontiguousarray(mat, dtype="<f8").tobytes()
+    )
+    jtt1_sha = hashlib.sha256(payload_bytes).hexdigest()
+
+    if out_jtt1_path is not None:
+        out_p = Path(out_jtt1_path)
+        out_p.parent.mkdir(parents=True, exist_ok=True)
+        out_p.write_bytes(payload_bytes)
+
+    return dict(
+        status="PASS",
+        csv_sha256=actual_sha,
+        jtt1_sha256=jtt1_sha,
+        jtt1_bytes_len=len(payload_bytes),
+        nt=nt,
+        nq=0,
+        p=width,
+        k=2,
+        fold_sizes=[int(np.sum(folds == 0)), int(np.sum(folds == 1))],
+        outer_test_rows_decoded=0,
+        X_train=mat[:, :-1].astype(np.float32),
+        y_train=y.astype(np.float32),
+    )
+
+
+def probe_s1main_nq0_protocol_blocker(
+    jtt1_path,
+    worker_bin=EVALUATOR_BINARY_PATH,
+    expected_worker_sha256=EVALUATOR_BINARY_SHA256,
+):
+    """Probe `bootstrap.s1main --fit-s1` on an `nq == 0` train-only JTT1 table and record the exact binary response.
+
+    Pins the exact protocol mismatch where `bootstrap.s1main --fit-s1` (`e3be9386...`) checks `nq >= 10`
+    in the 17-byte JTT1 header (`deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567`)
+    even though `parse_s1_data` at `main.rs:587-606` only loops `0..nt` and never reads a single byte
+    of the `nq` query block.
+    """
+    jtt1_p = Path(jtt1_path)
+    bin_p = Path(worker_bin)
+    if not jtt1_p.is_file():
+        raise RuntimeError(f"JTT1 file missing for nq=0 probe: {jtt1_p}")
+    if not bin_p.is_file():
+        raise RuntimeError(f"worker binary missing: {bin_p}")
+    bin_sha = _file_sha256(bin_p)
+    if expected_worker_sha256 is not None and bin_sha != expected_worker_sha256:
+        raise RuntimeError(
+            f"worker binary SHA256 mismatch: {bin_sha} != {expected_worker_sha256}"
+        )
+
+    raw_head = jtt1_p.read_bytes()[:17]
+    if len(raw_head) < 17 or raw_head[:4] != b"JTT1":
+        raise RuntimeError(f"invalid JTT1 header in {jtt1_p}")
+    nt, nq, p_dim, k_folds = struct.unpack("<IIIB", raw_head[4:17])
+
+    dsl = "(pipe X (standardize) (ridge_gcv))"
+    cand_obj = dict(
+        dsl=dsl,
+        program_sha256=hashlib.sha256(dsl.encode("utf-8")).hexdigest(),
+        birth_seq=0,
+        parents=[],
+        operator="probe_nq0",
+    )
+    with tempfile.TemporaryDirectory(prefix="h205_nq0_probe_") as td:
+        td_path = Path(td)
+        cand_path = td_path / "candidate.json"
+        out_path = td_path / "out.json"
+        cand_path.write_text(json.dumps(cand_obj, sort_keys=True), encoding="utf-8")
+        env = {
+            "PATH": "/usr/bin:/bin",
+            "RAYON_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "TMPDIR": str(td_path),
+            "HOME": str(td_path),
+        }
+        proc = subprocess.run(
+            [str(bin_p), "--fit-s1", str(jtt1_p), str(cand_path), str(out_path)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+            check=False,
+        )
+
+    return dict(
+        evaluator=NATIVE_RUST_EVALUATOR_ID,
+        evaluator_binary_sha256=bin_sha,
+        jtt1_sha256=_file_sha256(jtt1_p),
+        header=dict(nt=int(nt), nq=int(nq), p=int(p_dim), k=int(k_folds)),
+        returncode=int(proc.returncode),
+        stderr=proc.stderr.strip(),
+        stdout=proc.stdout.strip(),
+        nq0_refused_by_header_guard=bool(
+            nq == 0
+            and proc.returncode != 0
+            and "S1 requires exactly two inner folds and an admitted shape"
+            in proc.stderr
+        ),
+        rust_source_pin="deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567 (checks `nq < 10` in header while lines 587-606 `for _ in 0..nt` read only the `nt` training rows)",
+    )
+
+
+def verify_single_context_regression_seam_bundle(
+    bundle_dir,
+    *,
+    forbidden_cids=None,
+    forbidden_families=None,
+    forbidden_datasets=None,
+):
+    """Fail-closed verifier for a single-context regression seam bundle and its engine consumption receipt.
+
+    Rejects:
+    - Empty caller-supplied exclusion sets (`forbidden_cids`, `forbidden_families`, `forbidden_datasets`).
+    - Missing/null family keys, wrong role/task/split/cut, `outer_test_rows_decoded != 0`.
+    - Overlap with any forbidden CID, dataset, or family alias (including old 1,310/205 fallback).
+    - Missing or hash-mismatched `pool.npz`, `features.npz`, `native_evaluator_receipt.json`,
+      `s3_custody_receipt.json`, or `engine_consumption_receipt.json`.
+    - Wrong evaluator binary SHA256, wrong program hash, wrong DOPE/r882 encoder hash, or
+      zero/unchanged adapter parameter delta on the 1-step bounded AdamW check.
+    """
+    for name, coll in (
+        ("forbidden_cids", forbidden_cids),
+        ("forbidden_families", forbidden_families),
+        ("forbidden_datasets", forbidden_datasets),
+    ):
+        if coll is not None and len(coll) == 0:
+            raise RuntimeError(f"empty exclusion set refused: {name} is empty")
+
+    bdir = Path(bundle_dir)
+    if not bdir.is_dir():
+        raise RuntimeError(f"regression seam bundle directory missing: {bdir}")
+
+    manifest_path = bdir / "context_manifest.json"
+    eval_rec_path = bdir / "native_evaluator_receipt.json"
+    pool_path = bdir / "pool.npz"
+    feat_path = bdir / "features.npz"
+    s3_rec_path = bdir / "s3_custody_receipt.json"
+    eng_rec_path = bdir / "engine_consumption_receipt.json"
+
+    for req in (
+        manifest_path,
+        eval_rec_path,
+        pool_path,
+        feat_path,
+        s3_rec_path,
+        eng_rec_path,
+    ):
+        if not req.is_file():
+            raise RuntimeError(f"regression seam bundle missing required file: {req}")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    eval_rec = json.loads(eval_rec_path.read_text(encoding="utf-8"))
+    s3_rec = json.loads(s3_rec_path.read_text(encoding="utf-8"))
+    eng_rec = json.loads(eng_rec_path.read_text(encoding="utf-8"))
+
+    ds_id = _normalize_nonempty_key(manifest.get("dataset_id"), "dataset_id")
+    fam_id = _normalize_nonempty_key(manifest.get("family_id"), "family_id")
+    fam_key = _normalize_nonempty_key(manifest.get("family_key"), "family_key")
+    cid = _normalize_nonempty_key(manifest.get("context_sha256"), "context_sha256")
+    if not _is_hex64(cid) or not _is_hex64(manifest.get("train_sha256", "")):
+        raise RuntimeError(
+            "bundle manifest missing valid 64-hex context_sha256 or train_sha256"
+        )
+
+    if manifest.get("task") != "regression":
+        raise RuntimeError(f"bundle manifest invalid task: {manifest.get('task')!r}")
+    if (
+        manifest.get("role") != "regression_train"
+        or manifest.get("source_split") != "train"
+        or manifest.get("dl_split") != "DL-Train"
+        or bool(manifest.get("has_meta_test", False))
+        or int(manifest.get("outer_test_rows_decoded", -1)) != 0
+    ):
+        raise RuntimeError(
+            "bundle manifest invalid role/split/cut or non-zero outer_test_rows_decoded"
+        )
+
+    aliases = _row_family_aliases(manifest) | {
+        fam_id,
+        fam_key,
+        f"dedupe:{fam_id}",
+        f"dedupe:{fam_key}",
+    }
+    if forbidden_cids is not None and cid in set(forbidden_cids):
+        raise RuntimeError(
+            f"bundle context_sha256 {cid} overlaps forbidden/historical CIDs"
+        )
+    if forbidden_datasets is not None and ds_id in set(forbidden_datasets):
+        raise RuntimeError(f"bundle dataset_id {ds_id} overlaps forbidden datasets")
+    if forbidden_families is not None and (aliases & set(forbidden_families)):
+        raise RuntimeError(f"bundle family {fam_id} overlaps forbidden families")
+
+    if (
+        eval_rec.get("status") != "PASS"
+        or eval_rec.get("evaluator") != NATIVE_RUST_EVALUATOR_ID
+        or eval_rec.get("evaluator_binary_sha256") != EVALUATOR_BINARY_SHA256
+        or eval_rec.get("context_sha256") != cid
+        or eval_rec.get("dataset_id") != ds_id
+        or eval_rec.get("dope_sha256") != DOPE_SHA256
+        or eval_rec.get("r882_sha256") != R882_SHA256
+        or int(eval_rec.get("outer_test_rows_decoded", -1)) != 0
+    ):
+        raise RuntimeError(
+            "native_evaluator_receipt failed evaluator/encoder/identity check"
+        )
+
+    if _file_sha256(pool_path) != manifest.get("pool_sha256"):
+        raise RuntimeError("pool.npz file SHA256 mismatch against manifest")
+    if _file_sha256(feat_path) != manifest.get("features_npz_sha256"):
+        raise RuntimeError("features.npz file SHA256 mismatch against manifest")
+
+    with np.load(pool_path, allow_pickle=False) as zp:
+        for req_k in (
+            "program",
+            "proj16",
+            "fitness",
+            "gate",
+            "tokens_10x32",
+            "mask_10",
+        ):
+            if req_k not in zp.files:
+                raise RuntimeError(f"pool.npz missing required tensor {req_k!r}")
+        prog = zp["program"].astype(np.float32)
+        proj16 = zp["proj16"].astype(np.float32)
+        tok = zp["tokens_10x32"].astype(np.float32)
+        msk = zp["mask_10"].astype(bool)
+
+    with np.load(feat_path, allow_pickle=False) as zf:
+        for req_k in ("tokens_10x32", "mask_10", "dope629", "lm48_z", "ctx_feat_584"):
+            if req_k not in zf.files:
+                raise RuntimeError(f"features.npz missing required tensor {req_k!r}")
+        if (
+            zf["tokens_10x32"].astype(np.float32).tobytes() != tok.tobytes()
+            or zf["mask_10"].astype(bool).tobytes() != msk.tobytes()
+            or zf["dope629"].shape != (629,)
+            or zf["lm48_z"].shape != (48,)
+            or zf["ctx_feat_584"].shape != (584,)
+            or not np.isfinite(zf["dope629"]).all()
+            or not np.isfinite(zf["lm48_z"]).all()
+            or not np.isfinite(zf["ctx_feat_584"]).all()
+        ):
+            raise RuntimeError(
+                "features.npz tensor shape/finite/consistency check failed"
+            )
+
+    if (
+        proj16.ndim != 2
+        or proj16.shape != (prog.shape[0], 16)
+        or not np.isfinite(proj16).all()
+    ):
+        raise RuntimeError(f"invalid proj16 tensor shape {proj16.shape}")
+
+    row_for_check = dict(
+        manifest,
+        pool_npz_path=str(pool_path),
+        native_evaluator_receipt=eval_rec,
+    )
+    verified_payload = extract_and_verify_fresh_row_payload(row_for_check)
+
+    # Verify live 24-candidate s1main re-evaluation parity recorded in native_evaluator_receipt
+    live_check = eval_rec.get("live_s1main_slate24_verification")
+    if (
+        not isinstance(live_check, dict)
+        or live_check.get("status") != "PASS"
+        or int(live_check.get("evaluated_candidates", 0)) < SLATE_CANDIDATES
+        or not bool(live_check.get("gate_exact_match", False))
+        or float(live_check.get("max_abs_fitness_diff", 1.0)) > 1e-9
+    ):
+        raise RuntimeError(
+            "native_evaluator_receipt missing valid live_s1main_slate24_verification"
+        )
+
+    # Verify S3 custody receipt (source dataset object + uploaded bundle objects)
+    if s3_rec.get("status") != "PASS":
+        raise RuntimeError("s3_custody_receipt status is not PASS")
+    src_s3 = s3_rec.get("source_train_object")
+    if (
+        not isinstance(src_s3, dict)
+        or not str(src_s3.get("version_id", "")).strip()
+        or src_s3.get("sha256") != manifest.get("train_sha256")
+    ):
+        raise RuntimeError(
+            "s3_custody_receipt invalid source_train_object VersionId/sha256"
+        )
+    uploaded = s3_rec.get("uploaded_bundle_objects", ())
+    if not uploaded:
+        raise RuntimeError("s3_custody_receipt has zero uploaded_bundle_objects")
+    for obj in uploaded:
+        if (
+            not str(obj.get("version_id", "")).strip()
+            or not _is_hex64(obj.get("local_sha256", ""))
+            or obj.get("local_sha256") != obj.get("downloaded_version_sha256")
+        ):
+            raise RuntimeError(
+                f"s3_custody_receipt readback mismatch for {obj.get('name')!r}"
+            )
+
+    # Verify inherited-engine consumption & 1-step bounded AdamW parameter delta
+    if (
+        eng_rec.get("status") != "PASS"
+        or eng_rec.get("ingested_context_sha256") != cid
+        or eng_rec.get("dataset_id") != ds_id
+        or bool(eng_rec.get("used_old_1310_fallback", True))
+        or int(eng_rec.get("optimizer_steps", 0)) != 1
+        or int(eng_rec.get("trainable_parameters", 0)) != 29211
+        or not _is_hex64(eng_rec.get("adapter_sha256_before", ""))
+        or not _is_hex64(eng_rec.get("adapter_sha256_after", ""))
+        or eng_rec.get("adapter_sha256_before") == eng_rec.get("adapter_sha256_after")
+        or eng_rec.get("dope_sha256_before") != DOPE_SHA256
+        or eng_rec.get("dope_sha256_after") != DOPE_SHA256
+        or not bool(np.isfinite(float(eng_rec.get("loss_value", float("nan")))))
+    ):
+        raise RuntimeError(
+            "engine_consumption_receipt failed consumption or parameter-delta check"
+        )
+
+    return dict(
+        status="PASS",
+        dataset_id=ds_id,
+        family_id=fam_id,
+        context_sha256=cid,
+        candidates_count=int(prog.shape[0]),
+        labels_sha256=verified_payload["labels_sha256"],
+        programs_sha256=verified_payload["programs_sha256"],
+        features_sha256=verified_payload["features_sha256"],
+        adapter_sha256_before=eng_rec["adapter_sha256_before"],
+        adapter_sha256_after=eng_rec["adapter_sha256_after"],
     )
