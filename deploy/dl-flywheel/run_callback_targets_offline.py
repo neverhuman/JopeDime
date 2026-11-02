@@ -20,7 +20,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parent
 ROSTER = ROOT / 'pipelines/generated_target_callbacks_v1/integration-fixtures.json'
-ROSTER_SHA256 = 'b54c059aebd34e750da06f0617469ee47e629da82bf79f00e08177c3abd03874'
+ROSTER_SHA256 = '51c4dd208f0819c8a83c570dadc4fc084590eec33bffcb3f07038c9be082e790'
 EXPECTED_COUNTS = {'revision1': 37, 'revision2_new': 7, 'revision3': 11, 'compatibility': 8}
 
 
