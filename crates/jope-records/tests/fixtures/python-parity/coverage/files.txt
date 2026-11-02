@@ -1330,6 +1330,7 @@ crates/jope-learning/src/progress/tests/cadence.rs
 crates/jope-learning/src/progress/tests/census.rs
 crates/jope-learning/src/progress/tests/encoding.rs
 crates/jope-learning/src/progress/tests/faults.rs
+crates/jope-learning/src/progress/tests/faults/cases.rs
 crates/jope-learning/src/progress/tests/fixture.rs
 crates/jope-learning/src/progress/tests/outbox.rs
 crates/jope-learning/src/progress/tests/publish.rs
