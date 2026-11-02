@@ -2252,3 +2252,28 @@ def test_full_frozen_request_roundtrips_protocol_admission(tmp_path):
         initial_checkpoint_sha256=request["initial_checkpoint_sha256"],
     )
     assert protocol.admit_result(plan, job, receipt) is receipt
+
+
+def test_checkpoint_restore_uses_the_same_bytes_it_verified(tmp_path, monkeypatch):
+    request = fixture_request(rounds=1)
+    pinned = fixture_pinned()
+    receipt = learner.train(
+        request,
+        pinned,
+        fixture_core(pinned),
+        tmp_path / "checkpoints",
+        torch.device("cpu"),
+    )
+    trace = receipt["round_receipts"][0]
+    path = Path(trace["checkpoint_path"])
+    original_load = torch.load
+
+    def replace_file_before_deserialization(source, **kwargs):
+        # A replacement after verification must not change the bytes loaded.
+        path.write_bytes(b"replacement after digest verification")
+        return original_load(source, **kwargs)
+
+    monkeypatch.setattr(learner.torch, "load", replace_file_before_deserialization)
+    restored = fixture_pinned()
+    learner.load_checkpoint(path, restored, request, trace)
+    assert learner.parameter_sha(restored) == receipt["parameters_after"]

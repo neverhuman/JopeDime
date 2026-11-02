@@ -1,6 +1,6 @@
 # Jankurai vibe findings: scoped language allowances
 
-The four `dead_language_allow` records in `agent/audit-policy.toml` cover only
+The five `dead_language_allow` records in `agent/audit-policy.toml` cover only
 the exact term and file listed below. They keep those validated source terms
 out of the vibe cap while leaving the files in the scan, so other findings in
 these files remain visible. Each allowance expires 2027-02-01 and must be
@@ -49,3 +49,18 @@ reassessed against fresh source and test evidence.
 - **Evidence:** `validate_registry` checks that retired IDs are not live
   families and that each replacement resolves to a known family. Existing P3
   tests continue to cover runtime validation.
+
+## Late overlay refusal sidecar
+
+- **Scope:** `deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py`,
+  term `best effort` at lines 29 and 82.
+- **Reason:** after the original deadline is crossed, the builder attempts a
+  create-only refusal sidecar for custody and raises. That sidecar is
+  diagnostic; it is not a positive result. If its write fails, the exception
+  still propagates and the builder has not produced a caller acceptance
+  envelope. Consumers require that separate envelope before admission, so the
+  best-effort write cannot admit a late or failed packet.
+- **Evidence:** `tests/test_durability.py` exercises refusal when publication
+  crosses the original wall or monotonic bound, checks that refused packets
+  remain inadmissible, and verifies no retry. The pipeline README documents
+  that only the caller writes the post-return acceptance envelope.
