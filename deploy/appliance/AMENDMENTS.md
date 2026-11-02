@@ -473,9 +473,14 @@ tests, build/features/source receipts, fixture comparison and unsigned stage byt
 are retained under `/home/ubuntu/jope_plan/evidence/REL-07/res08-t0940/`, with build
 receipts at `xbabe1:/home/ubuntu/remote_tests/evidence/REL-07/res08-t0940/`.
 
-## A20 — Account HTTPS is an explicit client capability
+## A20 — Account HTTPS follow-through
 
-The owner-requested CLI account connection in PR1659 requires authenticated HTTPS. The existing client feature now selects the pinned ureq TLS features and the workspace's single AWS-LC provider; rustls is optional. Minimal/inference-only CPU and GPU selections keep featureless ureq and gain no TLS or native-crypto closure. Exact package version, dependency-feature caps and root selections remain fenced, with separate native build permissions and mutation controls. No C++ predictor, CUDA or external ML allowance is introduced. This records existing cloud behavior and restores the older dependency boundary for builds that do not select it.
+The original browser candidate proposed client-scoped TLS policy exceptions. Those exceptions
+are superseded by main PR1796: ureq/zip are optional behind `client`, and authenticated HTTPS
+requires the explicit `cloud-tls` feature. The browser PR adopts that merged architecture and
+removes its proposed TLS/native package exceptions. Inference appliance fences remain unchanged.
+The installed development CLI retains its previously verified source; new connected development
+source builds select `--features cloud-tls`. No new shipping TLS policy admission is claimed.
 
 ## A21 — Measured development fixture size after inherited main growth
 

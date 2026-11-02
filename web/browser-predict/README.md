@@ -32,3 +32,5 @@ mapping are explicitly refused. Native appliance class-labelled predictions reta
 native probability output. Parallel native execution is disabled in this single worker.
 
 The builder reuses an installed wasm32 standard library. On native-only, immutable runner images, it installs the same pinned Rust version plus wasm32 into the lane target cache, without changing the shared toolchain. Standard rustup distribution checks authenticate the downloaded components.
+
+The native connected CLI is a separate build: select `--features cloud-tls` when building a development client that must connect to HTTPS workspaces. Minimal appliance builds retain the upstream no-TLS dependency fence. This browser runtime requires no native client/TLS feature.

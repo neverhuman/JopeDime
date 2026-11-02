@@ -14,7 +14,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 FAKE = r'''
 #!/usr/bin/env python3
-import hashlib, json, os, pathlib, sys
+import hashlib, json, os, pathlib, sys, tomllib
 mode = os.environ["AUDIT_TEST_MODE"]
 if sys.argv[1:] == ["--version"]:
     print("jankurai 1.7.4" if mode == "version" else "jankurai 1.7.5")
@@ -34,12 +34,25 @@ report = {
     "standard_version": "0.9.0", "paper_edition": "2026.05-ed8",
     "scope": {"mode": "full", "paths": []},
     "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111",
-    "policy": {"minimum_score": floor, "mode": "standard", "fail_on": ["critical", "high"]},
+    "policy": {"minimum_score": floor, "mode": "standard", "fail_on": ["critical", "high"], "advisory_on": ["low", "medium"]},
     "score": 52 if low else 94, "raw_score": 52 if low else 94,
     "decision": {"status": "fail" if failed else "pass", "passed": not failed,
                  "minimum_score": floor, "hard_findings": int(failed), "soft_findings": 0},
     "findings": [{"severity": "high", "hardness": "hard"}] if failed else [],
 }
+policy_file = source / "agent/audit-policy.toml"
+if policy_file.exists():
+    policy_bytes = policy_file.read_bytes()
+    configured = tomllib.loads(policy_bytes.decode())
+    advisory = sorted(set(configured.get("advisory_on", ["medium", "low"])) - {"critical", "high"})
+    report["policy"]["advisory_on"] = advisory
+    binding = {"format": "jankurai-effective-audit-policy-v1",
+               "source_sha256": "sha256:" + hashlib.sha256(policy_bytes).hexdigest(),
+               "minimum_score": floor, "fail_on": ["critical", "high"], "advisory_on": advisory,
+               "auditor_version": "1.7.5", "schema_version": "1.9.0", "standard_version": "0.9.0"}
+    report["policy_fingerprint"] = "sha256:" + hashlib.sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+if mode == "advisory":
+    report["policy"]["advisory_on"] = ["info"]
 if mode == "severity":
     report["findings"] = [{"severity": "critical", "hardness": "soft"}]
     report["decision"]["soft_findings"] = 1
@@ -145,6 +158,22 @@ class AuditLaneTests(unittest.TestCase):
             env["JOPE_AUDIT_REPORT_ONLY"] = "1"
         return subprocess.run(["bash", "ops/ci/jankurai.sh", str(self.output)],
                               cwd=self.repo, env=env, capture_output=True, text=True)
+
+    def test_captured_repository_policy_is_bound_in_the_effective_fingerprint(self):
+        policy = self.repo / "agent/audit-policy.toml"
+        policy.parent.mkdir()
+        policy.write_text('minimum_score = 85\nfail_on = ["critical", "high"]\nadvisory_on = ["medium", "low", "info"]\n[scan]\nextra_excluded_paths = ["target"]\n')
+        subprocess.run(["git", "add", "agent/audit-policy.toml"], cwd=self.repo, check=True)
+        subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                        "commit", "-qm", "captured repository policy"], cwd=self.repo, check=True)
+        result = self.run_audit("failed", report_only=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        verification = json.loads((self.output / "audit-verification.json").read_text())
+        report = json.loads((self.output / "repo-score.json").read_text())
+        self.assertEqual(report["policy_fingerprint"], verification["policy_fingerprint"])
+        self.assertFalse(verification["audit_passed"])
+        self.assertNotEqual(0, self.run_audit("policy", report_only=True).returncode)
+        self.assertNotEqual(0, self.run_audit("advisory", report_only=True).returncode)
 
     def test_honest_failed_gate_retains_failure_and_reports(self):
         result = self.run_audit("failed")

@@ -20,13 +20,14 @@ PR1702 and subsequent audit cleanups renamed variables or rewrote equivalent exp
 
 The application now locks sklearn1.9.1, but benchmarks/prepare.py explicitly requires1.7.2 for its frozen split identity. Keep the application lock untouched. Run every benchmark preparation test in its own locked Python3.12 project with sklearn1.7.2, preserving a separate identity-bound nonzero execution receipt and full JUnit. The parent Python receipt continues to count its own application/adaptor pytest run once. Benchmark lock and project are bound in CI receipt inputs. No splitter/labels/partitions change, no version guard is relaxed.
 
-## Authenticated CLI HTTPS (A20)
+## Authenticated CLI HTTPS follow-through (A20)
 
-PR1659 introduced the explicitly requested cloud login and model sync. Its mandatory TLS dependencies violated the older no-TLS appliance fence. Make rustls optional and select it plus ureq TLS only through the existing client feature. The no-default-feature and inference-only GPU selections retain featureless ureq and no TLS/native-crypto closure; attempting HTTPS without client fails explicitly. The normal client keeps its verified HTTPS behavior and the existing workspace AWS-LC provider, with no second provider.
-
-The dependency policy retains global denies and adds only exact version, exact root-selection, capped-feature exceptions for ureq3.5.0, rustls0.23.46, aws-lc-rs1.18.1/aws-lc-sys0.45.0 and their three build helpers. Native permission is separate and these helpers also have exact package caps. Empty root selection is represented explicitly by `[[]]`, matched as an exact set, never a wildcard. All other root selections, versions/features, research frameworks, C++ predictor and CUDA bans remain. The test asserts both connected defaults and minimal no-TLS boundaries; existing mutation controls reject new versions/features and native permission cannot be granted by a package exception alone.
-
-This does not qualify an official release, production deployment or every model capability. The browser runtime remains a standalone prediction-only component with no host imports or fitting exports.
+The original candidate fenced HTTPS behind `client` using exact package exceptions. Main PR1796
+subsequently made ureq/zip optional behind `client` and HTTPS an explicit `cloud-tls` capability.
+Adopt that merged architecture and withdraw the candidate's now-superseded dependency-policy
+and parser exceptions; the original inference fences remain unchanged. Connected development
+source builds select `--features cloud-tls`. The existing verified development installation is
+not replaced by an unqualified build.
 
 ## Local authoritative base
 
@@ -57,3 +58,28 @@ Canceling superseded audit41388179289 left its read-only source copy in xbabe1's
 ## Reusable paper workflow concurrency
 
 The paper source-check reusable workflow used `github.workflow-ref` as its concurrency group. Called by manual ci.yml, `github.workflow` is the caller name ci, so its key equals the parent ci-ref group. Manual41398271392 stayed queued with active children and no paper job; official GitHub reusable workflow documentation warns against this caller/callee collision. Prefix only the reusable paper key with paper-, retaining cancellation of genuinely superseded paper checks and every gate. An existing runner-contract test evaluates the real caller/callee expressions for manual, PR and trusted-main contexts: it fails before the correction and passes after. No paper typesetting is restored. See https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations.
+
+## Captured effective audit policy fingerprint
+
+Manual41399605228/PR41399614338 correctly refused reports at the verifier's old default-policy
+fingerprint. Pinned Jankurai1.7.5 audit/outcome.rs fingerprints canonical effective settings plus
+SHA-256 of the complete repository policy source. Independently applying that algorithm to the
+captured e15 policy derives the actual c96d07ea30c035ef0f338d8246e23c55e063a0a20af78b2f159a6ab012d353ec.
+Derive the expected fingerprint only after validating the complete immutable Git-bound input,
+using captured policy bytes and pinned tool/schema/standard constants. Floor85, critical/high,
+standard mode, source/archive/blob/mode checks and every failure decision remain mandatory.
+The new repository-policy positive case reproduces failure before the fix; all17 contract tests
+pass afterward, including invalid fingerprint/advisory and existing corruption/refusal controls.
+A read-only replay of the actual retained CI artifact verifies all13707 files and reports
+artifact_valid:true, audit_passed:false, score64/85,204hard findings. The existing owner-approved
+below-floor report-only disposition remains separate from the failed audit; no new finding is
+waived or marked fixed. New source retains main's existing P37 exception verifier and expiry checks.
+
+## Latest upstream reconciliation
+
+Current main includes the default external RES07 inventory's explicit opt-in guard and isolated
+dashboard test evidence/browser fonts. Preserve those authored fixes. The browser successor now
+follows the already-merged CPU-affinity and authority-lineage identity transitions, with only its
+two metadata fixtures regenerated at b794bf1026c11441fe17495f41249c0fccd234cd. All13 behavioral
+compatibility cases and three historical joins pass; numerical fixtures and known identities
+remain unchanged. The app's original source-pinned runtime artifact is unchanged.

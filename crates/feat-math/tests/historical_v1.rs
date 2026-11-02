@@ -774,7 +774,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let browser_wasm = old_fixture("transitions/browser_wasm_identity_rebaseline.v1.json");
     assert_eq!(
         browser_wasm["source_commit"],
-        "e3348a443b665caf00a618da47b8f4b20721b4f5"
+        "b794bf1026c11441fe17495f41249c0fccd234cd"
     );
     assert_eq!(browser_wasm["fixtures"].as_array().unwrap().len(), 2);
     let api03_id_newtypes =
