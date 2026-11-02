@@ -12,6 +12,7 @@ import ssl
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from unittest import mock
 import urllib.error
 
@@ -56,6 +57,28 @@ class BrowserDependencies(unittest.TestCase):
             MODULE.prepare(self.cache, self.root / name)
         proof = json.loads((self.root / name).read_text())
         return Path(proof["runtime"])
+
+    def test_generic_font_fallbacks_use_only_the_verified_runtime(self):
+        runtime = self.root / "font-runtime"
+        fonts = runtime / "etc/fonts"
+        dropins = fonts / "conf.d"
+        dropins.mkdir(parents=True)
+        (fonts / "fonts.conf").write_text('<fontconfig><dir>/usr/share/fonts</dir><include>conf.d</include><cachedir>/var/cache/fontconfig</cachedir></fontconfig>')
+        (dropins / "45-fonts.conf").write_text('<fontconfig><alias><family>Consolas</family><default><family>monospace</family></default></alias></fontconfig>')
+        (dropins / "60-fonts.conf").write_text('<fontconfig><alias><family>sans-serif</family><prefer><family>Fixture Sans</family></prefer></alias></fontconfig>')
+        (dropins / "50-user.conf").write_text('<fontconfig><include>~/.fonts.conf</include></fontconfig>')
+        available = runtime / "usr/share/fontconfig/conf.avail"
+        available.mkdir(parents=True)
+        (available / "70-pinned.conf").write_text('<fontconfig><match target="font"><edit name="hintstyle"><const>hintslight</const></edit></match></fontconfig>')
+        (dropins / "70-pinned.conf").symlink_to("/usr/share/fontconfig/conf.avail/70-pinned.conf")
+        config = MODULE.hermetic_fontconfig(runtime, self.root / "font-cache")
+        self.assertEqual([node.text for node in config.findall("dir")], [str(runtime / "usr/share/fonts")])
+        self.assertEqual(list(config.iter("include")), [], "ambient font rules must never enter CI")
+        self.assertEqual(config.findtext("alias/default/family"), "monospace")
+        self.assertEqual(config.findall("alias")[1].findtext("prefer/family"), "Fixture Sans")
+        (dropins / "70-foreign.conf").symlink_to(self.root / "lock.json")
+        with self.assertRaisesRegex(ValueError, "escapes the verified runtime"):
+            MODULE.hermetic_fontconfig(runtime, self.root / "font-cache")
 
     def test_verified_extraction_and_reuse(self):
         runtime = self.prepare()

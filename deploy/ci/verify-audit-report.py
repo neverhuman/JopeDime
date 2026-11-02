@@ -6,8 +6,8 @@ import json
 from pathlib import Path, PurePosixPath
 import re
 import sys
+import tomllib
 
-POLICY_FINGERPRINT = "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111"
 REPORTS = ("repo-score.json", "repo-score.md", "timings.json", "summary.md", "repair-queue.jsonl")
 
 
@@ -40,6 +40,32 @@ def regular(path):
     return path
 
 
+def effective_policy_fingerprint(source, policy):
+    # Jankurai 1.7.5 audit/outcome.rs includes the complete policy source digest
+    # in this binding. Derive it from verified captured bytes, never from the report.
+    path = source / "agent/audit-policy.toml"
+    data = regular(path).read_bytes() if path.exists() else None
+    configured = tomllib.loads(data.decode("utf-8")) if data is not None else {}
+    floor = configured.get("minimum_score", 85)
+    fail_on = configured.get("fail_on", ["critical", "high"])
+    advisory = configured.get("advisory_on", ["medium", "low"])
+    require(type(floor) is int and floor == 85, "captured audit floor must remain 85")
+    require(isinstance(fail_on, list) and all(isinstance(x, str) for x in fail_on)
+            and set(fail_on) == {"critical", "high"}, "captured failure severities changed")
+    require(isinstance(advisory, list) and all(x in ("critical", "high", "medium", "low", "info")
+                                             for x in advisory), "invalid captured advisory severities")
+    advisory = sorted(set(advisory) - set(fail_on))
+    require(policy["advisory_on"] == advisory, "report advisory severities differ from captured policy")
+    binding = {
+        "format": "jankurai-effective-audit-policy-v1",
+        "source_sha256": "sha256:" + hashlib.sha256(data).hexdigest() if data is not None else None,
+        "minimum_score": 85, "fail_on": sorted(set(fail_on)), "advisory_on": advisory,
+        "auditor_version": "1.7.5", "schema_version": "1.9.0", "standard_version": "0.9.0",
+    }
+    encoded = json.dumps(binding, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
 def validate(output, audit_exit, expected_manifest):
     require(0 <= audit_exit <= 255, "invalid auditor exit")
     require(re.fullmatch(r"[0-9a-f]{64}", expected_manifest) is not None, "invalid manifest pin")
@@ -55,7 +81,6 @@ def validate(output, audit_exit, expected_manifest):
     for field, value in (
         ("auditor_version", "1.7.5"), ("schema_version", "1.9.0"),
         ("standard_version", "0.9.0"), ("paper_edition", "2026.05-ed8"),
-        ("policy_fingerprint", POLICY_FINGERPRINT),
         ("scope", {"mode": "full", "paths": []}),
     ):
         require(report[field] == value, f"unexpected {field}")
@@ -97,8 +122,13 @@ def validate(output, audit_exit, expected_manifest):
     require(manifest["schema"] == "jope.audit-product-input/v1", "unknown input manifest")
     for field in ("source_sha", "checkout_sha", "tree_sha"):
         require(re.fullmatch(r"[0-9a-f]{40}", manifest[field]) is not None, f"invalid {field}")
-    require(manifest["source_sha"] == manifest["checkout_sha"],
-            "logical audit source must equal the captured checkout")
+    source_tree = manifest.get("source_tree_sha")
+    if source_tree is None:
+        require(manifest["source_sha"] == manifest["checkout_sha"],
+                "distinct audit identities require a reviewed source tree attestation")
+        source_tree = manifest["tree_sha"]  # Original same-commit v1 receipts.
+    require(isinstance(source_tree, str) and re.fullmatch(r"[0-9a-f]{40}", source_tree) is not None
+            and source_tree == manifest["tree_sha"], "reviewed audit source tree differs from checkout")
     archive = regular(output / "input/source.tar")
     require(digest(archive) == manifest["archive_sha256"], "input archive changed during audit")
     source = output / "input/source"
@@ -135,14 +165,16 @@ def validate(output, audit_exit, expected_manifest):
     require({str(path.relative_to(source)) for path in paths if path.is_file()} == expected,
             "input paths changed during audit")
     require(type(manifest["input_bytes"]) is int and total == manifest["input_bytes"], "input byte total mismatch")
+    fingerprint = effective_policy_fingerprint(source, policy)
+    require(report["policy_fingerprint"] == fingerprint, "unexpected policy_fingerprint")
     return {
         "schema": "jope.audit-verification/v1", "artifact_valid": True, "audit_passed": passed,
         "audit_exit": audit_exit, "score": report["score"], "minimum_score": 85,
         "hard_findings": hard, "soft_findings": soft,
         "source_sha": manifest["source_sha"], "checkout_sha": manifest["checkout_sha"],
-        "tree_sha": manifest["tree_sha"], "file_count": len(files),
+        "tree_sha": manifest["tree_sha"], "source_tree_sha": source_tree, "file_count": len(files),
         "manifest_sha256": expected_manifest, "input_reverified_after_audit": True,
-        "policy_fingerprint": POLICY_FINGERPRINT,
+        "policy_fingerprint": fingerprint,
         "reports": {name: digest(output / name) for name in REPORTS},
     }
 

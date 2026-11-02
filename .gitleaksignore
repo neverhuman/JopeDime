@@ -2520,3 +2520,10 @@ f696db5484a50cdcb604e22d0e261644bcbab1a1:crates/jope-appliance/tests/system/live
 4fe8636982cbd88dc03a9b5402d4b60e265506a8:research/flywheel_selfplay/h205_fresh_vs_static/PREREG.md:generic-api-key:84
 f68cfa4ffaf02db68488f4f674e07ee057d2aec3:research/flywheel_selfplay/h205_fresh_vs_static/PREREG.md:generic-api-key:98
 f68cfa4ffaf02db68488f4f674e07ee057d2aec3:research/flywheel_selfplay/h205_fresh_vs_static/analysis.py:generic-api-key:972
+
+# H205 a1d3d690 repeats the already-reviewed deterministic 40-hex corpus family_key.
+# Exact findings only; validation and value SHA are recorded in browser-prediction CI repairs.
+a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_vs_static/README.md:generic-api-key:96
+a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_vs_static/PREREG.md:generic-api-key:122
+a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_vs_static/metrics.json:generic-api-key:460
+a1d3d69031395058feff24a61959b417fa067f0a:research/flywheel_selfplay/h205_fresh_vs_static/metrics.json:generic-api-key:911

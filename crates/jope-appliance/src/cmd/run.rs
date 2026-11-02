@@ -1120,7 +1120,10 @@ mod tests {
     #[test]
     fn run_uses_the_typed_in_process_api_contract() {
         use jope_client::{InProcess, Transport};
-        let client = InProcess::local(43123, &"ab".repeat(32)).unwrap();
+        let home = tempfile::tempdir().unwrap();
+        let engine = jope_service::engine::InProcessEngine::open(home.path()).unwrap();
+        let client =
+            InProcess::with_engine(std::sync::Arc::new(engine), 43123, &"ab".repeat(32)).unwrap();
         let parsed = Args::try_parse_from([
             "jopedime",
             "run",

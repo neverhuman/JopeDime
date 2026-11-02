@@ -86,11 +86,11 @@ class Custody(unittest.TestCase):
         self.assertEqual(report["handoff_sha256"], v.HANDOFF_SHA)
         self.assertEqual(report["predecessor_sha256"], [expected for _, expected in v.PREDECESSORS])
         self.assertEqual(report["current_files"], 177)
-        self.assertEqual(report["historical_versions"], 284)
+        self.assertEqual(report["historical_versions"], 285)
         self.assertEqual(report["supplemental_versions"], 3)
         self.assertEqual(report["python_syntax_files"], 167)
         self.assertEqual([len(report["predecessor_restoration"][expected]) for _, expected in v.PREDECESSORS],
-                         [176, 170, 169, 168, 165, 158, 158, 156, 155, 147, 143])
+                         [177, 176, 170, 169, 168, 165, 158, 158, 156, 155, 147, 143])
         self.assertEqual(report["abandoned_unpushed_stagings"],
                          ["0388e6a75c0f54038661c61f35e18e1225f1386a2b40abbb43b2ff25b3381987",
                           "be5e5f600a15d01d83a13c2745d37748c772c0317ee3986153e236fc0fea0d7f",

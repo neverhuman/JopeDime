@@ -26,7 +26,11 @@ use std::sync::{Arc, Mutex};
 const SHARDS: usize = 64;
 
 /// Default accounted payload budget: 6 GiB. Heap overhead and caller-held clones are additional.
-pub const DEFAULT_BYTE_CAP: usize = 6 * 1024 * 1024 * 1024;
+pub const DEFAULT_BYTE_CAP: usize = if usize::BITS >= 64 {
+    (6_u64 * 1024 * 1024 * 1024) as usize
+} else {
+    256 * 1024 * 1024
+};
 
 /// Everything besides the stage chain itself that pins a stage computation:
 /// the train-data identity plus the fold coordinates (which pin both the
