@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity successor for P45's tiny-budget race test: race_respects_tiny_time_budget now runs its one-chunk race on a dedicated two-thread rayon pool so its unchanged 30s wall bound measures the race rather than queueing behind sibling tests on the shared global pool, and the race wall backstop helpers it relies on are kept. Only crates/feat-math/src/evolve.rs (an evaluator identity input) changes. The identity-only rebaseline records the new evolve.rs input. DSL ABI and behavior fixtures remain unchanged. No known-identity row is added because this identity has no shipped receipt.",
+  "plan_reference": "jankurai P45 feat-math race budget; ADR-0004 and compat_freeze identity-only procedure",
+  "source_commit": "09653ef9a2a37e544b6ddff96d0a56e3d9f05847",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "316c26afb04bb94b53147b7b2bf309f2148a09b465dc55d501ef0008e49dd7a2",
+      "after": "c0e9775a3538e93c069a9041cd71c77cdfb47c182396c803f26f8f12795b9bac"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "9de2dce45cc7852aa86d5e1eb0b1e313a6aed340942e17b503b22780add11e5c",
+      "after": "7bdd2c734a36fb9f184fb292cdbaf42285f959fc8cdc6cfddbab6f149f410b2d"
+    }
+  ]
+}

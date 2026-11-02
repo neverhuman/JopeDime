@@ -13,6 +13,7 @@ pub enum StageClass {
     Target,
     Input,
     Transform,
+    /// A terminal fitted model; advanced-v3 calls this role a head.
     Learner,
 }
 
