@@ -11,17 +11,17 @@
     "axis_label_size_pt": 9,
     "fixed_canvas_no_tight_crop": true
   },
-  "source_receipt_sha256": "00efb299a509d911ccf4292e8bedf5cf30beb55f991ee5a63bdb083c6daa552d",
-  "csv_sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
+  "source_receipt_sha256": "dc7dcb9bca24c04b992d5f9285253b69859d4e1ac5d1b800685a834dd164a00d",
+  "csv_sha256": "5246d4176a6f97e4bb94aba8905bbbfbb98eb9767eff300a8babb8ef49f11f64",
   "generator_sha256": "3e107633e25d8539debe1699560ae4f24dbc400e06b08cd019457d68cb81b73b",
-  "figure_sha256": "2b0a252b545b50ac2462c226b85353be710cd5840142f914bf38dbebc89a5e07",
+  "figure_sha256": "a7aecfdcc6c50b56972bed0fe2469b448e993da2d881b20d3d1bb557fac48d7b",
   "round_window": [
     775,
-    3197
+    3950
   ],
-  "rows": 2423,
+  "rows": 3176,
   "older_displayed_prefix_rows": 1889,
-  "additional_logged_rows": 534,
+  "additional_logged_rows": 1287,
   "accepted_rounds": [
     782,
     785,
@@ -44,7 +44,7 @@
     2795,
     3100
   ],
-  "rejected_rows": 2415,
+  "rejected_rows": 3168,
   "final_recorded_best": "1.1389572403748425",
   "final_recorded_best_round": 3175,
   "classification": "Exact Decimal comparison of logged candidate with previous best; no epsilon or rounded-value tie classification",

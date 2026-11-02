@@ -1,11 +1,11 @@
 {
   "schema": "whitepaper.live-adapter-decisions-source/v1",
-  "csv_sha256": "e9d6e086ee862cf54823445e73e03aafaa396cefec1483289c0e671c51c16d0f",
+  "csv_sha256": "c88f9aee09512452e2a8e62793bc8f86c6ea6d96f7efd9914ef932d551c81b5c",
   "capture": {
-    "captured_at": "2026-11-02T21:25:49.576904+00:00",
+    "captured_at": "2026-11-02T23:00:00.993431+00:00",
     "round_window": [
-      3881,
-      3900
+      3931,
+      3950
     ],
     "rows": 20,
     "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
@@ -20,39 +20,42 @@
   },
   "sources": [
     {
-      "name": "summary.jsonl",
-      "captured_at": "2026-11-02T21:25:49.490243+00:00",
-      "source_basename": "summary.jsonl",
-      "complete_prefix_bytes": 3358600,
-      "complete_prefix_sha256": "c0de71bde29df1d6bb66b573d3d85e252574be89bce862372be83728dd1a73a7",
-      "incomplete_trailing_bytes_omitted": 0,
-      "stable_prefix_reread": true,
-      "projection_sha256": "ff16b7bdbbe079f67b02701fd6e8b35337cc7cd3a169e88a5736ab6d3da0b011"
+      "name": "adapter_admissions.jsonl",
+      "at": "2026-11-02T23:00:00.600514+00:00",
+      "observed_bytes": 1680837,
+      "complete_prefix_bytes": 1680837,
+      "complete_prefix_sha256": "9943c684037f109b3889e33bfd1e0d2cded511d314f5cd1247f5d5cf244c2f10",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true
     },
     {
-      "name": "admissions.jsonl",
-      "captured_at": "2026-11-02T21:25:49.517779+00:00",
-      "source_basename": "adapter_admissions.jsonl",
-      "complete_prefix_bytes": 1654391,
-      "complete_prefix_sha256": "7ca9d976eda66de46351b47edf0a85abfbc6e35ec130a8a64b49644e92afbbb8",
-      "incomplete_trailing_bytes_omitted": 0,
-      "stable_prefix_reread": true,
-      "projection_sha256": "4b44698a4ab60a370f796371244ec8df7cad2b218803890ca0209b6de27eef13"
+      "name": "summary.jsonl",
+      "at": "2026-11-02T23:00:00.625190+00:00",
+      "observed_bytes": 3526662,
+      "complete_prefix_bytes": 3526662,
+      "complete_prefix_sha256": "f554299ce491a0f2da0ca1a0145ed016c33c34238cb518fd21e7cd74ec4c8ffd",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true
     },
     {
       "name": "per-round.jsonl",
-      "captured_at": "2026-11-02T21:25:49.546794+00:00",
-      "source_basename": "per-round.jsonl",
-      "complete_prefix_bytes": 2348440,
-      "complete_prefix_sha256": "11fcf14d44aa0f00785b02d17da63f37c2330910d16c57bf5a86bb0a75f84414",
-      "incomplete_trailing_bytes_omitted": 0,
-      "stable_prefix_reread": true,
-      "projection_sha256": "965955fa916cf50bfbb2f0e742426b7a1468084453f7cca2c5d690ec50f17930"
+      "at": "2026-11-02T23:00:00.660578+00:00",
+      "observed_bytes": 2387373,
+      "complete_prefix_bytes": 2387373,
+      "complete_prefix_sha256": "0c84936c4f657f4b7c04597918f1121b9f0a6fc0c4f12a3563c05a163e0a9aa8",
+      "trailing_incomplete_bytes_omitted": 0,
+      "stable_prefix_reread": true
     }
   ],
-  "capture_script_sha256": "daeae2577d4bd88e2a477e70dad471f22e75abbdb4f8efca12317c296fba6432",
+  "capture_script_sha256": "d3d52acb0ca3c834e0fab029759a73f75204ddd020cd04b6e4eea59c9ba53bba",
   "definitions": "Each point is candidate_utility minus previous_best_utility from the admission journal. Zero means score equality, not an independent performance threshold. Marker categories use the logged accepted flag, not a threshold inferred from rounded values. All 20 consecutive matched complete rounds are included; no smoothing or outcome selection.",
   "source_binding": "Logged aggregate fields only; this capture does not qualify installed source, adapter, evaluation population or normalization closure.",
   "scope": "Adaptive development-side adapter admission decisions, separate from strict program-incumbent events. No independent first-proposal, learning-gain, cross-model or serving comparison.",
-  "reproduce": "python3 figures/scripts/make_live_adapter_decisions_figure.py"
+  "reproduce": "python3 figures/scripts/make_live_adapter_decisions_figure.py",
+  "projection_sha256": {
+    "admissions": "b8438390eb5fcd1b7e35213dbef09f4ae5601b3379fc90ded5f730507dfcda91",
+    "summary": "8db708e267b65d7630efe6ccaa47da0411d6d2a785bef3996bd41367b54a141a",
+    "per_round": "aec5ad11ac2a8bc2e079ec20b0348ab1edf634c9822cf5c3201901d062bacb99",
+    "promotions": "7a51fe75f3170be0901fc64391ca98a6ac94029e70787ea5672205eddeebe085"
+  }
 }
