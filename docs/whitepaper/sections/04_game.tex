@@ -11,7 +11,7 @@
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Reference training and proposed one-move evaluation.}
   Training loop (\cref{sub:method-selfplay}), separate from the adapter
-  record (\cref{sec:method-status}). Blue: game day (\searchone{}); dashed box:
+  record in \cref{sec:method-status}. Blue: game day (\searchone{}); dashed box:
   proposed training.
   Valid scored programs enter learning lists; failed attempts consume budget.}
   \label{fig:game-loop}
@@ -198,8 +198,7 @@ to that discipline still needs evidence.
 % ----------------------------------------------------------------------------
 \subsection{The analogy's limits}\label{sub:game-played}
 
-The analogy breaks in four places.
-
+The analogy to board games breaks in four places.
 \textbf{The referee is noisy:} picking a
 winner by a noisy validation score biases that score upward
 \citep{cawley2010overfitting}. Strict numerical improvement alone does not
