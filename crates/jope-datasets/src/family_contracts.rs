@@ -38,24 +38,31 @@ pub fn derive_binary_source_family(meta_path: &Path) -> Result<String> {
     let material = if let Some(source) = source_real_data {
         serde_json::json!({"origin": "real", "source": source})
     } else {
-        let recipe = metadata
-            .get("generator_recipe")
-            .and_then(Value::as_object);
-        let feature_family_counts = recipe
+        let recipe = metadata.get("generator_recipe").and_then(Value::as_object);
+        let feature_family_counts = match recipe
             .and_then(|recipe| recipe.get("feature_family_counts"))
             .filter(|value| json_truthy(value))
             .cloned()
-            .unwrap_or_else(|| serde_json::json!({}));
-        let origin = metadata
+        {
+            Some(value) => value,
+            None => serde_json::json!({}),
+        };
+        let origin = match metadata
             .get("origin")
             .filter(|value| json_truthy(value))
             .cloned()
-            .unwrap_or_else(|| Value::String("unknown".to_owned()));
-        let generator = metadata
+        {
+            Some(value) => value,
+            None => Value::String("unknown".to_owned()),
+        };
+        let generator = match metadata
             .get("generator_name")
             .filter(|value| json_truthy(value))
             .cloned()
-            .unwrap_or_else(|| Value::String("unknown".to_owned()));
+        {
+            Some(value) => value,
+            None => Value::String("unknown".to_owned()),
+        };
         serde_json::json!({
             "origin": origin,
             "generator": generator,
