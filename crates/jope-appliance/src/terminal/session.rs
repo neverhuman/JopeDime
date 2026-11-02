@@ -450,6 +450,12 @@ impl Session {
                         snapshot.state,
                         RunState::Completed | RunState::Cancelled | RunState::Failed
                     ) {
+                        // A finished run's leaderboard and profile, once; a failure is reported
+                        // and retried by the next sync rather than stopping this one.
+                        lines.push(
+                            crate::cloud::sync_events(&client, &snapshot)
+                                .unwrap_or_else(|error| format!("Run events: {error:#}")),
+                        );
                         let _ = done.send(run);
                     }
                 }
