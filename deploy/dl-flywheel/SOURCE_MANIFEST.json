@@ -296,7 +296,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/native_variant_snapshot.py",
       "origin_sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258",
       "path": "deploy/dl-flywheel/jope_flywheel/native_variant_snapshot.py",
-      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
+      "sha256": "b96a1ae5ab048f0f8144e20d4d59ea89bce46d1454d80c70831a610b2075d7ca"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/paper_archive.py",
