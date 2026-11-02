@@ -44,6 +44,7 @@ HERE = Path(__file__).resolve().parent
 H81_PATH = HERE.parent / "h81_w4_prospective_2plus2" / "run_prospective.py"
 H81_SHA = "5d0dd1afb7952e7ac2dc9a13185827088a9705b77d472bfd06dfd9086b6d9d5a"  # H81 safe numeric model archive helpers
 CTX_MODELS_SHA = "c8bfbe94f74d6ffe3f40b9848e43e22e832ada8672828d31f8ada647ee3096a1"
+PROG_MODELS_SHA = "5938a35497ccde1a1489c4d6b13d122196aed16739a3272afea06d57d5fff692"
 ARMS = ("PRIOR_top4", "CTX_top4", "HEDGE_CTX")
 ANCHOR = "PRIOR_top4"
 PRIMARY = ("HEDGE_CTX", "PRIOR_top4")
@@ -231,10 +232,14 @@ def main():
         ctx = pickle.load(f)
     prog_path = a.out / "models_prog.pkl"
     if prog_path.exists():
+        if h81.sha256_file(prog_path) != PROG_MODELS_SHA:
+            raise SystemExit("program-only models.pkl hash mismatch")
         with open(prog_path, "rb") as f:
             prog = pickle.load(f)
     else:
         prog = fit_prog_models(h81, a.out, a.threads)
+        if h81.sha256_file(prog_path) != PROG_MODELS_SHA:
+            raise SystemExit("program-only models.pkl hash mismatch")
     guard = cached_guard(h81, prog, ctx)
     guard["models_prog_sha256"] = h81.sha256_file(prog_path)
     (a.out / "guard.json").write_text(json.dumps(guard, indent=1))

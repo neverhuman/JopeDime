@@ -315,19 +315,25 @@ pub fn service(root: &Path, jobs: &Path, spec: &Path, output: &Path) -> Result<(
             && (gp["phase"] == "running" || gp["phase"] == "completed")
             && gp["cpu_budget"].as_u64().is_some_and(|n| n <= 104)
             && gp["worker_memory_limit_gib"].as_u64().is_some_and(|n| n <= 8)
-            && (gp["phase"] == "completed" || crate::telemetry::now().saturating_sub(gp["timestamp"].as_u64().unwrap_or(0)) <= 5),
+            && (gp["phase"] == "completed"
+                || gp["timestamp"]
+                    .as_u64()
+                    .is_some_and(|ts| crate::telemetry::now().saturating_sub(ts) <= 5)),
             "concurrent GP service must have fresh telemetry and stay within 104 CPUs / 8 GiB per worker");
     }
     let mut children = Vec::new();
-    let exe = persistent.clone().unwrap_or(std::env::current_exe()?);
+    let exe = match persistent.clone() {
+        Some(path) => path,
+        None => std::env::current_exe()?,
+    };
     let total = read_json::<GpJobs>(jobs)?.jobs.len();
     if schedule.exclusive_cpu {
-        let gp: serde_json::Value =
-            read_json(&root.join("runs/gp-service.json")).unwrap_or_default();
-        ensure!(
-            gp["active"].as_u64().unwrap_or(0) == 0,
-            "exclusive encoding requires the GP CPU block to drain first"
-        );
+        if let Ok(gp) = read_json::<serde_json::Value>(&root.join("runs/gp-service.json")) {
+            ensure!(
+                gp["active"].as_u64().is_none_or(|n| n == 0),
+                "exclusive encoding requires the GP CPU block to drain first"
+            );
+        }
     }
     let started_at = crate::telemetry::now();
     let started = Instant::now();
@@ -405,11 +411,9 @@ pub fn service(root: &Path, jobs: &Path, spec: &Path, output: &Path) -> Result<(
                 if let Ok(receipt) =
                     read_json::<serde_json::Value>(&output.join(format!("rank-{rank}.json")))
                 {
-                    if receipt["timestamp"].as_u64().unwrap_or(0) >= started_at {
+                    if let Some(ts) = receipt["timestamp"].as_u64().filter(|&ts| ts >= started_at) {
                         ensure!(
-                            crate::telemetry::now()
-                                .saturating_sub(receipt["timestamp"].as_u64().unwrap())
-                                < 600,
+                            crate::telemetry::now().saturating_sub(ts) < 600,
                             "Hyperion rank {rank} heartbeat timeout"
                         );
                         ranks.push(receipt);
@@ -431,7 +435,7 @@ pub fn service(root: &Path, jobs: &Path, spec: &Path, output: &Path) -> Result<(
                 // `persistent` is the legacy v23 GP admission flag. Keep it
                 // false in concurrent mode so the deployed GP controller does
                 // not drain; record the actual encoder backend separately.
-                &serde_json::json!({"phase":if complete{"completed"}else{"persistent batched Hyperion encoding"},"total":total,"world":8,"persistent":schedule.exclusive_cpu,"persistent_encoder":persistent.is_some(),"exclusive_cpu":schedule.exclusive_cpu,"concurrent_gp":specification.concurrent_gp,"cpu_budget":schedule.cpu_width*8,"cpu_threads_each":schedule.cpu_width,"preprocessing_streams_per_rank":if persistent.is_some(){14}else{1},"input_queue_depth_per_rank":if persistent.is_some(){28}else{1},"encoder_input_memory_budget_gib":if persistent.is_some(){512}else{0},"completed":ranks.iter().map(|r|r["completed"].as_u64().unwrap_or(0)).sum::<u64>(),"ranks":ranks,"timestamp":crate::telemetry::now()}),
+                &serde_json::json!({"phase":if complete{"completed"}else{"persistent batched Hyperion encoding"},"total":total,"world":8,"persistent":schedule.exclusive_cpu,"persistent_encoder":persistent.is_some(),"exclusive_cpu":schedule.exclusive_cpu,"concurrent_gp":specification.concurrent_gp,"cpu_budget":schedule.cpu_width*8,"cpu_threads_each":schedule.cpu_width,"preprocessing_streams_per_rank":if persistent.is_some(){14}else{1},"input_queue_depth_per_rank":if persistent.is_some(){28}else{1},"encoder_input_memory_budget_gib":if persistent.is_some(){512}else{0},"completed":ranks.iter().filter_map(|r|r["completed"].as_u64()).sum::<u64>(),"ranks":ranks,"timestamp":crate::telemetry::now()}),
             )?;
             if complete {
                 break;

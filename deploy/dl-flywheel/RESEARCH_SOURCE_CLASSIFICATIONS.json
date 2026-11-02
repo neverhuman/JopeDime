@@ -154,13 +154,13 @@
       "sha256": "782fc19537cf6e8e1c253a593f378897e97a02128cf2ae682fd0bf4426ca711b"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py": {
-      "bytes": 6840,
+      "bytes": 6853,
       "classification": {
         "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "f4a424b360d5ba6306d65ef14874f307779664ecb9d2ac3ff9ab415778f1028f"
+      "sha256": "312a04d80cdfb6e659ae796120bb440056c379284408d8773c604c29c392b22b"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py": {
       "bytes": 7481,
@@ -6031,8 +6031,8 @@
       }
     },
     "python:research/flywheel_selfplay/h229_pool_headroom_replication/backend.py": {
-      "bytes": 8018,
-      "sha256": "88e3de0e9b36c5084c7572a890c5634c104fa426e08adf2e33c584d2144760d2",
+      "bytes": 8922,
+      "sha256": "0e1ff0504ff142796c7575245cf20e6627f2e54bf705ede4edfdecc9bcfa023e",
       "classification": {
         "role": "research",
         "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
@@ -6047,8 +6047,8 @@
       }
     },
     "python:research/flywheel_selfplay/h229_pool_headroom_replication/launcher.py": {
-      "bytes": 8809,
-      "sha256": "f84b5c6b298e758d7574bb420f84df921a7dc2d0a160b972f56dcaf3d360802a",
+      "bytes": 9519,
+      "sha256": "4139c513efa321138ad3d9364b9754488137c20e7260455fb73f7e864e51dc79",
       "classification": {
         "role": "research",
         "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
