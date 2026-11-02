@@ -3,7 +3,7 @@
 use crate::cache::ModelsCache;
 use crate::fetch::{FetchOptions, Fetcher};
 use crate::index::Repo;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 use jope_datasets::paths::offline_env;
 use std::path::PathBuf;
@@ -93,7 +93,7 @@ pub enum Cmd {
 
 /// Run a parsed command line; errors are printed as `error: …` and exit with status 2, a
 /// failed check exits with status 1.
-pub fn exec(cli: Cli) -> ExitCode {
+pub fn dispatch(cli: Cli) -> ExitCode {
     match run(cli) {
         Ok(code) => code,
         Err(e) => {

@@ -2,12 +2,12 @@
 //! crate; `jope models …`, `jope datasets …`, `jope pipeline …` and `jope motifs …` delegate
 //! to the library crates' own clap commands (no process is spawned).
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use clap::{Parser, Subcommand};
 use jope_cli::{
-    emit_genome_with_train, fit_dataset, generate_fixtures, load_router, local_champions,
-    local_train_step, refuse_s3, resolve_root, route_dataset, search_dataset, verify_inputs,
-    write_json, Verification, DEFAULT_GENOME,
+    DEFAULT_GENOME, Verification, emit_genome_with_train, fit_dataset, generate_fixtures,
+    load_router, local_champions, local_train_step, refuse_s3, resolve_root, route_dataset,
+    search_dataset, verify_inputs, write_json,
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -234,7 +234,7 @@ fn main() -> ExitCode {
         #[cfg(target_os = "linux")]
         Command::Train(cli) => return train::execute(cli),
         Command::Optimize(cli) => return jope_bench::panel::optimize_cli::execute(cli),
-        Command::Models(cli) => return jope_models::cli::exec(cli),
+        Command::Models(cli) => return jope_models::cli::dispatch(cli),
         Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
         Command::Pipeline(cli) => return jope_pipeline::cli::exec(*cli),
         Command::Motifs(cli) => return jope_motifs::cli::exec(cli),
@@ -431,16 +431,36 @@ fn main() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::Cli;
+    use super::{Cli, Command};
     use clap::{CommandFactory, Parser};
 
     #[test]
     fn version_is_semver() {
         let parts: Vec<_> = env!("CARGO_PKG_VERSION").split('.').collect();
         assert_eq!(parts.len(), 3, "expected major.minor.patch");
-        assert!(parts
-            .iter()
-            .all(|part| part.chars().all(|character| character.is_ascii_digit())));
+        assert!(
+            parts
+                .iter()
+                .all(|part| part.chars().all(|character| character.is_ascii_digit()))
+        );
+    }
+
+    #[test]
+    fn models_cli_is_parsed_as_a_typed_command() {
+        let cli = Cli::try_parse_from(["jope", "models", "verify", "--manifests-only"])
+            .expect("valid typed models command");
+        assert!(matches!(
+            cli.command,
+            Some(Command::Models(jope_models::cli::Cli {
+                cmd: jope_models::cli::Cmd::Verify {
+                    manifests_only: true,
+                    ..
+                },
+                ..
+            }))
+        ));
+
+        assert!(Cli::try_parse_from(["jope", "models", "unknown"]).is_err());
     }
 
     #[test]
