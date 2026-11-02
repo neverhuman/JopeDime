@@ -1681,6 +1681,8 @@ crates/jope-pipeline/src/context_qualification/materialize.rs
 crates/jope-pipeline/src/cpu_context_bridge.rs
 crates/jope-pipeline/src/dataset.rs
 crates/jope-pipeline/src/emit.rs
+crates/jope-pipeline/src/emit/legacy.rs
+crates/jope-pipeline/src/emit/v3.rs
 crates/jope-pipeline/src/evaluation_score.rs
 crates/jope-pipeline/src/execution.rs
 crates/jope-pipeline/src/execution/pool_admission.rs
