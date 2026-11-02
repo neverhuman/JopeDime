@@ -1061,6 +1061,10 @@ crates/jope-cli/src/storage.rs
 crates/jope-cli/src/tests.rs
 crates/jope-cli/src/train.rs
 crates/jope-cli/src/train/corpus.rs
+crates/jope-cli/src/train/corpus/admission.rs
+crates/jope-cli/src/train/corpus/prepare.rs
+crates/jope-cli/src/train/corpus/prepare_request.rs
+crates/jope-cli/src/train/corpus/tests.rs
 crates/jope-cli/tests/offline_cli.rs
 crates/jope-cli/tests/offline_cli/champion_commands.rs
 crates/jope-cli/tests/offline_cli/emission_search.rs
