@@ -46,7 +46,7 @@ Freeze the evaluation contract before opening final outcomes. Bind evidence to s
 | D5 | [08_meaning.tex:23](sections/08_meaning.tex#L23) | State which level of self-improvement is supported by source-bound training changes and independent proposal outcomes supplied by Jepson. |
 | D6 | [08_meaning.tex:28](sections/08_meaning.tex#L28) | Describe limits on task coverage, the program language, referee reliability and measured cost using Jepson's supplied source. |
 | D7 | [08_meaning.tex:33](sections/08_meaning.tex#L33) | Supply the conclusion and next steps justified by Jepson's results and their limits; reserve stronger claims until their required evidence is supplied. |
-| P1 | [flywheel_status.tex:83](sections/06_method/flywheel_status.tex#L83) | Bind the retained snapshot to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. |
+| P1 | [flywheel_status.tex:84](sections/06_method/flywheel_status.tex#L84) | Bind the retained snapshot to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. |
 
 The marker table follows the current source lines. Update it whenever a placeholder is added, moved, filled or removed; keep the compiled count and source inventory consistent.
 
