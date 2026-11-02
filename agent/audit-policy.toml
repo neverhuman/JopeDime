@@ -17,6 +17,13 @@ extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "research/flywheel_selfplay/h188_kernel_inputs/treatment.py",
+  # Historical entrants archived verbatim in the paper; not generated product code.
+  # The artifact manifest pins them to the original submissions, and the paper check
+  # verifies the bytes. A source header would invalidate that evidence.
+  "docs/paper/innovationzero/artifacts/sources/GPT6_Astra_Max.rs",
+  "docs/paper/innovationzero/artifacts/sources/GPT6p1_Sol_Max.rs",
+  "docs/paper/innovationzero/artifacts/sources/Gemini4_argon_high.rs",
+  "docs/paper/innovationzero/artifacts/sources/Opus5p5_Extra.rs",
   "deploy/ci/test-gitleaks-config.py",
   "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
   "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",

@@ -2135,6 +2135,10 @@
       "reason": "H170 owner-directed one-cycle AdamW continuation (CTRL,OC3,OC15,mean-LR-matched control): data-free schedule application, inactive-gradient handling, drift, family selection/median inference, pseudoreplication and guarded launch controls. Research only; no product or sealed qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h204_bigger_proposer/test_h204.py": {
+      "reason": "H204 owner-directed bigger proposer (widths 128 -> 256 -> 512) data-free CPU controls: shared #1726 research DOPE opt-in and serving refusal, #1730 numeric-thread admission, step-0 live token bridge parity, pairwise cost ranking loss direction, R882_CONT adapter continuation, Rust CV evaluator signature binding and exact 91-context r882 parity/gate checks. Research only; no product or sealed qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h206_search_distill/test_h206.py": {
       "role": "research",
       "reason": "H206 research-only native-search/student integration: versioned TRAIN/tensor and transitive role closure, controlled native CLI and exact-version S3 labels, live inherited DOPE/SVD updates and per-round optimizer/forward proofs, cumulative budgets/resume, cache integrity and fixed-checkpoint locks. Generated fixtures only; no real model/data/GPU/scientific qualification."
@@ -5578,7 +5582,19 @@
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/test_h209.py": {
       "role": "research",
-      "reason": "H209 data-free CPU fixtures: actual optimizer/forward change, zero-reference/tie semantics, B harm and strict-gain boundary, role refusal before reads, limited reveal decoding, current-load/disk guards, independent family folds, exact native vector, pooled primary gate, create-only versioned S3 corruption refusal and unmerged-launch refusal. No real cohort or GPU opened."
+      "reason": "H209 data-free CPU fixtures: actual optimizer/forward change, zero-reference/tie semantics, B harm and strict-gain boundary, role refusal before reads, limited reveal decoding, current-load/disk guards, independent family folds, exact native vector, pooled primary gate, create-only versioned S3 corruption refusal and unmerged-launch refusal. No real cohort or GPU opened. Includes real SIGALRM buffered-write reentry and flag-reset controls."
+    },
+    "python:research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py": {
+      "reason": "H205 fresh vs static data and static teacher 50-round r882 study: data-free equal-compute schedule, shared fresh schedule, frozen-teacher identity, H178 per-round 205-family pooled cross-fit selector, native r882 91/91 parity gate, JRB-01 fresh D4 regression admission/label validator, and thread-rule-(b) monitor controls. Research only; no product or sealed qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h210_blend025_gated_retry/test_h210.py": {
+      "reason": "Owner-requested H210 (H203 retry) data-free controls for the outcome-free gated BLEND_025 (cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest, fixed-lambda blend, zgap and disagreement gate statistics, tau grid, FIT-only tau selection with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB/p/harm verdict, Elo orientation, xbabe1-only host admission, xbabe1 load gate with sustained-overload stop, 93.8% disk rule); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h211_gpu_delta_calibration/test_h211.py": {
+      "role": "research",
+      "reason": "H211 CPU-only data-free controls for optimizer/forward proof, roles/folds, exact native vector, B gates, resource guards, S3 custody, real SIGALRM reentry during buffered write, flag reset after refusal and exact-open-PR admission; no scientific outcome or GPU fixture."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

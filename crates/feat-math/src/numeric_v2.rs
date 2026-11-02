@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-opt-in-successor-model-has-contract-tests-and-no-legacy-default-rollout owner=feat-math expires=2027-04-01
 //! Explicit successor numerics. Legacy model, operator and generator paths are untouched.
 use crate::{dsl::Stage, heads::RidgeModel, GenomeIr, Rows, MAX_WIDTH};
 use anyhow::{bail, ensure, Context, Result};

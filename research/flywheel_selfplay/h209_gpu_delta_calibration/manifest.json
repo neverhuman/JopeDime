@@ -46,7 +46,7 @@
   },
   "schema": "jope.h209-gpu-delta/v1",
   "wave": "H209",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "CLOSED_INCOMPLETE",
   "owner": "rd_astra",
   "source_base": "49f25cc6656d269b72ed2a46231f9676dbc6697f",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
@@ -121,5 +121,55 @@
     "runner.py": "c5f4dbc74eb51b31d00bf73b0860271397525014ed935ade1d651077a19aa044",
     "science.py": "a825937950469310a0a827d0b7d286949b606899c0dc96947495c9893b8610d8",
     "test_h209.py": "d6c9a8e5e965598a9c41e0db9312a6ab307cae71dded5fd113de905a0f869c52"
+  },
+  "execution_source_commit": "d609dab46dc725925008e750e0813bfe40b44ab4",
+  "source_sha256_scope": "Immutable executed files at execution_source_commit; historical README hash intentionally refers to that commit, not this closeout.",
+  "closeout": {
+    "status": "INCOMPLETE",
+    "verdict": null,
+    "optimizer_updates": 0,
+    "retry_allowed": false,
+    "execution_manifest": "execution-manifest-attempt1.json",
+    "execution_manifest_sha256": "4c0af6bf536048b02f09761effb1cdd1f9595501759fc5f64f3db31448aa1e1e",
+    "metrics": "metrics.json",
+    "report": "REPORT.md",
+    "source_and_prereg_unchanged": true,
+    "s3": {
+      "runtime-evidence.tar.gz": {
+        "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H209/astra-t2236/closeout-20261102T0703Z/runtime-evidence.tar.gz",
+        "version_id": "k3lv7M9Q3j4mhXqcACdSoeEnNfeL1ror",
+        "sha256": "e762ffe225e54d0735022f78a635c4a89c4001794ab74cc3423ecf328729c963",
+        "bytes": 16147
+      },
+      "metrics.json": {
+        "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H209/astra-t2236/closeout-20261102T0703Z/metrics.json",
+        "version_id": "6GV.wuRGvXqf28iHf7VLQaFY9mPBSSGi",
+        "sha256": "00e25f991d7669631d5aa1539e5bcccb71184c718bdf62290abbac0df0cd6344",
+        "bytes": 2016
+      },
+      "executed-source.tar.gz": {
+        "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H209/astra-t2236/closeout-20261102T0703Z/executed-source.tar.gz",
+        "version_id": "CjaXVMqd69lp.lruoSo8lZ1lwe6lvD8f",
+        "sha256": "0deb85bc8f940efbcf6afbb7a223271c5f83c7c096650b4712d1017c422ea559",
+        "bytes": 173474
+      },
+      "manifest.json": {
+        "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H209/astra-t2236/closeout-20261102T0703Z/manifest.json",
+        "version_id": "lmJmF39su9zn125Sz8HGbhKhsuU8bcwW",
+        "sha256": "da4e78a2a0e92ca68deaaf972a888216b8ea9aaaee0f4736a3eaaf17afb33e54",
+        "bytes": 6467
+      }
+    },
+    "logging_reentry_reproduction": {
+      "status": "REPRODUCED",
+      "source_commit": "d609dab46dc725925008e750e0813bfe40b44ab4",
+      "runner_sha256": "c5f4dbc74eb51b31d00bf73b0860271397525014ed935ade1d651077a19aa044",
+      "method": "Extract exact check function AST; a fake RawIO writer raises SIGALRM during buffered flush, invoking the same function reentrantly.",
+      "observed_error": "reentrant call inside <_io.BufferedWriter>",
+      "real_data_opened": false,
+      "gpu_initialized": false,
+      "training_attempt": false,
+      "scope": "CPU-only reproduction of logging failure, not a scientific retry"
+    }
   }
 }

@@ -1,6 +1,6 @@
 # H206 native-search / student learning
 
-**CPU interfaces implemented; scientific run NOT STARTED; GPU queue CLOSED.**
+**CPU interfaces implemented; scientific run NOT STARTED; execution qualification PENDING.**
 
 The source now includes:
 

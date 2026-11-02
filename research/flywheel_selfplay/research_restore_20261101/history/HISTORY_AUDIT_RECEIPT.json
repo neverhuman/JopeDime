@@ -1,0 +1,52 @@
+{
+  "schema": "jope.research-history-audit-receipt/v1",
+  "utc": "2026-11-02T03:41:07.790266+00:00",
+  "source_head": "8ddc9b42683ceec96583bb0cf14cf2ebb2f75701",
+  "source_read_only": true,
+  "source_mutations": 0,
+  "launches": 0,
+  "new_scientific_studies": 0,
+  "index_records": 222,
+  "numeric_coverage_entries": 208,
+  "unavailable_numeric_ids": [
+    0,
+    54,
+    64
+  ],
+  "historical_H11_status": "UNAVAILABLE_IN_BOUNDED_SAVED_HISTORY",
+  "selected_canonical_files": 665,
+  "canonical_selected_bytes": 7375924,
+  "h_path_groups": 205,
+  "runtime_metadata_h_dirs": 110,
+  "runtime_small_files": 68,
+  "files": [
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/research-restore-20261101/history/research-history-index.json",
+      "bytes": 825091,
+      "sha256": "ecdabd8533cc82acef4036be98a9456bff71477ce0c6f40dba758b246d3af312"
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/research-restore-20261101/history/RESEARCH_SYNTHESIS.md",
+      "bytes": 15011,
+      "sha256": "aa678c1aa2269232efd87dc2911f5079ef75891146adeeefe9bed0e4e609f311"
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/research-restore-20261101/s3/REPORT.md",
+      "bytes": 10311,
+      "sha256": "0910e6bda1fb46dbed49eaf5d8d058a5fd75aee9ef7ea16419f9fef11b24d876"
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/research-restore-20261101/fleet/READINESS.md",
+      "bytes": 5568,
+      "sha256": "3c45a4526fc34c0373b0de5d5b3799cd1a205cec0752c5d1680e925ded79cbe4"
+    }
+  ],
+  "validation": [
+    "JSON parses",
+    "H0-H207 coverage once each",
+    "all SHA256 fields64hex",
+    "index below1MB",
+    "all selected canonical files bind path+SHA",
+    "no new H result or live promotion asserted"
+  ]
+}

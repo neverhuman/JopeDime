@@ -1,0 +1,134 @@
+{
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "/home/ubuntu/jope-data/h196/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "psutil": "7.1.0",
+    "torch": "2.7.0",
+    "boto3": "1.35.49",
+    "botocore": "1.35.99",
+    "threadpoolctl": "3.6.0"
+  },
+  "checkpoint": "/home/ubuntu/jope-data/h196/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "required_baseline": {
+    "bit_exact": true,
+    "contexts": 91,
+    "families": 19,
+    "mean": 1.1377941898164525
+  },
+  "schema": "jope.h211-gpu-delta/v1",
+  "wave": "H211",
+  "status": "PREREGISTERED_NOT_RUN",
+  "owner": "rd_astra",
+  "source_base": "abf062b3cf1ecc24bb40f999b0a534bdfa04aad5",
+  "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
+  "catalog": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
+  "source_manifest": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
+  "gpu_uuid": "GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b",
+  "s3_prefix": "experiments/rd_breakthrough_20261101/H211/astra-t0040/",
+  "seeds": [
+    211101,
+    211102,
+    211103
+  ],
+  "fold_seeds": [
+    211141,
+    211142,
+    211143
+  ],
+  "bootstrap_seed": 211150,
+  "elo_seed": 211151,
+  "arms": [
+    "R882",
+    "DELTA_RAW",
+    "DELTA_SAFE",
+    "SHUF_SAFE"
+  ],
+  "primary": "DELTA_SAFE",
+  "holm_multiplicity": 1,
+  "max_total_updates": 3840,
+  "updates_per_fit": 128,
+  "batch_contexts": 4,
+  "head_parameters": 47744,
+  "thresholds": [
+    0,
+    0.001,
+    0.01,
+    0.05,
+    0.1,
+    0.2,
+    0.5,
+    null
+  ],
+  "null_threshold_means": "positive infinity, always r882",
+  "resource_limits": {
+    "host": "xbabe2",
+    "gpu_index": 0,
+    "wall_seconds": 3600,
+    "attempts": 1,
+    "max_disk_used_fraction": 0.938,
+    "min_free_bytes": 40000000000,
+    "min_available_ram_bytes": 17179869184,
+    "max_process_tree_rss_bytes": 6000000000,
+    "max_local_output_bytes": 300000000,
+    "max_cpu_percent": 85,
+    "max_load_fraction_of_affinity": 0.85,
+    "numeric_threads": 1,
+    "numeric_policy_max": 4,
+    "os_threads": "diagnostic only; CUDA driver threads exempt"
+  },
+  "data_scope": "Historical real-S3 TRAIN pools; not fresh native-CV labels; no DL-Val head evaluation",
+  "serving_promotion": false,
+  "parent_sources": {
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "research/flywheel_selfplay/hwave_numeric_threads.py": "9cb334d61a95f9d648dd52100f7010d7f6c7b7d00e5bed5c2dc58507121c668d",
+    "research/flywheel_selfplay/h200_nested_blend/analysis.py": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2"
+  },
+  "source_sha256": {
+    "PREREG.md": "92c6ad8845afd1b544f708b0c82a0bb6c2f0dcb28d35e8e506ba65ca5f6bf5f7",
+    "README.md": "481800a43f4f1aeedaf3aca0ff2c1e392877642bf7d69a34a90ae6b06d89f666",
+    "fold_manifest.json": "0cdc28d0bb205ad53511c4742f1ef73281b51207cb6514169e9a958a3561441d",
+    "launch.py": "8d68c92b047a2190b6979b6a4897c470536aa194d65eae60b79f57536176c518",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "runner.py": "e8be61a63ce24e77ec786ed48b9ce86c60981ebfe3640058c93f4324a6cbc6b6",
+    "science.py": "0849dc9fad90d4176a7d4f775d279a8845be25c1ebe17d454d954449065cfc17",
+    "test_h211.py": "36d7a9e90a4d047440b19c4e6e7abba7179fedf6d7b7582e1bdcfcc067bc6a7e"
+  },
+  "authority": "gbw_0040_rd_astra.md",
+  "launch_gate": "Exact non-draft OPEN PR head or exact MERGED PR source; gbw_0040 authorization",
+  "predecessor": {
+    "wave": "H209",
+    "execution_commit": "d609dab46dc725925008e750e0813bfe40b44ab4",
+    "status": "INCOMPLETE",
+    "updates": 0,
+    "closeout_pr": 1752
+  }
+}

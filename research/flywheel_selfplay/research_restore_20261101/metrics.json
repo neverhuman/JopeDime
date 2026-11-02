@@ -1,0 +1,74 @@
+{
+  "schema": "jope.research-restore-audit/v1",
+  "observed_utc": "2026-11-02T03:44:45.972313+00:00",
+  "kind": "operational_history_audit_not_scientific_wave",
+  "status": "AUDIT_COMPLETE_RESEARCH_IMPLEMENTATION_IN_PROGRESS",
+  "history_pinned_main": "8ddc9b42683ceec96583bb0cf14cf2ebb2f75701",
+  "h_id_range": [
+    0,
+    207
+  ],
+  "indexed_records": 222,
+  "coverage_status_counts": {
+    "NO_RECORD_FOUND_IN_BOUNDED_INVENTORY": 3,
+    "DIRECT_OR_EMBEDDED_RECORD": 195,
+    "COMBINED_REPORT_ONLY_NO_SEPARATE_RESULT_ASSUMED": 6,
+    "ACTIVE_OWNER_PLAN_NOT_IN_PINNED_MAIN": 4
+  },
+  "unavailable_numeric_ids": [
+    0,
+    54,
+    64
+  ],
+  "historical_result_explicitly_unavailable": [
+    11
+  ],
+  "science_attempts_by_this_audit": 0,
+  "optimizer_updates_by_this_audit": 0,
+  "scientific_improvement_claimed": false,
+  "observed_flywheel": {
+    "host": "xbabe1",
+    "pid": 2297929,
+    "round": 3395,
+    "optimizer_steps": 2,
+    "changed_tensors": 47,
+    "trainable_parameters": 29211,
+    "training_seconds": 3.5592901334166527,
+    "round_seconds": 95.171486697,
+    "train_datasets": 257,
+    "train_families": 205,
+    "regression_elo": null,
+    "regression_elo_unavailable_reason": "Live round has no qualified Elo panel; H201 native/archive parity failure and exploratory CIs do not establish gain."
+  },
+  "new_wave_state_at_0339Z": {
+    "H204": "owner_implementing_no_launch_receipt",
+    "H205": "gpu_claimed_owner_implementing_no_launch_receipt",
+    "H206": "queued_disk_reservation_not_met",
+    "H207": "preregistered_executor_not_ready"
+  },
+  "publication_reconciliation": [
+    {
+      "wave": "H200",
+      "status": "source_summary_missing_at_pinned_main",
+      "next_action": "ASTRA owner transfer at03:41Z now owns exact evidence replay and closeout; do not duplicate."
+    },
+    {
+      "wave": "H203",
+      "status": "main_prereg_status_stale_vs_runtime4of45_resource_stop",
+      "next_action": "Original opus owner must publish stopped/progress receipt and one-resume disposition; preserve waiter and budget."
+    }
+  ],
+  "verification_scope": "All-H summary/source audit; five S3 metadata HEADs and bounded live runtime observations. Archive payload verification is recorded separately in manifest.json.",
+  "subsequent_source_review": {
+    "observed_utc": "2026-11-02T03:52:32.071073+00:00",
+    "pr": 1723,
+    "head": "357fc075c913b4e4b883d305ce6009c4d727327f",
+    "status": "HOLD_SCIENTIFIC_LAUNCH_PENDING_CORRECTION",
+    "findings": [
+      "FRESH reuses static train rows and orders; no actual new-family input path.",
+      "Within-cell candidate retention uses mean-only margin; pooled confidence selector runs only at the end."
+    ],
+    "qualification": "Two source reads plus data-free AST probe; no scored inference executed.",
+    "owner_route": "Immutable review packet and locked canonical coordination entry; original rd_argon/merger ownership retained."
+  }
+}
