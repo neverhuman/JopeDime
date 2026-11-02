@@ -17,7 +17,7 @@ fn main() {
         ))
         .unwrap(),
         Some("result-v2") => serde_json::to_value(schemars::schema_for!(
-            jope_pipeline::experiment_v2::EvaluationResult
+            jope_pipeline::evaluation_result::EvaluationResult
         ))
         .unwrap(),
         None => jope_pipeline::receipt::derived_schema(),

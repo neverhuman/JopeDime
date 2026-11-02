@@ -10826,7 +10826,7 @@
         "doctest": false,
         "kind": "target",
         "required_features": [],
-        "source": "crates/jope-campaigns/src/bin/search-v3.rs",
+        "source": "crates/jope-campaigns/src/bin/campaign_search.rs",
         "test": true
       },
       "dispositions": [

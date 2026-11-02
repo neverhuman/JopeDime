@@ -679,7 +679,7 @@ fn asm_contract_schemas_match_generated_types_exactly() {
         (
             "jope.evaluation-result.v2",
             serde_json::to_value(schemars::schema_for!(
-                jope_pipeline::experiment_v2::EvaluationResult
+                jope_pipeline::evaluation_result::EvaluationResult
             ))
             .unwrap(),
         ),
