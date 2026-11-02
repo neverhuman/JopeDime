@@ -1,10 +1,36 @@
-# REL-07 CPU gate preparation
+# REL-07 CPU gate preparation and final-gate inventory
 
-This is the owner-approved gb2112 CPU step for spec §§11 and14. It runs source
+This carries forward gov03's owner-approved gb2112 CPU step and adds the
+`grok_t2210_lanes.md` planning-only scope for spec §§11 and14. It runs source
 diagnostics on one frozen origin/main commit and writes qualification_receipt.json.
 The receipt always leaves all28 release gates and Q1 not-qualified, the signed
 candidate and OWNER approval null, and release_qualified false. A successful
 unsigned CPU run does not approve release bytes, learned guidance or a platform.
+
+## Final-gate rerun skeleton (t2210)
+
+The metadata-only `release-plan` command enumerates all28 release gates and Q1
+from spec §14, traces them through the task cards indexed by `master_plan.md`, and
+records the current status-note paths, existence, reported headings and SHA256s.
+Master-plan task statuses and even a historical PASS heading are dated metadata,
+not signed-candidate evidence. Missing notes retain null hashes/statuses. Source
+metadata that changes during collection causes refusal.
+
+    nice -n 10 python3 deploy/qualification/v1.0/cpu_gates.py release-plan \
+      --repo "$OWNED_CHECKOUT" --expected-main-sha "$MAIN_SHA" \
+      --plan-root "$PLAN_ROOT" --output "$NEW_EXTERNAL_PLAN"
+
+`PLAN_ROOT` contains `master_plan.md`, `tasks/`, `status/` and `source/spec-v1.md`.
+The command writes `qualification_receipt.json` and a compact `gate-status.md`.
+It executes no gate. Each release gate remains `not-qualified / not-run`, with
+null rerun command and qualification evidence. The schema rejects passing release
+gate status, a signed candidate, OWNER approval or release qualification in this
+prep format. Q1 is recorded separately as default-selecting, not release-blocking.
+No default is selected from missing Q1 evidence.
+
+This assignment exercises only the planner and focused tests below. The retained
+CPU diagnostics runner is separate; no complete matrix, GPU qualification,
+signing, release publication, dataset access or GitHub CI is performed by prep.
 
 The design reuses each full CPU family's command from deploy/ci/coverage.json.
 The literal full-main.py GROUPS must partition those families exactly. Independent
@@ -34,7 +60,7 @@ owned main checkout. A missing or stale checkout refuses before gates run.
       --output "$NEW_EXTERNAL_EVIDENCE"
 
 The Cargo entry point accepts the dispatcher's appended -j argument and caps
-actual child jobs at8. It executes no Rust build itself. CUDA visibility is empty,
+actual child jobs at4 under t2210. It executes no Rust build itself. CUDA visibility is empty,
 only basic locale and toolchain paths are forwarded; ambient credentials, fixture routing and GPU settings are not inherited. Math threads are1, incremental is0, and dev debug is line-tables-only. It checks
 CPU load<=85% and disk use<95% before each command; declared family timeouts still
 apply and the controller caps an owned process group at30min by default.
@@ -70,6 +96,116 @@ schema validation and the schema's refusal to promote a CPU result to a release.
 Set JOPE_QUALIFICATION_TEST_TMP to external custody if desired; defaults reuse the
 lane target and never put Git fixtures or build output under /tmp.
 
+The added release-plan controls check all29 gate IDs, current path/hash metadata,
+missing evidence, historical PASS non-promotion, gate-inventory drift, metadata
+root escapes, and concurrent status changes. These fixtures are not gate reruns.
+
+## Signer-compatible 28-gate receipt
+
+For final scaffold assembly, [RECEIPT-ASSEMBLY.md](RECEIPT-ASSEMBLY.md) gives the
+candidate-bound invocation and [release_notes.md](release_notes.md) retains the
+draft disclosures. Add both `--controller-run DIR` and `--controller-inputs FILE`
+to attach that run's machine, commands, input bindings and output pins. This
+mode requires all five external provider bindings and 28 completed commands;
+it refuses receipts from another run and rechecks metadata/log hashes before
+writing. Existing invocations without these optional arguments keep their
+minimal output shape. Provenance does not sign bytes or select the Q1 default.
+
+`gates_receipt.py` writes the minimal `{"gates":[{"id","status","evidence"}]}`
+shape read by `signer_watch.sh`. It emits exactly M1–D2 (28 release gates); Q1 is
+tracked separately. Projecting a `cpu_gates.py` CPU-prestage receipt always emits
+`NOT_RUN`, with the source and prep-receipt hash in each evidence string. Passing
+source checks do not become release-gate PASS results.
+
+For the later signed-byte run, provide a result manifest using schema
+`jope.rel07.gate-results/v1`, exactly 28 unique gate rows, a non-empty evidence
+string per row, and `signed_bytes_sha256`. Pass `--artifact` with the exact file
+whose bytes were tested; the runner verifies that digest and requires all 28
+statuses to be PASS before emitting a receipt with top-level `artifact_sha256`
+and the same `artifact_sha256` on every gate row. The previous
+`signed_bytes_sha256` field is retained for compatibility. These fields bind
+both the receipt and each gate to the exact artifact hash checked by
+`signer_watch.sh`.
+CPU-prestage output has no artifact binding and remains `NOT_RUN`. The helper
+only formats and validates receipts; it never signs or requests a signature.
+
+    python3 -B deploy/qualification/v1.0/gates_receipt.py \
+      --cpu-prestage "$CPU_RECEIPT" --output "$NEW_GATES_RECEIPT"
+
+    python3 -B deploy/qualification/v1.0/gates_receipt.py \
+      --gate-results "$SIGNED_RUN_RESULTS" --artifact "$SIGNED_CANDIDATE" \
+      --output "$NEW_GATES_RECEIPT"
+
+For a complete merged provider set, `release-gates --providers` discovers
+`providers/<gate>.py`, writes the exact 28-command manifest beside the evidence
+directory, and sends every child through the same `cpu_gates.py` admission and
+process controls. The runner refuses missing providers before execution and
+passes only a complete, candidate-bound result set to this receipt adapter. D2
+is not auto-discovered until its speed-gate policy is owner-defined. Until that
+and every other provider are available, supply an owner-reviewed complete
+manifest with `--manifest`; do not fill missing rows with placeholder commands.
+
 Signing, signed-byte gate reruns, native clean-host matrices, named client runs,
 reference-laptop measurements, Q1 and OWNER release approval remain future work.
 This PR does not claim that the complete CPU matrix has already run.
+
+## Timeout and process ownership
+
+Gate timeouts must be finite, positive, and at most 3600 seconds, including for planning and direct execution calls. On timeout or interruption, only the new session created for that invocation is signalled. The leader remains unreaped while its group receives SIGTERM, a five-second cleanup grace, and SIGKILL; descendants are therefore stopped even if the leader exits first. The leader is then reaped before another gate starts. This Unix process control does not establish native Windows qualification.
+
+The committed plan snapshot and gate inventory are refreshed from the metadata-only `release-plan` command. `plan-snapshot.json` pins the source main, driver bytes, and external receipt hash. The t1235 inventory ran against `f8bfa45ef07401ac7da94ffabf48973f7eabea98`; it inventoried 243 plan/status files and 19 CPU commands, executed zero checks, and left all 28 release gates plus Q1 `not-qualified / not-run`. The full receipt is retained at the path recorded in `plan-snapshot.json`. No release gate is executed or promoted by this inventory.
+
+Every CPU control requires a retained regular `command.log`, including controls
+without a test-result backend. A zero child exit with a missing log, symlink,
+directory or FIFO is recorded as failed evidence while preserving exit0. An
+empty regular log from a silent source tool remains valid. This does not promote
+CPU diagnostics to signed-byte qualification. The focused controller suite
+exercises these refusals using only its own fixture children and files.
+
+A per-file error while hashing retained output is recorded in the gate diagnostic
+without claiming that output's hash. It fails a successful or incomplete gate,
+preserves existing failed/timed-out/unavailable classifications and the child's
+original exit, and allows later CPU gates to run. Each gate receipt and the
+aggregate diagnostic remain available. The controller tests inject read errors
+at that I/O boundary while real fixture children and other hashes still run.
+
+Before each CPU gate starts, the runner rechecks the frozen origin/main, HEAD and
+clean working tree. Source drift stops the remaining commands and fails the
+aggregate receipt while retaining completed gate receipts and original exits.
+Unstarted gates stay in the inventory without fabricated execution records. The
+final source check remains in place; this is a boundary check, not a checkout
+lock or protection against changes during a running child.
+
+## v1.0.0 M3 operator-mix waiver receipt
+
+The receipt assembler can record owner ruling `M3-WAIVER-V1.0.0-T1955`
+without changing a raw gate verdict. Add `--release-version v1.0.0` and
+`--m3-waiver-ruling /absolute/owner-ruling.md` to its `--scaffold` command.
+The ruling's exact bytes are pinned. Supply all 28 actual receipts and the
+same signed candidate/source as usual. M3 must contain its fresh full four-clause
+measurement; the other three clauses must pass. The assembler derives the
+three-view guard from integer operator counts: every other operator stays
+within 2pp, and `edit_replace_head` stays within 3pp. It also verifies that the
+source contains the ruling's exact merged proposer bytes.
+
+The output retains M3 `status: FAIL`, its original counts, and adds
+`disposition: WAIVED_V1_0_0`. A separate `waivers` entry records the ruling,
+source/artifact hashes, measured deltas and expiry at v1.0.1. Every other gate
+still requires complete passing execution. CLI `all_pass` remains false.
+No historical receipt or tolerance is rewritten. A new release version,
+changed proposer, numerical CV failure or out-of-guard operator refuses.
+
+This format discloses the owner waiver for ENG's final review. The existing
+host signing watcher requires 28 literal PASS rows and will refuse it; only
+ENG may update or adjudicate that instrument. Never convert M3 to PASS to
+satisfy that watcher. Actual source/artifact qualification and release signing
+remain separate from successful receipt assembly.
+
+For candidate-mode D2 receipts, also pass `--candidate-manifest` to the scaffold
+assembler. It reuses the maintained controller admission for the full Linux and
+fused CPU variants, checks the manifest's seal receipt pins, and rechecks both
+artifacts and binding files after assembly. The top-level artifact remains the
+primary full package; the D2 row retains its actual fused package digest and
+`gate_artifacts.D2` records the same-candidate manifest/seal binding. A fused digest
+without this explicit binding is refused. M3 raw FAIL and the v1.0.0-only waiver
+remain separate; this option does not execute gates or sign a release.

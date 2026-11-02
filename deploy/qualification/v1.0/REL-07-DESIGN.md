@@ -20,7 +20,8 @@ than borrowing the full Linux hash. See [RECEIPT-ASSEMBLY.md](RECEIPT-ASSEMBLY.m
 Generate `qualification_receipt.json` only after that admission succeeds on the
 completed publisher run using the versioned provider inputs v2 or later. Preserve
 the assembled gate rows, counts, waiver and per-gate artifact hashes verbatim.
-Attach provenance from the same run: execution commands and exit statuses,
+Use the paired `--controller-run` and `--controller-inputs` options to attach
+provenance from the same run: execution commands and exit statuses,
 machines, source/tool identities, input manifests, output receipts/logs and their
 SHA-256 pins, plus the separately recorded Q1/default decision. Recheck input
 hashes around assembly; a changing run cannot yield the final deliverable.
@@ -38,7 +39,9 @@ as acceptance. Disclose the M3 waiver and known limits in
 [release_notes.md](release_notes.md). No runtime, model, threshold, protocol,
 credential or frozen application contract changes are proposed.
 
-Validation: first preserve the partial-run assembler refusal as NOT_QUALIFIED in
+Validation: synthetic fixtures exercise same-run admission and refusal of
+borrowed receipts, changed logs/metadata, incomplete bindings and failed
+commands. Preserve the partial-run assembler refusal as NOT_QUALIFIED in
 external custody. After final gate admission, verify all receipt/provenance pins
 and run `just hygiene`, `just lint-paths` and `just audit`, comparing any failure
 with unchanged main. The later t0115/t0145 directions authorize a draft
