@@ -219,6 +219,13 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h222_lipschitz_adapter/runner.py",
   "research/flywheel_selfplay/h224_learned_switch_gate/runner.py",
   "research/flywheel_selfplay/h225_multistep_regret/runner.py",
+# P37 t1900 exact HLT-033 loader dispositions; see
+# docs/release/jankurai-p37-t1900-exceptions-20261102.md.
+# Inputs are SHA-256 checked before deserialization/execution; H94 also verifies
+# its cached model output before loading it.
+  "research/flywheel_selfplay/h75_closed_loop_evolution/scoring/score_panel.py",
+  "research/flywheel_selfplay/h94_w6_prospective_hedge/run_prospective_hedge.py",
+  "research/flywheel_selfplay/h96_w4_active_reveal/run_w4.py",
 # Additional current-main exact-path exceptions retain their existing rationale
   # in the P5 and streaming evidence registers referenced above.
 ]
