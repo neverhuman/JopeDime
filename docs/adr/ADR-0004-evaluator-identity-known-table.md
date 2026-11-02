@@ -191,6 +191,12 @@ P23 ports the fitted-language runtime from `crates/feat-math/cpp/fitted_runtime.
 removing C++ from the product runtime surface while retaining the C++ implementation as a
 test-only parity oracle. The change follows the merged browser wasm32 and P35 corpus identity
 transitions. Announced identity-only regeneration records the fitted runtime source change;
-the DSL ABI, emitted bytes, Cargo.lock and known-identity table remain unchanged. The transition
-is registered in `prodlang_rust_runtime_identity_rebaseline.v1.json`. No shipped receipt or
-behavior rebaseline is claimed.
+the evaluator implementation hash advances from
+`0750e049cdabf54a4af94b6673790bd71f3600541e40f80cbeb55f81f211d37d` to
+`d8eb98d6465bf82e5c3e0388cc33dd85cd5f0d262877c06c3625a12932015d65`, and the identity digest
+from `77af8284de8e3e6e80177660f1d72c0790540be4e8556bca9382f6352a09bece` to
+`439de3ce446e0532b27102fceaa3e47c6796083767c651274763d5d912e89de5`. Announced identity-only
+regeneration records the fitted runtime source change; the DSL ABI, emitted bytes, Cargo.lock
+and known-identity table remain unchanged. The transition is registered in
+`prodlang_rust_runtime_identity_rebaseline.v1.json`. No shipped receipt or behavior rebaseline
+is claimed.
