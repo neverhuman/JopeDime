@@ -23,6 +23,14 @@ package's own `package/SOURCE_PINS.json` records that digest. This is the exact
 HLT-043 class `sha256:671081d3da76cbc035fdef9c5c867ded3dab401437e7bc9bdb2266ee9cee8665`.
 The pinned files remain unchanged.
 
+The t2015 deeper-fix pass adds the frozen `kumo_transport.py` copies in
+`encoding/fresh32` and `encoding/next128/packet0..packet3` to their existing
+snapshot entries. All five remain byte-identical at SHA-256
+`d5ceb1a91b6ddad7eb9c855651f6c57e19443cbdb9d2ecf0475abe43786c173f`; each
+package's own `config.template.json` records the exact path and digest. This is
+HLT-043 class `sha256:8b701c17f12848a77021422a5da6aba0697571f2c9c1842c01dec2749fc75f57`.
+The pinned files remain unchanged.
+
 The six canonical modules below also no longer have global exclusions. Their
 frozen `hpc_verified_v5` copies remain bound by the package manifest and
 `provenance/FINAL_VALIDATION.json`; the mutable canonical modules now receive all
