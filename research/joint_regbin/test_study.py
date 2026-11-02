@@ -53,6 +53,113 @@ from research.joint_regbin.protocol import (
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
 
 
+def test_resume_dispatch_load_gate_requires_five_spaced_high_samples():
+    from research.joint_regbin.learner_resume import LoadGate
+
+    gate = LoadGate()
+    assert gate.sample(90, 0)["consecutive_high"] == 1
+    for tick in (1, 10, 59):
+        assert gate.sample(99, tick) is None
+    assert not gate.blocked()
+    assert gate.sample(85, 60)["consecutive_high"] == 0
+    for index in range(1, 5):
+        assert not gate.sample(85.001, 60 + index * 60)["dispatch_paused"]
+    assert gate.sample(86.6, 360)["dispatch_paused"]
+    assert gate.sample(80, 420)["dispatch_paused"]
+    assert gate.sample(70, 480)["dispatch_paused"]
+    assert not gate.sample(69.999, 540)["dispatch_paused"]
+    gate = LoadGate()
+    for tick in (0, 60, 120, 180):
+        gate.sample(90, tick)
+    assert gate.sample(90, 300)["consecutive_high"] == 1
+    assert not gate.blocked()
+
+
+def test_resume_refusal_requires_proven_preexecution_and_no_artifacts(tmp_path):
+    from research.joint_regbin.learner_resume import proven_preexecution_refusal
+
+    log = tmp_path / "worker.log"
+    response = tmp_path / "unit.response.json"
+    log.write_text(
+        "in configure\nresource_check(device)\nCPU load exceeds 85% host budget\n"
+    )
+    assert proven_preexecution_refusal(log, response)
+    log.write_text(
+        "in train\nresource_check(device)\nCPU load exceeds 85% host budget\n"
+    )
+    assert not proven_preexecution_refusal(log, response)
+    log.write_text(
+        "in configure\nresource_check(device)\nGPU memory exceeds 90% budget\n"
+    )
+    response.write_text("{}")
+    assert not proven_preexecution_refusal(log, response)
+    response.unlink()
+    (tmp_path / "unit.response-checkpoints").mkdir()
+    assert not proven_preexecution_refusal(log, response)
+
+
+def test_resume_fifo_done_follows_actual_lock_release(tmp_path, monkeypatch):
+    import contextlib
+
+    from research.joint_regbin import learner_resume as resume
+
+    events = []
+
+    @contextlib.contextmanager
+    def lock():
+        events.append("acquired")
+        try:
+            yield 123
+        finally:
+            events.append("released")
+
+    def event(kind, **fields):
+        if kind == "FIFO_DONE":
+            assert events == ["acquired", "released"]
+            assert Path(fields["ticket"]).is_file()
+            events.append("done")
+
+    monkeypatch.setattr(resume.driver, "qualification_lock", lock)
+    monkeypatch.setattr(resume, "event", event)
+    monkeypatch.setattr(resume, "QUEUE", tmp_path)
+    with pytest.raises(RuntimeError, match="infrastructure"):
+        with resume.ordered_lock(resume.time.time() + 60) as (descriptor, ticket):
+            assert descriptor == 123
+            assert ticket.is_file() and not ticket.name.endswith(".done")
+            raise RuntimeError("infrastructure")
+    assert events == ["acquired", "released", "done"]
+
+
+def test_resume_fifo_ignores_done_and_dead_without_pruning_peers(tmp_path, monkeypatch):
+    from research.joint_regbin import learner_resume as resume
+
+    names = ("1-100-JRB01.done", "2-200-JRB01", "3-300-Q1")
+    for name in names:
+        (tmp_path / name).touch()
+    monkeypatch.setattr(resume, "QUEUE", tmp_path)
+    monkeypatch.setattr(resume.fifo, "pid_is_alive", lambda pid: pid != 200)
+    assert resume.oldest_ticket() == tmp_path / "3-300-Q1"
+    assert sorted(p.name for p in tmp_path.iterdir()) == sorted(names)
+
+
+def test_resume_fifo_finalizes_own_ticket_when_enqueue_logging_fails(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    def event(kind, **_fields):
+        if kind == "FIFO_ENQUEUED":
+            raise OSError("ledger unavailable")
+
+    monkeypatch.setattr(resume, "QUEUE", tmp_path)
+    monkeypatch.setattr(resume, "event", event)
+    with pytest.raises(OSError, match="ledger unavailable"):
+        with resume.ordered_lock(resume.time.time() + 60):
+            pytest.fail("must not dispatch without enqueue evidence")
+    tickets = list(tmp_path.iterdir())
+    assert len(tickets) == 1 and tickets[0].name.endswith(".done")
+
+
 def test_preparation_sampling_and_padding_preserve_only_train_rows():
     import gzip
     import struct
