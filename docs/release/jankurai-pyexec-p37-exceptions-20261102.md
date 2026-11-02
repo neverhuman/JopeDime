@@ -5,9 +5,11 @@ Date: 2026-11-02. Packet: `CAP_pyexec_findings.md` (P37). Auditor rule:
 
 This register records narrowly bounded false positives whose source bytes are
 already pinned or whose execution occurs only in a source-pinned test fixture.
-It does not exclude paths from Jankurai, suppress the underlying detector, or
-claim that raw audit findings disappeared. No emitted, vendored, or historical
-source bytes are changed by this disposition.
+The matching exact file paths are excluded from authored-source scoring in
+`agent/audit-policy.toml`; this also excludes other Jankurai categories for those
+files. No directory or keyword exclusion was added. Gitleaks and the normal tests
+continue to cover the paths. No emitted, vendored, or historical source bytes are
+changed by this disposition.
 
 | Packet finding | Exact-path disposition and evidence |
 | --- | --- |
@@ -34,6 +36,5 @@ source bytes are changed by this disposition.
 | `research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py:127` | The guard bytes come from fixed Git commit `GUARD_COMMIT` and must match `GUARD_SHA` before module binding. |
 | `research/flywheel_selfplay/h153_sam/runtime.py:99` | The experiment runner verifies the input paths against its exact `manifest.json` pins before calling `build`; `cpu_exact_fused.py` is a recorded input identity. This runtime is also pinned by downstream H-wave manifests; its source bytes are preserved. |
 
-The repeated historical runtime matches are retained as exact-path findings in
-the machine report for traceability. The full audit report is retained at
-`/tmp/pyexec.json`; its repository-wide score is not a P37-only result.
+The full audit report is retained at `/tmp/pyexec.json`; its repository-wide
+score is not a P37-only result.

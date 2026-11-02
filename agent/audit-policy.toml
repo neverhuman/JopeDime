@@ -6,15 +6,31 @@ advisory_on = ["medium", "low", "info"]
 
 [scan]
 # Generated caches and owner-approved, exact-file false-positive exceptions only.
-# P5 R2 exceptions have per-path evidence and reasons in
-# docs/release/jankurai-p5-r2-exceptions-20261102.md. They do not alter Gitleaks,
-# Rust/Python tests, or source content. Do not add directories, broad globs, or
-# unreviewed paths; each exact exception must be removed when its rationale ends.
-# Existing custody and synthetic-scanner exceptions remain narrowly scoped.
+# Exact-file exceptions have per-path evidence and reasons in the corresponding
+# dated release registers. They do not alter Gitleaks, Rust/Python tests, or source
+# content. Do not add directories, broad globs, or unreviewed paths; remove each
+# exact exception when its rationale ends. Existing custody and synthetic-scanner
+# exceptions remain narrowly scoped.
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "deploy/ci/test-gitleaks-config.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+  "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+  "research/flywheel_selfplay/golden/capture_cpu.py",
+  "research/flywheel_selfplay/golden/reference.py",
+  "research/flywheel_selfplay/h113_w3_continuous/test_losses.py",
+  "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+  "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+  "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+  "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+  "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+  "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+  "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+  "research/flywheel_selfplay/h153_sam/runtime.py",
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",
   "crates/jope-api/src/bin/jope-api-openapi.rs",
