@@ -54,6 +54,20 @@ echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
 # Advisories are a blocking check too: fetch/update failure must remain failure,
 # and the committed deny.toml has no ignored advisories.
 cargo deny --locked --all-features check advisories bans licenses sources
+# The browser predictor is a standalone workspace with its own committed lockfile.
+# Scan its graph under the same root policy; the root workspace scan cannot cover it.
+browser_deny=(cargo deny --manifest-path web/browser-predict/Cargo.toml --config deny.toml --locked --all-features)
+browser_graph="$("${browser_deny[@]}" list --layout crate)"
+browser_missing=""
+for c in jope-browser-predict feat-math jope-runtime; do
+  grep -qE "^$c@" <<< "$browser_graph" || browser_missing="$browser_missing $c"
+done
+if [ -n "$browser_missing" ]; then
+  echo "cargo-deny is not seeing the standalone browser graph; missing:$browser_missing" >&2
+  exit 1
+fi
+echo "browser deny graph: $(wc -l <<< "$browser_graph") crates, browser/runtime deps present"
+"${browser_deny[@]}" check advisories bans licenses sources
 # Scan the committed frontend lock graph, including build/test dependencies.
 # This reads package-lock.json and does not require installing node_modules.
 npm --prefix web/training-dashboard audit --package-lock-only --audit-level=high
