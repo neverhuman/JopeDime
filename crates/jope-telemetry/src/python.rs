@@ -29,7 +29,8 @@ use crate::train::Cadence;
 use jope_datasets::catalog::Task;
 use jope_datasets::family_contracts::{
     build_binary_target_summaries, build_split_view_manifest,
-    freeze_source_family_split as rust_freeze_source_family_split, OuterSplit,
+    derive_binary_source_family, freeze_source_family_split as rust_freeze_source_family_split,
+    OuterSplit,
 };
 use pyo3::buffer::PyBuffer;
 use pyo3::exceptions::{PyKeyError, PyRuntimeError, PyTypeError, PyValueError};
@@ -251,6 +252,12 @@ fn freeze_source_family_split_py(
     let split = rust_freeze_source_family_split(&families, train_count, holdout_count, seed)
         .map_err(value_error)?;
     to_py(py, &split)
+}
+
+/// Derive the label-independent binary dataset source-family identity in Rust.
+#[pyfunction]
+fn derive_source_family(meta_path: &str) -> PyResult<String> {
+    derive_binary_source_family(std::path::Path::new(meta_path)).map_err(value_error)
 }
 
 /// Build the canonical split-view and train-only binary target contracts in Rust.
@@ -2005,6 +2012,7 @@ fn _telemetry(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(metric_registry, module)?)?;
     module.add_function(wrap_pyfunction!(metric_id, module)?)?;
     module.add_function(wrap_pyfunction!(freeze_source_family_split_py, module)?)?;
+    module.add_function(wrap_pyfunction!(derive_source_family, module)?)?;
     module.add_function(wrap_pyfunction!(build_binary_dataset_contracts, module)?)?;
     module.add_function(wrap_pyfunction!(open_python_trainer, module)?)?;
     module.add_function(wrap_pyfunction!(open_flywheel_step, module)?)?;
