@@ -537,6 +537,7 @@ crates/jope-campaigns/src/bin/jope_strategy_screen.rs
 crates/jope-campaigns/src/bin/jope_task_elo.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller/execution.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/execution/recipe.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller/recipe.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller/scheduler.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller/state.rs
