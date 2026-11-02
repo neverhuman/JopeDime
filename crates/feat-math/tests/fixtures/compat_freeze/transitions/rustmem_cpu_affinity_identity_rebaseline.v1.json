@@ -2,17 +2,17 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Announced identity-only successor for P36 safe CPU affinity sets. The jope-campaigns nix sched dependency adds the safe CpuSet API and changes Cargo.lock. This transition also closes the unrecorded evaluator identity drift introduced by #1659, which was already red on origin/main. Evaluator calculations, DSL ABI, behavior fixtures, lineage source hashes, and historical identity rows are unchanged; lineage changes only generated_at_sha. No known-identity row is added without a shipped receipt.",
   "plan_reference": "P36 rust-bad-behavior cap; ADR-0004 and compat_freeze identity-only procedure",
-  "source_commit": "8a3ab03a792c046a60dfb03101d52584ec2df5ec",
+  "source_commit": "acb6974392bed9b72012fbcf986957629980f827",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "bd867599a0b725157338c016bb75f7fe59ed7ccf2c141f9b35fa181edcbcd9cd",
-      "after": "2f056fb886bbf35171dfd1ae1a72fd42de6f8830dc979650fb18bca736ea47bc"
+      "after": "939e12c832c95a3a32fdb33736996dc15af5084627c23a5b3f43fed4717c851d"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "f5a625df74792b2480d47f65617c0240f04a605c15c408ecf5f5fdf1f3884341",
-      "after": "d9b8dca851b286094b452ad2f926c28c1d5d41d78b13dce94c1cc60127b9bf0d"
+      "after": "7bd43bf61f6f382572e11bf5e1069687c158a41f9e15defc7ad0c752d2a556bd"
     }
   ]
 }
