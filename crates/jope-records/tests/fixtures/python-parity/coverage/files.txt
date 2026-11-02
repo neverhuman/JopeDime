@@ -1844,6 +1844,10 @@ crates/jope-policy/src/proposal_ledger/decision_links.rs
 crates/jope-policy/src/ranking.rs
 crates/jope-policy/src/seeds.rs
 crates/jope-policy/tests/decode_outcomes.rs
+crates/jope-policy/tests/decode_outcomes/logit_support.rs
+crates/jope-policy/tests/decode_outcomes/sampling_limits.rs
+crates/jope-policy/tests/decode_outcomes/terminal_outcomes.rs
+crates/jope-policy/tests/decode_outcomes/token_budget.rs
 crates/jope-policy/tests/fixtures/accepted-hyperion-manifest.json
 crates/jope-policy/tests/grammar_differential.rs
 crates/jope-policy/tests/grammar_differential/token_budget.rs
