@@ -658,40 +658,43 @@ impl Inventoried for RunManifest {
 // Events: one per attempt transition
 // ------------------------------------------------------------------------------------------
 
-/// Why an attempt failed. Every class is counted; none is ever dropped from the census.
+/// Why a learning progress attempt failed. Every class is counted; none is dropped from the census.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum FailureClass {
-    /// The `Timeout` case of `FailureClass`.
+pub enum ProgressFailureClass {
+    /// The `Timeout` case of `ProgressFailureClass`.
     Timeout,
-    /// The `PreflightRefusal` case of `FailureClass`.
+    /// The `PreflightRefusal` case of `ProgressFailureClass`.
     PreflightRefusal,
-    /// The `ParseRejection` case of `FailureClass`.
+    /// The `ParseRejection` case of `ProgressFailureClass`.
     ParseRejection,
-    /// The `ValidationRejection` case of `FailureClass`.
+    /// The `ValidationRejection` case of `ProgressFailureClass`.
     ValidationRejection,
-    /// The `WorkerError` case of `FailureClass`.
+    /// The `WorkerError` case of `ProgressFailureClass`.
     WorkerError,
-    /// The `WorkerLost` case of `FailureClass`.
+    /// The `WorkerLost` case of `ProgressFailureClass`.
     WorkerLost,
-    /// The `MissingInput` case of `FailureClass`.
+    /// The `MissingInput` case of `ProgressFailureClass`.
     MissingInput,
-    /// The `Cancelled` case of `FailureClass`.
+    /// The `Cancelled` case of `ProgressFailureClass`.
     Cancelled,
 }
 
-impl FailureClass {
+/// Compatibility name for progress attempt failure classes.
+pub type FailureClass = ProgressFailureClass;
+
+impl ProgressFailureClass {
     /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
-            FailureClass::Timeout => "timeout",
-            FailureClass::PreflightRefusal => "preflight-refusal",
-            FailureClass::ParseRejection => "parse-rejection",
-            FailureClass::ValidationRejection => "validation-rejection",
-            FailureClass::WorkerError => "worker-error",
-            FailureClass::WorkerLost => "worker-lost",
-            FailureClass::MissingInput => "missing-input",
-            FailureClass::Cancelled => "cancelled",
+            ProgressFailureClass::Timeout => "timeout",
+            ProgressFailureClass::PreflightRefusal => "preflight-refusal",
+            ProgressFailureClass::ParseRejection => "parse-rejection",
+            ProgressFailureClass::ValidationRejection => "validation-rejection",
+            ProgressFailureClass::WorkerError => "worker-error",
+            ProgressFailureClass::WorkerLost => "worker-lost",
+            ProgressFailureClass::MissingInput => "missing-input",
+            ProgressFailureClass::Cancelled => "cancelled",
         }
     }
 }
@@ -718,7 +721,7 @@ pub enum EventBody {
     /// The attempt ended without a result.
     Failed {
         /// Class recorded for this event body.
-        class: FailureClass,
+        class: ProgressFailureClass,
         /// Retryable recorded for this event body.
         retryable: bool,
         /// Detail recorded for this event body.

@@ -22,30 +22,33 @@ pub enum RowRole {
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
-/// `Purpose` is an enum for the purpose contract in this module: Role and purpose checks for disposable analytical lake views.
-pub enum Purpose {
-    /// The `Train` case of `Purpose`.
+/// Purpose selected when authorizing a disposable analytical lake view.
+pub enum LakeViewPurpose {
+    /// The `Train` case of `LakeViewPurpose`.
     Train,
-    /// The `Dev` case of `Purpose`.
+    /// The `Dev` case of `LakeViewPurpose`.
     Dev,
-    /// The `Confirm` case of `Purpose`.
+    /// The `Confirm` case of `LakeViewPurpose`.
     Confirm,
-    /// The `Sealed` case of `Purpose`.
+    /// The `Sealed` case of `LakeViewPurpose`.
     Sealed,
 }
+
+/// Compatibility name for the lake view authorization purpose.
+pub type Purpose = LakeViewPurpose;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 /// `RoleFilter` is a record for the role filter contract in this module: Role and purpose checks for disposable analytical lake views.
 pub struct RoleFilter {
     /// Purpose recorded for this role filter.
-    pub purpose: Purpose,
+    pub purpose: LakeViewPurpose,
 }
 
 /// I04 adapter contract. Implementations must resolve a verified principal and its capabilities;
 /// the lake never accepts a caller-supplied role string as authorization evidence.
 pub trait RoleAuthorizer {
     /// Performs the authorize operation and returns an error if it cannot be completed.
-    fn authorize(&self, purpose: Purpose, row_role: RowRole) -> Result<()>;
+    fn authorize(&self, purpose: LakeViewPurpose, row_role: RowRole) -> Result<()>;
 }
 
 impl RoleFilter {
@@ -61,12 +64,12 @@ impl RoleFilter {
 }
 
 /// Performs the role matches operation.
-pub fn role_matches(purpose: Purpose, row_role: RowRole) -> bool {
+pub fn role_matches(purpose: LakeViewPurpose, row_role: RowRole) -> bool {
     matches!(
         (purpose, row_role),
-        (Purpose::Train, RowRole::Train)
-            | (Purpose::Dev, RowRole::Dev)
-            | (Purpose::Confirm, RowRole::Confirm)
-            | (Purpose::Sealed, RowRole::Sealed)
+        (LakeViewPurpose::Train, RowRole::Train)
+            | (LakeViewPurpose::Dev, RowRole::Dev)
+            | (LakeViewPurpose::Confirm, RowRole::Confirm)
+            | (LakeViewPurpose::Sealed, RowRole::Sealed)
     )
 }
