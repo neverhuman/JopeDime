@@ -69,6 +69,22 @@ native runtime pin register. Only these five exact paths are excluded from
 Jankurai scoring. The mutable `hpc_verified_v4/neural_outbox.py` stays in scope
 for its owner’s deduplication. No pinned bytes or other security scans change.
 
+## Frozen `native_global_guard.py` copies
+
+HLT-043 fingerprint
+`sha256:6c5aeec682e4127ffa1c9d63a7de8f4b5669044c3750a149e6519400c0b7945c`
+in `rerun/j_ffba82986.json` identifies an exact-copy class of three frozen
+files, each SHA-256
+`22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b`:
+
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py`
+- `deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py`
+
+The revision 2 and revision 3 source packets pin these hashes, and hpc-v5
+`provenance/FINAL_VALIDATION.json` pins its copy. These exact paths alone are
+excluded from Jankurai scoring. No source bytes or other security scans change.
+
 ## `s3_library.py`
 
 The full audit `rerun/j_ffba82986.json` reports HLT-043 fingerprint
