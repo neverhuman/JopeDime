@@ -575,8 +575,8 @@ crates/jope-campaigns/src/selfplay_shadow/mod.rs
 crates/jope-campaigns/src/selfplay_shadow/policy.rs
 crates/jope-campaigns/src/selfplay_shadow/state.rs
 crates/jope-campaigns/src/selfplay_shadow/store.rs
-crates/jope-campaigns/src/selfplay_shadow/v2.rs
-crates/jope-campaigns/src/selfplay_shadow/v3.rs
+crates/jope-campaigns/src/selfplay_shadow/causal_evidence.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence.rs
 crates/jope-campaigns/src/spec_drift.rs
 crates/jope-campaigns/src/spec_policy.rs
 crates/jope-campaigns/src/task.rs
