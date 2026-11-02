@@ -61,6 +61,8 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
   # Ciaudit HLT-043 sha256:804e402d...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/augmentation.py",
+  # Ciaudit HLT-043 sha256:095ee8f1...: exact provenance-pinned copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/target_noise.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",
