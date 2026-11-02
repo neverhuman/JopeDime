@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-v3-redteam-results-module-is-coverage-inventoried owner=jope-campaigns expires=2027-04-01
 use super::*;
 
 fn smart_comparison_baselines(
