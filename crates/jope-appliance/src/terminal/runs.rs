@@ -32,7 +32,7 @@ impl Entry {
     }
 }
 
-pub enum Action {
+pub enum RunBrowserAction {
     None,
     Close,
     Refresh,
@@ -40,6 +40,8 @@ pub enum Action {
     Open(String),
     Fetch(String),
 }
+/// Compatibility name for callers that used the run browser's original action type.
+pub type Action = RunBrowserAction;
 #[derive(Default)]
 pub struct Browser {
     pub entries: Vec<Entry>,
@@ -65,7 +67,7 @@ impl Browser {
             Some(index)
         });
     }
-    pub fn handle(&mut self, event: &Event) -> Action {
+    pub fn handle(&mut self, event: &Event) -> RunBrowserAction {
         let key = match event {
             Event::Key(key) if key.kind != KeyEventKind::Release => Some(key.code),
             Event::Mouse(mouse) => match mouse.kind {
@@ -76,8 +78,8 @@ impl Browser {
             _ => None,
         };
         match key {
-            Some(KeyCode::Esc | KeyCode::Right) => return Action::Close,
-            Some(KeyCode::Char('r')) => return Action::Refresh,
+            Some(KeyCode::Esc | KeyCode::Right) => return RunBrowserAction::Close,
+            Some(KeyCode::Char('r')) => return RunBrowserAction::Refresh,
             Some(KeyCode::Up | KeyCode::Down) => {
                 let current = self.selected.selected().unwrap_or(0);
                 let next = if key == Some(KeyCode::Up) {
@@ -99,7 +101,7 @@ impl Browser {
                     .and_then(|row| row.cloud_url.as_deref())
                 {
                     if let Some(id) = url.rsplit('/').next() {
-                        return Action::Fetch(id.to_owned());
+                        return RunBrowserAction::Fetch(id.to_owned());
                     }
                 }
             }
@@ -107,17 +109,17 @@ impl Browser {
                 if let Some(row) = self.selected.selected().and_then(|n| self.entries.get(n)) {
                     if key == Some(KeyCode::Enter) {
                         if let Some(local) = &row.local {
-                            return Action::Attach(local.clone());
+                            return RunBrowserAction::Attach(local.clone());
                         }
                     }
                     if let Some(url) = &row.cloud_url {
-                        return Action::Open(url.clone());
+                        return RunBrowserAction::Open(url.clone());
                     }
                 }
             }
             _ => {}
         }
-        Action::None
+        RunBrowserAction::None
     }
     pub fn draw(&mut self, frame: &mut Frame<'_>, area: Rect, accent: Style) {
         let title = format!(
@@ -220,19 +222,19 @@ mod tests {
         assert_eq!(row.availability(), "Cloud only");
         browser.replace(vec![row], "Connected".into());
         assert!(
-            matches!(browser.handle(&key(KeyCode::Enter)), Action::Open(url) if url.ends_with("/runs/cloud-id"))
+            matches!(browser.handle(&key(KeyCode::Enter)), RunBrowserAction::Open(url) if url.ends_with("/runs/cloud-id"))
         );
-        assert!(matches!(browser.handle(&key(KeyCode::Esc)), Action::Close));
+        assert!(matches!(browser.handle(&key(KeyCode::Esc)), RunBrowserAction::Close));
     }
     #[test]
     fn empty_browser_navigation_is_safe_and_refresh_is_explicit() {
         let mut browser = Browser::default();
         browser.replace(Vec::new(), "Local".into());
-        assert!(matches!(browser.handle(&key(KeyCode::Down)), Action::None));
-        assert!(matches!(browser.handle(&key(KeyCode::Enter)), Action::None));
+        assert!(matches!(browser.handle(&key(KeyCode::Down)), RunBrowserAction::None));
+        assert!(matches!(browser.handle(&key(KeyCode::Enter)), RunBrowserAction::None));
         assert!(matches!(
             browser.handle(&key(KeyCode::Char('r'))),
-            Action::Refresh
+            RunBrowserAction::Refresh
         ));
     }
 }

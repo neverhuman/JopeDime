@@ -1,5 +1,5 @@
 """Registered prepared research inputs; replay and current role checks on every use."""
-from dataclasses import asdict
+import dataclasses
 import gzip
 import io
 import json
@@ -120,7 +120,7 @@ class RegisteredInputs:
         context = Context('regression',sha(raw),cut['target_sha256'],sha(self.native.canonical_json(cut)),
                           self.config['worker']['sha256'],vocabulary_sha,protocol_sha,cut['split_sha256'],
                           'rmse','prepared_synthetic_target_units','minimize')
-        descriptor = {'schema':'jope.flywheel-program-input/v1','variant_identity':identity,'context':asdict(context),
+        descriptor = {'schema':'jope.flywheel-program-input/v1','variant_identity':identity,'context':dataclasses.asdict(context),
             'parent_lineage_sha256':row['parent'],'partition':parent['partition'],'metadata_sha256':row['metadata_sha'],
             'parent_record_sha256':digest(parent),'preparation_receipt':parent.get('preparation_receipt'),
             'rows':len(y),'features':x.shape[1],'inner_counts':meta['inner_counts'],'outer_test_rows':0,

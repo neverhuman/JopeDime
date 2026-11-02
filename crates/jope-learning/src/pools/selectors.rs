@@ -15,19 +15,21 @@ use std::collections::{BTreeMap, BTreeSet};
 /// only against the strongest baseline, never by beating uniform alone (CLOVER §6).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Class {
-    /// The `Baseline` case of `Class`.
+pub enum SelectorClass {
+    /// The `Baseline` case of `SelectorClass`.
     Baseline,
-    /// The `Candidate` case of `Class`.
+    /// The `Candidate` case of `SelectorClass`.
     Candidate,
 }
+/// Compatibility name retained for callers of the original selector API.
+pub type Class = SelectorClass;
 
 /// Interface for the selector contract used by Selectors over a frozen pool (CLOVER §6 Experiment A).
 pub trait Selector {
     /// Performs the name operation.
     fn name(&self) -> &str;
     /// Performs the class operation.
-    fn class(&self) -> Class;
+    fn class(&self) -> SelectorClass;
     /// Exact rule and version, recorded in the receipt.
     fn rule(&self) -> String;
     /// One score per `view.programs`, higher first; ties are broken by program sha256.
@@ -101,8 +103,8 @@ impl Selector for ProgramPrior {
     fn name(&self) -> &str {
         "program_prior"
     }
-    fn class(&self) -> Class {
-        Class::Baseline
+    fn class(&self) -> SelectorClass {
+        SelectorClass::Baseline
     }
     fn rule(&self) -> String {
         format!(
@@ -476,8 +478,8 @@ impl Selector for RetrievalKnn<'_> {
     fn name(&self) -> &str {
         "retrieval_knn"
     }
-    fn class(&self) -> Class {
-        Class::Baseline
+    fn class(&self) -> SelectorClass {
+        SelectorClass::Baseline
     }
     fn rule(&self) -> String {
         format!(
@@ -623,8 +625,8 @@ impl Selector for RidgeProgram<'_> {
     fn name(&self) -> &str {
         "ridge_program"
     }
-    fn class(&self) -> Class {
-        Class::Baseline
+    fn class(&self) -> SelectorClass {
+        SelectorClass::Baseline
     }
     fn rule(&self) -> String {
         format!(
@@ -677,8 +679,8 @@ pub struct ExternalDocument {
     pub schema: String,
     /// Name recorded for this external document.
     pub name: String,
-    /// Class recorded for this external document.
-    pub class: Class,
+    /// Selector class recorded for this external document.
+    pub class: SelectorClass,
     /// Rule recorded for this external document.
     pub rule: String,
     /// Provenance recorded for this external document.
@@ -690,7 +692,7 @@ pub struct ExternalDocument {
 /// One score per (context, program). Missing scores are an error, never a default.
 pub struct External {
     name: String,
-    class: Class,
+    class: SelectorClass,
     rule: String,
     scores: BTreeMap<(String, String), f64>,
 }
@@ -738,7 +740,7 @@ impl Selector for External {
     fn name(&self) -> &str {
         &self.name
     }
-    fn class(&self) -> Class {
+    fn class(&self) -> SelectorClass {
         self.class
     }
     fn rule(&self) -> String {
@@ -1732,8 +1734,8 @@ impl Selector for ContextualSurrogateQHat<'_> {
     fn name(&self) -> &str {
         "contextual_surrogate_qhat"
     }
-    fn class(&self) -> Class {
-        Class::Candidate
+    fn class(&self) -> SelectorClass {
+        SelectorClass::Candidate
     }
     fn rule(&self) -> String {
         format!(
@@ -2065,8 +2067,8 @@ mod tests {
             fn name(&self) -> &str {
                 "fixed"
             }
-            fn class(&self) -> Class {
-                Class::Candidate
+            fn class(&self) -> SelectorClass {
+                SelectorClass::Candidate
             }
             fn rule(&self) -> String {
                 "fixed".into()

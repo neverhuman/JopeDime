@@ -302,7 +302,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/paper_archive.py",
       "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
       "path": "deploy/dl-flywheel/jope_flywheel/paper_archive.py",
-      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
+      "sha256": "ff0a9ec20ab154eb3c8019fe561d238ecb802540fcb4a83205831dffd014c1a3"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_gate.py",
@@ -375,7 +375,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/training_admission.py",
       "origin_sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
       "path": "deploy/dl-flywheel/jope_flywheel/training_admission.py",
-      "sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3"
+      "sha256": "2e3f439a668cbadca5f711885420f0b4900991417200d7dff435b806cb6bffd3"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
@@ -3540,7 +3540,7 @@
       "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/timing.py",
       "origin_sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
       "path": "deploy/dl-flywheel/pipelines/hpc/timing.py",
-      "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c"
+      "sha256": "b1a98d83a7e43c92cbee9c1e84952d420570e8b2eaea763caee6b6b24e1fb669"
     },
     {
       "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/verified_cache.py",
@@ -3751,7 +3751,7 @@
       "origin": "work/heartbeat-20261009-0616/native-v4/timing.py",
       "origin_sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/timing.py",
-      "sha256": "694fd24e5e894a0da90d07070173751a0b489e4992dbd6b1c0f5a2661dfa2b5c"
+      "sha256": "bcc6888e4ee22dac35907f1c6a2f5d55bca36d9c82ee452637fa232a82d169d8"
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/verified_cache.py",

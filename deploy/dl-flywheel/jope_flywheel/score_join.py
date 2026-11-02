@@ -4,7 +4,6 @@ Canonical bytes MUST come from a separately pinned native serde_json callback.
 Python JSON encoding is never a fallback for row hashes or cut identities.
 This fixed subset omits optional cost; it does not publish HWM winner records.
 """
-from dataclasses import asdict
 import hashlib
 import json
 import math

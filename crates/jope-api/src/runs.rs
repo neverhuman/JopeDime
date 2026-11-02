@@ -28,12 +28,16 @@ pub enum Effort {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Language {
+#[schemars(rename = "Language")]
+pub enum ApiRunLanguage {
     Python,
     Rust,
     Javascript,
     Typescript,
 }
+
+/// Backwards-compatible public name for the run request language vocabulary.
+pub type Language = ApiRunLanguage;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]

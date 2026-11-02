@@ -167,11 +167,13 @@ pub fn resolve(root: &Path, path: &Path) -> Result<PathBuf> {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Admission {
+pub enum DatasetAdmission {
     Approved,
     Excluded,
     Unresolved,
 }
+/// Backward-compatible public name for dataset provenance admission.
+pub use DatasetAdmission as Admission;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Evidence {
@@ -195,7 +197,7 @@ impl Evidence {
 #[serde(deny_unknown_fields)]
 pub struct Decision {
     pub key: String,
-    pub admission: Admission,
+    pub admission: DatasetAdmission,
     pub family: String,
     pub reason: String,
     pub evidence: Vec<Evidence>,
@@ -252,7 +254,7 @@ pub struct Dataset {
     pub source_key: String,
     pub family: String,
     pub parents: Vec<String>,
-    pub admission: Admission,
+    pub admission: DatasetAdmission,
     pub reason: String,
     pub evidence: Vec<Evidence>,
     pub metadata_sha256: String,

@@ -28,7 +28,7 @@ use std::fmt;
 
 use serde::Serialize;
 
-pub use gate::Gate;
+pub use gate::{Gate, SealGate};
 
 /// A request this module refuses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]

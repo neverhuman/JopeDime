@@ -32,11 +32,15 @@ def sha(b):return hashlib.sha256(b).hexdigest()
 def path_safe(path):
     p=Path(path);need(p.is_absolute()and '..'not in p.parts and all(not q.is_symlink()for q in(p,*p.parents)),'absolute non-symlink path required');return p
 
-def model_hash(state):
-    """Recompute native PolicyLM parameter SHA directly from bounded safetensors."""
+def _bounded_checkpoint_view(state):
+    """Return the checked JSON header and payload view of one checkpoint."""
     need(8<len(state)<=64*1024**2,'checkpoint cap')
     n=struct.unpack('<Q',state[:8])[0];need(0<n<=1024**2 and 8+n<=len(state),'safetensors header cap')
-    header=document(state[8:8+n]);payload=memoryview(state)[8+n:];h=hashlib.sha256();seen=[];count=0
+    return document(state[8:8+n]),memoryview(state)[8+n:]
+
+def model_hash(state):
+    """Recompute native PolicyLM parameter SHA directly from bounded safetensors."""
+    header,payload=_bounded_checkpoint_view(state);h=hashlib.sha256();seen=[];count=0
     for key in sorted(header):
         if key=='__metadata__':continue
         item=header[key];offset=item['data_offsets'];shape=item['shape']

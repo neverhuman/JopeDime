@@ -135,12 +135,15 @@ pub enum BoundedControllerDisposition {
 pub type Disposition = BoundedControllerDisposition;
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Outcome {
+pub enum BoundedControllerOutcome {
     Committed,
     Drained,
     Cancelled,
     Refused,
 }
+
+/// Compatibility alias for the bounded-controller terminal result.
+pub type Outcome = BoundedControllerOutcome;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "event", rename_all = "snake_case", deny_unknown_fields)]
 pub enum BoundedControllerEvent {
@@ -205,7 +208,7 @@ pub enum BoundedControllerEvent {
         detail: String,
     },
     Terminal {
-        outcome: Outcome,
+        outcome: BoundedControllerOutcome,
         committed_updates_total: u64,
     },
 }
@@ -267,7 +270,7 @@ pub struct StatusReport {
     pub journal_tip_sha256: Option<String>,
     pub coordinator_live: bool,
     pub cancel_requested: bool,
-    pub outcome: Option<Outcome>,
+    pub outcome: Option<BoundedControllerOutcome>,
     pub committed_updates_at_start: u64,
     pub committed_updates_total: u64,
     pub ranks: Vec<RankStatus>,
@@ -281,7 +284,7 @@ pub struct VerifyReport {
     pub plan_sha256: String,
     pub journal_records: u64,
     pub journal_tip_sha256: Option<String>,
-    pub outcome: Option<Outcome>,
+    pub outcome: Option<BoundedControllerOutcome>,
     pub committed_updates_total: u64,
     pub results_verified: u64,
     pub numerical_work_started: bool,
@@ -302,7 +305,7 @@ pub struct CancelReport {
     pub journaled: bool,
     pub delivered_to_live_coordinator: bool,
     pub drain_pending_reconcile: bool,
-    pub outcome: Option<Outcome>,
+    pub outcome: Option<BoundedControllerOutcome>,
 }
 
 fn read_bounded(path: &Path, limit: u64) -> Result<Vec<u8>> {
@@ -468,7 +471,7 @@ struct Replay {
     cancel: bool,
     drain: Option<DrainCause>,
     dispositions: BTreeMap<u32, (BoundedControllerDisposition, String)>,
-    terminal: Option<(Outcome, u64)>,
+    terminal: Option<(BoundedControllerOutcome, u64)>,
 }
 fn replay(
     contract: &BoundedRunContract,
@@ -688,9 +691,13 @@ fn replay(
                 committed_updates_total,
             } => {
                 let consistent = match outcome {
-                    Outcome::Committed => s.committed == Some(*committed_updates_total),
-                    Outcome::Refused => s.refused && *committed_updates_total == start,
-                    Outcome::Drained | Outcome::Cancelled => {
+                    BoundedControllerOutcome::Committed => {
+                        s.committed == Some(*committed_updates_total)
+                    }
+                    BoundedControllerOutcome::Refused => {
+                        s.refused && *committed_updates_total == start
+                    }
+                    BoundedControllerOutcome::Drained | BoundedControllerOutcome::Cancelled => {
                         (s.drain.is_some() || (s.cancel && s.intents.is_empty()))
                             && s.committed.is_none()
                             && *committed_updates_total == start
@@ -1138,7 +1145,7 @@ fn finish_cancel_before_dispatch(
         records,
         plan_sha256,
         BoundedControllerEvent::Terminal {
-            outcome: Outcome::Cancelled,
+            outcome: BoundedControllerOutcome::Cancelled,
             committed_updates_total: contract.counters.committed_updates_at_start,
         },
         now,
@@ -1509,7 +1516,7 @@ impl<S: Supervisor> Coordinator<S> {
         }
         self.append(
             BoundedControllerEvent::Terminal {
-                outcome: Outcome::Refused,
+                outcome: BoundedControllerOutcome::Refused,
                 committed_updates_total: self.contract.counters.committed_updates_at_start,
             },
             now,
@@ -1755,7 +1762,7 @@ impl<S: Supervisor> Coordinator<S> {
         if self.state()?.terminal.is_none() {
             self.append(
                 BoundedControllerEvent::Terminal {
-                    outcome: Outcome::Committed,
+                    outcome: BoundedControllerOutcome::Committed,
                     committed_updates_total: total,
                 },
                 now,
@@ -1852,9 +1859,9 @@ impl<S: Supervisor> Coordinator<S> {
         self.append(
             BoundedControllerEvent::Terminal {
                 outcome: if cause == DrainCause::Cancelled {
-                    Outcome::Cancelled
+                    BoundedControllerOutcome::Cancelled
                 } else {
-                    Outcome::Drained
+                    BoundedControllerOutcome::Drained
                 },
                 committed_updates_total: self.contract.counters.committed_updates_at_start,
             },

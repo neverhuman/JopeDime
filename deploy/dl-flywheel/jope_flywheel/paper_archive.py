@@ -69,6 +69,26 @@ def token(value):
     return value
 
 
+def _reject_json_constant(_value):
+    raise EvidenceError('non-finite JSON')
+
+
+def _unique_json_object(items):
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise EvidenceError('duplicate JSON key')
+        result[key] = value
+    return result
+
+
+def _finite_json_float(value):
+    result = float(value)
+    if not math.isfinite(result):
+        raise EvidenceError('non-finite JSON')
+    return result
+
+
 def absolute(path):
     p = Path(path)
     if not p.is_absolute() or '..' in p.parts or '\x00' in str(p):
@@ -104,22 +124,13 @@ def open_file(path, limit):
 
 
 def json_value(raw):
-    def reject(x):
-        raise EvidenceError('non-finite JSON')
-    def pairs(xs):
-        result = {}
-        for key, value in xs:
-            if key in result:
-                raise EvidenceError('duplicate JSON key')
-            result[key] = value
-        return result
-    def number(x):
-        result = float(x)
-        if not math.isfinite(result):
-            raise EvidenceError('non-finite JSON')
-        return result
     try:
-        return json.loads(raw, parse_constant=reject, parse_float=number, object_pairs_hook=pairs)
+        return json.loads(
+            raw,
+            parse_constant=_reject_json_constant,
+            parse_float=_finite_json_float,
+            object_pairs_hook=_unique_json_object,
+        )
     except (ValueError, UnicodeError, RecursionError) as exc:
         raise EvidenceError('invalid source JSON') from exc
 

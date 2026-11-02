@@ -11,7 +11,9 @@ advisory_on = ["medium", "low", "info"]
 # do not alter Gitleaks, Rust/Python tests, or source content. Do not add
 # directories, broad globs, or unreviewed paths; each exact exception must be
 # removed when its rationale ends. P38 SQL/pinned-input dispositions are recorded
-# in docs/release/jankurai-pysqlpickle-exceptions-20261102.md.
+# in docs/release/jankurai-pysqlpickle-exceptions-20261102.md and
+# docs/release/jankurai-ciaudit-frozen-exceptions-20261102.md and
+# docs/release/jankurai-reporot-manifest-exceptions-20261102.md.
 # The eight restored DL exact-file custody exceptions and SHA bindings are recorded
 # in docs/release/browser-prediction-ci-repairs-20261102.md; frozen hash checks remain.
 # P48's two exact MicroAdmission source paths and reviewed finding fingerprints
@@ -45,6 +47,31 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+  # Ciaudit HLT-043 sha256:09d1f247...: this exact copy is byte-pinned by the
+  # hpc_verified_v5 provenance; its path-scoped Jankurai disposition is documented.
+  # Repo-rot dispositions for immutable, path-versioned engine manifest records; see the exact fingerprints and custody rationale in jankurai-reporot-manifest-exceptions-20261102.md.
+  "crates/jope-engine/manifests/hyperion-concurrent-v30.sha256",
+  "crates/jope-engine/manifests/opportunistic-proposals-v44.json",
+  "crates/jope-engine/manifests/opportunistic-proposals-v44.sha256",
+  "crates/jope-engine/manifests/opportunistic-proposals-v53.json",
+  "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256",
+  "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
+  # Ciaudit HLT-043 sha256:fac8174f...: exact hash-pinned package copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/evidence.py",
+  # Variety-b HLT-001 sha256:f73fa835...: `old` identifies the prior archiver
+  # service whose retirement is checked; exact-path disposition is documented.
+  "deploy/dl-flywheel/pipelines/telemetry/trace_archive.py",
+  # Prodlang HLT-046 sha256:c8f09a3c...: this lifecycle Stage is a distinct domain
+  # from research evidence phases and CUDA tensor projection checkpoints; see disposition.
+  "crates/jope-pipeline/src/resource_ledger.rs",
+  # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
+  # Ciaudit HLT-043 sha256:804e402d...: exact provenance-pinned copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/augmentation.py",
+  # Ciaudit HLT-043 sha256:095ee8f1...: exact provenance-pinned copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/target_noise.py",
+  # Ciaudit HLT-043 sha256:7ec8a15a...: exact provenance-pinned copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/s3_library.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",
@@ -275,3 +302,11 @@ paid_maximum = "run-specific owner-approved dollar cap"
 quota = "preflight quota and limit confirmed before launch"
 stop_condition = "stop at cost, resource, wall-time cap, unknown result, or failed input pin"
 kill_switch = "supervising lane halt tested before launch"
+
+[[dead_language_allow]]
+name = "p26-content-addressed-blob-stale-cache-state"
+term = "stale"
+paths = ["crates/jope-datasets/src/blobs.rs"]
+owner = "datasets"
+expires = "2027-02-01"
+reason = "HLT-001 sha256:fa13a2d8103eeda06d5c85bd49ecc8869b16a7c6175e6917bbae92365d35eead flags the truthful cache-state term in BlobDir::ensure. The method verifies both size and SHA-256, removes a mismatched cache entry, refuses to serve a substitute offline, and otherwise refetches verified bytes. Preserve that integrity behavior; this term-and-path exception does not suppress other rules or files."

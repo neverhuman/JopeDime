@@ -282,11 +282,14 @@ impl ColumnPointer {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum EditKind {
+pub enum PolicyEditKind {
     ColumnTransform,
     ProgramTransform,
     Eos,
 }
+
+/// Backwards-compatible name for policy edit kinds.
+pub type EditKind = PolicyEditKind;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(tag = "site", content = "value", rename_all = "snake_case")]
@@ -318,7 +321,7 @@ pub enum Fidelity {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditKey {
-    pub kind: EditKind,
+    pub kind: PolicyEditKind,
     pub site: Option<EditSite>,
     pub operator: Option<EditOperator>,
     pub fidelity: Option<Fidelity>,
@@ -328,7 +331,7 @@ pub struct EditKey {
 impl EditKey {
     pub fn eos() -> Self {
         Self {
-            kind: EditKind::Eos,
+            kind: PolicyEditKind::Eos,
             site: None,
             operator: None,
             fidelity: None,

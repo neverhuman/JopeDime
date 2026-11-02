@@ -2,7 +2,7 @@
 import hashlib
 import json
 import os
-from pathlib import Path
+import pathlib
 import signal
 import selectors
 import stat
@@ -40,7 +40,7 @@ def tick(deadline):
 
 
 def read(path, cap=MAX_FILE):
-    path = Path(path)
+    path = pathlib.Path(path)
     need(path.is_absolute() and '..' not in path.parts, 'absolute source path')
     fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
     try:
@@ -69,7 +69,7 @@ def bound(ref, cap=MAX_FILE):
 
 
 def create(path, body):
-    path = Path(path)
+    path = pathlib.Path(path)
     need(path.is_absolute() and all(not p.is_symlink() for p in path.parents), 'owned nonsymlink output')
     with path.open('xb') as stream:
         stream.write(body)
@@ -80,7 +80,7 @@ def create(path, body):
 
 def run(command, directory, name, deadline, timeout):
     tick(deadline)
-    log = Path(directory)/(name+'.log')
+    log = pathlib.Path(directory)/(name+'.log')
     started = time.time()
     failure = None
     monotonic_end = time.monotonic()+min(timeout,remaining(deadline))
@@ -121,7 +121,7 @@ def run(command, directory, name, deadline, timeout):
     receipt = {'command': command, 'returncode': result, 'failure':failure,
                'started_unix': started, 'finished_unix': time.time(),
                'log_sha256': sha(read(log, 4*1024**2))}
-    create(Path(directory)/(name+'-command.json'), canonical(receipt))
+    create(pathlib.Path(directory)/(name+'-command.json'), canonical(receipt))
     need(result == 0 and failure is None, 'native command failed or timed out: ' + name)
     tick(deadline)
     return receipt
