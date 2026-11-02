@@ -28,7 +28,7 @@ pub use feat_math::evolve::{
 use feat_math::heads::RidgeModel;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int, c_uint, c_void};
-use std::sync::{Mutex, OnceLock};
+use std::sync::{mpsc, OnceLock};
 use std::time::Instant;
 
 /// Widest problem the on-device Cholesky handles; wider problems are scored
@@ -72,16 +72,6 @@ struct Gpu {
     info: GpuInfo,
 }
 
-// SAFETY: `Gpu` is private and has one construction site, `init_backend`, which
-// immediately places it in the process-wide `BACKEND` mutex. No handle or
-// reference to a handle escapes that mutex. `gpu_ridge_score_batch` holds the
-// guard for every API call and makes this context current on that calling
-// thread; `Drop` receives exclusive access and makes it current before cleanup.
-// The `_lib` field outlives all handles and closes only after `Drop` finishes.
-// Thus moving the mutex-protected value between threads cannot cause concurrent
-// use, stale thread-local current-context assumptions, or premature unload.
-unsafe impl Send for Gpu {}
-
 impl Drop for Gpu {
     fn drop(&mut self) {
         // Release the stream before its owning context, while the driver library
@@ -96,16 +86,69 @@ impl Drop for Gpu {
     }
 }
 
-static BACKEND: OnceLock<Result<Mutex<Gpu>, String>> = OnceLock::new();
+enum BackendRequest {
+    Probe(mpsc::SyncSender<Result<GpuInfo, String>>),
+    Score(
+        PreparedBatch,
+        mpsc::SyncSender<Result<GpuRidgeScoreBatch, String>>,
+    ),
+}
 
-fn backend() -> Result<&'static Mutex<Gpu>, String> {
+enum BackendState {
+    Uninitialized,
+    Ready(Gpu),
+    Failed(String),
+}
+
+static BACKEND: OnceLock<Result<mpsc::SyncSender<BackendRequest>, String>> = OnceLock::new();
+
+fn backend() -> Result<&'static mpsc::SyncSender<BackendRequest>, String> {
     BACKEND
-        .get_or_init(init_backend)
+        .get_or_init(|| {
+            let (sender, receiver) = mpsc::sync_channel(0);
+            std::thread::Builder::new()
+                .name("battle-gpu-owner".to_string())
+                .spawn(move || backend_worker(receiver))
+                .map_err(|error| format!("battle-gpu worker start failed: {error}"))?;
+            Ok(sender)
+        })
         .as_ref()
         .map_err(Clone::clone)
 }
 
-fn init_backend() -> Result<Mutex<Gpu>, String> {
+fn backend_worker(receiver: mpsc::Receiver<BackendRequest>) {
+    let mut state = BackendState::Uninitialized;
+    while let Ok(request) = receiver.recv() {
+        match request {
+            BackendRequest::Probe(reply) => {
+                let result = ready_backend(&mut state).map(|gpu| gpu.info.clone());
+                let _ = reply.send(result);
+            }
+            BackendRequest::Score(batch, reply) => {
+                let result = finish_batch_with_backend_initializer(batch, || {
+                    ready_backend(&mut state)
+                });
+                let _ = reply.send(result);
+            }
+        }
+    }
+}
+
+fn ready_backend(state: &mut BackendState) -> Result<&mut Gpu, String> {
+    if matches!(state, BackendState::Uninitialized) {
+        *state = match init_backend() {
+            Ok(gpu) => BackendState::Ready(gpu),
+            Err(error) => BackendState::Failed(error),
+        };
+    }
+    match state {
+        BackendState::Ready(gpu) => Ok(gpu),
+        BackendState::Failed(error) => Err(error.clone()),
+        BackendState::Uninitialized => Err("battle-gpu backend initialization failed".to_string()),
+    }
+}
+
+fn init_backend() -> Result<Gpu, String> {
     let lib = Library::open("libcuda.so.1")?;
     let api = lib.api()?;
     // SAFETY: the resolved driver entry points remain loaded in lib. Init takes
@@ -205,7 +248,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
     })();
     match built {
         Ok((_module, [f_col_stats, f_gram_atb, f_chol_solve, f_predict_r2], stream)) => {
-            Ok(Mutex::new(Gpu {
+            Ok(Gpu {
                 _lib: lib,
                 api,
                 ctx,
@@ -220,7 +263,7 @@ fn init_backend() -> Result<Mutex<Gpu>, String> {
                     total_mem_bytes: total_mem,
                     multiprocessors,
                 },
-            }))
+            })
         }
         Err(error) => {
             // SAFETY: initialization still owns ctx; no Gpu was published.
@@ -246,9 +289,10 @@ fn device_name(buffer: &[c_char]) -> Result<String, String> {
 
 /// Best-effort device discovery. `None` when no usable driver/device exists.
 pub fn probe() -> Option<GpuInfo> {
-    let gpu = backend().ok()?;
-    let guard = gpu.lock().ok()?;
-    Some(guard.info.clone())
+    let sender = backend().ok()?;
+    let (reply, response) = mpsc::sync_channel(0);
+    sender.send(BackendRequest::Probe(reply)).ok()?;
+    response.recv().ok()?.ok()
 }
 
 // ---------------------------------------------------------------------------
@@ -432,13 +476,40 @@ fn logical_h2d(problem: &GpuRidgeScoreProblem) -> u64 {
 pub fn gpu_ridge_score_batch(
     problems: Vec<GpuRidgeScoreProblem>,
 ) -> Result<GpuRidgeScoreBatch, String> {
-    gpu_ridge_score_batch_with_backend_initializer(problems, backend)
+    let batch = prepare_batch(problems)?;
+    if batch.gpu_idx.is_empty() {
+        return Ok(batch.into_result());
+    }
+
+    let sender = backend()?;
+    let (reply, response) = mpsc::sync_channel(0);
+    sender
+        .send(BackendRequest::Score(batch, reply))
+        .map_err(|_| "battle-gpu worker stopped".to_string())?;
+    response
+        .recv()
+        .map_err(|_| "battle-gpu worker stopped before replying".to_string())?
 }
 
-fn gpu_ridge_score_batch_with_backend_initializer(
+struct PreparedBatch {
     problems: Vec<GpuRidgeScoreProblem>,
-    initialize_backend: impl FnOnce() -> Result<&'static Mutex<Gpu>, String>,
-) -> Result<GpuRidgeScoreBatch, String> {
+    scores: Vec<f64>,
+    fold_bytes: Vec<GpuRidgeScoreFoldBytes>,
+    timings: GpuRidgeScoreTimings,
+    gpu_idx: Vec<usize>,
+}
+
+impl PreparedBatch {
+    fn into_result(self) -> GpuRidgeScoreBatch {
+        GpuRidgeScoreBatch {
+            scores: self.scores,
+            timings: self.timings,
+            fold_bytes: self.fold_bytes,
+        }
+    }
+}
+
+fn prepare_batch(problems: Vec<GpuRidgeScoreProblem>) -> Result<PreparedBatch, String> {
     let gpu_routes = problems
         .iter()
         .enumerate()
@@ -469,33 +540,40 @@ fn gpu_ridge_score_batch_with_backend_initializer(
 
     // CPU-only batches have no CUDA dependency. In particular, do not attempt
     // to initialize the backend when every problem is outside the GPU route.
-    if gpu_idx.is_empty() {
-        return Ok(GpuRidgeScoreBatch {
-            scores,
-            timings,
-            fold_bytes,
-        });
+    Ok(PreparedBatch {
+        problems,
+        scores,
+        fold_bytes,
+        timings,
+        gpu_idx,
+    })
+}
+
+fn finish_batch_with_backend_initializer<'a>(
+    batch: PreparedBatch,
+    initialize_backend: impl FnOnce() -> Result<&'a mut Gpu, String>,
+) -> Result<GpuRidgeScoreBatch, String> {
+    if batch.gpu_idx.is_empty() {
+        return Ok(batch.into_result());
     }
-
     let gpu = initialize_backend()?;
+    finish_batch(batch, gpu)
+}
 
-    let guard = gpu
-        .lock()
-        .map_err(|_| "battle-gpu mutex poisoned".to_string())?;
-    let api = &guard.api;
-    // SAFETY: guard exclusively owns access to this initialized context; set
-    // it current before any thread-affine CUDA allocation, launch or transfer.
-    api.check(
-        // SAFETY: `guard.ctx` is the backend's live context, used under its Mutex.
-        unsafe { (api.cuCtxSetCurrent)(guard.ctx) },
-        "cuCtxSetCurrent",
-    )?;
+fn finish_batch(
+    mut batch: PreparedBatch,
+    gpu: &mut Gpu,
+) -> Result<GpuRidgeScoreBatch, String> {
+    let api = &gpu.api;
+    // The worker owns this context and serializes every request. Re-establish
+    // its thread-local current-context state before each CUDA operation.
+    api.check(unsafe { (api.cuCtxSetCurrent)(gpu.ctx) }, "cuCtxSetCurrent")?;
 
     // Wave budget from free memory (fallback: fixed 2 GiB).
     let budget = {
         let (mut free, mut total): (usize, usize) = (0, 0);
-        // SAFETY: both size_t outputs are live and distinct; the backend
-        // lock is held and its context has been made current on this thread.
+        // SAFETY: both size_t outputs are live and distinct; the owner worker
+        // has made its context current on this thread.
         let status = unsafe { (api.cuMemGetInfo_v2)(&mut free, &mut total) };
         if status == 0 {
             ((free as f64 * WAVE_MEM_FRACTION) as usize).max(64 << 20)
@@ -505,36 +583,34 @@ fn gpu_ridge_score_batch_with_backend_initializer(
     };
 
     let mut cursor = 0usize;
-    while cursor < gpu_idx.len() {
+    while cursor < batch.gpu_idx.len() {
         let mut end = cursor;
         let mut bytes = 0usize;
-        while end < gpu_idx.len() {
-            let candidate = wave_bytes(&problems[gpu_idx[end]]);
+        while end < batch.gpu_idx.len() {
+            let candidate = wave_bytes(&batch.problems[batch.gpu_idx[end]]);
             if end > cursor && bytes + candidate > budget {
                 break;
             }
             bytes += candidate;
             end += 1;
         }
-        let wave: Vec<&GpuRidgeScoreProblem> =
-            gpu_idx[cursor..end].iter().map(|&i| &problems[i]).collect();
-        let wave_scores = run_wave(&guard, &wave, &mut timings)?;
-        for (slot, &index) in gpu_idx[cursor..end].iter().enumerate() {
-            scores[index] = wave_scores[slot];
-            fold_bytes[index] = GpuRidgeScoreFoldBytes {
-                logical_h2d_bytes: logical_h2d(&problems[index]),
-                physical_h2d_bytes: logical_h2d(&problems[index]),
+        let wave: Vec<&GpuRidgeScoreProblem> = batch.gpu_idx[cursor..end]
+            .iter()
+            .map(|&i| &batch.problems[i])
+            .collect();
+        let wave_scores = run_wave(gpu, &wave, &mut batch.timings)?;
+        for (slot, &index) in batch.gpu_idx[cursor..end].iter().enumerate() {
+            batch.scores[index] = wave_scores[slot];
+            batch.fold_bytes[index] = GpuRidgeScoreFoldBytes {
+                logical_h2d_bytes: logical_h2d(&batch.problems[index]),
+                physical_h2d_bytes: logical_h2d(&batch.problems[index]),
                 logical_d2h_bytes: 8,
                 physical_d2h_bytes: 8,
             };
         }
         cursor = end;
     }
-    Ok(GpuRidgeScoreBatch {
-        scores,
-        timings,
-        fold_bytes,
-    })
+    Ok(batch.into_result())
 }
 
 fn run_wave(
@@ -944,7 +1020,7 @@ mod shape_bounds_tests {
         wide.valid_y = vec![1.0, 3.0];
 
         let expected = cpu_reference_score(&wide);
-        let batch = gpu_ridge_score_batch_with_backend_initializer(vec![wide], || {
+        let batch = finish_batch_with_backend_initializer(prepare_batch(vec![wide]).unwrap(), || {
             panic!("CPU-only batch must not initialize CUDA")
         })
         .expect("CPU-only batch");
