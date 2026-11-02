@@ -6072,6 +6072,16 @@
       "lanes": [],
       "scope": "H218 (nested blend-weight lambda in {0.125,0.25,0.5} + outcome-free zgap gate on FIT) data-free controls: frozen H210/H217 gate/blend function bodies identical, nested (lambda, tau) FIT selection and R882 fallback, context-permuted zgap placebo, cyclic A/B/FIT cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest with cross-wave Jaccard vs H203/H210/H217 and refusal of reused partitions, primary verdict (LCB95, 3/3 seeds, harm<=10%, Holm m=1), DL-Val plateau co-primary (gain > +0.002 with family-bootstrap LCB95 > 0, ties not a win), Elo orientation, xbabe2-only admission and runtime guards (load<=85, MemAvailable>=20GiB, free>=200GB, source binding before claim, absolute deadline)"
     },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/test_h219.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H219 TRAIN-only fresh-family folds, H109 sampler/schedule/actual accumulation and paired r882 reset, strict-margin tie rejection/Holm2/harm/3seeds, full45-fit lock order, feature-row exclusion, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
