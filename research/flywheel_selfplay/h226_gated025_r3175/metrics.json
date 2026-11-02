@@ -1,0 +1,346 @@
+{
+  "wave": "H226",
+  "title": "Frozen GATED_025 on the retained-best r3175 base (zero adapter updates), fresh-fold confirmation",
+  "status": "INCOMPLETE",
+  "verdict": "INCONCLUSIVE",
+  "decision": "REFUSED_AT_R3175_REGRESSION_GATE",
+  "plateau_verdict": "NOT_EVALUATED_GATE_REFUSED",
+  "primary_gate": "FAIL_R3175_NATIVE_ARCHIVE_PARITY",
+  "prereg_pr": 1882,
+  "prereg_head_commit": "58e147e9ba2fda6da93ce3f52c9eccffa8e81ef5",
+  "executed_source_commit": "9d7704b2cd1e5301378656b75f1a71c072f1f134",
+  "prereg_sha256": "fc89fa3264c66baf41e8ac07bbcd9e3d349c6eded238a76068a734de341213da",
+  "fold_manifest_sha256": "5e5edc01327a34a63ebdfb5715868088d8e3c1950c9d97b4d46bcedf40db2878",
+  "host": "xbabe2",
+  "optimizer_updates": 0,
+  "backward_calls": 0,
+  "histgbm_fits_executed": 0,
+  "histgbm_fits_planned": 45,
+  "smoke_attempts": 1,
+  "full_attempts": 0,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_verified_unchanged": true,
+  "dope_receipts": {
+    "r882_val": {
+      "CUDA_initialized": false,
+      "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "device": "cpu",
+      "optimizer_updates": 0
+    },
+    "r882_train": {
+      "CUDA_initialized": false,
+      "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "device": "cpu",
+      "optimizer_updates": 0
+    },
+    "r3175_val": {
+      "CUDA_initialized": false,
+      "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "device": "cpu",
+      "optimizer_updates": 0
+    },
+    "r3175_train": {
+      "CUDA_initialized": false,
+      "after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "device": "cpu",
+      "optimizer_updates": 0
+    }
+  },
+  "structural_check": {
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "r3175_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "nonadapter_tensors_equal": true,
+    "r3175_adapter_elements_differing_from_r882": 29211,
+    "r882_trainable_adapter_sha256": "15cb403a96d6241063cf463b227ab1125c973ec858dc484dfd578c43d90dfb4f",
+    "r3175_trainable_adapter_sha256": "b686898c694fcff12f766b30d68ff80675da20b67fc4d4269ca8dfb04f2992d0"
+  },
+  "regression_gates": {
+    "R882_dl_val91": {
+      "status": "PASS",
+      "expected_context_mean": 1.1377941898164525,
+      "observed_context_mean": 1.1377941898164525,
+      "bit_exact_91_of_91": true,
+      "cost_npz_sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f"
+    },
+    "R3175_dl_val91": {
+      "status": "FAIL_REFUSED",
+      "expected_archived_context_mean": 1.1389572403748425,
+      "observed_cpu_context_mean": 1.1366829009431036,
+      "abs_difference": 0.0022743394317388255,
+      "signed_difference": -0.0022743394317388255,
+      "matching_contexts_vs_archive": 90,
+      "total_contexts": 91,
+      "discrepant_context": {
+        "context_sha256": "25aff0bcd9fb3ea4dd28c6a71463b1e02d8293401f40a2e48e56c2b5a3ab54d8",
+        "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+        "archived_pick_index": 521,
+        "archived_utility": 0.492827865172446,
+        "cpu_b1_pick_index": 68,
+        "cpu_b1_utility": 0.285862976884233,
+        "utility_delta_cpu_minus_archive": -0.20696488828821297,
+        "cpu_b1_cost_index_68": -2.077629327774048,
+        "cpu_b1_cost_index_521": -2.077592134475708,
+        "cpu_b1_cost_gap_521_minus_68": 3.719329833984375e-05,
+        "b1_matches_h201_b8_cpu_exactly": true
+      },
+      "cost_npz_sha256": "dd50b71d4fe74b0928951bdd80a07bf4335999219b124ad3d189c014bc988424"
+    }
+  },
+  "descriptive_base_comparison_from_saved_smoke": {
+    "scope": "post-refusal descriptive comparison of R3175 vs R882 from saved smoke-20261102 base forward outputs (zero additional model forwards, zero HistGBM fits)",
+    "dl_train_1219_contexts_205_families": {
+      "contexts": 1219,
+      "families": 205,
+      "r882_native_context_mean": 1.423073434552299,
+      "r3175_native_context_mean": 1.4195349430147646,
+      "r882_native_equal_family": 1.3853554329931828,
+      "r3175_native_equal_family": 1.3815246210845231,
+      "r882_u4_equal_family": 1.6092122364134802,
+      "r3175_u4_equal_family": 1.6098439655002166,
+      "r3175_vs_r882_native": {
+        "per_seed_gain": [
+          -0.0038308119086596414
+        ],
+        "median_gain": -0.0038308119086596414,
+        "ci95": [
+          -0.013024258506514824,
+          0.002295889322175213
+        ],
+        "p_one_sided_vs_margin": 0.9087091290870913,
+        "positive_seeds": 0,
+        "harm_fraction": 0.03902439024390244,
+        "harm_families": 8,
+        "families": 205
+      },
+      "r3175_vs_r882_u4": {
+        "per_seed_gain": [
+          0.0006317290867366849
+        ],
+        "median_gain": 0.0006317290867366849,
+        "ci95": [
+          -0.0007096381461334217,
+          0.002100471040964221
+        ],
+        "p_one_sided_vs_margin": 0.7085291470852915,
+        "positive_seeds": 1,
+        "harm_fraction": 0.01951219512195122,
+        "harm_families": 4,
+        "families": 205
+      },
+      "r3175_vs_r882_elo_native": {
+        "per_seed": [
+          1501.868832006995
+        ],
+        "median": 1501.868832006995,
+        "ci95": [
+          1497.8528372031303,
+          1505.631884082195
+        ]
+      },
+      "r3175_vs_r882_elo_u4": {
+        "per_seed": [
+          1502.4101967462311
+        ],
+        "median": 1502.4101967462311,
+        "ci95": [
+          1497.523661855608,
+          1507.7500375435018
+        ]
+      },
+      "top1_pick_flips": 45,
+      "utility_changed_contexts": 44,
+      "r882_minus2_count": 17,
+      "r3175_minus2_count": 19,
+      "r882_train_cost_npz_sha256": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+      "r3175_train_cost_npz_sha256": "f99bc7a05a0830a9b75610f04819a6f08716953d610886537825b2045a752cfa"
+    },
+    "dl_val_91_contexts_19_families": {
+      "contexts": 91,
+      "families": 19,
+      "r882_native_context_mean": 1.1377941898164525,
+      "r3175_cpu_native_context_mean": 1.1366829009431036,
+      "r882_native_equal_family": 1.153615276991245,
+      "r3175_cpu_native_equal_family": 1.1525507792283534,
+      "r882_u4_equal_family": 1.277655945725127,
+      "r3175_cpu_u4_equal_family": 1.2777377464928539,
+      "r3175_vs_r882_plateau": {
+        "arm_context_mean": 1.1366829009431036,
+        "ref_context_mean": 1.1377941898164525,
+        "r882_context_mean": 1.1377941898164525,
+        "gain": -0.0011112888733487228,
+        "ci95": [
+          -0.0066668236369076,
+          0.00290733477716234
+        ],
+        "contexts": 91,
+        "families": 19,
+        "lcb95_gt_0": false,
+        "win_vs_margin": false
+      },
+      "r3175_vs_r882_native_equal_family_contrast": {
+        "per_seed_gain": [
+          -0.0010644977628919343
+        ],
+        "median_gain": -0.0010644977628919343,
+        "ci95": [
+          -0.00645137774296966,
+          0.002692315338785731
+        ],
+        "p_one_sided_vs_margin": 0.799020097990201,
+        "positive_seeds": 0,
+        "harm_fraction": 0.05263157894736842,
+        "harm_families": 1,
+        "families": 19
+      },
+      "r3175_vs_r882_u4_equal_family_contrast": {
+        "per_seed_gain": [
+          8.180076772663694e-05
+        ],
+        "median_gain": 8.180076772663694e-05,
+        "ci95": [
+          0.0,
+          0.00024540230317991084
+        ],
+        "p_one_sided_vs_margin": 1.0,
+        "positive_seeds": 1,
+        "harm_fraction": 0.0,
+        "harm_families": 0,
+        "families": 19
+      },
+      "r3175_vs_r882_elo_native": {
+        "per_seed": [
+          1496.3464943034846
+        ],
+        "median": 1496.3464943034846,
+        "ci95": [
+          1481.7162853998977,
+          1507.3078195706648
+        ]
+      },
+      "top1_pick_flips": 5,
+      "flipped_contexts": [
+        {
+          "context_sha256": "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf",
+          "family_id": "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+          "r882_pick": 744,
+          "r3175_cpu_pick": 376,
+          "r882_utility": 0.3945300367645864,
+          "r3175_cpu_utility": 0.3724826589857436,
+          "utility_delta": -0.022047377778842803,
+          "r3175_cost_at_r882_pick": -1.9351837635040283,
+          "r3175_cost_at_r3175_pick": -1.9414854049682617,
+          "r3175_cost_diff_r882_minus_r3175_pick": 0.0063016414642333984
+        },
+        {
+          "context_sha256": "25aff0bcd9fb3ea4dd28c6a71463b1e02d8293401f40a2e48e56c2b5a3ab54d8",
+          "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+          "r882_pick": 521,
+          "r3175_cpu_pick": 68,
+          "r882_utility": 0.492827865172446,
+          "r3175_cpu_utility": 0.285862976884233,
+          "utility_delta": -0.20696488828821297,
+          "r3175_cost_at_r882_pick": -2.077592134475708,
+          "r3175_cost_at_r3175_pick": -2.077629327774048,
+          "r3175_cost_diff_r882_minus_r3175_pick": 3.719329833984375e-05
+        },
+        {
+          "context_sha256": "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421",
+          "family_id": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+          "r882_pick": 503,
+          "r3175_cpu_pick": 142,
+          "r882_utility": 0.6051026250307721,
+          "r3175_cpu_utility": 0.43459473120043496,
+          "utility_delta": -0.1705078938303371,
+          "r3175_cost_at_r882_pick": -2.0532827377319336,
+          "r3175_cost_at_r3175_pick": -2.0536413192749023,
+          "r3175_cost_diff_r882_minus_r3175_pick": 0.00035858154296875
+        },
+        {
+          "context_sha256": "2e8f7388b3d3ac447d8589803c8f53284db1ae43b718c3d11464b0c271afe9b6",
+          "family_id": "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345",
+          "r882_pick": 245,
+          "r3175_cpu_pick": 471,
+          "r882_utility": 0.13571560310803935,
+          "r3175_cpu_utility": 0.20987151572708948,
+          "utility_delta": 0.07415591261905013,
+          "r3175_cost_at_r882_pick": -1.5908401012420654,
+          "r3175_cost_at_r3175_pick": -1.591808557510376,
+          "r3175_cost_diff_r882_minus_r3175_pick": 0.0009684562683105469
+        },
+        {
+          "context_sha256": "983bb1e5e396d436d7347fc8ca1ebd116cfed99493c6e91f6026a7d167c19780",
+          "family_id": "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+          "r882_pick": 831,
+          "r3175_cpu_pick": 328,
+          "r882_utility": 0.2681040468551448,
+          "r3175_cpu_utility": 0.49234100665875374,
+          "utility_delta": 0.22423695980360897,
+          "r3175_cost_at_r882_pick": -1.6204886436462402,
+          "r3175_cost_at_r3175_pick": -1.6205183267593384,
+          "r3175_cost_diff_r882_minus_r3175_pick": 2.968311309814453e-05
+        }
+      ],
+      "r882_minus2_count": 0,
+      "r3175_minus2_count": 0
+    }
+  },
+  "resource_summary": {
+    "status": "INCOMPLETE",
+    "exit_code": 1,
+    "reasons": [],
+    "elapsed_seconds": 1077.789049994899,
+    "deadline_epoch": 1793644200.0,
+    "peak": {
+      "rss": 977838080,
+      "threads": 2,
+      "tree_cores": 1.1441300444495006
+    },
+    "resume": false,
+    "smoke": true,
+    "effective_cores": 102,
+    "worker_cpus": [
+      0,
+      1,
+      3,
+      5
+    ],
+    "load_limit": 86.7,
+    "core_limit": 4.5,
+    "load_pauses": [
+      {
+        "utc": 1793632435.8779233,
+        "action": "pause",
+        "load": 74.6123046875,
+        "load5": 60.7705078125,
+        "cpu": 46.59019607843137
+      },
+      {
+        "utc": 1793632556.1828594,
+        "action": "resume",
+        "load": 46.5439453125,
+        "load5": 54.673828125,
+        "cpu": 39.319607843137256
+      },
+      {
+        "utc": 1793632760.9648445,
+        "action": "pause",
+        "load": 75.87548828125,
+        "load5": 60.1943359375,
+        "cpu": 94.24607843137255
+      },
+      {
+        "utc": 1793632941.446022,
+        "action": "resume",
+        "load": 47.72314453125,
+        "load5": 54.296875,
+        "cpu": 41.69901960784314
+      }
+    ],
+    "paused_seconds": 300.79945918009616
+  }
+}
