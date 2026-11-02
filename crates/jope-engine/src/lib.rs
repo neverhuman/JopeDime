@@ -12,6 +12,7 @@ pub mod families;
 pub mod family_growth;
 pub mod fit_boundary;
 pub mod gp;
+pub mod gp_factory_config;
 pub mod host_os;
 pub mod learning_history;
 pub mod manifest;
