@@ -1,6 +1,6 @@
 # H218 — nested blend-weight (`lambda in {0.125, 0.25, 0.5}`) + `zgap` gate on FIT, xbabe2 CPU, 0 updates
 
-**Status: preregistered; not yet run.** It runs only after this prereg merges. See [PREREG.md](PREREG.md).
+**Status: CLOSED — INCOMPLETE / NO_ADVANCE (no scientific outcome).** Prereg [PREREG.md](PREREG.md) merged as #1828 (`1ffc18b62`).
 
 - **Why:** [H210](../h210_blend025_gated_retry/README.md) found `CANDIDATE: GATED_025` (`BLEND` with fixed `lambda = 0.25`
   of calibrated HistGBM vs `r882`, gated per context by outcome-free `zgap`, `FIT`-only `tau`), giving pooled-`A` native
@@ -31,3 +31,20 @@
   or `xbabe2 free disk < 200 GB`, `load <= 85`, no GPU, no `qualification.lock`, deadline `14:30Z`.
 - **Code:** [runner.py](runner.py), [analysis.py](analysis.py), [monitor.py](monitor.py), and
   [test_h218.py](test_h218.py).
+
+## Outcome (closeout 2026-11-02)
+
+- **Verdict: `INCOMPLETE` → `NO_ADVANCE`. No scientific outcome; nothing adopted.**
+- Non-scored smoke passed 11:39:56Z (cell `218101/outer 0`, 4/4 fits, `r882` DL-Val 91/91 `1.1377942` exact).
+- Full run (launched 11:40:14Z) was stopped by its own preregistered monitor guard `load5 > 85` at **13:35:23Z**
+  (host load from other xbabe2 jobs; exit `-15`) after **41/45** FIT-only HistGBM fits (seed `218101` 15/15,
+  `218102` 15/15, `218103` 11/15). The 14:30Z deadline enforcer saw the targets exit first and sent no signals.
+- **Scored contexts: 0 (A) and 0 (DL-Val arms).** Stage-1 lock / scoring never ran, so there is no median, CI, harm or Elo.
+  Scoring the two complete seeds was **refused**: it isn't preregistered (3/3 seeds required), and it would invite cherry-picking.
+- Resources: peak tree cores 3.889 (≤ 4), peak RSS 3.46 GiB, 0 GPU, 0 updates;
+  DOPE frozen `c51a56d0` untouched; sealed/holdout/meta-test reads 0.
+- Terminal custody (create-only S3): `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H218/run-t0400/terminal-custody-20261102T1335Z/h218-terminal-incomplete-load5-41of45-20261102T1335Z.tar.gz`
+  (VersionId `WpYIcJodVJeXVnldMgrA9wwQZFEqX6oJ`, sha256 `8c352164cad04ec0ec5273269d910d9945608ddf189c20efed6462acfc79f674`). Metrics: [metrics.json](metrics.json).
+- **Next step:** don't restart H218. The gated line continues in H223 (bagged component) and H224 (learned gate).
+  If the lambda sweep is still wanted after those close, rerun it as a fresh H wave with new seeds and folds and
+  a load guard that pauses (doesn't abort) when the host is busy.
