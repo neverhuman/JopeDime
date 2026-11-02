@@ -13,7 +13,8 @@ pub use effects::{
     Dataset, Effects, ExecutionStats, FitPlan, FittedGraph, InputIdentity, RowClosure,
 };
 pub use graph::{
-    ColumnRef, Constraints, Expression, InputSchema, Node, OperatorRef, ProgramGraph, RowSemantics,
+    ColumnRef, Constraints, Expression, GraphExpression, InputSchema, Node, OperatorRef,
+    ProgramGraph, RowSemantics,
 };
 
 pub type Result<T> = std::result::Result<T, String>;
