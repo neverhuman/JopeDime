@@ -1,3 +1,5 @@
+Machine-readable study archive pointers use [studies/INDEX.jsonl](../INDEX.jsonl) (`jope.hwave-study-index/v1`). The separate [waves/INDEX.jsonl](../../waves/INDEX.jsonl) contains the compact wave projections verified by MR03.
+
 | Wave | Date (MDT) | Hypothesis | Status | Verdict | Dir |
 |---|---|---|---|---|---|
 | H46 | 2026-10-30 00:35 | Multi-step+EMA / warmup-cosine / robust and family-balanced losses vs restore-on-reject plateau | complete | No selected win; A/B show objective mismatch, C final no gain, D negative; seeds near-pseudoreplicates | h46/ |
