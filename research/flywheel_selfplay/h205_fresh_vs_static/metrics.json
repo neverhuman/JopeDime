@@ -332,5 +332,740 @@
     "next_owner": "rd_argon",
     "acceptance": "test_h205.py --deadline-controls OWNED_SCRATCH",
     "legacy_real_table_model_native_tests": "NOT_RUN_IN_HELPER_LANE"
+  },
+  "reconciled_campaign_ledger_20261102T1338Z": {
+    "schema": "h205-campaign-accounting/v1",
+    "history_complete": true,
+    "pending": null,
+    "unreconciled_tail": null,
+    "campaign_cap_seconds": 25200.0,
+    "baseline_elapsed_seconds": 2021.039296863135,
+    "historical_categories_hist01_to_hist10_seconds": 8263.17037127493,
+    "invocations_1222z_1237z_1249z_1251z_seconds": 46.79034312404692,
+    "total_prior_elapsed_seconds": 10331.000011262111,
+    "remaining_wall_budget_seconds": 14868.999988737889,
+    "s3_reconciled_ledger": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1338Z/campaign_ledger.reconciled.json",
+      "version_id": "FwSgbi9Nh1W0HF79q_en16XXKBsQloep",
+      "size_bytes": 15643,
+      "sha256": "035cecab9cade308467cc4aac475988a6c3f7733c9b43c13a65c004817ab99a6"
+    },
+    "hist_10_disjoint_subwindow_proof": {
+      "baseline_elapsed_seconds": 2021.039296863135,
+      "campaign_cap_seconds": 25200.0,
+      "campaign_ledger_path": "/home/ubuntu/jope-data/h205/campaign_ledger.json",
+      "campaign_ledger_sha256": "035cecab9cade308467cc4aac475988a6c3f7733c9b43c13a65c004817ab99a6",
+      "excluded_non_h205_windows": [
+        {
+          "duration_seconds": 439.0,
+          "end_utc": "2026-11-02T13:01:47.000Z",
+          "reason": "Turn-idle interval between completion of step 8542 (12:54:28Z) and arrival of next user prompt at step 8544 (13:01:47Z); 0 H205 commands or background processes running.",
+          "start_utc": "2026-11-02T12:54:28.000Z",
+          "window_id": "turn_idle_between_prompts"
+        },
+        {
+          "duration_seconds": 240.0,
+          "end_utc": "2026-11-02T13:06:02.000Z",
+          "reason": "Separate H218 wave controller enforcement (steps 8551..8567: deployed PID 2726392 enforce_deadline_1430.py and guard_reconciliation_t1302.json on xbabe2); accounted under H218.",
+          "start_utc": "2026-11-02T13:02:02.000Z",
+          "window_id": "h218_1430_deadline_enforcer_deployment"
+        }
+      ],
+      "hist_10_active_command_wall_ceiling_plus1s_seconds": 88.974,
+      "hist_10_active_command_wall_observed_seconds": 70.974,
+      "hist_10_assigned_calendar_span_seconds": 568.693,
+      "hist_10_category_key": "hist_10_post_1252z_s3_extra_receipts_failure_custody_and_qualification_reconciliation_1252z_1312z",
+      "hist_10_charged_seconds": 600.0,
+      "no_rerun_performed": true,
+      "overlap_correction_note": "Earlier hist_10 summary text wrote 12:52:12-13:12:00 while marking it strictly outside the 1251Z invocation (12:51:56.974Z..12:52:24.188Z), creating a 12.188s nominal label overlap and omitting the active-operation breakdown across the 1,188s gross clock span. Corrected once-only in campaign_ledger.json by binding exact transcript.jsonl sub-windows strictly outside 1249Z (exited 12:50:08.093Z) and 1251Z (started 12:51:56.974Z, exited 12:52:24.188Z), and explicitly excluding the 439.0s turn-idle wait (12:54:28Z..13:01:47Z, 0 processes) and 240.0s H218 enforcer setup (13:02:02Z..13:06:02Z, charged to H218). Active H205 command wall ceiling = 88.974s; H205-assigned calendar span = 568.693s <= 600.0s.",
+      "remaining_wall_budget_seconds": 14868.999988737889,
+      "status": "RECONCILED_DISJOINT_SUBWINDOWS_AND_COMMAND_WALL_BOUND",
+      "sub_windows": [
+        {
+          "calendar_span_seconds": 104.907,
+          "command_wall_ceiling_plus1s_per_cmd_seconds": 13.0,
+          "commands_count": 4,
+          "disjointness_proof": "Starts at 12:50:08.093Z (exact observed_exit_epoch_utc 1793623808.093491 of 1249Z invocation) and ends at 12:51:53.000Z before step 8527 SSH invocation of 1251Z.",
+          "end_utc": "2026-11-02T12:51:53.000Z",
+          "observed_command_wall_seconds": 9.0,
+          "operations": "Reconciled 1249Z tail, inspected numeric threads>4 cause, updated campaign_ledger.json, and wrote launch-single-context-20261102T1251Z.json with torch_num_threads=1.",
+          "start_utc": "2026-11-02T12:50:08.093Z",
+          "sub_window_id": "hist_10a_post1249_to_pre1251_launch",
+          "transcript_steps": "8519..8526"
+        },
+        {
+          "calendar_span_seconds": 3.974,
+          "command_wall_ceiling_plus1s_per_cmd_seconds": 3.974,
+          "commands_count": 1,
+          "disjointness_proof": "Strictly precedes 1251Z invocation monitor process_start_epoch_utc 1793623916.9741668 (12:51:56.974Z); the 1251Z invocation envelope (12:51:56.974Z..12:52:24.188Z, 27.313591s charged) is excluded from hist_10.",
+          "end_utc": "2026-11-02T12:51:56.974Z",
+          "observed_command_wall_seconds": 3.974,
+          "operations": "SSH transport and Python interpreter startup prior to monitor.py clock capture.",
+          "start_utc": "2026-11-02T12:51:53.000Z",
+          "sub_window_id": "hist_10_pre1251_ssh_handshake",
+          "transcript_steps": "8527..8528 (pre-monitor-entry)"
+        },
+        {
+          "calendar_span_seconds": 123.812,
+          "command_wall_ceiling_plus1s_per_cmd_seconds": 31.0,
+          "commands_count": 3,
+          "disjointness_proof": "Starts at 12:52:24.188Z (exact observed_exit_epoch_utc 1793623944.187758 of 1251Z invocation, eliminating the old 12.188s wording overlap with 12:52:12Z) and ends at 12:54:28.000Z when turn completed.",
+          "end_utc": "2026-11-02T12:54:28.000Z",
+          "observed_command_wall_seconds": 29.0,
+          "operations": "Reconciled 1251Z tail, uploaded 6 extra S3 receipts + campaign_ledger.reconciled.json + final_reconciled_bundle_manifest.json with exact-VersionId replay, scp mirrored to xbabe2, and updated H205_claim.txt/AGENT_CHAT.md.",
+          "start_utc": "2026-11-02T12:52:24.188Z",
+          "sub_window_id": "hist_10b_post1251_s3_replay_and_handback",
+          "transcript_steps": "8531..8538"
+        },
+        {
+          "calendar_span_seconds": 8.0,
+          "command_wall_ceiling_plus1s_per_cmd_seconds": 4.0,
+          "commands_count": 2,
+          "disjointness_proof": "Starts after 12:54:28Z..13:01:47Z turn-idle wait (439.0s with 0 processes) and ends at 13:02:02.000Z before H218 14:30 enforcer work began.",
+          "end_utc": "2026-11-02T13:02:02.000Z",
+          "observed_command_wall_seconds": 2.0,
+          "operations": "Read check-20261102T1248Z/H205-NATIVE-PARTIAL-AND-ADMISSION.md and COORD.md.",
+          "start_utc": "2026-11-02T13:01:54.000Z",
+          "sub_window_id": "hist_10c_part1_check1248_read",
+          "transcript_steps": "8545..8550"
+        },
+        {
+          "calendar_span_seconds": 328.0,
+          "command_wall_ceiling_plus1s_per_cmd_seconds": 37.0,
+          "commands_count": 10,
+          "disjointness_proof": "Starts at 13:06:02.000Z strictly after H218 14:30 deadline enforcer deployment (13:02:02Z..13:06:02Z, 240.0s charged to H218) and ends at 13:11:30.000Z receipt post.",
+          "end_utc": "2026-11-02T13:11:30.000Z",
+          "observed_command_wall_seconds": 27.0,
+          "operations": "Packaged and uploaded 12:37Z/12:49Z failure custody tarballs to S3 with exact-VersionId replay, updated campaign_ledger.json with hist_07..hist_10, uploaded reconciled-20261102T1305Z/ to S3 with exact-VersionId replay, mirrored to xbabe2, and posted receipts.",
+          "start_utc": "2026-11-02T13:06:02.000Z",
+          "sub_window_id": "hist_10c_part2_failure_custody_and_reconciled_s3_upload",
+          "transcript_steps": "8568..8588"
+        }
+      ],
+      "total_prior_elapsed_seconds": 10331.000011262111
+    }
+  },
+  "qualified_single_context_same_s3_train_20261102T1251Z": {
+    "status": "SINGLE_CONTEXT_SAME_S3_TRAIN_NATIVE_AND_1STEP_RESTORED_WEIGHT_UPDATE_QUALIFIED",
+    "seam_qualified": true,
+    "single_context_is_full_study_coverage": false,
+    "full_50_round_h205_study_status": "ON_HOLD_SEPARATELY_GATED",
+    "h206_runtime_distillation_status": "ON_HOLD_SEPARATELY_GATED",
+    "accounting_invocation_id": "h205-single-regression-context-20261102T1251Z",
+    "source_commit": "05ab7ddf415da124fae5a1ea80a8fd9f3c7f7cba",
+    "context_sha256": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+    "dataset_id": "1db3750d4ceccab9",
+    "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+    "family_key": "e70bef3cf802dadb1f22458c1e1c6bb553a5d9f3",
+    "fpool_family_alias": "f00161",
+    "original_jtt1_nq0_sha256": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+    "padded_jtt1_nq10_sha256": "8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1",
+    "labels_sha256": "886a5c7a368a4d245873422ac67c8a281d46dcfa0be8dfaa66c9e5c8de06ab75",
+    "programs_sha256": "843a4f4a69af9478bb9971f3c05aa6224665c9e520f1b9c3af869e23d2650c57",
+    "features_sha256": "e546b65571e67346d9ca9da18dfac8447692aa3a58821ba7b4831e97605f4de5",
+    "pool_sha256": "dc04ba13972c38f861d90392ca7eb7238d39f59326fd573802f6f0fdffdcdd84",
+    "features_npz_sha256": "df4d45b3e7f3a13683563a351d512be092c179300dc07cd284d4514e0ca7c1e9",
+    "native_calls_total": 24,
+    "s3_persisted_and_replayed_before_optimizer_step": true,
+    "optimizer_steps": 1,
+    "trainable_parameters": 29211,
+    "loss_value": 48.03727340698242,
+    "adapter_sha256_before": "dbb86f218c5fb20229891668635df81df91c7d82f9d5a3b6136b43e069f9045a",
+    "adapter_sha256_after": "763150e426c727e68b295e0a80dd953f524a84145020263ccdc9934c447676db",
+    "adapter_sha256_restored": "dbb86f218c5fb20229891668635df81df91c7d82f9d5a3b6136b43e069f9045a",
+    "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "s3_reconciled_bundle_manifest": {
+      "context_sha256": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+      "cumulative_campaign_elapsed_seconds": 8291.000011262111,
+      "dataset_id": "1db3750d4ceccab9",
+      "engine_consumption": {
+        "adapter_sha256_after": "14e878421781ab95f3ca483a68caf1a0624d5ab969fcf16f83e26846ccb9d929",
+        "adapter_sha256_before": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+        "consumed_features_s3_version_id": "mjTuhpPKycw9MbZIBSD_8FqzSH8tc5ws",
+        "consumed_pool_s3_version_id": "ukhGlpp3DBN_92B0BUolQ0WqEu_dXlGU",
+        "dataset_id": "1db3750d4ceccab9",
+        "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+        "historical_contexts_preserved": 1310,
+        "ingested_context_sha256": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+        "loss_value": 4.187907695770264,
+        "optimizer_steps": 1,
+        "pre_consumption_s3_replay_sha256": "4798f49653e44e7a2934094d709d02d15be118dfed076ff9480aab86d15313d8",
+        "revealed_indices": [
+          0,
+          1,
+          12,
+          23
+        ],
+        "s3_persisted_and_replayed_before_optimizer_step": true,
+        "slate_candidates": 24,
+        "status": "PASS",
+        "trainable_parameters": 29211,
+        "unrevealed_indices": [
+          16,
+          18,
+          9,
+          8,
+          19,
+          22,
+          20,
+          15,
+          14,
+          2,
+          10,
+          4,
+          21,
+          11,
+          7,
+          13,
+          6,
+          5,
+          3,
+          17
+        ],
+        "used_old_1310_fallback": false
+      },
+      "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+      "invocation_charged_seconds": 27.31359102986753,
+      "invocation_id": "h205-single-regression-context-20261102T1251Z",
+      "post_exit_reconciled_objects": [
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "66ee0abab2b2b1b8a89c00790843d06e837f8989436f00d467001e3bcf4dd253",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/single_regression_context_summary.json",
+          "local_sha256": "66ee0abab2b2b1b8a89c00790843d06e837f8989436f00d467001e3bcf4dd253",
+          "name": "single_regression_context_summary.json",
+          "size_bytes": 11415,
+          "version_id": "MiLZsVFLmsaJxtq1Q0hNkfXBMrbZ79ir"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "ccf245efca346491b0f5206cfe50a9ab88f4c34d41cd54a457efa7506511ba48",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/campaign_ledger.reconciled.json",
+          "local_sha256": "ccf245efca346491b0f5206cfe50a9ab88f4c34d41cd54a457efa7506511ba48",
+          "name": "campaign_ledger.reconciled.json",
+          "size_bytes": 7823,
+          "version_id": "37CdtR8Rkq7BS8zxkaW7gr.Ld2RQhMOP"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "6ce7756ead0b8c124e1e0f30b8188b85e597de1a58ccf7c7661ab318fe9f54ba",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/run.resource_summary.json",
+          "local_sha256": "6ce7756ead0b8c124e1e0f30b8188b85e597de1a58ccf7c7661ab318fe9f54ba",
+          "name": "run.resource_summary.json",
+          "size_bytes": 12932,
+          "version_id": "usPpU5pbqt.rzZfpr7iPfY4I4VADTzFW"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "a7ff460ceccea6c9f314271003e889fb015b9e1c25df67d717dc335810bf0afc",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/run.resources.jsonl",
+          "local_sha256": "a7ff460ceccea6c9f314271003e889fb015b9e1c25df67d717dc335810bf0afc",
+          "name": "run.resources.jsonl",
+          "size_bytes": 11798,
+          "version_id": "c4OUeBI0kfzAqMnIqwgNs1Ghax7DmW_N"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "c4f501aa1a5d6f030eb42c350ae25ee19d60ef895795bfadb33fb46363459eaf",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/outer_supervisor_observation.json",
+          "local_sha256": "c4f501aa1a5d6f030eb42c350ae25ee19d60ef895795bfadb33fb46363459eaf",
+          "name": "outer_supervisor_observation.json",
+          "size_bytes": 12714,
+          "version_id": "lRIs8LgWJGqc0ZWAxo5fdAY5555ZurBH"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "257bf1133c7e540a1357506d81dd0d01f431f7e6a1e3a1a00165e606834d0339",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/launch-single-context-20261102T1251Z.json",
+          "local_sha256": "257bf1133c7e540a1357506d81dd0d01f431f7e6a1e3a1a00165e606834d0339",
+          "name": "launch-single-context-20261102T1251Z.json",
+          "size_bytes": 1047,
+          "version_id": "LoW.ihDRnthhn1awB4XimWE9FvGUlgCE"
+        }
+      ],
+      "reconciled_ledger_sha256": "ccf245efca346491b0f5206cfe50a9ab88f4c34d41cd54a457efa7506511ba48",
+      "remaining_campaign_budget_seconds": 16908.999988737887,
+      "s3_bucket": "veox-jopedime-learning-use2",
+      "s3_prefix": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z",
+      "source_commit": "05ab7ddf415da124fae5a1ea80a8fd9f3c7f7cba",
+      "status": "SINGLE_CONTEXT_REGRESSION_SEAM_RECONCILED_PASS",
+      "wave": "H205",
+      "worker_uploaded_bundle_objects": [
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "3dd893c6e95ddc7416a57a89d34fe4bd8203dd504c2d3a5d9ce457ce4ec9bf9f",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/context_manifest.json",
+          "local_sha256": "3dd893c6e95ddc7416a57a89d34fe4bd8203dd504c2d3a5d9ce457ce4ec9bf9f",
+          "name": "context_manifest.json",
+          "size_bytes": 2787,
+          "version_id": "OV_lCdz4OjIItEcnGEoaVehCYFxg3fUE"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "c9bcb1555cf499fad23024b63ef982a38eedd56e791fae6954a8ca0b25a07aa0",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/native_evaluator_receipt.json",
+          "local_sha256": "c9bcb1555cf499fad23024b63ef982a38eedd56e791fae6954a8ca0b25a07aa0",
+          "name": "native_evaluator_receipt.json",
+          "size_bytes": 5418,
+          "version_id": "g0HZpYbilyyy.9pTDzWtNy8q9Bq.RCyS"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "1c54e242793faa6d890375866b51e62bceb765a1ba41f7417122722066eb398f",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/pool.npz",
+          "local_sha256": "1c54e242793faa6d890375866b51e62bceb765a1ba41f7417122722066eb398f",
+          "name": "pool.npz",
+          "size_bytes": 52236,
+          "version_id": "ukhGlpp3DBN_92B0BUolQ0WqEu_dXlGU"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "107bf0feaa58d5e483e7edb5b4005a006303a0b132d65f73d3c01f829642aec0",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/features.npz",
+          "local_sha256": "107bf0feaa58d5e483e7edb5b4005a006303a0b132d65f73d3c01f829642aec0",
+          "name": "features.npz",
+          "size_bytes": 9398,
+          "version_id": "mjTuhpPKycw9MbZIBSD_8FqzSH8tc5ws"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "4798f49653e44e7a2934094d709d02d15be118dfed076ff9480aab86d15313d8",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/s3_pre_consumption_custody_receipt.json",
+          "local_sha256": "4798f49653e44e7a2934094d709d02d15be118dfed076ff9480aab86d15313d8",
+          "name": "s3_pre_consumption_custody_receipt.json",
+          "size_bytes": 3277,
+          "version_id": "lbiN0EuqBAIfiN2SboS5svAj_PIT790S"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "1ae188e98bddc7dbaf7477137942a9aa81192d846d4efac4067f1ee0ad097540",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/engine_consumption_receipt.json",
+          "local_sha256": "1ae188e98bddc7dbaf7477137942a9aa81192d846d4efac4067f1ee0ad097540",
+          "name": "engine_consumption_receipt.json",
+          "size_bytes": 1352,
+          "version_id": "KZj76VlAAwchJ3medjHEvwuX4JZ9_x3n"
+        },
+        {
+          "bucket": "veox-jopedime-learning-use2",
+          "downloaded_version_sha256": "81d060619da69dd00a04c9bf2ec7f7fc9aedf6fd53e68205b26c71106feae9b7",
+          "key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/s3_custody_receipt.json",
+          "local_sha256": "81d060619da69dd00a04c9bf2ec7f7fc9aedf6fd53e68205b26c71106feae9b7",
+          "name": "s3_custody_receipt.json",
+          "size_bytes": 4597,
+          "version_id": "mif1aSySY.0YLkmS2ol5DY22qa2hOb.A"
+        }
+      ]
+    },
+    "s3_failure_custody_1237z_1249z": {
+      "archives": [
+        {
+          "archive_filename": "h205-partial-20261102T1237Z.tar.gz",
+          "etag": "b342b06d4d9c6217cba7774df707f34e",
+          "invocation_tag": "20261102T1237Z",
+          "member_count": 12,
+          "members": [
+            {
+              "arcname": "launch-single-context-20261102T1237Z.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "87ec1df8671e361d73fb08816814b017bdabac9167b23ebc32a15ecae3f46d59",
+              "size_bytes": 1046,
+              "src_path": "/home/ubuntu/jope-data/h205/launch-single-context-20261102T1237Z.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/attempt.claim",
+              "replayed_member_sha256_verified": true,
+              "sha256": "0c268f3235390fb6b2242fbf37764d040409f149610263b2bc46bc874aba869e",
+              "size_bytes": 391,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/attempt.claim"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/outer_supervisor_observation.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "3ddf99096aa3991fa0ee6bcfd7b1460df0a57a636818815fb0bc6a4fa564d427",
+              "size_bytes": 1781,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/outer_supervisor_observation.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run.accounted-launch.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "69973833df6d665734cd32cf5cb8f1c4d6133be8cfdf39c5fd8a25cf42325daa",
+              "size_bytes": 1013,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run.accounted-launch.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run.resource_summary.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "bbbe871843234571d2678e24b4b27b24cdece43fe2bdf3d9f43a2911d30cbdf4",
+              "size_bytes": 1079,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run.resource_summary.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run.resources.jsonl",
+              "replayed_member_sha256_verified": true,
+              "sha256": "b932f127fbd7092c761a9ae0951a93ee89d69fb0b026844afe7e9c7d82311d9a",
+              "size_bytes": 3805,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run.resources.jsonl"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run.stdout",
+              "replayed_member_sha256_verified": true,
+              "sha256": "a78ebe894d9df9b6afc634e7434443f3db9fe40acd118d8a53ac28af753d9ddb",
+              "size_bytes": 987,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run.stdout"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run/allowed_regression_train_roster.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "1bc46e4bf7997e44be2881fdb185acb36fa06c6ffb49143bff21f85241674e69",
+              "size_bytes": 2591020,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run/allowed_regression_train_roster.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_nq0.jtt1",
+              "replayed_member_sha256_verified": true,
+              "sha256": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+              "size_bytes": 49017,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_nq0.jtt1"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_padded_nq10.jtt1",
+              "replayed_member_sha256_verified": true,
+              "sha256": "8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1",
+              "size_bytes": 49497,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_padded_nq10.jtt1"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/manifest.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "28253e606e580b6566e93ceefa49fedb7216799595ee6228939dcf66e7c072de",
+              "size_bytes": 1507,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/manifest.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/train.csv",
+              "replayed_member_sha256_verified": true,
+              "sha256": "6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d",
+              "size_bytes": 67040,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1237Z/run/raw_s3_intake/1db3750d4ceccab9/train.csv"
+            }
+          ],
+          "replayed_sha256": "6fb1dc1622dcdc8521aadbc9e78f47f2f12094d49a97c4197414ba82d7e46307",
+          "replayed_size_bytes": 441309,
+          "s3_bucket": "veox-jopedime-learning-use2",
+          "s3_key": "experiments/rd_breakthrough_20261101/H205/failure-custody-20261102T1237Z-1249Z/h205-partial-20261102T1237Z.tar.gz",
+          "s3_version_id": "r0OtLX2y6BZom9u1QJhLMx7eBQM5yYR6",
+          "sha256": "6fb1dc1622dcdc8521aadbc9e78f47f2f12094d49a97c4197414ba82d7e46307",
+          "size_bytes": 441309
+        },
+        {
+          "archive_filename": "h205-partial-20261102T1249Z.tar.gz",
+          "etag": "bc7952a7c288aa184bac64f08e7bd201",
+          "invocation_tag": "20261102T1249Z",
+          "member_count": 16,
+          "members": [
+            {
+              "arcname": "launch-single-context-20261102T1249Z.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "28a1bd9c45f16f529155fb7069a59e0d96cb4eb9527a8b11211316926fdc68f4",
+              "size_bytes": 1047,
+              "src_path": "/home/ubuntu/jope-data/h205/launch-single-context-20261102T1249Z.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/attempt.claim",
+              "replayed_member_sha256_verified": true,
+              "sha256": "2c1b67b5d3f7a39d1b95675e5ab693f44de8c4f831ffb072c2a652422f6fc22f",
+              "size_bytes": 392,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/attempt.claim"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/outer_supervisor_observation.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "d837814b851147e27f858323d02ea23718794dd779fe91fec305f948c29bb587",
+              "size_bytes": 1806,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/outer_supervisor_observation.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run.accounted-launch.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "faedeafa6e112f6d6f7fb0e10db76b29af95489ee47a6a477f8e39263221f8fc",
+              "size_bytes": 1013,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run.accounted-launch.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run.resource_summary.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "27976ec9a4b2193c69ea9b65b2f1355afd1c07718998a0f7425a66768bb38114",
+              "size_bytes": 1106,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run.resource_summary.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run.resources.jsonl",
+              "replayed_member_sha256_verified": true,
+              "sha256": "fdd2555fd20697dd37e17992402b6ec4579055503fbe6e6715bb691d1e370865",
+              "size_bytes": 3797,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run.resources.jsonl"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run.stdout",
+              "replayed_member_sha256_verified": true,
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size_bytes": 0,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run.stdout"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/allowed_regression_train_roster.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "1bc46e4bf7997e44be2881fdb185acb36fa06c6ffb49143bff21f85241674e69",
+              "size_bytes": 2591020,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/allowed_regression_train_roster.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/context_manifest.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "036a4cf1190bbaf0d1a97bf6b6bbe08865ee8179a8851e7af6458668ef74932c",
+              "size_bytes": 2787,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/context_manifest.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/features.npz",
+              "replayed_member_sha256_verified": true,
+              "sha256": "107bf0feaa58d5e483e7edb5b4005a006303a0b132d65f73d3c01f829642aec0",
+              "size_bytes": 9398,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/features.npz"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/native_evaluator_receipt.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "cbbfaf991d371251d8b3d31492ce98e92b77ef8d91528f6c8d6f0bf363b218c4",
+              "size_bytes": 5418,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/native_evaluator_receipt.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/pool.npz",
+              "replayed_member_sha256_verified": true,
+              "sha256": "1c54e242793faa6d890375866b51e62bceb765a1ba41f7417122722066eb398f",
+              "size_bytes": 52236,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec/pool.npz"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_nq0.jtt1",
+              "replayed_member_sha256_verified": true,
+              "sha256": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+              "size_bytes": 49017,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_nq0.jtt1"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_padded_nq10.jtt1",
+              "replayed_member_sha256_verified": true,
+              "sha256": "8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1",
+              "size_bytes": 49497,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/1db3750d4ceccab9_train_only_padded_nq10.jtt1"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/manifest.json",
+              "replayed_member_sha256_verified": true,
+              "sha256": "28253e606e580b6566e93ceefa49fedb7216799595ee6228939dcf66e7c072de",
+              "size_bytes": 1507,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/manifest.json"
+            },
+            {
+              "arcname": "regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/train.csv",
+              "replayed_member_sha256_verified": true,
+              "sha256": "6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d",
+              "size_bytes": 67040,
+              "src_path": "/home/ubuntu/jope-data/h205/regression-seam-20261102T1249Z/run/raw_s3_intake/1db3750d4ceccab9/train.csv"
+            }
+          ],
+          "replayed_sha256": "cbb34ba4f67ef9b1354c405998fb8139416b8eacc385cd3cc8b9243a2485cb47",
+          "replayed_size_bytes": 452989,
+          "s3_bucket": "veox-jopedime-learning-use2",
+          "s3_key": "experiments/rd_breakthrough_20261101/H205/failure-custody-20261102T1237Z-1249Z/h205-partial-20261102T1249Z.tar.gz",
+          "s3_version_id": "netQc.2TsR3f7hAreBVksXElweSlA7_h",
+          "sha256": "cbb34ba4f67ef9b1354c405998fb8139416b8eacc385cd3cc8b9243a2485cb47",
+          "size_bytes": 452989
+        }
+      ],
+      "created_utc": "2026-11-02T13:10:03Z",
+      "owner": "rd_argon",
+      "purpose": "Create-only S3 failure custody and exact-VersionId member replay for incomplete H205 invocations 20261102T1237Z (candidate struct missing birth_seq before PR #1855) and 20261102T1249Z (24/24 native evaluation completed, then stopped on numeric threads 5>4 before S3 upload).",
+      "schema": "jope.h205.failure_custody_manifest/v1"
+    }
+  },
+  "h205_h206_producer_decision_20261102T1338Z": {
+    "s3_bucket": "veox-jopedime-learning-use2",
+    "s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1338Z/H205_H206_PRODUCER_DECISION_AND_HIST10_PROOF_20261102T1338Z.json",
+    "s3_version_id": "0b52EwEEj8W6cFdHyxX7_Q7BJqB4JEX2",
+    "sha256": "3c2bf59d7d46802826508e4feb91b933ada452d2cd2a31da788cda13ac6712ca",
+    "selected_option": "OPTION_A_KEEP_H206_REGISTERED_1219_205_H50_COHORT_AND_SPECIFY_IN_COHORT_FULL_RAW_ABI_PRODUCER",
+    "no_fake_alias_or_silent_cohort_expansion": true,
+    "no_jrb_gate_weakening": true,
+    "cohort_relationship_proof": {
+      "h205_qualified_single_context": {
+        "context_sha256": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+        "dataset_id": "1db3750d4ceccab9",
+        "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+        "family_key": "e70bef3cf802dadb1f22458c1e1c6bb553a5d9f3",
+        "fpool_family_alias": "f00161",
+        "in_h205_disjoint_1336_fresh_roster": true,
+        "in_h206_1219_205_cohort": false,
+        "role_and_disjointness_reason": "H205 FRESH/STATIC-TEACHER arms require non-sealed D4 regression TRAIN families strictly disjoint from the static 205-family (1,219-context) H50 cohort. Therefore 1db3750d4ceccab9 (f00161) has zero exact context_sha256, dataset_id, or family_id match in H206s committed 1,219/205 cohort by design. It is recorded strictly as H205 single-context fresh-seam proof (1 context of 1,336 fresh families, not 50-round H205 coverage and not an H206 in-cohort context)."
+      },
+      "h206_registered_cohort": {
+        "a_assessment_families_per_fold": 41,
+        "b_selection_families_per_fold": 41,
+        "contexts_count": 1219,
+        "dl_val_regression_contexts": 91,
+        "families_count": 205,
+        "families_per_fold": 41,
+        "fit_families_per_fold": 123,
+        "outer_folds": 5,
+        "prereg_path": "research/flywheel_selfplay/h206_search_distill/PREREG.md",
+        "prereg_sha256": "2d174427e734a7609f756b3d5025474a4242b77d9796511e4bf6b918e777d242",
+        "selected_json_path": "/home/ubuntu/jope-data/h50/input/selected.json",
+        "selected_json_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+      }
+    },
+    "division_of_producer_authority_option_a": {
+      "argon_h205_producer_authority": "Owns source-global exclusion/role verification (build_allowed_regression_train_roster / D4 role closure), TRAIN-only JTT1 + nq=10 native S1 compatibility bridge (h206-native-S1-TRAIN-v1, cb967d3c...), and pinned original-encoder extraction of raw Stage-1A landmarks (vec256, col_lm), Stage-1B SVD tokens (tokens_10x32, mask_10, lm48_z, dope629), context features (ctx_feat, scale), and calibrated/SOS priors (base_prior_cost, sos_prior) from pinned cpu_exact_fused.py (b9f1468a...).",
+      "h206_owner_consumer_authority": "gpu_fused_redteam_codex retains sole ownership of research/flywheel_selfplay/h206_search_distill/*, the fixed 1,219-context / 205-family 5-fold FIT/B/A partition (contracts.validate_cohort_and_folds), the k=256 ordered candidate program slate + 412-dim program features + 16-dim orthogonal projection and 4 distinct warm-start revealed anchors (revealed_indices, revealed_raw_f, revealed_gate), and all H206 teacher/student distillation and JRB-01/H178 gates."
+    },
+    "pinned_original_module_sha256s": {
+      "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+      "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/dope_mlc_v3.py": "1733b1caaa61b83fc4947a4bb3b78b0cfed0f5d4db2a6e39d3d73041ac197c93",
+      "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/featurizer.py": "5e0f40f9aa2bf39dd3be213bd4608da3da1eb2740c7e6a98a00db191fd5d5c8b",
+      "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/gamenet_anchor.py": "8898c0dd347858068efba6baef78d5630ec5dd10f7f40b50d86c3db52369c2bc",
+      "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/landmarks.py": "9cdcc3e59641dc12b171b1615916448880bd20bf1b87a83c3496c15f98f4d432",
+      "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/model.py": "13a726ba10c3df8f0284094e87959b02e7927e6f631dd59fa611d364702f2b74",
+      "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/prior_net.py": "ef3a871f3b4a0d5c0368185d0936922229d187ba8a38119fcff04f7a6d52ba34",
+      "research/flywheel_selfplay/h206_search_distill/PREREG.md": "2d174427e734a7609f756b3d5025474a4242b77d9796511e4bf6b918e777d242",
+      "research/flywheel_selfplay/h206_search_distill/contracts.py": "8f314afe7ab57a240ecae19924d6f0562beefc5a5c726d6c6080bf007abbe0cd",
+      "research/flywheel_selfplay/h206_search_distill/model.py": "3a3087d2e75c9ba24c8b19fb22c44451092b494ef446de82041f8fa87539c113",
+      "research/flywheel_selfplay/h206_search_distill/student.py": "c47e8b93ef150e178046bd7eec5e2e7278e0d79d15665c40d84c6e5ab94039da"
+    },
+    "full_13_array_abi_derivation_spec": {
+      "base_prior_cost": {
+        "derivation": "Calibrated prior network predicted cost across all k=256 candidates conditioned on (cand_412, sem_24, lm48_z).",
+        "dtype": "float32",
+        "shape": [
+          1,
+          256
+        ],
+        "source_pin": "cpu_exact_fused.py:1280-1282 (_predict_calibrated_prior_batched_gpu, track_prefix=prior10)"
+      },
+      "col_lm": {
+        "derivation": "Top-64 active feature columns ordered by |corr(x_j, y_tr_norm)| with 14 nonlinear probe correlations + top_vals + skew_feat + kurt_feat (17 channels), zero-padded to 64 columns.",
+        "dtype": "float32",
+        "shape": [
+          1,
+          64,
+          17
+        ],
+        "source_pin": "cpu_exact_fused.py:807-865 / cpu_exact_fused.py:2272-2281"
+      },
+      "ctx_feat": {
+        "derivation": "584-dim context feature vector (concatenation of normalized dataset/landmark/prior context descriptors) consumed by frozen gamenet_anchor.predict_costs.",
+        "dtype": "float32",
+        "shape": [
+          1,
+          584
+        ],
+        "source_pin": "cpu_exact_fused.py:1459 (gamenet_anchor.predict_costs input) & model.py:187"
+      },
+      "mask_10": {
+        "derivation": "Boolean active-token slot mask from Stage-1B token projection; student.py enforces exact torch.equal(mask.bool(), mask_10).",
+        "dtype": "bool",
+        "shape": [
+          1,
+          10
+        ],
+        "source_pin": "cpu_exact_fused.py:1098-1119 (_project_stage1b_tokens_batched_gpu) & student.py:114"
+      },
+      "program": {
+        "derivation": "412-dim syntactic/structural DSL features for the k=256 ordered candidate program slate.",
+        "dtype": "float32",
+        "shape": [
+          256,
+          412
+        ],
+        "source_pin": "cpu_exact_fused.py:2145 (_featurize_dsl_412_fast) & featurizer.py"
+      },
+      "projection": {
+        "derivation": "(program @ w1_sign_matrix_412x16) / sqrt(412.0) using frozen DOPE w1_sign_matrix.",
+        "dtype": "float32",
+        "shape": [
+          256,
+          16
+        ],
+        "source_pin": "cpu_exact_fused.py:1220 & model.py:187"
+      },
+      "revealed_gate": {
+        "derivation": "Warm-start anchor validity gates in {0.0, 1.0} for the 4 revealed_indices.",
+        "dtype": "float32",
+        "shape": [
+          1,
+          4
+        ],
+        "source_pin": "cpu_exact_fused.py:1331-1365 & model.py:187"
+      },
+      "revealed_indices": {
+        "derivation": "4 distinct warm-start anchor indices in [0, 256) indexing the context k=256 program slate.",
+        "dtype": "int64",
+        "shape": [
+          1,
+          4
+        ],
+        "source_pin": "contracts.py:222-228 & cpu_exact_fused.py:1294-1365"
+      },
+      "revealed_raw_f": {
+        "derivation": "Inner 80/20 warm-start anchor raw evaluation costs for the 4 revealed_indices.",
+        "dtype": "float32",
+        "shape": [
+          1,
+          4
+        ],
+        "source_pin": "cpu_exact_fused.py:1294-1365 & model.py:187"
+      },
+      "scale": {
+        "derivation": "Positive target/cost scale scalar passed to frozen gamenet_anchor.predict_costs.",
+        "dtype": "float32",
+        "shape": [
+          1
+        ],
+        "source_pin": "cpu_exact_fused.py:1459 & model.py:187"
+      },
+      "sos_prior": {
+        "derivation": "2-channel SOS structural prior tensor across all k=256 candidates.",
+        "dtype": "float32",
+        "shape": [
+          1,
+          256,
+          2
+        ],
+        "source_pin": "cpu_exact_fused.py:1159-1185, 1222 (_compute_sos_prior_batched_gpu)"
+      },
+      "tokens_10x32": {
+        "derivation": "Live frozen-DOPE Stage-1B SVD token projection from (vec256, col_lm); student.py verifies max_abs_diff <= 1e-4 against live encoder recomputation.",
+        "dtype": "float32",
+        "shape": [
+          1,
+          10,
+          32
+        ],
+        "source_pin": "cpu_exact_fused.py:991-1119 (_run_dope_mlc_v3_and_lm48 -> _project_stage1b_tokens_batched_gpu) & student.py:98-123"
+      },
+      "vec256": {
+        "derivation": "Stage-1A dataset landmark summary projected via frozen DOPE landmark_bridge from unpadded inner TRAIN rows (X_tr, y_tr_norm, tr_row_mask, col_mask).",
+        "dtype": "float32",
+        "shape": [
+          1,
+          256
+        ],
+        "source_pin": "cpu_exact_fused.py:766-921 (_extract_stage1a_landmarks_batched_gpu -> self.landmark_bridge(raw_vec256)) / cpu_exact_fused.py:2271-2280 (FusedLandmarkWorkspace.fit_transform_and_extract_bundle_high)"
+      }
+    }
   }
 }
