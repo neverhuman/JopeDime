@@ -26,6 +26,11 @@ use crate::hooks::validation::{self, DatasetResult, ValidationError, ValidationR
 use crate::manifest::RunMetadata;
 use crate::record::RecordSink;
 use crate::train::Cadence;
+use jope_datasets::catalog::Task;
+use jope_datasets::family_contracts::{
+    build_binary_target_summaries, build_split_view_manifest,
+    freeze_source_family_split as rust_freeze_source_family_split, OuterSplit,
+};
 use pyo3::buffer::PyBuffer;
 use pyo3::exceptions::{PyKeyError, PyRuntimeError, PyTypeError, PyValueError};
 use pyo3::prelude::*;
@@ -229,6 +234,63 @@ fn metric_id(name: &str) -> PyResult<u16> {
     crate::train::metric_by_name(name)
         .map(|m| m.id)
         .ok_or_else(|| PyValueError::new_err(format!("unknown telemetry metric {name}")))
+}
+
+/// Freeze a dataset-family split with the canonical jope-datasets implementation.
+#[pyfunction]
+#[pyo3(signature = (dataset_families, train_count, holdout_count, seed=0))]
+fn freeze_source_family_split_py(
+    py: Python<'_>,
+    dataset_families: &Bound<'_, PyAny>,
+    train_count: usize,
+    holdout_count: usize,
+    seed: u64,
+) -> PyResult<Bound<'_, PyAny>> {
+    let families: BTreeMap<String, String> =
+        serde_json::from_str(&to_json(dataset_families)?).map_err(value_error)?;
+    let split = rust_freeze_source_family_split(&families, train_count, holdout_count, seed)
+        .map_err(value_error)?;
+    to_py(py, &split)
+}
+
+/// Build the canonical split-view and train-only binary target contracts in Rust.
+#[pyfunction]
+#[pyo3(signature = (dataset, source_family, outer_split, row_ids, train_sha256, training_targets, test_sha256=None))]
+#[allow(clippy::too_many_arguments)]
+fn build_binary_dataset_contracts(
+    py: Python<'_>,
+    dataset: &str,
+    source_family: &str,
+    outer_split: &str,
+    row_ids: Vec<String>,
+    train_sha256: &str,
+    training_targets: Vec<f64>,
+    test_sha256: Option<&str>,
+) -> PyResult<Bound<'_, PyAny>> {
+    let outer_split = match outer_split {
+        "train" => OuterSplit::Train,
+        "holdout" => OuterSplit::Holdout,
+        _ => return Err(value_error("outer_split must be 'train' or 'holdout'")),
+    };
+    let manifest = build_split_view_manifest(
+        dataset,
+        source_family,
+        Task::Binary,
+        outer_split,
+        &row_ids,
+        train_sha256,
+        test_sha256,
+    )
+    .map_err(value_error)?;
+    let summaries = build_binary_target_summaries(&training_targets, &row_ids, &manifest)
+        .map_err(value_error)?;
+    let manifest_sha256 = manifest.sha256().map_err(value_error)?;
+    let result = serde_json::json!({
+        "manifest": manifest.to_json(),
+        "manifest_sha256": manifest_sha256,
+        "target_summaries": summaries.iter().map(|summary| summary.to_json()).collect::<Vec<_>>(),
+    });
+    to_py(py, &result)
 }
 
 // ---- record sink ---------------------------------------------------------------------------
@@ -1942,6 +2004,8 @@ fn _telemetry(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyRatchetLive>()?;
     module.add_function(wrap_pyfunction!(metric_registry, module)?)?;
     module.add_function(wrap_pyfunction!(metric_id, module)?)?;
+    module.add_function(wrap_pyfunction!(freeze_source_family_split_py, module)?)?;
+    module.add_function(wrap_pyfunction!(build_binary_dataset_contracts, module)?)?;
     module.add_function(wrap_pyfunction!(open_python_trainer, module)?)?;
     module.add_function(wrap_pyfunction!(open_flywheel_step, module)?)?;
     module.add_function(wrap_pyfunction!(check_partition_label, module)?)?;

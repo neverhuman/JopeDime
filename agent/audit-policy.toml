@@ -119,6 +119,9 @@ extra_excluded_paths = [
   # P37: H173 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
   "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
   "deploy/release/test-release.sh",
+  # HLT-005: frozen portable-math parity oracle, not Python runtime product code.
+  # Exact bytes are pinned by the P-1B campaign receipts; see the pytruth register.
+  "crates/feat-math/tests/portable/full_ref.py",
 "research/flywheel_selfplay/h158_distillation/runtime.py",
   "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
   "research/flywheel_selfplay/h164_sam_retry/runtime.py",
@@ -366,6 +369,14 @@ owner = "dl-flywheel"
 expires = "2027-02-01"
 reason = "HLT-001 sha256:9dac31749c4d4a0bb0f1201e55b3fbb050ed128259f8f8ed0196a51f19e22843 flags `old` in a frozen legacy archive-unit shutdown check. The file is immutable reviewed evidence at SHA256 c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69, pinned by deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/README.md and provenance/validation.json. Preserve those bytes; this exact term-and-path allowance affects no other rule, term, or file."
 
+[[dead_language_allow]]
+name = "vibe-frozen-trace-recovery-v3-legacy-unit-check"
+term = "old"
+paths = ["deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py"]
+owner = "dl-flywheel"
+expires = "2027-02-01"
+reason = "HLT-001 sha256:3740a6e00ade6e4fe9e0be004362168ebfb4ab21276cfcce8332337f3c0f29ee flags `old` in a frozen legacy archive-unit shutdown check. The file is immutable reviewed evidence at SHA256 c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69, pinned by deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/provenance/README.md and provenance/validation.json. Preserve those bytes; this exact term-and-path allowance affects no other rule, term, or file."
+
 # Hash-pinned evidence snapshots. Each entry lists exact copies inside a frozen
 # evidence package whose sha256 is recorded by that package's own receipt or
 # manifest (pinned_by). Deduplicating or moving them would break the receipt,
@@ -566,6 +577,7 @@ reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_
 name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision2-package"
 paths = [
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/readonly_io.py",
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_io.py",
 ]
 pinned_by = [
@@ -578,6 +590,7 @@ reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_
 name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision3-package"
 paths = [
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/readonly_io.py",
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_io.py",
 ]
 pinned_by = [

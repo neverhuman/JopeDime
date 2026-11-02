@@ -41,7 +41,7 @@ def regular(path):
 
 
 def effective_policy_fingerprint(source, policy):
-    # Jankurai 1.7.5 audit/outcome.rs includes the complete policy source digest
+    # Jankurai 1.7.6 audit/outcome.rs includes the complete policy source digest
     # in this binding. Derive it from verified captured bytes, never from the report.
     path = source / "agent/audit-policy.toml"
     data = regular(path).read_bytes() if path.exists() else None
@@ -60,7 +60,7 @@ def effective_policy_fingerprint(source, policy):
         "format": "jankurai-effective-audit-policy-v1",
         "source_sha256": "sha256:" + hashlib.sha256(data).hexdigest() if data is not None else None,
         "minimum_score": 85, "fail_on": sorted(set(fail_on)), "advisory_on": advisory,
-        "auditor_version": "1.7.5", "schema_version": "1.9.0", "standard_version": "0.9.0",
+        "auditor_version": "1.7.6", "schema_version": "1.9.0", "standard_version": "0.9.0",
     }
     encoded = json.dumps(binding, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
@@ -79,7 +79,7 @@ def validate(output, audit_exit, expected_manifest):
 
     report = decode((output / "repo-score.json").read_text())
     for field, value in (
-        ("auditor_version", "1.7.5"), ("schema_version", "1.9.0"),
+        ("auditor_version", "1.7.6"), ("schema_version", "1.9.0"),
         ("standard_version", "0.9.0"), ("paper_edition", "2026.05-ed8"),
         ("scope", {"mode": "full", "paths": []}),
     ):

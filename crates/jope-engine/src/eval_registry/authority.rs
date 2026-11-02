@@ -2009,7 +2009,7 @@ impl Authority {
             let column = Self::table_key(table)?;
             let mut statement = self
                 .db
-                .prepare(&Self::scope_state_keys_sql(table, column))?;
+                .prepare(&Self::scope_state_keys_sql(table, column)?)?;
             let keys = statement.query_map([], |r| r.get::<_, String>(0))?;
             for key in keys {
                 let key = key?;
@@ -3519,7 +3519,7 @@ impl Authority {
             let column = Self::table_key(table)?;
             let mut statement = self
                 .db
-                .prepare(&Self::scope_state_keys_sql(table, column))?;
+                .prepare(&Self::scope_state_keys_sql(table, column)?)?;
             for key in statement.query_map([], |r| r.get::<_, String>(0))? {
                 let key = key?;
                 let actual = Self::state_row(&self.db, table, &key)?;

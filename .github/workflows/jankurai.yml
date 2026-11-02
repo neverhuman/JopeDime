@@ -26,18 +26,18 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Install pinned Jankurai v1.7.5
+      - name: Install pinned Jankurai v1.7.6
         run: |
           set -euo pipefail
           bash deploy/ci/install-jankurai.sh
-          echo "$PWD/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
+          echo "$PWD/target/jankurai/jankurai-1.7.6-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
 
       - name: Run source supply-chain scans
         env:
           JOPE_LANE_EVIDENCE: ${{ github.workspace }}/target/jankurai/reports/${{ github.run_id }}/${{ github.run_attempt }}/security
         run: bash tools/security-lane.sh
 
-      - name: Run full Jankurai v1.7.5 audit
+      - name: Run full Jankurai v1.7.6 audit
         run: |
           set -euo pipefail
           bash ops/ci/jankurai.sh "$PWD/target/jankurai/reports/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"

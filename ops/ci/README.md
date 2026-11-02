@@ -31,7 +31,7 @@ and the exact-head reviewed lifecycle remain authoritative.
 
 Run the identical full-scope Jankurai audit with
 `JANKURAI_BIN=/path/to/pinned/jankurai bash ops/ci/jankurai.sh /owned/fresh/report-directory`.
-The wrapper requires version1.7.5, emits timings and a repair queue, disables
+The wrapper requires version1.7.6, emits timings and a repair queue, disables
 badge/history writes, and always selects read-only mode. The independent audit job in full-main.yml uses the existing trusted-main
 runner on main pushes and main workflow dispatches. It runs alongside the eleven
 CPU families. On main it sets `JOPE_AUDIT_REPORT_ONLY=1` until the score reaches 85: a

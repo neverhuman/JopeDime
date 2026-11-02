@@ -15,6 +15,14 @@ removed. This includes the versioned trace archive copies, frozen `evergreen.py`
 `training_snapshot_kumos.py`, and the h189/h192 copies. Their exact package pins
 and reasons remain in `agent/audit-policy.toml`.
 
+The t1955 deeper-fix pass adds the frozen revision2 and revision3
+`generated_target_callbacks_v1/package/readonly_io.py` copies to their existing
+snapshot entries. Both remain byte-identical at SHA-256
+`49263f157b357809bd02d28be0ec1600dbf5362a68c5344e6f0a5859c11e4b09`; each
+package's own `package/SOURCE_PINS.json` records that digest. This is the exact
+HLT-043 class `sha256:671081d3da76cbc035fdef9c5c867ded3dab401437e7bc9bdb2266ee9cee8665`.
+The pinned files remain unchanged.
+
 The six canonical modules below also no longer have global exclusions. Their
 frozen `hpc_verified_v5` copies remain bound by the package manifest and
 `provenance/FINAL_VALIDATION.json`; the mutable canonical modules now receive all

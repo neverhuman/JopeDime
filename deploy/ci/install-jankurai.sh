@@ -2,8 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 mkdir -p target/jankurai
-version=1.7.5
-digest=792c16465c274a266f64541152eb5c796fdf22113120133789d28bf99bcf915c
+version=1.7.6
+digest=03def9b8b63e3b36234c4528a4a4ef5e619ad9eac152f1ffb5fa29d16341c017
 archive="target/jankurai/jankurai-$version-x86_64-unknown-linux-gnu.tar.gz"
 if [[ -e "$archive" || -L "$archive" ]]; then
   # Cached bytes must be a regular file, never a borrowed path or another object type.

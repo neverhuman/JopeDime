@@ -76,8 +76,9 @@ Oracle diagnostic only (never selection or a gate):
 CPU xbabe1, nice19,4cores/math1. Pause RAM<12GiB OR load5>70, resume RAM>=16GiB
 AND load5<=60,60s recheck; shared latch carries pressure to the next dispatch.
 Hard stops ownRSS>6GiB, RAM<6GiB, free<80GB, output>2GB or22:30Z deadline.
-Exact hard-stop fields `None`; all raw pause/stop
-observations are preserved in supervisor-guard.jsonl and compact metrics.
+Resource guard events: 0; hard-stop fields `None` (NOT_APPLICABLE_COMPLETE_NO_HARD_STOP).
+Full resource samples remain in resources.jsonl; a supervisor-guard.jsonl
+event log is emitted only when a pause, resume or error occurs.
 Compute22:30Z and closeout23:00Z November2 UTC remain unchanged.
 
 ## Versioned custody and next step
