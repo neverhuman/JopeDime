@@ -11,11 +11,11 @@ use super::*;
 )]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Command,
+    pub command: ApplianceCommand,
 }
 
 #[derive(Subcommand)]
-pub enum Command {
+pub enum ApplianceCommand {
     /// Connect this CLI to a VEOX account.
     #[cfg(feature = "client")]
     Auth {

@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
+pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
-        Cmd::PolicyParity { directory } => jope_parallel::neural::parity(&directory)?,
+        EngineCmd::PolicyParity { directory } => jope_parallel::neural::parity(&directory)?,
         #[cfg(feature = "neural")]
-        Cmd::ExportPolicy {
+        EngineCmd::ExportPolicy {
             checkpoint,
             output,
             receipt,
@@ -21,11 +21,11 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             })?
         ),
         #[cfg(feature = "neural")]
-        Cmd::LossOptimizerParity { directory } => {
+        EngineCmd::LossOptimizerParity { directory } => {
             jope_parallel::neural::loss_optimizer_parity(&directory)?
         }
         #[cfg(feature = "neural")]
-        Cmd::Encode {
+        EngineCmd::Encode {
             prepared,
             cut,
             spec,
@@ -36,14 +36,14 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             println!("{}", serde_json::to_string(&e)?);
         }
         #[cfg(feature = "neural")]
-        Cmd::DistributedProbe {
+        EngineCmd::DistributedProbe {
             world,
             output,
             timeout,
             fail_rank,
         } => jope_parallel::controller::probe(world, &output, timeout, fail_rank)?,
         #[cfg(feature = "neural")]
-        Cmd::TrainingProbe {
+        EngineCmd::TrainingProbe {
             output,
             vocabulary,
             microbatch,
@@ -59,7 +59,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             timeout,
         )?,
         #[cfg(feature = "neural")]
-        Cmd::TrainingProbeRank {
+        EngineCmd::TrainingProbeRank {
             directory,
             vocabulary,
             rank,
@@ -77,7 +77,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             steps,
         )?,
         #[cfg(feature = "neural")]
-        Cmd::NcclProbe {
+        EngineCmd::NcclProbe {
             directory,
             rank,
             world,

@@ -1,9 +1,9 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
+pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
         #[cfg(feature = "neural")]
-        Cmd::ApplyBinaryContexts {
+        EngineCmd::ApplyBinaryContexts {
             jobs,
             hyperion,
             foundation,
@@ -21,7 +21,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             &output,
             &aliases,
         )?,
-        Cmd::Enqueue {
+        EngineCmd::Enqueue {
             jobs,
             contexts,
             campaign_contexts,
@@ -36,7 +36,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 )?
             );
         }
-        Cmd::CampaignCoverage {
+        EngineCmd::CampaignCoverage {
             campaign,
             union,
             output,
@@ -52,7 +52,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             );
         }
         #[cfg(feature = "neural")]
-        Cmd::ApplyContexts {
+        EngineCmd::ApplyContexts {
             jobs,
             hyperion,
             foundation,
@@ -71,11 +71,11 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             qualification,
         )?,
         #[cfg(feature = "neural")]
-        Cmd::UnionContexts { indexes, output } => {
+        EngineCmd::UnionContexts { indexes, output } => {
             jope_parallel::contexts::union(&root, &indexes, &output)?
         }
         #[cfg(feature = "neural")]
-        Cmd::AssembleContexts {
+        EngineCmd::AssembleContexts {
             jobs,
             hyperion,
             foundation,
@@ -109,14 +109,14 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
         }
 
         #[cfg(feature = "neural")]
-        Cmd::FoundationService {
+        EngineCmd::FoundationService {
             jobs,
             spec,
             output,
             batch,
         } => jope_parallel::components::service(&root, &jobs, &spec, &output, batch, "foundation")?,
         #[cfg(feature = "neural")]
-        Cmd::FoundationRank {
+        EngineCmd::FoundationRank {
             jobs,
             spec,
             output,
@@ -128,14 +128,14 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
         )?,
 
         #[cfg(feature = "neural")]
-        Cmd::TargetService {
+        EngineCmd::TargetService {
             jobs,
             spec,
             output,
             batch,
         } => jope_parallel::components::service(&root, &jobs, &spec, &output, batch, "target")?,
         #[cfg(feature = "neural")]
-        Cmd::TargetRank {
+        EngineCmd::TargetRank {
             jobs,
             spec,
             output,
@@ -146,36 +146,36 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             &root, &jobs, &spec, &output, rank, world, batch,
         )?,
 
-        Cmd::HyperionService { jobs, spec, output } => {
+        EngineCmd::HyperionService { jobs, spec, output } => {
             jope_parallel::hyperion::service(&root, &jobs, &spec, &output)?
         }
-        Cmd::HyperionRank {
+        EngineCmd::HyperionRank {
             jobs,
             spec,
             output,
             rank,
             world,
         } => jope_parallel::hyperion::rank(&root, &jobs, &spec, &output, rank, world)?,
-        Cmd::ExpandCuts {
+        EngineCmd::ExpandCuts {
             prepared,
             output,
             rounds,
         } => {
             prepare::expand_cuts(&prepared, &output, rounds)?;
         }
-        Cmd::IndexCuts {
+        EngineCmd::IndexCuts {
             prepared,
             backing_manifest,
             metadata,
             output,
         } => prepare::index_existing(&prepared, &backing_manifest, &metadata, &output)?,
-        Cmd::EvaluateView {
+        EngineCmd::EvaluateView {
             prepared,
             cut,
             genome,
             output,
         } => jope_parallel::gp::evaluate_view(&prepared, cut, &genome, &output)?,
-        Cmd::EvaluateMemory {
+        EngineCmd::EvaluateMemory {
             fd,
             genome,
             output,

@@ -11,10 +11,10 @@ pub(crate) struct Cli {
     #[arg(long, default_value = ".")]
     pub(crate) root: PathBuf,
     #[command(subcommand)]
-    pub(crate) command: Cmd,
+    pub(crate) command: EngineCmd,
 }
 #[derive(Subcommand)]
-pub(crate) enum Cmd {
+pub(crate) enum EngineCmd {
     Doctor,
     #[cfg(feature = "neural")]
     GpuWorker {

@@ -154,7 +154,7 @@ fn qualified(plan: &Json, q: &Json) -> Result<bool> {
             number(error).is_some_and(|n| {
                 n.is_finite()
                     && at_least_zero(n)
-                    && compare(n, Number::Float(3e-4)).is_some_and(Ordering::is_le)
+                    && compare(n, JsonNumber::Float(3e-4)).is_some_and(Ordering::is_le)
             })
         });
         if !within {

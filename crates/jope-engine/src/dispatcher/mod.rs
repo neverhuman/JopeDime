@@ -7,7 +7,7 @@ mod misc;
 mod neural;
 mod registry;
 
-pub(super) fn run(root: &Path, mut command: Cmd) -> Result<()> {
+pub(super) fn run(root: &Path, mut command: EngineCmd) -> Result<()> {
     macro_rules! try_handler {
         ($module:ident) => {
             match $module::handle(root, command)? {

@@ -1,6 +1,6 @@
 //! Process integration for the existing clap command and engine lifecycle adapter.
 
-use super::{Cli, Command};
+use super::{ApplianceCommand, Cli};
 use clap::Parser;
 use std::{
     path::{Path, PathBuf},
@@ -173,7 +173,7 @@ fn serve_child() {
         serde_json::from_str(&std::env::var("JOPE_SERVE_TEST_ARGS").unwrap()).unwrap();
     let cli = Cli::try_parse_from(std::iter::once("jopedime".to_owned()).chain(args))
         .unwrap_or_else(|error| error.exit());
-    let Command::Serve {
+    let ApplianceCommand::Serve {
         status,
         stop,
         idle_exit,

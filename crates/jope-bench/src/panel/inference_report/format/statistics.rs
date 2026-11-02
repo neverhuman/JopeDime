@@ -1,4 +1,4 @@
-use super::{number, object, py_order, Json, Number, Ordering};
+use super::{number, object, py_order, Json, JsonNumber, Ordering};
 use anyhow::{bail, Context, Result};
 
 // ---------------------------------------------------------------------------------------------
@@ -132,14 +132,14 @@ pub(super) fn power_of_two(exponent: i32) -> f64 {
 }
 
 /// The correctly rounded quotient of an exact signed sum and a count.
-pub(super) fn rational(values: &[Number], count: u64) -> f64 {
+pub(super) fn rational(values: &[JsonNumber], count: u64) -> f64 {
     let (mut positive, mut negative) = (Wide::zero(), Wide::zero());
     for value in values {
         match *value {
-            Number::Int(i) if i < 0 => negative.add_int(i.unsigned_abs()),
-            Number::Int(i) => positive.add_int(i.unsigned_abs()),
-            Number::Float(f) if f.is_sign_negative() => negative.add_float(f),
-            Number::Float(f) => positive.add_float(f),
+            JsonNumber::Int(i) if i < 0 => negative.add_int(i.unsigned_abs()),
+            JsonNumber::Int(i) => positive.add_int(i.unsigned_abs()),
+            JsonNumber::Float(f) if f.is_sign_negative() => negative.add_float(f),
+            JsonNumber::Float(f) => positive.add_float(f),
         }
     }
     match positive.compare(&negative) {
@@ -155,12 +155,12 @@ pub(super) fn mean(values: &[Json]) -> Result<Json> {
         .map(|v| number(v).context("TypeError: mean of a non-number"))
         .collect::<Result<Vec<_>>>()?;
     let count = numbers.len() as i128;
-    if numbers.iter().all(|n| matches!(n, Number::Int(_))) {
+    if numbers.iter().all(|n| matches!(n, JsonNumber::Int(_))) {
         let total: i128 = numbers
             .iter()
             .map(|n| match n {
-                Number::Int(i) => *i,
-                Number::Float(_) => unreachable!(),
+                JsonNumber::Int(i) => *i,
+                JsonNumber::Float(_) => unreachable!(),
             })
             .sum();
         if total % count == 0 {
@@ -176,7 +176,7 @@ pub(super) fn midpoint(a: &Json, b: &Json) -> Result<Json> {
         bail!("TypeError: median of a non-number");
     };
     Ok(Json::Float(match (x, y) {
-        (Number::Int(i), Number::Int(j)) => rational(&[Number::Int(i + j)], 2),
+        (JsonNumber::Int(i), JsonNumber::Int(j)) => rational(&[JsonNumber::Int(i + j)], 2),
         _ => (x.to_f64() + y.to_f64()) / 2.0,
     }))
 }

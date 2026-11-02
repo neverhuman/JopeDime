@@ -265,14 +265,14 @@ fn main() -> Result<()> {
         .retain(|ms| now.saturating_sub(*ms) < HOUR_MS);
 
     match verdict {
-        Verdict::Ok | Verdict::IdleNoWork => {
+        SupervisorVerdict::Ok | SupervisorVerdict::IdleNoWork => {
             state.consecutive_idle = 0;
             state.consecutive_degraded = 0;
         }
-        Verdict::Idle => {
+        SupervisorVerdict::Idle => {
             state.consecutive_idle += 1;
         }
-        Verdict::Degraded => {
+        SupervisorVerdict::Degraded => {
             state.consecutive_idle = 0;
             state.consecutive_degraded += 1;
         }
@@ -316,9 +316,9 @@ fn main() -> Result<()> {
     }
 
     // ---- escalation --------------------------------------------------------
-    let should_escalate = (verdict == Verdict::Idle
+    let should_escalate = (verdict == SupervisorVerdict::Idle
         && state.consecutive_idle >= args.escalate_idle_cycles)
-        || (verdict == Verdict::Degraded
+        || (verdict == SupervisorVerdict::Degraded
             && state.consecutive_degraded >= args.escalate_degraded_cycles);
 
     let summary =
@@ -374,7 +374,7 @@ fn main() -> Result<()> {
         if state.escalated_at_ms == 0 {
             state.escalated_at_ms = now;
         }
-    } else if state.escalated && verdict == Verdict::Ok {
+    } else if state.escalated && verdict == SupervisorVerdict::Ok {
         // Recovery is as newsworthy as the outage: an unanswered alarm that
         // silently clears is how the next one gets ignored.
         let recovery = format!(

@@ -7,7 +7,7 @@ mod arguments;
 mod command;
 
 pub use arguments::*;
-pub use command::{Cli, Command};
+pub use command::{ApplianceCommand, Cli};
 
 #[cfg(all(test, feature = "engine"))]
 #[path = "serve.rs"]
@@ -15,14 +15,14 @@ mod serve_lifecycle_tests;
 
 #[cfg(test)]
 mod serve_tests {
-    use super::{Cli, Command};
+    use super::{ApplianceCommand, Cli};
     use clap::Parser;
 
     #[test]
     fn serve_accepts_the_specified_lifecycle_flags() {
         assert!(matches!(
             Cli::try_parse_from(["jopedime", "serve"]).unwrap().command,
-            Command::Serve {
+            ApplianceCommand::Serve {
                 status: false,
                 stop: false,
                 idle_exit: None
@@ -32,7 +32,7 @@ mod serve_tests {
             Cli::try_parse_from(["jopedime", "serve", "--status"])
                 .unwrap()
                 .command,
-            Command::Serve {
+            ApplianceCommand::Serve {
                 status: true,
                 stop: false,
                 idle_exit: None
@@ -42,14 +42,14 @@ mod serve_tests {
             Cli::try_parse_from(["jopedime", "serve", "--stop"])
                 .unwrap()
                 .command,
-            Command::Serve {
+            ApplianceCommand::Serve {
                 status: false,
                 stop: true,
                 idle_exit: None
             }
         ));
         assert!(
-            matches!(Cli::try_parse_from(["jopedime", "serve", "--idle-exit", "2s"]).unwrap().command, Command::Serve { status: false, stop: false, idle_exit: Some(value) } if value == "2s")
+            matches!(Cli::try_parse_from(["jopedime", "serve", "--idle-exit", "2s"]).unwrap().command, ApplianceCommand::Serve { status: false, stop: false, idle_exit: Some(value) } if value == "2s")
         );
         assert!(Cli::try_parse_from(["jopedime", "serve", "--status", "--stop"]).is_err());
         assert!(Cli::try_parse_from(["jopedime", "serve", "--stop", "--idle-exit", "2s"]).is_err());
@@ -58,25 +58,25 @@ mod serve_tests {
 
 #[cfg(all(test, feature = "mcp"))]
 mod batch_cli_tests {
-    use super::{Cli, Command, DatasetCommand, ObjectiveCommand};
+    use super::{ApplianceCommand, Cli, DatasetCommand, ObjectiveCommand};
     use clap::Parser;
 
     #[test]
     fn parses_bat04_command_shapes() {
         assert!(
-            matches!(Cli::try_parse_from(["jopedime", "predict", "--model", "run_01ARZ3NDEKTSV4RRFFQ69G5FAV", "--input", "in.csv", "--output", "-"]).unwrap().command, Command::Predict { output, .. } if output.as_os_str() == std::ffi::OsStr::new("-"))
+            matches!(Cli::try_parse_from(["jopedime", "predict", "--model", "run_01ARZ3NDEKTSV4RRFFQ69G5FAV", "--input", "in.csv", "--output", "-"]).unwrap().command, ApplianceCommand::Predict { output, .. } if output.as_os_str() == std::ffi::OsStr::new("-"))
         );
         assert!(
-            matches!(Cli::try_parse_from(["jopedime", "dataset", "add", "train.csv", "--name", "train"]).unwrap().command, Command::Dataset { command: DatasetCommand::Add { name: Some(name), .. } } if name == "train")
+            matches!(Cli::try_parse_from(["jopedime", "dataset", "add", "train.csv", "--name", "train"]).unwrap().command, ApplianceCommand::Dataset { command: DatasetCommand::Add { name: Some(name), .. } } if name == "train")
         );
         assert!(
-            matches!(Cli::try_parse_from(["jopedime", "objective", "validate", "mae"]).unwrap().command, Command::Objective { command: ObjectiveCommand::Validate { spec, .. } } if spec == "mae")
+            matches!(Cli::try_parse_from(["jopedime", "objective", "validate", "mae"]).unwrap().command, ApplianceCommand::Objective { command: ObjectiveCommand::Validate { spec, .. } } if spec == "mae")
         );
         assert!(matches!(
             Cli::try_parse_from(["jopedime", "gc", "--dry-run"])
                 .unwrap()
                 .command,
-            Command::Gc { dry_run: true, .. }
+            ApplianceCommand::Gc { dry_run: true, .. }
         ));
         assert!(matches!(
             Cli::try_parse_from([
@@ -92,14 +92,14 @@ mod batch_cli_tests {
             ])
             .unwrap()
             .command,
-            Command::Export { .. }
+            ApplianceCommand::Export { .. }
         ));
     }
 }
 
 #[cfg(all(test, feature = "client"))]
 mod batch_run_tests {
-    use super::{Cli, Command};
+    use super::{ApplianceCommand, Cli};
     use clap::Parser;
 
     #[test]
@@ -128,10 +128,10 @@ mod batch_run_tests {
             let cli = Cli::try_parse_from(args).unwrap();
             assert!(matches!(
                 cli.command,
-                Command::Control { .. }
-                    | Command::Restart { .. }
-                    | Command::Runs { .. }
-                    | Command::Code { .. }
+                ApplianceCommand::Control { .. }
+                    | ApplianceCommand::Restart { .. }
+                    | ApplianceCommand::Runs { .. }
+                    | ApplianceCommand::Code { .. }
             ));
         }
     }

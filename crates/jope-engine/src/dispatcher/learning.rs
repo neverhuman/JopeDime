@@ -1,9 +1,9 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
+pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
         #[cfg(feature = "neural")]
-        Cmd::Train {
+        EngineCmd::Train {
             corpus,
             output,
             world,
@@ -30,7 +30,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             replay_policy.as_deref(),
         )?,
         #[cfg(feature = "neural")]
-        Cmd::TrainRank {
+        EngineCmd::TrainRank {
             corpus,
             output,
             launch,
@@ -62,7 +62,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 .transpose()?,
         )?,
         #[cfg(feature = "neural")]
-        Cmd::QualifyBatchRank {
+        EngineCmd::QualifyBatchRank {
             corpus,
             output,
             launch,
@@ -83,17 +83,17 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             &initialize,
         )?,
         #[cfg(feature = "neural")]
-        Cmd::ProposeRanked {
+        EngineCmd::ProposeRanked {
             manifest,
             rank,
             world,
         } => jope_parallel::ranked_proposals::run(&root, &manifest, rank, world)?,
         #[cfg(feature = "neural")]
-        Cmd::AssembleRanked { manifest } => {
+        EngineCmd::AssembleRanked { manifest } => {
             jope_parallel::ranked_proposals::assemble(&root, &manifest)?
         }
         #[cfg(feature = "neural")]
-        Cmd::Propose {
+        EngineCmd::Propose {
             generation_manifest,
             corpus,
             checkpoint,
@@ -114,7 +114,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             generation_manifest.as_deref(),
         )?,
         #[cfg(feature = "neural")]
-        Cmd::ProposeRank {
+        EngineCmd::ProposeRank {
             corpus,
             checkpoint,
             output,
@@ -135,13 +135,13 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             shuffled,
         )?,
         #[cfg(feature = "neural")]
-        Cmd::MonitorCheckpoint {
+        EngineCmd::MonitorCheckpoint {
             corpus,
             checkpoint,
             panel,
             output,
         } => jope_parallel::monitoring::evaluate(&root, &corpus, &checkpoint, &panel, &output)?,
-        Cmd::ComparisonBaseline {
+        EngineCmd::ComparisonBaseline {
             jobs,
             vocabulary,
             output,
@@ -153,7 +153,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 &output,
             )?;
         }
-        Cmd::BuildCorpus {
+        EngineCmd::BuildCorpus {
             contexts,
             vocabulary,
             mut observations,
@@ -242,10 +242,10 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 jope_parallel::manifest::write_json(path, &receipt)?;
             }
         }
-        Cmd::ExportTeachingCorpus { corpus, output } => {
+        EngineCmd::ExportTeachingCorpus { corpus, output } => {
             jope_parallel::teaching_store::export(&root, &corpus, &output)?
         }
-        Cmd::ProjectCorpus {
+        EngineCmd::ProjectCorpus {
             source_root,
             corpus,
             output,
@@ -258,7 +258,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             )?;
             println!("{}", serde_json::to_string_pretty(&receipt)?);
         }
-        Cmd::Doctor => println!("{}", serde_json::to_string_pretty(&operations::doctor())?),
+        EngineCmd::Doctor => println!("{}", serde_json::to_string_pretty(&operations::doctor())?),
         other => return Ok(Some(other)),
     }
     Ok(None)
