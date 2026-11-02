@@ -219,6 +219,16 @@ fn fail(json: bool, schema: &str, error: anyhow::Error) -> ExitCode {
     ExitCode::FAILURE
 }
 
+fn dispatch_datasets(cli: jope_datasets::cli::Cli) -> ExitCode {
+    match jope_datasets::cli::run(cli) {
+        Ok(code) => code,
+        Err(error) => {
+            eprintln!("error: {error:#}");
+            ExitCode::from(2)
+        }
+    }
+}
+
 fn main() -> ExitCode {
     let Some(command) = Cli::parse().command else {
         println!("jope {}", env!("CARGO_PKG_VERSION"));
@@ -234,10 +244,10 @@ fn main() -> ExitCode {
         #[cfg(target_os = "linux")]
         Command::Train(cli) => return train::execute(cli),
         Command::Optimize(cli) => return jope_bench::panel::optimize_cli::execute(cli),
-        Command::Models(cli) => return jope_models::cli::exec(cli),
-        Command::Datasets(cli) => return jope_datasets::cli::exec(cli),
-        Command::Pipeline(cli) => return jope_pipeline::cli::exec(*cli),
-        Command::Motifs(cli) => return jope_motifs::cli::exec(cli),
+        Command::Models(cli) => return jope_models::cli::dispatch(cli),
+        Command::Datasets(cli) => return dispatch_datasets(cli),
+        Command::Pipeline(cli) => return jope_pipeline::cli::dispatch(*cli),
+        Command::Motifs(cli) => return jope_motifs::cli::dispatch(cli),
         command => command,
     };
     match &command {
@@ -431,7 +441,7 @@ fn main() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::Cli;
+    use super::{Cli, Command};
     use clap::{CommandFactory, Parser};
 
     #[test]
@@ -441,6 +451,37 @@ mod tests {
         assert!(parts
             .iter()
             .all(|part| part.chars().all(|character| character.is_ascii_digit())));
+    }
+
+    #[test]
+    fn models_cli_is_parsed_as_a_typed_command() {
+        let cli = Cli::try_parse_from(["jope", "models", "verify", "--manifests-only"])
+            .expect("valid typed models command");
+        assert!(matches!(
+            cli.command,
+            Some(Command::Models(jope_models::cli::Cli {
+                cmd: jope_models::cli::Cmd::Verify {
+                    manifests_only: true,
+                    ..
+                },
+                ..
+            }))
+        ));
+
+        assert!(Cli::try_parse_from(["jope", "models", "unknown"]).is_err());
+    }
+
+    #[test]
+    fn datasets_cli_is_parsed_as_a_typed_command() {
+        let cli = Cli::try_parse_from(["jope", "datasets", "verify"])
+            .expect("valid typed datasets command");
+        assert!(matches!(
+            cli.command,
+            Some(Command::Datasets(jope_datasets::cli::Cli {
+                cmd: jope_datasets::cli::Cmd::Verify { .. },
+            }))
+        ));
+        assert!(Cli::try_parse_from(["jope", "datasets", "unknown"]).is_err());
     }
 
     #[test]

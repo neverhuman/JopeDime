@@ -204,8 +204,7 @@ impl PairRegistry {
             }
         }
         let attempt_number: i64 = tx.query_row(
-            "SELECT COALESCE(MAX(attempt_number),0)+1 FROM attempts
-             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            include_str!("../sql/selfplay_registry_next_attempt.sql"),
             params![
                 identity.task,
                 identity.dataset_hash,
@@ -456,6 +455,13 @@ mod tests {
         assert!(registry.reserve(&value, "new").unwrap());
         let attempts = registry.attempts(&value.identity).unwrap();
         assert_eq!(attempts.len(), 2);
+        assert_eq!(
+            attempts
+                .iter()
+                .map(|attempt| attempt.attempt_number)
+                .collect::<Vec<_>>(),
+            [1, 2]
+        );
         assert_eq!(attempts[0].state, "superseded_unstarted");
         assert_eq!(attempts[1].state, "reserved");
     }

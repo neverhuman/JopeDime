@@ -4,5 +4,5 @@ use clap::Parser;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
-    jope_models::cli::exec(jope_models::cli::Cli::parse())
+    jope_models::cli::dispatch(jope_models::cli::Cli::parse())
 }

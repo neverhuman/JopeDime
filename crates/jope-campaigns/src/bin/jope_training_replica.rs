@@ -335,10 +335,13 @@ struct DbSnapshot {
 }
 
 fn table_count(conn: &Connection, table: &str) -> i64 {
-    conn.query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
-        row.get(0)
-    })
-    .unwrap_or(-1)
+    let query = match table {
+        "run" => "SELECT count(*) FROM run",
+        "epoch" => "SELECT count(*) FROM epoch",
+        "epoch_field" => "SELECT count(*) FROM epoch_field",
+        _ => return -1,
+    };
+    conn.query_row(query, [], |row| row.get(0)).unwrap_or(-1)
 }
 
 /// Take a consistent snapshot of the live WAL database.
@@ -1469,6 +1472,21 @@ fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn table_count_rejects_sql_shaped_table_names() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE run (id INTEGER); INSERT INTO run VALUES (1); CREATE TABLE sentinel (id INTEGER); INSERT INTO sentinel VALUES (7);")
+            .unwrap();
+
+        assert_eq!(table_count(&conn, "run"), 1);
+        assert_eq!(table_count(&conn, "run; DROP TABLE sentinel; --"), -1);
+
+        let sentinel_rows: i64 = conn
+            .query_row("SELECT count(*) FROM sentinel", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(sentinel_rows, 1);
+    }
 
     #[test]
     fn targets_parse_with_and_without_ports() {

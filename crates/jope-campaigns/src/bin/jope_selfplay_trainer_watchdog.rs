@@ -2362,7 +2362,8 @@ mod tests {
     #[test]
     fn packed_filenames_cannot_escape_the_staging_directory() {
         ensure_safe_filename("scores.npy").unwrap();
-        assert!(ensure_safe_filename("../scores.npy").is_err());
+        let traversal = Path::new("..").join("scores.npy");
+        assert!(ensure_safe_filename(traversal.to_str().unwrap()).is_err());
         assert!(ensure_safe_filename("nested/scores.npy").is_err());
     }
 

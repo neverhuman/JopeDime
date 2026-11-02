@@ -202,7 +202,7 @@ fn standard_opener() -> StateOpener {
 }
 
 /// Run a command and map failures to the tool's fixed stderr message and exit status.
-pub fn exec(cli: Cli) -> ExitCode {
+pub fn dispatch(cli: Cli) -> ExitCode {
     match run(cli) {
         Ok(code) => code,
         Err(_) => {

@@ -2004,49 +2004,19 @@ fn build_transfer_rankings(
             insert.execute([&entry.dataset_hash, &entry.source_family])?;
         }
     }
-    let mut sql = String::from(
-        r#"
-        WITH clean AS (
-          SELECT o.dataset_hash, o.semantic_sha256, o.canonical_genome, o.score,
-                 coalesce(f.source_family, 'dataset:' || o.dataset_hash) AS source_family
-          FROM observations o
-          LEFT JOIN dataset_family f ON f.dataset_hash = o.dataset_hash
-          WHERE o.task = 'regression'
-            AND lower(candidate_source) NOT LIKE '%proposal%'
-            AND lower(candidate_source) NOT LIKE '%model_sampled%'
-            AND lower(candidate_source) NOT LIKE '%checkpoint_dl%'
-            AND lower(origin_class) != 'dl_origin'
-        ),
-        positioned AS (
-          SELECT dataset_hash, source_family, semantic_sha256, canonical_genome, score,
-                 rank() OVER (PARTITION BY dataset_hash ORDER BY score ASC) AS asc_rank,
-                 count(*) OVER (PARTITION BY dataset_hash) AS dataset_n,
-                 max(score) OVER (PARTITION BY dataset_hash) AS dataset_max
-          FROM clean
-        ),
-        with_tops AS (
-          SELECT *, sum(CASE WHEN score = dataset_max THEN 1 ELSE 0 END)
-                    OVER (PARTITION BY dataset_hash) AS top_count
-          FROM positioned
-        )
-        SELECT semantic_sha256, canonical_genome, group_concat(dataset_hash)
-        "#,
-    );
-    for target in &targets {
-        let dataset = target.dataset_hash.replace('\'', "''");
-        let family = target.source_family.replace('\'', "''");
-        let include = format!("dataset_hash != '{dataset}' AND source_family != '{family}'");
-        write!(
-            sql,
-            ", avg(CASE WHEN {include} THEN CASE WHEN dataset_n = 1 THEN 1.0 \
-             ELSE CAST(asc_rank - 1 AS REAL) / CAST(dataset_n - 1 AS REAL) END END), \
-             min(CASE WHEN {include} THEN CASE WHEN dataset_n = 1 THEN 1.0 \
-             ELSE CAST(asc_rank - 1 AS REAL) / CAST(dataset_n - 1 AS REAL) END END), \
-             sum(CASE WHEN {include} AND score = dataset_max AND top_count = 1 THEN 1 ELSE 0 END), \
-             count(CASE WHEN {include} THEN 1 END)"
-        )?;
+    connection.execute_batch(
+        "CREATE TEMP TABLE transfer_targets(
+            dataset_hash TEXT PRIMARY KEY,
+            source_family TEXT NOT NULL
+        ) WITHOUT ROWID;",
+    )?;
+    {
+        let mut insert = connection
+            .prepare("INSERT INTO transfer_targets(dataset_hash, source_family) VALUES (?1, ?2)")?;
+        for target in &targets {
+            insert.execute([&target.dataset_hash, &target.source_family])?;
+        }
     }
-    sql.push_str(" FROM with_tops GROUP BY semantic_sha256, canonical_genome");
 
     let mut ranked = targets
         .iter()
@@ -2057,63 +2027,54 @@ fn build_transfer_rankings(
             )
         })
         .collect::<BTreeMap<_, _>>();
-    let mut statement = connection.prepare(&sql)?;
+    let mut statement =
+        connection.prepare(include_str!("../../sql/train_only_transfer_rankings.sql"))?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
-        let semantic_sha256: String = row.get(0)?;
-        let canonical_genome: String = row.get(1)?;
+        let target_dataset_hash: String = row.get(0)?;
+        let semantic_sha256: String = row.get(1)?;
+        let canonical_genome: String = row.get(2)?;
         let source_ids = row
-            .get::<_, String>(2)?
+            .get::<_, String>(3)?
             .split(',')
             .map(str::to_string)
             .collect::<Vec<_>>();
-        for (target_index, target) in targets.iter().enumerate() {
-            let base = 3 + target_index * 4;
-            let mean_percentile: Option<f64> = row.get(base)?;
-            let worst_percentile: Option<f64> = row.get(base + 1)?;
-            let strict_win_count = row.get::<_, i64>(base + 2)? as usize;
-            let dataset_count = row.get::<_, i64>(base + 3)? as usize;
-            let (Some(mean_percentile), Some(worst_percentile)) =
-                (mean_percentile, worst_percentile)
-            else {
-                continue;
-            };
-            let mut included_ids = source_ids
-                .iter()
-                .filter(|dataset| {
-                    dataset.as_str() != target.dataset_hash
-                        && (family_by_dataset.get(dataset.as_str()) != Some(&target.source_family))
-                })
-                .cloned()
-                .collect::<Vec<_>>();
-            included_ids.sort();
-            included_ids.dedup();
-            let source_families = included_ids
-                .iter()
-                .map(|dataset| {
-                    family_by_dataset
-                        .get(dataset)
-                        .cloned()
-                        .unwrap_or_else(|| format!("dataset:{dataset}"))
-                })
-                .collect::<BTreeSet<_>>()
-                .into_iter()
-                .collect();
-            ranked
-                .get_mut(&target.dataset_hash)
-                .unwrap()
-                .push(GlobalRankedGenome {
-                    rank: 0,
-                    canonical_genome: canonical_genome.clone(),
-                    semantic_sha256: semantic_sha256.clone(),
-                    mean_percentile,
-                    worst_percentile,
-                    strict_win_count,
-                    dataset_count,
-                    source_dataset_ids: included_ids,
-                    source_families,
-                });
-        }
+        let mean_percentile: Option<f64> = row.get(4)?;
+        let worst_percentile: Option<f64> = row.get(5)?;
+        let strict_win_count = row.get::<_, i64>(6)? as usize;
+        let dataset_count = row.get::<_, i64>(7)? as usize;
+        let (Some(mean_percentile), Some(worst_percentile)) = (mean_percentile, worst_percentile)
+        else {
+            continue;
+        };
+        let mut included_ids = source_ids;
+        included_ids.sort();
+        included_ids.dedup();
+        let source_families = included_ids
+            .iter()
+            .map(|dataset| {
+                family_by_dataset
+                    .get(dataset)
+                    .cloned()
+                    .unwrap_or_else(|| format!("dataset:{dataset}"))
+            })
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let Some(target_rankings) = ranked.get_mut(&target_dataset_hash) else {
+            bail!("transfer ranking query returned unexpected target {target_dataset_hash}");
+        };
+        target_rankings.push(GlobalRankedGenome {
+            rank: 0,
+            canonical_genome: canonical_genome.clone(),
+            semantic_sha256: semantic_sha256.clone(),
+            mean_percentile,
+            worst_percentile,
+            strict_win_count,
+            dataset_count,
+            source_dataset_ids: included_ids,
+            source_families,
+        });
     }
 
     let mut receipts = BTreeMap::new();
@@ -6219,7 +6180,7 @@ mod tests {
     }
 
     #[test]
-    fn transfer_ranking_excludes_target_family_and_direct_dl_sources() {
+    fn transfer_ranking_binds_sql_shaped_target_values_and_excludes_direct_dl_sources() {
         let directory = tempdir().unwrap();
         let database = directory.path().join("observations.sqlite");
         let connection = Connection::open(&database).unwrap();
@@ -6237,7 +6198,7 @@ mod tests {
                 ) WITHOUT ROWID;",
             )
             .unwrap();
-        let entries = ["target", "same-family-source", "clean-source"]
+        let entries = ["target' OR 1=1 --", "same-family-source", "clean-source"]
             .into_iter()
             .enumerate()
             .map(|(index, dataset)| CatalogEntry {
@@ -6245,7 +6206,12 @@ mod tests {
                 task: "regression".to_string(),
                 train_csv: PathBuf::new(),
                 train_sha256: "a".repeat(64),
-                source_family: if index < 2 { "family-a" } else { "family-b" }.to_string(),
+                source_family: if index < 2 {
+                    "family-a' OR 1=1 --"
+                } else {
+                    "family-b"
+                }
+                .to_string(),
                 context_sha256: "b".repeat(64),
                 catalog_index: index,
             })
@@ -6255,7 +6221,7 @@ mod tests {
                 "(pipe X (elasticnet alpha={} l1_ratio=0.5))",
                 index as f64 + 0.75
             ));
-            for dataset in ["target", "same-family-source", "clean-source"] {
+            for dataset in ["target' OR 1=1 --", "same-family-source", "clean-source"] {
                 connection
                     .execute(
                         "INSERT INTO observations VALUES('regression',?1,?2,?3,'transfer',?4,'gp_origin')",
@@ -6287,13 +6253,28 @@ mod tests {
             &entries[..1],
         )
         .unwrap();
-        let ranking = &rankings["target"];
+        let ranking = &rankings["target' OR 1=1 --"];
         assert!(ranking.genomes.len() >= GLOBAL_QUOTA);
-        assert!(ranking.genomes.iter().all(|genome| {
-            genome.source_dataset_ids == vec!["clean-source".to_string()]
-                && genome.source_families == vec!["family-b".to_string()]
-                && genome.semantic_sha256 != semantic_identity(&dl_genome)
-        }));
+        assert_eq!(
+            ranking.excluded_dataset_ids,
+            vec![
+                "same-family-source".to_string(),
+                "target' OR 1=1 --".to_string(),
+            ]
+        );
+        assert!(
+            ranking.genomes.iter().all(|genome| {
+                genome.source_dataset_ids == vec!["clean-source".to_string()]
+                    && genome.source_families == vec!["family-b".to_string()]
+                    && genome.semantic_sha256 != semantic_identity(&dl_genome)
+            }),
+            "unexpected ranking row: {:?}",
+            ranking.genomes.iter().find(|genome| {
+                genome.source_dataset_ids != vec!["clean-source".to_string()]
+                    || genome.source_families != vec!["family-b".to_string()]
+                    || genome.semantic_sha256 == semantic_identity(&dl_genome)
+            })
+        );
     }
 
     #[test]

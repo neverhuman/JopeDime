@@ -1,4 +1,4 @@
-//! `jope pipeline …`: the same `Cli`/`Cmd`/`exec`/`run` shape the other
+//! `jope pipeline …`: the same typed `Cli`/`Cmd` dispatch shape the other
 //! subcommand crates expose, so the umbrella delegates to it in process.
 
 use anyhow::Result;
@@ -303,7 +303,7 @@ pub fn load_objective(text: &str) -> Result<jope_runtime::fitness::Fitness> {
     Ok(objective)
 }
 
-pub fn exec(cli: Cli) -> ExitCode {
+pub fn dispatch(cli: Cli) -> ExitCode {
     match run(cli) {
         Ok(code) => code,
         Err(error) if crate::parallel::is_cancelled(&error) => {
