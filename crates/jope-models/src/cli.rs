@@ -27,12 +27,12 @@ pub struct Cli {
     pub repo: PathBuf,
     /// Command to execute.
     #[command(subcommand)]
-    pub cmd: Cmd,
+    pub cmd: ModelsCommand,
 }
 
 /// Supported `jope-models` commands.
 #[derive(Subcommand)]
-pub enum Cmd {
+pub enum ModelsCommand {
     /// Download a bundle (or every bundle in models/PINNED) into the cache, verifying sha256.
     Fetch {
         /// Bundle identifier to fetch when `--pinned` is not set.
@@ -91,6 +91,9 @@ pub enum Cmd {
     },
 }
 
+/// Backward-compatible name for the `jope-models` command domain.
+pub type Cmd = ModelsCommand;
+
 /// Run a parsed command line; errors are printed as `error: …` and exit with status 2, a
 /// failed check exits with status 1.
 pub fn exec(cli: Cli) -> ExitCode {
@@ -121,7 +124,7 @@ fn status(failed: bool) -> ExitCode {
 pub fn run(cli: Cli) -> Result<ExitCode> {
     let repo = Repo::detect(&cli.repo);
     match cli.cmd {
-        Cmd::Fetch {
+        ModelsCommand::Fetch {
             bundle_id,
             pinned,
             components,
@@ -186,7 +189,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             }
             Ok(status(failed))
         }
-        Cmd::Verify {
+        ModelsCommand::Verify {
             bundle_id,
             all,
             quick,
@@ -247,7 +250,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             }
             Ok(status(failed))
         }
-        Cmd::Publish {
+        ModelsCommand::Publish {
             manifest,
             from,
             store,
@@ -290,7 +293,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             );
             Ok(ExitCode::SUCCESS)
         }
-        Cmd::Path { bundle_id, path } => {
+        ModelsCommand::Path { bundle_id, path } => {
             let cache = ModelsCache::from_env();
             let p = match &path {
                 Some(rel) => cache.file_path(&bundle_id, rel),
