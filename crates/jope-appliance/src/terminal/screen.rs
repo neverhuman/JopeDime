@@ -14,13 +14,17 @@ use super::{composer::Composer, sanitize_user_string, ColorLevel, Theme, ThemeMo
 
 const MAX_LINES: usize = 2000;
 const MAX_BYTES: usize = 1024 * 1024;
-const LOGO: [&str; 5] = [
-    "       __      ___      ____   _   __",
-    "      / /     /   |    /  _/  / | / /",
-    " __  / /     / /| |    / /   /  |/ / ",
-    "/ /_/ /     / ___ |  _/ /   / /|  /  ",
-    "\\____/     /_/  |_| /___/  /_/ |_/   ",
+// Seven-cell ASCII glyphs; stretch the strokes to the available terminal width.
+const LOGO: [&str; 7] = [
+    "##   ##  #######   #####   ##   ##",
+    "##   ##  ##       ##   ##  ##   ##",
+    "##   ##  ##       ##   ##   ## ## ",
+    "##   ##  #####    ##   ##    ###  ",
+    " ## ##   ##       ##   ##   ## ## ",
+    "  ###    ##       ##   ##  ##   ##",
+    "   #     #######   #####   ##   ##",
 ];
+const TAGLINE: &str = "your data. your models. your next discover.";
 
 #[derive(Default)]
 pub struct Screen {
@@ -137,11 +141,12 @@ impl Screen {
             .lines
             .len() as u16
             + 2;
+        let is_landing = self.browser.is_none() && self.lines.is_empty();
         let rows = Layout::vertical([
             Constraint::Length(1),
             Constraint::Min(1),
             Constraint::Length(1),
-            Constraint::Length(1),
+            Constraint::Length(if is_landing && area.width < 55 { 2 } else { 1 }),
             Constraint::Length(input_height),
             Constraint::Length(1),
         ])
@@ -163,7 +168,7 @@ impl Screen {
         if let Some(browser) = &mut self.browser {
             browser.draw(frame, body, accent);
         } else if self.lines.is_empty() {
-            landing(frame, body, accent, muted);
+            landing(frame, rows[1], accent);
         } else {
             let max = self.wrapped.len().saturating_sub(self.page_height);
             let start = self.top.map(|top| top.min(max)).unwrap_or(max);
@@ -186,7 +191,16 @@ impl Screen {
             rows[2],
         );
         frame.render_widget(
-            Paragraph::new(sanitize_user_string(activity)).style(muted),
+            Paragraph::new(if is_landing {
+                if area.width < 55 {
+                    " /help  Commands\n /open <csv>  Start locally".to_owned()
+                } else {
+                    " /help  Commands     /open <csv>  Start locally".to_owned()
+                }
+            } else {
+                sanitize_user_string(activity)
+            })
+            .style(muted),
             rows[3],
         );
         let block = Block::bordered().title(" Command ").border_style(accent);
@@ -217,38 +231,63 @@ impl Screen {
     }
 }
 
-fn landing(frame: &mut Frame<'_>, area: Rect, accent: Style, muted: Style) {
-    let mut lines = Vec::new();
-    if area.width >= 38 && area.height >= 13 {
-        for (row, logo) in LOGO.iter().enumerate() {
-            let style = if row < 3 {
-                accent
-            } else {
-                accent.add_modifier(Modifier::BOLD)
-            };
-            lines.push(Line::styled(*logo, style));
-        }
-        lines.push(Line::raw(""));
-    }
-    lines.push(Line::styled(
-        "JAIN by VEOX",
-        accent.add_modifier(Modifier::BOLD),
-    ));
-    lines.push(Line::styled("Powered by JopeDime", muted));
-    lines.push(Line::raw(""));
-    lines.push(Line::raw("Your data. Your models. Your next discovery."));
-    lines.push(Line::raw(""));
-    lines.push(Line::styled(
-        "/help  Commands     /open <csv>  Start locally",
-        muted,
-    ));
-    let height = (lines.len() as u16).min(area.height);
-    let centered = Rect {
-        y: area.y + area.height.saturating_sub(height) / 2,
-        height,
-        ..area
+fn landing(frame: &mut Frame<'_>, area: Rect, accent: Style) {
+    let tagline_lines = if usize::from(area.width) >= TAGLINE.len() {
+        vec![TAGLINE.to_owned()]
+    } else {
+        TAGLINE
+            .split_inclusive(". ")
+            .flat_map(|sentence| wrap(sentence.trim(), area.width))
+            .collect()
     };
-    frame.render_widget(Paragraph::new(lines).alignment(Alignment::Center), centered);
+    let compact = area.height < LOGO.len() as u16 + 1 + tagline_lines.len() as u16;
+    let logo_height = if compact {
+        1
+    } else {
+        area.height
+            .saturating_sub(tagline_lines.len() as u16 + 2)
+            .min(14)
+    };
+    let crop = 2;
+    // The wordmark fills roughly 70% of the width; centering OX shifts V off-screen.
+    let logo_width = (area.width.saturating_mul(7) / 10 + crop).max(LOGO[0].len() as u16);
+    let height = logo_height + 1 + tagline_lines.len() as u16;
+    let top = area.y + area.height.saturating_sub(height) / 2;
+    // Render into the full-width body, cropping the V at the actual screen edge.
+    // The O/X midpoint lands near the screen center, rather than centering VEOX.
+    let mut lines = Vec::new();
+    for y in 0..logo_height {
+        let logo = LOGO[usize::from(y) * LOGO.len() / usize::from(logo_height)];
+        let stretched: String = (crop..logo_width)
+            .map(|x| logo.as_bytes()[usize::from(x) * logo.len() / usize::from(logo_width)] as char)
+            .collect();
+        lines.push(Line::styled(stretched, accent.add_modifier(Modifier::BOLD)));
+    }
+    let logo = if compact {
+        Paragraph::new("VEOX").style(accent.add_modifier(Modifier::BOLD))
+    } else {
+        Paragraph::new(lines)
+    };
+    frame.render_widget(
+        logo,
+        Rect {
+            y: top,
+            height: logo_height.min(area.height),
+            ..area
+        },
+    );
+    let tagline_y = top + logo_height + 1;
+    let tagline = Rect {
+        y: tagline_y,
+        height: tagline_lines.len() as u16,
+        ..area
+    }
+    .intersection(area);
+    frame.render_widget(
+        Paragraph::new(tagline_lines.into_iter().map(Line::raw).collect::<Vec<_>>())
+            .alignment(Alignment::Center),
+        tagline,
+    );
 }
 
 fn wrap(text: &str, width: u16) -> Vec<String> {
@@ -287,7 +326,7 @@ mod tests {
 
     #[test]
     fn landing_is_fullscreen_and_composer_stays_at_bottom() {
-        for (width, height) in [(100, 30), (40, 15)] {
+        for (width, height) in [(120, 40), (100, 30), (80, 24), (40, 15)] {
             let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
             let mut screen = Screen::default();
             let mut composer = Composer::default();
@@ -303,8 +342,36 @@ mod tests {
             };
             let output = (0..height).map(row).collect::<Vec<_>>().join("\n");
             assert!(output.contains("JAIN by VEOX"));
-            assert!(output.contains("Powered by JopeDime"));
+            assert!(output.contains("your data."));
+            assert!(output.contains("your models."));
+            assert!(output.contains("your next"));
+            assert!(output.contains("discover."));
+            assert!(row(height - 5).contains("/open <csv>"));
             assert!(row(height - 3).contains("my pending draft"));
+            if width >= 80 {
+                let tagline_y = (1..height - 5).find(|&y| row(y).contains(TAGLINE)).unwrap();
+                assert_eq!(
+                    row(tagline_y).find(TAGLINE),
+                    Some((usize::from(width) - TAGLINE.len()).div_ceil(2))
+                );
+                let logo_top = (1..tagline_y).find(|&y| row(y).contains('#')).unwrap();
+                assert_eq!(
+                    buffer[(0, logo_top)].symbol(),
+                    "#",
+                    "V must be cropped at left edge"
+                );
+                assert!(
+                    (1..tagline_y).all(|y| !row(y).contains("/help") && !row(y).contains("/open"))
+                );
+            }
+            if let Some(directory) = std::env::var_os("VEOX_SPLASH_PREVIEW_DIR") {
+                std::fs::create_dir_all(&directory).unwrap();
+                std::fs::write(
+                    std::path::Path::new(&directory).join(format!("{width}x{height}.txt")),
+                    output,
+                )
+                .unwrap();
+            }
         }
     }
 
