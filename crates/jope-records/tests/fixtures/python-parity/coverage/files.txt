@@ -722,6 +722,10 @@ crates/jope-campaigns/src/test_adaptive/aggressive/views.rs
 crates/jope-campaigns/src/test_adaptive/binary42.rs
 crates/jope-campaigns/src/test_adaptive/binary42/campaign.rs
 crates/jope-campaigns/src/test_adaptive/binary42/campaign_setup.rs
+crates/jope-campaigns/src/test_adaptive/binary42/campaign_setup/cohort.rs
+crates/jope-campaigns/src/test_adaptive/binary42/campaign_setup/population.rs
+crates/jope-campaigns/src/test_adaptive/binary42/campaign_setup/scheduling.rs
+crates/jope-campaigns/src/test_adaptive/binary42/campaign_setup/worker.rs
 crates/jope-campaigns/src/test_adaptive/binary42/confirmation.rs
 crates/jope-campaigns/src/test_adaptive/binary42/execution.rs
 crates/jope-campaigns/src/test_adaptive/binary42/generation.rs
