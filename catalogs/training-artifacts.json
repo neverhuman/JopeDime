@@ -190,7 +190,7 @@
     "strict_corpus_manifest": null
   },
   "git_home": "catalogs/training-artifacts.json",
-  "purpose": "Exact locators and evidence levels, not an admission manifest or authority issuer. Null means not located/verified, never fabricated.",
+  "purpose": "Artifact location index only. It does not decide training admission or authority; unknown locations remain null, never inferred.",
   "read_first": [
     "AGENTS.md",
     "catalogs/training-artifacts.json",

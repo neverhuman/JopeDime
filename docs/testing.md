@@ -35,30 +35,12 @@ The [nextest configuration](../.config/nextest.toml) defines tier filters.
 Ignored, host-only and unavailable cases remain explicit non-execution, including
 Python tests marked `xbabe2`; static coverage mapping is not execution coverage.
 
-## Required PR and main checks
+## Hosted CI procedure
 
-Follow the [exact-head PR procedure](../AGENTS.md#pull-requests).
-
-| GitHub entrypoint | Trigger and role |
-| --- | --- |
-| [`ci.yml`](../.github/workflows/ci.yml) | Runs for pull requests marked ready for review and by manual dispatch. The PR run satisfies PR rules; manually dispatch it on the final branch to retain the full-head matrix evidence. |
-| [`full-main.yml`](../.github/workflows/full-main.yml) | Manually dispatched trusted-main run for the extended CPU families and their aggregate. It is separate from PR checks. |
-| [`main-guard.yml`](../.github/workflows/main-guard.yml) | Runs on pushes to `main` and verifies merged-PR provenance. It does not certify test coverage or source quality. |
-
-For the manual `ci.yml` run, retain its actual full head, run ID and attempt.
-Every declared manual job must pass, including both Rust shards and frontend
-tests. Preserve the separate PR run and its synthetic checkout identity. A
-legitimate path skip is recorded as a skip. Changed source requires fresh checks
-and substantive review; same-agent review is permitted and identified.
-
-`full-main.yml` runs the eleven extended CPU families in two non-cancelling groups.
-Its aggregate verifies the entire declared partition and all evidence. The independent
-trusted-main audit job executes the same immutable-input audit wrapper used locally.
-Until the score reaches the 85 floor the job is report-only: a verified below-floor
-audit passes with a warning and `report-only.json`, while invalid or inconsistent
-evidence still fails it. A green audit job is therefore not a passing audit.
-A successful `main-guard` run proves merged-PR provenance; it does not certify tests,
-audit quality, scientific utility or serving readiness.
+The [agent contract](../AGENTS.md#pull-requests) is the canonical procedure for
+pull-request checks, full-head CI, review and merge. The [CI replay guide](../ops/ci/README.md)
+documents the local commands. This page lists test commands and their scope; it does not
+record that a hosted workflow or a particular change has passed.
 
 ## Failures and evidence custody
 
@@ -68,36 +50,55 @@ Read the lane command log and receipt before retrying; preserve run attempts and
 distinguish collection, environment and product failures. Do not cancel another
 owner's jobs or widen filters to make the result green.
 
-The Jankurai wrapper keeps the default 85 floor and full standard policy. Its
-`audit-verification.json` checks report consistency and captured-input integrity
-separately from `audit_passed`. A valid report can contain a failed audit.
-See the [dated remediation record](coordination/audit-remediation-20261022.md)
-for the 52-point baseline and remaining findings; no threshold waiver is implied.
+The Jankurai wrapper checks report consistency and captured-input integrity
+separately from the audit decision. A valid report can contain findings. See the
+[dated remediation record](coordination/audit-remediation-20261022.md) for its
+historical baseline and status; this page does not attest to a particular audit result.
 
 Keep `target/` evidence and frozen numerical fixtures intact. Run builds with
 `CARGO_INCREMENTAL=0` and `CARGO_PROFILE_DEV_DEBUG=line-tables-only`; reuse the
 claimed lane's build directory and leave global `CARGO_TARGET_DIR` unset.
 Do not publish checkpoints, training claims, models or defaults from fixture tests.
 
-## Cost bounds and stop conditions
+## Budget, quota and stop conditions
 
-Every job that can spend money, consume shared compute, read external corpora, or retry work must
-record its owner, exact command, maximum wall time, concurrency, input scope, and stop condition before
-launch. The stop condition must be enforced by the command or supervising lane; reaching a bound,
-losing an input pin, or receiving an unknown result stops the run without an automatic retry. Record
-actual duration, attempts, resources and any external charges with the run receipt. A command that has
-no declared cap is not an approved paid or shared-resource lane. Keep one reused `target/` per lane,
-`CARGO_TARGET_DIR` unset, `CARGO_BUILD_JOBS` at or below 16, and the BLAS/Rayon limits from the owning
-proof lane. Do not infer a compute or cloud budget from a test pass.
+Use the owning task's recorded resource budget and concurrency quota. Shared-host checks retain
+that task's CPU, build-job, memory and disk limits; this repository's bounded lanes use no more
+than eight Cargo build jobs. External paid services require the task's recorded spend cap. An
+already authorized command keeps its existing authorization and limits; this guide adds no
+approval step or new cloud/API allowance.
 
-## Release readiness evidence
+Reaching a quota, spend cap, input-pin failure or unknown required result is a stop condition,
+not permission for an automatic retry. The kill switch is the owning operator's documented
+supervisor stop path for that lane's own processes. Never cancel another owner's jobs. Preserve
+partial evidence, actual duration, attempts, external charges and the reason for stopping.
 
-A passing unit, integration, smoke, audit or main-guard job is evidence only for its stated scope. A
-release-readiness claim also needs current, reviewable evidence for security controls, recoverable
-backups, monitoring and alert ownership, a tested rollback path, and abuse/rate controls. Link each
-artifact to the release candidate and record its owner and timestamp. Missing, stale, untested, or
-unknown evidence remains open; this page does not certify that a particular release has met those
-gates.
+## Release gate evidence
+
+A release gate is an artifact checklist bound to the exact candidate and source. This policy
+requires evidence; it does not assert that any candidate has passed. Preserve the current owner,
+timestamp, artifact identity and outcome for each control:
+
+| Control | Evidence required before a release claim |
+| --- | --- |
+| Security | Current source-bound security results and unresolved findings. |
+| Backup | Recovery artifact identity plus an actual restore verification. |
+| Monitoring | Probe results, alert routing and the responsible operator. |
+| Rollback | The preserved prior artifact and an executed rollback rehearsal. |
+| Abuse and rate limits | Executed control/refusal cases and their limits. |
+| Cost | The task budget, quota, spend cap, stop condition and owning-lane kill switch. |
+
+Missing, stale, failed or unknown required evidence remains open. Unit tests, a signed stage,
+an inventory check and merged-PR provenance do not replace release qualification. Preserve raw
+failures separately from any explicitly authorized bounded disposition; do not relabel them PASS.
+
+## Human Review Evidence
+
+A review record must bind to the full source SHA and identify the reviewer, author relationship,
+review time, scope, findings and disposition. Retain the complete diff, raw CI logs and artifacts,
+and replayable commands with their results; link to those records instead of treating a summary as
+proof. A native review uses the full `commit_id`; a same-agent review is labeled as such. This guide
+defines the record required for a review claim and does not assert that a specific change was reviewed.
 
 ## Canonical path aliases
 
