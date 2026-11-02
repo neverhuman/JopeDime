@@ -19,9 +19,8 @@ from .active import (
     TARGET_SUMMARY_DIM, ActiveBuild, _active_canonical, _assign_relative_labels,
     _assign_splits, _build_label_summary, _build_split_manifest, _build_target_embeddings,
     _canonicalize_rows, _count_splits, _dedupe_active_rows, _fit_standardizer,
-    _float_or_nan, _target_summary, build_active_vocab, discover_train_sidecars,
-    format_pipeline_actions, parse_pipeline_actions, write_active_artifacts,
-    write_active_v2_artifacts,
+    _float_or_nan, _target_summary, build_active_vocab,
+    format_pipeline_actions, parse_pipeline_actions,
 )
 
 def build_active_corpus(

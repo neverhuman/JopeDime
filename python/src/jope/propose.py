@@ -23,7 +23,6 @@ from .model import (
     genome_features_from_actions,
 )
 from .schema import EMBEDDING_DIM, normalize_embedding
-from .selector_calibration import load_selector_calibration, score_candidate_with_calibration
 from .validator import RustValidator
 
 
@@ -86,6 +85,8 @@ def propose_one(
     validator: RustValidator | None = None,
     seed: int = 0,
 ) -> dict[str, Any]:
+    from .selector_calibration import load_selector_calibration, score_candidate_with_calibration
+
     validator = validator or RustValidator()
     rng = random.Random(seed)
     prediction: dict[str, float] = {}
@@ -153,6 +154,8 @@ def propose_active_v2(
     candidate_audit: list[dict[str, Any]] | None = None,
     selector_calibration: str | Path | dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
+    from .selector_calibration import load_selector_calibration, score_candidate_with_calibration
+
     validator = validator or RustValidator()
     calibration = load_selector_calibration(selector_calibration)
     x = torch.tensor(
