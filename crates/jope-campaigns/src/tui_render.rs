@@ -1,4 +1,5 @@
 use super::*;
+use super::tui_dashboard::blocked_banner;
 
 pub(super) fn render(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64, ui: UiState) {
     let mut area = frame.area();
