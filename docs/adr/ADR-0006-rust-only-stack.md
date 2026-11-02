@@ -42,6 +42,13 @@ React, with live tools ported under differential tests and unused code archived.
    - `python3` in the runner image, for them;
    - the grammar files `featmath.py`, `tokens.py` and `automaton.py`, which are sha-pinned in
      assets, until phase P3 decides whether they are G or are ported.
+   - the fitted portable JavaScript template at
+     `crates/feat-math/contracts/fitted_portable_v3.js`: the Rust emitter validates the model,
+     serializes inference state, and renders this versioned downstream artifact; JopeDime never
+     executes the JavaScript. The template SHA is pinned by
+     `fitted_portable_template_bytes_are_pinned_for_version_three`, and moving the source file
+     must preserve emitted artifact bytes. This is a generated contract, not a JavaScript runtime
+     or service in the product stack.
 3. **Remove the rest in three phases**, each keeping every guard
    honest (coverage map, test inventory and its static-Python floor, capability matrix,
    `spec_drift` registry, ruff/pytest configuration, asset provenance) and never weakens one:

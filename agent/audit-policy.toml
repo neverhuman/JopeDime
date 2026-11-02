@@ -89,6 +89,9 @@ extra_excluded_paths = [
   # Historical fitted-runtime ABI kept byte-for-byte as a sanitizer-tested parity oracle;
   # production loading and prediction dispatch are implemented in Rust.
   "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp",
+  # Versioned JavaScript inference is a downstream artifact template, never executed by JopeDime;
+  # its bytes are pinned by fitted_portable_template_bytes_are_pinned_for_version_three.
+  "crates/feat-math/contracts/fitted_portable_v3.js",
   "crates/jope-learning/src/lake/archive.rs",
   "crates/jope-learning/src/lake/roles.rs",
   "crates/jope-learning/src/main.rs",
