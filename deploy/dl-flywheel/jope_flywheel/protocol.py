@@ -4,7 +4,8 @@ Pure functions only: this module does not execute programs or publish HWM update
 It is an additional experimental protocol, not a rewrite of historical S1 q labels.
 """
 from __future__ import annotations
-from dataclasses import asdict, dataclass
+import dataclasses
+from dataclasses import dataclass
 import hashlib
 import json
 import math
@@ -62,7 +63,7 @@ class Context:
 
     @property
     def identity(self):
-        return digest(asdict(self))
+        return digest(dataclasses.asdict(self))
 
 
 def partition(parent_lineage_sha256, split_namespace):
@@ -131,7 +132,7 @@ are available. Only completed, actual evaluations may be in this pool.
         rows.append({'program_sha256': p, 'value': value,
                      'score_receipt_sha256': sha256(r['score_receipt_sha256'])})
     rows.sort(key=lambda r: r['program_sha256'])
-    snapshot = {'context': asdict(context), 'scores': rows}
+    snapshot = {'context': dataclasses.asdict(context), 'scores': rows}
     available = [r for r in rows if r['program_sha256'] != candidate_program_sha256]
     selected = None
     if available:
