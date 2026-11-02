@@ -2,8 +2,8 @@
 
 Authority: **Jepson via Grok Bot, card answer 8:22 PM MT**.
 Owner: gpu_fused_redteam_codex; backup rd_astra.
-Status: **QUEUED / NOT RUN / CPU EXECUTOR INTERFACES IMPLEMENTED**. Target: xbabe3 RTX 3090.
-This PR registers the experiment and CPU-only preparation code. It authorizes
+Status: **QUEUED / NOT RUN / FACTORY AND PHASED STUDY SOURCE IMPLEMENTED**. Target: xbabe3 RTX 3090.
+The initial prereg registered CPU preparation; final sections bind later source. It authorizes
 no launch now. A later owner queue-release nudge, reviewed executor and immutable
 input/model bindings are required. No GPU claim has been made.
 
@@ -236,3 +236,31 @@ model/input/native91 qualification and source/openPR/resource/queue gates still
 require binding. --execute remains refused. See MISSING_PINS.md for exact
 artifacts/owners. No scientific training, real-data verdict, GPU allocation,
 serving change or queue release follows from this source PR.
+
+
+## Prospective phase implementation binding — RESEARCH-EXEC-0918
+
+No H206 scientific candidate forward, optimizer update or GPU allocation has
+occurred. The implementation now binds the original constructor/state and
+explicit GPU/CPU phase lifecycle without changing k1/16/64/256, three seeds,
+five folds, three rounds,600 updates, matched initialization/batches or
+terminal-only selection. The original CPU wrapper remains CPU-only; a separate
+GPU worker requires actual merged source, immutable genuine qualification,
+the parent's canonical GPU reservation/attempt and the assigned3090.
+
+Qualified actor-independent slate templates may be prepared by the pinned
+actual GP generator for each cell/round/role. They must contain256 distinct
+programs, actual generator source/seed/attempt receipts and the same admitted
+original TRAIN/cut/tensor identities. They are not cached1152-pool resamples.
+The current measured actor is bound and ranks the full slate anew; no common
+ranked prefix is asserted across trained models. No template/payload is opened
+for a transitively protected role, no B score is allowed before1800, and no A
+payload/score is allowed before the durable checkpoint-bound B lock.
+
+Persist step proofs/losses and terminal partial state before advancing, including
+during a storage or resource failure. The only runtime reclamation is verified
+owned native scratch/cache duplication after exact-version S3 recovery.
+Creation and custody costs remain charged once to the original cumulative
+campaign. A terminated scientific attempt is INCOMPLETE, not a retry/reset or
+partial-arm efficacy result. Source fixtures and metadata-only full-controller
+controls never establish actual GPU/model/native/data scientific qualification.
