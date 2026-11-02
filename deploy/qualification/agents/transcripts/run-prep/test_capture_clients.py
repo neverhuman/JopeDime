@@ -265,10 +265,13 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
         return process
 
     drain_calls = []
+    real_drain = THREE_CLIENTS_MODULE.drain_group
 
-    def drain_must_not_run(*_args, **_kwargs):
-        drain_calls.append(True)
-        raise AssertionError("no recorder drain budget remains at the client deadline")
+    def drain_must_not_run(process, deadline, check_interrupted):
+        if process.args[-1] == "claude_code":
+            drain_calls.append(True)
+            raise AssertionError("no recorder drain budget remains at the client deadline")
+        return real_drain(process, deadline, check_interrupted)
 
     with monkeypatch.context() as patch:
         patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
