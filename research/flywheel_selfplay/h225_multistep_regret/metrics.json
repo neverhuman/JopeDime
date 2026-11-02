@@ -1,0 +1,10 @@
+{
+  "wave": "H225",
+  "status": "NOT_RUN",
+  "verdict": null,
+  "primary_gain": null,
+  "ci95": null,
+  "elo": null,
+  "optimizer_updates": 0,
+  "candidate_readouts": 0
+}

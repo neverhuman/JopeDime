@@ -5640,6 +5640,46 @@
       },
       "sha256": "ca3a8aee72a6158e600671a07e9870ac4db1b219c9a915cec95b5ecc2d11e64d"
     },
+    "python:research/flywheel_selfplay/h225_multistep_regret/backend.py": {
+      "bytes": 10635,
+      "classification": {
+        "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
+        "role": "research"
+      },
+      "sha256": "7c751e2057a443a9b531ebd27771f26c35e227cac1d21f3805eb5830ce20dadd"
+    },
+    "python:research/flywheel_selfplay/h225_multistep_regret/custody.py": {
+      "bytes": 5405,
+      "classification": {
+        "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
+        "role": "research"
+      },
+      "sha256": "39ce6e25a3fc56dccaf253a53aa3070a96ada51f2ba4f0246cb001fadb30e9f5"
+    },
+    "python:research/flywheel_selfplay/h225_multistep_regret/monitor.py": {
+      "bytes": 8466,
+      "classification": {
+        "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
+        "role": "research"
+      },
+      "sha256": "11e13723847533ef7d5ab7824e112d9654a9fea63fe090e1e71e47bc91fcbf34"
+    },
+    "python:research/flywheel_selfplay/h225_multistep_regret/runner.py": {
+      "bytes": 17830,
+      "classification": {
+        "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
+        "role": "research"
+      },
+      "sha256": "a5642759d04fb476524bbfc9d44afbd6defadcd85964ea495cc7b1a03eaa2735"
+    },
+    "python:research/flywheel_selfplay/h225_multistep_regret/science.py": {
+      "bytes": 9132,
+      "classification": {
+        "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
+        "role": "research"
+      },
+      "sha256": "15fde3b2ce18118f12e4f9813dc565f0000c03c0cfb839682a197b8f715a0f8d"
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
