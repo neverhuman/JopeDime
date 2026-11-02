@@ -5805,6 +5805,46 @@
         "role": "research"
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/backend.py": {
+      "bytes": 14110,
+      "sha256": "cd50c64809d21bef1ff658aa65afd77bc172e9b023b7d19c7d4187f1e04898e2",
+      "classification": {
+        "role": "research",
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
+      }
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/science.py": {
+      "bytes": 5057,
+      "sha256": "4c2369bc1e0022bbff758bf724ae0d07c759be9525b74c77e82a05e9fab165a2",
+      "classification": {
+        "role": "research",
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
+      }
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/launcher.py": {
+      "bytes": 8105,
+      "sha256": "6d403b2bb9c9e28000ed56f9a4330e04930519a1801dc460df8ea26d09170995",
+      "classification": {
+        "role": "research",
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
+      }
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/regularize.py": {
+      "bytes": 2612,
+      "sha256": "30f49bbb45183f47de1defdca6b49d32c486c8fcec2b51d1dde5870d87d9621b",
+      "classification": {
+        "role": "research",
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
+      }
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/runner.py": {
+      "bytes": 13814,
+      "sha256": "008159b546643094d0ef9d784f7059c6266cb6fde81f5ec8c64cd322082f629c",
+      "classification": {
+        "role": "research",
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
