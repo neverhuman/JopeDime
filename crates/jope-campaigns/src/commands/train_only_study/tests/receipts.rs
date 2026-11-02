@@ -127,21 +127,3 @@ fn checkpoint_overlap_is_disclosed_without_zero_shot_rejection() {
         .any(|reason| reason.starts_with("checkpoint_corpus_")));
     assert!(selected.is_empty());
 }
-
-fn proposal_row(dataset: &str, checkpoint: &str, context: &str, index: usize) -> ProposalRow {
-    let canonical_genome = canonical(&format!("(pipe X (ridge l2={}))", index as f64 + 0.125));
-    ProposalRow {
-        task: "regression".to_string(),
-        dataset_hash: dataset.to_string(),
-        semantic_sha256: semantic_identity(&canonical_genome),
-        canonical_genome,
-        model_checkpoint_sha256: checkpoint.to_string(),
-        context_sha256: Some(context.to_string()),
-        proposal_score: Some(100.0 - index as f64),
-        selection_score: None,
-        reward_lcb: Some(100.0 - index as f64),
-        instability_probability: Some(0.0),
-        slot: index,
-        extra: BTreeMap::new(),
-    }
-}
