@@ -28,3 +28,13 @@ production-linked generation, the frozen doubled CPU admission, all three
 historical operator views at the unchanged exact +/-2 percentage points, and
 all four M3 clauses are required. The v1.0.0 waiver does not apply to v1.0.1;
 source controls alone do not establish numerical or release qualification.
+
+The first measured C1 stream (3,072 calls and duplicate checks, 44,544 outputs)
+passes all 21 exact operator/view comparisons using the unchanged first 10,000
+frozen-model admissions. Head counts are 1,859/10,000 overall, 437/1,920
+non-exploring and 1,422/8,080 exploring, versus 175/1,024, 45/192 and 130/832
+in R5: +1.50015625pp, -0.677083333pp and +1.974009901pp respectively.
+The matched 20 non-exploring and 30 exploring memo replay control returns
+640/640 new unique, allowed proposals, with deterministic duplicate replay.
+These measured proposer results do not substitute for the required full M3 run
+or qualify a new release artifact.

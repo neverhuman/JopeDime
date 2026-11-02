@@ -511,7 +511,7 @@ impl Proposer {
                         } else {
                             vec![first]
                         };
-                        // A repeated known key should not consume this typed
+                        // A genuine changed-head collision should not consume this typed
                         // mutation slot while a legal, novel head is available.
                         // Keep the initial weighted draw and RNG position; the
                         // finite retry order preserves the pool's weights.
