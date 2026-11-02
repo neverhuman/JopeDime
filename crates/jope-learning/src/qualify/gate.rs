@@ -1,7 +1,7 @@
 //! The `JOPE_SEAL_GATE_ENABLED` switch.
 //!
 //! Only the exact value `1` turns the gate on. Unset, empty and `0` are off. Every other value,
-//! including `true`, ` 1` and bytes that are not UTF-8, is [`Gate::Unrecognized`] and also off,
+//! including `true`, ` 1` and bytes that are not UTF-8, is [`SealGate::Unrecognized`] and also off,
 //! so a mistyped value can never open the gate.
 
 use std::ffi::OsStr;
@@ -16,7 +16,7 @@ pub const FLAG: &str = "JOPE_SEAL_GATE_ENABLED";
 /// consults the process environment on its own.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 #[serde(tag = "state", content = "value", rename_all = "snake_case")]
-pub enum Gate {
+pub enum SealGate {
     /// Unset, empty or `0`. The default.
     #[default]
     Off,
@@ -26,7 +26,10 @@ pub enum Gate {
     On,
 }
 
-impl Gate {
+/// Compatibility name for callers that used the original qualification gate API.
+pub type Gate = SealGate;
+
+impl SealGate {
     /// The gate for a raw flag value; `None` is an unset variable.
     #[must_use]
     pub fn from_value(value: Option<&OsStr>) -> Self {
@@ -44,14 +47,14 @@ impl Gate {
         Self::from_value(std::env::var_os(FLAG).as_deref())
     }
 
-    /// Whether the gate is on. Only [`Gate::On`] is.
+    /// Whether the gate is on. Only [`SealGate::On`] is.
     #[must_use]
     pub fn is_on(&self) -> bool {
         matches!(self, Self::On)
     }
 }
 
-impl fmt::Display for Gate {
+impl fmt::Display for SealGate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Off => f.write_str("off"),
