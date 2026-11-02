@@ -286,6 +286,7 @@ crates/hyperion/src/lib.rs
 crates/hyperion/src/progress.rs
 crates/hyperion/src/rng.rs
 crates/hyperion/tests/weights_smoke.rs
+crates/jope-appliance/src/terminal/app/tests/linux.rs
 crates/jope-arena/Cargo.toml
 crates/jope-arena/src/corrections.rs
 crates/jope-arena/src/elo.rs
@@ -1268,8 +1269,8 @@ crates/jope-engine/tests/atomic_write.rs
 crates/jope-engine/tests/binary_preparation.rs
 crates/jope-engine/tests/bounded_assignment.rs
 crates/jope-engine/tests/bounded_assignment/assignment_tests.rs
-crates/jope-engine/tests/bounded_assignment/worker_tests.rs
 crates/jope-engine/tests/bounded_assignment/selection_tests.rs
+crates/jope-engine/tests/bounded_assignment/worker_tests.rs
 crates/jope-engine/tests/bounded_preflight_cli.rs
 crates/jope-engine/tests/bounded_run.rs
 crates/jope-engine/tests/bounded_run/cli.rs
