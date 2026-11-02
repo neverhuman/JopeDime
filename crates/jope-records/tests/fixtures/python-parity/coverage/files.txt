@@ -675,7 +675,6 @@ crates/jope-campaigns/src/main.rs
 crates/jope-campaigns/src/paths.rs
 crates/jope-campaigns/src/ratchet/mod.rs
 crates/jope-campaigns/src/recovery_contracts.rs
-crates/jope-campaigns/src/regression_panel.rs
 crates/jope-campaigns/src/recovery_contracts/continuity.rs
 crates/jope-campaigns/src/recovery_contracts/quarantine.rs
 crates/jope-campaigns/src/recovery_contracts/rollback_v1.rs
@@ -683,6 +682,7 @@ crates/jope-campaigns/src/recovery_contracts/rollback_v2.rs
 crates/jope-campaigns/src/recovery_contracts/rollback_v2/capsule.rs
 crates/jope-campaigns/src/recovery_contracts/rollback_v2/evidence.rs
 crates/jope-campaigns/src/recovery_contracts/rollback_v2_tests.rs
+crates/jope-campaigns/src/regression_panel.rs
 crates/jope-campaigns/src/router_contracts_v2.rs
 crates/jope-campaigns/src/runtime.rs
 crates/jope-campaigns/src/score_corpus.rs
@@ -722,8 +722,6 @@ crates/jope-campaigns/src/selfplay_shadow/flywheel.rs
 crates/jope-campaigns/src/selfplay_shadow/mod.rs
 crates/jope-campaigns/src/selfplay_shadow/policy.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence.rs
-crates/jope-campaigns/src/selfplay_shadow/state.rs
-crates/jope-campaigns/src/selfplay_shadow/store.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/dataset_profile.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/packed_corpus.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/plateau.rs
@@ -733,6 +731,8 @@ crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/promotion_eval.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/proposal_cache.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/sealed_panels.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests.rs
+crates/jope-campaigns/src/selfplay_shadow/state.rs
+crates/jope-campaigns/src/selfplay_shadow/store.rs
 crates/jope-campaigns/src/spec_drift.rs
 crates/jope-campaigns/src/spec_policy.rs
 crates/jope-campaigns/src/task.rs
@@ -885,12 +885,12 @@ crates/jope-encoders/src/lib.rs
 crates/jope-encoders/src/main.rs
 crates/jope-encoders/src/metrics.rs
 crates/jope-encoders/src/model.rs
-crates/jope-encoders/src/model/classification.rs
 crates/jope-encoders/src/model/attention.rs
 crates/jope-encoders/src/model/chimera.rs
 crates/jope-encoders/src/model/chimera/attention_fusion.rs
 crates/jope-encoders/src/model/chimera/stack_fusion.rs
 crates/jope-encoders/src/model/chimera/support.rs
+crates/jope-encoders/src/model/classification.rs
 crates/jope-encoders/src/model/inference.rs
 crates/jope-encoders/src/model/layers.rs
 crates/jope-encoders/src/model/proptests.rs
@@ -1581,6 +1581,10 @@ crates/smartcluster/jain-smartcluster-daemon/tests/gpu_host.rs
 crates/smartcluster/jain-smartcluster-daemon/tests/linux_cgroup.rs
 crates/smartcluster/jain-smartcluster-daemon/tests/performance.rs
 crates/smartcluster/jain-smartcluster-daemon/tests/resident_kernel.rs
+crates/smartcluster/jain-smartcluster-daemon/tests/resident_kernel/admission.rs
+crates/smartcluster/jain-smartcluster-daemon/tests/resident_kernel/lease.rs
+crates/smartcluster/jain-smartcluster-daemon/tests/resident_kernel/placement.rs
+crates/smartcluster/jain-smartcluster-daemon/tests/resident_kernel/restarts.rs
 crates/smartcluster/jain-smartcluster-daemon/tests/restart_chaos.rs
 crates/smartcluster/jain-smartcluster-daemon/tests/soak.rs
 crates/smartcluster/jain-smartcluster-fabric/AGENTS.md
