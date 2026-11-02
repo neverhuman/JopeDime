@@ -12,12 +12,37 @@ use std::{
 };
 
 #[derive(Default)]
-struct Evidence {
-    checked: bool,
-    started: bool,
-    complete: bool,
-    evaluations: u64,
-    mismatch: bool,
+enum Evidence {
+    #[default]
+    Unchecked,
+    Unavailable,
+    Malformed,
+    IdentityMismatch,
+    Started { evaluations: u64, complete: bool },
+}
+impl Evidence {
+    fn checked(&self) -> bool {
+        !matches!(self, Self::Unchecked)
+    }
+
+    fn started(&self) -> bool {
+        matches!(self, Self::Started { .. })
+    }
+
+    fn complete(&self) -> bool {
+        matches!(self, Self::Started { complete: true, .. })
+    }
+
+    fn evaluations(&self) -> u64 {
+        match self {
+            Self::Started { evaluations, .. } => *evaluations,
+            _ => 0,
+        }
+    }
+
+    fn mismatch(&self) -> bool {
+        matches!(self, Self::IdentityMismatch)
+    }
 }
 struct Entry {
     job: GpJob,
@@ -35,35 +60,47 @@ fn unavailable(reason: &str) -> Value {
 }
 
 fn probe(root: &Path, entry: &mut Entry) {
-    entry.evidence.checked = true;
     let output = root.join(&entry.job.output);
-    let progress: Value = read_json(&output.join("progress.json")).unwrap_or_default();
+    let progress: Value = match read_json(&output.join("progress.json")) {
+        Ok(progress) => progress,
+        Err(error) => {
+            entry.evidence = if error.downcast_ref::<std::io::Error>().is_some() {
+                Evidence::Unavailable
+            } else {
+                Evidence::Malformed
+            };
+            return;
+        }
+    };
     if !progress.is_object() {
+        entry.evidence = Evidence::Malformed;
         return;
     }
     let matches = progress["prepared_sha256"] == entry.job.prepared_sha256
         && progress["cut"].as_u64() == Some(entry.job.cut as u64)
         && progress["seeds_sha256"].as_str() == entry.job.seeds_sha256.as_deref();
     if !matches {
-        entry.evidence = Evidence {
-            checked: true,
-            mismatch: true,
-            ..Default::default()
-        };
+        entry.evidence = Evidence::IdentityMismatch;
         return;
     }
     let Some(evaluations) = progress["evaluations"].as_u64() else {
+        entry.evidence = Evidence::Malformed;
         return;
     };
-    entry.evidence.started = true;
-    entry.evidence.evaluations = evaluations;
-    entry.evidence.mismatch = false;
-    let summary: Value = read_json(&output.join("search.json")).unwrap_or_default();
-    entry.evidence.complete = summary["schema"] == "parallel.search.v1"
-        && summary["completed_evaluations"].as_u64() == Some(evaluations)
-        && summary["seeds_sha256"] == progress["seeds_sha256"]
-        && summary["vocabulary_sha256"].is_string()
-        && summary["vocabulary_sha256"] == progress["vocabulary_sha256"];
+    let complete = match read_json::<Value>(&output.join("search.json")) {
+        Ok(summary) => {
+            summary["schema"] == "parallel.search.v1"
+                && summary["completed_evaluations"].as_u64() == Some(evaluations)
+                && summary["seeds_sha256"] == progress["seeds_sha256"]
+                && summary["vocabulary_sha256"].is_string()
+                && summary["vocabulary_sha256"] == progress["vocabulary_sha256"]
+        }
+        Err(_) => false,
+    };
+    entry.evidence = Evidence::Started {
+        evaluations,
+        complete,
+    };
 }
 
 pub(super) fn progress(root: &Path, receipt_path: &Path, receipt: &Value) -> Value {
@@ -120,13 +157,13 @@ pub(super) fn progress(root: &Path, receipt_path: &Path, receipt: &Value) -> Val
         .entries
         .iter()
         .enumerate()
-        .filter(|(_, entry)| entry.evidence.started && !entry.evidence.complete)
+        .filter(|(_, entry)| entry.evidence.started() && !entry.evidence.complete())
         .map(|(index, _)| index)
         .collect::<BTreeSet<_>>();
     for _ in 0..cache.entries.len().min(256) {
         let index = cache.cursor;
         cache.cursor = (cache.cursor + 1) % cache.entries.len();
-        if !cache.entries[index].evidence.complete {
+        if !cache.entries[index].evidence.complete() {
             indices.insert(index);
         }
     }
@@ -134,11 +171,13 @@ pub(super) fn progress(root: &Path, receipt_path: &Path, receipt: &Value) -> Val
         probe(root, &mut cache.entries[index]);
     }
     json!({"schema":"parallel.dashboard_library_gp.v1","status":"observed","timestamp":now(),
-        "requested_jobs":cache.entries.len(),"checked_jobs":cache.entries.iter().filter(|entry|entry.evidence.checked).count(),
-        "started_jobs":cache.entries.iter().filter(|entry|entry.evidence.started).count(),
-        "completed_jobs":cache.entries.iter().filter(|entry|entry.evidence.complete).count(),
-        "observed_evaluations":cache.entries.iter().map(|entry|entry.evidence.evaluations).sum::<u64>(),
-        "identity_mismatches":cache.entries.iter().filter(|entry|entry.evidence.mismatch).count(),
+        "requested_jobs":cache.entries.len(),"checked_jobs":cache.entries.iter().filter(|entry|entry.evidence.checked()).count(),
+        "started_jobs":cache.entries.iter().filter(|entry|entry.evidence.started()).count(),
+        "completed_jobs":cache.entries.iter().filter(|entry|entry.evidence.complete()).count(),
+        "unavailable_progress_jobs":cache.entries.iter().filter(|entry|matches!(&entry.evidence, Evidence::Unavailable)).count(),
+        "malformed_progress_jobs":cache.entries.iter().filter(|entry|matches!(&entry.evidence, Evidence::Malformed)).count(),
+        "observed_evaluations":cache.entries.iter().map(|entry|entry.evidence.evaluations()).sum::<u64>(),
+        "identity_mismatches":cache.entries.iter().filter(|entry|entry.evidence.mismatch()).count(),
         "outputs_probed_this_refresh":indices.len(),"jobs_sha256":expected,
         "scope":"admitted proposal library jobs only; observed lower bound from bounded compact-receipt scans",
         "observation_ledgers_read":false})
