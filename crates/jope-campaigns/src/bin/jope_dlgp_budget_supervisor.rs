@@ -906,13 +906,30 @@ fn cycle(args: &Args) -> Result<JopeDlgpBudgetCampaignStatusV1> {
     }
 
     let wins_path = campaign_root.join("receipts/robust-wins.v1.json");
-    let wins = read_json(&wins_path).unwrap_or_else(|_| json!({}));
-    let robust_wins = wins.get("robust_wins").and_then(Value::as_u64).unwrap_or(0);
-    let seed_agreement = wins
-        .get("seed_agreement")
-        .and_then(Value::as_str)
-        .unwrap_or("unavailable")
-        .to_owned();
+    let (robust_wins, seed_agreement) = match fs::symlink_metadata(&wins_path) {
+        Ok(_) => {
+            let wins = read_json(&wins_path)?;
+            let robust_wins = wins
+                .get("robust_wins")
+                .and_then(Value::as_u64)
+                .context("robust wins receipt is missing its count")?;
+            let seed_agreement = wins
+                .get("seed_agreement")
+                .and_then(Value::as_str)
+                .context("robust wins receipt is missing seed agreement")?
+                .to_owned();
+            (robust_wins, seed_agreement)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            blockers.push("robust wins receipt unavailable; count remains unknown".to_owned());
+            (0, "unavailable".to_owned())
+        }
+        Err(error) => {
+            return Err(error).with_context(|| {
+                format!("inspect robust wins receipt {}", wins_path.display())
+            });
+        }
+    };
     let last_advanced_at_ms = progress
         .values()
         .map(|value| value.updated_at_ms)
