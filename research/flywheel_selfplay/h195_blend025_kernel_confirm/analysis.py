@@ -8,6 +8,13 @@ import hashlib
 import itertools
 
 import numpy as np
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+
+from h195_blend025_kernel_confirm.analysis_common import family_matrix as _shared_family_matrix, contrast as _shared_contrast
 
 SEEDS = (195101, 195102, 195103)
 FOLD_SEEDS = {195101: 195141, 195102: 195142, 195103: 195143}
@@ -26,6 +33,21 @@ DESCRIPTIVE = ARMS[2:]
 LCB_MARGIN = 0.001  # H129 one-sided p is computed against this margin
 HARM_DELTA, HARM_CAP = -0.01, 0.10
 TIE_MARGIN = 1e-4
+
+
+def contrast(panel, base, families, seed=BOOT_SEED):
+    return _shared_contrast(
+        panel, base, families, seed, DRAWS, LCB_MARGIN, HARM_DELTA
+    )
+
+
+def family_win_matrix(values_by_context, family_ids, tie_margin=TIE_MARGIN):
+    from h195_blend025_kernel_confirm.analysis_common import family_win_matrix as shared
+    return shared(values_by_context, family_ids, tie_margin)
+
+
+def family_matrix(values, families):
+    return _shared_family_matrix(values, families)
 
 
 # ------------------------------------------------------------------ folds and fit plan
@@ -118,46 +140,8 @@ def blend(reference_cost, gbm_cost, lam=LAMBDA):
 # ------------------------------------------------------------------ statistics
 
 
-def family_matrix(values, families):
-    order = sorted(set(families))
-    v = np.asarray(values, dtype=np.float64)
-    m = np.asarray([v[..., np.asarray(families) == f].mean(axis=-1) for f in order])
-    return order, np.moveaxis(m, 0, -1)
 
 
-def contrast(panel, base, families, seed=BOOT_SEED):
-    """panel/base: [3 seeds, contexts]. Per-seed equal-family gain, median over seeds, 10,000 shared family draws
-    reduced over seeds (axis 0), H129 one-sided p against +0.001, harm = families whose three-seed mean delta < -0.01."""
-    _, fp = family_matrix(panel, families)
-    _, fb = family_matrix(base, families)
-    delta = fp - fb  # (3, F)
-    n = delta.shape[1]
-    draw = np.random.default_rng(seed).integers(0, n, (DRAWS, n))
-    boot = np.median(delta[:, draw].mean(axis=2), axis=0)
-    per_seed = delta.mean(axis=1)
-    fam_mean = delta.mean(axis=0)
-    return dict(
-        per_seed_gain=per_seed.tolist(),
-        median_gain=float(np.median(per_seed)),
-        ci95=np.quantile(boot, [0.025, 0.975]).tolist(),
-        p_one_sided_vs_margin=float(
-            (1 + np.count_nonzero(boot <= LCB_MARGIN)) / (DRAWS + 1)
-        ),
-        positive_seeds=int((per_seed > 0).sum()),
-        harm_fraction=float((fam_mean < HARM_DELTA).mean()),
-        harm_families=int((fam_mean < HARM_DELTA).sum()),
-        families=int(n),
-    )
-
-
-def family_win_matrix(values_by_context, family_ids, tie_margin=TIE_MARGIN):
-    v = np.asarray(values_by_context, dtype=np.float64)
-    diff = v[:, :, None] - v[:, None, :]
-    wins = np.where(diff > tie_margin, 1.0, np.where(diff < -tie_margin, 0.0, 0.5)) * (
-        1.0 - np.eye(v.shape[1])
-    )
-    fams = sorted(set(family_ids))
-    return np.array([wins[np.asarray(family_ids) == f].mean(axis=0) for f in fams])
 
 
 def bt_ratings(wins, anchor=0, prior=0.01):
