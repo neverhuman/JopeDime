@@ -115,6 +115,7 @@
     "deploy/ci/emitters.sh": "ops",
     "test-support/": "data",
     "test-support/**": "data",
+    ".jankurai/": "agent",
     ".jankurai/repo-score.md": "agent"
   }
 }
