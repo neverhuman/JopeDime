@@ -16060,7 +16060,8 @@
         "cargo test --locked -p feat-math --no-default-features --test artifact_target_binding",
         "cargo test --locked -p jope-pipeline --test artifact_target_binding",
         "cargo test --locked -p jope-cli --no-default-features --lib kernel::artifact_v3_tests::",
-        "node deploy/ci/typescript/browser.mjs (all census fixtures, Chromium/Firefox/WebKit page and module worker)"
+        "node deploy/ci/typescript/browser.mjs (all census fixtures, Chromium/Firefox/WebKit page and module worker)",
+        "bash web/browser-predict/check.sh (Node26: native model integrity and first-party WASM parity; no fitting export or host imports)"
       ],
       "command": [
         "GitHub Actions",
