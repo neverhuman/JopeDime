@@ -1734,6 +1734,8 @@ crates/jope-models/src/repo.rs
 crates/jope-models/tests/roundtrip.rs
 crates/jope-motifs/Cargo.toml
 crates/jope-motifs/src/cli.rs
+crates/jope-motifs/src/cli/mining_command.rs
+crates/jope-motifs/src/cli/validate_command.rs
 crates/jope-motifs/src/expand.rs
 crates/jope-motifs/src/export.rs
 crates/jope-motifs/src/fixture.rs
