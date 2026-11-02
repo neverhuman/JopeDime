@@ -1,0 +1,485 @@
+use super::*;
+
+impl Renderer {
+    pub(super) fn render_with_variant(
+        &mut self,
+        fact: &LineageFact,
+        links: &Links,
+        evidence: &str,
+        forced: Option<u8>,
+    ) -> Narration {
+        let evidence_refs = evidence_refs(links, evidence);
+        let claim = |category: &str, predicate: &str, details: Value| Claim {
+            category: category.into(),
+            predicate: predicate.into(),
+            evidence: evidence_refs.clone(),
+            details,
+        };
+        let mut out = Narration {
+            text: String::new(),
+            category: "status_fact".into(),
+            claims: Vec::new(),
+            delta: None,
+            variant: None,
+        };
+        use LineageFact::*;
+        match fact {
+            SearchStarted {
+                cut,
+                objective,
+                train_rows,
+                hold_rows,
+                ..
+            } => {
+                out.text=format!("Live search commentary, derived from program edits and measurements. Cut {cut}: {train_rows} fitting rows and {hold_rows} validation rows. Ranking uses {}.",objective.as_ref().map(|s|format!("the recorded {} objective",safe(s))).unwrap_or_else(||"validation RMSE".into()));
+                out.claims.push(claim("status_fact","search_started",json!({"cut":cut,"objective":objective,"train_rows":train_rows,"hold_rows":hold_rows})));
+            }
+            Drawn {
+                cut,
+                coordinate,
+                origin,
+                parents,
+                child,
+                outcome,
+                generation,
+                island,
+                phase,
+                ..
+            } => {
+                let variants = [
+                    "Compared with its recorded parent",
+                    "Keeping the parent as reference",
+                    "The new variation",
+                    "This candidate",
+                    "The local change",
+                    "Against the parent recipe",
+                    "At this search step",
+                    "The next recorded draw",
+                ];
+                let seed = digest(evidence.as_bytes());
+                let mut chosen =
+                    usize::from_str_radix(&seed[..8], 16).unwrap_or(0) % variants.len();
+                for _ in 0..variants.len() {
+                    if !self.recent.contains(&chosen) {
+                        break;
+                    }
+                    chosen = (chosen + 1) % variants.len();
+                }
+                if let Some(v) = forced {
+                    chosen = usize::from(v);
+                }
+                out.variant = Some(chosen as u8);
+                self.recent.push_back(chosen);
+                if self.recent.len() > 4 {
+                    self.recent.pop_front();
+                }
+                let id = child
+                    .as_ref()
+                    .map(|p| short(&p.sha256))
+                    .unwrap_or_else(|| "unavailable".into());
+                out.text = if phase == "comparison" {
+                    format!(
+                        "Cut {cut}, comparison pool (coordinate island {island}), candidate {id}: "
+                    )
+                } else {
+                    format!(
+                        "Cut {cut}, generation {generation}, island {island}, {} candidate {id}: ",
+                        safe(phase)
+                    )
+                };
+                if !parents.is_empty() {
+                    out.text.push_str(&format!(
+                        "ordered parents [{}]. ",
+                        parents
+                            .iter()
+                            .map(|p| short(&p.sha256))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ));
+                }
+                if let Some(child) = child {
+                    for note in implementation_notes(&child.canonical) {
+                        out.claims.push(claim("implementation_fact","legacy_head_resolution",json!({"rule_version":"legacy-plan-7848c77/1","source":"crates/feat-math/src/spec.rs::plan_head_stage; crates/feat-math/src/heads.rs::RidgeModel::fit","note":note})));
+                        out.text.push_str(&note);
+                        out.text.push(' ');
+                    }
+                    if let Some(parent) = parents.first() {
+                        match ProgramSnapshot::from_legacy(&parent.canonical).and_then(|p| {
+                            ProgramSnapshot::from_legacy(&child.canonical)
+                                .and_then(|c| diff_programs(&p, &c))
+                        }) {
+                            Ok(delta) => {
+                                out.category = "structural_fact".into();
+                                if delta.edits.is_empty() {
+                                    out.text.push_str("The captured program is unchanged from the recorded parent.");
+                                } else if delta.coverage == "whole_program_only" {
+                                    out.text.push_str("The program changed; detailed semantic analysis is unavailable for this representation.");
+                                } else {
+                                    out.text.push_str(variants[chosen]);
+                                    out.text.push_str(": ");
+                                    out.text.push_str(
+                                        &delta
+                                            .edits
+                                            .iter()
+                                            .take(6)
+                                            .map(edit_text)
+                                            .collect::<Vec<_>>()
+                                            .join("; "),
+                                    );
+                                    out.text.push('.');
+                                    if delta.edits.len() > 6 {
+                                        out.text.push_str(&format!(" {} additional exact edits are retained in the audit record.",delta.edits.len()-6));
+                                    }
+                                    for edit in &delta.edits {
+                                        if let Some((text, _)) = resolution(edit) {
+                                            out.text.push(' ');
+                                            out.text.push_str(&text);
+                                            out.claims.push(claim("implementation_fact","legacy_parameter_resolution",json!({"rule_version":"legacy-plan-7848c77/1","source":"crates/feat-math/src/spec.rs::plan_op","edit":edit,"resolution":text})));
+                                        }
+                                    }
+                                }
+                                out.claims.push(claim(
+                                    "structural_fact",
+                                    "endpoint_difference",
+                                    json!({"parent_identity":delta.parent.identity,"child_identity":delta.child.identity,"coverage":delta.coverage,"patch":"narration.delta"}),
+                                ));
+                                if parents.len() > 1 {
+                                    if parents[0] == parents[1] {
+                                        out.text.push_str(" The first two ordered parent roles selected the same program; neither role is discarded.");
+                                    }
+                                    for (role, other) in parents.iter().enumerate().skip(1) {
+                                        match ProgramSnapshot::from_legacy(&other.canonical)
+                                            .and_then(|p| {
+                                                ProgramSnapshot::from_legacy(&child.canonical)
+                                                    .and_then(|c| diff_programs(&p, &c))
+                                            }) {
+                                            Ok(other_delta) => {
+                                                let count = other_delta.edits.len();
+                                                let edits = if count == 1 {
+                                                    "1 exact endpoint edit is retained".into()
+                                                } else {
+                                                    format!(
+                                                        "{count} exact endpoint edits are retained"
+                                                    )
+                                                };
+                                                out.text.push_str(&format!(
+                                                    " Relative to parent role {} ({}), {edits}.",
+                                                    role + 1,
+                                                    short(&other.sha256)
+                                                ));
+                                                out.claims.push(claim(
+                                                    "structural_fact",
+                                                    "additional_parent_difference",
+                                                    json!({"role":role+1,"delta":other_delta}),
+                                                ));
+                                            }
+                                            Err(_) => out.claims.push(claim(
+                                                "limitation",
+                                                "additional_parent_analysis_unavailable",
+                                                json!({"role":role+1,"parent":other.sha256}),
+                                            )),
+                                        }
+                                    }
+                                    out.text.push_str(" Endpoint differences do not identify a unique crossover splice.");
+                                    out.claims.push(claim("limitation","crossover_endpoint_provenance",json!({"parents":parents.iter().map(|p|&p.sha256).collect::<Vec<_>>()})));
+                                }
+                                if outcome == "candidate"
+                                    && !delta.edits.is_empty()
+                                    && !delta.edits.iter().all(|e| {
+                                        resolution(e).is_some_and(|(_, unchanged)| unchanged)
+                                    })
+                                    && matches!(origin.as_str(), "mutate" | "crossover")
+                                {
+                                    let question = hypothesis(&delta);
+                                    out.text.push(' ');
+                                    out.text.push_str(&question);
+                                    out.claims.push(claim("prospective_hypothesis","test_changed_recipe",json!({"question":question,"knowledge_cut":evidence,"origin":"observer_interpretation","status":"pending"})));
+                                }
+                                out.delta = Some(delta);
+                            }
+                            Err(_) => {
+                                out.text.push_str("The recorded recipe is available; exact structural analysis is unavailable under current limits.");
+                                out.claims.push(claim(
+                                    "limitation",
+                                    "analysis_unavailable",
+                                    json!({"coordinate":coordinate}),
+                                ));
+                            }
+                        }
+                    } else {
+                        out.text.push_str(&format!(
+                            "A {} proposal was recorded without parent references.",
+                            safe(origin)
+                        ));
+                        out.claims.push(claim(
+                            "structural_fact",
+                            "parentless_proposal",
+                            json!({"program_sha256":child.sha256,"origin":origin}),
+                        ));
+                    }
+                } else {
+                    out.text.push_str(
+                        "Construction returned no program; no evaluation result is implied.",
+                    );
+                }
+                out.claims.push(claim(
+                    "observed_decision",
+                    "draw_outcome",
+                    json!({"coordinate":coordinate,"outcome":outcome,"origin":origin}),
+                ));
+                if outcome != "candidate" {
+                    out.text
+                        .push_str(&format!(" Recorded draw outcome: {}.", safe(outcome)));
+                }
+            }
+            Admitted {
+                cut,
+                program_sha256,
+                disposition,
+                ..
+            } => {
+                let decision = match disposition.as_str() {
+                    "admitted" => "admitted for evaluation. This decision alone does not establish a physical start".into(),
+                    "duplicate" => "duplicate; not admitted for a new evaluation".into(),
+                    "evaluations" => "not admitted: the per-cut evaluation bound was reached".into(),
+                    "seconds" => "not admitted: the active-seconds bound was reached".into(),
+                    "cancelled" => "cancelled; this decision does not establish a physical evaluation start".into(),
+                    other => format!("recorded admission decision {}. A physical start is not established by this record", safe(other)),
+                };
+                out.text = format!(
+                    "Cut {cut}, candidate {}: {decision}.",
+                    short(program_sha256)
+                );
+                out.claims.push(claim(
+                    "observed_decision",
+                    "admission",
+                    json!({"cut":cut,"program_sha256":program_sha256,"disposition":disposition}),
+                ));
+            }
+            Started {
+                cut,
+                program_sha256,
+                ..
+            } => {
+                out.text = format!(
+                    "Cut {cut}, candidate {}: evaluation started; results pending.",
+                    short(program_sha256)
+                );
+                out.claims.push(claim(
+                    "status_fact",
+                    "evaluation_started",
+                    json!({"cut":cut,"program_sha256":program_sha256}),
+                ));
+            }
+            Measured {
+                cut,
+                phase,
+                program_sha256,
+                status,
+                rmse,
+                objective_loss,
+                hold_r2,
+                train_r2,
+                seconds,
+                generation,
+                island,
+                origin,
+                ..
+            } => {
+                out.category = "measured_fact".into();
+                out.text = format!(
+                    "Cut {cut}, candidate {}: {} evaluation status {}",
+                    short(program_sha256),
+                    safe(phase),
+                    safe(status)
+                );
+                if let Some(v) = objective_loss {
+                    out.text.push_str(&format!("; recorded objective loss {v}"));
+                }
+                if let Some(v) = rmse {
+                    out.text.push_str(&format!("; validation RMSE {v}"));
+                }
+                if let Some(v) = hold_r2 {
+                    out.text.push_str(&format!("; validation R² {v}"));
+                }
+                if let Some(v) = train_r2 {
+                    out.text.push_str(&format!("; fitting R² {v}"));
+                }
+                out.text.push_str(&format!("; measured runtime {seconds}s (generation {generation}, island {}, origin {}).",island.map_or_else(||"unavailable".into(),|i|i.to_string()),safe(origin)));
+                out.claims.push(claim("measured_fact","evaluation_result",json!({"cut":cut,"phase":phase,"program_sha256":program_sha256,"status":status,"rmse_bits":rmse.map(|v|format!("{:016x}",v.to_bits())),"objective_loss_bits":objective_loss.map(|v|format!("{:016x}",v.to_bits()))})));
+            }
+            GenerationClosed {
+                cut,
+                generation,
+                island,
+                survivors,
+                evaluations,
+                barren,
+            } => {
+                out.text=format!("Cut {cut}, island {island}: generation {generation} closed after {evaluations} evaluations; {} recorded survivors.",survivors.len());
+                if let Some(top) = survivors.first() {
+                    out.text.push_str(&format!(
+                        " Leading survivor {} has ranking loss {} and validation RMSE {}.",
+                        short(&top.program_sha256),
+                        top.score,
+                        top.rmse
+                    ));
+                }
+                if *barren > 0 {
+                    out.text.push_str(&format!(
+                        " {barren} consecutive generations spent no evaluation."
+                    ));
+                }
+                out.claims.push(claim("aggregate_fact","generation_closed",json!({"cut":cut,"generation":generation,"island":island,"survivors":survivors.len(),"evaluations":evaluations})));
+            }
+            Migrated {
+                cut,
+                from_island,
+                to_island,
+                admitted,
+                program_sha256,
+                rmse,
+                after_generation,
+            } => {
+                out.text = format!(
+                    "Cut {cut}, after generation {after_generation}: candidate {} (validation RMSE {rmse}) migration from island {from_island} to {to_island} was {}.",
+                    short(program_sha256),
+                    if *admitted { "admitted" } else { "refused" }
+                );
+                out.claims.push(claim(
+                    "observed_decision",
+                    "migration",
+                    json!({"cut":cut,"from":from_island,"to":to_island,"admitted":admitted}),
+                ));
+            }
+            ExplorationStopped {
+                cut,
+                reason,
+                evaluations,
+                ..
+            } => {
+                let description = match reason.as_str() {
+                    "evaluations" => "the evaluation bound was reached".into(),
+                    "seconds" => "the active-seconds bound was reached".into(),
+                    "cancelled" => "the source run was cancelled".into(),
+                    "search_space_exhausted" => {
+                        "the recorded distinct-candidate attempts were exhausted".into()
+                    }
+                    other => format!("recorded stop reason {}", safe(other)),
+                };
+                out.text = format!(
+                    "Cut {cut}: exploration stopped after {evaluations} evaluations; {description}."
+                );
+                out.claims.push(claim(
+                    "observed_decision",
+                    "exploration_stopped",
+                    json!({"cut":cut,"reason":reason,"evaluations":evaluations}),
+                ));
+            }
+            ComparisonStarted {
+                cuts,
+                program_sha256s,
+            } => {
+                out.text=format!("Cross-cut comparison started: {} recorded programs across {} cuts. Complete comparison results pending.",program_sha256s.len(),cuts.len());
+                out.claims.push(claim(
+                    "status_fact",
+                    "comparison_started",
+                    json!({"cuts":cuts,"programs":program_sha256s}),
+                ));
+            }
+            TapDropped { dropped } => {
+                out.category = "limitation".into();
+                out.text=format!("Evidence gap: {dropped} observer records were dropped. Complete experiment counts and history cannot be inferred across this gap.");
+                out.claims.push(claim(
+                    "limitation",
+                    "capture_gap",
+                    json!({"dropped":dropped.to_string()}),
+                ));
+            }
+            Selected {
+                program_sha256,
+                rule,
+            } => {
+                out.category = "observed_decision".into();
+                out.text = format!(
+                    "Candidate {} selected under recorded rule {}.",
+                    short(program_sha256),
+                    safe(rule)
+                );
+                out.claims.push(claim(
+                    "observed_decision",
+                    "selected",
+                    json!({"program_sha256":program_sha256,"rule":rule}),
+                ));
+            }
+            CandidatesOffered {
+                program_sha256s,
+                rule,
+            } => {
+                out.category = "observed_decision".into();
+                out.text=format!("{} ranked candidates offered under recorded rule {}. The consuming engine has its own final selection and fitting steps.",program_sha256s.len(),safe(rule));
+                out.claims.push(claim(
+                    "observed_decision",
+                    "candidates_offered",
+                    json!({"program_sha256s":program_sha256s,"rule":rule}),
+                ));
+            }
+            Emitted {
+                program_sha256,
+                languages,
+            } => {
+                out.text=format!("Candidate {}: source emission completed for {}. Compiler checks and predictive validation have separate status.",short(program_sha256),languages.iter().map(|v|safe(v)).collect::<Vec<_>>().join(", "));
+                out.claims.push(claim(
+                    "status_fact",
+                    "source_emitted",
+                    json!({"program_sha256":program_sha256,"languages":languages}),
+                ));
+            }
+            RunStopped { status } => {
+                out.text = format!("Recorded run status: {}.", safe(status));
+                out.claims
+                    .push(claim("status_fact", "run_status", json!({"status":status})));
+            }
+            Prediction {
+                status,
+                program_sha256,
+            } => {
+                out.text = format!(
+                    "Fixed-model prediction status: {}{}.",
+                    safe(status),
+                    program_sha256
+                        .as_ref()
+                        .map(|p| format!("; program {}", short(p)))
+                        .unwrap_or_default()
+                );
+                out.claims.push(claim(
+                    "status_fact",
+                    "prediction_status",
+                    json!({"status":status,"program_sha256":program_sha256}),
+                ));
+            }
+            PredictionBound {
+                status,
+                model_sha256,
+                input_sha256,
+                rows,
+                seconds,
+            } => {
+                out.text = format!(
+                    "Fixed-model prediction {}: model {}, input {}, {rows} rows.",
+                    safe(status),
+                    short(model_sha256),
+                    short(input_sha256)
+                );
+                if let Some(seconds) = seconds {
+                    out.text
+                        .push_str(&format!(" Measured prediction runtime {seconds}s."));
+                }
+                out.text.push_str(" Prediction uses fixed fitted state.");
+                out.claims.push(claim("status_fact","prediction_bound",json!({"status":status,"model_sha256":model_sha256,"input_sha256":input_sha256,"rows":rows,"seconds_bits":seconds.map(|v|format!("{:016x}",v.to_bits()))})));
+            }
+        }
+        append_boundary_note(&mut out, fact, links, &claim);
+        out
+    }
+}
