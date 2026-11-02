@@ -4,6 +4,8 @@ mod capsule;
 mod compile;
 mod render;
 
+pub mod record_reader;
+
 pub mod state;
 pub mod wave_git;
 
