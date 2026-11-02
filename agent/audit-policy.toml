@@ -8,6 +8,8 @@ advisory_on = ["medium", "low", "info"]
 
 [scan]
 # Generated caches and owner-approved, exact-file false-positive exceptions only.
+# Receipt-pinned frozen copies belong in [[evidence_snapshot]], never here: that
+# class skips only HLT-043/045 while every other detector still audits the files.
 # Exact-file exceptions have per-path evidence and reasons in
 # docs/release/jankurai-p5-r2-exceptions-20261102.md, docs/release/jankurai-reporot-p50-exceptions-20261102.md and docs/streaming.md. They
 # do not alter Gitleaks, Rust/Python tests, or source content. Do not add
@@ -50,8 +52,6 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
-  # Ciaudit HLT-043 sha256:09d1f247...: this exact copy is byte-pinned by the
-  # hpc_verified_v5 provenance; its path-scoped Jankurai disposition is documented.
   # Reporot HLT-019 sha256:3cd49f1c...: byte-pinned verbatim fixture; see exact-path disposition.
   "deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py",
   # Repo-rot dispositions for immutable, path-versioned engine manifest records; see the exact fingerprints and custody rationale in jankurai-reporot-manifest-exceptions-20261102.md.
@@ -62,52 +62,20 @@ extra_excluded_paths = [
   "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256",
   # HLT-040 05b639e6...: immutable ExecStartPre integrity pin; see exact disposition.
   "crates/jope-engine/manifests/champion-import-v44.sha256",
-  "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
-  # Ciaudit HLT-043 sha256:fac8174f...: exact hash-pinned package copy; see disposition.
-  "deploy/dl-flywheel/jope_flywheel/evidence.py",
   # Prodlang HLT-046 sha256:c8f09a3c...: this lifecycle Stage is a distinct domain
   # from research evidence phases and CUDA tensor projection checkpoints; see disposition.
   "crates/jope-pipeline/src/resource_ledger.rs",
   # Prodlang HLT-027 sha256:7985f857...: explanatory ledger refusal comment is not a
   # human-review or proof claim; exact-path disposition is documented.
   "crates/jope-learning/src/hwm.rs",
-  # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
-  "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
-  # Variety B HLT-001/HLT-043: versioned trace-archive copies are hash-pinned; see disposition.
-  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
-  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
-  # Ciaudit HLT-043 sha256:804e402d...: exact provenance-pinned copy; see disposition.
-  "deploy/dl-flywheel/jope_flywheel/augmentation.py",
-  # Ciaudit HLT-043 sha256:095ee8f1...: exact provenance-pinned copy; see disposition.
-  "deploy/dl-flywheel/jope_flywheel/target_noise.py",
-  # Ciaudit HLT-043 sha256:7ec8a15a...: exact provenance-pinned copy; see disposition.
-  "deploy/dl-flywheel/jope_flywheel/s3_library.py",
   # Frozen HLT-043 instance; immutable hpc-v5 provenance and fingerprint are documented.
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
   # Pinned evergreen package copies; the mutable canonical source remains scanned.
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/evergreen.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/evergreen.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/evergreen.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py",
   # Frozen fresh_gp_v2 label_campaign package copies; all source hashes are pinned.
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/label_campaign.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/label_campaign.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/label_campaign.py",
   # Frozen HLT-043 copies; leave the mutable hpc_verified_v4 instance to its owner.
   "deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/neural_outbox.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py",
   "deploy/dl-flywheel/pipelines/native/neural_outbox.py",
   # Entire HLT-043 class consists of receipt-pinned native global guard copies.
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
   # HLT-043 score_join.py instances are pinned package copies; the mutable root stays scanned.
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/score_join.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/score_join.py",
-  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/score_join.py",
-  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",
@@ -155,8 +123,6 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
   "research/flywheel_selfplay/h164_sam_retry/runtime.py",
   # Exact copies retained as part of immutable experiment manifests/results.
-  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
-  "research/flywheel_selfplay/h192_margin_gate/runner.py",
   "research/flywheel_selfplay/h192_margin_gate/treatment.py",
   "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/run_acceptance.py",
 
