@@ -2437,3 +2437,5 @@ HEAD=649e32379364e108b7a9a30abd24951179b1984d
 owner=Codex
 paths=deploy/qualification/v1.0/providers/a5.py, deploy/dl-flywheel/ingest_joined_roster/roster.py, crates/jope-campaigns/src/encoder_v2_store.rs, crates/jope-encoders/src/model/tensor_ops.rs
 intent=mechanical behavior-preserving splits to <500 LOC per file; syntax-only checks; per-file commits and jk_fastpush; no cargo builds/tests/audits
+2026-11-02T21:07:08Z | CLAIM luna_jk_evidence_excl WATCHER t2100 SPARE continuation | checkout=/home/ubuntu/jk_wide/lanes/evidence_excl_t2040/JopeDime branch=fast/luna_jk_evidence_excl_t2100 HEAD=46458dc3e2d5f97c97422f46109c20fc48973bd6; exclusive path crates/feat-math/tests/scalar_v2/recipes.rs (749 LOC, SHA256 d41bcdf5720fd8d48c1ddc4198bed8f46854660ffb692c70b8a070f7164915b4; no exact hash pin found); first currently unclaimed SPARE_t2100 candidate. Behavior-preserving Rust module split under 500 LOC; rustfmt --check and git diff --check only; no builds/tests/audits; jk_fastpush.
+>>>>>>> 090d7865d (refactor(shape): split scalar recipes tests into 3 modules (max 416 LOC))
