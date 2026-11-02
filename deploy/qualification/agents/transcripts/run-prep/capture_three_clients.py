@@ -298,6 +298,37 @@ def drain_group(
         time.sleep(min(0.05, max(0, drain_deadline - time.monotonic())))
 
 
+def _current_sigmask() -> tuple[set[signal.Signals], BaseException | None]:
+    pending_error = None
+    while True:
+        try:
+            return signal.pthread_sigmask(signal.SIG_BLOCK, ()), pending_error
+        except KeyboardInterrupt as error:
+            if pending_error is None:
+                pending_error = error
+
+
+def _block_sigint() -> tuple[set[signal.Signals], BaseException | None]:
+    # Read the mask before changing it: pthread_sigmask applies the new mask and
+    # only then runs pending handlers, so an interrupt raised by the blocking call
+    # must not be retried into a "previous" mask that already blocks SIGINT.
+    previous_mask, pending_error = _current_sigmask()
+    try:
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+    except KeyboardInterrupt as error:
+        if pending_error is None:
+            pending_error = error
+    return previous_mask, pending_error
+
+
+def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
+    try:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+    except BaseException as error:
+        return error
+    return None
+
+
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
     previous_mask, pending_error = _block_sigint()
     pgid = process.pid
