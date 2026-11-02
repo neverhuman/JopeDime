@@ -3,6 +3,8 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
+pub use super::Stage;
+
 pub const MANIFEST_LIMIT: usize = 12 * 1024;
 pub const CARD_LIMIT: usize = 4 * 1024;
 pub const CONTEXT_LIMIT: usize = 4 * 1024;
@@ -21,24 +23,6 @@ const CONTEXT_SLOTS: [&str; 10] = [
     "falsifier",
     "reconstruction",
 ];
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Stage {
-    Synthetic,
-    Shadow,
-    Adaptive,
-    Confirmatory,
-}
-impl Stage {
-    fn text(self) -> &'static str {
-        match self {
-            Self::Synthetic => "synthetic",
-            Self::Shadow => "shadow",
-            Self::Adaptive => "adaptive",
-            Self::Confirmatory => "confirmatory",
-        }
-    }
-}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EvidenceRoot {
@@ -175,8 +159,8 @@ pub fn compile(input: &WaveGitInput) -> Result<Projection, ProjectionError> {
         .as_ref()
         .map(|(id, reason)| format!("{{\"review_id\":{},\"reason\":{}}}", q(id), q(reason)))
         .unwrap_or_else(|| "null".into());
-    let manifest=format!("{{\"archive_manifest_sha256\":{},\"archive_status\":{},\"ancestry\":[{}],\"budget_exception\":{},\"capture_status\":{},\"disclosure_policy\":{{\"policy_id\":{},\"role\":{},\"sha256\":{}}},\"disposition\":{},\"evidence_roots\":[{}],\"git_status\":\"GIT_PUBLICATION_PENDING\",\"schema_version\":1,\"source_commit\":{},\"stage\":{},\"training_identity_sha256\":{},\"version\":{},\"wave_id\":{}}}",q(&input.archive_manifest_sha256),q(&input.archive_status),ancestry_json,exception,q(&input.capture_status),q(&input.disclosure.policy_id),q(&input.disclosure.role),q(&input.disclosure.sha256),q(&input.disposition),roots_json,opt(&input.source_commit),q(input.stage.text()),q(&input.training_identity_sha256),q(&input.version),q(&input.wave_id));
-    let card=format!("{{\"archive_status\":{},\"assertion_count\":{},\"capture_status\":{},\"disposition\":{},\"evidence_root_count\":{},\"interpretation\":\"descriptive; no promotion authority\",\"schema_version\":1,\"stage\":{},\"version\":{},\"wave_id\":{}}}",q(&input.archive_status),assertions.len(),q(&input.capture_status),q(&input.disposition),roots.len(),q(input.stage.text()),q(&input.version),q(&input.wave_id)).into_bytes();
+    let manifest=format!("{{\"archive_manifest_sha256\":{},\"archive_status\":{},\"ancestry\":[{}],\"budget_exception\":{},\"capture_status\":{},\"disclosure_policy\":{{\"policy_id\":{},\"role\":{},\"sha256\":{}}},\"disposition\":{},\"evidence_roots\":[{}],\"git_status\":\"GIT_PUBLICATION_PENDING\",\"schema_version\":1,\"source_commit\":{},\"stage\":{},\"training_identity_sha256\":{},\"version\":{},\"wave_id\":{}}}",q(&input.archive_manifest_sha256),q(&input.archive_status),ancestry_json,exception,q(&input.capture_status),q(&input.disclosure.policy_id),q(&input.disclosure.role),q(&input.disclosure.sha256),q(&input.disposition),roots_json,opt(&input.source_commit),q(input.stage.as_str()),q(&input.training_identity_sha256),q(&input.version),q(&input.wave_id));
+    let card=format!("{{\"archive_status\":{},\"assertion_count\":{},\"capture_status\":{},\"disposition\":{},\"evidence_root_count\":{},\"interpretation\":\"descriptive; no promotion authority\",\"schema_version\":1,\"stage\":{},\"version\":{},\"wave_id\":{}}}",q(&input.archive_status),assertions.len(),q(&input.capture_status),q(&input.disposition),roots.len(),q(input.stage.as_str()),q(&input.version),q(&input.wave_id)).into_bytes();
     let manifest = manifest.into_bytes();
     let mut hashes = BTreeMap::new();
     let mut byte_counts = BTreeMap::new();
@@ -487,6 +471,6 @@ mod tests {
     use super::*;
     #[test]
     fn stage_names_are_stable() {
-        assert_eq!(Stage::Shadow.text(), "shadow");
+        assert_eq!(Stage::Shadow.as_str(), "shadow");
     }
 }
