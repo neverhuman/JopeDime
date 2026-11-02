@@ -3,6 +3,11 @@ use super::*;
 
 /// Present category strings that must stay data in every backend. Several imitate
 /// shell, Python, JavaScript and Rust syntax, template markers or the missing sentinel.
+const HOSTILE_JS_CHILD_PROCESS_EXEC: &str = concat!(
+    "'); require('child_process').exec",
+    "Sync('touch PWNED'); ('"
+);
+
 pub(crate) const HOSTILE_CATEGORIES: [&str; 18] = [
     "NA",
     "null",
@@ -11,10 +16,7 @@ pub(crate) const HOSTILE_CATEGORIES: [&str; 18] = [
     "line\n\"quoted\"\u{2028}",
     "__PREDICT____REGRESSION____CLASSES_JSON__",
     "\"; import os; os.system('touch PWNED') #",
-    concat!(
-        "'); require('child_process').exec",
-        "Sync('touch PWNED'); ('"
-    ),
+    HOSTILE_JS_CHILD_PROCESS_EXEC,
     "\\\"}]); panic!(\"x\"); //",
     "\u{0}MISSING",
     "jope.category.v1:\"NA\"",
@@ -228,6 +230,17 @@ pub(crate) fn raw_cases(categories: &[&str]) -> Vec<Case> {
                     .map(|value| row(&[Some("1.25"), Some(value)]))
                     .collect(),
             ),
+            false,
+        ),
+        // Deterministic negative security case: the child-process payload is categorical data.
+        // The contract runner sends it through each backend and checks that no PWNED sentinel
+        // appears, while this valid category remains accepted by the typed inference boundary.
+        case(
+            "negative-hostile-js-child-process-exec-is-inert-category-data",
+            Value::Array(vec![row(&[
+                Some("1.25"),
+                Some(HOSTILE_JS_CHILD_PROCESS_EXEC),
+            ])]),
             false,
         ),
         case("long-category", json!([["2", "x".repeat(100_000)]]), false),
