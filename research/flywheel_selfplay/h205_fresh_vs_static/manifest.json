@@ -44,6 +44,22 @@
     "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
     "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
   },
+  "invocation_accounting_contract": {
+    "budget_reset": false,
+    "known_prior_floor_seconds": 2021.039296863135,
+    "no_automatic_ledger_initialization": true,
+    "owner_exit_cost_reconciliation_required": true,
+    "pending_or_unknown_history_blocks_next_invocation": true,
+    "required_launch_fields": [
+      "campaign_ledger_path",
+      "campaign_ledger_sha256",
+      "accounting_invocation_id"
+    ],
+    "schema": "h205-campaign-accounting/v1",
+    "standalone_worker_is_unqualified": true,
+    "terminal_bookkeeping_seconds": null,
+    "worker_result_qualified": false
+  },
   "live_flywheel_pid_untouched": 2297929,
   "microbatches_per_round": 16,
   "numeric_threads_max": 4,
@@ -66,7 +82,31 @@
     "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
     "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING"
   },
+  "qualified_single_context_20261102T1251Z": {
+    "accounting_invocation_id": "h205-single-regression-context-20261102T1251Z",
+    "context_sha256": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+    "dataset_id": "1db3750d4ceccab9",
+    "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+    "fpool_family_alias": "f00161",
+    "full_50_round_h205_study_status": "ON_HOLD_SEPARATELY_GATED",
+    "h206_runtime_distillation_status": "ON_HOLD_SEPARATELY_GATED",
+    "producer_decision_s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1338Z/H205_H206_PRODUCER_DECISION_AND_HIST10_PROOF_20261102T1338Z.json",
+    "producer_decision_s3_version_id": "0b52EwEEj8W6cFdHyxX7_Q7BJqB4JEX2",
+    "producer_decision_sha256": "3c2bf59d7d46802826508e4feb91b933ada452d2cd2a31da788cda13ac6712ca",
+    "s3_prefix": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/",
+    "selected_h206_producer_option": "OPTION_A_KEEP_H206_REGISTERED_1219_205_H50_COHORT_AND_SPECIFY_IN_COHORT_FULL_RAW_ABI_PRODUCER",
+    "single_context_is_full_study_coverage": false
+  },
   "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "reconciled_campaign_ledger_20261102T1338Z": {
+    "baseline_elapsed_seconds": 2021.039296863135,
+    "campaign_cap_seconds": 25200.0,
+    "remaining_wall_budget_seconds": 14868.999988737889,
+    "s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1338Z/campaign_ledger.reconciled.json",
+    "s3_version_id": "FwSgbi9Nh1W0HF79q_en16XXKBsQloep",
+    "sha256": "035cecab9cade308467cc4aac475988a6c3f7733c9b43c13a65c004817ab99a6",
+    "total_prior_elapsed_seconds": 10331.000011262111
+  },
   "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
   "regression": {
     "dl_val_contexts": 91,
@@ -80,8 +120,8 @@
   ],
   "selector": "H178_calibrated_pooled_205_family",
   "source_sha256": {
-    "PREREG.md": "4827c2884a682449de69363299673e5a067df7c45904be1aff260be2a6aad72c",
-    "README.md": "39ac9695275e02d7e5f30972af36b28e9767ae70fc1700070271f2db05b758f1",
+    "PREREG.md": "6192ef015a365ea8f78b93186bddb0ecb57d79c5232658454774015ce8a2bf24",
+    "README.md": "3cfde9ed8d1d0cc40bd4244f477ed36479b5f7a7cd28e1aef24ad3841fdc5f06",
     "analysis.py": "bb402d63f05cfc247987f2999fdf5df52f3629557781359d7d0b1716c0416e17",
     "monitor.py": "91baa39155459017e7349bf7587b03cc8c8d8b04eb201f9ceac560f81a8a8127",
     "runner.py": "7b6f0d5def0af1e2add386b1d5928bf64557c78a6c0afabd8e0830c2cdfac7e6",
@@ -120,21 +160,5 @@
     "target_same_s3_train_context_sha256_1db3750d4ceccab9": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
     "train_matrix_sha256_1db3750d4ceccab9": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7"
   },
-  "wave": "H205",
-  "invocation_accounting_contract": {
-    "schema": "h205-campaign-accounting/v1",
-    "required_launch_fields": [
-      "campaign_ledger_path",
-      "campaign_ledger_sha256",
-      "accounting_invocation_id"
-    ],
-    "no_automatic_ledger_initialization": true,
-    "pending_or_unknown_history_blocks_next_invocation": true,
-    "known_prior_floor_seconds": 2021.039296863135,
-    "budget_reset": false,
-    "terminal_bookkeeping_seconds": null,
-    "owner_exit_cost_reconciliation_required": true,
-    "worker_result_qualified": false,
-    "standalone_worker_is_unqualified": true
-  }
+  "wave": "H205"
 }
