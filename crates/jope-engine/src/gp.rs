@@ -59,6 +59,7 @@ fn evaluator_command(executable: &Path) -> Command {
 #[cfg(test)]
 mod fit_contract_tests;
 pub mod handoff;
+pub mod interop;
 pub mod lineage;
 pub mod outer_release;
 pub mod outer_release_cli;
