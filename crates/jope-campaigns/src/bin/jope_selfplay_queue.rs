@@ -2795,8 +2795,8 @@ fn update_native_attempts_submitted(
         ),
         _ => bail!("attempt ledger schema is not supported"),
     };
-    let mut select_statement = tx.prepare_cached(&select)?;
-    let mut update_statement = tx.prepare_cached(&update)?;
+    let mut select_statement = tx.prepare_cached(select)?;
+    let mut update_statement = tx.prepare_cached(update)?;
     for pair in &manifest.pairs {
         let rows = select_statement
             .query_map(
@@ -2919,9 +2919,9 @@ fn ensure_native_reserved_attempts(
         ),
         _ => bail!("attempt ledger schema is not supported"),
     };
-    let mut active_statement = tx.prepare_cached(&active_query)?;
-    let mut next_statement = tx.prepare_cached(&next_query)?;
-    let mut insert_statement = tx.prepare_cached(&insert)?;
+    let mut active_statement = tx.prepare_cached(active_query)?;
+    let mut next_statement = tx.prepare_cached(next_query)?;
+    let mut insert_statement = tx.prepare_cached(insert)?;
     for pair in &manifest.pairs {
         let rows = active_statement
             .query_map(
@@ -3009,8 +3009,8 @@ fn update_pairs_submitted(
         ),
         _ => bail!("pair registry schema is not supported"),
     };
-    let mut select_statement = tx.prepare_cached(&select)?;
-    let mut update_statement = tx.prepare_cached(&update)?;
+    let mut select_statement = tx.prepare_cached(select)?;
+    let mut update_statement = tx.prepare_cached(update)?;
     for pair in &manifest.pairs {
         let row: Option<(String, String, Option<String>, Option<String>)> = select_statement
             .query_row(
