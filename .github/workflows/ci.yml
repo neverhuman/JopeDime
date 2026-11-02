@@ -61,8 +61,7 @@ jobs:
 
   changes-dispatch:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    # Classification is unprivileged and hosted; downstream self-hosted jobs still perform
-    # their own runner provenance and resource admission before executing candidate work.
+    # Manual classification is restricted to main; pull requests use the separate hosted job.
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
