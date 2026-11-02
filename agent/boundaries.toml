@@ -5,6 +5,11 @@
 id = "rust-ts-vite-react-postgres-bounded-python"
 version = "1.0.0"
 
+# Exact non-product Python reference path for the Rust portable-math parity oracle.
+# P-1B receipts pin the bytes; see docs/release/jankurai-pytruth-exceptions-20261102.md.
+[python]
+allowed_non_product_paths = ["crates/feat-math/tests/portable/full_ref.py"]
+
 [queues]
 adapter_paths = ["crates/jope-client/src/transport.rs", "crates/jope-client/src/http.rs"]
 event_contract_paths = ["crates/jope-engine/src/resident_protocol.rs"]
