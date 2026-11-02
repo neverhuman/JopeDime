@@ -40,10 +40,23 @@ pub enum CloudCommand {
         run: Option<String>,
     },
     Runs,
+    /// Publish explicitly: the fitted model (the default), or with `--report`/`--code` only the
+    /// named PDF report and ZIP of generated code. Nothing uploads without this command.
     Publish {
         run: String,
         #[arg(long)]
         model: Option<PathBuf>,
+        /// A PDF report for the run's Report tab (16 MiB at most).
+        #[arg(long)]
+        report: Option<PathBuf>,
+        /// A ZIP of the run's generated code, flat files only (8 MiB at most).
+        #[arg(long)]
+        code: Option<PathBuf>,
+    },
+    /// Anonymous, de-identified usage telemetry for connected runs: `on`, `off`, or show it.
+    /// Off unless you turn it on.
+    Telemetry {
+        setting: Option<String>,
     },
     Fetch {
         run: String,
@@ -635,16 +648,37 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
             };
             for snapshot in runs {
                 println!("{}", sync_snapshot(&snapshot, &version)?);
+                // Reported, not fatal: a workspace without the events endpoint still syncs runs.
+                println!(
+                    "{}",
+                    sync_events(&local, &snapshot)
+                        .unwrap_or_else(|error| format!("Run events: {error:#}"))
+                );
             }
         }
-        CloudCommand::Publish { run, model } => println!(
-            "{}",
-            if let Some(model) = model {
-                publish_model(&run, &model)?
+        CloudCommand::Publish {
+            run,
+            model,
+            report,
+            code,
+        } => {
+            if report.is_some() || code.is_some() {
+                if let Some(model) = model {
+                    println!("{}", publish_model(&run, &model)?);
+                }
+                if let Some(report) = report {
+                    println!("{}", publish_file(&run, Upload::Report, &report)?);
+                }
+                if let Some(code) = code {
+                    println!("{}", publish_file(&run, Upload::Code, &code)?);
+                }
+            } else if let Some(model) = model {
+                println!("{}", publish_model(&run, &model)?);
             } else {
-                publish_best(&run)?
+                println!("{}", publish_best(&run)?);
             }
-        ),
+        }
+        CloudCommand::Telemetry { setting } => println!("{}", telemetry_command(setting)?),
         CloudCommand::Fetch { run } => println!("{}", fetch_model(&run)?),
     }
     Ok(())
@@ -1060,6 +1094,7 @@ pub fn publish_model(run: &str, model: &Path) -> Result<String> {
     sync_snapshot(&snapshot, &version)?;
     let object = jope_runtime::model_object::ModelObject::read(model, MAX_MODEL)?;
     let bytes = pack_object(&object)?;
+    let bytes_len = bytes.len() as u64;
     let hash = jope_runtime::sha256_hex(&bytes);
     let _lock = connection_lock()?;
     let c = connection()?;
@@ -1091,8 +1126,10 @@ pub fn publish_model(run: &str, model: &Path) -> Result<String> {
         value["modelSha256"] == hash,
         "published model transfer digest differs"
     );
+    let note = record_publication(&c, &client, run, &cloud, &hash, bytes_len)
+        .unwrap_or_else(|error| format!("\nModel event queued: {error:#}"));
     Ok(format!(
-        "Published model {} · SHA-256 {hash}\n{}/runs/{cloud}",
+        "Published model {} · SHA-256 {hash}\n{}/runs/{cloud}{note}",
         object.id(),
         c.origin
     ))
@@ -1296,6 +1333,360 @@ pub fn publish_best(run: &str) -> Result<String> {
     private_dir(&models)?;
     let model = object.save(&models, MAX_MODEL)?;
     publish_model(run, &model)
+}
+
+// ---- connected-run events: veox.connected-run-events/v1 to the account, de-identified to
+// veox-telemetry. See `cloud_events`.
+
+impl Client {
+    /// `POST /v1/telemetry` on a telemetry origin. No credential of any kind is attached.
+    fn post_telemetry(&self, body: Vec<u8>) -> Result<u16> {
+        let request = ureq::http::Request::builder()
+            .method("POST")
+            .uri(format!("{}/v1/telemetry", self.origin))
+            .header("content-type", "application/json")
+            .body(body)?;
+        let mut response = self
+            .agent
+            .run(request)
+            .context("telemetry request failed")?;
+        let mut sink = Vec::new();
+        let _ = response
+            .body_mut()
+            .as_reader()
+            .take(64 * 1024)
+            .read_to_end(&mut sink);
+        Ok(response.status().as_u16())
+    }
+}
+
+const TELEMETRY_ORIGIN: &str = "https://telemetry.veox.ai";
+
+fn random_hex() -> String {
+    format!("{:032x}", rand::random::<u128>())
+}
+
+fn telemetry_enabled() -> bool {
+    cloud_root()
+        .ok()
+        .and_then(|root| read_private(&root.join("telemetry")).ok())
+        .is_some_and(|bytes| bytes == b"basic")
+}
+
+fn telemetry_command(setting: Option<String>) -> Result<String> {
+    let path = cloud_root()?.join("telemetry");
+    match setting.as_deref() {
+        Some("on") => write_private(&path, b"basic")?,
+        Some("off") => write_private(&path, b"off")?,
+        Some(_) => anyhow::bail!("use `on` or `off`"),
+        None => {}
+    }
+    Ok(if telemetry_enabled() {
+        "Telemetry on: connected runs also send de-identified counts (bucketed sizes, scores in tenths, no names, no rows) to telemetry.veox.ai.".into()
+    } else {
+        "Telemetry off. Your account still receives the run details you sync; `jopedime cloud telemetry on` also sends de-identified counts to telemetry.veox.ai.".into()
+    })
+}
+
+fn install_id() -> Result<String> {
+    let path = cloud_root()?.join("telemetry-install-id");
+    if path.exists() {
+        let value = String::from_utf8(read_private(&path)?)?;
+        if value.len() == 32 && value.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Ok(value);
+        }
+    }
+    let value = random_hex();
+    write_private(&path, value.as_bytes())?;
+    Ok(value)
+}
+
+fn session_id() -> &'static str {
+    static ID: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    ID.get_or_init(random_hex)
+}
+
+/// What has been delivered for one run, per destination, and its telemetry pseudonym.
+#[derive(Serialize, Deserialize, Default)]
+struct EventState {
+    sent_app: std::collections::BTreeSet<String>,
+    sent_telemetry: std::collections::BTreeSet<String>,
+    telemetry_run: Option<String>,
+}
+
+fn event_state_path(c: &Connection, run: &str) -> Result<PathBuf> {
+    Ok(account_root(c)?
+        .join("runs")
+        .join(format!("{run}.events.json")))
+}
+
+fn read_event_state(path: &Path) -> Result<EventState> {
+    if path.exists() {
+        Ok(serde_json::from_slice(&read_private(path)?)?)
+    } else {
+        Ok(EventState::default())
+    }
+}
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_millis() as u64)
+}
+
+/// Send `events` the account has not yet acknowledged; then, when telemetry is on, their
+/// de-identified forms. Caller holds the connection lock.
+fn deliver(
+    c: &Connection,
+    client: &Client,
+    run: &str,
+    cloud: &str,
+    events: &[Value],
+    extra_telemetry: Option<(String, u64)>,
+) -> Result<String> {
+    let path = event_state_path(c, run)?;
+    let mut state = read_event_state(&path)?;
+    let pending: Vec<&Value> = events
+        .iter()
+        .filter(|e| {
+            e["id"]
+                .as_str()
+                .is_some_and(|id| !state.sent_app.contains(id))
+        })
+        .collect();
+    let mut sent = 0;
+    for chunk in pending.chunks(crate::cloud_events::APP_BATCH) {
+        let body = json!({"schema": crate::cloud_events::SCHEMA, "events": chunk});
+        let (status, _) = client.call(
+            "POST",
+            &format!("/api/cli/runs/{cloud}/events"),
+            serde_json::to_vec(&body)?,
+            "application/json",
+            MAX_JSON,
+        )?;
+        anyhow::ensure!(
+            status == 200,
+            "run events are queued locally; cloud refused them (HTTP {status})"
+        );
+        for event in chunk {
+            if let Some(id) = event["id"].as_str() {
+                state.sent_app.insert(id.to_owned());
+            }
+        }
+        sent += chunk.len();
+        write_private(&path, &serde_json::to_vec(&state)?)?;
+    }
+    let mut note = format!("Run events: {sent} sent");
+    if telemetry_enabled() {
+        let run_pseudonym = state.telemetry_run.get_or_insert_with(random_hex).clone();
+        write_private(&path, &serde_json::to_vec(&state)?)?;
+        let install = install_id()?;
+        let ids = crate::cloud_events::Pseudonyms {
+            install_id: &install,
+            session_id: session_id(),
+            run_id: &run_pseudonym,
+            environment: crate::cloud_events::environment(&c.origin),
+        };
+        let mut envelopes: Vec<(String, Value)> =
+            crate::cloud_events::telemetry(events, &ids, now_ms(), random_hex)
+                .into_iter()
+                .filter(|(id, _)| !state.sent_telemetry.contains(id))
+                .collect();
+        if let Some((id, bytes)) = extra_telemetry {
+            if !state.sent_telemetry.contains(&id) {
+                let envelope =
+                    crate::cloud_events::telemetry_model(&ids, bytes, now_ms(), random_hex());
+                envelopes.push((id, envelope));
+            }
+        }
+        if !envelopes.is_empty() {
+            let origin =
+                std::env::var("JOPE_TELEMETRY_ORIGIN").unwrap_or_else(|_| TELEMETRY_ORIGIN.into());
+            let telemetry = Client::new(&origin, None, None)?;
+            for chunk in envelopes.chunks(crate::cloud_events::TELEMETRY_BATCH) {
+                let body: Vec<&Value> = chunk.iter().map(|(_, v)| v).collect();
+                let status = telemetry.post_telemetry(serde_json::to_vec(&body)?)?;
+                anyhow::ensure!(
+                    (200..300).contains(&status),
+                    "telemetry refused (HTTP {status}); it is retried on the next sync"
+                );
+                for (id, _) in chunk {
+                    state.sent_telemetry.insert(id.clone());
+                }
+                write_private(&path, &serde_json::to_vec(&state)?)?;
+            }
+            note.push_str(" · de-identified telemetry sent");
+        }
+    }
+    Ok(note)
+}
+
+/// Sync a run's leaderboard, start, finish and dataset column profile to its connected record.
+/// The run's metadata must already be synced (it gives the cloud run id).
+pub fn sync_events<T: jope_client::Transport>(
+    local: &T,
+    snapshot: &jope_api::RunSnapshot,
+) -> Result<String> {
+    let events = crate::cloud_events::collect(local, snapshot)?;
+    let _lock = connection_lock()?;
+    let c = connection()?;
+    anyhow::ensure!(
+        c.may_publish,
+        "this token is read-only; reconnect with CLI publication access"
+    );
+    let run = snapshot.run_id.to_string();
+    binding(&c, &run)?;
+    let record: SyncRecord = serde_json::from_slice(&read_private(&record_path(&c, &run)?)?)
+        .context("sync the run before its events")?;
+    let cloud = record.cloud_id.context("run is not synced")?;
+    anyhow::ensure!(uuid(&cloud), "invalid cloud run");
+    deliver(&c, &Client::connected(&c)?, &run, &cloud, &events, None)
+}
+
+/// Record an explicit model publication as an event (and, with telemetry on, its size bucket).
+/// Caller holds the connection lock.
+fn record_publication(
+    c: &Connection,
+    client: &Client,
+    run: &str,
+    cloud: &str,
+    hash: &str,
+    bytes: u64,
+) -> Result<String> {
+    let at = chrono_like_now();
+    let event = crate::cloud_events::model_published(hash, &at, now_ms() / 1000);
+    let id = event["id"].as_str().unwrap_or_default().to_owned();
+    deliver(c, client, run, cloud, &[event], Some((id, bytes))).map(|n| format!("\n{n}"))
+}
+
+/// RFC 3339 UTC, seconds precision, without a date-time dependency.
+fn chrono_like_now() -> String {
+    let secs = now_ms() / 1000;
+    let (days, rem) = (secs / 86_400, secs % 86_400);
+    // Civil-from-days (Howard Hinnant), valid for the Unix era.
+    let z = days as i64 + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = yoe + era * 400 + i64::from(m <= 2);
+    format!(
+        "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}Z",
+        rem / 3600,
+        rem % 3600 / 60,
+        rem % 60
+    )
+}
+
+/// The two explicit uploads beside the model.
+#[derive(Clone, Copy)]
+pub enum Upload {
+    Report,
+    Code,
+}
+
+const MAX_REPORT: u64 = 16 * 1024 * 1024;
+const MAX_CODE: u64 = 8 * 1024 * 1024;
+
+fn check_upload(kind: Upload, bytes: &[u8]) -> Result<()> {
+    match kind {
+        Upload::Report => {
+            anyhow::ensure!(bytes.starts_with(b"%PDF-"), "the report must be a PDF file");
+            let tail = &bytes[bytes.len().saturating_sub(1024)..];
+            anyhow::ensure!(
+                tail.windows(5).any(|w| w == b"%%EOF"),
+                "the report PDF looks truncated"
+            );
+        }
+        Upload::Code => {
+            let mut archive = zip::ZipArchive::new(io::Cursor::new(bytes))
+                .context("generated code must be a ZIP archive")?;
+            anyhow::ensure!(
+                !archive.is_empty() && archive.len() <= 256,
+                "the code archive must hold 1 to 256 files"
+            );
+            for n in 0..archive.len() {
+                let file = archive.by_index(n)?;
+                let name = file.name()?.to_string();
+                anyhow::ensure!(
+                    !file.is_dir() && !name.contains(['/', '\\']) && !name.starts_with('.'),
+                    "the code archive must hold flat files only"
+                );
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Upload a run's PDF report or ZIP of generated code to its connected record, explicitly.
+pub fn publish_file(run: &str, kind: Upload, file: &Path) -> Result<String> {
+    use jope_client::Transport;
+    let (limit, route, header, field, label) = match kind {
+        Upload::Report => (
+            MAX_REPORT,
+            "report",
+            "x-report-sha256",
+            "reportSha256",
+            "report",
+        ),
+        Upload::Code => (MAX_CODE, "code", "x-code-sha256", "codeSha256", "code"),
+    };
+    let mut bytes = Vec::new();
+    fs::File::open(file)
+        .with_context(|| format!("open {}", file.display()))?
+        .take(limit + 1)
+        .read_to_end(&mut bytes)?;
+    anyhow::ensure!(
+        !bytes.is_empty() && bytes.len() as u64 <= limit,
+        "the {label} is empty or larger than {} MiB",
+        limit / 1024 / 1024
+    );
+    check_upload(kind, &bytes)?;
+    let id: jope_api::ids::RunId = run.parse()?;
+    let local = local_client()?;
+    let snapshot = local.run_status(&id)?;
+    let version = local.system_info()?.version;
+    sync_snapshot(&snapshot, &version)?;
+    let hash = jope_runtime::sha256_hex(&bytes);
+    let _lock = connection_lock()?;
+    let c = connection()?;
+    binding(&c, run)?;
+    let record: SyncRecord = serde_json::from_slice(&read_private(&record_path(&c, run)?)?)?;
+    let cloud = record.cloud_id.context("run is not synced")?;
+    anyhow::ensure!(uuid(&cloud), "invalid cloud run");
+    let client = Client::connected(&c)?;
+    let media = match kind {
+        Upload::Report => "application/pdf",
+        Upload::Code => "application/zip",
+    };
+    let mut request = client.wire(
+        "POST",
+        &format!("/api/cli/runs/{cloud}/{route}"),
+        bytes,
+        media,
+    )?;
+    request.headers_mut().insert(header, hash.parse()?);
+    let mut response = client.agent.run(request)?;
+    let status = response.status().as_u16();
+    let mut body = Vec::new();
+    response
+        .body_mut()
+        .as_reader()
+        .take(MAX_JSON + 1)
+        .read_to_end(&mut body)?;
+    anyhow::ensure!(
+        status == 200,
+        "{label} upload refused (HTTP {status}); an existing different {label} is immutable"
+    );
+    let value: Value = serde_json::from_slice(&body)?;
+    anyhow::ensure!(value[field] == hash, "uploaded {label} digest differs");
+    Ok(format!(
+        "Uploaded {label} · SHA-256 {hash}\n{}/runs/{cloud}",
+        c.origin
+    ))
 }
 
 #[cfg(test)]
