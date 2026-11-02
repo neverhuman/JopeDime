@@ -31,25 +31,28 @@ pub enum Known<T> {
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(rename_all = "snake_case")]
-/// `Disposition` is an enum for the disposition contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
-pub enum Disposition {
-    /// The `Success` case of `Disposition`.
+/// `WaveArchiveDisposition` is an enum for the disposition contract in this module: Content-addressed local archive for typed wave telemetry. This module does not publish remotely.
+pub enum WaveArchiveDisposition {
+    /// The `Success` case of `WaveArchiveDisposition`.
     Success,
-    /// The `RejectedChild` case of `Disposition`.
+    /// The `RejectedChild` case of `WaveArchiveDisposition`.
     RejectedChild,
-    /// The `Aborted` case of `Disposition`.
+    /// The `Aborted` case of `WaveArchiveDisposition`.
     Aborted,
-    /// The `TimeoutOnly` case of `Disposition`.
+    /// The `TimeoutOnly` case of `WaveArchiveDisposition`.
     TimeoutOnly,
-    /// The `Inconclusive` case of `Disposition`.
+    /// The `Inconclusive` case of `WaveArchiveDisposition`.
     Inconclusive,
-    /// The `InterruptedResumed` case of `Disposition`.
+    /// The `InterruptedResumed` case of `WaveArchiveDisposition`.
     InterruptedResumed,
-    /// The `ZeroUpdate` case of `Disposition`.
+    /// The `ZeroUpdate` case of `WaveArchiveDisposition`.
     ZeroUpdate,
-    /// The `HistoricalPartial` case of `Disposition`.
+    /// The `HistoricalPartial` case of `WaveArchiveDisposition`.
     HistoricalPartial,
 }
+
+/// Compatibility alias for the domain-specific `WaveArchiveDisposition` type.
+pub type Disposition = WaveArchiveDisposition;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -97,8 +100,8 @@ pub struct WaveInput {
     pub wave_id: String,
     /// Version recorded for this wave input.
     pub version: String,
-    /// Disposition recorded for this wave input.
-    pub disposition: Disposition,
+    /// WaveArchiveDisposition recorded for this wave input.
+    pub disposition: WaveArchiveDisposition,
     /// New wave recorded for this wave input.
     pub new_wave: bool,
     /// Mapping of identity values carried by this wave input.
@@ -147,8 +150,8 @@ pub struct Manifest {
     pub wave_id: String,
     /// Version recorded for this manifest.
     pub version: String,
-    /// Disposition recorded for this manifest.
-    pub disposition: Disposition,
+    /// WaveArchiveDisposition recorded for this manifest.
+    pub disposition: WaveArchiveDisposition,
     /// Archive status recorded for this manifest.
     pub archive_status: String,
     /// Capture status recorded for this manifest.
@@ -288,7 +291,8 @@ pub fn archive(state: &State, input: &WaveInput) -> anyhow::Result<ArchiveReceip
         }
     }
     let historical_partial = !input.new_wave
-        && (input.disposition == Disposition::HistoricalPartial || !missing_fields.is_empty());
+        && (input.disposition == WaveArchiveDisposition::HistoricalPartial
+            || !missing_fields.is_empty());
     let archive_status = if historical_partial {
         "HISTORICAL_PARTIAL"
     } else {

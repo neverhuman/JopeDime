@@ -17,7 +17,7 @@
 //!
 //! Owner decision D1 (ENG:watcher, 2026-10-13T12:36:00Z): in the scan roles the policy names, an
 //! object ref found in a prose file (the policy's extensions, md/txt/log) is a
-//! [`Role::ProseMention`]: training value that blocks EXPIRE, not a T0 pin. Structured JSON/JSONL
+//! [`RetentionReferenceRole::ProseMention`]: training value that blocks EXPIRE, not a T0 pin. Structured JSON/JSONL
 //! refs keep their scan role; formats the ruling does not name stay pins (fail closed).
 
 use anyhow::{bail, Context, Result};
@@ -33,42 +33,45 @@ use std::path::Path;
 /// value and, when they name objects by key, keep it readable in place.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum Role {
-    /// The `Val263` case of `Role`.
+pub enum RetentionReferenceRole {
+    /// The `Val263` case of `RetentionReferenceRole`.
     Val263,
-    /// The `Sealed` case of `Role`.
+    /// The `Sealed` case of `RetentionReferenceRole`.
     Sealed,
-    /// The `Prereg` case of `Role`.
+    /// The `Prereg` case of `RetentionReferenceRole`.
     Prereg,
-    /// The `Evidence` case of `Role`.
+    /// The `Evidence` case of `RetentionReferenceRole`.
     Evidence,
-    /// The `MainManifest` case of `Role`.
+    /// The `MainManifest` case of `RetentionReferenceRole`.
     MainManifest,
-    /// The `Train` case of `Role`.
+    /// The `Train` case of `RetentionReferenceRole`.
     Train,
-    /// The `Frozen24` case of `Role`.
+    /// The `Frozen24` case of `RetentionReferenceRole`.
     Frozen24,
-    /// The `Backlog` case of `Role`.
+    /// The `Backlog` case of `RetentionReferenceRole`.
     Backlog,
-    /// The `Seed` case of `Role`.
+    /// The `Seed` case of `RetentionReferenceRole`.
     Seed,
     /// Derived by a scan (D1), never accepted as a declared role.
     ProseMention,
 }
 
-impl Role {
+/// Compatibility alias for the domain-specific `RetentionReferenceRole` type.
+pub type Role = RetentionReferenceRole;
+
+impl RetentionReferenceRole {
     /// Parses the supplied representation, returning an error when the input is invalid.
-    pub fn parse(s: &str) -> Result<Role> {
+    pub fn parse(s: &str) -> Result<RetentionReferenceRole> {
         Ok(match s {
-            "val263" => Role::Val263,
-            "sealed" => Role::Sealed,
-            "prereg" => Role::Prereg,
-            "evidence" => Role::Evidence,
-            "main-manifest" => Role::MainManifest,
-            "train" => Role::Train,
-            "frozen24" => Role::Frozen24,
-            "backlog" => Role::Backlog,
-            "seed" => Role::Seed,
+            "val263" => RetentionReferenceRole::Val263,
+            "sealed" => RetentionReferenceRole::Sealed,
+            "prereg" => RetentionReferenceRole::Prereg,
+            "evidence" => RetentionReferenceRole::Evidence,
+            "main-manifest" => RetentionReferenceRole::MainManifest,
+            "train" => RetentionReferenceRole::Train,
+            "frozen24" => RetentionReferenceRole::Frozen24,
+            "backlog" => RetentionReferenceRole::Backlog,
+            "seed" => RetentionReferenceRole::Seed,
             _ => bail!("unknown reference role {s:?} (val263 sealed prereg evidence main-manifest train frozen24 backlog seed)"),
         })
     }
@@ -76,16 +79,16 @@ impl Role {
     /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
-            Role::Val263 => "val263",
-            Role::Sealed => "sealed",
-            Role::Prereg => "prereg",
-            Role::Evidence => "evidence",
-            Role::MainManifest => "main-manifest",
-            Role::Train => "train",
-            Role::Frozen24 => "frozen24",
-            Role::Backlog => "backlog",
-            Role::Seed => "seed",
-            Role::ProseMention => "prose-mention",
+            RetentionReferenceRole::Val263 => "val263",
+            RetentionReferenceRole::Sealed => "sealed",
+            RetentionReferenceRole::Prereg => "prereg",
+            RetentionReferenceRole::Evidence => "evidence",
+            RetentionReferenceRole::MainManifest => "main-manifest",
+            RetentionReferenceRole::Train => "train",
+            RetentionReferenceRole::Frozen24 => "frozen24",
+            RetentionReferenceRole::Backlog => "backlog",
+            RetentionReferenceRole::Seed => "seed",
+            RetentionReferenceRole::ProseMention => "prose-mention",
         }
     }
 
@@ -93,7 +96,11 @@ impl Role {
     pub fn is_t0(self) -> bool {
         matches!(
             self,
-            Role::Val263 | Role::Sealed | Role::Prereg | Role::Evidence | Role::MainManifest
+            RetentionReferenceRole::Val263
+                | RetentionReferenceRole::Sealed
+                | RetentionReferenceRole::Prereg
+                | RetentionReferenceRole::Evidence
+                | RetentionReferenceRole::MainManifest
         )
     }
 
@@ -101,13 +108,19 @@ impl Role {
     pub fn is_active(self) -> bool {
         matches!(
             self,
-            Role::Train | Role::Frozen24 | Role::Backlog | Role::Seed
+            RetentionReferenceRole::Train
+                | RetentionReferenceRole::Frozen24
+                | RetentionReferenceRole::Backlog
+                | RetentionReferenceRole::Seed
         )
     }
 
-    /// The scan roles whose prose refs D1 may demote to [`Role::ProseMention`].
+    /// The scan roles whose prose refs D1 may demote to [`RetentionReferenceRole::ProseMention`].
     pub fn is_scan_pin(self) -> bool {
-        matches!(self, Role::Evidence | Role::MainManifest)
+        matches!(
+            self,
+            RetentionReferenceRole::Evidence | RetentionReferenceRole::MainManifest
+        )
     }
 }
 
@@ -115,7 +128,7 @@ impl Role {
 /// `ObjRef` is a record for the obj ref contract in this module: References that pin object groups: rosters, seed packets, the main tree and the evidence store.
 pub struct ObjRef {
     /// Data or authority role assigned to this value.
-    pub role: Role,
+    pub role: RetentionReferenceRole,
     /// Bucket recorded for this obj ref.
     pub bucket: String,
     /// Key recorded for this obj ref.
@@ -149,7 +162,7 @@ pub struct ScanStats {
     pub bytes_read: u64,
     /// Object refs recorded for this scan stats.
     pub object_refs: u64,
-    /// Of `object_refs`, those found in prose files and recorded as [`Role::ProseMention`].
+    /// Of `object_refs`, those found in prose files and recorded as [`RetentionReferenceRole::ProseMention`].
     pub prose_refs: u64,
     /// Prefix mentions recorded for this scan stats.
     pub prefix_mentions: u64,
@@ -164,9 +177,9 @@ pub struct RefSet {
     /// Number of objects represented by this value.
     pub objects: BTreeSet<ObjRef>,
     /// Mapping of contexts values carried by this ref set.
-    pub contexts: BTreeMap<String, BTreeSet<Role>>,
+    pub contexts: BTreeMap<String, BTreeSet<RetentionReferenceRole>>,
     /// Mapping of programs values carried by this ref set.
-    pub programs: BTreeMap<String, BTreeSet<Role>>,
+    pub programs: BTreeMap<String, BTreeSet<RetentionReferenceRole>>,
     /// Prefix mentions recorded for this ref set.
     pub prefix_mentions: u64,
     /// Collection of scans values carried by this ref set.
@@ -249,7 +262,7 @@ pub fn parse_s3_uri(s: &str) -> Option<(String, String)> {
 }
 
 impl RefSet {
-    fn add_uri(&mut self, role: Role, s: &str, count: &mut (u64, u64)) {
+    fn add_uri(&mut self, role: RetentionReferenceRole, s: &str, count: &mut (u64, u64)) {
         match parse_s3_uri(s) {
             Some((bucket, key)) => {
                 self.objects.insert(ObjRef {
@@ -268,7 +281,13 @@ impl RefSet {
     }
 
     /// Collects references from one JSON value. `ids` enables context/program id pins.
-    pub fn walk_json(&mut self, role: Role, v: &Value, ids: bool, count: &mut (u64, u64)) {
+    pub fn walk_json(
+        &mut self,
+        role: RetentionReferenceRole,
+        v: &Value,
+        ids: bool,
+        count: &mut (u64, u64),
+    ) {
         match v {
             Value::Object(m) => {
                 if let (Some(Value::String(bucket)), Some(Value::String(key))) =
@@ -331,7 +350,7 @@ impl RefSet {
     }
 
     /// Token-scans text for `s3://` URIs.
-    pub fn scan_text(&mut self, role: Role, text: &str, count: &mut (u64, u64)) {
+    pub fn scan_text(&mut self, role: RetentionReferenceRole, text: &str, count: &mut (u64, u64)) {
         let mut rest = text;
         while let Some(i) = rest.find("s3://") {
             let tail = &rest[i..];
@@ -345,7 +364,12 @@ impl RefSet {
     }
 
     /// A declared reference file: JSON, or JSONL when the name ends in `.jsonl`. Must parse.
-    pub fn add_file(&mut self, role: Role, name: &str, bytes: &[u8]) -> Result<(u64, u64)> {
+    pub fn add_file(
+        &mut self,
+        role: RetentionReferenceRole,
+        name: &str,
+        bytes: &[u8],
+    ) -> Result<(u64, u64)> {
         self.source = name.to_string();
         let mut count = (0, 0);
         if name.ends_with(".jsonl") {
@@ -369,10 +393,10 @@ impl RefSet {
 
     /// Walks a scan root. `needles` are substrings (in-scope bucket name stems) a file must
     /// contain to be parsed; `skip_dirs` are directory names never entered. Object refs in files
-    /// whose extension is in `prose_exts` are recorded as [`Role::ProseMention`] (D1).
+    /// whose extension is in `prose_exts` are recorded as [`RetentionReferenceRole::ProseMention`] (D1).
     pub fn scan_root(
         &mut self,
-        role: Role,
+        role: RetentionReferenceRole,
         root: &Path,
         max_bytes: u64,
         needles: &[String],
@@ -461,7 +485,11 @@ impl RefSet {
             self.source = rel;
             let mut count = (0, 0);
             let prose = prose_exts.contains(&ext);
-            let role = if prose { Role::ProseMention } else { role };
+            let role = if prose {
+                RetentionReferenceRole::ProseMention
+            } else {
+                role
+            };
             let name = entry.file_name().to_string_lossy();
             let parsed = if name.ends_with(".jsonl") {
                 let mut ok = true;

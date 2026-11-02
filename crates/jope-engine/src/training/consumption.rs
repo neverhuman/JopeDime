@@ -214,7 +214,7 @@ pub enum Outcome {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "event", rename_all = "snake_case", deny_unknown_fields)]
-pub enum Event {
+pub enum TrainingConsumptionEvent {
     Attempt {
         header: Header,
         /// Partition v2 only. Absent, and never serialized, under v1, so
@@ -244,7 +244,10 @@ pub enum Event {
     },
 }
 
-impl Event {
+/// Compatibility alias for the domain-specific `TrainingConsumptionEvent` type.
+pub type Event = TrainingConsumptionEvent;
+
+impl TrainingConsumptionEvent {
     fn key(&self) -> String {
         match self {
             Self::Attempt { .. } => "attempt".into(),
@@ -306,11 +309,11 @@ struct Tracker {
 }
 
 impl Tracker {
-    fn accept(&mut self, event: &Event) -> Result<()> {
+    fn accept(&mut self, event: &TrainingConsumptionEvent) -> Result<()> {
         if let Some(reason) = &self.ended {
             bail!("consumption journal continues after a rejected update ({reason})");
         }
-        if let Event::Attempt { header, shard } = event {
+        if let TrainingConsumptionEvent::Attempt { header, shard } = event {
             ensure!(
                 self.header.is_none(),
                 "consumption journal has two attempt headers"
@@ -329,8 +332,8 @@ impl Tracker {
             .context("consumption journal must begin with its attempt header")?;
         let shard = self.shard.clone();
         match event {
-            Event::Attempt { .. } => unreachable!(),
-            Event::Microbatch {
+            TrainingConsumptionEvent::Attempt { .. } => unreachable!(),
+            TrainingConsumptionEvent::Microbatch {
                 step,
                 microbatch,
                 serial,
@@ -369,7 +372,7 @@ impl Tracker {
                     self.step.records.extend(records);
                 }
             }
-            Event::Update {
+            TrainingConsumptionEvent::Update {
                 step,
                 outcome,
                 microbatches,
@@ -422,7 +425,7 @@ impl Tracker {
                     }
                 }
             }
-            Event::Commit { step, state_sha256 } => {
+            TrainingConsumptionEvent::Commit { step, state_sha256 } => {
                 ensure!(
                     self.step.units.microbatches == 0,
                     "commit inside an unfinished update"
@@ -495,7 +498,7 @@ impl Journal {
             tracker: Tracker::default(),
             poisoned: false,
         };
-        journal.append(&Event::Attempt { header, shard })?;
+        journal.append(&TrainingConsumptionEvent::Attempt { header, shard })?;
         journal.sync()?;
         if let Some(parent) = path.parent() {
             fs::File::open(parent)?.sync_all()?;
@@ -507,7 +510,7 @@ impl Journal {
         &self.path
     }
 
-    fn append(&mut self, event: &Event) -> Result<()> {
+    fn append(&mut self, event: &TrainingConsumptionEvent) -> Result<()> {
         ensure!(
             !self.poisoned,
             "consumption journal failed an earlier write"
@@ -536,7 +539,7 @@ impl Journal {
         records: &[usize],
         supervision: Supervision,
     ) -> Result<()> {
-        self.append(&Event::Microbatch {
+        self.append(&TrainingConsumptionEvent::Microbatch {
             step,
             microbatch,
             serial,
@@ -547,7 +550,7 @@ impl Journal {
     }
 
     pub fn applied(&mut self, step: u64, gradient_norm: f64) -> Result<()> {
-        self.append(&Event::Update {
+        self.append(&TrainingConsumptionEvent::Update {
             step,
             outcome: Outcome::Applied,
             microbatches: self.tracker.step.units.microbatches as usize,
@@ -560,7 +563,7 @@ impl Journal {
     /// Record that the attempted update of `step` was not applied. The
     /// attempt ends; the journal refuses every later event.
     pub fn rejected(&mut self, step: u64, reason: &str) -> Result<()> {
-        self.append(&Event::Update {
+        self.append(&TrainingConsumptionEvent::Update {
             step,
             outcome: Outcome::Rejected,
             microbatches: self.tracker.step.units.microbatches as usize,
@@ -590,7 +593,7 @@ impl Journal {
 
     /// Record, durably, that a checkpoint covers every applied update through `step`.
     pub fn commit(&mut self, step: u64, state_sha256: &str) -> Result<Binding> {
-        self.append(&Event::Commit {
+        self.append(&TrainingConsumptionEvent::Commit {
             step,
             state_sha256: state_sha256.into(),
         })?;
@@ -674,7 +677,7 @@ pub fn reconcile(bytes: &[u8], durable_step: Option<u64>) -> Result<Reconciliati
     let mut seen = BTreeMap::<String, &[u8]>::new();
     let mut duplicates = 0;
     for (n, line) in lines.into_iter().enumerate() {
-        let event: Event = serde_json::from_slice(line)
+        let event: TrainingConsumptionEvent = serde_json::from_slice(line)
             .with_context(|| format!("malformed consumption journal line {}", n + 1))?;
         let key = event.key();
         if let Some(previous) = seen.get(&key) {
@@ -785,8 +788,8 @@ pub fn recover_published_ack(
     );
     let mut matching_ack = false;
     for line in &lines {
-        let event: Event = serde_json::from_slice(line)?;
-        if let Event::Commit {
+        let event: TrainingConsumptionEvent = serde_json::from_slice(line)?;
+        if let TrainingConsumptionEvent::Commit {
             step,
             state_sha256: ack_sha,
         } = event
@@ -808,7 +811,7 @@ pub fn recover_published_ack(
             "published checkpoint is ahead of journal-applied work"
         );
         if reconciliation.applied_through >= durable_step {
-            let event = Event::Commit {
+            let event = TrainingConsumptionEvent::Commit {
                 step: durable_step,
                 state_sha256: state_sha256.into(),
             };
@@ -818,7 +821,7 @@ pub fn recover_published_ack(
             };
             let mut seen = BTreeMap::<String, &[u8]>::new();
             for line in &lines {
-                let event: Event = serde_json::from_slice(line)?;
+                let event: TrainingConsumptionEvent = serde_json::from_slice(line)?;
                 let key = event.key();
                 if let Some(previous) = seen.get(&key) {
                     ensure!(
@@ -865,13 +868,13 @@ pub fn verify_records(
     let (lines, _) = complete_lines(bytes);
     let mut verified = 0;
     for line in lines {
-        if let Event::Microbatch {
+        if let TrainingConsumptionEvent::Microbatch {
             step,
             microbatch,
             serial,
             records,
             ..
-        } = serde_json::from_slice::<Event>(line)?
+        } = serde_json::from_slice::<TrainingConsumptionEvent>(line)?
         {
             let expected = sampler(usize::try_from(serial)?, records.len());
             ensure!(

@@ -402,15 +402,18 @@ pub struct Candidate {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-/// `Disposition` is an enum for the disposition contract in this module: Offline model of exact-version dependencies and retention promises.
-pub enum Disposition {
-    /// The `Keep` case of `Disposition`.
+/// `RetentionObligationDisposition` is an enum for the disposition contract in this module: Offline model of exact-version dependencies and retention promises.
+pub enum RetentionObligationDisposition {
+    /// The `Keep` case of `RetentionObligationDisposition`.
     Keep,
-    /// The `Hold` case of `Disposition`.
+    /// The `Hold` case of `RetentionObligationDisposition`.
     Hold,
-    /// The `ReviewAfterRootTransition` case of `Disposition`.
+    /// The `ReviewAfterRootTransition` case of `RetentionObligationDisposition`.
     ReviewAfterRootTransition,
 }
+
+/// Compatibility alias for the domain-specific `RetentionObligationDisposition` type.
+pub type Disposition = RetentionObligationDisposition;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -418,8 +421,8 @@ pub enum Disposition {
 pub struct ObligationRow {
     /// Object recorded for this obligation row.
     pub object: StrongPhysicalRef,
-    /// Disposition recorded for this obligation row.
-    pub disposition: Disposition,
+    /// RetentionObligationDisposition recorded for this obligation row.
+    pub disposition: RetentionObligationDisposition,
     /// Collection of strong roots values carried by this obligation row.
     pub strong_roots: Vec<String>,
     /// Collection of promises values carried by this obligation row.
@@ -562,11 +565,11 @@ impl ObligationPlanV2 {
             unresolved.sort();
             unresolved.dedup();
             let disposition = if !unresolved.is_empty() {
-                Disposition::Hold
+                RetentionObligationDisposition::Hold
             } else if !strong_roots.is_empty() || !promises.is_empty() {
-                Disposition::Keep
+                RetentionObligationDisposition::Keep
             } else {
-                Disposition::ReviewAfterRootTransition
+                RetentionObligationDisposition::ReviewAfterRootTransition
             };
             rows.push(ObligationRow {
                 provenance: snapshot

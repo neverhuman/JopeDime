@@ -122,28 +122,31 @@ pub struct LabelMasks {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-/// `Disposition` is an enum for the disposition contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
-pub enum Disposition {
-    /// The `Scored` case of `Disposition`.
+/// `ReplayObservationDisposition` is an enum for the disposition contract in this module: Lossless archival observations. Retention does not issue replay capabilities.
+pub enum ReplayObservationDisposition {
+    /// The `Scored` case of `ReplayObservationDisposition`.
     Scored,
-    /// The `Failed` case of `Disposition`.
+    /// The `Failed` case of `ReplayObservationDisposition`.
     Failed,
-    /// The `Timeout` case of `Disposition`.
+    /// The `Timeout` case of `ReplayObservationDisposition`.
     Timeout,
     /// Only part of the outcome mass is supported by measured outcomes.
     Partial,
-    /// The `Unscored` case of `Disposition`.
+    /// The `Unscored` case of `ReplayObservationDisposition`.
     Unscored,
-    /// The `Unknown` case of `Disposition`.
+    /// The `Unknown` case of `ReplayObservationDisposition`.
     Unknown,
-    /// The `RejectedMeasurement` case of `Disposition`.
+    /// The `RejectedMeasurement` case of `ReplayObservationDisposition`.
     RejectedMeasurement,
-    /// The `DuplicateDelivery` case of `Disposition`.
+    /// The `DuplicateDelivery` case of `ReplayObservationDisposition`.
     DuplicateDelivery,
-    /// The `Conflict` case of `Disposition`.
+    /// The `Conflict` case of `ReplayObservationDisposition`.
     Conflict,
 }
-impl Disposition {
+
+/// Compatibility alias for the domain-specific `ReplayObservationDisposition` type.
+pub type Disposition = ReplayObservationDisposition;
+impl ReplayObservationDisposition {
     /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
@@ -181,8 +184,8 @@ pub struct Observation {
     pub original_role: Option<String>,
     /// Collection of provenance holds values carried by this observation.
     pub provenance_holds: Vec<String>,
-    /// Disposition recorded for this observation.
-    pub disposition: Disposition,
+    /// ReplayObservationDisposition recorded for this observation.
+    pub disposition: ReplayObservationDisposition,
     /// Collection of related occurrences values carried by this observation.
     pub related_occurrences: Vec<String>,
     /// References are opaque: row counts are never physical-attempt or logical-success rates.
@@ -310,13 +313,13 @@ fn observation(
         ObservedOutcome::Unknown => DurationObservation::Unknown,
     };
     let disposition = match (&measurement, observed_outcome) {
-        (Measurement::Rejected { .. }, _) => Disposition::RejectedMeasurement,
-        (_, ObservedOutcome::Failed) => Disposition::Failed,
-        (_, ObservedOutcome::Timeout) => Disposition::Timeout,
-        (_, ObservedOutcome::Partial) => Disposition::Partial,
-        (Measurement::Finite { .. }, _) => Disposition::Scored,
-        (_, ObservedOutcome::Ok) => Disposition::Unscored,
-        _ => Disposition::Unknown,
+        (Measurement::Rejected { .. }, _) => ReplayObservationDisposition::RejectedMeasurement,
+        (_, ObservedOutcome::Failed) => ReplayObservationDisposition::Failed,
+        (_, ObservedOutcome::Timeout) => ReplayObservationDisposition::Timeout,
+        (_, ObservedOutcome::Partial) => ReplayObservationDisposition::Partial,
+        (Measurement::Finite { .. }, _) => ReplayObservationDisposition::Scored,
+        (_, ObservedOutcome::Ok) => ReplayObservationDisposition::Unscored,
+        _ => ReplayObservationDisposition::Unknown,
     };
     // A referenced or serialized capability must still be revalidated by I04 at consumption.
     let hold = |observed| LabelHold {
@@ -415,12 +418,12 @@ pub fn import_index(
                 .map(|j| observations[*j].identity.occurrence_id.clone())
                 .collect();
             if conflict {
-                observations[i].disposition = Disposition::Conflict;
+                observations[i].disposition = ReplayObservationDisposition::Conflict;
                 observations[i]
                     .provenance_holds
                     .push("conflicting_delivery".into());
             } else if n > 0 {
-                observations[i].disposition = Disposition::DuplicateDelivery;
+                observations[i].disposition = ReplayObservationDisposition::DuplicateDelivery;
             }
         }
     }

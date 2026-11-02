@@ -37,19 +37,22 @@ pub struct Catalog {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-/// `Role` is a public role enum.
-pub enum Role {
-    /// The `Train` case of `Role`.
+/// `VersionSupportRole` is a public role enum.
+pub enum VersionSupportRole {
+    /// The `Train` case of `VersionSupportRole`.
     Train,
-    /// The `Validation` case of `Role`.
+    /// The `Validation` case of `VersionSupportRole`.
     Validation,
-    /// The `Heldout` case of `Role`.
+    /// The `Heldout` case of `VersionSupportRole`.
     Heldout,
-    /// The `Sealed` case of `Role`.
+    /// The `Sealed` case of `VersionSupportRole`.
     Sealed,
-    /// The `Unknown` case of `Role`.
+    /// The `Unknown` case of `VersionSupportRole`.
     Unknown,
 }
+
+/// Compatibility alias for the domain-specific `VersionSupportRole` type.
+pub type Role = VersionSupportRole;
 
 /// Immutable evidence stays separate from action availability and numeric targets.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -80,7 +83,7 @@ pub struct FreezeRequest {
     /// Require v1 catalog recorded for this freeze request.
     pub require_v1_catalog: bool,
     /// Mapping of role map values carried by this freeze request.
-    pub role_map: BTreeMap<String, Role>,
+    pub role_map: BTreeMap<String, VersionSupportRole>,
     /// SHA-256 digest identifying the associated expected role map.
     pub expected_role_map_sha256: String,
     /// Collection of candidates values carried by this freeze request.
@@ -106,7 +109,7 @@ pub struct FrozenSupport {
     /// Vocabulary recorded for this frozen support.
     pub vocabulary: Vocabulary,
     /// Mapping of role map values carried by this frozen support.
-    pub role_map: BTreeMap<String, Role>,
+    pub role_map: BTreeMap<String, VersionSupportRole>,
     /// SHA-256 digest identifying the associated role map.
     pub role_map_sha256: String,
     /// SHA-256 digest identifying the associated catalog program.
@@ -215,7 +218,7 @@ impl FrozenSupport {
             "bound context/source receipt required"
         );
         ensure!(
-            self.role_map.get(&candidate.context_id) == Some(&Role::Train),
+            self.role_map.get(&candidate.context_id) == Some(&VersionSupportRole::Train),
             "support extension requires frozen TRAIN role"
         );
         if let Some(pin) = &candidate.parity_receipt_sha256 {

@@ -311,7 +311,7 @@ pub struct Measurement {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Disposition {
+pub enum ResourceLedgerDisposition {
     Completed,
     Failed,
     Killed,
@@ -320,13 +320,16 @@ pub enum Disposition {
     ProvenNotStarted,
 }
 
+/// Compatibility alias for the domain-specific `ResourceLedgerDisposition` type.
+pub type Disposition = ResourceLedgerDisposition;
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AttemptCost {
     pub schema: String,
     pub reservation_sha256: String,
     pub ids: JoinIds,
-    pub disposition: Disposition,
+    pub disposition: ResourceLedgerDisposition,
     pub ended_unix_us: u64,
     pub exit_code: Option<i32>,
     pub signal: Option<i32>,
@@ -347,11 +350,14 @@ impl AttemptCost {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "transition", rename_all = "snake_case", deny_unknown_fields)]
-pub enum Event {
+pub enum ResourceLedgerEvent {
     Reserved { reservation: Reservation },
     Started { attempt_id: String, at_unix_us: u64 },
     Finished { cost: AttemptCost },
 }
+
+/// Compatibility alias for the domain-specific `ResourceLedgerEvent` type.
+pub type Event = ResourceLedgerEvent;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Reconciliation {
@@ -406,11 +412,11 @@ impl ResourceLedger {
     }
 
     /// Replay journal order, including duplicates, without opening a new window.
-    pub fn restore(policy: Policy, events: &[Event]) -> Result<Self> {
+    pub fn restore(policy: Policy, events: &[ResourceLedgerEvent]) -> Result<Self> {
         let mut ledger = Self::new(policy)?;
         for event in events {
             match event {
-                Event::Reserved { reservation } => {
+                ResourceLedgerEvent::Reserved { reservation } => {
                     let actual = ledger.reserve(
                         reservation.request.clone(),
                         reservation.reserved_unix_us,
@@ -421,11 +427,13 @@ impl ResourceLedger {
                         "changed reservation on journal replay"
                     );
                 }
-                Event::Started {
+                ResourceLedgerEvent::Started {
                     attempt_id,
                     at_unix_us,
                 } => ledger.start(attempt_id, *at_unix_us, |_| Ok(()))?,
-                Event::Finished { cost } => ledger.finish(cost.clone(), |_| Ok(()))?,
+                ResourceLedgerEvent::Finished { cost } => {
+                    ledger.finish(cost.clone(), |_| Ok(()))?
+                }
             }
         }
         Ok(ledger)
@@ -435,7 +443,7 @@ impl ResourceLedger {
         &mut self,
         request: ReservationRequest,
         now: u64,
-        persist: impl FnOnce(&Event) -> Result<()>,
+        persist: impl FnOnce(&ResourceLedgerEvent) -> Result<()>,
     ) -> Result<Reservation> {
         request.ids.validate()?;
         if let Some(prior) = self.reservations.get(&request.ids.attempt_id) {
@@ -487,7 +495,8 @@ impl ResourceLedger {
             ensure!(
                 !matches!(
                     cost.disposition,
-                    Disposition::Completed | Disposition::ProvenNotStarted
+                    ResourceLedgerDisposition::Completed
+                        | ResourceLedgerDisposition::ProvenNotStarted
                 ) && cost.ids.logical_id == request.ids.logical_id
                     && cost.ids.request_id == request.ids.request_id
                     && cost.ids.draw_id == request.ids.draw_id
@@ -552,7 +561,7 @@ impl ResourceLedger {
             deadline_unix_us: deadline,
         };
         reservation.identity()?;
-        persist(&Event::Reserved {
+        persist(&ResourceLedgerEvent::Reserved {
             reservation: reservation.clone(),
         })?;
         self.last_unix_us = now;
@@ -567,7 +576,7 @@ impl ResourceLedger {
         &mut self,
         id: &str,
         now: u64,
-        persist: impl FnOnce(&Event) -> Result<()>,
+        persist: impl FnOnce(&ResourceLedgerEvent) -> Result<()>,
     ) -> Result<()> {
         if let Some(prior) = self.starts.get(id) {
             ensure!(*prior == now, "conflicting attempt start");
@@ -585,7 +594,7 @@ impl ResourceLedger {
                     .is_some_and(|end| end <= reservation.deadline_unix_us),
             "start exceeds original reservation window"
         );
-        persist(&Event::Started {
+        persist(&ResourceLedgerEvent::Started {
             attempt_id: id.into(),
             at_unix_us: now,
         })?;
@@ -599,7 +608,7 @@ impl ResourceLedger {
     pub fn finish(
         &mut self,
         cost: AttemptCost,
-        persist: impl FnOnce(&Event) -> Result<()>,
+        persist: impl FnOnce(&ResourceLedgerEvent) -> Result<()>,
     ) -> Result<()> {
         if let Some(prior) = self.costs.get(&cost.ids.attempt_id) {
             ensure!(prior == &cost, "conflicting terminal attempt receipt");
@@ -618,7 +627,7 @@ impl ResourceLedger {
         );
         let start = self.starts.get(&cost.ids.attempt_id).copied();
         ensure!(
-            cost.disposition == Disposition::ProvenNotStarted || start.is_some(),
+            cost.disposition == ResourceLedgerDisposition::ProvenNotStarted || start.is_some(),
             "cost before start"
         );
         ensure!(
@@ -644,7 +653,8 @@ impl ResourceLedger {
             "missing or invalid evidence digest"
         );
         ensure!(
-            cost.retained_sha256.is_empty() || cost.disposition == Disposition::Completed,
+            cost.retained_sha256.is_empty()
+                || cost.disposition == ResourceLedgerDisposition::Completed,
             "failed physical work cannot claim a retained result"
         );
         if let Reading::Unknown { reason } = &cost.retained_bytes {
@@ -677,7 +687,7 @@ impl ResourceLedger {
             if let Reading::Unknown { reason } = &measurement.reading {
                 ensure!(!reason.is_empty(), "unknown telemetry requires reason");
             }
-            if cost.disposition != Disposition::ProvenNotStarted
+            if cost.disposition != ResourceLedgerDisposition::ProvenNotStarted
                 && matches!(
                     unit,
                     Unit::Evaluations
@@ -693,7 +703,7 @@ impl ResourceLedger {
                     );
                 }
             }
-            if cost.disposition == Disposition::ProvenNotStarted {
+            if cost.disposition == ResourceLedgerDisposition::ProvenNotStarted {
                 ensure!(
                     measurement.reading == Reading::exact(0)
                         && cost.reason.starts_with("not_started: gate never released")
@@ -730,7 +740,7 @@ impl ResourceLedger {
             .costs
             .insert(cost.ids.attempt_id.clone(), cost.clone());
         candidate.reconcile()?;
-        persist(&Event::Finished { cost: cost.clone() })?;
+        persist(&ResourceLedgerEvent::Finished { cost: cost.clone() })?;
         self.costs.insert(cost.ids.attempt_id.clone(), cost.clone());
         self.last_unix_us = self.last_unix_us.max(cost.ended_unix_us);
         Ok(())
