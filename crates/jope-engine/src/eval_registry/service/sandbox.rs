@@ -454,18 +454,11 @@ fn allow(ruleset: &OwnedFd, path: &Path, rights: u64, optional: bool) -> Result<
     }
     // SAFETY: a successful open returns a fresh descriptor owned here.
     let fd = unsafe { OwnedFd::from_raw_fd(fd) };
-    let mut stat = std::mem::MaybeUninit::<libc::stat>::uninit();
-    ensure!(
-        // SAFETY: `stat` is aligned writable storage for one result and `fd`
-        // owns a live descriptor for the opened allowlist path.
-        unsafe { libc::fstat(fd.as_raw_fd(), stat.as_mut_ptr()) } == 0,
-        "allowlist {}: {}",
-        path.display(),
-        std::io::Error::last_os_error()
-    );
-    // SAFETY: fstat returned 0, so it initialized every field of `stat`.
-    let stat = unsafe { stat.assume_init() };
-    let allowed = if stat.st_mode & libc::S_IFMT == libc::S_IFDIR {
+    let file = fs::File::from(fd);
+    let metadata = file
+        .metadata()
+        .with_context(|| format!("allowlist {}", path.display()))?;
+    let allowed = if metadata.is_dir() {
         rights
     } else {
         rights & FS_FILE
@@ -475,7 +468,7 @@ fn allow(ruleset: &OwnedFd, path: &Path, rights: u64, optional: bool) -> Result<
     }
     let rule = PathBeneathAttr {
         allowed_access: allowed,
-        parent_fd: fd.as_raw_fd(),
+        parent_fd: file.as_raw_fd(),
     };
     // SAFETY: rule and both descriptors outlive the call.
     let added = unsafe {
