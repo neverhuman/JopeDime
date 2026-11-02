@@ -4,6 +4,7 @@ use super::{artifact, directory, immutable};
 use anyhow::{bail, ensure, Context, Result};
 use clap::Args;
 use feat_math::GenomeIr;
+use jope_datasets::family_contracts::build_training_family_partition;
 use jope_learning::{
     canon::{canonical_json, canonical_sha256},
     eligibility::{freeze_teaching, Qualification},
@@ -216,70 +217,7 @@ fn partition(
     families: &BTreeMap<String, BTreeSet<String>>,
     seed: u64,
 ) -> Result<BTreeMap<String, String>> {
-    ensure!(
-        !families.is_empty() && families.len() <= 3,
-        "unsupported requested task inventory"
-    );
-    ensure!(
-        families.values().all(|s| s.len() >= 2),
-        "real training requires at least two independently evidenced families per category"
-    );
-    let mut all = families
-        .values()
-        .flat_map(|s| s.iter().cloned())
-        .collect::<BTreeSet<_>>()
-        .into_iter()
-        .collect::<Vec<_>>();
-    ensure!(
-        all.len() <= 30,
-        "family registry exceeds bounded panel scope"
-    );
-    all.sort_by_key(|name| {
-        sha256_hex(format!("jope.family-partition/v1\0{seed}\0{name}").as_bytes())
-    });
-    let acceptable = |selected: &BTreeSet<String>| {
-        families
-            .values()
-            .all(|set| !set.is_disjoint(selected) && !set.is_subset(selected))
-    };
-    let mut selected = None;
-    'outer: for a in 0..all.len() {
-        for b in a..all.len() {
-            for c in b..all.len() {
-                let set = [all[a].clone(), all[b].clone(), all[c].clone()]
-                    .into_iter()
-                    .collect();
-                if acceptable(&set) {
-                    selected = Some(set);
-                    break 'outer;
-                }
-            }
-        }
-    }
-    let mut selected =
-        selected.context("no family-disjoint partition covers every requested category")?;
-    let target = all.len().div_ceil(5);
-    for name in &all {
-        if selected.len() >= target {
-            break;
-        }
-        let mut trial = selected.clone();
-        trial.insert(name.clone());
-        if acceptable(&trial) {
-            selected = trial;
-        }
-    }
-    Ok(all
-        .into_iter()
-        .map(|family| {
-            let side = if selected.contains(&family) {
-                "development"
-            } else {
-                "train"
-            };
-            (family, side.to_owned())
-        })
-        .collect())
+    build_training_family_partition(families, seed)
 }
 /// Conservative exact parameter-bin gate. Python performs an additional complete
 /// token encode/decode check at plan/run. Free expressions without an exact frozen
