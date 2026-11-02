@@ -3048,6 +3048,8 @@ python/src/jope/grammars/spec.py
 python/src/jope/grammars/vocab.py
 python/src/jope/io.py
 python/src/jope/loop.py
+python/src/jope/loop_selection.py
+python/src/jope/loop_state.py
 python/src/jope/model.py
 python/src/jope/newmath_grammar.py
 python/src/jope/pipeline_text.py
