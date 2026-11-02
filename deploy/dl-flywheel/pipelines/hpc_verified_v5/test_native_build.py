@@ -119,16 +119,15 @@ class NativeBuildTests(unittest.TestCase):
         tree = ast.parse(textwrap.dedent(inspect.getsource(NativeEvaluator.execute)))
         value = next(n.value for n in ast.walk(tree) if isinstance(n, ast.Assign) and
                      any(isinstance(t, ast.Name) and t.id == 'provenance' for t in n.targets))
-        # Inspect the actual result-metadata expression without executing code,
-        # running GP, compiling Rust, or replacing the scientific implementation.
-        fields = {
-            key.value: ast.unparse(item)
-            for key, item in zip(value.keys, value.values)
-            if isinstance(key, ast.Constant) and isinstance(key.value, str)
-        }
-        self.assertEqual(
-            fields['source_build_plan_sha256'], "self.config['source_build_plan_sha256']"
-        )
+        # Evaluate the actual result-metadata expression without running GP,
+        # compiling Rust, or replacing the evaluator's scientific implementation.
+        import time
+        env = {'self': SimpleNamespace(config=c, plan='1'*64), 'context': SimpleNamespace(evaluator_sha256='2'*64),
+               'raw': b'input', 'candidate': {'program_sha256': '3'*64}, 'evaluation_bytes': b'evaluation',
+               'sha': lambda b: hashlib.sha256(b).hexdigest(), 'time': time, 'commands': {},
+               'descriptor': {}, 'manifest_bytes': b'{}', 'predictions': [], 'checks': []}
+        provenance = eval(compile(ast.Expression(value), '<actual-provenance>', 'eval'), env)
+        self.assertEqual(provenance['source_build_plan_sha256'], c['source_build_plan_sha256'])
 
 
 if __name__ == '__main__':

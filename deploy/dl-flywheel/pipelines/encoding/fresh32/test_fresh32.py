@@ -184,7 +184,7 @@ class RemoteInvocationCases(unittest.TestCase):
   tree=ast.parse((HERE/'kumo_controller.py').read_text());scripts=[]
   for n in ast.walk(tree):
    if isinstance(n,ast.Assign)and any(isinstance(x,ast.Name)and x.id=='script'for x in n.targets)and isinstance(n.value,ast.Constant)and isinstance(n.value.value,str):
-    ast.parse(n.value.value,filename='remote-python-c',mode='exec');self.assertNotIn('from campaign import',n.value.value);scripts.append(n.value.value)
+    compile(n.value.value,'remote-python-c','exec');self.assertNotIn('from campaign import',n.value.value);scripts.append(n.value.value)
   self.assertEqual(len(scripts),3)
 
 class BoundaryCases(unittest.TestCase):
