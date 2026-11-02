@@ -1937,10 +1937,6 @@
         "training"
       ]
     },
-    "python:python/tests/test_dime_score_worker_validation.py": {
-      "role": "regression",
-      "subsystems": ["training"]
-    },
     "python:python/tests/test_training_corpus_contract.py": {
       "role": "regression",
       "subsystems": [
@@ -2395,6 +2391,10 @@
     },
     "python:research/flywheel_selfplay/h230_coswr_gated025_stack/test_h230.py": {
       "reason": "H230 data-free frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
+      "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
