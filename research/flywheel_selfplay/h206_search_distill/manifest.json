@@ -1,0 +1,25 @@
+{
+  "schema": "h206-prereg-source-manifest-v1",
+  "authority": "Jepson via Grok Bot, card answer 8:22 PM MT",
+  "status": "QUEUED_NOT_RUN",
+  "scope": "Preregistration and CPU-only disabled executor skeleton; no scientific qualification.",
+  "source_sha256": {
+    "PREREG.md": "d6b18fc50d4bb8dd352c844bd72dab69846579aca7010acfe30d670c7538f287",
+    "README.md": "603a2676160c31dc1c19154c8452a4ef8f449424bf544b7799dcee14d9b8a70b",
+    "launch.json": "c1b96e1dc794aaf7ce1353547efb35bc83f0450f188623c3c7ae121f948cd407",
+    "launch.sh": "10f3f0daaae300c16683eedf4c0ad7222de2f2303067f6bc488254ca435d6658",
+    "metrics.json": "b0fe1f0358e5dbfc549440e91fff406b2a02324c9428562e7c15309cb7adf053",
+    "runner.py": "aaa354367dff47db1a98925b59dbc872265935835bb6e567078ca52554094c0e",
+    "test_h206.py": "8e445d6615d016f43b1975942013007300410723510c4eda299d43278354f8df"
+  },
+  "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
+  "evidence": [],
+  "pending": [
+    "reviewed scientific executor",
+    "pinned width128 architecture and r882 initialization",
+    "versioned real-data and fold bindings",
+    "queue-release nudge and fresh GPU/disk admission",
+    "native91 exact and actual gradient qualification",
+    "sanctioned sealed confirmation evaluator"
+  ]
+}
