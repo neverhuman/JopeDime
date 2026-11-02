@@ -360,7 +360,6 @@ pub struct GcReport {
 
 #[cfg(test)]
 mod exchange_proofs;
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 mod operations;
 
 pub use operations::*;
