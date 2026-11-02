@@ -104,7 +104,7 @@ fn journal_window_closed(
         return Some(cause);
     }
     records.iter().find_map(|(record, _)| {
-        let Event::DispatchIntent { global_rank, .. } = record.event else {
+        let BoundedControllerEvent::DispatchIntent { global_rank, .. } = record.event else {
             return None;
         };
         let participant = contract.participant(global_rank)?;
@@ -115,7 +115,7 @@ fn journal_window_closed(
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Disposition {
+pub enum BoundedControllerDisposition {
     Committed,
     /// The rank whose failure caused the drain.
     Failed,
@@ -130,6 +130,9 @@ pub enum Disposition {
     /// The group was refused before any rank started.
     Refused,
 }
+
+/// Compatibility alias for the domain-specific `BoundedControllerDisposition` type.
+pub type Disposition = BoundedControllerDisposition;
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Outcome {
@@ -140,7 +143,7 @@ pub enum Outcome {
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "event", rename_all = "snake_case", deny_unknown_fields)]
-pub enum Event {
+pub enum BoundedControllerEvent {
     Planned {
         original_deadline_unix_ms: u64,
         committed_updates_at_start: u64,
@@ -196,9 +199,9 @@ pub enum Event {
     DrainStarted {
         cause: DrainCause,
     },
-    Disposition {
+    BoundedControllerDisposition {
         global_rank: u32,
-        disposition: Disposition,
+        disposition: BoundedControllerDisposition,
         detail: String,
     },
     Terminal {
@@ -206,6 +209,9 @@ pub enum Event {
         committed_updates_total: u64,
     },
 }
+
+/// Compatibility alias for the domain-specific `BoundedControllerEvent` type.
+pub type Event = BoundedControllerEvent;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct JournalRecord {
@@ -214,7 +220,7 @@ pub struct JournalRecord {
     pub previous_sha256: Option<String>,
     pub plan_sha256: String,
     pub recorded_unix_ms: u64,
-    pub event: Event,
+    pub event: BoundedControllerEvent,
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -246,7 +252,7 @@ pub struct RankStatus {
     pub host: String,
     pub device_uuid: Option<String>,
     pub state: RankState,
-    pub disposition: Option<Disposition>,
+    pub disposition: Option<BoundedControllerDisposition>,
     pub detail: String,
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -461,7 +467,7 @@ struct Replay {
     committed: Option<u64>,
     cancel: bool,
     drain: Option<DrainCause>,
-    dispositions: BTreeMap<u32, (Disposition, String)>,
+    dispositions: BTreeMap<u32, (BoundedControllerDisposition, String)>,
     terminal: Option<(Outcome, u64)>,
 }
 fn replay(
@@ -493,12 +499,12 @@ fn replay(
         // window. Finishing records (drain, dispositions, terminal) may come later.
         if matches!(
             r.event,
-            Event::DispatchIntent { .. }
-                | Event::Launched { .. }
-                | Event::GroupAdmitted { .. }
-                | Event::AdmissionDelivered { .. }
-                | Event::ResultAcknowledged { .. }
-                | Event::GroupCommitted { .. }
+            BoundedControllerEvent::DispatchIntent { .. }
+                | BoundedControllerEvent::Launched { .. }
+                | BoundedControllerEvent::GroupAdmitted { .. }
+                | BoundedControllerEvent::AdmissionDelivered { .. }
+                | BoundedControllerEvent::ResultAcknowledged { .. }
+                | BoundedControllerEvent::GroupCommitted { .. }
         ) {
             if let Some(cause) = journal_window_closed(contract, &records[..i], r.recorded_unix_ms)
             {
@@ -508,7 +514,7 @@ fn replay(
             }
         }
         match &r.event {
-            Event::Planned {
+            BoundedControllerEvent::Planned {
                 original_deadline_unix_ms,
                 committed_updates_at_start,
                 planned_updates,
@@ -520,7 +526,7 @@ fn replay(
                 "journal must open with the plan's original deadline and counters"
             ),
             _ if i == 0 => bail!("journal must open with the Planned record"),
-            Event::PreflightAdmitted { receipt } => {
+            BoundedControllerEvent::PreflightAdmitted { receipt } => {
                 ensure!(
                     s.admission.is_none()
                         && !s.refused
@@ -531,11 +537,11 @@ fn replay(
                 );
                 s.preflight = Some(receipt.clone());
             }
-            Event::PreflightRefused { .. } => ensure!(
+            BoundedControllerEvent::PreflightRefused { .. } => ensure!(
                 s.admission.is_none() && !s.refused,
                 "journal record {at}: preflight after admission"
             ),
-            Event::DispatchIntent {
+            BoundedControllerEvent::DispatchIntent {
                 global_rank,
                 dispatch_id,
             } => {
@@ -552,7 +558,7 @@ fn replay(
                     "journal record {at}: dispatch intent without preflight, after admission/refusal/drain, or repeated"
                 );
             }
-            Event::Launched {
+            BoundedControllerEvent::Launched {
                 global_rank,
                 dispatch_id,
                 handle,
@@ -567,7 +573,7 @@ fn replay(
                     "journal record {at}: launch without its persisted intent or repeated"
                 );
             }
-            Event::GroupAdmitted {
+            BoundedControllerEvent::GroupAdmitted {
                 admission_sha256,
                 admission,
             } => {
@@ -583,7 +589,7 @@ fn replay(
                 rendezvous::verify_group_admission(contract, plan_sha256, admission)?;
                 s.admission = Some((admission.clone(), admission_sha256.clone()));
             }
-            Event::AdmissionDelivered { admission_sha256 } => {
+            BoundedControllerEvent::AdmissionDelivered { admission_sha256 } => {
                 ensure!(
                     s.admission.as_ref().map(|(_, h)| h) == Some(admission_sha256)
                         && !s.delivered
@@ -592,7 +598,7 @@ fn replay(
                 );
                 s.delivered = true;
             }
-            Event::GroupRefused { refusal } => {
+            BoundedControllerEvent::GroupRefused { refusal } => {
                 ensure!(
                     s.admission.is_none()
                         && !s.refused
@@ -603,7 +609,7 @@ fn replay(
                 );
                 s.refused = true;
             }
-            Event::ResultAcknowledged {
+            BoundedControllerEvent::ResultAcknowledged {
                 global_rank,
                 result_sha256,
                 updates,
@@ -620,7 +626,7 @@ fn replay(
                     "journal record {at}: result acknowledgement invalid or repeated"
                 );
             }
-            Event::GroupCommitted {
+            BoundedControllerEvent::GroupCommitted {
                 committed_updates_total,
                 results,
             } => {
@@ -634,12 +640,12 @@ fn replay(
                 );
                 s.committed = Some(*committed_updates_total);
             }
-            Event::CancelRequested { .. } => {
+            BoundedControllerEvent::CancelRequested { .. } => {
                 ensure!(!s.cancel, "journal record {at}: repeated cancellation");
                 s.cancel = true;
             }
-            Event::CoordinatorRestarted { .. } => {}
-            Event::DrainStarted { cause } => {
+            BoundedControllerEvent::CoordinatorRestarted { .. } => {}
+            BoundedControllerEvent::DrainStarted { cause } => {
                 ensure!(
                     s.drain.is_none()
                         && s.committed.is_none()
@@ -649,25 +655,25 @@ fn replay(
                 );
                 s.drain = Some(cause.clone());
             }
-            Event::Disposition {
+            BoundedControllerEvent::BoundedControllerDisposition {
                 global_rank,
                 disposition,
                 detail,
             } => {
                 rank_ok(*global_rank)?;
                 let allowed = match disposition {
-                    Disposition::Committed => s.committed.is_some(),
-                    Disposition::Refused => s.refused,
-                    Disposition::CompletedUncommitted => {
+                    BoundedControllerDisposition::Committed => s.committed.is_some(),
+                    BoundedControllerDisposition::Refused => s.refused,
+                    BoundedControllerDisposition::CompletedUncommitted => {
                         s.drain.is_some() && s.acked.contains_key(global_rank)
                     }
-                    Disposition::NeverStarted => {
+                    BoundedControllerDisposition::NeverStarted => {
                         (s.drain.is_some() || (s.cancel && s.intents.is_empty()))
                             && !s.launched.contains_key(global_rank)
                     }
-                    Disposition::Failed
-                    | Disposition::Drained
-                    | Disposition::CompletedUnacknowledged => s.drain.is_some(),
+                    BoundedControllerDisposition::Failed
+                    | BoundedControllerDisposition::Drained
+                    | BoundedControllerDisposition::CompletedUnacknowledged => s.drain.is_some(),
                 };
                 ensure!(
                     allowed
@@ -677,7 +683,7 @@ fn replay(
                     "journal record {at}: disposition not permitted by the recorded state"
                 );
             }
-            Event::Terminal {
+            BoundedControllerEvent::Terminal {
                 outcome,
                 committed_updates_total,
             } => {
@@ -708,8 +714,8 @@ fn rank_status(contract: &BoundedRunContract, s: &Replay, live: bool) -> Vec<Ran
             let r = p.global_rank;
             let (state, disposition, detail) = if let Some((d, detail)) = s.dispositions.get(&r) {
                 let state = match d {
-                    Disposition::Committed => RankState::Committed,
-                    Disposition::Failed => RankState::Failed,
+                    BoundedControllerDisposition::Committed => RankState::Committed,
+                    BoundedControllerDisposition::Failed => RankState::Failed,
                     _ => RankState::Drained,
                 };
                 (state, Some(*d), detail.clone())
@@ -883,7 +889,7 @@ pub fn verify(dir: &Path, expected_plan_sha256: Option<&str>) -> Result<VerifyRe
                 "committed result bytes differ from the acknowledged digest"
             );
             let acknowledged = records.iter().any(|(r, _)| {
-                matches!(&r.event, Event::ResultAcknowledged { global_rank, envelope_sha256, .. }
+                matches!(&r.event, BoundedControllerEvent::ResultAcknowledged { global_rank, envelope_sha256, .. }
                     if global_rank == rank && *envelope_sha256 == hash(&envelope))
             });
             ensure!(
@@ -924,7 +930,7 @@ fn append(
     dir: &Path,
     records: &mut Vec<(JournalRecord, String)>,
     plan_sha256: &str,
-    event: Event,
+    event: BoundedControllerEvent,
     now: u64,
 ) -> Result<()> {
     let record = JournalRecord {
@@ -1012,7 +1018,7 @@ pub fn plan(
             dir,
             &mut records,
             &plan_sha256,
-            Event::Planned {
+            BoundedControllerEvent::Planned {
                 original_deadline_unix_ms: contract.original_deadline_unix_ms,
                 committed_updates_at_start: contract.counters.committed_updates_at_start,
                 planned_updates: contract.counters.planned_updates,
@@ -1074,7 +1080,7 @@ pub fn cancel(dir: &Path, plan_sha256: &str, reason: &str, now: u64) -> Result<C
                 dir,
                 &mut records,
                 plan_sha256,
-                Event::CancelRequested { request_sha256 },
+                BoundedControllerEvent::CancelRequested { request_sha256 },
                 now,
             )?;
             journaled = true;
@@ -1118,9 +1124,9 @@ fn finish_cancel_before_dispatch(
                 dir,
                 records,
                 plan_sha256,
-                Event::Disposition {
+                BoundedControllerEvent::BoundedControllerDisposition {
                     global_rank: p.global_rank,
-                    disposition: Disposition::NeverStarted,
+                    disposition: BoundedControllerDisposition::NeverStarted,
                     detail: "cancelled before dispatch".into(),
                 },
                 now,
@@ -1131,7 +1137,7 @@ fn finish_cancel_before_dispatch(
         dir,
         records,
         plan_sha256,
-        Event::Terminal {
+        BoundedControllerEvent::Terminal {
             outcome: Outcome::Cancelled,
             committed_updates_total: contract.counters.committed_updates_at_start,
         },
@@ -1227,7 +1233,7 @@ impl<S: Supervisor> Coordinator<S> {
         if s.terminal.is_none() && !s.intents.is_empty() {
             let me = crate::eval_registry::ProcessIdentity::current()?;
             c.append(
-                Event::CoordinatorRestarted {
+                BoundedControllerEvent::CoordinatorRestarted {
                     boot_id: me.boot_id,
                     pid: me.pid,
                 },
@@ -1252,7 +1258,7 @@ impl<S: Supervisor> Coordinator<S> {
     pub fn journal(&self) -> Vec<JournalRecord> {
         self.records.iter().map(|(r, _)| r.clone()).collect()
     }
-    fn append(&mut self, event: Event, now: u64) -> Result<()> {
+    fn append(&mut self, event: BoundedControllerEvent, now: u64) -> Result<()> {
         append(&self.dir, &mut self.records, &self.plan_sha256, event, now)?;
         replay(&self.contract, &self.plan_sha256, &self.records)?;
         Ok(())
@@ -1293,7 +1299,7 @@ impl<S: Supervisor> Coordinator<S> {
         ) {
             Ok(receipt) => {
                 self.append(
-                    Event::PreflightAdmitted {
+                    BoundedControllerEvent::PreflightAdmitted {
                         receipt: receipt.clone(),
                     },
                     now,
@@ -1302,7 +1308,7 @@ impl<S: Supervisor> Coordinator<S> {
             }
             Err(refusal) => {
                 self.append(
-                    Event::PreflightRefused {
+                    BoundedControllerEvent::PreflightRefused {
                         census_sha256,
                         reasons: refusal.reasons.clone(),
                     },
@@ -1367,7 +1373,7 @@ impl<S: Supervisor> Coordinator<S> {
         rendezvous::verify_group_admission(&self.contract, &self.plan_sha256, &admission)?;
         let admission_sha256 = rendezvous::admission_sha256(&admission)?;
         self.append(
-            Event::GroupAdmitted {
+            BoundedControllerEvent::GroupAdmitted {
                 admission_sha256: admission_sha256.clone(),
                 admission: admission.clone(),
             },
@@ -1458,7 +1464,7 @@ impl<S: Supervisor> Coordinator<S> {
             bail!("admission delivery window closed ({cause:?}); group drained");
         }
         self.append(
-            Event::AdmissionDelivered {
+            BoundedControllerEvent::AdmissionDelivered {
                 admission_sha256: persisted.admission_sha256.clone(),
             },
             now,
@@ -1473,7 +1479,7 @@ impl<S: Supervisor> Coordinator<S> {
             "refusal after admission"
         );
         self.append(
-            Event::GroupRefused {
+            BoundedControllerEvent::GroupRefused {
                 refusal: refusal.clone(),
             },
             now,
@@ -1493,16 +1499,16 @@ impl<S: Supervisor> Coordinator<S> {
                 None => "; no rank work was started".into(),
             };
             self.append(
-                Event::Disposition {
+                BoundedControllerEvent::BoundedControllerDisposition {
                     global_rank: rank,
-                    disposition: Disposition::Refused,
+                    disposition: BoundedControllerDisposition::Refused,
                     detail: format!("{}{stopped}", serde_json::to_string(&refusal.cause)?),
                 },
                 now,
             )?;
         }
         self.append(
-            Event::Terminal {
+            BoundedControllerEvent::Terminal {
                 outcome: Outcome::Refused,
                 committed_updates_total: self.contract.counters.committed_updates_at_start,
             },
@@ -1551,7 +1557,7 @@ impl<S: Supervisor> Coordinator<S> {
         }
         let id = rendezvous::dispatch_id(&self.plan_sha256, self.contract.attempt, rank)?;
         self.append(
-            Event::DispatchIntent {
+            BoundedControllerEvent::DispatchIntent {
                 global_rank: rank,
                 dispatch_id: id.clone(),
             },
@@ -1582,7 +1588,7 @@ impl<S: Supervisor> Coordinator<S> {
             .records
             .iter()
             .find_map(|(r, _)| match &r.event {
-                Event::DispatchIntent {
+                BoundedControllerEvent::DispatchIntent {
                     global_rank,
                     dispatch_id,
                 } if *global_rank == rank && *dispatch_id == id => Some(r.recorded_unix_ms),
@@ -1612,7 +1618,7 @@ impl<S: Supervisor> Coordinator<S> {
             bail!("execution window closed while launching rank {rank}");
         }
         self.append(
-            Event::Launched {
+            BoundedControllerEvent::Launched {
                 global_rank: rank,
                 dispatch_id: id,
                 handle: handle.clone(),
@@ -1698,7 +1704,7 @@ impl<S: Supervisor> Coordinator<S> {
             return Ok(false);
         }
         self.append(
-            Event::ResultAcknowledged {
+            BoundedControllerEvent::ResultAcknowledged {
                 global_rank: rank,
                 delivery_id: v.body().delivery_id,
                 result_sha256: v.body().result_sha256.clone(),
@@ -1724,7 +1730,7 @@ impl<S: Supervisor> Coordinator<S> {
                 return Ok(());
             }
             self.append(
-                Event::GroupCommitted {
+                BoundedControllerEvent::GroupCommitted {
                     committed_updates_total: self.contract.counters.committed_updates_at_start
                         + self.contract.counters.planned_updates,
                     results: s.acked.clone().into_iter().collect(),
@@ -1737,9 +1743,9 @@ impl<S: Supervisor> Coordinator<S> {
         for rank in 0..self.contract.world_size() as u32 {
             if !s.dispositions.contains_key(&rank) {
                 self.append(
-                    Event::Disposition {
+                    BoundedControllerEvent::BoundedControllerDisposition {
                         global_rank: rank,
-                        disposition: Disposition::Committed,
+                        disposition: BoundedControllerDisposition::Committed,
                         detail: "authenticated result committed with the whole group".into(),
                     },
                     now,
@@ -1748,7 +1754,7 @@ impl<S: Supervisor> Coordinator<S> {
         }
         if self.state()?.terminal.is_none() {
             self.append(
-                Event::Terminal {
+                BoundedControllerEvent::Terminal {
                     outcome: Outcome::Committed,
                     committed_updates_total: total,
                 },
@@ -1771,7 +1777,7 @@ impl<S: Supervisor> Coordinator<S> {
             "nothing was dispatched; there is no group to drain"
         );
         if s.drain.is_none() {
-            self.append(Event::DrainStarted { cause }, now)?;
+            self.append(BoundedControllerEvent::DrainStarted { cause }, now)?;
         }
         let cause = self.state()?.drain.context("drain cause")?;
         let failing = match &cause {
@@ -1790,7 +1796,7 @@ impl<S: Supervisor> Coordinator<S> {
             };
             let (disposition, detail) = match handle {
                 None => (
-                    Disposition::NeverStarted,
+                    BoundedControllerDisposition::NeverStarted,
                     if s.intents.contains_key(&rank) {
                         "dispatch intent persisted; supervisor holds no started work".to_string()
                     } else {
@@ -1802,15 +1808,18 @@ impl<S: Supervisor> Coordinator<S> {
                     ensure!(last != Liveness::Running, "rank {rank} survived the drain");
                     let started_unrecorded = !s.launched.contains_key(&rank);
                     if failing == Some(rank) {
-                        (Disposition::Failed, format!("{cause:?}; final {last:?}"))
+                        (
+                            BoundedControllerDisposition::Failed,
+                            format!("{cause:?}; final {last:?}"),
+                        )
                     } else if s.acked.contains_key(&rank) {
                         (
-                            Disposition::CompletedUncommitted,
+                            BoundedControllerDisposition::CompletedUncommitted,
                             "authenticated result acknowledged; group drained before commit".into(),
                         )
                     } else if let Retained::Valid(v) = self.retained(&h)? {
                         (
-                            Disposition::CompletedUnacknowledged,
+                            BoundedControllerDisposition::CompletedUnacknowledged,
                             format!(
                                 "authenticated result {} retained, never acknowledged; not committed",
                                 v.body().result_sha256
@@ -1818,7 +1827,7 @@ impl<S: Supervisor> Coordinator<S> {
                         )
                     } else {
                         (
-                            Disposition::Drained,
+                            BoundedControllerDisposition::Drained,
                             format!(
                                 "stopped by whole-group drain; final {last:?}{}",
                                 if started_unrecorded {
@@ -1832,7 +1841,7 @@ impl<S: Supervisor> Coordinator<S> {
                 }
             };
             self.append(
-                Event::Disposition {
+                BoundedControllerEvent::BoundedControllerDisposition {
                     global_rank: rank,
                     disposition,
                     detail,
@@ -1841,7 +1850,7 @@ impl<S: Supervisor> Coordinator<S> {
             )?;
         }
         self.append(
-            Event::Terminal {
+            BoundedControllerEvent::Terminal {
                 outcome: if cause == DrainCause::Cancelled {
                     Outcome::Cancelled
                 } else {
@@ -1873,7 +1882,7 @@ impl<S: Supervisor> Coordinator<S> {
             "cancellation bound to another plan"
         );
         self.append(
-            Event::CancelRequested {
+            BoundedControllerEvent::CancelRequested {
                 request_sha256: hash(&bytes),
             },
             now,

@@ -35,10 +35,13 @@ pub struct ReplayIdentity {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Disposition {
+pub enum ReplaySelectionDisposition {
     Chosen,
     Rejected,
 }
+
+/// Compatibility alias for the domain-specific `ReplaySelectionDisposition` type.
+pub type Disposition = ReplaySelectionDisposition;
 
 /// Eligibility is recorded per measured occurrence. Since the existing
 /// objective consumes a complete eight-row group across all active terms, a
@@ -76,7 +79,7 @@ pub struct FreshOccurrence {
     pub comparison_id: String,
     pub record_id: usize,
     pub context_id: usize,
-    pub disposition: Disposition,
+    pub disposition: ReplaySelectionDisposition,
     pub value: f32,
     pub percentile: f32,
     pub runtime: f32,
@@ -192,7 +195,7 @@ impl ReplayBundle {
             objective::validate_rows(&labels)?;
             let chosen = group
                 .iter()
-                .filter(|item| item.disposition == Disposition::Chosen)
+                .filter(|item| item.disposition == ReplaySelectionDisposition::Chosen)
                 .count();
             ensure!(
                 chosen == 1,
@@ -230,8 +233,8 @@ impl ReplayBundle {
         for item in selected {
             denominators.occurrences += 1;
             match item.disposition {
-                Disposition::Chosen => denominators.chosen_occurrences += 1,
-                Disposition::Rejected => denominators.rejected_occurrences += 1,
+                ReplaySelectionDisposition::Chosen => denominators.chosen_occurrences += 1,
+                ReplaySelectionDisposition::Rejected => denominators.rejected_occurrences += 1,
             }
             denominators.sequence_supervised_positions += item.token_length - 1;
             denominators.sequence_row_weight_sum +=
@@ -316,7 +319,7 @@ impl ReplayBundle {
             ensure!(
                 group
                     .iter()
-                    .filter(|item| item.disposition == Disposition::Chosen)
+                    .filter(|item| item.disposition == ReplaySelectionDisposition::Chosen)
                     .count()
                     == 1,
                 "comparison {comparison_id} must retain one chosen occurrence"

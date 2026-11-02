@@ -222,7 +222,7 @@ pub struct ScientificPolicy {
 }
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Role {
+pub enum NativeLoopRole {
     ProposalModel,
     ProposalShuffled,
     Direct,
@@ -231,6 +231,9 @@ pub enum Role {
     Aggregate,
     Train,
 }
+
+/// Compatibility alias for the domain-specific `NativeLoopRole` type.
+pub type Role = NativeLoopRole;
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Request {
@@ -238,7 +241,7 @@ pub struct Request {
     pub run: String,
     pub generation: u64,
     pub id: String,
-    pub role: Role,
+    pub role: NativeLoopRole,
     pub parameters: Value,
     pub predecessors: BTreeMap<String, Artifact>,
 }
@@ -549,7 +552,7 @@ impl Loop {
         &self,
         generation: u64,
         id: String,
-        role: Role,
+        role: NativeLoopRole,
         parameters: Value,
         predecessors: BTreeMap<String, Artifact>,
     ) -> Result<(Artifact, Request)> {
@@ -661,7 +664,7 @@ impl Loop {
         );
         match (&r.role, &input.operation) {
             (
-                Role::ProposalModel,
+                NativeLoopRole::ProposalModel,
                 Operation::Proposal {
                     corpus,
                     checkpoint,
@@ -674,7 +677,7 @@ impl Loop {
                 },
             )
             | (
-                Role::ProposalShuffled,
+                NativeLoopRole::ProposalShuffled,
                 Operation::Proposal {
                     corpus,
                     checkpoint,
@@ -727,15 +730,15 @@ impl Loop {
                     "proposal RNG is not generation-derived"
                 );
             }
-            (Role::Direct, Operation::DirectEvaluation { manifest, sha256 })
-            | (Role::Continuation, Operation::SeededContinuation { manifest, sha256 }) => {
+            (NativeLoopRole::Direct, Operation::DirectEvaluation { manifest, sha256 })
+            | (NativeLoopRole::Continuation, Operation::SeededContinuation { manifest, sha256 }) => {
                 ensure!(
                     b.admission.delivery == Delivery::NativeJob
                         && r.parameters["genome_task"] == json!({"path":manifest,"sha256":sha256}),
                     "genome task changed"
                 );
             }
-            (Role::Aggregate, Operation::Verify) => {
+            (NativeLoopRole::Aggregate, Operation::Verify) => {
                 ensure!(
                     b.admission.delivery == Delivery::NativeJob
                         && task.kind == TaskKind::Verification
@@ -744,7 +747,7 @@ impl Loop {
                 );
             }
             (
-                Role::PackAndPublish,
+                NativeLoopRole::PackAndPublish,
                 Operation::PackAndPublish {
                     manifest, sha256, ..
                 },
@@ -768,7 +771,7 @@ impl Loop {
                 );
             }
             (
-                Role::Train,
+                NativeLoopRole::Train,
                 Operation::Train {
                     corpus,
                     initialize,
@@ -850,12 +853,14 @@ impl Loop {
             if let Some(binding) = self.binding(r)? {
                 // Unadmitted/waiting-authority bindings cannot execute. Admission
                 // occurs only in offer after the independent exact task grant.
-                if !matches!(r.role, Role::Direct | Role::Continuation)
-                    || crate::eval_registry::native_scq::policy::InstalledPolicy::load(
-                        &self.config.fit_policy,
-                    )?
-                    .task_policy(&binding.admission.manifest.sha256)?
-                    .is_some()
+                if !matches!(
+                    r.role,
+                    NativeLoopRole::Direct | NativeLoopRole::Continuation
+                ) || crate::eval_registry::native_scq::policy::InstalledPolicy::load(
+                    &self.config.fit_policy,
+                )?
+                .task_policy(&binding.admission.manifest.sha256)?
+                .is_some()
                 {
                     graph.reconcile_eligible(client, &binding.admission).await?;
                 }
@@ -925,7 +930,10 @@ impl Loop {
             )?;
             return Ok(());
         }
-        if matches!(r.role, Role::Direct | Role::Continuation) {
+        if matches!(
+            r.role,
+            NativeLoopRole::Direct | NativeLoopRole::Continuation
+        ) {
             let key = identity(&r.run, r.generation, &r.id)?;
             let admission = frozen(
                 &self.root,
@@ -1023,9 +1031,9 @@ impl Loop {
             generation,
             id.clone(),
             if stage == Stage::Direct {
-                Role::Direct
+                NativeLoopRole::Direct
             } else {
-                Role::Continuation
+                NativeLoopRole::Continuation
             },
             json!({"genome_task":reference}),
             predecessors,
@@ -1132,7 +1140,7 @@ impl Loop {
                 let (request_ref, r) = self.request(
                     generation,
                     id.clone(),
-                    Role::Aggregate,
+                    NativeLoopRole::Aggregate,
                     json!({"members":predecessors}),
                     predecessors.clone(),
                 )?;
@@ -1423,7 +1431,7 @@ impl Loop {
             let pack = previous
                 .original_request(generation, &format!("g{generation}-pack-and-publish"))?;
             ensure!(
-                pack.role == Role::PackAndPublish
+                pack.role == NativeLoopRole::PackAndPublish
                     && pack.parameters["previous_corpus"] == serde_json::to_value(&corpus)?,
                 "predecessor corpus lineage changed"
             );
@@ -1443,7 +1451,7 @@ impl Loop {
             let window = previous.config.train_window(generation)?;
             let initial = window.initial;
             ensure!(
-                train.role == Role::Train
+                train.role == NativeLoopRole::Train
                     && train.parameters["checkpoint"] == serde_json::to_value(&parent)?
                     && train.parameters["corpus"] == serde_json::to_value(&next_corpus)?
                     && train.parameters["initial_step"] == initial
@@ -1619,8 +1627,8 @@ impl Loop {
         for generation in 0..=self.config.cycles {
             let mut proposals = Vec::new();
             for (arm, role) in [
-                (Arm::Model, Role::ProposalModel),
-                (Arm::Shuffled, Role::ProposalShuffled),
+                (Arm::Model, NativeLoopRole::ProposalModel),
+                (Arm::Shuffled, NativeLoopRole::ProposalShuffled),
             ] {
                 let id = format!(
                     "g{generation}-proposal-{}",
@@ -1851,7 +1859,7 @@ impl Loop {
             let (_, pack) = self.request(
                 generation,
                 format!("g{generation}-pack-and-publish"),
-                Role::PackAndPublish,
+                NativeLoopRole::PackAndPublish,
                 json!({"target_set":set_ref,"previous_corpus":corpus,"closure":closure_ref}),
                 target_predecessors,
             )?;
@@ -1885,7 +1893,7 @@ impl Loop {
             let (_, train) = self.request(
                 generation,
                 format!("g{generation}-train"),
-                Role::Train,
+                NativeLoopRole::Train,
                 warm_start::train_parameters(&checkpoint, &next_corpus, &window)?,
                 predecessors,
             )?;
@@ -2165,7 +2173,7 @@ pub fn replenish(
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn r(g: u64, n: &str, role: Role) -> Request {
+    fn r(g: u64, n: &str, role: NativeLoopRole) -> Request {
         Request {
             schema: "jope.native_loop_request.v1".into(),
             run: "r".into(),
@@ -2178,7 +2186,7 @@ mod tests {
     }
     #[test]
     fn independently_valid_graph_admission_with_same_ids_cannot_replace_loop_binding() {
-        let request = r(0, "same", Role::Aggregate);
+        let request = r(0, "same", NativeLoopRole::Aggregate);
         let a = Artifact {
             path: "task.json".into(),
             sha256: "1".repeat(64),
@@ -2331,18 +2339,20 @@ mod tests {
     #[test]
     fn shared_backlog_counts_and_continuation_quarter_cap() {
         let direct = (0..500)
-            .map(|i| r(2, &i.to_string(), Role::Direct))
+            .map(|i| r(2, &i.to_string(), NativeLoopRole::Direct))
             .collect();
         let cont = (0..500)
-            .map(|i| r(1, &i.to_string(), Role::Continuation))
+            .map(|i| r(1, &i.to_string(), NativeLoopRole::Continuation))
             .collect();
         let out = replenish(48, 20, 4, direct, cont);
         assert_eq!(out.len(), 120);
         assert_eq!(
-            out.iter().filter(|r| r.role == Role::Continuation).count(),
+            out.iter()
+                .filter(|r| r.role == NativeLoopRole::Continuation)
+                .count(),
             8
         );
-        assert!(replenish(48, 90, 6, vec![r(0, "x", Role::Direct)], vec![]).is_empty());
+        assert!(replenish(48, 90, 6, vec![r(0, "x", NativeLoopRole::Direct)], vec![]).is_empty());
     }
     #[test]
     fn generations_not_newest_first_and_no_continuation_starvation() {
@@ -2350,10 +2360,13 @@ mod tests {
             48,
             0,
             0,
-            vec![r(3, "new", Role::Direct), r(0, "old", Role::Direct)],
-            vec![r(1, "continuation", Role::Continuation)],
+            vec![
+                r(3, "new", NativeLoopRole::Direct),
+                r(0, "old", NativeLoopRole::Direct),
+            ],
+            vec![r(1, "continuation", NativeLoopRole::Continuation)],
         );
-        assert_eq!(out[0].role, Role::Continuation);
+        assert_eq!(out[0].role, NativeLoopRole::Continuation);
         assert_eq!(out[1].generation, 0);
         assert_eq!(out[2].generation, 3);
     }

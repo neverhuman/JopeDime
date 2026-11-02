@@ -326,10 +326,10 @@ impl Checkpoints {
 /// What an attempt's candidate turned out to be.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum Role {
+pub enum CadenceRole {
     /// Initialized or improved an HWM.
     Winner,
-    /// The `AdmittedTeacher` case of `Role`.
+    /// The `AdmittedTeacher` case of `CadenceRole`.
     AdmittedTeacher,
     /// A declared diagnostic sample.
     DiagnosticSample,
@@ -337,10 +337,15 @@ pub enum Role {
     Other,
 }
 
+/// Compatibility alias for the domain-specific `CadenceRole` type.
+pub type Role = CadenceRole;
+
 /// The retention class for a role. There is no class that retains nothing.
-pub fn retention(role: Role) -> Retention {
+pub fn retention(role: CadenceRole) -> Retention {
     match role {
-        Role::Winner | Role::AdmittedTeacher | Role::DiagnosticSample => Retention::Full,
-        Role::Other => Retention::Compact,
+        CadenceRole::Winner | CadenceRole::AdmittedTeacher | CadenceRole::DiagnosticSample => {
+            Retention::Full
+        }
+        CadenceRole::Other => Retention::Compact,
     }
 }

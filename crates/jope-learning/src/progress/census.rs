@@ -31,7 +31,7 @@ use std::collections::{BTreeMap, BTreeSet};
 /// Where one logical unit stands.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "state")]
-pub enum Disposition {
+pub enum ProgressCensusDisposition {
     /// Terminal: exactly one attempt completed.
     /// Field value recorded by this public API type.
     /// Field value recorded by this public API type.
@@ -72,14 +72,17 @@ pub enum Disposition {
     Unscheduled,
 }
 
-impl Disposition {
+/// Compatibility alias for the domain-specific `ProgressCensusDisposition` type.
+pub type Disposition = ProgressCensusDisposition;
+
+impl ProgressCensusDisposition {
     /// Performs the terminal operation.
     pub fn terminal(&self) -> bool {
         matches!(
             self,
-            Disposition::Completed { .. }
-                | Disposition::Failed { .. }
-                | Disposition::Excluded { .. }
+            ProgressCensusDisposition::Completed { .. }
+                | ProgressCensusDisposition::Failed { .. }
+                | ProgressCensusDisposition::Excluded { .. }
         )
     }
 }
@@ -89,8 +92,8 @@ impl Disposition {
 pub struct UnitStatus {
     /// Identifier for the associated work.
     pub work_id: String,
-    /// Disposition recorded for this unit status.
-    pub disposition: Disposition,
+    /// ProgressCensusDisposition recorded for this unit status.
+    pub disposition: ProgressCensusDisposition,
     /// Attempts recorded for this unit status.
     pub attempts: u32,
     /// Retries recorded for this unit status.
@@ -324,7 +327,7 @@ pub fn reconcile(
         let attempts = by_work.get(w).unwrap_or(&empty);
         let mut status = UnitStatus {
             work_id: w.into(),
-            disposition: Disposition::Unscheduled,
+            disposition: ProgressCensusDisposition::Unscheduled,
             attempts: 0,
             retries: 0,
             failures: 0,
@@ -482,7 +485,7 @@ pub fn reconcile(
         }
 
         status.disposition = if let Some((attempt, d)) = completion {
-            Disposition::Completed {
+            ProgressCensusDisposition::Completed {
                 attempt,
                 completion: d.into(),
             }
@@ -490,24 +493,24 @@ pub fn reconcile(
             match last_failure {
                 Some((fa, class, retryable)) if fa == n => {
                     if retryable && n < m.max_attempts {
-                        Disposition::AwaitingRetry { attempt: n }
+                        ProgressCensusDisposition::AwaitingRetry { attempt: n }
                     } else {
-                        Disposition::Failed {
+                        ProgressCensusDisposition::Failed {
                             attempts: n,
                             class,
                             exhausted: retryable,
                         }
                     }
                 }
-                _ => Disposition::InFlight { attempt: n },
+                _ => ProgressCensusDisposition::InFlight { attempt: n },
             }
         } else if let Some((_, reason)) = exclusions.first() {
             *counts.exclusions.entry((*reason).into()).or_default() += 1;
-            Disposition::Excluded {
+            ProgressCensusDisposition::Excluded {
                 reason: (*reason).into(),
             }
         } else {
-            Disposition::Unscheduled
+            ProgressCensusDisposition::Unscheduled
         };
 
         let unit_decisions = decisions_by_work.get(w).map_or(&[][..], Vec::as_slice);
@@ -547,12 +550,12 @@ pub fn reconcile(
         }
 
         match &status.disposition {
-            Disposition::Completed { .. } => counts.completed += 1,
-            Disposition::Failed { .. } => counts.failed += 1,
-            Disposition::Excluded { .. } => counts.excluded += 1,
-            Disposition::InFlight { .. } => counts.in_flight += 1,
-            Disposition::AwaitingRetry { .. } => counts.awaiting_retry += 1,
-            Disposition::Unscheduled => counts.unscheduled += 1,
+            ProgressCensusDisposition::Completed { .. } => counts.completed += 1,
+            ProgressCensusDisposition::Failed { .. } => counts.failed += 1,
+            ProgressCensusDisposition::Excluded { .. } => counts.excluded += 1,
+            ProgressCensusDisposition::InFlight { .. } => counts.in_flight += 1,
+            ProgressCensusDisposition::AwaitingRetry { .. } => counts.awaiting_retry += 1,
+            ProgressCensusDisposition::Unscheduled => counts.unscheduled += 1,
         }
         units.push(status);
     }
