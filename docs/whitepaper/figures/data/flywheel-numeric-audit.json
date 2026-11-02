@@ -1,0 +1,622 @@
+{
+  "schema": "whitepaper.flywheel-numeric-audit/v1",
+  "checked_at": "2026-11-02T15:29:13.769173+00:00",
+  "source_paper_commit": "6dcad1097ae411f2da7599ff417b1aadf02448d6",
+  "conclusion": "No numerical correction or unsupported writer/ranking-map outcome found. Four PDF link targets are routed through the existing neutral provenance path; visible text and scientific values are preserved.",
+  "csv_rows_compared": 13751,
+  "csv_projections": 26,
+  "numeric_field_comparisons": 61077,
+  "scalar_and_derived_assertions": 91203,
+  "independent_observations": false,
+  "projection_checks": {
+    "admission_block_rates.csv": {
+      "sha256": "42f913c81aa4ab32a48cefcd54882d98c5d280cafdcb18e4bba6db0054da1e9d",
+      "rows": 2391,
+      "round_range": [
+        775,
+        3165
+      ],
+      "numeric_comparisons": 14346,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "admission_shortfall.csv": {
+      "sha256": "ae68b108f55a57552f395e2035ab69b7f4cdda05f362605ab06f0869e3f940db",
+      "rows": 695,
+      "round_range": [
+        775,
+        1469
+      ],
+      "numeric_comparisons": 695,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "admissions.csv": {
+      "sha256": "fd64a540f48127f4475b9eda8adeba6ecdcc767757cfdbba118ede332995bf9e",
+      "rows": 695,
+      "round_range": [
+        775,
+        1469
+      ],
+      "numeric_comparisons": 2085,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "candidate_retained_trace.csv": {
+      "sha256": "058a6cc3539de75fd4fe80ff1e8c4b696f399dc1cde2b47142068b3d2c057cd9",
+      "rows": 341,
+      "round_range": [
+        2795,
+        3135
+      ],
+      "numeric_comparisons": 2046,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "current_program_clock.csv": {
+      "sha256": "3190503d23afbade74225cc54c1a3f2a2470e97f4cfa501b53dbc9583209ec74",
+      "rows": 20,
+      "round_range": [
+        3609,
+        3628
+      ],
+      "numeric_comparisons": 40,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "followup_development.csv": {
+      "sha256": "a5e5fbc19ac048b851b8b17640e50e59bfc5456234c706823b8df530f373bed1",
+      "rows": 20,
+      "round_range": [
+        2082,
+        2101
+      ],
+      "numeric_comparisons": 80,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "later_development.csv": {
+      "sha256": "1b4600aaf84769efb6f3b4c24db4a5d68d281480731d2f2a8d37d5459fae909f",
+      "rows": 20,
+      "round_range": [
+        2343,
+        2362
+      ],
+      "numeric_comparisons": 100,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "latest_admissions.csv": {
+      "sha256": "aba6f21f5c9d0e0ab2b85c12081f05d2f6c6f558a64db90299af78f58c28a0b3",
+      "rows": 2423,
+      "round_range": [
+        775,
+        3197
+      ],
+      "numeric_comparisons": 12115,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "latest_event_rates.csv": {
+      "sha256": "eef4905cb41729766f76d15e75b51a1e76db8d56f763499b215925015ffaad3c",
+      "rows": 20,
+      "round_range": [
+        2933,
+        2952
+      ],
+      "numeric_comparisons": 80,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "latest_round_clock.csv": {
+      "sha256": "14a5f7a8a6bace9d18c7bad132fe563cd0737ddd0a82b6e38f6cb26178168f64",
+      "rows": 20,
+      "round_range": [
+        3033,
+        3052
+      ],
+      "numeric_comparisons": 80,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "live_admissions.csv": {
+      "sha256": "edd336c3b68e880040e8f41a6fe437617f643ed183d9b03d69554963ad54a6dd",
+      "rows": 1889,
+      "round_range": [
+        775,
+        2663
+      ],
+      "numeric_comparisons": 9445,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "live_development.csv": {
+      "sha256": "a913ea6de13ed5c48b36c5499ecc5a2c72a38652bf4472835ace69ba95f56dfc",
+      "rows": 20,
+      "round_range": [
+        2644,
+        2663
+      ],
+      "numeric_comparisons": 100,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "live_round_throughput.csv": {
+      "sha256": "a583a4b0790bb2e009adea2f667b62609aa26967b4383101c840d8348317c229",
+      "rows": 20,
+      "round_range": [
+        3576,
+        3595
+      ],
+      "numeric_comparisons": 120,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "program_gain_events.csv": {
+      "sha256": "3754dc2b22a5e1ee08a3881705504cc7afea0a4aea9795de54417a44ff19d6ef",
+      "rows": 9,
+      "round_range": [
+        3656,
+        3675
+      ],
+      "numeric_comparisons": 0,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "program_promotions.csv": {
+      "sha256": "a5c6be48052332bfad27ad12145fc34ce07434759d71eb1e77cda7ef596d04b6",
+      "rows": 20,
+      "round_range": [
+        1838,
+        1857
+      ],
+      "numeric_comparisons": 40,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "promotions_per_hour.csv": {
+      "sha256": "c45b14fe81fba0f3c225bf29abb05d3d67fcfce663121cc16f85ccd9ee05b508",
+      "rows": 20,
+      "round_range": [
+        2644,
+        2663
+      ],
+      "numeric_comparisons": 120,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "recent_candidate_retained_trace.csv": {
+      "sha256": "3494e66db541d4f9713d65bbe9abfd5d18be94aa2ffadb9dd0d6aea0a3adc092",
+      "rows": 500,
+      "round_range": [
+        3112,
+        3611
+      ],
+      "numeric_comparisons": 3000,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "recent_development.csv": {
+      "sha256": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
+      "rows": 20,
+      "round_range": [
+        2005,
+        2024
+      ],
+      "numeric_comparisons": 80,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "rolling_admissions.csv": {
+      "sha256": "5da2c00a93c91088760a38d83bbf9aaf2848e194947eca3e1623aba0b6d2ff39",
+      "rows": 1000,
+      "round_range": [
+        2710,
+        3709
+      ],
+      "numeric_comparisons": 6000,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "rolling_margin_quantiles.csv": {
+      "sha256": "7cfb79a9de610c9abd04500c9671fd4004ead369c975897760cfcd032ec05859",
+      "rows": 2423,
+      "round_range": [
+        775,
+        3197
+      ],
+      "numeric_comparisons": 0,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "round_throughput.csv": {
+      "sha256": "f2ccfb9e5dff3c29a8e188bc2ff4430bf7bef2e721daba3d870859db0146d002",
+      "rows": 20,
+      "round_range": [
+        2696,
+        2715
+      ],
+      "numeric_comparisons": 120,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "rounds.csv": {
+      "sha256": "8ef84b67c0af0e80ebe924cf8cdcfcada63859676d3f27b929bdcb9b41c69f9c",
+      "rows": 25,
+      "round_range": [
+        1342,
+        1469
+      ],
+      "numeric_comparisons": 25,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "selection_changes.csv": {
+      "sha256": "a0ea4013fa38bb3bbb8211b8a4399515b342f60f9dc4e966a1754259430d7e9e",
+      "rows": 1000,
+      "round_range": [
+        2744,
+        3743
+      ],
+      "numeric_comparisons": 10000,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "subsequent_rates.csv": {
+      "sha256": "b2ed1ff83eb3da4acb71f285e2aec85c738814a82d913c86cf9a060e0e3c3d60",
+      "rows": 20,
+      "round_range": [
+        2508,
+        2527
+      ],
+      "numeric_comparisons": 60,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "subsequent_window.csv": {
+      "sha256": "a4999500f97cb98c3ef3fd3bab0bb42aa4e91982997923c28d095f08691adabd",
+      "rows": 20,
+      "round_range": [
+        2508,
+        2527
+      ],
+      "numeric_comparisons": 100,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    },
+    "window_operating_inputs.csv": {
+      "sha256": "7d3eaed80874d387c45abbc4b5583e828acbf5bbc06c1769384f97ab80843ba1",
+      "rows": 100,
+      "round_range": [
+        2343,
+        3020
+      ],
+      "numeric_comparisons": 200,
+      "basis": "Current admission/per-round/promotion scalar journals; rate arithmetic uses retained CSV wall durations"
+    }
+  },
+  "printed_aggregate_checks": {
+    "current_program_clock.csv": {
+      "round_range": [
+        3609,
+        3628
+      ],
+      "program_events": 7,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 13,
+      "retained_wall_seconds": "1914.914594052",
+      "events_per_hour": "13.159855838100990260884057216827514044589797131016",
+      "rounds_per_hour": "37.599588108859972173954449190935754413113706088616"
+    },
+    "followup_development.csv": {
+      "round_range": [
+        2082,
+        2101
+      ],
+      "program_events": 10,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 14
+    },
+    "later_development.csv": {
+      "round_range": [
+        2343,
+        2362
+      ],
+      "program_events": 22,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 8,
+      "retained_wall_seconds": "1730.12998260400001",
+      "events_per_hour": "45.776907397903672346103015469225626768866413841124",
+      "rounds_per_hour": "41.615370361730611223730014062932387971696739855567"
+    },
+    "latest_event_rates.csv": {
+      "round_range": [
+        2933,
+        2952
+      ],
+      "program_events": 7,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 15,
+      "retained_wall_seconds": "1814.511273090",
+      "events_per_hour": "13.888037166661392604641302035924183986465000838393",
+      "rounds_per_hour": "39.680106190461121727546577245497668532757145252551"
+    },
+    "latest_round_clock.csv": {
+      "round_range": [
+        3033,
+        3052
+      ],
+      "program_events": 8,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 12,
+      "retained_wall_seconds": "1831.315931965",
+      "events_per_hour": "15.726396247259003188016858858180124247418115264155",
+      "rounds_per_hour": "39.315990618147507970042147145450310618545288160388"
+    },
+    "live_development.csv": {
+      "round_range": [
+        2644,
+        2663
+      ],
+      "program_events": 21,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 8,
+      "retained_wall_seconds": "1994.540229887",
+      "events_per_hour": "37.903472122135682542638576975365475179318041980664",
+      "rounds_per_hour": "36.098544878224459564417692357490928742207659029204"
+    },
+    "program_promotions.csv": {
+      "round_range": [
+        1838,
+        1857
+      ],
+      "program_events": 22,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 6
+    },
+    "recent_development.csv": {
+      "round_range": [
+        2005,
+        2024
+      ],
+      "program_events": 15,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 10
+    },
+    "subsequent_window.csv": {
+      "round_range": [
+        2508,
+        2527
+      ],
+      "program_events": 15,
+      "adapter_admissions": 0,
+      "zero_event_rounds": 8,
+      "retained_wall_seconds": "1731.449021203",
+      "events_per_hour": "31.187750455673904971123141887099199900104285207412",
+      "rounds_per_hour": "41.583667274231873294830855849465599866805713609883"
+    },
+    "latest_admissions.csv": {
+      "round_range": [
+        775,
+        3197
+      ],
+      "records": 2423,
+      "strict_gain_rounds": [
+        785,
+        859,
+        2750,
+        3175
+      ],
+      "exact_tie_rounds": [
+        782,
+        882,
+        2795,
+        3100
+      ],
+      "rejections": 2415
+    },
+    "live_admissions.csv": {
+      "round_range": [
+        775,
+        2663
+      ],
+      "records": 1889,
+      "strict_gain_rounds": [
+        785,
+        859
+      ],
+      "exact_tie_rounds": [
+        782,
+        882
+      ],
+      "rejections": 1885
+    },
+    "admission_block_rates.csv": {
+      "round_range": [
+        775,
+        3165
+      ],
+      "records": 2391,
+      "strict_gain_rounds": [
+        785,
+        859,
+        2750
+      ],
+      "exact_tie_rounds": [
+        782,
+        882,
+        2795,
+        3100
+      ],
+      "rejections": 2384
+    },
+    "rolling_admissions.csv": {
+      "round_range": [
+        2710,
+        3709
+      ],
+      "records": 1000,
+      "strict_gain_rounds": [
+        2750,
+        3175
+      ],
+      "exact_tie_rounds": [
+        2795,
+        3100
+      ],
+      "rejections": 996
+    },
+    "recent_candidate_retained_trace.csv": {
+      "round_range": [
+        3112,
+        3611
+      ],
+      "records": 500,
+      "strict_gain_rounds": [
+        3175
+      ],
+      "exact_tie_rounds": [],
+      "rejections": 499
+    },
+    "selection_changes.csv": {
+      "round_range": [
+        2744,
+        3743
+      ],
+      "records": 1000,
+      "strict_gain_rounds": [
+        2750,
+        3175
+      ],
+      "exact_tie_rounds": [
+        2795,
+        3100
+      ],
+      "rejections": 996
+    }
+  },
+  "source_capture": {
+    "per-round.jsonl": {
+      "at": "2026-11-02T15:23:09.009448+00:00",
+      "source_prefix_bytes": 2244107,
+      "source_prefix_sha256": "04735fa4f889a6684da1ef491a73f2f18a27b3ef7196dadb2eee3c1ba044d4e8",
+      "prefix_reread_verified": true,
+      "source_rows": 2884,
+      "round_range": [
+        883,
+        3766
+      ],
+      "omitted_partial_bytes": 0,
+      "projection_sha256": "b3ed0c868ca7d9cbf8b2f9746dc7df6ff0381030c95f3add874dc9a67220bc0b",
+      "fields": [
+        "round",
+        "adapter_accepted",
+        "candidate_selected_changes_fraction",
+        "candidate_selected_changes_vs882",
+        "incumbent_selected_changes_vs882",
+        "development_contexts",
+        "dope_checksum_match",
+        "reference_round",
+        "val_reg",
+        "evaluation_identity",
+        "optimizer_step_before",
+        "optimizer_step_candidate",
+        "trainable_params"
+      ]
+    },
+    "admissions.jsonl": {
+      "at": "2026-11-02T15:23:09.094135+00:00",
+      "source_prefix_bytes": 1581534,
+      "source_prefix_sha256": "02ab7bd4f58b5cb2adbe54617c61a1cc25bd3a6eabc47aa2be1422ca8807aff2",
+      "prefix_reread_verified": true,
+      "source_rows": 2992,
+      "round_range": [
+        775,
+        3766
+      ],
+      "omitted_partial_bytes": 0,
+      "projection_sha256": "7ed1922b4d4f1ef8da3e6b6c3530c2e20f3d4119ab9090026b781d69021aff86",
+      "fields": [
+        "round",
+        "candidate_utility",
+        "previous_best_utility",
+        "best_utility",
+        "accepted",
+        "action",
+        "best_round",
+        "evaluation_identity"
+      ]
+    },
+    "promotions.jsonl": {
+      "at": "2026-11-02T15:23:09.877601+00:00",
+      "source_prefix_bytes": 11581825,
+      "source_prefix_sha256": "380dacda13f1c10d34cf6c76beed2a38788e24e232fa0fe9ad82ba3cfa39ca63",
+      "prefix_reread_verified": true,
+      "source_rows": 3201,
+      "round_range": [
+        0,
+        3766
+      ],
+      "omitted_partial_bytes": 0,
+      "projection_sha256": "9544d9d31fade2db3fc92d68b12461d0c6abdcc5c58f0a48ecc86eb33b04ff92",
+      "fields": [
+        "round",
+        "kind",
+        "cv_gate_passed",
+        "old_utility",
+        "new_utility",
+        "timestamp"
+      ]
+    },
+    "summary.jsonl": {
+      "at": "2026-11-02T15:23:09.947056+00:00",
+      "source_prefix_bytes": 3358621,
+      "source_prefix_sha256": "1c9d9c705c47679ec3beebbd6acc55e7892e0bd7a0e754412d67ea061bd52a19",
+      "prefix_reread_verified": true,
+      "source_rows": 20,
+      "round_range": [
+        3747,
+        3766
+      ],
+      "omitted_partial_bytes": 0,
+      "projection_sha256": "f373001b01082a491975894dbb283785559dc6e8c3fa71de2473358d7911fc99",
+      "fields": [
+        "round",
+        "wall_seconds",
+        "train_wall_seconds",
+        "datasets_per_second",
+        "training_contexts_per_second",
+        "program_promotions",
+        "promotions",
+        "promotions_per_hour",
+        "program_promotions_per_hour",
+        "train_reg",
+        "val_reg",
+        "trainable_params",
+        "promotions_total",
+        "cumulative_promotions",
+        "training_context_presentations",
+        "distinct_training_contexts",
+        "adapter_admission"
+      ]
+    },
+    "producer_sha256": "3a5828c9f03e6c9e35df2257d79cd66f65831b7d4feb94608a7a0e0dd57a422f"
+  },
+  "checker_sha256": "9026df0bb9fddf0102c69b71baaebf9d6fd1848d10d1c441df0a75d52450c2ac",
+  "check_definitions": {
+    "candidate": "Candidate validation utility equals admission candidate_utility, and per-round val_reg where present.",
+    "retained_best": "Post-decision best_utility from the admission journal; accepted ties can change best_round without changing utility.",
+    "program_events": "kind=promotion, CV gate passed and new-minus-old utility >0.000001; historical admissions excluded.",
+    "rates": "Recompute counts divided by total retained wall seconds, not the mean of per-round rates.",
+    "margins": "Exact Decimal candidate minus previous best; exact bins, median, closest rejection and trailing50 linear-interpolation quantiles.",
+    "selection_counts": "Both plotted series equal the per-round fixed-reference identity counts; 91 contexts and reference round882. Counts do not establish quality or training causality.",
+    "comparison_tolerance": "Raw logged scalar matches and counts use exact Decimal/int comparisons; float-derived rate/shortfall comparisons use rel_tol1e-12, abs_tol1e-14.",
+    "history": "Retained historical aggregate metadata hashes match its provenance;159groups/55pairs/64lowergroups/23pairs and reported first final-value generations replay. Original score/seed payloads are not reopened."
+  },
+  "appendix_source_review": {
+    "primary_source_pins": 48,
+    "unchanged_from_previous_review": 48,
+    "predicates": 54,
+    "source_line_bindings": 24,
+    "pin_manifest_sha256": "1b044d48c5615b87286315fc5f0d681aa3ffd77488ee29172e126b9545e5c8a5",
+    "appendices": {
+      "A": "Native family-allocation source is distinguished from qualification of any corpus or checkpoint.",
+      "B": "Exclusion and pending audit requirements do not establish completed benchmark qualification.",
+      "C": "Encoder, native objectives, registered parameter counts and optimization records are explicitly historical reference specifications; exercised/learned capacity is not inferred.",
+      "D": "Adapter-only decisions and program events retain separate denominators and adaptive development scope. Predicted ranking cost is distinct from logged utility.",
+      "E": "Program-event clocks include all completed-round work/waits; no independent writer or value-net result is asserted.",
+      "F": "Strict-event gain distribution is conditional/descriptive; no-event rounds are counted separately, no independent performance/uncertainty estimate inferred."
+    },
+    "remaining_overclaims": []
+  },
+  "caption_and_figure_review": {
+    "captions": 36,
+    "latex_labels": 123,
+    "retained_pdf_figures": 36,
+    "provenance_figure_hashes_checked": 28,
+    "experiment_identifier_hits": [],
+    "method": "Caption/label source and extracted PDF figure text read; experiment-like identifiers searched and findings reviewed."
+  },
+  "limitations": [
+    "The per-round audit starts at883; earlier candidate/admission records use the companion admission journal starting775.",
+    "Program-event counts use promotion records, excluding historical admissions.",
+    "Duration arithmetic is recomputed from pinned retained CSV rows; old rotating summary rows are not claimed newly observed.",
+    "Historical search aggregates are separate retained metadata, not the live per-round series."
+  ],
+  "issues": []
+}

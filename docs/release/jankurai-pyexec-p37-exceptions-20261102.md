@@ -8,21 +8,30 @@ already pinned or whose execution occurs only in a source-pinned test fixture.
 The matching exact file paths are excluded from authored-source scoring in
 `agent/audit-policy.toml`. The auditor skips excluded files before scanning, so
 that policy also skips other Jankurai categories for those files. The exact
-source digests and all 57 observed per-file rule/fingerprint findings (including
-the 23 packet findings and other categories), plus the HLT-043 cross-file copy
-finding, are recorded in
+source digests and all 90 observed per-file rule/fingerprint findings (including
+42 HLT-033 sites and other categories), plus the complete raw changed-scope
+finding and copy-code inventories touching registered paths, are recorded in
 [`jankurai-pyexec-p37-dispositions-20261102.json`](jankurai-pyexec-p37-dispositions-20261102.json).
 `ops/ci/verify-pyexec-exceptions.sh` runs `audit-file` on every registered file
 and fails on byte drift, a changed/missing fingerprint, a new finding, a missing
 policy path, or expiry. It also runs a changed-scope repository audit with the
-P37 path skips temporarily removed, verifies the cross-file duplicate finding,
-and checks SHA-256 digests for all eight participating files. The helper restores
+P37 path skips temporarily removed, verifies every raw changed-scope finding and
+copy-code class touching registered paths, and checks exact SHA-256 digests for
+every registered source and identity participant. The helper restores
 the policy byte-for-byte before returning. This makes the coarse score exclusion
 conditional on the exact reviewed contents and complete current finding inventory. No emitted,
 vendored, or historical source bytes are changed by this disposition.
 
 | Packet finding | Exact-path disposition and evidence |
 | --- | --- |
+| Current H155 findings at `research/flywheel_selfplay/h155_rank_smoothing/runner.py:65,87,88` | The runner loads runtime and selected primitive functions only from H153 Git blobs at fixed commit `ea6347d5cc642cd0d7ae847c4e95f309471a5e72`; each source blob is checked against the manifest SHA-256 before compilation. The H155 executor is itself pinned by `manifest.json`. This preserves the recorded experiment source identity; it does not accept user-controlled source. The complete file finding set and exact H155 runner digest are in the register and rechecked by CI. |
+| Current H154 findings at `research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py` | The manifest pins this exact runtime and executor. Before execution, the runner verifies its manifest-pinned fused H50 input and fixed-commit guard-source digest; only those verified code blobs are compiled and executed. The runtime bytes, experiment manifest, and prior outputs remain unchanged. Complete file findings and exact runtime digest are enforced by the register and CI verifier. |
+| Current H158 findings at `research/flywheel_selfplay/h158_distillation/runtime.py` | The manifest pins this exact runtime and executor. Before execution, the runner verifies its manifest-pinned fused H50 input and fixed-commit guard-source digest; only those verified code blobs are compiled and executed. The runtime bytes, experiment manifest, and prior outputs remain unchanged. Complete file findings and exact runtime digest are enforced by the register and CI verifier. |
+| Current H159 findings at `research/flywheel_selfplay/h159_fail_logit_veto/runtime.py` | The manifest pins this exact runtime and executor. Before execution, the runner verifies its manifest-pinned fused H50 input and fixed-commit guard-source digest; only those verified code blobs are compiled and executed. The runtime bytes, experiment manifest, and prior outputs remain unchanged. Complete file findings and exact runtime digest are enforced by the register and CI verifier. |
+| Current H161 findings at `research/flywheel_selfplay/h161_robust_fambal/runtime.py` | The manifest pins this exact runtime and executor. Before execution, the runner verifies its manifest-pinned fused H50 input and fixed-commit guard-source digest; only those verified code blobs are compiled and executed. The runtime bytes, experiment manifest, and prior outputs remain unchanged. Complete file findings and exact runtime digest are enforced by the register and CI verifier. |
+| Current H164 findings at `research/flywheel_selfplay/h164_sam_retry/runtime.py` | The manifest pins this exact runtime and executor. Before execution, the runner verifies its manifest-pinned fused H50 input and fixed-commit guard-source digest; only those verified code blobs are compiled and executed. The runtime bytes, experiment manifest, and prior outputs remain unchanged. Complete file findings and exact runtime digest are enforced by the register and CI verifier. |
+| Current H168 findings at `research/flywheel_selfplay/h168_selector_remedy/runtime.py` | The manifest pins this exact runtime and executor. Before execution, the runner verifies its manifest-pinned fused H50 input and fixed-commit guard-source digest; only those verified code blobs are compiled and executed. The runtime bytes, experiment manifest, and prior outputs remain unchanged. Complete file findings and exact runtime digest are enforced by the register and CI verifier. |
+| Current H173 findings at `research/flywheel_selfplay/h173_hard_context_reweight/runtime.py` | The manifest pins this exact runtime and executor. Before execution, the runner verifies its manifest-pinned fused H50 input and fixed-commit guard-source digest; only those verified code blobs are compiled and executed. The runtime bytes, experiment manifest, and prior outputs remain unchanged. Complete file findings and exact runtime digest are enforced by the register and CI verifier. |
 | `deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py:187` | The test calls `compile` on three literal remote Python command strings only to reject syntax errors and an unwanted import. It does not execute them. This fixture's exact source bytes are recorded in `deploy/dl-flywheel/SOURCE_MANIFEST.json`; changing them would invalidate the recorded source identity. |
 | `deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py:109` | `CheckedCallback.check` compiles a bounded callback file after `safe_file` validates its path, size, and unchanged identity and after the request's SHA-256 matches. It compares the compiled function code object with the already-loaded callable; this line does not execute the supplied code. Compilation is required for the bytecode identity check. |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py:129` | The test extracts only the `provenance` expression from `NativeEvaluator.execute` and evaluates it against a closed local fixture environment to assert a field binding. The test file is byte-pinned in `deploy/dl-flywheel/SOURCE_MANIFEST.json`; the evaluation is a test-only check, not a runtime input path. |
@@ -46,5 +55,4 @@ vendored, or historical source bytes are changed by this disposition.
 | `research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py:127` | The guard bytes come from fixed Git commit `GUARD_COMMIT` and must match `GUARD_SHA` before module binding. |
 | `research/flywheel_selfplay/h153_sam/runtime.py:99` | The experiment runner verifies the input paths against its exact `manifest.json` pins before calling `build`; `cpu_exact_fused.py` is a recorded input identity. This runtime is also pinned by downstream H-wave manifests; its source bytes are preserved. |
 
-The full audit report is retained at `/tmp/pyexec.json`; its repository-wide
-score is not a P37-only result.
+The baseline full audit is retained at `/home/ubuntu/jope_plan/master/audit/rerun/j_fbe191a33.json`; its repository-wide score is not a P37-only result.

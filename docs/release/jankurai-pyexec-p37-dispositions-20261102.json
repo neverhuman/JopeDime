@@ -3,8 +3,6 @@
   "cross_file_findings": [
     {
       "check_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR:copy-code",
-      "class_id": "copy-code-unit-python-28fe6215583fcaec",
-      "disposition": "This exact duplicate is preserved in pinned historical experiment runtimes. It is not claimed fixed; the changed-scope repository audit requires this class fingerprint to remain unchanged.",
       "fingerprint": "sha256:f19b9afde2f6d8a61b0d4c70e2ad77533c4bc3b8a2fd170c44317a2fa1f2939d",
       "line": 50,
       "participants": {
@@ -18,11 +16,1299 @@
         "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
       },
       "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+        "rule_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR",
+        "check_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR:copy-code",
+        "fingerprint": "sha256:f19b9afde2f6d8a61b0d4c70e2ad77533c4bc3b8a2fd170c44317a2fa1f2939d",
+        "line": 50,
+        "problem": "copy-code hard class `copy-code-unit-python-28fe6215583fcaec` detected",
+        "reason": "same-name semantic unit copied across multiple files",
+        "category": "copy-code",
+        "evidence": [
+          "kind=ExactUnitSameName",
+          "language=python",
+          "duplicate_lines=41",
+          "duplicate_tokens=176",
+          "duplicate_bytes=1515",
+          "instances=research/flywheel_selfplay/h144_reg_sweep/runtime.py:50-93, research/flywheel_selfplay/h146_lookahead_exec/runtime.py:51-94, research/flywheel_selfplay/h149_wd_dose/runtime.py:50-93, research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py:50-93, research/flywheel_selfplay/h153_sam/runtime.py:50-93, research/flywheel_selfplay/h158_distillation/runtime.py:50-93, research/flywheel_selfplay/h161_robust_fambal/runtime.py:50-93, research/flywheel_selfplay/h164_sam_retry/runtime.py:50-93"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "research/flywheel_selfplay/h153_sam/runtime.py",
+          "research/flywheel_selfplay/h158_distillation/runtime.py",
+          "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "research/flywheel_selfplay/h164_sam_retry/runtime.py"
+        ]
+      },
       "rule_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:854cf7c51e988d40546adf6fef1fa4a88c3f4e4ae3d8bec06112d8b674cacf9f",
+      "line": 187,
+      "participants": {
+        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
+      },
+      "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+      "raw_identity": {
+        "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:854cf7c51e988d40546adf6fef1fa4a88c3f4e4ae3d8bec06112d8b674cacf9f",
+        "line": 187,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+          "line=187",
+          "proof_window=None",
+          "snippet=compile(n.value.value,'remote-python-c','exec');self.assertNotIn('from campaign import',n.value.value);scripts.append(n.value.value)"
+        ],
+        "participants": [
+          "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:26899bc6cf581e8cce1936a8bb7c7904309aa2ba7bae6c200dd80d09ea0abd67",
+      "line": 109,
+      "participants": {
+        "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+      },
+      "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+      "raw_identity": {
+        "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:26899bc6cf581e8cce1936a8bb7c7904309aa2ba7bae6c200dd80d09ea0abd67",
+        "line": 109,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+          "line=109",
+          "proof_window=None",
+          "snippet=compiled = compile(raw, self.fn.__code__.co_filename, 'exec', dont_inherit=True, optimize=sys.flags.optimize)"
+        ],
+        "participants": [
+          "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:748ac262c5a82e79441290877934a9dad51a5d1df76d888465b72dc339b86c74",
+      "line": 129,
+      "participants": {
+        "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py": "32bf2aa07e7964c0a935ca9894113f1a512ceff3325a1c3db3016e80ba59d2e3"
+      },
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
+      "raw_identity": {
+        "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:748ac262c5a82e79441290877934a9dad51a5d1df76d888465b72dc339b86c74",
+        "line": 129,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
+          "line=129",
+          "proof_window=None",
+          "snippet=provenance = eval(compile(ast.Expression(value), '<actual-provenance>', 'eval'), env)"
+        ],
+        "participants": [
+          "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:9fcdf81e43c2e8f006031e8133ecacf498ee5eab69157b9b0679502e98ba3974",
+      "line": 220,
+      "participants": {
+        "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py": "d326be2130f6ec5871823867ef3f352bf2aa579a655e86eb3552324c4e805c68"
+      },
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+      "raw_identity": {
+        "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:9fcdf81e43c2e8f006031e8133ecacf498ee5eab69157b9b0679502e98ba3974",
+        "line": 220,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+          "line=220",
+          "proof_window=None",
+          "snippet=with self.assertRaises(AssertionError):exec(op.PHYSICAL_UNIT,{})"
+        ],
+        "participants": [
+          "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:7b59dc18e5c24d1049e09b033d32c4f09134ba2c53aedebbb4244d897e0b3fcc",
+      "line": 223,
+      "participants": {
+        "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py": "d326be2130f6ec5871823867ef3f352bf2aa579a655e86eb3552324c4e805c68"
+      },
+      "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+      "raw_identity": {
+        "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:7b59dc18e5c24d1049e09b033d32c4f09134ba2c53aedebbb4244d897e0b3fcc",
+        "line": 223,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+          "line=223",
+          "proof_window=None",
+          "snippet=with contextlib.redirect_stdout(output):exec(op.PHYSICAL_UNIT,{})"
+        ],
+        "participants": [
+          "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:a3ef262ddd3ad3e161412f4d695f07623d321e8ba8bda0ed3e5eb4c4bbd1f223",
+      "line": 1497,
+      "participants": {
+        "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py": "b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00"
+      },
+      "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+      "raw_identity": {
+        "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:a3ef262ddd3ad3e161412f4d695f07623d321e8ba8bda0ed3e5eb4c4bbd1f223",
+        "line": 1497,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "line=1497",
+          "proof_window=None",
+          "snippet=exec(compile(body, str(GSK), \"exec\"), mod.__dict__)"
+        ],
+        "participants": [
+          "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:a15be3164ce727420bc01b0ebc08fa1197133b7f9c7ef1731a8ea6487d58c1c3",
+      "line": 113,
+      "participants": {
+        "research/flywheel_selfplay/golden/capture_cpu.py": "98330cd3bd39bd71ce1011b04af35c25f7ed5b53d7eb182da326267e7e509dab"
+      },
+      "path": "research/flywheel_selfplay/golden/capture_cpu.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/golden/capture_cpu.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:a15be3164ce727420bc01b0ebc08fa1197133b7f9c7ef1731a8ea6487d58c1c3",
+        "line": 113,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/golden/capture_cpu.py",
+          "line=113",
+          "proof_window=None",
+          "snippet=exec(compile(ast.fix_missing_locations(module), original, \"exec\"), reference.env)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/golden/capture_cpu.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:509c88c401ca101d90ab50dbe1417dcec5ed0071546b742bc7867fa30d0d0f7c",
+      "line": 164,
+      "participants": {
+        "research/flywheel_selfplay/golden/reference.py": "ab83c64fb88523710588e0b7554cd4e8005f4f7988e8ec4e3d2f949c71c323ce"
+      },
+      "path": "research/flywheel_selfplay/golden/reference.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/golden/reference.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:509c88c401ca101d90ab50dbe1417dcec5ed0071546b742bc7867fa30d0d0f7c",
+        "line": 164,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/golden/reference.py",
+          "line=164",
+          "proof_window=None",
+          "snippet=exec(compile(module, original, \"exec\"), self.env)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/golden/reference.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:f6cf784e54635bbd901651015c46732ca1930c9d6f9eb8c5a3107fe87b105865",
+      "line": 142,
+      "participants": {
+        "research/flywheel_selfplay/h113_w3_continuous/test_losses.py": "8481461c08f7c3b8a55c32a2ca3c1aa1aad57ed5f9f3edae943347420daa9db0"
+      },
+      "path": "research/flywheel_selfplay/h113_w3_continuous/test_losses.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h113_w3_continuous/test_losses.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:f6cf784e54635bbd901651015c46732ca1930c9d6f9eb8c5a3107fe87b105865",
+        "line": 142,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h113_w3_continuous/test_losses.py",
+          "line=142",
+          "proof_window=None",
+          "snippet=exec(compile(ast.Module(body=[fn], type_ignores=[]), str(path), \"exec\"), scope)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h113_w3_continuous/test_losses.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:96147bcf7fd7839ecdb43a5aae7193d6ee4a8027b98229b5bb184395ea32855a",
+      "line": 91,
+      "participants": {
+        "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py": "8ed175fa240c3769f1fcef81e23c6128736bf539f7e771358da84f4dc7278ab7"
+      },
+      "path": "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:96147bcf7fd7839ecdb43a5aae7193d6ee4a8027b98229b5bb184395ea32855a",
+        "line": 91,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+          "line=91",
+          "proof_window=None",
+          "snippet=exec(compile(source, module.__file__, \"exec\"), module.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:1b568003a853f1d3913d1fe78e4e8098f9d1325d68712256145f5b04750ae327",
+      "line": 112,
+      "participants": {
+        "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a"
+      },
+      "path": "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:1b568003a853f1d3913d1fe78e4e8098f9d1325d68712256145f5b04750ae327",
+        "line": 112,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+          "line=112",
+          "proof_window=None",
+          "snippet=exec(compile(source, module.__file__, \"exec\"), module.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:cf09edd872cfb6a38060707813a48d96226d333cf45868d2926e41f4da51ee81",
+      "line": 119,
+      "participants": {
+        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc"
+      },
+      "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:cf09edd872cfb6a38060707813a48d96226d333cf45868d2926e41f4da51ee81",
+        "line": 119,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "line=119",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h144_reg_sweep/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:f05f5138423fe55ebe20a7e6222b3ae71d26f439af9e561538e71279ccebb924",
+      "line": 99,
+      "participants": {
+        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc"
+      },
+      "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:f05f5138423fe55ebe20a7e6222b3ae71d26f439af9e561538e71279ccebb924",
+        "line": 99,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "line=99",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h144_reg_sweep/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:716a3cf6e578cebd7050e1df3652fc33c42fef12cefbc1ceb93ef371f9cceeed",
+      "line": 100,
+      "participants": {
+        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4"
+      },
+      "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:716a3cf6e578cebd7050e1df3652fc33c42fef12cefbc1ceb93ef371f9cceeed",
+        "line": 100,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "line=100",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h146_lookahead_exec/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:4fdf30569cc73bfd5502abf25b21037b87df93aa8d49ffca5cf1efffd6580f2c",
+      "line": 120,
+      "participants": {
+        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4"
+      },
+      "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:4fdf30569cc73bfd5502abf25b21037b87df93aa8d49ffca5cf1efffd6580f2c",
+        "line": 120,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "line=120",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h146_lookahead_exec/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:c52ff8a891e8d1d5eb71d82ef4ac808160cb134414f3bee299e7e16b64da359a",
+      "line": 227,
+      "participants": {
+        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+      },
+      "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:c52ff8a891e8d1d5eb71d82ef4ac808160cb134414f3bee299e7e16b64da359a",
+        "line": 227,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "line=227",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h147_reveal_alignment/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:aa45f70317f190b992be2f00d416f4f82c7978e2d04fcc7327b78f00d7e59bc3",
+      "line": 248,
+      "participants": {
+        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+      },
+      "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:aa45f70317f190b992be2f00d416f4f82c7978e2d04fcc7327b78f00d7e59bc3",
+        "line": 248,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "line=248",
+          "proof_window=None",
+          "snippet=exec(compile(src, ELO_PATH, \"exec\"), mod.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h147_reveal_alignment/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:7ef660c7e89936069173811a8598c80ecead60b743c155f3c6c5082f9d0a8119",
+      "line": 344,
+      "participants": {
+        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+      },
+      "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:7ef660c7e89936069173811a8598c80ecead60b743c155f3c6c5082f9d0a8119",
+        "line": 344,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "line=344",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h147_reveal_alignment/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:ebda579bdf66b8879b5a9a59ff16cdfbf2b934f34d60ceb04f0e5591a6ed95d4",
+      "line": 119,
+      "participants": {
+        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6"
+      },
+      "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:ebda579bdf66b8879b5a9a59ff16cdfbf2b934f34d60ceb04f0e5591a6ed95d4",
+        "line": 119,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "line=119",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h149_wd_dose/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:c2a0ebfaeb38f4b7d0214d7b656b7e11bfe313a881c24b6858203422830531fd",
+      "line": 99,
+      "participants": {
+        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6"
+      },
+      "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:c2a0ebfaeb38f4b7d0214d7b656b7e11bfe313a881c24b6858203422830531fd",
+        "line": 99,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "line=99",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h149_wd_dose/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:40e88b1f9da3ae1b0856afb5dcb3cdbbf3bd82a97cd852e1742debd982cd256c",
+      "line": 127,
+      "participants": {
+        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b"
+      },
+      "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:40e88b1f9da3ae1b0856afb5dcb3cdbbf3bd82a97cd852e1742debd982cd256c",
+        "line": 127,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "line=127",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:59b7f8db14933ca7fc18dff34783ae0f06f620a0b5a0dfa8298c20e76e8f6a91",
+      "line": 99,
+      "participants": {
+        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b"
+      },
+      "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:59b7f8db14933ca7fc18dff34783ae0f06f620a0b5a0dfa8298c20e76e8f6a91",
+        "line": 99,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "line=99",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:0740000c26014b08d7f1b00262049a09724393c014a46738a8ca015a6145aff3",
+      "line": 119,
+      "participants": {
+        "research/flywheel_selfplay/h153_sam/runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a"
+      },
+      "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:0740000c26014b08d7f1b00262049a09724393c014a46738a8ca015a6145aff3",
+        "line": 119,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h153_sam/runtime.py",
+          "line=119",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h153_sam/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:06a85304cd21ef186279ebe7009e77554435bf9042d92a8a98bab84aaa9fbe74",
+      "line": 99,
+      "participants": {
+        "research/flywheel_selfplay/h153_sam/runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a"
+      },
+      "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:06a85304cd21ef186279ebe7009e77554435bf9042d92a8a98bab84aaa9fbe74",
+        "line": 99,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h153_sam/runtime.py",
+          "line=99",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h153_sam/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:c984d0438eea4ef87e419b43114e97f4d6d383b7702a81d566a5f936b028a5d6",
+      "line": 181,
+      "participants": {
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": "345ef71cd4c894e48818741df75a8c21b62fbfc9325398bdaf8d361e434031f5"
+      },
+      "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:c984d0438eea4ef87e419b43114e97f4d6d383b7702a81d566a5f936b028a5d6",
+        "line": 181,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "line=181",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:80cfc51123697836d12f4b61a3c8faddb7aabc08af3ae745333ac3cfaaacf58f",
+      "line": 277,
+      "participants": {
+        "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": "345ef71cd4c894e48818741df75a8c21b62fbfc9325398bdaf8d361e434031f5"
+      },
+      "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:80cfc51123697836d12f4b61a3c8faddb7aabc08af3ae745333ac3cfaaacf58f",
+        "line": 277,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "line=277",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:3d3cbe8e914c57b5822f356014a34a4906f66a2a04f62b78b1245fb87ab1309e",
+      "line": 65,
+      "participants": {
+        "research/flywheel_selfplay/h155_rank_smoothing/runner.py": "e7f27e5420b9c8f06f11311241ef41e4f8a6f227ab7c58f67ab9f6f1638f57a5"
+      },
+      "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:3d3cbe8e914c57b5822f356014a34a4906f66a2a04f62b78b1245fb87ab1309e",
+        "line": 65,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+          "line=65",
+          "proof_window=None",
+          "snippet=exec(compile(code[\"runtime.py\"], runtime.__file__, \"exec\"), runtime.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h155_rank_smoothing/runner.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:c4519207777310dd7b09ab9215a668469682dbc9acd0479459a075175f2e6805",
+      "line": 87,
+      "participants": {
+        "research/flywheel_selfplay/h155_rank_smoothing/runner.py": "e7f27e5420b9c8f06f11311241ef41e4f8a6f227ab7c58f67ab9f6f1638f57a5"
+      },
+      "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:c4519207777310dd7b09ab9215a668469682dbc9acd0479459a075175f2e6805",
+        "line": 87,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+          "line=87",
+          "proof_window=None",
+          "snippet=exec("
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h155_rank_smoothing/runner.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:c1662f0c6c1e641f1d6fd49a856fe9816a34f1caa108a8c2eff83621e4da2e12",
+      "line": 88,
+      "participants": {
+        "research/flywheel_selfplay/h155_rank_smoothing/runner.py": "e7f27e5420b9c8f06f11311241ef41e4f8a6f227ab7c58f67ab9f6f1638f57a5"
+      },
+      "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:c1662f0c6c1e641f1d6fd49a856fe9816a34f1caa108a8c2eff83621e4da2e12",
+        "line": 88,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+          "line=88",
+          "proof_window=None",
+          "snippet=compile("
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h155_rank_smoothing/runner.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:ede0bae6b48f01f7d6de1266ebbb01a347e427384247c514347d30e8eb403a70",
+      "line": 127,
+      "participants": {
+        "research/flywheel_selfplay/h158_distillation/runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4"
+      },
+      "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:ede0bae6b48f01f7d6de1266ebbb01a347e427384247c514347d30e8eb403a70",
+        "line": 127,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h158_distillation/runtime.py",
+          "line=127",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h158_distillation/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:ad8ce6079eb3726cacb7855cc36e6fe3aad1a5e6c357102e1275baa0bd065501",
+      "line": 99,
+      "participants": {
+        "research/flywheel_selfplay/h158_distillation/runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4"
+      },
+      "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:ad8ce6079eb3726cacb7855cc36e6fe3aad1a5e6c357102e1275baa0bd065501",
+        "line": 99,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h158_distillation/runtime.py",
+          "line=99",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h158_distillation/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:8d43e777064b510250d6a6e3331d518b0381cf22eab92d3d2a7c22564341b070",
+      "line": 154,
+      "participants": {
+        "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py": "3051b328f585f045e92a7f49d84243d05a0ec658839fb6e70533e763f3f7c48d"
+      },
+      "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:8d43e777064b510250d6a6e3331d518b0381cf22eab92d3d2a7c22564341b070",
+        "line": 154,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+          "line=154",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:bff700070fd0f280f5308850679881d6c42fdaa52660c2f734afa019f3de1ef3",
+      "line": 182,
+      "participants": {
+        "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py": "3051b328f585f045e92a7f49d84243d05a0ec658839fb6e70533e763f3f7c48d"
+      },
+      "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:bff700070fd0f280f5308850679881d6c42fdaa52660c2f734afa019f3de1ef3",
+        "line": 182,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+          "line=182",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:60062364e40ba304450b8ceeff58180b95e2960681e63d90ed89ac731224e475",
+      "line": 127,
+      "participants": {
+        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b"
+      },
+      "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:60062364e40ba304450b8ceeff58180b95e2960681e63d90ed89ac731224e475",
+        "line": 127,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "line=127",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h161_robust_fambal/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:b10a2ee9efc76750ac3b5736fbc2fcb2e370dc9ba0d751ad1530cf023f2806ae",
+      "line": 99,
+      "participants": {
+        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b"
+      },
+      "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:b10a2ee9efc76750ac3b5736fbc2fcb2e370dc9ba0d751ad1530cf023f2806ae",
+        "line": 99,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "line=99",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h161_robust_fambal/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:a2e29ec7b5fd9c2d547e422852ff2aa950349c0d4d00fca865965fe0367c9100",
+      "line": 119,
+      "participants": {
+        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+      },
+      "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:a2e29ec7b5fd9c2d547e422852ff2aa950349c0d4d00fca865965fe0367c9100",
+        "line": 119,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "line=119",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h164_sam_retry/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:90a52d05faf137e21ca69907f784e970751fd0d1fd7bde7293fe89de27d89124",
+      "line": 99,
+      "participants": {
+        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+      },
+      "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:90a52d05faf137e21ca69907f784e970751fd0d1fd7bde7293fe89de27d89124",
+        "line": 99,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "line=99",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h164_sam_retry/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:186a26213aef22495023d991b65c74720e9f4c5a720a17667bbe764229e5eda9",
+      "line": 120,
+      "participants": {
+        "research/flywheel_selfplay/h168_selector_remedy/runtime.py": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d"
+      },
+      "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:186a26213aef22495023d991b65c74720e9f4c5a720a17667bbe764229e5eda9",
+        "line": 120,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "line=120",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h168_selector_remedy/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:600aa5e9ac2b2f45e4d1def1cabd55cda6c2dd14c8c2f07a41bbda809f811211",
+      "line": 95,
+      "participants": {
+        "research/flywheel_selfplay/h168_selector_remedy/runtime.py": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d"
+      },
+      "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:600aa5e9ac2b2f45e4d1def1cabd55cda6c2dd14c8c2f07a41bbda809f811211",
+        "line": 95,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "line=95",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h168_selector_remedy/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:bec2688f25e9689adafdecb3496ba69f9382aecb1a8017e2116fa116fdd31d85",
+      "line": 120,
+      "participants": {
+        "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py": "4c4342bcb8de9a9c157dc400ba062e061742f90e2cac96a4a61546ec498be05e"
+      },
+      "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:bec2688f25e9689adafdecb3496ba69f9382aecb1a8017e2116fa116fdd31d85",
+        "line": 120,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "line=120",
+          "proof_window=None",
+          "snippet=exec(compile(src, GUARD_PATH, \"exec\"), guard.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:3c392595dd08ee0b79133b7eaad2a92db6bf2ffb6c93e2e05f963277350b6771",
+      "line": 95,
+      "participants": {
+        "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py": "4c4342bcb8de9a9c157dc400ba062e061742f90e2cac96a4a61546ec498be05e"
+      },
+      "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+      "raw_identity": {
+        "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:3c392595dd08ee0b79133b7eaad2a92db6bf2ffb6c93e2e05f963277350b6771",
+        "line": 95,
+        "problem": "dynamic code execution runs attacker-controlled source directly",
+        "reason": "the line executes text as code instead of keeping it as data",
+        "category": "python",
+        "evidence": [
+          "detector=python.exec.dynamic-code",
+          "path=research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "line=95",
+          "proof_window=None",
+          "snippet=exec(compile(p.read_bytes(), str(p), \"exec\"), m.__dict__)"
+        ],
+        "participants": [
+          "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+    },
+    {
+      "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+      "fingerprint": "sha256:ab8cc443bcb57b13f9c615f83837a3d854f9a80e24325c32dc6cb8e1799da26e",
+      "line": 38,
+      "participants": {
+        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
+      },
+      "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+      "raw_identity": {
+        "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+        "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+        "check_id": "HLT-033-PYTHON-BAD-BEHAVIOR:python",
+        "fingerprint": "sha256:ab8cc443bcb57b13f9c615f83837a3d854f9a80e24325c32dc6cb8e1799da26e",
+        "line": 38,
+        "problem": "string-built SQL reaches a database sink without parameter binding",
+        "reason": "the SQL text is assembled inline before the execute/query call",
+        "category": "python",
+        "evidence": [
+          "detector=python.sql.string-built",
+          "path=deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+          "line=38",
+          "proof_window=None",
+          "snippet=self.db.execute('INSERT INTO '+q.PACKETS+' VALUES(?,?,?,?,?,?,NULL)',('f'*64,'xbabe3',c.PIPELINE_SHA,1,2,'claimed'))"
+        ],
+        "participants": [
+          "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py"
+        ]
+      },
+      "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
     }
   ],
   "expires_on": "2026-12-02",
-  "generated_unix": 1793590976,
+  "generated_unix": 1793631163,
   "owner": "P37 / jankurai python-bad-behavior cap",
   "paths": {
     "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
@@ -503,8 +1789,3543 @@
         }
       ],
       "sha256": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a"
+    },
+    "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": {
+      "sha256": "345ef71cd4c894e48818741df75a8c21b62fbfc9325398bdaf8d361e434031f5",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:52aae06457af0bf3027691ab42283a7f76e56d31f8bd732357cd883b773e9fb3",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:c984d0438eea4ef87e419b43114e97f4d6d383b7702a81d566a5f936b028a5d6",
+          "line": 181,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:ade267dcc19a0d6f446001e01eb84be97549104ef71b2d876157cf2e6784835d",
+          "line": 182,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:80cfc51123697836d12f4b61a3c8faddb7aabc08af3ae745333ac3cfaaacf58f",
+          "line": 277,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
+    },
+    "research/flywheel_selfplay/h155_rank_smoothing/runner.py": {
+      "sha256": "e7f27e5420b9c8f06f11311241ef41e4f8a6f227ab7c58f67ab9f6f1638f57a5",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:3392c834c13246cc196e298eee0a7c931533ca47f3866b86c5c5d98df3506ce6",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:3d3cbe8e914c57b5822f356014a34a4906f66a2a04f62b78b1245fb87ab1309e",
+          "line": 65,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:a5fcba91a9d079fe816f10c388087506195781279b0514a6262898d800937815",
+          "line": 66,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:c4519207777310dd7b09ab9215a668469682dbc9acd0479459a075175f2e6805",
+          "line": 87,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:c1662f0c6c1e641f1d6fd49a856fe9816a34f1caa108a8c2eff83621e4da2e12",
+          "line": 88,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
+    },
+    "research/flywheel_selfplay/h158_distillation/runtime.py": {
+      "sha256": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:f6afc042e1b50b46fc770f70f560aa10d9879dd977e6a87f07b12c272761c91b",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:ad8ce6079eb3726cacb7855cc36e6fe3aad1a5e6c357102e1275baa0bd065501",
+          "line": 99,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:32568e545251ab033e2fd4f7efd1e60622573f26d71ebf1a631c8bab3562a85c",
+          "line": 100,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:ede0bae6b48f01f7d6de1266ebbb01a347e427384247c514347d30e8eb403a70",
+          "line": 127,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
+    },
+    "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py": {
+      "sha256": "3051b328f585f045e92a7f49d84243d05a0ec658839fb6e70533e763f3f7c48d",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:789fedc03d434ba6c927cb0a067538b65bf31c8e56a36bea380eb29a1c0aa591",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:8d43e777064b510250d6a6e3331d518b0381cf22eab92d3d2a7c22564341b070",
+          "line": 154,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:499b92169e69ab2ea48436b3b46c9bee651f17d5c45e802dc27eb2f3774960f5",
+          "line": 155,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:bff700070fd0f280f5308850679881d6c42fdaa52660c2f734afa019f3de1ef3",
+          "line": 182,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
+    },
+    "research/flywheel_selfplay/h161_robust_fambal/runtime.py": {
+      "sha256": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:dbc6a30fdfdd6202258cc9c3539ed7d2ad90b14be5d1468e9596891b3e4c6d1f",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:b10a2ee9efc76750ac3b5736fbc2fcb2e370dc9ba0d751ad1530cf023f2806ae",
+          "line": 99,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:c470cbc05ce5ac44a47940ab97476327738ee04d4a8aa104f914c9030f775470",
+          "line": 100,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:60062364e40ba304450b8ceeff58180b95e2960681e63d90ed89ac731224e475",
+          "line": 127,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
+    },
+    "research/flywheel_selfplay/h164_sam_retry/runtime.py": {
+      "sha256": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:0a1eb3180e5b3e2e7167326353df7365511044694295cca1e0dad81b1f301d34",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:90a52d05faf137e21ca69907f784e970751fd0d1fd7bde7293fe89de27d89124",
+          "line": 99,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:26f4e0521e4059338a2302f6a0f499ec59a5cf30cbf015e7bacbf597d2b8a8d4",
+          "line": 100,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:a2e29ec7b5fd9c2d547e422852ff2aa950349c0d4d00fca865965fe0367c9100",
+          "line": 119,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
+    },
+    "research/flywheel_selfplay/h168_selector_remedy/runtime.py": {
+      "sha256": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:51e9a95fec4792a11465c067e0a9774d5be65cf483c561e5ff380f8ccadceeb3",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:600aa5e9ac2b2f45e4d1def1cabd55cda6c2dd14c8c2f07a41bbda809f811211",
+          "line": 95,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:39db2be5780856117f6f71cae545fedb4af554be74ecaf53050d7d3eb9486ebb",
+          "line": 96,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:186a26213aef22495023d991b65c74720e9f4c5a720a17667bbe764229e5eda9",
+          "line": 120,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
+    },
+    "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py": {
+      "sha256": "4c4342bcb8de9a9c157dc400ba062e061742f90e2cac96a4a61546ec498be05e",
+      "findings": [
+        {
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack",
+          "fingerprint": "sha256:b778b67390a1acddfb44f352279076388f826da78079b3751236caa68abd5605",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:3c392595dd08ee0b79133b7eaad2a92db6bf2ffb6c93e2e05f963277350b6771",
+          "line": 95,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        },
+        {
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP",
+          "fingerprint": "sha256:d521b7d102552feefc0cd3109f1fbff1517db03327040e73a6f85e253040be49",
+          "line": 96,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests"
+        },
+        {
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR",
+          "fingerprint": "sha256:bec2688f25e9689adafdecb3496ba69f9382aecb1a8017e2116fa116fdd31d85",
+          "line": 120,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data"
+        }
+      ]
     }
   },
+  "raw_copy_code_class_count": 45,
+  "raw_copy_code_classes": [
+    {
+      "id": "copy-code-unit-python-ca536c6b695487b7",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "tree_bytes",
+      "duplicate_lines": 4,
+      "duplicate_tokens": 22,
+      "duplicate_bytes": 128,
+      "instance_count": 2,
+      "total_redundant_lines": 4,
+      "total_redundant_tokens": 22,
+      "total_redundant_bytes": 128,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "7415eae33d9dcbe3",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 76,
+          "end_line": 82,
+          "unit_name": "tree_bytes"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 52,
+          "end_line": 58,
+          "unit_name": "tree_bytes"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-b3456c451b6bd5f2",
+      "kind": "exact_unit_same_name",
+      "severity": "hard",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "Audit",
+      "duplicate_lines": 37,
+      "duplicate_tokens": 177,
+      "duplicate_bytes": 1451,
+      "instance_count": 2,
+      "total_redundant_lines": 37,
+      "total_redundant_tokens": 177,
+      "total_redundant_bytes": 1451,
+      "effective_severity": "hard",
+      "hard_fail": true,
+      "fingerprint": "d0a0b4fb7cd1abe5",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 39,
+          "end_line": 78,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 39,
+          "end_line": 78,
+          "unit_name": "Audit"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-216893792fb7c719",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "forward_adapter_with_anchor",
+      "duplicate_lines": 11,
+      "duplicate_tokens": 11,
+      "duplicate_bytes": 149,
+      "instance_count": 5,
+      "total_redundant_lines": 44,
+      "total_redundant_tokens": 44,
+      "total_redundant_bytes": 596,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "461d9a5f8b922e06",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 332,
+          "end_line": 343,
+          "unit_name": "forward_adapter_with_anchor"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 197,
+          "end_line": 208,
+          "unit_name": "forward_adapter_with_anchor"
+        },
+        {
+          "path": "research/h156/run.py",
+          "language": "python",
+          "start_line": 262,
+          "end_line": 273,
+          "unit_name": "forward_adapter_with_anchor"
+        },
+        {
+          "path": "research/h162/run.py",
+          "language": "python",
+          "start_line": 51,
+          "end_line": 62,
+          "unit_name": "forward_adapter_with_anchor"
+        },
+        {
+          "path": "research/h166/run.py",
+          "language": "python",
+          "start_line": 52,
+          "end_line": 63,
+          "unit_name": "forward_adapter_with_anchor"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-28fe6215583fcaec",
+      "kind": "exact_unit_same_name",
+      "severity": "hard",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "Audit",
+      "duplicate_lines": 41,
+      "duplicate_tokens": 176,
+      "duplicate_bytes": 1515,
+      "instance_count": 8,
+      "total_redundant_lines": 287,
+      "total_redundant_tokens": 1232,
+      "total_redundant_bytes": 10605,
+      "effective_severity": "hard",
+      "hard_fail": true,
+      "fingerprint": "3c7dae747160ef34",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 93,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "language": "python",
+          "start_line": 51,
+          "end_line": 94,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 93,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 93,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 93,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 93,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 93,
+          "unit_name": "Audit"
+        },
+        {
+          "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 93,
+          "unit_name": "Audit"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-886c5d00127d19aa",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "sha",
+      "duplicate_lines": 5,
+      "duplicate_tokens": 25,
+      "duplicate_bytes": 160,
+      "instance_count": 11,
+      "total_redundant_lines": 50,
+      "total_redundant_tokens": 250,
+      "total_redundant_bytes": 1600,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "a0132c9bb16c3f65",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 27,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "language": "python",
+          "start_line": 21,
+          "end_line": 28,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 56,
+          "end_line": 63,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 27,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 27,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 27,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 40,
+          "end_line": 47,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 27,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+          "language": "python",
+          "start_line": 30,
+          "end_line": 37,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 27,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 27,
+          "unit_name": "sha"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-c34a41de7d870eeb",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "atomic",
+      "duplicate_lines": 4,
+      "duplicate_tokens": 25,
+      "duplicate_bytes": 162,
+      "instance_count": 5,
+      "total_redundant_lines": 16,
+      "total_redundant_tokens": 100,
+      "total_redundant_bytes": 648,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "8520d7d7b480fd83",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_l7a.py",
+          "language": "python",
+          "start_line": 97,
+          "end_line": 103,
+          "unit_name": "atomic"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 119,
+          "end_line": 125,
+          "unit_name": "atomic"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_dope_run.py",
+          "language": "python",
+          "start_line": 48,
+          "end_line": 54,
+          "unit_name": "atomic"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 169,
+          "end_line": 175,
+          "unit_name": "atomic"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+          "language": "python",
+          "start_line": 91,
+          "end_line": 97,
+          "unit_name": "atomic"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-ac7875dbd9a85a6a",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "sha_file",
+      "duplicate_lines": 5,
+      "duplicate_tokens": 25,
+      "duplicate_bytes": 163,
+      "instance_count": 2,
+      "total_redundant_lines": 5,
+      "total_redundant_tokens": 25,
+      "total_redundant_bytes": 163,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "54e29e6311f0fbb6",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_l7a.py",
+          "language": "python",
+          "start_line": 89,
+          "end_line": 96,
+          "unit_name": "sha_file"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 156,
+          "end_line": 163,
+          "unit_name": "sha_file"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-531fd78159797e98",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "sha",
+      "duplicate_lines": 5,
+      "duplicate_tokens": 26,
+      "duplicate_bytes": 163,
+      "instance_count": 15,
+      "total_redundant_lines": 70,
+      "total_redundant_tokens": 364,
+      "total_redundant_bytes": 2282,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "aa05049d3857c86f",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+          "language": "python",
+          "start_line": 65,
+          "end_line": 72,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+          "language": "python",
+          "start_line": 86,
+          "end_line": 93,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h135_blend025_flywheel_val/runner.py",
+          "language": "python",
+          "start_line": 23,
+          "end_line": 30,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h139_selection_audit/runner.py",
+          "language": "python",
+          "start_line": 92,
+          "end_line": 99,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h152_ckpt_soup/runner.py",
+          "language": "python",
+          "start_line": 89,
+          "end_line": 96,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py",
+          "language": "python",
+          "start_line": 57,
+          "end_line": 64,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h199_blend025_native/runner.py",
+          "language": "python",
+          "start_line": 54,
+          "end_line": 61,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h200_nested_blend/runner.py",
+          "language": "python",
+          "start_line": 50,
+          "end_line": 57,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h203_blend025_gated/runner.py",
+          "language": "python",
+          "start_line": 59,
+          "end_line": 66,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h205_fresh_vs_static/runner.py",
+          "language": "python",
+          "start_line": 47,
+          "end_line": 54,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h210_blend025_gated_retry/runner.py",
+          "language": "python",
+          "start_line": 56,
+          "end_line": 63,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h217_gated025_confirm/runner.py",
+          "language": "python",
+          "start_line": 64,
+          "end_line": 71,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h218_gated_lambda_nest/runner.py",
+          "language": "python",
+          "start_line": 66,
+          "end_line": 73,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h223_bagged_blend_gate/runner.py",
+          "language": "python",
+          "start_line": 67,
+          "end_line": 74,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h226_gated025_r3175/runner.py",
+          "language": "python",
+          "start_line": 79,
+          "end_line": 86,
+          "unit_name": "sha"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-f7d4e71c88523a2e",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "sha",
+      "duplicate_lines": 5,
+      "duplicate_tokens": 25,
+      "duplicate_bytes": 166,
+      "instance_count": 2,
+      "total_redundant_lines": 5,
+      "total_redundant_tokens": 25,
+      "total_redundant_bytes": 166,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "306539884ab1c9cd",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 38,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 38,
+          "unit_name": "sha"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-8b8320230d2e20ed",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "write",
+      "duplicate_lines": 8,
+      "duplicate_tokens": 37,
+      "duplicate_bytes": 262,
+      "instance_count": 2,
+      "total_redundant_lines": 8,
+      "total_redundant_tokens": 37,
+      "total_redundant_bytes": 262,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "2226646d97a4f3d7",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+          "language": "python",
+          "start_line": 73,
+          "end_line": 83,
+          "unit_name": "write"
+        },
+        {
+          "path": "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+          "language": "python",
+          "start_line": 94,
+          "end_line": 104,
+          "unit_name": "write"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-db536be4eb5cdaf0",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "tensor_hash",
+      "duplicate_lines": 8,
+      "duplicate_tokens": 38,
+      "duplicate_bytes": 276,
+      "instance_count": 2,
+      "total_redundant_lines": 8,
+      "total_redundant_tokens": 38,
+      "total_redundant_bytes": 276,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "96ae5d5727e30214",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 79,
+          "end_line": 89,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 79,
+          "end_line": 89,
+          "unit_name": "tensor_hash"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-57cbf86b95fbb526",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "check_frozen",
+      "duplicate_lines": 7,
+      "duplicate_tokens": 33,
+      "duplicate_bytes": 279,
+      "instance_count": 8,
+      "total_redundant_lines": 49,
+      "total_redundant_tokens": 231,
+      "total_redundant_bytes": 1953,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "3ddf8adfb3dec541",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "language": "python",
+          "start_line": 160,
+          "end_line": 169,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "language": "python",
+          "start_line": 185,
+          "end_line": 194,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "language": "python",
+          "start_line": 160,
+          "end_line": 169,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "language": "python",
+          "start_line": 192,
+          "end_line": 201,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+          "language": "python",
+          "start_line": 160,
+          "end_line": 169,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+          "language": "python",
+          "start_line": 168,
+          "end_line": 177,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "language": "python",
+          "start_line": 168,
+          "end_line": 177,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "language": "python",
+          "start_line": 160,
+          "end_line": 169,
+          "unit_name": "check_frozen"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-c47e7cf2dc0f3a42",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "context_refusal",
+      "duplicate_lines": 3,
+      "duplicate_tokens": 43,
+      "duplicate_bytes": 298,
+      "instance_count": 2,
+      "total_redundant_lines": 3,
+      "total_redundant_tokens": 43,
+      "total_redundant_bytes": 298,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "f2f6f567bf4668a7",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 532,
+          "end_line": 537,
+          "unit_name": "context_refusal"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 1559,
+          "end_line": 1564,
+          "unit_name": "context_refusal"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-9dc0651af83fce82",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "check_frozen",
+      "duplicate_lines": 8,
+      "duplicate_tokens": 40,
+      "duplicate_bytes": 354,
+      "instance_count": 2,
+      "total_redundant_lines": 8,
+      "total_redundant_tokens": 40,
+      "total_redundant_bytes": 354,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "c745070a14849810",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 424,
+          "end_line": 434,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 500,
+          "end_line": 510,
+          "unit_name": "check_frozen"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-9f5c9871c6d27e70",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "tensor_hash",
+      "duplicate_lines": 15,
+      "duplicate_tokens": 39,
+      "duplicate_bytes": 370,
+      "instance_count": 11,
+      "total_redundant_lines": 150,
+      "total_redundant_tokens": 390,
+      "total_redundant_bytes": 3700,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "810eaeb15e24e44d",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 49,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "language": "python",
+          "start_line": 33,
+          "end_line": 50,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 143,
+          "end_line": 160,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 49,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 49,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 49,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 103,
+          "end_line": 120,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 49,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+          "language": "python",
+          "start_line": 79,
+          "end_line": 96,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 49,
+          "unit_name": "tensor_hash"
+        },
+        {
+          "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 49,
+          "unit_name": "tensor_hash"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-28906d63f359d105",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "source_module",
+      "duplicate_lines": 8,
+      "duplicate_tokens": 46,
+      "duplicate_bytes": 393,
+      "instance_count": 2,
+      "total_redundant_lines": 8,
+      "total_redundant_tokens": 46,
+      "total_redundant_bytes": 393,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "2226646d97a4f3d7",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+          "language": "python",
+          "start_line": 84,
+          "end_line": 94,
+          "unit_name": "source_module"
+        },
+        {
+          "path": "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+          "language": "python",
+          "start_line": 105,
+          "end_line": 115,
+          "unit_name": "source_module"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-dc7c34b445e51b1c",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "sha",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 5,
+      "duplicate_bytes": 40,
+      "instance_count": 22,
+      "total_redundant_lines": 21,
+      "total_redundant_tokens": 105,
+      "total_redundant_bytes": 840,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "6e81abf3444785e1",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/rowsel_raw.py",
+          "language": "python",
+          "start_line": 77,
+          "end_line": 80,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py",
+          "language": "python",
+          "start_line": 29,
+          "end_line": 32,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_families.py",
+          "language": "python",
+          "start_line": 73,
+          "end_line": 76,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/fixtures_p3.py",
+          "language": "python",
+          "start_line": 165,
+          "end_line": 168,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py",
+          "language": "python",
+          "start_line": 64,
+          "end_line": 67,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/stage_dope.py",
+          "language": "python",
+          "start_line": 39,
+          "end_line": 42,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/trainonly_pilot.py",
+          "language": "python",
+          "start_line": 34,
+          "end_line": 37,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_l7a.py",
+          "language": "python",
+          "start_line": 85,
+          "end_line": 88,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 115,
+          "end_line": 118,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_dope_run.py",
+          "language": "python",
+          "start_line": 44,
+          "end_line": 47,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_gpu_assemble.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_gpu_encode.py",
+          "language": "python",
+          "start_line": 65,
+          "end_line": 68,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_holdout_supplement.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_publish.py",
+          "language": "python",
+          "start_line": 129,
+          "end_line": 132,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_publish_manifest.py",
+          "language": "python",
+          "start_line": 52,
+          "end_line": 55,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_pubset.py",
+          "language": "python",
+          "start_line": 21,
+          "end_line": 24,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 152,
+          "end_line": 155,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_manifest.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 35,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+          "language": "python",
+          "start_line": 74,
+          "end_line": 77,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_manifest.py",
+          "language": "python",
+          "start_line": 35,
+          "end_line": 38,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_s1_input_list.py",
+          "language": "python",
+          "start_line": 44,
+          "end_line": 47,
+          "unit_name": "sha"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-19a66e17a358d623",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "sha",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 5,
+      "duplicate_bytes": 42,
+      "instance_count": 7,
+      "total_redundant_lines": 6,
+      "total_redundant_tokens": 30,
+      "total_redundant_bytes": 252,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "c267a90b701db4cb",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-flywheel/pipelines/encoding/next128/run_next128.py",
+          "language": "python",
+          "start_line": 42,
+          "end_line": 45,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/readonly_io.py",
+          "language": "python",
+          "start_line": 37,
+          "end_line": 39,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py",
+          "language": "python",
+          "start_line": 65,
+          "end_line": 68,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations_launch.py",
+          "language": "python",
+          "start_line": 61,
+          "end_line": 64,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/runner.py",
+          "language": "python",
+          "start_line": 21,
+          "end_line": 24,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/h145/run.py",
+          "language": "python",
+          "start_line": 49,
+          "end_line": 52,
+          "unit_name": "sha"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-eaa7a7910071cdc9",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "digest",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 5,
+      "duplicate_bytes": 43,
+      "instance_count": 12,
+      "total_redundant_lines": 11,
+      "total_redundant_tokens": 55,
+      "total_redundant_bytes": 473,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "3b3c8578d134aa44",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "benchmarks/prepare.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 35,
+          "unit_name": "digest"
+        },
+        {
+          "path": "deploy/dl-trainonly/hwm_publish.py",
+          "language": "python",
+          "start_line": 103,
+          "end_line": 106,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/golden/capture_cpu.py",
+          "language": "python",
+          "start_line": 30,
+          "end_line": 33,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h209_gpu_delta_calibration/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h215_pess_disagreement/runner.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h216_init_lottery/runner.py",
+          "language": "python",
+          "start_line": 42,
+          "end_line": 45,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h219_fbal_accum_run/runner.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h220_family_mixup/runner.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h221_bagged_delta_head/runner.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/input_manifest.py",
+          "language": "python",
+          "start_line": 40,
+          "end_line": 43,
+          "unit_name": "digest"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-cd0c62b341e1c1c3",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "calibration",
+      "duplicate_lines": 12,
+      "duplicate_tokens": 70,
+      "duplicate_bytes": 433,
+      "instance_count": 2,
+      "total_redundant_lines": 12,
+      "total_redundant_tokens": 70,
+      "total_redundant_bytes": 433,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "a142525dfeb54290",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+          "language": "python",
+          "start_line": 131,
+          "end_line": 145,
+          "unit_name": "calibration"
+        },
+        {
+          "path": "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+          "language": "python",
+          "start_line": 169,
+          "end_line": 183,
+          "unit_name": "calibration"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-033ab9264e48d3fc",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "check_frozen",
+      "duplicate_lines": 10,
+      "duplicate_tokens": 56,
+      "duplicate_bytes": 458,
+      "instance_count": 2,
+      "total_redundant_lines": 10,
+      "total_redundant_tokens": 56,
+      "total_redundant_bytes": 458,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "fcdbba1c2c1f9ea8",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 139,
+          "end_line": 151,
+          "unit_name": "check_frozen"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 139,
+          "end_line": 151,
+          "unit_name": "check_frozen"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-90c779bab75634c6",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "safe_grad_norm_and_clip",
+      "duplicate_lines": 11,
+      "duplicate_tokens": 65,
+      "duplicate_bytes": 482,
+      "instance_count": 2,
+      "total_redundant_lines": 11,
+      "total_redundant_tokens": 65,
+      "total_redundant_bytes": 482,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "e2d073144951871e",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 375,
+          "end_line": 388,
+          "unit_name": "safe_grad_norm_and_clip"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 240,
+          "end_line": 253,
+          "unit_name": "safe_grad_norm_and_clip"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-7e292dce88ae1c00",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "loss",
+      "duplicate_lines": 14,
+      "duplicate_tokens": 66,
+      "duplicate_bytes": 488,
+      "instance_count": 5,
+      "total_redundant_lines": 56,
+      "total_redundant_tokens": 264,
+      "total_redundant_bytes": 1952,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "585e0d61f6ab6d2d",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "language": "python",
+          "start_line": 170,
+          "end_line": 184,
+          "unit_name": "loss"
+        },
+        {
+          "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "language": "python",
+          "start_line": 195,
+          "end_line": 209,
+          "unit_name": "loss"
+        },
+        {
+          "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "language": "python",
+          "start_line": 170,
+          "end_line": 184,
+          "unit_name": "loss"
+        },
+        {
+          "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+          "language": "python",
+          "start_line": 170,
+          "end_line": 184,
+          "unit_name": "loss"
+        },
+        {
+          "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "language": "python",
+          "start_line": 170,
+          "end_line": 184,
+          "unit_name": "loss"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-4d8096d70e34b217",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "endpoints",
+      "duplicate_lines": 14,
+      "duplicate_tokens": 66,
+      "duplicate_bytes": 490,
+      "instance_count": 2,
+      "total_redundant_lines": 14,
+      "total_redundant_tokens": 66,
+      "total_redundant_bytes": 490,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "e89b23fc704de4d4",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+          "language": "python",
+          "start_line": 114,
+          "end_line": 130,
+          "unit_name": "endpoints"
+        },
+        {
+          "path": "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+          "language": "python",
+          "start_line": 137,
+          "end_line": 153,
+          "unit_name": "endpoints"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-805679f0338b795e",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "validate_eval_cache_key",
+      "duplicate_lines": 16,
+      "duplicate_tokens": 78,
+      "duplicate_bytes": 578,
+      "instance_count": 2,
+      "total_redundant_lines": 16,
+      "total_redundant_tokens": 78,
+      "total_redundant_bytes": 578,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "fdf563e7859c0397",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 301,
+          "end_line": 319,
+          "unit_name": "validate_eval_cache_key"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 234,
+          "end_line": 252,
+          "unit_name": "validate_eval_cache_key"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-2f80e55a182d8c78",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "jdump",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 8,
+      "duplicate_bytes": 58,
+      "instance_count": 4,
+      "total_redundant_lines": 3,
+      "total_redundant_tokens": 24,
+      "total_redundant_bytes": 174,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "c176b47d6847fed1",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_l7a.py",
+          "language": "python",
+          "start_line": 104,
+          "end_line": 107,
+          "unit_name": "jdump"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 306,
+          "end_line": 309,
+          "unit_name": "jdump"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 176,
+          "end_line": 179,
+          "unit_name": "jdump"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+          "language": "python",
+          "start_line": 98,
+          "end_line": 101,
+          "unit_name": "jdump"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-b700cc0dc5c0023a",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "save",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 11,
+      "duplicate_bytes": 71,
+      "instance_count": 11,
+      "total_redundant_lines": 10,
+      "total_redundant_tokens": 110,
+      "total_redundant_bytes": 710,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "675d653bfd18eec7",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "language": "python",
+          "start_line": 29,
+          "end_line": 32,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 64,
+          "end_line": 67,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 48,
+          "end_line": 51,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+          "language": "python",
+          "start_line": 38,
+          "end_line": 41,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "save"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-4bb1370d49691495",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "replacement_membership",
+      "duplicate_lines": 7,
+      "duplicate_tokens": 111,
+      "duplicate_bytes": 777,
+      "instance_count": 3,
+      "total_redundant_lines": 14,
+      "total_redundant_tokens": 222,
+      "total_redundant_bytes": 1554,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "8016cf81383fb08f",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 522,
+          "end_line": 531,
+          "unit_name": "replacement_membership"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 1549,
+          "end_line": 1558,
+          "unit_name": "replacement_membership"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+          "language": "python",
+          "start_line": 1132,
+          "end_line": 1141,
+          "unit_name": "replacement_membership"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-9c148e4c07397393",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "save",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 11,
+      "duplicate_bytes": 78,
+      "instance_count": 4,
+      "total_redundant_lines": 3,
+      "total_redundant_tokens": 33,
+      "total_redundant_bytes": 234,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "96d2db12fa08d144",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h135_blend025_flywheel_val/runner.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h138_trajectory_swa/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+          "language": "python",
+          "start_line": 47,
+          "end_line": 50,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h157_best_of_k_trust_region/runner.py",
+          "language": "python",
+          "start_line": 43,
+          "end_line": 46,
+          "unit_name": "save"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-dc28df8ddace0a66",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "dropout_census",
+      "duplicate_lines": 19,
+      "duplicate_tokens": 74,
+      "duplicate_bytes": 793,
+      "instance_count": 11,
+      "total_redundant_lines": 190,
+      "total_redundant_tokens": 740,
+      "total_redundant_bytes": 7930,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "909d14ffb7a00e6b",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+          "language": "python",
+          "start_line": 138,
+          "end_line": 159,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+          "language": "python",
+          "start_line": 163,
+          "end_line": 184,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 402,
+          "end_line": 423,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+          "language": "python",
+          "start_line": 138,
+          "end_line": 159,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+          "language": "python",
+          "start_line": 170,
+          "end_line": 191,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h153_sam/runtime.py",
+          "language": "python",
+          "start_line": 138,
+          "end_line": 159,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 478,
+          "end_line": 499,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
+          "language": "python",
+          "start_line": 146,
+          "end_line": 167,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+          "language": "python",
+          "start_line": 201,
+          "end_line": 222,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+          "language": "python",
+          "start_line": 146,
+          "end_line": 167,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+          "language": "python",
+          "start_line": 138,
+          "end_line": 159,
+          "unit_name": "dropout_census"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-28a2e40f235f24b3",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "dropout_census",
+      "duplicate_lines": 19,
+      "duplicate_tokens": 76,
+      "duplicate_bytes": 805,
+      "instance_count": 2,
+      "total_redundant_lines": 19,
+      "total_redundant_tokens": 76,
+      "total_redundant_bytes": 805,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "2b13aea9108f97df",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 152,
+          "end_line": 173,
+          "unit_name": "dropout_census"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 152,
+          "end_line": 173,
+          "unit_name": "dropout_census"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-1c67f40edb447a33",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "bind_source",
+      "duplicate_lines": 19,
+      "duplicate_tokens": 91,
+      "duplicate_bytes": 903,
+      "instance_count": 2,
+      "total_redundant_lines": 19,
+      "total_redundant_tokens": 91,
+      "total_redundant_bytes": 903,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "715de7fd20309ce9",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 121,
+          "end_line": 142,
+          "unit_name": "bind_source"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 81,
+          "end_line": 102,
+          "unit_name": "bind_source"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-347f9f71256baf3f",
+      "kind": "exact_unit_same_name",
+      "severity": "warning",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "hash64",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 18,
+      "duplicate_bytes": 98,
+      "instance_count": 2,
+      "total_redundant_lines": 1,
+      "total_redundant_tokens": 18,
+      "total_redundant_bytes": 98,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "ee267246076eb766",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+          "language": "python",
+          "start_line": 34,
+          "end_line": 37,
+          "unit_name": "hash64"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/readonly_io.py",
+          "language": "python",
+          "start_line": 40,
+          "end_line": 42,
+          "unit_name": "hash64"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-unit-python-eb3c300f52c75ff7",
+      "kind": "exact_unit_same_name",
+      "severity": "hard",
+      "confidence": "high",
+      "language": "python",
+      "unit_name": "assert_frozen_anchor",
+      "duplicate_lines": 19,
+      "duplicate_tokens": 120,
+      "duplicate_bytes": 981,
+      "instance_count": 2,
+      "total_redundant_lines": 19,
+      "total_redundant_tokens": 120,
+      "total_redundant_bytes": 981,
+      "effective_severity": "hard",
+      "hard_fail": true,
+      "fingerprint": "715de7fd20309ce9",
+      "reason": "same-name semantic unit copied across multiple files",
+      "recommended_action": "keep the named unit in one owner and call it from the other sites",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+          "language": "python",
+          "start_line": 252,
+          "end_line": 273,
+          "unit_name": "assert_frozen_anchor"
+        },
+        {
+          "path": "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+          "language": "python",
+          "start_line": 185,
+          "end_line": 206,
+          "unit_name": "assert_frozen_anchor"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-8bdf219be882566f",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 5,
+      "duplicate_tokens": 25,
+      "duplicate_bytes": 166,
+      "instance_count": 6,
+      "total_redundant_lines": 25,
+      "total_redundant_tokens": 125,
+      "total_redundant_bytes": 830,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "8b34c23b51bf5ec0",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 38,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 38,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/post_audit_phase7_cap_and_interpretation.py",
+          "language": "python",
+          "start_line": 60,
+          "end_line": 67,
+          "unit_name": "sha256_file"
+        },
+        {
+          "path": "research/flywheel_selfplay/publish_phase7_addendum_v2.py",
+          "language": "python",
+          "start_line": 63,
+          "end_line": 70,
+          "unit_name": "sha256_file"
+        },
+        {
+          "path": "research/flywheel_selfplay/publish_phase7_addendum_v3.py",
+          "language": "python",
+          "start_line": 75,
+          "end_line": 82,
+          "unit_name": "sha256_file"
+        },
+        {
+          "path": "research/flywheel_selfplay/publish_phase7_addendum_v4.py",
+          "language": "python",
+          "start_line": 103,
+          "end_line": 110,
+          "unit_name": "sha256_file"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-be4a8f1087c9016d",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 5,
+      "duplicate_bytes": 40,
+      "instance_count": 44,
+      "total_redundant_lines": 43,
+      "total_redundant_tokens": 215,
+      "total_redundant_bytes": 1720,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "15e86e4a21c6e092",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_data_v4.py",
+          "language": "python",
+          "start_line": 51,
+          "end_line": 54,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/gpu_manifest_cut.py",
+          "language": "python",
+          "start_line": 57,
+          "end_line": 60,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/families.py",
+          "language": "python",
+          "start_line": 343,
+          "end_line": 346,
+          "unit_name": "_sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py",
+          "language": "python",
+          "start_line": 239,
+          "end_line": 242,
+          "unit_name": "sha256"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/rowsel_raw.py",
+          "language": "python",
+          "start_line": 77,
+          "end_line": 80,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/scorer_labels.py",
+          "language": "python",
+          "start_line": 40,
+          "end_line": 43,
+          "unit_name": "_sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/trainonly.py",
+          "language": "python",
+          "start_line": 51,
+          "end_line": 54,
+          "unit_name": "_sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_payload_strip.py",
+          "language": "python",
+          "start_line": 48,
+          "end_line": 51,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_quarantine.py",
+          "language": "python",
+          "start_line": 35,
+          "end_line": 38,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_s3io.py",
+          "language": "python",
+          "start_line": 413,
+          "end_line": 416,
+          "unit_name": "_sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_split_defaults.py",
+          "language": "python",
+          "start_line": 48,
+          "end_line": 51,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_partial_refusal_manifest.py",
+          "language": "python",
+          "start_line": 48,
+          "end_line": 51,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_publish.py",
+          "language": "python",
+          "start_line": 29,
+          "end_line": 32,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_families.py",
+          "language": "python",
+          "start_line": 73,
+          "end_line": 76,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/fixtures_p3.py",
+          "language": "python",
+          "start_line": 165,
+          "end_line": 168,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py",
+          "language": "python",
+          "start_line": 64,
+          "end_line": 67,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/s1_outer_test_scorer.py",
+          "language": "python",
+          "start_line": 65,
+          "end_line": 68,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/stage_dope.py",
+          "language": "python",
+          "start_line": 39,
+          "end_line": 42,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/trainonly_pilot.py",
+          "language": "python",
+          "start_line": 34,
+          "end_line": 37,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_l7a.py",
+          "language": "python",
+          "start_line": 85,
+          "end_line": 88,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 115,
+          "end_line": 118,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_coverage_ledger.py",
+          "language": "python",
+          "start_line": 23,
+          "end_line": 26,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_dope_run.py",
+          "language": "python",
+          "start_line": 44,
+          "end_line": 47,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_g3_append_build.py",
+          "language": "python",
+          "start_line": 35,
+          "end_line": 38,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_gpu_assemble.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_gpu_encode.py",
+          "language": "python",
+          "start_line": 65,
+          "end_line": 68,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_holdout_denylist.py",
+          "language": "python",
+          "start_line": 22,
+          "end_line": 25,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_holdout_supplement.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_provenance.py",
+          "language": "python",
+          "start_line": 25,
+          "end_line": 28,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_publish.py",
+          "language": "python",
+          "start_line": 129,
+          "end_line": 132,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_publish_manifest.py",
+          "language": "python",
+          "start_line": 52,
+          "end_line": 55,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_pubset.py",
+          "language": "python",
+          "start_line": 21,
+          "end_line": 24,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_quarantine_unstripped.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 35,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 152,
+          "end_line": 155,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_manifest.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 35,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+          "language": "python",
+          "start_line": 74,
+          "end_line": 77,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_manifest.py",
+          "language": "python",
+          "start_line": 35,
+          "end_line": 38,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_s1_input_list.py",
+          "language": "python",
+          "start_line": 44,
+          "end_line": 47,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_strip_outer_test.py",
+          "language": "python",
+          "start_line": 64,
+          "end_line": 67,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_superseded.py",
+          "language": "python",
+          "start_line": 22,
+          "end_line": 25,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/manifest_binding.py",
+          "language": "python",
+          "start_line": 77,
+          "end_line": 80,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/research/dlhwm/flatstats/ta_common.py",
+          "language": "python",
+          "start_line": 23,
+          "end_line": 26,
+          "unit_name": "sha256"
+        },
+        {
+          "path": "research/flywheel_selfplay/verify_flywheel_qualified_next_phase.py",
+          "language": "python",
+          "start_line": 60,
+          "end_line": 63,
+          "unit_name": "sha256_bytes"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-73963ced05fb3c12",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 5,
+      "duplicate_bytes": 42,
+      "instance_count": 14,
+      "total_redundant_lines": 13,
+      "total_redundant_tokens": 65,
+      "total_redundant_bytes": 546,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "46c6a865a2670a64",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "deploy/ci/rendered-ux-receipt.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "digest"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/encoding/next128/run_next128.py",
+          "language": "python",
+          "start_line": 42,
+          "end_line": 45,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/readonly_io.py",
+          "language": "python",
+          "start_line": 37,
+          "end_line": 39,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py",
+          "language": "python",
+          "start_line": 65,
+          "end_line": 68,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations_launch.py",
+          "language": "python",
+          "start_line": 61,
+          "end_line": 64,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/offline.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "_sha"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/rlfw/pools/qhead.py",
+          "language": "python",
+          "start_line": 29,
+          "end_line": 32,
+          "unit_name": "sha256"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/offline_adapter.py",
+          "language": "python",
+          "start_line": 19,
+          "end_line": 22,
+          "unit_name": "digest"
+        },
+        {
+          "path": "deploy/dl-flywheel/run_v2_offline.py",
+          "language": "python",
+          "start_line": 186,
+          "end_line": 189,
+          "unit_name": "digest"
+        },
+        {
+          "path": "deploy/dl-trainonly/outputs.py",
+          "language": "python",
+          "start_line": 19,
+          "end_line": 22,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h102_w5_provenance_gaps/check.py",
+          "language": "python",
+          "start_line": 16,
+          "end_line": 19,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h104_w7_acquisition_replay_prep/runner.py",
+          "language": "python",
+          "start_line": 21,
+          "end_line": 24,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/h145/run.py",
+          "language": "python",
+          "start_line": 49,
+          "end_line": 52,
+          "unit_name": "sha"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-939d9f6f39089364",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 5,
+      "duplicate_bytes": 43,
+      "instance_count": 36,
+      "total_redundant_lines": 35,
+      "total_redundant_tokens": 175,
+      "total_redundant_bytes": 1505,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "eed9283e97b5a95b",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "benchmarks/prepare.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 35,
+          "unit_name": "digest"
+        },
+        {
+          "path": "deploy/dl-trainonly/hwm_publish.py",
+          "language": "python",
+          "start_line": 103,
+          "end_line": 106,
+          "unit_name": "digest"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/corpus_build.py",
+          "language": "python",
+          "start_line": 191,
+          "end_line": 194,
+          "unit_name": "_sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/live.py",
+          "language": "python",
+          "start_line": 153,
+          "end_line": 156,
+          "unit_name": "_sha256"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/fixtures_p5.py",
+          "language": "python",
+          "start_line": 173,
+          "end_line": 176,
+          "unit_name": "sha_bytes"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_build.py",
+          "language": "python",
+          "start_line": 44,
+          "end_line": 47,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_hygiene.py",
+          "language": "python",
+          "start_line": 87,
+          "end_line": 90,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_poison.py",
+          "language": "python",
+          "start_line": 44,
+          "end_line": 47,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_real.py",
+          "language": "python",
+          "start_line": 36,
+          "end_line": 39,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p5/test_corpus_sample.py",
+          "language": "python",
+          "start_line": 34,
+          "end_line": 37,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/dl-trainonly/verify_lane.py",
+          "language": "python",
+          "start_line": 36,
+          "end_line": 39,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/lambda/training/teacher-v2/materialize_g0.py",
+          "language": "python",
+          "start_line": 22,
+          "end_line": 25,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/qualification/agents/transcripts/run-prep/capture_clients.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "digest"
+        },
+        {
+          "path": "deploy/qualification/q1/harness/plan_publisher.py",
+          "language": "python",
+          "start_line": 43,
+          "end_line": 46,
+          "unit_name": "sha"
+        },
+        {
+          "path": "deploy/qualification/v1.0/test_provider_a5/test_a5.py",
+          "language": "python",
+          "start_line": 25,
+          "end_line": 28,
+          "unit_name": "digest"
+        },
+        {
+          "path": "python/src/jope/research/test_exact_common.py",
+          "language": "python",
+          "start_line": 58,
+          "end_line": 61,
+          "unit_name": "sha256_bytes"
+        },
+        {
+          "path": "research/flywheel_selfplay/export_fused_bundle.py",
+          "language": "python",
+          "start_line": 402,
+          "end_line": 405,
+          "unit_name": "sha256"
+        },
+        {
+          "path": "research/flywheel_selfplay/golden/capture_cpu.py",
+          "language": "python",
+          "start_line": 30,
+          "end_line": 33,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/golden/generate.py",
+          "language": "python",
+          "start_line": 72,
+          "end_line": 75,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h206_search_distill/contracts.py",
+          "language": "python",
+          "start_line": 15,
+          "end_line": 18,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h209_gpu_delta_calibration/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h215_pess_disagreement/runner.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h216_init_lottery/runner.py",
+          "language": "python",
+          "start_line": 42,
+          "end_line": 45,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h219_fbal_accum_run/runner.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h220_family_mixup/runner.py",
+          "language": "python",
+          "start_line": 26,
+          "end_line": 29,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h221_bagged_delta_head/runner.py",
+          "language": "python",
+          "start_line": 28,
+          "end_line": 31,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/h65_w3_continuous_top_resolved/runner.py",
+          "language": "python",
+          "start_line": 62,
+          "end_line": 65,
+          "unit_name": "sha256_bytes"
+        },
+        {
+          "path": "research/flywheel_selfplay/h75_closed_loop_evolution/feedback/feedback.py",
+          "language": "python",
+          "start_line": 41,
+          "end_line": 44,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/h99_h100_readout/readout.py",
+          "language": "python",
+          "start_line": 69,
+          "end_line": 72,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/input_manifest.py",
+          "language": "python",
+          "start_line": 40,
+          "end_line": 43,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "sha"
+        },
+        {
+          "path": "research/flywheel_selfplay/rnk10_r882_release/prepare_release.py",
+          "language": "python",
+          "start_line": 37,
+          "end_line": 40,
+          "unit_name": "digest"
+        },
+        {
+          "path": "research/flywheel_selfplay/test_export_fused_bundle.py",
+          "language": "python",
+          "start_line": 357,
+          "end_line": 360,
+          "unit_name": "_storage_sha"
+        },
+        {
+          "path": "research/joint_regbin/candidate_builder.py",
+          "language": "python",
+          "start_line": 46,
+          "end_line": 49,
+          "unit_name": "sha256_bytes"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-block-python-50ff01e68b3d68d4",
+      "kind": "token_block",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 12,
+      "duplicate_tokens": 144,
+      "duplicate_bytes": 484,
+      "instance_count": 3,
+      "total_redundant_lines": 24,
+      "total_redundant_tokens": 288,
+      "total_redundant_bytes": 968,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "d30a28a8bb9d115f",
+      "reason": "strict token/block duplication exceeded the configured threshold",
+      "recommended_action": "review whether the block is intentional; otherwise consolidate the shared logic behind one owner",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 522,
+          "end_line": 533
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 1549,
+          "end_line": 1560
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+          "language": "python",
+          "start_line": 1132,
+          "end_line": 1143
+        }
+      ]
+    },
+    {
+      "id": "copy-code-block-python-84a50ca0d0520005",
+      "kind": "token_block",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 12,
+      "duplicate_tokens": 146,
+      "duplicate_bytes": 494,
+      "instance_count": 2,
+      "total_redundant_lines": 12,
+      "total_redundant_tokens": 146,
+      "total_redundant_bytes": 494,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "1686974a07948689",
+      "reason": "strict token/block duplication exceeded the configured threshold",
+      "recommended_action": "review whether the block is intentional; otherwise consolidate the shared logic behind one owner",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 524,
+          "end_line": 535
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 1551,
+          "end_line": 1562
+        }
+      ]
+    },
+    {
+      "id": "copy-code-block-python-27fd9cc81239ff3c",
+      "kind": "token_block",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 12,
+      "duplicate_tokens": 151,
+      "duplicate_bytes": 505,
+      "instance_count": 2,
+      "total_redundant_lines": 12,
+      "total_redundant_tokens": 151,
+      "total_redundant_bytes": 505,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "1686974a07948689",
+      "reason": "strict token/block duplication exceeded the configured threshold",
+      "recommended_action": "review whether the block is intentional; otherwise consolidate the shared logic behind one owner",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 523,
+          "end_line": 534
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 1550,
+          "end_line": 1561
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-14d365ea8340f910",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 11,
+      "duplicate_bytes": 78,
+      "instance_count": 5,
+      "total_redundant_lines": 4,
+      "total_redundant_tokens": 44,
+      "total_redundant_bytes": 312,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "c55f95a42b3fd442",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h135_blend025_flywheel_val/runner.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h138_trajectory_swa/runner.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h141_w3_retention/runner.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 35,
+          "unit_name": "write"
+        },
+        {
+          "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+          "language": "python",
+          "start_line": 47,
+          "end_line": 50,
+          "unit_name": "save"
+        },
+        {
+          "path": "research/flywheel_selfplay/h157_best_of_k_trust_region/runner.py",
+          "language": "python",
+          "start_line": 43,
+          "end_line": 46,
+          "unit_name": "save"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-e225b388d251d099",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 1,
+      "duplicate_bytes": 8,
+      "instance_count": 32,
+      "total_redundant_lines": 31,
+      "total_redundant_tokens": 31,
+      "total_redundant_bytes": 248,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "a42334355666aaf8",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "deploy/appliance/d1_macos_dev.py",
+          "language": "python",
+          "start_line": 30,
+          "end_line": 33,
+          "unit_name": "D1DevError"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/boundary_admission_v2/tests/test_boundary.py",
+          "language": "python",
+          "start_line": 31,
+          "end_line": 34,
+          "unit_name": "Fault"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py",
+          "language": "python",
+          "start_line": 18,
+          "end_line": 21,
+          "unit_name": "DeadlineExceeded"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py",
+          "language": "python",
+          "start_line": 20,
+          "end_line": 23,
+          "unit_name": "DeadlineExceeded"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+          "language": "python",
+          "start_line": 12,
+          "end_line": 15,
+          "unit_name": "ExportError"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/readonly_io.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 29,
+          "unit_name": "Failure"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/native_result_overlay_v1/tests/world.py",
+          "language": "python",
+          "start_line": 74,
+          "end_line": 77,
+          "unit_name": "OuterTestDecoded"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/knn_table.py",
+          "language": "python",
+          "start_line": 15,
+          "end_line": 18,
+          "unit_name": "KnnTableError"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_train_v7.py",
+          "language": "python",
+          "start_line": 73,
+          "end_line": 76,
+          "unit_name": "DeadlineExceeded"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/rlfw/r25_knnce/lpi_scratch_train_v7.py",
+          "language": "python",
+          "start_line": 77,
+          "end_line": 80,
+          "unit_name": "CrosscheckFailed"
+        },
+        {
+          "path": "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py",
+          "language": "python",
+          "start_line": 13,
+          "end_line": 15,
+          "unit_name": "Refusal"
+        },
+        {
+          "path": "deploy/dl-trainonly/gpu_gate.py",
+          "language": "python",
+          "start_line": 21,
+          "end_line": 24,
+          "unit_name": "Refusal"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/admission.py",
+          "language": "python",
+          "start_line": 17,
+          "end_line": 20,
+          "unit_name": "AdmissionRefused"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/cpuguard.py",
+          "language": "python",
+          "start_line": 30,
+          "end_line": 33,
+          "unit_name": "GuardTimeout"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/dsl_tokenizer.py",
+          "language": "python",
+          "start_line": 215,
+          "end_line": 218,
+          "unit_name": "_NoForm"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/jtt1.py",
+          "language": "python",
+          "start_line": 33,
+          "end_line": 36,
+          "unit_name": "JTTError"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/quarantine.py",
+          "language": "python",
+          "start_line": 34,
+          "end_line": 37,
+          "unit_name": "QuarantinedKey"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/quarantine.py",
+          "language": "python",
+          "start_line": 38,
+          "end_line": 41,
+          "unit_name": "QuarantineCorrupt"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/rowsel.py",
+          "language": "python",
+          "start_line": 85,
+          "end_line": 88,
+          "unit_name": "RowselError"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/scorer_labels.py",
+          "language": "python",
+          "start_line": 36,
+          "end_line": 39,
+          "unit_name": "ScorerError"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/t1prep.py",
+          "language": "python",
+          "start_line": 48,
+          "end_line": 51,
+          "unit_name": "T1PrepError"
+        },
+        {
+          "path": "deploy/dl-trainonly/test_manifest_binding.py",
+          "language": "python",
+          "start_line": 196,
+          "end_line": 199,
+          "unit_name": "Escapes"
+        },
+        {
+          "path": "deploy/qualification/agents/transcripts/run-prep/capture_clients.py",
+          "language": "python",
+          "start_line": 27,
+          "end_line": 30,
+          "unit_name": "CapturePackageError"
+        },
+        {
+          "path": "deploy/qualification/agents/transcripts/run-prep/capture_three_clients.py",
+          "language": "python",
+          "start_line": 65,
+          "end_line": 68,
+          "unit_name": "CaptureError"
+        },
+        {
+          "path": "deploy/qualification/agents/transcripts/run-prep/verify_capture.py",
+          "language": "python",
+          "start_line": 21,
+          "end_line": 24,
+          "unit_name": "CaptureError"
+        },
+        {
+          "path": "deploy/qualification/q1/harness/api01_launch.py",
+          "language": "python",
+          "start_line": 35,
+          "end_line": 38,
+          "unit_name": "Pending"
+        },
+        {
+          "path": "python/src/jope/policy/automaton.py",
+          "language": "python",
+          "start_line": 30,
+          "end_line": 33,
+          "unit_name": "IllegalToken"
+        },
+        {
+          "path": "python/src/jope/policy/tokens.py",
+          "language": "python",
+          "start_line": 131,
+          "end_line": 134,
+          "unit_name": "EncodeError"
+        },
+        {
+          "path": "research/flywheel_selfplay/dev_incumbent.py",
+          "language": "python",
+          "start_line": 440,
+          "end_line": 443,
+          "unit_name": "RejectedCandidateError"
+        },
+        {
+          "path": "research/flywheel_selfplay/golden/generate.py",
+          "language": "python",
+          "start_line": 53,
+          "end_line": 56,
+          "unit_name": "Refusal"
+        },
+        {
+          "path": "research/flywheel_selfplay/h100_asam_confirm/run_wave.py",
+          "language": "python",
+          "start_line": 33,
+          "end_line": 36,
+          "unit_name": "PredecessorPending"
+        },
+        {
+          "path": "research/flywheel_selfplay/h105_shrink_r882/run_wave.py",
+          "language": "python",
+          "start_line": 33,
+          "end_line": 36,
+          "unit_name": "PredecessorPending"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-71416a33bdd479c1",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 1,
+      "duplicate_tokens": 15,
+      "duplicate_bytes": 85,
+      "instance_count": 2,
+      "total_redundant_lines": 1,
+      "total_redundant_tokens": 15,
+      "total_redundant_bytes": 85,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "4cf4628ed68b59a9",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+          "language": "python",
+          "start_line": 109,
+          "end_line": 112,
+          "unit_name": "target_cost"
+        },
+        {
+          "path": "research/flywheel_selfplay/h220_family_mixup/mixup.py",
+          "language": "python",
+          "start_line": 32,
+          "end_line": 35,
+          "unit_name": "cost_target"
+        }
+      ]
+    },
+    {
+      "id": "copy-code-body-python-e23f7953d884e0e9",
+      "kind": "exact_unit_different_name",
+      "severity": "warning",
+      "confidence": "medium",
+      "language": "python",
+      "duplicate_lines": 2,
+      "duplicate_tokens": 14,
+      "duplicate_bytes": 93,
+      "instance_count": 3,
+      "total_redundant_lines": 4,
+      "total_redundant_tokens": 28,
+      "total_redundant_bytes": 186,
+      "effective_severity": "warning",
+      "hard_fail": false,
+      "fingerprint": "a707a810b4a13f0b",
+      "reason": "same body appears under different names across files",
+      "recommended_action": "choose one owner for the shared body or intentionally differentiate the behavior",
+      "instances": [
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_build_local.py",
+          "language": "python",
+          "start_line": 318,
+          "end_line": 322,
+          "unit_name": "ref"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+          "language": "python",
+          "start_line": 164,
+          "end_line": 168,
+          "unit_name": "file_ref"
+        },
+        {
+          "path": "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw.py",
+          "language": "python",
+          "start_line": 86,
+          "end_line": 90,
+          "unit_name": "ref"
+        }
+      ]
+    }
+  ],
   "reviewed_on": "2026-11-02",
   "rule_dispositions": {
     "HLT-000-SCORE-DIMENSION:stack": "Historical/test and offline data tooling files are outside the supported product runtime; finding remains enumerated and is not claimed fixed.",
@@ -515,5 +5336,5 @@
     "HLT-033-PYTHON-BAD-BEHAVIOR:sql": "The table identifier is a fixed internal constant and value data remains parameter-bound; the finding remains enumerated pending detector-specific adjudication."
   },
   "schema": "jopedime.jankurai-pyexec-dispositions/v1",
-  "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 23 packet HLT-033 sites and file-level findings recorded below. Their bytes are pinned by source manifests or experiment identity. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; a changed-scope repository audit also checks the cross-file duplicate finding. Any byte drift, missing finding, or new finding fails closed."
+  "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 42 registered HLT-033 sites and file-level findings recorded below. The H155 executor loads only H153 Git blobs at a fixed commit after SHA-256 checks; H154/H158/H159/H161/H164/H168/H173 runners load the manifest-pinned H50 fused input and SHA-verified fixed-commit guard only after input and executor verification. The exact executor hashes for these files remain in their manifests. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; a changed-scope repository audit verifies all raw findings and copy-code classes touching registered paths. Any byte drift, missing finding, or new finding fails closed."
 }
