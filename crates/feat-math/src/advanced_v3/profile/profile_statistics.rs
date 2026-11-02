@@ -218,7 +218,11 @@ pub(super) fn deterministic_numeric_pairs(columns: &[usize], limit: usize) -> Ve
         .collect()
 }
 
-pub(super) fn subset_table(table: &RawTable, rows: &[usize], columns: &[usize]) -> Result<RawTable> {
+pub(super) fn subset_table(
+    table: &RawTable,
+    rows: &[usize],
+    columns: &[usize],
+) -> Result<RawTable> {
     RawTable::new(
         columns
             .iter()
