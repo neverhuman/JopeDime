@@ -21,6 +21,7 @@ for (const format of ['appliance', 'bound']) {
 }
 for (const name of fixtures) {
   const fixture = JSON.parse(fs.readFileSync(path.join(fixtureRoot, name + '.json')));
+  assert(fixture.probes.length > 0, `${name}: no native comparisons generated`);
   const loaded = call('browser_load', fixture.envelope);
   assert(loaded.ok, JSON.stringify(loaded));
   for (const probe of fixture.probes) {

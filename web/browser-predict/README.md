@@ -6,7 +6,8 @@ native preprocessing, missing values, fitted parameters and target inversion. No
 refitted and no model-supplied JavaScript, WASM, host import or executable source is loaded.
 
 Build: `rustup target add wasm32-unknown-unknown`, then `bash web/browser-predict/build.sh`.
-Verify: `bash web/browser-predict/check.sh` runs native contracts and Node/WASM parity over
+Verify: with cargo-deny0.20.2 installed, `bash web/browser-predict/check.sh` first scans the
+standalone locked graph under root deny.toml (advisories, bans, licenses and sources), then runs native contracts and Node/WASM parity over
 native-generated ridge, composite-GPR, binary/categorical, multiclass and Platt-calibrated
 appliance/bound fixtures, including exact class order, tied labels, missing/out-of-range cells, corruption,
 stale-model refusal and message limits. The cloud app separately verifies actual browsers,

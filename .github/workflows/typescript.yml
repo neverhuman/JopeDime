@@ -97,7 +97,11 @@ jobs:
         run: bash ops/ci/typescript.sh source-check
       - name: Native browser runtime integrity and WASM parity
         if: matrix.node == '26.1.0'
-        run: bash web/browser-predict/check.sh
+        run: |
+          bash web/browser-predict/check.sh
+          mkdir -p target/typescript-evidence/browser-dependencies
+          cp "$CARGO_TARGET_DIR/browser-predict/security/"* target/typescript-evidence/browser-dependencies/
+          cp "$CARGO_TARGET_DIR/browser-predict/runtime-build.json" "$CARGO_TARGET_DIR/browser-predict/parity.json" target/typescript-evidence/browser-dependencies/
       - name: Complete census, golden parity, 100 percent facade coverage and publication contracts
         run: bash ops/ci/typescript.sh qualify
       - name: Every census fixture in Chromium, Firefox, WebKit and module workers
