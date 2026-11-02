@@ -280,7 +280,7 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
 
     def client_exits_during_deadline_poll(command, *positional, **kwargs):
         process = original_popen(command, *positional, **kwargs)
-        if command[0] == str(client):
+        if str(client) in command:
             original_wait = process.wait
             first_wait = True
 
