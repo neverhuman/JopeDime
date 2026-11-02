@@ -544,62 +544,11 @@ print(json.dumps(out,allow_nan=False))
     return json.loads(r.stdout)
 
 def main():
-    p = argparse.ArgumentParser()
-    p.add_argument('--deployment', type=Path, required=True)
-    p.add_argument('--out', type=Path, required=True)
-    p.add_argument('--once', action='store_true')
-    p.add_argument('--publisher-window', type=Path)
-    p.add_argument('--publisher-window-sha')
-    a = p.parse_args()
-    entries = json.loads(a.deployment.read_text())
-    assert len(entries) == 3 and {x['host'] for x in entries} == {'xbabe2', 'xbabe3'}
-    deadline = min(x['deadline'] for x in entries)
-    if a.publisher_window is not None:
-        raw=a.publisher_window.read_bytes()
-        if hashlib.sha256(raw).hexdigest()!=a.publisher_window_sha:raise ValueError('publisher window SHA')
-        window=json.loads(raw)
-        if set(window)!={'schema','created_unix','deadline_unix','global_deadline_unix','source_sha256','deployment_sha256','historical_archive_deadlines_preserved'} or window['schema']!='jope.readonly-publisher-window/v1':raise ValueError('closed publisher window')
-        if not(0<window['deadline_unix']-window['created_unix']<=3600 and window['deadline_unix']<=window['global_deadline_unix']==1791592146.380285 and window['created_unix']<=time.time()<window['deadline_unix']):raise ValueError('fixed fresh publisher window under original global deadline')
-        if window['historical_archive_deadlines_preserved']is not True or hashlib.sha256(a.deployment.read_bytes()).hexdigest()!=window['deployment_sha256']or hashlib.sha256(Path(__file__).read_bytes()).hexdigest()!=window['source_sha256']:raise ValueError('publisher source/deployment closure')
-        deadline=window['deadline_unix']
-    while time.time() < deadline:
-        s = {'schema': 'jope.paper-observatory/v1', 'at': time.time(), 'archives': [], 'hosts': [], 'errors': []}
-        for host in ('xbabe1', 'xbabe2', 'xbabe3'):
-            try:
-                h = collect_compute(host) if host=='xbabe1' else collect(host, [x for x in entries if x['host'] == host])
-                s['archives'].extend(h.pop('archives'));s['hosts'].append(h)
-            except Exception as exc:
-                s['errors'].append({'host': host, 'error': type(exc).__name__, 'message': str(exc)[:300]})
-        host2 = next((h for h in s['hosts'] if h['host']=='xbabe2'), {})
-        g = host2.get('evergreen', {}); gp = host2.get('gp_label_campaign', {}).get('counts', {}); fill = host2.get('gp_fill_campaign', {}).get('counts', {}); neural = host2.get('neural_training', {})
-        expanded = sum(x.get('counts',{}).get('completed_publications',0)for h in s['hosts']for x in h.get('gp_expansion_campaigns',[]))
-        point = {'at': s['at'], 'data_runs_published': g.get('published',0),
-                 'gp_results_published': host2.get('gp_publication',{}).get('published_programs',0)+host2.get('gp_bridge',{}).get('actual_evaluations',0)+gp.get('completed_publications',0)+fill.get('completed_publications',0)+neural.get('published_results',0)+host2.get('neural_previous_run',{}).get('published_results',0)+expanded,
-                 'unique_data_runs_seen': host2.get('neural_training',{}).get('unique_train_data_runs_seen',0),
-                 'completed_batches': host2.get('neural_training',{}).get('completed_batches',0),'neural_run_id':neural.get('run_id',neural.get('config_sha256'))}
-        history_path = a.deployment.parent/'flywheel_history_v1.jsonl'
-        history = []
-        if history_path.exists():
-            if history_path.is_symlink() or history_path.stat().st_size>8*1024**2:raise ValueError('history cap')
-            previous = '0'*64
-            for line in history_path.read_bytes().splitlines():
-                event = json.loads(line); expected = event.pop('sha256')
-                body = json.dumps(event,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
-                if event['previous']!=previous or hashlib.sha256(body).hexdigest()!=expected:raise ValueError('history integrity')
-                previous=expected;history.append(event['point'])
-        else:previous='0'*64
-        event={'point':point,'previous':previous}
-        event['sha256']=hashlib.sha256(json.dumps(event,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
-        if not a.once:
-            with history_path.open('ab')as stream:
-                stream.write((json.dumps(event,sort_keys=True,separators=(',',':'),allow_nan=False)+'\n').encode());stream.flush();os.fsync(stream.fileno())
-        history.append(point);s['flywheel_history']=history[-400:]
-        tmp = a.out.with_suffix('.new')
-        tmp.write_text(json.dumps(s, allow_nan=False) + '\n');os.replace(tmp, a.out)
-        print(json.dumps({'at': s['at'], 'archives': len(s['archives']), 'errors': s['errors']}), flush=True)
-        if a.once:
-            return
-        time.sleep(max(0, min(15, deadline - time.time())))
+    import runpy
+
+    publisher = runpy.run_path(str(Path(__file__).with_name('paper_publish_v33.py')))
+    publisher['main'](__file__, collect_fn=collect, collect_compute_fn=collect_compute)
+
 
 if __name__ == '__main__':
     main()

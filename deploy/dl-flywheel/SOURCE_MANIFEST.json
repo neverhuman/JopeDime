@@ -58,14 +58,14 @@
       "origin": "work/heartbeat-20261009-0616/paper_publish_v33.py",
       "origin_sha256": "3d2c59b45cf66fe95a1249692f600acdbcff2262ecbf427b9ac4e775bd02cd3a",
       "path": "deploy/dl-flywheel/dashboard/paper_publish_v33.py",
-      "sha256": "3d2c59b45cf66fe95a1249692f600acdbcff2262ecbf427b9ac4e775bd02cd3a"
+      "sha256": "5ae613a1b74a1c84d6068152e63e729d1c9df62ae235f45b9584a53ac6939eb9"
     },
     {
       "normalization": "Repository-local import paths/fixture regression or reviewed publisher executor selection; imported runtime origin retained.",
       "origin": "work/heartbeat-20261009-0616/paper_publish_v34.py",
       "origin_sha256": "350748079c1b9af87005c348a80fcce97632d13c9b56e1a691bd8a283750279d",
       "path": "deploy/dl-flywheel/dashboard/paper_publish_v34.py",
-      "sha256": "495f0384319cdaf5ebcc561fa31ea17a3c20fea86a1f31efb361e17bb75ed4fe"
+      "sha256": "22c9c1ccc0714025e555921498ece8723663ab697ea45a9f15e5baf730700944"
     },
     {
       "normalization": "Removed one blank line at EOF for git diff --check; deployed source remains unchanged.",
