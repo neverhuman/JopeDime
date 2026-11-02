@@ -587,7 +587,7 @@
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_snapshot_kumos.py",
       "origin_sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot_kumos.py",
-      "sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2"
+      "sha256": "42f8c2923bfe050d054d2c08c22d0c649a731725adb701befa6f2c3521414b87"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_snapshot_native.py",
