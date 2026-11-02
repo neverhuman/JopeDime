@@ -2226,6 +2226,26 @@ fn batch_watchdog_expired(control: std::sync::mpsc::Receiver<()>, timeout: Durat
     !matches!(control.recv_timeout(timeout), Ok(()))
 }
 
+fn observe_batch_watchdog(
+    control: std::sync::mpsc::Receiver<()>,
+    timeout: Duration,
+    expired: &AtomicBool,
+) -> bool {
+    let did_expire = batch_watchdog_expired(control, timeout);
+    if did_expire {
+        expired.store(true, AtomicOrdering::SeqCst);
+    }
+    did_expire
+}
+
+fn reject_expired_batch_watchdog(expired: bool) -> Result<()> {
+    anyhow::ensure!(
+        !expired,
+        "aggressive batch watchdog expired before the batch completed"
+    );
+    Ok(())
+}
+
 fn timeout_candidate_receipt(
     request: &CandidateRequest,
     runtime_seconds: f64,
@@ -2358,26 +2378,24 @@ fn aggressive_batch_worker_direct(manifest_path: &Path, output_dir: &Path) -> Re
     let next_request = Arc::new(AtomicUsize::new(0));
     let candidates = Arc::new(Mutex::new(Vec::<BatchCandidateReceipt>::new()));
     let failures = Arc::new(Mutex::new(Vec::<String>::new()));
+    let watchdog_expired = Arc::new(AtomicBool::new(false));
     let watchdog = if manifest.candidate_timeout_seconds == 0 {
         None
     } else {
         let (watchdog_control, watchdog_receiver) = std::sync::mpsc::sync_channel(2);
+        let expired = Arc::clone(&watchdog_expired);
         let queue_waves = manifest.requests.len().div_ceil(worker_count);
         let watchdog_timeout = Duration::from_secs(
             manifest.candidate_timeout_seconds as u64 * queue_waves as u64 + 60,
         );
         let watchdog = thread::Builder::new()
             .name("jope-aggressive-watchdog".to_string())
-            .spawn(move || {
-                if batch_watchdog_expired(watchdog_receiver, watchdog_timeout) {
-                    std::process::exit(124);
-                }
-            })
+            .spawn(move || observe_batch_watchdog(watchdog_receiver, watchdog_timeout, &expired))
             .context("spawn aggressive batch watchdog")?;
         watchdog_control
             .send(())
             .context("start aggressive batch watchdog")?;
-        Some((watchdog_control, watchdog))
+        Some((watchdog_control, watchdog, Arc::clone(&watchdog_expired)))
     };
     thread::scope(|scope| -> Result<()> {
         for (worker, cpu) in cpus.iter().enumerate() {
@@ -2386,6 +2404,7 @@ fn aggressive_batch_worker_direct(manifest_path: &Path, output_dir: &Path) -> Re
             let next_request = Arc::clone(&next_request);
             let candidates = Arc::clone(&candidates);
             let failures = Arc::clone(&failures);
+            let watchdog_expired = Arc::clone(&watchdog_expired);
             let requests = &manifest.requests;
             let request_dir = &request_dir;
             scope.spawn(move || {
@@ -2409,6 +2428,9 @@ fn aggressive_batch_worker_direct(manifest_path: &Path, output_dir: &Path) -> Re
                     return;
                 }
                 loop {
+                    if watchdog_expired.load(AtomicOrdering::SeqCst) {
+                        break;
+                    }
                     let index = next_request.fetch_add(1, AtomicOrdering::Relaxed);
                     let Some(request) = requests.get(index) else {
                         break;
@@ -2447,13 +2469,13 @@ fn aggressive_batch_worker_direct(manifest_path: &Path, output_dir: &Path) -> Re
         start_barrier.wait();
         Ok(())
     })?;
-    if let Some((watchdog_control, watchdog)) = watchdog {
-        watchdog_control
-            .send(())
-            .context("cancel aggressive batch watchdog")?;
-        watchdog
+    if let Some((watchdog_control, watchdog, expired)) = watchdog {
+        let cancellation = watchdog_control.send(());
+        let watchdog_fired = watchdog
             .join()
             .map_err(|_| anyhow::anyhow!("aggressive batch watchdog panicked"))?;
+        reject_expired_batch_watchdog(watchdog_fired || expired.load(AtomicOrdering::SeqCst))?;
+        cancellation.context("cancel aggressive batch watchdog")?;
     }
 
     let failures = Arc::into_inner(failures)
@@ -3057,19 +3079,30 @@ mod tests {
     }
 
     #[test]
-    fn batch_watchdog_cancels_or_expires_fail_closed() {
+    fn batch_watchdog_cancels_or_reports_expiry_without_exiting() {
         let (cancelled_tx, cancelled_rx) = std::sync::mpsc::sync_channel(2);
         cancelled_tx.send(()).unwrap();
         cancelled_tx.send(()).unwrap();
-        assert!(!batch_watchdog_expired(
+        let cancelled = AtomicBool::new(false);
+        assert!(!observe_batch_watchdog(
             cancelled_rx,
-            Duration::from_secs(1)
+            Duration::from_secs(1),
+            &cancelled,
         ));
+        assert!(!cancelled.load(AtomicOrdering::SeqCst));
 
         let (expired_tx, expired_rx) = std::sync::mpsc::sync_channel(1);
         expired_tx.send(()).unwrap();
         drop(expired_tx);
-        assert!(batch_watchdog_expired(expired_rx, Duration::from_secs(1)));
+        let expired = Arc::new(AtomicBool::new(false));
+        let thread_expired = Arc::clone(&expired);
+        let watchdog = thread::spawn(move || {
+            observe_batch_watchdog(expired_rx, Duration::from_secs(1), &thread_expired)
+        });
+        assert!(watchdog.join().unwrap());
+        assert!(expired.load(AtomicOrdering::SeqCst));
+        assert!(reject_expired_batch_watchdog(true).is_err());
+        assert!(reject_expired_batch_watchdog(false).is_ok());
     }
 
     #[test]

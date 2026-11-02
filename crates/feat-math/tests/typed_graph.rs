@@ -129,7 +129,7 @@ fn supported_bridge_executes_existing_interpreter_and_preserves_old_identity() {
 
 #[test]
 fn every_committed_historical_program_roundtrips_typed_or_explicitly_opaque() {
-    let corpus:Json=serde_json::from_str(include_str!("fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json")).unwrap();
+    let corpus:Json=serde_json::from_str(include_str!("../fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json")).unwrap();
     fn collect<'a>(v: &'a Json, out: &mut Vec<&'a str>) {
         match v {
             Json::Object(m) => {

@@ -5,7 +5,60 @@
 //! request retries, bounded status/event reads, two-language export, parity and prediction.
 //! Unavailable parity is a failing acceptance result, never a skipped or passing test.
 
-use std::{fs, io, path::Path, process::Command};
+use std::{collections::BTreeSet, fs, io, path::Path, process::Command};
+
+const REQUIRED_CHECKS: &[&str] = &[
+    "system_info",
+    "dataset_register_replay",
+    "dry_run_plan_replay",
+    "initial_run_inventory_empty",
+    "one_run_between_create_and_retry",
+    "run_start_replay",
+    "one_run_after_create_retry",
+    "run_start_replay_after_mcp_reconnect",
+    "completed_with_real_champion",
+    "event_sequences",
+    "event_run_identity",
+    "zero_resource_limits",
+    "one_run_after_retry",
+    "fit_holdout_export",
+    "both_languages_exported",
+    "measured_parity_receipt",
+    "exported_sources_exist",
+    "model_payload_exists",
+    "parity_receipt_file_exists",
+    "usage_readme_exists",
+    "downloaded_sources_match_measured_bytes",
+    "python_downloaded_readme_self_check",
+    "rust_downloaded_readme_self_check",
+    "export_retry",
+    "prediction_retry",
+    "prediction_resource_hash",
+    "prediction_rows",
+    "finite_predictions",
+    "prediction_file_retry",
+    "prediction_file_retry_preserves_inode",
+    "prediction_file_matches_resource",
+    "prediction_did_not_mutate_run",
+];
+
+fn qualification_report_passes(report: &serde_json::Value) -> bool {
+    let Some(checks) = report.get("checks").and_then(serde_json::Value::as_object) else {
+        return false;
+    };
+    let expected: BTreeSet<_> = REQUIRED_CHECKS.iter().copied().collect();
+    let observed: BTreeSet<_> = checks.keys().map(String::as_str).collect();
+    observed == expected
+        && checks.values().all(|value| value.as_bool() == Some(true))
+        && report
+            .get("full_AG1_qualified")
+            .and_then(serde_json::Value::as_bool)
+            == Some(true)
+        && report
+            .get("cleanup_errors")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(Vec::is_empty)
+}
 
 pub(super) fn run(
     executable: &Path,
@@ -48,6 +101,19 @@ pub(super) fn run(
             evidence.display(),
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr),
+        )));
+    }
+    let report: serde_json::Value = serde_json::from_slice(&output.stdout).map_err(|error| {
+        io::Error::other(format!(
+            "AG1 acceptance did not emit a JSON report; receipts {}: {error}",
+            evidence.display()
+        ))
+    })?;
+    if !qualification_report_passes(&report) {
+        return Err(io::Error::other(format!(
+            "AG1 acceptance report did not contain every passing required check; receipts {}\n{}",
+            evidence.display(),
+            String::from_utf8_lossy(&output.stdout),
         )));
     }
     Ok(())
@@ -135,10 +201,38 @@ report = {'source': a.source, 'binary_sha256': pin['sha256'], 'binary_original':
           'checks': {}, 'full_AG1_qualified': False}
 frames = []; children = []; client = None; daemon = None
 
+REQUIRED_CHECKS = frozenset({
+    'system_info', 'dataset_register_replay', 'dry_run_plan_replay',
+    'initial_run_inventory_empty', 'one_run_between_create_and_retry',
+    'run_start_replay', 'one_run_after_create_retry',
+    'run_start_replay_after_mcp_reconnect', 'completed_with_real_champion',
+    'event_sequences', 'event_run_identity', 'zero_resource_limits',
+    'one_run_after_retry', 'fit_holdout_export', 'both_languages_exported',
+    'measured_parity_receipt', 'exported_sources_exist', 'model_payload_exists',
+    'parity_receipt_file_exists', 'usage_readme_exists',
+    'downloaded_sources_match_measured_bytes', 'python_downloaded_readme_self_check',
+    'rust_downloaded_readme_self_check', 'export_retry', 'prediction_retry',
+    'prediction_resource_hash', 'prediction_rows', 'finite_predictions',
+    'prediction_file_retry', 'prediction_file_retry_preserves_inode',
+    'prediction_file_matches_resource', 'prediction_did_not_mutate_run',
+})
+
+def qualification_complete(checks):
+    return set(checks) == REQUIRED_CHECKS and all(checks[name] is True for name in REQUIRED_CHECKS)
+
+_all_true = {name: True for name in REQUIRED_CHECKS}
+_one_check = next(iter(REQUIRED_CHECKS))
+assert not qualification_complete({}), 'empty check set must not qualify'
+assert not qualification_complete({name: True for name in REQUIRED_CHECKS if name != _one_check}), 'missing check must not qualify'
+assert not qualification_complete({**_all_true, _one_check: False}), 'failed check must not qualify'
+assert not qualification_complete({**_all_true, 'unexpected_check': True}), 'unknown check must not qualify'
+assert qualification_complete(_all_true), 'complete passing check set must qualify'
+
 def save(name, value):
     (out / name).write_text(json.dumps(value, indent=2) + '\n')
 
 def check(name, condition):
+    assert name not in report['checks'], f'duplicate acceptance check: {name}'
     report['checks'][name] = bool(condition)
 
 def command(argv, timeout=20):
@@ -380,7 +474,9 @@ try:
          'file_sha256': hashlib.sha256((home / 'predictions.csv').read_bytes()).hexdigest()})
     check('prediction_did_not_mutate_run', client.tool('run_status', {'run_id': rid}) == snapshot)
     check_binary()
-    report['full_AG1_qualified'] = all(report['checks'].values())
+    report['required_checks_missing'] = sorted(REQUIRED_CHECKS - set(report['checks']))
+    report['unexpected_checks'] = sorted(set(report['checks']) - REQUIRED_CHECKS)
+    report['full_AG1_qualified'] = qualification_complete(report['checks'])
 except Exception as error:
     report['error'] = str(error); report['traceback'] = traceback.format_exc()
 finally:
@@ -414,5 +510,59 @@ finally:
     save('frames.json', frames); save('report.json', report)
     binary_file.close()
 print(json.dumps(report))
-raise SystemExit(0 if report['full_AG1_qualified'] and not report['cleanup_errors'] else 1)
+if report['full_AG1_qualified'] is not True or report['cleanup_errors']:
+    raise AssertionError('AG1 acceptance failed or owned-process cleanup was incomplete')
 "####;
+
+#[cfg(test)]
+mod qualification_report_tests {
+    use super::{qualification_report_passes, REQUIRED_CHECKS};
+    use serde_json::{json, Value};
+
+    fn report(checks: Value) -> Value {
+        json!({
+            "checks": checks,
+            "full_AG1_qualified": true,
+            "cleanup_errors": [],
+        })
+    }
+
+    #[test]
+    fn qualification_requires_every_unique_named_check_to_pass() {
+        let complete = REQUIRED_CHECKS
+            .iter()
+            .map(|name| ((*name).to_owned(), Value::Bool(true)))
+            .collect::<serde_json::Map<_, _>>();
+        assert!(qualification_report_passes(&report(Value::Object(
+            complete.clone()
+        ))));
+
+        assert!(!qualification_report_passes(&report(json!({}))));
+        let missing = complete
+            .iter()
+            .filter(|(name, _)| name.as_str() != REQUIRED_CHECKS[0])
+            .map(|(name, value)| (name.clone(), value.clone()))
+            .collect();
+        assert!(!qualification_report_passes(&report(Value::Object(
+            missing
+        ))));
+
+        let mut failed = complete.clone();
+        failed.insert(REQUIRED_CHECKS[0].to_owned(), Value::Bool(false));
+        assert!(!qualification_report_passes(&report(Value::Object(failed))));
+
+        let mut unexpected = complete.clone();
+        unexpected.insert("unexpected_check".to_owned(), Value::Bool(true));
+        assert!(!qualification_report_passes(&report(Value::Object(
+            unexpected
+        ))));
+
+        let mut incomplete = report(Value::Object(complete.clone()));
+        incomplete["full_AG1_qualified"] = Value::Bool(false);
+        assert!(!qualification_report_passes(&incomplete));
+
+        let mut cleanup_failed = report(Value::Object(complete));
+        cleanup_failed["cleanup_errors"] = json!(["daemon did not stop"]);
+        assert!(!qualification_report_passes(&cleanup_failed));
+    }
+}

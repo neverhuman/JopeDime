@@ -601,27 +601,64 @@ const EMPTY_BIN: &str = "a value is required for '--bin <BIN>' but none was supp
 /// `--profile`, `=` forms, `--bin=-1`) print what the Python printed.
 #[test]
 fn cargo_artifact_matches_round_seven() {
-    let usage: Vec<(&str, &str)> = R7_STRICTER.iter().chain(R7_BOTH_REFUSE).copied().collect();
-    replay_round("negative-r7.json", 47, &[], &[], &[], &usage);
-    // Each list holds what its documentation says the Python did.
     let doc: Value =
         serde_json::from_str(&fs::read_to_string(fixture().join("negative-r7.json")).unwrap())
             .unwrap();
-    let python_exit = |name: &str| {
-        doc["cases"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .find(|c| c["name"] == name)
-            .map(|c| c["exit"].as_i64().unwrap())
-            .unwrap()
-    };
-    for (name, _) in R7_STRICTER {
-        assert_eq!(python_exit(name), 0, "{name}: listed as stricter");
+    let stricter_names: std::collections::BTreeSet<_> =
+        R7_STRICTER.iter().map(|(name, _)| *name).collect();
+    let both_refuse_names: std::collections::BTreeSet<_> =
+        R7_BOTH_REFUSE.iter().map(|(name, _)| *name).collect();
+    assert_eq!(R7_STRICTER.len(), 21, "reviewed stricter-case inventory");
+    assert_eq!(R7_BOTH_REFUSE.len(), 17, "reviewed both-refuse inventory");
+    assert_eq!(
+        stricter_names.len(),
+        R7_STRICTER.len(),
+        "duplicate stricter case"
+    );
+    assert_eq!(
+        both_refuse_names.len(),
+        R7_BOTH_REFUSE.len(),
+        "duplicate both-refuse case"
+    );
+    assert!(
+        stricter_names.is_disjoint(&both_refuse_names),
+        "one case cannot be both stricter and refused by both"
+    );
+
+    let usage_names: std::collections::BTreeSet<_> =
+        stricter_names.union(&both_refuse_names).copied().collect();
+    let mut observed_usage = std::collections::BTreeSet::new();
+    let mut python_accepted = std::collections::BTreeSet::new();
+    let mut python_refused = std::collections::BTreeSet::new();
+    for case in doc["cases"].as_array().unwrap() {
+        let name = case["name"].as_str().unwrap();
+        if usage_names.contains(name) {
+            assert!(
+                observed_usage.insert(name),
+                "duplicate fixture case: {name}"
+            );
+            if case["exit"].as_i64().unwrap() == 0 {
+                python_accepted.insert(name);
+            } else {
+                python_refused.insert(name);
+            }
+        }
     }
-    for (name, _) in R7_BOTH_REFUSE {
-        assert_ne!(python_exit(name), 0, "{name}: listed as refused by both");
-    }
+    assert_eq!(
+        observed_usage, usage_names,
+        "every reviewed case is present"
+    );
+    assert_eq!(
+        python_accepted, stricter_names,
+        "historical Python acceptance set must equal the reviewed stricter cases"
+    );
+    assert_eq!(
+        python_refused, both_refuse_names,
+        "historical Python refusal set must equal the reviewed refusal cases"
+    );
+
+    let usage: Vec<(&str, &str)> = R7_STRICTER.iter().chain(R7_BOTH_REFUSE).copied().collect();
+    replay_round("negative-r7.json", 47, &[], &[], &[], &usage);
 }
 
 /// Replay every case of a round fixture (the layout of `negative-r2.json`); `message_differs` names

@@ -95,6 +95,13 @@ pub(super) fn run() {
     ] {
         assert_eq!(report[gate], true, "missing actual acceptance: {gate}");
     }
+    assert_eq!(
+        report["driver_qualified"], true,
+        "driver did not qualify its required gates"
+    );
+    assert!(report["cleanup_errors"]
+        .as_array()
+        .is_some_and(Vec::is_empty));
     eprintln!(
         "INT-02 R4/S2/R1 actual native acceptance PASS; receipts {}",
         out.display()
@@ -149,6 +156,54 @@ report = {'source': args.source, 'started': datetime.datetime.now(datetime.timez
           'open_file_limit': list(resource.getrlimit(resource.RLIMIT_NOFILE)),
           'parent_open_files_start': len(os.listdir('/dev/fd')),
           'binary_sha256': hashlib.sha256(Path(args.binary).read_bytes()).hexdigest()}
+
+def acceptance_passes(result, required_gates):
+    return ('error' not in result
+            and all(result.get(gate) is True for gate in required_gates)
+            and result.get('cleanup_errors', []) == [])
+
+def required_gates(args):
+    gates={'projection_oracle_controls'}
+    if not args.s2_only and not args.r1_only:gates.add('r4_qualified')
+    if not args.r4_only and not args.r1_only:gates.add('s2_qualified')
+    if args.r1_only or args.all_live:gates.add('r1_coarse_native_pass')
+    if args.boundary_matrix:gates.add('r1_all_internal_background_cuts_qualified')
+    return gates
+
+_all_live_gates = {
+    'projection_oracle_controls': True,
+    'r4_qualified': True,
+    's2_qualified': True,
+    'r1_coarse_native_pass': True,
+}
+qualification_controls = {
+    'empty_rejected': not acceptance_passes({}, {'projection_oracle_controls'}),
+    'missing_gate_rejected': not acceptance_passes(
+        {'projection_oracle_controls': True, 'cleanup_errors': []},
+        {'projection_oracle_controls', 'r4_qualified'}),
+    'false_gate_rejected': not acceptance_passes(
+        {**_all_live_gates, 's2_qualified': False, 'cleanup_errors': []}, _all_live_gates),
+    'reported_error_rejected': not acceptance_passes(
+        {**_all_live_gates, 'error': 'controlled failure', 'cleanup_errors': []}, _all_live_gates),
+    'cleanup_failure_rejected': not acceptance_passes(
+        {**_all_live_gates, 'cleanup_errors': ['controlled cleanup failure']}, _all_live_gates),
+    'complete_pass_accepted': acceptance_passes(
+        {**_all_live_gates, 'cleanup_errors': []}, _all_live_gates),
+    'all_live_requires_all_gates': required_gates(argparse.Namespace(
+        s2_only=False, r4_only=False, r1_only=False, all_live=True,
+        boundary_matrix=False)) == set(_all_live_gates),
+    'r4_only_requires_r4': required_gates(argparse.Namespace(
+        s2_only=False, r4_only=True, r1_only=False, all_live=False,
+        boundary_matrix=False)) == {'projection_oracle_controls', 'r4_qualified'},
+    's2_only_requires_s2': required_gates(argparse.Namespace(
+        s2_only=True, r4_only=False, r1_only=False, all_live=False,
+        boundary_matrix=False)) == {'projection_oracle_controls', 's2_qualified'},
+    'r1_only_requires_r1': required_gates(argparse.Namespace(
+        s2_only=False, r4_only=False, r1_only=True, all_live=False,
+        boundary_matrix=False)) == {'projection_oracle_controls', 'r1_coarse_native_pass'},
+}
+assert all(qualification_controls.values()), 'acceptance predicate negative/positive control failed'
+report['qualification_controls'] = qualification_controls
 
 def save(name, value):
     (out/name).write_text(json.dumps(value, indent=2)+'\n')
@@ -617,9 +672,16 @@ finally:
                 except OSError as error:cleanup.append(str(error))
     report['cleanup_errors']=cleanup
     report['finished']=datetime.datetime.now(datetime.timezone.utc).isoformat()
-    report['load_after']=os.getloadavg()[0];save('commands.json',commands);save('report.json',report)
+    report['load_after']=os.getloadavg()[0]
+    expected_gates=required_gates(args)
+    report['required_gates']=sorted(expected_gates)
+    report['missing_gates']=sorted(gate for gate in expected_gates if gate not in report)
+    report['failed_gates']=sorted(gate for gate in expected_gates if report.get(gate) is not True)
+    report['driver_qualified']=acceptance_passes(report,expected_gates)
+    save('commands.json',commands);save('report.json',report)
 print(json.dumps({k:v for k,v in report.items() if k not in ['traceback','r4_final']}))
-raise SystemExit(1 if 'error' in report else 0)
+if report['driver_qualified'] is not True:
+    raise AssertionError('INT-02 acceptance failed, a required mode gate is absent/false, or cleanup failed')
 "####;
 
 const OBSERVER: &str = r####""""Transparent loopback observer; retain response events, never auth headers."""
