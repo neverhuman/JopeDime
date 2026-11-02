@@ -302,7 +302,7 @@ def selection_changes():
             "pdf.fonttype": 42,
         }
     )
-    fig, ax = plt.subplots(figsize=(3.25, 2.45))
+    fig, ax = plt.subplots(figsize=(3.25, 2.00))
     ax.plot(rounds, candidates, color="#adb5bd", lw=0.6, label="candidate")
     ax.step(rounds, retained, where="post", color="#0b5394", lw=1, label="retained")
     for events, marker, color, label, hollow in [
