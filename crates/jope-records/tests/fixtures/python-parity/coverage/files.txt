@@ -1510,6 +1510,8 @@ crates/jope-policy/tests/jope_dime.rs
 crates/jope-policy/tests/scorer_dependencies.rs
 crates/jope-records/Cargo.toml
 crates/jope-records/src/claims.rs
+crates/jope-records/src/claims/revoked.rs
+crates/jope-records/src/claims/verify.rs
 crates/jope-records/src/coverage.rs
 crates/jope-records/src/dispositions.rs
 crates/jope-records/src/dispositions/evidence.rs
