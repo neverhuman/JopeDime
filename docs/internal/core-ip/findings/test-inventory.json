@@ -2377,6 +2377,10 @@
       "reason": "H226 (frozen GATED_025 recipe on the retained-best r3175 base) data-free controls: cyclic cells and minimal fit plan, H124 seed folds and a fresh fold manifest, family-preserving shuffles, BT-Elo orientation, H129 blend/disagreement definitions, FIT-only tau choice with base fallback, primary and r882/r3175 plateau verdict rules, frozen H210/H217 gate recipe, xbabe2-only host, nice 19, source binding before the claim, load pause hysteresis and the capped absolute deadline; not study outcomes.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h228_family_invariant/test_h228.py": {
+      "reason": "H228 (family-invariant AND-mask and family GroupDRO adapter wave) preregistration data-free controls: AND-mask/GroupDRO math and placebo density match; not study outcomes or serving qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
