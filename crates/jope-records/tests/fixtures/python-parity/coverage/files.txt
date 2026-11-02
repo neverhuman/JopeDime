@@ -490,6 +490,15 @@ crates/jope-campaigns/src/bin/jope_selfplay_queue.rs
 crates/jope-campaigns/src/bin/jope_selfplay_shadow.rs
 crates/jope-campaigns/src/bin/jope_selfplay_status.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/constants.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/lock.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/proposer_context.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/proposer_input.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/supply.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/tests.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/tests_tail.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/wave_builder.rs
 crates/jope-campaigns/src/bin/jope_selfplay_trainer_watchdog.rs
 crates/jope-campaigns/src/bin/jope_selfplay_tui.rs
 crates/jope-campaigns/src/bin/jope_selfplay_wave.rs
