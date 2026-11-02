@@ -3,7 +3,7 @@
   "wave": "H222",
   "owner": "luna_v1_res08",
   "authority": "/home/ubuntu/nudges/hw_t1300_res08_h222.md",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "CLOSED_INCOMPLETE",
   "parent_commit": "b8ca3509833861d72502714684d3b4b61a206934",
   "runtime_sha256": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
   "inputs": {
@@ -129,11 +129,96 @@
   "execution": "SHA-bound Git objects read-only capsule, no added checkout or RC4/foreign source mutation",
   "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H222/res08-t1300/",
   "outcome": {
-    "status": "NOT_RUN",
-    "optimizer_updates": 0,
+    "status": "CLOSED_INCOMPLETE",
+    "verdict": "INCOMPLETE",
+    "full_completed_fits": 22,
+    "full_optimizer_updates": 881,
+    "smoke_optimizer_updates": 6,
+    "total_known_optimizer_updates": 887,
     "primary_candidate_readouts": 0,
     "median_gain": null,
     "ci95": null,
     "elo": null
+  },
+  "execution_source_commit": "12da44ef5fb97d74084d652109690c49f1ace854",
+  "resource_amendments": [
+    {
+      "id": "A1",
+      "authority": "/home/ubuntu/nudges/hw_t1400_loadguard.md",
+      "authority_sha256": "79eb3c2a22ece33ca28ea20e3e5198068809d5a136ba2febdf593a21ebc2683a",
+      "recorded_utc": "2026-11-02T14:00:28.289501+00:00",
+      "scientific_pre_primary_outcome": true,
+      "disposition": "NOT_APPLIED_TO_ACTIVE_ATTEMPT_UNDER_EXPLICIT_SAFE_CHANGE_EXCEPTION",
+      "quote": "If your run is already past the point where you can safely change this, leave it alone and note why in your receipt.",
+      "reason": "Both immutable Git-loaded live worker1242215 and supervisor1241622 enforce hard abort on load5>60 in memory, with no reload/cooperative controller handoff hook. SIGSTOP of the worker would leave the supervisor abort guard active; source-file edits would not alter either live function. Safe replacement would require interruption of an in-progress optimizer fit without a per-step optimizer/RNG resume checkpoint. No restart/replay/controller injection or disabling hard guards is authorized or performed.",
+      "actual_live_load_policy": "ABORT if load5>60; unchanged from registered/executed source12da44ef",
+      "requested_policy": "PAUSE if load5>60; recheck60s; resume<=55",
+      "hard_guards_unchanged": [
+        "RSS<4GiB",
+        "MemAvailable>=16GiB",
+        "free disk>=300GB",
+        "host CPU<=85%",
+        "compute deadline17:00Z"
+      ],
+      "observed_load": [
+        44.39501953125,
+        43.5283203125,
+        50.23974609375
+      ],
+      "completed_fits": 5,
+      "completed_fit_updates": 200,
+      "primary_candidate_readouts": 0,
+      "worker_or_supervisor_signalled": false,
+      "source_changed": false,
+      "deadline_reset": false
+    }
+  ],
+  "post_attempt_custody_resource_policy": {
+    "recorded_utc": "2026-11-02T14:48:23.920023+00:00",
+    "authority": "/home/ubuntu/nudges/hw_t1400_loadguard.md",
+    "applies_to": "New metadata-only terminal custody unit, after scientific worker termination",
+    "pause_if_load5_gt": 60,
+    "resume_if_load5_le": 55,
+    "recheck_seconds": 60,
+    "hard_guards_unchanged": [
+      "RSS4GiB",
+      "MemAvailable16GiB",
+      "free disk300GB",
+      "compute17:00Z",
+      "closeout17:30Z"
+    ],
+    "scientific_attempt_policy_unchanged": "Original live ABORT; explicit safe-change exception recorded",
+    "no_scientific_retry": true
+  },
+  "terminal_custody": {
+    "schema": "jope.h222.custody-receipt/v1",
+    "verified_utc": "2026-11-02T15:09:41.005381+00:00",
+    "source_commit": "12da44ef5fb97d74084d652109690c49f1ace854",
+    "status": "EXACT_VERSION_OBJECT_AND_MEMBER_REPLAY_PASS",
+    "scientific_status": "CLOSED_INCOMPLETE",
+    "scientific_verdict": "INCOMPLETE",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H222/res08-t1300/terminal-12da44ef5fb9-810a474cfc52d17a/H222-execution-output.zip",
+      "version_id": "2miMsVuDizlRfOw1eASOcJgQi3gRV2us",
+      "sha256": "810a474cfc52d17abb1dec405a5cb7e9ac13461f586c58e235aedac2bb0f94e5",
+      "bytes": 28165243
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H222/res08-t1300/terminal-12da44ef5fb9-810a474cfc52d17a/H222-terminal-manifest.json",
+      "version_id": "WZDnKYyACarLJ3JPNZ_vHG6AvDkkypQY",
+      "sha256": "27cd34d4e9c995c23ab02d308f3a84570868d666543a62655b0fe60f2174c660",
+      "bytes": 50172
+    },
+    "verified_members": 160,
+    "create_only_if_none_match": "*",
+    "exact_version_archive_and_manifest_bytes_verified": true,
+    "archive_member_sha256s_verified": true,
+    "raw_roots_retained": true,
+    "scientific_retry": false
+  },
+  "preregistration_manifest": {
+    "source_commit": "12da44ef5fb97d74084d652109690c49f1ace854",
+    "path": "research/flywheel_selfplay/h222_lipschitz_adapter/manifest.json",
+    "sha256": "044ff09dfea5aff31279ff170369e1ff738f532dfa511f86642c16c3bc9c351d"
   }
 }
