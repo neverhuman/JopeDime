@@ -148,6 +148,7 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
     interrupted = False
     input_eof = False
     actual_input_eof = False
+    client_signaled_eof = False
     readers = {}
     selector = selectors.PollSelector()
     blocking = {fd: os.get_blocking(fd) for fd in (0, 1)}
@@ -269,21 +270,35 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
                 observed("client_to_server", chunk, not chunk)
 
             def drain_interrupted_client_eof():
-                """Accept TERM only when client stdin is already at a real EOF."""
+                """Accept real EOF or one idle post-exchange client shutdown signal."""
+                nonlocal input_eof, actual_input_eof, interrupted, client_signaled_eof
                 if actual_input_eof:
-                    return True
-                if 0 not in readers or not any(
-                    key.fd == 0 for key, _ in selector.select(0)
-                ):
+                    return not client_signaled_eof
+                if 0 not in readers:
                     return False
-                while True:
+                while any(key.fd == 0 for key, _ in selector.select(0)):
                     try:
                         chunk = os.read(0, 65536)
                     except BlockingIOError:
-                        return actual_input_eof
+                        break
                     consume_client_chunk(chunk)
                     if not chunk:
                         return True
+                if (
+                    not client_signaled_eof
+                    and frames["client_to_server"] > 0
+                    and frames["server_to_client"] > 0
+                    and not any(fragments.values())
+                ):
+                    client_signaled_eof = True
+                    interrupted = False
+                    selector.unregister(0)
+                    del readers[0]
+                    observed("client_to_server", b"", True)
+                    input_eof = True
+                    actual_input_eof = True
+                    return True
+                return False
 
             while True:
                 require(time.monotonic() < deadline, "capture deadline exceeded")
@@ -643,6 +658,110 @@ sys.exit(recorder.record([sys.executable, "-c", server_code], Path(output), floa
                 receipt["frames"], {"client_to_server": 1, "server_to_client": 1}
             )
             self.assertFalse((self.out / "capture.json.pending").exists())
+
+        def test_idle_post_exchange_sigint_closes_server_stdin_and_completes_when_server_exits_zero(
+            self,
+        ):
+            server = (
+                f"import sys; data=sys.stdin.buffer.readline(); "
+                f"assert data=={request!r}; "
+                f"sys.stdout.buffer.write({reply!r}); sys.stdout.buffer.flush(); "
+                "assert sys.stdin.buffer.read()==b''"
+            )
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-B",
+                    __file__,
+                    "--out-dir",
+                    str(self.out),
+                    "--seconds",
+                    "2",
+                    "--",
+                    sys.executable,
+                    "-B",
+                    "-c",
+                    server,
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            try:
+                process.stdin.write(request)
+                process.stdin.flush()
+                with selectors.DefaultSelector() as ready:
+                    ready.register(process.stdout, selectors.EVENT_READ)
+                    self.assertTrue(
+                        ready.select(timeout=3), "server reply did not arrive"
+                    )
+                self.assertEqual(process.stdout.readline(), reply)
+                process.send_signal(signal.SIGINT)
+                self.assertEqual(process.wait(timeout=3), 0)
+                extra_stdout, stderr = process.communicate(timeout=1)
+                self.assertEqual(extra_stdout, b"")
+                receipt = self.receipt()
+                self.assertTrue(receipt["complete"], receipt["error"])
+                self.assertIsNone(receipt["error"])
+                self.assertEqual(receipt["server_exit_code"], 0)
+                self.assertEqual(receipt["relay_exit_code"], 0)
+                self.assertEqual(
+                    receipt["frames"],
+                    {"client_to_server": 1, "server_to_client": 1},
+                )
+                self.assertEqual(stderr, b"")
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.communicate(timeout=3)
+
+        def test_second_signal_after_synthetic_eof_remains_incomplete(self):
+            server = (
+                f"import os,signal,sys; data=sys.stdin.buffer.readline(); "
+                f"assert data=={request!r}; "
+                f"sys.stdout.buffer.write({reply!r}); sys.stdout.buffer.flush(); "
+                "assert sys.stdin.buffer.read()==b''; "
+                "os.kill(os.getppid(), signal.SIGTERM)"
+            )
+            process = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-B",
+                    __file__,
+                    "--out-dir",
+                    str(self.out),
+                    "--seconds",
+                    "2",
+                    "--",
+                    sys.executable,
+                    "-B",
+                    "-c",
+                    server,
+                ],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            try:
+                process.stdin.write(request)
+                process.stdin.flush()
+                with selectors.DefaultSelector() as ready:
+                    ready.register(process.stdout, selectors.EVENT_READ)
+                    self.assertTrue(
+                        ready.select(timeout=3), "server reply did not arrive"
+                    )
+                self.assertEqual(process.stdout.readline(), reply)
+                process.send_signal(signal.SIGINT)
+                self.assertEqual(process.wait(timeout=3), 125)
+                _extra_stdout, _stderr = process.communicate(timeout=1)
+                receipt = self.receipt()
+                self.assertFalse(receipt["complete"])
+                self.assertEqual(receipt["relay_exit_code"], 125)
+                self.assertTrue(receipt["error"])
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.communicate(timeout=3)
 
         def test_second_term_during_publication_preserves_incomplete_receipt(self):
             self.out = Path(self.temp.name) / "second-term"
