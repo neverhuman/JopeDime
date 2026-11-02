@@ -107,3 +107,7 @@ Implementation hash `d8cc9c3e1e7e7a426e3c3e5fdfb2af74f74af5d4b2174f4019ef84d83fa
 calculations are unchanged. The identity and lineage source pins are regenerated at the
 transition commit. The append-only known-identity table is unchanged because this work has no
 shipped receipt proving that the new identity existed.
+
+## Current identity transition: browser wasm32 portability (2026-11-02)
+
+Browser prediction makes stage_cache's default byte cap representable on32-bit targets, retaining the native64-bit6GiB default. Main's earlier cloud/test Cargo.lock changes were also unannounced. From the prior fixture, implementation `e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d` advances to `938b77002e83e310f9cb933917725618059c864267e537e4e8df0dece49cd6e4`; lock `96a5734beed7151cfebd89651fdc4611b4b79b822010a0ce16af683a4a72236b` to `b6c2e5166be20e42e667ee2ea79b8efb19cefb2a066ff1432f75396bc61a2ab5`; identity `2d5c740d8cb55f65d76b4348bec3f71d0b7d8800d84de78a25088d9348853b18` to `c1e66c2778041b065455e17048f867ed0eaf3366db8afb15dbdf0aae8cb1441b`. The DSL ABI and64-bit evaluator calculations are unchanged. Identity-only regeneration at committed source `d1537a7eef1552d50225cda965fae03da720481c` updates only evaluator/lineage metadata and all13 compatibility tests pass, including every numerical/model/emitter/generator/search comparison. The transition is registered in browser_wasm_identity_rebaseline.v1.json. The historical known-identity table stays unchanged: no shipped receipt is asserted for this identity.

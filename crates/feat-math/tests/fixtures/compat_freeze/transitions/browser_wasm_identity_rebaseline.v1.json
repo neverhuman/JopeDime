@@ -1,0 +1,28 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced ADR-0004 identity-only successor for wasm32-safe cache constant (native64-bit default remains6GiB) and inherited main lockfile changes. All numerical/model/emitter/generator/search fixtures compare unchanged. No historical identity row is added without a shipped receipt.",
+  "plan_reference": "Owner-requested browser JS/WASM prediction; ADR-0004 announced-identity procedure",
+  "pr_reference": "https://github.com/neverhuman/JopeDime/pull/1716",
+  "source_commit": "d1537a7eef1552d50225cda965fae03da720481c",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "bd867599a0b725157338c016bb75f7fe59ed7ccf2c141f9b35fa181edcbcd9cd",
+      "after": "1bdbd567e769fe942ff8981f2ed82d84abc06a280e0562ae124a237527c72891"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "f5a625df74792b2480d47f65617c0240f04a605c15c408ecf5f5fdf1f3884341",
+      "after": "6edba414b879be067cb65301f468d5f92441f13304c590bb85a1d033f7eb95d9"
+    }
+  ],
+  "identity": {
+    "old_implementation_sha256": "e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d",
+    "old_cargo_lock_sha256": "96a5734beed7151cfebd89651fdc4611b4b79b822010a0ce16af683a4a72236b",
+    "old_identity_digest": "2d5c740d8cb55f65d76b4348bec3f71d0b7d8800d84de78a25088d9348853b18",
+    "new_implementation_sha256": "938b77002e83e310f9cb933917725618059c864267e537e4e8df0dece49cd6e4",
+    "new_cargo_lock_sha256": "b6c2e5166be20e42e667ee2ea79b8efb19cefb2a066ff1432f75396bc61a2ab5",
+    "new_identity_digest": "c1e66c2778041b065455e17048f867ed0eaf3366db8afb15dbdf0aae8cb1441b"
+  },
+  "known_identities_sha256_unchanged": "07b98359b4a15f02a6be9ce3ff06065a44a77fcb6e8e697298d7444e55623d2b"
+}

@@ -39,3 +39,7 @@ After restoring the imported bytes, the original P3 receipt assertion fails beca
 ## Local/hosted Python parity
 
 `just python-check` now explicitly syncs the same locked CPU/dev/benchmark/foundry/custody extras as the hosted Python lane, then uses `uv run --no-sync` for Ruff, pytest and both research fixture runners. A fresh checkout previously had neither Ruff nor the selected CPU extras, and ambient system Python was used for Torch fixtures. This changes environment preparation only; tests/markers remain intact and no application dependency lock is changed.
+
+## Native compatibility and local test isolation
+
+All13 compatibility surfaces compare successfully in the documented identity-only mode; only source/lock/lineage metadata changes, with old/new identities announced before regeneration and a recorded transition. No numerical or emitted/model fixture is rewritten. The local full suite also exposed default-engine interference and invalid fixture placement when TMPDIR was inside a registered checkout. The typed in-process API unit now owns a private temporary engine instead of opening a user's running default engine. Test scratch is staged outside registered checkouts and parallel fixtures are bounded. Qualified RES07 fixtures are materialized from the README's independently SHA-pinned catalog a16efb5c3a8bd09ea08caaaf030c199f5d2d733153874d112b928a3f1cd2bb86, using original read-only custody objects from xbabe2, never fabricated or regenerated numerical fixtures. These are environment corrections and stronger isolation, not skipped assertions.
