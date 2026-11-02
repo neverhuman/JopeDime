@@ -22,6 +22,7 @@ pub mod operations;
 #[cfg(feature = "neural")]
 pub mod policy_export;
 pub mod prepare;
+pub mod prime_grammar;
 pub mod proposal_population;
 pub mod qualification_slots;
 pub mod queue;
