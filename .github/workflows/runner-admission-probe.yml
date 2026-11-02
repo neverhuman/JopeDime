@@ -17,15 +17,11 @@ jobs:
     steps:
       - name: Must never execute after admission denial
         if: always()
-        run: |
-          echo 'ADMISSION_POLICY_BYPASS'
-          exit 1
+        run: bash ops/ci/runner-admission-probe.sh
   reject-main:
     runs-on: [self-hosted, linux, x64, jope-full-cpu]
     timeout-minutes: 2
     steps:
       - name: Must never execute after admission denial
         if: always()
-        run: |
-          echo 'ADMISSION_POLICY_BYPASS'
-          exit 1
+        run: bash ops/ci/runner-admission-probe.sh
