@@ -1,9 +1,7 @@
 {
   "arms": {
     "H180_RAND": {
-      "deployed_dl_val_mean_gain": 0.0,
-      "deployed_dl_val_mean_utility": 1.1377941898164525,
-      "fallback_to_r882_rate": 1.0,
+      "fitted_fold_models": 15,
       "freeze_trunk": true,
       "gate": {
         "beats_controls": false,
@@ -22,6 +20,10 @@
         "worst_regression": 2.605102625030772
       },
       "holm_adjusted_p": 1.0,
+      "offline_fallback_dl_val_mean_gain": 0.0,
+      "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+      "offline_fallback_to_r882_rate": 1.0,
+      "pooled_bootstrap_p_one_sided": 0.9985001499850015,
       "pooled_oof_dev_mean_gain": -0.06742251547924931,
       "pooled_raw_dl_val_ci95_high": -0.013148313122026262,
       "pooled_raw_dl_val_ci95_low": -0.09065223404438695,
@@ -29,16 +31,17 @@
       "pooled_raw_dl_val_mean_gain": -0.051394625576502394,
       "pooled_raw_dl_val_mean_utility": 1.0863995642399502,
       "positive_seeds": 0,
-      "raw_p_one_sided": 0.9648701796487019,
+      "seed_mean_p_one_sided": 0.9648701796487019,
       "seeds": [
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 0,
           "dope_weights_changed_folds": 0,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 0.0,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.03478151877625893,
           "oof_dev_ci95_low": -0.10978300939950573,
           "oof_dev_harm_frac_family": 0.5219512195121951,
@@ -54,16 +57,17 @@
           "raw_dl_val_mean_utility": 1.0500878432648844,
           "raw_dl_val_p_one_sided": 0.998000199980002,
           "seed": 204101,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         },
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 0,
           "dope_weights_changed_folds": 0,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 0.0,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.04868739471719199,
           "oof_dev_ci95_low": -0.12742603736129965,
           "oof_dev_harm_frac_family": 0.5170731707317073,
@@ -79,16 +83,17 @@
           "raw_dl_val_mean_utility": 1.0875948353225557,
           "raw_dl_val_p_one_sided": 0.9999000099990001,
           "seed": 204102,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         },
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 0,
           "dope_weights_changed_folds": 0,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 0.0,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.026094407663476298,
           "oof_dev_ci95_low": -0.09692704197646658,
           "oof_dev_harm_frac_family": 0.5121951219512195,
@@ -104,19 +109,20 @@
           "raw_dl_val_mean_utility": 1.1215160141324103,
           "raw_dl_val_p_one_sided": 0.8967103289671033,
           "seed": 204103,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         }
       ],
-      "selector_adoption_rate": 0.0,
+      "selector_admitted_seeds": 0,
+      "selector_decision_unit": "seed_level_concatenated_oof (1 decision per seed, 3 per arm)",
+      "selector_seed_adoption_rate": 0.0,
+      "selector_total_seed_decisions": 3,
       "total_seeds": 3,
       "unfreeze_dope": false,
       "width": 128,
       "worst_regression": 2.605102625030772
     },
     "PROPOSER_W128": {
-      "deployed_dl_val_mean_gain": 0.0,
-      "deployed_dl_val_mean_utility": 1.1377941898164525,
-      "fallback_to_r882_rate": 1.0,
+      "fitted_fold_models": 15,
       "freeze_trunk": false,
       "gate": {
         "beats_controls": false,
@@ -135,6 +141,10 @@
         "worst_regression": 4.469387370022879
       },
       "holm_adjusted_p": 1.0,
+      "offline_fallback_dl_val_mean_gain": 0.0,
+      "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+      "offline_fallback_to_r882_rate": 1.0,
+      "pooled_bootstrap_p_one_sided": 1.0,
       "pooled_oof_dev_mean_gain": -0.20173331663799163,
       "pooled_raw_dl_val_ci95_high": -0.07964305723864708,
       "pooled_raw_dl_val_ci95_low": -0.4553672224532951,
@@ -142,16 +152,17 @@
       "pooled_raw_dl_val_mean_gain": -0.2609303065051937,
       "pooled_raw_dl_val_mean_utility": 0.8768638833112589,
       "positive_seeds": 0,
-      "raw_p_one_sided": 0.9996666999966669,
+      "seed_mean_p_one_sided": 0.9996666999966669,
       "seeds": [
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 444168,
           "dope_weights_changed_folds": 5,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 20.10353677898906,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.1539073963556394,
           "oof_dev_ci95_low": -0.270419479874006,
           "oof_dev_harm_frac_family": 0.7024390243902439,
@@ -167,16 +178,17 @@
           "raw_dl_val_mean_utility": 0.861385819476836,
           "raw_dl_val_p_one_sided": 1.0,
           "seed": 204101,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         },
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 444168,
           "dope_weights_changed_folds": 5,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 19.880905202793873,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.14773623935814278,
           "oof_dev_ci95_low": -0.2720625025731625,
           "oof_dev_harm_frac_family": 0.7414634146341463,
@@ -192,16 +204,17 @@
           "raw_dl_val_mean_utility": 0.885903858897775,
           "raw_dl_val_p_one_sided": 0.9995000499950005,
           "seed": 204102,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         },
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 444168,
           "dope_weights_changed_folds": 5,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 25.3527334063502,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.1424131391562824,
           "oof_dev_ci95_low": -0.2770514899805148,
           "oof_dev_harm_frac_family": 0.6780487804878049,
@@ -217,19 +230,20 @@
           "raw_dl_val_mean_utility": 0.8833019715591655,
           "raw_dl_val_p_one_sided": 0.9995000499950005,
           "seed": 204103,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         }
       ],
-      "selector_adoption_rate": 0.0,
+      "selector_admitted_seeds": 0,
+      "selector_decision_unit": "seed_level_concatenated_oof (1 decision per seed, 3 per arm)",
+      "selector_seed_adoption_rate": 0.0,
+      "selector_total_seed_decisions": 3,
       "total_seeds": 3,
       "unfreeze_dope": true,
       "width": 128,
       "worst_regression": 4.469387370022879
     },
     "R882_CONT": {
-      "deployed_dl_val_mean_gain": 0.0,
-      "deployed_dl_val_mean_utility": 1.1377941898164525,
-      "fallback_to_r882_rate": 1.0,
+      "fitted_fold_models": 15,
       "freeze_trunk": false,
       "gate": {
         "beats_controls": false,
@@ -248,6 +262,10 @@
         "worst_regression": 3.2699414368427506
       },
       "holm_adjusted_p": 1.0,
+      "offline_fallback_dl_val_mean_gain": 0.0,
+      "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+      "offline_fallback_to_r882_rate": 1.0,
+      "pooled_bootstrap_p_one_sided": 1.0,
       "pooled_oof_dev_mean_gain": -0.25065937898316976,
       "pooled_raw_dl_val_ci95_high": -0.1754705862786618,
       "pooled_raw_dl_val_ci95_low": -0.40800832155973227,
@@ -255,16 +273,17 @@
       "pooled_raw_dl_val_mean_gain": -0.3051919080189964,
       "pooled_raw_dl_val_mean_utility": 0.8326022817974561,
       "positive_seeds": 0,
-      "raw_p_one_sided": 1.0,
+      "seed_mean_p_one_sided": 1.0,
       "seeds": [
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 0,
           "dope_weights_changed_folds": 0,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 0.0,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.15129945912372697,
           "oof_dev_ci95_low": -0.2690911197795647,
           "oof_dev_harm_frac_family": 0.7365853658536585,
@@ -280,16 +299,17 @@
           "raw_dl_val_mean_utility": 0.8134006708740696,
           "raw_dl_val_p_one_sided": 1.0,
           "seed": 204101,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         },
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 0,
           "dope_weights_changed_folds": 0,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 0.0,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.18776582434757907,
           "oof_dev_ci95_low": -0.3309666925546319,
           "oof_dev_harm_frac_family": 0.7073170731707317,
@@ -305,16 +325,17 @@
           "raw_dl_val_mean_utility": 0.7904198761396701,
           "raw_dl_val_p_one_sided": 1.0,
           "seed": 204102,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         },
         {
-          "deployed_dl_val_mean_gain_post_selector": 0.0,
-          "deployed_dl_val_mean_utility_post_selector": 1.1377941898164525,
           "dope_trainable_params": 0,
           "dope_weights_changed_folds": 0,
-          "fallback_rate": 1.0,
+          "fitted_fold_models": 5,
           "max_dope_data_grad_l2": 0.0,
           "max_step0_token_diff": 0.0,
+          "offline_fallback_dl_val_mean_gain": 0.0,
+          "offline_fallback_dl_val_mean_utility": 1.1377941898164525,
+          "offline_fallback_rate": 1.0,
           "oof_dev_ci95_high": -0.17566553288639503,
           "oof_dev_ci95_low": -0.32650960712495,
           "oof_dev_harm_frac_family": 0.7317073170731707,
@@ -330,10 +351,13 @@
           "raw_dl_val_mean_utility": 0.8939862983786284,
           "raw_dl_val_p_one_sided": 1.0,
           "seed": 204103,
-          "selector_admitted": false
+          "seed_level_selector_admitted": false
         }
       ],
-      "selector_adoption_rate": 0.0,
+      "selector_admitted_seeds": 0,
+      "selector_decision_unit": "seed_level_concatenated_oof (1 decision per seed, 3 per arm)",
+      "selector_seed_adoption_rate": 0.0,
+      "selector_total_seed_decisions": 3,
       "total_seeds": 3,
       "unfreeze_dope": false,
       "width": 64,
@@ -341,10 +365,14 @@
     }
   },
   "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
+  "cleared_for_promotion_or_serving": false,
+  "cleared_for_rerun_or_reuse": false,
   "control_best_gain": -0.051394625576502394,
   "decision": "NO_ADVANCE",
   "elapsed_sec": 528.0923418998718,
   "evaluator_contract_id": "fixed-dev-cost-argmin-negative-fitness/v1",
+  "executed_source_commit": "d8d241a3d6dd2af597b3e033141dfe79711ca758",
+  "fitted_fold_models_per_arm": 15,
   "gpu_device": "cuda:0",
   "gpu_name": "NVIDIA GeForce RTX 3090",
   "holm_adjusted_p": {
@@ -383,11 +411,71 @@
       "research/flywheel_selfplay/rust_evaluator.py": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45"
     }
   },
+  "observed_dl_val_contexts": 91,
+  "observed_dl_val_families": 19,
   "owner": "gpu_tokbench_agy",
   "pid": 2843546,
   "prereg_pr": 1729,
-  "proposer_w128_vs_r882_cont_dl_val_delta": 0.044261601513802706,
-  "proposer_w128_vs_r882_cont_oof_dev_delta": 0.04892606234517813,
+  "preregistered_dl_val_families": 39,
+  "proposer_w128_vs_r882_cont_comparison": {
+    "descriptive_only_not_causal_or_compute_matched": true,
+    "dl_val_seed_wins": 2,
+    "dl_val_total_seeds": 3,
+    "oof_dev_seed_wins": 3,
+    "oof_dev_total_seeds": 3,
+    "per_seed": {
+      "204101": {
+        "dl_val_delta_w128_minus_r882_cont": 0.047985148602766314,
+        "oof_dev_delta_w128_minus_r882_cont": 0.03499992961862325,
+        "w128_wins_dl_val_on_seed": true,
+        "w128_wins_oof_dev_on_seed": true
+      },
+      "204102": {
+        "dl_val_delta_w128_minus_r882_cont": 0.09548398275810493,
+        "oof_dev_delta_w128_minus_r882_cont": 0.0548418965137385,
+        "w128_wins_dl_val_on_seed": true,
+        "w128_wins_oof_dev_on_seed": true
+      },
+      "204103": {
+        "dl_val_delta_w128_minus_r882_cont": -0.01068432681946302,
+        "oof_dev_delta_w128_minus_r882_cont": 0.056936360903172584,
+        "w128_wins_dl_val_on_seed": false,
+        "w128_wins_oof_dev_on_seed": true
+      }
+    },
+    "pooled_dl_val_raw_delta": 0.044261601513802706,
+    "pooled_oof_dev_delta": 0.04892606234517813
+  },
+  "qualification_status": "UNQUALIFIED_SCIENTIFIC_HOLD",
+  "quarantine_and_limitations": {
+    "cleared_for_promotion_or_serving": false,
+    "cleared_for_rerun_or_reuse": false,
+    "protocol_and_source_limitations": {
+      "col_gate_head_bias_forward_cancellation": "trainer.py:344 computes delta_raw_g with (col_b_live - col_b_live.detach()), which is identically 0.0 in the forward pass while propagating nonzero gradient to col_gate_head.bias, and uses only W[:, :128] of the 145-input col_gate_head. Learned bias changes do not affect forward predictions or loss; gradient/hash changes do not qualify full col_gate_head fine-tuning.",
+      "equal_steps_not_compute_matched": "All three Stage-1 arms used equal epochs/batches (15 epochs, batch_size=32) across width-64 continuation, width-128 frozen-trunk readout, and width-128 + 444,168 DOPE params without FLOP or GPU-time matching.",
+      "holm_input_statistic_mismatch": "trainer.py:1359-1365, 1396-1402 passes the average of per-seed p_one_sided values rather than evaluate_arm_gate's pooled_p_one_sided into holm_bonferroni.",
+      "resource_monitor_and_preflight_limitations": "labeler.py:123 divides used/total (diluting reserved root blocks relative to used/(used+free)); monitor.py:203-206 uses min(load1, load5, load15) <= max_load1 instead of load1 <= max_load1; monitor.py:415-435 does not fail-stop on initial !ok before starting run_h204_stage1. The 36 monitor snapshots with 0 reported violations are the monitor's self-report, not independent certification.",
+      "stage0_utility_hash_gate_not_enforced_in_code": "verify_r882_native_parity (analysis.py:236-251) records utilities_sha256 (which matched 77fd7f5963905a1aa0fd321f4ae04fe24328961357aa745efb18bbe0ebfec8e9 in run-20261102T0511Z), but its passed predicate does not compare utilities_sha256 to R882_EXPECTED_DL_VAL_UTILITIES_SHA256.",
+      "static_205_family_label_scope": "Training loaded historical two-fold Rust CV pool fitnesses from pinned_205_family_two_fold_rust_cv_pools; evaluate_context_candidates_rust_cv has zero production call sites in trainer.py/labeler.py/monitor.py/analysis.py. No fresh live Rust CV labeling and no JRB-01 D4 stream was executed.",
+      "validation_family_count_deviation": {
+        "note": "PREREG.md:79 specified 39 validation families; selected.json DL-Val (91 contexts) spans 19 unique family_id prefixes.",
+        "observed_dl_val_contexts": 91,
+        "observed_dl_val_families": 19,
+        "preregistered_dl_val_families": 39
+      }
+    },
+    "qualification_status": "UNQUALIFIED_SCIENTIFIC_HOLD",
+    "scientific_hold_reviews": [
+      "/home/ubuntu/jope_plan/evidence/sm-n2022-codex/review1729/re-review-d8d241a3d.md",
+      "/home/ubuntu/jope_plan/evidence/sm-gbw2308-codex/review1729/review-951f51422.md"
+    ],
+    "speculative_hypotheses_not_established_causally": [
+      "Hypothesis A (speculative): Subsampled training candidate pool (K=16 of 1,152) may leave 1,136 candidates uncalibrated during full-pool argmin inference.",
+      "Hypothesis B (speculative): Unfreezing 444,168 DOPE parameters plus a width-128 trunk on 1,219 static contexts (205 families) may overfit fold-local context features.",
+      "Neither hypothesis can be disentangled by this run from the unresolved implementation/objective defects above."
+    ],
+    "status": "UNQUALIFIED_HISTORICAL_DIAGNOSTIC_NO_ADVANCE"
+  },
   "r882_baseline_dl_val_mean_cost": 1.1377941898164525,
   "raw_p_one_sided": {
     "H180_RAND": 0.9648701796487019,
@@ -398,7 +486,8 @@
   "run_id": "run-20261102T0511Z",
   "s3_evidence_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/",
   "s3_run_evidence_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/",
-  "stage": "STAGE1_COMPLETE",
+  "seed_level_selector_decisions_per_arm": 3,
+  "stage": "STAGE1_DIAGNOSTIC_ARCHIVED",
   "stage0_native_r882_parity": {
     "abs_diff": 0.0,
     "atol": 1e-12,
@@ -440,7 +529,7 @@
     256,
     512
   ],
-  "status": "COMPLETED_STAGE1_NO_ADVANCE",
+  "status": "UNQUALIFIED_HISTORICAL_DIAGNOSTIC_NO_ADVANCE",
   "thread_rule_b": {
     "admission": {
       "numeric_threads_upper_bound": 4,
@@ -479,7 +568,10 @@
     "numeric_thread_cap": 4,
     "torch_num_threads": 4
   },
+  "total_fitted_fold_models": 45,
+  "total_seed_level_selector_admissions": 0,
+  "total_seed_level_selector_decisions": 9,
   "verdict": "NO_ADVANCE",
   "wave": "H204",
-  "xbabe2_gpu_released": true
+  "xbabe2_gpu_released_owner_reported": true
 }

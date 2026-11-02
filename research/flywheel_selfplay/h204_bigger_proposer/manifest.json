@@ -8,8 +8,11 @@
   ],
   "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
   "boot_seed": 204141,
+  "cleared_for_promotion_or_serving": false,
+  "cleared_for_rerun_or_reuse": false,
   "decision": "NO_ADVANCE",
   "evaluator_contract_id": "fixed-dev-cost-argmin-negative-fitness/v1",
+  "executed_source_commit": "d8d241a3d6dd2af597b3e033141dfe79711ca758",
   "fold_seed": 204140,
   "gpu_device": "cuda:0",
   "gpu_name_expected": "NVIDIA GeForce RTX 3090",
@@ -23,6 +26,7 @@
     1726,
     1730
   ],
+  "observed_dl_val_families": 19,
   "owner": "gpu_tokbench_agy",
   "pinned_sha256": {
     "cache_manifest.json": "66b1df1374242580d482b7d6f9b72b6fe8f65830f90f658ca662a698aa229897",
@@ -39,7 +43,40 @@
     "source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
   },
   "prereg_pr": 1729,
+  "preregistered_dl_val_families": 39,
   "primary_run_id": "run-20261102T0511Z",
+  "proposer_w128_vs_r882_cont_dl_val_seed_wins": 2,
+  "proposer_w128_vs_r882_cont_oof_dev_seed_wins": 3,
+  "qualification_status": "UNQUALIFIED_SCIENTIFIC_HOLD",
+  "quarantine_and_limitations": {
+    "cleared_for_promotion_or_serving": false,
+    "cleared_for_rerun_or_reuse": false,
+    "protocol_and_source_limitations": {
+      "col_gate_head_bias_forward_cancellation": "trainer.py:344 computes delta_raw_g with (col_b_live - col_b_live.detach()), which is identically 0.0 in the forward pass while propagating nonzero gradient to col_gate_head.bias, and uses only W[:, :128] of the 145-input col_gate_head. Learned bias changes do not affect forward predictions or loss; gradient/hash changes do not qualify full col_gate_head fine-tuning.",
+      "equal_steps_not_compute_matched": "All three Stage-1 arms used equal epochs/batches (15 epochs, batch_size=32) across width-64 continuation, width-128 frozen-trunk readout, and width-128 + 444,168 DOPE params without FLOP or GPU-time matching.",
+      "holm_input_statistic_mismatch": "trainer.py:1359-1365, 1396-1402 passes the average of per-seed p_one_sided values rather than evaluate_arm_gate's pooled_p_one_sided into holm_bonferroni.",
+      "resource_monitor_and_preflight_limitations": "labeler.py:123 divides used/total (diluting reserved root blocks relative to used/(used+free)); monitor.py:203-206 uses min(load1, load5, load15) <= max_load1 instead of load1 <= max_load1; monitor.py:415-435 does not fail-stop on initial !ok before starting run_h204_stage1. The 36 monitor snapshots with 0 reported violations are the monitor's self-report, not independent certification.",
+      "stage0_utility_hash_gate_not_enforced_in_code": "verify_r882_native_parity (analysis.py:236-251) records utilities_sha256 (which matched 77fd7f5963905a1aa0fd321f4ae04fe24328961357aa745efb18bbe0ebfec8e9 in run-20261102T0511Z), but its passed predicate does not compare utilities_sha256 to R882_EXPECTED_DL_VAL_UTILITIES_SHA256.",
+      "static_205_family_label_scope": "Training loaded historical two-fold Rust CV pool fitnesses from pinned_205_family_two_fold_rust_cv_pools; evaluate_context_candidates_rust_cv has zero production call sites in trainer.py/labeler.py/monitor.py/analysis.py. No fresh live Rust CV labeling and no JRB-01 D4 stream was executed.",
+      "validation_family_count_deviation": {
+        "note": "PREREG.md:79 specified 39 validation families; selected.json DL-Val (91 contexts) spans 19 unique family_id prefixes.",
+        "observed_dl_val_contexts": 91,
+        "observed_dl_val_families": 19,
+        "preregistered_dl_val_families": 39
+      }
+    },
+    "qualification_status": "UNQUALIFIED_SCIENTIFIC_HOLD",
+    "scientific_hold_reviews": [
+      "/home/ubuntu/jope_plan/evidence/sm-n2022-codex/review1729/re-review-d8d241a3d.md",
+      "/home/ubuntu/jope_plan/evidence/sm-gbw2308-codex/review1729/review-951f51422.md"
+    ],
+    "speculative_hypotheses_not_established_causally": [
+      "Hypothesis A (speculative): Subsampled training candidate pool (K=16 of 1,152) may leave 1,136 candidates uncalibrated during full-pool argmin inference.",
+      "Hypothesis B (speculative): Unfreezing 444,168 DOPE parameters plus a width-128 trunk on 1,219 static contexts (205 families) may overfit fold-local context features.",
+      "Neither hypothesis can be disentangled by this run from the unresolved implementation/objective defects above."
+    ],
+    "status": "UNQUALIFIED_HISTORICAL_DIAGNOSTIC_NO_ADVANCE"
+  },
   "r882_expected_dl_val_mean_cost": 1.1377941898164525,
   "research_dope_unfreeze_flag": "JOPE_RESEARCH_DOPE_UNFREEZE=1",
   "research_run_id_required": true,
@@ -58,11 +95,11 @@
     "required_nice": 19
   },
   "run_20261102T0511Z_sha256": {
-    "REPORT.md": "35e06769af7779ceb0d0939ef4c212cda32929cf8648d58b91d13057bbdf8b27",
+    "REPORT.md": "a3d4c734ef470c8885631f00066ee0f3feded867732e86b13925108d6d321106",
     "cache/h204_labels_seed204101_k16.json": "959bc58f71dca87bf5b58bad329251d1cf227c7508ed0de46ce0ed3e4686a96b",
     "launch.json": "2d33d6f0f351a35659123af2755bd23ea03751715caadf9bfbade450452dbb9b",
-    "manifest.json": "ec2f6d4a2165a0c033347f6d1a72ec9b4d47b1e26275b7bcc58a33a3ee7e7da6",
-    "metrics.json": "b183e49f2021a8c53397794bf3a204a48a4c4fe1bc238ca45df0c9b88bc842ca",
+    "manifest.json": "49d601e1105a867d59d12bfd1a0eb229f3144acf62d418f94561ae6bf06ad592",
+    "metrics.json": "5f6c33ac09af72c7a2c7dd743a003e5062a43435980f981e55a105d7892e0633",
     "progress.json": "07d7bd46a6a6536abeff51e5ec9e74bc0562f5739039f858d05b8fb77ff3d84a",
     "resource_monitor.jsonl": "ca700653461987bf5177bfc88c4d664b2cb5622b53a14b0dc23eed91122a9153",
     "stage1_results.json": "e0b2b8fbbd6143fd0fea1156061fda85a55a3a7b739f5c4c2b42ce82ad62c5e2",
@@ -97,7 +134,10 @@
   ],
   "stage1_width": 128,
   "stage2_launched": false,
-  "status": "COMPLETED_STAGE1_NO_ADVANCE",
+  "status": "UNQUALIFIED_HISTORICAL_DIAGNOSTIC_NO_ADVANCE",
+  "total_fitted_fold_models": 45,
+  "total_seed_level_selector_admissions": 0,
+  "total_seed_level_selector_decisions": 9,
   "verdict": "NO_ADVANCE",
   "wave": "H204",
   "widths": [
@@ -105,5 +145,5 @@
     256,
     512
   ],
-  "xbabe2_gpu_released": true
+  "xbabe2_gpu_released_owner_reported": true
 }

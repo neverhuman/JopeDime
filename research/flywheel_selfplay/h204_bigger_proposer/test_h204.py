@@ -155,6 +155,8 @@ def test_prereg_and_manifest_contain_verbatim_authority(tmp_path: Path) -> None:
     assert manifest["stage1_arms"] == list(STAGE1_ARMS)
     assert manifest["merged_unblock_prs"] == [1726, 1730]
     assert manifest["decision"] == "NO_ADVANCE"
+    assert manifest["status"] == "UNQUALIFIED_HISTORICAL_DIAGNOSTIC_NO_ADVANCE"
+    assert manifest["cleared_for_rerun_or_reuse"] is False
     assert manifest["s3_run_evidence_uri"].startswith(
         "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/"
     )
@@ -162,7 +164,16 @@ def test_prereg_and_manifest_contain_verbatim_authority(tmp_path: Path) -> None:
     metrics = json.loads((WAVE_DIR / "metrics.json").read_text(encoding="utf-8"))
     assert metrics["authority"] == AUTHORITY_STRING
     assert metrics["decision"] == "NO_ADVANCE"
+    assert metrics["status"] == "UNQUALIFIED_HISTORICAL_DIAGNOSTIC_NO_ADVANCE"
+    assert metrics["cleared_for_rerun_or_reuse"] is False
     assert metrics["stage2_launched"] is False
+    assert metrics["total_fitted_fold_models"] == 45
+    assert metrics["total_seed_level_selector_decisions"] == 9
+    assert metrics["total_seed_level_selector_admissions"] == 0
+    assert metrics["observed_dl_val_families"] == 19
+    assert metrics["preregistered_dl_val_families"] == 39
+    assert metrics["proposer_w128_vs_r882_cont_comparison"]["dl_val_seed_wins"] == 2
+    assert metrics["proposer_w128_vs_r882_cont_comparison"]["oof_dev_seed_wins"] == 3
     assert metrics["r882_baseline_dl_val_mean_cost"] == pytest.approx(
         R882_EXPECTED_DL_VAL_MEAN_COST, abs=1e-12
     )
