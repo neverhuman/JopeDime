@@ -1671,6 +1671,9 @@ crates/jope-motifs/src/table/operations.rs
 crates/jope-motifs/src/table/tests.rs
 crates/jope-motifs/src/teaching.rs
 crates/jope-motifs/src/validate.rs
+crates/jope-motifs/src/validate/analysis.rs
+crates/jope-motifs/src/validate/run.rs
+crates/jope-motifs/src/validate/types.rs
 crates/jope-paths/Cargo.toml
 crates/jope-paths/README.md
 crates/jope-paths/src/bin/jope-units-render.rs
