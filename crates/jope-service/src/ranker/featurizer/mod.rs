@@ -548,7 +548,12 @@ mod tests {
                     "parse.rs":jope_runtime::sha256_hex(include_str!("parse.rs").as_bytes()),
                     "structural.rs":jope_runtime::sha256_hex(include_str!("structural.rs").as_bytes()),
                     "parameters.rs":jope_runtime::sha256_hex(include_str!("parameters.rs").as_bytes()),
-                    "positions.rs":jope_runtime::sha256_hex(include_str!("positions.rs").as_bytes())
+                    "positions.rs":jope_runtime::sha256_hex(include_str!("positions.rs").as_bytes()),
+                    "positions/oracle_data.rs":jope_runtime::sha256_hex(include_str!("positions/oracle_data.rs").as_bytes()),
+                    "positions/oracle_goldens_a.rs":jope_runtime::sha256_hex(include_str!("positions/oracle_goldens_a.rs").as_bytes()),
+                    "positions/oracle_goldens_b.rs":jope_runtime::sha256_hex(include_str!("positions/oracle_goldens_b.rs").as_bytes()),
+                    "positions/schema.rs":jope_runtime::sha256_hex(include_str!("positions/schema.rs").as_bytes()),
+                    "positions/tests.rs":jope_runtime::sha256_hex(include_str!("positions/tests.rs").as_bytes())
                 }
             })
         );
