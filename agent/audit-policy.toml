@@ -129,3 +129,11 @@ paths = ["crates/jope-learning/src/clover/round_qual.rs"]
 owner = "rust"
 expires = "2027-02-01"
 reason = "TODO is one explicit input sentinel rejected by the placeholder contract; the refusal behavior remains covered by selfplay_round_qual tests."
+
+[[dead_language_allow]]
+name = "vibe-native-overlay-refusal-sidecar"
+term = "best effort"
+paths = ["deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "The late overlay-refusal sidecar is diagnostic only; if its create-only write fails, the build raises and cannot produce the caller-owned positive acceptance envelope required for admission."
