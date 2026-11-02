@@ -1097,15 +1097,23 @@ def test_drain_timeout_preserves_client_exit_and_refuses_success(
 
 def test_foreign_recorder_and_reused_pid_are_never_signaled(monkeypatch, a5_tmp_path):
     args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
-    foreign = subprocess.Popen(
-        [sys.executable, "-B", "-c", "import time;time.sleep(30)"],
-        start_new_session=True,
-    )
     producer = (
         args.repo / "deploy/qualification/agents/transcripts/run-prep/capture_stdio.py"
     )
     directory = a5_tmp_path / "foreign-lease"
     directory.mkdir()
+    foreign = subprocess.Popen(
+        [
+            sys.executable,
+            "-B",
+            "-c",
+            "import time;time.sleep(30)",
+            str(producer),
+            "--out-dir",
+            str(directory),
+        ],
+        start_new_session=True,
+    )
     info = THREE_CLIENTS_MODULE._process_info(foreign.pid)
     lease = dict(
         schema="jopedime.mcp-recorder-session/v1",

@@ -483,8 +483,14 @@ class RecorderSession:
                 "recorder PID identity changed",
             )
             expected = [b"--out-dir", os.fsencode(self.directory)]
+            producer_arg = os.fsencode(self.producer)
+            script_position = (
+                command.index(producer_arg) if producer_arg in command else 0
+            )
+            python_flags = {b"-B", b"-u", b"-I", b"-s", b"-E", b"-S"}
             require(
-                os.fsencode(self.producer) in command
+                script_position > 0
+                and all(arg in python_flags for arg in command[1:script_position])
                 and any(
                     command[i : i + 2] == expected for i in range(len(command) - 1)
                 ),
