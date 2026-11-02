@@ -50,13 +50,9 @@ unsafe fn rows_from(ptr: *const f64, rows: usize, cols: usize) -> Vec<Vec<f64>> 
 
 /// Copy a checked C-owned float buffer without taking ownership of its allocation.
 unsafe fn values_from(ptr: *const f64, len: usize) -> Vec<f64> {
-    // SAFETY: each caller validates `len` against its checked ABI dimensions,
-    // non-nullness and alignment. The exported functions' C contract requires
-    // `ptr` to originate from one live, contiguous allocation containing `len`
-    // initialized f64 values, readable for this call. `from_raw_parts` creates
-    // only a temporary shared borrow; `to_vec` copies into Rust's allocator.
-    // The C allocation is neither freed, reallocated, nor transferred, so its
-    // original allocator and ownership remain entirely with the C caller.
+    // SAFETY: callers validate `len`, non-nullness, alignment and checked
+    // dimensions; the C contract guarantees one live allocation readable for
+    // `len` initialized f64 values. This shared borrow is copied, not owned.
     unsafe { std::slice::from_raw_parts(ptr, len) }.to_vec()
 }
 #[no_mangle]
