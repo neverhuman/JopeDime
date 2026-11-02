@@ -109,7 +109,7 @@ jobs:
           persist-credentials: false
       - name: Runner provenance and approved resources
         uses: ./.github/actions/runner-provenance
-      - name: Require publication build
+      - name: Require publication source checks
         env:
           PAPER_RESULT: ${{ needs.paper.result }}
         run: test "$PAPER_RESULT" = success
