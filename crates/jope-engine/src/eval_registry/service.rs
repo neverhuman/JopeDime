@@ -958,6 +958,8 @@ impl Drop for OriginalChild {
         if !self.reaped
             && ProcessIdentity::read(self.child.id()).ok().as_ref() == Some(&self.process)
         {
+            // SAFETY: the process identity was revalidated immediately above;
+            // the negative pid addresses only its owned process group.
             unsafe {
                 libc::kill(-(self.child.id() as i32), libc::SIGKILL);
             }
@@ -1017,6 +1019,9 @@ fn supervise(
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::inherit());
+    // SAFETY: the pre-exec closure captures only the verified parent pid, a
+    // live descriptor, and prepared confinement state; it performs child-side
+    // syscalls before exec and returns errors through the documented hook.
     unsafe {
         command.pre_exec(move || {
             if libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGKILL) != 0
@@ -1036,6 +1041,8 @@ fn supervise(
         reaped: false,
     };
     if let Some(proof) = native.as_deref_mut() {
+        // SAFETY: `process` is the authenticated original child bound to this
+        // launch; kill takes only its pid and a scalar signal number.
         ensure!(
             unsafe { libc::kill(process.pid as i32, libc::SIGSTOP) } == 0,
             "cannot stop original native child"
@@ -1057,6 +1064,7 @@ fn supervise(
             std::thread::sleep(Duration::from_millis(2));
         }
         proof.attach_child(&process)?;
+        // SAFETY: this resumes the same authenticated child stopped above.
         ensure!(
             unsafe { libc::kill(process.pid as i32, libc::SIGCONT) } == 0,
             "cannot release placed original child"
@@ -1171,6 +1179,7 @@ fn supervise(
         .is_ok();
     drop(worker);
     if !sent {
+        // SAFETY: `original` still owns the verified child and its process group.
         unsafe {
             libc::kill(-(original.child.id() as i32), libc::SIGKILL);
         }
@@ -1334,8 +1343,11 @@ pub fn await_start_from_environment() -> Result<(VerifiedFit, WorkerPermit, Path
         launch.service.process.pid == crate::host_os::parent_pid(),
         "worker original parent changed"
     );
+    // SAFETY: fd is the inherited live launch descriptor; F_DUPFD_CLOEXEC takes
+    // an integer minimum and returns a new descriptor or -1.
     let duplicate = unsafe { libc::fcntl(fd, libc::F_DUPFD_CLOEXEC, 3) };
     ensure!(duplicate >= 3, "worker descriptor duplication failed");
+    // SAFETY: duplicate is the fresh successful fcntl result and has no owner.
     let file = File::from(unsafe { OwnedFd::from_raw_fd(duplicate) });
     let inputs: ServiceInputs =
         serde_json::from_slice(&read_sealed(&file, 2 * 1024 * 1024 * 1024)?)?;
@@ -1632,6 +1644,8 @@ fn validate_response(result: ServiceResult, identity: &ServiceIdentity) -> Resul
 }
 fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
     let bytes = path.as_os_str().as_bytes();
+    // SAFETY: sockaddr_un is composed of integer fields; zero is a valid
+    // initial value, and the validated family/path are populated below.
     let mut address: libc::sockaddr_un = unsafe { std::mem::zeroed() };
     ensure!(
         !bytes.is_empty() && bytes.len() < address.sun_path.len() && !bytes.contains(&0),
@@ -1641,6 +1655,8 @@ fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
     for (slot, byte) in address.sun_path.iter_mut().zip(bytes) {
         *slot = *byte as libc::c_char;
     }
+    // SAFETY: socket receives scalar arguments and returns a fresh descriptor
+    // or -1; the result is checked before transferring ownership below.
     let raw = unsafe {
         libc::socket(
             libc::AF_UNIX,
@@ -1649,6 +1665,7 @@ fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
         )
     };
     ensure!(raw >= 0, "cannot allocate local authority socket");
+    // SAFETY: raw is a fresh successful socket descriptor with no other owner.
     let stream = unsafe { UnixStream::from_raw_fd(raw) };
     let deadline = Instant::now() + timeout;
     loop {
@@ -1656,6 +1673,8 @@ fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
             Instant::now() < deadline,
             "absolute connect deadline exceeded"
         );
+        // SAFETY: address remains live for the call and its length is exactly
+        // sockaddr_un; raw is the live socket owned by stream.
         let result = unsafe {
             libc::connect(
                 raw,
@@ -1673,6 +1692,8 @@ fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
                 let mut socket_error: libc::c_int = 0;
                 let mut size = std::mem::size_of_val(&socket_error) as libc::socklen_t;
                 ensure!(
+                    // SAFETY: socket_error and size are writable live locals;
+                    // size advertises the exact c_int output capacity.
                     unsafe {
                         libc::getsockopt(
                             raw,
@@ -1854,12 +1875,16 @@ fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
 }
 fn sealed(bytes: &[u8]) -> Result<File> {
     let name = std::ffi::CString::new("jope-native-fit")?;
+    // SAFETY: name is a live NUL-terminated string; successful memfd_create
+    // returns a fresh descriptor, checked below before taking ownership.
     let fd =
         unsafe { libc::memfd_create(name.as_ptr(), libc::MFD_ALLOW_SEALING | libc::MFD_CLOEXEC) };
     ensure!(fd >= 0, "sealed descriptor unavailable");
+    // SAFETY: fd is the fresh successful memfd_create result and has no owner.
     let mut f = unsafe { File::from_raw_fd(fd) };
     f.write_all(bytes)?;
     f.seek(SeekFrom::Start(0))?;
+    // SAFETY: f owns the live descriptor; F_ADD_SEALS takes only an integer mask.
     ensure!(
         unsafe { libc::fcntl(fd, libc::F_ADD_SEALS, SEALS) } == 0,
         "descriptor seal failed"
@@ -1867,6 +1892,7 @@ fn sealed(bytes: &[u8]) -> Result<File> {
     Ok(f)
 }
 fn read_sealed(file: &File, limit: u64) -> Result<Vec<u8>> {
+    // SAFETY: F_GET_SEALS takes a borrowed live descriptor and no pointers.
     let seals = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GET_SEALS) };
     ensure!(
         file.metadata()?.len() <= limit && seals >= 0 && seals & SEALS == SEALS,
@@ -1891,6 +1917,7 @@ fn wait_fd(fd: i32, events: i16, deadline: Instant) -> Result<()> {
             .saturating_duration_since(Instant::now())
             .as_millis()
             .clamp(1, 100) as i32;
+        // SAFETY: p is a live pollfd and poll is given its exact one-element length.
         let n = unsafe { libc::poll(&mut p, 1, ms) };
         if n > 0 {
             return Ok(());
@@ -1975,12 +2002,17 @@ fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result<()> {
             iov_len: 1,
         };
         let mut control = [0usize; 8];
+        // SAFETY: msghdr is an integer/pointer C record; zero initializes its
+        // pointer fields to null before live iov/control buffers are assigned.
         let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
         msg.msg_iov = &mut iov;
         msg.msg_iovlen = 1;
         msg.msg_control = control.as_mut_ptr().cast();
+        // SAFETY: CMSG_SPACE is called for one descriptor and performs size arithmetic.
         msg.msg_controllen =
             unsafe { libc::CMSG_SPACE(std::mem::size_of::<i32>() as u32) } as usize;
+        // SAFETY: control is cmsghdr-aligned and sized by CMSG_SPACE; marker,
+        // iov and control live through sendmsg, and fd is borrowed for transfer.
         unsafe {
             let c = libc::CMSG_FIRSTHDR(&msg);
             (*c).cmsg_level = libc::SOL_SOCKET;
@@ -2015,11 +2047,15 @@ fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
             iov_len: 1,
         };
         let mut control = [0usize; 8];
+        // SAFETY: msghdr is an integer/pointer C record; zero initializes its
+        // pointer fields to null before live iov/control buffers are assigned.
         let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
         msg.msg_iov = &mut iov;
         msg.msg_iovlen = 1;
         msg.msg_control = control.as_mut_ptr().cast();
         msg.msg_controllen = std::mem::size_of_val(&control);
+        // SAFETY: recvmsg writes only to the live bounded iov/control buffers;
+        // the aligned control array is traversed and installed fds are owned.
         unsafe {
             let n = libc::recvmsg(
                 stream.as_raw_fd(),
