@@ -9,7 +9,21 @@ bash deploy/ci/actionlint-workflows.sh "$(pwd -P)"
 bash deploy/ci/secret-scan.sh
 python3 -B deploy/ci/verify-vendor-security.py --root "$(pwd -P)"
 syft version | grep -qF '1.40.0'
-syft dir:. --exclude ./target --exclude ./.git --output spdx-json >/dev/null
+sbom_dir="${JOPE_LANE_EVIDENCE:-target/security}"
+mkdir -p "$sbom_dir"
+sbom="$sbom_dir/jope.spdx.json"
+syft dir:. --exclude ./target --exclude ./.git --output "spdx-json=$sbom" >/dev/null
+python3 -B - "$sbom" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    document = json.load(stream)
+if not document.get("spdxVersion", "").startswith("SPDX-"):
+    raise SystemExit("Syft output is not a valid SPDX JSON document")
+if not isinstance(document.get("packages"), list):
+    raise SystemExit("Syft SPDX JSON has no package inventory")
+PY
 set -euo pipefail
 # Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
 # deliberately given no docker socket, and the binary is in the image anyway.

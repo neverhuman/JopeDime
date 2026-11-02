@@ -20,6 +20,7 @@ class SecurityLane(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name).resolve()
         self.real_gitleaks = shutil.which("gitleaks")
+        self.real_python3 = shutil.which("python3")
         for name in ("tools/security-lane.sh", "deploy/ci/secret-scan.sh", "deploy/ci/actionlint-workflows.sh", "deploy/ci/verify-vendor-security.py", ".gitleaks.toml"):
             destination = self.root / name
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -29,11 +30,11 @@ class SecurityLane(unittest.TestCase):
         (workflows / "ci.yml").write_text("name: fixture\non: push\n")
         self.bin = self.root / "bin"
         self.bin.mkdir()
-        for command in ("bash", "dirname", "realpath", "find", "sort", "grep", "wc"):
+        for command in ("bash", "dirname", "realpath", "find", "sort", "grep", "wc", "mkdir"):
             (self.bin / command).symlink_to(shutil.which(command))
         self.fake("git", 'case "$*" in *--is-shallow-repository*) echo false ;; *--verify*) printf "%040d\\n" 1 ;; *--count*) echo 7 ;; *) exit 92 ;; esac')
-        self.fake("python3", '[[ "$*" == "-B deploy/ci/verify-vendor-security.py --root "* ]] || exit 96; exit "${FAIL_PROVENANCE:-0}"')
-        self.fake("syft", 'case "$*" in "version") echo "syft 1.40.0" ;; "dir:. --exclude ./target --exclude ./.git --output spdx-json") exit "${FAIL_SBOM:-0}" ;; *) exit 97 ;; esac')
+        self.fake("python3", 'case "$*" in "-B deploy/ci/verify-vendor-security.py --root "*) exit "${FAIL_PROVENANCE:-0}" ;; *) exec "$REAL_PYTHON3" "$@" ;; esac')
+        self.fake("syft", 'case "$*" in "version") echo "syft 1.40.0" ;; *"--output spdx-json="*) rc="${FAIL_SBOM:-0}"; [ "$rc" = 0 ] || exit "$rc"; output="${@: -1}"; output="${output#spdx-json=}"; printf %s "{\\"spdxVersion\\":\\"SPDX-2.3\\",\\"packages\\":[]}" > "$output" ;; *) exit 97 ;; esac')
         self.fake("actionlint", 'exit "${FAIL_ACTIONLINT:-0}"')
         self.fake("gitleaks", '[[ "$*" == *"--redact"* && "$*" == *"--log-opts=HEAD"* ]] || exit 93; exit "${FAIL_GITLEAKS:-0}"')
         self.fake("npm", '[[ "$*" == "--prefix web/training-dashboard audit --package-lock-only --audit-level=high" ]] || exit 95; exit "${FAIL_NPM:-0}"')
@@ -45,8 +46,16 @@ class SecurityLane(unittest.TestCase):
         path.chmod(0o755)
 
     def run_lane(self, **extra):
-        env = dict(os.environ, PATH=str(self.bin), **extra)
+        env = dict(os.environ, PATH=str(self.bin), REAL_PYTHON3=self.real_python3, **extra)
         return subprocess.run(["/bin/bash", str(self.root / "tools/security-lane.sh")], env=env, capture_output=True, text=True)
+
+    def test_sbom_is_retained_in_lane_evidence(self):
+        evidence = self.root / "receipt"
+        result = self.run_lane(JOPE_LANE_EVIDENCE=str(evidence))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        sbom = json.loads((evidence / "jope.spdx.json").read_text())
+        self.assertEqual(sbom["spdxVersion"], "SPDX-2.3")
+        self.assertEqual(sbom["packages"], [])
 
     def test_authorized_path_executes_all_gates(self):
         result = self.run_lane()
