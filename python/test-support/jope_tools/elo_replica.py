@@ -18,7 +18,7 @@ import sys
 
 import numpy as np
 
-from .prime_config import load_config
+from jope.prime_config import load_config
 
 QUANT_MODELS = load_config().quant_models_root
 LADDER_CACHE = QUANT_MODELS / "tools/artifacts/regression_router_cache_all_real_models_v1"
