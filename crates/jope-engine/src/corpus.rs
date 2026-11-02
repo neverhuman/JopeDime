@@ -312,11 +312,9 @@ impl Records {
     }
     pub fn get(&self, i: usize) -> Record {
         assert!(i < self.len / RECORD_BYTES, "record index out of bounds");
-        // SAFETY: `self.ptr` is the base of the successful read-only mmap retained by `self`;
-        // `u8` needs no stronger alignment, and construction bounds its initialized file-backed
-        // bytes by `isize::MAX`. Since `i < self.len / RECORD_BYTES`, the multiplication and
-        // complete record stay within that one mapping allocation. The slice borrow lasts only
-        // for this call, and `Record::parse` copies its values, so no reference escapes the map.
+        // SAFETY: Borrow initialized bytes from the live read-only mmap in `self`; this does not
+        // transfer Rust allocator ownership. `u8` alignment is 1; the bounded record is within
+        // the <=isize::MAX mapping; parse copies before borrow ends and `Drop` munmaps it once.
         Record::parse(unsafe {
             std::slice::from_raw_parts((self.ptr as *const u8).add(i * RECORD_BYTES), RECORD_BYTES)
         })
