@@ -12,5 +12,7 @@
   "pooled_b_decision": null,
   "pooled_a_confirmation": null,
   "sealed_d4_confirmation": null,
-  "serving_promotion": false
+  "serving_promotion": false,
+  "source_interfaces": "IMPLEMENTED_CPU_FIXTURE_VERIFIED",
+  "scientific_executor_qualification": "PENDING_MODEL_INPUT_NATIVE91_GPU_PHASE_BINDINGS"
 }

@@ -11,7 +11,7 @@
   "source_head": null,
   "prereg_pr": null,
   "queue_released": false,
-  "executor_implemented": false,
+  "executor_implemented": true,
   "search_k": [
     16,
     64,
@@ -58,9 +58,34 @@
   "native_reference_contexts": 91,
   "native_reference_mean": 1.1377941898164525,
   "native_gate_status": "NOT_RUN",
-  "model_architecture_sha256": null,
+  "model_architecture_sha256": "622b7aea789058598b7bae01a30b5530d2b67d09c3906da5e894dba5971d2df2",
   "model_initial_state_sha256": null,
   "input_manifest_sha256": null,
   "fold_manifest_sha256": null,
-  "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/"
+  "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
+  "executor_scope": "CPU native-search/learner cell interfaces; scientific GPU coordinator NOT_QUALIFIED",
+  "scientific_execution_enabled": false,
+  "architecture": {
+    "schema": "h206-student-width128-v1",
+    "input": 749,
+    "hidden": [
+      128,
+      128
+    ],
+    "activation": "GELU",
+    "output": 1,
+    "output_init": "zero",
+    "dropout": 0,
+    "optimizer": "AdamW",
+    "lr": 0.0001,
+    "weight_decay": 0.0001,
+    "teacher": "frozen r882 adapter_10tok; original tokens and native full kernel",
+    "encoder": "inherited Fused DOPE router/col_gate + Stage1B SVD, live autograd"
+  },
+  "native_s1_binary_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+  "native_metric_source_sha256": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
+  "native_train_bridge": "first-10-TRAIN-rows-cyclic-zero-query-target-v1",
+  "binding_status": "MISSING_PINS.md",
+  "conditional_launch_authority": "gbw_0108_gpu_fused_redteam_codex.md",
+  "execution_admission": "PENDING_MODEL_INPUT_NATIVE91_STUDY_RUNTIME_AND_LEDGER"
 }
