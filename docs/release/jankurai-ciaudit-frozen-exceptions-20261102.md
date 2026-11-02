@@ -55,6 +55,22 @@ provenance. These exact paths alone are excluded from Jankurai scoring; the
 mutable canonical `deploy/dl-flywheel/jope_flywheel/evergreen.py` remains in the
 scan. No pinned bytes or other security scans change.
 
+## Frozen `label_campaign.py` copies
+
+HLT-043 fingerprint
+`sha256:2881cc53a3b58139f0b00e15b81ad55df4ccb2fcb2202176976fe2f22fa52f5d`
+in `rerun/j_8df4fe341.json` identifies these three preserved files:
+
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/label_campaign.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/label_campaign.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/label_campaign.py`
+
+All three have SHA-256
+`564f25581f8ce4e3e912e5b04a321235d887d050e5f20786c97fa8e52eb10b2f`, pinned
+by the revision source packets and v1 source manifest. Only these exact paths
+are excluded from Jankurai scoring. The frozen package bytes and other security
+scans remain unchanged.
+
 ## Frozen `training_snapshot_kumos.py` instance
 
 HLT-043 fingerprint

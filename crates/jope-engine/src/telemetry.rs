@@ -454,15 +454,9 @@ impl Sampler {
         h.ram_total_gb = field("MemTotal:");
         h.available_gb = field("MemAvailable:");
         h.ram_used_gb = h.ram_total_gb - h.available_gb;
-        if let Ok(path) = std::ffi::CString::new(root.as_os_str().as_encoded_bytes()) {
-            let mut stat = std::mem::MaybeUninit::<libc::statvfs>::uninit();
-            // SAFETY: `path` is a CString that outlives the call, so it is NUL-terminated; `stat`
-            // is writable, aligned storage for exactly one statvfs, which the call fills.
-            if unsafe { libc::statvfs(path.as_ptr(), stat.as_mut_ptr()) } == 0 {
-                // SAFETY: statvfs returned 0, so it has initialized every field of `stat`.
-                let stat = unsafe { stat.assume_init() };
-                h.disk_free_gb = stat.f_bavail as f64 * stat.f_frsize as f64 / 1024f64.powi(3);
-            }
+        if let Ok(stat) = nix::sys::statvfs::statvfs(root) {
+            h.disk_free_gb =
+                stat.blocks_available() as f64 * stat.fragment_size() as f64 / 1024f64.powi(3);
         }
         h.load = fs::read_to_string("/proc/loadavg").unwrap_or_default();
         h

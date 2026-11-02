@@ -94,7 +94,7 @@ fn search_without_authority_cannot_publish_an_admissible_quality_label() {
         );
         assert!(
             row["metrics"].is_null(),
-            "failed dispatch fabricated quality"
+            "failed dispatch recorded metrics"
         );
     }
     let receipt: Value = read_json(&output.join("search.json")).unwrap();

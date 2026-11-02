@@ -759,6 +759,24 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let rustunsafe_authority =
         old_fixture("transitions/rustunsafe_authority_lineage_rebaseline.v1.json");
     let p21_family_split = old_fixture("transitions/p21_family_split_identity_rebaseline.v1.json");
+    // The P42 path rename was merged without a fixture transition; bridge it before P66.
+    let reporot_identity =
+        old_fixture("transitions/reporot_evaluator_fixture_paths_identity_chain.v1.json");
+    assert_eq!(
+        reporot_identity["source_commit"],
+        "d10a4a32dc324f6dd44d36c3aa9d07bba4fb2ad7"
+    );
+    assert_eq!(reporot_identity["fixtures"].as_array().unwrap().len(), 1);
+    assert_eq!(reporot_identity["fixtures"][0]["path"], changed_fixtures[0]);
+    let deadlang_identity =
+        old_fixture("transitions/deadlang_unsupported_blend_identity_rebaseline.v1.json");
+    assert_eq!(
+        deadlang_identity["source_commit"],
+        "ccbd0cfaf3edaee109f648883a0e2c37f57675a6"
+    );
+    assert_eq!(deadlang_identity["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(deadlang_identity["fixtures"][0]["path"], changed_fixtures[0]);
+    assert_eq!(deadlang_identity["fixtures"][1]["path"], changed_fixtures[1]);
     assert_eq!(
         p21_family_split["source_commit"],
         "e240a9f27e3bba296acf77d29dae10fd2529a0c1"
@@ -1825,6 +1843,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         p45_race_pool_identity,
         prodlang_rust_runtime,
         p21_family_split,
+        reporot_identity,
+        deadlang_identity,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

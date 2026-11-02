@@ -20,10 +20,10 @@ pub fn connect_bounded(path: &Path, window: std::time::Duration) -> std::io::Res
     let end = std::time::Instant::now()
         .checked_add(window)
         .ok_or_else(|| std::io::Error::other("socket deadline overflow"))?;
-    // SAFETY: the all-zero bit pattern is valid for sockaddr_un: sun_family and
-    // every sun_path element are integers. The family and bounded path are set below.
-    let mut address: libc::sockaddr_un = unsafe { std::mem::zeroed() };
-    address.sun_family = libc::AF_UNIX as libc::sa_family_t;
+    let mut address = libc::sockaddr_un {
+        sun_family: libc::AF_UNIX as libc::sa_family_t,
+        sun_path: [0; 108],
+    };
     let bytes = path.as_os_str().as_bytes();
     if bytes.len() >= address.sun_path.len() || bytes.contains(&0) {
         return Err(std::io::Error::new(
@@ -90,12 +90,15 @@ pub(crate) fn send_fd(stream: &UnixStream, fd: i32) -> Result<()> {
         iov_len: 1,
     };
     let mut control = [0usize; 8];
-    // SAFETY: the all-zero bit pattern is valid for msghdr: its fields are raw
-    // pointers (null is valid) and integers (zero is valid), populated below.
-    let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
-    msg.msg_iov = &mut iov;
-    msg.msg_iovlen = 1;
-    msg.msg_control = control.as_mut_ptr().cast();
+    let mut msg = libc::msghdr {
+        msg_name: std::ptr::null_mut(),
+        msg_namelen: 0,
+        msg_iov: &mut iov,
+        msg_iovlen: 1,
+        msg_control: control.as_mut_ptr().cast(),
+        msg_controllen: 0,
+        msg_flags: 0,
+    };
     // SAFETY: CMSG_SPACE performs size arithmetic for one descriptor only.
     msg.msg_controllen = unsafe { libc::CMSG_SPACE(std::mem::size_of::<i32>() as u32) } as usize;
     // SAFETY: control is cmsghdr-aligned and holds CMSG_SPACE(sizeof(i32));
@@ -121,13 +124,15 @@ pub(crate) fn receive_fd(stream: &UnixStream) -> Result<OwnedFd> {
         iov_len: 1,
     };
     let mut control = [0usize; 8];
-    // SAFETY: the all-zero bit pattern is valid for msghdr: its fields are raw
-    // pointers (null is valid) and integers (zero is valid), populated below.
-    let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
-    msg.msg_iov = &mut iov;
-    msg.msg_iovlen = 1;
-    msg.msg_control = control.as_mut_ptr().cast();
-    msg.msg_controllen = std::mem::size_of_val(&control);
+    let mut msg = libc::msghdr {
+        msg_name: std::ptr::null_mut(),
+        msg_namelen: 0,
+        msg_iov: &mut iov,
+        msg_iovlen: 1,
+        msg_control: control.as_mut_ptr().cast(),
+        msg_controllen: std::mem::size_of_val(&control),
+        msg_flags: 0,
+    };
     // recvmsg writes to live, bounded iov and aligned control buffers; the kernel creates the
     // traversed headers and fresh SCM_RIGHTS descriptors. read_unaligned handles data alignment;
     // each descriptor gets one OwnedFd before validation, so every refusal closes the installed
@@ -235,26 +240,9 @@ pub fn shared(path: &Path, expected: &str, length: usize) -> Result<Option<fs::F
         socket,
         std::time::Duration::from_millis((deadline - now).try_into()?),
     )?;
-    let mut peer = std::mem::MaybeUninit::<libc::ucred>::uninit();
-    let mut size = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
-    // SAFETY: peer and size are live writable objects; size advertises exactly
-    // sizeof(ucred). getsockopt writes within that capacity for SO_PEERCRED.
-    ensure!(
-        unsafe {
-            libc::getsockopt(
-                stream.as_raw_fd(),
-                libc::SOL_SOCKET,
-                libc::SO_PEERCRED,
-                peer.as_mut_ptr().cast(),
-                &mut size,
-            )
-        } == 0
-            && size as usize == std::mem::size_of::<libc::ucred>(),
-        "cache socket peer identity changed"
-    );
-    // SAFETY: getsockopt succeeded and returned the exact ucred size.
-    let peer = unsafe { peer.assume_init() };
-    ensure!(peer.uid == uid, "cache socket peer identity changed");
+    let peer = nix::sys::socket::getsockopt(&stream, nix::sys::socket::sockopt::PeerCredentials)
+        .map_err(|_| anyhow::anyhow!("cache socket peer identity changed"))?;
+    ensure!(peer.uid() == uid, "cache socket peer identity changed");
     let connected = fs::symlink_metadata(socket)?;
     ensure!(
         connected.dev() == metadata.dev() && connected.ino() == metadata.ino(),
