@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Assemble released DOPE into the fused inference model and run real-data P2 checks.
 
-Internal HPC harness using read-only sibling gpu_bench/ and JopeDimeMicro sources.
-Run at nice 19. The P2 GPU phase takes qualification.lock nonblockingly.
+Internal HPC harness using read-only sibling gpu_bench/ and JopeDimeMicro sources. P2 runs gpu_bench's
+Phase 2 harness (`run_phase2_shard_and_fleet.run_shard`, one shard over all 915 datasets), the code path
+behind the signed 912/912 receipts, with every network it builds pinned to this run's fused artifact.
+Run at nice 19 with an interpreter that has torch and tiktoken. The P2 GPU phase takes
+qualification.lock nonblockingly.
 """
 
 from __future__ import annotations
@@ -13,6 +16,7 @@ import importlib
 import json
 import os
 import shutil
+import socket
 import sys
 import tempfile
 from datetime import UTC, datetime
@@ -28,10 +32,27 @@ OUTPUT_ROOT = REPO / "target" / "auto-fuse"
 QUALIFICATION_LOCK = HOME / "jope_plan" / "qualification.lock"
 RELEASED_DOPE_SHA256 = "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952"
 COHORT_SHA256 = "95b3f54042e5f8bb405080b8e169bf0af33008a0f86ce66477479635ce7e4139"
+CHAINED_REPORT = GPU_BENCH / "runs" / "infer_v1_cohort915" / "infer_v1_cohort915_combined_report.json"
+# The pinned external chained (5-net CPU) selections that every match is counted against.
+CHAINED_REPORT_SHA256 = "9478a6f2c374455cb1cc3578eb09e34e17da2e4120f6da057574b3337c36bdca"
+# quick10 (gpu_bench reviewer_infer_quick10_manifest.json, sha256 7e6229ab...): all ten are cohort915 members.
+QUICK10_DATASET_IDS = (
+    "2cac5f3ad025291f",
+    "d50018658be71d1e",
+    "f2d83d253c91dffe",
+    "c6c5a1e929d039b9",
+    "dbc501fc7f6a40b5",
+    "c02354d05cfc50ca",
+    "6d6c749c3ff27710",
+    "1125c70822c5b44b",
+    "4c562924720c9e19",
+    "a76d20c7ab4f79b3",
+)
+COHORT_GATE = (903, 912)
 MICRO_ASSETS = HOME / "JopeDimeMicro" / "assets"
-# Read-only inputs that decide the fused selection (the gpu_bench submission pins plus both harnesses).
-# The receipt records their bytes so it can be joined to a signed runtime identity: the 2026-10-29 run
-# scored 893/912 on the Phase 1 tree and its receipt could not say so.
+# Read-only inputs that decide the fused selection (the gpu_bench Phase 2 submission pins, the harness and
+# its helpers). The receipt records their bytes so it can be joined to a signed runtime identity: the
+# 2026-10-29 run scored 893/912 on the Phase 1 tree and its receipt could not say so.
 RUNTIME_INPUTS = {
     "fused/fused_jope_net.py": FUSED / "fused_jope_net.py",
     "fused/gpu_stage1a_and_slate.py": FUSED / "gpu_stage1a_and_slate.py",
@@ -40,8 +61,10 @@ RUNTIME_INPUTS = {
     "fused/distilled_stage1a_bridge_real_s3.pt": FUSED / "distilled_stage1a_bridge_real_s3.pt",
     "fused/gpu_slate_tables.pt": FUSED / "gpu_slate_tables.pt",
     "fused/expanded_gpu_bank_1766.pt": FUSED / "expanded_gpu_bank_1766.pt",
+    "fused/bridge_provenance_audit.json": FUSED / "bridge_provenance_audit.json",
+    "fused/reviewer_infer_emit_rust_only": FUSED / "reviewer_infer_emit_rust_only",
+    "fused/run_phase2_shard_and_fleet.py": FUSED / "run_phase2_shard_and_fleet.py",
     "fused/run_parity_and_quick10_benchmark.py": FUSED / "run_parity_and_quick10_benchmark.py",
-    "fused/run_batch_vram_and_cohort915_benchmark.py": FUSED / "run_batch_vram_and_cohort915_benchmark.py",
     "micro/frozen_stage1_stage2_inference_params_v3.pt": MICRO_ASSETS
     / "projections"
     / "frozen_stage1_stage2_inference_params_v3.pt",
@@ -156,16 +179,38 @@ def atomic_torch_save(value: dict[str, Any], path: Path) -> None:
             os.unlink(temporary)
 
 
-def import_runtime() -> tuple[Any, Any, Any]:
+def import_runtime() -> tuple[Any, Any]:
     for path in (FUSED, MICRO_PYTHON):
         if not path.is_dir():
             raise FileNotFoundError(f"required read-only runtime missing: {path}")
         if str(path) not in sys.path:
             sys.path.insert(0, str(path))
     fused = importlib.import_module("fused_jope_net")
-    parity = importlib.import_module("run_parity_and_quick10_benchmark")
-    cohort = importlib.import_module("run_batch_vram_and_cohort915_benchmark")
-    return fused, parity, cohort
+    phase2 = importlib.import_module("run_phase2_shard_and_fleet")
+    return fused, phase2
+
+
+def count_matches(rows: list[dict[str, Any]], chained: dict[str, Any]) -> dict[str, Any]:
+    """Exact DSL matches of the h45 picks against the chained selections, over the paired datasets."""
+    reference = {
+        r["dataset_id"]: r["selected_dsl"] for r in chained.get("datasets", []) if r.get("status") == "ok"
+    }
+    ids = [r["dataset_id"] for r in rows]
+    if len(ids) != len(set(ids)):
+        raise ValueError("Phase 2 report repeats a dataset")
+    paired = [r for r in rows if r["dataset_id"] in reference]
+    quick = [r for r in rows if r["dataset_id"] in QUICK10_DATASET_IDS]
+    if len(quick) != len(QUICK10_DATASET_IDS):
+        raise ValueError("Phase 2 report is missing quick10 datasets")
+    return {
+        "paired": len(paired),
+        "fp16": sum(r["selected_dsl_h45_fp16"] == reference[r["dataset_id"]] for r in paired),
+        "fp32": sum(r["selected_dsl_h45_fp32"] == reference[r["dataset_id"]] for r in paired),
+        "quick10": sum(r["selected_dsl_h45_fp16"] == reference.get(r["dataset_id"]) for r in quick),
+        "mismatched_ids": sorted(
+            r["dataset_id"] for r in paired if r["selected_dsl_h45_fp16"] != reference[r["dataset_id"]]
+        ),
+    }
 
 
 def load_released_dope(path: Path) -> tuple[dict[str, torch.Tensor], str]:
@@ -206,7 +251,7 @@ def main() -> int:
     source_state, source_sha = load_released_dope(checkpoint)
     source_file_sha_before = file_sha(checkpoint)
     runtime_before = runtime_identity()
-    fused, parity, cohort = import_runtime()
+    fused, phase2 = import_runtime()
 
     # Keep dynamic bank-registration writes inside this run's output directory.
     bank = run_dir / "expanded_gpu_bank_1766.pt"
@@ -251,13 +296,15 @@ def main() -> int:
 
     eval_dir = run_dir / "evaluation"
     eval_dir.mkdir()
-    parity.FUSED_DIR = eval_dir
-    cohort.FUSED_DIR = eval_dir
-    parity.FusedJopeNetwork = PinnedFusedNetwork
-    cohort.FusedJopeNetwork = PinnedFusedNetwork
+    # run_shard writes only under its scratch directory; its gpu_bench paths stay read-only inputs.
+    phase2.FusedJopeNetwork = PinnedFusedNetwork
     cohort_manifest = GPU_BENCH / "infer_real_cohort_no_friedman_manifest.json"
     if file_sha(cohort_manifest) != COHORT_SHA256:
         raise RuntimeError("cohort915 manifest identity changed")
+    if file_sha(CHAINED_REPORT) != CHAINED_REPORT_SHA256:
+        raise RuntimeError("chained cohort915 reference identity changed")
+    host = socket.gethostname()
+    phase2_report = eval_dir / f"single_gpu_915_{host}_report.json"
 
     eval_reason = None
     try:
@@ -269,8 +316,7 @@ def main() -> int:
             try:
                 if not torch.cuda.is_available():
                     raise RuntimeError("P2 requires allocated CUDA; CPU fallback is refused")
-                parity.main()
-                cohort.main()
+                phase2.run_shard(0, host, eval_dir, num_shards=1)
             finally:
                 fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
     except Exception as exc:
@@ -290,8 +336,15 @@ def main() -> int:
     if runtime_after is not None and runtime_after != runtime_before:
         eval_reason = eval_reason or "gpu_bench runtime inputs changed during evaluation"
 
-    quick_path = eval_dir / "quick10_and_parity_report.json"
-    cohort_path = eval_dir / "batch_sweep_and_cohort915_report.json"
+    counted: dict[str, Any] = {}
+    report: dict[str, Any] = {}
+    if eval_reason is None:
+        try:
+            report = json.loads(phase2_report.read_text())
+            counted = count_matches(report["datasets"], json.loads(CHAINED_REPORT.read_text()))
+        except (OSError, KeyError, TypeError, ValueError) as exc:
+            eval_reason = f"Phase 2 report unreadable: {type(exc).__name__}: {exc}"
+
     p2: dict[str, Any] = {
         "schema": "jope.auto-fuse-p2-evaluation/v1",
         "evaluation_ran": eval_reason is None,
@@ -312,34 +365,52 @@ def main() -> int:
         "source_file_unchanged": source_file_sha_after == source_file_sha_before == source_sha,
         "runtime_identity_sha256": runtime_before,
         "runtime_identity_unchanged": runtime_after == runtime_before,
-        # Every evaluator instance carries this run's fused h45 artifact, including the ones the harnesses
-        # build as h40b (quick10's default path among them).
+        # Every evaluator instance carries this run's fused h45 artifact, including the one the harness
+        # builds as h40b.
         "p2_evaluator_constructed_adapter_variants": [m.constructed_adapter_variant for m in instances],
         "p2_evaluator_state": "fused_h45 artifact",
         "trainable_parameter_counts": counts,
-        "paired_holdout_r2_no_regression": "UNVERIFIED: no paired CPU-chain R2 receipt in this harness",
+        "paired_holdout_r2_no_regression": "UNVERIFIED: the shard harness retains GPU holdout predictions; "
+        "the paired CPU-chain comparison is a separate step",
         "all10_language_selected_program_correctness": "UNVERIFIED: codegen timing is not correctness evidence",
     }
     if eval_reason is not None:
         p2.update({"status": "NOT_RUN", "reason": eval_reason})
     else:
-        quick = json.loads(quick_path.read_text())
-        cohort_report = json.loads(cohort_path.read_text())
-        q = quick["quick10_parity_and_fitter_accuracy"]
-        c = cohort_report["cohort915_summary"]["landmarks_on"]
-        matches = int(c["exact_dsl_match_vs_chained_count"])
-        paired = int(c["exact_dsl_match_vs_chained_paired_count"])
-        quick_matches = int(q["default_path_lm_exact_dsl_matches"])
-        quick_total = int(q["total_datasets"])
-        passed = matches >= 903 and paired == 912 and quick_matches == 10 and quick_total == 10
+        threshold, denominator = COHORT_GATE
+        # The harness counts the same pairs itself; both counts must agree.
+        harness = {
+            "paired": report.get("paired_chained_compared_count"),
+            "fp16": report.get("paired_exact_dsl_match_h45_fp16_count"),
+        }
+        agree = harness == {"paired": counted["paired"], "fp16": counted["fp16"]}
+        passed = (
+            agree
+            and counted["paired"] == denominator
+            and counted["fp16"] >= threshold
+            and counted["quick10"] == len(QUICK10_DATASET_IDS)
+        )
         p2.update(
             {
                 "status": "INCOMPLETE" if passed else "FAIL",
-                "cohort912": {"matches": matches, "denominator": paired, "threshold": 903},
-                "quick10": {"matches": quick_matches, "denominator": quick_total},
+                "harness": "gpu_bench run_phase2_shard_and_fleet.run_shard(0, host, num_shards=1)",
+                "host": host,
+                "cohort912": {
+                    "matches": counted["fp16"],
+                    "denominator": counted["paired"],
+                    "threshold": threshold,
+                    "fp32_router_matches": counted["fp32"],
+                    "mismatched_dataset_ids": counted["mismatched_ids"],
+                },
+                "quick10": {"matches": counted["quick10"], "denominator": len(QUICK10_DATASET_IDS)},
+                "harness_counts": harness,
+                "harness_counts_agree": agree,
                 "reports": {
-                    "quick10": {"path": str(quick_path), "sha256": file_sha(quick_path)},
-                    "cohort915": {"path": str(cohort_path), "sha256": file_sha(cohort_path)},
+                    "phase2_single915": {"path": str(phase2_report), "sha256": file_sha(phase2_report)},
+                    "holdout_predictions": {
+                        "path": report.get("holdout_preds_npz_path"),
+                        "sha256": report.get("holdout_preds_npz_sha256"),
+                    },
                 },
             }
         )

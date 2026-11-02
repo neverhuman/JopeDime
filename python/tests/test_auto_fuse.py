@@ -218,27 +218,80 @@ def test_runtime_identity_refuses_missing_inputs(tmp_path, monkeypatch, auto_fus
 
 def test_runtime_inputs_are_the_read_only_selection_inputs(auto_fuse) -> None:
     names = {name.split("/", 1)[1] for name in auto_fuse.RUNTIME_INPUTS}
-    # The gpu_bench Phase 2 submission pins (DOPE and the cohort manifest are pinned separately) plus
-    # both harnesses the P2 evaluation drives.
+    # The gpu_bench Phase 2 submission pins (DOPE, the cohort manifest and the chained reference are
+    # pinned separately), the Phase 2 harness and the helper module it imports.
     assert {
         "fused_jope_net.py",
         "gpu_stage1a_and_slate.py",
         "fused_gpu_kernels.cu",
         "libfused_gpu_kernels.so",
         "distilled_stage1a_bridge_real_s3.pt",
+        "bridge_provenance_audit.json",
         "gpu_slate_tables.pt",
         "expanded_gpu_bank_1766.pt",
+        "reviewer_infer_emit_rust_only",
         "flywheel_winner_pool_v3a_q25_train_only_430.pt",
         "h45_full_s3_15151_gate_disjoint_all_dl_train_1100_10tok.pt",
         "h40b_round2_dope_self_contained_10tok.pt",
         "frozen_stage1_stage2_inference_params_v3.pt",
+        "run_phase2_shard_and_fleet.py",
         "run_parity_and_quick10_benchmark.py",
-        "run_batch_vram_and_cohort915_benchmark.py",
     } <= names
     for name, path in auto_fuse.RUNTIME_INPUTS.items():
         root = auto_fuse.FUSED if name.startswith("fused/") else auto_fuse.MICRO_ASSETS
         assert path.is_relative_to(root) and path.name == name.split("/", 1)[1]
         assert not path.is_relative_to(auto_fuse.REPO)
+    assert auto_fuse.CHAINED_REPORT.is_relative_to(auto_fuse.GPU_BENCH)
+    assert len(set(auto_fuse.QUICK10_DATASET_IDS)) == 10
+
+
+def _chained(ids_ok: list[str], ids_failed: list[str]) -> dict:
+    rows = [{"dataset_id": i, "status": "ok", "selected_dsl": f"(pipe X (ridge) #{i})"} for i in ids_ok]
+    rows += [{"dataset_id": i, "status": "failed", "selected_dsl": None} for i in ids_failed]
+    return {"datasets": rows}
+
+
+def _phase2_rows(chained: dict, wrong: set[str]) -> list[dict]:
+    rows = []
+    for c in chained["datasets"]:
+        pick = c["selected_dsl"] or "(pipe X (ridge_gcv))"
+        if c["dataset_id"] in wrong:
+            pick = "(pipe X (histgbm depth=4))"
+        rows.append(
+            {"dataset_id": c["dataset_id"], "selected_dsl_h45_fp16": pick, "selected_dsl_h45_fp32": pick}
+        )
+    return rows
+
+
+def _cohort_ids(auto_fuse) -> tuple[list[str], list[str]]:
+    others = [f"ds{i:04d}" for i in range(912 - len(auto_fuse.QUICK10_DATASET_IDS))]
+    return list(auto_fuse.QUICK10_DATASET_IDS) + others, ["failed0", "failed1", "failed2"]
+
+
+def test_count_matches_counts_paired_h45_picks_and_quick10(auto_fuse) -> None:
+    ok, failed = _cohort_ids(auto_fuse)
+    chained = _chained(ok, failed)
+    wrong = {ok[0], ok[20], ok[21]}
+    rows = _phase2_rows(chained, wrong)
+    rows[30]["selected_dsl_h45_fp32"] = "(pipe X (ridge lambda_frac=0.1))"
+    counted = auto_fuse.count_matches(rows, chained)
+    assert counted == {
+        "paired": 912,
+        "fp16": 909,
+        "fp32": 908,
+        "quick10": 9,
+        "mismatched_ids": sorted(wrong),
+    }
+
+
+def test_count_matches_refuses_repeated_or_missing_quick10_rows(auto_fuse) -> None:
+    ok, failed = _cohort_ids(auto_fuse)
+    chained = _chained(ok, failed)
+    rows = _phase2_rows(chained, set())
+    with pytest.raises(ValueError, match="^Phase 2 report repeats a dataset$"):
+        auto_fuse.count_matches(rows + rows[-1:], chained)
+    with pytest.raises(ValueError, match="^Phase 2 report is missing quick10 datasets$"):
+        auto_fuse.count_matches(rows[1:], chained)
 
 
 class _FakeFusedNet(nn.Module):
@@ -253,7 +306,7 @@ class _FakeFusedNet(nn.Module):
 
 @pytest.fixture
 def fake_runtime(tmp_path, monkeypatch, auto_fuse):
-    """`main()` wired to fake gpu_bench modules, with every side effect kept under tmp_path."""
+    """`main()` wired to a fake gpu_bench Phase 2 harness, with every side effect kept under tmp_path."""
     root = tmp_path / "runtime"
     root.mkdir()
     inputs = {f"fused/input{i}.bin": root / f"input{i}.bin" for i in range(3)}
@@ -264,54 +317,66 @@ def fake_runtime(tmp_path, monkeypatch, auto_fuse):
     inputs["fused/expanded_gpu_bank_1766.pt"] = bank
     manifest = root / "infer_real_cohort_no_friedman_manifest.json"
     manifest.write_text("{}\n")
+    ok, failed = _cohort_ids(auto_fuse)
+    chained = _chained(ok, failed)
+    chained_path = root / "chained.json"
+    chained_path.write_text(json.dumps(chained))
 
     torch.manual_seed(0)
     released = _FakeFusedNet(adapter_variant="h45").dope_model.state_dict()
     checkpoint = tmp_path / "dope.pt"
     torch.save({"model_state_dict": released}, checkpoint)
 
-    hooks: dict[str, object] = {"during_cohort": None}
+    state: dict[str, object] = {
+        "during_shard": None,
+        "wrong": set(),
+        "harness_fp16": None,
+        "drop_first_row": False,
+        "calls": [],
+    }
     built: list[float] = []
     fused = types.ModuleType("fake_fused_jope_net")
     fused.EXPANDED_BANK_PATH = bank
     fused.FusedJopeNetwork = _FakeFusedNet
-    parity = types.ModuleType("fake_parity")
-    cohort = types.ModuleType("fake_cohort")
+    phase2 = types.ModuleType("fake_run_phase2_shard_and_fleet")
 
-    def parity_main() -> None:
-        net = parity.FusedJopeNetwork(adapter_variant="h40b", device=None)
-        built.append(float(net.adapter_10tok.weight.detach()[0, 0]))
-        report = {
-            "quick10_parity_and_fitter_accuracy": {
-                "default_path_lm_exact_dsl_matches": 10,
-                "total_datasets": 10,
-            }
-        }
-        (parity.FUSED_DIR / "quick10_and_parity_report.json").write_text(json.dumps(report))
-
-    def cohort_main() -> None:
+    def run_shard(shard_index: int, host_name: str, scratch_dir: Path, num_shards: int = 3) -> None:
+        state["calls"].append((shard_index, host_name, num_shards))
         for variant in ("h45", "h40b"):
-            net = cohort.FusedJopeNetwork(adapter_variant=variant, device=None)
+            net = phase2.FusedJopeNetwork(adapter_variant=variant, device=None)
             built.append(float(net.adapter_10tok.weight.detach()[0, 0]))
-        if hooks["during_cohort"] is not None:
-            hooks["during_cohort"]()
-        on = {"exact_dsl_match_vs_chained_count": 912, "exact_dsl_match_vs_chained_paired_count": 912}
-        report = {"cohort915_summary": {"landmarks_on": on}}
-        (cohort.FUSED_DIR / "batch_sweep_and_cohort915_report.json").write_text(json.dumps(report))
+        if state["during_shard"] is not None:
+            state["during_shard"]()
+        rows = _phase2_rows(chained, state["wrong"])
+        if state["drop_first_row"]:  # the first row is a quick10 dataset
+            rows = rows[1:]
+        fp16 = 912 - len(state["wrong"]) if state["harness_fp16"] is None else state["harness_fp16"]
+        npz = scratch_dir / f"single_gpu_915_{host_name}_holdout_preds.npz"
+        npz.write_bytes(b"npz")
+        report = {
+            "paired_chained_compared_count": 912,
+            "paired_exact_dsl_match_h45_fp16_count": fp16,
+            "holdout_preds_npz_path": str(npz),
+            "holdout_preds_npz_sha256": auto_fuse.file_sha(npz),
+            "datasets": rows,
+        }
+        (scratch_dir / f"single_gpu_915_{host_name}_report.json").write_text(json.dumps(report))
 
-    parity.main = parity_main
-    cohort.main = cohort_main
+    phase2.run_shard = run_shard
     out = tmp_path / "out"
     for name, value in {
         "RUNTIME_INPUTS": inputs,
         "RELEASED_DOPE_SHA256": auto_fuse.file_sha(checkpoint),
         "GPU_BENCH": root,
         "COHORT_SHA256": auto_fuse.file_sha(manifest),
+        "CHAINED_REPORT": chained_path,
+        "CHAINED_REPORT_SHA256": auto_fuse.file_sha(chained_path),
         "OUTPUT_ROOT": out,
         "QUALIFICATION_LOCK": tmp_path / "qualification.lock",
-        "import_runtime": lambda: (fused, parity, cohort),
+        "import_runtime": lambda: (fused, phase2),
     }.items():
         monkeypatch.setattr(auto_fuse, name, value)
+    monkeypatch.setattr(auto_fuse.socket, "gethostname", lambda: "xbabe9")
     monkeypatch.setattr(auto_fuse.os, "nice", lambda increment: 0)
     monkeypatch.setattr(auto_fuse.torch, "set_num_threads", lambda n: None)
     monkeypatch.setattr(auto_fuse.torch.cuda, "is_available", lambda: True)
@@ -326,34 +391,85 @@ def fake_runtime(tmp_path, monkeypatch, auto_fuse):
         manifest_out = json.loads((run_dir / "auto_fuse_manifest.json").read_text())
         return receipt, manifest_out
 
-    return types.SimpleNamespace(run=run, inputs=inputs, hooks=hooks, built=built)
+    return types.SimpleNamespace(run=run, inputs=inputs, state=state, built=built, ok=ok)
 
 
-def test_main_binds_the_runtime_identity_and_labels_every_evaluator(fake_runtime, auto_fuse) -> None:
+def test_main_runs_the_phase2_shard_and_binds_identity_and_labels(fake_runtime, auto_fuse) -> None:
     expected = {name: auto_fuse.file_sha(path) for name, path in fake_runtime.inputs.items()}
     receipt, manifest = fake_runtime.run()
 
+    assert fake_runtime.state["calls"] == [(0, "xbabe9", 1)]
     assert receipt["status"] == "INCOMPLETE" and receipt["evaluation_ran"] is True
-    assert receipt["cohort912"] == {"matches": 912, "denominator": 912, "threshold": 903}
+    assert receipt["host"] == "xbabe9"
+    assert receipt["cohort912"] == {
+        "matches": 912,
+        "denominator": 912,
+        "threshold": 903,
+        "fp32_router_matches": 912,
+        "mismatched_dataset_ids": [],
+    }
     assert receipt["quick10"] == {"matches": 10, "denominator": 10}
+    assert receipt["harness_counts"] == {"paired": 912, "fp16": 912} and receipt["harness_counts_agree"]
+    assert receipt["reports"]["phase2_single915"]["path"].endswith("single_gpu_915_xbabe9_report.json")
+    assert receipt["reports"]["holdout_predictions"]["sha256"] == hashlib.sha256(b"npz").hexdigest()
     assert receipt["runtime_identity_sha256"] == manifest["runtime_identity_sha256"] == expected
     assert receipt["runtime_identity_unchanged"] is True
     assert receipt["dope_checksum_unchanged"] is True
-    # The harnesses build h40b and h45 networks; every one of them runs the fused h45 artifact.
-    assert receipt["p2_evaluator_constructed_adapter_variants"] == ["h40b", "h45", "h40b"]
+    # The harness builds h45 and h40b networks; both run the fused h45 artifact.
+    assert receipt["p2_evaluator_constructed_adapter_variants"] == ["h45", "h40b"]
     assert receipt["p2_evaluator_state"] == "fused_h45 artifact"
-    assert fake_runtime.built == [45.0, 45.0, 45.0]
+    assert fake_runtime.built == [45.0, 45.0]
+
+
+def test_main_fails_the_gate_below_903_and_names_the_misses(fake_runtime) -> None:
+    wrong = set(fake_runtime.ok[100:110])
+    fake_runtime.state["wrong"] = wrong
+    receipt, _ = fake_runtime.run()
+
+    assert receipt["status"] == "FAIL"
+    assert receipt["cohort912"]["matches"] == 902
+    assert receipt["cohort912"]["mismatched_dataset_ids"] == sorted(wrong)
+    assert receipt["quick10"] == {"matches": 10, "denominator": 10}
+
+
+def test_main_fails_when_the_harness_count_disagrees(fake_runtime) -> None:
+    fake_runtime.state["wrong"] = {fake_runtime.ok[500]}
+    fake_runtime.state["harness_fp16"] = 912
+    receipt, _ = fake_runtime.run()
+
+    assert receipt["status"] == "FAIL"
+    assert receipt["cohort912"]["matches"] == 911
+    assert receipt["harness_counts"]["fp16"] == 912 and receipt["harness_counts_agree"] is False
 
 
 def test_main_refuses_a_runtime_that_changes_during_evaluation(fake_runtime) -> None:
     target = fake_runtime.inputs["fused/input1.bin"]
-    fake_runtime.hooks["during_cohort"] = lambda: target.write_bytes(b"phase-1 tree")
+    fake_runtime.state["during_shard"] = lambda: target.write_bytes(b"phase-1 tree")
     receipt, _ = fake_runtime.run()
 
     assert receipt["status"] == "NOT_RUN" and receipt["evaluation_ran"] is False
     assert receipt["reason"] == "gpu_bench runtime inputs changed during evaluation"
     assert receipt["runtime_identity_unchanged"] is False
     assert "cohort912" not in receipt
+
+
+def test_main_reports_an_unreadable_phase2_report_as_not_run(fake_runtime) -> None:
+    fake_runtime.state["drop_first_row"] = True
+    receipt, _ = fake_runtime.run()
+
+    assert receipt["status"] == "NOT_RUN" and receipt["evaluation_ran"] is False
+    assert (
+        receipt["reason"]
+        == "Phase 2 report unreadable: ValueError: Phase 2 report is missing quick10 datasets"
+    )
+    assert "cohort912" not in receipt
+
+
+def test_main_refuses_a_changed_chained_reference_before_evaluating(fake_runtime, auto_fuse) -> None:
+    auto_fuse.CHAINED_REPORT.write_text("{}")
+    with pytest.raises(RuntimeError, match="^chained cohort915 reference identity changed$"):
+        auto_fuse.main()
+    assert fake_runtime.state["calls"] == []
 
 
 def test_main_refuses_a_missing_runtime_input_before_evaluating(fake_runtime, auto_fuse) -> None:
