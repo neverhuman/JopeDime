@@ -95,7 +95,7 @@ MODULE_PINS = {
     ),
     "_q1_waiver_gates": (
         "deploy/qualification/v1.0/gates_receipt.py",
-        "22450812c3a8c20d79ca59b8a7a7e754ffc820c43dd379f6e25f4569b43609e9",
+        "d78c6fc3f8e9c30cdd2164ca4d4a6c3268db61498f08a75d3572b6fa20ce70a9",
         False,
     ),
     "q1_bindings": (
