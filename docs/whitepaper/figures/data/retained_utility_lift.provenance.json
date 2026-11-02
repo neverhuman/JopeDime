@@ -1,0 +1,30 @@
+{
+  "schema": "whitepaper.retained-utility-lift-figure/v1",
+  "input_csv_sha256": "47a4847715670ce132ff15ba64baee9a8df94fc89423e362bfe3b3309892fafa",
+  "source_receipt_sha256": "5ad219c6017394c42b4bcd9d2fedd52e555862c01727eec7979696c450d44467",
+  "generator_sha256": "dea8a6ca573fbfa7b3087713be087c3b27d84ee3da531e2a663f4d105ef0cbfe",
+  "figure_sha256": "39af4f8fd659e74be479a0dcdeb0f8bde75bb08ca8e1c38662681fe12a12b3cc",
+  "round_window": [
+    883,
+    3806
+  ],
+  "rows": 2924,
+  "baseline_round": 882,
+  "baseline_retained_utility": "1.1377941898164525",
+  "final_retained_utility": "1.1389572403748425",
+  "final_retained_lift": "0.0011630505583900",
+  "displayed_scale": 1000,
+  "strict_gain_rounds": [
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    2795,
+    3100
+  ],
+  "rejections": 2920,
+  "definition": "retained_utility_lift = post-decision retained_best_validation_utility minus the recorded round882 retained utility, from unrounded logged values. Accepted ties can update best-round identity without increasing utility; markers denote accepted strict gains.",
+  "scope": "Adaptive reused development observations, not independent first-proposal, training causality, transfer, serving or Elo qualification; exact loop/adapter/population/normalization closure remains pending.",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --retained-utility-lift"
+}

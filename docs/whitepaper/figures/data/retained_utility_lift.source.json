@@ -1,0 +1,74 @@
+{
+  "schema": "whitepaper.retained-utility-lift-source/v1",
+  "csv_sha256": "47a4847715670ce132ff15ba64baee9a8df94fc89423e362bfe3b3309892fafa",
+  "capture": {
+    "at": "2026-11-02T17:33:48.403773+00:00",
+    "round_window": [
+      883,
+      3806
+    ],
+    "rows": 2924,
+    "baseline_round": 882,
+    "baseline_retained_utility": "1.1377941898164525",
+    "baseline_projection_sha256": "83eb42105e1698f2e5c48937a936488b2d27cd100b883d31d60100d4d198a9ff",
+    "development_contexts": 91,
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "strict_gain_rounds": [
+      2750,
+      3175
+    ],
+    "accepted_tie_rounds": [
+      2795,
+      3100
+    ],
+    "rejections": 2920,
+    "summary_join_rows": 20,
+    "all_selected_per_round_scalars_match": true,
+    "all_retained_summaries_match": true,
+    "selection": "All consecutive complete records after the fixed recorded round882incumbent, through the common complete cutoff of admission/per-round/summary logs; no outcome filtering",
+    "sources": [
+      {
+        "name": "admissions.jsonl",
+        "sha256": "1a344b265d46befecfd59585e170ad88fe5c06cfaa5319d2833c0f2849b6565a",
+        "source_prefix": {
+          "at": "2026-11-02T17:33:48.191069+00:00",
+          "complete_prefix_bytes": 1603122,
+          "complete_prefix_sha256": "be7ec312b44c51aab7d3cd6ada72c6c003b47cf457818b30be47f45fc0a7b73b",
+          "complete_rows": 3032,
+          "stable_prefix_reread_verified": true,
+          "trailing_partial_bytes_omitted": 0
+        },
+        "scope": "Round-level scalar metadata projection only"
+      },
+      {
+        "name": "per-round.jsonl",
+        "sha256": "9b5dde62f107241b9e22d2b39a4ec60ec7358c78cfeaaaffe4fcecb122ba8bb7",
+        "source_prefix": {
+          "at": "2026-11-02T17:33:48.231150+00:00",
+          "complete_prefix_bytes": 2275250,
+          "complete_prefix_sha256": "7bbef16da81618dfcb7ee28452f22cfea7460474c4a1ee36e845142fd8af34d3",
+          "complete_rows": 2924,
+          "stable_prefix_reread_verified": true,
+          "trailing_partial_bytes_omitted": 0
+        },
+        "scope": "Round-level scalar metadata projection only"
+      },
+      {
+        "name": "summary.jsonl",
+        "sha256": "30b2029b93067923013cb38c712d88d1b8cc36d3a6aedb98f94883e1927e44f1",
+        "source_prefix": {
+          "at": "2026-11-02T17:33:48.313708+00:00",
+          "complete_prefix_bytes": 3358732,
+          "complete_prefix_sha256": "d0c291cd919a77cf0e70e72ce2b57c40eda74fce0032e537ec9213ac17f06808",
+          "complete_rows": 20,
+          "stable_prefix_reread_verified": true,
+          "trailing_partial_bytes_omitted": 0
+        },
+        "scope": "Round-level scalar metadata projection only"
+      }
+    ]
+  },
+  "definition": "retained_utility_lift = post-decision retained_best_validation_utility minus the recorded round882 retained utility, from unrounded logged values. Accepted ties can update best-round identity without increasing utility; markers denote accepted strict gains.",
+  "scope": "Adaptive reused development observations, not independent first-proposal, training causality, transfer, serving or Elo qualification; exact loop/adapter/population/normalization closure remains pending.",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --retained-utility-lift"
+}
