@@ -492,6 +492,14 @@ crates/jope-campaigns/src/bin/jope_selfplay_propose_driver.rs
 crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/cycle.rs
 crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/tests.rs
 crates/jope-campaigns/src/bin/jope_selfplay_queue.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/attempts.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/database.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/dispatch.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/keeper_claims.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/keeper_cycle.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/manifests.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/screening.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/tests.rs
 crates/jope-campaigns/src/bin/jope_selfplay_shadow.rs
 crates/jope-campaigns/src/bin/jope_selfplay_status.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply.rs
