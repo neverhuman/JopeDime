@@ -1549,14 +1549,33 @@ fn node_command(
         .with_context(|| format!("run fresh activation probe on {node}: {program}"))
 }
 
-/// Repeat a fresh, verifier-challenged live probe during activation. This does
-/// not consume the capsule's supplied node receipts and therefore cannot turn
-/// a stale or fabricated receipt into live-node authority.
+/// Repeat a challenged live probe during activation; each node hashes the
+/// complete bundle again. See `tests::fresh_live_probe_records_rechallenged_hashes_for_all_nodes`.
 fn fresh_live_bundle_probe(
     output_root: &Path,
     bundle_sha256: &str,
     manifest: &Value,
 ) -> Result<Value> {
+    fresh_live_bundle_probe_with(
+        output_root,
+        bundle_sha256,
+        manifest,
+        local_hostname,
+        node_command,
+    )
+}
+
+fn fresh_live_bundle_probe_with<L, N>(
+    output_root: &Path,
+    bundle_sha256: &str,
+    manifest: &Value,
+    hostname: L,
+    mut probe_node: N,
+) -> Result<Value>
+where
+    L: FnOnce() -> Result<String>,
+    N: FnMut(&str, &str, &str, &[String]) -> Result<std::process::Output>,
+{
     let started_at_ms = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
     let challenge_nonce_sha256 = sha256_bytes(
         format!(
@@ -1601,7 +1620,7 @@ fn fresh_live_bundle_probe(
     );
     let manifest_file_sha256 = sha256_file(&root.join("bundle.json"))?;
     let manifest_canonical_json_sha256 = canonical_json_sha256(manifest)?;
-    let hostname = local_hostname()?;
+    let hostname = hostname()?;
     let paths = expected
         .iter()
         .map(|(target, _, _)| root.join(target).display().to_string())
@@ -1612,7 +1631,7 @@ fn fresh_live_bundle_probe(
     let mut receipts = Vec::new();
     for node in GPU_SYNC_NODES {
         let node_started_at_ms = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-        let observed_hostname = node_command(node, &hostname, "hostname", &[])?;
+        let observed_hostname = probe_node(node, &hostname, "hostname", &[])?;
         ensure!(
             observed_hostname.status.success(),
             "fresh hostname probe failed on {node}"
@@ -1624,7 +1643,7 @@ fn fresh_live_bundle_probe(
             observed_hostname.split('.').next() == Some(*node),
             "fresh activation probe observed the wrong hostname for {node}"
         );
-        let hashes = node_command(node, &hostname, "sha256sum", &paths)?;
+        let hashes = probe_node(node, &hostname, "sha256sum", &paths)?;
         ensure!(
             hashes.status.success(),
             "fresh bundle hash probe failed on {node}"
@@ -1643,7 +1662,7 @@ fn fresh_live_bundle_probe(
             "fresh activation probe found incomplete or altered bytes on {node}"
         );
         let tool_path = "/usr/bin/sha256sum".to_owned();
-        let tool_hash = node_command(
+        let tool_hash = probe_node(
             node,
             &hostname,
             "sha256sum",
@@ -1659,7 +1678,7 @@ fn fresh_live_bundle_probe(
             .context("fresh probe tool digest is absent")?
             .to_owned();
         require_bundle_sha256(&tool_sha256)?;
-        let version = node_command(node, &hostname, "sha256sum", &["--version".to_owned()])?;
+        let version = probe_node(node, &hostname, "sha256sum", &["--version".to_owned()])?;
         ensure!(
             version.status.success(),
             "fresh probe tool version failed on {node}"
@@ -2755,6 +2774,95 @@ mod tests {
         for remote in ["xbabe0", "xbabe1", "xbabe3", "xbabe4"] {
             assert!(!node_is_local(remote, hostname));
         }
+    }
+
+    #[test]
+    fn fresh_live_probe_records_rechallenged_hashes_for_all_nodes() {
+        use std::os::unix::process::ExitStatusExt;
+
+        fn fixture(root: &Path, bundle_sha256: &str) -> Value {
+            let bundle = root.join(bundle_sha256);
+            fs::create_dir_all(bundle.join("runtime/systemd")).unwrap();
+            fs::write(bundle.join("bundle.json"), b"{}\n").unwrap();
+            let target = "runtime/systemd/worker.service";
+            let bytes = b"[Service]\nExecStart=/runtime/bin/worker\n";
+            fs::write(bundle.join(target), bytes).unwrap();
+            json!({"files": [{
+                "target": target,
+                "sha256": sha256_bytes(bytes),
+                "bytes": bytes.len(),
+            }]})
+        }
+
+        fn fake_node_probe(
+            stale_node: Option<&'static str>,
+        ) -> impl FnMut(&str, &str, &str, &[String]) -> Result<std::process::Output> {
+            move |node, _local_hostname, program, arguments| {
+                let stdout = match (program, arguments) {
+                    ("hostname", _) => format!("{node}.cluster.local\n"),
+                    ("sha256sum", [arg]) if arg == "--version" => {
+                        "sha256sum (GNU coreutils) 9.1\n".to_owned()
+                    }
+                    ("sha256sum", args) => args
+                        .iter()
+                        .map(|arg| {
+                            let digest =
+                                if Some(node) == stale_node && arg.contains("worker.service") {
+                                    "0".repeat(64)
+                                } else {
+                                    sha256_file(Path::new(arg)).unwrap()
+                                };
+                            format!("{digest}  {arg}\n")
+                        })
+                        .collect(),
+                    _ => panic!("unexpected probe command {program} {arguments:?}"),
+                };
+                Ok(std::process::Output {
+                    status: std::process::ExitStatus::from_raw(0),
+                    stdout: stdout.into_bytes(),
+                    stderr: Vec::new(),
+                })
+            }
+        }
+
+        let bundle_sha256 = "a".repeat(64);
+        let success_root = tempfile::tempdir().unwrap();
+        let manifest = fixture(success_root.path(), &bundle_sha256);
+        let receipt = fresh_live_bundle_probe_with(
+            success_root.path(),
+            &bundle_sha256,
+            &manifest,
+            || Ok("controller".to_owned()),
+            fake_node_probe(None),
+        )
+        .unwrap();
+        let receipt: Value =
+            serde_json::from_slice(&fs::read(receipt["receipt"].as_str().unwrap()).unwrap())
+                .unwrap();
+        let node_receipts = receipt["receipts"].as_array().unwrap();
+        assert_eq!(node_receipts.len(), GPU_SYNC_NODES.len());
+        assert_eq!(
+            node_receipts
+                .iter()
+                .map(|row| row["node"].as_str().unwrap())
+                .collect::<Vec<_>>(),
+            GPU_SYNC_NODES
+        );
+        assert!(node_receipts.iter().all(|row| {
+            row["complete_file_inventory"][0]["sha256"] == manifest["files"][0]["sha256"]
+        }));
+
+        let stale_root = tempfile::tempdir().unwrap();
+        let stale_manifest = fixture(stale_root.path(), &bundle_sha256);
+        assert!(fresh_live_bundle_probe_with(
+            stale_root.path(),
+            &bundle_sha256,
+            &stale_manifest,
+            || Ok("controller".to_owned()),
+            fake_node_probe(Some("xbabe3")),
+        )
+        .is_err());
+        assert!(!stale_root.path().join("activation-probes").exists());
     }
 
     #[test]
