@@ -439,6 +439,196 @@ class ScaffoldAssemblyTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse(self.output.exists())
 
+    def controller_fixture(self):
+        run_dir = self.root / "controller"
+        checks, paths = [], []
+        for gate, old in zip(runner.RELEASE_GATE_IDS, self.paths):
+            folder = run_dir / gate
+            folder.mkdir(parents=True)
+            path = folder / "result.json"
+            path.write_bytes(old.read_bytes())
+            log = folder / "command.log"
+            log.write_text("synthetic command output only\n")
+            paths.append(path)
+            checks.append(
+                dict(
+                    id=gate,
+                    argv=["never-execute-this-fixture", gate],
+                    exit_code=0,
+                    timed_out=False,
+                    started_utc="2026-11-02T00:00:00+00:00",
+                    finished_utc="2026-11-02T00:00:01+00:00",
+                    log_sha256=hashlib.sha256(log.read_bytes()).hexdigest(),
+                    result_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+                )
+            )
+        self.paths = paths
+        fields = runner._assembly_controller()["INPUT_FIELDS"]
+        inputs = self.root / "provider-inputs.json"
+        inputs.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.provider-inputs/v1",
+                    "gates": {
+                        gate: {
+                            name: "b" * 64
+                            if name.endswith("_sha256")
+                            else str(self.root)
+                            for name in (
+                                choices[-1] if isinstance(choices, tuple) else choices
+                            )
+                        }
+                        for gate, choices in fields.items()
+                    },
+                }
+            )
+        )
+        execution = dict(
+            schema="jope.rel07.gate-run/v1",
+            mode="execute",
+            source_sha=self.source,
+            artifact_sha256=self.digest,
+            candidate_inputs_sha256=hashlib.sha256(inputs.read_bytes()).hexdigest(),
+            machine="synthetic-host",
+            interrupted=False,
+            started_utc="2026-11-02T00:00:00+00:00",
+            finished_utc="2026-11-02T00:00:01+00:00",
+            runner_sha256="c" * 64,
+            manifest_sha256="d" * 64,
+            checks=checks,
+        )
+        (run_dir / "execution.json").write_text(json.dumps(execution))
+        return dict(controller_run=run_dir, controller_inputs=inputs), execution
+
+    def test_controller_provenance_preserves_commands_machine_and_output_pins(self):
+        options, execution = self.controller_fixture()
+        result = self.assemble(**options)
+        provenance = result.pop("provenance")
+        self.assertEqual(result, self.assemble())
+        self.assertEqual(provenance["commands"], execution["checks"])
+        self.assertEqual(provenance["machine"], "synthetic-host")
+        self.assertEqual(len(provenance["outputs"]), 28)
+        for row, path in zip(provenance["outputs"], self.paths):
+            self.assertEqual(row["result"], str(path))
+            self.assertEqual(
+                row["result_sha256"], hashlib.sha256(path.read_bytes()).hexdigest()
+            )
+        args = self.argv()
+        for name, path in options.items():
+            args += ["--" + name.replace("_", "-"), str(path)]
+        child = subprocess.run(args, capture_output=True, text=True, check=False)
+        self.assertEqual(child.returncode, 0, child.stderr)
+        self.assertEqual(json.loads(self.output.read_text())["provenance"], provenance)
+
+    def test_controller_rejects_incomplete_or_mismatched_execution(self):
+        options, execution = self.controller_fixture()
+        changes = [
+            {"source_sha": "b" * 40},
+            {"artifact_sha256": "b" * 64},
+            {"candidate_inputs_sha256": "b" * 64},
+            {"interrupted": True},
+            {"machine": ""},
+            {"finished_utc": None},
+            {"runner_sha256": "bad"},
+            {"checks": execution["checks"][:-1]},
+            {"checks": execution["checks"][:-1] + execution["checks"][:1]},
+        ]
+        for key, value in [
+            ("exit_code", 1),
+            ("exit_code", True),
+            ("timed_out", True),
+            ("argv", []),
+            ("finished_utc", ""),
+            ("log_sha256", "b" * 64),
+            ("result_sha256", "b" * 64),
+        ]:
+            checks = copy.deepcopy(execution["checks"])
+            checks[0][key] = value
+            changes.append({"checks": checks})
+        for change in changes:
+            (options["controller_run"] / "execution.json").write_text(
+                json.dumps({**execution, **change})
+            )
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.assemble(**options)
+
+    def test_controller_rejects_borrowed_receipts_and_changed_logs(self):
+        options, _ = self.controller_fixture()
+        original = self.paths[0]
+        borrowed = self.root / "borrowed.json"
+        borrowed.write_bytes(original.read_bytes())
+        self.paths[0] = borrowed
+        with self.assertRaisesRegex(ValueError, "same controller run"):
+            self.assemble(**options)
+        self.paths[0] = original
+        (original.parent / "command.log").write_text("changed output")
+        with self.assertRaisesRegex(ValueError, "output hash differs"):
+            self.assemble(**options)
+
+    def test_controller_rejects_missing_bindings_and_changes_during_assembly(self):
+        options, _ = self.controller_fixture()
+        inputs = options["controller_inputs"]
+        saved = inputs.read_bytes()
+        value = json.loads(saved)
+        del value["gates"]["A5"]
+        inputs.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ValueError, "all provider input"):
+            self.assemble(**options)
+        inputs.write_bytes(saved)
+        original = runner._assembly_json
+
+        def change_metadata(path):
+            result = original(path)
+            if path == self.scaffold:
+                inputs.write_text("changed during assembly")
+            return result
+
+        with patch.object(runner, "_assembly_json", side_effect=change_metadata):
+            with self.assertRaisesRegex(ValueError, "provenance changed"):
+                self.assemble(**options)
+
+    def test_controller_pass_requires_successful_exit_and_controller_result_pin(self):
+        options, execution = self.controller_fixture()
+        m3 = execution["checks"][2]
+        original = dict(m3)
+        for change in [{"exit_code": 1}, {"result_sha256": None}]:
+            execution["checks"][2] = {**original, **change}
+            (options["controller_run"] / "execution.json").write_text(
+                json.dumps(execution)
+            )
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.assemble(**options)
+        del execution["checks"][2]["result_sha256"]
+        (options["controller_run"] / "execution.json").write_text(json.dumps(execution))
+        with self.assertRaises(ValueError):
+            self.assemble(**options)
+
+    def test_controller_raw_preflight_failure_is_not_a_waiver(self):
+        options, execution = self.controller_fixture()
+        path = self.paths[2]
+        raw = json.loads(path.read_text())
+        raw.update(
+            status="FAIL",
+            counts=dict(
+                collected=0, executed=0, passed=0, failed=0, skipped=0, excluded=0
+            ),
+        )
+        path.write_text(json.dumps(raw))
+        execution["checks"][2]["exit_code"] = 1
+        del execution["checks"][2]["result_sha256"]
+        (options["controller_run"] / "execution.json").write_text(json.dumps(execution))
+        with self.assertRaisesRegex(ValueError, "receipt must PASS"):
+            self.assemble(**options)
+        for name, value in options.items():
+            child = subprocess.run(
+                self.argv() + ["--" + name.replace("_", "-"), str(value)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(child.returncode, 0)
+            self.assertFalse(self.output.exists())
+
     def test_cli_exclusive_output_creation_preserves_a_racing_receipt(self):
         original = Path.mkdir
 
@@ -534,6 +724,16 @@ class M3WaiverTests(unittest.TestCase):
         self.assertEqual(row["status"], "FAIL")
         self.assertEqual(row["disposition"], "WAIVED_V1_0_0")
         self.assertEqual(row["counts"], self.payload["counts"])
+
+    def test_same_controller_provenance_retains_waived_raw_failure_exit(self):
+        options, execution = self.fixture.controller_fixture()
+        execution["checks"][2]["exit_code"] = 1
+        del execution["checks"][2]["result_sha256"]
+        (options["controller_run"] / "execution.json").write_text(json.dumps(execution))
+        receipt = self.assemble(**options)
+        row = next(x for x in receipt["gates"] if x["id"] == "M3")
+        self.assertEqual((row["status"], row["disposition"]), ("FAIL", "WAIVED_V1_0_0"))
+        self.assertEqual(receipt["provenance"]["commands"][2]["exit_code"], 1)
         self.assertEqual(receipt["release_version"], "v1.0.0")
         self.assertEqual(receipt["waivers"][0]["expires_at"], "v1.0.1")
         self.assertEqual(len(receipt["gates"]), 28)

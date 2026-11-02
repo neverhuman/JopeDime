@@ -240,14 +240,18 @@ def _m3_waiver(result: dict, ruling: Path, release_version: str) -> dict:
     }
 
 
+def _assembly_controller():
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        return runpy.run_path(str(Path(__file__).with_name("release-gates")))
+    finally:
+        sys.path.pop(0)
+
+
 def _assembly_candidate(artifact: Path, manifest: Path, source_sha: str):
     """Reuse the maintained controller's same-candidate full/fused admission."""
     value, expected = _assembly_json(manifest)
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    try:
-        controller = runpy.run_path(str(Path(__file__).with_name("release-gates")))
-    finally:
-        sys.path.pop(0)
+    controller = _assembly_controller()
     candidate = controller["_candidate_record"](artifact, manifest)
     if (
         candidate["source_sha"] != source_sha
@@ -275,6 +279,109 @@ def _assembly_candidate(artifact: Path, manifest: Path, source_sha: str):
     return candidate, controller["verify_candidate_variant"], inputs
 
 
+def _controller_provenance(run_dir, provider_inputs, receipt_paths, source, digest):
+    """Bind metadata to one completed run without executing or promoting it."""
+    execution_path = run_dir / "execution.json"
+    execution, execution_sha = _assembly_json(execution_path)
+    bindings, inputs_sha = _assembly_json(provider_inputs)
+    controller = _assembly_controller()
+    admitted = controller["provider_inputs"](provider_inputs)
+    if set(admitted) != set(controller["INPUT_FIELDS"]):
+        raise ValueError("controller provenance requires all provider input bindings")
+    if (
+        execution.get("schema") != "jope.rel07.gate-run/v1"
+        or execution.get("mode") != "execute"
+        or execution.get("source_sha") != source
+        or execution.get("artifact_sha256") != digest
+        or execution.get("candidate_inputs_sha256") != inputs_sha
+        or execution.get("interrupted") is not False
+        or any(
+            not isinstance(execution.get(key), str) or not execution[key].strip()
+            for key in ("machine", "started_utc", "finished_utc")
+        )
+        or any(
+            not isinstance(execution.get(key), str)
+            or not HEX_SHA256.fullmatch(execution[key])
+            for key in ("runner_sha256", "manifest_sha256")
+        )
+    ):
+        raise ValueError("controller execution identity or completion does not match")
+    expected = {run_dir.absolute() / gate / "result.json" for gate in RELEASE_GATE_IDS}
+    if len(receipt_paths) != 28 or {p.absolute() for p in receipt_paths} != expected:
+        raise ValueError("all receipts must belong to the same controller run")
+    checks = execution.get("checks")
+    if not isinstance(checks, list) or len(checks) != 28:
+        raise ValueError("controller execution requires exactly 28 command records")
+    seen = set()
+    outputs = []
+    pins = [(execution_path, execution_sha), (provider_inputs, inputs_sha)]
+    for check in checks:
+        if not isinstance(check, dict):
+            raise ValueError("invalid controller command record")
+        gate, argv = check.get("id"), check.get("argv")
+        if not isinstance(gate, str) or gate not in RELEASE_GATE_IDS or gate in seen:
+            raise ValueError("unknown or duplicate controller command")
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or any(not isinstance(arg, str) or not arg or "\0" in arg for arg in argv)
+            or type(check.get("exit_code")) is not int
+            or check["exit_code"] not in ((0, 1) if gate == "M3" else (0,))
+            or check.get("timed_out") is not False
+            or any(
+                not isinstance(check.get(key), str) or not check[key].strip()
+                for key in ("started_utc", "finished_utc")
+            )
+        ):
+            raise ValueError("controller command did not complete: " + gate)
+        seen.add(gate)
+        result = run_dir / gate / "result.json"
+        log = run_dir / gate / "command.log"
+        raw, result_sha = _assembly_json(result)
+        log_sha = _assembly_artifact(log)
+        # The frozen controller may reject the raw M3 FAIL before pinning it.
+        # Its result still has to satisfy every separate waiver guard below.
+        if (
+            check.get("log_sha256") != log_sha
+            or (check["exit_code"] != 0 and raw.get("status") != "FAIL")
+            or (
+                check.get("result_sha256") != result_sha
+                and not (
+                    gate == "M3"
+                    and raw.get("status") == "FAIL"
+                    and "result_sha256" not in check
+                )
+            )
+        ):
+            raise ValueError("controller output hash differs: " + gate)
+        outputs.append(
+            dict(
+                id=gate,
+                result=str(result.absolute()),
+                result_sha256=result_sha,
+                log=str(log.absolute()),
+                log_sha256=log_sha,
+            )
+        )
+        pins.extend([(result, result_sha), (log, log_sha)])
+    return {
+        "schema": "jope.rel07.controller-provenance/v1",
+        "execution": {"path": str(execution_path.absolute()), "sha256": execution_sha},
+        "inputs": {
+            "path": str(provider_inputs.absolute()),
+            "sha256": inputs_sha,
+            "bindings": bindings,
+        },
+        "machine": execution["machine"],
+        "started_utc": execution["started_utc"],
+        "finished_utc": execution["finished_utc"],
+        "runner_sha256": execution["runner_sha256"],
+        "manifest_sha256": execution["manifest_sha256"],
+        "commands": checks,
+        "outputs": outputs,
+    }, pins
+
+
 def from_scaffold(
     scaffold_path: Path,
     receipt_paths: list[Path],
@@ -284,6 +391,8 @@ def from_scaffold(
     m3_waiver_ruling: Path | None = None,
     release_version: str | None = None,
     candidate_manifest: Path | None = None,
+    controller_run: Path | None = None,
+    controller_inputs: Path | None = None,
 ) -> dict:
     """Assemble existing PASS receipts; never execute the scaffold or sign bytes."""
     if not isinstance(source_sha, str) or not HEX_COMMIT.fullmatch(source_sha):
@@ -291,6 +400,13 @@ def from_scaffold(
     if (m3_waiver_ruling is None) != (release_version is None):
         raise ValueError("M3 waiver requires both ruling and explicit release version")
     digest = _assembly_artifact(artifact)
+    if (controller_run is None) != (controller_inputs is None):
+        raise ValueError("controller provenance requires both run and inputs")
+    provenance, provenance_pins = None, []
+    if controller_run is not None:
+        provenance, provenance_pins = _controller_provenance(
+            controller_run, controller_inputs, receipt_paths, source_sha, digest
+        )
     scaffold, scaffold_sha = _assembly_json(scaffold_path)
     if (
         scaffold.get("schema") != "jope.rel07.gate-command-scaffold/v1"
@@ -402,6 +518,13 @@ def from_scaffold(
         }
     if waiver:
         assembled.update(release_version=release_version, waivers=[waiver])
+    for path, expected in provenance_pins:
+        if _assembly_artifact(path) != expected:
+            raise ValueError(
+                "controller provenance changed during assembly: " + str(path)
+            )
+    if provenance is not None:
+        assembled["provenance"] = provenance
     return assembled
 
 
@@ -421,6 +544,8 @@ def main() -> int:
     )
     parser.add_argument("--artifact", type=Path)
     parser.add_argument("--candidate-manifest", type=Path)
+    parser.add_argument("--controller-run", type=Path)
+    parser.add_argument("--controller-inputs", type=Path)
     parser.add_argument("--m3-waiver-ruling", type=Path)
     parser.add_argument("--release-version")
     parser.add_argument("--output", type=Path, required=True)
@@ -437,6 +562,8 @@ def main() -> int:
                 m3_waiver_ruling=args.m3_waiver_ruling,
                 release_version=args.release_version,
                 candidate_manifest=args.candidate_manifest,
+                controller_run=args.controller_run,
+                controller_inputs=args.controller_inputs,
             )
         else:
             if (
@@ -445,6 +572,8 @@ def main() -> int:
                 or args.m3_waiver_ruling
                 or args.candidate_manifest
                 or args.release_version
+                or args.controller_run
+                or args.controller_inputs
             ):
                 raise ValueError("--gate-receipt and --source-sha require --scaffold")
             receipt = (
