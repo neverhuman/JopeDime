@@ -19,6 +19,9 @@ use super::{sha256_hex, PRODUCT_RESTRICTIONS};
 mod expression;
 use expression::{parse_expr_tokens, render_expr};
 
+/// Structured action/token conversion corresponding to Python's `tokens_actions`.
+pub mod actions;
+
 /// Token id reserved for padding in policy input sequences.
 pub const PAD: usize = 0;
 /// Token id that starts a policy sequence.
