@@ -169,6 +169,15 @@ class RuntimeAdmission(unittest.TestCase):
             "raw",
             side_effect=lambda source, path: (ROOT / path).read_bytes(),
         ).start()
+        # `raw` serves working-tree bytes, so pin those; reviewed-pin enforcement
+        # against real Git objects is covered by the private-fixture tests below.
+        patch.dict(
+            publisher.MODULE_PINS,
+            {
+                name: (path, digest(ROOT / path), frozen)
+                for name, (path, _, frozen) in publisher.MODULE_PINS.items()
+            },
+        ).start()
         patch.object(publisher, "module", side_effect=source_module).start()
 
     def write(self, name, value, repin=False):
@@ -527,6 +536,23 @@ class PinnedModuleLoaderTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "deliberate pinned fixture"):
             publisher.module("q1_cut", self.source, self.filename())
         self.assertNotIn("q1_cut", sys.modules)
+
+
+class ReviewedModulePins(unittest.TestCase):
+    # The signed Q1 plan's metadata source; re-signing at a newer source needs a reviewed re-pin.
+    SIGNED_METADATA_SOURCE = "fa07e1336c8fc7c04994faadf8f6efabded0a195"
+
+    def test_pins_equal_reviewed_git_bytes(self):
+        for name, (path, expected, frozen) in publisher.MODULE_PINS.items():
+            source = publisher.FROZEN_SOURCE if frozen else self.SIGNED_METADATA_SOURCE
+            with self.subTest(name=name):
+                shown = subprocess.run(
+                    ["git", "-C", str(ROOT), "show", f"{source}:{path}"],
+                    capture_output=True,
+                )
+                if shown.returncode != 0:
+                    self.skipTest(f"{source} is not in local Git history")
+                self.assertEqual(hashlib.sha256(shown.stdout).hexdigest(), expected)
 
 
 if __name__ == "__main__":
