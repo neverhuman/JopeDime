@@ -5587,6 +5587,10 @@
     "python:research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py": {
       "reason": "H205 fresh vs static data and static teacher 50-round r882 study: data-free equal-compute schedule, shared fresh schedule, frozen-teacher identity, H178 per-round 205-family pooled cross-fit selector, native r882 91/91 parity gate, JRB-01 fresh D4 regression admission/label validator, and thread-rule-(b) monitor controls. Research only; no product or sealed qualification.",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h210_blend025_gated_retry/test_h210.py": {
+      "reason": "Owner-requested H210 (H203 retry) data-free controls for the outcome-free gated BLEND_025 (cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest, fixed-lambda blend, zgap and disagreement gate statistics, tau grid, FIT-only tau selection with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB/p/harm verdict, Elo orientation, xbabe1-only host admission, xbabe1 load gate with sustained-overload stop, 93.8% disk rule); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

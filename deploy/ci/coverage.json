@@ -14865,6 +14865,16 @@
       ],
       "lanes": [],
       "scope": "H205 fresh vs static data and static teacher 50-round r882 study (STATIC-DATA, STATIC-TEACHER, FRESH): data-free equal-compute 50x16 microbatch schedule, shared fresh schedule, frozen-teacher identity, H178 per-round 205-family pooled cross-fit selector, native r882 91/91 parity gate, JRB-01 fresh D4 regression admission/label validator, and thread-rule-(b) monitor controls. Research only; no product or sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h210_blend025_gated_retry/test_h210.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H210 (H203 retry) data-free controls: cyclic A/B/FIT cells, minimal 45-fit plan (no SHUF), H124 fold algorithm per fresh fold seed, fold manifest consistency, fixed lambda 0.25, outcome-free zgap and H129 disagreement, tau grid, FIT-only tau selection under the 5% FIT harm target with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB95/p/harm verdict, Bradley-Terry Elo orientation, xbabe1-only admission before any side effect, xbabe1 load gate (50% admission, load5 or 300 s sustained load1/CPU runtime stop, load5 at fit boundaries) and the 93.8% disk rule"
     }
   },
   "lanes": {

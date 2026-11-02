@@ -5469,6 +5469,30 @@
         "role": "research",
         "reason": "H209 exact merged-source and exclusive xbabe2 GPU supervisor, create-only attempt claim and independent resource/deadline enforcement; no model imports or self-merge."
       }
+    },
+    "python:research/flywheel_selfplay/h210_blend025_gated_retry/analysis.py": {
+      "bytes": 12399,
+      "sha256": "a1d99f211bfd0158e9b906dc0d42631d68e2f53cc10a9012d92aaeaf3446aa1b",
+      "classification": {
+        "role": "research",
+        "reason": "H210 preregistered CPU-only diagnostic (H203 retry, fresh seeds, xbabe1 load gate): BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h210_blend025_gated_retry/monitor.py": {
+      "bytes": 8938,
+      "sha256": "ed98ac7a944ac438a0151c594798956b922cb555b2252c85e217c64e3994bd9f",
+      "classification": {
+        "role": "research",
+        "reason": "H210 preregistered CPU-only diagnostic (H203 retry, fresh seeds, xbabe1 load gate): BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h210_blend025_gated_retry/runner.py": {
+      "bytes": 30442,
+      "sha256": "96f227cc5e54188b5052982a65460bcddcb518e90b5021a44a7542858f82ad81",
+      "classification": {
+        "role": "research",
+        "reason": "H210 preregistered CPU-only diagnostic (H203 retry, fresh seeds, xbabe1 load gate): BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
