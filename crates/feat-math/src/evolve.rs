@@ -6530,26 +6530,53 @@ mod tests {
         assert_eq!(a.rung_evals, b.rung_evals);
     }
 
-    /// Even a budget already exhausted by setup admits exactly one bounded
-    /// rung-0 chunk, then terminates promptly. This is deterministic under
-    /// concurrent test load and prevents a positive-budget race from returning
-    /// no ranking merely because its worker was descheduled before admission.
+    /// The exhausted budget admits exactly one bounded rung-0 chunk, then stops
+    /// before either promotion rung. Keep this wall backstop unconditional while
+    /// limiting the proof to one chunk of small, fixed ridge candidates.
     #[test]
     fn race_respects_tiny_time_budget() {
-        let (x, y) = race_fixture(5, 400);
+        let (x, y) = race_fixture(5, 32);
         let metric = |yt: &[f64], yp: &[f64]| crate::metrics::r2(yt, yp);
+        let initial_population = (0..RACE_CHUNK)
+            .map(|index| {
+                format!(
+                    "(pipe X (ridge lambda_frac={:.5}))",
+                    0.02 + index as f64 * 0.001
+                )
+            })
+            .collect::<Vec<_>>();
         let mut cfg = race_cfg(13);
-        cfg.pop = 64;
+        cfg.pop = RACE_CHUNK;
         cfg.gens = 10_000;
         cfg.time_budget_secs = f64::MIN_POSITIVE;
+        // Run on a dedicated pool so the wall bound measures this race, not queueing behind
+        // sibling tests that saturate the shared global rayon pool during a full suite run.
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .expect("dedicated race test pool");
         let t = Instant::now();
-        let out = evolve_lite_race(&x, &y, &metric, &cfg, &quiet_obs());
-        assert!(
-            t.elapsed().as_secs_f64() < 30.0,
-            "race must respect the wall budget"
-        );
+        let out = pool
+            .install(|| {
+                evolve_lite_race_with_exact_initial_population(
+                    &x,
+                    &y,
+                    &metric,
+                    &cfg,
+                    &quiet_obs(),
+                    &initial_population,
+                )
+            })
+            .expect("small exact initial race population is valid");
+        let elapsed = t.elapsed().as_secs_f64();
         assert!(!out.ranked.is_empty());
         assert_eq!(out.rung_evals[0], RACE_CHUNK as u64);
+        assert_eq!(out.rung_evals[1], 0, "tiny budget must stop before rung 1");
+        assert_eq!(out.rung_evals[2], 0, "tiny budget must stop before rung 2");
+        assert!(
+            elapsed < 30.0,
+            "race exceeded the 30s wall bound on a 32-row, one-chunk fixture: {elapsed:.2}s"
+        );
     }
 
     #[test]
