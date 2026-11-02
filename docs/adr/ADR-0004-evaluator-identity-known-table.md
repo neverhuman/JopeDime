@@ -150,3 +150,26 @@ main fixture. Cargo.lock, numerical/model/emitter/generator/search fixtures, eve
 transition and the known-identity table remain unchanged. The two metadata fixture hashes,
 old/new identities and committed generation source are recorded in
 `browser_wasm_identity_rebaseline.v1.json`; no shipped receipt or behavior rebaseline is claimed.
+
+
+## Current identity transition: connected-run event lock edge (2026-11-02)
+
+The already-merged connected-run events change (#1879) adds an appliance dependency edge
+in the workspace lockfile. After the browser wasm32 transition above, the committed main
+`c0a6b362b19499de70d6072e2e099ec3f574f64f` therefore has a different current evaluator identity
+than its metadata fixture records. The VEOX CLI qualification repairs that inherited mismatch
+with the identity-only procedure; the CLI artwork and branding change no identity input.
+
+Implementation hash `e5b6edc767a192b3ce7b14b132b68cd29fa72407282ca3231562671ea236e3d5`
+advances to `12780a3fee57c912baf0f2092b36758b1e3cd5c686c015b61dd875c08192b802`;
+Cargo.lock hash `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`
+advances to `c6eea54f040d52e824a04bc7e259ecd7a289493fd71f2d0f65ee5b38ee8f73df`;
+identity digest `2febbecb129d61930a625d5aa15f7f1a49ecf035c352e4999fc1719b88b20e86`
+advances to `b4d98da696866b90940382f806b100c6323bfca9cc4a4b6b84cc5be88df576b3`.
+
+Generation is pinned to that committed main because every normative input matches it.
+Only the evaluator identity metadata and lineage generation SHA change. All numerical,
+model, emitter, generator and search fixture bytes, all lineage source hashes, the DSL ABI,
+and the append-only known-identity table remain unchanged. The transition is recorded in
+`connected_run_events_lock_identity_rebaseline.v1.json`. No known-identity row is added:
+this change supplies no shipped receipt proving an additional historical identity.
