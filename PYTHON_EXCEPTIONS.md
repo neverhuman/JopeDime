@@ -1,14 +1,14 @@
 # JopeDime Python Exceptions Register (`PYTHON_EXCEPTIONS.md`)
 
-Per the 2026-10-18 stack ruling (`Rust` for backend/CLI/tools/compute; `Vite + TypeScript + React` for web UI; zero new Python without an explicit exception entry), this file records the **1-line justification for every kept `.py` file** (`207` kept files, `97,319` LOC out of `1,185` tracked `.py` files / `344,915` total LOC).
+Per the 2026-10-18 stack ruling (`Rust` for backend/CLI/tools/compute; `Vite + TypeScript + React` for web UI; zero new Python without an explicit exception entry), this file records the **1-line justification for every kept `.py` file** (`205` kept files, `96,946` LOC out of `1,166` tracked `.py` files / `340,381` total LOC).
 
-All remaining `978` tracked `.py` files (`247,435` LOC) are pure orchestration, manifest validation, S3/archive plumbing, or CI/publication helpers scheduled for incremental Rust migration under [`PY_TO_RUST_PLAN.md`](PY_TO_RUST_PLAN.md) on spare worker capacity.
+All remaining `961` tracked `.py` files (`243,443` LOC) are pure orchestration, manifest validation, S3/archive plumbing, or CI/publication helpers scheduled for incremental Rust migration under [`PY_TO_RUST_PLAN.md`](PY_TO_RUST_PLAN.md) on spare worker capacity.
 
 ## Summary by Exception Category
 
 | Exception ID | Category | Kept `.py` Files | Kept LOC | Justification Rule |
 | --- | --- | ---: | ---: | --- |
-| `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 205 | 93,379 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
+| `PR-EXCEPT-TORCH` | PyTorch / Safetensors / CUDA model & checkpoint layer | 203 | 93,006 | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
 | `PR-EXCEPT-FFI` | Thin Python-to-Rust native extension / FFI shim | 4 | 945 | Thin Python-to-Rust native extension / FFI boundary shim wrapping compiled Rust crates. |
 | `PR-EXCEPT-EXT-ML` | External third-party Python ML baseline adapters (LightGBM/XGBoost/CatBoost/TabPFN) | 16 | 8,092 | External third-party Python ML baseline adapter (LightGBM/XGBoost/CatBoost/TabPFN parity harness). |
 | **Total Kept** | **All Authorized Python Exceptions** | **225** | **102,416** | **Strict 1-line justification per file below** |
@@ -84,8 +84,6 @@ All remaining `978` tracked `.py` files (`247,435` LOC) are pure orchestration, 
 | `deploy/dl-flywheel/pipelines/generated_target_preparation_v2/offline.py` | 128 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Shared pinned offline runner for the C10 revision-2 packages (generated_target_preparation_v2, boundary_admiss) |
 | `deploy/dl-flywheel/pipelines/generated_target_preparation_v2/tests/test_preparation.py` | 657 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (C10a revision 2 private CPU fixtures: verified A -> B -> C train-result appends become exact prepared roots.) |
 | `deploy/dl-flywheel/pipelines/hpc/timing.py` | 83 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Bounded append-only measured stage timing for this owned inference campaign.) |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/timing.py` | 83 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Bounded append-only measured stage timing for this owned inference campaign.) |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_admission.py` | 290 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Proof-gated, exact-row training admission; never launches or fabricates training.) |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v4/timing.py` | 83 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Bounded append-only measured stage timing for this owned inference campaign.) |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/timing.py` | 83 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Bounded append-only measured stage timing for this owned inference campaign.) |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_admission.py` | 290 | `PR-EXCEPT-TORCH` | PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). (Proof-gated, exact-row training admission; never launches or fabricates training.) |

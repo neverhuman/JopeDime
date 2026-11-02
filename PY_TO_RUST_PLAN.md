@@ -2,9 +2,9 @@
 
 Per the 2026-10-18 stack ruling (`JEPSON_RULING_20261018T1940Z_stack_rust_jankurai.md`), JopeDime standardizes on **Rust** for all backend, CLI, tooling, verification, and compute workloads, and **Vite + TypeScript + React** for web UI.
 
-- **Total tracked `.py` files audited**: `1,185` (`344,915` LOC)
-  - **`keep-with-reason`**: `207` files (`97,319` LOC) — documented with 1-line justifications in [`PYTHON_EXCEPTIONS.md`](PYTHON_EXCEPTIONS.md).
-  - **`port-to-Rust`**: `978` files (`247,596` LOC) — scheduled for incremental replacement by Rust binaries/subcommands on spare worker capacity without interrupting active release lanes.
+- **Total tracked `.py` files audited**: `1,166` (`340,381` LOC)
+  - **`keep-with-reason`**: `205` files (`96,946` LOC) — documented with 1-line justifications in [`PYTHON_EXCEPTIONS.md`](PYTHON_EXCEPTIONS.md).
+  - **`port-to-Rust`**: `961` files (`243,443` LOC) — scheduled for incremental replacement by Rust binaries/subcommands on spare worker capacity without interrupting active release lanes.
 - **Total tracked `.sh` files audited**: `87` (`9,824` LOC)
 
 ## Spare-Worker Rust Porting Tracker Tasks (`PORT-RUST-01..07`)
@@ -13,7 +13,7 @@ Porting executes exclusively on spare worker capacity, never preempting active r
 
 | Task ID | Scope / Subtree | Target Rust Crate | Files to Port (`.py` + `.sh`) | Total LOC | Execution Policy |
 | --- | --- | --- | ---: | ---: | --- |
-| `PORT-RUST-01` | `deploy/dl-flywheel/**` pure orchestration, S3/archive & manifest pipelines | `crates/jope-engine` & `crates/jope-cli` | 637 | 115,134 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
+| `PORT-RUST-01` | `deploy/dl-flywheel/**` pure orchestration, S3/archive & manifest pipelines | `crates/jope-engine` & `crates/jope-cli` | 620 | 110,981 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-02` | `deploy/dl-trainonly/**` manifest binding, feature reduction & lane verifiers | `crates/jope-cli` & `crates/feat-math` | 166 | 81,892 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-03` | `deploy/ci/**`, `deploy/runner/**`, `deploy/*.py` & CI shell wrappers | `crates/jope-records` & `crates/jope-cli` | 63 | 10,360 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-04` | `python/src/jope/**` non-Torch campaign, corpus, selfplay & runtime orchestration | `crates/jope-engine` & `crates/jope-cli` | 98 | 36,221 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
@@ -21,7 +21,7 @@ Porting executes exclusively on spare worker capacity, never preempting active r
 | `PORT-RUST-06` | `crates/**`, `benchmarks/**` & developer shell scripts | `crates/jope-bench` & `build.rs` | 58 | 7,335 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 | `PORT-RUST-07` | `docs/internal/**` & `python/legacy/**` publication/figure verification tools | `crates/jope-records` | 22 | 2,559 | Spare worker capacity; parity-tested before removing `.py`/`.sh` |
 
-## Complete Python File Inventory (`1,185` `.py` Files)
+## Complete Python File Inventory (`1,166` `.py` Files)
 
 | Path | LOC | Purpose | Disposition | Reason / Target Tracker Task |
 | --- | ---: | --- | --- | --- |
@@ -467,28 +467,9 @@ Porting executes exclusively on spare worker capacity, never preempting active r
 | `deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py` | 660 | Create-only additional native pool; parent workers and registry stay unchanged. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py` | 337 | New orchestration fixtures only. No systemd, SSH, S3 or native GP execution. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v4/historical_custody.py` | 86 | Read-only old unknown failures -> nonnumeric S3 custody; no GP reexecution. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/__init__.py` | 2 | Experimental JopeDime flywheel provenance and data-contract tools. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/augmentation.py` | 211 | Deterministic, type-aware feature augmentation of admitted regression slices. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/batch_stream.py` | 311 | Durable exhaustive, shuffled batches with distinct parent lineages. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/evergreen.py` | 210 | Balanced, bounded dataset expansion with immutable provenance and backpressure. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/evidence.py` | 629 | Bounded, transactional evidence; no trainer, network, environment or implicit path reads. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/native_variant_snapshot.py` | 170 | Append verified prepared variants to a native corpus at an epoch boundary. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/paper_archive.py` | 588 | Bounded, host-local evidence capture; never trains, loads data or copies weights. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_gate.py` | 127 | Exact-context novelty gate shared by training and validation producers. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
+| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/__init__.py` | 10 | Package namespace bridge to the canonical root jope_flywheel modules; hpc v4-specific modules remain local. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_inputs.py` | 129 | Registered prepared research inputs; replay and current role checks on every use. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_io.py` | 158 | Bounded local files and native tools for the owned program bridge. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_observer.py` | 101 | Durable emission boundary: record every bounded request before validation. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/program_worker.py` | 206 | Owned queue consumer: real local S1 fit, emitted Rust, parity, versioned S3. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/protocol.py` | 208 | Versioned flywheel identities and measured, same-task comparison rules. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/queue.py` | 195 | Durable bounded DAG queue for the experimental flywheel. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/s3_library.py` | 69 | Create-only measured-program library, with exact-version content verification. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/score_join.py` | 86 | Two native-compatible jope.score/v1 rows for measured S1 inner folds. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/target_noise.py` | 98 | Versioned regression target-noise variants; never reuse parent GP scores. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/timing.py` | 83 | Bounded append-only measured stage timing for this owned inference campaign. | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_admission.py` | 290 | Proof-gated, exact-row training admission; never launches or fabricates training. | `keep-with-reason` | `PR-EXCEPT-TORCH`: PyTorch/Safetensors tensor & neural model training/checkpoint boundary (exempt GPU/DL training layer per stack ruling). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_snapshot.py` | 484 | Frozen, read-only flywheel -> PolicyLM adapter (no DB admission or training). | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_snapshot_kumos.py` | 573 | KumoS-only frozen, read-only flywheel -> PolicyLM adapter (no DB admission or training). | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
-| `deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_snapshot_native.py` | 310 | Versioned, lazy native-context KumoS corpus; no optimizer/admission/publication. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v4/native_corpus_authority.py` | 50 | Read-only current native role proof. No datasets, models or mutations. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v4/native_dispatch.py` | 159 | Drain mandatory original-context emissions with native measured S3 closure. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
 | `deploy/dl-flywheel/pipelines/hpc_verified_v4/native_evaluate.py` | 153 | Original-context native execution + emitted Rust parity, distinct cache schema. | `port-to-Rust` | `PORT-RUST-01`: Port flywheel orchestration/manifest/pipeline module to Rust (`jope-cli` / `jope-engine`). |
