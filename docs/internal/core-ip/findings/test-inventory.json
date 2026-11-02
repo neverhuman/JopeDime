@@ -1595,6 +1595,10 @@
       "reason": "REL-07 PR1436 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
+      "reason": "REL-07 PR1794 normal-exit Codex MCP recorder drain regression test over synthetic child processes; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "reason": "QLT-04 FIFO launcher controls with private queue/key/backend fixtures; admission, lease, mutation, ledger and process cleanup proofs, not live qualification.",
       "role": "infrastructure"
@@ -5607,6 +5611,18 @@
     "python:research/flywheel_selfplay/h213_gpu_delta_sustained/test_h213.py": {
       "role": "research",
       "reason": "H213 CPU-only data-free controls: unchanged H211 science, gradient/forward and role controls, exact native vector, S3 custody, SIGALRM reentry, exact PR admission; separate monotonic300s load1/CPU clocks, one-sample spike/recovery/301s refusal in worker and supervisor and instantaneous load5/memory. No scientific outcome or GPU fixture."
+    },
+    "python:research/flywheel_selfplay/h215_pess_disagreement/test_h215.py": {
+      "role": "research",
+      "reason": "H215 data-free controls for native kappa0 identity, within-context ensemble disagreement, nested family roles,600-member/24000-update plan, actual CPU optimizer/forward proof, exact four-arm calibrated selector, complete study lock order, FIFO preservation/exclusivity, resource/swap guards, SIGALRM reentry, S3 exact-version refusal and exact-open-PR admission; no corpus/GPU qualification."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_h214.py": {
+      "role": "research",
+      "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_runtime.py": {
+      "role": "research",
+      "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

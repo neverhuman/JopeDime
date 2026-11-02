@@ -505,7 +505,9 @@
     "feature:jope-appliance/client": {
       "discovery": {
         "dependencies": [
-          "dep:jope-client"
+          "dep:jope-client",
+          "dep:ureq",
+          "dep:zip"
         ],
         "kind": "feature"
       },
@@ -513,7 +515,23 @@
       "lanes": [
         "lite-client"
       ],
-      "scope": "BAT-07 explicit client-only build and strict normal dependency graph; existing CLT-04 loopback HTTP/in-process/SSE fixture contracts. Full product CLI/MCP A1 remains dependent on their composition tasks."
+      "scope": "BAT-07 explicit client-only build and strict normal dependency graph, with featureless ureq and zip for the JAIN cloud client (plain loopback HTTP only; HTTPS needs cloud-tls); existing CLT-04 loopback HTTP/in-process/SSE fixture contracts. Full product CLI/MCP A1 remains dependent on their composition tasks."
+    },
+    "feature:jope-appliance/cloud-tls": {
+      "discovery": {
+        "dependencies": [
+          "client",
+          "dep:rustls",
+          "ureq/rustls-no-provider",
+          "ureq/rustls-webpki-roots"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "Opt-in HTTPS for JAIN cloud workspaces (rustls with the aws-lc-rs provider). No audited appliance feature set selects it: deploy/appliance/dependencies-deny.toml denies rustls/aws-* and keeps ureq featureless, so shipping it needs a reviewed dependency-policy amendment. Local check, clippy and cloud tests with the feature are recorded in its PR."
     },
     "feature:jope-appliance/default": {
       "discovery": {
@@ -4268,6 +4286,16 @@
       ],
       "lanes": [],
       "scope": "REL-07 PR1436 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
+    },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 Codex normal-exit recorder drain regression. Synthetic same-process-group recorder fixture only; no named client or candidate execution."
     },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "discovery": {
@@ -14915,6 +14943,36 @@
       ],
       "lanes": [],
       "scope": "H213 CPU-only data-free controls: unchanged H211 science, gradient/forward and role controls, exact native vector, S3 custody, SIGALRM reentry, exact PR admission; separate monotonic300s load1/CPU clocks, one-sample spike/recovery/301s refusal in worker and supervisor and instantaneous load5/memory. No scientific outcome or GPU fixture."
+    },
+    "python:research/flywheel_selfplay/h215_pess_disagreement/test_h215.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H215 data-free controls for native kappa0 identity, within-context ensemble disagreement, nested family roles,600-member/24000-update plan, actual CPU optimizer/forward proof, exact four-arm calibrated selector, complete study lock order, FIFO preservation/exclusivity, resource/swap guards, SIGALRM reentry, S3 exact-version refusal and exact-open-PR admission; no corpus/GPU qualification."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_h214.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H214 data-free controls: exact16 parent-first dedup/FPS ordering, equal-family median-over-seed bootstrap, strict gain/margin and Holm1, exact-head smoke, TEMP16 NOT_RUN refusal, instantaneous/sustained/invalid resource guards."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H214 synthetic runtime adapter proof: family-disjoint TRAIN bank/parent tie, only selected16-wide panels evaluated, explicit context identity with feature-only records, exact native order/coverage and no timeout-to-gate-failure relabel. No actual data/model/Rust worker."
     }
   },
   "lanes": {

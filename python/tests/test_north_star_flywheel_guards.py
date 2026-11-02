@@ -518,3 +518,158 @@ def test_ns14_rust_fitness_tie_averaged_roc_auc_and_validation() -> None:
         compile_and_eval_rust_fitness(
             rs_unit, X_pt_fwd, np.array([0.0, 0.5, 1.0, 1.0], dtype=np.float64), is_binary=True
         )
+
+
+@pytest.mark.parametrize("label", [0.0, 1.0])
+@pytest.mark.parametrize("coverage", ["all", "one", "masked_opposite"])
+def test_ns4_single_class_auc_is_unavailable(label: float, coverage: str) -> None:
+    scores = torch.tensor([[0.1, 0.7, 0.2, 0.9]])
+    labels = torch.full_like(scores, label)
+    mask = torch.ones_like(scores, dtype=torch.bool)
+    if coverage == "one":
+        mask[:, 1:] = False
+    elif coverage == "masked_opposite":
+        labels[:, 2:] = 1.0 - label
+        mask[:, 2:] = False
+        scores[:, 2:] = torch.tensor([math.nan, math.inf])
+    result = batched_roc_auc_gpu(scores, labels, mask)
+    assert result.shape == (1,)
+    assert result.dtype == scores.dtype
+    assert result.device == scores.device
+    assert torch.isnan(result).all()
+
+
+def test_ns4_auc_batch_distinguishes_missing_classes_from_measured_ties() -> None:
+    scores = torch.tensor(
+        [
+            [0.1, 0.7, 0.2, 0.9],
+            [0.1, 0.7, 0.2, 0.9],
+            [0.5, 0.5, 0.5, 0.5],
+            [0.1, 0.5, 0.5, 0.9],
+            [math.nan, 0.7, 0.2, 0.9],
+            [0.1, 0.7, 0.2, 0.9],
+        ]
+    )
+    labels = torch.tensor(
+        [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 1, 1], [0, 1, 0, 1], [0, 0, 1, 1], [0, 0, 1, 1]]
+    ).float()
+    mask = torch.ones_like(labels, dtype=torch.bool)
+    mask[-1] = False
+    result = batched_roc_auc_gpu(scores, labels, mask)
+    expected = torch.tensor([math.nan, math.nan, 0.5, 0.875, math.nan, math.nan])
+    torch.testing.assert_close(result, expected, rtol=0, atol=0, equal_nan=True)
+
+
+@pytest.mark.parametrize("label", [0.0, 1.0])
+def test_ns4_unified_single_class_auc_preserves_other_metrics(label: float) -> None:
+    train_y = torch.tensor([[0.0, 1.0, 0.0, 1.0]])
+    result = evaluate_unified_regression_and_binary_batched_gpu(
+        torch.tensor([[-2.0, 2.0, -1.0, 1.0]]),
+        train_y,
+        torch.ones_like(train_y, dtype=torch.bool),
+        torch.tensor([[-1.0, 1.0, 2.0, 3.0]]),
+        torch.full_like(train_y, label),
+        torch.ones_like(train_y, dtype=torch.bool),
+        reject_nonfinite_eval=True,
+    )
+    assert result["is_binary"].tolist() == [True]
+    assert result["valid_eval_mask"].tolist() == [True]
+    assert torch.isnan(result["roc_auc"]).all()
+    for name in [
+        "unified_r2_score",
+        "regression_r2",
+        "brier_r2",
+        "log_loss",
+        "balanced_accuracy",
+        "platt_a",
+        "platt_b",
+    ]:
+        assert torch.isfinite(result[name]).all(), name
+
+
+def test_ns4_valid_auc_matches_pairwise_definition_with_masks_and_ties() -> None:
+    rng = torch.Generator().manual_seed(1504)
+    scores = torch.randint(0, 5, (8, 16), generator=rng).float() / 4.0
+    labels = torch.randint(0, 2, (8, 16), generator=rng).float()
+    labels[:, 0], labels[:, 1] = 0.0, 1.0
+    mask = torch.rand(8, 16, generator=rng) > 0.3
+    mask[:, :2] = True
+    scores = torch.where(mask, scores, torch.full_like(scores, math.nan))
+    expected = []
+    for score_row, label_row, mask_row in zip(scores, labels, mask):
+        positive = score_row[mask_row & (label_row == 1)]
+        negative = score_row[mask_row & (label_row == 0)]
+        pairs = (positive[:, None] > negative[None, :]).float()
+        pairs += 0.5 * (positive[:, None] == negative[None, :]).float()
+        expected.append(pairs.mean())
+    result = batched_roc_auc_gpu(scores, labels, mask)
+    torch.testing.assert_close(result, torch.stack(expected), rtol=0, atol=1e-7)
+    permutation = torch.randperm(scores.shape[1], generator=rng)
+    reordered = batched_roc_auc_gpu(scores[:, permutation], labels[:, permutation], mask[:, permutation])
+    torch.testing.assert_close(reordered, result, rtol=0, atol=0)
+
+
+@pytest.fixture
+def ns16_gate_inputs():
+    from jope.north_star import check_phase_d_elo_gate
+
+    ratings = {"ROUND_0": 1490.0, "ROUND_1": 1500.0, "ROUND_2": 1510.0, "H": 1500.0}
+    return check_phase_d_elo_gate, {
+        "round_names": ["ROUND_0", "ROUND_1", "ROUND_2"],
+        "overall_ratings": dict(ratings),
+        "regression_ratings": dict(ratings),
+        "binary_ratings": dict(ratings),
+        "h_baseline_name": "H",
+    }
+
+
+@pytest.mark.parametrize("axis", ["overall", "regression", "binary"])
+@pytest.mark.parametrize("contender", ["ROUND_0", "ROUND_1", "ROUND_2", "H"])
+@pytest.mark.parametrize("invalid", [math.nan, math.inf, -math.inf, True, None])
+def test_ns16_gate_rejects_invalid_requested_ratings(ns16_gate_inputs, axis, contender, invalid):
+    gate, inputs = ns16_gate_inputs
+    inputs[f"{axis}_ratings"][contender] = invalid
+    with pytest.raises(ValueError):
+        gate(**inputs)
+
+
+@pytest.mark.parametrize("numeric_strings", [False, True])
+def test_ns16_gate_preserves_finite_policy(ns16_gate_inputs, numeric_strings):
+    gate, inputs = ns16_gate_inputs
+    # Overall is compared at the final round; only regression and binary must rise.
+    inputs["overall_ratings"]["ROUND_0"] = 1600.0
+    for axis in ["overall", "regression", "binary"]:
+        inputs[f"{axis}_ratings"]["UNREQUESTED"] = math.nan
+        if numeric_strings:
+            inputs[f"{axis}_ratings"] = {key: str(value) for key, value in inputs[f"{axis}_ratings"].items()}
+    result = gate(**inputs)
+    assert result["gate_pass"] is True
+    assert result["num_rounds"] == 3
+    assert result["overall_elo_trajectory"] == {"ROUND_0": 1600.0, "ROUND_1": 1500.0, "ROUND_2": 1510.0}
+    assert all(
+        result[key] is True
+        for key in [
+            "regression_trending_up",
+            "binary_clf_trending_up",
+            "beats_h_baseline_regression",
+            "beats_h_baseline_binary_clf",
+            "beats_h_baseline_overall",
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "reason", ["one_round", "two_rounds", "regression_plateau", "binary_plateau", "overall_below_baseline"]
+)
+def test_ns16_gate_preserves_finite_rejections(ns16_gate_inputs, reason):
+    gate, inputs = ns16_gate_inputs
+    if reason == "one_round":
+        inputs["round_names"] = ["ROUND_2"]
+    elif reason == "two_rounds":
+        inputs["round_names"] = ["ROUND_1", "ROUND_2"]
+    elif reason.endswith("_plateau"):
+        axis = reason.removesuffix("_plateau")
+        inputs[f"{axis}_ratings"]["ROUND_2"] = 1500.0
+    else:
+        inputs["overall_ratings"]["H"] = 1520.0
+    assert gate(**inputs)["gate_pass"] is False

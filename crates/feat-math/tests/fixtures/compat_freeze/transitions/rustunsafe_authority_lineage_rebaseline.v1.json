@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced lineage-only successor for the jankurai rustunsafe cap (#1782), which replaced libc getsockopt(SO_PEERCRED) and waitid in crates/jope-engine/src/eval_registry/authority.rs with nix safe wrappers but merged without recording the lineage source that jope-engine hashes into the teaching-store semantic_dependencies_sha256; compat_freeze lineage_sources has been red on origin/main since. The identity-only regeneration records the new authority.rs hash. Evaluator implementation hash, Cargo.lock hash, evaluator identity digest, DSL ABI, evaluator calculations and behavior fixtures are unchanged; the evaluator identity fixture changes only its generation SHA. No known-identity row is added without a shipped receipt.",
+  "plan_reference": "jankurai rustunsafe cap (#1782); ADR-0004 and compat_freeze identity-only procedure",
+  "source_commit": "1b5154d82787ea955f9e989a52eeb2f23c51627f",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "163405acbbc4f6bfdfa2594896f62499eedfd7b37c8a69fb63cfc4cb2072a7e5",
+      "after": "58e1ac3f3907a3b7c5239447a8e89c2df5f619220c667e06044fe4fcf7b55d30"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "51773b290b0e1657764cf72c085861345028f56fe541f2db97841c7ace302303",
+      "after": "cddee93e84223fa23bbb744b560f965034d8fbc320ace50c04335ca37dc74e0d"
+    }
+  ]
+}

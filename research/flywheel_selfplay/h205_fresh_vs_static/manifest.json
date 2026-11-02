@@ -80,12 +80,45 @@
   ],
   "selector": "H178_calibrated_pooled_205_family",
   "source_sha256": {
-    "PREREG.md": "6282a82624ff497d1b1538ab02030afe15c2cc0c5dbb9710ddbfa5065b2b823d",
-    "README.md": "42cdd80322daa386487815dab44c4207cf0dd4c6f336f270fc67701c27632231",
-    "analysis.py": "0ed415fa95a497f327c8aa05621d10e8258f8453c8be679a498d8b167a978e38",
+    "PREREG.md": "f00a6e5f72bc23d05b033d6174790ad25770db570e2aab85f94325a75345e4f2",
+    "README.md": "4c2b1a670f0eb432cd85e0265b7e103ab5389ae0dbf957b4a7c1846add0a5ec3",
+    "analysis.py": "bf28f6c736b41fe85c2921fde6c64ab679e131110632bc3c8d702c25c5c28692",
     "monitor.py": "e4d111929b3dc317fc420b4be6fd10840e93d4f0d544d1d3da486210bb605b9b",
-    "runner.py": "842d2e09fd9ca2d3e755f39df3d760ad48b815e5028992b59ea1de9844a5d3f4",
-    "test_h205.py": "8a2d5b179dfa01da6241009f21c42c43e480a8eda3cf4d3c15d4fcf51df33b63"
+    "runner.py": "03721c8f03dac89f5df3ff4df9eeec76637d913c43dda94df28ce4b75eee42e5",
+    "test_h205.py": "d13b34fa3f00f7848c25d8d2158d3156d8d839540833ff2021fbb1e048d64c81"
+  },
+  "train_padding_bridge_protocol": {
+    "cut_sha256_1db3750d4ceccab9": "d2208c223250e1916dd480fc9cf940342db30a9066bece9735181935bc001f0c",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "evaluator_binary_path": "/home/ubuntu/jope-data/teacher-v2-s1-smoke/bin/jopedime-q1-linux",
+    "evaluator_binary_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+    "evaluator_id": "bootstrap.s1main --fit-s1",
+    "forbidden_historical_local_replay_hashes": [
+      "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45"
+    ],
+    "h206_native_fixture_receipt_path": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102/native-protocol/corrected-shape/receipt.json",
+    "h206_native_fixture_receipt_sha256": "63d15495672652297aba8cbe0b1afd4428f0c36f363b9fa66186e86804d4087a",
+    "h206_scientific_replay_receipt_path": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102/native-protocol/corrected-shape/scientific-replay.json",
+    "h206_scientific_replay_receipt_sha256": "e2d83a76a8b5a81c8f0d8cfd4ac5baaf9bbc4f301cb3dcaca45a06bcca60168f",
+    "inner_fold_rule": "even_row_0_odd_row_1_two_fold_s1",
+    "metric_source_path": "research/flywheel_selfplay/rust_evaluator.py",
+    "metric_source_sha256": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
+    "min_inner_fold_rows": 25,
+    "min_train_rows_nt": 50,
+    "native_rust_source_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
+    "native_rust_source_sha256": "e369e13bfb498dee924cd0afca23a82fb43c6997864e37fdc28063f092cc1fb1",
+    "original_jtt1_nq0_sha256_1db3750d4ceccab9": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+    "padded_jtt1_nq10_sha256_1db3750d4ceccab9": "8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1",
+    "padding_examples_added_to_learner": 0,
+    "padding_families_added": 0,
+    "padding_queries_sha256_1db3750d4ceccab9": "4eb522e958e3656f8e8f069e4553f5b927c1a3eb8ae057414b63a2f86aadd5d7",
+    "padding_rows_nq": 10,
+    "protocol_sha256": "cb967d3c4baa4e855f3b893ccfff2d1045e64435277f89530c11ae4d3a6aa0ed",
+    "query_padding_rule": "first-10-TRAIN-rows-cyclic-zero-query-target-v1",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "schema_version": "h206-native-S1-TRAIN-v1",
+    "target_same_s3_train_context_sha256_1db3750d4ceccab9": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+    "train_matrix_sha256_1db3750d4ceccab9": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7"
   },
   "wave": "H205"
 }

@@ -5541,6 +5541,70 @@
         "role": "research",
         "reason": "H213 prospective H211 hypothesis with fresh213 seeds and sustained-load resource guard; one90min GPU attempt, frozen native models, exact open PR admission; no serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h215_pess_disagreement/science.py": {
+      "bytes": 4970,
+      "sha256": "62a803dae134f8b8a0a97a297b3913ba4ef0e24677c5fa68d788c468763fc5e9",
+      "classification": {
+        "role": "research",
+        "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h215_pess_disagreement/backend.py": {
+      "bytes": 8838,
+      "sha256": "4b168819b1a92b32d57696fe658174689f1f7c09d4f71e808a8311c8e7729e74",
+      "classification": {
+        "role": "research",
+        "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h215_pess_disagreement/study.py": {
+      "bytes": 8646,
+      "sha256": "13bc70abab60363d663745f63454e95218be74af3d22b3308d268d68ea1f2d1d",
+      "classification": {
+        "role": "research",
+        "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h215_pess_disagreement/runner.py": {
+      "bytes": 23607,
+      "sha256": "622f3a83c6cbf8185e24b6fd04a2b771b442e173ee7efa0efb0bf576b2011c07",
+      "classification": {
+        "role": "research",
+        "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h215_pess_disagreement/launch.py": {
+      "bytes": 11733,
+      "sha256": "27d4473610359918630125969ef75ffa9bb68d45788eff1db8a7df69cc97db49",
+      "classification": {
+        "role": "research",
+        "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/analysis.py": {
+      "bytes": 4876,
+      "sha256": "be12e0982c54c70bfce402398b77e0166e72909fe9be89af33a58b13832e5ad2",
+      "classification": {
+        "role": "research",
+        "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
+      }
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/protocol.py": {
+      "bytes": 2612,
+      "sha256": "28eac30e550b6878257665d66aba050add8539edf97804352587ec7e5fe74915",
+      "classification": {
+        "role": "research",
+        "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
+      }
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/runner.py": {
+      "bytes": 26198,
+      "sha256": "2be6039720ac0c25959ef3f98605adb21bc1884af7c90407256febc0b58a84c2",
+      "classification": {
+        "role": "research",
+        "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
