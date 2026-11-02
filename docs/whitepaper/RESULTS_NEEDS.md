@@ -27,9 +27,9 @@ Freeze the evaluation contract before opening final outcomes. Bind evidence to s
 | R13 | [07_results.tex:160](sections/07_results.tex#L160) | Supply problem-similarity and program-only-control evaluations. |
 | R14 | [07_results.tex:143](sections/07_results.tex#L143) | Pilot cost measurements: supply per-stage failure shares and cost per verified win. |
 | R15 | [07_results.tex:149](sections/07_results.tex#L149) | Supply pilot data, seeds and family-level uncertainty; identify settings with no verified win without assigning a finite cost per win. |
-| R16 | [07_results.tex:172](sections/07_results.tex#L172) | held-out ranking study |
-| R17 | [07_results.tex:173](sections/07_results.tex#L173) | matched causal ablation |
-| R18 | [07_results.tex:174](sections/07_results.tex#L174) | failure-class comparison |
+| R16 | [07_results.tex:177](sections/07_results.tex#L177) | held-out ranking study |
+| R17 | [07_results.tex:178](sections/07_results.tex#L178) | matched causal ablation |
+| R18 | [07_results.tex:179](sections/07_results.tex#L179) | failure-class comparison |
 | R19 | [07_results.tex:188](sections/07_results.tex#L188) | Identify an implemented influence path or limit the study to ranking. |
 | R20 | [07_results.tex:199](sections/07_results.tex#L199) | Supply attempt inventories and costs by outcome class, identifying unresolved cases. |
 | R21 | [07_results.tex:204](sections/07_results.tex#L204) | Supply the example selection rule, actual program and verified outcomes, with no replacement of failed attempts. |
