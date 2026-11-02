@@ -296,23 +296,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn output_destination_defaults_to_committed_schema() {
+    fn generated_document_matches_committed_openapi() {
         let destination = parse_output_destination(std::iter::empty()).unwrap();
         assert_eq!(destination, OutputDestination::DefaultSchema);
-    }
-
-    #[test]
-    fn output_destination_accepts_one_explicit_path() {
         let destination =
             parse_output_destination([OsString::from("target/openapi.json")]).unwrap();
         assert_eq!(
             destination,
             OutputDestination::Explicit(PathBuf::from("target/openapi.json"))
         );
-    }
-
-    #[test]
-    fn output_destination_rejects_extra_arguments() {
         let error = parse_output_destination([
             OsString::from("target/openapi.json"),
             OsString::from("unexpected"),
@@ -320,21 +312,6 @@ mod tests {
         .unwrap_err();
         assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
         assert_eq!(error.to_string(), "usage: jope-api-openapi [OUTPUT_PATH]");
-    }
-
-    #[test]
-    fn schema_definitions_reject_malformed_shape() {
-        let mut schema = json!({"$defs": []});
-        let error = take_schema_definitions(&mut schema, "Problem").unwrap_err();
-        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
-        assert_eq!(
-            error.to_string(),
-            "generated schema Problem $defs must be an object"
-        );
-    }
-
-    #[test]
-    fn generated_document_matches_committed_openapi() {
         let generated = serde_json::to_vec_pretty(&generate().unwrap()).unwrap();
         let committed = include_bytes!("../../../../schemas/jope.api.v1.openapi.json");
         assert_eq!(generated.as_slice(), committed.as_slice());
@@ -344,6 +321,13 @@ mod tests {
     fn generated_document_covers_registry_without_pending_exchanges() {
         let document = generate().expect("all registered exchange schemas are materialized");
         assert!(document.get("x-jope-pending-exchanges").is_none());
+        let mut malformed_schema = json!({"$defs": []});
+        let error = take_schema_definitions(&mut malformed_schema, "Problem").unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert_eq!(
+            error.to_string(),
+            "generated schema Problem $defs must be an object"
+        );
 
         let emitted: BTreeSet<_> = document["paths"]
             .as_object()
