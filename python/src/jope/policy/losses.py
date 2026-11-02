@@ -323,7 +323,7 @@ def rank_pct_listwise_terms(
         target = torch.softmax(p / tau, dim=0)
         logp = torch.log_softmax(reward[idx_t], dim=0)
         terms.append(-(target * logp).sum())
-        # H(target) in nats. target is a softmax so it is strictly positive; the clamp
+        # H(target) in natural-log units. target is a softmax so it is strictly positive; the clamp
         # only guards float16 underflow on very peaked groups.
         entropies.append(-(target * target.clamp_min(1e-12).log()).sum())
     if not terms:
