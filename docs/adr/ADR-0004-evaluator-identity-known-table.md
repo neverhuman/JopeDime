@@ -22,6 +22,22 @@ Old receipts remain verifiable and auditable under the identity that produced th
 (WP2's `gpr.rs`, `registry.rs`) creates a new current identity without invalidating history. Reviewers see every
 accepted historical identity in one file.
 
+## Current identity transition: race test dedicated pool (2026-11-02)
+
+P45 changes `crates/feat-math/src/evolve.rs` so `race_respects_tiny_time_budget` runs its one-chunk
+race on a dedicated two-thread rayon pool; the unchanged 30s wall bound then measures the race and
+not queueing behind sibling tests on the shared global pool (the test took 1.1s alone but 40s inside
+the full `feat-math` suite). `evolve.rs` is an evaluator identity input, so this change announces an
+identity-only transition. `implementation_sha256` changes from
+`43c6ae985f652b408c94f1e5f60c93a4ecf99e801f5a11a189cda1a55d747c4f` to
+`0750e049cdabf54a4af94b6673790bd71f3600541e40f80cbeb55f81f211d37d`, and `identity_digest`
+changes from `9dab8f04a9bef7f36a5b432eb2123a8ff2fac9acba434ccc4331ba4cf25bf5c8` to
+`77af8284de8e3e6e80177660f1d72c0790540be4e8556bca9382f6352a09bece`. The DSL ABI is unchanged.
+The regeneration ran `JOPE_COMPAT_FREEZE_REGENERATE=identity JOPE_COMPAT_FREEZE_SHA=09653ef9a2a37e544b6ddff96d0a56e3d9f05847 cargo nextest run --locked -P pr -p feat-math --test compat_freeze`
+(13/13 passed). The append-only historical chain records both fixture successors in
+`crates/feat-math/tests/fixtures/compat_freeze/transitions/p45_race_dedicated_pool_identity_rebaseline.v1.json`.
+The append-only known-identity table gains no row because this identity has no shipped receipt.
+
 ## Current identity transition: sealed corpus mapping (2026-11-02)
 
 P35 changes `crates/jope-engine/src/corpus.rs` to snapshot unverified record files into sealed
