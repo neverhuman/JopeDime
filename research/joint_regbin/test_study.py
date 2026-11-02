@@ -89,6 +89,139 @@ def test_resume_deadline_amendment_carries_old_execution_without_reset():
         amended_deadline(dict(campaign, wall_seconds=22000), 330, 3600)
 
 
+def test_resume_charges_rejected_attempt_and_drain_without_overlap():
+    from research.joint_regbin.learner_resume import execution_charge
+
+    segments = [
+        ("2026-11-02T11:00:24.788852+00:00", "2026-11-02T11:05:55.470557+00:00"),
+        ("2026-11-02T14:27:58.968547+00:00", "2026-11-02T14:37:54.102331+00:00"),
+    ]
+    assert execution_charge(segments) == pytest.approx(925.815489)
+    for invalid in (segments[::-1], [(segments[0][1], segments[0][0])]):
+        with pytest.raises(ValueError, match="interval"):
+            execution_charge(invalid)
+
+
+def test_resume_preservation_rejects_mutation_extra_file_and_symlink(tmp_path):
+    from research.joint_regbin.learner_resume import verify_preserved
+
+    source = tmp_path / "rejected.response.json"
+    source.write_bytes(b"rejected immutable artifact")
+    manifest = {
+        source.name: dict(bytes=source.stat().st_size, sha256=protocol.file_sha(source))
+    }
+    verify_preserved(tmp_path, manifest)
+    source.write_bytes(b"changed immutable artifact!")
+    with pytest.raises(ValueError, match="artifact differs"):
+        verify_preserved(tmp_path, manifest)
+    source.write_bytes(b"rejected immutable artifact")
+    extra = tmp_path / "unexpected"
+    extra.write_text("unclassified work")
+    with pytest.raises(ValueError, match="inventory differs"):
+        verify_preserved(tmp_path, manifest)
+    extra.unlink()
+    backing = tmp_path.parent / (tmp_path.name + "-backing")
+    backing.write_bytes(source.read_bytes())
+    source.unlink()
+    source.symlink_to(backing)
+    with pytest.raises(ValueError, match="artifact differs"):
+        verify_preserved(tmp_path, manifest)
+
+
+def test_resume_qualified_view_preserves_rejected_original_and_is_create_only(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    rejected = tmp_path / "job-evaluate.response.json"
+    rejected.write_text(
+        json.dumps(
+            dict(
+                job_id="job",
+                plan_sha256=resume.PLAN_SHA,
+                round_receipts=[dict(updates=[dict(worker_source_sha256="rejected")])],
+            )
+        )
+    )
+    rejected_bytes = rejected.read_bytes()
+    replacement = tmp_path / "recovery" / "job-evaluate.response.json"
+    replacement.parent.mkdir()
+    replacement.write_text(
+        json.dumps(
+            dict(
+                job_id="job",
+                plan_sha256=resume.PLAN_SHA,
+                round_receipts=[
+                    dict(
+                        updates=[dict(worker_source_sha256=resume.QUALIFIED_WORKER_SHA)]
+                    )
+                ],
+            )
+        )
+    )
+    view = tmp_path / "qualified"
+    view.mkdir()
+    monkeypatch.setattr(resume, "QUALIFIED", view)
+    with pytest.raises(ValueError, match="provenance"):
+        resume.publish_qualified("job", rejected)
+    assert not list(view.iterdir())
+    resume.publish_qualified("job", replacement)
+    assert rejected.read_bytes() == rejected_bytes
+    assert (view / rejected.name).read_bytes() == replacement.read_bytes()
+    with pytest.raises(FileExistsError):
+        resume.publish_qualified("job", replacement)
+
+
+def test_resume_requires_actual_worker_fingerprint_in_every_update():
+    from research.joint_regbin.learner_resume import require_worker_provenance
+
+    valid = dict(
+        round_receipts=[dict(updates=[dict(worker_source_sha256="qualified")])]
+    )
+    require_worker_provenance(valid, "qualified")
+    valid["round_receipts"][0]["updates"].append(dict(worker_source_sha256="rejected"))
+    with pytest.raises(ValueError, match="provenance"):
+        require_worker_provenance(valid, "qualified")
+    with pytest.raises(ValueError, match="provenance"):
+        require_worker_provenance(dict(round_receipts=[]), "qualified")
+
+
+def test_resume_readmission_binds_new_source_qualification_and_all_charges(tmp_path):
+    from research.joint_regbin import learner_resume as resume
+
+    path = tmp_path / "ADMISSION.json"
+    receipt = dict(
+        decision="ADMISSION_PASS",
+        source_binding=dict(
+            controller_sha256=protocol.file_sha(resume.__file__),
+            resource_qualification_sha256=resume.RESOURCE_QUALIFICATION_SHA,
+            source_loader_sha256=protocol.file_sha(resume.learner_source.__file__),
+        ),
+        recovery_accounting=dict(
+            baseline_sha256=resume.BASELINE_SHA,
+            physical_updates_spent=300,
+            planned_physical_updates=5600,
+            planned_qualified_updates=5400,
+        ),
+    )
+    path.write_text(json.dumps(receipt))
+    assert resume.verify_readmission(path, protocol.file_sha(path)) == receipt
+    for section, key, wrong in (
+        ("source_binding", "controller_sha256", "old controller"),
+        ("source_binding", "resource_qualification_sha256", "old q842"),
+        ("source_binding", "source_loader_sha256", "old loader"),
+        ("recovery_accounting", "physical_updates_spent", 100),
+        ("recovery_accounting", "planned_physical_updates", 5400),
+        ("recovery_accounting", "planned_qualified_updates", 5600),
+        ("recovery_accounting", "baseline_sha256", "unreviewed baseline"),
+    ):
+        damaged = json.loads(json.dumps(receipt))
+        damaged[section][key] = wrong
+        path.write_text(json.dumps(damaged))
+        with pytest.raises(ValueError, match="binding"):
+            resume.verify_readmission(path, protocol.file_sha(path))
+
+
 def test_resume_refusal_requires_proven_preexecution_and_no_artifacts(tmp_path):
     from research.joint_regbin.learner_resume import proven_preexecution_refusal
 
@@ -1213,6 +1346,40 @@ def test_result_admission_negative_controls(plan, mutation):
         receipt["learner_sha256"] = "f" * 64
     with pytest.raises(ValueError):
         admit_result(plan, job, receipt)
+
+
+def test_recovery_collection_excludes_rejected_originals_at_same_study_root(
+    plan, tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    qualified = tmp_path / "qualified"
+    qualified.mkdir()
+    attempts = tmp_path / "recovery"
+    attempts.mkdir()
+    monkeypatch.setattr(resume, "QUALIFIED", qualified)
+    monkeypatch.setattr(resume, "PLAN_SHA", plan["sha256"])
+    rejected_job = plan["jobs"][1]
+    rejected = receipt_for(plan, rejected_job)
+    for trace in rejected["round_receipts"]:
+        trace["updates"] = [dict(worker_source_sha256="rejected")]
+    original = tmp_path / f"{rejected_job['id']}-evaluate.response.json"
+    original.write_text(json.dumps(rejected))
+    original_hash = protocol.file_sha(original)
+    with pytest.raises(ValueError, match="provenance"):
+        resume.publish_qualified(rejected_job["id"], original)
+    for job in plan["jobs"]:
+        receipt = receipt_for(plan, job)
+        for trace in receipt["round_receipts"]:
+            trace["updates"] = [dict(worker_source_sha256=resume.QUALIFIED_WORKER_SHA)]
+        response = attempts / f"{job['id']}-evaluate.response.json"
+        response.write_text(json.dumps(receipt))
+        resume.publish_qualified(job["id"], response)
+    assert protocol.file_sha(original) == original_hash
+    assert len(list(qualified.glob("*-evaluate.response.json"))) == 54
+    assert collect(plan, qualified)
+    with pytest.raises(ValueError, match="missing/extra"):
+        collect(plan, tmp_path)
 
 
 def test_complete_collection_and_no_partial_inventory(plan, tmp_path):
