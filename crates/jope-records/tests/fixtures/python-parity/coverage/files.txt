@@ -682,6 +682,7 @@ crates/jope-campaigns/src/binary_panel.rs
 crates/jope-campaigns/src/broad_shadow_cli.rs
 crates/jope-campaigns/src/broad_shadow_cli/tests.rs
 crates/jope-campaigns/src/campaign.rs
+crates/jope-campaigns/src/campaign/live.rs
 crates/jope-campaigns/src/campaign/artifacts.rs
 crates/jope-campaigns/src/campaign/file_io.rs
 crates/jope-campaigns/src/campaign/population.rs
