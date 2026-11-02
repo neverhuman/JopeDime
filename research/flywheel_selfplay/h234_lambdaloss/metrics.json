@@ -1,32 +1,55 @@
 {
   "wave": "H234",
-  "status": "PREREGISTERED_NOT_EXECUTED",
-  "optimizer_updates": 0,
-  "scored_contexts": 0,
+  "status": "INCOMPLETE",
   "verdict": null,
-  "schema_on_completion": {
-    "wave": "H234",
-    "status": "COMPLETE",
-    "arms": [
-      "r882",
-      "CONTROL",
-      "LAMBDAMIX",
-      "LAMBDA"
-    ],
-    "seeds": [
-      234101,
-      234102,
-      234103
-    ],
-    "optimizer_updates": 1800,
-    "complete_cells": 15,
-    "baseline_mean": 1.1377941898164525,
-    "dope_before": "c51a56d0...",
-    "dope_after": "c51a56d0...",
-    "primary_dlval": "summary of the DL-Val91 policy-mixture panel: contrasts {ARM_minus_r882, ARM_minus_CONTROL} with per_seed_gain, median_gain, ci95, positive_seeds, p_one_sided, holm_p, advance; median_elo, elo_ci95",
-    "secondary_oof": "same on the 1,219-context family OOF panel",
-    "harm": "families with three-seed mean delta < -0.01, per panel",
-    "full_metrics": "sha256 + S3 key of the full metrics.json",
-    "verdict": "ADVANCE iff LAMBDAMIX or LAMBDA advances on primary_dlval, else NO_ADVANCE"
+  "verdict_note": "No efficacy verdict: single attempt stopped by the hard MemAvailable<20GiB guard after 1/15 cells; no retry per hw_t2220.",
+  "stop": {
+    "utc": "2026-11-02T22:36:05Z",
+    "reason": "MemAvailable<20GiB",
+    "mem_available_gib": 19.9196,
+    "worker_rss_bytes": 3138473984,
+    "host_swap": "7/7 GiB used",
+    "host_load5": 7.2,
+    "signalled": "own process group only (SIGTERM)"
+  },
+  "optimizer_updates": 120,
+  "complete_cells": 1,
+  "cells_planned": 15,
+  "snapshot_files": 12,
+  "last_cell": "A0-234101",
+  "baseline": {
+    "native91_mean": 1.1377941898164525,
+    "bit_exact": true
+  },
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_note": "frozen bytes checked after every update; DOPE assets re-hashed after the stop",
+  "outcomes_read": "none beyond the Native91 gate; the one completed cell's lock/assessment is archived, not analysed (no verdict from 1/15 cells)",
+  "arms": [
+    "r882",
+    "CONTROL",
+    "LAMBDAMIX",
+    "LAMBDA"
+  ],
+  "seeds": [
+    234101,
+    234102,
+    234103
+  ],
+  "source_commit": "86c988c3aa19e047fa461da8d264c61b6f11b976",
+  "runtime": {
+    "admitted": "2026-11-02T22:29:49Z",
+    "ended": "2026-11-02T22:36:20Z",
+    "elapsed_seconds": 376.7,
+    "peak_rss_bytes": 3348865024,
+    "peak_threads": 3,
+    "load_pauses": 0
+  },
+  "s3_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H234/attempt-001/s3_manifest.json",
+    "version_id": "vb5KYxSb6VInUd2XvJnqEt8KPRs3uFZP",
+    "sha256": "cfcb6d72d8ab65917d7f36d8e6ace94b20de1bbe84a0b9f74c0f8c705b0238cb",
+    "bytes": 5850,
+    "write": "create-only if-none-match"
   }
 }
