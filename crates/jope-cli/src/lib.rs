@@ -12,6 +12,7 @@ pub mod research_view;
 mod router;
 mod schema;
 mod storage;
+pub mod tui_helpers;
 
 pub use admission::{verify_inputs, Verification};
 pub use champions::{
