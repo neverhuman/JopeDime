@@ -7,10 +7,10 @@ before mapping it. `Records::get` uses safe slice bounds and preserves the parse
 
 `crates/jope-engine/src/corpus.rs` and `Cargo.lock` are ADR-0004 identity inputs. This repair
 therefore creates a new current evaluator identity. The identity-only `compat_freeze` rebaseline
-was generated against source commit `8e44ad43d913f105da5df8d2f8d1094585043d20`; its retained
-receipt is `/home/ubuntu/jope_plan/master/audit/receipts/P35/identity-8e44ad4/identity-regenerate.log`.
-The fixture SHA-256 values are `70763f9b512c232730fbbf0a2d9b9d641c9aa572dc3447d260e879a1eac5d0bc`
-(`evaluator_identity.v1.json`) and `55c2f6046a3295dba46fe4d5ef4b382ae649fe00d7db4604b98319953c1506d2`
+was generated against source commit `66bf3b548de2f39aef8b26128cbf1331ee2bfb2a`; its retained
+receipt is `/home/ubuntu/jope_plan/master/audit/receipts/P35/identity-66bf3b5/identity-regenerate.log`.
+The fixture SHA-256 values are `358055fa1b2ad807fbb29534673d4995d86f12ef316bad7beda8401dd882bce7`
+(`evaluator_identity.v1.json`) and `9f6f1a7196ef22ae2b937eb08b3faf8985ff8fe7a5d4cfae01e5823d4289acb6`
 (`lineage_sources.v1.json`).
 
 | Field | Before | After |
