@@ -72,6 +72,8 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/jope_flywheel/target_noise.py",
   # Ciaudit HLT-043 sha256:7ec8a15a...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/s3_library.py",
+  # Frozen HLT-043 instance; immutable hpc-v5 provenance and fingerprint are documented.
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",

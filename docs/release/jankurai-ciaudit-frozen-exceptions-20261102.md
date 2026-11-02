@@ -37,6 +37,19 @@ Only the exact finding source path is excluded from Jankurai scoring. Tests and
 other security scans remain in place. Revisit if the pinned provenance is retired
 or either recorded hash changes; this does not cover other findings in the file.
 
+## Frozen `training_snapshot_kumos.py` instance
+
+HLT-043 fingerprint
+`sha256:562310a12c8e7b55e54dfe517f1424eb619c50231c32211bdc5df2d84ca0da53`
+in `rerun/j_ffba82986.json` covers the copy class containing
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py`.
+That exact historical file has SHA-256
+`c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2`, pinned by
+the package's `provenance/FINAL_VALIDATION.json` and `provenance/ORIGIN.json`.
+The pinned instance is excluded by its exact path in `agent/audit-policy.toml`;
+mutable copies remain eligible for behavior-preserving deduplication. No source
+bytes, package provenance, tests, or other security scans are changed.
+
 ## `s3_library.py`
 
 The full audit `rerun/j_ffba82986.json` reports HLT-043 fingerprint
