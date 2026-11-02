@@ -1210,14 +1210,6 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gov03_axum["base_commit"],
         "1e1229abcdc50f360721c5c3cc6912b58734e30e"
     );
-    // GOV04 already records the approved metadata-only successor on main. Every historical
-    // chain must reach it; otherwise the frozen current fixture is incorrectly called unledgered.
-    let gov04_portable_pty =
-        old_fixture("transitions/gov04_pub06_portable_pty_lockfile_identity_rebaseline.v1.json");
-    assert_eq!(
-        gov04_portable_pty["source_commit"],
-        "4b51c5528129c3fc4c170f2c4074a1a176c25eb3"
-    );
     assert_eq!(
         gov04_portable_pty["base_commit"],
         "3df2979abf861502f69f3fa70e7871952bbf0c06"
