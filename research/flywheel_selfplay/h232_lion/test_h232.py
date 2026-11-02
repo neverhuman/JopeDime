@@ -304,3 +304,15 @@ def test_boolean_ids_cannot_stand_in_for_a_real_external_review():
     )
     with pytest.raises(RuntimeError):
         validate_launch(launch, "h", "m", "p", "f")
+
+
+def test_runtime_loader_releases_the_early_research_namespace():
+    """Amendment A2: after loading the pinned H146 runtime, no `research` package binding may remain, so the pinned
+    H50 fused module can import JopeDimeMicro's regular `research` package (research.levels)."""
+    import sys
+
+    import runner
+
+    rt = runner.runtime()
+    assert rt.Audit.__name__ == "Audit"
+    assert not [n for n in sys.modules if n == "research" or n.startswith("research.")]

@@ -126,3 +126,18 @@ objects go into git.
 - **Change.** In `manifest.json` only, the pin for `h146_lookahead_exec/runtime.py` is updated to main's bytes, and
   `runtime_audit.py` is pinned as a parent source. No Python file changes, and no change to science, seeds, folds,
   arms, guards or decision rules. The single attempt has not started.
+
+## Amendment A2 (pre-outcome): release the early `research` namespace binding
+
+- **When and who.** Recorded 2026-11-02T21:38:57Z by the H-wave owner (rd_opus), after A1 (#2060, `8ccf821b`). The second
+  constructor smoke (`smoke-002`, no claim) stopped 2.2 s after start, in the pinned H50 `cpu_exact_fused.py`, on
+  `ModuleNotFoundError: research.levels`. This was before any model build, Native91 or TRAIN outcome.
+- **Why.** Since #2006, the H146 runtime imports `research.flywheel_selfplay.runtime_audit` with the JopeDime root
+  first on `sys.path`, which binds `research` to JopeDime's namespace package. The fused module then cannot import
+  JopeDimeMicro's regular `research` package (`python/research/levels`).
+- **Change.** In `runner.runtime()`, after loading the H146 runtime, the `research*` entries are dropped from
+  `sys.modules`; `runtime.Audit` keeps its class reference.
+  - A probe on xbabe1 with this exact change built the model: 47 adapter tensors, 29,211 trainable parameters.
+    Without it, the build fails.
+  - A data-free test checks that no `research` binding remains after `runtime()`.
+- **Unchanged.** Science, seeds, folds, arms, guards and decision rules. The single attempt has not started.

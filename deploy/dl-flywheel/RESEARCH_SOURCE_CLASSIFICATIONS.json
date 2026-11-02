@@ -4265,8 +4265,8 @@
       }
     },
     "python:research/flywheel_selfplay/h232_lion/runner.py": {
-      "bytes": 28792,
-      "sha256": "1f51e89f6538d29252cfa2823a5e2f776ee7ca60344771eeb0b278b9e3ce99dc",
+      "bytes": 29266,
+      "sha256": "45c1730b73446a5234efeb1600c6c005957784b7019a8a88af2ae2e1e18fa5ce",
       "classification": {
         "role": "research",
         "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."

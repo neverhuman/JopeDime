@@ -17,4 +17,4 @@
 - **Hard stops.** RSS ≥ 4 GiB, MemAvailable < 20 GiB, free disk < 150 GB, or the compute stop at
   2026-11-03T04:00:00Z. Single attempt.
 - **Code.** [runner.py](runner.py), [treatment.py](treatment.py) (Lion), [analysis.py](analysis.py),
-  [monitor.py](monitor.py) and [test_h232.py](test_h232.py) (13 data-free tests).
+  [monitor.py](monitor.py) and [test_h232.py](test_h232.py) (14 data-free tests).
