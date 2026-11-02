@@ -11,7 +11,8 @@ advisory_on = ["medium", "low", "info"]
 # do not alter Gitleaks, Rust/Python tests, or source content. Do not add
 # directories, broad globs, or unreviewed paths; each exact exception must be
 # removed when its rationale ends. P38 SQL/pinned-input dispositions are recorded
-# in docs/release/jankurai-pysqlpickle-exceptions-20261102.md.
+# in docs/release/jankurai-pysqlpickle-exceptions-20261102.md and
+# docs/release/jankurai-ciaudit-frozen-exceptions-20261102.md.
 # The eight restored DL exact-file custody exceptions and SHA bindings are recorded
 # in docs/release/browser-prediction-ci-repairs-20261102.md; frozen hash checks remain.
 # P48's two exact MicroAdmission source paths and reviewed finding fingerprints
@@ -39,6 +40,9 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+  # Ciaudit HLT-043 sha256:09d1f247...: this exact copy is byte-pinned by the
+  # hpc_verified_v5 provenance; its path-scoped Jankurai disposition is documented.
+  "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",
