@@ -119,10 +119,17 @@ pub fn fitted_public_cpp_unsupported(model: &BoundModel) -> Result<Option<Portab
     )
 }
 
+/// Versioned downstream artifact templates; Rust emits them but never executes them.
 pub fn fitted_portable_templates() -> BTreeMap<String, String> {
     [
-        ("matrix.py", include_str!("fitted_portable.py")),
-        ("matrix.js", include_str!("fitted_portable.js")),
+        (
+            "matrix.py",
+            include_str!("../../contracts/fitted_portable_py.template"),
+        ),
+        (
+            "matrix.js",
+            include_str!("../../contracts/fitted_portable.template"),
+        ),
         ("matrix.rs", include_str!("fitted_portable.rs.txt")),
     ]
     .into_iter()
@@ -459,12 +466,12 @@ pub fn emit_fitted_portable(model: &BoundModel) -> Result<FittedPortableSources>
     validate_state(&state)?;
     let serialized = serde_json::to_string(&state)?;
     let python = render(
-        include_str!("fitted_portable.py"),
+        include_str!("../../contracts/fitted_portable_py.template"),
         &[("__STATE_JSON__", serde_json::to_string(&serialized)?)],
     );
     let javascript = if fitted_javascript_unsupported(model)?.is_none() {
         Some(render(
-            include_str!("fitted_portable.js"),
+            include_str!("../../contracts/fitted_portable.template"),
             &[("__STATE_JSON__", serialized)],
         ))
     } else {

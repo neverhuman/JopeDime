@@ -121,10 +121,10 @@
       "lane": "emitters",
       "purpose": "exercise the feature math build generator"
     },
-    "crates/feat-math/cpp/fitted_runtime.cpp": {
+    "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp": {
       "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
-      "purpose": "compile and parity-check the generated C++ runtime"
+      "purpose": "exercise the pinned fitted-runtime C ABI oracle and sanitizer checks"
     },
     "crates/feat-math/examples/emit.rs": {
       "command": "cargo test -p feat-math --locked",

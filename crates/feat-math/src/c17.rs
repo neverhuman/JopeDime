@@ -29,7 +29,10 @@ pub fn emit(genome: &GenomeIr, options: &EmitOptions) -> Result<Emitted> {
     let pair = transpile::emit(genome, &framed)?;
     let rust_source_sha256 = sha256(pair.rust.as_bytes());
     let mut files: BTreeMap<String, String> = BTreeMap::from([
-        ("c17/model.h".into(), include_str!("c17/model.h").into()),
+        (
+            "c17/model.h".into(),
+            include_str!("../contracts/c17_model.h.template").into(),
+        ),
         (
             "c17/model_ffi.rs".into(),
             include_str!("c17/bridge.rs").into(),

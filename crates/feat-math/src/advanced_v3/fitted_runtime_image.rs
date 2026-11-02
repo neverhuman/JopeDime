@@ -1,4 +1,4 @@
-//! Immutable storage for the pinned, executable fitted runtime image.
+//! Immutable storage for fitted executable model images.
 
 use anyhow::{bail, Context, Result};
 use sha2::{Digest, Sha256};
@@ -6,7 +6,7 @@ use std::fs::File;
 
 pub(super) fn sealed_image(bytes: &[u8], expected_sha256: &str) -> Result<File> {
     if format!("{:x}", Sha256::digest(bytes)) != expected_sha256 {
-        bail!("fitted C++ runtime image SHA-256 mismatch");
+        bail!("fitted model image SHA-256 mismatch");
     }
     seal(bytes)
 }
@@ -39,14 +39,14 @@ fn seal(bytes: &[u8]) -> Result<File> {
     // SAFETY: F_GET_SEALS takes a live borrowed descriptor without a pointer.
     let actual = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GET_SEALS) };
     if actual < 0 || actual & seals != seals {
-        bail!("fitted C++ runtime image is not fully sealed");
+        bail!("fitted model image is not fully sealed");
     }
     Ok(file)
 }
 
 #[cfg(not(target_os = "linux"))]
 fn seal(_: &[u8]) -> Result<File> {
-    bail!("fitted C++ runtime requires Linux sealed executable storage")
+    bail!("fitted model loading requires Linux sealed executable storage")
 }
 
 #[cfg(all(test, target_os = "linux"))]

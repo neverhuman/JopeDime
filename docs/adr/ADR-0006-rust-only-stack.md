@@ -33,7 +33,7 @@ React, with live tools ported under differential tests and unused code archived.
    exception is GP-emitted Python and the harness that runs and checks it: the emitters target
    Python among other languages, and that output must be executed to prove parity.
 2. **Always keep** (not candidates for removal):
-   - the eight G files: `crates/feat-math/src/advanced_v3/fitted_portable.py`,
+   - the seven G files:
      `crates/feat-math/tests/portable/full_ref.py` (byte-pinned),
      `crates/jope-bench/src/panel/inference_boundary.py`,
      `crates/jope-bench/src/panel/inference_cpp_boundary.py`,
@@ -42,6 +42,26 @@ React, with live tools ported under differential tests and unused code archived.
    - `python3` in the runner image, for them;
    - the grammar files `featmath.py`, `tokens.py` and `automaton.py`, which are sha-pinned in
      assets, until phase P3 decides whether they are G or are ported.
+   - the fitted portable Python template at
+     `crates/feat-math/contracts/fitted_portable_py.template`: Rust validates the model,
+     serializes inference state, and emits this as the downstream `matrix.py` artifact;
+     JopeDime never executes the template. Its bytes are pinned by
+     `fitted_portable_template_bytes_are_pinned_for_version_three`, and the generated
+     Python output remains byte-identical. This is a generated contract, not a Python
+     runtime or service in the product stack.
+   - the fitted portable JavaScript template at
+     `crates/feat-math/contracts/fitted_portable.template`: the Rust emitter validates the model,
+     serializes inference state, and renders this versioned downstream artifact; JopeDime never
+     executes the JavaScript. The template SHA is pinned by
+     `fitted_portable_template_bytes_are_pinned_for_version_three`, and moving the source file
+     must preserve emitted artifact bytes. This is a generated contract, not a JavaScript runtime
+     or service in the product stack.
+   - the C17 ABI header template at
+     `crates/feat-math/contracts/c17_model.h.template`: Rust embeds it in the exported `c17/model.h`
+     bundle; JopeDime does not compile or execute the C header as runtime source. The C17 export
+     and ABI tests verify the generated header and consumer behavior, and its emitted bytes and
+     output path remain unchanged. This is a generated contract, not a C runtime in the product
+     stack.
 3. **Remove the rest in three phases**, each keeping every guard
    honest (coverage map, test inventory and its static-Python floor, capability matrix,
    `spec_drift` registry, ruff/pytest configuration, asset provenance) and never weakens one:

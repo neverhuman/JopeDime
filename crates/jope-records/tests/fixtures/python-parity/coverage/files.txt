@@ -105,7 +105,6 @@ crates/battle-gpu/src/lib.rs
 crates/feat-math/Cargo.toml
 crates/feat-math/assets/champions/8944cbdf.dsl
 crates/feat-math/build.rs
-crates/feat-math/cpp/fitted_runtime.cpp
 crates/feat-math/examples/emit.rs
 crates/feat-math/examples/evolve_smoke.rs
 crates/feat-math/examples/expression_benchmark.rs
@@ -196,6 +195,7 @@ crates/feat-math/tests/fixtures/emitted/portable-4lang.predictions.sha256
 crates/feat-math/tests/fixtures/emitted/portable-4lang.py.sha256
 crates/feat-math/tests/fixtures/emitted/portable-4lang.rs.sha256
 crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256
+crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp
 crates/feat-math/tests/golden.rs
 crates/feat-math/tests/ip_scrub.rs
 crates/feat-math/tests/kernel_codec.rs

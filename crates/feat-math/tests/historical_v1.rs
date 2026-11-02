@@ -789,6 +789,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         p45_race_pool_identity["source_commit"],
         "09653ef9a2a37e544b6ddff96d0a56e3d9f05847"
     );
+    let prodlang_rust_runtime =
+        old_fixture("transitions/prodlang_rust_runtime_identity_rebaseline.v1.json");
     let api03_id_newtypes =
         old_fixture("transitions/api03_id_newtypes_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
@@ -1380,6 +1382,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
+                prodlang_rust_runtime.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1458,6 +1461,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
+                prodlang_rust_runtime.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1529,6 +1533,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
+                prodlang_rust_runtime.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1631,6 +1636,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
+                prodlang_rust_runtime.clone(),
             ],
         ),
         (
@@ -1693,6 +1699,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
+                prodlang_rust_runtime.clone(),
             ],
         ),
     ] {
@@ -1803,6 +1810,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         browser_wasm,
         p35_corpus_identity,
         p45_race_pool_identity,
+        prodlang_rust_runtime,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

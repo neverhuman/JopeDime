@@ -184,3 +184,18 @@ main fixture. Cargo.lock, numerical/model/emitter/generator/search fixtures, eve
 transition and the known-identity table remain unchanged. The two metadata fixture hashes,
 old/new identities and committed generation source are recorded in
 `browser_wasm_identity_rebaseline.v1.json`; no shipped receipt or behavior rebaseline is claimed.
+
+## Current identity transition: fitted runtime moved to Rust (2026-11-02)
+
+P23 ports the fitted-language runtime from `crates/feat-math/cpp/fitted_runtime.cpp` to Rust,
+removing C++ from the product runtime surface while retaining the C++ implementation as a
+test-only parity oracle. The change follows the merged browser wasm32, P35 corpus and P45
+dedicated-pool identity transitions. The evaluator implementation hash advances from
+`0750e049cdabf54a4af94b6673790bd71f3600541e40f80cbeb55f81f211d37d` to
+`10fe3dee6daf50c3b54362df80cbcb60774c6169563fcba2c3c0036ab5e3dfda`, and the identity digest
+from `77af8284de8e3e6e80177660f1d72c0790540be4e8556bca9382f6352a09bece` to
+`8fe007189bca9fe7e0d92b85b509ac79c116616e41a16bb5a0c4bf93d1dda9d6`. Announced identity-only
+regeneration records the fitted runtime source change; the DSL ABI, emitted bytes, Cargo.lock
+and known-identity table remain unchanged. The transition is registered in
+`prodlang_rust_runtime_identity_rebaseline.v1.json`. No shipped receipt or behavior rebaseline
+is claimed.

@@ -220,6 +220,13 @@ fn fixture_path(relative: &str) -> PathBuf {
 }
 
 fn read_repo_file(relative: &str) -> Vec<u8> {
+    // frozen_pins.v1.json preserves the historical source key. The bytes now
+    // live only under tests/fixtures, outside the product runtime surface.
+    let relative = if relative == "crates/feat-math/cpp/fitted_runtime.cpp" {
+        "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp"
+    } else {
+        relative
+    };
     std::fs::read(repo_root().join(relative)).unwrap_or_else(|error| panic!("{relative}: {error}"))
 }
 
@@ -2711,7 +2718,6 @@ const FROZEN_FILES: &[(&str, &str)] = &[
     ("crates/jope-policy/release/policy-step-60000.semantic-v1.json", "the accepted semantic manifest (jope-policy ACCEPTED_SEMANTIC_MANIFEST_SHA256)"),
     ("crates/feat-math/src/registry.rs", "the wire registry (registry_hash) and the line numbers registry_dump recomputes for the ADR-0002 snapshot check; the registry is not edited this release (plan OQ-1)"),
     ("crates/feat-math/assets/champions/8944cbdf.dsl", "the champion program (CHAMPION_GENOME)"),
-    ("crates/feat-math/cpp/fitted_runtime.cpp", "the fitted C++ runtime bound into fitted containers (runtime_source_sha256)"),
     ("crates/feat-math/tests/fixtures/emitted/8944cbdf.predictions.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/8944cbdf.py.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/8944cbdf.rs.sha256", EMITTED_PIN_WHY),
@@ -2723,6 +2729,7 @@ const FROZEN_FILES: &[(&str, &str)] = &[
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.py.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.rs.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256", EMITTED_PIN_WHY),
+    ("crates/feat-math/cpp/fitted_runtime.cpp", "the immutable legacy pin key is read from tests/fixtures/fitted_runtime_oracle.cpp (runtime_source_sha256)"),
 ];
 
 #[derive(Debug, Serialize, Deserialize)]
