@@ -1,5 +1,24 @@
 # Streaming runtime boundary exception
 
+## Telemetry entropy metric false positive
+
+- **Owner authorization:** Jepson, via the P34 cap assignment on 2026-11-02.
+- **Owner:** `jope-telemetry`.
+- **Scope:** the exact Jankurai scoring exception for
+  `crates/jope-telemetry/src/gp.rs`. HLT-019 matches `nats` inside
+  `op_entropy_nats`, the generation entropy statistic computed with natural
+  logarithms (`p * p.ln()`). The file implements telemetry statistics and has
+  no queue or streaming client.
+- **Review expiry:** 2027-02-01. Recheck the metric implementation and client
+  inventory before renewal.
+- **Migration path:** remove this exact-file exception after the pinned
+  detector uses token-boundary matching and a fresh full audit confirms the
+  metric field no longer matches.
+- **Evidence and limits:** `Tracker::summarize` computes Shannon entropy from
+  operation frequencies using `ln`; the per-file exception suppresses only
+  Jankurai scoring for `gp.rs`. Rust tests, Clippy, Gitleaks and other scanners
+  continue to inspect the file.
+
 ## Scoped false positive in sealed storage
 
 - **Owner authorization:** Jepson, via the P34 packet direction on 2026-11-02.

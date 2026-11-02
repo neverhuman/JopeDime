@@ -103,6 +103,8 @@ extra_excluded_paths = [
   "crates/jope-service/src/store/mod.rs",
   "crates/jope-service/src/telemetry.rs",
   "crates/jope-service/src/worker/frame.rs",
+  # Entropy is measured in nats (natural logarithmic units); no queue client is present.
+  "crates/jope-telemetry/src/gp.rs",
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
   # P38: pinned research artifacts load only inputs whose complete identity is checked.
   "research/flywheel_selfplay/h101_w6_proposer_transfer_prep/w6_transfer_prep.py",
