@@ -5554,6 +5554,16 @@
       "lanes": [],
       "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
     },
+    "python:research/flywheel_selfplay/h204_bigger_proposer/test_h204.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H204 bigger proposer (widths 128 -> 256 -> 512) data-free CPU controls: shared #1726 research DOPE opt-in and serving refusal, #1730 numeric-thread admission, step-0 live token bridge parity, pairwise cost ranking loss direction, R882_CONT adapter continuation, Rust CV evaluator signature binding and exact 91-context r882 parity/gate checks. Research only; not a live GPU or serving qualification."
+    },
     "python:research/flywheel_selfplay/h206_search_distill/test_h206.py": {
       "discovery": {
         "kind": "python-family"
@@ -14845,6 +14855,16 @@
       ],
       "lanes": [],
       "scope": "H209 data-free CPU fixtures: actual optimizer/forward change, zero-reference/tie semantics, B harm and strict-gain boundary, role refusal before reads, limited reveal decoding, current-load/disk guards, independent family folds, exact native vector, pooled primary gate, create-only versioned S3 corruption refusal and unmerged-launch refusal. No real cohort or GPU opened."
+    },
+    "python:research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H205 fresh vs static data and static teacher 50-round r882 study (STATIC-DATA, STATIC-TEACHER, FRESH): data-free equal-compute 50x16 microbatch schedule, shared fresh schedule, frozen-teacher identity, H178 per-round 205-family pooled cross-fit selector, native r882 91/91 parity gate, JRB-01 fresh D4 regression admission/label validator, and thread-rule-(b) monitor controls. Research only; no product or sealed qualification."
     },
     "python:research/flywheel_selfplay/h210_blend025_gated_retry/test_h210.py": {
       "discovery": {

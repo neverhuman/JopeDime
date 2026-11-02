@@ -1,0 +1,150 @@
+{
+  "wave": "H205",
+  "status": "INCOMPLETE",
+  "scientific_disposition": "EXPLORATORY_NONCONFORMING_HELD_AT_FRESH_BOUNDARY",
+  "causal_h205_claim_status": "NOT_QUALIFIED_NO_ADVANCE",
+  "verdict": "NO_ADVANCE",
+  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
+  "optimizer_updates": 1500,
+  "exploratory_static_data_updates": 750,
+  "exploratory_static_teacher_updates": 750,
+  "fresh_updates": 0,
+  "scored_contexts": 1310,
+  "stage0_r882_parity": {
+    "status": "PASS",
+    "dl_val_contexts": 91,
+    "mean": 1.1377941898164525,
+    "bit_exact": true
+  },
+  "static_teacher_infra": {
+    "status": "READY",
+    "teacher_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "cached_contexts": 1219,
+    "r882_train_mean": 1.423073434552299
+  },
+  "missing_evidence_limits": {
+    "static_b_panel": null,
+    "static_a_panel": null,
+    "teacher_b_panel": null,
+    "teacher_a_panel": null,
+    "fresh_b_panel": null,
+    "fresh_a_panel": null,
+    "pooled_b_selection_lock": null,
+    "elo_ratings": null,
+    "saved_adapter_checkpoints": null,
+    "missing_reason": "In runner.py at 812ec1ee78cc32a70bb275c109b0c2138d0fb3b8, static_b_panel, static_a_panel, teacher_b_panel, teacher_a_panel, and round_log were held in process memory across Stage 1 and were not flushed to disk before the Stage 2 receipt wait loop (lines 401-420), where owned worker PID 170087 was safely stopped via SIGTERM before FRESH could trigger. No raw score panels or checkpoints were rescued or reconstructed by an unregistered rerun."
+  },
+  "attempts_ledger": [
+    {
+      "attempt_id": "run-20261102T0355Z",
+      "source_commit": "357fc075c913b4e4b883d305ce6009c4d727327f",
+      "status": "FAILED_STAGE0_PARSER",
+      "elapsed_wall_seconds": 11.552287836093456,
+      "optimizer_updates": 0,
+      "scored_contexts": 91,
+      "reason": "KeyError: 'values' when reading best_dev_checkpoint.json before Stage 0 completion"
+    },
+    {
+      "attempt_id": "run-20261102T0358Z",
+      "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
+      "original_prereg_sha256": "7b2b042b4a40dbb9ecc04e587d51647f9431527e7ff74a277f5ead4bd605c18d",
+      "original_manifest_sha256": "aef78c471ebde5bbbb93d3be998bac929b3b5ebfd43e6706eb827b451d6d54a9",
+      "original_runner_sha256": "ad5c228ae5f44e7353bb90bb1c0e52cf333295318f625e3463e5272c5f50bd31",
+      "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING",
+      "worker_pid": 170087,
+      "monitor_pid": 170003,
+      "exit_code": -15,
+      "elapsed_wall_seconds": 1959.3849376700819,
+      "optimizer_updates": 1500,
+      "static_data_updates": 750,
+      "static_teacher_updates": 750,
+      "fresh_updates": 0,
+      "scored_contexts": 1310
+    }
+  ],
+  "cumulative_budget_ledger": {
+    "total_elapsed_wall_seconds": 1970.9372255061753,
+    "campaign_wall_budget_cap_seconds": 25200.0,
+    "remaining_wall_budget_seconds": 23229.062774493825,
+    "budget_reset": false
+  },
+  "s3_terminal_custody": {
+    "bucket": "veox-jopedime-learning-use2",
+    "prefix": "experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/",
+    "terminal_custody_manifest_key": "experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/terminal_custody_manifest_20261102T0502Z.json",
+    "terminal_custody_manifest_version_id": "BInrGnjKhZOFhuK5qS9ZOA.EcIsGFwAS",
+    "terminal_custody_manifest_sha256": "f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186",
+    "verified_members": [
+      {
+        "name": "disposition_nonconforming_hold.json",
+        "version_id": "eR0i4LeBLsPubzVMAXLedPUw73jCI3DK",
+        "size_bytes": 4859,
+        "local_sha256": "65abc94a36ae039e68a6a30e9092437bf216a0b3d0416609e182d23c436734ae",
+        "downloaded_version_sha256": "65abc94a36ae039e68a6a30e9092437bf216a0b3d0416609e182d23c436734ae"
+      },
+      {
+        "name": "gpu-device.json",
+        "version_id": "E5gx51svWTEKgFS5pC.Y7cwDkeuHuJyI",
+        "size_bytes": 495,
+        "local_sha256": "9e771c72892faa93b2c03ca13ec159378931efce3fb413b276b55aaeac0bf7da",
+        "downloaded_version_sha256": "9e771c72892faa93b2c03ca13ec159378931efce3fb413b276b55aaeac0bf7da"
+      },
+      {
+        "name": "launch.json",
+        "version_id": "O56Fs9Xt.777HU97iOeZStJctKnncwsf",
+        "size_bytes": 979,
+        "local_sha256": "83ba869c318ca48c016c4021286148b378d0fa0581257f953c8d960d029743f0",
+        "downloaded_version_sha256": "83ba869c318ca48c016c4021286148b378d0fa0581257f953c8d960d029743f0"
+      },
+      {
+        "name": "progress.json",
+        "version_id": "N_yw8zfAtYWl8U3d_O8uAKYk06jY8i_4",
+        "size_bytes": 407,
+        "local_sha256": "2e22e157518bcea9100dcd84b209f2055e5c2f3d89847cc03e1cf11de356a2fc",
+        "downloaded_version_sha256": "2e22e157518bcea9100dcd84b209f2055e5c2f3d89847cc03e1cf11de356a2fc"
+      },
+      {
+        "name": "resource_summary.json",
+        "version_id": "15JC24QtRVNMahxoln4AsUV30Cou9Yh_",
+        "size_bytes": 282,
+        "local_sha256": "f31afd1b82d1bcf42b3a56bad8ee6b8af0f573c374f198a31cee093599b5443e",
+        "downloaded_version_sha256": "f31afd1b82d1bcf42b3a56bad8ee6b8af0f573c374f198a31cee093599b5443e"
+      },
+      {
+        "name": "resources.jsonl",
+        "version_id": "LGy_aWZudyBlQvQ6oPZgWQH5se9XfgOd",
+        "size_bytes": 729390,
+        "local_sha256": "ac32a31d18a0159dddc42e040e26f358b9484b03ffc86f91105854fd6ae35611",
+        "downloaded_version_sha256": "ac32a31d18a0159dddc42e040e26f358b9484b03ffc86f91105854fd6ae35611"
+      },
+      {
+        "name": "s3_launch_custody.json",
+        "version_id": "b_ppBxgF_slNoylPSy9nlb4a6YDrsrPt",
+        "size_bytes": 1566,
+        "local_sha256": "69f282c0a43f38ad48c36aee8cf0ae366a79a1b82085cdb724b37061a453cb23",
+        "downloaded_version_sha256": "69f282c0a43f38ad48c36aee8cf0ae366a79a1b82085cdb724b37061a453cb23"
+      },
+      {
+        "name": "stage0_r882_parity.json",
+        "version_id": "hxYKFKzErP2Za5LDbQhl3.hAJFWx1Z3A",
+        "size_bytes": 99,
+        "local_sha256": "0ba20d837e640d7fb6b2a1670c188d61d23a94f30e93092cf78b42339718e571",
+        "downloaded_version_sha256": "0ba20d837e640d7fb6b2a1670c188d61d23a94f30e93092cf78b42339718e571"
+      },
+      {
+        "name": "static_teacher_infra.json",
+        "version_id": "skGPR7mE1iF4CBNU.n8jEiaabsVLpE.T",
+        "size_bytes": 235,
+        "local_sha256": "b93cba069e2fe74406791e106412259ac4d268dde729e7e7ac2f3ec4e59c89f7",
+        "downloaded_version_sha256": "b93cba069e2fe74406791e106412259ac4d268dde729e7e7ac2f3ec4e59c89f7"
+      },
+      {
+        "name": "stdout.log",
+        "version_id": "fS2n0Km2JGpK8d.j0lNYGeJafK4wzunL",
+        "size_bytes": 542,
+        "local_sha256": "8c1962081bc6a179ace241b6e22adbbcbdb93c2100040a8dbe90fc43378c9393",
+        "downloaded_version_sha256": "8c1962081bc6a179ace241b6e22adbbcbdb93c2100040a8dbe90fc43378c9393"
+      }
+    ]
+  }
+}

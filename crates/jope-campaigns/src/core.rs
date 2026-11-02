@@ -36,18 +36,15 @@ fn physical_cores_from(cpu_root: &std::path::Path, allowed: &[usize]) -> Result<
 }
 
 fn allowed_cpus() -> Result<Vec<usize>> {
-    // SAFETY: sched_getaffinity writes to this live, correctly sized set for the calling thread;
-    // CPU_ISSET below only reads indices within CPU_SETSIZE after the syscall succeeds.
-    unsafe {
-        // SAFETY: cpu_set_t contains only integer mask words, for which zeroed is valid.
-        let mut set: libc::cpu_set_t = std::mem::zeroed();
-        if libc::sched_getaffinity(0, std::mem::size_of::<libc::cpu_set_t>(), &mut set) != 0 {
-            return Err(std::io::Error::last_os_error()).context("read process CPU affinity");
+    let set = nix::sched::sched_getaffinity(nix::unistd::Pid::from_raw(0))
+        .context("read process CPU affinity")?;
+    let mut cpus = Vec::new();
+    for cpu in 0..nix::sched::CpuSet::count() {
+        if set.is_set(cpu).context("check process CPU affinity")? {
+            cpus.push(cpu);
         }
-        Ok((0..libc::CPU_SETSIZE as usize)
-            .filter(|cpu| libc::CPU_ISSET(*cpu, &set))
-            .collect())
     }
+    Ok(cpus)
 }
 
 fn read_i32(path: &std::path::Path) -> Result<i32> {
@@ -72,31 +69,16 @@ fn core_plan(cores: Vec<usize>, count: usize) -> Result<Vec<usize>> {
 }
 
 pub(crate) fn pin_current_thread(cpu: usize) -> Result<()> {
-    if cpu >= libc::CPU_SETSIZE as usize {
+    if cpu >= nix::sched::CpuSet::count() {
         bail!(
             "CPU index {cpu} exceeds affinity mask capacity {}",
-            libc::CPU_SETSIZE
+            nix::sched::CpuSet::count()
         );
     }
-    // SAFETY: the checked index fits the set, and pthread_setaffinity_np borrows its sized
-    // storage only for this call. pthread_self identifies the live calling thread.
-    unsafe {
-        // SAFETY: cpu_set_t contains only integer mask words, for which zeroed is valid.
-        let mut set: libc::cpu_set_t = std::mem::zeroed();
-        libc::CPU_ZERO(&mut set);
-        libc::CPU_SET(cpu, &mut set);
-        let code = libc::pthread_setaffinity_np(
-            libc::pthread_self(),
-            std::mem::size_of::<libc::cpu_set_t>(),
-            &set,
-        );
-        if code != 0 {
-            bail!(
-                "pin current thread to CPU {cpu}: {}",
-                std::io::Error::from_raw_os_error(code)
-            );
-        }
-    }
+    let mut set = nix::sched::CpuSet::new();
+    set.set(cpu).context("add CPU to current-thread affinity")?;
+    nix::sched::sched_setaffinity(nix::unistd::Pid::from_raw(0), &set)
+        .with_context(|| format!("pin current thread to CPU {cpu}"))?;
     Ok(())
 }
 
