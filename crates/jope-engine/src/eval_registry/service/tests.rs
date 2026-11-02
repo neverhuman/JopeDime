@@ -17,8 +17,7 @@ impl ExecutablePeer {
                 // Linux can briefly retain deny-write access while the previous exec mapping is
                 // torn down. Keep the same-inode rewrite test strict, but tolerate that race.
                 Err(error)
-                    if error.raw_os_error() == Some(libc::ETXTBSY)
-                        && Instant::now() < deadline =>
+                    if error.raw_os_error() == Some(libc::ETXTBSY) && Instant::now() < deadline =>
                 {
                     std::thread::sleep(Duration::from_millis(10));
                 }
