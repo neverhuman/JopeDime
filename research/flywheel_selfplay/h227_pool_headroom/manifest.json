@@ -2,7 +2,7 @@
   "schema": "jope.h227.pool-headroom/v1",
   "wave": "H227",
   "owner": "luna_v1_res08",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "CLOSED_INCOMPLETE",
   "authority": "/home/ubuntu/nudges/hw_t1530_res08_h227.md",
   "recorded_utc": "2026-11-02T15:57:26.092636+00:00",
   "source_parent": "31207ade1cb12da1df2036d1adbbfcc50c3d8dce",
@@ -171,11 +171,69 @@
   "execution": "Immutable Git objects at exact merged source, own process tree/roots; no checkout/HEAD/index mutation on xbabe1 object cache",
   "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H227/res08-t1530/",
   "outcome": {
-    "status": "NOT_RUN",
-    "primary_units": 0,
+    "status": "INCOMPLETE",
+    "verdict": "INCOMPLETE",
+    "complete_units": 76,
+    "planned_units": 273,
+    "known_native_records_primary": 4869,
+    "smoke_native_records": 64,
+    "additional_interrupted_native_calls": null,
     "optimizer_updates": 0,
     "median_gain": null,
     "ci95": null,
-    "elo": null
+    "elo": null,
+    "oracle_summary": null,
+    "final_in_memory_DOPE_observation": null,
+    "scientific_retry": false
+  },
+  "execution_source_commit": "1b463762b90c2f5f4db8143483026802e2947d03",
+  "preregistration_manifest": {
+    "source_commit": "1b463762b90c2f5f4db8143483026802e2947d03",
+    "path": "research/flywheel_selfplay/h227_pool_headroom/manifest.json",
+    "sha256": "560e7d1536cf7efe91584d567f1b7d4a50d2a2e1871b163068c7ec804fd027e2"
+  },
+  "terminal_custody": {
+    "schema": "jope.h227.custody-receipt/v1",
+    "verified_utc": "2026-11-02T16:52:31.438627+00:00",
+    "source_commit": "1b463762b90c2f5f4db8143483026802e2947d03",
+    "status": "EXACT_VERSION_OBJECT_AND_MEMBER_REPLAY_PASS",
+    "scientific_status": "INCOMPLETE",
+    "scientific_verdict": "INCOMPLETE",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H227/res08-t1530/terminal-1b463762b90c-c4fde112a6889695/H227-execution-output.zip",
+      "version_id": "tUawTBgHrNjbqveS5JHC85ln95duAB6N",
+      "sha256": "c4fde112a688969537901fde601d07c95bc137d0d2011d889334315aa6ce620a",
+      "bytes": 4410203
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H227/res08-t1530/terminal-1b463762b90c-c4fde112a6889695/H227-terminal-manifest.json",
+      "version_id": "4jjn4yf3dDrH1_pbwlr025U5OpRA23tz",
+      "sha256": "c6d2c8ccb64d7d992a421a1b33a0632f72a44d891253f2fd0afcc9f60bb070df",
+      "bytes": 26251
+    },
+    "verified_members": 81,
+    "create_only_if_none_match": "*",
+    "exact_version_archive_and_manifest_bytes_verified": true,
+    "archive_member_sha256s_verified": true,
+    "raw_roots_retained": true,
+    "scientific_retry": false
+  },
+  "resource_termination": {
+    "terminal_utc": "2026-11-02T16:45:06.548445+00:00",
+    "actual_worker_exit": -15,
+    "error": "hard RSS/MemAvailable/disk/output/deadline guard",
+    "violating_field": null,
+    "violating_observation": null,
+    "last_recorded_observation": {
+      "at": "2026-11-02T16:45:04.979956+00:00",
+      "host": "xbabe1",
+      "nice": 19,
+      "affinity": 4,
+      "rss": 416927744,
+      "ram": 11105603584,
+      "free": 192175931392,
+      "output": 28081140,
+      "load5": 56.79150390625
+    }
   }
 }
