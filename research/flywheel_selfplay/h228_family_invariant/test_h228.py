@@ -400,6 +400,57 @@ def test_actual_resource_guard_uses_20gib_300gb_6gib_and_4cores():
                 dict(sample, **{key: value}), state=runner.SustainedLoad(), now=1
             )
 
+    # Verify pause_on_trip=True pauses/waits and persists exact violating_field + violating_value
+    log_buf = io.StringIO()
+    seq = [dict(sample, available=18 * 2**30), dict(sample, available=22 * 2**30)]
+    it = iter(seq)
+    original_snap = runner.snapshot
+    original_sleep = runner.time.sleep
+    try:
+        runner.snapshot = lambda: next(it)
+        runner.time.sleep = lambda s: None
+        recovered = runner.guard(
+            dict(sample, available=15 * 2**30),
+            state=runner.SustainedLoad(),
+            now=1,
+            pause_on_trip=True,
+            log_file=log_buf,
+            started=0.0,
+            deadline_epoch=9999999999,
+        )
+    finally:
+        runner.snapshot = original_snap
+        runner.time.sleep = original_sleep
+    assert recovered["guard_trip"] is False
+    logged = [json.loads(line) for line in log_buf.getvalue().splitlines()]
+    assert len(logged) == 2
+    assert logged[0]["paused_on_guard_trip"] is True
+    assert logged[0]["violating_field"] == "available"
+    assert logged[0]["violating_value"] == 15 * 2**30
+    assert logged[1]["violating_field"] == "available"
+    assert logged[1]["violating_value"] == 18 * 2**30
+
+    # Also verify launch.guard_violations reports violating_field + violating_value
+    launch = load("launch")
+    ls = dict(
+        load1=1.0,
+        load5=62.5,
+        effective_cores=4,
+        host_cores=76,
+        cpu_percent=10.0,
+        available=25 * 2**30,
+        swap_free=0,
+        free=350_000_000_000,
+        used_fraction=0.70,
+        child_rss=1_000_000_000,
+        overloaded=False,
+    )
+    v = launch.guard_violations(ls, paused=False)
+    assert ls["guard_trip"] is True
+    assert ls["violating_field"] == "load5"
+    assert ls["violating_value"] == pytest.approx(62.5)
+    assert len(v) == 1
+
 
 def test_readout_strict_margin_002_exact_tie_rejection_holm2_and_breakthrough():
     families = list(map(str, range(205)))

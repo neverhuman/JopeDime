@@ -2,6 +2,7 @@
 
 import argparse
 from collections import OrderedDict
+import gc
 import hashlib
 import importlib.metadata
 import io
@@ -244,7 +245,48 @@ class SustainedLoad:
 LOAD_STATE = SustainedLoad()
 
 
-def guard(s, *, state=None, now=None, admission=False):
+def guard_violations(s, *, admission=False, overloaded=False):
+    host_cores = s.get("host_cores", s["cores"])
+    violations = []
+    if s["available"] < 20 * 2**30:
+        violations.append(
+            dict(field="available", value=s["available"], limit=20 * 2**30)
+        )
+    if s["free"] < 300_000_000_000:
+        violations.append(dict(field="free", value=s["free"], limit=300_000_000_000))
+    if s["rss"] >= 6_000_000_000:
+        violations.append(dict(field="rss", value=s["rss"], limit=6_000_000_000))
+    if s["cores"] > 4:
+        violations.append(dict(field="cores", value=s["cores"], limit=4))
+    if admission:
+        if s["load"] > 0.85 * host_cores:
+            violations.append(
+                dict(field="load", value=s["load"], limit=0.85 * host_cores)
+            )
+        if s["load5"] > 85:
+            violations.append(dict(field="load5", value=s["load5"], limit=85))
+        if s["cpu"] > 85:
+            violations.append(dict(field="cpu", value=s["cpu"], limit=85))
+        if overloaded:
+            violations.append(dict(field="overloaded", value=True, limit=False))
+    s["guard_trip"] = bool(violations)
+    s["violating_field"] = violations[0]["field"] if violations else None
+    s["violating_value"] = violations[0]["value"] if violations else None
+    s["violations"] = violations
+    return violations
+
+
+def guard(
+    s,
+    *,
+    state=None,
+    now=None,
+    admission=False,
+    pause_on_trip=False,
+    log_file=None,
+    started=0.0,
+    deadline_epoch=None,
+):
     state = LOAD_STATE if state is None else state
     host_cores = s.get("host_cores", s["cores"])
     overloaded = state.overloaded(
@@ -257,17 +299,51 @@ def guard(s, *, state=None, now=None, admission=False):
     s.update(
         load_over_seconds=state.elapsed["load"], cpu_over_seconds=state.elapsed["cpu"]
     )
-    if (
-        s["available"] < 20 * 2**30
-        or s["free"] < 300_000_000_000
-        or s["rss"] >= 6_000_000_000
-        or s["cores"] > 4
-    ):
-        raise RuntimeError("resource refusal: " + repr(s))
-    if admission and (
-        overloaded or s["load"] > 0.85 * host_cores or s["load5"] > 85 or s["cpu"] > 85
-    ):
-        raise RuntimeError("resource refusal: " + repr(s))
+    violations = guard_violations(s, admission=admission, overloaded=overloaded)
+    if not violations:
+        return s
+    if not pause_on_trip:
+        raise RuntimeError(
+            f"resource refusal ({s['violating_field']}={s['violating_value']}): {s!r}"
+        )
+    # Pause-and-wait on guard trip (hw_t1700_argon_h228_launch.md): persist violating
+    # field+value to log and wait for recovery rather than exiting.
+    while violations:
+        if s["cores"] > 4:
+            os.sched_setaffinity(0, {0, 1, 2, 3})
+        if s["rss"] >= 6_000_000_000 or s["available"] < 20 * 2**30:
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        if log_file is not None:
+            log_file.write(
+                json.dumps(
+                    dict(
+                        s, paused_on_guard_trip=True, elapsed=time.monotonic() - started
+                    )
+                )
+                + "\n"
+            )
+            log_file.flush()
+        if deadline_epoch is not None and time.time() >= deadline_epoch:
+            raise RuntimeError(
+                f"fixed supervisor deadline exceeded during guard pause ({s['violating_field']}={s['violating_value']})"
+            )
+        time.sleep(2)
+        s = snapshot()
+        overloaded = state.overloaded(
+            s["load"],
+            s["load5"],
+            s["cpu"],
+            s.get("host_cores", s["cores"]),
+            time.monotonic(),
+        )
+        s.update(
+            load_over_seconds=state.elapsed["load"],
+            cpu_over_seconds=state.elapsed["cpu"],
+        )
+        violations = guard_violations(s, admission=admission, overloaded=overloaded)
+    return s
 
 
 def cohort(packet):
@@ -301,7 +377,6 @@ def run(args):
         raise RuntimeError("xbabe2 GPU0 only")
     psutil.cpu_percent()
     time.sleep(1)
-    guard(snapshot(), admission=False)
     if args.output.exists():
         raise RuntimeError("fresh output required")
     pins = json.loads(source(args.repo, args.commit, PREFIX + "manifest.json"))
@@ -321,6 +396,14 @@ def run(args):
         (args.output.parent / "attempt1-claim.json").read_text()
     )["deadline_epoch"]
     resources = (args.output / "resources.jsonl").open("x")
+    guard(
+        snapshot(),
+        admission=False,
+        pause_on_trip=True,
+        log_file=resources,
+        started=started,
+        deadline_epoch=absolute_deadline,
+    )
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     torch.use_deterministic_algorithms(True)
@@ -368,11 +451,18 @@ def run(args):
         last_check = time.monotonic()
         try:
             sample = snapshot()
+            guard_violations(sample, admission=False, overloaded=False)
             resources.write(
                 json.dumps(dict(sample, elapsed=time.monotonic() - started)) + "\n"
             )
             resources.flush()
-            guard(sample)
+            guard(
+                sample,
+                pause_on_trip=True,
+                log_file=resources,
+                started=started,
+                deadline_epoch=absolute_deadline,
+            )
             if (
                 time.monotonic() - started > 5400
                 or sum(p.stat().st_size for p in args.output.rglob("*") if p.is_file())

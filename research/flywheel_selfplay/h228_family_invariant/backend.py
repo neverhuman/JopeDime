@@ -1,6 +1,7 @@
 """GPU adapter-only H228 training: CTRL, AND-mask (tau=0.8), GroupDRO (eta=0.01), and shuffled-mask placebo."""
 
-from collections import Counter
+from collections import Counter, OrderedDict
+import gc
 import hashlib
 import io
 import json
@@ -44,8 +45,8 @@ class Engine:
         self.initial = {
             n: dict(net.named_parameters())[n].detach().cpu().clone() for n in names
         }
-        self.full = {}
-        self.labels_cache = {}
+        self.full = OrderedDict()
+        self.labels_cache = OrderedDict()
 
     def restore(self, state):
         restore(self.net, self.names, state)
@@ -95,6 +96,10 @@ class Engine:
                 kwargs["revealed_gate"],
                 *anchor,
             )
+            if isinstance(self.full, OrderedDict) and len(self.full) > 320:
+                self.full.popitem(last=False)
+        if isinstance(self.full, OrderedDict):
+            self.full.move_to_end(cid)
         return self.full[cid]
 
     def score(self, cid):
@@ -387,6 +392,9 @@ class Engine:
             checkpoint_sha256=legacy._sha256(staged),
         )
         self.store.put("proofs/" + label + ".json", (json.dumps(proof) + "\n").encode())
+        optimizer.zero_grad(set_to_none=True)
+        del optimizer
+        gc.collect()
         return state, proof
 
 
