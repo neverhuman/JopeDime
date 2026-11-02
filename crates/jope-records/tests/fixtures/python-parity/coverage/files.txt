@@ -2978,6 +2978,7 @@ python/src/jope/encoders/__init__.py
 python/src/jope/encoders/foundation.py
 python/src/jope/encoders/projection.py
 python/src/jope/engines.py
+python/src/jope/engines_config.py
 python/src/jope/eval_ledger.py
 python/src/jope/evaluate_active.py
 python/src/jope/evidence_persistence.py
