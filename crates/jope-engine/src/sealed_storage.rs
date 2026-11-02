@@ -7,7 +7,6 @@ use std::{
     os::{
         fd::{AsRawFd, FromRawFd, OwnedFd},
         unix::{
-            ffi::OsStrExt,
             fs::{FileExt, MetadataExt},
             net::UnixStream,
         },
@@ -20,20 +19,9 @@ pub fn connect_bounded(path: &Path, window: std::time::Duration) -> std::io::Res
     let end = std::time::Instant::now()
         .checked_add(window)
         .ok_or_else(|| std::io::Error::other("socket deadline overflow"))?;
-    let mut address = libc::sockaddr_un {
-        sun_family: libc::AF_UNIX as libc::sa_family_t,
-        sun_path: [0; 108],
-    };
-    let bytes = path.as_os_str().as_bytes();
-    if bytes.len() >= address.sun_path.len() || bytes.contains(&0) {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "invalid Unix socket path",
-        ));
-    }
-    for (target, byte) in address.sun_path.iter_mut().zip(bytes) {
-        *target = *byte as libc::c_char;
-    }
+    let address = nix::sys::socket::UnixAddr::new(path).map_err(|_| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "invalid Unix socket path")
+    })?;
     loop {
         if std::time::Instant::now() >= end {
             return Err(std::io::Error::new(
@@ -56,23 +44,18 @@ pub fn connect_bounded(path: &Path, window: std::time::Duration) -> std::io::Res
         // SAFETY: socket returned this fresh, nonnegative stream descriptor;
         // no other Rust owner exists, and stream closes it on every exit path.
         let stream = unsafe { UnixStream::from_raw_fd(fd) };
-        // SAFETY: address lives through connect; its length includes the fixed
-        // prefix and validated path plus terminator, within sockaddr_un.
-        let rc = unsafe {
-            libc::connect(
-                fd,
-                (&address as *const libc::sockaddr_un).cast(),
-                (std::mem::offset_of!(libc::sockaddr_un, sun_path) + bytes.len() + 1)
-                    as libc::socklen_t,
-            )
-        };
-        if rc == 0 {
-            stream.set_nonblocking(false)?;
-            return Ok(stream);
-        }
-        let error = std::io::Error::last_os_error();
-        if error.kind() != std::io::ErrorKind::WouldBlock {
-            return Err(error);
+        // The validated socket address remains live for the connect call.
+        match nix::sys::socket::connect(fd, &address) {
+            Ok(()) => {
+                stream.set_nonblocking(false)?;
+                return Ok(stream);
+            }
+            Err(errno) => {
+                let error = std::io::Error::from(errno);
+                if error.kind() != std::io::ErrorKind::WouldBlock {
+                    return Err(error);
+                }
+            }
         }
         drop(stream);
         std::thread::sleep(
