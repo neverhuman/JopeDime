@@ -648,7 +648,12 @@ pub fn cloud_command(command: CloudCommand) -> Result<()> {
             };
             for snapshot in runs {
                 println!("{}", sync_snapshot(&snapshot, &version)?);
-                println!("{}", sync_events(&local, &snapshot)?);
+                // Reported, not fatal: a workspace without the events endpoint still syncs runs.
+                println!(
+                    "{}",
+                    sync_events(&local, &snapshot)
+                        .unwrap_or_else(|error| format!("Run events: {error:#}"))
+                );
             }
         }
         CloudCommand::Publish {
