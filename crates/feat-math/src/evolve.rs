@@ -10,13 +10,6 @@
 
 pub mod api;
 
-mod genetics;
-pub(super) use genetics::*;
-mod fitness;
-pub(super) use fitness::*;
-mod evolve_core;
-pub use evolve_core::evolve;
-
 use crate::credit::TokenLedger;
 use crate::dsl::{DslExpr, ParamValue, Stage};
 use crate::heads::RidgeModel;
@@ -358,7 +351,871 @@ impl RidgeScoring {
 // B11 ridge scoring: end
 
 #[cfg(test)]
-mod gpu_screen_tests;
+mod gpu_screen_tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    const PARITY_ABS_TOL: f64 = 5e-3;
+    const TEST_EVALUATOR_RELEASE_SHA256: &str =
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    type Rung0TestRun = (
+        Vec<Option<Vec<f64>>>,
+        Rung0ExactSurrogateDedupReceipt,
+        Vec<Option<Rung0ExactSurrogateCandidateReceipt>>,
+        Vec<Vec<Rung0FoldRouteReceipt>>,
+        GpuScreenPhaseTimings,
+    );
+
+    struct NullObs;
+    impl Observer for NullObs {
+        fn on_generation(&self, _stats: &GenStats) {}
+        fn on_improvement(&self, _best: &Scored, _emitted: &Emitted, _stats: &GenStats) {}
+    }
+
+    struct XorShift(u64);
+    impl XorShift {
+        fn next_f64(&mut self) -> f64 {
+            self.0 ^= self.0 << 13;
+            self.0 ^= self.0 >> 7;
+            self.0 ^= self.0 << 17;
+            (self.0 >> 11) as f64 / (1u64 << 53) as f64
+        }
+    }
+
+    fn synth(n: usize, seed: u64) -> (Rows, Vec<f64>) {
+        let mut rng = XorShift(seed | 1);
+        let mut x = Vec::with_capacity(n);
+        let mut y = Vec::with_capacity(n);
+        for _ in 0..n {
+            let row: Vec<f64> = (0..6).map(|_| rng.next_f64() * 4.0 - 2.0).collect();
+            let target = 0.8 * row[0] - 1.3 * row[1]
+                + 0.5 * row[2] * row[3]
+                + (row[4] * 1.7).sin()
+                + 0.05 * (rng.next_f64() - 0.5);
+            x.push(row);
+            y.push(target);
+        }
+        (x, y)
+    }
+
+    fn candidates(count: usize, seed: u64) -> Vec<(String, DslExpr)> {
+        let mut rng = Pcg32::new(seed, 0x5EED);
+        let mut out = Vec::new();
+        let mut seen = std::collections::HashSet::new();
+        for source in STARTERS {
+            if let Ok(GenomeIr::Pipeline(genome)) = GenomeIr::parse(source) {
+                let key = genome.to_string();
+                if seen.insert(key.clone()) {
+                    out.push((key, genome));
+                }
+            }
+        }
+        while out.len() < count {
+            let genome = rand_genome(&mut rng, 4);
+            let key = genome.to_string();
+            if seen.insert(key.clone()) {
+                out.push((key, genome));
+            }
+        }
+        out
+    }
+
+    fn run_rung0(
+        x: &Rows,
+        y: &[f64],
+        candidates: &[(String, DslExpr)],
+        gpu: Option<&GpuRidgeScoreBatchFn<'_>>,
+    ) -> Vec<Option<Vec<f64>>> {
+        let policy = gpu.map(|_| GpuRidgeScorePolicy::new(1, 1).unwrap());
+        run_rung0_with_policy(x, y, candidates, gpu, policy)
+    }
+
+    fn run_rung0_with_policy(
+        x: &Rows,
+        y: &[f64],
+        candidates: &[(String, DslExpr)],
+        gpu: Option<&GpuRidgeScoreBatchFn<'_>>,
+        policy: Option<GpuRidgeScorePolicy>,
+    ) -> Vec<Option<Vec<f64>>> {
+        run_rung0_with_options(x, y, candidates, gpu, policy, None).0
+    }
+
+    fn run_rung0_with_options(
+        x: &Rows,
+        y: &[f64],
+        candidates: &[(String, DslExpr)],
+        gpu: Option<&GpuRidgeScoreBatchFn<'_>>,
+        policy: Option<GpuRidgeScorePolicy>,
+        dedup: Option<Rung0ExactSurrogateDedupPolicy>,
+    ) -> Rung0TestRun {
+        run_rung0_with_options_and_observer(x, y, candidates, gpu, policy, dedup, &NullObs)
+    }
+
+    fn run_rung0_with_options_and_observer(
+        x: &Rows,
+        y: &[f64],
+        candidates: &[(String, DslExpr)],
+        gpu: Option<&GpuRidgeScoreBatchFn<'_>>,
+        policy: Option<GpuRidgeScorePolicy>,
+        dedup: Option<Rung0ExactSurrogateDedupPolicy>,
+        obs: &dyn Observer,
+    ) -> Rung0TestRun {
+        let n = x.len().min(y.len());
+        let perm = permute_indices(n, 7);
+        let rows0 = perm[..n.min(RACE_RUNG_ROWS[0])].to_vec();
+        let assign0 = fold_assign(rows0.len(), RACE_RUNG_FOLDS[0], "invent_r0");
+        let dedup_scope = dedup.map(|policy| {
+            rung0_fold_scope_sha256(
+                x,
+                y,
+                &rows0,
+                &assign0,
+                RACE_RUNG_FOLDS[0],
+                &policy.evaluator_release_sha256,
+            )
+            .unwrap()
+        });
+        let metric = |actual: &[f64], predicted: &[f64]| crate::metrics::r2(actual, predicted);
+        let ctx = RungCtx {
+            x,
+            y,
+            metric: &metric,
+            rows: [rows0.clone(), rows0.clone(), rows0],
+            assigns: [assign0.clone(), assign0.clone(), assign0],
+            caps: [f64::INFINITY; 3],
+            t0: Instant::now(),
+            overall_budget: 0.0,
+            gpu_screen: gpu,
+            gpu_screen_policy: policy,
+            rung0_exact_surrogate_scope_sha256: dedup_scope,
+            capture_cases: false,
+        };
+        let mut state = RaceState {
+            memo: HashMap::new(),
+            occurrences: HashMap::new(),
+            spent: [0.0; 3],
+            rung_evals: [0; 3],
+            evals: 0,
+            ledger: TokenLedger::new(),
+            last_eval_tick: Instant::now(),
+            gpu_screen_timings: GpuScreenPhaseTimings::default(),
+            rung0_exact_surrogate_cache: HashMap::new(),
+            rung0_exact_surrogate_dedup: Rung0ExactSurrogateDedupReceipt {
+                requested: dedup.is_some(),
+                active: dedup_scope.is_some(),
+                authority_receipt_sha256: dedup
+                    .map(|_| RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256.to_string()),
+                evaluator_release_sha256: dedup
+                    .map(Rung0ExactSurrogateDedupPolicy::evaluator_release_sha256_hex),
+                cache_scope: dedup.map(|_| "run_local".to_string()),
+                wall_clock_completion_may_accelerate: dedup.is_some(),
+                completed_candidate_score_bits_exact: dedup.is_some(),
+                ..Rung0ExactSurrogateDedupReceipt::default()
+            },
+        };
+        eval_rung(&ctx, &mut state, 0, 0, candidates, obs);
+        let scores = candidates
+            .iter()
+            .map(|(key, _)| {
+                state
+                    .memo
+                    .get(key)
+                    .and_then(|entry| entry.rungs[0].clone())
+                    .flatten()
+            })
+            .collect();
+        let receipts = candidates
+            .iter()
+            .map(|(key, _)| {
+                state
+                    .memo
+                    .get(key)
+                    .and_then(|entry| entry.r0_exact_surrogate_dedup.clone())
+            })
+            .collect();
+        let routes = candidates
+            .iter()
+            .map(|(key, _)| {
+                state
+                    .memo
+                    .get(key)
+                    .and_then(|entry| entry.r0_fold_routes.clone())
+                    .unwrap()
+            })
+            .collect();
+        (
+            scores,
+            state.rung0_exact_surrogate_dedup,
+            receipts,
+            routes,
+            state.gpu_screen_timings,
+        )
+    }
+
+    fn assert_same_shape(cpu: &[Option<Vec<f64>>], gpu: &[Option<Vec<f64>>]) {
+        assert_eq!(cpu.len(), gpu.len());
+        for (index, (cpu_scores, gpu_scores)) in cpu.iter().zip(gpu).enumerate() {
+            assert_eq!(
+                cpu_scores.is_some(),
+                gpu_scores.is_some(),
+                "candidate {index}: CPU/GPU scored-ness diverged"
+            );
+            if let (Some(cpu_scores), Some(gpu_scores)) = (cpu_scores, gpu_scores) {
+                assert_eq!(
+                    cpu_scores.len(),
+                    gpu_scores.len(),
+                    "candidate {index}: fold count diverged"
+                );
+            }
+        }
+    }
+
+    fn exact_backend(problems: Vec<GpuRidgeScoreProblem>) -> Result<GpuRidgeScoreBatch, String> {
+        let fold_bytes = vec![GpuRidgeScoreFoldBytes::default(); problems.len()];
+        let scores = problems
+            .into_iter()
+            .map(|problem| {
+                let mut rows: Rows = vec![vec![0.0; problem.p]; problem.train_n];
+                // Column-major to row-major transpose. The index arithmetic
+                // `column * train_n + row` is the operation being performed, not an
+                // accidental way of walking a slice.
+                #[allow(clippy::needless_range_loop)]
+                for column in 0..problem.p {
+                    for row in 0..problem.train_n {
+                        rows[row][column] =
+                            problem.train_x_cols[column * problem.train_n + row] as f64;
+                    }
+                }
+                let target = problem
+                    .train_y
+                    .iter()
+                    .map(|value| *value as f64)
+                    .collect::<Vec<_>>();
+                let model = RidgeModel::fit(&rows, &target, problem.lambda_frac);
+                let validation = problem
+                    .valid_x_rows
+                    .chunks_exact(problem.p)
+                    .map(|row| row.iter().map(|value| f64::from(*value)).collect())
+                    .collect::<Rows>();
+                crate::metrics::r2(&problem.valid_y, &model.predict(&validation))
+            })
+            .collect();
+        Ok(GpuRidgeScoreBatch {
+            scores,
+            timings: GpuRidgeScoreTimings::default(),
+            fold_bytes,
+        })
+    }
+
+    #[test]
+    fn gpu_screen_wave_seam_matches_cpu_path_with_exact_backend() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let (x, y) = synth(160, 0xFEED_CAFE);
+        let candidates = candidates(192, 42);
+        let calls = AtomicUsize::new(0);
+        let backend = |problems: Vec<GpuRidgeScoreProblem>| {
+            calls.fetch_add(1, Ordering::Relaxed);
+            exact_backend(problems)
+        };
+        let cpu = run_rung0(&x, &y, &candidates, None);
+        let gpu = run_rung0(&x, &y, &candidates, Some(&backend));
+        assert!(calls.load(Ordering::Relaxed) > 0);
+        assert_same_shape(&cpu, &gpu);
+        let scored = cpu.iter().filter(|scores| scores.is_some()).count();
+        assert!(scored * 2 >= candidates.len());
+        for (index, (cpu_scores, gpu_scores)) in cpu.iter().zip(&gpu).enumerate() {
+            if let (Some(cpu_scores), Some(gpu_scores)) = (cpu_scores, gpu_scores) {
+                for (fold, (cpu_score, gpu_score)) in cpu_scores.iter().zip(gpu_scores).enumerate()
+                {
+                    let delta = (cpu_score - gpu_score).abs();
+                    assert!(
+                        delta <= PARITY_ABS_TOL,
+                        "candidate {index} ({}) fold {fold}: CPU={cpu_score} backend={gpu_score} delta={delta}",
+                        candidates[index].0
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn gpu_screen_backend_error_falls_back_to_exact_cpu_path() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let (x, y) = synth(160, 0xBEEF_F00D);
+        let candidates = candidates(96, 7);
+        let calls = AtomicUsize::new(0);
+        let backend = |_problems: Vec<GpuRidgeScoreProblem>| {
+            calls.fetch_add(1, Ordering::Relaxed);
+            Err("injected CUDA failure".to_string())
+        };
+        let cpu = run_rung0(&x, &y, &candidates, None);
+        let fallback = run_rung0(&x, &y, &candidates, Some(&backend));
+        assert!(calls.load(Ordering::Relaxed) > 0);
+        assert_same_shape(&cpu, &fallback);
+        for (index, (cpu_scores, fallback_scores)) in cpu.iter().zip(&fallback).enumerate() {
+            if let (Some(cpu_scores), Some(fallback_scores)) = (cpu_scores, fallback_scores) {
+                for (fold, (cpu_score, fallback_score)) in
+                    cpu_scores.iter().zip(fallback_scores).enumerate()
+                {
+                    assert_eq!(
+                        cpu_score.to_bits(),
+                        fallback_score.to_bits(),
+                        "candidate {index} fold {fold}: fallback changed CPU result"
+                    );
+                }
+            }
+        }
+    }
+
+    fn one_surrogate_candidates(count: usize) -> Vec<(String, DslExpr)> {
+        (0..count)
+            .map(|index| {
+                let source = format!(
+                    "(pipe X (standardize) (ridge lambda_frac={}))",
+                    0.001 + index as f64 * 0.000_001
+                );
+                let GenomeIr::Pipeline(genome) = GenomeIr::parse(&source).unwrap() else {
+                    unreachable!()
+                };
+                (genome.to_string(), genome)
+            })
+            .collect()
+    }
+
+    fn score_bits(scores: &[Option<Vec<f64>>]) -> Vec<Option<Vec<u64>>> {
+        scores
+            .iter()
+            .map(|scores| {
+                scores
+                    .as_ref()
+                    .map(|scores| scores.iter().map(|score| score.to_bits()).collect())
+            })
+            .collect()
+    }
+
+    #[test]
+    fn exact_surrogate_dedup_is_bit_exact_ordered_and_cross_chunk_deterministic() {
+        let (x, y) = synth(160, 0xDEC0_DED0);
+        let candidates = one_surrogate_candidates(RACE_CHUNK * 2 + 1);
+        let policy = Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            TEST_EVALUATOR_RELEASE_SHA256,
+        )
+        .unwrap();
+
+        let baseline = run_rung0_with_options(&x, &y, &candidates, None, None, None);
+        let first = run_rung0_with_options(&x, &y, &candidates, None, None, Some(policy));
+        let second = run_rung0_with_options(&x, &y, &candidates, None, None, Some(policy));
+
+        assert_eq!(score_bits(&baseline.0), score_bits(&first.0));
+        assert_eq!(score_bits(&first.0), score_bits(&second.0));
+        assert_eq!(first.1, second.1);
+        assert_eq!(first.2, second.2);
+        assert!(!baseline.1.requested);
+        assert_eq!(baseline.1.physical_candidate_evaluations, 0);
+        assert!(first.1.requested && first.1.active);
+        assert_eq!(
+            first.1.evaluator_release_sha256.as_deref(),
+            Some(TEST_EVALUATOR_RELEASE_SHA256)
+        );
+        assert_eq!(first.1.cache_scope.as_deref(), Some("run_local"));
+        assert_eq!(first.1.logical_candidates, candidates.len() as u64);
+        assert_eq!(first.1.physical_candidate_evaluations, 1);
+        assert_eq!(first.1.unique_evaluation_signatures, 1);
+        assert_eq!(first.1.reused_candidates, candidates.len() as u64 - 1);
+        assert_eq!(first.1.rejected_chunks, 0);
+        let physical_cpu_folds = first
+            .3
+            .iter()
+            .flatten()
+            .filter(|route| route.route == Rung0FoldRoute::CpuExact)
+            .count();
+        let reused_folds = first
+            .3
+            .iter()
+            .flatten()
+            .filter(|route| route.route == Rung0FoldRoute::ExactSurrogateReuse)
+            .count();
+        assert_eq!(physical_cpu_folds, RACE_RUNG_FOLDS[0]);
+        assert_eq!(reused_folds, (candidates.len() - 1) * RACE_RUNG_FOLDS[0]);
+        assert_eq!(first.4.cpu_folds as usize, physical_cpu_folds);
+        assert_eq!(first.4.gpu_folds, 0);
+        assert_eq!(
+            first.1.physical_candidate_evaluations * RACE_RUNG_FOLDS[0] as u64,
+            first.4.cpu_folds + first.4.gpu_folds
+        );
+
+        let representative = first.2[0].as_ref().unwrap();
+        assert!(!representative.reused);
+        assert_eq!(representative.representative_r0_seq, 0);
+        for receipt in first.2.iter().skip(1) {
+            let receipt = receipt.as_ref().unwrap();
+            assert!(receipt.reused);
+            assert_eq!(receipt.representative_r0_seq, 0);
+            assert_eq!(
+                receipt.evaluation_signature_sha256,
+                representative.evaluation_signature_sha256
+            );
+        }
+
+        let other_release = Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        )
+        .unwrap();
+        let other = run_rung0_with_options(&x, &y, &candidates, None, None, Some(other_release));
+        assert_eq!(score_bits(&first.0), score_bits(&other.0));
+        assert_ne!(
+            first.2[0].as_ref().unwrap().evaluation_signature_sha256,
+            other.2[0].as_ref().unwrap().evaluation_signature_sha256
+        );
+    }
+
+    #[test]
+    fn exact_surrogate_dedup_rejects_signature_collisions_and_partial_scatter() {
+        let candidates = ["(pipe X (standardize) (ridge))", "(pipe X (rank) (ridge))"]
+            .into_iter()
+            .map(|source| {
+                let GenomeIr::Pipeline(genome) = GenomeIr::parse(source).unwrap() else {
+                    unreachable!()
+                };
+                (genome.to_string(), genome)
+            })
+            .collect::<Vec<_>>();
+        let scope = [3_u8; 32];
+        let cache = HashMap::new();
+        let collision =
+            build_rung0_exact_surrogate_plan_with(&candidates, &scope, &cache, |_, _| [9_u8; 32])
+                .unwrap_err();
+        assert_eq!(collision, Rung0ExactSurrogateReject::SignatureCollision);
+
+        let duplicate_candidates = one_surrogate_candidates(2);
+        let mut plan =
+            build_rung0_exact_surrogate_plan(&duplicate_candidates, &scope, &cache).unwrap();
+        plan.member_sources.pop();
+        let partial = scatter_rung0_exact_surrogates(
+            &plan,
+            &RungChunkEvaluation {
+                scores: vec![Some(vec![0.25, 0.5])],
+                timings: GpuScreenPhaseTimings::default(),
+                routes: vec![vec![
+                    Rung0FoldRouteReceipt::cpu(Rung0FoldRoute::CpuExact);
+                    RACE_RUNG_FOLDS[0]
+                ]],
+            },
+            &cache,
+            0,
+            RACE_RUNG_FOLDS[0],
+        )
+        .err()
+        .unwrap();
+        assert_eq!(partial, Rung0ExactSurrogateReject::PartialMapping);
+    }
+
+    #[test]
+    fn exact_surrogate_dedup_rejects_failed_representative_and_unknown_authority() {
+        assert!(Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            &"0".repeat(64),
+            TEST_EVALUATOR_RELEASE_SHA256,
+        )
+        .is_none());
+        assert!(Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            "",
+        )
+        .is_none());
+        assert!(Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            &"0".repeat(64),
+        )
+        .is_none());
+        let candidates = one_surrogate_candidates(2);
+        let scope = [4_u8; 32];
+        let cache = HashMap::new();
+        let plan = build_rung0_exact_surrogate_plan(&candidates, &scope, &cache).unwrap();
+        let rejected = scatter_rung0_exact_surrogates(
+            &plan,
+            &RungChunkEvaluation {
+                scores: vec![None],
+                timings: GpuScreenPhaseTimings::default(),
+                routes: vec![vec![
+                    Rung0FoldRouteReceipt::cpu(Rung0FoldRoute::CpuExact);
+                    RACE_RUNG_FOLDS[0]
+                ]],
+            },
+            &cache,
+            0,
+            RACE_RUNG_FOLDS[0],
+        )
+        .err()
+        .unwrap();
+        assert_eq!(rejected, Rung0ExactSurrogateReject::RepresentativeFailure);
+    }
+
+    #[test]
+    fn exact_surrogate_dedup_reduces_gpu_work_without_changing_score_bits() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let (x, y) = synth(160, 0xFA57_CADA);
+        let candidates = one_surrogate_candidates(RACE_CHUNK * 2 + 1);
+        let baseline_folds = AtomicUsize::new(0);
+        let baseline_backend = |problems: Vec<GpuRidgeScoreProblem>| {
+            baseline_folds.fetch_add(problems.len(), Ordering::Relaxed);
+            exact_backend(problems)
+        };
+        let dedup_folds = AtomicUsize::new(0);
+        let dedup_backend = |problems: Vec<GpuRidgeScoreProblem>| {
+            dedup_folds.fetch_add(problems.len(), Ordering::Relaxed);
+            exact_backend(problems)
+        };
+        let gpu_policy = GpuRidgeScorePolicy::new(1, 1);
+        let dedup_policy = Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            TEST_EVALUATOR_RELEASE_SHA256,
+        )
+        .unwrap();
+
+        let baseline = run_rung0_with_options(
+            &x,
+            &y,
+            &candidates,
+            Some(&baseline_backend),
+            gpu_policy,
+            None,
+        );
+        let dedup = run_rung0_with_options(
+            &x,
+            &y,
+            &candidates,
+            Some(&dedup_backend),
+            gpu_policy,
+            Some(dedup_policy),
+        );
+
+        assert_eq!(score_bits(&baseline.0), score_bits(&dedup.0));
+        assert_eq!(
+            baseline_folds.load(Ordering::Relaxed),
+            candidates.len() * RACE_RUNG_FOLDS[0]
+        );
+        assert_eq!(dedup_folds.load(Ordering::Relaxed), RACE_RUNG_FOLDS[0]);
+        assert_eq!(dedup.1.physical_candidate_evaluations, 1);
+        assert_eq!(dedup.1.reused_candidates, candidates.len() as u64 - 1);
+        assert_eq!(dedup.4.gpu_folds, RACE_RUNG_FOLDS[0] as u64);
+        assert_eq!(dedup.4.cpu_folds, 0);
+        assert_eq!(
+            dedup
+                .3
+                .iter()
+                .flatten()
+                .filter(|route| route.route == Rung0FoldRoute::Gpu)
+                .count(),
+            RACE_RUNG_FOLDS[0]
+        );
+        assert_eq!(
+            dedup
+                .3
+                .iter()
+                .flatten()
+                .filter(|route| route.route == Rung0FoldRoute::ExactSurrogateReuse)
+                .count(),
+            (candidates.len() - 1) * RACE_RUNG_FOLDS[0]
+        );
+    }
+
+    #[test]
+    fn exact_surrogate_dedup_runs_bounded_and_preserves_common_completed_bits() {
+        let (x, y) = synth(96, 0xB0_0DED);
+        let seeds = one_surrogate_candidates(64);
+        let config = EvolveConfig {
+            pop: 64,
+            gens: 1,
+            time_budget_secs: 30.0,
+            seed_genomes: seeds.iter().map(|(dsl, _)| dsl.clone()).collect(),
+            fitness: FitnessMode::LiteRace,
+            ..EvolveConfig::default()
+        };
+        let policy = Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            TEST_EVALUATOR_RELEASE_SHA256,
+        )
+        .unwrap();
+        let baseline = evolve_lite_race_with_gpu_policy(
+            &x,
+            &y,
+            &crate::metrics::r2,
+            &config,
+            &NullObs,
+            None,
+            None,
+        );
+        let accelerated = evolve_lite_race_with_gpu_policy_and_exact_surrogate_dedup(
+            &x,
+            &y,
+            &crate::metrics::r2,
+            &config,
+            &NullObs,
+            None,
+            None,
+            Some(policy),
+        );
+
+        let completed_bits = |outcome: &RaceOutcome| {
+            outcome
+                .candidates
+                .iter()
+                .filter_map(|candidate| {
+                    candidate.rung_fold_scores[0].as_ref().map(|scores| {
+                        (
+                            candidate.dsl.clone(),
+                            scores
+                                .iter()
+                                .map(|score| score.to_bits())
+                                .collect::<Vec<_>>(),
+                        )
+                    })
+                })
+                .collect::<BTreeMap<_, _>>()
+        };
+        let baseline_bits = completed_bits(&baseline);
+        let accelerated_bits = completed_bits(&accelerated);
+        let mut common = 0;
+        for (dsl, bits) in &baseline_bits {
+            if let Some(accelerated) = accelerated_bits.get(dsl) {
+                assert_eq!(bits, accelerated, "bounded common candidate {dsl}");
+                common += 1;
+            }
+        }
+
+        assert!(common > 0);
+        assert!(accelerated_bits.len() >= baseline_bits.len());
+        assert!(accelerated.rung0_exact_surrogate_dedup.requested);
+        assert!(accelerated.rung0_exact_surrogate_dedup.active);
+        assert!(
+            accelerated
+                .rung0_exact_surrogate_dedup
+                .wall_clock_completion_may_accelerate
+        );
+        assert!(
+            accelerated
+                .rung0_exact_surrogate_dedup
+                .completed_candidate_score_bits_exact
+        );
+        assert!(accelerated.rung0_exact_surrogate_dedup.reused_candidates >= 1);
+        assert!(
+            accelerated
+                .rung0_exact_surrogate_dedup
+                .physical_candidate_evaluations
+                < accelerated.rung0_exact_surrogate_dedup.logical_candidates
+        );
+        assert!(accelerated
+            .rung0_exact_surrogate_dedup
+            .activation_blocker
+            .is_none());
+    }
+
+    struct CancelAfterRepresentative {
+        checks: AtomicUsize,
+    }
+
+    impl Observer for CancelAfterRepresentative {
+        fn on_generation(&self, _stats: &GenStats) {}
+        fn on_improvement(&self, _best: &Scored, _emitted: &Emitted, _stats: &GenStats) {}
+        fn is_cancelled(&self) -> bool {
+            self.checks.fetch_add(1, Ordering::Relaxed) + 1 >= 6
+        }
+    }
+
+    #[test]
+    fn exact_surrogate_dedup_never_scatters_or_falls_back_after_cancellation() {
+        let (x, y) = synth(160, 0x0CA1_1CE1);
+        let candidates = one_surrogate_candidates(2);
+        let policy = Rung0ExactSurrogateDedupPolicy::from_authority_receipt(
+            RUNG0_EXACT_SURROGATE_DEDUP_AUTHORITY_SHA256,
+            TEST_EVALUATOR_RELEASE_SHA256,
+        )
+        .unwrap();
+        let observer = CancelAfterRepresentative {
+            checks: AtomicUsize::new(0),
+        };
+        let result = run_rung0_with_options_and_observer(
+            &x,
+            &y,
+            &candidates,
+            None,
+            None,
+            Some(policy),
+            &observer,
+        );
+
+        assert!(result.0.iter().all(Option::is_none));
+        assert_eq!(result.1.physical_candidate_evaluations, 1);
+        assert_eq!(result.1.reused_candidates, 0);
+        assert_eq!(result.1.cancellation_rejections, 1);
+        assert_eq!(result.1.rejected_chunks, 1);
+        assert!(result.2.iter().all(Option::is_none));
+    }
+
+    #[test]
+    fn rung0_trace_enrichment_replays_target_candidate_bit_exactly() {
+        let (x, y) = synth(160, 0xA11C_E55E);
+        let source = "(pipe X (target kind=rank_gauss) (standardize) (histgbm depth=4))";
+        let GenomeIr::Pipeline(genome) = GenomeIr::parse(source).unwrap() else {
+            unreachable!()
+        };
+        let candidates = vec![(genome.to_string(), genome)];
+        let observed = run_rung0(&x, &y, &candidates, None)
+            .pop()
+            .flatten()
+            .unwrap();
+        let rows = permute_indices(x.len(), 7)[..x.len().min(RACE_RUNG_ROWS[0])].to_vec();
+        let assignments = fold_assign(rows.len(), RACE_RUNG_FOLDS[0], "invent_r0");
+        let trace =
+            enrich_rung0_trace_candidate(&candidates[0].0, &x, &y, &rows, &assignments).unwrap();
+
+        assert!(trace.surrogate_dsl.ends_with("(ridge))"));
+        assert_eq!(trace.transform_prefixes.len(), 2);
+        assert_eq!(trace.folds.len(), RACE_RUNG_FOLDS[0]);
+        for (actual, replay) in observed.iter().zip(&trace.folds) {
+            assert_eq!(actual.to_bits(), replay.cpu_replay_score.to_bits());
+            assert!(replay.prepared_width > 0);
+            assert!(replay.host_f64_bytes > replay.host_f32_bytes);
+        }
+    }
+
+    #[test]
+    fn rung0_trace_sequence_and_cpu_routes_are_dense() {
+        let (x, y) = synth(96, 0x51A7_E001);
+        let cfg = EvolveConfig {
+            pop: 8,
+            gens: 1,
+            seed: 0x51A7_E001,
+            fitness: FitnessMode::LiteRace,
+            ..EvolveConfig::default()
+        };
+        let outcome = evolve_lite_race_with_gpu_policy(
+            &x,
+            &y,
+            &crate::metrics::r2,
+            &cfg,
+            &NullObs,
+            None,
+            None,
+        );
+        let mut traced = outcome
+            .candidates
+            .iter()
+            .filter_map(|candidate| candidate.r0_seq.map(|seq| (seq, candidate)))
+            .collect::<Vec<_>>();
+        traced.sort_by_key(|(seq, _)| *seq);
+        assert_eq!(traced.len() as u64, outcome.rung_evals[0]);
+        for (expected, (seq, candidate)) in traced.iter().enumerate() {
+            assert_eq!(*seq, expected as u64);
+            assert_eq!(candidate.r0_generation, Some(0));
+            assert_eq!(candidate.r0_generation_slot, Some(expected));
+            assert!(candidate
+                .r0_fold_routes
+                .as_ref()
+                .unwrap()
+                .iter()
+                .all(|receipt| {
+                    receipt.route == Rung0FoldRoute::CpuExact
+                        && receipt.physical_h2d_bytes == 0
+                        && receipt.physical_d2h_bytes == 0
+                }));
+        }
+        assert_eq!(outcome.rung0_rows.len(), outcome.rung0_assignments.len());
+        assert_ne!(
+            outcome.rung0_rows,
+            (0..outcome.rung0_rows.len()).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn gpu_screen_requires_explicit_policy_and_routes_only_eligible_widths() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        use std::sync::Mutex;
+
+        let (x, y) = synth(160, 0xABCD_1234);
+        let candidates = [
+            "(pipe X (standardize) (ridge))",
+            "(pipe X (poly_interact append=true) (ridge))",
+            "(pipe X (target kind=rank_gauss) (standardize) (ridge))",
+        ]
+        .into_iter()
+        .map(|source| {
+            let GenomeIr::Pipeline(genome) = GenomeIr::parse(source).unwrap() else {
+                unreachable!()
+            };
+            (genome.to_string(), genome)
+        })
+        .collect::<Vec<_>>();
+        let calls = AtomicUsize::new(0);
+        let seen_widths = Mutex::new(Vec::new());
+        let backend = |problems: Vec<GpuRidgeScoreProblem>| {
+            calls.fetch_add(1, Ordering::Relaxed);
+            seen_widths
+                .lock()
+                .unwrap()
+                .extend(problems.iter().map(|problem| problem.p));
+            exact_backend(problems)
+        };
+
+        let cpu = run_rung0(&x, &y, &candidates, None);
+        let fail_closed = run_rung0_with_policy(&x, &y, &candidates, Some(&backend), None);
+        assert_eq!(calls.load(Ordering::Relaxed), 0);
+        for (cpu_scores, fail_closed_scores) in cpu.iter().zip(&fail_closed) {
+            assert_eq!(
+                cpu_scores.as_ref().map(|scores| scores
+                    .iter()
+                    .map(|score| score.to_bits())
+                    .collect::<Vec<_>>()),
+                fail_closed_scores.as_ref().map(|scores| scores
+                    .iter()
+                    .map(|score| score.to_bits())
+                    .collect::<Vec<_>>())
+            );
+        }
+
+        let below_batch = run_rung0_with_policy(
+            &x,
+            &y,
+            &candidates,
+            Some(&backend),
+            GpuRidgeScorePolicy::new(7, 3),
+        );
+        assert_eq!(calls.load(Ordering::Relaxed), 0);
+        for (cpu_scores, below_batch_scores) in cpu.iter().zip(&below_batch) {
+            assert_eq!(
+                cpu_scores.as_ref().map(|scores| scores
+                    .iter()
+                    .map(|score| score.to_bits())
+                    .collect::<Vec<_>>()),
+                below_batch_scores.as_ref().map(|scores| scores
+                    .iter()
+                    .map(|score| score.to_bits())
+                    .collect::<Vec<_>>())
+            );
+        }
+
+        let policy = GpuRidgeScorePolicy::new(7, 2).unwrap();
+        let hybrid = run_rung0_with_policy(&x, &y, &candidates, Some(&backend), Some(policy));
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
+        let widths = seen_widths.lock().unwrap();
+        assert_eq!(widths.len(), RACE_RUNG_FOLDS[0]);
+        assert!(widths.iter().all(|width| *width >= policy.min_p));
+        drop(widths);
+        assert_same_shape(&cpu, &hybrid);
+        for (cpu_scores, hybrid_scores) in cpu.iter().zip(&hybrid) {
+            if let (Some(cpu_scores), Some(hybrid_scores)) = (cpu_scores, hybrid_scores) {
+                for (cpu_score, hybrid_score) in cpu_scores.iter().zip(hybrid_scores) {
+                    assert!((cpu_score - hybrid_score).abs() <= PARITY_ABS_TOL);
+                }
+            }
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct EvolveConfig {
@@ -525,6 +1382,1613 @@ const EVAL_SCORE_SAMPLE_MS: u128 = 60;
 // Random genome construction + mutation
 // ---------------------------------------------------------------------------
 
+fn pick<'a>(rng: &mut Pcg32, items: &'a [&'a str]) -> &'a str {
+    items[(rng.next_u32() as usize) % items.len()]
+}
+
+fn rand_params(rng: &mut Pcg32, op: &str) -> BTreeMap<String, ParamValue> {
+    let mut p = BTreeMap::new();
+    let int = |rng: &mut Pcg32, lo: i64, hi: i64| -> ParamValue {
+        ParamValue::Int(lo + (rng.next_u32() as i64) % (hi - lo + 1))
+    };
+    // Discrete lotteries over the exact value grids the engine's own search uses.
+    let pick_i = |rng: &mut Pcg32, choices: &[i64]| -> ParamValue {
+        ParamValue::Int(choices[(rng.next_u32() as usize) % choices.len()])
+    };
+    let pick_f = |rng: &mut Pcg32, choices: &[f64]| -> ParamValue {
+        ParamValue::Float(choices[(rng.next_u32() as usize) % choices.len()])
+    };
+    match op {
+        "quantile_bins" => {
+            p.insert("bins".into(), int(rng, 4, 32));
+        }
+        "bin_onehot" | "target_bin_encode" => {
+            p.insert("bins".into(), int(rng, 4, 16));
+        }
+        "hinge" => {
+            p.insert("knots".into(), int(rng, 2, 8));
+        }
+        "winsor_clip" => {
+            p.insert("q".into(), ParamValue::Float(rng.range_f64(0.01, 0.2)));
+        }
+        "cheb" => {
+            p.insert("degree".into(), int(rng, 2, 8));
+        }
+        "rff_cos" | "rff_sin" | "oblique_hinge" => {
+            p.insert("n".into(), int(rng, 16, 96));
+            p.insert("gamma".into(), ParamValue::Float(rng.range_f64(0.1, 2.0)));
+            p.insert("seed".into(), int(rng, 1, 9999));
+        }
+        "rand_proj" => {
+            p.insert("k".into(), int(rng, 8, 64));
+            p.insert("seed".into(), int(rng, 1, 9999));
+        }
+        "landmark_dist" | "nystrom" => {
+            p.insert("k".into(), int(rng, 8, 48));
+            p.insert("gamma".into(), ParamValue::Float(rng.range_f64(0.1, 2.0)));
+            p.insert("seed".into(), int(rng, 1, 9999));
+        }
+        "pair_prod" => {
+            p.insert("topk".into(), int(rng, 4, 16));
+        }
+        "svd_project" => {
+            p.insert("k".into(), int(rng, 4, 32));
+            p.insert("seed".into(), int(rng, 1, 9999));
+        }
+        // Expansion vocabulary: drawn only when `expansion_vocab` is on, so
+        // these arms are inert for every legacy stream.
+        "impute" => {
+            let strategies = ["median", "median", "mean"];
+            let strategy = strategies[(rng.next_u32() as usize) % strategies.len()];
+            p.insert("strategy".into(), ParamValue::Str(strategy.to_string()));
+            if rng.next_f64() < 0.5 {
+                p.insert("add_indicator".into(), ParamValue::Bool(true));
+            }
+        }
+        "symlog" => {
+            p.insert("c".into(), pick_f(rng, &[0.1, 1.0, 10.0]));
+        }
+        "select_corr" => {
+            p.insert("k".into(), pick_i(rng, &[16, 32, 64, 128]));
+            let by = ["corr", "corr", "var"];
+            let by = by[(rng.next_u32() as usize) % by.len()];
+            p.insert("by".into(), ParamValue::Str(by.to_string()));
+        }
+        "pair_ratio" => {
+            p.insert("topk".into(), int(rng, 4, 16));
+        }
+        "spline" => {
+            p.insert("knots".into(), int(rng, 3, 8));
+        }
+        // heads
+        "histgbm" | "gbm" | "ensemble_ridge_gbm" => {
+            p.insert("rounds".into(), int(rng, 40, 300));
+            p.insert("depth".into(), int(rng, 2, 6));
+            p.insert("lr".into(), ParamValue::Float(rng.range_f64(0.03, 0.25)));
+        }
+        // Deep bagged boosting: leaf-wise trees with row/column subsampling, a
+        // min-leaf guard, and a held-out early-stopping split (v2.1 knobs).
+        "histgbm2" => {
+            p.insert("leaves".into(), pick_i(rng, &[15, 31, 63, 127, 255]));
+            p.insert("lr".into(), pick_f(rng, &[0.01, 0.03, 0.05, 0.08]));
+            p.insert("bags".into(), pick_i(rng, &[3, 5]));
+            p.insert("rounds".into(), pick_i(rng, &[500, 1000]));
+            p.insert("row_subsample".into(), pick_f(rng, &[0.6, 0.7, 0.85, 1.0]));
+            p.insert("col_subsample".into(), pick_f(rng, &[0.6, 0.8, 1.0]));
+            p.insert("min_leaf".into(), pick_i(rng, &[1, 3, 5, 10, 20]));
+            p.insert("val_pct".into(), pick_i(rng, &[15, 20]));
+            if rng.next_f64() < 0.5 {
+                p.insert("val_shuffle".into(), ParamValue::Bool(true));
+            }
+        }
+        // Composite-kernel Gaussian process: m inducing points, a few marginal-
+        // likelihood steps, and a kernel algebra over {rbf, rq, periodic,
+        // linear} joined by sum (+) and product (*). Plain ARD ("rbf") is the
+        // modal draw and carries no explicit kernel= param.
+        "gpr" => {
+            p.insert("m".into(), pick_i(rng, &[300, 400, 500]));
+            p.insert("steps".into(), pick_i(rng, &[30, 40, 60]));
+            let kernels = [
+                "rbf",
+                "rbf",
+                "linear",
+                "rq",
+                "periodic",
+                "rbf+linear",
+                "rq+linear",
+                "rbf*periodic",
+                "periodic+linear",
+            ];
+            let kernel = kernels[(rng.next_u32() as usize) % kernels.len()];
+            if kernel != "rbf" {
+                p.insert("kernel".into(), ParamValue::Str(kernel.to_string()));
+            }
+        }
+        // Nadaraya-Watson kernel smoother: k nearest anchors, RBF bandwidth gamma.
+        "ksmooth" => {
+            p.insert("k".into(), pick_i(rng, &[8, 16, 32, 64, 128]));
+            p.insert("gamma".into(), pick_f(rng, &[0.5, 1.0, 2.0, 4.0]));
+        }
+        "elasticnet" => {
+            p.insert("alpha".into(), ParamValue::Float(rng.range_f64(1e-4, 0.05)));
+            p.insert(
+                "l1_ratio".into(),
+                ParamValue::Float(rng.range_f64(0.1, 0.9)),
+            );
+        }
+        _ => {}
+    }
+    // transforms may append (keep original cols) or replace
+    if !HEAD_OPS.contains(&op) && rng.next_f64() < 0.5 {
+        p.insert("append".into(), ParamValue::Bool(true));
+    }
+    p
+}
+
+pub(crate) fn rand_stage_from(rng: &mut Pcg32, vocab: &[&str]) -> Stage {
+    let op = pick(rng, vocab);
+    Stage {
+        op: op.to_string(),
+        params: rand_params(rng, op),
+    }
+}
+
+fn rand_stage(rng: &mut Pcg32) -> Stage {
+    rand_stage_from(rng, &TRANSFORMS)
+}
+
+pub(crate) fn rand_head(rng: &mut Pcg32) -> Stage {
+    let op = pick(rng, &HEADS);
+    Stage {
+        op: op.to_string(),
+        params: rand_params(rng, op),
+    }
+}
+
+fn rand_genome_from(rng: &mut Pcg32, max_transforms: usize, vocab: &[&str]) -> DslExpr {
+    let n = 1 + (rng.next_u32() as usize) % max_transforms.clamp(1, 6);
+    let mut stages: Vec<Stage> = (0..n).map(|_| rand_stage_from(rng, vocab)).collect();
+    stages.push(rand_head(rng));
+    let program = DslExpr { stages };
+    crate::capture_gp_source!("legacy-operator", "rand_genome_from", &program.to_string());
+    program
+}
+
+fn rand_genome(rng: &mut Pcg32, max_transforms: usize) -> DslExpr {
+    rand_genome_from(rng, max_transforms, &TRANSFORMS)
+}
+
+/// The transform vocabulary a search run draws from: the frozen legacy array,
+/// plus the expansion ops when the config opts in. With the flag off the
+/// contents (and so every draw) are identical to the legacy array.
+fn generation_vocab(cfg: &EvolveConfig) -> Vec<&'static str> {
+    let mut vocab: Vec<&'static str> = TRANSFORMS.to_vec();
+    if cfg.expansion_vocab {
+        vocab.extend_from_slice(&EXPANSION_TRANSFORMS);
+    }
+    vocab
+}
+
+/// Split a genome into (transforms, head). The head is always present in generated genomes.
+fn split(g: &DslExpr) -> (Vec<Stage>, Option<Stage>) {
+    match g.stages.last() {
+        Some(last) if HEAD_OPS.contains(&last.op.as_str()) => {
+            (g.stages[..g.stages.len() - 1].to_vec(), Some(last.clone()))
+        }
+        _ => (g.stages.clone(), None),
+    }
+}
+
+fn jitter_params(rng: &mut Pcg32, stage: &mut Stage) {
+    let keys: Vec<String> = stage.params.keys().cloned().collect();
+    if keys.is_empty() {
+        // maybe flip append on
+        stage.params = rand_params(rng, &stage.op);
+        return;
+    }
+    let key = keys[(rng.next_u32() as usize) % keys.len()].clone();
+    if let Some(v) = stage.params.get(&key) {
+        let jittered = match v {
+            ParamValue::Int(i) => {
+                let delta = ((rng.next_u32() % 5) as i64) - 2;
+                ParamValue::Int((*i + delta).max(1))
+            }
+            ParamValue::Float(f) => ParamValue::Float((f * rng.range_f64(0.6, 1.5)).max(1e-6)),
+            ParamValue::Bool(b) => ParamValue::Bool(!b),
+            ParamValue::Str(s) => ParamValue::Str(s.clone()),
+        };
+        stage.params.insert(key, jittered);
+    }
+}
+
+/// v2 param jitter: log-scale for positive floats (`v * exp(u)`, u uniform in
+/// [-ln 2.5, +ln 2.5] — symmetric multiplicative spread, right for
+/// lr/lambda/gamma-style params where v1's ×[0.6, 1.5] is narrow and
+/// upward-biased), logit-space for `l1_ratio` (stays inside (0, 1)), and the
+/// original int/bool/str behavior. Exactly the same RNG-draw count per param
+/// as v1, so the two are clean drop-in twins; the frozen `jitter_params`
+/// stays byte-identical for every recorded v1 stream. Schema clamps re-apply
+/// at plan/fit time exactly as they do for v1 jitter.
+pub(crate) fn jitter_params_v2(rng: &mut Pcg32, stage: &mut Stage) {
+    let keys: Vec<String> = stage.params.keys().cloned().collect();
+    if keys.is_empty() {
+        // maybe flip append on (mirrors v1)
+        stage.params = rand_params(rng, &stage.op);
+        return;
+    }
+    let key = keys[(rng.next_u32() as usize) % keys.len()].clone();
+    if let Some(v) = stage.params.get(&key) {
+        let span = 2.5f64.ln();
+        let jittered = match v {
+            ParamValue::Int(i) => {
+                let delta = ((rng.next_u32() % 5) as i64) - 2;
+                ParamValue::Int((*i + delta).max(1))
+            }
+            ParamValue::Float(f) if key == "l1_ratio" => {
+                let p = f.clamp(0.01, 0.99);
+                let logit = (p / (1.0 - p)).ln() + rng.range_f64(-span, span);
+                ParamValue::Float(1.0 / (1.0 + (-logit).exp()))
+            }
+            ParamValue::Float(f) => {
+                ParamValue::Float((f * rng.range_f64(-span, span).exp()).max(1e-6))
+            }
+            ParamValue::Bool(b) => ParamValue::Bool(!b),
+            ParamValue::Str(s) => ParamValue::Str(s.clone()),
+        };
+        stage.params.insert(key, jittered);
+    }
+}
+
+/// First index i where stages i and i+1 are canonical-equal (same op, same
+/// params — Stage derives PartialEq over its canonical fields).
+fn adjacent_duplicate(tf: &[Stage]) -> Option<usize> {
+    (0..tf.len().saturating_sub(1)).find(|&i| tf[i] == tf[i + 1])
+}
+
+/// v2 mutation over 7 equally-drawn outcomes (arm = draw % 7): {0, 1} param
+/// jitter via `jitter_params_v2` (2/7 base mass, exactly v1's inner
+/// stage-vs-head split), {2} insert drawn from `vocab` (legacy ++ expansion
+/// when the caller opts in), {3} drop, {4} swap-adjacent, {5} head replace,
+/// {6} simplify — delete the LATER stage of the first adjacent
+/// canonical-duplicate pair (dissolves the observed 4x-standardize
+/// pathology); with no such pair the draw falls through deterministically to
+/// param jitter, so no draw is ever a no-op beyond v1's own degenerate arms.
+/// The frozen `mutate` stays byte-identical for every recorded v1 stream.
+fn mutate_v2(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize, vocab: &[&str]) -> DslExpr {
+    let (mut tf, head) = split(g);
+    let mut head = head.unwrap_or_else(|| rand_head(rng));
+    let mut arm = rng.next_u32() % 7;
+    if arm == 6 {
+        match adjacent_duplicate(&tf) {
+            Some(i) => {
+                tf.remove(i + 1);
+                arm = 7; // handled; the match below is a no-op
+            }
+            None => arm = 0, // deterministic fall-through to param jitter
+        }
+    }
+    match arm {
+        0 | 1 => {
+            if !tf.is_empty() && rng.next_f64() < 0.7 {
+                let i = (rng.next_u32() as usize) % tf.len();
+                jitter_params_v2(rng, &mut tf[i]);
+            } else {
+                jitter_params_v2(rng, &mut head);
+            }
+        }
+        2 => {
+            if tf.len() < max_transforms {
+                let i = (rng.next_u32() as usize) % (tf.len() + 1);
+                tf.insert(i, rand_stage_from(rng, vocab));
+            }
+        }
+        3 => {
+            if !tf.is_empty() {
+                let i = (rng.next_u32() as usize) % tf.len();
+                tf.remove(i);
+            }
+        }
+        4 => {
+            if tf.len() >= 2 {
+                let i = (rng.next_u32() as usize) % (tf.len() - 1);
+                tf.swap(i, i + 1);
+            }
+        }
+        5 => {
+            head = rand_head(rng);
+        }
+        _ => {}
+    }
+    let mut stages = tf;
+    stages.push(head);
+    DslExpr { stages }
+}
+
+fn mutate(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize) -> DslExpr {
+    let (mut tf, head) = split(g);
+    let mut head = head.unwrap_or_else(|| rand_head(rng));
+    match rng.next_u32() % 6 {
+        // param jitter on a random stage (transform or head)
+        0 | 1 => {
+            if !tf.is_empty() && rng.next_f64() < 0.7 {
+                let i = (rng.next_u32() as usize) % tf.len();
+                jitter_params(rng, &mut tf[i]);
+            } else {
+                jitter_params(rng, &mut head);
+            }
+        }
+        // insert a random transform
+        2 => {
+            if tf.len() < max_transforms {
+                let i = (rng.next_u32() as usize) % (tf.len() + 1);
+                tf.insert(i, rand_stage(rng));
+            }
+        }
+        // drop a transform
+        3 => {
+            if !tf.is_empty() {
+                let i = (rng.next_u32() as usize) % tf.len();
+                tf.remove(i);
+            }
+        }
+        // swap two adjacent transforms
+        4 => {
+            if tf.len() >= 2 {
+                let i = (rng.next_u32() as usize) % (tf.len() - 1);
+                tf.swap(i, i + 1);
+            }
+        }
+        // replace the head
+        _ => {
+            head = rand_head(rng);
+        }
+    }
+    let mut stages = tf;
+    stages.push(head);
+    DslExpr { stages }
+}
+
+fn crossover(rng: &mut Pcg32, a: &DslExpr, b: &DslExpr, max_transforms: usize) -> DslExpr {
+    let (ta, ha) = split(a);
+    let (tb, hb) = split(b);
+    let cut_a = (rng.next_u32() as usize) % (ta.len() + 1);
+    let cut_b = (rng.next_u32() as usize) % (tb.len() + 1);
+    let mut tf: Vec<Stage> = ta[..cut_a].to_vec();
+    tf.extend_from_slice(&tb[cut_b..]);
+    tf.truncate(max_transforms);
+    let head = if rng.next_f64() < 0.5 { ha } else { hb };
+    let mut stages = tf;
+    stages.push(head.unwrap_or_else(|| rand_head(rng)));
+    DslExpr { stages }
+}
+
+// Keep the immutable legacy bodies above byte-for-byte intact. All production
+// callers cross these observation seams before selection or population admission.
+fn mutate_with_source_capture(rng: &mut Pcg32, g: &DslExpr, max_transforms: usize) -> DslExpr {
+    let program = mutate(rng, g, max_transforms);
+    crate::capture_gp_source!("legacy-operator", "mutate", &program.to_string());
+    program
+}
+
+fn mutate_v2_with_source_capture(
+    rng: &mut Pcg32,
+    g: &DslExpr,
+    max_transforms: usize,
+    vocab: &[&str],
+) -> DslExpr {
+    let program = mutate_v2(rng, g, max_transforms, vocab);
+    crate::capture_gp_source!("legacy-operator", "mutate_v2", &program.to_string());
+    program
+}
+
+fn crossover_with_source_capture(
+    rng: &mut Pcg32,
+    a: &DslExpr,
+    b: &DslExpr,
+    max_transforms: usize,
+) -> DslExpr {
+    let program = crossover(rng, a, b, max_transforms);
+    crate::capture_gp_source!("legacy-operator", "crossover", &program.to_string());
+    program
+}
+
+/// Build one deterministic grammar-random pipeline using the evolution engine's RNG stream.
+///
+/// The returned source is canonical pipeline DSL. This is an additive generation-0 seam; it does
+/// not alter or share RNG state with any evolution entry point.
+pub fn random_canonical_pipeline(seed: u64, max_transforms: usize) -> String {
+    let mut rng = Pcg32::new(seed, 0x5EED);
+    GenomeIr::Pipeline(rand_genome(&mut rng, max_transforms)).canonical()
+}
+
+/// Deterministically mutate one valid pipeline and return canonical pipeline DSL.
+///
+/// A fresh RNG stream is derived solely from `seed`, so callers can record and replay each
+/// generation-0 offspring independently.
+pub fn mutate_canonical_pipeline(
+    source: &str,
+    seed: u64,
+    max_transforms: usize,
+) -> Result<String, String> {
+    let parent = parse_canonical_pipeline(source)?;
+    let mut rng = Pcg32::new(seed, 0x5EED);
+    Ok(GenomeIr::Pipeline(mutate_with_source_capture(
+        &mut rng,
+        &parent,
+        max_transforms,
+    ))
+    .canonical())
+}
+
+/// Deterministically cross two valid pipelines and return canonical pipeline DSL.
+///
+/// A fresh RNG stream is derived solely from `seed`, so parent order, seed, and
+/// `max_transforms` completely determine the child.
+pub fn crossover_canonical_pipelines(
+    left: &str,
+    right: &str,
+    seed: u64,
+    max_transforms: usize,
+) -> Result<String, String> {
+    let left = parse_canonical_pipeline(left)?;
+    let right = parse_canonical_pipeline(right)?;
+    let mut rng = Pcg32::new(seed, 0x5EED);
+    Ok(GenomeIr::Pipeline(crossover_with_source_capture(
+        &mut rng,
+        &left,
+        &right,
+        max_transforms,
+    ))
+    .canonical())
+}
+
+/// v2 twin of `mutate_canonical_pipeline`: expansion-aware insert vocabulary,
+/// log-scale param jitter, and a simplify arm that dissolves adjacent
+/// duplicate stages. Pure function of (source, seed, max_transforms,
+/// expansion_vocab) on the same Pcg32 seeding pattern; the v1 entry point and
+/// every recorded stream stay byte-identical.
+pub fn mutate_canonical_pipeline_v2(
+    source: &str,
+    seed: u64,
+    max_transforms: usize,
+    expansion_vocab: bool,
+) -> Result<String, String> {
+    let parent = parse_canonical_pipeline(source)?;
+    let mut vocab: Vec<&'static str> = TRANSFORMS.to_vec();
+    if expansion_vocab {
+        vocab.extend_from_slice(&EXPANSION_TRANSFORMS);
+    }
+    let mut rng = Pcg32::new(seed, 0x5EED);
+    Ok(GenomeIr::Pipeline(mutate_v2_with_source_capture(
+        &mut rng,
+        &parent,
+        max_transforms,
+        &vocab,
+    ))
+    .canonical())
+}
+
+/// Explicit mutation arms for train-only search protocols that seal an
+/// operator distribution independently from the legacy v2 sampler.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CanonicalMutationArm {
+    ParameterJitter,
+    Insert,
+    Delete,
+    AdjacentSwap,
+    HeadReplacement,
+    Simplify,
+}
+
+/// Apply exactly one requested v2-compatible mutation arm.
+///
+/// This is additive: the frozen v1/v2 entry points and their RNG streams are
+/// unchanged. A structurally inapplicable arm may return the canonical parent;
+/// callers that require semantic uniqueness must reject and retry it.
+pub fn mutate_canonical_pipeline_with_arm(
+    source: &str,
+    seed: u64,
+    max_transforms: usize,
+    expansion_vocab: bool,
+    arm: CanonicalMutationArm,
+) -> Result<String, String> {
+    let parent = parse_canonical_pipeline(source)?;
+    let mut rng = Pcg32::new(seed, 0x5EED);
+    let (mut transforms, head) = split(&parent);
+    let mut head = head.unwrap_or_else(|| rand_head(&mut rng));
+    let mut vocab: Vec<&'static str> = TRANSFORMS.to_vec();
+    if expansion_vocab {
+        vocab.extend_from_slice(&EXPANSION_TRANSFORMS);
+    }
+    match arm {
+        CanonicalMutationArm::ParameterJitter => {
+            if !transforms.is_empty() && rng.next_f64() < 0.7 {
+                let index = (rng.next_u32() as usize) % transforms.len();
+                jitter_params_v2(&mut rng, &mut transforms[index]);
+            } else {
+                jitter_params_v2(&mut rng, &mut head);
+            }
+        }
+        CanonicalMutationArm::Insert => {
+            if transforms.len() < max_transforms {
+                let index = (rng.next_u32() as usize) % (transforms.len() + 1);
+                transforms.insert(index, rand_stage_from(&mut rng, &vocab));
+            }
+        }
+        CanonicalMutationArm::Delete => {
+            if !transforms.is_empty() {
+                let index = (rng.next_u32() as usize) % transforms.len();
+                transforms.remove(index);
+            }
+        }
+        CanonicalMutationArm::AdjacentSwap => {
+            if transforms.len() >= 2 {
+                let index = (rng.next_u32() as usize) % (transforms.len() - 1);
+                transforms.swap(index, index + 1);
+            }
+        }
+        CanonicalMutationArm::HeadReplacement => head = rand_head(&mut rng),
+        CanonicalMutationArm::Simplify => {
+            if let Some(index) = adjacent_duplicate(&transforms) {
+                transforms.remove(index + 1);
+            } else if !transforms.is_empty() {
+                let index = (rng.next_u32() as usize) % transforms.len();
+                transforms.remove(index);
+            }
+        }
+    }
+    transforms.push(head);
+    let program = GenomeIr::Pipeline(DslExpr { stages: transforms }).canonical();
+    crate::capture_gp_source!("legacy-operator", "explicit-mutation-arm", &program);
+    Ok(program)
+}
+
+fn parse_canonical_pipeline(source: &str) -> Result<DslExpr, String> {
+    match GenomeIr::parse(source).map_err(|error| error.to_string())? {
+        GenomeIr::Pipeline(genome) => Ok(genome),
+        _ => Err("expected a pipeline genome".to_string()),
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Fitness
+// ---------------------------------------------------------------------------
+
+/// Deterministic row->fold assignment (FNV-1a over (key, row), matching folds.rs behavior).
+fn fold_assign(n: usize, k: usize, key: &str) -> Vec<usize> {
+    (0..n)
+        .map(|row| crate::folds::fold_of(key, row, k))
+        .collect()
+}
+
+/// k-fold CV of one genome: full refit inside every fold, scored by `metric` (higher = better).
+/// Returns None for genomes that fail to fit or produce non-finite scores.
+/// Widest transform knobs are clamped during search so the transformed frame stays cheap to build.
+const SEARCH_MAX_DEGREE: i64 = 4;
+const SEARCH_MAX_N: i64 = 64;
+
+/// The heart of the engine's speed: during search we DO NOT train each genome's real (expensive)
+/// head. We replace it with a cheap closed-form RIDGE surrogate and measure how linearly-predictable
+/// the genome's TRANSFORMS have made the target. That is the whole bet — the transforms' job is to
+/// linearize structure (cheb/poly/rff/quantile all do exactly this), so ridge is a principled and
+/// millisecond-fast fitness. Only the top-K leaders are later gated to their real head + proper CV.
+/// Also clamps the widest transform knobs so building the frame stays cheap.
+fn search_surrogate(g: &DslExpr) -> DslExpr {
+    let mut c = g.clone();
+    for st in &mut c.stages {
+        for (key, cap) in [("degree", SEARCH_MAX_DEGREE), ("n", SEARCH_MAX_N)] {
+            if let Some(v) = st.params.get_mut(key) {
+                if v.as_u64().map(|r| r as i64 > cap).unwrap_or(false) {
+                    *v = ParamValue::Int(cap);
+                }
+            }
+        }
+    }
+    match c.stages.last_mut() {
+        Some(last) if HEAD_OPS.contains(&last.op.as_str()) => {
+            last.op = "ridge".to_string();
+            last.params.clear();
+        }
+        // No head present (all-transform genome) — append a ridge so it is scorable.
+        _ => c.stages.push(Stage {
+            op: "ridge".to_string(),
+            params: BTreeMap::new(),
+        }),
+    }
+    c
+}
+
+/// Lite head budgets for the v2 race: `(head op, param overrides)` applied by `lite_budget`.
+/// One table so the knobs are tunable in one place. Heads absent from the table
+/// (ridge / ridge_gcv / logistic / ksmooth / stack / ensemble / ensemble_ridge_gbm) are already
+/// cheap at race row counts and pass through unchanged.
+pub const LITE_HEAD_BUDGETS: [(&str, &[(&str, i64)]); 6] = [
+    ("histgbm2", &[("rounds", 40), ("bags", 1)]),
+    ("histgbm", &[("rounds", 25)]),
+    ("gbm", &[("rounds", 25)]),
+    ("gpr", &[("steps", 5), ("m", 96)]),
+    ("krr", &[("m", 96)]),
+    ("elasticnet", &[("sweeps", 15)]),
+];
+
+/// Lite-budget variant of a genome for rungs 1-2 of the race: KEEPS the genome's real head — the
+/// whole point, since the ridge surrogate is head-blind — but caps the head's compute budget via
+/// `LITE_HEAD_BUDGETS` (tuning knobs like leaves/lr/kernel are preserved) and applies the same
+/// transform clamps as `search_surrogate`. A lab study showed this low-fidelity probe of the true
+/// objective scores Spearman 0.731 vs honest CV (surrogate: 0.373) at a fraction of full-fit cost.
+fn lite_budget(g: &DslExpr) -> DslExpr {
+    let mut c = g.clone();
+    for st in &mut c.stages {
+        for (key, cap) in [("degree", SEARCH_MAX_DEGREE), ("n", SEARCH_MAX_N)] {
+            if let Some(v) = st.params.get_mut(key) {
+                if v.as_u64().map(|r| r as i64 > cap).unwrap_or(false) {
+                    *v = ParamValue::Int(cap);
+                }
+            }
+        }
+    }
+    match c.stages.last_mut() {
+        Some(last) if HEAD_OPS.contains(&last.op.as_str()) => {
+            if let Some((_, overrides)) = LITE_HEAD_BUDGETS.iter().find(|(op, _)| *op == last.op) {
+                for (key, val) in overrides.iter() {
+                    last.params
+                        .insert((*key).to_string(), ParamValue::Int(*val));
+                }
+            }
+        }
+        // No head present (all-transform genome) — append a ridge so it is scorable.
+        _ => c.stages.push(Stage {
+            op: "ridge".to_string(),
+            params: BTreeMap::new(),
+        }),
+    }
+    c
+}
+
+/// The static emitted-token estimate (Python + Rust) of each genome, in input order, computed
+/// in parallel. Genomes the emitter cannot support estimate `0.0`, as the serial loops did.
+fn token_estimates<'a>(genomes: impl Iterator<Item = &'a DslExpr>) -> Vec<f64> {
+    let genomes: Vec<&DslExpr> = genomes.collect();
+    genomes
+        .into_par_iter()
+        .map(|genome| {
+            crate::tokens::try_estimate_tokens(
+                &GenomeIr::Pipeline(genome.clone()),
+                &EmitOptions::default(),
+            )
+            .map(|e| (e.py + e.rs) as f64)
+            .unwrap_or(0.0)
+        })
+        .collect()
+}
+
+fn score_genome(
+    g: &DslExpr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+) -> Option<Vec<f64>> {
+    let genome = GenomeIr::Pipeline(search_surrogate(g));
+    let mut fold_scores = Vec::with_capacity(k);
+    for fold in 0..k {
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        for i in 0..y.len() {
+            if assign[i] == fold {
+                xte.push(x[i].clone());
+                yte.push(y[i]);
+            } else {
+                xtr.push(x[i].clone());
+                ytr.push(y[i]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return None;
+        }
+        let m = model::fit(&genome, &xtr, &ytr).ok()?;
+        let pred = m.predict(&xte).ok()?;
+        let s = metric(&yte, &pred);
+        if !s.is_finite() {
+            return None;
+        }
+        fold_scores.push(s);
+    }
+    Some(fold_scores)
+}
+
+// B10 lexicase: begin
+/// [`score_genome`], also returning every row's out-of-fold prediction, by row (`NaN` for a row
+/// that is in no fold). The program, folds, fits, predictions and metric calls are
+/// `score_genome`'s, in the same order, so the fold scores are the same bits.
+fn score_genome_predictions(
+    g: &DslExpr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+) -> ScoredCases {
+    let genome = GenomeIr::Pipeline(search_surrogate(g));
+    let mut fold_scores = Vec::with_capacity(k);
+    let mut predictions = vec![f64::NAN; y.len()];
+    for fold in 0..k {
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        let mut held_out = Vec::new();
+        for i in 0..y.len() {
+            if assign[i] == fold {
+                xte.push(x[i].clone());
+                yte.push(y[i]);
+                held_out.push(i);
+            } else {
+                xtr.push(x[i].clone());
+                ytr.push(y[i]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return None;
+        }
+        let m = model::fit(&genome, &xtr, &ytr).ok()?;
+        let pred = m.predict(&xte).ok()?;
+        let s = metric(&yte, &pred);
+        if !s.is_finite() {
+            return None;
+        }
+        fold_scores.push(s);
+        for (&row, &value) in held_out.iter().zip(&pred) {
+            predictions[row] = value;
+        }
+    }
+    Some((fold_scores, predictions))
+}
+
+/// Fold scores with a per-row vector beside them (out-of-fold predictions or residual cases), or
+/// `None` where the legacy scorer gives `None`.
+type ScoredCases = Option<(Vec<f64>, Vec<f64>)>;
+
+/// [`score_genome`], also returning the signed out-of-fold residual `y[r] - prediction` of each
+/// row of `case_rows`, in that order.
+fn score_genome_cases(
+    g: &DslExpr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    case_rows: &[usize],
+) -> ScoredCases {
+    let (fold_scores, predictions) = score_genome_predictions(g, x, y, assign, k, metric)?;
+    let residuals = case_rows
+        .iter()
+        .map(|&row| y[row] - predictions[row])
+        .collect();
+    Some((fold_scores, residuals))
+}
+
+/// The surrogate search's legacy scoring of `unseen` under lexicase selection:
+/// [`score_genome_cases`] in parallel, keeping each scored candidate's cases in `cases`.
+#[allow(clippy::too_many_arguments)]
+fn score_unseen_with_cases(
+    unseen: Vec<(String, DslExpr)>,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    case_rows: &[usize],
+    cases: &mut HashMap<String, Vec<f64>>,
+) -> Vec<(String, DslExpr, Option<Vec<f64>>)> {
+    let scored: Vec<(String, DslExpr, ScoredCases)> = unseen
+        .into_par_iter()
+        .map(|(key, g)| {
+            let scored = score_genome_cases(&g, x, y, assign, k, metric, case_rows);
+            (key, g, scored)
+        })
+        .collect();
+    scored
+        .into_iter()
+        .map(|(key, g, scored)| {
+            let scores = scored.map(|(scores, residuals)| {
+                cases.insert(key.clone(), residuals);
+                scores
+            });
+            (key, g, scores)
+        })
+        .collect()
+}
+// B10 lexicase: end
+
+// B11 ridge scoring: begin
+/// The certified scorer of one surrogate search: the surrogate memo and the fold-scoped stage
+/// cache ([`RidgeScoring::Certified`]). Every score it returns is [`score_genome`]'s, bit for bit.
+/// Its keys pin the surrogate and the stage chain, not the data: they are sound because one scorer
+/// serves one search run, whose rows, labels, folds and case rows are fixed.
+struct CertifiedScoring {
+    cache: crate::stage_cache::StageCache,
+    /// A surrogate's exact key ([`exact_surrogate_key`]) to its fold scores and, when lexicase
+    /// cases are kept, its residuals on the run's case rows (fixed for the run).
+    memo: HashMap<Vec<u8>, ScoredCases>,
+    candidates: u64,
+    reuses: u64,
+}
+
+impl CertifiedScoring {
+    fn new() -> Self {
+        Self {
+            cache: crate::stage_cache::StageCache::new(CERTIFIED_STAGE_CACHE_BYTES),
+            memo: HashMap::new(),
+            candidates: 0,
+            reuses: 0,
+        }
+    }
+
+    /// Scores `unseen` as the legacy scorer does, keeping each candidate's lexicase cases on
+    /// `case_rows` when given. Each distinct surrogate not yet in the memo is scored once, in
+    /// parallel.
+    #[allow(clippy::too_many_arguments)]
+    fn score_unseen(
+        &mut self,
+        unseen: Vec<(String, DslExpr)>,
+        x: &Rows,
+        y: &[f64],
+        assign: &[usize],
+        k: usize,
+        metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+        case_rows: Option<&[usize]>,
+        cases: &mut HashMap<String, Vec<f64>>,
+    ) -> Vec<(String, DslExpr, Option<Vec<f64>>)> {
+        let surrogates: Vec<DslExpr> = unseen.iter().map(|(_, g)| search_surrogate(g)).collect();
+        let exact: Vec<Vec<u8>> = surrogates.iter().map(exact_surrogate_key).collect();
+        let mut queued = std::collections::HashSet::new();
+        let todo: Vec<(Vec<u8>, DslExpr)> = surrogates
+            .into_iter()
+            .zip(&exact)
+            .filter(|(_, id)| !self.memo.contains_key(*id) && queued.insert((*id).clone()))
+            .map(|(surrogate, id)| (id.clone(), surrogate))
+            .collect();
+        let cache = &self.cache;
+        let scored: Vec<(Vec<u8>, ScoredCases)> = todo
+            .into_par_iter()
+            .map(|(id, surrogate)| {
+                let genome = GenomeIr::Pipeline(surrogate);
+                let scored =
+                    score_surrogate_cached(&genome, x, y, assign, k, metric, cache, case_rows);
+                (id, scored)
+            })
+            .collect();
+        let computed = scored.len() as u64;
+        self.memo.extend(scored);
+        self.candidates += unseen.len() as u64;
+        self.reuses += unseen.len() as u64 - computed;
+        unseen
+            .into_iter()
+            .zip(exact)
+            .map(|((key, g), id)| {
+                let entry = &self.memo[&id];
+                if let (Some(_), Some((_, residuals))) = (case_rows, entry) {
+                    cases.insert(key.clone(), residuals.clone());
+                }
+                let scores = entry.as_ref().map(|(scores, _)| scores.clone());
+                (key, g, scores)
+            })
+            .collect()
+    }
+
+    fn receipt(&self, generation: usize) -> ScoringReceipt {
+        let (stage_hits, stage_misses, _) = self.cache.stats();
+        ScoringReceipt {
+            generation,
+            candidates: self.candidates,
+            surrogate_reuses: self.reuses,
+            stage_hits,
+            stage_misses,
+        }
+    }
+}
+
+/// The exact key of a surrogate: its stage count, then each stage's exact encoding (op and every
+/// parameter, floats as their IEEE-754 bits). Unlike canonical text, it separates surrogates that
+/// print alike but differ in any parameter bit.
+fn exact_surrogate_key(surrogate: &DslExpr) -> Vec<u8> {
+    let mut key = (surrogate.stages.len() as u64).to_le_bytes().to_vec();
+    for stage in &surrogate.stages {
+        crate::stage_cache::write_exact_stage(stage, &mut key);
+    }
+    key
+}
+
+/// [`score_genome_predictions`] for an already built surrogate, each fold fitted through the
+/// stage cache: the same folds, the same fits (bit-identical, [`model::fit_with_stage_cache`]),
+/// predictions and metric calls. With `case_rows`, also the residuals `y - prediction` on those
+/// rows, in that order, as [`score_genome_cases`] computes them; otherwise an empty vector.
+#[allow(clippy::too_many_arguments)]
+fn score_surrogate_cached(
+    surrogate: &GenomeIr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    cache: &crate::stage_cache::StageCache,
+    case_rows: Option<&[usize]>,
+) -> ScoredCases {
+    let keep = case_rows.is_some();
+    let mut fold_scores = Vec::with_capacity(k);
+    let mut predictions = if keep {
+        vec![f64::NAN; y.len()]
+    } else {
+        Vec::new()
+    };
+    for fold in 0..k {
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        let mut held_out = Vec::new();
+        for i in 0..y.len() {
+            if assign[i] == fold {
+                xte.push(x[i].clone());
+                yte.push(y[i]);
+                held_out.push(i);
+            } else {
+                xtr.push(x[i].clone());
+                ytr.push(y[i]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return None;
+        }
+        let ctx = crate::stage_cache::StageCacheCtx {
+            context_tag: "evolve-surrogate".to_string(),
+            folds: k,
+            fold,
+        };
+        let m = model::fit_with_stage_cache(surrogate, &xtr, &ytr, cache, &ctx).ok()?;
+        let pred = m.predict(&xte).ok()?;
+        let s = metric(&yte, &pred);
+        if !s.is_finite() {
+            return None;
+        }
+        fold_scores.push(s);
+        if keep {
+            for (&row, &value) in held_out.iter().zip(&pred) {
+                predictions[row] = value;
+            }
+        }
+    }
+    let residuals = case_rows.map_or_else(Vec::new, |rows| {
+        rows.iter().map(|&row| y[row] - predictions[row]).collect()
+    });
+    Some((fold_scores, residuals))
+}
+// B11 ridge scoring: end
+
+// ---------------------------------------------------------------------------
+// Fault policy (kernel2 WP-1.5): the scorers and bookkeeping of the non-legacy policies. Under
+// `FaultPolicy::Legacy` none of this runs.
+// ---------------------------------------------------------------------------
+
+/// One evaluation under a non-legacy [`FaultPolicy`].
+enum Admitted {
+    /// Scored: the policy's fold scores, and the fault totals of every pass.
+    Scored(Vec<f64>, FaultTotals),
+    /// Not scored, for a reason the legacy scorers share: an empty fold, a fit or prediction
+    /// error, a score that is not finite (a penalized one included), or the budget or a
+    /// cancellation stopping the evaluation.
+    Failed,
+    /// Rejected by the policy.
+    Rejected(Rejection),
+}
+
+/// The fit a non-legacy policy runs: [`fit_traced`], except in tests.
+type TracedFit<'fit> = dyn Fn(&GenomeIr, &Rows, &[f64]) -> anyhow::Result<(model::Model, PipelineTelemetry)>
+    + Sync
+    + 'fit;
+
+/// The scope check of a non-legacy policy: the program as it is fitted, at the input width. A set
+/// without rows is left to the folds, which fail on it as the legacy scorers do.
+fn scope_rejection(genome: &GenomeIr, x: &Rows) -> Option<Rejection> {
+    let width = x.first()?.len();
+    validate_scope(genome, width).err().map(Rejection::Scope)
+}
+
+/// One fold under a non-legacy policy: fit and predict with the traced entry points and add both
+/// passes to `faults`. `stop` runs between the fit and the prediction, where [`score_rung`] checks
+/// its budget. `Err` ends the evaluation: a Hard fault rejects it, anything else fails it.
+fn traced_fold(
+    genome: &GenomeIr,
+    (xtr, ytr): (&Rows, &[f64]),
+    (xte, yte): (&Rows, &[f64]),
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    fit: &TracedFit<'_>,
+    stop: &dyn Fn() -> bool,
+    faults: &mut FaultTotals,
+) -> Result<f64, Admitted> {
+    let hard = |faults: &FaultTotals| Admitted::Rejected(Rejection::HardFault(faults.hard_classes));
+    let (fitted, training) = fit(genome, xtr, ytr).map_err(|_| Admitted::Failed)?;
+    faults.add_pass(&training);
+    if faults.is_hard() {
+        return Err(hard(faults));
+    }
+    if stop() {
+        return Err(Admitted::Failed);
+    }
+    let (predictions, held_out) = predict_traced(&fitted, xte).map_err(|_| Admitted::Failed)?;
+    faults.add_pass(&held_out);
+    if faults.is_hard() {
+        return Err(hard(faults));
+    }
+    let score = metric(yte, &predictions);
+    if score.is_finite() {
+        Ok(score)
+    } else {
+        Err(Admitted::Failed)
+    }
+}
+
+/// The end of an evaluation whose every fold was scored without a Hard fault: the fold scores as
+/// `policy` keeps them.
+fn admit(policy: FaultPolicy, fold_scores: Vec<f64>, faults: FaultTotals) -> Admitted {
+    let scores = match policy {
+        FaultPolicy::Penalize {
+            lambda_domain,
+            lambda_saturation,
+            ..
+        } => {
+            let penalized = fold_scores
+                .iter()
+                .map(|&score| faults.penalize(score, lambda_domain, lambda_saturation))
+                .collect::<Option<Vec<f64>>>();
+            match penalized {
+                Some(scores) => scores,
+                None => return Admitted::Failed,
+            }
+        }
+        FaultPolicy::Legacy | FaultPolicy::RejectHard => fold_scores,
+    };
+    Admitted::Scored(scores, faults)
+}
+
+/// [`score_genome`] under a non-legacy [`FaultPolicy`]: the same program, folds and metric, with
+/// the scope check before anything is fitted and every fold run by [`traced_fold`].
+#[allow(clippy::too_many_arguments)]
+fn score_genome_admitted(
+    g: &DslExpr,
+    x: &Rows,
+    y: &[f64],
+    assign: &[usize],
+    k: usize,
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    policy: FaultPolicy,
+    fit: &TracedFit<'_>,
+) -> Admitted {
+    let genome = GenomeIr::Pipeline(search_surrogate(g));
+    if let Some(rejection) = scope_rejection(&genome, x) {
+        return Admitted::Rejected(rejection);
+    }
+    let mut faults = FaultTotals::default();
+    let mut fold_scores = Vec::with_capacity(k);
+    for fold in 0..k {
+        let (mut xtr, mut ytr, mut xte, mut yte) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        for i in 0..y.len() {
+            if assign[i] == fold {
+                xte.push(x[i].clone());
+                yte.push(y[i]);
+            } else {
+                xtr.push(x[i].clone());
+                ytr.push(y[i]);
+            }
+        }
+        if xte.is_empty() || xtr.is_empty() {
+            return Admitted::Failed;
+        }
+        match traced_fold(
+            &genome,
+            (&xtr, &ytr),
+            (&xte, &yte),
+            metric,
+            fit,
+            &|| false,
+            &mut faults,
+        ) {
+            Ok(score) => fold_scores.push(score),
+            Err(end) => return end,
+        }
+    }
+    admit(policy, fold_scores, faults)
+}
+
+/// What a non-legacy [`FaultPolicy`] knows about the candidates of one run: the fault totals of
+/// every scored evaluation, per canonical program and rung (the surrogate search uses rung 0), and
+/// the programs it rejected. It is only looked up by program, never iterated, so the order of its
+/// hash maps cannot reach a result.
+struct Admission {
+    policy: FaultPolicy,
+    faults: HashMap<String, [Option<FaultTotals>; 3]>,
+    rejected: std::collections::HashSet<String>,
+}
+
+/// The fault counters of one generation's [`GenStats`]; all zero under `Legacy`.
+#[derive(Default)]
+struct FaultCounters {
+    hard_rejected_share: f64,
+    hard_rejected: u64,
+    pop_domain_rate: f64,
+    elite_domain_rate: f64,
+}
+
+impl Admission {
+    /// The admission state of a run under `policy`, or `None` under `Legacy`, which runs the
+    /// search unchanged. Panics when the policy cannot be run ([`FaultPolicy::validate`]).
+    fn start(policy: FaultPolicy) -> Option<Self> {
+        if matches!(policy, FaultPolicy::Legacy) {
+            return None;
+        }
+        if let Err(reason) = policy.validate() {
+            panic!("{reason}");
+        }
+        Some(Self {
+            policy,
+            faults: HashMap::new(),
+            rejected: std::collections::HashSet::new(),
+        })
+    }
+
+    /// Records one evaluation of `key` at `rung` and returns the scores the search keeps: the
+    /// policy's scores, or `None` when the evaluation failed or was rejected. A rejection is
+    /// reported to `obs`.
+    fn record(
+        &mut self,
+        key: &str,
+        rung: usize,
+        admitted: Admitted,
+        obs: &dyn Observer,
+    ) -> Option<Vec<f64>> {
+        match admitted {
+            Admitted::Scored(scores, totals) => {
+                self.faults.entry(key.to_string()).or_default()[rung] = Some(totals);
+                Some(scores)
+            }
+            Admitted::Failed => None,
+            Admitted::Rejected(reason) => {
+                obs.on_reject(key, &reason);
+                self.rejected.insert(key.to_string());
+                None
+            }
+        }
+    }
+
+    /// The fault totals of `key`'s scored evaluation at `rung`; zero when there is none.
+    fn totals(&self, key: &str, rung: usize) -> FaultTotals {
+        self.faults
+            .get(key)
+            .and_then(|rungs| rungs[rung])
+            .unwrap_or_default()
+    }
+
+    /// The faulted cells of each ranked candidate, in order, when the policy breaks ties.
+    /// `rung_of` names the rung each candidate's score comes from.
+    fn tie_break_cells(
+        &self,
+        ranked: &[Scored],
+        rung_of: impl Fn(&str) -> usize,
+    ) -> Option<Vec<u64>> {
+        self.policy.breaks_ties().then(|| {
+            ranked
+                .iter()
+                .map(|s| self.totals(&s.dsl, rung_of(&s.dsl)).faulted_cells())
+                .collect()
+        })
+    }
+
+    /// One generation's counters: `population` is the generation's candidates, `ranked` their
+    /// ranking and `elites` how many ranked candidates pass into the next generation. `rung_of`
+    /// names the rung each ranked candidate's score comes from.
+    fn counters(
+        &self,
+        population: &[DslExpr],
+        ranked: &[Scored],
+        elites: usize,
+        rung_of: impl Fn(&str) -> usize,
+    ) -> FaultCounters {
+        let mut seen = std::collections::HashSet::new();
+        let (mut distinct, mut rejected) = (0_u64, 0_u64);
+        for genome in population {
+            let key = genome.to_string();
+            let was_rejected = self.rejected.contains(&key);
+            if seen.insert(key) {
+                distinct += 1;
+                rejected += u64::from(was_rejected);
+            }
+        }
+        let mean_domain_rate = |candidates: &[Scored]| {
+            if candidates.is_empty() {
+                return 0.0;
+            }
+            candidates
+                .iter()
+                .map(|s| self.totals(&s.dsl, rung_of(&s.dsl)).domain_rate())
+                .sum::<f64>()
+                / candidates.len() as f64
+        };
+        FaultCounters {
+            hard_rejected_share: if distinct == 0 {
+                0.0
+            } else {
+                rejected as f64 / distinct as f64
+            },
+            hard_rejected: self.rejected.len() as u64,
+            pop_domain_rate: mean_domain_rate(ranked),
+            elite_domain_rate: mean_domain_rate(&ranked[..elites.min(ranked.len())]),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The loop
+// ---------------------------------------------------------------------------
+
+/// Evolve pipeline genomes on (x, y). Returns the deduped population best-first (callers take the
+/// top-N finalists for proper CV downstream). Dispatches on `cfg.fitness`: the v1 surrogate path
+/// is untouched, bit-identical code; the v2 lite-race is a separate loop (callers that need the
+/// per-rung score dump should call `evolve_lite_race` directly).
+pub fn evolve(
+    x: &Rows,
+    y: &[f64],
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    cfg: &EvolveConfig,
+    obs: &dyn Observer,
+) -> Vec<Scored> {
+    match cfg.fitness {
+        FitnessMode::Surrogate => evolve_surrogate(x, y, metric, cfg, obs),
+        FitnessMode::LiteRace => evolve_lite_race(x, y, metric, cfg, obs).ranked,
+    }
+}
+
+/// v1 fitness loop: ridge-surrogate scoring of every candidate (see `search_surrogate`).
+fn evolve_surrogate(
+    x: &Rows,
+    y: &[f64],
+    metric: &(dyn Fn(&[f64], &[f64]) -> f64 + Sync),
+    cfg: &EvolveConfig,
+    obs: &dyn Observer,
+) -> Vec<Scored> {
+    // `None` under `FaultPolicy::Legacy`: every step below then runs the legacy code.
+    let mut admission = Admission::start(cfg.fault_policy);
+    let t0 = Instant::now();
+    let mut rng = Pcg32::new(cfg.seed, 0x5EED);
+    let assign = fold_assign(y.len(), cfg.folds.max(2), "invent");
+    let k = cfg.folds.max(2);
+    let gen_vocab = generation_vocab(cfg);
+    // B10 lexicase: begin
+    if let Err(reason) = cfg.selection.validate(cfg.fault_policy) {
+        panic!("{reason}");
+    }
+    let lexicase = cfg.selection.lexicase();
+    let case_rows = match lexicase {
+        Some(_) => lexicase_case_rows(y.len(), cfg.seed),
+        None => Vec::new(),
+    };
+    let mut cases: HashMap<String, Vec<f64>> = HashMap::new();
+    // B10 lexicase: end
+    // B11 ridge scoring: begin
+    if let Err(reason) = cfg.ridge_scoring.validate(cfg.fitness, cfg.fault_policy) {
+        panic!("{reason}");
+    }
+    let mut certified = (cfg.ridge_scoring == RidgeScoring::Certified).then(CertifiedScoring::new);
+    // B11 ridge scoring: end
+
+    // Seeds: champion + external seeds + starters + random fill.
+    let target_pop = cfg.pop.max(1);
+    let mut population: Vec<DslExpr> = Vec::with_capacity(target_pop);
+    let mut seed_seen = std::collections::HashSet::new();
+    for src in std::iter::once(CHAMPION_GENOME)
+        .chain(cfg.seed_genomes.iter().map(String::as_str))
+        .chain(
+            cfg.hard_ten_priors
+                .then_some(HARD_TEN_STARTERS.as_slice())
+                .into_iter()
+                .flatten()
+                .copied(),
+        )
+        .chain(STARTERS.iter().copied())
+        .chain(
+            cfg.expansion_vocab
+                .then_some(EXPANSION_STARTERS.as_slice())
+                .into_iter()
+                .flatten()
+                .copied(),
+        )
+    {
+        if population.len() >= target_pop {
+            break;
+        }
+        if let Ok(GenomeIr::Pipeline(d)) = GenomeIr::parse(src) {
+            let canonical = d.to_string();
+            if seed_seen.insert(canonical) {
+                population.push(d);
+            }
+        }
+    }
+    while population.len() < target_pop {
+        population.push(rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab));
+    }
+
+    let mut memo: HashMap<String, Option<Vec<f64>>> = HashMap::new();
+    let mut ledger = TokenLedger::new();
+    let mut evals: u64 = 0;
+    let mut best: Option<Scored> = None;
+    let mut ranked: Vec<Scored> = Vec::new();
+    // Wall-clock throttles for the live streams (decoupled from generations). A fast
+    // score-only tick (~16/sec) drives the ticker + score scatter. The code panel is fed
+    // ONLY by the per-generation leader (`ranked[0]`), throttled and emitted just when the
+    // leader changes — arbitrary candidates are never transpiled. Both are best-effort.
+    let mut last_eval_tick = Instant::now();
+    let mut last_eval_code = Instant::now();
+    let mut last_leader: Option<String> = None;
+
+    for gen in 0..cfg.gens.max(1) {
+        if obs.is_cancelled() {
+            break;
+        }
+        if cfg.time_budget_secs > 0.0 && t0.elapsed().as_secs_f64() > cfg.time_budget_secs {
+            break;
+        }
+
+        for (slot, genome) in population.iter().enumerate() {
+            crate::capture_gp_source!(
+                "surrogate",
+                &format!("generation/{gen}/slot/{slot}"),
+                &genome.to_string()
+            );
+        }
+
+        // Evaluate all unseen genomes in parallel (the Rust interpreter executes each candidate).
+        let unseen: Vec<(String, DslExpr)> = population
+            .iter()
+            .map(|g| (g.to_string(), g.clone()))
+            .filter(|(key, _)| !memo.contains_key(key))
+            .collect();
+        let fresh: Vec<(String, DslExpr, Option<Vec<f64>>)> = match admission.as_mut() {
+            // B11 ridge scoring: the same scores (and cases) from the memo and the stage cache.
+            None if certified.is_some() => {
+                let Some(scoring) = certified.as_mut() else {
+                    unreachable!("certified scoring is set")
+                };
+                scoring.cache.begin_generation(gen as u64);
+                let rows = lexicase.map(|_| case_rows.as_slice());
+                let fresh =
+                    scoring.score_unseen(unseen, x, y, &assign, k, metric, rows, &mut cases);
+                scoring.cache.sweep();
+                obs.on_scoring(&scoring.receipt(gen));
+                fresh
+            }
+            // B10 lexicase: the same scores, keeping each candidate's residual cases.
+            None if lexicase.is_some() => {
+                score_unseen_with_cases(unseen, x, y, &assign, k, metric, &case_rows, &mut cases)
+            }
+            None => unseen
+                .into_par_iter()
+                .map(|(key, g)| {
+                    let scores = score_genome(&g, x, y, &assign, k, metric);
+                    (key, g, scores)
+                })
+                .collect(),
+            Some(admission) => {
+                let policy = admission.policy;
+                let admitted: Vec<(String, DslExpr, Admitted)> = unseen
+                    .into_par_iter()
+                    .map(|(key, g)| {
+                        let admitted = score_genome_admitted(
+                            &g,
+                            x,
+                            y,
+                            &assign,
+                            k,
+                            metric,
+                            policy,
+                            &fit_traced,
+                        );
+                        (key, g, admitted)
+                    })
+                    .collect();
+                admitted
+                    .into_iter()
+                    .map(|(key, g, admitted)| {
+                        let scores = admission.record(&key, 0, admitted, obs);
+                        (key, g, scores)
+                    })
+                    .collect()
+            }
+        };
+        // Per-generation token accounting uses the STATIC estimator (X6, no
+        // emission): every evaluated genome is a shippable dual-language
+        // algorithm, so we credit its exact predicted Python+Rust token
+        // count without paying to emit it. tokens/sec is therefore live even
+        // when no improvement fires. Genomes the emitter cannot support
+        // (never generated here) simply credit nothing. The estimates are pure,
+        // so they are computed in parallel and credited in candidate order.
+        let estimates = token_estimates(fresh.iter().map(|(_, g, _)| g));
+        for ((key, _, scores), est) in fresh.iter().zip(estimates) {
+            evals += 1;
+            ledger.add(est);
+            memo.insert(key.clone(), scores.clone());
+
+            // Live candidate stream (throttled), SCORE ONLY. Arbitrary candidates are never
+            // transpiled — only the per-generation leader is (see the leader-code emit after
+            // ranking). This keeps the ticker + score scatter live without spraying code.
+            if let Some(fold) = scores {
+                if !fold.is_empty() {
+                    let cv = fold.iter().sum::<f64>() / fold.len() as f64;
+                    if cv.is_finite() {
+                        let now = Instant::now();
+                        if now.duration_since(last_eval_tick).as_millis() >= EVAL_SCORE_SAMPLE_MS {
+                            last_eval_tick = now;
+                            obs.on_eval(key, cv, None);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Rank the current population.
+        ranked = {
+            let mut seen = std::collections::HashSet::new();
+            let mut v: Vec<Scored> = population
+                .iter()
+                .filter_map(|g| {
+                    let key = g.to_string();
+                    if !seen.insert(key.clone()) {
+                        return None;
+                    }
+                    let fold_scores = memo.get(&key)?.clone()?;
+                    let cv_mean = fold_scores.iter().sum::<f64>() / fold_scores.len() as f64;
+                    Some(Scored {
+                        dsl: key,
+                        cv_mean,
+                        fold_scores,
+                    })
+                })
+                .collect();
+            v.sort_by(|a, b| {
+                b.cv_mean
+                    .partial_cmp(&a.cv_mean)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
+            v
+        };
+        if let Some(admission) = &admission {
+            if admission.policy.breaks_ties() {
+                prefer_fewer_faults(
+                    &mut ranked,
+                    |s| s.cv_mean,
+                    |s| admission.totals(&s.dsl, 0).faulted_cells(),
+                );
+            }
+        }
+        if ranked.is_empty() {
+            // population collapsed to invalid genomes — reseed randoms and continue
+            population = (0..cfg.pop)
+                .map(|_| rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab))
+                .collect();
+            continue;
+        }
+
+        // Stream ONLY the generation leader's code (ephemeral): whenever ranked[0] — the best
+        // of this generation — changes, transpile just that one genome and push it to the code
+        // panel, throttled so ultra-fast generations can't spray. No other candidate is ever
+        // converted to code, and this rides the ephemeral eval channel so it is never persisted.
+        {
+            // Emit a NEW leader's code immediately (the first emittable one always goes); only
+            // rate-limit subsequent leader changes so ultra-fast generations can't stream faster
+            // than the panel can read. State advances only on a successful emit, so a leader the
+            // transpiler can't render is retried, not silently swallowed.
+            let leader_changed = last_leader.as_deref() != Some(ranked[0].dsl.as_str());
+            let now = Instant::now();
+            let first = last_leader.is_none();
+            if leader_changed
+                && (first || now.duration_since(last_eval_code).as_millis() >= EVAL_CODE_SAMPLE_MS)
+            {
+                if let Some(py) = GenomeIr::parse(&ranked[0].dsl)
+                    .ok()
+                    .and_then(|gm| emit(&gm, &EmitOptions::default()).ok())
+                    .map(|e| e.python)
+                {
+                    last_eval_code = now;
+                    last_leader = Some(ranked[0].dsl.clone());
+                    obs.on_eval(&ranked[0].dsl, ranked[0].cv_mean, Some(&py));
+                }
+            }
+        }
+
+        let elapsed = t0.elapsed().as_secs_f64().max(1e-9);
+        let counters = admission
+            .as_ref()
+            .map_or_else(FaultCounters::default, |admission| {
+                admission.counters(&population, &ranked, (cfg.pop / 8).clamp(1, 8), |_| 0)
+            });
+        let mut stats = GenStats {
+            gen,
+            gens: cfg.gens,
+            evals,
+            evals_per_sec: evals as f64 / elapsed,
+            tokens_total: ledger.total(),
+            tokens_per_sec: ledger.rate(),
+            best_cv: ranked[0].cv_mean,
+            pop_fitness: ranked.iter().map(|s| s.cv_mean).collect(),
+            hard_rejected_share: counters.hard_rejected_share,
+            hard_rejected: counters.hard_rejected,
+            pop_domain_rate: counters.pop_domain_rate,
+            elite_domain_rate: counters.elite_domain_rate,
+        };
+
+        // New best? Emit its FULL dual-language source and stream it.
+        let improved = best
+            .as_ref()
+            .map(|b| ranked[0].cv_mean > b.cv_mean + 1e-9)
+            .unwrap_or(true);
+        if improved {
+            best = Some(ranked[0].clone());
+            if let Ok(genome) = GenomeIr::parse(&ranked[0].dsl) {
+                if let Ok(emitted) = emit(&genome, &EmitOptions::default()) {
+                    // real token credit for the artifact we actually produced
+                    ledger.add(
+                        (emitted.py_tokens.code_tokens
+                            + emitted.py_tokens.doc_tokens
+                            + emitted.rs_tokens.code_tokens
+                            + emitted.rs_tokens.doc_tokens) as f64,
+                    );
+                    stats.tokens_total = ledger.total();
+                    stats.tokens_per_sec = ledger.rate();
+                    obs.on_improvement(&ranked[0], &emitted, &stats);
+                }
+            }
+        }
+        obs.on_generation(&stats);
+
+        // Next generation: elites survive, the rest are tournament offspring.
+        let elite = (cfg.pop / 8).clamp(1, 8);
+        let mut next: Vec<DslExpr> = ranked
+            .iter()
+            .take(elite)
+            .filter_map(|s| match GenomeIr::parse(&s.dsl) {
+                Ok(GenomeIr::Pipeline(d)) => Some(d),
+                _ => None,
+            })
+            .collect();
+        let parents = ranked.len().min(cfg.pop / 2).max(1);
+        let tie_cells = admission
+            .as_ref()
+            .and_then(|admission| admission.tie_break_cells(&ranked, |_| 0));
+        // B10 lexicase: begin
+        let matrix =
+            lexicase.map(|_| lexicase_matrix(&ranked, |dsl| cases.get(dsl).map(Vec::as_slice)));
+        let mut draws = start_lexicase(lexicase, matrix.as_ref(), cfg.seed, gen);
+        // B10 lexicase: end
+        while next.len() < cfg.pop {
+            let pa = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
+            let child = if rng.next_f64() < 0.25 && ranked.len() >= 2 {
+                let pb = pick_parent(&mut rng, &ranked, parents, tie_cells.as_deref(), &mut draws);
+                let (ga, gb) = (parse_pipe(&ranked[pa].dsl), parse_pipe(&ranked[pb].dsl));
+                match (ga, gb) {
+                    (Some(a), Some(b)) => {
+                        crossover_with_source_capture(&mut rng, &a, &b, cfg.max_transforms)
+                    }
+                    _ => rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab),
+                }
+            } else {
+                match parse_pipe(&ranked[pa].dsl) {
+                    Some(a) => mutate_with_source_capture(&mut rng, &a, cfg.max_transforms),
+                    None => rand_genome_from(&mut rng, cfg.max_transforms, &gen_vocab),
+                }
+            };
+            next.push(child);
+        }
+        report_selection(obs, gen, ranked.len(), draws);
+        population = next;
+    }
+
+    ranked
+}
+
+// ---------------------------------------------------------------------------
 // Fitness v2: multi-rung lite-race (successive halving of the TRUE objective)
 // ---------------------------------------------------------------------------
 
