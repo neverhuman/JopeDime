@@ -6266,6 +6266,16 @@
       "lanes": [],
       "scope": "H230 data-free frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
     },
+    "python:research/flywheel_selfplay/h232_lion/test_h232.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H232 data-free controls: hw_t2120 arm settings (CONTROL = H170 CTRL AdamW lr 1e-4 wd 1e-4; LION lr 1e-5, LION_LR3 lr 3.33e-5, betas 0.9/0.99, decoupled wd 3e-4) constant over 40 updates and equal to schedules.json, Lion step equal to the Chen et al. 2023 reference update with None-gradient skipping, every arm moves parameters, None-safe gradient norm and full-coordinate drift, family folds and fit-only batch plan, strict inner selector reachability, median family bootstrap with Holm m=2 and the +0.002 advance margin (ties fail), canonical Elo, duplicate/pseudoreplication disclosure, xbabe1 monitor hard limits (RSS 4 GiB, MemAvailable 20 GiB, free 150 GB, 4 threads, 04:00Z compute stop) with load5 60/55 pause hysteresis, launch binding"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"

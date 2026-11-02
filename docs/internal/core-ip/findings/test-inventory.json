@@ -433,6 +433,10 @@
         "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
         "role": "research"
       },
+    "python:research/flywheel_selfplay/h232_lion/test_h232.py": {
+      "reason": "Owner-requested H232 data-free controls for the Lion vs AdamW r882 adapter continuation (arm settings, Lion reference update, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor limits and load-pause hysteresis, launch binding).",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [

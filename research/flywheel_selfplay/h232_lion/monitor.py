@@ -27,7 +27,9 @@ MEM_MIN = 20 * 2**30
 FREE_MIN = 150_000_000_000
 THREADS_MAX = 4
 COMPUTE_STOP = 1793678400.0  # 2026-11-03T04:00:00Z (hw_t2120)
-CLAIMS = Path("/home/ubuntu/jope_plan/ns/receipts")
+CLAIMS = Path(
+    "/home/ubuntu/jope-data/h232"
+)  # the attempt claim lives on the run host (xbabe1)
 
 
 def violations(sample):
