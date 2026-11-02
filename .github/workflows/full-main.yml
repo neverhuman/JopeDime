@@ -74,6 +74,23 @@ jobs:
           name: full-cpu-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.group }}
           path: target/full-cpu/${{ github.run_id }}/${{ github.run_attempt }}/${{ matrix.group }}/
 
+  macos-arm64:
+    # Native macOS arm64 leg of the full CI on the self-hosted xbabe4 Mac (a launchd user-service
+    # runner, not the Linux guest lanes). The Linux families stay on jope-full-cpu trusted storage,
+    # where the cpu matrix already fans out across every full host (xbabe2, xbabe3).
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, macOS, ARM64, jope-macos]
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: "8"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build, package and exercise native macOS arm64 D1
+        run: nice -n 10 bash ops/ci/clean-host.sh macos
+
   paper:
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/paper.yml
