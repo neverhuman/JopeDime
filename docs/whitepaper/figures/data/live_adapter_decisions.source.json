@@ -1,0 +1,58 @@
+{
+  "schema": "whitepaper.live-adapter-decisions-source/v1",
+  "csv_sha256": "e9d6e086ee862cf54823445e73e03aafaa396cefec1483289c0e671c51c16d0f",
+  "capture": {
+    "captured_at": "2026-11-02T21:25:49.576904+00:00",
+    "round_window": [
+      3881,
+      3900
+    ],
+    "rows": 20,
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "all20_candidate_and_decision_flags_matched": true,
+    "all20_summary_admission_retained_utility_matched": true,
+    "retained_state_contiguous": true,
+    "adapter_admissions": 0,
+    "rejected": 20,
+    "retained_utility_values": [
+      "1.1389572403748425"
+    ]
+  },
+  "sources": [
+    {
+      "name": "summary.jsonl",
+      "captured_at": "2026-11-02T21:25:49.490243+00:00",
+      "source_basename": "summary.jsonl",
+      "complete_prefix_bytes": 3358600,
+      "complete_prefix_sha256": "c0de71bde29df1d6bb66b573d3d85e252574be89bce862372be83728dd1a73a7",
+      "incomplete_trailing_bytes_omitted": 0,
+      "stable_prefix_reread": true,
+      "projection_sha256": "ff16b7bdbbe079f67b02701fd6e8b35337cc7cd3a169e88a5736ab6d3da0b011"
+    },
+    {
+      "name": "admissions.jsonl",
+      "captured_at": "2026-11-02T21:25:49.517779+00:00",
+      "source_basename": "adapter_admissions.jsonl",
+      "complete_prefix_bytes": 1654391,
+      "complete_prefix_sha256": "7ca9d976eda66de46351b47edf0a85abfbc6e35ec130a8a64b49644e92afbbb8",
+      "incomplete_trailing_bytes_omitted": 0,
+      "stable_prefix_reread": true,
+      "projection_sha256": "4b44698a4ab60a370f796371244ec8df7cad2b218803890ca0209b6de27eef13"
+    },
+    {
+      "name": "per-round.jsonl",
+      "captured_at": "2026-11-02T21:25:49.546794+00:00",
+      "source_basename": "per-round.jsonl",
+      "complete_prefix_bytes": 2348440,
+      "complete_prefix_sha256": "11fcf14d44aa0f00785b02d17da63f37c2330910d16c57bf5a86bb0a75f84414",
+      "incomplete_trailing_bytes_omitted": 0,
+      "stable_prefix_reread": true,
+      "projection_sha256": "965955fa916cf50bfbb2f0e742426b7a1468084453f7cca2c5d690ec50f17930"
+    }
+  ],
+  "capture_script_sha256": "daeae2577d4bd88e2a477e70dad471f22e75abbdb4f8efca12317c296fba6432",
+  "definitions": "Each point is candidate_utility minus previous_best_utility from the admission journal. Zero means score equality, not an independent performance threshold. Marker categories use the logged accepted flag, not a threshold inferred from rounded values. All 20 consecutive matched complete rounds are included; no smoothing or outcome selection.",
+  "source_binding": "Logged aggregate fields only; this capture does not qualify installed source, adapter, evaluation population or normalization closure.",
+  "scope": "Adaptive development-side adapter admission decisions, separate from strict program-incumbent events. No independent first-proposal, learning-gain, cross-model or serving comparison.",
+  "reproduce": "python3 figures/scripts/make_live_adapter_decisions_figure.py"
+}
