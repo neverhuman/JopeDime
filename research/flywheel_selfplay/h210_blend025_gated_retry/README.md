@@ -113,6 +113,20 @@ No arm made a −2.0 pick. The ungated blend is negative here, as in H199/H135. 
    0, peak 3.94 cores). That was 2 h 06 min before the absolute deadline.
 6. **Resources.** Fit wall 5,684 s and process CPU 10,428 s in total. Max RSS 3.4 GB and the run root 177 MB.
 
+## Caveats
+
+- **Not a sealed test.** The scores are nested TRAIN cross-fit dev scores on the same 205 DL-Train families. Those
+  families were already used by H124, H129, H195, H199 and H203. No sealed, holdout or meta-test data was read.
+- **Partitions are only partly independent.** Each replicate seed has its own cross-fit family partition: fold seeds
+  210141–210143, pairwise best-match Jaccard 0.14–0.16, and the runner refuses identical partitions. But the H124
+  data load and the TRAIN dev projection run once, with fold seed 210141 (`runner.py`, `h124.FOLD_SEED`). All three
+  replicate seeds share that one partition, so the seeds are not fully independent replicates.
+- **DL-Val is descriptive and small.**
+  - The flywheel91 context mean is 1.1387996, against r882's 1.1377942 (+0.0010).
+  - The equal-family mean is 1.1545752, against 1.1536153 (+0.0010).
+  - It covers 19 families and was never a decision gate.
+- **U4 does not confirm.** On U4, GATED_025's CI95 crosses 0: +0.0064 [−0.0008, +0.0125], 2/3 seeds.
+
 ## Verdict
 
 **CANDIDATE: GATED_025** on the flywheel native first-argmin protocol, qualified by D1 and E1. It is a diagnostic
@@ -130,8 +144,12 @@ For `flywheel_gp_fused`, frozen DOPE `c51a56d0`, no serving change:
 
 ## Next step
 
-- **Before any shadow decision.** Replicate prospectively on fresh fold partitions with τ frozen per cell from this
-  wave's recipe, run on a host whose guards are sized from the effective CPU affinity.
+- **Before any shadow decision: preregister H217.** H217 confirms GATED_025 on a fresh fold seed, plus fresh JRB
+  families if they are admitted.
+  - It applies the frozen gate recipe: `zgap`, τ chosen on FIT only, FIT harm ≤ 5%.
+  - It does **no retuning of τ** or of the recipe.
+  - It keeps the same decision gates.
+  - It runs on a host whose guards are sized from the effective CPU affinity.
 - **Harm target.** Report per-family win/loss so the remaining harm (7 families) can be inspected.
 - **Larger gain.** Recovering more of the ungated gain needs a better outcome-free signal, not a looser τ.
 
