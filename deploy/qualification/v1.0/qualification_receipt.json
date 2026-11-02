@@ -314,12 +314,20 @@
     ]
   },
   "qualification": {
-    "status": "GATES_ADMITTED_PENDING_OWNER_RELEASE_APPROVAL",
+    "status": "OWNER_APPROVED_SCOPED_V1_0_0",
     "gates_admitted": true,
     "raw_all_pass": false,
-    "release_qualified": false,
-    "owner_release_approval": null,
-    "aggregate_signature": null
+    "release_qualified": true,
+    "owner_release_approval": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/api01-final-t2226/OWNER-RELEASE-DECISION.json",
+      "sha256": "14259f14c28a15d907bbe6f3dab5544e62ac5b5b756a9b9ed479716559b132a8",
+      "bytes": 3494
+    },
+    "aggregate_signature": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/api01-final-t2226/SIGNING-RECEIPT.json",
+      "sha256": "c2e36d927f46edfb32862080f02bbac1b890f842212954361b68b8e4e1320349",
+      "bytes": 3240
+    }
   },
   "q1": {
     "outcome": "INCOMPLETE",
