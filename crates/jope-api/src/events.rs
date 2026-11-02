@@ -11,14 +11,15 @@ pub struct PublicEvent {
     /// RFC 3339 UTC timestamp; produced by the service clock.
     pub time: String,
     #[serde(flatten)]
-    pub event: EventBody,
+    pub event: DurableEventBody,
 }
 
 /// Adjacent tagging makes mismatched kind/body pairs unrepresentable.
 /// Appendix B's telemetry entry is ephemeral and cannot acquire a durable ID.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", content = "body")]
-pub enum EventBody {
+#[schemars(rename = "EventBody")]
+pub enum DurableEventBody {
     #[serde(rename = "run.state")]
     RunState(RunStateBody),
     #[serde(rename = "run.config")]
@@ -40,6 +41,9 @@ pub enum EventBody {
     #[serde(rename = "run.finished")]
     RunFinished(RunFinishedBody),
 }
+
+/// Backwards-compatible name for the durable event body.
+pub type EventBody = DurableEventBody;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct RunStateBody {
