@@ -5582,22 +5582,6 @@
         "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion."
       }
     },
-    "python:research/flywheel_selfplay/h214_pool_diversity/test_h214.py": {
-      "bytes": 6424,
-      "sha256": "6e93d1e1771551353668f230650a649832875bd8715af43210605af8fc04d261",
-      "classification": {
-        "role": "research",
-        "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
-      }
-    },
-    "python:research/flywheel_selfplay/h214_pool_diversity/test_runtime.py": {
-      "bytes": 4830,
-      "sha256": "522a9c8b7c601afcedc96416709e263be143146b013743ecdee003bdde7d4c6b",
-      "classification": {
-        "role": "research",
-        "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
-      }
-    },
     "python:research/flywheel_selfplay/h214_pool_diversity/analysis.py": {
       "bytes": 4876,
       "sha256": "be12e0982c54c70bfce402398b77e0166e72909fe9be89af33a58b13832e5ad2",
