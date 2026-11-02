@@ -271,11 +271,25 @@ def test_two_fold_jtt1_is_deterministic_stratified_and_train_only():
     assert first == second
     raw = gzip.decompress(first)
     n, n_test, columns, folds_count = struct.unpack("<IIIB", raw[4:17])
-    assert (n, n_test, columns, folds_count) == (50, 0, 2, 2)
+    assert (n, n_test, columns, folds_count) == (
+        50,
+        builder.NATIVE_MIN_QUERY_ROWS,
+        2,
+        2,
+    )
     fold_ids = np.frombuffer(raw, dtype=np.uint8, count=n, offset=17)
-    targets = np.frombuffer(
-        raw, dtype="<f8", count=n * (columns + 1), offset=17 + n
-    ).reshape(n, columns + 1)[:, -1]
+    table = np.frombuffer(
+        raw,
+        dtype="<f8",
+        count=(n + n_test) * (columns + 1),
+        offset=17 + n,
+    ).reshape(n + n_test, columns + 1)
+    train_table, query_table = table[:n], table[n:]
+    assert len(raw) == 17 + n + 8 * (n + n_test) * (columns + 1)
+    np.testing.assert_array_equal(train_table, np.column_stack((x, y)))
+    np.testing.assert_array_equal(query_table[:, :-1], x[:n_test])
+    np.testing.assert_array_equal(query_table[:, -1], np.zeros(n_test))
+    targets = train_table[:, -1]
     assert np.bincount(fold_ids).tolist() == [25, 25]
     for label in (0.0, 1.0):
         assert np.bincount(fold_ids[targets == label]).tolist() == [
