@@ -1644,9 +1644,10 @@ fn validate_response(result: ServiceResult, identity: &ServiceIdentity) -> Resul
 }
 fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
     let bytes = path.as_os_str().as_bytes();
-    // SAFETY: sockaddr_un is composed of integer fields; zero is a valid
-    // initial value, and the validated family/path are populated below.
-    let mut address: libc::sockaddr_un = unsafe { std::mem::zeroed() };
+    let mut address = libc::sockaddr_un {
+        sun_family: 0,
+        sun_path: [0; 108],
+    };
     ensure!(
         !bytes.is_empty() && bytes.len() < address.sun_path.len() && !bytes.contains(&0),
         "invalid local authority socket path"
@@ -2002,9 +2003,15 @@ fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result<()> {
             iov_len: 1,
         };
         let mut control = [0usize; 8];
-        // SAFETY: msghdr is an integer/pointer C record; zero initializes its
-        // pointer fields to null before live iov/control buffers are assigned.
-        let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
+        let mut msg = libc::msghdr {
+            msg_name: std::ptr::null_mut(),
+            msg_namelen: 0,
+            msg_iov: std::ptr::null_mut(),
+            msg_iovlen: 0,
+            msg_control: std::ptr::null_mut(),
+            msg_controllen: 0,
+            msg_flags: 0,
+        };
         msg.msg_iov = &mut iov;
         msg.msg_iovlen = 1;
         msg.msg_control = control.as_mut_ptr().cast();
@@ -2047,9 +2054,15 @@ fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
             iov_len: 1,
         };
         let mut control = [0usize; 8];
-        // SAFETY: msghdr is an integer/pointer C record; zero initializes its
-        // pointer fields to null before live iov/control buffers are assigned.
-        let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
+        let mut msg = libc::msghdr {
+            msg_name: std::ptr::null_mut(),
+            msg_namelen: 0,
+            msg_iov: std::ptr::null_mut(),
+            msg_iovlen: 0,
+            msg_control: std::ptr::null_mut(),
+            msg_controllen: 0,
+            msg_flags: 0,
+        };
         msg.msg_iov = &mut iov;
         msg.msg_iovlen = 1;
         msg.msg_control = control.as_mut_ptr().cast();
