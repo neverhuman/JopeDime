@@ -14,6 +14,7 @@ pub mod hash;
 pub mod ingest;
 pub mod meta;
 pub mod paths;
+pub mod prep_v31_labels;
 pub mod prime_label_to_corpus;
 pub mod regression_release;
 pub mod repo;
