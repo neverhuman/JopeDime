@@ -5798,13 +5798,13 @@
       "sha256": "3396bced69ba492486649f3fdedceb865b052f7f7a7d377300b253cc98d0fdbb"
     },
     "python:research/flywheel_selfplay/rnk10_m5_causal/train_candidate.py": {
-      "bytes": 27161,
+      "bytes": 27343,
       "classification": {
         "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
         "role": "research"
       },
       "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "7276cc681efdc83e10733ff6389eea3173ef5ae9c64566024730a3a00d905bf4"
+      "sha256": "b2e16c5b82d11ceed5eef9fdd95f14becce88a287bc9efa33e1fa3243edbdde3"
     },
     "python:research/flywheel_selfplay/rust_evaluator.py": {
       "bytes": 53182,
@@ -5855,12 +5855,12 @@
       "sha256": "e0d95e016c5ee62b5fad581dacc90bb01853e8162811e3a8b63b7efa02bb309c"
     },
     "python:research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py": {
-      "bytes": 110958,
+      "bytes": 110967,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "feabff0733e68662bd7d871ec51a530e8deedf8c86bce1911fb4bdb35ec394e1"
+      "sha256": "2389470aec2e3bb53931af696d7c571d917a242b062bf14e7e6be27bee4bbf0e"
     },
     "python:research/flywheel_selfplay/verify_flywheel_winner_pool_integration_v2.py": {
       "bytes": 63915,

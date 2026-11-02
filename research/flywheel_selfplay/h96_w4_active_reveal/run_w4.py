@@ -49,7 +49,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 H81_PATH = HERE.parent / "h81_w4_prospective_2plus2" / "run_prospective.py"
-H81_SHA = "9ad50be577a30c616f7668d52f621d5411e70019ba9f1d1960eb8a45a448c999"
+H81_SHA = "5d0dd1afb7952e7ac2dc9a13185827088a9705b77d472bfd06dfd9086b6d9d5a"
 PROG_MODELS_SHA = "5938a35497ccde1a1489c4d6b13d122196aed16739a3272afea06d57d5fff692"
 ARMS = ("random4", "prog_top4", "prog_2plus2", "prog_2plus2_swap")
 H81_NAME = {"random4": "random4", "prog_top4": "gbm_top4", "prog_2plus2": "gbm_2plus2", "prog_2plus2_swap": "gbm_2plus2_swap"}

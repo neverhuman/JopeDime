@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import random
@@ -99,14 +98,19 @@ def source_blob(path: str, expected_sha: str) -> str:
     return result.decode("utf-8")
 
 
+def training_indices(pool: dict, slate_size: int) -> np.ndarray:
+    """Retain the best 48 (including a promoted incumbent) in every training slate."""
+    if slate_size < 1 or not len(pool["pids"]):
+        raise ValueError("positive slate and nonempty pool required")
+    order = np.argsort(pool["fitness"])
+    k = min(48, slate_size, len(order))
+    rest_pool = order[k:] if len(order) > k else order
+    rest = np.random.choice(rest_pool, slate_size - k, replace=len(rest_pool) < slate_size - k)
+    return np.concatenate([order[:k], rest])
+
+
 def load_training_indices():
-    namespace: dict[str, object] = {"__name__": "r10_pinned_automatic_promotion"}
-    source = source_blob(
-        "research/flywheel_selfplay/automatic_promotion.py",
-        "37e50568fd097944cf7125de340a19da3dbf27f7be80f47e28fb93b6cc24d16d",
-    )
-    exec(compile(source, "automatic_promotion.py@3b4f349f", "exec"), namespace)
-    return namespace["training_indices"]
+    return training_indices
 
 
 def verify_sources(input_dir: Path) -> dict[str, str]:
