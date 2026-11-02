@@ -14,6 +14,16 @@ def need(ok,msg):
     if not ok:raise ValueError(msg)
 def code(exc):return getattr(exc,'response',{}).get('Error',{}).get('Code')
 
+def _read_bounded_body(stream,expected,tick):
+    """Read at most one byte beyond the declared size before rejecting."""
+    out=bytearray()
+    while True:
+        tick()
+        chunk=stream.read(min(1024**2,expected-len(out)+1))
+        if not chunk:break
+        out.extend(chunk);need(len(out)<=expected,'object exceeded expected bytes')
+    return bytes(out)
+
 class S3Library:
     def __init__(self,client,*,deadline,nativecanonical_json=None):
         self.client=client;self.deadline=deadline;self.nativecanonical_json=nativecanonical_json
@@ -25,13 +35,9 @@ class S3Library:
         sha256(ref['sha256']);version=ref['version_id'];need(type(version)is str and version not in ('','null'),'VersionId required')
         r=self.client.get_object(Bucket=BUCKET,Key=ref['key'],VersionId=version)
         need(r.get('VersionId')==version and r.get('ContentLength')==ref['bytes'],'exact version/size mismatch')
-        out=bytearray()
         with r['Body']as stream:
-            while True:
-                self.tick();b=stream.read(min(1024**2,ref['bytes']-len(out)+1))
-                if not b:break
-                out.extend(b);need(len(out)<=ref['bytes'],'object exceeded expected bytes')
-        self.tick();body=bytes(out)
+            body=_read_bounded_body(stream,ref['bytes'],self.tick)
+        self.tick()
         need(len(body)==ref['bytes'] and hashlib.sha256(body).hexdigest()==ref['sha256'],'exact version SHA mismatch')
         return body,version
     def lookup(self,evaluation_key):
