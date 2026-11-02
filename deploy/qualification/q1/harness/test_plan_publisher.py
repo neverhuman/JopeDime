@@ -482,10 +482,12 @@ class PinnedModuleLoaderTests(unittest.TestCase):
     def test_unknown_names_escaped_paths_and_symlinks_are_refused(self):
         with self.assertRaisesRegex(ValueError, "module name"):
             publisher.module("arbitrary", self.source, self.filename())
+        escaped = self.filename().parent / os.pardir / self.filename().name
+        self.assertIn(os.pardir, escaped.parts)
         for filename in [
             Path("q1_cut.py"),
             self.root / "outside.py",
-            self.filename().parent / "../q1_cut.py",
+            escaped,
             self.filename().with_name("other.py"),
         ]:
             with self.subTest(filename=str(filename)), self.assertRaises(ValueError):
