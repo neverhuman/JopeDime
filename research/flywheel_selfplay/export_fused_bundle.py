@@ -466,8 +466,25 @@ def compute_bundle_digest(manifest, files):
     return "sha256:" + digest.hexdigest()
 
 
+def _assert_no_symlink_path(path):
+    """Reject symlinks in every existing component without resolving them away."""
+    path = Path(path)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current = current / part
+        try:
+            mode = current.lstat().st_mode
+        except OSError as error:
+            raise ExportError(f"missing custody path component: {current}") from error
+        if stat.S_ISLNK(mode):
+            raise ExportError(f"symlink in custody path: {current}")
+    return path
+
+
 def _external_rows(custody):
-    """Validate EXTERNAL.json against the original custody manifest and Git pins."""
+    """Validate EXTERNAL.json against the original custody manifest."""
     verifier_path = Path(__file__).resolve().parent / "custody/verify_custody.py"
     spec = importlib.util.spec_from_file_location("_jope_custody_verifier", verifier_path)
     if spec is None or spec.loader is None:
@@ -475,30 +492,12 @@ def _external_rows(custody):
     verifier = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(verifier)
     try:
-        manifest = json.loads((Path(custody) / "MANIFEST.json").read_bytes())
-        document = json.loads((Path(custody) / "EXTERNAL.json").read_bytes())
+        manifest_path = _assert_no_symlink_path(Path(custody) / "MANIFEST.json")
+        external_path = _assert_no_symlink_path(Path(custody) / "EXTERNAL.json")
+        manifest = json.loads(manifest_path.read_bytes())
+        document = json.loads(external_path.read_bytes())
         expected, _ = verifier._manifest_entries(manifest)
         entries = verifier._external_entries(document, expected)
-        for row in entries.values():
-            commit = row["recovery_commit"]
-            git_path = row["git_path"]
-            object_id = row["git_object_id"]
-            if (
-                not isinstance(commit, str)
-                or not re.fullmatch(r"[0-9a-f]{40}", commit)
-                or not isinstance(object_id, str)
-                or not re.fullmatch(r"[0-9a-f]{40}", object_id)
-                or not isinstance(git_path, str)
-                or git_path != "research/flywheel_selfplay/custody/files/" + row["path"].lstrip("/")
-            ):
-                raise ValueError("invalid immutable external Git pin")
-            actual = subprocess.check_output(
-                ["git", "-C", str(REPO_ROOT), "rev-parse", "--verify", f"{commit}:{git_path}"],
-                stderr=subprocess.PIPE,
-                text=True,
-            ).strip()
-            if actual != object_id:
-                raise ValueError("external Git object identity differs from custody pin")
         return entries
     except (OSError, KeyError, TypeError, AttributeError, json.JSONDecodeError, ValueError, subprocess.CalledProcessError) as error:
         raise ExportError(f"invalid external custody pins: {error}") from error
@@ -549,6 +548,25 @@ def _cache_bytes(root, expected, size):
 
 
 def _git_bytes(row, expected, size):
+    commit = row["recovery_commit"]
+    git_path = row["git_path"]
+    object_id = row["git_object_id"]
+    if (
+        not re.fullmatch(r"[0-9a-f]{40}", commit)
+        or not re.fullmatch(r"[0-9a-f]{40}", object_id)
+        or git_path != "research/flywheel_selfplay/custody/files/" + row["path"].lstrip("/")
+    ):
+        raise ExportError("invalid immutable external Git pin")
+    try:
+        actual = subprocess.check_output(
+            ["git", "-C", str(REPO_ROOT), "rev-parse", "--verify", f"{commit}:{git_path}"],
+            stderr=subprocess.PIPE,
+            text=True,
+        ).strip()
+    except subprocess.CalledProcessError as error:
+        raise ExportError("pinned Git recovery commit/path unavailable") from error
+    if actual != object_id:
+        raise ExportError("external Git recovery object identity differs")
     command = ["git", "-C", str(REPO_ROOT), "cat-file", "blob", row["git_object_id"]]
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
@@ -582,11 +600,8 @@ def _pinned_bytes(custody, original, expected, size=None, external_root=None, ex
             return _cache_bytes(external_root, expected, size)
         return _git_bytes(external, expected, size)
 
-    path = custody / "files"
-    for part in parts[1:]:
-        path = path / part
-        if path.is_symlink():
-            raise ExportError("symlink in pinned source path")
+    path = Path(custody) / "files" / relative
+    _assert_no_symlink_path(path)
     try:
         mode = path.lstat().st_mode
     except OSError as error:
@@ -600,8 +615,10 @@ def _pinned_bytes(custody, original, expected, size=None, external_root=None, ex
 def load_inputs(custody=CUSTODY_PATH, external_root=None):
     """Read committed custody copies only; restricted pickle load after byte pins."""
     custody = Path(custody)
-    manifest_data = (custody / "MANIFEST.json").read_bytes()
-    checkpoint_data = (custody / "CHECKPOINT.json").read_bytes()
+    manifest_path = _assert_no_symlink_path(custody / "MANIFEST.json")
+    checkpoint_path = _assert_no_symlink_path(custody / "CHECKPOINT.json")
+    manifest_data = manifest_path.read_bytes()
+    checkpoint_data = checkpoint_path.read_bytes()
     manifest, pin = read_json(manifest_data), read_json(checkpoint_data)
     external_rows = _external_rows(custody)
     checkpoint_hash = pin["checkpoint"]["sha256"]
