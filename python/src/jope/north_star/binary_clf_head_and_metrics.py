@@ -161,6 +161,7 @@ def batched_roc_auc_gpu(
     with exact mid-rank averaging (`torch.searchsorted` left/right bounds) and zero CPU loops.
     Preserves `valid_mask` strictly: if any required (`valid_mask == True`) entry has non-finite
     `prob_pred` or `y_bin_true`, or if `valid_mask` has 0 valid rows, returns `NaN` for that table.
+    AUC is also unavailable (`NaN`) when either target class has no observed valid row.
     """
     B, N = prob_pred.shape
     req_mask = valid_mask.bool()
@@ -197,7 +198,7 @@ def batched_roc_auc_gpu(
     u_stat = rank_sum_pos - 0.5 * n_pos * (n_pos + 1.0)
     denom = (n_pos * n_neg).clamp_min(1.0)
     auc = (u_stat / denom).clamp(0.0, 1.0)
-    auc = torch.where((n_pos >= 1.0) & (n_neg >= 1.0), auc, torch.full_like(auc, 0.5))
+    auc = torch.where((n_pos >= 1.0) & (n_neg >= 1.0), auc, torch.full_like(auc, float("nan")))
     auc = torch.where(invalid_table, torch.full_like(auc, float("nan")), auc)
     return auc.squeeze(1)
 
@@ -220,6 +221,8 @@ def evaluate_unified_regression_and_binary_batched_gpu(
       valid train or evaluation rows, marks `valid_eval_mask = False` and sets all metrics for
       that table to `NaN` (or raises `ValueError` when `reject_nonfinite_eval=True`); NEVER
       drops required evaluation rows or awards `1.0`.
+    - ROC-AUC additionally requires both classes in the evaluation rows. A single-class
+      evaluation has unavailable (`NaN`) AUC while input validity and other metrics are preserved.
     """
     req_tr_b = mask_tr.bool()
     req_te_b = mask_te.bool()

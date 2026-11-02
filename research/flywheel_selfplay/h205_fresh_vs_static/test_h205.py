@@ -172,8 +172,32 @@ def test_prereg_and_manifest_authority_and_wave_separation():
     assert manifest["arms"] == ["R882", "STATIC-DATA", "STATIC-TEACHER", "FRESH"]
     assert manifest["r882_sha256"] == stat.R882_SHA256
     assert manifest["dope_sha256"] == stat.DOPE_SHA256
+    bridge_proto = manifest["train_padding_bridge_protocol"]
+    assert bridge_proto["schema_version"] == stat.TRAIN_PADDING_BRIDGE_SCHEMA
+    assert bridge_proto["query_padding_rule"] == stat.TRAIN_PADDING_QUERY_RULE
+    assert bridge_proto["protocol_sha256"] == stat.TRAIN_PADDING_PROTOCOL_SHA256
+    assert bridge_proto["evaluator_binary_sha256"] == stat.EVALUATOR_BINARY_SHA256
+    assert bridge_proto["native_rust_source_sha256"] == stat.NATIVE_RUST_SOURCE_SHA256
+    assert bridge_proto["metric_source_sha256"] == stat.METRIC_EVALUATOR_SOURCE_SHA256
+    assert (
+        bridge_proto["original_jtt1_nq0_sha256_1db3750d4ceccab9"]
+        == stat.TARGET_REGRESSION_NQ0_JTT1_SHA256
+    )
+    assert (
+        bridge_proto["padded_jtt1_nq10_sha256_1db3750d4ceccab9"]
+        == stat.TARGET_REGRESSION_PADDED_NQ10_JTT1_SHA256
+    )
+    assert (
+        bridge_proto["target_same_s3_train_context_sha256_1db3750d4ceccab9"]
+        == stat.TARGET_SAME_S3_TRAIN_CONTEXT_SHA256
+    )
+    assert bridge_proto["padding_examples_added_to_learner"] == 0
+    assert bridge_proto["padding_families_added"] == 0
     for w in ("H204", "H205", "H206", "H207"):
         assert w in prereg_text
+    assert stat.TRAIN_PADDING_PROTOCOL_SHA256 in prereg_text
+    assert stat.H206_NATIVE_FIXTURE_RECEIPT_SHA256 in prereg_text
+    assert stat.H206_SCIENTIFIC_REPLAY_RECEIPT_SHA256 in prereg_text
 
 
 def test_terminal_closeout_and_missing_panel_ledger_recorded():
@@ -253,6 +277,30 @@ def test_terminal_closeout_and_missing_panel_ledger_recorded():
     assert (
         nq0_chk["train_matrix_sha256"]
         == "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7"
+    )
+    bridge_rec = seam["prospective_train_padding_bridge"]
+    assert bridge_rec["schema_version"] == stat.TRAIN_PADDING_BRIDGE_SCHEMA
+    assert bridge_rec["protocol_sha256"] == stat.TRAIN_PADDING_PROTOCOL_SHA256
+    assert (
+        bridge_rec["original_jtt1_nq0_sha256"] == stat.TARGET_REGRESSION_NQ0_JTT1_SHA256
+    )
+    assert (
+        bridge_rec["padded_jtt1_nq10_sha256"]
+        == stat.TARGET_REGRESSION_PADDED_NQ10_JTT1_SHA256
+    )
+    assert (
+        bridge_rec["original_jtt1_nq0_sha256"] != bridge_rec["padded_jtt1_nq10_sha256"]
+    )
+    assert (
+        bridge_rec["target_same_s3_train_context_sha256"]
+        == stat.TARGET_SAME_S3_TRAIN_CONTEXT_SHA256
+    )
+    assert bridge_rec["padding_examples_added_to_learner"] == 0
+    assert bridge_rec["padding_families_added"] == 0
+    assert bridge_rec["h206_readiness_claimed_from_tokens_alone"] is False
+    assert (
+        bridge_rec["h206_measured_fixture_evidence"]["real_TRAIN_or_r882_qualification"]
+        is False
     )
     assert seam["s1_prod_context_bundle"]["outer_test_rows_decoded"] == 0
     assert (
@@ -1382,7 +1430,7 @@ def test_allowed_regression_train_roster_and_exclusion_refusals():
             dataset_id=stat.TARGET_REGRESSION_DATASET_ID,
             family_id=stat.TARGET_REGRESSION_FAMILY_ID,
             family_key=stat.TARGET_REGRESSION_FAMILY_KEY,
-            context_sha256=stat.TARGET_REGRESSION_CONTEXT_SHA256,
+            context_sha256=stat.TARGET_SAME_S3_TRAIN_CONTEXT_SHA256,
             task="regression",
             role="regression_train",
             source_split="train",
@@ -1392,6 +1440,23 @@ def test_allowed_regression_train_roster_and_exclusion_refusals():
         real_roster,
     )
     assert target_ok["status"] == "PASS"
+
+    # Historical local s1-prod replay context fa480de3... is explicitly refused as a same-S3-TRAIN context
+    with pytest.raises(RuntimeError, match="historical local s1-prod replay"):
+        stat.verify_single_regression_train_candidate(
+            dict(
+                dataset_id=stat.TARGET_REGRESSION_DATASET_ID,
+                family_id=stat.TARGET_REGRESSION_FAMILY_ID,
+                family_key=stat.TARGET_REGRESSION_FAMILY_KEY,
+                context_sha256=stat.HISTORICAL_LOCAL_S1PROD_REPLAY_CONTEXT_SHA256,
+                task="regression",
+                role="regression_train",
+                source_split="train",
+                dl_split="DL-Train",
+                has_meta_test=False,
+            ),
+            real_roster,
+        )
 
 
 def test_encode_train_only_jtt1_and_nq0_protocol_check(tmp_path):
@@ -1516,6 +1581,216 @@ def test_encode_train_only_jtt1_and_nq0_protocol_check(tmp_path):
         assert probe["nq0_refused_by_header_guard"] is True
 
 
+def test_train_only_padding_bridge_and_h206_fixture_evidence(tmp_path):
+    """Verify `build_train_only_padded_native_jtt1`, `strip_s1_timing_fields`, `verify_scientific_inner_cv_invariance`,
+    and `verify_h206_native_protocol_fixture_evidence` plus all negative controls.
+    """
+    assert (
+        stat.TRAIN_PADDING_PROTOCOL_SHA256
+        == "cb967d3c4baa4e855f3b893ccfff2d1045e64435277f89530c11ae4d3a6aa0ed"
+    )
+    assert run_mod.sha(stat.NATIVE_RUST_SOURCE_PATH) == stat.NATIVE_RUST_SOURCE_SHA256
+    assert (
+        run_mod.sha(stat.METRIC_EVALUATOR_SOURCE_PATH)
+        == stat.METRIC_EVALUATOR_SOURCE_SHA256
+    )
+
+    # 1. Synthetic 60-row headerless CSV -> nq=0 JTT1 -> nq=10 TRAIN-only padded JTT1
+    csv_60 = tmp_path / "train_60.csv"
+    lines_60 = [
+        f"{i * 0.05:.4f},{(i % 7) * 0.2:.4f},1.25,-0.5,{i * 0.01:.4f},{i * 0.75 + 0.1:.4f}"
+        for i in range(60)
+    ]
+    csv_60.write_text("\n".join(lines_60) + "\n", encoding="utf-8")
+    csv_60_sha = run_mod.sha(csv_60)
+    man_60 = tmp_path / "manifest_60.json"
+    man_60.write_text(
+        json.dumps(
+            {
+                "task": "regression",
+                "files": {
+                    "train": {
+                        "bytes": csv_60.stat().st_size,
+                        "columns": 6,
+                        "has_header": False,
+                        "rows": 60,
+                        "sha256": csv_60_sha,
+                    }
+                },
+                "shape": {"features": 5},
+                "split": {"train_rows": 60},
+                "target": {"index": 5},
+            }
+        ),
+        encoding="utf-8",
+    )
+    jtt1_60_nq0 = tmp_path / "train_60_nq0.jtt1"
+    enc_60 = stat.encode_train_only_jtt1_from_csv(
+        csv_60,
+        out_jtt1_path=jtt1_60_nq0,
+        expected_csv_sha256=csv_60_sha,
+        manifest_path=man_60,
+    )
+    assert enc_60["nt"] == 60 and enc_60["nq"] == 0
+    assert len(enc_60["cut_sha256"]) == 64
+
+    jtt1_60_nq10 = tmp_path / "train_60_padded_nq10.jtt1"
+    bridge_60 = stat.build_train_only_padded_native_jtt1(
+        jtt1_60_nq0,
+        out_padded_jtt1_path=jtt1_60_nq10,
+        expected_original_jtt1_nq0_sha256=enc_60["jtt1_sha256"],
+        expected_train_matrix_sha256=enc_60["train_matrix_sha256"],
+        expected_cut_sha256=enc_60["cut_sha256"],
+        expected_nt=60,
+        expected_p=5,
+    )
+    assert bridge_60["status"] == "PASS"
+    assert bridge_60["original_jtt1_nq0_sha256"] != bridge_60["padded_jtt1_nq10_sha256"]
+    assert bridge_60["original_header"] == dict(nt=60, nq=0, p=5, k=2)
+    assert bridge_60["padded_header"] == dict(nt=60, nq=10, p=5, k=2)
+    assert bridge_60["cut_sha256"] == enc_60["cut_sha256"]
+    assert bridge_60["train_matrix_sha256"] == enc_60["train_matrix_sha256"]
+    assert bridge_60["padding_examples_added_to_learner"] == 0
+    assert bridge_60["padding_families_added"] == 0
+
+    # Negative controls on build_train_only_padded_native_jtt1:
+    # (a) Non-zero source nq refused (passing already-padded nq=10 file as source)
+    with pytest.raises(RuntimeError, match="requires source nq == 0"):
+        stat.build_train_only_padded_native_jtt1(jtt1_60_nq10)
+    # (b) Altered original nq=0 SHA refused
+    with pytest.raises(RuntimeError, match="original nq=0 JTT1 SHA256 mismatch"):
+        stat.build_train_only_padded_native_jtt1(
+            jtt1_60_nq0, expected_original_jtt1_nq0_sha256="d" * 64
+        )
+    # (c) Altered train_matrix_sha256 refused
+    with pytest.raises(RuntimeError, match="train_matrix_sha256 mismatch"):
+        stat.build_train_only_padded_native_jtt1(
+            jtt1_60_nq0, expected_train_matrix_sha256="f" * 64
+        )
+    # (d) Altered cut_sha256 refused
+    with pytest.raises(RuntimeError, match="cut_sha256 mismatch"):
+        stat.build_train_only_padded_native_jtt1(
+            jtt1_60_nq0, expected_cut_sha256="e" * 64
+        )
+    # (e) Fewer than 50 train rows refused
+    raw_60 = bytearray(jtt1_60_nq0.read_bytes())
+    small_nt_jtt1 = tmp_path / "small_nt.jtt1"
+    # Build a 20-row nq=0 JTT1
+    csv_20 = tmp_path / "train_20.csv"
+    csv_20.write_text("\n".join(lines_60[:20]) + "\n", encoding="utf-8")
+    stat.encode_train_only_jtt1_from_csv(
+        csv_20, out_jtt1_path=small_nt_jtt1, has_header=False
+    )
+    with pytest.raises(RuntimeError, match="requires nt >= 50"):
+        stat.build_train_only_padded_native_jtt1(small_nt_jtt1)
+    # (f) Corrupted fold cut (all fold 0 -> fold 1 has 0 < 25 rows) refused
+    bad_cut_bytes = bytearray(raw_60)
+    bad_cut_bytes[17 : 17 + 60] = b"\x00" * 60
+    bad_cut_jtt1 = tmp_path / "bad_cut.jtt1"
+    bad_cut_jtt1.write_bytes(bytes(bad_cut_bytes))
+    with pytest.raises(RuntimeError, match="each inner fold requires >= 25 rows"):
+        stat.build_train_only_padded_native_jtt1(bad_cut_jtt1)
+
+    # 2. Real 1db3750d4ceccab9 1,000-row headerless train.csv -> exact nq=0 and nq=10 bridge hashes
+    real_intake_dir = Path(
+        "/home/ubuntu/jope-data/h205/regression-seam-20261102T0752Z/raw_s3_intake/1db3750d4ceccab9"
+    )
+    if (real_intake_dir / "train.csv").is_file():
+        real_nq0 = tmp_path / "real_1db3750d4ceccab9_nq0.jtt1"
+        real_nq10 = tmp_path / "real_1db3750d4ceccab9_nq10.jtt1"
+        real_enc = stat.encode_train_only_jtt1_from_csv(
+            real_intake_dir / "train.csv",
+            out_jtt1_path=real_nq0,
+            expected_csv_sha256=stat.TARGET_REGRESSION_TRAIN_SHA256,
+            manifest_path=real_intake_dir / "manifest.json",
+        )
+        assert real_enc["jtt1_sha256"] == stat.TARGET_REGRESSION_NQ0_JTT1_SHA256
+        assert real_enc["cut_sha256"] == stat.TARGET_REGRESSION_CUT_SHA256
+        real_bridge = stat.build_train_only_padded_native_jtt1(
+            real_nq0,
+            out_padded_jtt1_path=real_nq10,
+            expected_original_jtt1_nq0_sha256=stat.TARGET_REGRESSION_NQ0_JTT1_SHA256,
+            expected_train_matrix_sha256=stat.TARGET_REGRESSION_TRAIN_MATRIX_SHA256,
+            expected_cut_sha256=stat.TARGET_REGRESSION_CUT_SHA256,
+            expected_nt=1000,
+            expected_p=5,
+        )
+        assert (
+            real_bridge["padded_jtt1_nq10_sha256"]
+            == stat.TARGET_REGRESSION_PADDED_NQ10_JTT1_SHA256
+        )
+        assert (
+            real_bridge["padding_queries_sha256"]
+            == stat.TARGET_REGRESSION_PADDING_QUERIES_SHA256
+        )
+        derived_cid = stat.derive_same_s3_train_context_sha256(
+            dataset_id=stat.TARGET_REGRESSION_DATASET_ID,
+            train_sha256=stat.TARGET_REGRESSION_TRAIN_SHA256,
+            original_jtt1_nq0_sha256=real_bridge["original_jtt1_nq0_sha256"],
+            padded_jtt1_nq10_sha256=real_bridge["padded_jtt1_nq10_sha256"],
+            cut_sha256=real_bridge["cut_sha256"],
+        )
+        assert derived_cid == stat.TARGET_SAME_S3_TRAIN_CONTEXT_SHA256
+        assert derived_cid != stat.HISTORICAL_LOCAL_S1PROD_REPLAY_CONTEXT_SHA256
+
+    # 3. Verify scientific inner-CV invariance helper and measured H206 fixture receipts (0 new native calls)
+    ev_a = {
+        "status": "completed",
+        "fold_protocol": "jope.s1-two-fold/v1",
+        "total_ms": 11,
+        "inner_cv": [
+            {
+                "fold_id": "s1_fold_0",
+                "rows_train": 30,
+                "rows_test": 30,
+                "fit_ms": 5,
+                "predict_ms": 1,
+                "metrics": {"rmse": 0.25, "mae": 0.2, "r2": 0.9, "resid_std": 0.25},
+                "baseline_metrics": {
+                    "rmse": 1.0,
+                    "mae": 0.8,
+                    "r2": 0.0,
+                    "resid_std": 1.0,
+                },
+            },
+            {
+                "fold_id": "s1_fold_1",
+                "rows_train": 30,
+                "rows_test": 30,
+                "fit_ms": 4,
+                "predict_ms": 1,
+                "metrics": {"rmse": 0.27, "mae": 0.21, "r2": 0.88, "resid_std": 0.27},
+                "baseline_metrics": {
+                    "rmse": 1.0,
+                    "mae": 0.8,
+                    "r2": 0.0,
+                    "resid_std": 1.0,
+                },
+            },
+        ],
+    }
+    ev_b = copy.deepcopy(ev_a)
+    ev_b["total_ms"] = 19
+    ev_b["inner_cv"][0]["fit_ms"] = 9
+    inv_ok = stat.verify_scientific_inner_cv_invariance(ev_a, ev_b)
+    assert inv_ok["invariance_raw_equal"] is False
+    assert inv_ok["scientific_inner_cv_equal"] is True
+    assert inv_ok["max_abs_scientific_metric_diff"] == 0.0
+
+    ev_bad = copy.deepcopy(ev_b)
+    ev_bad["inner_cv"][0]["metrics"]["rmse"] += 1e-6
+    with pytest.raises(RuntimeError, match="scientific inner-CV invariance failed"):
+        stat.verify_scientific_inner_cv_invariance(ev_a, ev_bad)
+
+    h206_ev = stat.verify_h206_native_protocol_fixture_evidence()
+    assert h206_ev["status"] == "PASS"
+    assert h206_ev["native_calls_total"] == 2
+    assert h206_ev["invariance_raw_equal"] is False
+    assert h206_ev["scientific_inner_cv_equal"] is True
+    assert h206_ev["max_abs_scientific_metric_diff"] == 0.0
+    assert h206_ev["real_TRAIN_or_r882_qualification"] is False
+
+
 def test_single_context_regression_seam_bundle_verifier_and_negative_counterexamples(
     tmp_path,
 ):
@@ -1526,7 +1801,9 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
     cid = hashlib.sha256(b"fresh_reg_ctx_001").hexdigest()
     train_sha = hashlib.sha256(b"fresh_reg_train_csv_001").hexdigest()
     train_mat_sha = hashlib.sha256(b"fresh_reg_train_mat_001").hexdigest()
-    jtt1_sha = hashlib.sha256(b"fresh_reg_jtt1_001").hexdigest()
+    cut_sha = hashlib.sha256(b"fresh_reg_cut_001").hexdigest()
+    orig_nq0_sha = hashlib.sha256(b"fresh_reg_jtt1_nq0_001").hexdigest()
+    padded_nq10_sha = hashlib.sha256(b"fresh_reg_jtt1_nq10_001").hexdigest()
     ds_id = "fresh_ds_001"
     fam_id = "fresh_fam_001"
     fam_key = "fresh_fk_001"
@@ -1563,6 +1840,9 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
         train_rows=np.asarray(1000, dtype=np.int64),
         train_sha256=np.asarray(train_sha),
         train_matrix_sha256=np.asarray(train_mat_sha),
+        cut_sha256=np.asarray(cut_sha),
+        original_jtt1_nq0_sha256=np.asarray(orig_nq0_sha),
+        padded_jtt1_nq10_sha256=np.asarray(padded_nq10_sha),
     )
     np.savez(
         feat_path,
@@ -1574,6 +1854,9 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
         train_rows=np.asarray(1000, dtype=np.int64),
         train_sha256=np.asarray(train_sha),
         train_matrix_sha256=np.asarray(train_mat_sha),
+        cut_sha256=np.asarray(cut_sha),
+        original_jtt1_nq0_sha256=np.asarray(orig_nq0_sha),
+        padded_jtt1_nq10_sha256=np.asarray(padded_nq10_sha),
     )
 
     labels_sha = hashlib.sha256(fitness.tobytes() + gate_arr.tobytes()).hexdigest()
@@ -1586,15 +1869,25 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
         status="PASS",
         evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
         evaluator_binary_sha256=stat.EVALUATOR_BINARY_SHA256,
+        native_rust_source_sha256=stat.NATIVE_RUST_SOURCE_SHA256,
+        metric_source_sha256=stat.METRIC_EVALUATOR_SOURCE_SHA256,
         context_sha256=cid,
         dataset_id=ds_id,
         train_sha256=train_sha,
         train_matrix_sha256=train_mat_sha,
+        cut_sha256=cut_sha,
         train_rows=1000,
         has_header=False,
         feature_columns=5,
-        s1_input_sha256=jtt1_sha,
-        training_block_sha256=jtt1_sha,
+        original_jtt1_nq0_sha256=orig_nq0_sha,
+        padded_jtt1_nq10_sha256=padded_nq10_sha,
+        train_padding_bridge_schema=stat.TRAIN_PADDING_BRIDGE_SCHEMA,
+        train_padding_bridge_rule=stat.TRAIN_PADDING_QUERY_RULE,
+        train_padding_bridge_protocol_sha256=stat.TRAIN_PADDING_PROTOCOL_SHA256,
+        padding_examples_added_to_learner=0,
+        padding_families_added=0,
+        s1_input_sha256=padded_nq10_sha,
+        training_block_sha256=padded_nq10_sha,
         labels_sha256=labels_sha,
         programs_sha256=programs_sha,
         features_sha256=features_sha,
@@ -1624,11 +1917,19 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
         outer_test_rows_decoded=0,
         train_sha256=train_sha,
         train_matrix_sha256=train_mat_sha,
+        cut_sha256=cut_sha,
         train_rows=1000,
         has_header=False,
         feature_columns=5,
-        s1_input_sha256=jtt1_sha,
-        training_block_sha256=jtt1_sha,
+        original_jtt1_nq0_sha256=orig_nq0_sha,
+        padded_jtt1_nq10_sha256=padded_nq10_sha,
+        train_padding_bridge_schema=stat.TRAIN_PADDING_BRIDGE_SCHEMA,
+        train_padding_bridge_rule=stat.TRAIN_PADDING_QUERY_RULE,
+        train_padding_bridge_protocol_sha256=stat.TRAIN_PADDING_PROTOCOL_SHA256,
+        padding_examples_added_to_learner=0,
+        padding_families_added=0,
+        s1_input_sha256=padded_nq10_sha,
+        training_block_sha256=padded_nq10_sha,
         pool_sha256=pool_sha,
         features_npz_sha256=feat_npz_sha,
     )
@@ -1703,6 +2004,9 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
         bdir,
         expected_train_sha256=train_sha,
         expected_train_matrix_sha256=train_mat_sha,
+        expected_cut_sha256=cut_sha,
+        expected_original_jtt1_nq0_sha256=orig_nq0_sha,
+        expected_padded_jtt1_nq10_sha256=padded_nq10_sha,
         expected_train_rows=1000,
         forbidden_cids={"9" * 64},
         forbidden_families={"old_static_fam"},
@@ -1710,6 +2014,9 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
     )
     assert res["status"] == "PASS"
     assert res["context_sha256"] == cid
+    assert res["original_jtt1_nq0_sha256"] == orig_nq0_sha
+    assert res["padded_jtt1_nq10_sha256"] == padded_nq10_sha
+    assert res["cut_sha256"] == cut_sha
     assert res["s3_persisted_and_replayed_before_optimizer_step"] is True
 
     # 1. Empty exclusion sets refused
@@ -1720,7 +2027,7 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
             bdir, forbidden_families=set()
         )
 
-    # 2. Old-1310 CID / family / dataset overlap refused
+    # 2. Old-1310 CID / family / dataset overlap refused, AND historical local replay fa480de3... refused
     with pytest.raises(RuntimeError, match="overlaps forbidden/historical CIDs"):
         stat.verify_single_context_regression_seam_bundle(bdir, forbidden_cids={cid})
     with pytest.raises(RuntimeError, match="overlaps forbidden families"):
@@ -1731,6 +2038,72 @@ def test_single_context_regression_seam_bundle_verifier_and_negative_counterexam
         stat.verify_single_context_regression_seam_bundle(
             bdir, forbidden_datasets={ds_id}
         )
+
+    # Historical local s1-prod replay hash fa480de3... is always refused even when not passed in forbidden_cids
+    hist_cid = stat.HISTORICAL_LOCAL_S1PROD_REPLAY_CONTEXT_SHA256
+    bad_hist_manifest = dict(manifest, context_sha256=hist_cid)
+    bad_hist_eval = dict(eval_rec, context_sha256=hist_cid)
+    run_mod.save(bdir / "context_manifest.json", bad_hist_manifest)
+    run_mod.save(bdir / "native_evaluator_receipt.json", bad_hist_eval)
+    hist_cm_sha = run_mod.sha(bdir / "context_manifest.json")
+    hist_nr_sha = run_mod.sha(bdir / "native_evaluator_receipt.json")
+    bad_pre_s3_hist = copy.deepcopy(pre_s3_rec)
+    bad_pre_s3_hist["uploaded_bundle_objects"][0]["local_sha256"] = hist_cm_sha
+    bad_pre_s3_hist["uploaded_bundle_objects"][0]["downloaded_version_sha256"] = (
+        hist_cm_sha
+    )
+    bad_pre_s3_hist["uploaded_bundle_objects"][1]["local_sha256"] = hist_nr_sha
+    bad_pre_s3_hist["uploaded_bundle_objects"][1]["downloaded_version_sha256"] = (
+        hist_nr_sha
+    )
+    run_mod.save(bdir / "s3_pre_consumption_custody_receipt.json", bad_pre_s3_hist)
+    with pytest.raises(RuntimeError, match="overlaps forbidden/historical CIDs"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir,
+            forbidden_cids={"9" * 64},
+            forbidden_families={"old_static_fam"},
+            forbidden_datasets={"old_static_ds"},
+        )
+    run_mod.save(bdir / "context_manifest.json", manifest)
+    run_mod.save(bdir / "native_evaluator_receipt.json", eval_rec)
+    run_mod.save(bdir / "s3_pre_consumption_custody_receipt.json", pre_s3_rec)
+
+    # 2b. Padding bridge identity failures: identical nq0/nq10 hash or non-zero padding_examples_added_to_learner refused
+    bad_same_jtt1_manifest = dict(manifest, padded_jtt1_nq10_sha256=orig_nq0_sha)
+    run_mod.save(bdir / "context_manifest.json", bad_same_jtt1_manifest)
+    bad_cm_sha = run_mod.sha(bdir / "context_manifest.json")
+    bad_pre_s3_jtt1 = copy.deepcopy(pre_s3_rec)
+    bad_pre_s3_jtt1["uploaded_bundle_objects"][0]["local_sha256"] = bad_cm_sha
+    bad_pre_s3_jtt1["uploaded_bundle_objects"][0]["downloaded_version_sha256"] = (
+        bad_cm_sha
+    )
+    run_mod.save(bdir / "s3_pre_consumption_custody_receipt.json", bad_pre_s3_jtt1)
+    with pytest.raises(RuntimeError, match="failed TRAIN-only padding bridge identity"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir,
+            forbidden_cids={"9" * 64},
+            forbidden_families={"old_static_fam"},
+            forbidden_datasets={"old_static_ds"},
+        )
+
+    bad_pad_ex_manifest = dict(manifest, padding_examples_added_to_learner=10)
+    run_mod.save(bdir / "context_manifest.json", bad_pad_ex_manifest)
+    bad_cm_sha2 = run_mod.sha(bdir / "context_manifest.json")
+    bad_pre_s3_pad = copy.deepcopy(pre_s3_rec)
+    bad_pre_s3_pad["uploaded_bundle_objects"][0]["local_sha256"] = bad_cm_sha2
+    bad_pre_s3_pad["uploaded_bundle_objects"][0]["downloaded_version_sha256"] = (
+        bad_cm_sha2
+    )
+    run_mod.save(bdir / "s3_pre_consumption_custody_receipt.json", bad_pre_s3_pad)
+    with pytest.raises(RuntimeError, match="failed TRAIN-only padding bridge identity"):
+        stat.verify_single_context_regression_seam_bundle(
+            bdir,
+            forbidden_cids={"9" * 64},
+            forbidden_families={"old_static_fam"},
+            forbidden_datasets={"old_static_ds"},
+        )
+    run_mod.save(bdir / "context_manifest.json", manifest)
+    run_mod.save(bdir / "s3_pre_consumption_custody_receipt.json", pre_s3_rec)
 
     # 3. Local 1,600-row cut vs 1,000-row S3 train.csv mismatch refused
     with pytest.raises(RuntimeError, match="manifest train_rows"):
@@ -1894,7 +2267,7 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
         process_start_monotonic=run_mod.time.monotonic()
     )
 
-    # Control A: Real bootstrap.s1main refuses nq == 0 -> fail-closed BLOCKED_NQ0_PROTOCOL, 0 uploads, 0 optimizer steps
+    # Control A1: require_hold_release_for_live=True without release receipt -> HOLD_ACTIVE_PRE_SCORING, 0 native calls, 0 uploads, 0 optimizer steps
     put_calls_a = []
     consume_calls_a = []
     monkeypatch.setattr(
@@ -1909,12 +2282,39 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
         lambda *a, **kw: consume_calls_a.append((a, kw)),
     )
 
+    out_hold = tmp_path / "out_hold_active"
+    res_hold = run_mod.construct_and_consume_single_regression_context(
+        out_hold,
+        launch_obj,
+        manifest_obj,
+        deadline_spec=deadline_spec,
+        use_train_padding_bridge=True,
+        require_hold_release_for_live=True,
+    )
+    assert res_hold["status"] == "HOLD_ACTIVE_PRE_SCORING"
+    assert res_hold["seam_qualified"] is False
+    assert res_hold["optimizer_steps"] == 0
+    assert res_hold["native_calls_total"] == 0
+    assert (
+        res_hold["train_padding_bridge"]["original_jtt1_nq0_sha256"]
+        == stat.TARGET_REGRESSION_NQ0_JTT1_SHA256
+    )
+    assert (
+        res_hold["train_padding_bridge"]["padded_jtt1_nq10_sha256"]
+        == stat.TARGET_REGRESSION_PADDED_NQ10_JTT1_SHA256
+    )
+    assert res_hold["context_sha256"] == stat.TARGET_SAME_S3_TRAIN_CONTEXT_SHA256
+    assert put_calls_a == []
+    assert consume_calls_a == []
+
+    # Control A2: Real bootstrap.s1main refuses nq == 0 when use_train_padding_bridge=False -> fail-closed BLOCKED_NQ0_PROTOCOL, 0 uploads, 0 optimizer steps
     out_a = tmp_path / "out_blocked_nq0"
     res_a = run_mod.construct_and_consume_single_regression_context(
         out_a,
         launch_obj,
         manifest_obj,
         deadline_spec=deadline_spec,
+        use_train_padding_bridge=False,
     )
     assert res_a["status"] == "BLOCKED_NQ0_PROTOCOL"
     assert res_a["seam_qualified"] is False
@@ -1928,13 +2328,16 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
     assert put_calls_a == []
     assert consume_calls_a == []
 
-    # Create a deterministic nq=0-capable test worker script for Controls B and C
-    mock_worker = tmp_path / "mock_s1main_nq0_ok.py"
+    # Create a deterministic nq=10-checking test worker script for Controls B and C (verifies padded nq=10 JTT1 is passed)
+    mock_worker = tmp_path / "mock_s1main_nq10_ok.py"
     mock_worker.write_text(
         "#!/usr/bin/env python3\n"
-        "import json, sys, hashlib\n"
+        "import json, sys, hashlib, struct\n"
         "_, flag, jtt1_p, cand_p, out_p = sys.argv\n"
         "assert flag == '--fit-s1'\n"
+        "raw = open(jtt1_p, 'rb').read()\n"
+        "magic, nt, nq, p, k = struct.unpack('<4sIIIb', raw[:17])\n"
+        "assert magic == b'JTT1' and nt == 1000 and nq == 10 and p == 5 and k == 2\n"
         "cand = json.loads(open(cand_p).read())\n"
         "h = int(hashlib.sha256(cand['dsl'].encode()).hexdigest()[:8], 16)\n"
         "r0 = 0.70 + (h % 150) * 0.001\n"
@@ -1989,10 +2392,11 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
             deadline_spec=deadline_spec,
             worker_bin=mock_worker,
             verify_worker_sha256=False,
+            use_train_padding_bridge=True,
         )
     assert consume_calls_b == []
 
-    # Control C: Full valid same-TRAIN persist -> exact-VersionId replay -> consume control
+    # Control C: Full valid same-TRAIN bridge -> persist -> exact-VersionId replay -> consume control
     events_c = []
 
     def _recording_s3_put(
@@ -2042,12 +2446,32 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
         deadline_spec=deadline_spec,
         worker_bin=mock_worker,
         verify_worker_sha256=False,
+        use_train_padding_bridge=True,
     )
     assert res_c["status"] == "PASS"
     assert res_c["seam_qualified"] is True
+    assert res_c["context_sha256"] == stat.TARGET_SAME_S3_TRAIN_CONTEXT_SHA256
+    assert res_c["context_sha256"] != stat.HISTORICAL_LOCAL_S1PROD_REPLAY_CONTEXT_SHA256
     assert res_c["s1_prod_context_bundle"]["train_rows"] == 1000
+    assert (
+        res_c["s1_prod_context_bundle"]["original_jtt1_nq0_sha256"]
+        == stat.TARGET_REGRESSION_NQ0_JTT1_SHA256
+    )
+    assert (
+        res_c["s1_prod_context_bundle"]["padded_jtt1_nq10_sha256"]
+        == stat.TARGET_REGRESSION_PADDED_NQ10_JTT1_SHA256
+    )
+    assert (
+        res_c["s1_prod_context_bundle"]["cut_sha256"]
+        == stat.TARGET_REGRESSION_CUT_SHA256
+    )
+    assert res_c["s1_prod_context_bundle"]["padding_examples_added_to_learner"] == 0
+    assert res_c["s1_prod_context_bundle"]["padding_families_added"] == 0
     assert res_c["s1_prod_context_bundle"]["candidates_count"] == 24
     assert res_c["s1_prod_context_bundle"]["evaluated_candidates_count"] == 24
+    assert res_c["h206_readiness_claimed_from_tokens_alone"] is False
+    assert res_c["family_novelty_ledger"]["padding_examples_added_to_learner"] == 0
+    assert res_c["family_novelty_ledger"]["padding_families_added"] == 0
     assert (
         res_c["engine_consumption"]["s3_persisted_and_replayed_before_optimizer_step"]
         is True

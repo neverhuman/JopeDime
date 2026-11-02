@@ -11,3 +11,20 @@ by that round's full logged wall time. These within-round counts do not
 establish the number of distinct tasks across rounds.
 This rate has a different denominator from training
 presentations per training second.
+
+The separate capture in \cref{fig:fw-live-round-throughput} provides a later
+operating window under the same completed-round denominator.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_round_throughput.pdf}
+  \caption{\textbf{Completed-round throughput in a fresh live capture.}
+  Twenty consecutive rounds, 3576--3595, captured on November 2, 2026 at
+  09:54 UTC. Each point divides \num{1219} distinct training contexts by
+  that round's full wall time (contexts per second), including all work and
+  waits. The dashed line divides the window's summed counts by summed time.
+  Repeated contexts across rounds are not independent tasks; this is an
+  operating observation, not deployment throughput.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-live-round-throughput}
+\end{figure}

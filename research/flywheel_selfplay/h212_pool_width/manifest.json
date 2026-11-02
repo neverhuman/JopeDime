@@ -150,5 +150,7 @@
     ],
     "holm_m": 2,
     "decision_role": "descriptive only; does not change per-seed N64 gates"
-  }
+  },
+  "s3_evidence_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H212/",
+  "s3_evidence_manifest": "S3_EVIDENCE_MANIFEST.json"
 }

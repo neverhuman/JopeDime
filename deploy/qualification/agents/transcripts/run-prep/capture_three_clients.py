@@ -263,6 +263,7 @@ def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
 
 
 NORMAL_EXIT_DRAIN_MAX_SECONDS = 2.0
+NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS = 10.0
 
 
 def _group_has_live_members(pgid: int) -> bool:
@@ -288,13 +289,34 @@ def _group_has_live_members(pgid: int) -> bool:
 
 
 def drain_group(
-    process: subprocess.Popen, deadline: float, check_interrupted=lambda: None
+    process: subprocess.Popen,
+    deadline: float,
+    check_interrupted=lambda: None,
+    receipt_path: Path | None = None,
 ) -> None:
-    """Let normal-exit descendants finish, bounded by the client deadline."""
+    """Let normal-exit recorders finish before bounded process-group cleanup."""
     drain_deadline = min(deadline, time.monotonic() + NORMAL_EXIT_DRAIN_MAX_SECONDS)
     while _group_has_live_members(process.pid) and time.monotonic() < drain_deadline:
         check_interrupted()
         time.sleep(min(0.05, max(0, drain_deadline - time.monotonic())))
+    if receipt_path is None:
+        return
+
+    receipt_deadline = min(
+        deadline, time.monotonic() + NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS
+    )
+    while time.monotonic() < receipt_deadline:
+        check_interrupted()
+        if receipt_path.is_symlink() or (
+            receipt_path.exists() and not receipt_path.is_file()
+        ):
+            return
+        try:
+            read_object(receipt_path, "normal-exit transport receipt")
+        except (OSError, CaptureError):
+            time.sleep(min(0.05, max(0, receipt_deadline - time.monotonic())))
+            continue
+        return
 
 
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
@@ -694,8 +716,10 @@ def run_capture(args: argparse.Namespace) -> dict:
                                 if client_exit == 0:
                                     drain_group(
                                         active_client,
-                                        client_deadline,
+                                        time.monotonic()
+                                        + NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS,
                                         raise_if_sigint_pending,
+                                        capture_dir / "capture.json",
                                     )
                                 break
                             except subprocess.TimeoutExpired:
