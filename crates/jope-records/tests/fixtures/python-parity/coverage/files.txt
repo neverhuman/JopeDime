@@ -1516,6 +1516,7 @@ crates/jope-engine/src/teaching_store.rs
 crates/jope-engine/src/teaching_store/admission_tests.rs
 crates/jope-engine/src/teaching_store/read_once_tests.rs
 crates/jope-engine/src/telemetry.rs
+crates/jope-engine/src/telemetry/heartbeat_tests.rs
 crates/jope-engine/src/tournament.rs
 crates/jope-engine/src/training.rs
 crates/jope-engine/src/training/ancestry.rs
