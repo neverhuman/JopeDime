@@ -479,6 +479,8 @@ crates/jope-campaigns/src/bin/jope_selfplay_gc.rs
 crates/jope-campaigns/src/bin/jope_selfplay_mcp.rs
 crates/jope-campaigns/src/bin/jope_selfplay_promotion.rs
 crates/jope-campaigns/src/bin/jope_selfplay_propose_driver.rs
+crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/cycle.rs
+crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/tests.rs
 crates/jope-campaigns/src/bin/jope_selfplay_queue.rs
 crates/jope-campaigns/src/bin/jope_selfplay_shadow.rs
 crates/jope-campaigns/src/bin/jope_selfplay_status.rs
