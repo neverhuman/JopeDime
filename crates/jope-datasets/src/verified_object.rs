@@ -26,6 +26,9 @@ mod options;
 
 pub use options::{VerificationOptions, VersionRequirement, DEFAULT_MAX_VERIFIED_READBACK_BYTES};
 
+mod contract;
+pub use contract::{PhysicalVersionStatus, PublicationStatus, VerifiedObjectRef};
+
 /// How an immutable object reached verified publication closure.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
