@@ -35,12 +35,7 @@ def resources(process=None, output=None):
         swap_free=psutil.swap_memory().free,
         tree_rss=rss,
     )
-    if (
-        load > 60
-        or disk.free < 300_000_000_000
-        or mem.available < 20 * 2**30
-        or rss >= 4 * 2**30
-    ):
+    if disk.free < 300_000_000_000 or mem.available < 20 * 2**30 or rss >= 4 * 2**30:
         raise RuntimeError("resource stop: " + repr(sample))
     if process is not None:
         allowed = set(os.sched_getaffinity(process.pid))
@@ -65,6 +60,26 @@ def resources(process=None, output=None):
         if size >= 600_000_000:
             raise RuntimeError("600MB own output cap")
     return sample
+
+
+class LoadPause:
+    """Hysteresis applies to load only; hard guards keep running while paused."""
+
+    def __init__(self):
+        self.paused = False
+        self.next_check = 0.0
+
+    def update(self, load5, now):
+        if not self.paused and load5 > 60:
+            self.paused = True
+            self.next_check = now + 60
+            return "pause"
+        if self.paused and now >= self.next_check:
+            self.next_check = now + 60
+            if load5 <= 55:
+                self.paused = False
+                return "resume"
+        return None
 
 
 def write(path, value):
@@ -104,7 +119,11 @@ def main(args):
         pr["state"] != "MERGED"
         or pr["mergeCommit"]["oid"] != args.commit
         or pr["headRefName"]
-        not in ("rd/h224-learned-switch", "rd/h224-prelaunch-lifecycle")
+        not in (
+            "rd/h224-learned-switch",
+            "rd/h224-prelaunch-lifecycle",
+            "rd/h224-load-pause",
+        )
         or pr["baseRefName"] != "main"
         or pr["isDraft"]
     ):
@@ -149,6 +168,7 @@ def main(args):
     )
     child = None
     error = None
+    load_state = LoadPause()
     with (
         (ROOT / "attempt1.stdout").open("x") as log,
         (ROOT / "supervisor.jsonl").open("x") as samples,
@@ -183,6 +203,18 @@ def main(args):
                     if child.poll() is not None:
                         break
                     raise
+                action = load_state.update(sample["load5"], time.monotonic())
+                if action is not None:
+                    try:
+                        os.kill(
+                            child.pid,
+                            signal.SIGSTOP if action == "pause" else signal.SIGCONT,
+                        )
+                    except ProcessLookupError:
+                        if child.poll() is not None:
+                            break
+                        raise
+                sample.update(load_paused=load_state.paused, load_action=action)
                 samples.write(json.dumps(sample) + "\n")
                 samples.flush()
                 time.sleep(0.25)
@@ -191,6 +223,8 @@ def main(args):
         except BaseException as exc:
             error = repr(exc)
             if child is not None and child.poll() is None:
+                if load_state.paused:
+                    os.kill(child.pid, signal.SIGCONT)
                 os.killpg(child.pid, signal.SIGTERM)
                 try:
                     child.wait(timeout=15)

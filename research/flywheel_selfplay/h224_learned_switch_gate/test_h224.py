@@ -234,7 +234,7 @@ def test_primary_and_plateau_strict_boundaries():
 
 
 @pytest.mark.parametrize(
-    "field,value", [("load", 61), ("free", 299_999_999_999), ("ram", 20 * 2**30 - 1)]
+    "field,value", [("free", 299_999_999_999), ("ram", 20 * 2**30 - 1)]
 )
 def test_resource_stops(monkeypatch, field, value):
     values = dict(load=0, free=400_000_000_000, ram=30 * 2**30)
@@ -391,3 +391,41 @@ def test_exited_short_lived_child_does_not_abort_resource_sample(monkeypatch):
         threads=lambda: [],
     )
     assert monitor.resources(parent)["tree_rss"] == 1000
+
+
+def test_load_pauses_with_60_second_checks_and_55_resume():
+    state = monitor.LoadPause()
+    assert state.update(60, 0) is None
+    assert state.update(60.01, 1) == "pause" and state.paused
+    assert state.update(40, 60) is None and state.paused
+    assert state.update(55.01, 61) is None and state.paused
+    assert state.update(55, 120) is None and state.paused
+    assert state.update(55, 121) == "resume" and not state.paused
+    assert state.update(61, 122) == "pause"
+
+
+def test_load_alone_no_longer_aborts_resources(monkeypatch):
+    monkeypatch.setattr(monitor.os, "getloadavg", lambda: (0, 80, 0))
+    monkeypatch.setattr(
+        monitor.psutil,
+        "disk_usage",
+        lambda path: types.SimpleNamespace(free=400_000_000_000),
+    )
+    monkeypatch.setattr(
+        monitor.psutil,
+        "virtual_memory",
+        lambda: types.SimpleNamespace(available=30 * 2**30),
+    )
+    assert monitor.resources()["load5"] == 80
+
+
+def test_pausing_does_not_disable_hard_guard_or_deadline():
+    source = (HERE / "monitor.py").read_text()
+    assert source.index(
+        "if time.time() >= DEADLINE:", source.index("while child.poll()")
+    ) < source.index("load_state.update(")
+    assert source.index(
+        "sample = resources(psutil.Process()", source.index("while child.poll()")
+    ) < source.index("load_state.update(")
+    assert "os.kill(child.pid, signal.SIGCONT)" in source
+    assert "SIGSTOP" in source and "killpg(child.pid, signal.SIGSTOP)" not in source
