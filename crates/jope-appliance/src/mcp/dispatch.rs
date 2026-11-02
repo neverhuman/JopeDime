@@ -69,10 +69,14 @@ impl Resources {
     }
 }
 
-pub enum Outcome {
+/// Results returned by the MCP dispatch layer.
+pub enum McpDispatchOutcome {
     Success(Value),
     Failure(Value),
 }
+
+/// Preserve the public dispatcher result path while giving this domain its own enum name.
+pub type Outcome = McpDispatchOutcome;
 pub fn problem(
     code: jope_api::error::ErrorCode,
     detail: impl Into<String>,

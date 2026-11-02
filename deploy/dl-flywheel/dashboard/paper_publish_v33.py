@@ -543,7 +543,7 @@ print(json.dumps(out,allow_nan=False))
         raise ValueError('publisher response too large')
     return json.loads(r.stdout)
 
-def main():
+def main(source_path=None, *, collect_fn=collect, collect_compute_fn=collect_compute):
     p = argparse.ArgumentParser()
     p.add_argument('--deployment', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
@@ -560,13 +560,13 @@ def main():
         window=json.loads(raw)
         if set(window)!={'schema','created_unix','deadline_unix','global_deadline_unix','source_sha256','deployment_sha256','historical_archive_deadlines_preserved'} or window['schema']!='jope.readonly-publisher-window/v1':raise ValueError('closed publisher window')
         if not(0<window['deadline_unix']-window['created_unix']<=3600 and window['deadline_unix']<=window['global_deadline_unix']==1791592146.380285 and window['created_unix']<=time.time()<window['deadline_unix']):raise ValueError('fixed fresh publisher window under original global deadline')
-        if window['historical_archive_deadlines_preserved']is not True or hashlib.sha256(a.deployment.read_bytes()).hexdigest()!=window['deployment_sha256']or hashlib.sha256(Path(__file__).read_bytes()).hexdigest()!=window['source_sha256']:raise ValueError('publisher source/deployment closure')
+        if window['historical_archive_deadlines_preserved']is not True or hashlib.sha256(a.deployment.read_bytes()).hexdigest()!=window['deployment_sha256']or hashlib.sha256(Path(source_path or __file__).read_bytes()).hexdigest()!=window['source_sha256']:raise ValueError('publisher source/deployment closure')
         deadline=window['deadline_unix']
     while time.time() < deadline:
         s = {'schema': 'jope.paper-observatory/v1', 'at': time.time(), 'archives': [], 'hosts': [], 'errors': []}
         for host in ('xbabe1', 'xbabe2', 'xbabe3'):
             try:
-                h = collect_compute(host) if host=='xbabe1' else collect(host, [x for x in entries if x['host'] == host])
+                h = collect_compute_fn(host) if host=='xbabe1' else collect_fn(host, [x for x in entries if x['host'] == host])
                 s['archives'].extend(h.pop('archives'));s['hosts'].append(h)
             except Exception as exc:
                 s['errors'].append({'host': host, 'error': type(exc).__name__, 'message': str(exc)[:300]})

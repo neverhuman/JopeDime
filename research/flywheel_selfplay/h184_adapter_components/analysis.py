@@ -3,6 +3,9 @@ model code. Fold/utility/win-matrix/Bradley-Terry helpers are copied verbatim fr
 #1512 axis=0 paired bootstrap); only constants, arms and the decision are H184's."""
 
 import hashlib
+import importlib.util
+from pathlib import Path
+import sys
 
 import numpy as np
 
@@ -82,26 +85,21 @@ def context_utility(fitness, gate):
     return np.where(gate, -fitness, -2.0)
 
 
+_h180_analysis = None
+
+
 def batch_plan(cids, orders, seed, updates=40):
-    """H156 sampler: eight FIT contexts, four lowest-fitness plus twenty random candidates."""
-    cids = sorted(cids)
-    if len(cids) < 8 or updates < 1:
-        raise ValueError("H156 needs at least eight FIT contexts and a positive budget")
-    plan = []
-    for step in range(1, updates + 1):
-        stream = stream_seed(seed, step)
-        rng = np.random.default_rng(stream)
-        chosen = [cids[i] for i in rng.choice(len(cids), 8, replace=False)]
-        indexes = []
-        for cid in chosen:
-            order = np.asarray(orders[cid], dtype=np.int64)
-            if len(order) < 24:
-                raise ValueError("H156 needs at least 24 candidates per context")
-            indexes.append(
-                np.concatenate([order[:4], rng.choice(order[4:], 20, replace=False)])
-            )
-        plan.append((stream, chosen, indexes))
-    return plan
+    """Use H180's canonical implementation of the shared H156 sampler."""
+    global _h180_analysis
+    if _h180_analysis is None:
+        path = Path(__file__).resolve().parents[1] / "h180_adapter_ablation/analysis.py"
+        spec = importlib.util.spec_from_file_location("h180_adapter_analysis", path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"cannot import canonical H156 sampler {path}")
+        _h180_analysis = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = _h180_analysis
+        spec.loader.exec_module(_h180_analysis)
+    return _h180_analysis.batch_plan(cids, orders, seed, updates)
 
 
 def family_values(rows, values):

@@ -623,43 +623,10 @@ pub fn utc_now_rfc3339() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gp::{BehaviorStats, ProvenanceFracs, Quantiles};
+    use crate::gp::test_gen_summary;
 
     fn gen(context: &str, g: u32, unique: f64) -> GenSummary {
-        GenSummary {
-            schema: crate::gp::GEN_SCHEMA.into(),
-            context: context.into(),
-            round: 0,
-            generation: g,
-            pop_size: 10,
-            candidates_truncated: 0,
-            genomes_truncated: 0,
-            unique_genotype_frac: Some(unique),
-            dedup: Default::default(),
-            dedup_reject_frac: None,
-            edit_distance_pairs: 0,
-            edit_distance_mean: None,
-            edit_distance_p10: None,
-            parent_child_hist: [0; 8],
-            behavior: BehaviorStats::default(),
-            proj16_unique_frac: None,
-            proj16_mean_hamming: None,
-            op_counts: Default::default(),
-            op_entropy_nats: None,
-            op_entropy_norm: None,
-            ops_distinct: 0,
-            ops_unused: None,
-            edit_ops: Default::default(),
-            size_clauses: Quantiles::default(),
-            complexity: Quantiles::default(),
-            status: Default::default(),
-            fitness_passers: Quantiles::default(),
-            best_fitness: None,
-            gens_since_improved: 0,
-            provenance_population: ProvenanceFracs::default(),
-            provenance_passers: ProvenanceFracs::default(),
-            provenance_hwm: ProvenanceFracs::default(),
-        }
+        test_gen_summary(context, g, unique)
     }
 
     #[test]

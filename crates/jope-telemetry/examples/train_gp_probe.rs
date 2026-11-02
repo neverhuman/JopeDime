@@ -144,7 +144,7 @@ fn import_tree(root: &Path) -> Result<()> {
                 "{}",
                 json!({"kind": "retained_generation", "round": round, "pop": g.pop_size,
                        "unique_genotype_frac": g.unique_genotype_frac, "edit_distance_mean": g.edit_distance_mean,
-                       "edit_distance_p10": g.edit_distance_p10, "op_entropy_nats": g.op_entropy_nats,
+                       "edit_distance_p10": g.edit_distance_p10, "op_entropy_nat": g.op_entropy_nat(),
                        "ops_distinct": g.ops_distinct, "passers": g.status.gate_passed, "gate_failed": g.status.gate_failed,
                        "fitness_passers": g.fitness_passers, "edit_ops": g.edit_ops})
             );

@@ -4585,12 +4585,12 @@
       "sha256": "516619a3e230a39464d7b03c45ae638ca293195b58e008a0c03b142962cc4213"
     },
     "python:research/flywheel_selfplay/h184_adapter_components/analysis.py": {
-      "bytes": 14238,
+      "bytes": 14105,
       "classification": {
         "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion.",
         "role": "research"
       },
-      "sha256": "08a7af01e725c68e041ac1a522ca097e4d81c1c58d46f319559a332263a1390e"
+      "sha256": "acf7c1b3e9d15f8e13f97f8c50504c4a7a7df2d7bb3353fea5c784ec8d1d902f"
     },
     "python:research/flywheel_selfplay/h184_adapter_components/monitor.py": {
       "bytes": 5240,
@@ -5377,12 +5377,12 @@
       "sha256": "87b57d9797030d6e72b473fa75b3710f489511c1aced3d6edf63857c4454134f"
     },
     "python:research/flywheel_selfplay/h217_gated025_confirm/monitor.py": {
-      "bytes": 11280,
+      "bytes": 11422,
       "classification": {
         "reason": "H217 preregistered CPU-only diagnostic: fresh-fold confirmation of H210 GATED_025 with the frozen recipe (BLEND_025 = r882 + 0.25*(calibrated HistGBM - r882), gated per context by the outcome-free zgap cost signal with a FIT-only threshold, max FIT native gain s.t. FIT harm <= 5%, else r882; no retuning; H129 disagreement placebo), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit with fresh seeds/folds; stage-1 lock before A; primary CONFIRMED iff LCB95>0, 3/3 seeds positive, harm<=10%; co-primary DL-Val plateau gain>+0.002 with family-bootstrap LCB95>0; xbabe2 CPU with effective-affinity limits, absolute deadline and pre-claim source binding; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion.",
         "role": "research"
       },
-      "sha256": "d2b0ee5bf37c216e78528fd8890d0f6f7936a09b8df447e557a910a656eb8e32"
+      "sha256": "c93e14d248442a9c511dde2a6627c286325743f17e8b4f5705255a894a8e61b3"
     },
     "python:research/flywheel_selfplay/h217_gated025_confirm/runner.py": {
       "bytes": 33249,
@@ -5401,12 +5401,12 @@
       "sha256": "fb66cb9fdd20dfb4af97f1f2aae96bbdf37e49b92a33034ae4190ca0a84a5a6e"
     },
     "python:research/flywheel_selfplay/h218_gated_lambda_nest/monitor.py": {
-      "bytes": 11320,
+      "bytes": 10477,
       "classification": {
         "reason": "H218 xbabe2-only CPU guard (nice 19, OMP=4, other pools 1; worker tree <= 4.5 cores over 30 s; pre-claim runner --check-launch source binding; admission load1/load5 <= 80, host CPU <= 80%, MemAvailable >= 24 GiB, disk free >= 220 GB; runtime stop on load5 > 85, load1 or host CPU > 85% for 300 s, MemAvailable < 20 GiB, disk free < 200 GB, RSS >= 6 GB, or the absolute 4 h deadline inherited from the attempt claim); no GPU, no live-loop touch.",
         "role": "research"
       },
-      "sha256": "10daeb05f558d09c5e0d3a3d3c0633bada5e188be9557c29fb7a0548e8bdee1f"
+      "sha256": "3fc852253f8753d279b61ebad8b8d7dbeeb1a039fb6044a00f7aab46a14e4586"
     },
     "python:research/flywheel_selfplay/h218_gated_lambda_nest/runner.py": {
       "bytes": 39234,
@@ -5593,12 +5593,12 @@
       "sha256": "1f7df1064955de15ac2a8e2367fb7a66b58bf6d3c4be59a94cb535a9710fca46"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/monitor.py": {
-      "bytes": 13713,
+      "bytes": 12870,
       "classification": {
         "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
         "role": "research"
       },
-      "sha256": "b29d83f58fbf2f710dd92574684562b2fdc44462977dc7da44778fef5f0dc88e"
+      "sha256": "c3628fda60d97fe3ef335463f54b3171c7724a2f9e1f1bbd35a96301371371ec"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/runner.py": {
       "bytes": 38153,
@@ -5721,28 +5721,36 @@
       "sha256": "f497299e4b356d2975797f3057bd5c166a3b211c07ca1c29d69cab654673e740"
     },
     "python:research/flywheel_selfplay/publish_phase7_addendum_v2.py": {
-      "bytes": 16988,
+      "bytes": 15275,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "fa59c8d36ada413c388f10737036a82c14b96720a5a2df8e9ad418168ed774ca"
+      "sha256": "d8fa317133216f8d28128f5b02f589f81be53e67c9dbec5d880e7d308efa78cf"
     },
     "python:research/flywheel_selfplay/publish_phase7_addendum_v3.py": {
-      "bytes": 21858,
+      "bytes": 20145,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "0f747bf94bf6247af67d2ee4523d1c34b20f57310d9020a4a092693b836b3e1c"
+      "sha256": "9bc3bf6b182869c7960fbadb7eb8cc1d070c6ef3a97892327138e82bfb777960"
     },
     "python:research/flywheel_selfplay/publish_phase7_addendum_v4.py": {
-      "bytes": 22778,
+      "bytes": 21065,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "a0ba7ec0f01c9b000884196dc7914781ed2eb5846361b422032b59ac05aab90b"
+      "sha256": "4d54facb7fdc56925be591cd43bd11479afda7e0d1cfb3ed3bfc3af70efb4688"
+    },
+    "python:research/flywheel_selfplay/phase7_s3_upload.py": {
+      "bytes": 2196,
+      "classification": {
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "1bf9d138aa966e7892f9646c349f27832ee9881e58c0be58b110fcba4e62dab7"
     },
     "python:research/flywheel_selfplay/reconcile_provenance_audit.py": {
       "bytes": 14512,
