@@ -1,6 +1,6 @@
 # Jankurai vibe findings: scoped language allowances
 
-The thirteen `dead_language_allow` records in `agent/audit-policy.toml` cover only
+The fourteen `dead_language_allow` records in `agent/audit-policy.toml` cover only
 the exact term and file listed below. They keep those validated source terms
 out of the vibe cap while leaving the files in the scan, so other findings in
 these files remain visible. Each allowance expires 2027-02-01 and must be
