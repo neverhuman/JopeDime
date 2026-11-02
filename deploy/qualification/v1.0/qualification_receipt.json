@@ -322,13 +322,52 @@
     "aggregate_signature": null
   },
   "q1": {
-    "outcome": "NOT_RECORDED_IN_THIS_RECEIPT",
+    "outcome": "INCOMPLETE",
     "guidance_default": "OFF",
     "owner_decision": "OWNER-R21",
     "record": {
       "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/delivery-v3/OWNER-R21.json",
       "sha256": "4271f0ac76903514faefd17ad0c73d156aa9de40fb918acdfb2d49743d2ddd3f",
       "bytes": 1827
+    },
+    "qualification": "NOT_QUALIFIED",
+    "post_execution_receipt": {
+      "path": "/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-final-t2141/FINAL-Q1-RECEIPT.json",
+      "sha256": "49fe1da4d8fab088b7d5b3d80f335df2b2cbb6e8b084dec447044292455b8855",
+      "bytes": 6026
+    },
+    "delegated_owner_guidance_receipt": {
+      "path": "/home/ubuntu/jope_plan/evidence/QLT-04/api01-final-t2141/OWNER-GUIDANCE-DEFAULT.json",
+      "sha256": "399facf280bfffee848d813e3807cb876280a1402e3a9429db9a408f4bb8d2b2",
+      "bytes": 4441
+    },
+    "independent_source_review": {
+      "path": "/home/ubuntu/jope_plan/evidence/QLT-04/api01-final-t2141/FINAL-SOURCE-REVIEW.json",
+      "sha256": "0c1aca460bd94da2e2f68541205a631df4ba38ada019230bd12fe439c56e3801",
+      "bytes": 3481
+    },
+    "independent_governance_handoff": {
+      "path": "/home/ubuntu/jope_plan/evidence/QLT-04/gov03-final-review-20261102-t2141/FINAL-HANDOFF.json",
+      "sha256": "1d70c75775f575f6892583b660180b7c83bf1139a108808c29fafb2257950991",
+      "bytes": 2440
+    },
+    "report_source_commit": "211fd341db45431e6db8af82c1a0ec3a691baba4",
+    "report_sha256": "c1c4adc032c56351cc7eeff8a3a8a526d6ab6fa39c3a259538ed82a975ee8f81",
+    "summary": {
+      "signed_units": 582,
+      "terminal_units": 582,
+      "valid_units": 60,
+      "invalid_units": 522,
+      "analyzer_exit_code": 1,
+      "scientific_decision": null,
+      "effect_estimate": null,
+      "confidence_interval": null,
+      "partial_statistics_computed": false,
+      "known_returned_charges": 1440,
+      "unknown_failed_unit_charges": 522,
+      "total_physical_charges": null,
+      "prior_started_only_work_unknown": true,
+      "qualification_signature": null
     }
   },
   "provenance": {
