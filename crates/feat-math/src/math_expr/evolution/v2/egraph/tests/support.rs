@@ -1,5 +1,3 @@
-use crate::Pcg32;
-
 fn source(text: &str) -> String {
     simplify(&MathExpr::parse(text).unwrap())
         .expression

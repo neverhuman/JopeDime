@@ -12,7 +12,7 @@ pub(crate) fn compute_expr(expr: &Expr, ctx: &EvalContext<'_>) -> Result<f64> {
 /// The evaluator, reporting every guard it takes to `sink` (kernel2 WP-1.2). The arithmetic is
 /// the legacy evaluator's, unchanged, and so is every error; only the `sink.raise` calls are new.
 /// Each raise site is a row of docs/internal/kernel2/math-domain-table.md.
-fn compute_expr_with<S: FaultSink>(
+pub(super) fn compute_expr_with<S: FaultSink>(
     expr: &Expr,
     ctx: &EvalContext<'_>,
     sink: &mut S,
@@ -43,11 +43,11 @@ fn compute_expr_with<S: FaultSink>(
     }
 }
 
-fn compute_binary(op: BinOp, a: f64, b: f64) -> f64 {
+pub(super) fn compute_binary(op: BinOp, a: f64, b: f64) -> f64 {
     compute_binary_with(op, a, b, &mut NoSink)
 }
 
-fn compute_binary_with<S: FaultSink>(op: BinOp, a: f64, b: f64, sink: &mut S) -> f64 {
+pub(super) fn compute_binary_with<S: FaultSink>(op: BinOp, a: f64, b: f64, sink: &mut S) -> f64 {
     match op {
         BinOp::Add => a + b,
         BinOp::Sub => a - b,
@@ -74,11 +74,15 @@ fn compute_binary_with<S: FaultSink>(op: BinOp, a: f64, b: f64, sink: &mut S) ->
     }
 }
 
-fn compute_func(func: Func, values: [f64; 3]) -> Result<f64> {
+pub(super) fn compute_func(func: Func, values: [f64; 3]) -> Result<f64> {
     compute_func_with(func, values, &mut NoSink)
 }
 
-fn compute_func_with<S: FaultSink>(func: Func, values: [f64; 3], sink: &mut S) -> Result<f64> {
+pub(super) fn compute_func_with<S: FaultSink>(
+    func: Func,
+    values: [f64; 3],
+    sink: &mut S,
+) -> Result<f64> {
     Ok(match func {
         Func::Abs => values[0].abs(),
         Func::Sqrt => {
@@ -187,11 +191,15 @@ fn compute_func_with<S: FaultSink>(func: Func, values: [f64; 3], sink: &mut S) -
     })
 }
 
-fn eval_var(var: Var, ctx: &EvalContext<'_>) -> Result<f64> {
+pub(super) fn eval_var(var: Var, ctx: &EvalContext<'_>) -> Result<f64> {
     eval_var_with(var, ctx, &mut NoSink)
 }
 
-fn eval_var_with<S: FaultSink>(var: Var, ctx: &EvalContext<'_>, sink: &mut S) -> Result<f64> {
+pub(super) fn eval_var_with<S: FaultSink>(
+    var: Var,
+    ctx: &EvalContext<'_>,
+    sink: &mut S,
+) -> Result<f64> {
     match var {
         Var::X => raise_read(
             ctx.x.context("variable x is only valid in map expressions"),
@@ -278,7 +286,7 @@ pub(crate) fn safe(value: f64) -> f64 {
     safe_with(value, &mut NoSink)
 }
 
-fn safe_with<S: FaultSink>(value: f64, sink: &mut S) -> f64 {
+pub(super) fn safe_with<S: FaultSink>(value: f64, sink: &mut S) -> f64 {
     if value.is_finite() {
         if value.abs() > MAX_ABS {
             sink.raise(FaultSet::MAGNITUDE_CLAMPED);

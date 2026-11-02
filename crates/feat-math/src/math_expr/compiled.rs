@@ -1,3 +1,7 @@
+use super::evaluator::{
+    compute_binary, compute_binary_with, compute_func, compute_func_with, eval_var, eval_var_with,
+    safe_with,
+};
 use super::fault::Collect;
 use super::*;
 
