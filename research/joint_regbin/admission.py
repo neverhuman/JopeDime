@@ -337,6 +337,17 @@ def review_catalog_families(records: list[dict]) -> dict:
         )
         attrs["provenance"] = provenance
         keys = set(family_keys.derive(attrs)[0])
+        catalog_family_key = row.get("family_key")
+        if (
+            row.get("family_key_source") == "provenance.dedupe_fingerprint"
+            and isinstance(catalog_family_key, str)
+            and re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", catalog_family_key)
+        ):
+            # The shared family-key policy namespaces fingerprints by source
+            # (for example, ``pmlb:<fingerprint>``). The owner-pinned D4
+            # artifact stores the catalog's raw fingerprint, so retain that
+            # exact alias as well for exclusion joins.
+            keys.add(("dedupe_fingerprint", catalog_family_key))
         srcfile = _srcfile_key(row)
         if srcfile:
             keys.add(("srcfile", srcfile))
@@ -576,6 +587,7 @@ def build_catalog_pool_manifest(
         if (
             family_exclusion is not None
             and row["task"] == "binary"
+            and not row.get("family_key")
             and _srcfile_key(row) is not None
         ):
             candidate_exclusions["binary"]["sourcefile_dependent"] += 1
@@ -1137,7 +1149,9 @@ def build_task_role_candidate_manifest(
     }
     if d4_alias_closure:
         role_exclusion_counts["train"]["binary"] = sum(
-            row.get("task") == "binary" and _srcfile_key(row) is not None
+            row.get("task") == "binary"
+            and not row.get("family_key")
+            and _srcfile_key(row) is not None
             for row in catalog_rows
         )
 
@@ -1159,7 +1173,10 @@ def build_task_role_candidate_manifest(
             if row.get("task") == task
             and row["id"] not in d4_excluded_ids
             and not (
-                d4_alias_closure and task == "binary" and _srcfile_key(row) is not None
+                d4_alias_closure
+                and task == "binary"
+                and not row.get("family_key")
+                and _srcfile_key(row) is not None
             )
         }
         if len(pool_by_id) != len(rows) or set(pool_by_id) != expected_ids:
