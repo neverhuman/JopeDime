@@ -269,7 +269,7 @@ crates/jope-arena/src/scores.rs
 crates/jope-arena/src/verify.rs
 crates/jope-arena/tests/elo_regression.rs
 crates/jope-bench/Cargo.toml
-crates/jope-bench/adapters/_common.py
+benchmarks/jope-bench/adapters/_common.py
 crates/jope-bench/adapters/_panel.py
 crates/jope-bench/adapters/catboost_adapter.py
 crates/jope-bench/adapters/lightgbm_adapter.py
