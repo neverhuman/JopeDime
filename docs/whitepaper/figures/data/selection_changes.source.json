@@ -68,7 +68,7 @@
   "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
   "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --selection-changes",
   "method_source_pins": {
-    "source_snapshot_commit": "02f613533632e53f0a9135412e1b523661c9dafd",
+    "source_snapshot_commit": "76a81767e98a5d1b5b24345af72c25ebfd72678e",
     "observer": {
       "sha256": "3a5828c9f03e6c9e35df2257d79cd66f65831b7d4feb94608a7a0e0dd57a422f",
       "existing_pin": "capture.producer_script_sha256",
@@ -79,7 +79,7 @@
     },
     "admission": {
       "path": "research/flywheel_selfplay/dev_incumbent.py",
-      "sha256": "81ebdafa5fe1accb1da56a424bee669f0e381fee2bd5e23c751c17618079523f",
+      "sha256": "d77a0ad527359ec8edd3f94ee5516c05a25802d041ed28cbf11e506f782be22e",
       "claims": [
         "Unrounded finite utility is compared with retained utility; ties are accepted by default.",
         "Accepted ties can update the recorded best-round identity without a strict score gain."
