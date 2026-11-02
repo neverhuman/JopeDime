@@ -754,6 +754,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     assert_eq!(tui10_identity["fixtures"][1]["path"], changed_fixtures[1]);
     let gov04_portable_pty =
         old_fixture("transitions/gov04_pub06_portable_pty_lockfile_identity_rebaseline.v1.json");
+    let rustmem_cpu_affinity =
+        old_fixture("transitions/rustmem_cpu_affinity_identity_rebaseline.v1.json");
     assert_eq!(
         gov04_portable_pty["source_commit"],
         "4b51c5528129c3fc4c170f2c4074a1a176c25eb3"
@@ -1352,6 +1354,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1425,6 +1428,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1491,6 +1495,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1588,6 +1593,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         ),
         (
@@ -1645,6 +1651,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         ),
     ] {
@@ -1750,6 +1757,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         res09_candle,
         gov03_axum,
         gov04_portable_pty,
+        rustmem_cpu_affinity,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
