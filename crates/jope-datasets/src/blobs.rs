@@ -125,8 +125,8 @@ impl BlobDir {
     }
 
     /// Make sure `<dir>/<sha256>` exists with exactly the named content, downloading
-    /// `blobs/sha256/<sha256>` from `store` when it is absent or has different content. A cached entry is served
-    /// only after its bytes re-hash to `sha256`; a same-size mismatched or corrupted entry is removed
+    /// `blobs/sha256/<sha256>` from `store` when it is absent or stale. A cached entry is served
+    /// only after its bytes re-hash to `sha256`; a same-size stale or corrupted entry is removed
     /// and, offline, the request fails rather than serving any substitute. `Ok(true)` when it was
     /// downloaded.
     pub async fn ensure(&self, store: Option<&Store>, sha256: &str, bytes: u64) -> Result<bool> {
@@ -144,7 +144,7 @@ impl BlobDir {
             std::fs::remove_file(&dest)?;
             if store.is_none() {
                 return Err(anyhow!(
-                    "cached blob {sha256} has mismatched content ({found}); removed, and offline: no substitute is served"
+                    "cached blob {sha256} is stale ({found}); removed, and offline: no substitute is served"
                 ));
             }
         }
@@ -236,7 +236,7 @@ mod tests {
         std::fs::write(&blob, &payload).unwrap();
         let dst = tmp.path().join("out").join("linked");
         std::fs::create_dir_all(dst.parent().unwrap()).unwrap();
-        std::fs::write(&dst, b"wrong!").unwrap();
+        std::fs::write(&dst, b"stale").unwrap();
         std::thread::scope(|s| {
             for _ in 0..16 {
                 s.spawn(|| link_or_copy(&blob, &dst).unwrap());
