@@ -1,0 +1,7 @@
+# Match the bounded numerical environment used by CI for local Cargo commands.
+# Cargo applies these values only when the caller has not set the variables.
+[env]
+OMP_NUM_THREADS = "1"
+RAYON_NUM_THREADS = "1"
+OPENBLAS_NUM_THREADS = "1"
+MKL_NUM_THREADS = "1"
