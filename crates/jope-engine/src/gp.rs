@@ -955,32 +955,40 @@ pub fn guard_evaluator_group() -> Result<()> {
             libc::kill(0, libc::SIGKILL);
         }
     }
-    unsafe {
-        ensure!(
-            libc::getpgrp() == libc::getpid(),
-            "guarded evaluator does not lead its own process group"
-        );
-        let mut mask = std::mem::MaybeUninit::<libc::sigset_t>::uninit();
-        ensure!(
-            libc::sigemptyset(mask.as_mut_ptr()) == 0,
-            "cannot initialize evaluator signal mask"
-        );
-        // SAFETY: successful sigemptyset initializes the complete signal set.
-        let mask = mask.assume_init();
-        let action: libc::sigaction = libc::sigaction {
-            sa_sigaction: kill_group as *const () as libc::sighandler_t,
-            sa_mask: mask,
-            sa_flags: 0,
-            sa_restorer: None,
-        };
-        ensure!(
-            libc::sigaction(libc::SIGTERM, &action, std::ptr::null_mut()) == 0,
-            "evaluator group guard not installed"
-        );
-        // The controller may have died before the handler existed.
-        if libc::getppid() != controller {
-            libc::kill(0, libc::SIGKILL);
-        }
+    // SAFETY: getpgrp/getpid only inspect this process's identifiers and have no pointer
+    // preconditions; the equality proves the later kill(0, ...) targets our own group.
+    ensure!(
+        unsafe { libc::getpgrp() } == unsafe { libc::getpid() },
+        "guarded evaluator does not lead its own process group"
+    );
+    // SAFETY: sigset_t is a C array of integer words on supported Unix targets, so all-zero
+    // is a valid initial value; sigemptyset then establishes the requested empty set.
+    let mut mask = unsafe { std::mem::zeroed::<libc::sigset_t>() };
+    // SAFETY: mask is a writable, fully initialized sigset_t and sigemptyset accepts its
+    // address, replacing it with the empty signal set before it is used below.
+    ensure!(
+        unsafe { libc::sigemptyset(&mut mask) } == 0,
+        "cannot initialize evaluator signal mask"
+    );
+    let action: libc::sigaction = libc::sigaction {
+        sa_sigaction: kill_group as *const () as libc::sighandler_t,
+        sa_mask: mask,
+        sa_flags: 0,
+        sa_restorer: None,
+    };
+    // SAFETY: action is a fully initialized sigaction and the output pointer is null, as
+    // permitted by sigaction when the previous disposition is not needed.
+    ensure!(
+        unsafe { libc::sigaction(libc::SIGTERM, &action, std::ptr::null_mut()) } == 0,
+        "evaluator group guard not installed"
+    );
+    // The controller may have died before the handler existed.
+    // SAFETY: getppid only reads this process's parent identifier and has no pointer
+    // preconditions. The group ownership check above still holds for the kill handler.
+    if unsafe { libc::getppid() } != controller {
+        // SAFETY: kill is async-signal-safe; pid 0 targets this process's own group, whose
+        // ownership was verified above.
+        unsafe { libc::kill(0, libc::SIGKILL) };
     }
     Ok(())
 }
@@ -1567,14 +1575,17 @@ fn search_lease(output: &Path) -> Result<fs::File> {
 /// Whether the evaluator has exited, without reaping it: an unreaped leader
 /// keeps its process-group id reserved while the group is drained.
 fn evaluator_exited(pid: i32) -> Result<bool> {
-    let mut info = std::mem::MaybeUninit::<libc::siginfo_t>::uninit();
-    // SAFETY: info points to writable siginfo_t storage and waitid initializes
-    // it on success; WNOWAIT leaves the child unreaped so its pid stays reserved.
+    // SAFETY: siginfo_t contains C integer/pointer fields and unions whose all-zero
+    // representation is valid; initializing it first also gives WNOHANG's no-result case
+    // a defined si_pid value without relying on unspecified output bytes.
+    let mut info = unsafe { std::mem::zeroed::<libc::siginfo_t>() };
+    // SAFETY: info is a fully initialized writable siginfo_t and waitid accepts its address;
+    // WNOWAIT leaves a ready child unreaped so its pid stays reserved.
     let status = unsafe {
         libc::waitid(
             libc::P_PID,
             pid as libc::id_t,
-            info.as_mut_ptr(),
+            &mut info,
             libc::WEXITED | libc::WNOHANG | libc::WNOWAIT,
         )
     };
@@ -1583,9 +1594,8 @@ fn evaluator_exited(pid: i32) -> Result<bool> {
         "evaluator wait failed: {}",
         std::io::Error::last_os_error()
     );
-    // SAFETY: successful waitid initialized the siginfo_t output.
-    let info = unsafe { info.assume_init() };
-    // SAFETY: successful waitid initialized the siginfo_t, including its pid field.
+    // SAFETY: info is initialized before waitid, and successful waitid either writes a child
+    // result or leaves the initialized WNOHANG no-result value intact.
     Ok(unsafe { info.si_pid() } != 0)
 }
 
