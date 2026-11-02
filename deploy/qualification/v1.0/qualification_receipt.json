@@ -1,603 +1,2025 @@
 {
-  "$schema": "./qualification_receipt.draft.schema.json",
-  "schema": "jope.rel07.qualification-receipt-draft/v2",
-  "state": "DRAFT_NOT_QUALIFIED_NOT_SIGNER_COMPATIBLE",
-  "generated_at_utc": "2026-11-02T12:23:00Z",
+  "$schema": "./qualification_receipt.final.schema.json",
+  "schema": "jope.rel07.qualification-receipt/v1",
+  "generated_at_utc": "2026-11-02T21:35:54.558433+00:00",
+  "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+  "gates": [
+    {
+      "id": "M1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M1/result.json; receipt_sha256=6b5597621a252a57054b3d21bfce5f8ea63e52f67788d44494650e847f9ae577; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "M2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M2/result.json; receipt_sha256=557605e2eb1067f79192356afffdeae0ab7e0064a66da51d1ff8954927a3e66d; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "M3",
+      "status": "FAIL",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M3/result.json; receipt_sha256=02215ae078ef3f1510a4a49582ce43c829e4816bd25195ac60eeee7e95f2d73c; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998",
+      "disposition": "WAIVED_V1_0_0",
+      "counts": {
+        "collected": 4,
+        "excluded": 0,
+        "executed": 4,
+        "failed": 1,
+        "passed": 3,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "M4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M4/result.json; receipt_sha256=9871145edf63ef2616cc79cca49653372703ef98cba65eda0f9b758d1ca27e27; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "M5",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M5/result.json; receipt_sha256=da5720bc66dcaefdecee61ba56022b7dbd154d5a49227132be76d7e6db58750f; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S1/result.json; receipt_sha256=5f95769746c5ce006c86a846fc2ec4435101f61829a7ba9ea3f708653619a866; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S2/result.json; receipt_sha256=8de737436e9a4cc46ec82dfb883a2a402230cfd6035881cddb276937412cf374; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S3/result.json; receipt_sha256=59f63a4adf1a245b55b788c7fbc808d2c814e7526da396426264d992bf58436b; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S4/result.json; receipt_sha256=bb037e800ecefa2b1ee6a313bdc87d5863a9f869d6ac68e577401f4b6ba92e6b; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R1/result.json; receipt_sha256=a5186ea95249c2f041a5f5dacda3b5a556e7e06081a0f4352f325cf6408a3d3a; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R2/result.json; receipt_sha256=d044f0085db6c468c5b0258445dec98b3ab50baf3d149f406c3d51b8945ef3ed; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R3/result.json; receipt_sha256=b7ec87ea23425ebccb90c830571c3b0ed61e57b82828d7c525b51f79dfdc1fa5; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R4/result.json; receipt_sha256=ecdfc4c6697ea4a114fad8664b2f4e7b0b7013a791bd121444bdc9ffd7b1ba86; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A1/result.json; receipt_sha256=db850fae911062d414356b8180fc5b1618fbb51fb71b5895b86b11b988698114; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A2/result.json; receipt_sha256=fdec2249680db971a9539154c5a6fa7296ff0b0ff01907ef32562ecd7a7d460b; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A3/result.json; receipt_sha256=a15e1a7860162454ef08d6723cbae6fc4d0c69509e2b9ce51505b891883ec5bb; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A4/result.json; receipt_sha256=121baa9d19444fd7bc019b14a1052515e956592a42361b0bf511dde5c4f7b976; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A5",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A5/result.json; receipt_sha256=fa4ea46e3ce6cbb2529ffad07a1e070b92074d5eb5a2c6f20a379a74f49c4913; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "E1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E1/result.json; receipt_sha256=e227f6399ce516d933ece520f3195096e26ad22785cf1da19fe0d0223c5d36a8; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "E2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E2/result.json; receipt_sha256=acd3c0446075c3eee6fe78de70c784e8a4f446d8b01df1f293d59d58e623d379; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "E3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E3/result.json; receipt_sha256=9f7eefcf5fc9aff53fbef29cb4520185ff6f65d29dc0884fe37da7c715a2d2d5; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "U1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U1/result.json; receipt_sha256=f34db730219f26bd8e09518372bd9f7fdc65cbc2ee1bb1701ea5a88580637cb7; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "U2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U2/result.json; receipt_sha256=1d87cb1a20adc5fb8fabc33527ffe41c6c5b72c1b6cbe0c69bf8fda2f0f9d43f; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "T1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T1/result.json; receipt_sha256=7147e92b2e7d1300c88f2899835641827cbd50431ccc222036b50b91761bded5; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "T2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T2/result.json; receipt_sha256=19995b3e983a4eeb5791550a1f584e75589e50f2089d0130cac041c5ce6dbbab; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "T3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T3/result.json; receipt_sha256=f4c875383e7f126482fe1383b4add20825fbe90277a4b61275a552e46075682a; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "D1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D1/result.json; receipt_sha256=a77ca214d754dc7a8c0fd80263bb0076ca45d9d6d77f9a57964627c8cdd6242c; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "D2",
+      "status": "PASS",
+      "artifact_sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D2/result.json; receipt_sha256=579d562d92a2c7b79c66e2b4289ed16613286b42649eca252b6d85e5f0ca27e7; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    }
+  ],
+  "gate_artifacts": {
+    "D2": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/tui-t1525/build-ccaf14b210b3-20261102T000809Z/output/jopedime",
+      "sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+      "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+      "candidate_manifest_sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff",
+      "seal_receipt_sha256": "097cbf56819d4fa001314eaf0c97b3bb271b5c0750e486de2ea3f99d8406bc7a"
+    }
+  },
   "release_version": "v1.0.0",
+  "waivers": [
+    {
+      "id": "M3-WAIVER-V1.0.0-T1955",
+      "gate": "M3",
+      "disposition": "WAIVED_V1_0_0",
+      "expires_at": "v1.0.1",
+      "ruling": "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
+      "ruling_sha256": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf",
+      "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "raw_status": "FAIL",
+      "guard_views": [
+        {
+          "mode": "all",
+          "deltas_pp": {
+            "champion_retrieval": -0.489375,
+            "edit_crossover": -0.1615625,
+            "edit_delete_stage": 0.3346875,
+            "edit_insert_stage": -0.94171875,
+            "edit_parameter": -1.0421875,
+            "edit_replace_head": 2.30015625,
+            "landmark_synthesis": 0.0
+          }
+        },
+        {
+          "mode": false,
+          "deltas_pp": {
+            "champion_retrieval": 0.3645833333333333,
+            "edit_crossover": 0.0,
+            "edit_delete_stage": 1.3020833333333333,
+            "edit_insert_stage": -0.5208333333333334,
+            "edit_parameter": -1.1979166666666667,
+            "edit_replace_head": 0.052083333333333336,
+            "landmark_synthesis": 0.0
+          }
+        },
+        {
+          "mode": true,
+          "deltas_pp": {
+            "champion_retrieval": -0.6878332063975628,
+            "edit_crossover": -0.17183929931454683,
+            "edit_delete_stage": 0.1347105864432597,
+            "edit_insert_stage": -1.0379379284082255,
+            "edit_parameter": -1.0279417364813404,
+            "edit_replace_head": 2.7908415841584158,
+            "landmark_synthesis": 0.0
+          }
+        }
+      ]
+    }
+  ],
   "candidate": {
     "generation": "RC4",
     "scope": "internal-restricted",
     "runtime_source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
     "runtime_tree_sha": "2e4324f0bb387ece970664eac193a7ef6a8eb05c",
-    "candidate_manifest": {
+    "manifest": {
       "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/rc4-manifest.json",
-      "sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff"
+      "sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff",
+      "bytes": 6094
     },
     "artifacts": [
       {
         "id": "full-linux-x86_64",
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/full-linux-x86_64/jopedime",
         "sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
         "bytes": 293673722,
         "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
-        "signature_status": "PASS",
-        "seal_status": "PASS"
+        "seal_receipt": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/full-linux-x86_64-SEALED-nativefs.json",
+          "sha256": "2f59f19aef387dfab6763d8628e55af3d519b5137b4e91e2432f509a40fad6e6",
+          "bytes": 47921
+        },
+        "signature_receipts": [
+          {
+            "path": "/home/ubuntu/jope_plan/signing/receipts/release-rel07rc4-ccaf14b21-full-linux-x86_64-20261102T032324Z.json",
+            "sha256": "c963d807150be9fcc7712ca5d2729bfaf52896ec9fa77c6e375c9bc2e84c31f1",
+            "bytes": 534
+          }
+        ]
       },
       {
         "id": "full-darwin-arm64",
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/full-darwin-arm64/jopedime",
         "sha256": "e78bef5a71952df03f705fc18f2704b668ab4bd05f7e5ebde8ef996c8c317097",
         "bytes": 290728940,
         "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
-        "signature_status": "PASS",
-        "seal_status": "PASS"
+        "seal_receipt": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/full-darwin-arm64-SEALED.json",
+          "sha256": "2cb9b3f7fccc501c09ec7f3c6cb0765fba385c45ac9cb220e64ee257ac2acab8",
+          "bytes": 48053
+        },
+        "signature_receipts": [
+          {
+            "path": "/home/ubuntu/jope_plan/signing/receipts/release-rel07rc4-ccaf14b21-full-darwin-arm64-20261102T032328Z.json",
+            "sha256": "ea0ce5ce1e4490208cce5ceed494b480c9671b0fa3db30f64cee048d1a1a1055",
+            "bytes": 534
+          }
+        ]
       },
       {
         "id": "fused-cpu-linux-x86_64",
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/tui-t1525/build-ccaf14b210b3-20261102T000809Z/output/jopedime",
         "sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
         "bytes": 25791221,
         "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
-        "signature_status": "PASS",
-        "seal_status": "PASS"
+        "seal_receipt": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/FUSED-RUNNER-SEAL.json",
+          "sha256": "097cbf56819d4fa001314eaf0c97b3bb271b5c0750e486de2ea3f99d8406bc7a",
+          "bytes": 42374
+        },
+        "signature_receipts": [
+          {
+            "path": "/home/ubuntu/jope_plan/signing/receipts/release-rel07rc4-ccaf14b21-fused-cpu-linux-x86_64-20261102T025920Z.json",
+            "sha256": "f7fdce09163ad0338e0cbc960fdce9cbbc3cd46d66479824e1c88c41c1ddcbd8",
+            "bytes": 539
+          }
+        ]
       }
     ]
   },
   "qualification": {
-    "status": "NOT_QUALIFIED",
+    "status": "GATES_ADMITTED_PENDING_OWNER_RELEASE_APPROVAL",
+    "gates_admitted": true,
+    "raw_all_pass": false,
     "release_qualified": false,
-    "final_controller_status": "INCOMPLETE_PENDING_A5_AND_FINAL_REPLAY",
-    "required_gate_count": 28,
     "owner_release_approval": null,
     "aggregate_signature": null
   },
-  "controller_snapshot": {
-    "attempt_path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3",
-    "status_table": {
-      "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-      "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-    },
-    "execution": {
-      "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/execution.json",
-      "sha256": "a93fbe0bc48f10019fc6cef13b2b10627c20dac4caea07c75f268e112f14844f"
-    },
-    "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
-    "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
-    "outcomes": {
-      "PASS": 25,
-      "FAIL": 2,
-      "BLOCKED": 1,
-      "NOT_RUN": 0
-    },
-    "qualification_use": "HISTORICAL_SNAPSHOT_ONLY_NOT_PROMOTED_OR_COMBINED"
+  "q1": {
+    "outcome": "NOT_RECORDED_IN_THIS_RECEIPT",
+    "guidance_default": "OFF",
+    "owner_decision": "OWNER-R21",
+    "record": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/delivery-v3/OWNER-R21.json",
+      "sha256": "4271f0ac76903514faefd17ad0c73d156aa9de40fb918acdfb2d49743d2ddd3f",
+      "bytes": 1827
+    }
   },
-  "current_evidence": {
-    "observations": [
-      {
-        "gate": "M1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/M1/result.json",
-            "sha256": "6b5597621a252a57054b3d21bfce5f8ea63e52f67788d44494650e847f9ae577"
+  "provenance": {
+    "controller_output": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3",
+    "core_files": {
+      "execution": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/execution.json",
+        "sha256": "b6d00e61639286aa82c4ed851a4d9448d936dde4aecb344bd66f8c642419d913",
+        "bytes": 26037
+      },
+      "status_table": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/status_table.json",
+        "sha256": "c66b7d329a705a8e1cf0007eb2291ab05134bec2a2c1b70aee37764893f3e185",
+        "bytes": 13285
+      },
+      "command_manifest": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3.gate-commands.json",
+        "sha256": "c473d1fe67759ef2a7ef88ed8e44ef3051b39cc6980d50d593c27aad9df9a932",
+        "bytes": 7363
+      },
+      "candidate_manifest": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/rc4-manifest.json",
+        "sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff",
+        "bytes": 6094
+      },
+      "inputs": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/candidate-inputs-v8.json",
+        "sha256": "f777472ddd60c927326fc91c4ee256be64ad3f71d5a21031bffcad6f85ca9f93",
+        "bytes": 1476
+      },
+      "scaffold": {
+        "path": "/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json",
+        "sha256": "702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998",
+        "bytes": 6188
+      },
+      "assembler": {
+        "path": "/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/gates_receipt.py",
+        "sha256": "22450812c3a8c20d79ca59b8a7a7e754ffc820c43dd379f6e25f4569b43609e9",
+        "bytes": 20330
+      },
+      "generator": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/generate_delivery_v3.py",
+        "sha256": "600e74b7d413aac6558eb0f8e3aea14c069f148ec8031a4ab01c03e99fb00692",
+        "bytes": 10957
+      },
+      "m3_ruling": {
+        "path": "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
+        "sha256": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf",
+        "bytes": 5596
+      },
+      "namespace_preflight": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/NAMESPACE-PREFLIGHT.json",
+        "sha256": "d7ea3fc5147c81093a81200942837bcfa77d82a76164850f5a51dd6db188a206",
+        "bytes": 2213
+      },
+      "owner_namespace_change": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/OWNER-NAMESPACE-CHANGE-t2100.json",
+        "sha256": "091937d5427570973ea148d9f2719d9f213fb9e1de0e3e26462cd2769a170ddf",
+        "bytes": 842
+      },
+      "controller_process": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/RUNNING-v3-JOBS.json",
+        "sha256": "8ccad2404ba06c5f260f495af53f3c0118c46ef0584217bef71e3f1dd563188b",
+        "bytes": 824
+      },
+      "inputs_derivation": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/INPUTS-V8-DERIVATION.json",
+        "sha256": "90e077a9e07bc0fd02fc46bf2d1b1c509ca94ab5407e73389452e28ddea4d65b",
+        "bytes": 930
+      },
+      "inputs_review": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/input-binding-review-v8-t2040.json",
+        "sha256": "c9ee841fb5fceee1b3d293a25d1b3fbee16400bb303af1dae3b2f833deebfd09",
+        "bytes": 3010
+      },
+      "launch_wrapper": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/run_final_28_v8.sh",
+        "sha256": "8d95dd9d45c0767c863a27b3e4b9aae61abc563dcc12703ebb130ae3492fde07",
+        "bytes": 5573
+      },
+      "wrapper_log": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/run_final_28_v8.log",
+        "sha256": "43566366ab9535f295937a19bb79e2b20ddea1375aaced60d3d199f6cb7eee3b",
+        "bytes": 198
+      }
+    },
+    "controller_execution": {
+      "schema": "jope.rel07.gate-run/v1",
+      "mode": "execute",
+      "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+      "artifact": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/full-linux-x86_64/jopedime",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "manifest_sha256": "c473d1fe67759ef2a7ef88ed8e44ef3051b39cc6980d50d593c27aad9df9a932",
+      "runner_sha256": "df9a68b83e4d5537959ea2163776383cd08a2656d60906b42c3d5667e96f4c3b",
+      "candidate_inputs_sha256": "f777472ddd60c927326fc91c4ee256be64ad3f71d5a21031bffcad6f85ca9f93",
+      "gate_artifacts": {
+        "D2": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/tui-t1525/build-ccaf14b210b3-20261102T000809Z/output/jopedime",
+          "sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+          "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+          "candidate_manifest_sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff",
+          "seal_receipt_sha256": "097cbf56819d4fa001314eaf0c97b3bb271b5c0750e486de2ea3f99d8406bc7a"
+        }
+      },
+      "machine": "xbabe2",
+      "started_utc": "2026-11-02T20:40:52.452273+00:00",
+      "checks": [
+        {
+          "id": "M1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/m1.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T20:40:52.453160+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 35.06298828125,
+            "disk_used_percent": 89.7582523914096
           },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+          "timed_out": false,
+          "log_sha256": "2d02361958b09f311474c9972a3cc6e3cf0ae3482a3777d00fa42e034ab65850",
+          "counts": {
+            "collected": 33,
+            "excluded": 0,
+            "executed": 33,
+            "failed": 0,
+            "passed": 33,
+            "skipped": 0
+          },
+          "result_sha256": "6b5597621a252a57054b3d21bfce5f8ea63e52f67788d44494650e847f9ae577",
+          "finished_utc": "2026-11-02T20:41:56.331383+00:00"
+        },
+        {
+          "id": "M2",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/m2.py",
+            "--golden-dir",
+            "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1410/inputs/m2-golden",
+            "--golden-index-sha256",
+            "ddaa6cfc558f0a7e56fe73f657266d00d6c821739a602afc701f87fa1c4f5af1",
+            "--parity-bundle-dir",
+            "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1410/inputs/m2-bundle",
+            "--parity-report-dir",
+            "/home/ubuntu/jope_plan/evidence/REL-07/dsc01-t0415-m2-20261102T113225Z/PUB-final-controller-report-v8"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T20:41:56.575612+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 38.064453125,
+            "disk_used_percent": 89.76643676630357
+          },
+          "timed_out": false,
+          "log_sha256": "7b125b5947a709ab65bea361bdb8e7a5410d7f278024a3a56dd28ab35f7eb898",
+          "counts": {
+            "collected": 1,
+            "excluded": 0,
+            "executed": 1,
+            "failed": 0,
+            "passed": 1,
+            "skipped": 0
+          },
+          "result_sha256": "557605e2eb1067f79192356afffdeae0ab7e0064a66da51d1ff8954927a3e66d",
+          "finished_utc": "2026-11-02T20:42:58.857679+00:00"
+        },
+        {
+          "id": "M3",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/m3.py",
+            "--full-inputs",
+            "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/m3-full-inputs-v2.json",
+            "--full-inputs-sha256",
+            "195ed8251fe6edbc1658998f9df03b9a0ccb2b4d9376baeb951cf84df6bb2c51"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T20:42:59.116722+00:00",
+          "exit_code": 1,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 41.98388671875,
+            "disk_used_percent": 89.77164039308117
+          },
+          "timed_out": false,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "diagnostic": "gate command failed: exit=1, timeout=False",
+          "finished_utc": "2026-11-02T21:01:57.727432+00:00"
+        },
+        {
+          "id": "M4",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/m4.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:01:58.004067+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 41.17333984375,
+            "disk_used_percent": 89.94151477723567
+          },
+          "timed_out": false,
+          "log_sha256": "803a4618c05f7dc977c2d5507ca8cf43e21d32123876d06cd5ca8561687b9a38",
+          "counts": {
+            "collected": 4,
+            "excluded": 0,
+            "executed": 4,
+            "failed": 0,
+            "passed": 4,
+            "skipped": 0
+          },
+          "result_sha256": "9871145edf63ef2616cc79cca49653372703ef98cba65eda0f9b758d1ca27e27",
+          "finished_utc": "2026-11-02T21:02:50.356350+00:00"
+        },
+        {
+          "id": "M5",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/m5.py",
+            "--default-off-receipt",
+            "/home/ubuntu/jope_plan/evidence/RNK-10/rnk11-rc4-ccaf14b/DEFAULT-OFF.json",
+            "--default-off-receipt-sha256",
+            "821357699e432ee9c4389da0bc788d61383d5badad16df6db183cc21fb7a2b6c"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:02:50.637980+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 40.34912109375,
+            "disk_used_percent": 89.94215512895883
+          },
+          "timed_out": false,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "counts": {
+            "collected": 3,
+            "excluded": 0,
+            "executed": 3,
+            "failed": 0,
+            "passed": 3,
+            "skipped": 0
+          },
+          "result_sha256": "da5720bc66dcaefdecee61ba56022b7dbd154d5a49227132be76d7e6db58750f",
+          "finished_utc": "2026-11-02T21:03:30.586374+00:00"
+        },
+        {
+          "id": "S1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/s1.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:03:30.890464+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 39.78125,
+            "disk_used_percent": 89.94210549414036
+          },
+          "timed_out": false,
+          "log_sha256": "398116076bce8da9a598af1cdca04bddb0d7ce54312074f25e8c8cf8289f4c34",
+          "counts": {
+            "collected": 1,
+            "excluded": 0,
+            "executed": 1,
+            "failed": 0,
+            "passed": 1,
+            "skipped": 0
+          },
+          "result_sha256": "5f95769746c5ce006c86a846fc2ec4435101f61829a7ba9ea3f708653619a866",
+          "finished_utc": "2026-11-02T21:04:33.684848+00:00"
+        },
+        {
+          "id": "S2",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/s2.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:04:33.994293+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 42.3974609375,
+            "disk_used_percent": 89.94415459879953
+          },
+          "timed_out": false,
+          "log_sha256": "956d46f9b42030517daca2bfe70b4b4155b17f8f6ef66f7e34de0f282e42996a",
+          "counts": {
+            "collected": 1,
+            "excluded": 0,
+            "executed": 1,
+            "failed": 0,
+            "passed": 1,
+            "skipped": 0
+          },
+          "result_sha256": "8de737436e9a4cc46ec82dfb883a2a402230cfd6035881cddb276937412cf374",
+          "finished_utc": "2026-11-02T21:06:40.519831+00:00"
+        },
+        {
+          "id": "S3",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/s3.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:06:40.810856+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 43.63720703125,
+            "disk_used_percent": 89.94624890659695
+          },
+          "timed_out": false,
+          "log_sha256": "ab80c52be6284e143853eb20c906a3684d13bdd85e3a1fd8ae17c979c7dd2285",
+          "counts": {
+            "collected": 12,
+            "excluded": 0,
+            "executed": 12,
+            "failed": 0,
+            "passed": 12,
+            "skipped": 0
+          },
+          "result_sha256": "59f63a4adf1a245b55b788c7fbc808d2c814e7526da396426264d992bf58436b",
+          "finished_utc": "2026-11-02T21:08:01.191533+00:00"
+        },
+        {
+          "id": "S4",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/s4.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:08:01.477446+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 39.62841796875,
+            "disk_used_percent": 89.94819978436747
+          },
+          "timed_out": false,
+          "log_sha256": "1d5fb09bc851308ddba1809f233eecdf008abae91dbdc8e7857ed681adcb5b65",
+          "counts": {
+            "collected": 4,
+            "excluded": 0,
+            "executed": 4,
+            "failed": 0,
+            "passed": 4,
+            "skipped": 0
+          },
+          "result_sha256": "bb037e800ecefa2b1ee6a313bdc87d5863a9f869d6ac68e577401f4b6ba92e6b",
+          "finished_utc": "2026-11-02T21:09:10.911634+00:00"
+        },
+        {
+          "id": "R1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/r1.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:09:11.219419+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 51.16015625,
+            "disk_used_percent": 89.94888168960989
+          },
+          "timed_out": false,
+          "log_sha256": "e1d3f7bc14efcb519b7854eb8e8a96c5e39cb7be1a04cab9133830d34ebf1b1c",
+          "counts": {
+            "collected": 1,
+            "excluded": 0,
+            "executed": 1,
+            "failed": 0,
+            "passed": 1,
+            "skipped": 0
+          },
+          "result_sha256": "a5186ea95249c2f041a5f5dacda3b5a556e7e06081a0f4352f325cf6408a3d3a",
+          "finished_utc": "2026-11-02T21:10:48.107230+00:00"
+        },
+        {
+          "id": "R2",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/r2.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:10:48.390673+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 56.36474609375,
+            "disk_used_percent": 89.96290988659239
+          },
+          "timed_out": false,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "counts": {
+            "collected": 1,
+            "excluded": 0,
+            "executed": 1,
+            "failed": 0,
+            "passed": 1,
+            "skipped": 0
+          },
+          "result_sha256": "d044f0085db6c468c5b0258445dec98b3ab50baf3d149f406c3d51b8945ef3ed",
+          "finished_utc": "2026-11-02T21:12:23.055492+00:00"
+        },
+        {
+          "id": "R3",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/r3.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:12:23.348104+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 45.337890625,
+            "disk_used_percent": 89.98071523069561
+          },
+          "timed_out": false,
+          "log_sha256": "5d243c806df0c28e42912189fdffe2772056f4efbadb1b72aae72fcd90a6416a",
+          "counts": {
+            "collected": 7,
+            "excluded": 0,
+            "executed": 7,
+            "failed": 0,
+            "passed": 7,
+            "skipped": 0
+          },
+          "result_sha256": "b7ec87ea23425ebccb90c830571c3b0ed61e57b82828d7c525b51f79dfdc1fa5",
+          "finished_utc": "2026-11-02T21:14:10.369237+00:00"
+        },
+        {
+          "id": "R4",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/r4.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:14:10.656825+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 43.8447265625,
+            "disk_used_percent": 89.99089631214733
+          },
+          "timed_out": false,
+          "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "counts": {
+            "collected": 3,
+            "excluded": 0,
+            "executed": 3,
+            "failed": 0,
+            "passed": 3,
+            "skipped": 0
+          },
+          "result_sha256": "ecdfc4c6697ea4a114fad8664b2f4e7b0b7013a791bd121444bdc9ffd7b1ba86",
+          "finished_utc": "2026-11-02T21:14:59.181288+00:00"
+        },
+        {
+          "id": "A1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/a1.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:14:59.470841+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 44.8603515625,
+            "disk_used_percent": 89.99100668705353
+          },
+          "timed_out": false,
+          "log_sha256": "4a3fc56446e4351e5a59b1f71611ee41808835cc8439ea43e3f92badecc58efb",
+          "counts": {
+            "collected": 4,
+            "excluded": 0,
+            "executed": 4,
+            "failed": 0,
+            "passed": 4,
+            "skipped": 0
+          },
+          "result_sha256": "db850fae911062d414356b8180fc5b1618fbb51fb71b5895b86b11b988698114",
+          "finished_utc": "2026-11-02T21:15:42.690724+00:00"
+        },
+        {
+          "id": "A2",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/a2.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:15:43.173718+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 44.80126953125,
+            "disk_used_percent": 89.99245412595099
+          },
+          "timed_out": false,
+          "log_sha256": "45e6a0c07389f1039e5be0b18eec0828479d384a49dde0ea994508804cd94d99",
+          "counts": {
+            "collected": 14,
+            "excluded": 0,
+            "executed": 14,
+            "failed": 0,
+            "passed": 14,
+            "skipped": 0
+          },
+          "result_sha256": "fdec2249680db971a9539154c5a6fa7296ff0b0ff01907ef32562ecd7a7d460b",
+          "finished_utc": "2026-11-02T21:16:51.189935+00:00"
+        },
+        {
+          "id": "A3",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/a3.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:16:51.477648+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 43.71337890625,
+            "disk_used_percent": 89.33624517316706
+          },
+          "timed_out": false,
+          "log_sha256": "ea6bf929e1b261225a08594fbbd213a04cb7d60dd82fe54737def164c31b5606",
+          "counts": {
+            "collected": 6,
+            "excluded": 0,
+            "executed": 6,
+            "failed": 0,
+            "passed": 6,
+            "skipped": 0
+          },
+          "result_sha256": "a15e1a7860162454ef08d6723cbae6fc4d0c69509e2b9ce51505b891883ec5bb",
+          "finished_utc": "2026-11-02T21:17:31.430519+00:00"
+        },
+        {
+          "id": "A4",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/a4.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:17:31.768617+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 41.275390625,
+            "disk_used_percent": 89.33749386424098
+          },
+          "timed_out": false,
+          "log_sha256": "77d814a7dc46096ebe2c14e8fd984ea1b58e6954bd71de23ff8f2c0f2e3da84b",
+          "counts": {
+            "collected": 23,
+            "excluded": 0,
+            "executed": 23,
+            "failed": 0,
+            "passed": 23,
+            "skipped": 0
+          },
+          "result_sha256": "121baa9d19444fd7bc019b14a1052515e956592a42361b0bf511dde5c4f7b976",
+          "finished_utc": "2026-11-02T21:19:02.122476+00:00"
+        },
+        {
+          "id": "A5",
+          "argv": [
+            "/usr/bin/env",
+            "JOPE_REL07_A5_MANIFEST=/home/ubuntu/jope_plan/evidence/REL-07/rnk11-a5-v17-provider-ready-r1/a5-manifest.json",
+            "JOPE_REL07_A5_MANIFEST_SHA256=8227d86ffd5a5267c20cef2514ec25687ef831a10531e9443a6c05e637b190c7",
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/a5_run.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:19:02.497612+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 45.83349609375,
+            "disk_used_percent": 89.35124432521718
+          },
+          "timed_out": false,
+          "log_sha256": "c139753783d9f7db33e10d5de0e4b5de99b01593ebda021f5e765e4e5e9ea90b",
+          "counts": {
+            "collected": 3,
+            "excluded": 0,
+            "executed": 3,
+            "failed": 0,
+            "passed": 3,
+            "skipped": 0
+          },
+          "result_sha256": "fa4ea46e3ce6cbb2529ffad07a1e070b92074d5eb5a2c6f20a379a74f49c4913",
+          "finished_utc": "2026-11-02T21:19:45.982229+00:00"
+        },
+        {
+          "id": "E1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/e1.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:19:46.275565+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 44.2431640625,
+            "disk_used_percent": 89.35641562679788
+          },
+          "timed_out": false,
+          "log_sha256": "21ecbe6b98994acf1c4c490793f2b6b27e78a73eb24456019719b71ec58657a0",
+          "counts": {
+            "collected": 6,
+            "excluded": 0,
+            "executed": 6,
+            "failed": 0,
+            "passed": 6,
+            "skipped": 0
+          },
+          "result_sha256": "e227f6399ce516d933ece520f3195096e26ad22785cf1da19fe0d0223c5d36a8",
+          "finished_utc": "2026-11-02T21:20:55.232945+00:00"
+        },
+        {
+          "id": "E2",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/e2.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:20:55.569595+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 68.15673828125,
+            "disk_used_percent": 89.35907307080781
+          },
+          "timed_out": false,
+          "log_sha256": "66a01a03d97fe3e66d56a6a8467204738244a657b6dc1f5658b9fd37be4f83da",
+          "counts": {
+            "collected": 176,
+            "excluded": 0,
+            "executed": 176,
+            "failed": 0,
+            "passed": 176,
+            "skipped": 0
+          },
+          "result_sha256": "acd3c0446075c3eee6fe78de70c784e8a4f446d8b01df1f293d59d58e623d379",
+          "finished_utc": "2026-11-02T21:23:17.702199+00:00"
+        },
+        {
+          "id": "E3",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/e3.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:23:18.020911+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 44.7861328125,
+            "disk_used_percent": 89.37746344883756
+          },
+          "timed_out": false,
+          "log_sha256": "c8ff65ed6ce9a5c4ec022cd8b8d0ee2c9b3f2a28c6f2742e287b20e2ea6dcf79",
+          "counts": {
+            "collected": 7,
+            "excluded": 0,
+            "executed": 7,
+            "failed": 0,
+            "passed": 7,
+            "skipped": 0
+          },
+          "result_sha256": "9f7eefcf5fc9aff53fbef29cb4520185ff6f65d29dc0884fe37da7c715a2d2d5",
+          "finished_utc": "2026-11-02T21:24:23.623760+00:00"
+        },
+        {
+          "id": "U1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/u1.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:24:23.945879+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 39.93994140625,
+            "disk_used_percent": 89.38176040597945
+          },
+          "timed_out": false,
+          "log_sha256": "8481b3c98b28e08f582b894fcf8396474edcf6a6459aa00a3049b36f171ee639",
+          "counts": {
+            "collected": 3,
+            "excluded": 0,
+            "executed": 3,
+            "failed": 0,
+            "passed": 3,
+            "skipped": 0
+          },
+          "result_sha256": "f34db730219f26bd8e09518372bd9f7fdc65cbc2ee1bb1701ea5a88580637cb7",
+          "finished_utc": "2026-11-02T21:26:03.794000+00:00"
+        },
+        {
+          "id": "U2",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/u2.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:26:04.156866+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 51.3271484375,
+            "disk_used_percent": 89.38250190428647
+          },
+          "timed_out": false,
+          "log_sha256": "6fa66fd59710f2c0944855c33289d1352ec6ce1f1916c1187c7e095344ce666d",
+          "counts": {
+            "collected": 7,
+            "excluded": 0,
+            "executed": 7,
+            "failed": 0,
+            "passed": 7,
+            "skipped": 0
+          },
+          "result_sha256": "1d87cb1a20adc5fb8fabc33527ffe41c6c5b72c1b6cbe0c69bf8fda2f0f9d43f",
+          "finished_utc": "2026-11-02T21:27:27.333209+00:00"
+        },
+        {
+          "id": "T1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/t1.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:27:27.634983+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 33.95947265625,
+            "disk_used_percent": 89.3937515941829
+          },
+          "timed_out": false,
+          "log_sha256": "31643f629d1c375a9cd49e8fc8466e87eadd3e36ce6f6d5bb9e01dabb13308bd",
+          "counts": {
+            "collected": 3,
+            "excluded": 0,
+            "executed": 3,
+            "failed": 0,
+            "passed": 3,
+            "skipped": 0
+          },
+          "result_sha256": "7147e92b2e7d1300c88f2899835641827cbd50431ccc222036b50b91761bded5",
+          "finished_utc": "2026-11-02T21:28:43.246267+00:00"
+        },
+        {
+          "id": "T2",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/t2.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:28:43.749293+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 37.14990234375,
+            "disk_used_percent": 89.38188339813992
+          },
+          "timed_out": false,
+          "log_sha256": "c59e227125d07febdbc7351c44156ea105e3a1005a26a75e08919980c61dba37",
+          "counts": {
+            "collected": 4,
+            "excluded": 0,
+            "executed": 4,
+            "failed": 0,
+            "passed": 4,
+            "skipped": 0
+          },
+          "result_sha256": "19995b3e983a4eeb5791550a1f584e75589e50f2089d0130cac041c5ce6dbbab",
+          "finished_utc": "2026-11-02T21:30:35.421573+00:00"
+        },
+        {
+          "id": "T3",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/t3.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:30:35.903662+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 36.30322265625,
+            "disk_used_percent": 89.38780208955548
+          },
+          "timed_out": false,
+          "log_sha256": "6f1d27495bc696e13b7526b78805cf64d5e3ccdf0ba5d1d5e9ec921a5086ae50",
+          "counts": {
+            "collected": 3,
+            "excluded": 0,
+            "executed": 3,
+            "failed": 0,
+            "passed": 3,
+            "skipped": 0
+          },
+          "result_sha256": "f4c875383e7f126482fe1383b4add20825fbe90277a4b61275a552e46075682a",
+          "finished_utc": "2026-11-02T21:32:18.466811+00:00"
+        },
+        {
+          "id": "D1",
+          "argv": [
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/d1.py",
+            "--macos-receipt",
+            "/home/ubuntu/jope_plan/evidence/REL-07/hwv03-d1-rc4-t0545/D1-macos-arm64.json",
+            "--macos-receipt-sha256",
+            "ed07caad8e1a425f8085f38ecd9fcb6f03c58023490b9e3c45d2d35859c178c2",
+            "--macos-artifact-sha256",
+            "e78bef5a71952df03f705fc18f2704b668ab4bd05f7e5ebde8ef996c8c317097"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:32:18.924919+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 34.80078125,
+            "disk_used_percent": 89.38883774715431
+          },
+          "timed_out": false,
+          "log_sha256": "7c0d31f38fa33395a6cb9f21e6d7357589718bb4b0224122a2795a8edcc2de3c",
+          "counts": {
+            "collected": 2,
+            "excluded": 0,
+            "executed": 2,
+            "failed": 0,
+            "passed": 2,
+            "skipped": 0
+          },
+          "result_sha256": "a77ca214d754dc7a8c0fd80263bb0076ca45d9d6d77f9a57964627c8cdd6242c",
+          "finished_utc": "2026-11-02T21:33:16.088682+00:00"
+        },
+        {
+          "id": "D2",
+          "argv": [
+            "/usr/bin/env",
+            "JOPE_REL07_ARTIFACT=/home/ubuntu/jope_plan/evidence/REL-07/tui-t1525/build-ccaf14b210b3-20261102T000809Z/output/jopedime",
+            "JOPE_REL07_ARTIFACT_SHA256=001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+            "python3",
+            "-B",
+            "deploy/qualification/v1.0/providers/d2.py"
+          ],
+          "timeout_seconds": 3600,
+          "started_utc": "2026-11-02T21:33:16.540545+00:00",
+          "exit_code": 0,
+          "admission": {
+            "cpu_count": 128,
+            "load1": 34.8857421875,
+            "disk_used_percent": 89.39789041854704
+          },
+          "gate_artifact": {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/tui-t1525/build-ccaf14b210b3-20261102T000809Z/output/jopedime",
+            "sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+            "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+            "candidate_manifest_sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff",
+            "seal_receipt_sha256": "097cbf56819d4fa001314eaf0c97b3bb271b5c0750e486de2ea3f99d8406bc7a"
+          },
+          "timed_out": false,
+          "log_sha256": "64b5b9477e022929d77448a1cef8f751d8f2c5f55abef64a139ffb8492c44339",
+          "counts": {
+            "collected": 3,
+            "excluded": 0,
+            "executed": 3,
+            "failed": 0,
+            "passed": 3,
+            "skipped": 0
+          },
+          "result_sha256": "579d562d92a2c7b79c66e2b4289ed16613286b42649eca252b6d85e5f0ca27e7",
+          "finished_utc": "2026-11-02T21:33:25.793715+00:00"
+        }
+      ],
+      "release_qualified": false,
+      "finished_utc": "2026-11-02T21:33:26.167725+00:00",
+      "interrupted": false
+    },
+    "provider_inputs": {
+      "gates": {
+        "A5": {
+          "manifest": "/home/ubuntu/jope_plan/evidence/REL-07/rnk11-a5-v17-provider-ready-r1/a5-manifest.json",
+          "manifest_sha256": "8227d86ffd5a5267c20cef2514ec25687ef831a10531e9443a6c05e637b190c7"
+        },
+        "D1": {
+          "macos_artifact_sha256": "e78bef5a71952df03f705fc18f2704b668ab4bd05f7e5ebde8ef996c8c317097",
+          "macos_receipt": "/home/ubuntu/jope_plan/evidence/REL-07/hwv03-d1-rc4-t0545/D1-macos-arm64.json",
+          "macos_receipt_sha256": "ed07caad8e1a425f8085f38ecd9fcb6f03c58023490b9e3c45d2d35859c178c2"
+        },
+        "M2": {
+          "golden_dir": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1410/inputs/m2-golden",
+          "golden_index_sha256": "ddaa6cfc558f0a7e56fe73f657266d00d6c821739a602afc701f87fa1c4f5af1",
+          "parity_bundle_dir": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1410/inputs/m2-bundle",
+          "parity_report_dir": "/home/ubuntu/jope_plan/evidence/REL-07/dsc01-t0415-m2-20261102T113225Z/PUB-final-controller-report-v8"
+        },
+        "M3": {
+          "full_inputs": "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/m3-full-inputs-v2.json",
+          "full_inputs_sha256": "195ed8251fe6edbc1658998f9df03b9a0ccb2b4d9376baeb951cf84df6bb2c51"
+        },
+        "M5": {
+          "default_off_receipt": "/home/ubuntu/jope_plan/evidence/RNK-10/rnk11-rc4-ccaf14b/DEFAULT-OFF.json",
+          "default_off_receipt_sha256": "821357699e432ee9c4389da0bc788d61383d5badad16df6db183cc21fb7a2b6c"
+        }
+      },
+      "schema": "jope.rel07.provider-inputs/v1"
+    },
+    "gate_results": [
+      {
+        "id": "M1",
+        "status": "PASS",
+        "counts": {
+          "collected": 33,
+          "excluded": 0,
+          "executed": 33,
+          "failed": 0,
+          "passed": 33,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M1/result.json",
+          "sha256": "6b5597621a252a57054b3d21bfce5f8ea63e52f67788d44494650e847f9ae577",
+          "bytes": 319
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M1/command.log",
+          "sha256": "2d02361958b09f311474c9972a3cc6e3cf0ae3482a3777d00fa42e034ab65850",
+          "bytes": 100
+        }
       },
       {
-        "gate": "M4",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/M4/result.json",
-            "sha256": "9871145edf63ef2616cc79cca49653372703ef98cba65eda0f9b758d1ca27e27"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "M2",
+        "status": "PASS",
+        "counts": {
+          "collected": 1,
+          "excluded": 0,
+          "executed": 1,
+          "failed": 0,
+          "passed": 1,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M2/result.json",
+          "sha256": "557605e2eb1067f79192356afffdeae0ab7e0064a66da51d1ff8954927a3e66d",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M2/command.log",
+          "sha256": "7b125b5947a709ab65bea361bdb8e7a5410d7f278024a3a56dd28ab35f7eb898",
+          "bytes": 1029
+        }
       },
       {
-        "gate": "M5",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/M5/result.json",
-            "sha256": "da5720bc66dcaefdecee61ba56022b7dbd154d5a49227132be76d7e6db58750f"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "M3",
+        "status": "FAIL",
+        "counts": {
+          "collected": 4,
+          "excluded": 0,
+          "executed": 4,
+          "failed": 1,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M3/result.json",
+          "sha256": "02215ae078ef3f1510a4a49582ce43c829e4816bd25195ac60eeee7e95f2d73c",
+          "bytes": 6013
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M3/command.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
       },
       {
-        "gate": "S1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S1/result.json",
-            "sha256": "5f95769746c5ce006c86a846fc2ec4435101f61829a7ba9ea3f708653619a866"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "M4",
+        "status": "PASS",
+        "counts": {
+          "collected": 4,
+          "excluded": 0,
+          "executed": 4,
+          "failed": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M4/result.json",
+          "sha256": "9871145edf63ef2616cc79cca49653372703ef98cba65eda0f9b758d1ca27e27",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M4/command.log",
+          "sha256": "803a4618c05f7dc977c2d5507ca8cf43e21d32123876d06cd5ca8561687b9a38",
+          "bytes": 1382
+        }
       },
       {
-        "gate": "S2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S2/result.json",
-            "sha256": "8de737436e9a4cc46ec82dfb883a2a402230cfd6035881cddb276937412cf374"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "M5",
+        "status": "PASS",
+        "counts": {
+          "collected": 3,
+          "excluded": 0,
+          "executed": 3,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M5/result.json",
+          "sha256": "da5720bc66dcaefdecee61ba56022b7dbd154d5a49227132be76d7e6db58750f",
+          "bytes": 538
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M5/command.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
       },
       {
-        "gate": "S3",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S3/result.json",
-            "sha256": "59f63a4adf1a245b55b788c7fbc808d2c814e7526da396426264d992bf58436b"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "S1",
+        "status": "PASS",
+        "counts": {
+          "collected": 1,
+          "excluded": 0,
+          "executed": 1,
+          "failed": 0,
+          "passed": 1,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S1/result.json",
+          "sha256": "5f95769746c5ce006c86a846fc2ec4435101f61829a7ba9ea3f708653619a866",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S1/command.log",
+          "sha256": "398116076bce8da9a598af1cdca04bddb0d7ce54312074f25e8c8cf8289f4c34",
+          "bytes": 11096
+        }
       },
       {
-        "gate": "S4",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S4/result.json",
-            "sha256": "bb037e800ecefa2b1ee6a313bdc87d5863a9f869d6ac68e577401f4b6ba92e6b"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "S2",
+        "status": "PASS",
+        "counts": {
+          "collected": 1,
+          "excluded": 0,
+          "executed": 1,
+          "failed": 0,
+          "passed": 1,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S2/result.json",
+          "sha256": "8de737436e9a4cc46ec82dfb883a2a402230cfd6035881cddb276937412cf374",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S2/command.log",
+          "sha256": "956d46f9b42030517daca2bfe70b4b4155b17f8f6ef66f7e34de0f282e42996a",
+          "bytes": 2393
+        }
       },
       {
-        "gate": "R1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R1/result.json",
-            "sha256": "a5186ea95249c2f041a5f5dacda3b5a556e7e06081a0f4352f325cf6408a3d3a"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "S3",
+        "status": "PASS",
+        "counts": {
+          "collected": 12,
+          "excluded": 0,
+          "executed": 12,
+          "failed": 0,
+          "passed": 12,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S3/result.json",
+          "sha256": "59f63a4adf1a245b55b788c7fbc808d2c814e7526da396426264d992bf58436b",
+          "bytes": 319
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S3/command.log",
+          "sha256": "ab80c52be6284e143853eb20c906a3684d13bdd85e3a1fd8ae17c979c7dd2285",
+          "bytes": 14097
+        }
       },
       {
-        "gate": "R2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R2/result.json",
-            "sha256": "3e315678c968325d4510509e2accee2b155065e287b19e1655ffb6267746dccb"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "S4",
+        "status": "PASS",
+        "counts": {
+          "collected": 4,
+          "excluded": 0,
+          "executed": 4,
+          "failed": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S4/result.json",
+          "sha256": "bb037e800ecefa2b1ee6a313bdc87d5863a9f869d6ac68e577401f4b6ba92e6b",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S4/command.log",
+          "sha256": "1d5fb09bc851308ddba1809f233eecdf008abae91dbdc8e7857ed681adcb5b65",
+          "bytes": 4890
+        }
       },
       {
-        "gate": "R3",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R3/result.json",
-            "sha256": "b7ec87ea23425ebccb90c830571c3b0ed61e57b82828d7c525b51f79dfdc1fa5"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "R1",
+        "status": "PASS",
+        "counts": {
+          "collected": 1,
+          "excluded": 0,
+          "executed": 1,
+          "failed": 0,
+          "passed": 1,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R1/result.json",
+          "sha256": "a5186ea95249c2f041a5f5dacda3b5a556e7e06081a0f4352f325cf6408a3d3a",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R1/command.log",
+          "sha256": "e1d3f7bc14efcb519b7854eb8e8a96c5e39cb7be1a04cab9133830d34ebf1b1c",
+          "bytes": 14656
+        }
       },
       {
-        "gate": "R4",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R4/result.json",
-            "sha256": "ecdfc4c6697ea4a114fad8664b2f4e7b0b7013a791bd121444bdc9ffd7b1ba86"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "R2",
+        "status": "PASS",
+        "counts": {
+          "collected": 1,
+          "excluded": 0,
+          "executed": 1,
+          "failed": 0,
+          "passed": 1,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R2/result.json",
+          "sha256": "d044f0085db6c468c5b0258445dec98b3ab50baf3d149f406c3d51b8945ef3ed",
+          "bytes": 1416
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R2/command.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
       },
       {
-        "gate": "A1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A1/result.json",
-            "sha256": "db850fae911062d414356b8180fc5b1618fbb51fb71b5895b86b11b988698114"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "R3",
+        "status": "PASS",
+        "counts": {
+          "collected": 7,
+          "excluded": 0,
+          "executed": 7,
+          "failed": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R3/result.json",
+          "sha256": "b7ec87ea23425ebccb90c830571c3b0ed61e57b82828d7c525b51f79dfdc1fa5",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R3/command.log",
+          "sha256": "5d243c806df0c28e42912189fdffe2772056f4efbadb1b72aae72fcd90a6416a",
+          "bytes": 8303
+        }
       },
       {
-        "gate": "A2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A2/result.json",
-            "sha256": "fdec2249680db971a9539154c5a6fa7296ff0b0ff01907ef32562ecd7a7d460b"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "R4",
+        "status": "PASS",
+        "counts": {
+          "collected": 3,
+          "excluded": 0,
+          "executed": 3,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R4/result.json",
+          "sha256": "ecdfc4c6697ea4a114fad8664b2f4e7b0b7013a791bd121444bdc9ffd7b1ba86",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R4/command.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
       },
       {
-        "gate": "A3",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A3/result.json",
-            "sha256": "a15e1a7860162454ef08d6723cbae6fc4d0c69509e2b9ce51505b891883ec5bb"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "A1",
+        "status": "PASS",
+        "counts": {
+          "collected": 4,
+          "excluded": 0,
+          "executed": 4,
+          "failed": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A1/result.json",
+          "sha256": "db850fae911062d414356b8180fc5b1618fbb51fb71b5895b86b11b988698114",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A1/command.log",
+          "sha256": "4a3fc56446e4351e5a59b1f71611ee41808835cc8439ea43e3f92badecc58efb",
+          "bytes": 4575
+        }
       },
       {
-        "gate": "A4",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A4/result.json",
-            "sha256": "121baa9d19444fd7bc019b14a1052515e956592a42361b0bf511dde5c4f7b976"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "A2",
+        "status": "PASS",
+        "counts": {
+          "collected": 14,
+          "excluded": 0,
+          "executed": 14,
+          "failed": 0,
+          "passed": 14,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A2/result.json",
+          "sha256": "fdec2249680db971a9539154c5a6fa7296ff0b0ff01907ef32562ecd7a7d460b",
+          "bytes": 319
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A2/command.log",
+          "sha256": "45e6a0c07389f1039e5be0b18eec0828479d384a49dde0ea994508804cd94d99",
+          "bytes": 15582
+        }
       },
       {
-        "gate": "E1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/E1/result.json",
-            "sha256": "e227f6399ce516d933ece520f3195096e26ad22785cf1da19fe0d0223c5d36a8"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "A3",
+        "status": "PASS",
+        "counts": {
+          "collected": 6,
+          "excluded": 0,
+          "executed": 6,
+          "failed": 0,
+          "passed": 6,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A3/result.json",
+          "sha256": "a15e1a7860162454ef08d6723cbae6fc4d0c69509e2b9ce51505b891883ec5bb",
+          "bytes": 699
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A3/command.log",
+          "sha256": "ea6bf929e1b261225a08594fbbd213a04cb7d60dd82fe54737def164c31b5606",
+          "bytes": 699
+        }
       },
       {
-        "gate": "E2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/E2/result.json",
-            "sha256": "8fe4a63f989340d18bf66c25f75f273d6f0715cff9071c175ee886b517bcb6f5"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "A4",
+        "status": "PASS",
+        "counts": {
+          "collected": 23,
+          "excluded": 0,
+          "executed": 23,
+          "failed": 0,
+          "passed": 23,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A4/result.json",
+          "sha256": "121baa9d19444fd7bc019b14a1052515e956592a42361b0bf511dde5c4f7b976",
+          "bytes": 445
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A4/command.log",
+          "sha256": "77d814a7dc46096ebe2c14e8fd984ea1b58e6954bd71de23ff8f2c0f2e3da84b",
+          "bytes": 253915
+        }
       },
       {
-        "gate": "E3",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/E3/result.json",
-            "sha256": "9f7eefcf5fc9aff53fbef29cb4520185ff6f65d29dc0884fe37da7c715a2d2d5"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "A5",
+        "status": "PASS",
+        "counts": {
+          "collected": 3,
+          "excluded": 0,
+          "executed": 3,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A5/result.json",
+          "sha256": "fa4ea46e3ce6cbb2529ffad07a1e070b92074d5eb5a2c6f20a379a74f49c4913",
+          "bytes": 846
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A5/command.log",
+          "sha256": "c139753783d9f7db33e10d5de0e4b5de99b01593ebda021f5e765e4e5e9ea90b",
+          "bytes": 593
+        }
       },
       {
-        "gate": "U1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/U1/result.json",
-            "sha256": "f34db730219f26bd8e09518372bd9f7fdc65cbc2ee1bb1701ea5a88580637cb7"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "E1",
+        "status": "PASS",
+        "counts": {
+          "collected": 6,
+          "excluded": 0,
+          "executed": 6,
+          "failed": 0,
+          "passed": 6,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E1/result.json",
+          "sha256": "e227f6399ce516d933ece520f3195096e26ad22785cf1da19fe0d0223c5d36a8",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E1/command.log",
+          "sha256": "21ecbe6b98994acf1c4c490793f2b6b27e78a73eb24456019719b71ec58657a0",
+          "bytes": 7023
+        }
       },
       {
-        "gate": "U2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/U2/result.json",
-            "sha256": "1d87cb1a20adc5fb8fabc33527ffe41c6c5b72c1b6cbe0c69bf8fda2f0f9d43f"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "E2",
+        "status": "PASS",
+        "counts": {
+          "collected": 176,
+          "excluded": 0,
+          "executed": 176,
+          "failed": 0,
+          "passed": 176,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E2/result.json",
+          "sha256": "acd3c0446075c3eee6fe78de70c784e8a4f446d8b01df1f293d59d58e623d379",
+          "bytes": 713
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E2/command.log",
+          "sha256": "66a01a03d97fe3e66d56a6a8467204738244a657b6dc1f5658b9fd37be4f83da",
+          "bytes": 515
+        }
       },
       {
-        "gate": "T1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/T1/result.json",
-            "sha256": "7147e92b2e7d1300c88f2899835641827cbd50431ccc222036b50b91761bded5"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "E3",
+        "status": "PASS",
+        "counts": {
+          "collected": 7,
+          "excluded": 0,
+          "executed": 7,
+          "failed": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E3/result.json",
+          "sha256": "9f7eefcf5fc9aff53fbef29cb4520185ff6f65d29dc0884fe37da7c715a2d2d5",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E3/command.log",
+          "sha256": "c8ff65ed6ce9a5c4ec022cd8b8d0ee2c9b3f2a28c6f2742e287b20e2ea6dcf79",
+          "bytes": 8077
+        }
       },
       {
-        "gate": "T2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/T2/result.json",
-            "sha256": "19995b3e983a4eeb5791550a1f584e75589e50f2089d0130cac041c5ce6dbbab"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "U1",
+        "status": "PASS",
+        "counts": {
+          "collected": 3,
+          "excluded": 0,
+          "executed": 3,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U1/result.json",
+          "sha256": "f34db730219f26bd8e09518372bd9f7fdc65cbc2ee1bb1701ea5a88580637cb7",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U1/command.log",
+          "sha256": "8481b3c98b28e08f582b894fcf8396474edcf6a6459aa00a3049b36f171ee639",
+          "bytes": 32605
+        }
       },
       {
-        "gate": "T3",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/T3/result.json",
-            "sha256": "f4c875383e7f126482fe1383b4add20825fbe90277a4b61275a552e46075682a"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "U2",
+        "status": "PASS",
+        "counts": {
+          "collected": 7,
+          "excluded": 0,
+          "executed": 7,
+          "failed": 0,
+          "passed": 7,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U2/result.json",
+          "sha256": "1d87cb1a20adc5fb8fabc33527ffe41c6c5b72c1b6cbe0c69bf8fda2f0f9d43f",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U2/command.log",
+          "sha256": "6fa66fd59710f2c0944855c33289d1352ec6ce1f1916c1187c7e095344ce666d",
+          "bytes": 75621
+        }
       },
       {
-        "gate": "D1",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/D1/result.json",
-            "sha256": "030857627345f0ea00bfb971a445c693b36799204220c11d567b496985b35e9c"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "T1",
+        "status": "PASS",
+        "counts": {
+          "collected": 3,
+          "excluded": 0,
+          "executed": 3,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T1/result.json",
+          "sha256": "7147e92b2e7d1300c88f2899835641827cbd50431ccc222036b50b91761bded5",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T1/command.log",
+          "sha256": "31643f629d1c375a9cd49e8fc8466e87eadd3e36ce6f6d5bb9e01dabb13308bd",
+          "bytes": 3468
+        }
       },
       {
-        "gate": "D2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/D2/result.json",
-            "sha256": "579d562d92a2c7b79c66e2b4289ed16613286b42649eca252b6d85e5f0ca27e7"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
-            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "T2",
+        "status": "PASS",
+        "counts": {
+          "collected": 4,
+          "excluded": 0,
+          "executed": 4,
+          "failed": 0,
+          "passed": 4,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T2/result.json",
+          "sha256": "19995b3e983a4eeb5791550a1f584e75589e50f2089d0130cac041c5ce6dbbab",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T2/command.log",
+          "sha256": "c59e227125d07febdbc7351c44156ea105e3a1005a26a75e08919980c61dba37",
+          "bytes": 17193
+        }
       },
       {
-        "gate": "M2",
-        "observed_status": "PASS",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "Fresh standalone exact-RC4 M2 provider PASS; the final controller must execute M2 again on its own fresh report path. Do not promote or reuse this standalone report.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/dsc01-t0415-m2-20261102T113225Z/M2/result.json",
-            "sha256": "557605e2eb1067f79192356afffdeae0ab7e0064a66da51d1ff8954927a3e66d"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/dsc01-t0415-m2-20261102T113225Z/M2-HANDOFF.json",
-            "sha256": "8093acdc6bb3ef7e886e34a3c14e4c8fbc8d6b479d36d4ac8d84a71526113cb6"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "T3",
+        "status": "PASS",
+        "counts": {
+          "collected": 3,
+          "excluded": 0,
+          "executed": 3,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T3/result.json",
+          "sha256": "f4c875383e7f126482fe1383b4add20825fbe90277a4b61275a552e46075682a",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T3/command.log",
+          "sha256": "6f1d27495bc696e13b7526b78805cf64d5e3ccdf0ba5d1d5e9ec921a5086ae50",
+          "bytes": 3522
+        }
       },
       {
-        "gate": "M3",
-        "observed_status": "FAIL",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "Raw FAIL retained. Separate v1.0.0-only disposition WAIVED_V1_0_0 under M3-WAIVER-V1.0.0-T1955; final same-controller run must retain its own raw result and validate the ruling guard.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/RAW-CANDIDATE-M3.json",
-            "sha256": "99ee6a670f97d49992a7e5325931657c1eee27fb88d310bb8153d2e08e9606e6"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/WAIVER-GUARD-SUMMARY.json",
-            "sha256": "63107cb1d641b78931543750941f641c567b4ced4f6baf5a8c16bc0310956b57"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t1955-a5-rc4/M3-DISPOSITION.json",
-            "sha256": "986a0ca71c6d687398b013d9a0c16543a081b4990e261da08ab2e039eb57d780"
-          },
-          {
-            "path": "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
-            "sha256": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "D1",
+        "status": "PASS",
+        "counts": {
+          "collected": 2,
+          "excluded": 0,
+          "executed": 2,
+          "failed": 0,
+          "passed": 2,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D1/result.json",
+          "sha256": "a77ca214d754dc7a8c0fd80263bb0076ca45d9d6d77f9a57964627c8cdd6242c",
+          "bytes": 1126
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D1/command.log",
+          "sha256": "7c0d31f38fa33395a6cb9f21e6d7357589718bb4b0224122a2795a8edcc2de3c",
+          "bytes": 2495
+        }
       },
       {
-        "gate": "A5",
-        "observed_status": "PENDING",
-        "final_controller_status": "NOT_RUN",
-        "disposition": "PENDING: latest v9 capture was incomplete and excluded; no accepted provider manifest or candidate-inputs-v5 binding exists.",
-        "evidence": [
-          {
-            "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t0445c/CLIENT-RESULTS.json",
-            "sha256": "00787ec03288d8a252d50504006d50c46b859021b361c3c8772c0f2742ea3ffd"
-          }
-        ],
-        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+        "id": "D2",
+        "status": "PASS",
+        "counts": {
+          "collected": 3,
+          "excluded": 0,
+          "executed": 3,
+          "failed": 0,
+          "passed": 3,
+          "skipped": 0
+        },
+        "result": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D2/result.json",
+          "sha256": "579d562d92a2c7b79c66e2b4289ed16613286b42649eca252b6d85e5f0ca27e7",
+          "bytes": 316
+        },
+        "command_log": {
+          "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D2/command.log",
+          "sha256": "64b5b9477e022929d77448a1cef8f751d8f2c5f55abef64a139ffb8492c44339",
+          "bytes": 16605
+        }
       }
     ],
-    "final_controller_rows_promoted": 0
-  },
-  "blockers": {
-    "A5": {
-      "status": "PENDING",
-      "manifest": null,
-      "manifest_sha256": null,
-      "reason": "No accepted complete three-client provider manifest or immutable candidate-inputs-v5 binding; final aggregate cannot start.",
-      "latest_attempt": {
-        "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t0445c/CLIENT-RESULTS.json",
-        "sha256": "00787ec03288d8a252d50504006d50c46b859021b361c3c8772c0f2742ea3ffd"
+    "assembly": {
+      "tooling_commit": "cf1e5788c31b835c9f8a496b7ff37097c4e36671",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/gates_receipt.py",
+        "--scaffold",
+        "/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json",
+        "--artifact",
+        "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/full-linux-x86_64/jopedime",
+        "--candidate-manifest",
+        "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/rc4-manifest.json",
+        "--source-sha",
+        "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+        "--m3-waiver-ruling",
+        "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
+        "--release-version",
+        "v1.0.0",
+        "--output",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/delivery-v3/release-gates-receipt.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M2/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M3/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M4/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M5/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S2/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S3/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S4/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R2/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R3/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R4/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A2/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A3/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A4/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A5/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E2/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E3/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U2/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T2/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T3/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D1/result.json",
+        "--gate-receipt",
+        "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D2/result.json"
+      ],
+      "started_utc": "2026-11-02T21:35:52.766408+00:00",
+      "finished_utc": "2026-11-02T21:35:54.704899+00:00",
+      "exit_code": 0,
+      "stdout": "{\"gates\": 28, \"all_pass\": false}\n",
+      "output": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/delivery-v3/release-gates-receipt.json",
+        "sha256": "4a3abd9aa6fdef5732c871cdba03cc8c35196a5175fba03168914bcbc1225fa3",
+        "bytes": 19118
+      },
+      "log": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/delivery-v3/assembly.log",
+        "sha256": "759e5b65244b53d37c68c9c7020638b97e208096da0f88e4e4559da3b41adecd",
+        "bytes": 33
       }
     },
-    "final_controller": "Run one completed versioned provider-input controller execution with all 28 rows bound to the same RC4 signed candidate bytes and fused-cpu D2 artifact; do not combine evidence from separate runs.",
-    "Q1": "Separate QLT-04 Q1 result and owner-recorded guidance default decision are not present in this evidence packet."
-  },
-  "owner_decisions": {
-    "M3": {
-      "raw_status": "FAIL",
-      "disposition": "WAIVED_V1_0_0",
-      "ruling_id": "M3-WAIVER-V1.0.0-T1955",
-      "expires_at": "v1.0.1",
-      "raw_result": {
-        "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/RAW-CANDIDATE-M3.json",
-        "sha256": "99ee6a670f97d49992a7e5325931657c1eee27fb88d310bb8153d2e08e9606e6"
-      },
-      "waiver_guard": {
-        "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/WAIVER-GUARD-SUMMARY.json",
-        "sha256": "63107cb1d641b78931543750941f641c567b4ced4f6baf5a8c16bc0310956b57"
-      },
-      "disposition_record": {
-        "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t1955-a5-rc4/M3-DISPOSITION.json",
-        "sha256": "986a0ca71c6d687398b013d9a0c16543a081b4990e261da08ab2e039eb57d780"
-      },
-      "ruling": {
-        "path": "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
-        "sha256": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf"
-      },
-      "measured_delta_pp": {
-        "overall": 2.30015625,
-        "non_exploring": 0.052083333333333336,
-        "exploring": 2.7908415841584153
-      },
-      "future_tolerance_pp": 2.0,
-      "future_tolerance_changed": false
+    "environment": {
+      "nice": 19,
+      "cargo_build_jobs": 4,
+      "cargo_incremental": "0",
+      "cargo_profile_dev_debug": "line-tables-only",
+      "cuda_visible_devices": "",
+      "math_threads": 1,
+      "uid": 1000,
+      "apparmor_profile": "lxc-unshare (unconfined)",
+      "host_policy_mutated_by_this_lane": false,
+      "userns_restriction_at_start": "1",
+      "userns_restriction_at_assembly": "0"
     },
-    "Q1": "PENDING_OWNER_RECORD"
-  },
-  "replacement_condition": "Replace this draft only with the maintained provenance-bearing assembler output after a single completed candidate-bound final controller run. Bind all 28 gate results to the same signed RC4 candidate and fused-cpu D2 bytes, record raw M3 FAIL plus WAIVED_V1_0_0 only under the ruling guard, bind a valid A5 provider manifest, and attach the separate Q1/default owner decision."
+    "input_hashes_rechecked": true,
+    "previous_attempts_promoted": 0,
+    "controller_launch": [
+      "nice",
+      "-n",
+      "19",
+      "aa-exec",
+      "-p",
+      "lxc-unshare",
+      "--",
+      "env",
+      "CUDA_VISIBLE_DEVICES=",
+      "OMP_NUM_THREADS=1",
+      "OPENBLAS_NUM_THREADS=1",
+      "MKL_NUM_THREADS=1",
+      "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/run_final_28_v8.sh",
+      "/home/ubuntu/jope_plan/evidence/REL-07/pub-t1945-recovery/candidate-inputs-v8.json"
+    ]
+  }
 }
