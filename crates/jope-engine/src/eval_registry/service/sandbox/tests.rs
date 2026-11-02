@@ -77,12 +77,32 @@ fn spawn_violations() -> Vec<String> {
         refused(what, socket(family, kind), libc::EPERM, &mut found);
     }
     // SAFETY: an unexpectedly created process exits at once without unwinding.
+    let child_program = c"/bin/false";
+    let child_argv = [child_program.as_ptr(), std::ptr::null()];
+    let child_env = [std::ptr::null()];
     let pid = unsafe { libc::fork() };
     if pid == 0 {
-        unsafe { libc::_exit(0) };
+        // A child here proves the sandbox failed to refuse fork. Replace it
+        // with a program whose process status is explicitly unsuccessful.
+        // SAFETY: all pointers refer to NUL-terminated static strings and
+        // `child_argv`/`child_env` remain valid across this async-safe call.
+        unsafe {
+            libc::execve(
+                child_program.as_ptr(),
+                child_argv.as_ptr(),
+                child_env.as_ptr(),
+            );
+            libc::abort();
+        }
     }
     if pid > 0 {
-        unsafe { libc::waitpid(pid, std::ptr::null_mut(), 0) };
+        let mut status = 0;
+        let waited = unsafe { libc::waitpid(pid, &mut status, 0) };
+        if waited != pid {
+            found.push(format!("fork child {pid} could not be reaped: {waited}"));
+        } else if !libc::WIFEXITED(status) || libc::WEXITSTATUS(status) == 0 {
+            found.push(format!("unexpected fork child status {status:#x}"));
+        }
     }
     refused("fork", i64::from(pid), libc::EPERM, &mut found);
     let mut params = [0u64; 16];
