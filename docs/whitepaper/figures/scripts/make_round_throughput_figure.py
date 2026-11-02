@@ -12,6 +12,8 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
+from matplotlib.ticker import MaxNLocator
 
 FIGURES = Path(__file__).resolve().parent.parent
 DATA = FIGURES / "data/round_throughput.csv"
@@ -185,7 +187,12 @@ if args.live_window:
     ax.legend(loc="lower left", fontsize=6.7, frameon=False)
     fig.tight_layout(pad=0.45)
 else:
-    fig, axes = plt.subplots(1, 2, figsize=(6.8, 2.25))
+    font_path = font_manager.findfont("Liberation Serif", fallback_to_default=False)
+    plt.rcParams.update({
+        "font.family": "Liberation Serif", "font.size": 9,
+        "axes.labelsize": 9, "xtick.labelsize": 8.5, "ytick.labelsize": 8.5,
+    })
+    fig, axes = plt.subplots(1, 2, figsize=(7.0, 1.50))
     axes[0].plot(
         rounds,
         [float(r["candidate_validation_utility"]) for r in rows],
@@ -203,7 +210,7 @@ else:
         lw=1.1,
         label="recorded best",
     )
-    axes[0].set_title("Adapter validation", loc="left", fontsize=8)
+    axes[0].set_title("Adapter validation", loc="left", fontsize=9)
     axes[0].set_ylabel("validation pool utility")
     axes[0].ticklabel_format(axis="y", style="plain", useOffset=False)
     utilities = [
@@ -212,10 +219,9 @@ else:
         for k in ["candidate_validation_utility", "recorded_best_validation_utility"]
     ]
     axes[0].set_ylim(min(utilities) - 0.004, max(utilities) + 0.0013)
-    axes[0].legend(frameon=False, loc="lower left", fontsize=7.2)
     axes[1].plot(rounds, rates, "o-", color="#2b8a3e", ms=2.7, lw=0.8)
-    axes[1].set_title("Completed-round throughput", loc="left", fontsize=8)
-    axes[1].set_ylabel("distinct training contexts /\nfull-round s")
+    axes[1].set_title("Completed-round throughput", loc="left", fontsize=9)
+    axes[1].set_ylabel("distinct training\ncontexts / full-round s")
     axes[1].set_ylim(bottom=0)
     for ax in axes:
         ax.set_xlabel("round (later retained window)")
@@ -223,7 +229,13 @@ else:
         ax.set_xlim(rounds[0] - 0.4, rounds[-1] + 0.4)
         ax.grid(axis="y", alpha=0.22, linewidth=0.4)
         ax.set_axisbelow(True)
-    fig.tight_layout(pad=0.5, w_pad=1.1)
+    for ax in axes:
+        ax.yaxis.set_major_locator(MaxNLocator(nbins=4, steps=[1, 2, 4, 5, 10]))
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 1.0),
+               ncol=2, frameon=False, fontsize=8.5, handlelength=1.4,
+               borderaxespad=0.25)
+    fig.tight_layout(pad=0.5, w_pad=1.1, rect=(0, 0, 1, 0.83))
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 provenance.update(
@@ -231,6 +243,12 @@ provenance.update(
     figure_sha256=sha(OUTPUT),
     matplotlib_version=matplotlib.__version__,
 )
+if not args.live_window:
+    provenance["rendering"] = {
+        "canvas_inches": [7.0, 1.50], "font_family": "Liberation Serif",
+        "font_file_sha256": sha(Path(font_path)), "minimum_text_size_pt": 8.5,
+        "axis_label_size_pt": 9, "fixed_canvas_no_tight_crop": True,
+    }
 if args.live_window:
     provenance["figure_definition"] = {
         "points": "Distinct training contexts / full-round wall_seconds, contexts per second",

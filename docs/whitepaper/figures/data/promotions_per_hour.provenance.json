@@ -1,5 +1,16 @@
 {
   "schema": "whitepaper.promotions-per-hour/v1",
+  "rendering": {
+    "canvas_inches": [
+      7.0,
+      1.5
+    ],
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "minimum_text_size_pt": 8.5,
+    "axis_label_size_pt": 9,
+    "fixed_canvas_no_tight_crop": true
+  },
   "source_csv": "figures/data/live_development.csv",
   "source_csv_sha256": "a913ea6de13ed5c48b36c5499ecc5a2c72a38652bf4472835ace69ba95f56dfc",
   "parent_provenance": "figures/data/live_development.provenance.json",
@@ -7,9 +18,9 @@
   "csv": "figures/data/promotions_per_hour.csv",
   "csv_sha256": "c45b14fe81fba0f3c225bf29abb05d3d67fcfce663121cc16f85ccd9ee05b508",
   "figure": "figures/fig_fw_promotions_per_hour.pdf",
-  "figure_sha256": "1ba019f43c98068819769fc4c64495aea6e133e6a20aa86e10d1b087b36c4798",
+  "figure_sha256": "4768bfbeec05141c3e22bef4f319ceb54ae0552700c81ce5c503e7a821c4a403",
   "generator": "figures/scripts/make_promotions_per_hour_figure.py",
-  "generator_sha256": "31c162fbd8e7841ddf3e61178e62e02822d7e1e439724dac36ae376d8abc11b6",
+  "generator_sha256": "5fb65b01a05df77656f75cf05cd219a6350cc07e2c08e1503eb1beddfa00d324",
   "round_window": [
     2644,
     2663
