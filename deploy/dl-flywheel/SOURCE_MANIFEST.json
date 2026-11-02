@@ -372,10 +372,16 @@
       "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
     },
     {
-      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/target_noise.py",
-      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "origin": "Compatibility facade for the canonical target-noise implementation",
+      "origin_sha256": "679109bd91a422cd552efdeec84adbfebb5784c0260ed681866d6c2b57a262aa",
       "path": "deploy/dl-flywheel/jope_flywheel/target_noise.py",
-      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
+      "sha256": "c13d2c4d3ef866297b683f6d2542e1b4a3c8a02df8835642345eea3656b8e8eb"
+    },
+    {
+      "origin": "Refactored from deploy/dl-flywheel/jope_flywheel/target_noise.py; internal API names separated from frozen copies",
+      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
+      "path": "deploy/dl-flywheel/jope_flywheel/target_noise_core.py",
+      "sha256": "679109bd91a422cd552efdeec84adbfebb5784c0260ed681866d6c2b57a262aa"
     },
     {
       "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/timing.py",
