@@ -18,6 +18,9 @@ allowed_non_product_paths = [
   "crates/jope-bench/adapters/xgboost_adapter.py",
   "crates/jope-bench/src/panel/inference_boundary.py",
   "crates/jope-bench/src/panel/inference_cpp_boundary.py",
+  "deploy",
+  "python",
+  "test-support",
 ]
 
 [queues]
