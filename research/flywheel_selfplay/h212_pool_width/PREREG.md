@@ -100,6 +100,16 @@ secondary and cannot rescue a failed N64 primary. Any failed gate yields
 `NO_ADVANCE`; no serving action is authorized. Missing a registered seed or
 family yields `INCOMPLETE`.
 
+**Supplemental pooled report (owner reporting addendum, 2026-11-02):** for each
+seed, average context gains within each family, then average those family means
+equally. Report the median of these three seed-level means for N32 and N64 versus
+N16, with a shared 10,000-draw family bootstrap 95% interval (resample the same
+family indices across seeds and take the median of the three resampled seed
+means). For each width, the one-sided descriptive bootstrap p is
+`(1 + count(bootstrap median <= 0)) / 10001`; Holm m=2 adjusts the N32 and N64
+p-values. This pooled report is descriptive and does not alter the registered
+per-seed N64 decision gates above.
+
 ## Frozen state, execution, and artifacts
 
 Use an owned copy of the exact r882 checkpoint; never read or write the live
