@@ -3,7 +3,7 @@
 use crate::cache::ModelsCache;
 use crate::fetch::{FetchOptions, Fetcher};
 use crate::index::Repo;
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
 use jope_datasets::paths::offline_env;
 use std::path::PathBuf;

@@ -1,7 +1,7 @@
 //! Durable exactly-once pair and attempt registry for self-play.
 
-use anyhow::{Context, Result, bail};
-use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
+use anyhow::{bail, Context, Result};
+use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};

@@ -2,12 +2,12 @@
 //! crate; `jope models …`, `jope datasets …`, `jope pipeline …` and `jope motifs …` delegate
 //! to the library crates' own clap commands (no process is spawned).
 
-use anyhow::{Result, ensure};
+use anyhow::{ensure, Result};
 use clap::{Parser, Subcommand};
 use jope_cli::{
-    DEFAULT_GENOME, Verification, emit_genome_with_train, fit_dataset, generate_fixtures,
-    load_router, local_champions, local_train_step, refuse_s3, resolve_root, route_dataset,
-    search_dataset, verify_inputs, write_json,
+    emit_genome_with_train, fit_dataset, generate_fixtures, load_router, local_champions,
+    local_train_step, refuse_s3, resolve_root, route_dataset, search_dataset, verify_inputs,
+    write_json, Verification, DEFAULT_GENOME,
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -438,11 +438,9 @@ mod tests {
     fn version_is_semver() {
         let parts: Vec<_> = env!("CARGO_PKG_VERSION").split('.').collect();
         assert_eq!(parts.len(), 3, "expected major.minor.patch");
-        assert!(
-            parts
-                .iter()
-                .all(|part| part.chars().all(|character| character.is_ascii_digit()))
-        );
+        assert!(parts
+            .iter()
+            .all(|part| part.chars().all(|character| character.is_ascii_digit())));
     }
 
     #[test]
