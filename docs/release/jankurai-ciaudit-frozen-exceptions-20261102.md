@@ -37,6 +37,54 @@ Only the exact finding source path is excluded from Jankurai scoring. Tests and
 other security scans remain in place. Revisit if the pinned provenance is retired
 or either recorded hash changes; this does not cover other findings in the file.
 
+## Frozen `training_snapshot_kumos.py` instance
+
+HLT-043 fingerprint
+`sha256:562310a12c8e7b55e54dfe517f1424eb619c50231c32211bdc5df2d84ca0da53`
+in `rerun/j_ffba82986.json` covers the copy class containing
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py`.
+That exact historical file has SHA-256
+`c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2`, pinned by
+the package's `provenance/FINAL_VALIDATION.json` and `provenance/ORIGIN.json`.
+The pinned instance is excluded by its exact path in `agent/audit-policy.toml`;
+mutable copies remain eligible for behavior-preserving deduplication. No source
+bytes, package provenance, tests, or other security scans are changed.
+
+## Frozen `neural_outbox.py` copies
+
+HLT-043 fingerprint
+`sha256:99bfa2e00ed990007f3fbfbbc7eeb12d7f096ccb6d2e7dffdfda7420d4b375de`
+in `rerun/j_ffba82986.json` includes five hash-pinned copies with SHA-256
+`d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11`:
+
+- `deploy/dl-flywheel/pipelines/continuous/neural_outbox.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/neural_outbox.py`
+- `deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py`
+- `deploy/dl-flywheel/pipelines/native/neural_outbox.py`
+
+Their identities are bound by the continuous source pin register, revision
+source packets and packaged receipts, hpc-v5 `FINAL_VALIDATION.json`, and the
+native runtime pin register. Only these five exact paths are excluded from
+Jankurai scoring. The mutable `hpc_verified_v4/neural_outbox.py` stays in scope
+for its owner’s deduplication. No pinned bytes or other security scans change.
+
+## Frozen `native_global_guard.py` copies
+
+HLT-043 fingerprint
+`sha256:6c5aeec682e4127ffa1c9d63a7de8f4b5669044c3750a149e6519400c0b7945c`
+in `rerun/j_ffba82986.json` identifies an exact-copy class of three frozen
+files, each SHA-256
+`22eee81339a46938c228bb6c17dc79147369a55ea684427819c92ee31294c63b`:
+
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py`
+- `deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py`
+
+The revision 2 and revision 3 source packets pin these hashes, and hpc-v5
+`provenance/FINAL_VALIDATION.json` pins its copy. These exact paths alone are
+excluded from Jankurai scoring. No source bytes or other security scans change.
+
 ## `s3_library.py`
 
 The full audit `rerun/j_ffba82986.json` reports HLT-043 fingerprint

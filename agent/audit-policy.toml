@@ -58,20 +58,32 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
   # Ciaudit HLT-043 sha256:fac8174f...: exact hash-pinned package copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/evidence.py",
-  # Variety-b HLT-001 sha256:f73fa835...: `old` identifies the prior archiver
-  # service whose retirement is checked; exact-path disposition is documented.
-  "deploy/dl-flywheel/pipelines/telemetry/trace_archive.py",
   # Prodlang HLT-046 sha256:c8f09a3c...: this lifecycle Stage is a distinct domain
   # from research evidence phases and CUDA tensor projection checkpoints; see disposition.
   "crates/jope-pipeline/src/resource_ledger.rs",
   # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
+  # Variety B HLT-001/HLT-043: versioned trace-archive copies are hash-pinned; see disposition.
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
   # Ciaudit HLT-043 sha256:804e402d...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/augmentation.py",
   # Ciaudit HLT-043 sha256:095ee8f1...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/target_noise.py",
   # Ciaudit HLT-043 sha256:7ec8a15a...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/s3_library.py",
+  # Frozen HLT-043 instance; immutable hpc-v5 provenance and fingerprint are documented.
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
+  # Frozen HLT-043 copies; leave the mutable hpc_verified_v4 instance to its owner.
+  "deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/native/neural_outbox.py",
+  # Entire HLT-043 class consists of receipt-pinned native global guard copies.
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",

@@ -3457,13 +3457,13 @@
       "sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
-      "bytes": 17268,
+      "bytes": 17342,
       "classification": {
         "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+      "sha256": "cfb027f9b638458e4eea1c2267cfe49412e9e8711c262332fbd3cd690e683f0c"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py": {
       "bytes": 5352,

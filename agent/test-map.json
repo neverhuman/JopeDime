@@ -386,6 +386,16 @@
       "lane": "python-contract",
       "purpose": "verify Python AI/data boundaries and training contracts"
     },
+    "python/src/jope/": {
+      "command": "cd python && python3 -m pytest -q tests/test_training_input_closure.py tests/test_policy_training_contract.py",
+      "lane": "python-contract",
+      "purpose": "verify Python AI/data boundaries and training contracts"
+    },
+    "python/src/jope/**": {
+      "command": "cd python && python3 -m pytest -q tests/test_training_input_closure.py tests/test_policy_training_contract.py",
+      "lane": "python-contract",
+      "purpose": "verify Python AI/data boundaries and training contracts"
+    },
     "research/flywheel_selfplay/custody/files/": {
       "command": "python3 research/flywheel_selfplay/custody/verify_custody.py && python3 deploy/ci/test-runner.py",
       "lane": "custody-integrity",

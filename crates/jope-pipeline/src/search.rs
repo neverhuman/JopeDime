@@ -78,7 +78,7 @@ use crate::{
     prepare::Cut,
     receipt::Phase,
     search_events::{
-        self, BehaviorLaw, EditTransition, Effort, EvidenceRef, Recorder, SearchBinding,
+        self, ProposalBehaviorLaw, EditTransition, Effort, EvidenceRef, Recorder, SearchBinding,
         SearchDecision, SearchEvent, SearchEventLog,
     },
     sha256_hex,
@@ -1058,8 +1058,8 @@ fn record_draw(
         let program = genome.map(|g| sha256_hex(g.as_bytes()));
         let request_id = program.as_ref().map(|g| log.request_id(g, &canonical)).transpose()?;
         let behavior_law = if matches!(source, BOOTSTRAP | INCUMBENT | REMEASURE | "migration") {
-            BehaviorLaw::NotApplicable { reason: "deterministic population insertion/reuse; no sampled child probability".into() }
-        } else { BehaviorLaw::Unknown { reason: "actual marginal program law has not been reconstructed; seed/parent likelihood is not child density".into() } };
+            ProposalBehaviorLaw::NotApplicable { reason: "deterministic population insertion/reuse; no sampled child probability".into() }
+        } else { ProposalBehaviorLaw::Unknown { reason: "actual marginal program law has not been reconstructed; seed/parent likelihood is not child density".into() } };
         let draw = log.append(SearchEvent::Draw { decision: SearchDecision {
             schema: search_events::DECISION_SCHEMA.into(), coordinate: coordinate.clone(), source: source.into(), seed_hex: seed.map(|s| format!("{s:016x}")),
             program_sha256: program, canonical_sha256: canonical.clone(), request_id, outcome: outcome.into(), detail: detail.clone(), behavior_law,
