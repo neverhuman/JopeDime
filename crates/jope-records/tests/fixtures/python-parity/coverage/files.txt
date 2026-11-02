@@ -1859,6 +1859,8 @@ crates/smartcluster/jainnode/src/network.rs
 crates/smartcluster/jainnode/src/outbound.rs
 crates/smartcluster/jainnode/src/outbox.rs
 crates/smartcluster/jainnode/src/protocol.rs
+crates/smartcluster/jainnode/src/protocol/state.rs
+crates/smartcluster/jainnode/src/protocol/tests.rs
 crates/smartcluster/jainnode/src/protocol_session.rs
 crates/smartcluster/jainnode/src/replay.rs
 crates/smartcluster/jainnode/src/role.rs
