@@ -1103,8 +1103,13 @@ crates/jope-engine/src/resident_protocol.rs
 crates/jope-engine/src/runtime_custody.rs
 crates/jope-engine/src/sealed_storage.rs
 crates/jope-engine/src/service.rs
+crates/jope-engine/src/service/allowed_cpu_tests.rs
 crates/jope-engine/src/service/coverage.rs
 crates/jope-engine/src/service/coverage/tests.rs
+crates/jope-engine/src/service/process.rs
+crates/jope-engine/src/service/recovery.rs
+crates/jope-engine/src/service/runner.rs
+crates/jope-engine/src/service/validation.rs
 crates/jope-engine/src/smartcluster_worker.rs
 crates/jope-engine/src/snapshot.rs
 crates/jope-engine/src/task_contract.rs
