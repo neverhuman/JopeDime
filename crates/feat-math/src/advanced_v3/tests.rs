@@ -806,11 +806,11 @@ fn v3_admission_matches_manifest() {
                 StageClass::Learner => OpKind::Head,
             };
             assert_eq!(row.kind, kind, "{name}");
-            let role = match kind {
-                OpKind::Target => "target",
-                OpKind::Input => "input",
-                OpKind::Transform => "transform",
-                OpKind::Head => "head",
+            let role = match descriptor.stage_class {
+                StageClass::Target => "target",
+                StageClass::Input => "input",
+                StageClass::Transform => "transform",
+                StageClass::Learner => "head",
             };
             let entry = crate::kernel::registry_v2::operator("advanced_v3", name)
                 .unwrap_or_else(|| panic!("missing advanced-v3 registry entry for {name}"));
