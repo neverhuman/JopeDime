@@ -85,7 +85,7 @@ pub struct Background {
 
 /// Errors encountered while validating, attaching to, or starting a local engine.
 #[derive(Debug)]
-pub enum Error {
+pub enum DiscoveryError {
     /// The explicitly selected endpoint is not a valid supported authority.
     InvalidEndpoint,
     /// Local daemon metadata is malformed or inconsistent.
@@ -109,7 +109,10 @@ pub enum Error {
         child_exit: Option<i32>,
     },
 }
-impl Error {
+/// Compatibility name retained for callers of the original discovery API.
+pub type Error = DiscoveryError;
+
+impl DiscoveryError {
     /// Map this discovery failure to the stable CLI exit-code contract.
     pub fn exit_code(&self) -> u8 {
         use jope_api::error::ErrorCode;
@@ -123,7 +126,7 @@ impl Error {
         }
     }
 }
-impl fmt::Display for Error {
+impl fmt::Display for DiscoveryError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidEndpoint => f.write_str("invalid engine endpoint; use an HTTP(S) authority"),
@@ -136,8 +139,8 @@ impl fmt::Display for Error {
         }
     }
 }
-impl std::error::Error for Error {}
-impl From<io::Error> for Error {
+impl std::error::Error for DiscoveryError {}
+impl From<io::Error> for DiscoveryError {
     fn from(e: io::Error) -> Self {
         Self::Io(e)
     }
