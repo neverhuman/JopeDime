@@ -1466,7 +1466,9 @@
       "discovery": {
         "kind": "workflow-job"
       },
-      "dispositions": [],
+      "dispositions": [
+        "release"
+      ],
       "lanes": [],
       "scope": "Trusted-main manual native macOS arm64 clean-host D1 (ops/ci/clean-host.sh macos) on the self-hosted xbabe4 Mac runner (labels self-hosted, macOS, ARM64, jope-macos); independent of the Linux cpu groups and outside the cpu aggregate; diagnostic, no merge gate or qualification claim."
     },
