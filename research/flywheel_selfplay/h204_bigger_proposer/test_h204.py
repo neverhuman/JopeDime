@@ -160,6 +160,28 @@ def test_prereg_and_manifest_contain_verbatim_authority(tmp_path: Path) -> None:
     assert manifest["s3_run_evidence_uri"].startswith(
         "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/"
     )
+    env_ptr = manifest["s3_custody_audit_envelope"]
+    assert (
+        env_ptr["uri"]
+        == "s3://veox-jopedime-learning-use2/experiments/research_restore_20261101/20261102T0642Z/H204-evidence-replay-2d5e15fa.json"
+    )
+    assert env_ptr["version_id"] == "v4GSvIQ4B.kcyDG5JBwhkFtrBm7knQyi"
+    assert (
+        env_ptr["sha256"]
+        == "6e9fd82be2509b5258d3ae433450ee1ff949c95cada4b01339f095b0176f5841"
+    )
+    assert env_ptr["bytes"] == 14532
+    assert env_ptr["exact_versions_downloaded"] == 11
+    assert env_ptr["downloaded_total_bytes"] == 303964
+    assert env_ptr["direct_committed_pin_matches"] == 10
+    assert env_ptr["indirect_content_pin_matches"] == 1
+    assert env_ptr["original_upload_create_only_provenance"] == "UNKNOWN"
+    assert (
+        manifest["s3_evidence_objects_versioned"]["run_labels_cache_json"][
+            "disposition"
+        ]
+        == "EXCLUDED_TRAINING_LABEL_CACHE_PAYLOAD"
+    )
 
     metrics = json.loads((WAVE_DIR / "metrics.json").read_text(encoding="utf-8"))
     assert metrics["authority"] == AUTHORITY_STRING
