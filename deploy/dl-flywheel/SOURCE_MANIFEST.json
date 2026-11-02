@@ -272,7 +272,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/augmentation.py",
       "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
       "path": "deploy/dl-flywheel/jope_flywheel/augmentation.py",
-      "sha256": "ca922a443caf4df561a37d6c251c1b8df2ab02e8fd9b35471cb08c6b90d7d017"
+      "sha256": "c498f055f4233abee1509d15828ba4a465449deca68fe1fb3eccf1fe10bda291"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/batch_stream.py",
@@ -4979,7 +4979,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_augmentation.py",
       "origin_sha256": "ca1956d3eceb649629a62ef9b10c1e3bcde10c8f1276127b5fc37a327e62cbfa",
       "path": "deploy/dl-flywheel/tests/test_augmentation.py",
-      "sha256": "ca1956d3eceb649629a62ef9b10c1e3bcde10c8f1276127b5fc37a327e62cbfa"
+      "sha256": "0c36d14f097286b2c1948d7a8330ab51de08db6d80f81fc480709c5ff03feb69"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/tests/test_batch_stream.py",
