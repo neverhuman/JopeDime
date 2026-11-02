@@ -497,6 +497,53 @@ def mode_failure(report):
 
 
 class M3FullTests(unittest.TestCase):
+    rc4_source = "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+    rc4_witnesses = {
+        "native_candidates": "94eb53cddd796c98b077d2142dd4b60e679a8d768d38fafa070ba4ee935c0bf2",
+        "native_admission": "2ad84b8525a5ecbcf7895e9cb56e417a21f8689e7ac11e7d7fa62c5b65fc3e6d",
+    }
+
+    def rc4_context(self):
+        return Context(
+            self.ctx.gate_id,
+            self.ctx.artifact,
+            self.ctx.artifact_sha256,
+            self.rc4_source,
+            self.ctx.result,
+        )
+
+    def test_frozen_rc4_native_clock_preserves_raw_failure(self):
+        report = mode_failure(full_report(source=self.rc4_source))
+        report["clauses"]["r0_proposer"]["native_witness_sha256"] = dict(self.rc4_witnesses)
+        payload = full.gate_payload(self.rc4_context(), report, self.pin)
+        self.assertEqual(payload["status"], "FAIL")
+        self.assertEqual(payload["counts"]["passed"], 3)
+        self.assertEqual(payload["counts"]["failed"], 1)
+
+    def test_native_clock_witnesses_cannot_cross_source_identities(self):
+        for source, witnesses in [
+            (self.rc4_source, full.SOURCE_CLOCK_PINS),
+            (self.ctx.source_sha, self.rc4_witnesses),
+            ("d" * 40, self.rc4_witnesses),
+        ]:
+            report = full_report(source=source)
+            report["clauses"]["r0_proposer"]["native_witness_sha256"] = dict(witnesses)
+            ctx = Context("M3", self.ctx.artifact, self.ctx.artifact_sha256, source, self.ctx.result)
+            with self.subTest(source=source), self.assertRaisesRegex(ProviderError, "correct source-clock"):
+                full.gate_payload(ctx, report, self.pin)
+
+    def test_frozen_rc4_paired_diagnostic_keeps_its_native_witnesses(self):
+        report = self.paired_report()
+        report["source_sha"] = self.rc4_source
+        proposer = report["clauses"]["r0_proposer"]
+        proposer["native_witness_sha256"] = dict(self.rc4_witnesses)
+        diagnostic = proposer["paired_diagnostic"]
+        diagnostic["witness_sha256"] = {**full.PAIRED_PINS, **self.rc4_witnesses}
+        self.assertEqual(full.gate_payload(self.rc4_context(), report, self.pin)["status"], "FAIL")
+        diagnostic["witness_sha256"] = dict(full.PAIRED_PINS)
+        with self.assertRaisesRegex(ProviderError, "paired result is diagnostic"):
+            full.gate_payload(self.rc4_context(), report, self.pin)
+
     def setUp(self):
         self.ctx = Context(
             "M3",
