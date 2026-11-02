@@ -15,27 +15,8 @@ use crate::{
     MetricsPort, NetworkPolicyPort, ShardPort,
 };
 
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct ExecutionKey {
-    run_id: String,
-    attempt: u32,
-    fence: u64,
-}
-
-impl ExecutionKey {
-    fn from_work(work: &VerifiedWorkUnit) -> Self {
-        Self {
-            run_id: work.run_id.to_string(),
-            attempt: work.attempt,
-            fence: work.attempt_fence,
-        }
-    }
-}
-
-struct PreparedExecution {
-    accepted: AcceptedAssignment,
-    acknowledgement: WorkerAcknowledgement,
-}
+mod execution_types;
+pub(super) use execution_types::{ExecutionKey, PreparedExecution, ProductExecutor};
 
 #[async_trait]
 pub trait NodeExecutionPort: Send + Sync {
@@ -83,9 +64,6 @@ pub trait NodeExecutionPort: Send + Sync {
 
     fn drain_completions(&self) -> Result<usize, ExecutionError>;
 }
-
-type ProductExecutor<D, S, N, M, I, K> =
-    JainNodeExecutor<D, S, N, DurableCancellationRegistry, M, DurableControlOutbox, I, K>;
 
 pub struct ConcurrentExecutorRuntime<D, S, N, M, I, K>
 where
