@@ -30,6 +30,7 @@ class SecurityLane(unittest.TestCase):
             (self.bin / command).symlink_to(shutil.which(command))
         self.fake("git", 'case "$*" in *--is-shallow-repository*) echo false ;; *--verify*) printf "%040d\\n" 1 ;; *--count*) echo 7 ;; *) exit 92 ;; esac')
         self.fake("python3", '[[ "$*" == "-B deploy/ci/verify-vendor-security.py --root "* ]] || exit 96; exit "${FAIL_PROVENANCE:-0}"')
+        self.fake("syft", 'case "$*" in "version") echo "syft 1.40.0" ;; "dir:. --exclude ./target --exclude ./.git --output spdx-json") exit "${FAIL_SBOM:-0}" ;; *) exit 97 ;; esac')
         self.fake("actionlint", 'exit "${FAIL_ACTIONLINT:-0}"')
         self.fake("gitleaks", '[[ "$*" == *"--redact"* && "$*" == *"--log-opts=HEAD"* ]] || exit 93; exit "${FAIL_GITLEAKS:-0}"')
         self.fake("npm", '[[ "$*" == "--prefix web/training-dashboard audit --package-lock-only --audit-level=high" ]] || exit 95; exit "${FAIL_NPM:-0}"')
@@ -51,6 +52,9 @@ class SecurityLane(unittest.TestCase):
 
     def test_provenance_failure_propagates(self):
         self.assertEqual(self.run_lane(FAIL_PROVENANCE="21").returncode, 21)
+
+    def test_sbom_failure_propagates(self):
+        self.assertEqual(self.run_lane(FAIL_SBOM="22").returncode, 22)
 
     def test_workflow_failure_propagates(self):
         self.assertEqual(self.run_lane(FAIL_ACTIONLINT="17").returncode, 17)
