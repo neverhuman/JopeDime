@@ -129,6 +129,16 @@ pub enum ApiObjectiveDirection {
 /// Backwards-compatible public name for an objective's optimization direction.
 pub type Direction = ApiObjectiveDirection;
 
+impl ApiObjectiveDirection {
+    /// Canonical wire spelling used by metric direction fields.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Minimize => "minimize",
+            Self::Maximize => "maximize",
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct ResolvedObjective {
     pub name: String,
