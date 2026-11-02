@@ -136,6 +136,7 @@ def test_missing_seed_and_ties_cannot_be_candidate_or_plateau_win():
     vf = [str(i % 19) for i in range(91)]
     val = np.zeros((3, 91))
     assert not sci.contrast(val, val, vf, 11, plateau=True)["strict_pass"]
+    assert not sci.contrast(val + 0.002, val, vf, 11, plateau=True)["strict_pass"]
     assert not sci.contrast(val + 0.00199, val, vf, 11, plateau=True)["strict_pass"]
     assert sci.contrast(val + 0.003, val, vf, 11, plateau=True)["strict_pass"]
     assert sci.elo(zero, zero, families)["median"] == 1500

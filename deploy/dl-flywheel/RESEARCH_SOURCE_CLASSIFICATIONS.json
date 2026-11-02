@@ -5673,12 +5673,12 @@
       "sha256": "a5642759d04fb476524bbfc9d44afbd6defadcd85964ea495cc7b1a03eaa2735"
     },
     "python:research/flywheel_selfplay/h225_multistep_regret/science.py": {
-      "bytes": 9071,
+      "bytes": 9132,
       "classification": {
         "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
         "role": "research"
       },
-      "sha256": "0c93a6408fddd74a924dd0f03f44f03008dd0acd2deaba09bcfea676c1ad05e2"
+      "sha256": "15fde3b2ce18118f12e4f9813dc565f0000c03c0cfb839682a197b8f715a0f8d"
     },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,

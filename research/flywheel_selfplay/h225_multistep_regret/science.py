@@ -2,6 +2,7 @@
 
 import hashlib
 import itertools
+import math
 import random
 
 import numpy as np
@@ -199,7 +200,7 @@ def contrast(panel, reference, families, seed, *, plateau=False):
         counts = np.array([(labels == f).sum() for f in sorted(set(labels))])
         sums = family * counts
         boot = sums[:, draws].sum(-1) / counts[draws].sum(-1)
-        per_seed = delta.mean(-1)
+        per_seed = np.array([math.fsum(row.tolist()) / len(row) for row in delta])
     else:
         boot = family[:, draws].mean(-1)
         per_seed = family.mean(-1)

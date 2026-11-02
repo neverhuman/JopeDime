@@ -97,6 +97,8 @@ the paired MSCR-minus-MSTOP1 A contrast. After the selection lock, score every
 one of the 120 outer proposals on DL-Val and report the exact distinct
 context-mean value count as a diversity diagnostic. This diagnostic cannot
 select a proposal. No AUC or speed verdict is reported.
+The plateau point uses accurate `math.fsum` context sums so an exact +0.002
+fixture is not rounded upward into a win.
 
 ## Execution and closeout
 
