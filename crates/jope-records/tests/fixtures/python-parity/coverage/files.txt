@@ -1444,6 +1444,16 @@ crates/jope-records/src/main.rs
 crates/jope-records/src/parity.rs
 crates/jope-records/src/progress_view.rs
 crates/jope-records/src/py.rs
+crates/jope-records/src/py/float.rs
+crates/jope-records/src/py/io.rs
+crates/jope-records/src/py/numbers.rs
+crates/jope-records/src/py/path.rs
+crates/jope-records/src/py/tests.rs
+crates/jope-records/src/py/tests/numbers.rs
+crates/jope-records/src/py/tests/paths.rs
+crates/jope-records/src/py/tests/semantics.rs
+crates/jope-records/src/py/utility.rs
+crates/jope-records/src/py/values.rs
 crates/jope-records/src/pycsv.rs
 crates/jope-records/src/pyjson.rs
 crates/jope-records/src/readme.rs
