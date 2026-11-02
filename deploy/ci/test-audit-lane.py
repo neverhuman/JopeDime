@@ -172,6 +172,13 @@ class AuditLaneTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location("verify_audit_report", ROOT / "deploy/ci/verify-audit-report.py")
         verifier = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(verifier)
+        for workflow_name, job in (("ci.yml", "jankurai-audit"), ("full-main.yml", "audit")):
+            workflow = (ROOT / ".github/workflows" / workflow_name).read_text()
+            block = workflow.split("\n  " + job + ":\n", 1)[1]
+            unlock = block.split("      - name: Leave the persistent workspace deletable for the next checkout\n", 1)[1]
+            self.assertTrue(unlock.startswith("        if: always()\n        run: "))
+            command = unlock.split("        run: ", 1)[1].splitlines()[0]
+            self.assertEqual("if [ -d target/full-audit ]; then chmod -R u+w target/full-audit; fi", command)
         workflow = (ROOT / ".github/workflows/full-main.yml").read_text()
         block = workflow.split("\n  audit:\n", 1)[1]
         unlock = block.split("      - name: Leave the persistent workspace deletable for the next checkout\n", 1)[1]
