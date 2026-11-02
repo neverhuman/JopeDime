@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { Page, TestInfo } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { observedAt, observerFixture } from "./observer-fixture";
+import { visualReviews, type VisualReviewState } from "./visual-review";
 
 async function evidence(page: Page, testInfo: TestInfo, name: string) {
   const geometry = await page.evaluate(() => {
@@ -40,7 +41,9 @@ async function evidence(page: Page, testInfo: TestInfo, name: string) {
   await testInfo.attach(`${name}-accessibility.json`, { body: JSON.stringify(accessibility, null, 2), contentType: "application/json" });
   expect(accessibility.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
     "No axe WCAG A/AA violations in the rendered synthetic state").toEqual([]);
-  // visual_review decisions are hash-bound in visual_review.json beside these baselines.
+  const review = visualReviews[name as VisualReviewState];
+  expect(review, `A visual review verdict is required for the ${name} screenshot`).toMatch(/^pass:/);
+  await testInfo.attach(`${name}-visual-review.txt`, { body: review, contentType: "text/plain" });
   const snapshotName = name === "overview" ? "overview-section" : name;
   await expect(page).toHaveScreenshot(`${snapshotName}.png`, {
     fullPage: !geometry.dialog,
