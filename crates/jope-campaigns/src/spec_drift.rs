@@ -1116,8 +1116,11 @@ for family in p.FAMILIES:
             "def render():\n    return '''[resource]\nram_mb = 768\n[dependencies]\nsmoke = [{ command = \"/usr/bin/grep\", args = [\"-qx\", \"xbabe2\", \"/etc/hostname\"] }]\n'''\n",
         )
         .unwrap();
-        let synthetic =
-            scan_file(root.path(), "python/test-support/jope/research/test_exact_canary.py").unwrap();
+        let synthetic = scan_file(
+            root.path(),
+            "python/test-support/jope/research/test_exact_canary.py",
+        )
+        .unwrap();
         let legacy = synthetic.first().expect("synthetic inline smoke site");
         assert_eq!(legacy.dep_form, DepForm::SmokeInline);
         assert!(legacy.probes_etc_hostname);
