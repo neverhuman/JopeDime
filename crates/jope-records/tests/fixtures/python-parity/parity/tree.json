@@ -1347,6 +1347,8 @@
   "crates/jope-campaigns/src/bin/scq_runs_gc.rs": true,
   "crates/jope-campaigns/src/bin/search-v3.rs": true,
   "crates/jope-campaigns/src/main.rs": true,
+  "crates/jope-campaigns/src/main_app.rs": true,
+  "crates/jope-campaigns/src/main_app/train_only_dispatch.rs": true,
   "crates/jope-ci/src/main.rs": true,
   "crates/jope-cli/src/main.rs": true,
   "crates/jope-datasets/src/main.rs": true,
