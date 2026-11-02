@@ -1,0 +1,80 @@
+{
+  "advance": "NO",
+  "attempt": {
+    "elapsed_seconds": 370.49317193217576,
+    "id": "attempt-001",
+    "pid": 2037108,
+    "root": "/home/ubuntu/jope-data/h212/attempt-001",
+    "source_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
+    "started_utc": "2026-11-02T08:19:00Z"
+  },
+  "baseline_parity": {
+    "contexts_matched": 91,
+    "exact_mean": 1.1377941898164525,
+    "max_abs_error": 0.0,
+    "mean": 1.1377941898164525,
+    "mean_error": 0.0,
+    "status": "PASS"
+  },
+  "efficacy_verdict": "NONE",
+  "evidence": {
+    "attempt_metrics_sha256": "91c9d6b3062285b7501a41bc21a4b907052cd3c8400d11b3efcea627f12966f4",
+    "attempt_output_bytes": 14406175,
+    "baseline_parity_sha256": "d5ada77a5224440963f1d97dafc9132a53bb45e4dcaa3dbb3d9391a936d37f58",
+    "dope_receipt_sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2"
+  },
+  "failure": {
+    "H58_decompressed_bytes": 181937,
+    "H58_decompressed_sha256": "9dd0ed4e72bcbccce5baadfcd7fd381334065499d7ebda3f1109f0f7dc832330",
+    "H58_gzip_file_sha256": "6bd7cb7bbd9f9d7794a4b83587fb32986871013faa8a57b16f7d0a436eba07e1",
+    "H58_gzip_manifest_sha256": "6bd7cb7bbd9f9d7794a4b83587fb32986871013faa8a57b16f7d0a436eba07e1",
+    "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "identity_matches_gzip_manifest": true,
+    "identity_matches_selected": false,
+    "selected_source_file_bytes": 180817,
+    "selected_source_file_sha256": "c7397751da253966dd6f2ff04eb384cd5ee0c412ec8634d90440d5727dceedcb",
+    "selected_train_record_sha256": "c7397751da253966dd6f2ff04eb384cd5ee0c412ec8634d90440d5727dceedcb",
+    "stage": "first TRAIN cache payload identity check, before proposal call"
+  },
+  "freeze": {
+    "CUDA_initialized": false,
+    "device": "cpu",
+    "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "optimizer_updates": 0
+  },
+  "launch_guard": {
+    "MemAvailable_bytes": 84597444608,
+    "disk_used_fraction": 0.9325158506537843,
+    "host_cpu_pct_sample": 15.2,
+    "load1": 60.47,
+    "online_cores": 128,
+    "swap_free_bytes": 26611712
+  },
+  "next_step": "No efficacy conclusion. Repair/revalidate the pinned H58 TRAIN cache seam under owner direction; any new science run requires a new H-wave ID because H212 allowed one attempt.",
+  "preregistration": {
+    "merged_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
+    "pr": 1762,
+    "tested_head": "2672445f03bd764eb3946ecedfee4702eec4112f"
+  },
+  "read_boundary": {
+    "excluded_payloads": 0,
+    "holdout": 0,
+    "meta_test": 0,
+    "outer_rows": 0,
+    "sealed": 0,
+    "train_contexts_in_frozen_r882_baseline_cost_panel": 1219,
+    "train_h58_jtt1_payloads_decompressed": 1,
+    "train_treatment_utility_scored": 0,
+    "validation_baseline_contexts": 91
+  },
+  "reason": "First TRAIN JTT1 source failed content identity check before proposal generation or candidate evaluation; registered one attempt is consumed and no retry is authorized.",
+  "schema": "jope.h212.pool-width-closeout/v1",
+  "status": "INCOMPLETE",
+  "treatment": {
+    "candidate_evaluations": 0,
+    "candidate_panels_written": false,
+    "proposal_calls": 0,
+    "train_utility_scored": 0
+  }
+}
