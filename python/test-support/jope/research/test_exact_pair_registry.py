@@ -1061,7 +1061,7 @@ class PairRegistry:
                         and active["job_id"] != job_id
                     )
                 ):
-                    raise RuntimeError("stale retirement active-attempt audit failed")
+                    raise RuntimeError("retirement and active-attempt consistency check failed")
                 self.db.execute(
                     """
                     UPDATE attempts SET state='superseded_unstarted',

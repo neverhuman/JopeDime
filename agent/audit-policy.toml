@@ -225,9 +225,6 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/readonly_snapshot.py",
   # P38: joblib models are emitted with producer-generated identity pins and consumed only by trusted pipeline code.
   "python/src/jope/target_maker/artifact_pins.py",
-  # HLT-027 false positive: an internal ledger refusal comment is not a human
-  # review or proof attestation; see the fingerprint-specific rationale.
-  "crates/jope-learning/src/hwm.rs",
   # P38 HLT-033 sha256:7e8d63e1b202 + 5027af590b9f: these exact loaders
   # reject non-regular/symlink inputs and verify source against H144 pins before one-read exec.
   "research/joint_regbin/runtime.py",
@@ -386,6 +383,14 @@ paths = ["crates/jope-datasets/src/blobs.rs"]
 owner = "datasets"
 expires = "2027-02-01"
 reason = "HLT-001 sha256:fa13a2d8103eeda06d5c85bd49ecc8869b16a7c6175e6917bbae92365d35eead flags the truthful cache-state term in BlobDir::ensure. The method verifies both size and SHA-256, removes a mismatched cache entry, refuses to serve a substitute offline, and otherwise refetches verified bytes. Preserve that integrity behavior; this term-and-path exception does not suppress other rules or files."
+
+[[dead_language_allow]]
+name = "p66-timeseries-content-addressed-stale-artifact-state"
+term = "stale"
+paths = ["crates/jope-campaigns/src/test_adaptive/timeseries42.rs"]
+owner = "rust"
+expires = "2027-02-01"
+reason = "HLT-001 sha256:e5f47544f0ddd90cb05371940aba9e0ea8aac56c0d57f9535331389dad877176 flags the truthful stale-output state in the TimeSeries42 harness. Conflicting prior artifacts are retained under a .stale-<content-sha256-prefix>.v1.json name before replacement; invalid or stale generation/final outputs are rejected, and cancelled work is explicitly retryable. The exact term-and-path allowance preserves this content-addressed history and rejection behavior; it suppresses no other terms, rules, or files. See docs/release/jankurai-vibe-exceptions-20261102.md."
 
 # Hash-pinned evidence snapshots. Each entry lists exact copies inside a frozen
 # evidence package whose sha256 is recorded by that package's own receipt or

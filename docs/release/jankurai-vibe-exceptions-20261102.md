@@ -1,10 +1,30 @@
 # Jankurai vibe findings: scoped language allowances
 
-The fourteen `dead_language_allow` records in `agent/audit-policy.toml` cover only
+The sixteen `dead_language_allow` records in `agent/audit-policy.toml` cover only
 the exact term and file listed below. They keep those validated source terms
 out of the vibe cap while leaving the files in the scan, so other findings in
 these files remain visible. Each allowance expires 2027-02-01 and must be
 reassessed against fresh source and test evidence.
+
+## TimeSeries42 content-addressed stale outputs
+
+- **Scope:** `crates/jope-campaigns/src/test_adaptive/timeseries42.rs`, term
+  `stale`.
+- **Finding:** HLT-001
+  `sha256:e5f47544f0ddd90cb05371940aba9e0ea8aac56c0d57f9535331389dad877176`
+  in `rerun/j_161a8216d.json`, at line 806.
+- **Reason:** the term describes a real artifact lifecycle state. When a
+  generated output conflicts with existing bytes, the harness preserves the
+  prior bytes under a filename containing their SHA-256 prefix before writing
+  the current output. Loaders reject invalid or stale generation/final
+  artifacts, and cancelled jobs remain retryable. This term-and-file allowance
+  keeps those integrity and recovery semantics explicit while leaving every
+  other finding and file scanned.
+- **Evidence:** `replace_stale_artifact` and
+  `archive_stale_final_result` implement the content-addressed preservation;
+  `base_generation_loader_rejects_stale_artifacts` and
+  `stale_cancelled_jobs_are_retryable_not_terminal_failures` cover rejection
+  and retry behavior. The fastlane source was reviewed without running tests.
 
 ## Preregistration sentinel
 
