@@ -1033,6 +1033,7 @@ crates/jope-engine/src/gp/fit_contract_tests/selection.rs
 crates/jope-engine/src/gp/fit_contract_tests/view_exports.rs
 crates/jope-engine/src/gp/handoff.rs
 crates/jope-engine/src/gp/lineage.rs
+crates/jope-engine/src/gp/lineage/tests.rs
 crates/jope-engine/src/gp/outer_release.rs
 crates/jope-engine/src/gp/outer_release_cli.rs
 crates/jope-engine/src/gp/paired.rs
