@@ -1,18 +1,40 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
+use std::ffi::OsString;
+use std::io;
 use std::path::PathBuf;
 
 use jope_api::registry::{MediaType, Operation, PayloadTypeRef, OPERATIONS};
 use serde_json::{json, Map, Value};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let output = std::env::args_os()
-        .nth(1)
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("schemas/jope.api.v1.openapi.json"));
+    let output = match parse_output_destination(std::env::args_os().skip(1))? {
+        OutputDestination::DefaultSchema => PathBuf::from("schemas/jope.api.v1.openapi.json"),
+        OutputDestination::Explicit(path) => path,
+    };
     let document = generate()?;
     std::fs::write(output, serde_json::to_vec_pretty(&document)?)?;
     Ok(())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum OutputDestination {
+    DefaultSchema,
+    Explicit(PathBuf),
+}
+
+fn parse_output_destination(
+    args: impl IntoIterator<Item = OsString>,
+) -> Result<OutputDestination, io::Error> {
+    let mut args = args.into_iter();
+    match (args.next(), args.next()) {
+        (None, None) => Ok(OutputDestination::DefaultSchema),
+        (Some(path), None) => Ok(OutputDestination::Explicit(PathBuf::from(path))),
+        (_, Some(_)) => Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "usage: jope-api-openapi [OUTPUT_PATH]",
+        )),
+    }
 }
 
 fn generate() -> Result<Value, Box<dyn Error>> {
@@ -256,6 +278,33 @@ fn rewrite_definition_refs(value: &mut Value) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn output_destination_defaults_to_committed_schema() {
+        let destination = parse_output_destination(std::iter::empty()).unwrap();
+        assert_eq!(destination, OutputDestination::DefaultSchema);
+    }
+
+    #[test]
+    fn output_destination_accepts_one_explicit_path() {
+        let destination =
+            parse_output_destination([OsString::from("target/openapi.json")]).unwrap();
+        assert_eq!(
+            destination,
+            OutputDestination::Explicit(PathBuf::from("target/openapi.json"))
+        );
+    }
+
+    #[test]
+    fn output_destination_rejects_extra_arguments() {
+        let error = parse_output_destination([
+            OsString::from("target/openapi.json"),
+            OsString::from("unexpected"),
+        ])
+        .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(error.to_string(), "usage: jope-api-openapi [OUTPUT_PATH]");
+    }
 
     #[test]
     fn generated_document_matches_committed_openapi() {
