@@ -203,3 +203,21 @@ def test_smoke_routes_actual_nonzero_family_fold_to_h212(tmp_path, monkeypatch):
     assert r.worker(tmp_path, "smoke", source, None) == 0
     assert captured == [4]
     assert json.loads((tmp_path / "metrics.json").read_text())["status"] == "SMOKE_PASS"
+
+
+def test_pinned_real_upstream_loads_without_model_or_cohort_reads():
+    upstream = r.load_h212()
+    manifest = r.load_input_manifest()
+    assert callable(upstream.end_to_end_smoke)
+    assert upstream.stat.first_argmin_utility is r.stat.first_argmin_utility
+    assert manifest["inputs"]["r882_owned_copy_path"].endswith("round-882.pt")
+    assert r.H212_COMMIT == "c39a96589f340e3d8faa833840e8ddf224aed2a5"
+
+
+def test_upstream_runner_and_analysis_pin_drift_refuse(monkeypatch):
+    monkeypatch.setattr(r, "H212_SHA", "0" * 64)
+    with pytest.raises(ValueError, match="runner pin differs"):
+        r.load_h212()
+    monkeypatch.setattr(r.stat, "H212_ANALYSIS_SHA", "0" * 64)
+    with pytest.raises(ValueError, match="analysis pin differs"):
+        r.stat.load_upstream_analysis()
