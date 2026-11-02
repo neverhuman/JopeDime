@@ -117,6 +117,38 @@ def prepare(args) -> dict:
             f"metadata field {key}.executable_sha256 is invalid",
         )
 
+    requested = getattr(args, "clients", None)
+    selected = list(CLIENTS) if requested is None else requested
+    fail_if(
+        not selected
+        or any(not isinstance(key, str) or key not in CLIENTS for key in selected),
+        "selected clients must name at least one supported client",
+    )
+    fail_if(len(selected) != len(set(selected)), "selected clients must be unique")
+    selected_set = set(selected)
+    selected = [key for key in CLIENTS if key in selected_set]
+    excluded = [key for key in CLIENTS if key not in selected_set]
+    excluded_clients = {}
+    for key in selected:
+        fail_if(
+            metadata[key].get("status") not in (None, "INCLUDED"),
+            f"selected client has an invalid disposition in metadata: {key}",
+        )
+    for key in excluded:
+        row = metadata[key]
+        reason = row.get("exclusion_reason")
+        fail_if(
+            row.get("status") != "EXCLUDED"
+            or not isinstance(reason, str)
+            or not reason.strip(),
+            f"omitted client must be EXCLUDED with a reason in metadata: {key}",
+        )
+        excluded_clients[key] = reason.strip()
+    fail_if(
+        excluded and getattr(args, "provider_ready", False),
+        "provider-ready packaging requires all three clients; partial captures remain NOT_QUALIFIED",
+    )
+
     capture_root = args.capture_root.resolve(strict=True)
     fail_if(not capture_root.is_dir(), "capture root must be a directory")
     output = args.out_dir.resolve()
@@ -130,7 +162,16 @@ def prepare(args) -> dict:
     )
     inventory = {}
     for key, slug in CLIENTS.items():
-        for suffix in ("execution.json", "verification.json", "mcp.jsonl"):
+        suffixes = (
+            ("execution.json",)
+            if key in excluded_clients
+            else (
+                "execution.json",
+                "verification.json",
+                "mcp.jsonl",
+            )
+        )
+        for suffix in suffixes:
             name = f"{slug}.{suffix}"
             source_file = capture_root / name
             fail_if(
@@ -151,6 +192,17 @@ def prepare(args) -> dict:
                     != metadata[key]["executable_sha256"],
                     f"execution identity does not bind to source, candidate and client: {key}",
                 )
+                if key in excluded_clients:
+                    fail_if(
+                        record.get("status") != "EXCLUDED"
+                        or record.get("exclusion_reason") != excluded_clients[key],
+                        f"excluded client execution receipt does not record its exclusion: {key}",
+                    )
+                else:
+                    fail_if(
+                        record.get("status", "INCLUDED") == "EXCLUDED",
+                        f"selected client execution receipt is marked EXCLUDED: {key}",
+                    )
             elif suffix == "verification.json":
                 record = parse_object(contents, name)
                 fail_if(
@@ -214,6 +266,8 @@ def prepare(args) -> dict:
                 "split": "TRAIN",
                 "dataset_id": handoff.get("dataset_id"),
             },
+            "selected_clients": selected,
+            "excluded_clients": excluded_clients,
             "clients": metadata,
             "files": inventory,
             "a5_status": "NOT_QUALIFIED",
@@ -399,6 +453,71 @@ def self_test() -> None:
             digest((root / "out-provider/a5-manifest.json").read_bytes())
             == (root / "out-provider/a5-manifest.sha256").read_text().strip()
         )
+        partial_captures = root / "partial-captures"
+        partial_captures.mkdir()
+        partial_metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        for key, slug in CLIENTS.items():
+            if key == "gemini_cli":
+                reason = "Gemini CLI MCP configuration unavailable"
+                partial_metadata[key]["status"] = "EXCLUDED"
+                partial_metadata[key]["exclusion_reason"] = reason
+                execution = {
+                    "source": source,
+                    "binary_sha256": candidate_sha,
+                    "client": key,
+                    "client_version": "fixture",
+                    "client_resolved_path": "/fixture/client",
+                    "client_launcher_sha256": "a" * 64,
+                    "status": "EXCLUDED",
+                    "exclusion_reason": reason,
+                }
+                (partial_captures / f"{slug}.execution.json").write_text(
+                    json.dumps(execution), encoding="utf-8"
+                )
+                continue
+            for suffix in ("execution.json", "verification.json", "mcp.jsonl"):
+                source_file = captures / f"{slug}.{suffix}"
+                (partial_captures / source_file.name).write_bytes(
+                    source_file.read_bytes()
+                )
+        partial_metadata_path = root / "partial-clients.json"
+        partial_metadata_path.write_text(json.dumps(partial_metadata), encoding="utf-8")
+        partial_args = argparse.Namespace(
+            **{
+                **vars(parser),
+                "client_metadata": partial_metadata_path,
+                "capture_root": partial_captures,
+                "out_dir": root / "out-partial",
+                "clients": ["claude_code", "codex_cli"],
+            }
+        )
+        partial_result = prepare(partial_args)
+        partial_manifest = json.loads(
+            (root / "out-partial/capture-manifest.json").read_text(encoding="utf-8")
+        )
+        assert partial_result["a5_status"] == "NOT_QUALIFIED"
+        assert partial_manifest["selected_clients"] == [
+            "claude_code",
+            "codex_cli",
+        ]
+        assert partial_manifest["excluded_clients"] == {
+            "gemini_cli": "Gemini CLI MCP configuration unavailable"
+        }
+        assert "gemini-cli.mcp.jsonl" not in partial_manifest["files"]
+        try:
+            prepare(
+                argparse.Namespace(
+                    **{
+                        **vars(partial_args),
+                        "out_dir": root / "out-partial-provider",
+                        "provider_ready": True,
+                    }
+                )
+            )
+        except CapturePackageError:
+            pass
+        else:
+            raise AssertionError("provider-ready accepted a partial client roster")
         verification_path = captures / "claude-code.verification.json"
         verification = json.loads(verification_path.read_text(encoding="utf-8"))
         verification["failed_calls"] = 1
@@ -471,6 +590,12 @@ def main() -> int:
     parser.add_argument("--client-metadata", type=Path)
     parser.add_argument("--capture-root", type=Path)
     parser.add_argument("--out-dir", type=Path)
+    parser.add_argument(
+        "--clients",
+        nargs="+",
+        choices=CLIENTS,
+        help="clients represented by the package (default: all)",
+    )
     parser.add_argument(
         "--provider-ready",
         action="store_true",

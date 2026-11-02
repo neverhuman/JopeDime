@@ -1276,7 +1276,27 @@
       "lanes": [
         "changes"
       ],
-      "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
+      "scope": "Hosted output-only join of the PR-hosted and provenance-bound manual classifiers; requires exactly the selected classifier to succeed and passes its verified applicability outputs to dependent jobs."
+    },
+    "job:.github/workflows/ci.yml/changes-dispatch": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "changes"
+      ],
+      "scope": "Manual-dispatch classifier only; uses the existing admitted native runner, verifies runner provenance, records the source-bound changes plan, and retains its run/attempt receipt."
+    },
+    "job:.github/workflows/ci.yml/changes-pr": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "changes"
+      ],
+      "scope": "Pull-request-only source-diff classifier on disposable ubuntu-24.04; no self-hosted resources or runner tokens. Produces the exact plan and run/attempt receipt consumed by the workflow aggregate."
     },
     "job:.github/workflows/ci.yml/e2e-smoke": {
       "discovery": {
@@ -6081,6 +6101,16 @@
       ],
       "lanes": [],
       "scope": "H219 TRAIN-only fresh-family folds, H109 sampler/schedule/actual accumulation and paired r882 reset, strict-margin tie rejection/Holm2/harm/3seeds, full45-fit lock order, feature-row exclusion, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification."
+    },
+    "python:research/flywheel_selfplay/h220_family_mixup/test_h220.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H220 Within-family input/target mixup invariants, singleton identity and partner closure; native91 before training, actual40x4 CONTROL/MIX, strict Holm1/harm/3seeds, full30-fit lock order, feature-row exclusion, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {

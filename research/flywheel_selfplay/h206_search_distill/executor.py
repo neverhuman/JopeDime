@@ -99,7 +99,7 @@ class BudgetLedger:
                 for kind, requested in (("cpu", cpu_reserve), ("gpu", gpu_reserve))
             ):
                 raise RuntimeError("cumulative campaign budget exhausted")
-            s["reservations"][token] = {"cpu": cpu_reserve, "gpu": gpu_reserve}
+            s["reservations"][token] = {"cpu": cpu_reserve, "gpu": gpu_reserve, "stage": stage}
 
         self.mutate(reserve)
 
@@ -111,7 +111,7 @@ class BudgetLedger:
         started, before, failed = time.monotonic(), cpu(), True
         self.active = True
         try:
-            yield
+            yield token
             failed = False
         finally:
             elapsed = time.monotonic() - started
@@ -348,14 +348,21 @@ def initialize_learner(
 def restore_learner(learner, checkpoint_ref, store, *, expected_state_sha256, budget, cpu_reserve_seconds):
     """Verified state+optimizer resume; never creates or resets the cost ledger."""
     with budget.operation("checkpoint_resume", cpu_reserve=cpu_reserve_seconds, gpu_reserve=0):
-        state = torch.load(io.BytesIO(checkpoint_ref.read(store)), map_location="cpu", weights_only=True)
-        learner.model.load_state_dict(state["model"], strict=True)
-        learner.optimizer.load_state_dict(state["optimizer"])
-        learner.updates = state["updates"]
-        learner.examples = state["examples"]
-        learner.scope_sha256 = state["scope_sha256"]
-        learner.gradient_squares = state["gradient_squares"]
-        learner.model.assert_frozen()
-        if learner.state_hash() != expected_state_sha256:
-            raise ValueError("resumed checkpoint content identity mismatch")
-        return learner
+        return restore_verified_state(
+            learner, checkpoint_ref, store, expected_state_sha256=expected_state_sha256
+        )
+
+
+def restore_verified_state(learner, checkpoint_ref, store, *, expected_state_sha256):
+    """Same verified restoration inside an already charged parent phase."""
+    state = torch.load(io.BytesIO(checkpoint_ref.read(store)), map_location="cpu", weights_only=True)
+    learner.model.load_state_dict(state["model"], strict=True)
+    learner.optimizer.load_state_dict(state["optimizer"])
+    learner.updates = state["updates"]
+    learner.examples = state["examples"]
+    learner.scope_sha256 = state["scope_sha256"]
+    learner.gradient_squares = state["gradient_squares"]
+    learner.model.assert_frozen()
+    if learner.state_hash() != expected_state_sha256:
+        raise ValueError("resumed checkpoint content identity mismatch")
+    return learner

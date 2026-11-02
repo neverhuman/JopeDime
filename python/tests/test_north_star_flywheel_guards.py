@@ -162,8 +162,7 @@ def test_ns4_binary_clf_metrics_and_valid_mask_nan_counterexample() -> None:
     assert bool(ev_nan["valid_eval_mask"][0].item())
     assert abs(float(ev_fin["roc_auc"][0].item()) - float(ev_nan["roc_auc"][0].item())) < 1e-6
     assert (
-        abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item()))
-        < 1e-6
+        abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item())) < 1e-6
     )
 
     # Codex 13:41:58Z counterexample: 2 valid holdout rows with BOTH predictions NaN
@@ -507,9 +506,7 @@ def test_ns14_rust_fitness_tie_averaged_roc_auc_and_validation() -> None:
 
     # 4. Holdout target validation rejects non-finite labels, constant regression targets, and invalid binary targets
     with pytest.raises(ValueError, match="y_val must contain only finite"):
-        compile_and_eval_rust_fitness(
-            rs_unit, X_pt_fwd, np.array([0.0, math.nan, 1.0, 1.0]), is_binary=False
-        )
+        compile_and_eval_rust_fitness(rs_unit, X_pt_fwd, np.array([0.0, math.nan, 1.0, 1.0]), is_binary=False)
     with pytest.raises(ValueError, match="Degenerate constant regression holdout target"):
         compile_and_eval_rust_fitness(rs_unit, X_pt_fwd, np.ones(4, dtype=np.float64), is_binary=False)
     with pytest.raises(ValueError, match="Degenerate single-class binary holdout target"):
@@ -746,3 +743,115 @@ def test_ns19_dope_freeze_storage_aliases_normalizers_and_anchor_guards(monkeypa
         assert_research_optimizer_policy(opt_anchor_alias, model, research_run_id="H206-ns19")
     with pytest.raises(DopeFreezeViolationError, match="normalizer buffer"):
         assert_research_optimizer_policy(opt_buf_alias, model, research_run_id="H206-ns19")
+
+
+def test_ns21_unified_eval_holdout_degeneracy_ood_binary_and_shape_guards() -> None:
+    from jope.north_star import (
+        detect_binary_target_batched_gpu,
+        fit_batched_platt_calibration_gpu,
+    )
+
+    # 1. Constant regression holdout target (sst <= 1e-12) must never award R^2 = 1.0,
+    # while preserving valid regression/binary sibling tables in the same batch.
+    raw_tr = torch.tensor(
+        [
+            [1.0, 2.0, 3.0, 4.0],  # b=0: valid regression
+            [1.0, 2.0, 3.0, 4.0],  # b=1: regression with constant holdout y_te
+            [-2.0, 2.0, -1.5, 1.5],  # b=2: binary {0, 1} with out-of-domain holdout label 2.0
+        ],
+        dtype=torch.float32,
+    )
+    y_tr = torch.tensor(
+        [
+            [1.0, 2.0, 3.0, 4.0],
+            [1.0, 2.0, 3.0, 4.0],
+            [0.0, 1.0, 0.0, 1.0],
+        ],
+        dtype=torch.float32,
+    )
+    m_tr = torch.ones((3, 4), dtype=torch.bool)
+
+    raw_te = torch.tensor(
+        [
+            [1.5, 2.5, 3.5, 4.5],
+            [5.0, 5.0, 5.0, 5.0],  # exact match to constant y_te
+            [-1.0, 1.0, -1.0, 1.0],
+        ],
+        dtype=torch.float32,
+    )
+    y_te = torch.tensor(
+        [
+            [1.5, 2.5, 3.5, 4.5],
+            [5.0, 5.0, 5.0, 5.0],  # constant holdout regression target
+            [0.0, 1.0, 0.0, 2.0],  # 2.0 is out-of-domain for {0.0, 1.0}
+        ],
+        dtype=torch.float32,
+    )
+    m_te = torch.ones((3, 4), dtype=torch.bool)
+
+    res = evaluate_unified_regression_and_binary_batched_gpu(raw_tr, y_tr, m_tr, raw_te, y_te, m_te)
+    assert res["is_binary"].tolist() == [False, False, True]
+    assert res["valid_eval_mask"].tolist() == [True, False, False]
+    assert abs(float(res["unified_r2_score"][0]) - 1.0) < 1e-6
+    for idx in (1, 2):
+        for metric_key in (
+            "unified_r2_score",
+            "regression_r2",
+            "brier_r2",
+            "roc_auc",
+            "log_loss",
+            "balanced_accuracy",
+        ):
+            assert math.isnan(float(res[metric_key][idx])), (metric_key, idx, res[metric_key])
+
+    with pytest.raises(ValueError, match="Invalid evaluation batch"):
+        evaluate_unified_regression_and_binary_batched_gpu(
+            raw_tr[1:2], y_tr[1:2], m_tr[1:2], raw_te[1:2], y_te[1:2], m_te[1:2], reject_nonfinite_eval=True
+        )
+    with pytest.raises(ValueError, match="Invalid evaluation batch"):
+        evaluate_unified_regression_and_binary_batched_gpu(
+            raw_tr[2:3], y_tr[2:3], m_tr[2:3], raw_te[2:3], y_te[2:3], m_te[2:3], reject_nonfinite_eval=True
+        )
+
+    # Masked-out out-of-domain binary padding must be ignored when mask_te is False on that column
+    m_te_masked_ood = m_te[2:3].clone()
+    m_te_masked_ood[0, 3] = False
+    res_masked_ood = evaluate_unified_regression_and_binary_batched_gpu(
+        raw_tr[2:3], y_tr[2:3], m_tr[2:3], raw_te[2:3], y_te[2:3], m_te_masked_ood, reject_nonfinite_eval=True
+    )
+    assert res_masked_ood["valid_eval_mask"].tolist() == [True]
+    assert bool(torch.isfinite(res_masked_ood["unified_r2_score"]).all())
+
+    # 2. batched_roc_auc_gpu rejects non-binary required labels (outside {0, 1}) as NaN per table
+    auc_nonbin = batched_roc_auc_gpu(
+        torch.tensor([[0.1, 0.4, 0.6, 0.9], [0.1, 0.4, 0.6, 0.9]]),
+        torch.tensor([[0.0, 0.5, 1.0, 1.0], [0.0, 0.0, 1.0, 1.0]]),
+        torch.ones((2, 4), dtype=torch.bool),
+    )
+    assert math.isnan(float(auc_nonbin[0]))
+    assert abs(float(auc_nonbin[1]) - 1.0) < 1e-6
+
+    # 3. Shape, rank, hyperparameter, and mask domain validation
+    with pytest.raises(ValueError, match="2D torch.Tensor"):
+        detect_binary_target_batched_gpu(torch.zeros(4), torch.ones(4, dtype=torch.bool))
+    with pytest.raises(ValueError, match="does not match expected shape"):
+        detect_binary_target_batched_gpu(torch.zeros(2, 4), torch.ones(1, 4, dtype=torch.bool))
+    with pytest.raises(ValueError, match="tol must be a finite non-negative"):
+        detect_binary_target_batched_gpu(torch.zeros(2, 4), torch.ones(2, 4, dtype=torch.bool), tol=-1e-5)
+    with pytest.raises(ValueError, match="non-finite values"):
+        detect_binary_target_batched_gpu(torch.zeros(1, 4), torch.tensor([[1.0, 0.0, float("nan"), 1.0]]))
+    with pytest.raises(ValueError, match="contain only \\{0, 1\\}"):
+        detect_binary_target_batched_gpu(torch.zeros(1, 4), torch.tensor([[1, 0, 2, 1]]))
+
+    with pytest.raises(ValueError, match="l2_reg must be a finite positive"):
+        fit_batched_platt_calibration_gpu(
+            torch.zeros(1, 4), torch.zeros(1, 4), torch.ones(1, 4, dtype=torch.bool), l2_reg=0.0
+        )
+    with pytest.raises(ValueError, match="n_iters must be a non-negative int"):
+        fit_batched_platt_calibration_gpu(
+            torch.zeros(1, 4), torch.zeros(1, 4), torch.ones(1, 4, dtype=torch.bool), n_iters=-1
+        )
+    with pytest.raises(ValueError, match="Batch size mismatch"):
+        evaluate_unified_regression_and_binary_batched_gpu(
+            raw_tr[:2], y_tr[:2], m_tr[:2], raw_te[:1], y_te[:1], m_te[:1]
+        )

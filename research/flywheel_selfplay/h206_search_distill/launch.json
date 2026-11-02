@@ -57,13 +57,13 @@
   },
   "native_reference_contexts": 91,
   "native_reference_mean": 1.1377941898164525,
-  "native_gate_status": "NOT_RUN",
+  "native_gate_status": "CPU_SINGLETON_91_EXACT_PASS",
   "model_architecture_sha256": "622b7aea789058598b7bae01a30b5530d2b67d09c3906da5e894dba5971d2df2",
   "model_initial_state_sha256": null,
   "input_manifest_sha256": null,
   "fold_manifest_sha256": null,
   "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
-  "executor_scope": "CPU native-search/learner cell interfaces; scientific GPU coordinator NOT_QUALIFIED",
+  "executor_scope": "Actual pinned model factory + conditional phased CUDA study/controller source; science admission remains incomplete",
   "scientific_execution_enabled": false,
   "architecture": {
     "schema": "h206-student-width128-v1",
@@ -87,7 +87,7 @@
   "native_train_bridge": "first-10-TRAIN-rows-cyclic-zero-query-target-v1",
   "binding_status": "MISSING_PINS.md",
   "conditional_launch_authority": "gbw_0135_gpu_fused_redteam_codex.md",
-  "execution_admission": "PENDING_MODEL_INPUT_NATIVE91_STUDY_RUNTIME_AND_LEDGER",
+  "execution_admission": "PENDING_INPUT_CUDA_STUDY_RUNTIME_LEDGER_MERGED_SOURCE_QUEUE_RESOURCES",
   "recovered_bindings_sha256": "62e41c27478662eb94756953ae89668ab2717a5e0de6190a805664c3626bc5b6",
   "initial_checkpoint_ref": {
     "bucket": "veox-jopedime-learning-use2",
@@ -106,5 +106,12 @@
   "canonical_ledger_host": "xbabe3",
   "canonical_ledger_path": "/home/ubuntu/jope_plan/evidence/H206/campaign-ledger.json",
   "canonical_ledger_registered": true,
-  "accounting_status": "UNRECONCILED"
+  "accounting_status": "UNRECONCILED",
+  "full_study_implementation": "study.py + supervisor.py",
+  "actual_factory_implementation": "model.py, original constructor/strict-state qualification",
+  "native91_compatibility_inputs_sha256": "019049235b6c2f840f6c8c3f1f0d5b97cad6a114e6c25d6f165db6cf0401f4e6",
+  "cuda_execution_qualification": "NOT_RUN",
+  "native_gate_source_head": "15f365007f7c978af262184e108edc05cc09779d",
+  "native_gate_receipt_sha256": "37725a6ef19c165687ebd70f95c3c45b8c4e1f01ce13d6a7ee9410f5456e2a73",
+  "model_factory_cpu_qualification": "PASS"
 }

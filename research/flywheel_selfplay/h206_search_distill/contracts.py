@@ -181,6 +181,16 @@ class Scope:
         members = sorted(k for k in list(self._parent) if self.component(k) == root)
         return digest(members)
 
+    def admit_metadata(self, context_id, role):
+        """Authorize role/alias metadata before opening even a template body."""
+        row = self.roles["contexts"].get(context_id)
+        if row is None or row["role"] != role:
+            raise ValueError("context role differs from approved role manifest")
+        dataset, family = "dataset:" + row["dataset_id"], "family:" + row["family_id"]
+        if self.component(dataset) != self.component(family) or self.component(family) in self.protected:
+            raise ValueError("unjoined or transitively protected family")
+        return row
+
     def verify(self, context: Context, role: str):
         data_fields = ("context_id", "dataset_id", "family_id", "task", "role", "train", "cut_sha256")
         data_identity = {k: v for k, v in json.loads(canonical(asdict(context))).items() if k in data_fields}
