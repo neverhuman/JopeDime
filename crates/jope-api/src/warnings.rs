@@ -20,11 +20,15 @@ pub const WARNING_CODES: &[&str] = &[
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Severity {
+#[schemars(rename = "Severity")]
+pub enum WarningSeverity {
     Info,
     Warn,
     Error,
 }
+
+/// Backwards-compatible name for warning severity.
+pub type Severity = WarningSeverity;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -37,7 +41,7 @@ pub enum WarningState {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Warning {
     pub code: String,
-    pub severity: Severity,
+    pub severity: WarningSeverity,
     pub state: WarningState,
     pub host: bool,
     pub value: Option<f64>,

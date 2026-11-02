@@ -2,7 +2,7 @@
 //!
 //! HTTP adapters send [`Problem::CONTENT_TYPE`](crate::error::Problem::CONTENT_TYPE)
 //! and use the same status in the response and document. Batch clients use
-//! [`ErrorCode::exit_code`](crate::error::ErrorCode::exit_code).
+//! [`ProblemCode::exit_code`](crate::error::ProblemCode::exit_code).
 //! This module contains data only; transport and occurrence-specific retry
 //! decisions belong to the caller.
 
@@ -54,11 +54,12 @@ macro_rules! error_catalog {
     ($($variant:ident => ($wire:literal, $http:expr, $exit:expr, $retry:ident)),+ $(,)?) => {
         /// Every Appendix D code. There is no arbitrary-string/fallback variant.
         #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, JsonSchema)]
-        pub enum ErrorCode {
+        #[schemars(rename = "ErrorCode")]
+        pub enum ProblemCode {
             $(#[serde(rename = $wire)] $variant),+
         }
 
-        impl ErrorCode {
+        impl ProblemCode {
             /// Catalog order follows Appendix D, including the event-only row.
             pub const ALL: &'static [Self] = &[$(Self::$variant),+];
 
@@ -86,7 +87,7 @@ macro_rules! error_catalog {
             }
         }
 
-        impl<'de> Deserialize<'de> for ErrorCode {
+        impl<'de> Deserialize<'de> for ProblemCode {
             fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
                 // A code is a JSON string, never an externally tagged object.
                 let code = String::deserialize(deserializer)?;
@@ -125,7 +126,10 @@ error_catalog! {
     FitnessUndefined => ("FITNESS_UNDEFINED", None, None, NotApplicable),
 }
 
-impl std::fmt::Display for ErrorCode {
+/// Backwards-compatible name for the public problem catalog.
+pub type ErrorCode = ProblemCode;
+
+impl std::fmt::Display for ProblemCode {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter.write_str(self.as_str())
     }
@@ -150,7 +154,7 @@ pub struct Problem {
     pub detail: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub instance: Option<String>,
-    pub code: ErrorCode,
+    pub code: ProblemCode,
     pub retriable: bool,
     pub remedy: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
