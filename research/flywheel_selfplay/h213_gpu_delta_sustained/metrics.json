@@ -1,0 +1,254 @@
+{
+  "wave": "H213",
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "source_commit": "ae683dabb2a810b416cb6734bce216a4aa6d1016",
+  "attempt": 1,
+  "attempt_consumed": true,
+  "retry_allowed": false,
+  "start_utc": "2026-11-02T08:45:09Z",
+  "finish_utc": "2026-11-02T09:14:27.787060+00:00",
+  "elapsed_worker_seconds": 1752.357454971876,
+  "elapsed_supervisor_seconds": 1758.5586392879486,
+  "optimizer_updates": 3840,
+  "planned_updates": 3840,
+  "native91_mean": 1.1377941898164525,
+  "native91_bit_exact": true,
+  "selection_lock": true,
+  "A_scored": true,
+  "serving_promotion": false,
+  "U4": null,
+  "U4_reason": "No verified multi-proposal budget in this protocol.",
+  "resource_summary": {
+    "samples": 827,
+    "max_load1": 101.29736328125,
+    "max_load5": 62.6865234375,
+    "max_cpu_percent": 73.7,
+    "max_disk_used_fraction": 0.9359947013788534,
+    "min_free_bytes": 502836027392,
+    "min_available_ram_bytes": 77237243904,
+    "max_child_rss_bytes": 1960546304,
+    "max_load_over_seconds": 34.87033369904384,
+    "max_cpu_over_seconds": 0.0,
+    "load1_spike_samples": 17
+  },
+  "scientific_hypothesis_tested": true,
+  "contrasts": {
+    "DELTA_RAW": {
+      "per_seed_gain": [
+        -0.03477844681830256,
+        0.02111837417945084,
+        -0.005292729264646043
+      ],
+      "median_gain": -0.005292729264646043,
+      "ci95": [
+        -0.08650684710247593,
+        0.0815346427200461
+      ],
+      "p": 0.5738426157384262,
+      "harm": 0.424390243902439,
+      "positive_seeds": 1
+    },
+    "DELTA_SAFE": {
+      "per_seed_gain": [
+        0.007008392076468253,
+        0.02456585640416627,
+        -0.0010540949515571553
+      ],
+      "median_gain": 0.007008392076468253,
+      "ci95": [
+        -0.0011461646640584405,
+        0.018764069134263865
+      ],
+      "p": 0.07689231076892311,
+      "harm": 0.02926829268292683,
+      "positive_seeds": 2
+    },
+    "SHUF_SAFE": {
+      "per_seed_gain": [
+        -0.0012006835110468046,
+        0.0,
+        0.0
+      ],
+      "median_gain": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p": 1.0,
+      "harm": 0.00975609756097561,
+      "positive_seeds": 0
+    }
+  },
+  "elo_vs_r882": {
+    "DELTA_RAW": {
+      "per_seed": [
+        1531.8194598498076,
+        1549.900290288498,
+        1555.2301907651968
+      ],
+      "median": 1549.900290288498,
+      "ci95": [
+        1525.0283946676261,
+        1570.0197281243925
+      ]
+    },
+    "DELTA_SAFE": {
+      "per_seed": [
+        1501.6758260393499,
+        1503.135173540444,
+        1501.355720803422
+      ],
+      "median": 1501.6758260393499,
+      "ci95": [
+        1500.225952352294,
+        1504.067327562798
+      ]
+    },
+    "SHUF_SAFE": {
+      "per_seed": [
+        1498.813745708115,
+        1500.0,
+        1500.0
+      ],
+      "median": 1500.0,
+      "ci95": [
+        1500.0,
+        1500.0
+      ]
+    }
+  },
+  "adoption_counts": {
+    "DELTA_RAW": [
+      1170,
+      1181,
+      1188
+    ],
+    "DELTA_SAFE": [
+      25,
+      21,
+      18
+    ],
+    "SHUF_SAFE": [
+      4,
+      0,
+      0
+    ]
+  },
+  "adoption_rates": {
+    "DELTA_RAW": [
+      0.9598031173092699,
+      0.9688269073010665,
+      0.9745693191140279
+    ],
+    "DELTA_SAFE": [
+      0.020508613617719443,
+      0.017227235438884332,
+      0.014766201804757998
+    ],
+    "SHUF_SAFE": [
+      0.003281378178835111,
+      0.0,
+      0.0
+    ]
+  },
+  "val_reg_inner_oof": {
+    "R882": {
+      "context_mean_per_seed": [
+        1.423073434552299,
+        1.423073434552299,
+        1.423073434552299
+      ],
+      "equal_family_mean_per_seed": [
+        1.3853554329931828,
+        1.3853554329931828,
+        1.3853554329931828
+      ]
+    },
+    "DELTA_RAW": {
+      "context_mean_per_seed": [
+        1.4244194298327288,
+        1.4674999557877246,
+        1.4417044382903743
+      ],
+      "equal_family_mean_per_seed": [
+        1.35057698617488,
+        1.4064738071726335,
+        1.3800627037285367
+      ]
+    },
+    "DELTA_SAFE": {
+      "context_mean_per_seed": [
+        1.429147252202975,
+        1.4461990221581769,
+        1.421097328617844
+      ],
+      "equal_family_mean_per_seed": [
+        1.392363825069651,
+        1.409921289397349,
+        1.3843013380416256
+      ]
+    },
+    "SHUF_SAFE": {
+      "context_mean_per_seed": [
+        1.422044188056991,
+        1.423073434552299,
+        1.423073434552299
+      ],
+      "equal_family_mean_per_seed": [
+        1.384154749482136,
+        1.3853554329931828,
+        1.3853554329931828
+      ]
+    }
+  },
+  "selection_lock_sha256": "a4df56fdaf71e8cb5e21bc444bb4cc17811f30f17973decc0ee313bf2c647e12",
+  "frozen_hash": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+  "numeric": {
+    "policy": "<=4 numeric threads (OMP/MKL/OpenBLAS/torch intra-op); CUDA runtime/driver threads exempt",
+    "numeric_threads_upper_bound": 1,
+    "os_threads_diagnostic": 6,
+    "workers": [
+      {
+        "pid": 3701795,
+        "environment": {
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1"
+        },
+        "torch_intraop": 1,
+        "native_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1
+          },
+          {
+            "user_api": "openmp",
+            "internal_api": "openmp",
+            "num_threads": 1
+          }
+        ]
+      }
+    ]
+  },
+  "training_proofs": {
+    "fits": 30,
+    "updates": 3840,
+    "all_nonzero_gradients": true,
+    "all_changed_parameters": true,
+    "all_changed_future_forward": true,
+    "actual_device": "cuda:0",
+    "first_loss_mean": 0.2698586558224633,
+    "last_loss_mean": 0.28590184145917497
+  },
+  "postrun_pinned_files_unchanged": true,
+  "audit_summary": {
+    "opened": 1330,
+    "refused": 0,
+    "protected_reads": 0,
+    "list_values_are_counts": true,
+    "full_audit_location": "Original attempt1/metrics.json in exact-VersionId runtime archive and closeout manifest",
+    "canonical_json_sha256": "b823d0f29854486d5004344de576a0b6fa989709bcef8c383e65009a8ca97267"
+  }
+}
