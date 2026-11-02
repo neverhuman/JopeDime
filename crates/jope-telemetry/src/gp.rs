@@ -453,6 +453,13 @@ pub struct GenSummary {
     pub provenance_hwm: ProvenanceFracs,
 }
 
+impl GenSummary {
+    /// Returns generation entropy in natural logarithmic units.
+    pub fn op_entropy_nat(&self) -> Option<f64> {
+        self.op_entropy_nats
+    }
+}
+
 /// Per-context state that spans generations: best fitness, stagnation and the behavior archive.
 pub struct Tracker {
     cfg: Config,
