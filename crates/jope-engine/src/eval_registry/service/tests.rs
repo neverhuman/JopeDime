@@ -107,9 +107,9 @@ impl ExecutingSelfPeer {
             }
         }
         unsafe { libc::close(ready_pipe[1]) };
-        let mut status = 0;
+        let mut status = [0u8; 1];
         let read = loop {
-            let read = unsafe { libc::read(ready_pipe[0], (&mut status as *mut u8).cast(), 1) };
+            let read = unsafe { libc::read(ready_pipe[0], status.as_mut_ptr().cast(), 1) };
             if read < 0 && std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted
             {
                 continue;
@@ -117,14 +117,17 @@ impl ExecutingSelfPeer {
             break read;
         };
         unsafe { libc::close(ready_pipe[0]) };
-        if read != 1 || status != 1 {
+        if read != 1 || status[0] != 1 {
             unsafe { libc::kill(pid, libc::SIGKILL) };
             let mut child_status = 0;
             while unsafe { libc::waitpid(pid, &mut child_status, 0) } < 0
                 && std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted
             {
             }
-            panic!("executable peer setup failed: read={read}, status={status}");
+            panic!(
+                "executable peer setup failed: read={read}, status={}",
+                status[0]
+            );
         }
         Self(pid)
     }
