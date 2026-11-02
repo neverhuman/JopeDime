@@ -369,5 +369,3 @@ def _available_loader_workers() -> tuple[int, ...]:
         cpus = os.cpu_count() or 1
     maximum = min(8, max(0, cpus - 4))
     return tuple(value for value in AUTOTUNE_WORKERS if value <= maximum)
-
-

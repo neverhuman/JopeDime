@@ -126,5 +126,3 @@ def warm_start_preflight(config: TrainConfig) -> dict[str, Any]:
     config.run_dir.mkdir(parents=True, exist_ok=True)
     _atomic_json(config.run_dir / "warm-start-preflight.v1.json", report)
     return report
-
-
