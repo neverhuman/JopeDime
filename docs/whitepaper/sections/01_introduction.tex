@@ -136,8 +136,8 @@ and retained state are specified for audit. Pretrained components still supply p
   \item \textbf{One inference, one candidate.} For a new problem, the program
     writer emits one complete program ($\budget = 1$), with no retries, repairs,
     best-of-$N$, reranking or weight updates.
-  \item \textbf{Everything is counted,} including reasoning tokens and problem
-    encoding. One inference is one generation, not one forward pass.
+  \item \textbf{Everything is counted.} This includes reasoning tokens and
+    problem encoding. One inference is one generation, not one forward pass.
   \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
     to training rows is allowed. Any internal model or hyperparameter
     selection must be disclosed and counted in its compute budget. One
