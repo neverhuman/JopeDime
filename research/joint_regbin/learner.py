@@ -47,7 +47,7 @@ PAYLOAD_SCHEMA = "jope.joint-regbin.learner-payload/v1"
 SOURCE_PINS = {
     "runtime.py": "efd51ff4218bc9e7f81db552a3735aaa17723437039ab27db001ff12cdb471c8",
     "worker.py": "154a8a57177e0f3552601dba10d91c4b0bb7639ebf48edbb53bad24651682e97",
-    "candidate_builder.py": "dc3550d134615045e7baa3353670cdee0f2bbc7c8cb0a4acc76e1b0a17d7a6d9",
+    "candidate_builder.py": "25920e24fb22101e644bd1672f0b376093301821e3d5337a105aba9b7df67d02",
     "protocol.py": "b3bdb37fe2ef00f433b886c5864850f5b6d4da97118d3b55d549ea002b040612",
     "admission.py": "57c8c0850fb8517e2cad5ea54414054f9b1eca27a80a11c6168663e4ef47e3dd",
     "driver.py": "7473ce8252f9de879a62fdf8d31cc124be8af01ed797a5ac7a3edeb72baf291d",

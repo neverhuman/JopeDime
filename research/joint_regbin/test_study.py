@@ -183,15 +183,16 @@ def test_preparation_sampling_and_padding_preserve_only_train_rows():
     padded = gzip.decompress(prepare.padded_native_input(encoded))
     original = gzip.decompress(encoded)
     assert struct.unpack_from("<4sIIIB", padded) == (b"JTT1", 300, 10, 64, 2)
-    assert padded[17 : len(original)] == original[17:]
-    queries = np.frombuffer(padded[len(original) :], dtype="<f8").reshape(10, 65)
+    assert padded == original
+    queries = np.frombuffer(padded, dtype="<f8", offset=17 + 300).reshape(310, 65)[300:]
     assert np.array_equal(queries[:, :-1], selected_x[:10])
     assert np.count_nonzero(queries[:, -1]) == 0
     decoded_x, decoded_y = prepare.decode_train_table(encoded)
     assert np.array_equal(decoded_x, selected_x)
     assert np.array_equal(decoded_y, selected_y)
-    with pytest.raises(ValueError, match="TRAIN-only"):
-        prepare.decode_train_table(padded)
+    padded_x, padded_y = prepare.decode_train_table(padded)
+    assert np.array_equal(padded_x, selected_x)
+    assert np.array_equal(padded_y, selected_y)
     with pytest.raises(ValueError, match="each explicit binary class"):
         prepare.select_input(x, np.zeros(800), "binary", "fixed")
 

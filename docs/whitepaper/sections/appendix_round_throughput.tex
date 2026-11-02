@@ -1,8 +1,8 @@
 \subsection{Adapter utility and completed-round throughput}\label{app:round-throughput}
 
 \Cref{fig:fw-round-throughput} extends the retained operating record with
-20 later completed rounds, 2696--2715, captured on November 1, 2026 at
-06:54 UTC. The summary and admission journals agree on every candidate
+20 later completed rounds, 2696--2715, captured at 06:54 UTC on
+1 November 2026. The summary and admission journals agree on every candidate
 utility, recorded best, acceptance flag and reported best-round marker in this
 window. The source retains no adapter admission here.
 
@@ -10,17 +10,16 @@ Throughput counts distinct training contexts within each round and divides
 by that round's full logged wall time. These within-round counts do not
 establish the number of distinct tasks across rounds.
 This rate has a different denominator from training
-presentations per training second.
-
-The separate capture in \cref{fig:fw-live-round-throughput} provides a later
-operating window under the same completed-round denominator.
+presentations per training second. The separate capture in
+\cref{fig:fw-live-round-throughput} provides a later operating window under
+the same completed-round denominator.
 
 \begin{figure}[tb]
   \centering
   \includegraphics[width=\linewidth]{figures/fig_fw_live_round_throughput.pdf}
   \caption{\textbf{Completed-round throughput in a fresh live capture.}
-  Twenty consecutive rounds, 3576--3595, captured on November 2, 2026 at
-  09:54 UTC. Each point divides \num{1219} distinct training contexts by
+  Twenty consecutive rounds, 3576--3595, captured at 09:54 UTC on
+  2 November 2026. Each point divides \num{1219} distinct training contexts by
   that round's full wall time (contexts per second), including all work and
   waits. The dashed line divides the window's summed counts by summed time.
   Repeated contexts across rounds are not independent tasks; this is an
