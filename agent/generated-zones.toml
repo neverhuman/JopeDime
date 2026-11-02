@@ -29,11 +29,3 @@ source = "research/flywheel_selfplay/custody/MANIFEST.json and EXTERNAL.json"
 command = "python3 research/flywheel_selfplay/custody/verify_custody.py"
 read_only = true
 write_policy = "immutable_custody"
-
-# Frozen historical submission copied into the paper packet and byte-pinned there.
-[[zone]]
-path = "docs/paper/innovationzero/artifacts/sources/GPT6_Astra_Max.rs"
-source = "docs/paper/innovationzero/evidence/artifact-manifest.json"
-command = "bash docs/paper/innovationzero/scripts/check.sh"
-read_only = true
-write_policy = "immutable_evidence"
