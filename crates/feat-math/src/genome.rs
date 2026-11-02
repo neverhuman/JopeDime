@@ -3,6 +3,25 @@
 use crate::dsl::{parse_dsl, parse_portfolio, DslExpr, ParamValue, Stage};
 use crate::math_expr::MathExpr;
 use anyhow::{bail, Result};
+use std::fmt;
+
+/// A blend name outside the supported `nnls` kind, inspectable without parsing its message.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnsupportedBlendKind {
+    pub kind: String,
+}
+
+impl fmt::Display for UnsupportedBlendKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "blend: unsupported kind '{}' (supported kind: nnls)",
+            self.kind
+        )
+    }
+}
+
+impl std::error::Error for UnsupportedBlendKind {}
 
 /// Blend parameters of the explicit nested portfolio form. v1 pins the whole
 /// tuple (kind=nnls, folds=5, guard=clip); only `repeats` carries a choice.
@@ -45,7 +64,7 @@ fn parse_blend(stage: &Stage) -> Result<(usize, bool)> {
         None => {}
         Some(ParamValue::Str(s)) if s == "nnls" => {}
         Some(ParamValue::Str(s)) => {
-            bail!("blend: kind must be nnls (got '{s}'; caruana is not implemented in v1)")
+            return Err(anyhow::Error::new(UnsupportedBlendKind { kind: s.clone() }));
         }
         Some(_) => bail!("blend: kind must be nnls"),
     }
@@ -219,6 +238,14 @@ mod tests {
         ] {
             assert!(GenomeIr::parse(bad).is_err(), "{bad}");
         }
+        let error = GenomeIr::parse("(portfolio (member (pipe X (ridge))) (blend kind=caruana))")
+            .unwrap_err();
+        assert_eq!(
+            error.downcast_ref::<UnsupportedBlendKind>(),
+            Some(&UnsupportedBlendKind {
+                kind: "caruana".to_owned()
+            })
+        );
         // Members after the blend stage.
         assert!(GenomeIr::parse("(portfolio (blend) (member (pipe X (ridge))))").is_err());
         // repeats=1 accepted.
