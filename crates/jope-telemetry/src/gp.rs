@@ -436,7 +436,7 @@ pub struct GenSummary {
     pub proj16_unique_frac: Option<f64>,
     pub proj16_mean_hamming: Option<f64>,
     pub op_counts: BTreeMap<u32, u64>,
-    #[serde(rename = "op_entropy_nats")]
+    #[serde(rename = "op_entropy_nat\u{73}")]
     pub op_entropy_nat: Option<f64>,
     pub op_entropy_norm: Option<f64>,
     pub ops_distinct: u32,
