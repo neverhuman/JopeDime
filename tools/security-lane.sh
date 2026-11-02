@@ -2,11 +2,28 @@
 # Fail closed: security tools are required for the same local and CI entry point.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-for tool in actionlint gitleaks cargo npm; do
+for tool in actionlint gitleaks cargo npm python3 syft; do
   command -v "$tool" >/dev/null || { printf 'security lane requires %s\n' "$tool" >&2; exit 127; }
 done
 bash deploy/ci/actionlint-workflows.sh "$(pwd -P)"
 bash deploy/ci/secret-scan.sh
+python3 -B deploy/ci/verify-vendor-security.py --root "$(pwd -P)"
+syft version | grep -qF '1.40.0'
+sbom_dir="${JOPE_LANE_EVIDENCE:-target/security}"
+mkdir -p "$sbom_dir"
+sbom="$sbom_dir/jope.spdx.json"
+syft dir:. --exclude ./target --exclude ./.git --output "spdx-json=$sbom" >/dev/null
+python3 -B - "$sbom" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    document = json.load(stream)
+if not document.get("spdxVersion", "").startswith("SPDX-"):
+    raise SystemExit("Syft output is not a valid SPDX JSON document")
+if not isinstance(document.get("packages"), list):
+    raise SystemExit("Syft SPDX JSON has no package inventory")
+PY
 set -euo pipefail
 # Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
 # deliberately given no docker socket, and the binary is in the image anyway.
@@ -37,6 +54,20 @@ echo "deny graph: $(wc -l <<< "$graph") crates, optional-feature deps present"
 # Advisories are a blocking check too: fetch/update failure must remain failure,
 # and the committed deny.toml has no ignored advisories.
 cargo deny --locked --all-features check advisories bans licenses sources
+# The browser predictor is a standalone workspace with its own committed lockfile.
+# Scan its graph under the same root policy; the root workspace scan cannot cover it.
+browser_deny=(cargo deny --manifest-path web/browser-predict/Cargo.toml --config deny.toml --locked --all-features)
+browser_graph="$("${browser_deny[@]}" list --layout crate)"
+browser_missing=""
+for c in jope-browser-predict feat-math jope-runtime; do
+  grep -qE "^$c@" <<< "$browser_graph" || browser_missing="$browser_missing $c"
+done
+if [ -n "$browser_missing" ]; then
+  echo "cargo-deny is not seeing the standalone browser graph; missing:$browser_missing" >&2
+  exit 1
+fi
+echo "browser deny graph: $(wc -l <<< "$browser_graph") crates, browser/runtime deps present"
+"${browser_deny[@]}" check advisories bans licenses sources
 # Scan the committed frontend lock graph, including build/test dependencies.
 # This reads package-lock.json and does not require installing node_modules.
 npm --prefix web/training-dashboard audit --package-lock-only --audit-level=high
