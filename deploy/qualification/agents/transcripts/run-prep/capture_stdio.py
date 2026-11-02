@@ -146,6 +146,9 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
     fragments = {name: bytearray() for name in frames}
     outgoing = {"to_server": bytearray(), "to_client": bytearray()}
     interrupted = False
+    input_eof = False
+    actual_input_eof = False
+    readers = {}
     selector = selectors.PollSelector()
     blocking = {fd: os.get_blocking(fd) for fd in (0, 1)}
     old_handlers = {}
@@ -559,14 +562,91 @@ def self_test():
                     time.sleep(0.01)
                 self.assertTrue(ready.exists())
                 process.send_signal(signal.SIGTERM)
-                process.communicate(timeout=5)
-                self.assertEqual(process.returncode, 125)
+                self.assertEqual(process.wait(timeout=5), 125)
+                process.stdin.close()
+                process.stdout.close()
+                process.stderr.close()
                 self.assertIn("interrupted", self.receipt()["error"])
                 self.assertFalse(Path(f"/proc/{ready.read_text()}/stat").exists())
             finally:
                 if process.poll() is None:
                     process.kill()
                     process.communicate(timeout=5)
+
+        def run_signal_harness(self, mode, server_code, data=b"", seconds="2"):
+            harness = r'''import json, os, signal, sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[1]).parent))
+import capture_stdio as recorder
+mode, output, seconds, server_code = sys.argv[2:]
+if mode == "eof-term":
+    original_read = os.read
+    state = {"sent": False}
+    def read(fd, size):
+        chunk = original_read(fd, size)
+        if fd == 0 and not chunk and not state["sent"]:
+            state["sent"] = True
+            os.kill(os.getpid(), signal.SIGTERM)
+        return chunk
+    os.read = read
+elif mode == "second-term":
+    original_publish = recorder.publish_private_json
+    def publish(path, value):
+        if path.name != "capture.json":
+            return original_publish(path, value)
+        pending = path.with_name(path.name + ".pending")
+        descriptor = os.open(pending, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w") as stream:
+            json.dump(value, stream, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.kill(os.getpid(), signal.SIGTERM)
+        os.link(pending, path)
+        pending.unlink()
+    recorder.publish_private_json = publish
+sys.exit(recorder.record([sys.executable, "-c", server_code], Path(output), float(seconds), 1048576))
+'''
+            command = [
+                sys.executable,
+                "-B",
+                "-c",
+                harness,
+                str(Path(__file__).resolve()),
+                mode,
+                str(self.out),
+                seconds,
+                server_code,
+            ]
+            return subprocess.run(command, input=data, capture_output=True, timeout=5)
+
+        def test_eof_then_term_drains_frames_and_accepts_only_natural_server_zero(self):
+            server = (
+                f"import sys; data=sys.stdin.buffer.read(); "
+                f"assert data=={request!r}; sys.stdout.buffer.write({reply!r})"
+            )
+            result = self.run_signal_harness("eof-term", server, request)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, reply)
+            receipt = self.receipt()
+            self.assertTrue(receipt["complete"])
+            self.assertEqual(receipt["server_exit_code"], 0)
+            self.assertEqual(receipt["frames"], {"client_to_server": 1, "server_to_client": 1})
+            self.assertFalse((self.out / "capture.json.pending").exists())
+
+        def test_second_term_during_publication_preserves_incomplete_receipt(self):
+            self.out = Path(self.temp.name) / "second-term"
+            server = (
+                "import os,signal,time; "
+                "os.kill(os.getppid(),signal.SIGTERM); time.sleep(10)"
+            )
+            result = self.run_signal_harness("second-term", server, request, "0.2")
+            self.assertEqual(result.returncode, 125, result.stderr)
+            receipt = self.receipt()
+            self.assertFalse(receipt["complete"])
+            self.assertEqual(receipt["relay_exit_code"], 125)
+            self.assertTrue(receipt["error"])
+            self.assertFalse((self.out / "capture.json.pending").exists())
 
         def test_closed_output_consumer_refuses(self):
             code = f"import os,sys;sys.stdin.buffer.readline();os.write(1,{reply!r})"
