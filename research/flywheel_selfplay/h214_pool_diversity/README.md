@@ -1,22 +1,15 @@
 # H214 — pool diversity at fixed width16
 
-Preregistration and synthetic protocol tests only; no attempt launched and no
-H214 utility readout. See [PREREG.md](PREREG.md) and [manifest.json](manifest.json).
+Preregistered design: NATIVE16 vs FPS16-of64, exactly16 scored programs including
+the common native retrieved TRAIN parent. TEMP16 is NOT_RUN by the final
+coordinator ruling; Holm m=1. Frozen r882, three seeds, DL-Val91/19 families,
+zero updates. See [PREREG.md](PREREG.md) and [manifest.json](manifest.json).
 
-The comparison is NATIVE16 / FPS16-of64 / TEMP16, frozen r882, three fresh seeds,
-DL-Val91/19 families and exactly16 scored programs including the parent.
-The primary decision uses the median over seed-level equal-family gains,
-10,000 shared family bootstrap draws and Holm m=2; strict LCB95>0.001546.
+The executable adapter reuses merged H212 smoke/evaluator/predictor code.
+A separate supervisor enforces the xbabe1 CPU limits and fixed2h deadline.
+One real TRAIN smoke at the exact merged head must pass before attempt-001.
+The regression tests use synthetic inputs and fake native callbacks only.
 
-Launch is blocked until H212's real end-to-end smoke is merged and passes at
-the exact merged H214 head. The current pinned proposer has no temperature
-argument, and H212 N16 is4 anchors+16 proposals; the manifest records the
-required pre-outcome temperature and width resolutions. The code refuses an
-unsupported TEMP16 call and stale/incomplete smoke receipt. No approximate
-temperature substitute or silently altered control is permitted.
-
-The source currently supplies data-free selection/statistics and admission
-helpers, not a complete executable study runner. Reuse the fixed H212 runtime
-after its prerequisite merges, binding the exact source and frozen inputs
-before the single xbabe1 CPU attempt. No training, GPU, live-loop or protected
-data access is authorized. Final utility, CI and Elo remain unmeasured.
+No scientific attempt or H214 utility readout has occurred at registration.
+The two unchanged-main hygiene failures are explicitly nonblocking under
+hw_t0230_res08. Final utility, bootstrap CI and Elo remain unmeasured.

@@ -14924,7 +14924,17 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H214 synthetic controls: fixed16-parent-first dedup, normalized-proj16 farthest-point ordering/ties, equal-family median-over-seed estimator and shared bootstrap, strict margin/Holm acceptance, exact-head smoke and native-temperature refusal, instantaneous and sustained host guards. No study data, checkpoint or utility readout."
+      "scope": "H214 data-free controls: exact16 parent-first dedup/FPS ordering, equal-family median-over-seed bootstrap, strict gain/margin and Holm1, exact-head smoke, TEMP16 NOT_RUN refusal, instantaneous/sustained/invalid resource guards."
+    },
+    "python:research/flywheel_selfplay/h214_pool_diversity/test_runtime.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H214 synthetic runtime adapter proof: family-disjoint TRAIN bank/parent tie, only selected16-wide panels evaluated, explicit context identity with feature-only records, exact native order/coverage and no timeout-to-gate-failure relabel. No actual data/model/Rust worker."
     }
   },
   "lanes": {

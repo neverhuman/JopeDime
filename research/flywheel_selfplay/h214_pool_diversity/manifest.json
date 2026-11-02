@@ -2,21 +2,20 @@
   "schema": "jope.h214.pool-diversity/v1",
   "status": "PREREGISTRATION_ONLY",
   "owner": "luna_v1_res08",
-  "authority": "/home/ubuntu/nudges/hw_t0200_res08.md",
+  "authority": [
+    "/home/ubuntu/nudges/hw_t0200_res08.md",
+    "/home/ubuntu/nudges/hw_t0230_res08.md"
+  ],
   "claim": "/home/ubuntu/jope_plan/ns/receipts/H214_claim.txt",
   "arms": [
     "NATIVE16",
-    "FPS16",
-    "TEMP16"
+    "FPS16"
   ],
   "scored_width": 16,
   "parent_slot": 0,
   "new_proposals_scored": 15,
   "native_generation_width": 16,
   "fps_generation_width": 64,
-  "temperature": 2,
-  "temperature_reference": 1,
-  "reviewed_temperature_source_sha256": null,
   "seeds": [
     214101,
     214102,
@@ -58,17 +57,15 @@
     "h212_runner_sha256": "8c27d619d3bbc4b8c3772e6acf91fa0ae0e1b51d4d35a029ca52fe57853ce7c1"
   },
   "prelaunch_resolutions": [
-    "merged H212 smoke and real PASS at exact merged H214 head",
-    "reviewed native temperature hook/source pin; current pinned API has none",
-    "coordinator records fixed16-total interpretation versus H2124+16 control"
+    "real merged-H212 TRAIN smoke PASS at exact merged H214 head"
   ],
   "decision": {
     "median_gain_gt": 0,
     "lcb95_gt": 0.001546,
-    "holm_m": 2,
+    "holm_m": 1,
     "holm_adjusted_p_lt": 0.05,
     "ties": "REJECT",
-    "incomplete_arm": "INCOMPLETE; never drop or reduce m"
+    "incomplete_arm": "INCOMPLETE if executable FPS16/NATIVE16 panel, seed or family missing"
   },
   "resources": {
     "host": "xbabe1",
@@ -85,11 +82,20 @@
     "host_cpu_pct_max": 85,
     "load_fraction_max": 0.85,
     "high_load1_or_cpu_sustained_seconds": 300,
-    "load5_stop": "immediate"
+    "load5_stop": "immediate",
+    "wall_budget_start": "real TRAIN smoke; unchanged deadline carried into study"
   },
   "outcome": {
     "status": "NOT_RUN",
     "attempts_consumed": 0,
     "utility_readouts": 0
-  }
+  },
+  "dropped_arms": {
+    "TEMP16": {
+      "status": "NOT_RUN",
+      "reason": "No native temperature hook; final coordinator ruling; no surrogate"
+    }
+  },
+  "parent_definition": "Native first retrieved TRAIN champion: family-disjoint landmark12 squared-distance minimum, programSHA tiebreak; same parent in both16-total pools",
+  "derived_val_cv_views": "H214-owned envelopes from pinned train-only H50 tables through exact H58 function; frozen H58 cache unchanged"
 }

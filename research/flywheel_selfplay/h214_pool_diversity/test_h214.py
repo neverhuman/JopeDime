@@ -113,16 +113,16 @@ def test_estimator_takes_median_over_seeds_and_shared_family_bootstrap():
 )
 def test_strict_threshold_ties_never_advance(lower, median, pvalue):
     row = dict(median_gain=median, ci95=[lower, 0.2], p_margin=pvalue)
-    assert a.decide({"FPS16": row, "TEMP16": row})["verdict"] == "NO_ADVANCE"
+    assert a.decide({"FPS16": row})["verdict"] == "NO_ADVANCE"
 
 
-def test_holm_uses_both_registered_contrasts_and_missing_arm_is_incomplete():
+def test_holm_one_registered_contrast_and_missing_arm_is_incomplete():
     good = dict(median_gain=0.02, ci95=[0.01, 0.03], p_margin=0.03)
-    weak = dict(median_gain=0.03, ci95=[0.02, 0.04], p_margin=0.04)
-    assert a.decide({"FPS16": good})["verdict"] == "INCOMPLETE"
-    result = a.decide({"FPS16": good, "TEMP16": weak})
-    assert result["holm_p"] == {"FPS16": 0.06, "TEMP16": 0.06}
-    assert result["accepted_arms"] == []
+    assert a.decide({})["verdict"] == "INCOMPLETE"
+    result = a.decide({"FPS16": good})
+    assert result["holm_p"] == {"FPS16": 0.03}
+    assert result["accepted_arms"] == ["FPS16"]
+    assert result["holm_m"] == 1
 
 
 def test_smoke_must_be_complete_and_bound_to_exact_source_head():
@@ -145,23 +145,15 @@ def test_smoke_must_be_complete_and_bound_to_exact_source_head():
             p.require_smoke(dict(row, **changed), "a" * 40)
 
 
-def test_native_temperature_is_required_and_never_emulated():
+def test_TEMP16_is_not_executable_and_never_calls_native_proposer():
     calls = []
 
     def native(**kwargs):
         calls.append(kwargs)
-        return population()[1:17]
 
-    with pytest.raises(ValueError, match="native temperature hook"):
-        p.propose_arm(native, {}, "TEMP16", "a" * 64)
+    with pytest.raises(ValueError, match="TEMP16 is NOT_RUN"):
+        p.propose_arm(native, {}, "TEMP16")
     assert calls == []
-
-    def supported(*, n_proposals, temperature=1.0):
-        calls.append((n_proposals, temperature))
-        return population()[1 : 1 + n_proposals]
-
-    assert len(p.propose_arm(supported, {}, "TEMP16", "a" * 64)) == 16
-    assert calls == [(16, 2.0)]
 
 
 @pytest.mark.parametrize(

@@ -13,9 +13,8 @@ from research.flywheel_selfplay.h212_pool_width.analysis import (
 )
 
 SEEDS = (214101, 214102, 214103)
-ARMS = ("NATIVE16", "FPS16", "TEMP16")
+ARMS = ("NATIVE16", "FPS16")
 WIDTH = 16
-TEMPERATURE = 2.0
 BOOT_SEED = 214150
 BOOT_DRAWS = 10_000
 MIN_GAIN = 0.001546
@@ -106,8 +105,8 @@ def family_gain_stats(gain, families: list[str]) -> dict:
 
 
 def decide(stats: dict) -> dict:
-    if set(stats) != {"FPS16", "TEMP16"}:
-        return {"verdict": "INCOMPLETE", "reason": "both registered contrasts required"}
+    if set(stats) != {"FPS16"}:
+        return {"verdict": "INCOMPLETE", "reason": "registered FPS16 contrast required"}
     for row in stats.values():
         numbers = [row["median_gain"], *row["ci95"], row["p_margin"]]
         if not np.isfinite(numbers).all() or row["ci95"][0] > row["ci95"][1]:
@@ -123,6 +122,6 @@ def decide(stats: dict) -> dict:
     return {
         "verdict": "ADVANCE" if accepted else "NO_ADVANCE",
         "accepted_arms": sorted(accepted),
-        "holm_m": 2,
+        "holm_m": 1,
         "holm_p": adjusted,
     }

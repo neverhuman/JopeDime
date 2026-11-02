@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import inspect
 import math
-import re
 
 from research.flywheel_selfplay.h214_pool_diversity import analysis as stat
 
@@ -26,27 +24,10 @@ def require_smoke(receipt: dict, source_commit: str) -> None:
         )
 
 
-def require_temperature(proposer, reviewed_source_sha256: str | None) -> None:
-    parameter = inspect.signature(proposer).parameters.get("temperature")
-    if (
-        not isinstance(reviewed_source_sha256, str)
-        or re.fullmatch("[0-9a-f]{64}", reviewed_source_sha256) is None
-        or parameter is None
-        or parameter.kind
-        not in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
-    ):
-        raise ValueError(
-            "TEMP16 requires a reviewed native temperature hook; no fallback"
-        )
-
-
-def propose_arm(proposer, arguments: dict, arm: str, temperature_source_sha256=None):
+def propose_arm(proposer, arguments: dict, arm: str):
     if arm not in stat.ARMS:
-        raise ValueError("unregistered H214 arm")
+        raise ValueError("unregistered H214 arm; TEMP16 is NOT_RUN by owner ruling")
     options = dict(arguments, n_proposals=64 if arm == "FPS16" else 16)
-    if arm == "TEMP16":
-        require_temperature(proposer, temperature_source_sha256)
-        options["temperature"] = stat.TEMPERATURE
     result = proposer(**options)
     if len(result) != options["n_proposals"]:
         raise ValueError("native proposal output omitted registered generation width")
