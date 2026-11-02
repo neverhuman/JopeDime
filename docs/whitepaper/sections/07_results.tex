@@ -245,7 +245,7 @@ across seeds and summarize the median seed gain. Reported intervals are
 These studies reuse a development population; they are not independent
 replications.
 
-\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h195_blend025_kernel_confirm/README.md}{\textbf{Calibrated blend.}}
+\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L19}{\textbf{Calibrated blend.}}
 A calibrated tree prior receives weight $0.25$ in a cost-space blend with
 the reference adapter. Its primary endpoint is the maximum utility among
 four revealed and four lowest-cost unrevealed candidates, rather than a
@@ -256,7 +256,7 @@ Family harm below $-0.01$ is $7.3\%$ ($15/205$).
 The result is a \textbf{candidate}, with no adoption and zero adapter
 optimizer updates; the tree prior was fitted.
 
-\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h197_pcgc/README.md}{\textbf{Per-context clipping.}}
+\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L50}{\textbf{Per-context clipping.}}
 Clipping each context's gradient before averaging, with 40 updates per
 trajectory, gives utility gain $-0.02510$
 ($[-0.05128,+0.00009]$; $p=0.9743$; $0/3$ positive seeds).
@@ -264,7 +264,7 @@ Elo is $1485.63$ (lift $-14.37$, 95\% interval $[-24.34,-4.38]$).
 Family harm below zero is $46.83\%$, and the treatment does not strictly
 beat its shuffled-factor placebo: \textbf{NO\_ADVANCE}.
 
-\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h198_ttt/README.md}{\textbf{Revealed-only adaptation.}}
+\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L81}{\textbf{Revealed-only adaptation.}}
 Selection on a separate panel chose one SGD step at learning rate
 $10^{-5}$ in all $15/15$ cells. At that locked setting, adaptation
 changes scores in $1{,}219/1{,}219$ contexts but changes no selected
@@ -275,7 +275,7 @@ The verdict is \textbf{NO\_ADVANCE (inert treatment)} within the tested
 one-to-five-step, $10^{-5}$--$10^{-4}$ learning-rate grid; it does not
 exclude effective adaptation at larger budgets.
 
-\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h201_strict_admission/README.md}{\textbf{Admission audit.}}
+\href{https://github.com/neverhuman/JopeDime/blob/2b4014b7c3036f2b23bba92a0593b76242ed6e90/docs/whitepaper/development_results.sources.json#L112}{\textbf{Admission audit.}}
 The sole primary attempt is \textbf{INCOMPLETE}, with formal verdict
 \textbf{INCONCLUSIVE}: one of $91$ choices in $19$ development-validation
 families differs from its archived choice, failing the native parity gate.
