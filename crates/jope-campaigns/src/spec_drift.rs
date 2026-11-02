@@ -239,17 +239,17 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     // REPORTED rather than merely unseen; fixing them is a separate change owned
     // by whoever runs those campaigns.
     (
-        "crates/jope-campaigns/src/test_adaptive/binary42.rs",
+        "crates/jope-campaigns/src/test_adaptive/binary42/staging.rs",
         "submit_canary",
         None,
     ),
     (
-        "crates/jope-campaigns/src/test_adaptive/binary42.rs",
+        "crates/jope-campaigns/src/test_adaptive/binary42/staging.rs",
         "submit_canary_at",
         None,
     ),
     (
-        "crates/jope-campaigns/src/test_adaptive/binary42.rs",
+        "crates/jope-campaigns/src/test_adaptive/binary42/execution.rs",
         "scq_spec",
         None,
     ),

@@ -643,6 +643,17 @@ crates/jope-campaigns/src/test_adaptive/aggressive/tests.rs
 crates/jope-campaigns/src/test_adaptive/aggressive/validation.rs
 crates/jope-campaigns/src/test_adaptive/aggressive/views.rs
 crates/jope-campaigns/src/test_adaptive/binary42.rs
+crates/jope-campaigns/src/test_adaptive/binary42/campaign.rs
+crates/jope-campaigns/src/test_adaptive/binary42/campaign_setup.rs
+crates/jope-campaigns/src/test_adaptive/binary42/confirmation.rs
+crates/jope-campaigns/src/test_adaptive/binary42/execution.rs
+crates/jope-campaigns/src/test_adaptive/binary42/generation.rs
+crates/jope-campaigns/src/test_adaptive/binary42/indexes.rs
+crates/jope-campaigns/src/test_adaptive/binary42/publication.rs
+crates/jope-campaigns/src/test_adaptive/binary42/staging.rs
+crates/jope-campaigns/src/test_adaptive/binary42/tests.rs
+crates/jope-campaigns/src/test_adaptive/binary42/validation.rs
+crates/jope-campaigns/src/test_adaptive/binary42/worker.rs
 crates/jope-campaigns/src/test_adaptive/island_extension.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60/evolution.rs
