@@ -14,6 +14,9 @@ pub(crate) fn parameter_hash(vs: &nn::VarStore) -> Result<String> {
 }
 pub(super) fn hash_parameter_values(h: &mut sha2::Sha256, values: &[f32]) {
     use sha2::Digest;
+    #[cfg(target_endian = "little")]
+    h.update(bytemuck::cast_slice(values));
+    #[cfg(target_endian = "big")]
     for value in values {
         h.update(value.to_le_bytes());
     }
