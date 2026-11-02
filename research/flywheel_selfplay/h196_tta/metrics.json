@@ -228,5 +228,18 @@
   "dope_sha256_after": null,
   "serving_promotion": false,
   "next_attempt_authorized": false,
-  "closeout_self_merge_authorized": false
+  "closeout_self_merge_authorized": false,
+  "postrun_diagnosis": {
+    "file": "diagnosis.json",
+    "status": "COMPLETE",
+    "scope": "native-score harness diagnosis only; no efficacy outcome",
+    "batch_shape_reproduction": true,
+    "weight_drift_observed": false,
+    "custody_manifest": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/astra-t0305/diagnosis/manifest.json",
+      "version_id": "ABVDCUsSrqS1auWGjdEGjrSToKFZ9vAX",
+      "sha256": "811a5040ae3471d10bee509edfc565d41fb056c74ced864c2d94ef2be1911380",
+      "bytes": 39738
+    }
+  }
 }
