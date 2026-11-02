@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-v3-cli-is-coverage-inventoried-and-tests-pin-checkpoint-interface owner=jope-campaigns expires=2027-04-01
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
