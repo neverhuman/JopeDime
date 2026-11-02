@@ -1191,6 +1191,7 @@
     "feature:jope-telemetry/python": {
       "discovery": {
         "dependencies": [
+          "dep:jope-datasets",
           "dep:pyo3"
         ],
         "kind": "feature"
@@ -1199,7 +1200,7 @@
       "lanes": [
         "rust-check"
       ],
-      "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; jope-parallel telemetry feature is checked without enabling the neural/LibTorch feature."
+      "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; the Python extension includes jope-datasets without enabling the neural/LibTorch feature."
     },
     "feature:starforge/cuda": {
       "discovery": {
