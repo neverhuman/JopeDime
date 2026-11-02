@@ -75,7 +75,7 @@ pub fn tools() -> Vec<Value> {
         }),
         json!({
             "name": "preview_stale_retirement",
-            "description": "Preview stale holds/retirements without changing scheduler state.",
+            "description": "Preview held or unstarted queue work selected for retirement without changing scheduler state.",
             "inputSchema": empty_schema()
         }),
         json!({
