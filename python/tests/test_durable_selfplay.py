@@ -34,8 +34,6 @@ from test_exact_service import loaded_bundle, record_starting  # noqa: E402
 from test_exact_status import service_is_stale  # noqa: E402
 from test_exact_wave import wave_seed  # noqa: E402
 
-import jope.research
-
 
 def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -438,7 +436,13 @@ def test_runtime_bundle_contains_the_complete_prime_python_package():
 
 
 def test_deployment_explicitly_restarts_already_active_services():
-    deploy = Path(jope.research.__file__).parent / "deploy_selfplay_bundle.py"
+    deploy = (
+        Path(__file__).resolve().parents[1]
+        / "test-support"
+        / "jope"
+        / "research"
+        / "deploy_selfplay_bundle.py"
+    )
     source = deploy.read_text()
     assert '["systemctl", "--user", "enable", *UNITS]' in source
     assert '["systemctl", "--user", "restart", *UNITS]' in source
