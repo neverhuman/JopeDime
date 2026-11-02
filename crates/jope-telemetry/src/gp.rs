@@ -436,7 +436,8 @@ pub struct GenSummary {
     pub proj16_unique_frac: Option<f64>,
     pub proj16_mean_hamming: Option<f64>,
     pub op_counts: BTreeMap<u32, u64>,
-    pub op_entropy_nats: Option<f64>,
+    #[serde(rename = "op_entropy_nats")]
+    pub op_entropy_nat: Option<f64>,
     pub op_entropy_norm: Option<f64>,
     pub ops_distinct: u32,
     pub ops_unused: Option<u32>,
@@ -451,6 +452,51 @@ pub struct GenSummary {
     pub provenance_population: ProvenanceFracs,
     pub provenance_passers: ProvenanceFracs,
     pub provenance_hwm: ProvenanceFracs,
+}
+
+impl GenSummary {
+    /// Returns generation entropy in natural logarithmic units.
+    pub fn op_entropy_nat(&self) -> Option<f64> {
+        self.op_entropy_nat
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn test_gen_summary(context: &str, generation: u32, unique: f64) -> GenSummary {
+    GenSummary {
+        schema: GEN_SCHEMA.into(),
+        context: context.into(),
+        round: 0,
+        generation,
+        pop_size: 10,
+        candidates_truncated: 0,
+        genomes_truncated: 0,
+        unique_genotype_frac: Some(unique),
+        dedup: Default::default(),
+        dedup_reject_frac: None,
+        edit_distance_pairs: 0,
+        edit_distance_mean: None,
+        edit_distance_p10: None,
+        parent_child_hist: [0; 8],
+        behavior: BehaviorStats::default(),
+        proj16_unique_frac: None,
+        proj16_mean_hamming: None,
+        op_counts: Default::default(),
+        op_entropy_nat: None,
+        op_entropy_norm: None,
+        ops_distinct: 0,
+        ops_unused: None,
+        edit_ops: Default::default(),
+        size_clauses: Quantiles::default(),
+        complexity: Quantiles::default(),
+        status: StatusCounts::default(),
+        fitness_passers: Quantiles::default(),
+        best_fitness: None,
+        gens_since_improved: 0,
+        provenance_population: ProvenanceFracs::default(),
+        provenance_passers: ProvenanceFracs::default(),
+        provenance_hwm: ProvenanceFracs::default(),
+    }
 }
 
 /// Per-context state that spans generations: best fitness, stagnation and the behavior archive.
@@ -529,7 +575,7 @@ impl Tracker {
             }
         }
         let total_ops: u64 = op_counts.values().sum();
-        let op_entropy_nats = (total_ops > 0).then(|| {
+        let op_entropy_nat = (total_ops > 0).then(|| {
             -op_counts
                 .values()
                 .map(|&k| {
@@ -539,7 +585,7 @@ impl Tracker {
                 .sum::<f64>()
         });
         let ops_distinct = op_counts.len() as u32;
-        let op_entropy_norm = match (op_entropy_nats, self.cfg.op_vocab_size) {
+        let op_entropy_norm = match (op_entropy_nat, self.cfg.op_vocab_size) {
             (Some(h), Some(v)) if v > 1 => Some(h / (v as f64).ln()),
             _ => None,
         };
@@ -613,7 +659,7 @@ impl Tracker {
             proj16_unique_frac,
             proj16_mean_hamming,
             op_counts,
-            op_entropy_nats,
+            op_entropy_nat,
             op_entropy_norm,
             ops_distinct,
             ops_unused,
@@ -874,6 +920,16 @@ impl SplitMix64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn entropy_field_rename_preserves_telemetry_wire_key() {
+        let mut summary = test_gen_summary("test", 1, 0.5);
+        summary.op_entropy_nat = Some(0.75);
+
+        let value = serde_json::to_value(summary).expect("serialize generation summary");
+        assert_eq!(value["op_entropy_nats"], 0.75);
+        assert!(value.get("op_entropy_nat").is_none());
+    }
 
     #[test]
     fn parse_matches_python_reference_cases() {

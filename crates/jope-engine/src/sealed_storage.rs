@@ -329,13 +329,13 @@ mod tests {
     }
 
     fn offer_descriptors(stream: &UnixStream, file: &fs::File, marker: u8, count: usize) {
-        use nix::sys::socket::{sendmsg, ControlMessage, MsgFlags, UnixAddr};
+        use nix::sys::socket::{sendmsg, ControlMessage, MsgFlags, SockaddrStorage};
         use std::io::IoSlice;
 
         let byte = [marker];
         let descriptors = vec![file.as_raw_fd(); count];
         assert_eq!(
-            sendmsg::<UnixAddr>(
+            sendmsg::<SockaddrStorage>(
                 stream.as_raw_fd(),
                 &[IoSlice::new(&byte)],
                 &[ControlMessage::ScmRights(&descriptors)],

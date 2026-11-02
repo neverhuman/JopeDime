@@ -5,7 +5,7 @@
 //! `out_norm` maps every hidden state to a vector of ones, so the tied projection returns each
 //! `token_emb` row sum and the next-token logits do not depend on context, position or history.
 //! Row `t` is `[logit(t), 0, ..., 0]`, so a fixture sets every token's logit exactly, including
-//! NaN, ±Inf and preference orders whose adjacent ranks are 1000 nats apart (every non-preferred
+//! NaN, ±Inf and preference orders separated by 1000 logit units (every non-preferred
 //! weight underflows to exactly zero in f64, which makes decoding deterministic). A single large
 //! entry keeps the embedded input well conditioned for LayerNorm; spreading the logit evenly
 //! over the row (equal large entries, near-zero variance) produced NaN hidden states.
@@ -100,7 +100,7 @@ fn fixed_logit_model(max_seq: usize, logit: impl Fn(usize) -> f32) -> PolicyMode
 }
 
 /// Deterministic logits: `preferred` tokens first, in order, then every other token by
-/// descending id; adjacent ranks are 1000 nats apart.
+/// descending id; adjacent ranks are separated by 1000 logit units.
 fn ranked(preferred: &[usize]) -> impl Fn(usize) -> f32 + '_ {
     move |t| match preferred.iter().position(|&p| p == t) {
         Some(rank) => -1000.0 * rank as f32,
