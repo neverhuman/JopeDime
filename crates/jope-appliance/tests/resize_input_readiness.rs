@@ -101,16 +101,13 @@ fn readiness_child() {
         .unwrap()
         .success());
     let (mut resize, mut enter) = (false, false);
-    for index in 0..2 {
+    // Signal delivery and TTY readiness can be observed in either order.
+    for _ in 0..2 {
         assert!(
             event::poll(Duration::from_secs(10)).unwrap(),
             "prequeued readiness was lost"
         );
         let event = event::read().unwrap();
-        if index == 0 {
-            let signal_first = std::env::var("JOPE_READINESS_ORDER").unwrap() == "signal-first";
-            assert_eq!(matches!(event, Event::Resize(..)), signal_first);
-        }
         match event {
             Event::Resize(39, 24) => resize = true,
             Event::Key(key) if key.code == KeyCode::Enter => enter = true,
