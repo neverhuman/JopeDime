@@ -1310,6 +1310,7 @@ crates/jope-engine/tests/teacher_counterfactuals.rs
 crates/jope-engine/tests/trainer_topology.rs
 crates/jope-engine/tests/training.rs
 crates/jope-engine/tests/training_ancestry.rs
+crates/jope-engine/tests/training_ancestry/scenario_tests.rs
 crates/jope-engine/tests/training_inputs.rs
 crates/jope-engine/tests/view_contracts.rs
 crates/jope-learning/Cargo.toml
