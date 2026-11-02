@@ -14,7 +14,8 @@ import os
 import re
 import subprocess
 import sys
-import types
+import importlib.machinery
+import importlib.util
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -79,12 +80,144 @@ def regular(path):
     return p
 
 
-def module(name, code, filename):
-    m = types.ModuleType(name)
-    m.__file__ = str(filename)
-    sys.modules[name] = m
-    exec(compile(code, str(filename), "exec"), m.__dict__)
-    return m
+FROZEN_SOURCE = "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+# Exact reviewed dependency bytes. Changing a dependency requires a reviewed pin update.
+MODULE_PINS = {
+    "common": (
+        "deploy/qualification/v1.0/providers/common.py",
+        "0df9807cf0438df01b39e105d4870008da0876002583dadc94fcc0d76e7fcfda",
+        True,
+    ),
+    "m3_full": (
+        "deploy/qualification/v1.0/providers/m3_full.py",
+        "454cab4fb5ded27167a6437ce44e66a41d665c4749de574a9868e59b01b4957f",
+        True,
+    ),
+    "_q1_waiver_gates": (
+        "deploy/qualification/v1.0/gates_receipt.py",
+        "d78c6fc3f8e9c30cdd2164ca4d4a6c3268db61498f08a75d3572b6fa20ce70a9",
+        False,
+    ),
+    "q1_bindings": (
+        BASE + "harness/q1_bindings.py",
+        "005ba5824db317ca3c8a2dcda5569e7c7479353fabb10c4abe567414fd4d235e",
+        False,
+    ),
+    "q1": (
+        BASE + "harness/q1.py",
+        "3b1b23739de2014f10bc9741baf7db98ba960fedb932507ad6087ae0ac880011",
+        False,
+    ),
+    "q1_cut": (
+        BASE + "harness/q1_cut.py",
+        "1ab459f42b945b685fe28c064559a5fc5ac2c1991a67e69809678c27d9505e9d",
+        False,
+    ),
+    "q1_dedup": (
+        BASE + "harness/q1_dedup.py",
+        "c19e253ccfe7b0c02cb00ba9218451723d76b9f15fbca96a2f869446232e7653",
+        True,
+    ),
+}
+
+
+def _authorize_module_source(source, frozen):
+    require(
+        isinstance(source, str) and re.fullmatch(r"[0-9a-f]{40}", source),
+        "full module source SHA required",
+    )
+    if frozen:
+        require(source == FROZEN_SOURCE, "module requires the frozen compiled source")
+    else:
+        try:
+            git("merge-base", "--is-ancestor", FROZEN_SOURCE, source)
+            git("merge-base", "--is-ancestor", source, "origin/main")
+        except subprocess.CalledProcessError as error:
+            raise ValueError(
+                "module metadata source is not reviewed main ancestry"
+            ) from error
+
+
+def _module_filename(name, source, relative, filename):
+    """Allow only the existing canonical or relocated scientific-asset context."""
+    filename = Path(filename)
+    require(
+        filename.is_absolute()
+        and ".." not in filename.parts
+        and not any(p.is_symlink() for p in (filename, *filename.parents)),
+        "unsafe module filename",
+    )
+    if name in {"common", "m3_full", "_q1_waiver_gates"}:
+        require(
+            filename == REPO / relative, "module filename differs from fixed Git path"
+        )
+    else:
+        require(
+            filename.is_relative_to(E),
+            "module filename outside original publisher state",
+        )
+        parts = filename.relative_to(E).parts
+        require(
+            len(parts) in (4, 6)
+            and parts[0] in {"preview", "frozen"}
+            and parts[1] == FROZEN_SOURCE
+            and parts[-2:] == ("validation-inputs", Path(relative).name),
+            "unreviewed module asset context",
+        )
+        if len(parts) == 6:
+            require(parts[2] == "metadata", "module metadata context required")
+            _authorize_module_source(parts[3], False)
+            require(
+                name == "q1_dedup" or parts[3] == source,
+                "module metadata context/source differs",
+            )
+        else:
+            require(source == FROZEN_SOURCE, "relocated module source differs")
+    return filename
+
+
+class _PinnedGitLoader(importlib.machinery.SourceFileLoader):
+    """Standard import protocol over verified Git bytes, with no disk/cache input."""
+
+    def __init__(self, name, filename, data, expected_sha256):
+        super().__init__(name, str(filename))
+        self._data = data
+        self._expected_sha256 = expected_sha256
+
+    def path_stats(self, path):
+        # No filesystem timestamp means importlib never accepts or writes bytecode.
+        raise OSError("filesystem source and bytecode caches are not inputs")
+
+    def get_data(self, path):
+        if path != self.path:
+            raise OSError("only the fixed source path is admitted")
+        require(sha(self._data) == self._expected_sha256, "pinned module bytes changed")
+        return self._data
+
+
+def module(name, source, filename):
+    """Import one allowlisted, source-authorized and content-pinned dependency."""
+    require(name in MODULE_PINS, "unreviewed module name")
+    relative, expected_sha256, frozen = MODULE_PINS[name]
+    _authorize_module_source(source, frozen)
+    filename = _module_filename(name, source, relative, filename)
+    data = raw(source, relative)
+    require(sha(data) == expected_sha256, "reviewed module Git bytes differ")
+    loader = _PinnedGitLoader(name, filename, data, expected_sha256)
+    spec = importlib.util.spec_from_loader(name, loader)
+    require(spec is not None, "module import specification unavailable")
+    value = importlib.util.module_from_spec(spec)
+    existed, previous = name in sys.modules, sys.modules.get(name)
+    sys.modules[name] = value
+    try:
+        loader.exec_module(value)
+    except BaseException:
+        if existed:
+            sys.modules[name] = previous
+        else:
+            sys.modules.pop(name, None)
+        raise
+    return value
 
 
 def require(value, message):
@@ -313,9 +446,9 @@ def validate_runtime_receipt(receipt, plan, pin, metadata_source):
     try:
         for name in names[:2]:
             path = "deploy/qualification/v1.0/providers/" + name + ".py"
-            module(name, raw(source, path), REPO / path)
+            module(name, source, REPO / path)
         path = "deploy/qualification/v1.0/gates_receipt.py"
-        adapter = module(names[2], raw(metadata_source, path), REPO / path)
+        adapter = module(names[2], metadata_source, REPO / path)
         waiver = adapter._m3_waiver(
             result, regular(receipt["m3_waiver_ruling"]), "v1.0.0"
         )
@@ -503,7 +636,7 @@ def regenerate(preview=False, source_override=None, metadata_source=None):
     inputs = []
     bindings = module(
         "q1_bindings",
-        raw(code_source, BASE + "harness/q1_bindings.py"),
+        code_source,
         validation / "q1_bindings.py",
     )
     for name, path in artifacts.items():
@@ -536,10 +669,8 @@ def regenerate(preview=False, source_override=None, metadata_source=None):
     bindings.EVALUATOR_PIN = validation / "evaluator-pin.json"
     prereg = validation / "PREREGISTRATION.md"
     prereg.write_bytes(raw(source, BASE + "PREREGISTRATION.md"))
-    q1 = module("q1", raw(code_source, BASE + "harness/q1.py"), validation / "q1.py")
-    cut = module(
-        "q1_cut", raw(code_source, BASE + "harness/q1_cut.py"), validation / "q1_cut.py"
-    )
+    q1 = module("q1", code_source, validation / "q1.py")
+    cut = module("q1_cut", code_source, validation / "q1_cut.py")
     # Current T1115 source uses the frozen owner membership and no R19 override.
     selected = {}
     unknown = []
@@ -634,7 +765,7 @@ def regenerate(preview=False, source_override=None, metadata_source=None):
     source_json(current["wide_census"])
     dedup = module(
         "q1_dedup",
-        raw(source, BASE + "harness/q1_dedup.py"),
+        source,
         validation / "q1_dedup.py",
     )
     datasets, excluded = dedup.select(roster, membership)
