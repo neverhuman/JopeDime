@@ -261,6 +261,10 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
         .and_then(Value::as_array)
         .map(Vec::len)
         .unwrap_or_default();
+    let critical_identical_failures = match pair_repair.get("critical_identical_failures") {
+        Some(failures) => failures.clone(),
+        None => Value::Null,
+    };
     let pair_repair_age = now.saturating_sub(timestamp(&pair_repair));
     let disk = disk_used_percent(root)?;
     let useful_work = queued
@@ -394,10 +398,7 @@ fn cycle(root: &Path, scq: &Path) -> Result<Value> {
             "queue_depth": pair_repair_depth,
             "inflight": pair_repair.get("inflight").and_then(Value::as_u64).unwrap_or_default(),
             "last_progress_ms": timestamp(&pair_repair),
-            "critical_identical_failures": pair_repair
-                .get("critical_identical_failures")
-                .cloned()
-                .unwrap_or_else(|| json!([])),
+            "critical_identical_failures": critical_identical_failures,
         },
         "proposer": {
             "eligible": proposer_eligible,
