@@ -259,7 +259,7 @@ fn parse_allow(text: &str, findings: &mut Vec<String>) -> Vec<Entry> {
                 .is_some_and(|n| n > 0)
         {
             findings.push(format!(
-                "allowlist {at}: temp-dir count must be a positive integer; lower or remove this entry"
+                "allowlist {at}: directory allowance count must be a positive integer; lower or remove this entry"
             ));
             continue;
         }
