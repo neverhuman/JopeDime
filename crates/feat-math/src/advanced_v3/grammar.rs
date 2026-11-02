@@ -101,7 +101,7 @@ pub(crate) enum ParamKind {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum ParamDomain {
+pub(crate) enum V3ParamDomain {
     IntegerRange { min: i64, max: i64 },
     IntegerSet(&'static [i64]),
     FloatRange { min: f64, max: f64 },
@@ -112,6 +112,8 @@ pub(crate) enum ParamDomain {
     MaxFeaturesProduction,
     OofFive,
 }
+
+pub(crate) type ParamDomain = V3ParamDomain;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(crate) enum StaticValue {
@@ -181,8 +183,8 @@ pub(crate) struct ParamDescriptor {
     pub aliases: &'static [&'static str],
     pub kind: ParamKind,
     pub defaults: ModeDefaults,
-    pub prototype_domain: Option<ParamDomain>,
-    pub production_domain: Option<ParamDomain>,
+    pub prototype_domain: Option<V3ParamDomain>,
+    pub production_domain: Option<V3ParamDomain>,
     pub active_when: ActiveWhen,
 }
 
@@ -324,19 +326,19 @@ const TARGET_PARAMS: &[ParamDescriptor] = &[
         "kind",
         String,
         ModeDefaults::required(),
-        Some(ParamDomain::StringSet(TARGET_KINDS)),
-        Some(ParamDomain::StringSet(TARGET_KINDS))
+        Some(V3ParamDomain::StringSet(TARGET_KINDS)),
+        Some(V3ParamDomain::StringSet(TARGET_KINDS))
     ),
     ParamDescriptor {
         name: "q",
         aliases: NO_ALIASES,
         kind: ParamKind::FiniteFloat,
         defaults: ModeDefaults::both(StaticValue::Float(0.05)),
-        prototype_domain: Some(ParamDomain::FloatRange {
+        prototype_domain: Some(V3ParamDomain::FloatRange {
             min: 0.0,
             max: 0.25,
         }),
-        production_domain: Some(ParamDomain::FloatRange {
+        production_domain: Some(V3ParamDomain::FloatRange {
             min: 0.0,
             max: 0.25,
         }),
@@ -352,39 +354,39 @@ const INPUT_PARAMS: &[ParamDescriptor] = &[
         "numeric",
         String,
         ModeDefaults::both(StaticValue::String("median")),
-        Some(ParamDomain::StringSet(NUMERIC_MODES)),
-        Some(ParamDomain::StringSet(NUMERIC_MODES))
+        Some(V3ParamDomain::StringSet(NUMERIC_MODES)),
+        Some(V3ParamDomain::StringSet(NUMERIC_MODES))
     ),
     param!(
         "missing",
         String,
         ModeDefaults::both(StaticValue::String("indicator")),
-        Some(ParamDomain::StringSet(MISSING_MODES)),
-        Some(ParamDomain::StringSet(MISSING_MODES))
+        Some(V3ParamDomain::StringSet(MISSING_MODES)),
+        Some(V3ParamDomain::StringSet(MISSING_MODES))
     ),
     param!(
         "categorical",
         String,
         ModeDefaults::both(StaticValue::String("hybrid")),
-        Some(ParamDomain::StringSet(CATEGORICAL_MODES)),
-        Some(ParamDomain::StringSet(CATEGORICAL_MODES))
+        Some(V3ParamDomain::StringSet(CATEGORICAL_MODES)),
+        Some(V3ParamDomain::StringSet(CATEGORICAL_MODES))
     ),
     param!(
         "max_onehot",
         Integer,
         ModeDefaults::both(StaticValue::Integer(16)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 256 }),
-        Some(ParamDomain::IntegerRange { min: 1, max: 256 })
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 256 }),
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 256 })
     ),
     param!(
         "min_count",
         Integer,
         ModeDefaults::both(StaticValue::Integer(2)),
-        Some(ParamDomain::IntegerRange {
+        Some(V3ParamDomain::IntegerRange {
             min: 1,
             max: i64::MAX,
         }),
-        Some(ParamDomain::IntegerRange {
+        Some(V3ParamDomain::IntegerRange {
             min: 1,
             max: i64::MAX,
         })
@@ -393,11 +395,11 @@ const INPUT_PARAMS: &[ParamDescriptor] = &[
         "prior",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(10.0)),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: 0.0,
             max: f64::MAX,
         }),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: 0.0,
             max: f64::MAX,
         })
@@ -406,8 +408,8 @@ const INPUT_PARAMS: &[ParamDescriptor] = &[
         "folds",
         Integer,
         ModeDefaults::both(StaticValue::Integer(5)),
-        Some(ParamDomain::IntegerRange { min: 2, max: 20 }),
-        Some(ParamDomain::IntegerRange { min: 2, max: 20 })
+        Some(V3ParamDomain::IntegerRange { min: 2, max: 20 }),
+        Some(V3ParamDomain::IntegerRange { min: 2, max: 20 })
     ),
 ];
 
@@ -416,47 +418,47 @@ const POWER_PARAMS: &[ParamDescriptor] = &[param!(
     "kind",
     String,
     ModeDefaults::both(StaticValue::String("yeo_johnson")),
-    Some(ParamDomain::StringSet(POWER_KINDS)),
-    Some(ParamDomain::StringSet(POWER_KINDS))
+    Some(V3ParamDomain::StringSet(POWER_KINDS)),
+    Some(V3ParamDomain::StringSet(POWER_KINDS))
 )];
 const PIECEWISE_PARAMS: &[ParamDescriptor] = &[param!(
     "bins",
     Integer,
     ModeDefaults::both(StaticValue::Integer(8)),
-    Some(ParamDomain::IntegerSet(PIECEWISE_BINS)),
-    Some(ParamDomain::IntegerSet(PIECEWISE_BINS))
+    Some(V3ParamDomain::IntegerSet(PIECEWISE_BINS)),
+    Some(V3ParamDomain::IntegerSet(PIECEWISE_BINS))
 )];
 const CORR_PARAMS: &[ParamDescriptor] = &[param!(
     "k",
     Integer,
     ModeDefaults::both(StaticValue::Integer(32)),
-    Some(ParamDomain::IntegerSet(CORR_WIDTHS)),
-    Some(ParamDomain::IntegerSet(CORR_WIDTHS))
+    Some(V3ParamDomain::IntegerSet(CORR_WIDTHS)),
+    Some(V3ParamDomain::IntegerSet(CORR_WIDTHS))
 )];
 const PLS_PARAMS: &[ParamDescriptor] = &[param!(
     "k",
     Integer,
     ModeDefaults::both(StaticValue::Integer(8)),
-    Some(ParamDomain::IntegerSet(PLS_COMPONENTS)),
-    Some(ParamDomain::IntegerSet(PLS_COMPONENTS))
+    Some(V3ParamDomain::IntegerSet(PLS_COMPONENTS)),
+    Some(V3ParamDomain::IntegerSet(PLS_COMPONENTS))
 )];
 const TARGET_BIN_PARAMS: &[ParamDescriptor] = &[
     param!(
         "bins",
         Integer,
         ModeDefaults::both(StaticValue::Integer(8)),
-        Some(ParamDomain::IntegerRange { min: 2, max: 32 }),
-        Some(ParamDomain::IntegerRange { min: 2, max: 32 })
+        Some(V3ParamDomain::IntegerRange { min: 2, max: 32 }),
+        Some(V3ParamDomain::IntegerRange { min: 2, max: 32 })
     ),
     param!(
         "prior",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(10.0)),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: 0.0,
             max: f64::MAX,
         }),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: 0.0,
             max: f64::MAX,
         })
@@ -465,19 +467,19 @@ const TARGET_BIN_PARAMS: &[ParamDescriptor] = &[
         "oof",
         OofMode,
         ModeDefaults::both(StaticValue::String("legacy")),
-        Some(ParamDomain::OofFive),
-        Some(ParamDomain::OofFive)
+        Some(V3ParamDomain::OofFive),
+        Some(V3ParamDomain::OofFive)
     ),
 ];
 const STEP_PARAMS: &[ParamDescriptor] = &[param!(
     "t",
     FiniteFloat,
     ModeDefaults::both(StaticValue::Float(0.5)),
-    Some(ParamDomain::FloatRange {
+    Some(V3ParamDomain::FloatRange {
         min: -f64::MAX,
         max: f64::MAX,
     }),
-    Some(ParamDomain::FloatRange {
+    Some(V3ParamDomain::FloatRange {
         min: -f64::MAX,
         max: f64::MAX,
     })
@@ -486,11 +488,11 @@ const LAG_PARAMS: &[ParamDescriptor] = &[param!(
     "k",
     Integer,
     ModeDefaults::both(StaticValue::Integer(1)),
-    Some(ParamDomain::IntegerRange {
+    Some(V3ParamDomain::IntegerRange {
         min: 1,
         max: i64::MAX,
     }),
-    Some(ParamDomain::IntegerRange {
+    Some(V3ParamDomain::IntegerRange {
         min: 1,
         max: i64::MAX,
     })
@@ -500,26 +502,26 @@ const SELECT_PARAMS: &[ParamDescriptor] = &[
         "k",
         Integer,
         ModeDefaults::both(StaticValue::Integer(32)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 512 }),
-        Some(ParamDomain::IntegerSet(CORR_WIDTHS))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 512 }),
+        Some(V3ParamDomain::IntegerSet(CORR_WIDTHS))
     ),
     param!(
         "by",
         String,
         ModeDefaults::both(StaticValue::String("corr")),
-        Some(ParamDomain::StringSet(SELECT_BY)),
-        Some(ParamDomain::StringSet(SELECT_BY))
+        Some(V3ParamDomain::StringSet(SELECT_BY)),
+        Some(V3ParamDomain::StringSet(SELECT_BY))
     ),
 ];
 const WINSOR_PARAMS: &[ParamDescriptor] = &[param!(
     "q",
     FiniteFloat,
     ModeDefaults::both(StaticValue::Float(0.05)),
-    Some(ParamDomain::FloatRange {
+    Some(V3ParamDomain::FloatRange {
         min: 0.0,
         max: 0.25,
     }),
-    Some(ParamDomain::FloatRange {
+    Some(V3ParamDomain::FloatRange {
         min: 0.0,
         max: 0.25,
     })
@@ -529,18 +531,18 @@ const IMPUTE_PARAMS: &[ParamDescriptor] = &[
         "strategy",
         String,
         ModeDefaults::both(StaticValue::String("median")),
-        Some(ParamDomain::StringSet(IMPUTE_STRATEGIES)),
-        Some(ParamDomain::StringSet(IMPUTE_STRATEGIES))
+        Some(V3ParamDomain::StringSet(IMPUTE_STRATEGIES)),
+        Some(V3ParamDomain::StringSet(IMPUTE_STRATEGIES))
     ),
     param!(
         "value",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(0.0)),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: -1e12,
             max: 1e12,
         }),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: -1e12,
             max: 1e12,
         })
@@ -549,8 +551,8 @@ const IMPUTE_PARAMS: &[ParamDescriptor] = &[
         "add_indicator",
         Boolean,
         ModeDefaults::both(StaticValue::Boolean(false)),
-        Some(ParamDomain::Boolean),
-        Some(ParamDomain::Boolean)
+        Some(V3ParamDomain::Boolean),
+        Some(V3ParamDomain::Boolean)
     ),
 ];
 
@@ -558,8 +560,8 @@ const RIDGE_PARAMS: &[ParamDescriptor] = &[param!(
     "lambda_frac",
     FiniteFloat,
     ModeDefaults::both(StaticValue::Float(0.02)),
-    Some(ParamDomain::FloatRange { min: 0.0, max: 1e6 }),
-    Some(ParamDomain::FloatSet(RIDGE_PRODUCTION_LAMBDA))
+    Some(V3ParamDomain::FloatRange { min: 0.0, max: 1e6 }),
+    Some(V3ParamDomain::FloatSet(RIDGE_PRODUCTION_LAMBDA))
 )];
 
 const LOGIT_PARAMS: &[ParamDescriptor] = &[
@@ -568,37 +570,37 @@ const LOGIT_PARAMS: &[ParamDescriptor] = &[
         aliases: &["lambda_frac"],
         kind: ParamKind::FiniteFloat,
         defaults: ModeDefaults::both(StaticValue::Float(0.02)),
-        prototype_domain: Some(ParamDomain::FloatRange { min: 0.0, max: 1e6 }),
-        production_domain: Some(ParamDomain::FloatSet(LOGIT_L2)),
+        prototype_domain: Some(V3ParamDomain::FloatRange { min: 0.0, max: 1e6 }),
+        production_domain: Some(V3ParamDomain::FloatSet(LOGIT_L2)),
         active_when: ActiveWhen::Always,
     },
     param!(
         "max_iter",
         Integer,
         ModeDefaults::both(StaticValue::Integer(100)),
-        Some(ParamDomain::IntegerSet(LOGIT_ITERATIONS)),
-        Some(ParamDomain::IntegerSet(LOGIT_ITERATIONS))
+        Some(V3ParamDomain::IntegerSet(LOGIT_ITERATIONS)),
+        Some(V3ParamDomain::IntegerSet(LOGIT_ITERATIONS))
     ),
     binary_param!(
         "class_weight",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS)),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS))
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS)),
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS))
     ),
     binary_param!(
         "calibration",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CALIBRATIONS)),
-        Some(ParamDomain::StringSet(CALIBRATIONS))
+        Some(V3ParamDomain::StringSet(CALIBRATIONS)),
+        Some(V3ParamDomain::StringSet(CALIBRATIONS))
     ),
     binary_param!(
         "threshold",
         String,
         ModeDefaults::both(StaticValue::String("0.5")),
-        Some(ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
-        Some(ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
     ),
 ];
 const MULTICLASS_RIDGE_PARAMS: &[ParamDescriptor] = &[
@@ -606,18 +608,18 @@ const MULTICLASS_RIDGE_PARAMS: &[ParamDescriptor] = &[
         "l2",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(0.02)),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: 1e-9,
             max: 1e6
         }),
-        Some(ParamDomain::FloatSet(LOGIT_L2))
+        Some(V3ParamDomain::FloatSet(LOGIT_L2))
     ),
     param!(
         "class_weight",
         String,
         ModeDefaults::both(StaticValue::String("balanced")),
-        Some(ParamDomain::StringSet(&["balanced"])),
-        Some(ParamDomain::StringSet(&["balanced"]))
+        Some(V3ParamDomain::StringSet(&["balanced"])),
+        Some(V3ParamDomain::StringSet(&["balanced"]))
     ),
 ];
 
@@ -626,78 +628,78 @@ const TAB_PARAMS: &[ParamDescriptor] = &[
         "rounds",
         Integer,
         ModeDefaults::split(StaticValue::Integer(100), StaticValue::Integer(128)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 500 }),
-        Some(ParamDomain::IntegerSet(BOOST_ROUNDS))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 500 }),
+        Some(V3ParamDomain::IntegerSet(BOOST_ROUNDS))
     ),
     param!(
         "depth",
         Integer,
         ModeDefaults::both(StaticValue::Integer(3)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 20 }),
-        Some(ParamDomain::IntegerSet(BOOST_DEPTHS))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 20 }),
+        Some(V3ParamDomain::IntegerSet(BOOST_DEPTHS))
     ),
     param!(
         "bins",
         Integer,
         ModeDefaults::both(StaticValue::Integer(32)),
-        Some(ParamDomain::IntegerRange { min: 8, max: 256 }),
-        Some(ParamDomain::IntegerSet(BOOST_BINS))
+        Some(V3ParamDomain::IntegerRange { min: 8, max: 256 }),
+        Some(V3ParamDomain::IntegerSet(BOOST_BINS))
     ),
     param!(
         "lr",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(0.05)),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: 0.001,
             max: 1.0,
         }),
-        Some(ParamDomain::FloatSet(BOOST_LEARNING_RATES))
+        Some(V3ParamDomain::FloatSet(BOOST_LEARNING_RATES))
     ),
     param!(
         "min_leaf",
         Integer,
         ModeDefaults::both(StaticValue::Integer(5)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 100 }),
-        Some(ParamDomain::IntegerSet(BOOST_MIN_LEAF))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 100 }),
+        Some(V3ParamDomain::IntegerSet(BOOST_MIN_LEAF))
     ),
     param!(
         "lambda",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(1.0)),
-        Some(ParamDomain::FloatRange { min: 0.0, max: 1e6 }),
-        Some(ParamDomain::FloatSet(BOOST_LAMBDAS))
+        Some(V3ParamDomain::FloatRange { min: 0.0, max: 1e6 }),
+        Some(V3ParamDomain::FloatSet(BOOST_LAMBDAS))
     ),
     param!(
         "row_fraction",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(1.0)),
-        Some(ParamDomain::FloatRange { min: 0.1, max: 1.0 }),
-        Some(ParamDomain::FloatSet(SAMPLE_FRACTIONS))
+        Some(V3ParamDomain::FloatRange { min: 0.1, max: 1.0 }),
+        Some(V3ParamDomain::FloatSet(SAMPLE_FRACTIONS))
     ),
     param!(
         "feature_fraction",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(1.0)),
-        Some(ParamDomain::FloatRange { min: 0.1, max: 1.0 }),
-        Some(ParamDomain::FloatSet(SAMPLE_FRACTIONS))
+        Some(V3ParamDomain::FloatRange { min: 0.1, max: 1.0 }),
+        Some(V3ParamDomain::FloatSet(SAMPLE_FRACTIONS))
     ),
     param!(
         "loss",
         String,
         ModeDefaults::both(StaticValue::TaskLoss),
-        Some(ParamDomain::StringSet(&["squared", "huber", "log_loss",])),
-        Some(ParamDomain::StringSet(&["squared", "huber", "log_loss",]))
+        Some(V3ParamDomain::StringSet(&["squared", "huber", "log_loss",])),
+        Some(V3ParamDomain::StringSet(&["squared", "huber", "log_loss",]))
     ),
     ParamDescriptor {
         name: "delta",
         aliases: NO_ALIASES,
         kind: ParamKind::FiniteFloat,
         defaults: ModeDefaults::both(StaticValue::Float(1.0)),
-        prototype_domain: Some(ParamDomain::FloatRange {
+        prototype_domain: Some(V3ParamDomain::FloatRange {
             min: 1e-6,
             max: 1e6,
         }),
-        production_domain: Some(ParamDomain::FloatRange {
+        production_domain: Some(V3ParamDomain::FloatRange {
             min: 1e-6,
             max: 1e6,
         }),
@@ -710,22 +712,22 @@ const TAB_PARAMS: &[ParamDescriptor] = &[
         "class_weight",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS)),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS))
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS)),
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS))
     ),
     binary_param!(
         "calibration",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CALIBRATIONS)),
-        Some(ParamDomain::StringSet(CALIBRATIONS))
+        Some(V3ParamDomain::StringSet(CALIBRATIONS)),
+        Some(V3ParamDomain::StringSet(CALIBRATIONS))
     ),
     binary_param!(
         "threshold",
         String,
         ModeDefaults::both(StaticValue::String("0.5")),
-        Some(ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
-        Some(ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
     ),
 ];
 
@@ -734,35 +736,35 @@ const EXTRA_PARAMS: &[ParamDescriptor] = &[
         "trees",
         Integer,
         ModeDefaults::both(StaticValue::Integer(128)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 512 }),
-        Some(ParamDomain::IntegerSet(EXTRA_TREES))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 512 }),
+        Some(V3ParamDomain::IntegerSet(EXTRA_TREES))
     ),
     param!(
         "depth",
         Integer,
         ModeDefaults::both(StaticValue::Integer(8)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 20 }),
-        Some(ParamDomain::IntegerSet(EXTRA_DEPTHS))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 20 }),
+        Some(V3ParamDomain::IntegerSet(EXTRA_DEPTHS))
     ),
     param!(
         "min_leaf",
         Integer,
         ModeDefaults::both(StaticValue::Integer(2)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 100 }),
-        Some(ParamDomain::IntegerSet(EXTRA_MIN_LEAF))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 100 }),
+        Some(V3ParamDomain::IntegerSet(EXTRA_MIN_LEAF))
     ),
     param!(
         "max_features",
         MaxFeatures,
         ModeDefaults::both(StaticValue::String("sqrt")),
-        Some(ParamDomain::MaxFeaturesPrototype),
-        Some(ParamDomain::MaxFeaturesProduction)
+        Some(V3ParamDomain::MaxFeaturesPrototype),
+        Some(V3ParamDomain::MaxFeaturesProduction)
     ),
     param!(
         "seed",
         Integer,
         ModeDefaults::prototype(StaticValue::Integer(7)),
-        Some(ParamDomain::IntegerRange {
+        Some(V3ParamDomain::IntegerRange {
             min: 0,
             max: i64::MAX,
         }),
@@ -772,22 +774,22 @@ const EXTRA_PARAMS: &[ParamDescriptor] = &[
         "class_weight",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS)),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS))
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS)),
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS))
     ),
     binary_param!(
         "calibration",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CALIBRATIONS)),
-        Some(ParamDomain::StringSet(CALIBRATIONS))
+        Some(V3ParamDomain::StringSet(CALIBRATIONS)),
+        Some(V3ParamDomain::StringSet(CALIBRATIONS))
     ),
     binary_param!(
         "threshold",
         String,
         ModeDefaults::both(StaticValue::String("0.5")),
-        Some(ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
-        Some(ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
     ),
 ];
 
@@ -796,60 +798,60 @@ const GAM_PARAMS: &[ParamDescriptor] = &[
         "rounds",
         Integer,
         ModeDefaults::split(StaticValue::Integer(100), StaticValue::Integer(128)),
-        Some(ParamDomain::IntegerRange { min: 1, max: 500 }),
-        Some(ParamDomain::IntegerSet(BOOST_ROUNDS))
+        Some(V3ParamDomain::IntegerRange { min: 1, max: 500 }),
+        Some(V3ParamDomain::IntegerSet(BOOST_ROUNDS))
     ),
     param!(
         "bins",
         Integer,
         ModeDefaults::both(StaticValue::Integer(16)),
-        Some(ParamDomain::IntegerRange { min: 4, max: 64 }),
-        Some(ParamDomain::IntegerSet(GAM_BINS))
+        Some(V3ParamDomain::IntegerRange { min: 4, max: 64 }),
+        Some(V3ParamDomain::IntegerSet(GAM_BINS))
     ),
     param!(
         "interactions",
         Integer,
         ModeDefaults::both(StaticValue::Integer(0)),
-        Some(ParamDomain::IntegerSet(GAM_INTERACTIONS)),
-        Some(ParamDomain::IntegerSet(GAM_INTERACTIONS))
+        Some(V3ParamDomain::IntegerSet(GAM_INTERACTIONS)),
+        Some(V3ParamDomain::IntegerSet(GAM_INTERACTIONS))
     ),
     param!(
         "bags",
         Integer,
         ModeDefaults::both(StaticValue::Integer(1)),
-        Some(ParamDomain::IntegerSet(GAM_BAGS)),
-        Some(ParamDomain::IntegerSet(GAM_BAGS))
+        Some(V3ParamDomain::IntegerSet(GAM_BAGS)),
+        Some(V3ParamDomain::IntegerSet(GAM_BAGS))
     ),
     param!(
         "lr",
         FiniteFloat,
         ModeDefaults::both(StaticValue::Float(0.05)),
-        Some(ParamDomain::FloatRange {
+        Some(V3ParamDomain::FloatRange {
             min: 0.001,
             max: 1.0,
         }),
-        Some(ParamDomain::FloatSet(BOOST_LEARNING_RATES))
+        Some(V3ParamDomain::FloatSet(BOOST_LEARNING_RATES))
     ),
     binary_param!(
         "class_weight",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS)),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS))
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS)),
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS))
     ),
     binary_param!(
         "calibration",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CALIBRATIONS)),
-        Some(ParamDomain::StringSet(CALIBRATIONS))
+        Some(V3ParamDomain::StringSet(CALIBRATIONS)),
+        Some(V3ParamDomain::StringSet(CALIBRATIONS))
     ),
     binary_param!(
         "threshold",
         String,
         ModeDefaults::both(StaticValue::String("0.5")),
-        Some(ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
-        Some(ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
     ),
 ];
 
@@ -857,8 +859,8 @@ const PLS_HEAD_PARAMS: &[ParamDescriptor] = &[param!(
     "k",
     Integer,
     ModeDefaults::both(StaticValue::Integer(8)),
-    Some(ParamDomain::IntegerRange { min: 1, max: 32 }),
-    Some(ParamDomain::IntegerSet(PLS_COMPONENTS))
+    Some(V3ParamDomain::IntegerRange { min: 1, max: 32 }),
+    Some(V3ParamDomain::IntegerSet(PLS_COMPONENTS))
 )];
 
 const PORTFOLIO_PARAMS: &[ParamDescriptor] = &[
@@ -866,22 +868,22 @@ const PORTFOLIO_PARAMS: &[ParamDescriptor] = &[
         "class_weight",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS)),
-        Some(ParamDomain::StringSet(CLASS_WEIGHTS))
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS)),
+        Some(V3ParamDomain::StringSet(CLASS_WEIGHTS))
     ),
     binary_param!(
         "calibration",
         String,
         ModeDefaults::both(StaticValue::String("none")),
-        Some(ParamDomain::StringSet(CALIBRATIONS)),
-        Some(ParamDomain::StringSet(CALIBRATIONS))
+        Some(V3ParamDomain::StringSet(CALIBRATIONS)),
+        Some(V3ParamDomain::StringSet(CALIBRATIONS))
     ),
     binary_param!(
         "threshold",
         String,
         ModeDefaults::both(StaticValue::String("0.5")),
-        Some(ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
-        Some(ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PROTOTYPE)),
+        Some(V3ParamDomain::StringSet(THRESHOLDS_PRODUCTION))
     ),
 ];
 
@@ -1942,7 +1944,7 @@ fn materialize_stage(
     Ok(out)
 }
 
-fn selected_domain(parameter: &ParamDescriptor, mode: CompileMode) -> Option<ParamDomain> {
+fn selected_domain(parameter: &ParamDescriptor, mode: CompileMode) -> Option<V3ParamDomain> {
     match mode {
         CompileMode::PrototypeCompatibility => parameter.prototype_domain,
         CompileMode::Production => parameter.production_domain,
@@ -1973,7 +1975,7 @@ fn normalize_value(
     operation: &str,
     parameter: &ParamDescriptor,
     value: &ParamValue,
-    domain: ParamDomain,
+    domain: V3ParamDomain,
 ) -> Result<ParamValue> {
     let normalized = match parameter.kind {
         ParamKind::Integer => match value {
@@ -2045,36 +2047,36 @@ fn normalize_value(
     Ok(normalized)
 }
 
-fn domain_accepts(domain: ParamDomain, value: &ParamValue) -> bool {
+fn domain_accepts(domain: V3ParamDomain, value: &ParamValue) -> bool {
     match (domain, value) {
-        (ParamDomain::IntegerRange { min, max }, ParamValue::Int(value)) => {
+        (V3ParamDomain::IntegerRange { min, max }, ParamValue::Int(value)) => {
             *value >= min && *value <= max
         }
-        (ParamDomain::IntegerSet(values), ParamValue::Int(value)) => values.contains(value),
-        (ParamDomain::FloatRange { min, max }, ParamValue::Float(value)) => {
+        (V3ParamDomain::IntegerSet(values), ParamValue::Int(value)) => values.contains(value),
+        (V3ParamDomain::FloatRange { min, max }, ParamValue::Float(value)) => {
             value.is_finite() && *value >= min && *value <= max
         }
-        (ParamDomain::FloatSet(values), ParamValue::Float(value)) => {
+        (V3ParamDomain::FloatSet(values), ParamValue::Float(value)) => {
             value.is_finite() && values.contains(value)
         }
-        (ParamDomain::StringSet(values), ParamValue::Str(value)) => {
+        (V3ParamDomain::StringSet(values), ParamValue::Str(value)) => {
             values.contains(&value.as_str())
         }
-        (ParamDomain::Boolean, ParamValue::Bool(_)) => true,
-        (ParamDomain::MaxFeaturesPrototype, ParamValue::Int(value)) => *value >= 1,
-        (ParamDomain::MaxFeaturesPrototype, ParamValue::Float(value)) => {
+        (V3ParamDomain::Boolean, ParamValue::Bool(_)) => true,
+        (V3ParamDomain::MaxFeaturesPrototype, ParamValue::Int(value)) => *value >= 1,
+        (V3ParamDomain::MaxFeaturesPrototype, ParamValue::Float(value)) => {
             value.is_finite() && *value > 0.0 && *value <= 1.0
         }
-        (ParamDomain::MaxFeaturesPrototype, ParamValue::Str(value)) => {
+        (V3ParamDomain::MaxFeaturesPrototype, ParamValue::Str(value)) => {
             matches!(value.as_str(), "sqrt" | "log2")
         }
-        (ParamDomain::MaxFeaturesProduction, ParamValue::Float(value)) => {
+        (V3ParamDomain::MaxFeaturesProduction, ParamValue::Float(value)) => {
             [0.25, 0.5, 1.0].contains(value)
         }
-        (ParamDomain::MaxFeaturesProduction, ParamValue::Str(value)) => {
+        (V3ParamDomain::MaxFeaturesProduction, ParamValue::Str(value)) => {
             matches!(value.as_str(), "sqrt" | "log2")
         }
-        (ParamDomain::OofFive, ParamValue::Int(value)) => *value == 5,
+        (V3ParamDomain::OofFive, ParamValue::Int(value)) => *value == 5,
         _ => false,
     }
 }

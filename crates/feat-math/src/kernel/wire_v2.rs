@@ -98,13 +98,16 @@ pub const VARIABLES: &[Reservation] = &[
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Domain {
+pub enum KernelWireDomain {
     Wire,
     Function,
     Variable,
 }
 
-impl Domain {
+/// Backward-compatible name for the v2 kernel wire identity domain.
+pub type Domain = KernelWireDomain;
+
+impl KernelWireDomain {
     fn tag(self) -> u8 {
         match self {
             Self::Wire => 0,
@@ -135,12 +138,12 @@ impl Domain {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ReservationRef {
-    pub domain: Domain,
+    pub domain: KernelWireDomain,
     pub id: u16,
 }
 
 impl ReservationRef {
-    pub fn new(domain: Domain, id: u16) -> VersionResult<Self> {
+    pub fn new(domain: KernelWireDomain, id: u16) -> VersionResult<Self> {
         let row = domain.table().iter().find(|row| row.id == id);
         if !row.is_some_and(|row| row.name.is_some()) {
             return Err(VersionError::UnsupportedVersion(format!(
@@ -153,7 +156,7 @@ impl ReservationRef {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub struct ReservationRow {
-    pub domain: Domain,
+    pub domain: KernelWireDomain,
     pub id: u16,
     pub name: Option<&'static str>,
     pub lifecycle: &'static str,
@@ -161,18 +164,22 @@ pub struct ReservationRow {
 }
 
 pub fn manifest_rows() -> Vec<ReservationRow> {
-    [Domain::Wire, Domain::Function, Domain::Variable]
-        .into_iter()
-        .flat_map(|domain| {
-            domain.table().iter().map(move |row| ReservationRow {
-                domain,
-                id: row.id,
-                name: row.name,
-                lifecycle: "reserved",
-                generatable: false,
-            })
+    [
+        KernelWireDomain::Wire,
+        KernelWireDomain::Function,
+        KernelWireDomain::Variable,
+    ]
+    .into_iter()
+    .flat_map(|domain| {
+        domain.table().iter().map(move |row| ReservationRow {
+            domain,
+            id: row.id,
+            name: row.name,
+            lifecycle: "reserved",
+            generatable: false,
         })
-        .collect()
+    })
+    .collect()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -277,7 +284,7 @@ impl ReservedProgram {
         }
         let mut rows = Vec::with_capacity(count);
         for _ in 0..count {
-            let domain = Domain::from_tag(reader.byte()?)?;
+            let domain = KernelWireDomain::from_tag(reader.byte()?)?;
             let id = reader.word()?;
             let id = u16::try_from(id)
                 .map_err(|_| VersionError::UnsupportedVersion(format!("{domain:?} id {id}")))?;

@@ -45,7 +45,7 @@ pub enum TextChoice {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum ParamDomain {
+pub enum SearchParamDomain {
     IntRange {
         lo: i64,
         hi: i64,
@@ -63,7 +63,9 @@ pub enum ParamDomain {
     },
 }
 
-pub type DomainRow = BTreeMap<&'static str, ParamDomain>;
+pub type ParamDomain = SearchParamDomain;
+
+pub type DomainRow = BTreeMap<&'static str, SearchParamDomain>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -364,31 +366,31 @@ const BINS: [f64; 16] = [
     -2.0, -1.0, -0.5, -0.25, -0.1, 0.0, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 20.0,
 ];
 
-fn int_range(lo: i64, hi: i64) -> ParamDomain {
-    ParamDomain::IntRange { lo, hi }
+fn int_range(lo: i64, hi: i64) -> SearchParamDomain {
+    SearchParamDomain::IntRange { lo, hi }
 }
-fn float_range(lo: f64, hi: f64) -> ParamDomain {
-    ParamDomain::FloatRange { lo, hi }
+fn float_range(lo: f64, hi: f64) -> SearchParamDomain {
+    SearchParamDomain::FloatRange { lo, hi }
 }
-fn ints(values: &[i64]) -> ParamDomain {
-    ParamDomain::IntChoice(values.to_vec())
+fn ints(values: &[i64]) -> SearchParamDomain {
+    SearchParamDomain::IntChoice(values.to_vec())
 }
-fn floats(values: &[f64]) -> ParamDomain {
-    ParamDomain::FloatChoice(values.to_vec())
+fn floats(values: &[f64]) -> SearchParamDomain {
+    SearchParamDomain::FloatChoice(values.to_vec())
 }
-fn flag() -> ParamDomain {
-    ParamDomain::Flag {
+fn flag() -> SearchParamDomain {
+    SearchParamDomain::Flag {
         true_numerator: 1,
         denominator: 2,
     }
 }
-fn row(entries: &[(&'static str, ParamDomain)]) -> DomainRow {
+fn row(entries: &[(&'static str, SearchParamDomain)]) -> DomainRow {
     entries.iter().cloned().collect()
 }
 fn put(
     out: &mut BTreeMap<&'static str, DomainRow>,
     name: &'static str,
-    entries: &[(&'static str, ParamDomain)],
+    entries: &[(&'static str, SearchParamDomain)],
     append: bool,
 ) {
     let mut values = row(entries);
@@ -481,7 +483,7 @@ fn common_domains() -> BTreeMap<&'static str, DomainRow> {
             ("steps", ints(&[30, 40, 60])),
             (
                 "kernel",
-                ParamDomain::TextChoice(vec![
+                SearchParamDomain::TextChoice(vec![
                     TextChoice::Omit,
                     TextChoice::Omit,
                     TextChoice::Value("linear"),
@@ -527,7 +529,7 @@ fn expansion_domains() -> BTreeMap<&'static str, DomainRow> {
         &[
             (
                 "strategy",
-                ParamDomain::TextChoice(vec![
+                SearchParamDomain::TextChoice(vec![
                     TextChoice::Value("median"),
                     TextChoice::Value("median"),
                     TextChoice::Value("mean"),
@@ -550,7 +552,7 @@ fn expansion_domains() -> BTreeMap<&'static str, DomainRow> {
             ("k", ints(&[16, 32, 64, 128])),
             (
                 "by",
-                ParamDomain::TextChoice(vec![
+                SearchParamDomain::TextChoice(vec![
                     TextChoice::Value("corr"),
                     TextChoice::Value("corr"),
                     TextChoice::Value("var"),
