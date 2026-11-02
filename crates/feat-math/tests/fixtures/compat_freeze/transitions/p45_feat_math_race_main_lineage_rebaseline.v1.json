@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "After rebasing P45 onto current origin/main, jope-campaigns search_v3/checkpoint.rs changed in the evaluator lineage source closure. Re-run the identity-only fixture generation at the source commit so the lineage source hash and generation SHA match current source. The feat-math implementation hash and evaluator identity digest are unchanged; this does not add a known identity.",
+  "plan_reference": "P45 rebase onto origin/main 2b4014b7c3036f2b23bba92a0593b76242ed6e90; ADR-0004 identity-only procedure",
+  "source_commit": "f13324870ad12a25b35cdad8080762a82e4f70c4",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "9fd80fd21e5b1c150ce17a5339154c321a7f5082addf1c950686776078eb4de0",
+      "after": "1713a179d1f791d0ec431d5594b83675dc911f0888ccaca866012ebb2b28bd47"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "7b0cd76e57713ed9fa159c62cb6f23dd8cdec5b0cca47a836a1001a9e55866ce",
+      "after": "a23d94cd9b8e0892fe1589b4929dc37ffbf368e917fee4eab32c62edf68bf306"
+    }
+  ]
+}
