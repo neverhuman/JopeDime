@@ -51,8 +51,9 @@ mod tests {
             tv_sec: 0,
             tv_nsec: 0,
         };
-        // SAFETY: clock_gettime writes one timespec through the valid out-pointer.
         assert_eq!(
+            // SAFETY: `raw` is a live, aligned timespec pointer writable for
+            // the duration of clock_gettime, and CLOCK_MONOTONIC is valid.
             unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut raw) },
             0
         );
