@@ -670,6 +670,7 @@ crates/jope-campaigns/src/bin/jope_training_archive/ingest.rs
 crates/jope-campaigns/src/bin/jope_training_archive/ingest/reports.rs
 crates/jope-campaigns/src/bin/jope_training_archive/sources.rs
 crates/jope-campaigns/src/bin/jope_training_history.rs
+crates/jope-campaigns/src/bin/jope_training_history/capture.rs
 crates/jope-campaigns/src/bin/jope_training_replica.rs
 crates/jope-campaigns/src/bin/jope_training_replica/commands.rs
 crates/jope-campaigns/src/bin/jope_training_replica/commands/status.rs
