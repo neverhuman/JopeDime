@@ -19,7 +19,15 @@ from .executor import evaluate_fixed, restore_verified_state
 from .model import ModelCache, PinnedR882Factory
 from .native import OutcomeCache, RustS1Evaluator, S3Store, collect_teacher
 from .student import tensor_hash
-from .supervisor import ReservedPhaseBudget, atomic_record, verify_merged_source
+from .supervisor import (
+    ReservedPhaseBudget,
+    atomic_record,
+    execution_purpose,
+    original_deadline_guard,
+    runtime_qualification_plan,
+    validate_runtime_proofs,
+    verify_merged_source,
+)
 
 ARMS = {"CTRL": 1, "ACC4": 16, "ACC16": 64, "OC15": 256}
 SEEDS = (206101, 206102, 206103)
@@ -229,7 +237,9 @@ class StudyInputs:
                 or generation["cut_sha256"] != context.cut_sha256
             ):
                 raise ValueError("unqualified or disconnected actual slate generation")
-            loaded.append(load_context(context, self.scope, self.store, role=role))
+            loaded.append(
+                load_context(context, self.scope, self.store, role=role, require_original_provenance=True)
+            )
         if len(loaded) != len(task["context_ids"][role]):
             raise ValueError("duplicate/missing role context")
         return loaded
@@ -341,8 +351,9 @@ def preserve_native_scratch(teacher, loaded, native, cache, store, prefix):
 class PhaseRuntime:
     """Real model/native/learner operations shared by CPU controls and GPU workers."""
 
-    def __init__(self, store, budget, *, scientific=True, journal=None):
+    def __init__(self, store, budget, *, scientific=True, journal=None, deadline_guard=None):
         self.store, self.budget, self.scientific = store, budget, scientific
+        self.guard = deadline_guard or (lambda: None)
         self.journal = Path(journal).resolve() if journal is not None else None
         if scientific and self.journal is None:
             raise ValueError("scientific phases require an owned durable local journal")
@@ -393,7 +404,9 @@ class PhaseRuntime:
             context = Context.from_dict(row["context"])
             if context.actor_sha256 != doc["actor"]:
                 raise ValueError("persisted proposal actor mismatch")
-            loaded = load_context(context, scope, self.store, role="FIT")
+            loaded = load_context(
+                context, scope, self.store, role="FIT", require_original_provenance=self.scientific
+            )
             if loaded.scope_sha256 != row["scope_sha256"]:
                 raise ValueError("teacher scope differs from proposal scope")
             family_components.add(loaded.family_component_sha256)
@@ -463,8 +476,9 @@ class PhaseRuntime:
                 before = {k: tensor_hash(p) for k, p in learner.model.named_parameters() if p.requires_grad}
                 state_before, gradients_before = learner.state_hash(), dict(learner.gradient_squares)
                 forward_before = learner.score(batch[0])
+                self.guard()
                 with self.budget.measure("student_update"):
-                    loss = learner.update_batch(batch, refs, self.store)
+                    loss = learner.update_batch(batch, refs, self.store, deadline_guard=self.guard)
                 after = {k: tensor_hash(p) for k, p in learner.model.named_parameters() if p.requires_grad}
                 loss_after = 0.0
                 with torch.no_grad():
@@ -503,6 +517,7 @@ class PhaseRuntime:
                     atomic_record(self.journal / f"update-{learner.updates:06d}.json", record)
                 ref = self.store.put(f"{prefix}/steps/{learner.updates:06d}.json", canonical(record))
                 self.progress.append(dataclasses.asdict(ref))
+                self.guard()  # Late persistence can never produce a qualified normal return.
             proof = learner.proof_since(round_before, rows[0])
             self.last_checkpoint = checkpoint(
                 learner,
@@ -585,7 +600,9 @@ class PhaseRuntime:
         results = {}
         for context_doc in doc["contexts"]:
             context = Context.from_dict(context_doc)
-            loaded = load_context(context, scope, self.store, role=doc["role"])
+            loaded = load_context(
+                context, scope, self.store, role=doc["role"], require_original_provenance=self.scientific
+            )
             scores = np.asarray(panel[context.context_id])
             order = sorted(
                 range(len(scores)), key=lambda i: (float(scores[i]), sha(context.programs[i].encode()))
@@ -623,13 +640,148 @@ class StudyController:
         self.supervisor, self.store, self.repo = supervisor, supervisor.store, Path(repo)
         self.rows, self.inputs, self.baseline = rows, inputs, baseline
         self.fold_manifest = registered_cells(rows)
+        if set(inputs) != {c["cell_id"] for c in self.fold_manifest["cells"]}:
+            raise ValueError("all sixty registered cell inputs required")
+        for cell in self.fold_manifest["cells"]:
+            if any(
+                name in inputs[cell["cell_id"]] and inputs[cell["cell_id"]][name] != value
+                for name, value in cell.items()
+            ):
+                raise ValueError("input template cannot override preregistered cell")
         payload = {"rows": rows, "inputs": inputs, "baseline": dataclasses.asdict(baseline)}
         if digest(payload) != supervisor.admission["study_input_payload_sha256"]:
             raise ValueError("study inputs differ from the actually qualified payload")
         if digest(self.fold_manifest) != supervisor.admission["fold_manifest_sha256"]:
             raise ValueError("study folds differ from the actually qualified partition")
 
+    def _fit_cells(self, cells, fold_ref):
+        state, terminal, round_proofs = {}, {}, []
+        self.fit_progress = state
+        for round_index in (1, 2, 3):
+            for phase in ("propose", "teacher", "train"):
+                for cell in cells:
+                    key = cell["cell_id"]
+                    task = {
+                        **self.inputs[key],
+                        **cell,
+                        "round": round_index,
+                        "phase": phase,
+                        "fold_manifest": dataclasses.asdict(fold_ref),
+                        "previous": state.get((key, phase)),
+                        "proposal": state.get((key, "propose")),
+                        "teachers": state.get((key, "teacher")),
+                        "prior_round": terminal.get(key),
+                        "terminal_updates": 1800,
+                    }
+                    ref = self.supervisor.phase(
+                        task,
+                        cpu_reserve=self.inputs[key]["cpu_reserve_seconds"][phase],
+                        seconds_cap=300 if phase == "train" else self.inputs[key]["phase_caps"][phase],
+                    )
+                    state[(key, phase)] = dataclasses.asdict(ref)
+                    if (
+                        phase == "propose"
+                        and round_index == 1
+                        and execution_purpose(self.supervisor.admission) == "runtime_qualification"
+                    ):
+                        proposal = json.loads(ref.read(self.store))
+                        if proposal.get("actor") != runtime_qualification_plan()["initial_state_sha256"]:
+                            raise ValueError("qualification model differs from pinned initial student")
+                    if phase == "train":
+                        doc = json.loads(ref.read(self.store))
+                        if doc["updates"] != 600 * round_index:
+                            raise RuntimeError("cell did not reach its fixed round endpoint")
+                        terminal[key] = dataclasses.asdict(ref)
+                        round_proofs.append(
+                            {
+                                "arm": cell["arm"],
+                                "round": round_index,
+                                "updates": doc["updates"],
+                                "state_sha256": doc["state_sha256"],
+                                "proof": doc.get("proof"),
+                                "durable_steps": len(doc.get("steps", [])),
+                                "round_object": dataclasses.asdict(ref),
+                            }
+                        )
+                    self.store.put(
+                        f"progress/round-{round_index}/{key}/{phase}.json",
+                        canonical({"result": dataclasses.asdict(ref), "round": round_index}),
+                    )
+        return state, terminal, round_proofs
+
+    def qualify_runtime(self):
+        """Actual FIT-only protocol qualification through the SAME phase supervisor.
+
+        No B/A body, baseline panel or selector is opened. All updates and failed
+        phases spend the original campaign budget. Qualification models cannot
+        initialize the scientific study. Final PASS requires observed exit/costs.
+        """
+        if execution_purpose(self.supervisor.admission) != "runtime_qualification":
+            raise ValueError("explicit runtime qualification authority required")
+        plan = runtime_qualification_plan()
+        cells = [
+            c for c in self.fold_manifest["cells"] if c["seed"] == plan["seed"] and c["fold"] == plan["fold"]
+        ]
+        if {c["arm"]: c["k"] for c in cells} != plan["arms"]:
+            raise ValueError("fixed registered qualification cells required")
+        try:
+            with self.supervisor.controller():
+                self.store.put(
+                    "runtime-qualification-launch.json",
+                    canonical(
+                        {
+                            "purpose": "runtime_qualification",
+                            "plan": plan,
+                            "admission": self.supervisor.admission,
+                            "scientific_endpoint": False,
+                            "original_caps": {"cpu_hours": 400, "gpu_hours": 18},
+                        }
+                    ),
+                )
+                fold_ref = self.store.put("runtime-qualification-folds.json", canonical(self.fold_manifest))
+                _, _, proofs = self._fit_cells(cells, fold_ref)
+                admission = self.supervisor.admission
+                document = {
+                    "schema": "h206-cuda-runtime-pending-v1",
+                    "status": "PENDING_FINAL_ACCOUNTING",
+                    "fixture": False,
+                    "qualification_plan": plan,
+                    "b_a_payload_reads": 0,
+                    "initial_state_sha256": plan["initial_state_sha256"],
+                    "checkpoints_eligible_for_study": False,
+                    "round_proofs": proofs,
+                    "phase_executions": self.supervisor.executions,
+                    "source_files": admission["source"]["files"],
+                    "study_sha256": admission["study_sha256"],
+                    "study_input_payload_sha256": admission["study_input_payload_sha256"],
+                    "fold_manifest_sha256": admission["fold_manifest_sha256"],
+                    "bindings_sha256": admission["bindings_sha256"],
+                    "serving_eligible": False,
+                    "scientific_endpoint": False,
+                }
+                validate_runtime_proofs(document)
+                original_deadline_guard(admission)()
+                ref = self.store.put("cuda-runtime-pending.json", canonical(document))
+                original_deadline_guard(admission)()
+            return ref  # External observed-exit/cost handback is still required.
+        except BaseException as exc:
+            self.store.put(
+                "runtime-qualification-INCOMPLETE.json",
+                canonical(
+                    {
+                        "status": "INCOMPLETE_NO_RETRY",
+                        "error": repr(exc),
+                        "durable_phases": {str(k): v for k, v in getattr(self, "fit_progress", {}).items()},
+                        "phase_executions": self.supervisor.executions,
+                        "scientific_endpoint": False,
+                    }
+                ),
+            )
+            raise
+
     def run(self):
+        if execution_purpose(self.supervisor.admission) != "study":
+            raise ValueError("runtime qualification cannot execute the scientific study")
         state, terminal = {}, {}
         try:
             with self.supervisor.controller():
@@ -654,39 +806,7 @@ class StudyController:
                     not np.isfinite(self.baseline_values).all()
                 ):
                     raise ValueError("finite matched original native reference panel required")
-                for round_index in (1, 2, 3):
-                    for phase in ("propose", "teacher", "train"):
-                        for cell in self.fold_manifest["cells"]:
-                            key = cell["cell_id"]
-                            task = {
-                                **cell,
-                                **self.inputs[key],
-                                "round": round_index,
-                                "phase": phase,
-                                "fold_manifest": dataclasses.asdict(fold_ref),
-                                "previous": state.get((key, phase)),
-                                "proposal": state.get((key, "propose")),
-                                "teachers": state.get((key, "teacher")),
-                                "prior_round": terminal.get(key),
-                                "terminal_updates": 1800,
-                            }
-                            ref = self.supervisor.phase(
-                                task,
-                                cpu_reserve=self.inputs[key]["cpu_reserve_seconds"][phase],
-                                seconds_cap=300
-                                if phase == "train"
-                                else self.inputs[key]["phase_caps"][phase],
-                            )
-                            state[(key, phase)] = dataclasses.asdict(ref)
-                            if phase == "train":
-                                doc = json.loads(ref.read(self.store))
-                                if doc["updates"] != 600 * round_index:
-                                    raise RuntimeError("cell did not reach its fixed round endpoint")
-                                terminal[key] = dataclasses.asdict(ref)
-                            self.store.put(
-                                f"progress/round-{round_index}/{key}/{phase}.json",
-                                canonical({"result": dataclasses.asdict(ref), "round": round_index}),
-                            )
+                state, terminal, _ = self._fit_cells(self.fold_manifest["cells"], fold_ref)
                 b_panels = self._evaluate("B", terminal, fold_ref)
                 selected = pooled_select(self.repo, self.rows, self.baseline_values, b_panels)
                 checkpoints = [
@@ -736,7 +856,9 @@ class StudyController:
                         "status": "INCOMPLETE_NO_RETRY",
                         "error": repr(exc),
                         "terminals": terminal,
-                        "durable_phases": {str(k): v for k, v in state.items()},
+                        "durable_phases": {
+                            str(k): v for k, v in getattr(self, "fit_progress", state).items()
+                        },
                         "optimizer_counts": "per-update immutable records and terminal checkpoints",
                         "no_partial_arm_efficacy": True,
                     }
@@ -751,8 +873,8 @@ class StudyController:
         for cell in self.fold_manifest["cells"]:
             key = cell["cell_id"]
             task = {
-                **cell,
                 **self.inputs[key],
+                **cell,
                 "round": 3,
                 "phase": "score",
                 "role": role,
@@ -831,7 +953,12 @@ def worker(task_path, expected_sha):
 
     signal.signal(signal.SIGTERM, stop)
     inputs = StudyInputs(task, store)
-    runtime = PhaseRuntime(store, budget, journal=Path(task_path).parent / "incremental")
+    runtime = PhaseRuntime(
+        store,
+        budget,
+        journal=Path(task_path).parent / "incremental",
+        deadline_guard=original_deadline_guard(task["admission"], task["phase_deadline_epoch"]),
+    )
     prefix = task["stage"]
     phase = task["phase"]
     if phase in ("teacher", "utility"):
@@ -886,7 +1013,13 @@ def worker(task_path, expected_sha):
                 if teacher_doc["actor"] != learner.state_hash() or teacher_doc["k"] != task["k"]:
                     raise ValueError("training teacher/actor/arm mismatch")
                 rows = [
-                    load_context(Context.from_dict(r["context"]), inputs.scope, store, role="FIT")
+                    load_context(
+                        Context.from_dict(r["context"]),
+                        inputs.scope,
+                        store,
+                        role="FIT",
+                        require_original_provenance=True,
+                    )
                     for r in teacher_doc["rows"]
                 ]
                 ref = runtime.train(
@@ -937,9 +1070,13 @@ def main():
     supervisor = PhaseSupervisor(
         config["repo"], config["output"], config["cache"], config["ledger"], store, admission
     )
-    StudyController(
+    controller = StudyController(
         supervisor, config["rows"], config["inputs"], ObjectRef(**config["baseline"]), repo=config["repo"]
-    ).run()
+    )
+    if execution_purpose(admission) == "runtime_qualification":
+        controller.qualify_runtime()
+    else:
+        controller.run()
 
 
 if __name__ == "__main__":

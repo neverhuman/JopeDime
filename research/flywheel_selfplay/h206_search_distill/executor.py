@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from .contracts import canonical, digest
+from .contracts import canonical, digest, sha
 from .native import collect_teacher
 
 
@@ -44,7 +44,26 @@ class BudgetLedger:
                 raise ValueError("campaign caps changed")
             if state.get("accounting_status") != "RECONCILED":
                 raise ValueError("campaign accounting is not reconciled")
+            if state.get("unreconciled_scopes") or state.get(
+                "conservative_unmeasured_cpu_reservation_seconds", 0
+            ):
+                raise ValueError("unknown cumulative costs remain held")
+            for kind in ("cpu", "gpu"):
+                used = state.get(kind + "_used_seconds")
+                lower = state.get(kind + "_used_seconds_lower_bound", 0)
+                accounted = sum(e[kind + "_seconds"] for e in state.get("entries", []))
+                if kind == "cpu":
+                    accounted += sum(r["cpu_seconds_lower_bound"] for r in state.get("source_receipts", []))
+                lower = max(lower, accounted - 1e-6)
+                if type(used) not in (int, float) or not math.isfinite(used) or used < lower:
+                    raise ValueError("actual cumulative usage is unknown or below retained history")
+            before = canonical(state)
+            previous = {k: state[k + "_used_seconds"] for k in ("cpu", "gpu")}
             result = fn(state)
+            if any(state[k + "_used_seconds"] < value for k, value in previous.items()):
+                raise ValueError("cumulative usage cannot decrease or reset")
+            if canonical(state) == before:
+                return result  # Admission inspections preserve the exact ledger bytes/digest.
             temp = self.path.with_suffix(".next")
             with temp.open("w") as f:
                 f.write(canonical(state).decode())
@@ -99,7 +118,12 @@ class BudgetLedger:
                 for kind, requested in (("cpu", cpu_reserve), ("gpu", gpu_reserve))
             ):
                 raise RuntimeError("cumulative campaign budget exhausted")
-            s["reservations"][token] = {"cpu": cpu_reserve, "gpu": gpu_reserve, "stage": stage}
+            s["reservations"][token] = {
+                "cpu": cpu_reserve,
+                "gpu": gpu_reserve,
+                "stage": stage,
+                "prior_ledger_sha256": sha(self.path.read_bytes()),
+            }
 
         self.mutate(reserve)
 
