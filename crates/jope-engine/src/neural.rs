@@ -1100,7 +1100,8 @@ extern "C" {
         world: i32,
         device: i32,
         expected_uuid: *const std::ffi::c_char,
-    ) -> *mut c_void;
+        comm_out: *mut *mut c_void,
+    ) -> i32;
     fn jp_device_count() -> i32;
     fn jp_device_uuid(index: i32, out: *mut std::ffi::c_char) -> i32;
     fn jp_allreduce(comm: *mut c_void, tensor: *mut c_void) -> i32;
@@ -1225,18 +1226,25 @@ impl Nccl {
         let (rank, world) = (binding.global_rank(), binding.world());
         ensure!(rank < world && world <= 8, "invalid rank topology");
         let expected = std::ffi::CString::new(binding.gpu_uuid().unwrap_or(""))?;
-        // SAFETY: `id` has the 128 bytes jp_nccl_init copies and `expected` is a CString that
-        // outlives the call; failure returns null (checked below) and sets the error string.
-        let comm = unsafe {
+        // SAFETY: `id` has the 128 bytes jp_nccl_init copies, `expected` is a CString that
+        // outlives the call, and `comm_out` points to writable pointer storage. A nonzero
+        // status sets the thread-local native error; success writes the communicator.
+        let mut comm = std::ptr::null_mut();
+        let status = unsafe {
             jp_nccl_init(
                 id.as_ptr(),
                 i32::try_from(rank)?,
                 i32::try_from(world)?,
                 i32::try_from(binding.device_index())?,
                 expected.as_ptr(),
+                &mut comm,
             )
         };
-        ensure!(!comm.is_null(), "{}", native_error());
+        ensure!(status == 0, "{}", native_error());
+        ensure!(
+            !comm.is_null(),
+            "native NCCL initialization succeeded without a communicator"
+        );
         Ok(Self { comm, world })
     }
     pub fn reduce(&self, t: &mut Tensor) -> Result<()> {

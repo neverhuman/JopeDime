@@ -436,10 +436,10 @@ fn build(args: &Args) -> Result<EffectiveUnitAudit> {
 fn main() -> Result<()> {
     let args = Args::parse();
     let audit = build(&args)?;
-    let output = args
-        .output
-        .clone()
-        .unwrap_or_else(|| args.root.join("ops/effective-unit-audit.v1.json"));
+    let output = match &args.output {
+        Some(path) => path.clone(),
+        None => args.root.join("ops/effective-unit-audit.v1.json"),
+    };
     atomic_json(&output, &serde_json::to_value(&audit)?)?;
     println!("{}", serde_json::to_string(&audit)?);
     ensure!(audit.healthy, "effective unit audit found drift");

@@ -141,7 +141,19 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
                 result=timeout_at(deadline,worker)=>match result{
                     Ok(Ok(value))=>value,
                     Ok(Err(_))=>return Err(ErrorData::internal_error("engine request worker failed",None)),
-                    Err(_)=>return Ok(last.unwrap_or_else(||CallToolResult::structured_error(serde_json::to_value(dispatch::problem(jope_api::error::ErrorCode::IoFailure,"Engine response deadline reached. Retry mutations with the same idempotency key.")).expect("Problem JSON")))),
+                    Err(_) => {
+                        let response = match last {
+                            Some(previous_response) => previous_response,
+                            None => CallToolResult::structured_error(
+                                serde_json::to_value(dispatch::problem(
+                                    jope_api::error::ErrorCode::IoFailure,
+                                    "Engine response deadline reached. Retry mutations with the same idempotency key.",
+                                ))
+                                .expect("Problem JSON"),
+                            ),
+                        };
+                        return Ok(response);
+                    }
                 }
             };
             let result = match outcome {

@@ -122,34 +122,40 @@ struct Args {
 
 impl Args {
     fn state(&self) -> PathBuf {
-        self.state_file
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/utilization-supervisor-state.v1.json"))
+        match &self.state_file {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/utilization-supervisor-state.v1.json"),
+        }
     }
     fn status(&self) -> PathBuf {
-        self.status_file
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/utilization-supervisor-v1.json"))
+        match &self.status_file {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/utilization-supervisor-v1.json"),
+        }
     }
     fn series(&self) -> PathBuf {
-        self.series_file
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/utilization-series.v1.jsonl"))
+        match &self.series_file {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/utilization-series.v1.jsonl"),
+        }
     }
     fn events(&self) -> PathBuf {
-        self.events_file
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/utilization-supervisor-events.v1.jsonl"))
+        match &self.events_file {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/utilization-supervisor-events.v1.jsonl"),
+        }
     }
     fn alarms(&self) -> PathBuf {
-        self.alarms_file
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/utilization-alarms.v1.json"))
+        match &self.alarms_file {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/utilization-alarms.v1.json"),
+        }
     }
     fn banner(&self) -> PathBuf {
-        self.banner_file
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/UTILIZATION-ESCALATION.txt"))
+        match &self.banner_file {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/UTILIZATION-ESCALATION.txt"),
+        }
     }
 }
 

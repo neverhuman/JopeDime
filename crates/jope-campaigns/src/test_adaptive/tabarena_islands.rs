@@ -322,12 +322,25 @@ fn collect_local_leaders() -> Result<LocalLeaders> {
     for path in paths {
         let bytes = fs::read(&path)?;
         let values = if path.extension().and_then(|value| value.to_str()) == Some("jsonl") {
-            std::str::from_utf8(&bytes)?
-                .lines()
-                .filter_map(|line| serde_json::from_str::<Value>(line).ok())
-                .collect::<Vec<_>>()
+            let text = std::str::from_utf8(&bytes)
+                .with_context(|| format!("decode results file {} as UTF-8", path.display()))?;
+            let mut values = Vec::new();
+            for (line_number, line) in text.lines().enumerate() {
+                if line.trim().is_empty() {
+                    continue;
+                }
+                values.push(serde_json::from_str::<Value>(line).with_context(|| {
+                    format!(
+                        "parse results file {} line {}",
+                        path.display(),
+                        line_number + 1
+                    )
+                })?);
+            }
+            values
         } else {
-            serde_json::from_slice::<Vec<Value>>(&bytes).unwrap_or_default()
+            serde_json::from_slice::<Vec<Value>>(&bytes)
+                .with_context(|| format!("parse results file {}", path.display()))?
         };
         let mut used = false;
         for value in values {
