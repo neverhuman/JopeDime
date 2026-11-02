@@ -5627,6 +5627,10 @@
     "python:research/flywheel_selfplay/h217_gated025_confirm/test_h217.py": {
       "reason": "Owner-requested H217 data-free controls for the fresh-fold confirmation of H210 GATED_025 (frozen gate recipe identical to H210, cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest with cross-wave overlap and reused-partition refusal, LCB/3-of-3/harm primary verdict, DL-Val plateau co-primary, Elo orientation, xbabe2-only host admission, effective-affinity limits, source binding before the claim, absolute deadline, 20 GiB memory and 93.8% disk rules); no checkpoint/corpus reads or model passes in the fixtures",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/test_h216.py": {
+      "role": "research",
+      "reason": "H216 data-free CPU controls for K=16 untrained adapter lottery selection on reserved B with strict q10>0.005 bootstrap margin, family-shuffled B placebo, diagnostic-only ORACLE_A ceiling, Holm m=2, harm<=10% gate, resource guards and manifest pin verification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

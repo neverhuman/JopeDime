@@ -5629,6 +5629,30 @@
         "role": "research",
         "reason": "H217 preregistered CPU-only diagnostic: fresh-fold confirmation of H210 GATED_025 with the frozen recipe (BLEND_025 = r882 + 0.25*(calibrated HistGBM - r882), gated per context by the outcome-free zgap cost signal with a FIT-only threshold, max FIT native gain s.t. FIT harm <= 5%, else r882; no retuning; H129 disagreement placebo), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit with fresh seeds/folds; stage-1 lock before A; primary CONFIRMED iff LCB95>0, 3/3 seeds positive, harm<=10%; co-primary DL-Val plateau gain>+0.002 with family-bootstrap LCB95>0; xbabe2 CPU with effective-affinity limits, absolute deadline and pre-claim source binding; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/analysis.py": {
+      "bytes": 13529,
+      "sha256": "dfa22e9e7165d9e1356619e3ea7635122dde9190088bc5b969bbd7ddfa0a1824",
+      "classification": {
+        "role": "research",
+        "reason": "H216 CPU inference-only random-init lottery with B-locked strict-margin selection (q10>0.005), family-shuffled B placebo, diagnostic ORACLE_A ceiling, frozen DOPE/r882 and zero updates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/parents.py": {
+      "bytes": 1151,
+      "sha256": "7072249c7b471240f2b561df1540bcc3b43eea6c9172d95c91e9ab70def5330a",
+      "classification": {
+        "role": "research",
+        "reason": "H216 CPU inference-only random-init lottery with B-locked strict-margin selection (q10>0.005), family-shuffled B placebo, diagnostic ORACLE_A ceiling, frozen DOPE/r882 and zero updates; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/runner.py": {
+      "bytes": 31108,
+      "sha256": "f7326b7df4fb21bb036507c3d0da2ddcb7fb5179b51047624af446be2ca38b43",
+      "classification": {
+        "role": "research",
+        "reason": "H216 CPU inference-only random-init lottery with B-locked strict-margin selection (q10>0.005), family-shuffled B placebo, diagnostic ORACLE_A ceiling, frozen DOPE/r882 and zero updates; no serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
