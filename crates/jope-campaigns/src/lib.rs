@@ -24,6 +24,7 @@ pub mod jope_generalized_gp;
 pub mod paths;
 pub mod recovery_contracts;
 pub mod router_contracts;
+pub mod validation_gp_study_reporting;
 pub mod search_v3;
 pub mod selfplay_core;
 pub mod selfplay_data;
