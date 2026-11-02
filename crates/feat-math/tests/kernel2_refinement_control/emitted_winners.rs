@@ -206,5 +206,7 @@ fn the_pinned_winner_is_the_jope_pipeline_pin_and_round_trips() {
 // ------------------------------------------------------------------------------------------------
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[path = "emitted_winners/execution.rs"]
 mod execution;
+#[path = "emitted_winners/recipe.rs"]
 mod recipe;

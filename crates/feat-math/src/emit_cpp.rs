@@ -182,13 +182,20 @@ fn emit_cpp_inner(
     Ok(source)
 }
 
+#[path = "emit_cpp/helpers.rs"]
 mod helpers;
 mod model;
+#[path = "emit_cpp/templates_advanced_ops.rs"]
 mod templates_advanced_ops;
+#[path = "emit_cpp/templates_base.rs"]
 mod templates_base;
+#[path = "emit_cpp/templates_basic_ops.rs"]
 mod templates_basic_ops;
+#[path = "emit_cpp/templates_heads.rs"]
 mod templates_heads;
+#[path = "emit_cpp/templates_io.rs"]
 mod templates_io;
+#[path = "emit_cpp/templates_portable.rs"]
 mod templates_portable;
 
 use helpers::*;

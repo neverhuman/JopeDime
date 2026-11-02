@@ -363,7 +363,8 @@ impl Vocab {
                 };
                 if slot.is_expr {
                     if let ParamValue::Str(s) = value {
-                        if slot.bin_texts.contains(s) || parse_expr_tokens(s, &self.expr).is_ok() {
+                        if slot.bin_texts.contains(s) || tokenize_expr_input(s, &self.expr).is_ok()
+                        {
                             continue;
                         }
                     }
@@ -455,7 +456,7 @@ impl Vocab {
                     if let Some(i) = slot.bin_texts.iter().position(|s| s == &text) {
                         tokens.push(slot.val_ids[i]);
                     } else {
-                        tokens.extend(parse_expr_tokens(&text, &self.expr)?);
+                        tokens.extend(tokenize_expr_input(&text, &self.expr)?);
                         tokens.push(self.expr.end_id);
                     }
                     continue;
@@ -500,7 +501,8 @@ impl Vocab {
                 } else if k == "expr" {
                     match (av, bv) {
                         (ParamValue::Str(x), ParamValue::Str(y)) => {
-                            parse_expr_tokens(x, &self.expr)? == parse_expr_tokens(y, &self.expr)?
+                            tokenize_expr_input(x, &self.expr)?
+                                == tokenize_expr_input(y, &self.expr)?
                         }
                         _ => false,
                     }
@@ -530,7 +532,7 @@ fn render_expr(tokens: &[usize], table: &Expr, pos: &mut usize) -> Result<String
         Ok(symbol.clone())
     }
 }
-fn parse_expr_tokens(text: &str, table: &Expr) -> Result<Vec<usize>> {
+fn tokenize_expr_input(text: &str, table: &Expr) -> Result<Vec<usize>> {
     #[derive(Clone)]
     enum Token {
         Name(String),

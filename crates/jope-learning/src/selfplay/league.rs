@@ -20,8 +20,11 @@ fn is_sha256(value: &str) -> bool {
             .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
 }
 
+#[path = "league/payoffs.rs"]
 mod payoffs;
+#[path = "league/readiness.rs"]
 mod readiness;
+#[path = "league/registry.rs"]
 mod registry;
 
 pub use payoffs::{ContextIdentity, MemberSnapshot, PayoffCell, PayoffManifest, PayoffPurpose};

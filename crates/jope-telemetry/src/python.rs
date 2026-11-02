@@ -28,9 +28,8 @@ use crate::record::RecordSink;
 use crate::train::Cadence;
 use jope_datasets::catalog::Task;
 use jope_datasets::family_contracts::{
-    build_binary_target_summaries, build_split_view_manifest,
-    derive_binary_source_family, freeze_source_family_split as rust_freeze_source_family_split,
-    OuterSplit,
+    build_binary_target_summaries, build_split_view_manifest, derive_binary_source_family,
+    freeze_source_family_split as rust_freeze_source_family_split, OuterSplit,
 };
 use pyo3::buffer::PyBuffer;
 use pyo3::exceptions::{PyKeyError, PyRuntimeError, PyTypeError, PyValueError};

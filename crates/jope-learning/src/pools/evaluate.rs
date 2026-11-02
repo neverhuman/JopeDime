@@ -6,7 +6,7 @@
 //! pools, so per-context differences are paired. The primary contrast is each candidate against
 //! the strongest baseline by mean realized gain; beating uniform alone never passes.
 
-use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, IntervalVerdict};
+use super::bootstrap::{cluster_bootstrap_ci, IntervalVerdict, PairedInterval};
 use super::metrics::{score_context, uniform_context, ContextMetrics};
 use super::pool::{verify, Manifest, Pool, Reference};
 use super::selectors::{

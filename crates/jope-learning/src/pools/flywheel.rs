@@ -30,7 +30,7 @@
 //!
 //! Shadow-only: never claims `qualified = true` or `l6`.
 
-use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, IntervalVerdict};
+use super::bootstrap::{cluster_bootstrap_ci, IntervalVerdict, PairedInterval};
 use super::evaluate::{
     evaluate_with_fold_train_pools_and_priors, fold_of, Config as EvalConfig, Inputs, Summary,
 };
@@ -1216,8 +1216,8 @@ pub fn run_distilled_flywheel_with_s3_prior(
         })
         .unwrap_or(false);
 
-    let active_discovery_established =
-        all_rounds_kl_admissible && active_beats_passive_discovery_verdict == IntervalVerdict::Greater;
+    let active_discovery_established = all_rounds_kl_admissible
+        && active_beats_passive_discovery_verdict == IntervalVerdict::Greater;
     let data_accumulation_lift_established = monotonic_train_hwm_gain
         && all_rounds_kl_admissible
         && final_vs_round0_primary_verdict == IntervalVerdict::Greater

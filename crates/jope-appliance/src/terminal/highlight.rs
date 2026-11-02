@@ -117,8 +117,10 @@ fn scan_comment(
         return Some((end, ThemeToken::CodeComment));
     }
 
-    let block_comment = matches!(language, HighlightLanguage::Rust | HighlightLanguage::JavaScript)
-        && bytes.get(index..index + 2) == Some(b"/*");
+    let block_comment = matches!(
+        language,
+        HighlightLanguage::Rust | HighlightLanguage::JavaScript
+    ) && bytes.get(index..index + 2) == Some(b"/*");
     if !block_comment {
         return None;
     }
@@ -175,16 +177,14 @@ fn scan_quoted_string(
     language: HighlightLanguage,
 ) -> Option<(usize, bool)> {
     let quote = *bytes.get(index)?;
-    let is_quote =
-        matches!(quote, b'\'' | b'"')
-            || (language == HighlightLanguage::JavaScript && quote == b'`');
+    let is_quote = matches!(quote, b'\'' | b'"')
+        || (language == HighlightLanguage::JavaScript && quote == b'`');
     if !is_quote {
         return None;
     }
 
-    let triple =
-        language == HighlightLanguage::Python
-            && bytes.get(index..index + 3) == Some(&[quote, quote, quote]);
+    let triple = language == HighlightLanguage::Python
+        && bytes.get(index..index + 3) == Some(&[quote, quote, quote]);
     if language == HighlightLanguage::Rust && quote == b'\'' {
         let end = scan_char_literal(bytes, index);
         return Some((end.unwrap_or(index + 1), end.is_some()));

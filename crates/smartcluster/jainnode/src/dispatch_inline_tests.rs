@@ -370,6 +370,6 @@ mod tests {
         .unwrap()
     }
 
-    #[path = "cases.rs"]
+    #[path = "dispatch_inline_tests/cases.rs"]
     mod cases;
 }

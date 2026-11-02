@@ -12,37 +12,31 @@ fn retained_pages_use_exclusive_run_scoped_decimal_cursors() {
     let second = index.page(&first.next, 2, MAX_PAGE_BYTES).unwrap();
     assert_eq!(second.events, events[2..]);
     assert!(!second.more);
-    assert!(
-        index
-            .page(&second.next, 2, MAX_PAGE_BYTES)
-            .unwrap()
-            .events
-            .is_empty()
-    );
-    assert!(
-        index
-            .page(
-                &Cursor {
-                    run_id: "other".into(),
-                    sequence: "0".into()
-                },
-                2,
-                MAX_PAGE_BYTES
-            )
-            .is_err()
-    );
-    assert!(
-        index
-            .page(
-                &Cursor {
-                    run_id: "run-a".into(),
-                    sequence: "4".into()
-                },
-                2,
-                MAX_PAGE_BYTES
-            )
-            .is_err()
-    );
+    assert!(index
+        .page(&second.next, 2, MAX_PAGE_BYTES)
+        .unwrap()
+        .events
+        .is_empty());
+    assert!(index
+        .page(
+            &Cursor {
+                run_id: "other".into(),
+                sequence: "0".into()
+            },
+            2,
+            MAX_PAGE_BYTES
+        )
+        .is_err());
+    assert!(index
+        .page(
+            &Cursor {
+                run_id: "run-a".into(),
+                sequence: "4".into()
+            },
+            2,
+            MAX_PAGE_BYTES
+        )
+        .is_err());
     for s in ["01", "-1", "1e2", "+1", "18446744073709551616", ""] {
         assert!(narration::sequence(s).is_err(), "{s}");
     }
@@ -102,28 +96,24 @@ fn complete_corruption_wrong_run_and_oversize_tail_fail_closed() {
 fn truncation_replacement_and_record_caps_are_explicit_errors() {
     let dir = fixture_dir();
     let (path, _) = fixture(dir.path(), 2);
-    assert!(
-        Index::open(
-            &path,
-            "run-a",
-            Limits {
-                max_records: 1,
-                ..Limits::default()
-            }
-        )
-        .is_err()
-    );
-    assert!(
-        Index::open(
-            &path,
-            "run-a",
-            Limits {
-                max_journal_bytes: 1,
-                ..Limits::default()
-            }
-        )
-        .is_err()
-    );
+    assert!(Index::open(
+        &path,
+        "run-a",
+        Limits {
+            max_records: 1,
+            ..Limits::default()
+        }
+    )
+    .is_err());
+    assert!(Index::open(
+        &path,
+        "run-a",
+        Limits {
+            max_journal_bytes: 1,
+            ..Limits::default()
+        }
+    )
+    .is_err());
     let mut index = index(&path);
     fs::write(&path, b"").unwrap();
     assert!(index.status().is_err());

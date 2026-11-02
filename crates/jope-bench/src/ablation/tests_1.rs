@@ -137,8 +137,11 @@ pub(crate) fn paired_run(
 /// ties and losses overall and per dataset, both medians, the differences, the largest gain
 /// and the mean without it, the sign test, the same-winner count, an all-tie input, the
 /// bit-equality rule for a tie, and the refusal of unpaired runs.
+#[path = "tests_1/kernel2.rs"]
 mod kernel2;
+#[path = "tests_1/legacy.rs"]
 mod legacy;
+#[path = "tests_1/paired.rs"]
 mod paired;
 
 pub(crate) use kernel2::*;

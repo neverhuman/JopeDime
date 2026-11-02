@@ -223,11 +223,16 @@ struct SmartComparisonBaselines {
     stronger_tabfm_rmse: f64,
 }
 
+#[path = "train_only_redteam_results/report.rs"]
 mod report;
+#[path = "train_only_redteam_results/scoring.rs"]
 mod scoring;
+#[path = "train_only_redteam_results/smart_v3.rs"]
 mod smart_v3;
 #[cfg(test)]
+#[path = "train_only_redteam_results/tests.rs"]
 mod tests;
+#[path = "train_only_redteam_results/validation.rs"]
 mod validation;
 
 pub(super) use report::report_run;

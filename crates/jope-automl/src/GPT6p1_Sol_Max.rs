@@ -22,10 +22,13 @@ const MAX_FEATURES: usize = 96;
 const MAX_CANDIDATES: usize = 512;
 const QUANTILE_BINS: usize = 64;
 
+#[path = "GPT6p1_Sol_Max/random.rs"]
 mod random;
 use random::{sample_indices, Random};
+#[path = "GPT6p1_Sol_Max/tree.rs"]
 mod tree;
 use tree::{growth, tree_limit, Growth, Tree};
+#[path = "GPT6p1_Sol_Max/selection.rs"]
 mod selection;
 use selection::{choose, fit_final};
 

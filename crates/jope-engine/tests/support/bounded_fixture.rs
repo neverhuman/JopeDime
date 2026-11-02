@@ -395,5 +395,6 @@ pub fn result(
     (serde_json::to_vec(&envelope).unwrap(), payload)
 }
 
+#[path = "bounded_fixture/fake_supervisor.rs"]
 mod fake_supervisor;
 pub use fake_supervisor::{FakeState, FakeSupervisor, RetainedWork};

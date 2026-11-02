@@ -3,8 +3,18 @@ use anyhow::Result;
 use jope_parallel::{audit, operations, prepare, snapshot, transport};
 use std::path::{Path, PathBuf};
 
-#[path = "dispatcher/mod.rs"]
-mod dispatch;
+#[path = "dispatcher/context.rs"]
+mod context;
+#[path = "dispatcher/fit.rs"]
+mod fit;
+#[path = "dispatcher/learning.rs"]
+mod learning;
+#[path = "dispatcher/misc.rs"]
+mod misc;
+#[path = "dispatcher/neural.rs"]
+mod neural;
+#[path = "dispatcher/registry.rs"]
+mod registry;
 
 fn write_query_result(path: &std::path::Path, result: &impl serde::Serialize) -> Result<()> {
     use std::io::Write;
@@ -24,8 +34,22 @@ fn write_query_result(path: &std::path::Path, result: &impl serde::Serialize) ->
     Ok(())
 }
 
-pub(crate) fn run(_cli: crate::command::Cli) -> Result<()> {
-    let cli = Cli::parse();
+pub(crate) fn run(cli: Cli) -> Result<()> {
     let Cli { command, root, .. } = cli;
-    dispatch::run(&root, command)
+    let mut command = command;
+    macro_rules! try_handler {
+        ($module:ident) => {
+            match $module::handle(&root, command)? {
+                Some(next) => command = next,
+                None => return Ok(()),
+            }
+        };
+    }
+    try_handler!(registry);
+    try_handler!(context);
+    try_handler!(learning);
+    try_handler!(fit);
+    try_handler!(neural);
+    try_handler!(misc);
+    anyhow::bail!("no dispatcher handler accepts the selected command")
 }

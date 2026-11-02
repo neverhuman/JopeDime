@@ -458,4 +458,5 @@ pub fn main_impl() -> anyhow::Result<()> {
 }
 
 #[cfg(test)]
+#[path = "imp/tests.rs"]
 mod tests;

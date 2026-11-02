@@ -438,12 +438,17 @@ pub fn expm1(x: f64) -> f64 {
 
 // ---------------------------------- pow ------------------------------------
 
+#[path = "portable_math/power.rs"]
 mod power;
+#[path = "portable_math/trig.rs"]
 mod trig;
 
 pub use self::power::{pow, tanh};
 pub use self::trig::{atan, atan2, cos, sin};
 
+#[path = "portable_math/frozen_s1.rs"]
+#[path = "portable_math/frozen_s1.rs"]
 pub mod frozen_s1;
 #[cfg(test)]
+#[path = "portable_math/tests.rs"]
 mod tests;

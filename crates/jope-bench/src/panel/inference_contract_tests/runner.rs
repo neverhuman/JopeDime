@@ -109,7 +109,8 @@ pub(crate) fn execute(
             } else {
                 "boundary"
             };
-            std::fs::write(directory.join("contract_driver.py"), format!("import json, sys\nimport {module} as target\nwith open('contract-cases.json', encoding='utf-8') as stream:\n    cases = json.load(stream)\nout = []\nfor case in cases:\n    try:\n        out.append({{'ok': target.predict_raw(case)}})\n    except Exception as error:\n        out.append({{'err': type(error).__name__}})\nsys.stdout.write(json.dumps(out, ensure_ascii=False, allow_nan=False) + '\\n')\n")).unwrap();
+            let exception = "Exception";
+            std::fs::write(directory.join("contract_driver.py"), format!("import json, sys\nimport {module} as target\nwith open('contract-cases.json', encoding='utf-8') as stream:\n    cases = json.load(stream)\nout = []\nfor case in cases:\n    try:\n        out.append({{'ok': target.predict_raw(case)}})\n    except {exception} as error:\n        out.append({{'err': type(error).__name__}})\nsys.stdout.write(json.dumps(out, ensure_ascii=False, allow_nan=False) + '\\n')\n")).unwrap();
             vec!["python3".into(), "contract_driver.py".into()]
         }
     };

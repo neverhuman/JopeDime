@@ -3,8 +3,8 @@ use super::*;
 #[test]
 fn concurrent_commits_never_poison_a_healthy_live_index() {
     use std::sync::{
-        Arc,
         atomic::{AtomicBool, Ordering},
+        Arc,
     };
     let dir = fixture_dir();
     let path = dir.path().join("live-race.jsonl");
@@ -148,10 +148,8 @@ fn cli_distinguishes_integrity_and_completion_and_follow_stops_at_terminal_captu
         run(&limited, &["verify"]).status.success(),
         "committed prefix integrity remains inspectable"
     );
-    assert!(
-        !run(&limited, &["verify", "--require-complete"])
-            .status
-            .success()
-    );
+    assert!(!run(&limited, &["verify", "--require-complete"])
+        .status
+        .success());
     assert!(!run(&limited, &["follow"]).status.success());
 }

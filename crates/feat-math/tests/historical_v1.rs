@@ -775,8 +775,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         "ccbd0cfaf3edaee109f648883a0e2c37f57675a6"
     );
     assert_eq!(deadlang_identity["fixtures"].as_array().unwrap().len(), 2);
-    assert_eq!(deadlang_identity["fixtures"][0]["path"], changed_fixtures[0]);
-    assert_eq!(deadlang_identity["fixtures"][1]["path"], changed_fixtures[1]);
+    assert_eq!(
+        deadlang_identity["fixtures"][0]["path"],
+        changed_fixtures[0]
+    );
+    assert_eq!(
+        deadlang_identity["fixtures"][1]["path"],
+        changed_fixtures[1]
+    );
     assert_eq!(
         p21_family_split["source_commit"],
         "e240a9f27e3bba296acf77d29dae10fd2529a0c1"

@@ -185,7 +185,9 @@ impl GraphExpression {
             Ok(match e {
                 GraphExpression::Constant { value } => Expr::Const(value.value()?),
                 GraphExpression::Column { column } => Expr::Var(Var::Col(column.index)),
-                GraphExpression::Unary { op, argument } => Expr::Unary(*op, Box::new(lower(argument)?)),
+                GraphExpression::Unary { op, argument } => {
+                    Expr::Unary(*op, Box::new(lower(argument)?))
+                }
                 GraphExpression::Binary { op, left, right } => {
                     Expr::Binary(*op, Box::new(lower(left)?), Box::new(lower(right)?))
                 }
@@ -771,7 +773,8 @@ impl ProgramGraph {
                             "pure feature DAG: Scalar node {index} must read the raw input"
                         ));
                     }
-                    let crate::kernel::ir::graph::GraphExpression::Column { column } = expression else {
+                    let crate::kernel::ir::graph::GraphExpression::Column { column } = expression
+                    else {
                         return Err(format!(
                             "pure feature DAG refuses Scalar node {index}: only a bare column expression is lowered"
                         ));

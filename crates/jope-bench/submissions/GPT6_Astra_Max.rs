@@ -16,7 +16,9 @@ pub trait RegressorApi: Sized {
     ) -> Result<Vec<f64>, String>;
 }
 
+#[path = "GPT6_Astra_Max/prep.rs"]
 mod prep;
+#[path = "GPT6_Astra_Max/tree.rs"]
 mod tree;
 
 pub(super) use prep::{choose_features, encode, linear_predictions, prepare, ridge};

@@ -8,7 +8,9 @@ use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
+#[path = "promote/operations.rs"]
 mod operations;
+#[path = "promote/protocol.rs"]
 mod protocol;
 
 pub use operations::{

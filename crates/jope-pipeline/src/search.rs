@@ -78,7 +78,7 @@ use crate::{
     prepare::Cut,
     receipt::Phase,
     search_events::{
-        self, ProposalBehaviorLaw, EditTransition, Effort, EvidenceRef, Recorder, SearchBinding,
+        self, EditTransition, Effort, EvidenceRef, ProposalBehaviorLaw, Recorder, SearchBinding,
         SearchDecision, SearchEvent, SearchEventLog,
     },
     sha256_hex,

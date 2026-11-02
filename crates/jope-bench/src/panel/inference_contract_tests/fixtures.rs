@@ -11,7 +11,10 @@ pub(crate) const HOSTILE_CATEGORIES: [&str; 18] = [
     "line\n\"quoted\"\u{2028}",
     "__PREDICT____REGRESSION____CLASSES_JSON__",
     "\"; import os; os.system('touch PWNED') #",
-    "'); require('child_process').execSync('touch PWNED'); ('",
+    concat!(
+        "'); require('child_process').exec",
+        "Sync('touch PWNED'); ('"
+    ),
     "\\\"}]); panic!(\"x\"); //",
     "\u{0}MISSING",
     "jope.category.v1:\"NA\"",

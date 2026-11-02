@@ -284,6 +284,9 @@ fn synthetic_fixture(proposals: usize) -> Fixture {
     f
 }
 
+#[path = "tests/cpu_graph.rs"]
 mod cpu_graph;
+#[path = "tests/shape.rs"]
 mod shape;
+#[path = "tests/validation.rs"]
 mod validation;

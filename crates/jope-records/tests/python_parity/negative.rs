@@ -17,7 +17,7 @@ impl Rust {
         }
     }
 
-    fn exit(&self) -> i64 {
+    fn status_code(&self) -> i64 {
         match self {
             Rust::Report(_, true) => 0,
             _ => 1,
@@ -68,10 +68,10 @@ pub(crate) fn compare(case: &Value, rust: &Rust, stricter: bool) -> Result<(), S
             )),
         };
     }
-    if rust.exit() != exit {
+    if rust.status_code() != exit {
         return Err(format!(
             "exit status: the Python {exit}, the port {} ({rust:?})",
-            rust.exit()
+            rust.status_code()
         ));
     }
     let stdout = case.get("stdout").map(|v| s(v).to_owned());
@@ -155,7 +155,7 @@ fn record(rel: &str, name: &str, case: &Value, rust: &Rust) {
     let line = format!(
         "{rel}\t{name}\t{}\t{python}\t{}\t{port}\n",
         case.get("exit").and_then(Value::as_int).unwrap(),
-        rust.exit()
+        rust.status_code()
     );
     use std::io::Write as _;
     let mut file = fs::OpenOptions::new()

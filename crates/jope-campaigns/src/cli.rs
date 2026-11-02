@@ -4,7 +4,7 @@ use super::*;
 #[command(name = "jope-dime-regressor")]
 pub(crate) struct Cli {
     #[command(subcommand)]
-    pub(crate) command: Command,
+    pub(crate) command: CampaignCommand,
     #[arg(long, global = true, env = "JOPE_REGISTRY", default_value = registry_str())]
     pub(crate) registry: PathBuf,
     #[arg(long, global = true, default_value = "grok4p5-42")]
@@ -36,7 +36,7 @@ pub(crate) enum CliTrainOnlyRedteamSelectionMode {
 }
 
 #[derive(Subcommand)]
-pub(crate) enum Command {
+pub(crate) enum CampaignCommand {
     VerifyInputs,
     SelectPanel,
     ValidatePanel,

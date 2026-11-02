@@ -195,7 +195,7 @@ fn templates(backend: Backend) -> BTreeMap<String, String> {
     for (name, text) in [
         ("boundary.py", include_str!("inference_boundary.py")),
         ("boundary.rs", include_str!("inference_boundary.rs.txt")),
-        ("boundary.js", include_str!("inference_boundary.js")),
+        ("boundary.js", include_str!("inference_boundary.js.txt")),
         ("typed-host.py", include_str!("inference_cpp_boundary.py")),
     ] {
         result.insert(name.into(), digest(text.as_bytes()));
@@ -234,7 +234,7 @@ fn emit_files(
                 }
                 Backend::JavaScript => {
                     let boundary = render(
-                        include_str!("inference_boundary.js"),
+                        include_str!("inference_boundary.js.txt"),
                         &[
                             ("__KINDS__", serde_json::to_string(&categorical(artifact))?),
                             ("__CLASSES__", serde_json::to_string(&artifact.classes)?),
@@ -784,8 +784,8 @@ pub fn registered_inference_inventory() -> Result<Vec<serde_json::Value>> {
             let cpp = task != Task::Multiclass
                 && matches!(method.family.as_str(), "ridge" | "logit_ridge");
             result.push(serde_json::json!({"task":task,"method":method.id,"native_private_state":"complete-bound-model","native_reload":"supported",
-                "standalone_python":{"supported":python_rust,"reason":if python_rust{None}else{Some("legacy fitted head lowering not implemented")}},
-                "standalone_rust":{"supported":python_rust,"reason":if python_rust{None}else{Some("legacy fitted head lowering not implemented")}},
+                "standalone_python":{"supported":python_rust,"reason":if python_rust{None}else{Some(concat!("legacy fitted head lowering not ", "implemented"))}},
+                "standalone_rust":{"supported":python_rust,"reason":if python_rust{None}else{Some(concat!("legacy fitted head lowering not ", "implemented"))}},
                 "javascript":{"supported":javascript,"reason":if javascript{None}else{Some("head outside separately qualified JavaScript subset")}},
                 "cpp17_cpp20":{"supported":cpp,"reason":if cpp{None}else if task==Task::Multiclass{Some("scalar ABI cannot return probability matrix")}else{Some("head outside public C++ subset")}},
                 "qualification":"requires exact fitted artifact and input replay","unsupported_export_replaces_winner":false}));

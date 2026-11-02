@@ -8,7 +8,9 @@ use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+#[path = "executor_candidate/mock_namespaces.rs"]
 mod mock_namespaces;
+#[path = "executor_candidate/tombstone.rs"]
 mod tombstone;
 pub use mock_namespaces::{MockNamespace, MockRecoveryNamespace};
 pub use tombstone::{Tombstone, TombstoneState};

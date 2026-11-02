@@ -344,4 +344,5 @@ pub fn load(
     Ok((inputs, closure))
 }
 #[cfg(test)]
+#[path = "inference_inputs/tests.rs"]
 mod tests;

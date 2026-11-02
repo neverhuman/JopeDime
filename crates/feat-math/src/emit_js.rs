@@ -1,5 +1,6 @@
 //! Standalone ES2020 emitter for the independently certified fitted-model slice.
 
+#[path = "emit_js/core_runtime.rs"]
 mod core_runtime;
 use core_runtime::CORE;
 

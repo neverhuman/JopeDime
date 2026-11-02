@@ -70,13 +70,13 @@ fn mcp_refuses_unbounded_or_incomplete_requests_and_terminal_controls() {
 }
 
 use axum::{
-    body::{Body, to_bytes},
+    body::{to_bytes, Body},
     http::{Request, StatusCode},
 };
 use futures_util::{SinkExt, StreamExt};
 use tokio_tungstenite::{
     connect_async,
-    tungstenite::{self, Message, client::IntoClientRequest},
+    tungstenite::{self, client::IntoClientRequest, Message},
 };
 use tower::ServiceExt;
 
@@ -278,12 +278,10 @@ async fn http_monitor_has_strict_origin_policy_and_finite_page() {
         .await
         .unwrap();
     assert_eq!(root.status(), StatusCode::OK);
-    assert!(
-        root.headers()["content-security-policy"]
-            .to_str()
-            .unwrap()
-            .contains("script-src 'self'")
-    );
+    assert!(root.headers()["content-security-policy"]
+        .to_str()
+        .unwrap()
+        .contains("script-src 'self'"));
     assert!(
         String::from_utf8(to_bytes(root.into_body(), 65536).await.unwrap().to_vec())
             .unwrap()
