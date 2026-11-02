@@ -895,6 +895,14 @@ fn retention_sources_have_no_s3_write_or_delete_path() {
             "executor_candidate.rs",
             include_str!("../src/retention/executor_candidate.rs"),
         ),
+        (
+            "executor_candidate/mock_namespaces.rs",
+            include_str!("../src/retention/executor_candidate/mock_namespaces.rs"),
+        ),
+        (
+            "executor_candidate/tombstone.rs",
+            include_str!("../src/retention/executor_candidate/tombstone.rs"),
+        ),
         ("groups.rs", include_str!("../src/retention/groups.rs")),
         ("index.rs", include_str!("../src/retention/index.rs")),
         ("inputs.rs", include_str!("../src/retention/inputs.rs")),
