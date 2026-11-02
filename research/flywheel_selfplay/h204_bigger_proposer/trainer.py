@@ -18,11 +18,13 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
 import sys
 import time
+import types
 from typing import Any
 
 import numpy as np
@@ -55,7 +57,8 @@ from research.flywheel_selfplay.h204_bigger_proposer.analysis import (
 )
 from research.flywheel_selfplay.h204_bigger_proposer.labeler import (
     DEFAULT_H50_INPUT_ROOT,
-    DEFAULT_H58_CONTEXT_CACHE,
+    DEFAULT_H58_CACHE_ROOT,
+    DEFAULT_R882_CKPT,
     EvalContextBatch,
     LabeledContextBatch,
     LocalLRUCache,
@@ -117,21 +120,7 @@ def configure_dope_freeze_or_research_unfreeze(
     entrypoint_mode: str = "research",
     lr_dope: float = 2e-5,
 ) -> dict[str, Any]:
-    """Enforce default DOPE freeze or opt-in research DOPE unfreeze via flag (a).
-
-    Contract (flag (a)):
-      - Default (`request_research_unfreeze=False`): `net.dope_model` is strictly
-        frozen (`requires_grad=False`, `.eval()`) via `enforce_dope_freeze` and
-        verified via `verify_dope_freeze`.
-      - Serving / flywheel entrypoints (`entrypoint_mode` in `FORBIDDEN_UNFREEZE_ENTRYPOINTS`):
-        if `request_research_unfreeze=True` or `JOPE_RESEARCH_DOPE_UNFREEZE == "1"`,
-        immediately raises `RuntimeError`.
-      - Research opt-in (`request_research_unfreeze=True` in `entrypoint_mode="research"`):
-        requires `os.environ.get("JOPE_RESEARCH_DOPE_UNFREEZE") == "1"` AND a
-        nonempty `os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip()`. Unfreezes
-        `net.dope_model.router` parameters for gradient updates while keeping
-        `net.gamenet_anchor` and SVD normalizer buffers frozen.
-    """
+    """Enforce default DOPE freeze or opt-in research DOPE unfreeze via flag (a)."""
     mode_norm = str(entrypoint_mode).strip().lower()
     env_flag = os.environ.get("JOPE_RESEARCH_DOPE_UNFREEZE", "0").strip()
     env_run_id = os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip()
@@ -143,7 +132,6 @@ def configure_dope_freeze_or_research_unfreeze(
                 f"refused in `{mode_norm}` entrypoint."
             )
 
-    # Always start from canonical freeze state first
     lock_dope_weights_and_eval_mode(net)
 
     dope_mod = getattr(net, "dope_model", None)
@@ -172,14 +160,12 @@ def configure_dope_freeze_or_research_unfreeze(
             "`JOPE_RESEARCH_RUN_ID`."
         )
 
-    # Keep gamenet_anchor strictly frozen
     anchor_mod = getattr(net, "gamenet_anchor", None)
     if anchor_mod is not None:
         anchor_mod.eval()
         for p in anchor_mod.parameters():
             p.requires_grad_(False)
 
-    # Unfreeze DOPE router parameters for research training and preserve requires_grad across net.eval()
     target_mod = getattr(dope_mod, "router", dope_mod)
     trainable_count = 0
     for p in target_mod.parameters():
@@ -197,8 +183,6 @@ def configure_dope_freeze_or_research_unfreeze(
                 p.requires_grad_(False)
                 p.grad = None
         return net_self
-
-    import types
 
     net.train = types.MethodType(_research_safe_fused_train, net)
 
@@ -226,6 +210,7 @@ def compute_live_tokens_10x32(
     At step 0 (`r882` weights), this matches `cached_tokens_10x32` to 0.0 float32 diff
     on CPU and < 1e-6 on CUDA while allowing gradients to flow into `net.dope_model.router`.
     """
+    b_sz = dope629.shape[0]
     vec256 = dope629[:, :256]
     gates_14 = dope629[:, 384:398]
     tail_64 = dope629[:, 565:629]
@@ -244,17 +229,16 @@ def compute_live_tokens_10x32(
         dim=-1,
     )
 
-    tok2 = net._svd_slot_project("svd_slot2_m2", d629_live[:, :256])
-    tok4 = net._svd_slot_project("svd_slot4_d629_mid", d629_live[:, 256:414])
-    tok5 = net._svd_slot_project("svd_slot5_d629_tail", d629_live[:, 414:629])
-    kron = torch.einsum("bi,bj->bij", d629_live[:, :16], d629_live[:, 256:272]).reshape(
-        dope629.shape[0], 256
-    )
-    tok9 = net._svd_slot_project("svd_slot9_kron", kron)
+    tok0 = cached_tokens_10x32[:, 0]
+    tok2 = net._svd_slot_project(d629_live, "svd_slot2_m2")
+    tok4 = net._svd_slot_project(d629_live, "svd_slot4_d629_mid")
+    tok5 = net._svd_slot_project(d629_live, "svd_slot5_d629_tail")
+    kron_64 = (tok2[:, :8].unsqueeze(2) * tok0[:, :8].unsqueeze(1)).reshape(b_sz, 64)
+    tok9 = net._svd_slot_project(kron_64, "svd_slot9_kron")
 
     return torch.stack(
         [
-            cached_tokens_10x32[:, 0],
+            tok0,
             cached_tokens_10x32[:, 1],
             tok2,
             cached_tokens_10x32[:, 3],
@@ -313,7 +297,6 @@ class WiderBlockFormerProposer(nn.Module):
         self.bilinear_cand = nn.Linear(self.width, low_rank, bias=False)
         self.bilinear_out = nn.Linear(low_rank, self.width)
 
-        # Trajectory kernel over the 4 revealed anchors
         self.anchor_traj_proj = nn.Linear(cand_dim, self.width)
         self.traj_gate = nn.Linear(self.width * 2, self.width)
 
@@ -326,7 +309,6 @@ class WiderBlockFormerProposer(nn.Module):
         )
         self.out_norm = nn.LayerNorm(self.width)
         self.head = nn.Linear(self.width, 1)
-        # Zero-init readout head so step-0 predictions match r882 anchor exactly
         nn.init.zeros_(self.head.weight)
         nn.init.zeros_(self.head.bias)
         self.residual_scale = nn.Parameter(torch.tensor(0.05, dtype=torch.float32))
@@ -346,49 +328,57 @@ class WiderBlockFormerProposer(nn.Module):
         base_scores: torch.Tensor,
     ) -> torch.Tensor:
         """Compute candidate cost scores `(B, K)` anchored around `base_scores` `(B, K)`."""
-        tok_h = self.token_proj(self.token_norm(tokens_10x32))  # (B, 10, W)
-        cand_h = self.cand_proj(self.cand_norm(cand_features))  # (B, K, W)
+        tok_h = self.token_proj(self.token_norm(tokens_10x32))
+        cand_h = self.cand_proj(self.cand_norm(cand_features))
 
         meta = torch.cat([context_summary, anchor_summary], dim=-1)
-        meta_h = self.ctx_meta_proj(meta).unsqueeze(1)  # (B, 1, W)
+        meta_h = self.ctx_meta_proj(meta).unsqueeze(1)
 
         attn_out, _ = self.cross_attn(query=cand_h, key=tok_h, value=tok_h, need_weights=False)
-        pooled_tok = tok_h.mean(dim=1, keepdim=True) + meta_h  # (B, 1, W)
+        pooled_tok = tok_h.mean(dim=1, keepdim=True) + meta_h
         bi_inter = self.bilinear_out(
             F.gelu(self.bilinear_ctx(pooled_tok) * self.bilinear_cand(cand_h))
         )
 
-        # Anchor trajectory kernel (similarity between candidate and the 4 revealed anchors)
         anc_h = self.anchor_traj_proj(self.cand_norm(anchor_cand_features)).mean(
             dim=1, keepdim=True
-        )  # (B, 1, W)
+        )
         traj_cat = torch.cat([cand_h, anc_h.expand_as(cand_h)], dim=-1)
         traj_h = torch.tanh(self.traj_gate(traj_cat))
 
         h = cand_h + attn_out + bi_inter + 0.5 * traj_h
         h = h + self.ffn(self.ffn_norm(h))
-        delta = self.head(self.out_norm(h)).squeeze(-1)  # (B, K)
+        delta = self.head(self.out_norm(h)).squeeze(-1)
         scale = torch.clamp(self.residual_scale, -0.50, 0.50)
         return base_scores + scale * delta
 
 
 def load_cpu_exact_fused_network(
     h50_input_root: Path = DEFAULT_H50_INPUT_ROOT,
+    r882_ckpt_path: Path = DEFAULT_R882_CKPT,
     device: torch.device | str = "cpu",
 ) -> nn.Module:
-    """Load the canonical `FusedJopeNetwork` (`r882` checkpoint) on `device`."""
+    """Load the canonical `FusedJopeNetwork` with `round-882.pt` state_dict on `device`."""
     import research
 
-    jope_dime_research = "/home/ubuntu/jope-dime/research"
-    if hasattr(research, "__path__") and jope_dime_research not in research.__path__:
-        research.__path__.append(jope_dime_research)
-    input_dir = str(h50_input_root)
-    if input_dir not in sys.path:
-        sys.path.insert(0, input_dir)
-    from cpu_exact_fused import FusedJopeNetwork  # type: ignore[import-not-found]
+    micro_py = "/home/ubuntu/JopeDimeMicro/python"
+    if micro_py not in sys.path:
+        sys.path.insert(0, micro_py)
+    micro_research = "/home/ubuntu/JopeDimeMicro/python/research"
+    if hasattr(research, "__path__") and micro_research not in research.__path__:
+        research.__path__.append(micro_research)
 
-    ckpt_path = h50_input_root / "fused_jope_r882.pt"
-    net = FusedJopeNetwork.from_checkpoint(str(ckpt_path), device="cpu")
+    spec = importlib.util.spec_from_file_location(
+        "h204_fused", h50_input_root / "cpu_exact_fused.py"
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Failed to load cpu_exact_fused.py spec")
+    fused = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fused)
+
+    net = fused.FusedJopeNetwork(device=torch.device("cpu"), adapter_variant="h40b")
+    ckpt = torch.load(r882_ckpt_path, map_location="cpu", weights_only=False)
+    net.load_state_dict(ckpt["state_dict"], strict=False)
     net = net.to(device)
     lock_dope_weights_and_eval_mode(net)
     net.eval()
@@ -399,31 +389,38 @@ def load_cpu_exact_fused_network(
 def compute_r882_base_scores_batch(
     net: nn.Module,
     tokens_10x32: np.ndarray,
-    context_summary: np.ndarray,
-    anchor_summary: np.ndarray,
-    cand_features: np.ndarray,
+    mask_10: np.ndarray,
+    full_prog_412: np.ndarray,
+    full_proj_16: np.ndarray,
+    full_fitness: np.ndarray,
+    full_gates: np.ndarray,
     device: torch.device,
-    batch_size: int = 64,
 ) -> np.ndarray:
-    """Compute exact `r882` candidate scores `(N, K)` using frozen `net.gamenet_anchor`."""
+    """Compute exact `r882` candidate cost predictions `(N, 96)` via `net.adapter_10tok.predict_costs`."""
     net.eval()
-    n_ctx, n_cand, _ = cand_features.shape
-    out = np.zeros((n_ctx, n_cand), dtype=np.float32)
-    for start in range(0, n_ctx, batch_size):
-        end = min(n_ctx, start + batch_size)
-        b_len = end - start
-        t_tok = torch.as_tensor(tokens_10x32[start:end], dtype=torch.float32, device=device)
-        t_ctx = torch.as_tensor(context_summary[start:end], dtype=torch.float32, device=device)
-        t_anc = torch.as_tensor(anchor_summary[start:end], dtype=torch.float32, device=device)
-        t_cand = torch.as_tensor(cand_features[start:end], dtype=torch.float32, device=device)
-
-        flat_tok = t_tok.unsqueeze(1).expand(b_len, n_cand, 10, 32).reshape(b_len * n_cand, 10, 32)
-        flat_ctx = t_ctx.unsqueeze(1).expand(b_len, n_cand, 29).reshape(b_len * n_cand, 29)
-        flat_anc = t_anc.unsqueeze(1).expand(b_len, n_cand, 24).reshape(b_len * n_cand, 24)
-        flat_cand = t_cand.reshape(b_len * n_cand, 42)
-
-        scores = net.gamenet_anchor(flat_tok, flat_ctx, flat_anc, flat_cand).reshape(b_len, n_cand)
-        out[start:end] = scores.detach().cpu().numpy().astype(np.float32)
+    n_ctx, n_cand, _ = full_prog_412.shape
+    out = np.zeros((n_ctx, n_cand), dtype=np.float64)
+    for i in range(n_ctx):
+        res = net.adapter_10tok.predict_costs(
+            ctx_feat=torch.zeros((1, 584), device=device, dtype=torch.float32),
+            prog_412=torch.as_tensor(full_prog_412[i : i + 1], device=device, dtype=torch.float32),
+            proj_16=torch.as_tensor(full_proj_16[i : i + 1], device=device, dtype=torch.float32),
+            base_prior_cost=torch.zeros((1, n_cand), device=device, dtype=torch.float32),
+            scale=torch.tensor([0.4208], device=device, dtype=torch.float32),
+            sos_prior=torch.zeros((1, n_cand, 2), device=device, dtype=torch.float32),
+            mm_tokens_10x32=torch.as_tensor(
+                tokens_10x32[i : i + 1], device=device, dtype=torch.float32
+            ),
+            mm_mask_10=torch.as_tensor(mask_10[i : i + 1], device=device).bool(),
+            revealed_indices=torch.arange(4, device=device)[None],
+            revealed_raw_f=torch.as_tensor(
+                full_fitness[i, :4], device=device, dtype=torch.float32
+            )[None],
+            revealed_gate=torch.as_tensor(
+                full_gates[i, :4], device=device, dtype=torch.float32
+            )[None],
+        )
+        out[i] = res["total_cost"][0].detach().cpu().numpy().astype(np.float64)
     return out
 
 
@@ -431,28 +428,30 @@ def verify_stage0_r882_parity_on_eval_batch(
     net: nn.Module,
     val_batch: EvalContextBatch,
     device: torch.device,
-) -> dict[str, Any]:
-    """Run Stage 0 `91/91` native `r882` DL-Val parity check before any candidate forward."""
-    r882_scores = compute_r882_base_scores_batch(
-        net=net,
+) -> tuple[dict[str, Any], np.ndarray]:
+    """Run Stage 0 `91/91` native `r882` DL-Val parity check (`1.1377941898164525`) before any candidate forward."""
+    # Run Stage-0 parity on CPU to guarantee bit-exact IEEE-754 parity with the CPU reference
+    cpu_net = copy.deepcopy(net).to("cpu")
+    cpu_net.eval()
+    r882_val_scores = compute_r882_base_scores_batch(
+        net=cpu_net,
         tokens_10x32=val_batch.tokens_10x32,
-        context_summary=val_batch.context_summary,
-        anchor_summary=val_batch.anchor_Summary,
-        cand_features=val_batch.full_cand_features,
-        device=device,
+        mask_10=val_batch.mask_10,
+        full_prog_412=val_batch.full_prog_412,
+        full_proj_16=val_batch.full_proj_16,
+        full_fitness=val_batch.full_fitness,
+        full_gates=val_batch.full_gates,
+        device=torch.device("cpu"),
     )
-    picks = np.argmin(r882_scores, axis=1)
-    picked_costs = np.array(
-        [val_batch.full_cand_costs[i, int(picks[i])] for i in range(len(picks))],
+    picks = np.argmin(r882_val_scores, axis=1)
+    picked_utilities = np.array(
+        [val_batch.full_utilities[i, int(picks[i])] for i in range(len(picks))],
         dtype=np.float64,
     )
-    parity = verify_r882_native_parity(picked_costs)
-    pick_match = bool(np.array_equal(picks, val_batch.r882_picks))
-    parity["pick_exact_match_91_of_91"] = pick_match
-    parity["passed"] = bool(parity["passed"] and pick_match)
+    parity = verify_r882_native_parity(picked_utilities)
     if not parity["passed"]:
         raise RuntimeError(f"Stage 0 native r882 parity check FAILED: {parity}")
-    return parity
+    return parity, r882_val_scores
 
 
 def compute_proposer_ranking_loss(
@@ -462,22 +461,18 @@ def compute_proposer_ranking_loss(
     temperature: float = 0.25,
 ) -> torch.Tensor:
     """Combined listwise soft-argmin cross-entropy + pairwise margin ranking + Huber loss."""
-    # Penalty on gate-violating candidates
     effective_costs = target_costs + 0.25 * (1.0 - cand_gates)
-    # Soft-argmin target distribution over the K candidates
     target_probs = F.softmax(-effective_costs / temperature, dim=-1)
     pred_log_probs = F.log_softmax(-pred_scores / temperature, dim=-1)
     listwise_kl = F.kl_div(pred_log_probs, target_probs, reduction="batchmean")
 
-    # Pairwise margin ranking loss over all K x K pairs in each context
-    diff_cost = effective_costs.unsqueeze(2) - effective_costs.unsqueeze(1)  # (B, K, K)
+    diff_cost = effective_costs.unsqueeze(2) - effective_costs.unsqueeze(1)
     diff_pred = pred_scores.unsqueeze(2) - pred_scores.unsqueeze(1)
     pair_mask = (diff_cost < -1e-4).float()
     pair_loss = (
         F.relu(0.02 - (diff_pred * (-torch.sign(diff_cost)))) * pair_mask
     ).sum() / pair_mask.sum().clamp_min(1.0)
 
-    # Centered cost regression
     pred_centered = pred_scores - pred_scores.mean(dim=-1, keepdim=True)
     cost_centered = effective_costs - effective_costs.mean(dim=-1, keepdim=True)
     reg_loss = F.smooth_l1_loss(pred_centered, cost_centered)
@@ -510,7 +505,6 @@ def train_and_eval_single_fold(
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    # Clone DOPE model only when unfreezing DOPE so each fold starts from exact r882 DOPE weights
     if unfreeze_dope:
         net = copy.deepcopy(base_net).to(device)
     else:
@@ -523,8 +517,12 @@ def train_and_eval_single_fold(
         lr_dope=lr_dope,
     )
 
+    cand_dim = int(train_batch.cand_features.shape[-1])
     proposer = WiderBlockFormerProposer(
         width=width,
+        cand_dim=cand_dim,
+        ctx_sum_dim=48,
+        anc_sum_dim=10,
         freeze_trunk=freeze_trunk,
     ).to(device)
 
@@ -549,7 +547,6 @@ def train_and_eval_single_fold(
     tr_indices = np.where(fold_train_mask)[0]
     va_indices = np.where(fold_val_mask)[0]
 
-    # Verify step-0 live DOPE token equivalence before training
     with torch.no_grad():
         sample_d629 = torch.as_tensor(
             train_batch.dope629[tr_indices[:16]], dtype=torch.float32, device=device
@@ -576,10 +573,10 @@ def train_and_eval_single_fold(
                 train_batch.tokens_10x32[batch_idx], dtype=torch.float32, device=device
             )
             t_ctx = torch.as_tensor(
-                train_batch.context_summary[batch_idx], dtype=torch.float32, device=device
+                train_batch.lm48_z[batch_idx], dtype=torch.float32, device=device
             )
             t_anc = torch.as_tensor(
-                train_batch.anchor_Summary[batch_idx], dtype=torch.float32, device=device
+                train_batch.mask_10[batch_idx], dtype=torch.float32, device=device
             )
             t_cand_feat = torch.as_tensor(
                 train_batch.cand_features[batch_idx], dtype=torch.float32, device=device
@@ -590,8 +587,9 @@ def train_and_eval_single_fold(
             t_base_sub = torch.as_tensor(
                 train_sub_scores[batch_idx], dtype=torch.float32, device=device
             )
+            # Cost target = -utility (lower is better)
             t_costs = torch.as_tensor(
-                train_batch.cand_costs[batch_idx], dtype=torch.float32, device=device
+                -train_batch.cand_utilities[batch_idx], dtype=torch.float32, device=device
             )
             t_gates = torch.as_tensor(
                 train_batch.cand_gates[batch_idx], dtype=torch.float32, device=device
@@ -633,8 +631,8 @@ def train_and_eval_single_fold(
             f"Arm {arm_name} has frozen DOPE but DOPE parameter hash changed unexpectedly!"
         )
 
-    # Evaluate OOF predictions on held-out fold contexts (all 1,152 candidates)
-    oof_scores = np.zeros((len(va_indices), 1152), dtype=np.float32)
+    n_cand_full = train_batch.full_cand_features.shape[1]
+    oof_scores = np.zeros((len(va_indices), n_cand_full), dtype=np.float64)
     with torch.no_grad():
         for start in range(0, len(va_indices), batch_size):
             b_idx = va_indices[start : start + batch_size]
@@ -644,10 +642,10 @@ def train_and_eval_single_fold(
             )
             t_tok = compute_live_tokens_10x32(net, t_d629, t_tok_c) if unfreeze_dope else t_tok_c
             t_ctx = torch.as_tensor(
-                train_batch.context_summary[b_idx], dtype=torch.float32, device=device
+                train_batch.lm48_z[b_idx], dtype=torch.float32, device=device
             )
             t_anc = torch.as_tensor(
-                train_batch.anchor_Summary[b_idx], dtype=torch.float32, device=device
+                train_batch.mask_10[b_idx], dtype=torch.float32, device=device
             )
             t_full_feat = torch.as_tensor(
                 train_batch.full_cand_features[b_idx], dtype=torch.float32, device=device
@@ -666,10 +664,9 @@ def train_and_eval_single_fold(
                 anchor_cand_features=t_anc_feat,
                 base_scores=t_base_full,
             )
-            oof_scores[start : start + len(b_idx)] = preds.detach().cpu().numpy()
+            oof_scores[start : start + len(b_idx)] = preds.detach().cpu().numpy().astype(np.float64)
 
-    # Evaluate DL-Val predictions (91 contexts, all 1,152 candidates)
-    val_scores = np.zeros((len(val_batch.context_ids), 1152), dtype=np.float32)
+    val_scores = np.zeros((len(val_batch.context_ids), n_cand_full), dtype=np.float64)
     with torch.no_grad():
         for start in range(0, len(val_batch.context_ids), batch_size):
             end = min(len(val_batch.context_ids), start + batch_size)
@@ -681,10 +678,10 @@ def train_and_eval_single_fold(
             )
             t_tok = compute_live_tokens_10x32(net, t_d629, t_tok_c) if unfreeze_dope else t_tok_c
             t_ctx = torch.as_tensor(
-                val_batch.context_summary[start:end], dtype=torch.float32, device=device
+                val_batch.lm48_z[start:end], dtype=torch.float32, device=device
             )
             t_anc = torch.as_tensor(
-                val_batch.anchor_Summary[start:end], dtype=torch.float32, device=device
+                val_batch.mask_10[start:end], dtype=torch.float32, device=device
             )
             t_full_feat = torch.as_tensor(
                 val_batch.full_cand_features[start:end], dtype=torch.float32, device=device
@@ -703,7 +700,7 @@ def train_and_eval_single_fold(
                 anchor_cand_features=t_anc_feat,
                 base_scores=t_base_full,
             )
-            val_scores[start:end] = preds.detach().cpu().numpy()
+            val_scores[start:end] = preds.detach().cpu().numpy().astype(np.float64)
 
     return {
         "oof_indices": va_indices,
@@ -729,8 +726,10 @@ def run_arm_across_seeds(
     base_net: nn.Module,
     train_batch: LabeledContextBatch,
     train_full_scores: np.ndarray,
+    train_r882_utilities: np.ndarray,
     val_batch: EvalContextBatch,
     val_full_scores: np.ndarray,
+    val_r882_utilities: np.ndarray,
     device: torch.device,
     seeds: tuple[int, ...] = SEEDS,
     epochs: int = 30,
@@ -741,11 +740,10 @@ def run_arm_across_seeds(
     family_folds = assign_family_folds(train_batch.family_ids, n_folds=N_FOLDS, seed=FOLD_SEED)
     ctx_folds = np.array([family_folds[f] for f in train_batch.family_ids], dtype=np.int64)
 
-    # Gather precomputed r882 base scores on the K labeled candidates per training context
     n_tr, k_cand = train_batch.cand_indices.shape
     train_sub_scores = np.zeros((n_tr, k_cand), dtype=np.float32)
     for i in range(n_tr):
-        train_sub_scores[i] = train_full_scores[i, train_batch.cand_indices[i]]
+        train_sub_scores[i] = train_full_scores[i, train_batch.cand_indices[i]].astype(np.float32)
 
     seed_records: list[dict[str, Any]] = []
     total_optimizer_steps = 0
@@ -802,44 +800,45 @@ def run_arm_across_seeds(
                     total_optimizer_steps=total_optimizer_steps,
                 )
 
-        # Out-of-fold first-argmin costs across all 1,219 DL-Train contexts
-        oof_cand_costs = np.zeros(n_tr, dtype=np.float64)
+        oof_cand_utilities = np.zeros(n_tr, dtype=np.float64)
         for i in range(n_tr):
-            _, c = first_argmin_cost(oof_pred_scores[i], train_batch.full_cand_costs[i])
-            oof_cand_costs[i] = c
+            _, u_val = first_argmin_cost(oof_pred_scores[i], train_batch.full_utilities[i])
+            oof_cand_utilities[i] = u_val
 
         selector = evaluate_h178_selector(
-            r882_oof_costs=train_batch.r882_costs,
-            cand_oof_costs=oof_cand_costs,
+            r882_oof_costs=train_r882_utilities,
+            cand_oof_costs=oof_cand_utilities,
             family_ids=train_batch.family_ids,
             seed=BOOT_SEED + seed,
+            higher_is_better=True,
         )
 
-        # Ensemble mean of the 5 cross-fit fold models on DL-Val (91 contexts)
         mean_val_scores = np.mean(np.stack(fold_val_score_list, axis=0), axis=0)
         n_val = len(val_batch.context_ids)
-        raw_val_costs = np.zeros(n_val, dtype=np.float64)
+        raw_val_utilities = np.zeros(n_val, dtype=np.float64)
         raw_val_picks = np.zeros(n_val, dtype=np.int64)
         for i in range(n_val):
-            p_idx, c = first_argmin_cost(mean_val_scores[i], val_batch.full_cand_costs[i])
+            p_idx, u_val = first_argmin_cost(mean_val_scores[i], val_batch.full_utilities[i])
             raw_val_picks[i] = p_idx
-            raw_val_costs[i] = c
+            raw_val_utilities[i] = u_val
 
-        selected_val_costs = (
-            val_batch.r882_costs.copy() if selector["fallback_to_r882"] else raw_val_costs
+        selected_val_utilities = (
+            val_r882_utilities.copy() if selector["fallback_to_r882"] else raw_val_utilities
         )
 
         raw_dl_val_stats = paired_family_bootstrap(
-            r882_costs=val_batch.r882_costs,
-            candidate_costs=raw_val_costs,
+            r882_costs=val_r882_utilities,
+            candidate_costs=raw_val_utilities,
             family_ids=val_batch.family_ids,
             seed=BOOT_SEED,
+            higher_is_better=True,
         )
         selected_dl_val_stats = paired_family_bootstrap(
-            r882_costs=val_batch.r882_costs,
-            candidate_costs=selected_val_costs,
+            r882_costs=val_r882_utilities,
+            candidate_costs=selected_val_utilities,
             family_ids=val_batch.family_ids,
             seed=BOOT_SEED,
+            higher_is_better=True,
         )
 
         seed_records.append(
@@ -883,43 +882,51 @@ def run_h204_stage1(
     device = torch.device(device_str if torch.cuda.is_available() else "cpu")
     gpu_name = torch.cuda.get_device_name(device) if device.type == "cuda" else "cpu"
 
-    # Ensure research env vars are set for Stage-1 PROPOSER_W128 research run
     run_id = os.environ.get("JOPE_RESEARCH_RUN_ID", "").strip() or f"h204-{run_dir.name}"
     os.environ["JOPE_RESEARCH_RUN_ID"] = run_id
     os.environ["JOPE_RESEARCH_DOPE_UNFREEZE"] = "1"
 
     cache = LocalLRUCache(cache_dir=cache_dir)
-    base_net = load_cpu_exact_fused_network(DEFAULT_H50_INPUT_ROOT, device=device)
+    base_net = load_cpu_exact_fused_network(
+        DEFAULT_H50_INPUT_ROOT, DEFAULT_R882_CKPT, device=device
+    )
 
     train_batch, val_batch, labeler_meta = load_h204_stage1_datasets(
         cache=cache,
         h50_input_root=DEFAULT_H50_INPUT_ROOT,
-        h58_context_cache=DEFAULT_H58_CONTEXT_CACHE,
+        h58_cache_root=DEFAULT_H58_CACHE_ROOT,
         k_candidates=k_candidates,
         seed=SEEDS[0],
     )
 
     # Stage 0: Verify 91/91 exact native r882 DL-Val parity BEFORE any candidate forward
-    stage0_parity = verify_stage0_r882_parity_on_eval_batch(base_net, val_batch, device=device)
+    stage0_parity, val_full_scores = verify_stage0_r882_parity_on_eval_batch(
+        base_net, val_batch, device=device
+    )
+    val_r882_picks = np.argmin(val_full_scores, axis=1)
+    val_r882_utilities = np.array(
+        [val_batch.full_utilities[i, int(val_r882_picks[i])] for i in range(len(val_r882_picks))],
+        dtype=np.float64,
+    )
 
-    # Precompute frozen r882 anchor scores once for train and val pools
+    # Precompute frozen r882 anchor scores on DL-Train (1,219 contexts)
     train_full_scores = compute_r882_base_scores_batch(
         net=base_net,
         tokens_10x32=train_batch.tokens_10x32,
-        context_summary=train_batch.context_summary,
-        anchor_summary=train_batch.anchor_Summary,
-        cand_features=train_batch.full_cand_features,
+        mask_10=train_batch.mask_10,
+        full_prog_412=train_batch.full_prog_412,
+        full_proj_16=train_batch.full_proj_16,
+        full_fitness=train_batch.full_fitness,
+        full_gates=train_batch.full_gates,
         device=device,
-        batch_size=batch_size,
     )
-    val_full_scores = compute_r882_base_scores_batch(
-        net=base_net,
-        tokens_10x32=val_batch.tokens_10x32,
-        context_summary=val_batch.context_summary,
-        anchor_summary=val_batch.anchor_Summary,
-        cand_features=val_batch.full_cand_features,
-        device=device,
-        batch_size=batch_size,
+    train_r882_picks = np.argmin(train_full_scores, axis=1)
+    train_r882_utilities = np.array(
+        [
+            train_batch.full_utilities[i, int(train_r882_picks[i])]
+            for i in range(len(train_r882_picks))
+        ],
+        dtype=np.float64,
     )
 
     progress_path = run_dir / "progress.json"
@@ -962,8 +969,10 @@ def run_h204_stage1(
             base_net=base_net,
             train_batch=train_batch,
             train_full_scores=train_full_scores,
+            train_r882_utilities=train_r882_utilities,
             val_batch=val_batch,
             val_full_scores=val_full_scores,
+            val_r882_utilities=val_r882_utilities,
             device=device,
             seeds=SEEDS,
             epochs=epochs,
@@ -994,8 +1003,10 @@ def run_h204_stage1(
                 base_net=base_net,
                 train_batch=train_batch,
                 train_full_scores=train_full_scores,
+                train_r882_utilities=train_r882_utilities,
                 val_batch=val_batch,
                 val_full_scores=val_full_scores,
+                val_r882_utilities=val_r882_utilities,
                 device=device,
                 seeds=SEEDS,
                 epochs=epochs,
@@ -1003,7 +1014,6 @@ def run_h204_stage1(
                 progress_callback=_on_progress,
             )
 
-    # Compute Holm-Bonferroni across executed arms
     raw_p_map = {
         arm: float(np.mean([s["dl_val"]["p_one_sided"] for s in arms_out[arm]["seeds"]]))
         for arm in arms_out

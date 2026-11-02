@@ -36,7 +36,8 @@ from research.flywheel_selfplay.h204_bigger_proposer.analysis import (
 )
 
 DEFAULT_H50_INPUT_ROOT = Path("/home/ubuntu/jope-data/h50/input")
-DEFAULT_H58_CONTEXT_CACHE = Path("/home/ubuntu/jope-data/h58/cache/context_features.npz")
+DEFAULT_H58_CACHE_ROOT = Path("/home/ubuntu/jope-data/h58/cache")
+DEFAULT_R882_CKPT = Path("/home/ubuntu/jope-data/h51/ckpt/round-882.pt")
 DEFAULT_JRB01_MANIFEST = Path("/home/ubuntu/jope-data/jrb01/admitted_train_datasets.json")
 
 
@@ -171,17 +172,18 @@ class LabeledContextBatch:
     family_ids: list[str]
     dope629: np.ndarray           # (N, 629) float32
     tokens_10x32: np.ndarray      # (N, 10, 32) float32
-    context_summary: np.ndarray   # (N, 29) float32
-    anchor_Summary: np.ndarray    # (N, 24) float32
-    cand_indices: np.ndarray      # (N, K) int64 in [0, 1152)
-    cand_features: np.ndarray     # (N, K, 42) float32
-    cand_costs: np.ndarray        # (N, K) float32 (-fitness from two-fold Rust CV)
+    mask_10: np.ndarray           # (N, 10) float32
+    lm48_z: np.ndarray            # (N, 48) float32
+    cand_indices: np.ndarray      # (N, K) int64 in [0, 96)
+    cand_features: np.ndarray     # (N, K, 428) float32 (program 412 + proj16 16)
+    cand_utilities: np.ndarray    # (N, K) float32 (np.where(gate, -fitness, -2.0))
     cand_gates: np.ndarray        # (N, K) float32
-    full_cand_features: np.ndarray  # (N, 1152, 42) float32 for OOF / argmin evaluation
-    full_cand_costs: np.ndarray   # (N, 1152) float32 for OOF / argmin evaluation
-    full_cand_gates: np.ndarray   # (N, 1152) float32
-    r882_picks: np.ndarray        # (N,) int64
-    r882_costs: np.ndarray        # (N,) float64
+    full_prog_412: np.ndarray     # (N, 96, 412) float32
+    full_proj_16: np.ndarray      # (N, 96, 16) float32
+    full_cand_features: np.ndarray  # (N, 96, 428) float32
+    full_fitness: np.ndarray      # (N, 96) float64
+    full_utilities: np.ndarray    # (N, 96) float64 (higher is better: -fitness when gate else -2.0)
+    full_gates: np.ndarray        # (N, 96) float32
 
 
 @dataclass(frozen=True)
@@ -192,17 +194,18 @@ class EvalContextBatch:
     family_ids: list[str]
     dope629: np.ndarray           # (N, 629) float32
     tokens_10x32: np.ndarray      # (N, 10, 32) float32
-    context_summary: np.ndarray   # (N, 29) float32
-    anchor_Summary: np.ndarray    # (N, 24) float32
-    full_cand_features: np.ndarray  # (N, 1152, 42) float32
-    full_cand_costs: np.ndarray   # (N, 1152) float64
-    full_cand_gates: np.ndarray   # (N, 1152) float32
-    r882_picks: np.ndarray        # (N,) int64
-    r882_costs: np.ndarray        # (N,) float64
+    mask_10: np.ndarray           # (N, 10) float32
+    lm48_z: np.ndarray            # (N, 48) float32
+    full_prog_412: np.ndarray     # (N, 96, 412) float32
+    full_proj_16: np.ndarray      # (N, 96, 16) float32
+    full_cand_features: np.ndarray  # (N, 96, 428) float32
+    full_fitness: np.ndarray      # (N, 96) float64
+    full_utilities: np.ndarray    # (N, 96) float64
+    full_gates: np.ndarray        # (N, 96) float32
 
 
 def select_candidate_subset_indices(
-    n_total: int = 1152,
+    n_total: int = 96,
     k_candidates: int = 16,
     seed: int = 204101,
     context_idx: int = 0,
@@ -210,7 +213,7 @@ def select_candidate_subset_indices(
     """Deterministically select `k_candidates` (8..16) indices per context.
 
     Always includes the 4 revealed anchors (indices 0, 1, 2, 3) plus `k_candidates - 4`
-    stratified candidate indices across the 1,148 non-anchor slots.
+    stratified candidate indices across the non-anchor slots `4..n_total-1`.
     """
     if not (8 <= k_candidates <= 16):
         raise ValueError(f"k_candidates must be in [8, 16], got {k_candidates}")
@@ -221,7 +224,6 @@ def select_candidate_subset_indices(
     n_extra = k_candidates - 4
     rng = np.random.default_rng(seed + 1009 * int(context_idx))
     non_anchors = np.arange(4, n_total, dtype=np.int64)
-    # Stratified draw across `n_extra` contiguous bins of the 1,148 candidate slots
     bins = np.array_split(non_anchors, n_extra)
     picked = [int(rng.choice(b)) for b in bins]
     return np.concatenate([anchors, np.array(picked, dtype=np.int64)], axis=0)
@@ -288,7 +290,6 @@ def evaluate_context_candidates_rust_cv(
 
     from research.flywheel_selfplay.rust_evaluator import evaluate_gp_batch_rust
 
-    # Compress raw JTT1 if not already gzipped
     jtt1_gz = (
         raw_jtt1_bytes
         if raw_jtt1_bytes[:2] == b"\x1f\x8b"
@@ -310,7 +311,7 @@ def load_h204_stage1_datasets(
     *,
     cache: LocalLRUCache,
     h50_input_root: Path = DEFAULT_H50_INPUT_ROOT,
-    h58_context_cache: Path = DEFAULT_H58_CONTEXT_CACHE,
+    h58_cache_root: Path = DEFAULT_H58_CACHE_ROOT,
     k_candidates: int = 16,
     seed: int = 204101,
 ) -> tuple[LabeledContextBatch, EvalContextBatch, dict[str, Any]]:
@@ -322,77 +323,89 @@ def load_h204_stage1_datasets(
     if not (8 <= k_candidates <= 16):
         raise ValueError(f"k_candidates must be in [8, 16], got {k_candidates}")
 
-    ctx_npz = np.load(h58_context_cache, allow_pickle=False)
-    all_cids = [str(x) for x in ctx_npz["cids"]]
-    all_fids = [str(x) for x in ctx_npz["fids"]]
-    all_splits = [str(x) for x in ctx_npz["splits"]]
-    all_dope629 = np.asarray(ctx_npz["dope629"], dtype=np.float32)
-    all_tokens = np.asarray(ctx_npz["tokens_10x32"], dtype=np.float32)
-    all_ctx_sum = np.asarray(ctx_npz["context_summary"], dtype=np.float32)
-    all_anc_sum = np.asarray(ctx_npz["anchor_summary"], dtype=np.float32)
+    selected = json.loads((h50_input_root / "selected.json").read_text(encoding="utf-8"))
+    train_rows = selected["train"]
+    dev_rows = selected["dev"]
 
-    train_idx = [i for i, s in enumerate(all_splits) if s == "train"]
-    val_idx = [i for i, s in enumerate(all_splits) if s == "val"]
-
-    train_fams = {all_fids[i] for i in train_idx}
-    val_fams = {all_fids[i] for i in val_idx}
+    train_fams = {str(r["family_id"]) for r in train_rows}
+    val_fams = {str(r["family_id"]) for r in dev_rows}
     overlap = train_fams & val_fams
     if overlap:
         raise RuntimeError(f"Train/Val family leakage detected: {sorted(overlap)}")
-    if len(train_idx) != DL_TRAIN_EXPECTED_CONTEXTS or len(train_fams) != DL_TRAIN_EXPECTED_FAMILIES:
+    if len(train_rows) != DL_TRAIN_EXPECTED_CONTEXTS or len(train_fams) != DL_TRAIN_EXPECTED_FAMILIES:
         raise RuntimeError(
-            f"Unexpected DL-Train size: {len(train_idx)} contexts, {len(train_fams)} families"
+            f"Unexpected DL-Train size: {len(train_rows)} contexts, {len(train_fams)} families"
         )
-    if len(val_idx) != DL_VAL_EXPECTED_CONTEXTS:
-        raise RuntimeError(f"Unexpected DL-Val size: {len(val_idx)} contexts")
+    if len(dev_rows) != DL_VAL_EXPECTED_CONTEXTS:
+        raise RuntimeError(f"Unexpected DL-Val size: {len(dev_rows)} contexts")
+
+    cf_npz = np.load(h58_cache_root / "context_features.npz", allow_pickle=False)
+    pp_npz = np.load(h58_cache_root / "pool_priors.npz", allow_pickle=False)
+
+    cid_to_idx = {str(c): i for i, c in enumerate(cf_npz["cids"])}
+    all_dope629 = np.asarray(cf_npz["dope629"], dtype=np.float32)
+    all_tokens = np.asarray(cf_npz["tokens_10x32"], dtype=np.float32)
+    all_mask10 = np.asarray(cf_npz["mask_10"], dtype=np.float32)
+    all_lm48z = np.asarray(cf_npz["lm48_z"], dtype=np.float32)
+    offsets = np.asarray(pp_npz["offsets"], dtype=np.int64)
+    proj16_all = np.asarray(pp_npz["proj16"], dtype=np.float32)
 
     pools_dir = h50_input_root / "pools"
 
-    # Build Training Labeled Batch
-    n_tr = len(train_idx)
-    tr_cids = [all_cids[i] for i in train_idx]
-    tr_fids = [all_fids[i] for i in train_idx]
-    tr_dope629 = all_dope629[train_idx]
-    tr_tokens = all_tokens[train_idx]
-    tr_ctx_sum = all_ctx_sum[train_idx]
-    tr_anc_sum = all_anc_sum[train_idx]
+    # Build Training Labeled Batch (1,219 contexts, 96 total candidates per pool, K=16 labeled per context)
+    n_tr = len(train_rows)
+    tr_cids = [str(r["context_sha256"]) for r in train_rows]
+    tr_fids = [str(r["family_id"]) for r in train_rows]
+    tr_cf_indices = [cid_to_idx[cid] for cid in tr_cids]
+
+    tr_dope629 = all_dope629[tr_cf_indices]
+    tr_tokens = all_tokens[tr_cf_indices]
+    tr_mask10 = all_mask10[tr_cf_indices]
+    tr_lm48z = all_lm48z[tr_cf_indices]
 
     tr_cand_indices = np.zeros((n_tr, k_candidates), dtype=np.int64)
-    tr_cand_features = np.zeros((n_tr, k_candidates, 42), dtype=np.float32)
-    tr_cand_costs = np.zeros((n_tr, k_candidates), dtype=np.float32)
+    tr_cand_features = np.zeros((n_tr, k_candidates, 428), dtype=np.float32)
+    tr_cand_utilities = np.zeros((n_tr, k_candidates), dtype=np.float32)
     tr_cand_gates = np.zeros((n_tr, k_candidates), dtype=np.float32)
-    tr_full_features = np.zeros((n_tr, 1152, 42), dtype=np.float32)
-    tr_full_costs = np.zeros((n_tr, 1152), dtype=np.float32)
-    tr_full_gates = np.zeros((n_tr, 1152), dtype=np.float32)
-    tr_r882_picks = np.zeros(n_tr, dtype=np.int64)
-    tr_r882_costs = np.zeros(n_tr, dtype=np.float64)
 
-    for local_i, cid in enumerate(tr_cids):
+    tr_full_prog = np.zeros((n_tr, 96, 412), dtype=np.float32)
+    tr_full_proj = np.zeros((n_tr, 96, 16), dtype=np.float32)
+    tr_full_features = np.zeros((n_tr, 96, 428), dtype=np.float32)
+    tr_full_fitness = np.zeros((n_tr, 96), dtype=np.float64)
+    tr_full_utilities = np.zeros((n_tr, 96), dtype=np.float64)
+    tr_full_gates = np.zeros((n_tr, 96), dtype=np.float32)
+
+    for local_i, (cid, cf_idx) in enumerate(zip(tr_cids, tr_cf_indices, strict=True)):
         p_npz = np.load(pools_dir / f"{cid}.npz", allow_pickle=False)
-        feats = np.asarray(p_npz["cand_features"], dtype=np.float32)
+        prog = np.asarray(p_npz["program"], dtype=np.float32)
         fitness = np.asarray(p_npz["fitness"], dtype=np.float64)
-        gates = np.asarray(p_npz["gate"], dtype=np.float32)
-        costs = (-fitness).astype(np.float32)
-        r882_pick = int(np.asarray(p_npz["r882_pick"]).item())
+        gate_bool = np.asarray(p_npz["gate"], dtype=bool)
+        gates = gate_bool.astype(np.float32)
+        utilities = np.where(gate_bool, -fitness, -2.0).astype(np.float64)
+
+        lo, hi = int(offsets[cf_idx]), int(offsets[cf_idx + 1])
+        proj = proj16_all[lo:hi]
+        feats_428 = np.concatenate([prog, proj], axis=1).astype(np.float32)
 
         sub_idx = select_candidate_subset_indices(
-            n_total=feats.shape[0],
+            n_total=feats_428.shape[0],
             k_candidates=k_candidates,
             seed=seed,
             context_idx=local_i,
         )
         tr_cand_indices[local_i] = sub_idx
-        tr_cand_features[local_i] = feats[sub_idx]
-        tr_cand_costs[local_i] = costs[sub_idx]
+        tr_cand_features[local_i] = feats_428[sub_idx]
+        tr_cand_utilities[local_i] = utilities[sub_idx].astype(np.float32)
         tr_cand_gates[local_i] = gates[sub_idx]
-        tr_full_features[local_i] = feats
-        tr_full_costs[local_i] = costs
-        tr_full_gates[local_i] = gates
-        tr_r882_picks[local_i] = r882_pick
-        tr_r882_costs[local_i] = float(-fitness[r882_pick])
 
-    # Record compact labeler receipt in bounded cache
-    label_digest = sha256_bytes(tr_cand_indices.tobytes() + tr_cand_costs.tobytes())
+        tr_full_prog[local_i] = prog
+        tr_full_proj[local_i] = proj
+        tr_full_features[local_i] = feats_428
+        tr_full_fitness[local_i] = fitness
+        tr_full_utilities[local_i] = utilities
+        tr_full_gates[local_i] = gates
+
+    label_digest = sha256_bytes(tr_cand_indices.tobytes() + tr_cand_utilities.tobytes())
     cache_receipt = {
         "seed": int(seed),
         "k_candidates": int(k_candidates),
@@ -405,33 +418,42 @@ def load_h204_stage1_datasets(
         json.dumps(cache_receipt, sort_keys=True).encode("utf-8"),
     )
 
-    # Build DL-Val Evaluation Batch (strictly isolated from training labels)
-    n_val = len(val_idx)
-    val_cids = [all_cids[i] for i in val_idx]
-    val_fids = [all_fids[i] for i in val_idx]
-    val_dope629 = all_dope629[val_idx]
-    val_tokens = all_tokens[val_idx]
-    val_ctx_sum = all_ctx_sum[val_idx]
-    val_anc_sum = all_anc_sum[val_idx]
+    # Build DL-Val Evaluation Batch (91 contexts)
+    n_val = len(dev_rows)
+    val_cids = [str(r["context_sha256"]) for r in dev_rows]
+    val_fids = [str(r["family_id"]) for r in dev_rows]
+    val_cf_indices = [cid_to_idx[cid] for cid in val_cids]
 
-    val_full_features = np.zeros((n_val, 1152, 42), dtype=np.float32)
-    val_full_costs = np.zeros((n_val, 1152), dtype=np.float64)
-    val_full_gates = np.zeros((n_val, 1152), dtype=np.float32)
-    val_r882_picks = np.zeros(n_val, dtype=np.int64)
-    val_r882_costs = np.zeros(n_val, dtype=np.float64)
+    val_dope629 = all_dope629[val_cf_indices]
+    val_tokens = all_tokens[val_cf_indices]
+    val_mask10 = all_mask10[val_cf_indices]
+    val_lm48z = all_lm48z[val_cf_indices]
 
-    for local_i, cid in enumerate(val_cids):
+    val_full_prog = np.zeros((n_val, 96, 412), dtype=np.float32)
+    val_full_proj = np.zeros((n_val, 96, 16), dtype=np.float32)
+    val_full_features = np.zeros((n_val, 96, 428), dtype=np.float32)
+    val_full_fitness = np.zeros((n_val, 96), dtype=np.float64)
+    val_full_utilities = np.zeros((n_val, 96), dtype=np.float64)
+    val_full_gates = np.zeros((n_val, 96), dtype=np.float32)
+
+    for local_i, (cid, cf_idx) in enumerate(zip(val_cids, val_cf_indices, strict=True)):
         p_npz = np.load(pools_dir / f"{cid}.npz", allow_pickle=False)
-        feats = np.asarray(p_npz["cand_features"], dtype=np.float32)
+        prog = np.asarray(p_npz["program"], dtype=np.float32)
         fitness = np.asarray(p_npz["fitness"], dtype=np.float64)
-        gates = np.asarray(p_npz["gate"], dtype=np.float32)
-        r882_pick = int(np.asarray(p_npz["r882_pick"]).item())
+        gate_bool = np.asarray(p_npz["gate"], dtype=bool)
+        gates = gate_bool.astype(np.float32)
+        utilities = np.where(gate_bool, -fitness, -2.0).astype(np.float64)
 
-        val_full_features[local_i] = feats
-        val_full_costs[local_i] = -fitness
+        lo, hi = int(offsets[cf_idx]), int(offsets[cf_idx + 1])
+        proj = proj16_all[lo:hi]
+        feats_428 = np.concatenate([prog, proj], axis=1).astype(np.float32)
+
+        val_full_prog[local_i] = prog
+        val_full_proj[local_i] = proj
+        val_full_features[local_i] = feats_428
+        val_full_fitness[local_i] = fitness
+        val_full_utilities[local_i] = utilities
         val_full_gates[local_i] = gates
-        val_r882_picks[local_i] = r882_pick
-        val_r882_costs[local_i] = float(-fitness[r882_pick])
 
     jrb_status = check_jrb01_admission_status()
     labeler_meta = {
@@ -453,30 +475,32 @@ def load_h204_stage1_datasets(
             family_ids=tr_fids,
             dope629=tr_dope629,
             tokens_10x32=tr_tokens,
-            context_summary=tr_ctx_sum,
-            anchor_Summary=tr_anc_sum,
+            mask_10=tr_mask10,
+            lm48_z=tr_lm48z,
             cand_indices=tr_cand_indices,
             cand_features=tr_cand_features,
-            cand_costs=tr_cand_costs,
+            cand_utilities=tr_cand_utilities,
             cand_gates=tr_cand_gates,
+            full_prog_412=tr_full_prog,
+            full_proj_16=tr_full_proj,
             full_cand_features=tr_full_features,
-            full_cand_costs=tr_full_costs,
-            full_cand_gates=tr_full_gates,
-            r882_picks=tr_r882_picks,
-            r882_costs=tr_r882_costs,
+            full_fitness=tr_full_fitness,
+            full_utilities=tr_full_utilities,
+            full_gates=tr_full_gates,
         ),
         EvalContextBatch(
             context_ids=val_cids,
             family_ids=val_fids,
             dope629=val_dope629,
             tokens_10x32=val_tokens,
-            context_summary=val_ctx_sum,
-            anchor_Summary=val_anc_sum,
+            mask_10=val_mask10,
+            lm48_z=val_lm48z,
+            full_prog_412=val_full_prog,
+            full_proj_16=val_full_proj,
             full_cand_features=val_full_features,
-            full_cand_costs=val_full_costs,
-            full_cand_gates=val_full_gates,
-            r882_picks=val_r882_picks,
-            r882_costs=val_r882_costs,
+            full_fitness=val_full_fitness,
+            full_utilities=val_full_utilities,
+            full_gates=val_full_gates,
         ),
         labeler_meta,
     )

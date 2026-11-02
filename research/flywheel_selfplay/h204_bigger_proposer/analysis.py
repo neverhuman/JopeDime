@@ -3,7 +3,7 @@
 Evaluates wider proposer architectures (widths 128 -> 256 -> 512) trained on
 labeled context-candidate CV utility data with research-only DOPE unfreeze
 (`JOPE_RESEARCH_DOPE_UNFREEZE=1` + `JOPE_RESEARCH_RUN_ID`), against:
-  - Native `r882` baseline (`1.1377941898164525` on 91 DL-Val contexts)
+  - Native `r882` baseline (`1.1377941898164525` mean first-argmin utility on 91 DL-Val contexts)
   - `R882_CONT`: compute-matched `r882` continuation control (width 64, frozen DOPE)
   - `H180_RAND`: random-initialized wider proposer + linear readout control
 """
@@ -29,6 +29,7 @@ AUTHORITY_STRING = (
 
 EVALUATOR_CONTRACT_ID = "fixed-dev-cost-argmin-negative-fitness/v1"
 R882_EXPECTED_DL_VAL_MEAN_COST = 1.1377941898164525
+R882_EXPECTED_DL_VAL_MEAN_UTILITY = 1.1377941898164525
 R882_PARITY_ATOL = 1e-12
 DL_VAL_EXPECTED_CONTEXTS = 91
 DL_TRAIN_EXPECTED_FAMILIES = 205
@@ -95,17 +96,17 @@ def assign_family_folds(
 
 
 def verify_r882_native_parity(
-    dl_val_costs: np.ndarray,
-    expected_mean: float = R882_EXPECTED_DL_VAL_MEAN_COST,
+    dl_val_utilities: np.ndarray,
+    expected_mean: float = R882_EXPECTED_DL_VAL_MEAN_UTILITY,
     atol: float = R882_PARITY_ATOL,
     expected_n: int = DL_VAL_EXPECTED_CONTEXTS,
 ) -> dict[str, Any]:
-    """Verify 91/91 exact native `r882` DL-Val parity before any candidate forward."""
-    arr = np.asarray(dl_val_costs, dtype=np.float64)
+    """Verify 91/91 exact native `r882` DL-Val parity (`1.1377941898164525`) before any candidate forward."""
+    arr = np.asarray(dl_val_utilities, dtype=np.float64)
     n_ctx = int(arr.shape[0])
     finite_all = bool(np.all(np.isfinite(arr)))
-    mean_cost = float(np.mean(arr)) if n_ctx > 0 else float("nan")
-    abs_diff = abs(mean_cost - expected_mean) if np.isfinite(mean_cost) else float("inf")
+    mean_u = float(np.mean(arr)) if n_ctx > 0 else float("nan")
+    abs_diff = abs(mean_u - expected_mean) if np.isfinite(mean_u) else float("inf")
     passed = bool(
         n_ctx == expected_n
         and finite_all
@@ -116,23 +117,23 @@ def verify_r882_native_parity(
         "n_contexts": n_ctx,
         "expected_contexts": expected_n,
         "finite_all": finite_all,
-        "mean_cost": mean_cost,
-        "expected_mean_cost": expected_mean,
+        "mean_utility": mean_u,
+        "expected_mean_utility": expected_mean,
         "abs_diff": abs_diff,
         "atol": atol,
     }
 
 
-def first_argmin_cost(scores: np.ndarray, costs: np.ndarray) -> tuple[int, float]:
-    """Fixed-dev-cost-argmin-negative-fitness/v1: pick `int(np.argmin(scores))`."""
+def first_argmin_cost(scores: np.ndarray, outcomes: np.ndarray) -> tuple[int, float]:
+    """Fixed-dev-cost-argmin-negative-fitness/v1: pick `int(np.argmin(scores))` and return its outcome."""
     scores_arr = np.asarray(scores, dtype=np.float64)
-    costs_arr = np.asarray(costs, dtype=np.float64)
-    if scores_arr.ndim != 1 or costs_arr.ndim != 1 or scores_arr.shape[0] != costs_arr.shape[0]:
-        raise ValueError(f"Invalid shapes for first_argmin_cost: {scores_arr.shape} vs {costs_arr.shape}")
+    outcomes_arr = np.asarray(outcomes, dtype=np.float64)
+    if scores_arr.ndim != 1 or outcomes_arr.ndim != 1 or scores_arr.shape[0] != outcomes_arr.shape[0]:
+        raise ValueError(f"Invalid shapes for first_argmin_cost: {scores_arr.shape} vs {outcomes_arr.shape}")
     if not np.all(np.isfinite(scores_arr)):
         raise ValueError("Non-finite candidate scores encountered")
     pick_idx = int(np.argmin(scores_arr))
-    return pick_idx, float(costs_arr[pick_idx])
+    return pick_idx, float(outcomes_arr[pick_idx])
 
 
 def aggregate_family_means(
@@ -158,18 +159,20 @@ def paired_family_bootstrap(
     family_ids: list[str] | np.ndarray,
     n_boot: int = N_BOOTSTRAP,
     seed: int = BOOT_SEED,
+    *,
+    higher_is_better: bool = False,
 ) -> dict[str, Any]:
-    """Compute paired family-cluster bootstrap CI and one-sided p-value on `cost(r882) - cost(cand)`."""
+    """Compute paired family-cluster bootstrap CI and one-sided p-value."""
     base = np.asarray(r882_costs, dtype=np.float64)
     cand = np.asarray(candidate_costs, dtype=np.float64)
     if base.shape != cand.shape:
         raise ValueError(f"Shape mismatch: {base.shape} vs {cand.shape}")
 
-    ctx_gains = base - cand
+    ctx_gains = (cand - base) if higher_is_better else (base - cand)
     mean_gain = float(np.mean(ctx_gains))
     median_gain = float(np.median(ctx_gains))
-    max_regression = float(np.max(cand - base)) if ctx_gains.size > 0 else 0.0
-    harm_frac_ctx = float(np.mean((cand - base) > 0.01)) if ctx_gains.size > 0 else 0.0
+    max_regression = float(np.max(-ctx_gains)) if ctx_gains.size > 0 else 0.0
+    harm_frac_ctx = float(np.mean(ctx_gains < -0.01)) if ctx_gains.size > 0 else 0.0
 
     sorted_fams, fam_gains = aggregate_family_means(ctx_gains, family_ids)
     n_fams = len(sorted_fams)
@@ -183,9 +186,8 @@ def paired_family_bootstrap(
     lcb95 = float(np.quantile(boot_means, 0.05))
     p_one_sided = float((1 + np.sum(boot_means <= 0.0)) / (n_boot + 1))
 
-    # Elo lift from win rate across contexts (with 0.5 for ties)
-    wins = float(np.sum(cand < base - 1e-12))
-    losses = float(np.sum(cand > base + 1e-12))
+    wins = float(np.sum(ctx_gains > 1e-12))
+    losses = float(np.sum(ctx_gains < -1e-12))
     ties = float(base.size - wins - losses)
     win_score = (wins + 0.5 * ties) / max(1.0, float(base.size))
     win_clipped = min(max(win_score, 1e-4), 1.0 - 1e-4)
@@ -194,8 +196,8 @@ def paired_family_bootstrap(
     return {
         "n_contexts": int(base.size),
         "n_families": int(n_fams),
-        "mean_r882_cost": float(np.mean(base)),
-        "mean_candidate_cost": float(np.mean(cand)),
+        "mean_r882": float(np.mean(base)),
+        "mean_candidate": float(np.mean(cand)),
         "mean_gain": mean_gain,
         "family_mean_gain": fam_mean_gain,
         "median_gain": median_gain,
@@ -218,6 +220,8 @@ def evaluate_h178_selector(
     cand_oof_costs: np.ndarray,
     family_ids: list[str] | np.ndarray,
     seed: int = BOOT_SEED,
+    *,
+    higher_is_better: bool = False,
 ) -> dict[str, Any]:
     """Evaluate the H178 205-family pooled out-of-fold selector before DL-Val."""
     stats = paired_family_bootstrap(
@@ -226,6 +230,7 @@ def evaluate_h178_selector(
         family_ids=family_ids,
         n_boot=2000,
         seed=seed,
+        higher_is_better=higher_is_better,
     )
     admitted = bool(
         stats["mean_gain"] >= SELECTOR_MIN_DEV_GAIN
