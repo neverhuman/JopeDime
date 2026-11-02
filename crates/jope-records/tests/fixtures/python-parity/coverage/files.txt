@@ -460,6 +460,9 @@ crates/jope-campaigns/src/bin/jope_compile_cache/replay.rs
 crates/jope-campaigns/src/bin/jope_dlgp_best5.rs
 crates/jope-campaigns/src/bin/jope_dlgp_best5_worker.rs
 crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor.rs
+crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor/campaign_cycle.rs
+crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor/scheduler.rs
+crates/jope-campaigns/src/bin/jope_dlgp_budget_supervisor/tests.rs
 crates/jope-campaigns/src/bin/jope_effective_unit_audit.rs
 crates/jope-campaigns/src/bin/jope_encoder_supervisor.rs
 crates/jope-campaigns/src/bin/jope_encoder_v2_capacity.rs
