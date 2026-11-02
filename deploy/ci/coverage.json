@@ -5554,6 +5554,16 @@
       "lanes": [],
       "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
     },
+    "python:research/flywheel_selfplay/h204_bigger_proposer/test_h204.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H204 bigger proposer (widths 128 -> 256 -> 512) data-free CPU controls: shared #1726 research DOPE opt-in and serving refusal, #1730 numeric-thread admission, step-0 live token bridge parity, pairwise cost ranking loss direction, R882_CONT adapter continuation, Rust CV evaluator signature binding and exact 91-context r882 parity/gate checks. Research only; not a live GPU or serving qualification."
+    },
     "python:research/flywheel_selfplay/h206_search_distill/test_h206.py": {
       "discovery": {
         "kind": "python-family"
