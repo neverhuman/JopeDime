@@ -38,7 +38,7 @@ pub(crate) fn validate_operation(task: &TaskManifest, input: &InputManifest) -> 
         | (TaskKind::Publication, Operation::DatasetPublication { .. })
         | (TaskKind::Verification, Operation::Verify) => {}
         _ => anyhow::bail!(
-            "operation is not implemented by this fixed service; publication belongs to dataset authority"
+            "unsupported operation for this fixed service; publication belongs to dataset authority"
         ),
     }
     if !matches!(input.operation, Operation::Resident | Operation::Verify) {
