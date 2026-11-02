@@ -155,6 +155,7 @@ crates/feat-math/src/cxx.rs
 crates/feat-math/src/dsl.rs
 crates/feat-math/src/emit_cpp.rs
 crates/feat-math/src/emit_js.rs
+crates/feat-math/src/emit_js/core_runtime.rs
 crates/feat-math/src/emit_py.rs
 crates/feat-math/src/emit_rs.rs
 crates/feat-math/src/evolve.rs
