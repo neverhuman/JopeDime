@@ -665,6 +665,16 @@
       "command": "python3 deploy/ci/test-runner.py && python3 deploy/ci/test-security-lane.py",
       "lane": "ops",
       "purpose": "verify receipt-backed hygiene wiring and security-lane failure propagation"
+    },
+    "test-support/": {
+      "command": "cargo test -p jope-datasets --locked",
+      "lane": "data",
+      "purpose": "verify committed sample dataset contracts and loader behavior"
+    },
+    "test-support/**": {
+      "command": "cargo test -p jope-datasets --locked",
+      "lane": "data",
+      "purpose": "verify committed sample dataset contracts and loader behavior"
     }
   }
 }

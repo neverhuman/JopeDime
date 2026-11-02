@@ -1157,6 +1157,29 @@ class AgentMapTests(unittest.TestCase):
         missing = [key for key in test_map if not self.key_matches_tree(key)]
         self.assertEqual([], missing, f'untracked test-map keys: {missing}')
 
+
+    def test_policy_and_generated_zone_routes_are_valid(self):
+        import tomllib
+
+        with (ROOT / 'agent/audit-policy.toml').open('rb') as source:
+            policy = tomllib.load(source)
+        with (ROOT / 'agent/generated-zones.toml').open('rb') as source:
+            generated = tomllib.load(source)
+        with (ROOT / 'agent/ux-qa.toml').open('rb') as source:
+            ux = tomllib.load(source)
+        self.assertIn('minimum_score', policy)
+        self.assertEqual('pass', ux['visualBaselineMode'])
+        self.assertTrue(ux['accessibilityScanRequired'])
+        self.assertTrue(ux['routes'])
+        self.assertTrue(generated['zone'])
+        missing = [
+            zone['path'] for zone in generated['zone']
+            if (not zone['path'].startswith('target/')
+                and not self.key_matches_tree(zone['path']))
+            or not zone.get('source') or not zone.get('command')
+        ]
+        self.assertEqual([], missing, f'incomplete generated-zone routes: {missing}')
+
     def test_each_mapped_proof_command_invokes_a_test_suite(self):
         test_map = json.loads((ROOT / 'agent/test-map.json').read_text())['tests']
         commands = sorted({route.get('command', '') for route in test_map.values()})
@@ -1166,6 +1189,24 @@ class AgentMapTests(unittest.TestCase):
             if not any(marker in command for marker in self.TEST_COMMAND_MARKERS)
         ]
         self.assertEqual([], no_tests, f'proof commands without tests: {no_tests}')
+
+
+    def test_shared_research_audit_refuses_protected_reads_and_input_writes(self):
+        helper = ROOT / 'research/flywheel_selfplay/runtime_audit.py'
+        spec = importlib.util.spec_from_file_location('research_runtime_audit', helper)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        Audit = module.Audit
+
+        with tempfile.TemporaryDirectory(prefix='research-audit-') as name:
+            allowed = Path(name) / 'input.bin'
+            audit = Audit([allowed], Path(name) / 'output')
+            audit.check('open', (str(allowed), 'rb', 0))
+            with self.assertRaisesRegex(RuntimeError, 'input/output boundary refusal'):
+                audit.check('open', ('/home/ubuntu/jope-data/sealed/row.bin', 'rb', 0))
+            with self.assertRaisesRegex(RuntimeError, 'input/output boundary refusal'):
+                audit.check('open', (str(allowed), 'wb', 0))
+            self.assertEqual(2, len(audit.refused))
 
 
 
