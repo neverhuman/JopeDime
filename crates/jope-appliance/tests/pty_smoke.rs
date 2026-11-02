@@ -297,7 +297,7 @@ mod interactive_exit {
                 ],
             )?;
             terminal.wait_for_output_bytes(b"\x1b[?1049h", Duration::from_secs(15))?;
-            terminal.wait_for_text("Powered by JopeDime", Duration::from_secs(10))?;
+            terminal.wait_for_text("VEOX CLI", Duration::from_secs(10))?;
             terminal.type_text(keys)?;
             terminal.wait_for_text("JAIN_EXIT_RESTORED", Duration::from_secs(5))?;
             terminal.wait_for_output_bytes(b"\x1b[?1049l", Duration::from_secs(5))?;
