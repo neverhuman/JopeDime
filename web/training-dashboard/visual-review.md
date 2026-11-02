@@ -27,3 +27,13 @@ not an independent human approval or a live service qualification.
 
 Review result: pass for the captured synthetic states. The fixtures are artificial and
 this review makes no claim about live observer data, all possible content, or production UX.
+
+## Per-capture review record
+
+The run-8 receipt contains 16 screenshots: six page states plus checkpoint-dialog and
+interrupted-feed states, each at desktop (1440×1000) and mobile (390×844). I reviewed each
+rendered capture; the screenshot-bound notes, verdicts, visual-baseline disposition, receipt
+hash and limitations are recorded in
+[`e2e/reviews/rendered-ux-review.json`](e2e/reviews/rendered-ux-review.json). The review is an
+implementing-agent self-review. Only the overview screenshots are compared with committed
+Playwright baselines; the other captures have reviewer notes but no configured baseline.

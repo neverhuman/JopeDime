@@ -1,0 +1,74 @@
+artifactRoot = "target/ci-evidence/rendered-ux"
+outputRoot = "target/jankurai/ux-qa"
+decisionThreshold = "error"
+readyState = "load"
+timeoutMs = 45000
+requiredStates = ["success", "empty", "error"]
+visualBaselineMode = "review"
+visualBaselineRoot = "web/training-dashboard/e2e/observatory.spec.ts-snapshots"
+visualDiffRoot = "target/ci-evidence/rendered-ux/visual-diffs"
+baselineOwner = "web/training-dashboard"
+baselineApprovedBy = "Codex implementing-agent self-review"
+baselineApprovalNote = "Visual notes and per-capture verdicts are recorded in web/training-dashboard/e2e/reviews/rendered-ux-review.json. The approval is a local self-review of synthetic fixtures, not independent human approval or live-service qualification."
+stateQueryParam = "state"
+screenshotRequired = true
+ariaSnapshotRequired = false
+accessibilityScanRequired = true
+viewports = ["1440x1000", "390x844"]
+
+[[routes]]
+id = "overview"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-desktop-linux.png"
+
+[[routes]]
+id = "training"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
+
+[[routes]]
+id = "fleet"
+url = "/"
+states = ["empty"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
+
+[[routes]]
+id = "storage-datasets"
+url = "/"
+states = ["empty"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
+
+[[routes]]
+id = "gp-library"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
+
+[[routes]]
+id = "results-lineage"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
+
+[[routes]]
+id = "checkpoint-dialog"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
+
+[[routes]]
+id = "interrupted-feed"
+url = "/"
+states = ["error"]
+viewports = ["1440x1000", "390x844"]
+visualBaselineMode = "review"
