@@ -1313,6 +1313,7 @@
   "crates/jope-campaigns/src/bin/jope_training_archive.rs": true,
   "crates/jope-campaigns/src/bin/jope_training_archive/commands.rs": true,
   "crates/jope-campaigns/src/bin/jope_training_archive/ingest.rs": true,
+  "crates/jope-campaigns/src/bin/jope_training_archive/ingest/reports.rs": true,
   "crates/jope-campaigns/src/bin/jope_training_archive/sources.rs": true,
   "crates/jope-campaigns/src/bin/jope_training_history.rs": true,
   "crates/jope-campaigns/src/bin/jope_training_replica.rs": true,
