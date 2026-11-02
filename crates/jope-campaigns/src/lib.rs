@@ -24,6 +24,7 @@ pub mod hyperion_gate;
 pub mod hyperion_router;
 pub mod jope_dlgp_best5;
 pub mod jope_generalized_gp;
+pub mod loop_selection;
 /// ADR-0003 locations: every former home-directory path, by root.
 pub mod paths;
 pub mod recovery_contracts;
