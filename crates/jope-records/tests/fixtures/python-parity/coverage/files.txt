@@ -1126,6 +1126,9 @@ crates/jope-engine/src/eval_registry/service.rs
 crates/jope-engine/src/eval_registry/service/client.rs
 crates/jope-engine/src/eval_registry/service/funding_ipc.rs
 crates/jope-engine/src/eval_registry/service/funding_tests.rs
+crates/jope-engine/src/eval_registry/service/funding_tests/controller.rs
+crates/jope-engine/src/eval_registry/service/funding_tests/grants.rs
+crates/jope-engine/src/eval_registry/service/funding_tests/socket.rs
 crates/jope-engine/src/eval_registry/service/native_scq.rs
 crates/jope-engine/src/eval_registry/service/query_worker.rs
 crates/jope-engine/src/eval_registry/service/runtime.rs
