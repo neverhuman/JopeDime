@@ -4,15 +4,28 @@ use std::sync::Barrier;
 struct ExecutablePeer(Option<std::process::Child>);
 impl ExecutablePeer {
     fn start(path: &Path) -> Self {
-        let mut peer = Self(Some(
-            Command::new(path)
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let child = loop {
+            match Command::new(path)
                 .arg("30")
                 .stdin(Stdio::null())
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .spawn()
-                .unwrap(),
-        ));
+            {
+                Ok(child) => break child,
+                // Linux can briefly retain deny-write access while the previous exec mapping is
+                // torn down. Keep the same-inode rewrite test strict, but tolerate that race.
+                Err(error)
+                    if error.raw_os_error() == Some(libc::ETXTBSY)
+                        && Instant::now() < deadline =>
+                {
+                    std::thread::sleep(Duration::from_millis(10));
+                }
+                Err(error) => panic!("could not execute {}: {error}", path.display()),
+            }
+        };
+        let mut peer = Self(Some(child));
         // A spawned child can still be completing exec when /proc is sampled.
         // Begin the cache assertions only once it holds the requested inode.
         let expected = fs::metadata(path).unwrap();
