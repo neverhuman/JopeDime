@@ -194,6 +194,128 @@ class CatalogPoolManifestTests(unittest.TestCase):
                 catalog, catalog_sha, owner_alias, owner_alias_sha
             )
 
+    def test_r15_d4_closes_alias_scope_and_withholds_srcfile_binary_rows(self) -> None:
+        from research.joint_regbin import admission
+
+        catalog, catalog_sha, owner_alias, owner_alias_sha = self._inputs()
+        unkeyed_id = "b" * 16
+        catalog["datasets"].append(
+            {
+                "id": unkeyed_id,
+                "task": "binary",
+                "canonical_sha256": "e" * 64,
+                "source_file": None,
+                "source_url": None,
+                "platform": "pmlb",
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 13,
+                "train_sha256": "5" * 64,
+            }
+        )
+        catalog["inventory"]["catalog_records"] += 1
+        catalog["inventory"]["usable_records"] += 1
+        catalog["inventory"]["by_task"]["binary"] += 1
+        owner_alias["curated_catalog_sha256"] = catalog_sha
+        artifact = {
+            "schema": admission.FAMILY_EXCLUSION_SCHEMA,
+            "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
+            "catalog_sha256": catalog_sha,
+            "family_keys": [],
+            "unkeyed_catalog_ids": [unkeyed_id],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            artifact_path = Path(directory) / "exclusion.json"
+            artifact_bytes = json.dumps(
+                artifact, sort_keys=True, separators=(",", ":")
+            ).encode()
+            artifact_path.write_bytes(artifact_bytes)
+            artifact_sha = hashlib.sha256(artifact_bytes).hexdigest()
+            with patch.object(admission, "FAMILY_EXCLUSION_SHA256", artifact_sha):
+                manifest = build_catalog_pool_manifest(
+                    catalog,
+                    catalog_sha,
+                    owner_alias,
+                    owner_alias_sha,
+                    family_exclusion_path=artifact_path,
+                )
+
+        self.assertTrue(manifest["closure"]["owner_aliases_fully_closed"])
+        self.assertEqual(manifest["closure"]["unresolved_owner_sourcefile_aliases"], 0)
+        self.assertEqual(manifest["closure"]["family_exclusion_sha256"], artifact_sha)
+        self.assertEqual(manifest["candidate_counts"], {"binary": 0, "regression": 2})
+        self.assertEqual(
+            manifest["closure"]["candidate_exclusions"]["binary"][
+                "sourcefile_dependent"
+            ],
+            1,
+        )
+        self.assertEqual(
+            manifest["closure"]["candidate_exclusions"]["binary"]["d4_family"], 1
+        )
+        self.assertNotIn(
+            "owner source-file alias closure is incomplete", manifest["blockers"]
+        )
+        self.assertFalse(manifest["eligibility_verified"])
+
+    def test_catalog_pool_file_default_path_applies_d4_exclusion(self) -> None:
+        from research.joint_regbin import admission
+
+        catalog, _, owner_alias, _ = self._inputs()
+        with tempfile.TemporaryDirectory() as directory:
+            directory_path = Path(directory)
+            catalog_path = directory_path / "catalog.json"
+            owner_alias_path = directory_path / "owner-alias.json"
+            exclusion_path = directory_path / "family-exclusion.json"
+            catalog_bytes = json.dumps(
+                catalog, sort_keys=True, separators=(",", ":")
+            ).encode()
+            catalog_sha = hashlib.sha256(catalog_bytes).hexdigest()
+            catalog_path.write_bytes(catalog_bytes)
+            owner_alias["curated_catalog_sha256"] = catalog_sha
+            owner_alias_bytes = json.dumps(
+                owner_alias, sort_keys=True, separators=(",", ":")
+            ).encode()
+            owner_alias_path.write_bytes(owner_alias_bytes)
+            exclusion = {
+                "schema": admission.FAMILY_EXCLUSION_SCHEMA,
+                "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
+                "catalog_sha256": catalog_sha,
+                "family_keys": [
+                    {"kind": "dedupe_fingerprint", "value": "pmlb:" + "f" * 64}
+                ],
+                "unkeyed_catalog_ids": [],
+            }
+            exclusion_bytes = json.dumps(
+                exclusion, sort_keys=True, separators=(",", ":")
+            ).encode()
+            exclusion_path.write_bytes(exclusion_bytes)
+            with (
+                patch.object(
+                    admission,
+                    "OWNER_ALIAS_EXPANSION_SHA256",
+                    hashlib.sha256(owner_alias_bytes).hexdigest(),
+                ),
+                patch.object(
+                    admission,
+                    "FAMILY_EXCLUSION_SHA256",
+                    hashlib.sha256(exclusion_bytes).hexdigest(),
+                ),
+                patch.object(
+                    admission, "DEFAULT_FAMILY_EXCLUSION_PATH", exclusion_path
+                ),
+            ):
+                manifest = admission.build_catalog_pool_manifest_from_files(
+                    catalog_path, owner_alias_path
+                )
+
+        self.assertTrue(manifest["closure"]["owner_aliases_fully_closed"])
+        self.assertEqual(manifest["candidate_counts"], {"binary": 0, "regression": 0})
+        self.assertEqual(
+            manifest["closure"]["d4_excluded_catalog_ids"],
+            ["bin-a", "reg-a", "reg-b"],
+        )
+        self.assertFalse(manifest["eligibility_verified"])
+
 
 class TaskRoleCandidateManifestTests(unittest.TestCase):
     def _inputs(self):
@@ -415,6 +537,37 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
             "1 regression panel identities are absent",
             " ".join(manifest["blockers"]),
         )
+
+    def test_role_candidates_reject_srcfile_binary_rows_under_r15_d4(self):
+        inputs = list(self._inputs())
+        catalog, catalog_pool = inputs[0], inputs[4]
+        sourcefile_row = next(
+            row for row in catalog["datasets"] if row["task"] == "binary"
+        )
+        sourcefile_row["family_key_derived"] = "srcfile:conservative-alias"
+        sourcefile_row["source_file"] = "binary/conservative-alias.csv"
+        catalog_pool["closure"] = {
+            "owner_aliases_fully_closed": True,
+            "family_exclusion_sha256": "ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651",
+        }
+        catalog_pool["candidate_pools"]["binary"] = [
+            row
+            for row in catalog_pool["candidate_pools"]["binary"]
+            if row["dataset"] != sourcefile_row["id"]
+        ]
+
+        manifest = self._build(inputs)
+
+        self.assertEqual(manifest["role_counts"]["train"]["binary"], 9)
+        self.assertTrue(manifest["closure"]["owner_r15_d4_exclusion_verified"])
+        self.assertTrue(
+            manifest["closure"]["sourcefile_dependent_binary_rows_excluded"]
+        )
+        self.assertNotIn(
+            sourcefile_row["id"],
+            {row["dataset"] for row in manifest["records"]["binary_train"]},
+        )
+        self.assertFalse(manifest["eligibility_verified"])
 
     def test_role_candidates_refuse_flywheel_hash_or_task_drift(self):
         inputs = list(self._inputs())
