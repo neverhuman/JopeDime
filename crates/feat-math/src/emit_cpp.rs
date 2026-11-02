@@ -184,6 +184,7 @@ fn emit_cpp_inner(
 
 #[path = "emit_cpp/helpers.rs"]
 mod helpers;
+#[path = "emit_cpp/model.rs"]
 mod model;
 #[path = "emit_cpp/templates_advanced_ops.rs"]
 mod templates_advanced_ops;
@@ -199,7 +200,6 @@ mod templates_io;
 mod templates_portable;
 
 use helpers::*;
-use model::*;
 use templates_advanced_ops::*;
 use templates_base::*;
 use templates_basic_ops::*;

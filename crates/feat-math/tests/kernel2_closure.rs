@@ -19,9 +19,13 @@ const BOUNDARY: &str = include_str!("fixtures/math_boundary/v1.json");
 #[path = "support/eec_generation.rs"]
 mod eec_generation;
 
+#[path = "kernel2_closure/closure_core.rs"]
 mod closure_core;
+#[path = "kernel2_closure/domain.rs"]
 mod domain;
+#[path = "kernel2_closure/probe.rs"]
 mod probe;
+#[path = "kernel2_closure/training.rs"]
 mod training;
 
 use closure_core::*;

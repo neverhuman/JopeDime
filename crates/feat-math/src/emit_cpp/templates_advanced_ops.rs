@@ -1,5 +1,3 @@
-use super::*;
-
 pub(crate) const H_QUANTILE_EDGES: &str = r#"// Interior quantile cut points (1/bins .. (bins-1)/bins) for every column.
 static std::vector<std::vector<double>> quantile_edges(const std::vector<std::vector<double>>& x, std::size_t bins) {
     std::vector<std::vector<double>> edges;

@@ -173,7 +173,7 @@ impl fmt::Display for Agreement {
 }
 
 /// PR 01's compatibility corpus: every program's name and canonical text.
-fn corpus() -> Vec<(String, String)> {
+pub(super) fn corpus() -> Vec<(String, String)> {
     let path = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/tests/fixtures/compat_freeze/emitted_bytes.v1.json"

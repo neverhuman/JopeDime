@@ -1,5 +1,3 @@
-use super::*;
-
 pub(crate) const H_SOFT_THRESHOLD: &str = r#"// Shrink v toward zero by t (the lasso proximal step).
 static double soft_threshold(double v, double t) {
     if (v > t) return v - t;

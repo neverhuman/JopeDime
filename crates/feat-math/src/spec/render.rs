@@ -7,7 +7,6 @@ use super::*;
 /// `String`. This replaces the old `Vec<String>` + `join`, which allocated a
 /// temporary owned+trimmed copy per section and then copied the whole program
 /// a second time at join time; here every section is copied exactly once.
-
 pub struct Arena {
     buf: String,
     sep: &'static str,

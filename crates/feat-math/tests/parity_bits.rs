@@ -362,9 +362,13 @@ struct AllowlistEntry {
     reason: String,
 }
 
+#[path = "parity_bits/allowlist.rs"]
 mod allowlist;
+#[path = "parity_bits/input.rs"]
 mod input;
+#[path = "parity_bits/programs.rs"]
 mod programs;
+#[path = "parity_bits/runner.rs"]
 mod runner;
 pub(crate) use allowlist::*;
 pub(crate) use input::*;

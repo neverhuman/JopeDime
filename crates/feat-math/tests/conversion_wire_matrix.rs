@@ -21,6 +21,7 @@ const HISTORICAL: &str = include_str!(
 const EMITTED: &str = include_str!("fixtures/compat_freeze/emitted_bytes.v1.json");
 const MODELS: &str = include_str!("fixtures/compat_freeze/model_serde.v1.json");
 
+#[path = "conversion_wire_matrix/common.rs"]
 mod common;
 use common::*;
 

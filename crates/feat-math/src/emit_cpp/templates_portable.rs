@@ -1,5 +1,3 @@
-use super::*;
-
 pub(crate) const PORTABLE_WARNING_BEGIN: &str = r#"#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"

@@ -36,9 +36,13 @@ use std::fmt;
 use std::hint::black_box;
 use std::time::Instant;
 
+#[path = "fault_trace/cases.rs"]
 mod cases;
+#[path = "fault_trace/compare.rs"]
 mod compare;
+#[path = "fault_trace/corpus.rs"]
 mod corpus;
+#[path = "fault_trace/probes.rs"]
 mod probes;
 
 use cases::{all_cases, Case, POS_ZERO};

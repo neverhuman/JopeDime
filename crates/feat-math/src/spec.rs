@@ -25,9 +25,9 @@ pub use head_docs::*;
 pub use helpers::*;
 pub use op_docs::*;
 pub use render::*;
-pub use stage::*;
+
 pub use types::*;
 
 pub(super) use build::finite_f64;
 pub(crate) use build::{gbm_plan, get_append, HEAD_OPS};
-pub(super) use stage::{plan_head_stage, plan_member, plan_op, plan_portfolio_head, plan_target};
+pub(super) use stage::{plan_head_stage, plan_op, plan_portfolio_head, plan_target};

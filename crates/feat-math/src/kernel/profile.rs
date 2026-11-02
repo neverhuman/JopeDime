@@ -18,6 +18,7 @@ mod types;
 pub use types::*;
 
 mod builders;
+#[cfg(test)]
 use builders::BINS;
 pub use builders::{profile, profiles, render_profiles, shipped_kernel2_profiles};
 

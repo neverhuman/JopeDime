@@ -1,3 +1,4 @@
+use super::cases::union_of;
 use super::*;
 
 /// The Hard class of a legacy evaluation error, by the kinds compat_freeze records.
@@ -119,8 +120,8 @@ fn check_strict(
 /// Counts for the record: evaluations, those with any fault, legacy errors by their Hard class,
 /// and evaluations per class.
 #[derive(Default)]
-struct Tally {
-    evaluations: usize,
+pub(crate) struct Tally {
+    pub(crate) evaluations: usize,
     faulted: usize,
     errors: BTreeMap<&'static str, usize>,
     classes: BTreeMap<&'static str, usize>,

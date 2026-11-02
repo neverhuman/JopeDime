@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Lane {
     Rust,
     Python,

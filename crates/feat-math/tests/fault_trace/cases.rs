@@ -130,7 +130,7 @@ pub(crate) const POS_ZERO: u64 = 0x0000_0000_0000_0000;
 const NEG_ZERO: u64 = 0x8000_0000_0000_0000;
 const MAX_ABS: u64 = 0x426d_1a94_a200_0000; // 1e12, the output filter's clamp
 
-fn union_of(sets: &[FaultSet]) -> FaultSet {
+pub(super) fn union_of(sets: &[FaultSet]) -> FaultSet {
     sets.iter()
         .fold(FaultSet::EMPTY, |all, set| all.union(*set))
 }

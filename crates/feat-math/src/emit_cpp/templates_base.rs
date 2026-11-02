@@ -1,5 +1,3 @@
-use super::*;
-
 pub(crate) const EXPRESSION_SHAPE: &str = r#"static std::size_t expression_width(const std::vector<std::vector<double>>& rows) {
     if(rows.empty() || rows.front().empty()) throw std::invalid_argument("empty numeric table");
     const std::size_t width=rows.front().size();

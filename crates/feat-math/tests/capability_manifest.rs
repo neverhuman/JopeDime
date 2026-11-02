@@ -357,6 +357,9 @@ fn expression_elements(source: &MathExpr) -> BTreeSet<(&'static str, &'static st
     out
 }
 
+#[path = "capability_manifest/emitter.rs"]
 mod emitter;
+#[path = "capability_manifest/grammar.rs"]
 mod grammar;
+#[path = "capability_manifest/legacy.rs"]
 mod legacy;

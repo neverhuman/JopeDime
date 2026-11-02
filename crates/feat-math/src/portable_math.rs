@@ -447,7 +447,6 @@ pub use self::power::{pow, tanh};
 pub use self::trig::{atan, atan2, cos, sin};
 
 #[path = "portable_math/frozen_s1.rs"]
-#[path = "portable_math/frozen_s1.rs"]
 pub mod frozen_s1;
 #[cfg(test)]
 #[path = "portable_math/tests.rs"]

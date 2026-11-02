@@ -8,5 +8,7 @@ use std::cell::Cell;
 mod support;
 use support::{admitted, config, scope, size};
 
+#[path = "kernel2_expression_search/callbacks.rs"]
 mod callbacks;
+#[path = "kernel2_expression_search/evolution.rs"]
 mod evolution;

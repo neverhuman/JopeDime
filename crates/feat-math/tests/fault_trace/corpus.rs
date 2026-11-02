@@ -1,9 +1,9 @@
 use super::*;
 
 /// One corpus row: its label and its cells.
-struct Row {
-    label: String,
-    cells: Vec<f64>,
+pub(crate) struct Row {
+    pub(crate) label: String,
+    pub(crate) cells: Vec<f64>,
 }
 
 /// PR 01's corpus: every row and every expression source.
