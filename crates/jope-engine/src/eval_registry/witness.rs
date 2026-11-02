@@ -127,6 +127,14 @@ pub fn source_sha256() -> String {
     source_set_digest(&[
         ("witness.rs", include_bytes!("witness.rs")),
         ("witness/epochs.rs", include_bytes!("witness/epochs.rs")),
+        (
+            "witness/epochs/store_ops.rs",
+            include_bytes!("witness/epochs/store_ops.rs"),
+        ),
+        (
+            "witness/epochs/transition.rs",
+            include_bytes!("witness/epochs/transition.rs"),
+        ),
         ("witness/store.rs", include_bytes!("witness/store.rs")),
         ("native_review.rs", include_bytes!("../native_review.rs")),
         (
@@ -149,6 +157,14 @@ pub fn authority_source_sha256() -> String {
     source_set_digest(&[
         ("witness.rs", include_bytes!("witness.rs")),
         ("witness/epochs.rs", include_bytes!("witness/epochs.rs")),
+        (
+            "witness/epochs/store_ops.rs",
+            include_bytes!("witness/epochs/store_ops.rs"),
+        ),
+        (
+            "witness/epochs/transition.rs",
+            include_bytes!("witness/epochs/transition.rs"),
+        ),
         ("witness/store.rs", include_bytes!("witness/store.rs")),
         (
             "witness/native_grants.rs",
