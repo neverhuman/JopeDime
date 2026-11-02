@@ -2488,3 +2488,22 @@ intent=mechanical behavior-preserving split into cohesive Rust modules under 500
 2026-11-02T23:39Z | CLAIM CAPS t2310 luna_jk_shape_16_x2 | checkout=/home/ubuntu/jk_wide/lanes/shape_16_x2_t2040/JopeDime branch=fast/luna_jk_shape_16_x2 HEAD=c5434444a origin/v1/fastlane. COORD preclaim 9798; finding HLT-005-PYTHON-PRODUCT-TRUTH sha256:a9ed62b36b036c9cc50ca8f42844065f4bb44a12c1b6a715d99db7453617b019. j_7c52c57ee names python/ product truth; current agent/boundaries.toml SHA256 a85e5025c33c06d1d751c8bf10b0ebff4781e813730c92ccd4f6e952a721ea8f (report fingerprint stale, no current hash pin). Narrow only allowed_non_product_paths `python` entry to `python/ai-service`; keep row #13 separate. No cargo/tests/audits; diff-check; jk_fastpush.
 
 [2026-11-02T23:45Z] CLAIM CAPS t2310 luna_jk_shape_12_x2 | checkout=/home/ubuntu/jk_wide/lanes/shape_12_x2_t2040/JopeDime branch=fast/luna_jk_shape_12_x2_t2250 HEAD=f44b9ce3af3a4a678dc00379129112af4e39155d (fresh origin/v1/fastlane). COORD preclaim line 9794; exact owned scope is research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py and agent/audit-policy.toml exclusions for all t2310 EXCL-REQs. Current source bytes are preregistered; preserve them and add only exact pinned-evidence policy entries. No cargo/tests/audits; git diff --check and fastpush only.
+[2026-11-02T23:05:53Z] CLAIM luna_jk_shape_5_x1 SPARE t2250 continuation
+checkout=/mnt/jope-build-native/jk_wide/shape_5_x1_t2040/JopeDime
+branch=fast/luna_jk_shape_5_x1_t2250
+base/HEAD=c4528399354f118f6c208be1c0ad0ac85468e237 (fresh origin/v1/fastlane)
+exclusive_path=crates/jope-engine/src/gpu_worker.rs; current_SHA256=146df1b19de9351e8f2d9be1703f484574a9e1851e9cc530940bdc64853d5968; current_LOC=618; no exact current-byte hash pin or live exact claim found
+intent=mechanical behavior-preserving split into cohesive Rust modules under 500 LOC; rustfmt --edition 2021 --check and git diff --check only; update parity coverage file inventory entries for added modules; no builds/tests/audits; jk_fastpush
+
+[2026-11-02T23:13Z] CLAIM luna_jk_shape_5_x1 SPARE t2315
+checkout=/mnt/jope-build-native/jk_wide/shape_5_x1_t2040/JopeDime
+branch=fast/luna_jk_shape_5_x1_t2315 (to be refreshed from origin/v1/fastlane)
+base=origin/v1/fastlane@f44b9ce3a
+exclusive_path=deploy/qualification/q1/harness/test_fifo_launch.py; current_SHA256=5f41f3ec4b1467667424c427e0ec6ff7caa606235b86742a94a9cf9be9cda3cb; current_LOC=791
+intent=mechanical behavior-preserving Python split into sibling modules under 500 LOC; preserve test discovery and import paths; py_compile and git diff --check only; no cargo/pytest/npm/audits; update coverage/test inventories; publish jk_fastpush
+
+[2026-11-02T23:16Z] RELEASE luna_jk_shape_5_x1 SPARE t2250 continuation
+checkout=/mnt/jope-build-native/jk_wide/shape_5_x1_t2040/JopeDime
+branch=fast/luna_jk_shape_5_x1_t2250; stopped_HEAD=c4528399354f118f6c208be1c0ad0ac85468e237
+exclusive_path=crates/jope-engine/src/gpu_worker.rs; no source edits made; current ownership ended by direct t2315 reassignment
+remaining=none; disposition=release unedited claim; current checkout now refreshed on fast/luna_jk_shape_5_x1_t2315
