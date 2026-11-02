@@ -60,6 +60,8 @@
     "crates/jope-datasets/**": "data",
     "python/ai-service/": "python-ai",
     "python/ai-service/**": "python-ai",
+    "python/src/jope/": "python-ai",
+    "python/src/jope/**": "python-ai",
     "research/flywheel_selfplay/custody/files/": "custody",
     "research/flywheel_selfplay/custody/files/**": "custody",
     ".githooks/pre-commit": "ops",
