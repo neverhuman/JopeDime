@@ -100,13 +100,13 @@
       "sha256": "dab86bf0a66124e657d19e52b698c760a6823970c23fbc16f5767ac1b168f8ca"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py": {
-      "bytes": 21929,
+      "bytes": 21942,
       "classification": {
         "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
+      "sha256": "4b7e329df7aa1056acb96127db9d20975eb96460295bd4bfbceb4803a36726cc"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py": {
       "bytes": 18310,

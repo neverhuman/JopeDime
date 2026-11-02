@@ -6043,7 +6043,7 @@
       "origin": "Claude RLFW lane claude-rlfw-20261009 v2build/candidate-r2/deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py (v2.0.0 learner build r3.1)",
       "origin_sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264",
       "path": "deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py",
-      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
+      "sha256": "4b7e329df7aa1056acb96127db9d20975eb96460295bd4bfbceb4803a36726cc"
     },
     {
       "normalization": "Byte copy of the v2.0.0 learner build r3.1 package file; no normalization. Additive v2.0.0 learner source; prior812 identities and sources unchanged.",
