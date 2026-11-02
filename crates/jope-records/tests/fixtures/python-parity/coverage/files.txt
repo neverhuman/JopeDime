@@ -765,6 +765,11 @@ crates/jope-campaigns/src/selfplay_shadow/causal_evidence.rs
 crates/jope-campaigns/src/selfplay_shadow/causal_evidence/canary.rs
 crates/jope-campaigns/src/selfplay_shadow/contracts.rs
 crates/jope-campaigns/src/selfplay_shadow/flywheel.rs
+crates/jope-campaigns/src/selfplay_shadow/flywheel/admission.rs
+crates/jope-campaigns/src/selfplay_shadow/flywheel/alternation.rs
+crates/jope-campaigns/src/selfplay_shadow/flywheel/contracts.rs
+crates/jope-campaigns/src/selfplay_shadow/flywheel/evidence.rs
+crates/jope-campaigns/src/selfplay_shadow/flywheel/tests.rs
 crates/jope-campaigns/src/selfplay_shadow/mod.rs
 crates/jope-campaigns/src/selfplay_shadow/policy.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence.rs
