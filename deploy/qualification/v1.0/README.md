@@ -166,3 +166,28 @@ aggregate receipt while retaining completed gate receipts and original exits.
 Unstarted gates stay in the inventory without fabricated execution records. The
 final source check remains in place; this is a boundary check, not a checkout
 lock or protection against changes during a running child.
+
+## v1.0.0 M3 operator-mix waiver receipt
+
+The receipt assembler can record owner ruling `M3-WAIVER-V1.0.0-T1955`
+without changing a raw gate verdict. Add `--release-version v1.0.0` and
+`--m3-waiver-ruling /absolute/owner-ruling.md` to its `--scaffold` command.
+The ruling's exact bytes are pinned. Supply all 28 actual receipts and the
+same signed candidate/source as usual. M3 must contain its fresh full four-clause
+measurement; the other three clauses must pass. The assembler derives the
+three-view guard from integer operator counts: every other operator stays
+within 2pp, and `edit_replace_head` stays within 3pp. It also verifies that the
+source contains the ruling's exact merged proposer bytes.
+
+The output retains M3 `status: FAIL`, its original counts, and adds
+`disposition: WAIVED_V1_0_0`. A separate `waivers` entry records the ruling,
+source/artifact hashes, measured deltas and expiry at v1.0.1. Every other gate
+still requires complete passing execution. CLI `all_pass` remains false.
+No historical receipt or tolerance is rewritten. A new release version,
+changed proposer, numerical CV failure or out-of-guard operator refuses.
+
+This format discloses the owner waiver for ENG's final review. The existing
+host signing watcher requires 28 literal PASS rows and will refuse it; only
+ENG may update or adjudicate that instrument. Never convert M3 to PASS to
+satisfy that watcher. Actual source/artifact qualification and release signing
+remain separate from successful receipt assembly.
