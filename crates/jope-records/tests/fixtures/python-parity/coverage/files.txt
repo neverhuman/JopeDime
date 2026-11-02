@@ -745,6 +745,8 @@ crates/jope-campaigns/src/test_adaptive/binary42/execution.rs
 crates/jope-campaigns/src/test_adaptive/binary42/generation.rs
 crates/jope-campaigns/src/test_adaptive/binary42/indexes.rs
 crates/jope-campaigns/src/test_adaptive/binary42/publication.rs
+crates/jope-campaigns/src/test_adaptive/binary42/publication/setup.rs
+crates/jope-campaigns/src/test_adaptive/binary42/publication/winner.rs
 crates/jope-campaigns/src/test_adaptive/binary42/staging.rs
 crates/jope-campaigns/src/test_adaptive/binary42/tests.rs
 crates/jope-campaigns/src/test_adaptive/binary42/validation.rs
