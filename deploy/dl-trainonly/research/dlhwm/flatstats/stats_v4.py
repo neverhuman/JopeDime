@@ -86,9 +86,9 @@ if __name__ == "__main__":
     for l in open(os.path.join(W, "plan/plan_full.jsonl")):
         d = json.loads(l)
         if d["context_sha256"] in ws: PLAN[d["context_sha256"]] = d
-    T = [c for c in want if c in PLAN and not os.path.exists(f"{STD}/{c}.json")]; print(time.strftime("%H:%M:%S"), "todo", len(T), "of", len(want), flush=True)
+    pending_contexts = [c for c in want if c in PLAN and not os.path.exists(f"{STD}/{c}.json")]; print(time.strftime("%H:%M:%S"), "pending", len(pending_contexts), "of", len(want), flush=True)
     import multiprocessing as mp
     with mp.get_context("fork").Pool(a.workers, maxtasksperchild=200) as pool:
-        for i, (c, m) in enumerate(pool.imap(go, T, chunksize=2)):
+        for i, (c, m) in enumerate(pool.imap(go, pending_contexts, chunksize=2)):
             if m.startswith("ERR") or i % 250 == 0: print(time.strftime("%H:%M:%S"), i, c[:12], m, flush=True)
     print(time.strftime("%H:%M:%S"), "ALL DONE", flush=True)
