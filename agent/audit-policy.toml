@@ -65,8 +65,6 @@ extra_excluded_paths = [
   "crates/jope-pipeline/src/resource_ledger.rs",
   # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
-  # Frozen continuous runtime source pin; preserve its required import resolution.
-  "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot_native.py",
   # Variety B HLT-001/HLT-043: versioned trace-archive copies are hash-pinned; see disposition.
   "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
   "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
@@ -155,7 +153,9 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/run_acceptance.py",
 
   # P5 R2 exact-path exceptions are documented with per-path evidence in
-  # docs/release/jankurai-p5-r2-exceptions-20261102.md.
+  # docs/release/jankurai-p5-r2-exceptions-20261102.md. The same exact paths
+  # disposition T1900 HLT-029 fingerprints 31aa60cb (driver.rs) and 8400153d
+  # (lib.rs); no directory/glob or additional path is excluded.
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",
   "crates/jope-api/src/bin/jope-api-openapi.rs",

@@ -33,14 +33,17 @@ pub use gate::{Gate, SealGate};
 /// A request this module refuses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Action {
+pub enum QualificationAction {
     /// Adopt a sealed-family roster and create its seal.
     Seal,
     /// Promote a challenger to champion.
     Promote,
 }
 
-impl Action {
+/// Compatibility name for an action taken by the qualification API.
+pub type Action = QualificationAction;
+
+impl QualificationAction {
     /// The gap whose owner ruling the action waits for.
     #[must_use]
     pub fn gap(self) -> &'static str {
@@ -60,7 +63,7 @@ impl Action {
     }
 }
 
-impl fmt::Display for Action {
+impl fmt::Display for QualificationAction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
             Self::Seal => "seal",
@@ -82,7 +85,7 @@ pub enum Refusal {
     /// Field value recorded by this public API type.
     GateOff {
         /// Action recorded for this outcome.
-        action: Action,
+        action: QualificationAction,
         /// Gate recorded for this outcome.
         gate: Gate,
     },
@@ -92,7 +95,7 @@ pub enum Refusal {
     /// Field value recorded by this public API type.
     Invalid {
         /// Action recorded for this outcome.
-        action: Action,
+        action: QualificationAction,
         /// Explanation accompanying this outcome.
         reason: String,
     },
@@ -101,7 +104,7 @@ pub enum Refusal {
     #[error("{action} refused: not ready: {}", reasons.join("; "))]
     NotReady {
         /// Action recorded for this refusal.
-        action: Action,
+        action: QualificationAction,
         /// Collection of reasons values carried by this refusal.
         reasons: Vec<String>,
     },
@@ -114,7 +117,7 @@ pub enum Refusal {
     /// Field value recorded by this public API type.
     RulingPending {
         /// Action recorded for this outcome.
-        action: Action,
+        action: QualificationAction,
     },
 }
 
@@ -127,7 +130,7 @@ pub enum Refusal {
 /// [`Refusal::Invalid`] or [`Refusal::NotReady`] from [`roster::check`]; otherwise
 /// [`Refusal::RulingPending`].
 pub fn request_seal(gate: &Gate, proposal: &[u8]) -> Result<Infallible, Refusal> {
-    let action = Action::Seal;
+    let action = QualificationAction::Seal;
     if !gate.is_on() {
         return Err(Refusal::GateOff {
             action,
@@ -156,7 +159,7 @@ pub fn request_promotion(
     manifest: &[u8],
     results: &[u8],
 ) -> Result<Infallible, Refusal> {
-    let action = Action::Promote;
+    let action = QualificationAction::Promote;
     if !gate.is_on() {
         return Err(Refusal::GateOff {
             action,

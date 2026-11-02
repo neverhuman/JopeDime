@@ -207,10 +207,13 @@ pub use super::partition::Shard;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Outcome {
+pub enum TrainingUpdateOutcome {
     Applied,
     Rejected,
 }
+
+/// Compatibility name for the optimizer-update outcome.
+pub type Outcome = TrainingUpdateOutcome;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "event", rename_all = "snake_case", deny_unknown_fields)]
@@ -232,7 +235,7 @@ pub enum TrainingConsumptionEvent {
     },
     Update {
         step: u64,
-        outcome: Outcome,
+        outcome: TrainingUpdateOutcome,
         microbatches: usize,
         gradient_norm: Option<f64>,
         clipped: Option<bool>,
@@ -391,7 +394,7 @@ impl Tracker {
                 let step_work = std::mem::take(&mut self.step);
                 self.computed.add(&step_work.units)?;
                 match outcome {
-                    Outcome::Applied => {
+                    TrainingUpdateOutcome::Applied => {
                         ensure!(
                             *microbatches == h.accumulation,
                             "update for step {step} applied before every accumulation microbatch"
@@ -410,7 +413,7 @@ impl Tracker {
                         self.applied_through = self.next_step;
                         self.pending.push(step_work);
                     }
-                    Outcome::Rejected => {
+                    TrainingUpdateOutcome::Rejected => {
                         let reason = reason
                             .as_deref()
                             .filter(|r| !r.is_empty())
@@ -552,7 +555,7 @@ impl Journal {
     pub fn applied(&mut self, step: u64, gradient_norm: f64) -> Result<()> {
         self.append(&TrainingConsumptionEvent::Update {
             step,
-            outcome: Outcome::Applied,
+            outcome: TrainingUpdateOutcome::Applied,
             microbatches: self.tracker.step.units.microbatches as usize,
             gradient_norm: Some(gradient_norm),
             clipped: Some(gradient_norm > 1.0),
@@ -565,7 +568,7 @@ impl Journal {
     pub fn rejected(&mut self, step: u64, reason: &str) -> Result<()> {
         self.append(&TrainingConsumptionEvent::Update {
             step,
-            outcome: Outcome::Rejected,
+            outcome: TrainingUpdateOutcome::Rejected,
             microbatches: self.tracker.step.units.microbatches as usize,
             gradient_norm: None,
             clipped: None,
