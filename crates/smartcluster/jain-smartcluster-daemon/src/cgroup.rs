@@ -2,7 +2,7 @@ use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use nix::sys::signal::{kill, Signal};
+use nix::sys::signal::{Signal, kill};
 use nix::unistd::Pid;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

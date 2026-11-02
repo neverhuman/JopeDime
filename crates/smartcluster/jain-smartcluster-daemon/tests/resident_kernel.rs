@@ -1,5 +1,5 @@
 //! Real delegated-cgroup recovery tests. Never uses production sockets or process scans.
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result, ensure};
 use jain_smartcluster::{Client, ClientConfig};
 use jain_smartcluster_core::*;
 use jain_smartcluster_daemon::{
@@ -7,7 +7,7 @@ use jain_smartcluster_daemon::{
     config::{AuthConfig, DaemonConfig, ExecutionConfig, SchedulerConfig, WorkerConfig},
 };
 use nix::{
-    fcntl::{fcntl, FcntlArg, FdFlag},
+    fcntl::{FcntlArg, FdFlag, fcntl},
     unistd::{getegid, geteuid},
 };
 use std::os::unix::process::CommandExt;
@@ -25,6 +25,8 @@ use tokio::time::sleep;
 
 const SERVICE: &str = "jope-resident-gpu";
 const WAIT: Duration = Duration::from_secs(30);
+
+use lease_tests::populated;
 
 // Safe raw-FD socket APIs keep the fixture compatible with workspace unsafe_code=deny.
 struct Control(i32);

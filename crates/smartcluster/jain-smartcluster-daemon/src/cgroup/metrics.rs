@@ -24,7 +24,7 @@ pub(crate) fn read_pids(path: &Path) -> Result<Vec<i32>, CgroupError> {
         let source = match fs::read_to_string(directory.join("cgroup.procs")) {
             Ok(source) => source,
             Err(error) if directory != path && error.kind() == std::io::ErrorKind::NotFound => {
-                continue
+                continue;
             }
             Err(error) => return Err(error.into()),
         };

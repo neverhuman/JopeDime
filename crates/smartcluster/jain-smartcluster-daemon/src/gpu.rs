@@ -29,9 +29,13 @@ pub use idle::QualifiedIdleBaseline;
 
 mod inventory;
 pub use inventory::{GpuDevice, GpuInventory, GpuProcess};
+#[cfg(test)]
+pub(super) use inventory::{is_visible, parse_visible_devices};
 
 mod mps;
 pub use mps::{mps_client_matches_pids, MpsCapability, MpsClient, MpsClientLimits, MpsController};
+#[cfg(test)]
+pub(super) use mps::{compute_percent, format_vram_limits, parse_ps, parse_termination_response};
 
 mod events;
 pub use events::{GpuEvent, GpuEventKind, GpuEventMonitor};
