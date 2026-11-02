@@ -275,21 +275,24 @@ pub struct Usage {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-/// `Inserted` is an enum for the inserted contract in this module: Bounded immutable progress history segments and a hash-bound exact-key shard index.
-pub enum Inserted {
-    /// The `Added` case of `Inserted`.
+/// Result of appending records to the immutable progress segment store.
+pub enum SegmentInsertOutcome {
+    /// The `Added` case of `SegmentInsertOutcome`.
     Added {
         /// Generation recorded for this inserted.
         generation: u64,
         /// SHA-256 digest identifying the associated segment.
         segment_sha256: String,
     },
-    /// The `Existing` case of `Inserted`.
+    /// The `Existing` case of `SegmentInsertOutcome`.
     Existing {
         /// SHA-256 digest identifying the associated segment.
         segment_sha256: String,
     },
 }
+
+/// Backward-compatible name for [`SegmentInsertOutcome`].
+pub type Inserted = SegmentInsertOutcome;
 
 /// `SegmentStore` is a record for the segment store contract in this module: Bounded immutable progress history segments and a hash-bound exact-key shard index.
 pub struct SegmentStore {

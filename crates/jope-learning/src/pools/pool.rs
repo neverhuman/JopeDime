@@ -25,16 +25,19 @@ pub const ALLOWED_ROLES: &[&str] = &["train", "train_fit"];
 /// §5.1 forbids fabricating `q` for them, so their context is reported as excluded instead.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Status {
-    /// The `Complete` case of `Status`.
+pub enum MeasurementStatus {
+    /// The `Complete` case of `MeasurementStatus`.
     Complete,
-    /// The `ProgramFailed` case of `Status`.
+    /// The `ProgramFailed` case of `MeasurementStatus`.
     ProgramFailed,
-    /// The `Timeout` case of `Status`.
+    /// The `Timeout` case of `MeasurementStatus`.
     Timeout,
-    /// The `Unknown` case of `Status`.
+    /// The `Unknown` case of `MeasurementStatus`.
     Unknown,
 }
+
+/// Backward-compatible name for [`MeasurementStatus`].
+pub type Status = MeasurementStatus;
 
 /// One input measurement, as written by a source adapter.
 #[derive(Clone, Debug, Serialize, Deserialize)]

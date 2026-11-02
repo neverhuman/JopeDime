@@ -149,7 +149,7 @@ pub struct UniformDrawRecord {
 
 /// Why a sampling request ended without a result.
 #[derive(Clone, Debug, PartialEq)]
-pub enum FailureKind {
+pub enum DecodeFailureKind {
     /// Rounds or batch outside `1..=MAX_ROUNDS` / `1..=MAX_BATCH`.
     InvalidBudget { rounds: usize, batch: usize },
     /// Temperature that is not finite and positive.
@@ -170,7 +170,7 @@ pub enum FailureKind {
     },
 }
 
-impl fmt::Display for FailureKind {
+impl fmt::Display for DecodeFailureKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidBudget { rounds, batch } => write!(
@@ -203,6 +203,9 @@ impl fmt::Display for FailureKind {
     }
 }
 
+/// Backward-compatible name for [`DecodeFailureKind`].
+pub type FailureKind = DecodeFailureKind;
+
 /// A typed terminal failure of a sampling request, carried inside the returned
 /// `anyhow::Error`; recover it with `err.downcast_ref::<DecodeFailure>()`.
 #[derive(Clone, Debug, PartialEq)]
@@ -218,8 +221,8 @@ pub struct DecodeFailure {
     pub grammar_phase: Option<&'static str>,
 }
 
-impl From<FailureKind> for DecodeFailure {
-    fn from(kind: FailureKind) -> Self {
+impl From<DecodeFailureKind> for DecodeFailure {
+    fn from(kind: DecodeFailureKind) -> Self {
         Self {
             kind,
             draw: None,
