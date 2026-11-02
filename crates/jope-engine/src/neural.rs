@@ -1226,10 +1226,10 @@ impl Nccl {
         let (rank, world) = (binding.global_rank(), binding.world());
         ensure!(rank < world && world <= 8, "invalid rank topology");
         let expected = std::ffi::CString::new(binding.gpu_uuid().unwrap_or(""))?;
+        let mut comm = std::ptr::null_mut();
         // SAFETY: `id` has the 128 bytes jp_nccl_init copies, `expected` is a CString that
         // outlives the call, and `comm_out` points to writable pointer storage. A nonzero
         // status sets the thread-local native error; success writes the communicator.
-        let mut comm = std::ptr::null_mut();
         let status = unsafe {
             jp_nccl_init(
                 id.as_ptr(),
