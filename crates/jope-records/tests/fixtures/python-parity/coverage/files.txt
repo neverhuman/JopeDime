@@ -495,8 +495,6 @@ crates/jope-campaigns/seeds/generation-zero-binary.txt
 crates/jope-campaigns/seeds/generation-zero.txt
 crates/jope-campaigns/src/aggressive.rs
 crates/jope-campaigns/src/args.rs
-crates/jope-campaigns/src/broad_shadow_cli.rs
-crates/jope-campaigns/src/broad_shadow_cli/tests.rs
 crates/jope-campaigns/src/bin/aspfm_recovery_evolve.rs
 crates/jope-campaigns/src/bin/corpus_eval.rs
 crates/jope-campaigns/src/bin/jope_canary_executor.rs
@@ -636,6 +634,8 @@ crates/jope-campaigns/src/bin/jope_v3_control.rs
 crates/jope-campaigns/src/bin/scq_runs_gc.rs
 crates/jope-campaigns/src/bin/search-v3.rs
 crates/jope-campaigns/src/binary_panel.rs
+crates/jope-campaigns/src/broad_shadow_cli.rs
+crates/jope-campaigns/src/broad_shadow_cli/tests.rs
 crates/jope-campaigns/src/campaign.rs
 crates/jope-campaigns/src/campaign/artifacts.rs
 crates/jope-campaigns/src/campaign/file_io.rs
@@ -1362,6 +1362,9 @@ crates/jope-engine/src/native_loop/materialize/tests.rs
 crates/jope-engine/src/native_loop/run_approval.rs
 crates/jope-engine/src/native_observer.rs
 crates/jope-engine/src/native_observer/science.rs
+crates/jope-engine/src/native_observer/science/graph.rs
+crates/jope-engine/src/native_observer/science/reader.rs
+crates/jope-engine/src/native_observer/science/recorded.rs
 crates/jope-engine/src/native_persistence.rs
 crates/jope-engine/src/native_provisioner.rs
 crates/jope-engine/src/native_provisioner/service.rs
