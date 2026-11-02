@@ -523,6 +523,7 @@ crates/jope-campaigns/src/bin/jope_reporting.rs
 crates/jope-campaigns/src/bin/jope_reporting/learning.rs
 crates/jope-campaigns/src/bin/jope_reporting/recovery.rs
 crates/jope-campaigns/src/bin/jope_reporting/tests.rs
+crates/jope-campaigns/src/bin/jope_reporting/tests/improved_disjoint_passes.rs
 crates/jope-campaigns/src/bin/jope_sealed_zeroshot.rs
 crates/jope-campaigns/src/bin/jope_selfplay_alarms.rs
 crates/jope-campaigns/src/bin/jope_selfplay_bundle.rs

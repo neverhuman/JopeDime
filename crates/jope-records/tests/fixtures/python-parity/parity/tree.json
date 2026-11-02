@@ -1267,6 +1267,7 @@
   "crates/jope-campaigns/src/bin/jope_reporting/learning.rs": true,
   "crates/jope-campaigns/src/bin/jope_reporting/recovery.rs": true,
   "crates/jope-campaigns/src/bin/jope_reporting/tests.rs": true,
+  "crates/jope-campaigns/src/bin/jope_reporting/tests/improved_disjoint_passes.rs": true,
   "crates/jope-campaigns/src/bin/jope_sealed_zeroshot.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_alarms.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_bundle.rs": true,
