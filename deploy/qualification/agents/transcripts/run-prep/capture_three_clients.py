@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
-import importlib.util as _importlib_util
 import json
 import os
 from pathlib import Path
@@ -21,60 +20,250 @@ import sys
 import time
 
 
+CLIENTS = {
+    "claude_code": ("claude-code", "claude"),
+    "gemini_cli": (
+        "gemini-cli",
+        "Antigravity Gemini CLI (owner-approved mcp05_t1925_jrb02.md)",
+    ),
+    "codex_cli": ("codex-cli", "codex"),
+}
+SHA = re.compile(r"[0-9a-f]{64}\Z")
+GIT_SHA = re.compile(r"[0-9a-f]{40}\Z")
+PLACEHOLDERS = {
+    "{candidate}",
+    "{capture_dir}",
+    "{capture_stdio}",
+    "{dataset_id}",
+    "{engine_home}",
+    "{input_handoff_sha256}",
+    "{source_sha}",
+    "{train_path}",
+}
+ENV_NAMES = {
+    "PATH",
+    "HOME",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TZ",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "XDG_STATE_HOME",
+    "XDG_CACHE_HOME",
+    "CUDA_VISIBLE_DEVICES",
+    "OMP_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "RAYON_NUM_THREADS",
+}
 
-def _load_sibling(name: str):
-    path = Path(__file__).with_name(name + ".py")
-    spec = _importlib_util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"cannot load sibling module: {name}")
-    module = _importlib_util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
+
+class CaptureError(ValueError):
+    pass
 
 
-_contract = _load_sibling("capture_three_clients_contract")
-CLIENTS = _contract.CLIENTS
-SHA = _contract.SHA
-GIT_SHA = _contract.GIT_SHA
-MAX_TRANSPORT_SECONDS = _contract.MAX_TRANSPORT_SECONDS
-MAX_TRANSPORT_STREAM_BYTES = _contract.MAX_TRANSPORT_STREAM_BYTES
-MAX_TRANSPORT_FRAME_BYTES = _contract.MAX_TRANSPORT_FRAME_BYTES
-PLACEHOLDERS = _contract.PLACEHOLDERS
-ENV_NAMES = _contract.ENV_NAMES
-CaptureError = _contract.CaptureError
-require = _contract.require
-transport_limits_within_reviewed_bounds = _contract.transport_limits_within_reviewed_bounds
-digest = _contract.digest
-read_object = _contract.read_object
-check_source = _contract.check_source
-external_path = _contract.external_path
-plan_clients = _contract.plan_clients
-client_selection = _contract.client_selection
-selected_environment = _contract.selected_environment
-render_argv = _contract.render_argv
-render_client_commands = _contract.render_client_commands
-self_test = _contract.self_test
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise CaptureError(message)
 
-_recorder = _load_sibling("capture_three_clients_recorder")
-_recorder.require = require
-_recorder._live_processes = lambda: _live_processes()
-_current_sigmask = _recorder._current_sigmask
-_block_sigint = _recorder._block_sigint
-_restore_sigint = _recorder._restore_sigint
-wait_for_recorder = _recorder.wait_for_recorder
 
-_cli = _load_sibling("capture_three_clients_cli")
-_cli.__doc__ = __doc__
-_cli.Path = Path
-_cli.CLIENTS = CLIENTS
-_cli.CaptureError = CaptureError
-_cli.self_test = self_test
+def digest(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def read_object(path: Path, label: str) -> tuple[dict, bytes]:
+    require(not path.is_symlink() and path.is_file(), f"{label} must be a regular file")
+    raw = path.read_bytes()
+    try:
+        value = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise CaptureError(f"{label} is invalid JSON") from error
+    require(isinstance(value, dict), f"{label} must be a JSON object")
+    return value, raw
+
+
+def check_source(repo: Path, source_sha: str) -> None:
+    require(
+        GIT_SHA.fullmatch(source_sha) is not None,
+        "source SHA must be full lowercase hex",
+    )
+    try:
+        head = subprocess.check_output(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
+        ).strip()
+        dirty = subprocess.check_output(
+            ["git", "-C", str(repo), "status", "--porcelain", "--untracked-files=all"],
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise CaptureError("cannot establish clean source identity") from error
+    require(
+        head == source_sha and not dirty,
+        "checkout must be clean at the declared source SHA",
+    )
+
+
+def external_path(path: Path, repo: Path, label: str) -> Path:
+    require(path.is_absolute(), f"{label} must be absolute")
+    require(
+        Path("/tmp") not in (path, *path.parents), f"{label} must not be under /tmp"
+    )
+    require(
+        not any(part.is_symlink() for part in (path, *path.parents)),
+        f"{label} contains a symlink",
+    )
+    resolved = path.resolve()
+    require(
+        not resolved.is_relative_to(repo),
+        f"{label} must be outside the source checkout",
+    )
+    return resolved
+
+
+def plan_clients(plan: dict, source_sha: str, candidate_sha: str) -> dict[str, dict]:
+    require(
+        plan.get("schema") == "jopedime.a5-three-client-command-plan/v1",
+        "unsupported client plan schema",
+    )
+    require(plan.get("source_sha") == source_sha, "client plan source SHA mismatch")
+    require(
+        plan.get("candidate_artifact_sha256") == candidate_sha,
+        "client plan candidate SHA mismatch",
+    )
+    clients = plan.get("clients")
+    require(
+        isinstance(clients, dict) and set(clients) == set(CLIENTS),
+        "client plan must contain exactly the three named clients",
+    )
+    for key, (_slug, implementation) in CLIENTS.items():
+        row = clients[key]
+        require(isinstance(row, dict), f"client plan row must be an object: {key}")
+        require(
+            row.get("implementation") == implementation,
+            f"client implementation mismatch: {key}",
+        )
+        require(
+            isinstance(row.get("version"), str) and row["version"].strip(),
+            f"client version is required: {key}",
+        )
+        executable = row.get("executable")
+        executable_sha = row.get("executable_sha256")
+        require(
+            isinstance(executable, str) and Path(executable).is_absolute(),
+            f"client executable path is required: {key}",
+        )
+        require(
+            isinstance(executable_sha, str) and SHA.fullmatch(executable_sha),
+            f"client executable SHA is invalid: {key}",
+        )
+        argv = row.get("argv")
+        require(
+            isinstance(argv, list)
+            and argv
+            and all(isinstance(arg, str) and "\0" not in arg for arg in argv),
+            f"client argv must be a nonempty string array: {key}",
+        )
+        require(
+            argv[0] == executable,
+            f"client argv[0] must equal the pinned executable: {key}",
+        )
+        joined = "\n".join(argv)
+        for marker in (
+            "{capture_stdio}",
+            "{capture_dir}",
+            "{candidate}",
+            "{engine_home}",
+        ):
+            require(
+                marker in joined,
+                f"client argv must configure the candidate capture server using {marker}: {key}",
+            )
+        names = row.get("environment_names", [])
+        require(isinstance(names, list), f"environment_names must be an array: {key}")
+        for name in names:
+            require(
+                isinstance(name, str)
+                and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name) is not None,
+                f"invalid environment name: {key}",
+            )
+        timeout = row.get("timeout_seconds", 300)
+        require(
+            type(timeout) is int and 1 <= timeout <= 900,
+            f"client timeout must be from 1 to 900 seconds: {key}",
+        )
+        row["timeout_seconds"] = timeout
+    return clients
+
+
+def selected_environment(extra_names: list[str], engine_home: Path) -> dict[str, str]:
+    selected = {
+        name: os.environ[name]
+        for name in ENV_NAMES | set(extra_names)
+        if name in os.environ
+    }
+    selected.setdefault("PATH", os.defpath)
+    selected.update(
+        JOPEDIME_HOME=str(engine_home),
+        CUDA_VISIBLE_DEVICES="",
+        OMP_NUM_THREADS="1",
+        OPENBLAS_NUM_THREADS="1",
+        MKL_NUM_THREADS="1",
+        RAYON_NUM_THREADS="1",
+    )
+    return selected
+
+
+def render_argv(argv: list[str], values: dict[str, str]) -> list[str]:
+    rendered = []
+    for arg in argv:
+        for marker, value in values.items():
+            arg = arg.replace("{" + marker + "}", value)
+        require(
+            "{" not in arg and "}" not in arg,
+            "argv contains an unsupported placeholder",
+        )
+        rendered.append(arg)
+    return rendered
+
+
+def _current_sigmask() -> tuple[set[signal.Signals], BaseException | None]:
+    pending_error = None
+    while True:
+        try:
+            return signal.pthread_sigmask(signal.SIG_BLOCK, ()), pending_error
+        except KeyboardInterrupt as error:
+            if pending_error is None:
+                pending_error = error
+
+
+def _block_sigint() -> tuple[set[signal.Signals], BaseException | None]:
+    # Read the mask before changing it: pthread_sigmask applies the new mask and
+    # only then runs pending handlers, so an interrupt raised by the blocking call
+    # must not be retried into a "previous" mask that already blocks SIGINT.
+    previous_mask, pending_error = _current_sigmask()
+    try:
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT})
+    except KeyboardInterrupt as error:
+        if pending_error is None:
+            pending_error = error
+    return previous_mask, pending_error
+
+
+def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
+    try:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+    except BaseException as error:
+        return error
+    return None
 
 
 # MCP recorders can need several seconds after client EOF to flush their receipt.
 NORMAL_EXIT_DRAIN_MAX_SECONDS = 15.0
-NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS = 15.0
 
 
 def _group_has_live_members(pgid: int) -> bool:
@@ -100,34 +289,13 @@ def _group_has_live_members(pgid: int) -> bool:
 
 
 def drain_group(
-    process: subprocess.Popen,
-    deadline: float,
-    check_interrupted=lambda: None,
-    receipt_path: Path | None = None,
+    process: subprocess.Popen, deadline: float, check_interrupted=lambda: None
 ) -> None:
-    """Let normal-exit recorders finish before bounded process-group cleanup."""
+    """Let normal-exit descendants finish, bounded by the client deadline."""
     drain_deadline = min(deadline, time.monotonic() + NORMAL_EXIT_DRAIN_MAX_SECONDS)
     while _group_has_live_members(process.pid) and time.monotonic() < drain_deadline:
         check_interrupted()
         time.sleep(min(0.05, max(0, drain_deadline - time.monotonic())))
-    if receipt_path is None:
-        return
-
-    receipt_deadline = min(
-        deadline, time.monotonic() + NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS
-    )
-    while time.monotonic() < receipt_deadline:
-        check_interrupted()
-        if receipt_path.is_symlink() or (
-            receipt_path.exists() and not receipt_path.is_file()
-        ):
-            return
-        try:
-            read_object(receipt_path, "normal-exit transport receipt")
-        except (OSError, CaptureError):
-            time.sleep(min(0.05, max(0, receipt_deadline - time.monotonic())))
-            continue
-        return
 
 
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
@@ -218,162 +386,37 @@ def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
     return engine_exit
 
 
-RECORDER_DRAIN_SECONDS = 15.0
-
-
-def _process_info(pid: int) -> dict | None:
-    entry = Path("/proc") / str(pid)
-    try:
-        if entry.stat().st_uid != os.getuid():
-            return None
-        fields = (entry / "stat").read_text(encoding="ascii").rsplit(")", 1)[1].split()
-        return dict(
-            pid=pid,
-            state=fields[0],
-            group=int(fields[2]),
-            session=int(fields[3]),
-            start_ticks=int(fields[19]),
-        )
-    except (FileNotFoundError, ProcessLookupError):
-        return None
-    except (OSError, IndexError, ValueError) as error:
-        raise CaptureError(f"cannot inspect process {pid}") from error
-
-
-def _live_processes() -> list[dict]:
-    require(Path("/proc").is_dir(), "recorder ownership requires Linux /proc")
-    result = []
-    for entry in Path("/proc").iterdir():
-        if entry.name.isdecimal():
-            info = _process_info(int(entry.name))
-            if info is not None and info["state"] not in {"Z", "X"}:
-                result.append(info)
-    return result
-
-
-class RecorderSession:
-    """Signal only a source/path/start-time verified recorder's isolated session."""
-
-    def __init__(
-        self, directory: Path, client_pid: int, producer: Path, candidate: Path
-    ):
-        self.directory = directory
-        self.client_pid = client_pid
-        self.producer = producer
-        self.producer_pin = digest(producer)
-        self.candidate = candidate
-        self.identity = None
-
-    def groups(self) -> set[int]:
-        if self.identity is None:
-            marker = self.directory / "recorder.json"
-            if not marker.exists() and not marker.is_symlink():
-                return set()
-            lease, _ = read_object(marker, "recorder identity")
-            pid = lease.get("pid")
-            require(
-                lease.get("schema") == "jopedime.mcp-recorder-session/v2"
-                and type(pid) is int
-                and pid > 1
-                and pid != os.getpid()
-                and lease.get("owner_session") == self.client_pid
-                and type(lease.get("start_ticks")) is int
-                and lease["start_ticks"] > 0
-                and lease.get("producer_sha256") == self.producer_pin
-                and lease.get("argv") == [str(self.candidate), "mcp"],
-                "recorder ownership identity differs",
-            )
-            current = _process_info(pid)
-            if current is None or current["state"] in {"Z", "X"}:
-                require(
-                    not any(p["session"] == pid for p in _live_processes()),
-                    "recorder exited before session ownership was established",
-                )
-                return set()
-            require(
-                current["start_ticks"] == lease["start_ticks"],
-                "recorder PID identity changed",
-            )
-            try:
-                command = (
-                    (Path("/proc") / str(pid) / "cmdline").read_bytes().split(b"\0")
-                )
-            except FileNotFoundError:
-                require(
-                    not any(p["session"] == pid for p in _live_processes()),
-                    "recorder disappeared with live session members",
-                )
-                return set()
-            latest = _process_info(pid)
-            if latest is None or latest["state"] in {"Z", "X"}:
-                require(
-                    not any(p["session"] == pid for p in _live_processes()),
-                    "recorder exited with live session members",
-                )
-                return set()
-            require(
-                latest["start_ticks"] == lease["start_ticks"],
-                "recorder PID identity changed",
-            )
-            expected = [b"--out-dir", os.fsencode(self.directory)]
-            producer_arg = os.fsencode(self.producer)
-            script_position = (
-                command.index(producer_arg) if producer_arg in command else 0
-            )
-            python_flags = {b"-B", b"-u", b"-I", b"-s", b"-E", b"-S"}
-            require(
-                script_position > 0
-                and all(arg in python_flags for arg in command[1:script_position])
-                and any(
-                    command[i : i + 2] == expected for i in range(len(command) - 1)
-                ),
-                "recorder command is outside the owned capture",
-            )
-            require(
-                current["session"] == pid and current["group"] == pid,
-                "recorder is not isolated in its owned session",
-            )
-            self.identity = lease
-        pid = self.identity["pid"]
-        current = _process_info(pid)
+def render_client_commands(
+    clients: dict[str, dict],
+    *,
+    candidate: Path,
+    output: Path,
+    engine_home: Path,
+    capture_stdio: Path,
+    dataset_id: str,
+    handoff_sha: str,
+    source_sha: str,
+    train_path: Path,
+) -> dict[str, list[str]]:
+    commands = {}
+    for key, row in clients.items():
+        values = {
+            "candidate": str(candidate),
+            "capture_dir": str(output / "clients" / key / "transport"),
+            "capture_stdio": str(capture_stdio),
+            "dataset_id": dataset_id,
+            "engine_home": str(engine_home / key),
+            "input_handoff_sha256": handoff_sha,
+            "source_sha": source_sha,
+            "train_path": str(train_path),
+        }
+        command = render_argv(row["argv"], values)
         require(
-            current is None or current["start_ticks"] == self.identity["start_ticks"],
-            "recorder PID was reused",
+            Path(command[0]).is_absolute(),
+            f"client command must use an absolute executable: {key}",
         )
-        return {p["group"] for p in _live_processes() if p["session"] == pid}
-
-    def stop(self, grace_seconds: float = 2.0) -> None:
-        if not self.groups():
-            return
-        try:
-            os.killpg(self.identity["pid"], signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-        deadline = time.monotonic() + grace_seconds
-        while self.groups() and time.monotonic() < deadline:
-            time.sleep(0.02)
-        for group in self.groups():
-            try:
-                os.killpg(group, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-        deadline = time.monotonic() + 2
-        while self.groups() and time.monotonic() < deadline:
-            time.sleep(0.02)
-        require(not self.groups(), "owned recorder session survived cleanup")
-
-
-def observe_client_exit(process) -> int | None:
-    """Observe without reaping: reserve the client PID/PGID through drain/cleanup."""
-    if process.returncode is not None:
-        return process.returncode
-    try:
-        status = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
-    except ChildProcessError:
-        return process.poll()
-    if status is None:
-        return None
-    return status.si_status if status.si_code == os.CLD_EXITED else -status.si_status
+        commands[key] = command
+    return commands
 
 
 def stop_engine(
@@ -426,8 +469,7 @@ def stop_engine(
 
 def run_capture(args: argparse.Namespace) -> dict:
     repo = args.repo.resolve(strict=True)
-    capture_source_sha = getattr(args, "capture_source_sha", None) or args.source_sha
-    check_source(repo, capture_source_sha)
+    check_source(repo, args.source_sha)
     candidate = external_path(args.candidate, repo, "candidate")
     require(
         candidate.is_file() and os.access(candidate, os.X_OK),
@@ -450,14 +492,6 @@ def run_capture(args: argparse.Namespace) -> dict:
     require(train_path.is_file(), "TRAIN input must be a regular file")
     plan, _ = read_object(args.client_plan, "client command plan")
     clients = plan_clients(plan, args.source_sha, candidate_sha)
-    selected_keys, excluded_clients = client_selection(
-        getattr(args, "clients", None), getattr(args, "exclude_reason", None)
-    )
-    selected_clients = {key: clients[key] for key in selected_keys}
-    require(
-        plan.get("capture_source_sha", args.source_sha) == capture_source_sha,
-        "client plan capture-tool source SHA mismatch",
-    )
     output = external_path(args.out_dir, repo, "capture output")
     engine_home = external_path(args.engine_home, repo, "engine home")
     require(not output.exists(), "capture output already exists")
@@ -470,7 +504,7 @@ def run_capture(args: argparse.Namespace) -> dict:
         "capture_stdio.py must be a regular source file",
     )
 
-    for key, row in selected_clients.items():
+    for key, row in clients.items():
         executable = Path(row["executable"])
         require(
             executable.is_file() and os.access(executable, os.X_OK),
@@ -481,7 +515,7 @@ def run_capture(args: argparse.Namespace) -> dict:
             f"client executable changed: {key}",
         )
     commands = render_client_commands(
-        selected_clients,
+        clients,
         candidate=candidate,
         output=output,
         engine_home=engine_home,
@@ -496,11 +530,9 @@ def run_capture(args: argparse.Namespace) -> dict:
         return {
             "status": "PREFLIGHT_READY_NO_CLIENTS_LAUNCHED",
             "source_sha": args.source_sha,
-            "capture_source_sha": capture_source_sha,
             "candidate_artifact_sha256": candidate_sha,
             "input_handoff_sha256": handoff_sha,
-            "clients": selected_keys,
-            "excluded_clients": excluded_clients,
+            "clients": sorted(clients),
             "rendered_client_commands": commands,
             "a5_status": "NOT_QUALIFIED",
         }
@@ -543,8 +575,7 @@ def run_capture(args: argparse.Namespace) -> dict:
     engine_homes = {}
     started = datetime.now(timezone.utc).isoformat()
 
-    for key in selected_keys:
-        slug, _client_name = CLIENTS[key]
+    for key, (slug, _client_name) in CLIENTS.items():
         row = clients[key]
         case = logs / key
         case.mkdir(mode=0o700)
@@ -561,8 +592,6 @@ def run_capture(args: argparse.Namespace) -> dict:
         capture_error = None
         capture = None
         capture_dir = case / "transport"
-        recorder = None
-        client_drained = False
         command = commands[key]
         command_path = case / "command.json"
         command_path.write_text(json.dumps(command, indent=2) + "\n", encoding="utf-8")
@@ -645,62 +674,37 @@ def run_capture(args: argparse.Namespace) -> dict:
                         start_new_session=True,
                         preexec_fn=lambda: os.nice(19),
                     )
-                    recorder = RecorderSession(
-                        capture_dir, active_client.pid, capture_stdio, candidate
-                    )
                     raise_if_sigint_pending()
                 except OSError as error:
                     capture_error = f"client launch failed: {error}"
 
                 if active_client is not None:
-                    client_deadline = time.monotonic() + row["timeout_seconds"]
-                    deadline_reached = False
-                    while True:
-                        raise_if_sigint_pending()
-                        recorder.groups()
-                        remaining = client_deadline - time.monotonic()
-                        if remaining <= 0:
-                            deadline_reached = True
-                            client_exit = observe_client_exit(active_client)
-                            timed_out = client_exit is None
-                            break
-                        client_exit = observe_client_exit(active_client)
-                        if client_exit is not None:
-                            break
-                        time.sleep(min(0.05, remaining))
-                    if client_exit == 0 and not timed_out and not deadline_reached:
-                        try:
-                            # The client deadline bounds client execution. Once a
-                            # zero exit is observed within that bound, allow a
-                            # separate finite window for recorder EOF drain and
-                            # durable receipt publication.
-                            flush_deadline = time.monotonic() + min(
-                                RECORDER_DRAIN_SECONDS,
-                                NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS,
-                            )
-                            drain_group(
-                                active_client, flush_deadline, raise_if_sigint_pending
-                            )
-                            wait_for_recorder(
-                                active_client,
-                                capture_dir,
-                                recorder,
-                                raise_if_sigint_pending,
-                                flush_deadline,
-                            )
-                            client_drained = True
-                        except CaptureError as error:
-                            capture_error = str(error)
-                    else:
-                        capture_error = (
-                            "client timed out"
-                            if timed_out
-                            else "client deadline reached before recorder drain"
-                            if deadline_reached
-                            else "client exited unsuccessfully"
-                        )
+                    try:
+                        client_deadline = time.monotonic() + row["timeout_seconds"]
+                        while True:
+                            raise_if_sigint_pending()
+                            remaining = client_deadline - time.monotonic()
+                            if remaining <= 0:
+                                timed_out = active_client.poll() is None
+                                client_exit = active_client.poll()
+                                break
+                            try:
+                                client_exit = active_client.wait(
+                                    timeout=min(0.1, remaining)
+                                )
+                                if client_exit == 0:
+                                    drain_group(
+                                        active_client,
+                                        client_deadline,
+                                        raise_if_sigint_pending,
+                                    )
+                                break
+                            except subprocess.TimeoutExpired:
+                                continue
+                    finally:
+                        client_exit = terminate_group(active_client)
 
-            if active_client is not None and client_drained:
+            if active_client is not None:
                 try:
                     require(
                         not capture_dir.is_symlink() and capture_dir.is_dir(),
@@ -708,10 +712,6 @@ def run_capture(args: argparse.Namespace) -> dict:
                     )
                     capture, _ = read_object(
                         capture_dir / "capture.json", f"{key} transport receipt"
-                    )
-                    require(
-                        capture.get("producer_sha256") == digest(capture_stdio),
-                        f"{key} recorder source pin mismatch",
                     )
                     wire_path = capture_dir / "wire.jsonl"
                     require(
@@ -739,7 +739,10 @@ def run_capture(args: argparse.Namespace) -> dict:
                     )
                     limits = capture.get("limits")
                     require(
-                        transport_limits_within_reviewed_bounds(limits),
+                        isinstance(limits, dict)
+                        and limits.get("seconds", 0) <= 300
+                        and limits.get("stream_bytes", 0) <= 16_777_216
+                        and limits.get("frame_bytes") == 1_048_576,
                         f"{key} transport limits exceed the reviewed bounds",
                     )
                     require(
@@ -766,20 +769,8 @@ def run_capture(args: argparse.Namespace) -> dict:
                 teardown_error = error
             try:
                 try:
-                    try:
-                        if active_client is not None:
-                            if client_drained:
-                                require(
-                                    active_client.wait(timeout=2) == client_exit,
-                                    "client exit changed while reaping",
-                                )
-                            else:
-                                stopped_client = terminate_group(active_client)
-                                if client_exit is None:
-                                    client_exit = stopped_client
-                    finally:
-                        if recorder is not None:
-                            recorder.stop()
+                    if active_client is not None:
+                        terminate_group(active_client)
                 finally:
                     engine_stop_exit, engine_exit = stop_engine(
                         candidate, repo, environment, engine
@@ -797,7 +788,6 @@ def run_capture(args: argparse.Namespace) -> dict:
                 raise teardown_error
 
         rows[key] = {
-            "status": "INCLUDED",
             "version": row["version"],
             "executable": row["executable"],
             "executable_sha256": row["executable_sha256"],
@@ -817,76 +807,31 @@ def run_capture(args: argparse.Namespace) -> dict:
             "capture": capture,
         }
 
-    for key, reason in excluded_clients.items():
-        rows[key] = {
-            "status": "EXCLUDED",
-            "exclusion_reason": reason,
-            "version": clients[key]["version"],
-            "executable": clients[key]["executable"],
-            "executable_sha256": clients[key]["executable_sha256"],
-            "implementation": clients[key]["implementation"],
-            "client_exit": None,
-            "timed_out": False,
-            "capture_error": None,
-            "capture_receipt_sha256": None,
-            "engine_home": None,
-            "engine_exit": None,
-            "engine_stop_exit": None,
-            "capture": None,
-        }
-
-    selected_complete = (
-        all(rows[key]["engine_stop_exit"] == 0 for key in selected_keys)
-        and all(rows[key]["engine_exit"] == 0 for key in selected_keys)
+    complete = (
+        len(rows) == len(CLIENTS)
+        and all(row["engine_stop_exit"] == 0 for row in rows.values())
+        and all(row["engine_exit"] == 0 for row in rows.values())
         and all(
-            rows[key]["client_exit"] == 0
-            and not rows[key]["timed_out"]
-            and rows[key]["capture_error"] is None
-            for key in selected_keys
+            row["client_exit"] == 0
+            and not row["timed_out"]
+            and row["capture_error"] is None
+            for row in rows.values()
         )
     )
-    complete = selected_complete and not excluded_clients
     metadata = {
         key: {
             "version": row["version"],
             "executable": row["executable"],
             "executable_sha256": row["executable_sha256"],
             "implementation": row["implementation"],
-            "status": "EXCLUDED" if key in excluded_clients else "INCLUDED",
-            **(
-                {"exclusion_reason": excluded_clients[key]}
-                if key in excluded_clients
-                else {}
-            ),
         }
         for key, row in clients.items()
     }
     for key, (slug, _client_name) in CLIENTS.items():
         row = rows[key]
-        if row["status"] == "EXCLUDED":
-            execution = {
-                "schema": "jopedime.named-client-execution/v1",
-                "source": args.source_sha,
-                "capture_source_sha": capture_source_sha,
-                "binary_sha256": candidate_sha,
-                "client": key,
-                "client_version": row["version"],
-                "client_resolved_path": row["executable"],
-                "client_launcher_sha256": row["executable_sha256"],
-                "status": "EXCLUDED",
-                "exclusion_reason": row["exclusion_reason"],
-            }
-            execution_path = sidecars / f"{slug}.execution.json"
-            execution_path.write_text(
-                json.dumps(execution, sort_keys=True, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            os.chmod(execution_path, 0o600)
-            continue
         execution = {
             "schema": "jopedime.named-client-execution/v1",
             "source": args.source_sha,
-            "capture_source_sha": capture_source_sha,
             "binary_sha256": candidate_sha,
             "client": key,
             "client_version": row["version"],
@@ -927,27 +872,20 @@ def run_capture(args: argparse.Namespace) -> dict:
         json.dumps(metadata, sort_keys=True, indent=2) + "\n", encoding="utf-8"
     )
     os.chmod(metadata_path, 0o600)
-    engine_exits = [rows[key]["engine_exit"] for key in selected_keys]
-    stop_exits = [rows[key]["engine_stop_exit"] for key in selected_keys]
+    engine_exits = [row["engine_exit"] for row in rows.values()]
+    stop_exits = [row["engine_stop_exit"] for row in rows.values()]
     result = {
         "schema": "jopedime.a5-three-client-capture/v1",
-        "status": (
-            "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
-            if complete
-            else "PARTIAL_CAPTURES_PENDING_SEMANTIC_REVIEW"
-            if selected_complete and excluded_clients
-            else "INCOMPLETE"
-        ),
+        "status": "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+        if complete
+        else "INCOMPLETE",
         "started_at": started,
         "finished_at": datetime.now(timezone.utc).isoformat(),
         "source_sha": args.source_sha,
-        "capture_source_sha": capture_source_sha,
         "candidate_artifact_sha256": candidate_sha,
         "input_handoff_sha256": handoff_sha,
         "input_split": "TRAIN",
         "dataset_id": dataset_id,
-        "selected_clients": selected_keys,
-        "excluded_clients": excluded_clients,
         "engine_home": str(engine_home),
         "engine_homes": engine_homes,
         "engine_exit": 0
@@ -973,8 +911,116 @@ def run_capture(args: argparse.Namespace) -> dict:
     return result
 
 
-_cli.run_capture = run_capture
-main = _cli.main
+def self_test() -> None:
+    """Data-free validation checks; does not execute a client or candidate."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory(
+        prefix="a5-three-client-selftest-", dir=Path.home()
+    ) as directory:
+        root = Path(directory)
+        source = "a" * 40
+        candidate_sha = "b" * 64
+        plan = {
+            "schema": "jopedime.a5-three-client-command-plan/v1",
+            "source_sha": source,
+            "candidate_artifact_sha256": candidate_sha,
+            "clients": {},
+        }
+        for key, (_slug, implementation) in CLIENTS.items():
+            executable = str(root / key)
+            plan["clients"][key] = {
+                "version": "fixture",
+                "executable": executable,
+                "executable_sha256": "c" * 64,
+                "implementation": implementation,
+                "argv": [
+                    executable,
+                    "{capture_stdio}",
+                    "{capture_dir}",
+                    "{candidate}",
+                    "{engine_home}",
+                ],
+            }
+        rows = plan_clients(plan, source, candidate_sha)
+        rendered = render_argv(
+            rows["claude_code"]["argv"],
+            {
+                "candidate": "/candidate",
+                "capture_dir": "/capture",
+                "capture_stdio": "/capture_stdio.py",
+                "engine_home": "/engine",
+            },
+        )
+        assert rendered[-2:] == ["/candidate", "/engine"]
+        plan["clients"].pop("gemini_cli")
+        try:
+            plan_clients(plan, source, candidate_sha)
+        except CaptureError:
+            pass
+        else:
+            raise AssertionError("incomplete roster was accepted")
+        try:
+            render_argv(["client", "{unrecognized}"], {})
+        except CaptureError:
+            pass
+        else:
+            raise AssertionError("unknown command placeholder was accepted")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--repo", type=Path)
+    parser.add_argument("--source-sha")
+    parser.add_argument("--candidate", type=Path)
+    parser.add_argument("--candidate-sha256")
+    parser.add_argument("--input-handoff", type=Path)
+    parser.add_argument("--input-handoff-sha256")
+    parser.add_argument("--train-path", type=Path)
+    parser.add_argument("--client-plan", type=Path)
+    parser.add_argument("--engine-home", type=Path)
+    parser.add_argument("--out-dir", type=Path)
+    parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument("--execute-named-clients", action="store_true")
+    args = parser.parse_args()
+    if args.self_test:
+        self_test()
+        print("three-client capture plan controls: PASS (synthetic plan only)")
+        return 0
+    required = (
+        args.repo,
+        args.source_sha,
+        args.candidate,
+        args.candidate_sha256,
+        args.input_handoff,
+        args.input_handoff_sha256,
+        args.train_path,
+        args.client_plan,
+        args.engine_home,
+        args.out_dir,
+    )
+    if any(value is None for value in required):
+        parser.error(
+            "all candidate, TRAIN handoff, client plan and output bindings are required"
+        )
+    if not args.preflight_only and not args.execute_named_clients:
+        parser.error(
+            "pass --preflight-only or explicitly authorize --execute-named-clients"
+        )
+    try:
+        result = run_capture(args)
+        print(json.dumps(result, sort_keys=True))
+        return (
+            0
+            if result["status"] == "PREFLIGHT_READY_NO_CLIENTS_LAUNCHED"
+            or result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+            else 2
+        )
+    except (CaptureError, OSError, subprocess.SubprocessError) as error:
+        print(f"three-client capture refused: {error}", file=sys.stderr)
+        return 2
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
