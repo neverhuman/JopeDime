@@ -25,6 +25,7 @@ use std::{
 };
 
 const CHILD: &str = "W7C_RANK_CHILD";
+const CHILD_EXIT_STATUS: &str = "W7C_RANK_EXIT_STATUS";
 
 /// Rank process entry point. As an ordinary test (no `W7C_RANK_CHILD`) it does nothing.
 #[test]
@@ -39,7 +40,14 @@ fn rank_child() {
             76
         }
     };
-    std::process::exit(code);
+    // Preserve the simulated rank's logical status without bypassing the test
+    // harness. ProcessSupervisor consumes this only after the harness exits
+    // successfully; a panic or failed assertion remains a harness failure.
+    fs::write(
+        std::env::var_os(CHILD_EXIT_STATUS).unwrap(),
+        code.to_string(),
+    )
+    .unwrap();
 }
 fn child_main() -> Result<i32> {
     let var = |k: &str| std::env::var(k).with_context(|| k.to_string());
@@ -179,6 +187,7 @@ impl Supervisor for ProcessSupervisor {
             .env("W7C_PLAN", &self.plan)
             .env("W7C_RANK", l.global_rank.to_string())
             .env("W7C_OUTBOX", dir.join("outbox"))
+            .env(CHILD_EXIT_STATUS, dir.join("rank-exit-code"))
             .env("W7C_ROOT", &self.root)
             .env("W7C_MODE", self.modes[&l.global_rank])
             .env("W7C_SOCKET", &self.socket)
@@ -235,7 +244,20 @@ impl Supervisor for ProcessSupervisor {
             return Ok(Liveness::Gone);
         }
         let (code, signal) = if libc::WIFEXITED(status) {
-            (Some(libc::WEXITSTATUS(status)), None)
+            let harness_code = libc::WEXITSTATUS(status);
+            if harness_code == 0 {
+                let rank_code: i32 = fs::read_to_string(self.dir(handle).join("rank-exit-code"))
+                    .context("rank child harness succeeded without an exit-status record")?
+                    .parse()
+                    .context("invalid rank-child exit-status record")?;
+                anyhow::ensure!(
+                    (0..=255).contains(&rank_code),
+                    "invalid rank exit code {rank_code}"
+                );
+                (Some(rank_code), None)
+            } else {
+                (Some(harness_code), None)
+            }
         } else {
             (None, Some(libc::WTERMSIG(status)))
         };
