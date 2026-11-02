@@ -265,11 +265,11 @@ fn unknown_accounting_and_unbound_fitted_outputs_cannot_be_substituted() {
     let mut prediction: FoldPredictions =
         blob(&f.state, &f.evidence.fold_predictions_sha256[0]).unwrap();
     let original: EvaluationResult = blob(&f.state, &prediction.execution_receipt_sha256).unwrap();
-    let mut fabricated = original.clone();
-    fabricated.consumption.cpu_seconds = Some(0.0);
+    let mut tampered = original.clone();
+    tampered.consumption.cpu_seconds = Some(0.0);
     prediction.execution_receipt_sha256 = f
         .state
-        .put_blob(&canonical_json(&fabricated).unwrap())
+        .put_blob(&canonical_json(&tampered).unwrap())
         .unwrap();
     let mut evidence = f.evidence.clone();
     evidence.fold_predictions_sha256[0] = f
