@@ -8,12 +8,12 @@ descriptor containing their actual registered Context, never a fake native ID.
 """
 from collections import OrderedDict,Counter
 from dataclasses import asdict,replace
-import hashlib,importlib,io,json,math,time
+import importlib,io,json,math,time
 from pathlib import Path
 import numpy as np
 from . import training_snapshot_kumos as K
 from . import training_snapshot_native as N
-from .program_gate import verified_measurement,ARTIFACTS,object_bytes
+from .program_gate import verified_measurement,ARTIFACTS,object_bytes,bytes_sha as sha
 from .protocol import Context,canonical,digest,sha256
 
 SCHEMA='jope.native-variant-extension/v1'
@@ -22,8 +22,6 @@ MODULES=('jope_flywheel.training_snapshot_native','jope_flywheel.training_snapsh
 MAX_CACHE=64*1024**2
 def need(ok,msg):
  if not ok:raise ValueError(msg)
-def sha(b):return hashlib.sha256(b).hexdigest()
-
 class Reader:
  """Bounded transfer accounting; no metadata-only artifact verification."""
  def __init__(self,store,limit,deadline):
