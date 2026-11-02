@@ -11,7 +11,7 @@ mod canonical;
 mod random;
 mod validation;
 
-use canonical::canonical_sha256;
+use canonical::{canonical_sha256, python_float};
 pub use validation::validate_split_manifest;
 use validation::{is_json_integer, nonnegative_json_integer};
 
@@ -122,9 +122,11 @@ pub fn build_split_manifest(
             development_fraction,
             temporal_audit_fraction,
             BTreeMap::new(),
-            missing_family,
-            missing_time,
-            reasons,
+            MissingInputs {
+                source_family: missing_family,
+                committed_at_ms: missing_time,
+                reasons,
+            },
             legacy,
         )?;
         validate_split_manifest(&manifest)?;
@@ -187,11 +189,13 @@ pub fn build_split_manifest(
             development_fraction,
             temporal_audit_fraction,
             BTreeMap::new(),
-            BTreeSet::new(),
-            BTreeSet::new(),
-            ["unable_to_form_three_nonempty_family_splits".to_owned()]
-                .into_iter()
-                .collect(),
+            MissingInputs {
+                source_family: BTreeSet::new(),
+                committed_at_ms: BTreeSet::new(),
+                reasons: ["unable_to_form_three_nonempty_family_splits".to_owned()]
+                    .into_iter()
+                    .collect(),
+            },
             legacy,
         )?;
         validate_split_manifest(&manifest)?;
@@ -224,13 +228,21 @@ pub fn build_split_manifest(
         development_fraction,
         temporal_audit_fraction,
         assignments,
-        BTreeSet::new(),
-        BTreeSet::new(),
-        BTreeSet::new(),
+        MissingInputs {
+            source_family: BTreeSet::new(),
+            committed_at_ms: BTreeSet::new(),
+            reasons: BTreeSet::new(),
+        },
         legacy,
     )?;
     validate_split_manifest(&manifest)?;
     Ok(manifest)
+}
+
+struct MissingInputs {
+    source_family: BTreeSet<String>,
+    committed_at_ms: BTreeSet<String>,
+    reasons: BTreeSet<String>,
 }
 
 fn manifest_payload(
@@ -239,9 +251,7 @@ fn manifest_payload(
     development_fraction: &Value,
     temporal_audit_fraction: &Value,
     assignments: BTreeMap<String, Value>,
-    missing_source_family: BTreeSet<String>,
-    missing_committed_at_ms: BTreeSet<String>,
-    incomplete_reasons: BTreeSet<String>,
+    missing: MissingInputs,
     legacy_development_dataset_ids: BTreeSet<String>,
 ) -> Result<Value> {
     let audit_times = assignments
@@ -258,9 +268,9 @@ fn manifest_payload(
         "temporal_audit_fraction": temporal_audit_fraction,
         "temporal_audit_cutoff_ms": audit_times.into_iter().min(),
         "assignments": assignment_map,
-        "missing_source_family": missing_source_family,
-        "missing_committed_at_ms": missing_committed_at_ms,
-        "incomplete_reasons": incomplete_reasons,
+        "missing_source_family": missing.source_family,
+        "missing_committed_at_ms": missing.committed_at_ms,
+        "incomplete_reasons": missing.reasons,
         "legacy_development_dataset_ids": legacy_development_dataset_ids,
     });
     let digest = canonical_sha256(&payload)?;

@@ -37,7 +37,7 @@ pub struct Store {
 pub(crate) type InjectedRegistry =
     std::collections::BTreeMap<usize, (ObjectStoreScheme, std::sync::Arc<dyn InjectedBackend>)>;
 
-fn injected_registry() -> &'static std::sync::Mutex<InjectedRegistry> {
+pub(super) fn injected_registry() -> &'static std::sync::Mutex<InjectedRegistry> {
     static REGISTRY: std::sync::OnceLock<std::sync::Mutex<InjectedRegistry>> =
         std::sync::OnceLock::new();
     REGISTRY.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeMap::new()))
@@ -54,8 +54,8 @@ pub(crate) fn injected_registry_guard() -> std::sync::MutexGuard<'static, Inject
 #[derive(Debug)]
 pub struct ObservedObject {
     pub bytes: Vec<u8>,
-    version: UpdateVersion,
-    key: ObjPath,
+    pub(super) version: UpdateVersion,
+    pub(super) key: ObjPath,
 }
 
 impl ObservedObject {

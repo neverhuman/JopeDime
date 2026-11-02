@@ -2,13 +2,13 @@ use serde::ser::SerializeMap;
 use serde::{Serialize, Serializer};
 use serde_json::{Map, Number, Value};
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
 
 pub const SPLIT_MANIFEST_V1: &str = "PrimeDatasetSplitManifest.v1";
 pub const TRAIN_SPLIT: &str = "train";
 pub const DEVELOPMENT_SPLIT: &str = "development";
 pub const TEMPORAL_AUDIT_SPLIT: &str = "temporal_audit";
-const ASSIGNABLE_SPLITS: [&str; 3] = [TRAIN_SPLIT, DEVELOPMENT_SPLIT, TEMPORAL_AUDIT_SPLIT];
+pub(super) const ASSIGNABLE_SPLITS: [&str; 3] =
+    [TRAIN_SPLIT, DEVELOPMENT_SPLIT, TEMPORAL_AUDIT_SPLIT];
 const REPORT_ONLY_SPLITS: [&str; 4] = ["arena", "sealed", "double_holdout", TEMPORAL_AUDIT_SPLIT];
 
 #[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
@@ -16,7 +16,7 @@ const REPORT_ONLY_SPLITS: [&str; 4] = ["arena", "sealed", "double_holdout", TEMP
 pub struct SplitIntegrityError(String);
 
 impl SplitIntegrityError {
-    fn new(message: impl Into<String>) -> Self {
+    pub(super) fn new(message: impl Into<String>) -> Self {
         Self(message.into())
     }
 }
@@ -358,7 +358,7 @@ fn python_repr_string(value: &str) -> String {
     repr
 }
 
-fn python_number(value: &Number) -> String {
+pub(super) fn python_number(value: &Number) -> String {
     let rendered = value.to_string();
     if let Some((mantissa, exponent)) = rendered
         .split_once('e')

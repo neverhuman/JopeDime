@@ -95,7 +95,7 @@ impl PythonRandom {
 
     pub(super) fn shuffle<T>(&mut self, values: &mut [T]) {
         for i in (1..values.len()).rev() {
-            let bits = (usize::BITS - (i as usize).leading_zeros()) as u32;
+            let bits = usize::BITS - i.leading_zeros();
             let j = loop {
                 let r = if bits <= 32 {
                     (self.next_u32() >> (32 - bits)) as usize

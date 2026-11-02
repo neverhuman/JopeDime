@@ -1,10 +1,11 @@
 use super::canonical::canonical_sha256;
+use super::{DEVELOPMENT_SPLIT, SPLIT_MANIFEST_V1, TEMPORAL_AUDIT_SPLIT, TRAIN_SPLIT};
 use anyhow::{anyhow, ensure, Result};
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Validate the exact v1 manifest contract, including its canonical content hash.
-pub(super) fn validate_split_manifest(manifest: &Value) -> Result<()> {
+pub fn validate_split_manifest(manifest: &Value) -> Result<()> {
     let expected = [
         "schema",
         "status",
