@@ -10,6 +10,8 @@ python3 - "$repo" "$auditor" "$report" "$checkout" "$source_manifest" <<'PY'
 import datetime as dt
 import hashlib
 import json
+import os
+import tempfile
 import subprocess
 import sys
 import tomllib
@@ -92,12 +94,28 @@ for rel in expected_paths:
     policy_text = policy_text.replace(line, '', 1)
 cross_json = report.with_name('pyexec-cross-file-audit.json')
 cross_md = report.with_name('pyexec-cross-file-audit.md')
-try:
-    policy_path.write_text(policy_text)
-    cmd = [auditor, 'audit', str(checkout), '--changed', cross_path, '--read-only', '--no-badge', '--no-score-history', '--json', str(cross_json), '--md', str(cross_md)]
-    proc = subprocess.run(cmd, cwd=checkout, capture_output=True, text=True)
-finally:
-    policy_path.write_bytes(policy_bytes)
+# The auditor requires fresh reports outside its audited repository in read-only
+# mode. Use the runner scratch (or a private home cache), then retain full bytes.
+scratch = Path(os.environ.get('RUNNER_TEMP') or os.environ.get('TMPDIR')
+               or (Path.home() / '.cache/jope/p37-cross')).resolve()
+if scratch == checkout or checkout in scratch.parents:
+    raise SystemExit('P37 read-only report scratch must be outside the audited checkout')
+scratch.mkdir(parents=True, exist_ok=True)
+with tempfile.TemporaryDirectory(prefix='jope-p37-cross-', dir=scratch) as temporary:
+    external_json = Path(temporary) / 'audit.json'
+    external_md = Path(temporary) / 'audit.md'
+    try:
+        policy_path.write_text(policy_text)
+        cmd = [auditor, 'audit', str(checkout), '--changed', cross_path, '--read-only', '--no-badge', '--no-score-history', '--json', str(external_json), '--md', str(external_md)]
+        proc = subprocess.run(cmd, cwd=checkout, capture_output=True, text=True)
+    finally:
+        policy_path.write_bytes(policy_bytes)
+    for original, retained in ((external_json, cross_json), (external_md, cross_md)):
+        if original.is_file():
+            retained.parent.mkdir(parents=True, exist_ok=True)
+            # Exclusive publication cannot replace evidence from an earlier attempt.
+            with retained.open('xb') as output:
+                output.write(original.read_bytes())
 if proc.returncode not in (0, 1):
     raise SystemExit(f'P37 cross-file audit failed rc={proc.returncode}: {proc.stderr[-500:]}')
 try:
