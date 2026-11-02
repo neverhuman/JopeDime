@@ -2543,3 +2543,62 @@ def test_qualified_source_blob_is_content_addressed_and_rejects_tampering(
     path.write_bytes(b"changed")
     with pytest.raises(source.runtime.SourcePinError, match="hash mismatch"):
         source.source_blob("fixture")
+
+
+def test_qualified_source_binds_actual_runtime_consumers_and_rejects_stale_cache(
+    tmp_path,
+):
+    import os
+    import subprocess
+    import sys
+    import textwrap
+
+    builder = tmp_path / "candidate_builder.py"
+    builder.write_text("# isolated immutable builder fixture\n")
+    fixture_learner = tmp_path / "learner.py"
+    pins = {
+        "runtime.py": hashlib.sha256(Path(runtime.__file__).read_bytes()).hexdigest(),
+        "candidate_builder.py": hashlib.sha256(builder.read_bytes()).hexdigest(),
+    }
+    fixture_learner.write_text("SOURCE_PINS = " + repr(pins) + "\n")
+    code = textwrap.dedent("""
+        import hashlib, sys
+        from pathlib import Path
+        from research.joint_regbin import runtime, learner_source
+        root = Path(sys.argv[1])
+        paths = {name: root / (name + '.py') for name in ('candidate_builder', 'learner')}
+        learner_source.SOURCES = {
+            name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for name, path in paths.items()
+        }
+        learner_source.source_blob = paths.__getitem__
+        stale = runtime.candidate_builder
+        learner = learner_source.load()
+        from research import joint_regbin as package
+        qualified = package.candidate_builder
+        consumers = (runtime.SourcePinnedWorker.make_candidate_packer,
+                     runtime._worker_source_sha256)
+        assert stale is not qualified
+        assert all(f.__globals__['candidate_builder'] is qualified for f in consumers)
+        learner.verify_sources()
+        runtime.candidate_builder = stale
+        for check in (learner.verify_sources, learner_source.load):
+            try:
+                check()
+            except ValueError as error:
+                assert 'consumer' in str(error)
+            else:
+                raise AssertionError('stale actual consumer accepted')
+        runtime.candidate_builder = qualified
+        assert learner_source.load() is learner
+        learner.verify_sources()
+    """)
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", code, str(tmp_path)],
+        cwd=Path(__file__).resolve().parents[2],
+        env=dict(os.environ, CUDA_VISIBLE_DEVICES="", OMP_NUM_THREADS="1"),
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
