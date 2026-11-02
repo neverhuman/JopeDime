@@ -205,5 +205,3 @@ def evaluate(
     metrics["examples"] = int(len(indexes))
     metrics["split_name"] = "dataset-held-out test" if heldout else ("train", "validation", "test")[split]
     return metrics
-
-

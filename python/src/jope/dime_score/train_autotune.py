@@ -423,5 +423,3 @@ def _autotune_training(
         model.load_state_dict(state)
         torch.random.set_rng_state(torch_rng)
         torch.cuda.set_rng_state_all(cuda_rng)
-
-
