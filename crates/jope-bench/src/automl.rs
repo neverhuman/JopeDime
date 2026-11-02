@@ -13,6 +13,7 @@ use crate::adapter::{parse_spec, AdapterSpec};
 // Preserve the submitted bytes, including formatting. Style diagnostics in the
 // immutable entrant are not integration edits; rustc still forbids unsafe code.
 #[rustfmt::skip]
+#[allow(clippy::needless_range_loop, clippy::unnecessary_map_or)]
 #[path = "../submissions/GPT6_Astra_Max.rs"]
 pub mod submission;
 
