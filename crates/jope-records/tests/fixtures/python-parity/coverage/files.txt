@@ -1400,7 +1400,10 @@ crates/jope-engine/src/main.rs
 crates/jope-engine/src/manifest.rs
 crates/jope-engine/src/monitoring.rs
 crates/jope-engine/src/native_genome.rs
+crates/jope-engine/src/native_genome/execution.rs
 crates/jope-engine/src/native_genome/tests.rs
+crates/jope-engine/src/native_genome/validation.rs
+crates/jope-engine/src/native_genome/verification.rs
 crates/jope-engine/src/native_graph.rs
 crates/jope-engine/src/native_graph/transport.rs
 crates/jope-engine/src/native_input_cache.rs
