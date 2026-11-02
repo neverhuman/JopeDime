@@ -1,0 +1,40 @@
+:root {
+  /* Semantic dashboard palette. Keep component styles on these shared values. */
+  --color-text: #243a34;
+  --color-text-strong: #304a40;
+  --color-text-muted: #52665c;
+  --color-text-subtle: #586e62;
+  --color-canvas: #f5f7f5;
+  --color-surface: #fff;
+  --color-surface-hover: #f4faf6;
+  --color-border: #e5eae6;
+  --color-control-border: #dce4dd;
+  --color-primary: #137b60;
+  --color-primary-hover: #91b9a7;
+  --color-focus-ring: #3174bb;
+  --color-sidebar: #102923;
+  --color-sidebar-text: #c4d3c9;
+  --color-nav-active: #254538;
+  --color-nav-active-text: #d7eea5;
+  --color-status-success: #3e6b34;
+  --color-status-warning: #77501f;
+  --color-status-danger: #8a4b36;
+  --color-data-purple: #8181d5;
+  --color-live: #86b75d;
+  --radius-small: 5px;
+  --radius-compact: 8px;
+  --radius-brand: 10px;
+  --radius-control: 7px;
+  --radius-panel: 12px;
+
+  /* Compatibility names used by existing dashboard components. */
+  --muted: var(--color-text-muted);
+  --text-muted: var(--color-text-muted);
+  --text-subtle: var(--color-text-subtle);
+  --status-success: var(--color-status-success);
+  --status-warning: var(--color-status-warning);
+  --focus-ring: var(--color-focus-ring);
+  --line: var(--color-border);
+  --green: var(--color-primary);
+  --purple: var(--color-data-purple);
+}

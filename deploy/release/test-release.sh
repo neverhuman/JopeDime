@@ -185,6 +185,11 @@ unit() {
   shift
   bash -p -c "set -euo pipefail; source \"\$1\"; shift; $body" release-unit "$release" "$@"
 }
+unit_with_fixture() {
+  export RELEASE_TAG_TEST_FIXTURE=$1
+  shift
+  unit "$@"
+}
 
 pass=0
 failures=()
@@ -1270,16 +1275,23 @@ git -C "$ft/repo" tag -a v0.1.9 "$c0" -m 'an older local annotated tag that orig
 git -C "$ft/repo" tag -a v0.2.0 "$c1" -m 'JopeDime v0.2.0'
 git -C "$ft/repo" config push.followTags true
 for o in forced flag-only control; do git init -q --bare "$ft/origin-$o.git"; done
+git -C "$ft/repo" tag -a v0.1.8 "$c0" -m 'the existing control tag points to the previous release commit'
+git -C "$ft/repo" push -q "$ft/origin-control.git" refs/tags/v0.1.8:refs/tags/v0.2.0
 expect "git: the tag push sends only the release tag, even with push.followTags set in the repository's config" ok \
-  '^forced=refs/tags/v0\.2\.0;flag_only=refs/tags/v0\.2\.0;control=refs/tags/v0\.1\.9 refs/tags/v0\.2\.0$' \
-  unit 'cd "$1/repo"; tag=v0.2.0
-        tags() { git -C "$1/origin-$2.git" for-each-ref --format="%(refname)" refs/tags | tr "\n" " " | sed "s/ \$//"; }
-        remote=$1/origin-forced.git; push_release_tag
+  '^forced=refs/tags/v0\.2\.0;flag_only=refs/tags/v0\.2\.0;control=protected$' \
+  unit_with_fixture "$ft" 'cd "$RELEASE_TAG_TEST_FIXTURE/repo"; tag=v0.2.0
+        tags() { git -C "$RELEASE_TAG_TEST_FIXTURE/origin-$1.git" for-each-ref --format="%(refname)" refs/tags | tr "\n" " " | sed "s/ \$//"; }
+        remote=$RELEASE_TAG_TEST_FIXTURE/origin-forced.git; push_release_tag
         # Without the forced configuration, --no-follow-tags alone still holds.
-        ( export GIT_CONFIG_COUNT=0; remote=$1/origin-flag-only.git; push_release_tag )
-        # The control: the same push without --no-follow-tags or the forced configuration.
-        ( export GIT_CONFIG_COUNT=0; git push -q "$1/origin-control.git" "refs/tags/$tag:refs/tags/$tag" )
-        printf "forced=%s;flag_only=%s;control=%s\n" "$(tags "$1" forced)" "$(tags "$1" flag-only)" "$(tags "$1" control)"' \
+        ( export GIT_CONFIG_COUNT=0; remote=$RELEASE_TAG_TEST_FIXTURE/origin-flag-only.git; push_release_tag )
+        # A conflicting existing release tag must remain pinned; an ordinary push cannot move it.
+        before=$(git --git-dir="$RELEASE_TAG_TEST_FIXTURE/origin-control.git" rev-parse "refs/tags/$tag")
+        if ( export GIT_CONFIG_COUNT=0; git push -q "$RELEASE_TAG_TEST_FIXTURE/origin-control.git" "refs/tags/$tag:refs/tags/$tag" ); then
+          echo "unexpectedly replaced an existing release tag"; exit 1
+        fi
+        after=$(git --git-dir="$RELEASE_TAG_TEST_FIXTURE/origin-control.git" rev-parse "refs/tags/$tag")
+        [[ $before == "$after" ]] || { echo "existing tag moved: $before -> $after"; exit 1; }
+        printf "forced=%s;flag_only=%s;control=protected\n" "$(tags forced)" "$(tags flag-only)"' \
   "$ft"
 
 # bash itself: release.sh runs only in privileged mode (bash -p), which imports no exported function

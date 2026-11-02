@@ -1,0 +1,28 @@
+# The pinned auditor ingests these structural boundary classifications.
+# Language exceptions require separate file-bound proof and are not declared
+# here merely because a runtime exists.
+[stack]
+id = "rust-ts-vite-react-postgres-bounded-python"
+version = "1.0.0"
+
+[queues]
+adapter_paths = ["crates/jope-client/src/transport.rs", "crates/jope-client/src/http.rs"]
+event_contract_paths = ["crates/jope-engine/src/resident_protocol.rs"]
+generated_type_paths = ["schemas/jope.api.v1.openapi.json"]
+client_markers = [
+  "crates/jope-client/src/transport.rs",
+  "crates/jope-client/src/http.rs",
+  "crates/jope-client/src/sse.rs",
+  "crates/jope-client/src/files.rs",
+  "crates/jope-client/src/discover.rs",
+  "crates/jope-client/src/inproc.rs",
+  "crates/jope-client/src/fake.rs",
+]
+
+[[streaming_exception]]
+runtime = "rust test code"
+classification = "test-fixture-false-positive"
+reason = "The HLT-019 xadd match is the substring in nix::sys::socket::UnixAddr, imported only inside sealed_storage.rs's cfg(test) descriptor-transfer tests. It is not a Redis or other streaming client. SCM_RIGHTS behavior remains covered by the existing descriptor-transfer tests."
+owner = "jope-engine"
+expires = "2027-02-01"
+migration_path = "Remove this exception after the pinned detector uses token-boundary matching and a fresh full audit confirms UnixAddr no longer matches."

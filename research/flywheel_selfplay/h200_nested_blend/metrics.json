@@ -1,0 +1,370 @@
+{
+  "CUDA_initialized": false,
+  "GPU_used": false,
+  "bound_sha256": {
+    "python/src/jope/north_star/dope_freeze_guard.py": "07de5bc34f181e8ef14c3e5cdc20716716b2cc7dd418792f82f3db1d0d576f9c",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686",
+    "research/flywheel_selfplay/h200_nested_blend/PREREG.md": "4ce48078de380462d0dd41a102155f5a358dcdd79b2c812404fdd35994af1e31",
+    "research/flywheel_selfplay/h200_nested_blend/analysis.py": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2",
+    "research/flywheel_selfplay/h200_nested_blend/manifest.json": "7fed9fe184f1aadc0a4f5bd3b9cdc9b9cc24b0bb937ecf77dedabc461aaab6cb",
+    "research/flywheel_selfplay/h200_nested_blend/monitor.py": "078c8d4221d51d6024e0e48a1429cf76c29d8aac3f6716c040d9664f9d5188d4",
+    "research/flywheel_selfplay/h200_nested_blend/runner.py": "69addcb1c86ca87a231d44510674b89c64870d86590c56c33f734c47c964dbe1",
+    "research/flywheel_selfplay/h200_nested_blend/test_h200.py": "ee821900ef43f418d6ca846d8dd26472076a7583f86ba8de6c4cfedce38dcdd8"
+  },
+  "contrast_nestl_vs_fix025": {
+    "ci95": [
+      -0.015520013370194484,
+      0.011316805798508347
+    ],
+    "exact_tie_families": 28,
+    "exact_tie_families_all_seeds": 28,
+    "families": 205,
+    "family_win_tie_loss": [
+      92,
+      28,
+      85
+    ],
+    "harm_families": 46,
+    "harm_fraction": 0.22439024390243903,
+    "median_gain": -0.005714000987307558,
+    "p_one_sided_vs_margin": 0.6622337766223377,
+    "per_seed_gain": [
+      -0.005714000987307558,
+      -0.005732963189859467,
+      0.008595341934661951
+    ],
+    "positive_seeds": 1
+  },
+  "contrasts_native": {
+    "FIX025": {
+      "ci95": [
+        0.004677103933281879,
+        0.06411466058336025
+      ],
+      "exact_tie_families": 19,
+      "exact_tie_families_all_seeds": 19,
+      "families": 205,
+      "family_win_tie_loss": [
+        101,
+        19,
+        85
+      ],
+      "harm_families": 64,
+      "harm_fraction": 0.3121951219512195,
+      "median_gain": 0.029399992846335217,
+      "p_one_sided_vs_margin": 0.012398760123987601,
+      "per_seed_gain": [
+        0.041455047714163466,
+        0.026303453668984546,
+        0.029399992846335217
+      ],
+      "positive_seeds": 3
+    },
+    "NEST_L": {
+      "ci95": [
+        -0.000677051386395517,
+        0.07216009868008408
+      ],
+      "exact_tie_families": 13,
+      "exact_tie_families_all_seeds": 13,
+      "families": 205,
+      "family_win_tie_loss": [
+        103,
+        13,
+        89
+      ],
+      "harm_families": 71,
+      "harm_fraction": 0.3463414634146341,
+      "median_gain": 0.0357410467268559,
+      "p_one_sided_vs_margin": 0.032396760323967606,
+      "per_seed_gain": [
+        0.0357410467268559,
+        0.020570490479125084,
+        0.037995334780997196
+      ],
+      "positive_seeds": 3
+    },
+    "NEST_SHUF": {
+      "ci95": [
+        -0.02515714044401107,
+        0.009563363338587406
+      ],
+      "exact_tie_families": 19,
+      "exact_tie_families_all_seeds": 19,
+      "families": 205,
+      "family_win_tie_loss": [
+        88,
+        19,
+        98
+      ],
+      "harm_families": 58,
+      "harm_fraction": 0.28292682926829266,
+      "median_gain": -0.0031513938347494867,
+      "p_one_sided_vs_margin": 0.7904209579042096,
+      "per_seed_gain": [
+        -0.02507556375096716,
+        -0.0005488595831749729,
+        -0.0031513938347494867
+      ],
+      "positive_seeds": 0
+    },
+    "RANK025": {
+      "ci95": [
+        -0.12074209095575948,
+        0.04222330212128947
+      ],
+      "exact_tie_families": 0,
+      "exact_tie_families_all_seeds": 0,
+      "families": 205,
+      "family_win_tie_loss": [
+        108,
+        0,
+        97
+      ],
+      "harm_families": 82,
+      "harm_fraction": 0.4,
+      "median_gain": -0.024359200113759565,
+      "p_one_sided_vs_margin": 0.7838216178382161,
+      "per_seed_gain": [
+        -0.04971809977860159,
+        -0.024359200113759565,
+        -0.02048674360449711
+      ],
+      "positive_seeds": 0
+    }
+  },
+  "decision": {
+    "gates": {
+      "harm_le_10pct": false,
+      "holm_p_lt_005": false,
+      "lcb95_gt_0": false
+    },
+    "verdict": "NO_ADVANCE"
+  },
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "elo_nestl_vs_fix025": {
+    "ci95": [
+      1492.5373585679524,
+      1505.169255325009
+    ],
+    "median": 1500.5828800009215,
+    "per_seed": [
+      1500.5828800009215,
+      1494.8270818301655,
+      1501.6389971882068
+    ]
+  },
+  "elo_vs_r882": {
+    "FIX025": {
+      "ci95": [
+        1505.284618200025,
+        1526.9977766011789
+      ],
+      "median": 1515.3331693364164,
+      "per_seed": [
+        1513.2356859188221,
+        1515.3331693364164,
+        1524.3927309142603
+      ]
+    },
+    "NEST_L": {
+      "ci95": [
+        1498.3566415014845,
+        1525.089505291726
+      ],
+      "median": 1510.232838340241,
+      "per_seed": [
+        1510.232838340241,
+        1508.4671346053235,
+        1523.357781480024
+      ]
+    },
+    "NEST_SHUF": {
+      "ci95": [
+        1491.7172786311426,
+        1507.7233101497118
+      ],
+      "median": 1499.9435119193927,
+      "per_seed": [
+        1497.6321713170528,
+        1499.9435119193927,
+        1503.4569630575866
+      ]
+    },
+    "RANK025": {
+      "ci95": [
+        1500.923873059823,
+        1538.5791022861254
+      ],
+      "median": 1521.5306483021757,
+      "per_seed": [
+        1512.8114296963913,
+        1523.6348395159455,
+        1521.5306483021757
+      ]
+    }
+  },
+  "fit_wall_seconds": 7095.69912350364,
+  "fits": 60,
+  "holm_adjusted_p": {
+    "NEST_L": 0.06479352064793521,
+    "RANK025": 0.7838216178382161
+  },
+  "optimizer_updates": 0,
+  "primary_endpoint": "H139 native first-argmin utility (full candidate pool)",
+  "read_boundary": {
+    "dl_val_contexts_for_baseline_only": 91,
+    "holdout": 0,
+    "live_loop": 0,
+    "meta_test": 0,
+    "sealed": 0,
+    "train_cache_dl_val_rows_decoded": 0,
+    "train_contexts": 1219,
+    "train_families": 205
+  },
+  "runtime": {
+    "max_rss_kib": 3613388,
+    "process_cpu_seconds": 24376.030747686,
+    "scratch_bytes": 226036170,
+    "wall_seconds": 7469.483829824254
+  },
+  "schema": "jope.h200.nested-blend/v1",
+  "selected_lambdas": {
+    "200101/0": {
+      "NEST_L": 0.4,
+      "NEST_SHUF": 0.0
+    },
+    "200101/1": {
+      "NEST_L": 0.5,
+      "NEST_SHUF": 0.15
+    },
+    "200101/2": {
+      "NEST_L": 0.3,
+      "NEST_SHUF": 0.25
+    },
+    "200101/3": {
+      "NEST_L": 0.5,
+      "NEST_SHUF": 0.15
+    },
+    "200101/4": {
+      "NEST_L": 0.4,
+      "NEST_SHUF": 0.25
+    },
+    "200102/0": {
+      "NEST_L": 0.4,
+      "NEST_SHUF": 0.0
+    },
+    "200102/1": {
+      "NEST_L": 0.3,
+      "NEST_SHUF": 0.0
+    },
+    "200102/2": {
+      "NEST_L": 0.3,
+      "NEST_SHUF": 0.1
+    },
+    "200102/3": {
+      "NEST_L": 0.5,
+      "NEST_SHUF": 0.0
+    },
+    "200102/4": {
+      "NEST_L": 0.4,
+      "NEST_SHUF": 0.3
+    },
+    "200103/0": {
+      "NEST_L": 0.1,
+      "NEST_SHUF": 0.0
+    },
+    "200103/1": {
+      "NEST_L": 0.3,
+      "NEST_SHUF": 0.2
+    },
+    "200103/2": {
+      "NEST_L": 0.2,
+      "NEST_SHUF": 0.3
+    },
+    "200103/3": {
+      "NEST_L": 0.4,
+      "NEST_SHUF": 0.1
+    },
+    "200103/4": {
+      "NEST_L": 0.3,
+      "NEST_SHUF": 0.0
+    }
+  },
+  "serving_promotion": false,
+  "stage1_lock_sha256": "6bf300f118c8eec3e8ab48d2ab1f316b1c7d5a922a7ca29c8fd91d3e1b5021cd",
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "versions": {
+    "numpy": "1.26.4",
+    "python": "3.12.3",
+    "scikit_learn": "1.7.2",
+    "torch": "2.7.0"
+  },
+  "wave": "H200",
+  "attempt": "attempt-001",
+  "source_commit": "af2825452ec98bd0fc044c826f3c812f1fc02339",
+  "host": "xbabe1",
+  "original_owner": "luna_ns_hbaseline",
+  "closeout_owner": "rd_astra",
+  "native_reference": 1.1377941898164525,
+  "original_metrics_sha256": "b4e4507f29beaa43f9d78174d399c72ccefc2bf482e8fdd19bfa23a859bf9040",
+  "protocol_qualification": "DEVIATIONS_RECORDED",
+  "closeout_note": "Original COMPLETE/NO_ADVANCE metrics replay exactly. Not abandoned or superseded. Seven fits stopped early despite preregistration; original monitor lacked93.8percent disk guard. No promotion or retry.",
+  "replay_file": "replay.json",
+  "custody_file": "custody.json",
+  "exact_minus2_counts": {
+    "R882": [
+      17,
+      17,
+      17
+    ],
+    "FIX025": [
+      12,
+      15,
+      16
+    ],
+    "NEST_L": [
+      12,
+      17,
+      15
+    ],
+    "RANK025": [
+      28,
+      22,
+      27
+    ],
+    "NEST_SHUF": [
+      21,
+      16,
+      16
+    ]
+  },
+  "resource_summary": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "elapsed_seconds": 7472.797001544386,
+    "peak": {
+      "rss": 3764551680,
+      "threads": 13,
+      "tree_cores": 3.9908989603810285
+    },
+    "resume": false,
+    "host_online_cores": 128,
+    "load_limit": 108.8,
+    "core_limit": 4.0
+  },
+  "deviations": {
+    "early_stopped_fits": 7,
+    "registered_no_early_stopping": true,
+    "historical_launch_disk_used_fraction": 0.94242,
+    "observed_disk_used_fraction_min": 0.9412904014593001,
+    "observed_disk_used_fraction_max": 0.9579529379108593,
+    "original_guard": "disk free>=40GB; no percentage guard",
+    "current_938_guard_verified_for_original_run": false
+  },
+  "related_followup": "H203 evaluates outcome-free harm gating of fixed lambda0.25; independent H199-derived preregistration, not replacement or H200 result"
+}

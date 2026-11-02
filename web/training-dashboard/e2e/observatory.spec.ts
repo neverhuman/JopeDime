@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { Page, TestInfo } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { observedAt, observerFixture } from "./observer-fixture";
+import { visualReviews, type VisualReviewState } from "./visual-review";
 
 async function evidence(page: Page, testInfo: TestInfo, name: string) {
   const geometry = await page.evaluate(() => {
@@ -40,7 +41,34 @@ async function evidence(page: Page, testInfo: TestInfo, name: string) {
   await testInfo.attach(`${name}-accessibility.json`, { body: JSON.stringify(accessibility, null, 2), contentType: "application/json" });
   expect(accessibility.violations.map(({ id, nodes }) => ({ id, targets: nodes.map((node) => node.target) })),
     "No axe WCAG A/AA violations in the rendered synthetic state").toEqual([]);
+  const review = visualReviews[name as VisualReviewState];
+  expect(review, `A visual review verdict is required for the ${name} screenshot`).toMatch(/^pass:/);
+  await testInfo.attach(`${name}-visual-review.txt`, { body: review, contentType: "text/plain" });
+  const snapshotName = name === "overview" ? "overview-section" : name;
+  await expect(page).toHaveScreenshot(`${snapshotName}.png`, {
+    fullPage: !geometry.dialog,
+    animations: "disabled",
+    caret: "hide",
+    maxDiffPixelRatio: 0.002,
+  });
   await testInfo.attach(`${name}.png`, { body: await page.screenshot({ fullPage: !geometry.dialog, animations: "disabled" }), contentType: "image/png" });
+}
+
+async function cumulativeLayoutShift(page: Page): Promise<number> {
+  return page.evaluate(() => new Promise<number>((resolve) => {
+    const shifts: PerformanceEntry[] = [];
+    const observer = new PerformanceObserver((list) => shifts.push(...list.getEntries()));
+    observer.observe({ type: "layout-shift", buffered: true });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      setTimeout(() => {
+        observer.disconnect();
+        resolve(shifts.reduce((total, entry) => {
+          const shift = entry as PerformanceEntry & { value: number; hadRecentInput: boolean };
+          return total + (shift.hadRecentInput ? 0 : shift.value);
+        }, 0));
+      }, 250);
+    }));
+  }));
 }
 
 test.beforeEach(async ({ page }) => {
@@ -59,6 +87,19 @@ test("all six sections retain bounded layout, screenshots and accessible semanti
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "synthetic-rendered-ui-only", exact: true })).toBeVisible();
+  const tokens = await page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    return ["--color-canvas", "--color-text", "--color-border", "--color-focus-ring"]
+      .map((token) => styles.getPropertyValue(token).trim());
+  });
+  expect(tokens.every((token) => token.length > 0), "Shared design tokens must load in the rendered app").toBe(true);
+  expect(await cumulativeLayoutShift(page), "Initial rendered state must stay below the 0.1 CLS budget").toBeLessThanOrEqual(0.1);
+  await expect(page).toHaveScreenshot("overview.png", {
+    fullPage: true,
+    animations: "disabled",
+    caret: "hide",
+    maxDiffPixelRatio: 0.002,
+  });
   for (const section of ["Overview", "Training", "Fleet", "Storage & datasets", "GP library", "Results & lineage"]) {
     const button = page.getByRole("navigation").getByRole("button", { name: section, exact: true });
     await button.click();

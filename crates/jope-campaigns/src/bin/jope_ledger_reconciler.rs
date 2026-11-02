@@ -948,6 +948,68 @@ mod tests {
     }
 
     #[test]
+    fn fill_treats_sql_shaped_pair_identifiers_as_values() {
+        let root = temp_root("sql-shaped-pair");
+        fixture(&root).unwrap();
+        let mut registry = open_rw(&root.join("ops/pair-registry.sqlite"), 5_000).unwrap();
+        let hostile = "' OR 1=1; DROP TABLE attempts; --";
+        let mut pending = vec![MissingAttempt {
+            task: hostile.to_owned(),
+            dataset_hash: hostile.to_owned(),
+            semantic_sha256: hostile.to_owned(),
+            protocol_sha256: hostile.to_owned(),
+            state: "reserved".to_owned(),
+            reservation_owner: hostile.to_owned(),
+            manifest_path: Some("/manifest.json".to_owned()),
+            manifest_sha256: "manifest-sha".to_owned(),
+        }];
+        let args = args_for(&root, Lane::Fill, true);
+        let mut journal = Journal::create(root.join("ops/receipts/t.journal.jsonl"), true).unwrap();
+
+        assert_eq!(
+            flush_fill(&mut registry, &args, "t", &mut journal, &mut pending).unwrap(),
+            1
+        );
+        assert!(pending.is_empty());
+
+        let inserted: (String, String, String, String, String) = registry
+            .query_row(
+                "SELECT task,dataset_hash,semantic_sha256,protocol_sha256,reservation_owner \
+                 FROM attempts WHERE manifest_sha256=?",
+                ["manifest-sha"],
+                |row| {
+                    Ok((
+                        row.get(0)?,
+                        row.get(1)?,
+                        row.get(2)?,
+                        row.get(3)?,
+                        row.get(4)?,
+                    ))
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            inserted,
+            (
+                hostile.to_owned(),
+                hostile.to_owned(),
+                hostile.to_owned(),
+                hostile.to_owned(),
+                hostile.to_owned()
+            )
+        );
+
+        // The SQL-shaped data must remain a single row value; it must not
+        // broaden the predicate or alter the table used by later ledger work.
+        let rows: i64 = registry
+            .query_row("SELECT COUNT(*) FROM attempts", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(rows, 1);
+        assert!(registry.prepare("SELECT COUNT(*) FROM pairs").is_ok());
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
     fn fill_leaves_pairs_with_evidence_alone() {
         let root = temp_root("evidence");
         fixture(&root).unwrap();

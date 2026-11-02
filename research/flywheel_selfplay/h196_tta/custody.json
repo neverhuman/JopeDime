@@ -1,18 +1,18 @@
 {
   "manifest": {
-    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/attempt3/manifest.json",
-    "version_id": "pL1S6jgU.c9fsKPDGod9XcsD7E7q3fL7",
-    "sha256": "df40c66ce3e04507375290b485611375b5879e32982fbde2b0d5c86d21a23607",
-    "bytes": 1760961,
-    "verified_utc": "2026-11-01T23:18:11.220902+00:00",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/attempt4/manifest.json",
+    "version_id": "hNL6YAE_LjLFuTJxGK_8StqRftjeDeKn",
+    "sha256": "7261f024c0c2e4e0ae41da1e18547ab1b53c07c5e537de98e438d438760c26b6",
+    "bytes": 893102,
+    "verified_utc": "2026-11-02T02:41:59.362087+00:00",
     "readback": "exact-version full payload SHA256; synchronous client"
   },
   "outputs": {
-    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/attempt3/numerical-evidence.zip",
-    "version_id": "C46hjbo2I8liwTp32SJYcfnypqS2U_VL",
-    "sha256": "489c0fdc47db94b16167766ccd7e2f82f02090dd3a7d3e2cbd3374853e2c39bd",
-    "bytes": 3071262,
-    "verified_utc": "2026-11-01T23:16:48.540741+00:00",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/attempt4/numerical-evidence.zip",
+    "version_id": "F8F20ANBFLucx_rK_l3sI4jcsxwcYVL0",
+    "sha256": "510975c040391715c5dd4852a37da6b17a18df3ad1e40e2137969de2ebbc9bee",
+    "bytes": 969720,
+    "verified_utc": "2026-11-02T02:40:39.916796+00:00",
     "readback": "exact-version full payload and every member SHA256; memory archive, no duplicate disk output"
   },
   "inputs": {
@@ -20,8 +20,8 @@
     "version_id": "0e32TgvuISMpki_1xht80IAPxJ3DlRGc",
     "sha256": "2736ef59eaec74a492ede00a9993a837b81188f756793e09ca9eb7c3a8b88b00",
     "bytes": 243382846,
-    "verified_utc": "2026-11-01T23:18:09.857453+00:00",
-    "readback": "Exact-version payload and every member reverified for attempt3; immutable attempt2 input archive reused, all input identities unchanged"
+    "verified_utc": "2026-11-02T02:41:57.355992+00:00",
+    "readback": "Exact-version payload and every member reverified for attempt4; immutable attempt2 input archive reused, all input identities unchanged"
   },
-  "verified_members": 1445
+  "verified_members": 1371
 }

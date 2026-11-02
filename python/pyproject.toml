@@ -64,6 +64,13 @@ manifest-path = "../crates/jope-telemetry/Cargo.toml"
 python-source = "src"
 module-name = "jope._telemetry"
 features = ["python"]
+# Research drivers remain available in the source distribution and editable test tree,
+# but are not part of an installed runtime wheel.
+exclude = [
+  { path = "src/jope/research/**", format = "wheel" },
+  { path = "src/jope/tools/resume_expired_cycle.py", format = "wheel" },
+  { path = "src/jope/tools/shared_teaching_cache.py", format = "wheel" },
+]
 
 [tool.ruff]
 line-length = 110
