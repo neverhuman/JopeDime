@@ -1,0 +1,75 @@
+{
+  "schema": "whitepaper.round-throughput.v1",
+  "csv_sha256": "a583a4b0790bb2e009adea2f667b62609aa26967b4383101c840d8348317c229",
+  "generator_sha256": "4171511b8550fe8c69e56fe304d7ae9439c30f1e000537f56c3bb5a073bb296a",
+  "source_snapshot": {
+    "captured_at": "2026-11-02T09:54:33.778963+00:00",
+    "round_window": [
+      3576,
+      3595
+    ],
+    "files": [
+      {
+        "name": "summary.jsonl",
+        "sha256": "38d8b7b0de891a9b52e76457cce71bf5feeff2648610aea527e0f2c005c53b9b",
+        "size": 8242,
+        "source_prefix": {
+          "file": "summary.jsonl",
+          "bytes_read": 3358630,
+          "complete_prefix_bytes": 3358630,
+          "complete_prefix_sha256": "5f4e8d4e34fe7621465ebad524e7749bd24109fc8ed431e7e4ea25c574e0449a",
+          "mtime_ns": 1793613247046288948
+        },
+        "selection": "Whitelist of round-level aggregate scalars; no per-context values, identifiers, checkpoint paths, input payloads or protected data copied"
+      },
+      {
+        "name": "admissions.jsonl",
+        "sha256": "9b619da375a595bfbd0f3c5c6dd6cc942aadee751cbf7ef57d64d221999304c3",
+        "size": 4457,
+        "source_prefix": {
+          "file": "summary.jsonl",
+          "bytes_read": 3358630,
+          "complete_prefix_bytes": 3358630,
+          "complete_prefix_sha256": "5f4e8d4e34fe7621465ebad524e7749bd24109fc8ed431e7e4ea25c574e0449a",
+          "mtime_ns": 1793613247046288948
+        },
+        "selection": "Whitelist of round-level aggregate scalars; no per-context values, identifiers, checkpoint paths, input payloads or protected data copied"
+      },
+      {
+        "name": "per-round.jsonl",
+        "sha256": "3f68e7e033c27912b33be554c9573d03a4f20179e045f7c625597f93041b8b1d",
+        "size": 4437,
+        "source_prefix": {
+          "file": "per-round.jsonl",
+          "bytes_read": 2110980,
+          "complete_prefix_bytes": 2110980,
+          "complete_prefix_sha256": "3620f4055f013ef9619195ccd3d38c794912d5a8b369e262dbf034544f6e5014",
+          "mtime_ns": 1793613227129981648
+        },
+        "selection": "Whitelist of round-level aggregate scalars; no per-context values, identifiers, checkpoint paths, input payloads or protected data copied"
+      }
+    ],
+    "scope": "Live operating aggregates only; summary admission fields independently crosschecked against live per-round selection audit; frozen complete-line prefixes, no gaps joined"
+  },
+  "rows": 20,
+  "round_window": [
+    3576,
+    3595
+  ],
+  "adapter_admissions": 0,
+  "metrics": {
+    "validation": "Candidate adapter utility and recorded best; larger is preferred in the admission log",
+    "throughput": "Distinct training contexts within each completed round / that round's entire logged wall_seconds; independently checked against datasets_per_second"
+  },
+  "scope": "Development operating observations; repeated contexts across rounds are not independent tasks. Runtime/checkpoint binding and independent first-proposal/deployment comparisons remain pending.",
+  "reproduce": "python3 figures/scripts/make_round_throughput_figure.py --live-window",
+  "figure_sha256": "ced4f18312b39c1f3eb7f4c85d07ea743cb8c3701af10322fe04629b7c817212",
+  "matplotlib_version": "3.10.8",
+  "figure_definition": {
+    "points": "Distinct training contexts / full-round wall_seconds, contexts per second",
+    "dashed_line": "Sum of per-round distinct counts / sum of full-round wall_seconds",
+    "selection": "One separate capture of all 20 consecutive completed summary rounds",
+    "validation": "Admission scalars originate in summaries; candidate utility, acceptance and identity crosschecked against the separate live per-round audit",
+    "scope": "No interpolation across uncaptured gaps; no learning, deployment or independent task comparison"
+  }
+}
