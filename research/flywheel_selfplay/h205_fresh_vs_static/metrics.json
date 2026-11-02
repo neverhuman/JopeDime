@@ -461,19 +461,19 @@
     "fpool_family_alias": "f00161",
     "original_jtt1_nq0_sha256": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
     "padded_jtt1_nq10_sha256": "8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1",
-    "labels_sha256": "886a5c7a368a4d245873422ac67c8a281d46dcfa0be8dfaa66c9e5c8de06ab75",
-    "programs_sha256": "843a4f4a69af9478bb9971f3c05aa6224665c9e520f1b9c3af869e23d2650c57",
-    "features_sha256": "e546b65571e67346d9ca9da18dfac8447692aa3a58821ba7b4831e97605f4de5",
-    "pool_sha256": "dc04ba13972c38f861d90392ca7eb7238d39f59326fd573802f6f0fdffdcdd84",
-    "features_npz_sha256": "df4d45b3e7f3a13683563a351d512be092c179300dc07cd284d4514e0ca7c1e9",
+    "labels_sha256": "3e1d225b92f20c3af9907d7a3747a8b45829f779e5a7cb86cd0fe7427e47f61b",
+    "programs_sha256": "edafbd65a4bf52b2c46abead6f151e28f35cf1f8cabd25fb132c28a76a4ddcfd",
+    "features_sha256": "a84271417a25b285aed0b5612ebfc0bb953c9cb863e32f24a484ab6127fff33a",
+    "pool_sha256": "1c54e242793faa6d890375866b51e62bceb765a1ba41f7417122722066eb398f",
+    "features_npz_sha256": "107bf0feaa58d5e483e7edb5b4005a006303a0b132d65f73d3c01f829642aec0",
     "native_calls_total": 24,
     "s3_persisted_and_replayed_before_optimizer_step": true,
     "optimizer_steps": 1,
     "trainable_parameters": 29211,
-    "loss_value": 48.03727340698242,
-    "adapter_sha256_before": "dbb86f218c5fb20229891668635df81df91c7d82f9d5a3b6136b43e069f9045a",
-    "adapter_sha256_after": "763150e426c727e68b295e0a80dd953f524a84145020263ccdc9934c447676db",
-    "adapter_sha256_restored": "dbb86f218c5fb20229891668635df81df91c7d82f9d5a3b6136b43e069f9045a",
+    "loss_value": 4.187907695770264,
+    "adapter_sha256_before": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+    "adapter_sha256_after": "14e878421781ab95f3ca483a68caf1a0624d5ab969fcf16f83e26846ccb9d929",
+    "adapter_sha256_restored": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
     "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
     "s3_reconciled_bundle_manifest": {
@@ -893,7 +893,8 @@
       "owner": "rd_argon",
       "purpose": "Create-only S3 failure custody and exact-VersionId member replay for incomplete H205 invocations 20261102T1237Z (candidate struct missing birth_seq before PR #1855) and 20261102T1249Z (24/24 native evaluation completed, then stopped on numeric threads 5>4 before S3 upload).",
       "schema": "jope.h205.failure_custody_manifest/v1"
-    }
+    },
+    "native_evaluator_input_sha256": "be5800a4dfda8d3497c0ec1db4a3df8f0101e2b850fb489a385f9982491b4de9"
   },
   "h205_h206_producer_decision_20261102T1338Z": {
     "s3_bucket": "veox-jopedime-learning-use2",
@@ -1067,5 +1068,38 @@
         "source_pin": "cpu_exact_fused.py:766-921 (_extract_stage1a_landmarks_batched_gpu -> self.landmark_bridge(raw_vec256)) / cpu_exact_fused.py:2271-2280 (FusedLandmarkWorkspace.fit_transform_and_extract_bundle_high)"
       }
     }
+  },
+  "reconciled_campaign_ledger_20261102T1410Z": {
+    "s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1410Z/campaign_ledger.reconciled.json",
+    "s3_version_id": ".yu26GzCvyfAHU0MPQl1Vp5K9_R5H376",
+    "sha256": "e376f44e9a6c47d7d98cab31b15b60695a6a42dc5bbf63e1bf73014da181bb94",
+    "baseline_elapsed_seconds": 2021.039296863135,
+    "hist_11_charged_seconds": 420.0,
+    "total_prior_elapsed_seconds": 10751.000011262111,
+    "remaining_wall_budget_seconds": 14448.999988737889,
+    "campaign_cap_seconds": 25200.0
+  },
+  "option_a_selected_in_cohort_target_20261102T1410Z": {
+    "receipt_s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1410Z/H205_POINTER_RECONCILIATION_AND_OPTION_A_TARGET_20261102T1410Z.json",
+    "receipt_s3_version_id": "YjUHh2vw0wNPQwJ3NF_vx3KtqWJrfk2X",
+    "receipt_sha256": "2e2239ed6ebf8b5918e0348e477eee434b908032fce80d92fe409c20c53f8d3a",
+    "specification_is_constructed_data": false,
+    "constructed_bundle_exists_yet": false,
+    "selected_in_cohort_target_context": {
+      "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+      "dataset_id": "64d58df1e45d2857",
+      "family_id": "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+      "view_id": "64d58df1e45d2857__r0__f1__rowselraw1_c7626cfa3300",
+      "pool_sha256": "7c0e7a4e4ff52d5f126d798e27a901dcde22645e1edeac53c63839278c63d0a8",
+      "train_only_jtt1_sha256": "c7397751da253966dd6f2ff04eb384cd5ee0c412ec8634d90440d5727dceedcb",
+      "role": "DL-Train",
+      "outer_test_rows_included": 0,
+      "d4_or_dl_val_overlap": 0
+    },
+    "next_construction_blockers": [
+      "Receiving-main merge of the fresh-main H205 pointer-reconciliation addendum PR.",
+      "H206-owner (@gpu_fused_redteam_codex) handshake supplying the pinned k=256 candidate slate + 4 revealed_indices + 5-fold FIT/B/A role assignment for context 002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031.",
+      "Prospective source/prereg PR adding a dedicated in-cohort H206 13-array producer mode under monitor.py accounting/resource supervision without weakening FORBIDDEN_205."
+    ]
   }
 }
