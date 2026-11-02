@@ -1365,6 +1365,9 @@ crates/jope-engine/src/neural/optimizer.rs
 crates/jope-engine/src/neural/runtime.rs
 crates/jope-engine/src/operations.rs
 crates/jope-engine/src/pipeline.rs
+crates/jope-engine/src/pipeline/campaign_identity_tests.rs
+crates/jope-engine/src/pipeline/corpus_cache_tests.rs
+crates/jope-engine/src/pipeline/run.rs
 crates/jope-engine/src/policy_export.rs
 crates/jope-engine/src/policy_export/publication.rs
 crates/jope-engine/src/preparation_overlay.rs
