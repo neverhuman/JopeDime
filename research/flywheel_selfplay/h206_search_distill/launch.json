@@ -87,7 +87,7 @@
   "native_train_bridge": "first-10-TRAIN-rows-cyclic-zero-query-target-v1",
   "binding_status": "MISSING_PINS.md",
   "conditional_launch_authority": "gbw_0135_gpu_fused_redteam_codex.md",
-  "execution_admission": "PENDING_INPUT_CUDA_STUDY_RUNTIME_LEDGER_MERGED_SOURCE_QUEUE_RESOURCES",
+  "execution_admission": "PENDING_COMPLETE_TRAIN_ROLES_ENCODER_COSTS_MERGED_CUDA_PROOF_AND_PURPOSE_QUEUE_RESOURCE_GATES",
   "recovered_bindings_sha256": "62e41c27478662eb94756953ae89668ab2717a5e0de6190a805664c3626bc5b6",
   "initial_checkpoint_ref": {
     "bucket": "veox-jopedime-learning-use2",
@@ -113,5 +113,7 @@
   "cuda_execution_qualification": "NOT_RUN",
   "native_gate_source_head": "15f365007f7c978af262184e108edc05cc09779d",
   "native_gate_receipt_sha256": "37725a6ef19c165687ebd70f95c3c45b8c4e1f01ce13d6a7ee9410f5456e2a73",
-  "model_factory_cpu_qualification": "PASS"
+  "model_factory_cpu_qualification": "PASS",
+  "runtime_qualification_status": "SOURCE_ONLY_NOT_RUN",
+  "runtime_qualification_purpose": "runtime_qualification"
 }
