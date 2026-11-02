@@ -179,6 +179,12 @@ crates/feat-math/src/tokens.rs
 crates/feat-math/src/transpile.rs
 crates/feat-math/tests/advanced_v3_conformance.rs
 crates/feat-math/tests/advanced_v3_fitted_cpp.rs
+crates/feat-math/tests/advanced_v3_fitted_cpp/part_1.rs
+crates/feat-math/tests/advanced_v3_fitted_cpp/part_2.rs
+crates/feat-math/tests/advanced_v3_fitted_cpp/part_3.rs
+crates/feat-math/tests/advanced_v3_fitted_cpp/part_4.rs
+crates/feat-math/tests/advanced_v3_fitted_cpp/part_5.rs
+crates/feat-math/tests/advanced_v3_fitted_cpp/part_6.rs
 crates/feat-math/tests/advanced_v3_multiclass.rs
 crates/feat-math/tests/advanced_v3_parity.rs
 crates/feat-math/tests/advanced_v3_property.rs
