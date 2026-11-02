@@ -49,7 +49,8 @@ fn boot_id() -> Result<String> {
 }
 fn heartbeat_all(connected: &mut [Connected], id: u64, limit: u32, allowance: Duration) {
     let frame =
-        serde_json::to_vec(&ControlFrame::Heartbeat { delivery_id: id }).unwrap_or_default();
+        serde_json::to_vec(&ControlFrame::Heartbeat { delivery_id: id })
+            .expect("heartbeat control frame contains only serializable fields");
     for c in connected.iter_mut() {
         // Each write ends within `allowance` (one heartbeat interval) of its start, so a rank
         // that stops reading delays this loop, and the other ranks' heartbeats, by at most
