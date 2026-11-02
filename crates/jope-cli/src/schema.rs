@@ -151,17 +151,20 @@ pub struct Dataset {
 #[serde(deny_unknown_fields)]
 pub struct Column {
     pub name: String,
-    pub kind: Kind,
+    pub kind: TabularColumnKind,
     pub nullable: bool,
     pub categories: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Kind {
+pub enum TabularColumnKind {
     Integer,
     Categorical,
 }
+
+/// Compatibility name retained for existing schema and generator callers.
+pub type Kind = TabularColumnKind;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
