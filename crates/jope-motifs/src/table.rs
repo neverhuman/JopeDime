@@ -25,6 +25,9 @@ const TABLE_DOMAIN: &[u8] = b"jope-motif-table/v1\0";
 mod model;
 pub use model::*;
 
+mod operations;
+pub use operations::{dataset_set, motif_order, occurrence_order, support_of};
+
 impl TableBody {
     /// `sha256(TABLE_DOMAIN || serde_json(body))`, lowercase hex.
     pub fn digest(&self) -> Result<String> {

@@ -1578,6 +1578,9 @@ crates/jope-motifs/src/private_io.rs
 crates/jope-motifs/src/source.rs
 crates/jope-motifs/src/synthetic.rs
 crates/jope-motifs/src/table.rs
+crates/jope-motifs/src/table/model.rs
+crates/jope-motifs/src/table/operations.rs
+crates/jope-motifs/src/table/tests.rs
 crates/jope-motifs/src/teaching.rs
 crates/jope-motifs/src/validate.rs
 crates/jope-paths/Cargo.toml
