@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import io
 import json
 import math
@@ -132,8 +133,6 @@ def load_payloads(rows, packet):
     pools, tokens, masks, metrics = {}, {}, {}, {}
     for row, path in paths:
         raw = path.read_bytes()
-        import hashlib
-
         if hashlib.sha256(raw).hexdigest() != row["payload_sha256"]:
             raise ValueError("worker payload hash mismatch")
         with np.load(io.BytesIO(raw), allow_pickle=False) as data:
@@ -206,9 +205,10 @@ def save_checkpoint(path, pinned, request, round_number):
 
 
 def load_checkpoint(path, pinned, request, trace):
-    if protocol.file_sha(path) != trace["checkpoint_sha256"]:
+    raw = Path(path).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != trace["checkpoint_sha256"]:
         raise ValueError("private checkpoint file hash mismatch")
-    state = torch.load(path, map_location="cpu", weights_only=True)
+    state = torch.load(io.BytesIO(raw), map_location="cpu", weights_only=True)
     if (
         state.get("schema") != "jope.joint-regbin.private-checkpoint/v1"
         or any(
