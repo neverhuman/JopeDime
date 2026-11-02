@@ -11,6 +11,90 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use sha2::Digest;
 use std::collections::{BTreeMap, BTreeSet};
+use std::path::Path;
+
+/// Derive the stable source-family identity used by fused binary-corpus admission.
+/// The algorithm intentionally excludes per-dataset seeds, labels, acceptance scores,
+/// and held-out measurements so related generated datasets remain in one split family.
+pub fn derive_binary_source_family(meta_path: &Path) -> Result<String> {
+    let metadata: Value = if meta_path.is_file() {
+        serde_json::from_slice(&std::fs::read(meta_path)?)?
+    } else {
+        Value::Object(Map::new())
+    };
+
+    if let Some(family) = metadata
+        .get("source_family")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|family| !family.is_empty())
+    {
+        return Ok(family.to_owned());
+    }
+
+    let source_real_data = metadata
+        .get("source_real_data")
+        .filter(|value| json_truthy(value));
+    let material = if let Some(source) = source_real_data {
+        serde_json::json!({"origin": "real", "source": source})
+    } else {
+        let recipe = metadata
+            .get("generator_recipe")
+            .and_then(Value::as_object);
+        let feature_family_counts = recipe
+            .and_then(|recipe| recipe.get("feature_family_counts"))
+            .filter(|value| json_truthy(value))
+            .cloned()
+            .unwrap_or_else(|| serde_json::json!({}));
+        let origin = metadata
+            .get("origin")
+            .filter(|value| json_truthy(value))
+            .cloned()
+            .unwrap_or_else(|| Value::String("unknown".to_owned()));
+        let generator = metadata
+            .get("generator_name")
+            .filter(|value| json_truthy(value))
+            .cloned()
+            .unwrap_or_else(|| Value::String("unknown".to_owned()));
+        serde_json::json!({
+            "origin": origin,
+            "generator": generator,
+            "feature_family_counts": feature_family_counts,
+        })
+    };
+    let canonical = python_ascii_json(&crate::meta::canonical_json(&material));
+    let digest = sha256_hex(canonical.as_bytes());
+    Ok(format!("family-{}", &digest[..16]))
+}
+
+fn python_ascii_json(canonical: &str) -> String {
+    let mut escaped = String::with_capacity(canonical.len());
+    for character in canonical.chars() {
+        let codepoint = character as u32;
+        if codepoint <= 0x7f {
+            escaped.push(character);
+        } else if codepoint <= 0xffff {
+            escaped.push_str(&format!("\\u{codepoint:04x}"));
+        } else {
+            let supplementary = codepoint - 0x1_0000;
+            let high = 0xd800 + (supplementary >> 10);
+            let low = 0xdc00 + (supplementary & 0x3ff);
+            escaped.push_str(&format!("\\u{high:04x}\\u{low:04x}"));
+        }
+    }
+    escaped
+}
+
+fn json_truthy(value: &Value) -> bool {
+    match value {
+        Value::Null => false,
+        Value::Bool(value) => *value,
+        Value::Number(value) => value.as_f64().is_some_and(|value| value != 0.0),
+        Value::String(value) => !value.is_empty(),
+        Value::Array(value) => !value.is_empty(),
+        Value::Object(value) => !value.is_empty(),
+    }
+}
 
 /// Assign a source family to the stable campaign train/validation partition.
 /// This preserves the historical SHA-256 prefix threshold used by self-play

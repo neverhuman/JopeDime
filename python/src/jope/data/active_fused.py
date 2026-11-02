@@ -24,7 +24,11 @@ from typing import Any
 
 import numpy as np
 
-from .._telemetry import build_binary_dataset_contracts, freeze_source_family_split_py
+from .._telemetry import (
+    build_binary_dataset_contracts,
+    derive_source_family,
+    freeze_source_family_split_py,
+)
 from ..engines import EngineRouter
 from ..eval_ledger import iter_eval_regression_with_ledger
 from ..grammars import grammar_for
@@ -97,7 +101,7 @@ def build_fused_corpus(
                 continue
             sig = dataset_signature_from_vs(d / ROW_SIDECAR)
             standardized_signature = _standardize(sig, mean, scale)
-            source_family = _source_family(d)
+            source_family = derive_source_family(str(d / "meta.json"))
             train_sha256 = _sha256_file(d / "train.csv")
             test_sha256 = _sha256_file(d / "test.csv") if (d / "test.csv").is_file() else None
             # The outer split does not affect view membership. Validate all five class
@@ -385,25 +389,3 @@ def _training_targets(path: Path) -> tuple[list[int], list[str]]:
                 f"{index}:{hashlib.sha256(json.dumps(row, separators=(',', ':')).encode()).hexdigest()}"
             )
     return targets, row_ids
-
-
-def _source_family(dataset_dir: Path) -> str:
-    """Derive a stable lineage family; never use target/test statistics."""
-    meta_path = dataset_dir / "meta.json"
-    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.is_file() else {}
-    explicit = meta.get("source_family")
-    if isinstance(explicit, str) and explicit.strip():
-        return explicit.strip()
-    real_source = meta.get("source_real_data")
-    if real_source:
-        material: Any = {"origin": "real", "source": real_source}
-    else:
-        recipe = meta.get("generator_recipe") or {}
-        material = {
-            "origin": meta.get("origin") or "unknown",
-            "generator": meta.get("generator_name") or "unknown",
-            # Counts define a generator lineage without using per-dataset seeds,
-            # labels, acceptance scores, or any held-out/test measurement.
-            "feature_family_counts": recipe.get("feature_family_counts") or {},
-        }
-    return f"family-{hashlib.sha256(json.dumps(material, sort_keys=True, separators=(',', ':')).encode()).hexdigest()[:16]}"
