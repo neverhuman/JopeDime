@@ -234,15 +234,11 @@ impl Loop {
                 && fs::canonicalize(&b.cgroup_root)? == b.cgroup_root,
             "run drain requires physical delegated cgroup"
         );
-        let name = std::ffi::CString::new(b.cgroup_root.as_os_str().as_encoded_bytes())?;
-        let mut st = std::mem::MaybeUninit::<libc::statfs>::uninit();
+        let filesystem = nix::sys::statfs::statfs(&b.cgroup_root);
         ensure!(
-            // SAFETY: `name` is a CString that outlives the call (NUL-terminated path) and `st`
-            // has room for the one statfs that statfs writes.
-            unsafe { libc::statfs(name.as_ptr(), st.as_mut_ptr()) } == 0
-                // SAFETY: `&&` short-circuits, so this runs only after statfs returned 0 and
-                // filled every field of `st`.
-                && unsafe { st.assume_init() }.f_type == libc::CGROUP2_SUPER_MAGIC,
+            filesystem.is_ok_and(|stats| {
+                stats.filesystem_type() == nix::sys::statfs::CGROUP2_SUPER_MAGIC
+            }),
             "run drain requires real cgroup v2"
         );
         let mut seen = BTreeSet::new();
