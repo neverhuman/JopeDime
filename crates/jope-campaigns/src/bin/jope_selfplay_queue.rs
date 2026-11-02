@@ -2677,10 +2677,9 @@ fn append_keeper_attempts(
          AND semantic_sha256=? AND protocol_sha256=? \
          AND state IN ('checked','submitting','submitted','deferred_horizon')",
     )?;
-    let mut attempt_statement = tx.prepare_cached(
-        "SELECT COALESCE(MAX(attempt_number),0)+1 FROM keeper_attempts \
-         WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
-    )?;
+    let mut attempt_statement = tx.prepare_cached(include_str!(
+        "../../sql/jope_selfplay_queue_attempt_number.sql"
+    ))?;
     let mut insert_statement = tx.prepare_cached(
         "INSERT INTO keeper_attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
          attempt_number,state,owner,manifest_path,manifest_sha256,job_id,created_at_ms) \
@@ -4120,6 +4119,53 @@ mod tests {
             ..live
         };
         assert!(scheduler_job_is_adoptable(&completed));
+    }
+
+    #[test]
+    fn append_keeper_attempts_treats_sql_shaped_pair_keys_as_values() {
+        let connection = Connection::open_in_memory().unwrap();
+        initialize_backlog(&connection).unwrap();
+        let hostile = "' OR 1=1; DROP TABLE keeper_attempts; --";
+        let manifest = ValidManifest {
+            path: PathBuf::from("/manifest.json"),
+            sha256: "a".repeat(64),
+            generated_at_ms: 1,
+            pairs: vec![PairKey {
+                task: hostile.to_owned(),
+                dataset_hash: hostile.to_owned(),
+                semantic_sha256: hostile.to_owned(),
+                protocol_sha256: hostile.to_owned(),
+            }],
+            value: json!({}),
+        };
+
+        let first = connection.unchecked_transaction().unwrap();
+        append_keeper_attempts(&first, &manifest, "owner", "old-job", "completed", 1).unwrap();
+        first.commit().unwrap();
+
+        let retry = connection.unchecked_transaction().unwrap();
+        append_keeper_attempts(&retry, &manifest, "owner", "new-job", "submitting", 0).unwrap();
+        retry.commit().unwrap();
+
+        let inserted: (String, String, String, String, i64) = connection
+            .query_row(
+                "SELECT task,dataset_hash,semantic_sha256,protocol_sha256,attempt_number \
+                 FROM keeper_attempts WHERE job_id=?",
+                ["new-job"],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+            )
+            .unwrap();
+        assert_eq!(
+            inserted,
+            (
+                hostile.to_owned(),
+                hostile.to_owned(),
+                hostile.to_owned(),
+                hostile.to_owned(),
+                2
+            )
+        );
+        assert!(sqlite_table_exists(&connection, "keeper_attempts").unwrap());
     }
 
     fn submission_transition_fixture(
