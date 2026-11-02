@@ -701,6 +701,7 @@ crates/jope-campaigns/src/campaign/tests.rs
 crates/jope-campaigns/src/campaign_evaluator.rs
 crates/jope-campaigns/src/cli.rs
 crates/jope-campaigns/src/commands/binary_cv.rs
+crates/jope-campaigns/src/commands/binary_cv/fold_cache.rs
 crates/jope-campaigns/src/commands/exact_cv.rs
 crates/jope-campaigns/src/commands/jain_regressor.rs
 crates/jope-campaigns/src/commands/mod.rs
