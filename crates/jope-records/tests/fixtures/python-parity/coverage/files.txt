@@ -556,6 +556,10 @@ crates/jope-campaigns/src/hyperion_router/strategy.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign.rs
 crates/jope-campaigns/src/jope_dlgp_best5/compare.rs
 crates/jope-campaigns/src/jope_dlgp_best5/contracts.rs
+crates/jope-campaigns/src/jope_dlgp_best5/contracts/evidence.rs
+crates/jope-campaigns/src/jope_dlgp_best5/contracts/freeze.rs
+crates/jope-campaigns/src/jope_dlgp_best5/contracts/search.rs
+crates/jope-campaigns/src/jope_dlgp_best5/contracts/selection.rs
 crates/jope-campaigns/src/jope_dlgp_best5/execution.rs
 crates/jope-campaigns/src/jope_dlgp_best5/mod.rs
 crates/jope-campaigns/src/jope_dlgp_best5/portfolio.rs
