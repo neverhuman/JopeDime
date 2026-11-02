@@ -4113,6 +4113,9 @@ python/tests/conftest.py
 python/tests/engine/test_experiment_scheduler.py
 python/tests/engine/test_opportunistic_proposals.py
 python/tests/engine/test_opportunistic_proposals_v2.py
+python/tests/selfplay_controller_corpus.py
+python/tests/selfplay_controller_ingest.py
+python/tests/selfplay_controller_lifecycle.py
 python/tests/test_append_realtime_agent_chat.py
 python/tests/test_backfill_hyperion_stale_confirmation_cells.py
 python/tests/test_context_proposals.py
