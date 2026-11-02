@@ -795,6 +795,10 @@ crates/jope-campaigns/src/training_history/index.rs
 crates/jope-campaigns/src/training_history/ingest.rs
 crates/jope-campaigns/src/training_history/tests.rs
 crates/jope-campaigns/tests/dlgp_best5.rs
+crates/jope-campaigns/tests/dlgp_best5/campaign_tests.rs
+crates/jope-campaigns/tests/dlgp_best5/evaluation_tests.rs
+crates/jope-campaigns/tests/dlgp_best5/search_tests.rs
+crates/jope-campaigns/tests/dlgp_best5/worker_tests.rs
 crates/jope-campaigns/tests/dlgp_budget_campaign.rs
 crates/jope-campaigns/tests/encoder_v2_recovery.rs
 crates/jope-campaigns/tests/epoch6_foundation.rs
