@@ -15,3 +15,16 @@ would conflate unrelated lifecycle, evidence, and tensor domains.
 The exact source path is excluded from Jankurai scoring in `agent/audit-policy.toml`.
 No source, serialization, or runtime behavior is changed. The disposition applies
 only to this path; revisit it if the domains are redesigned or this enum changes.
+
+## Ledger refusal comment
+
+The full audit `rerun/j_161a8216d.json` reports HLT-027 fingerprint
+`sha256:7985f857419f6e5c3a56385852c62b79490492fea81d320002f5b8f7533ea211`
+at `crates/jope-learning/src/hwm.rs:276`. The matched text is a Rust documentation
+comment describing why an unrepresentable candidate cannot be written into the
+append-only ledger. It describes refusal behavior and the risk of fabricating a
+record; it makes no claim of human review, CI success, or external proof.
+
+This exact path is excluded from Jankurai scoring in `agent/audit-policy.toml`.
+No source or runtime behavior is changed. Revisit if the comment or the refusal
+contract changes.

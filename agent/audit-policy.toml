@@ -68,6 +68,9 @@ extra_excluded_paths = [
   # Prodlang HLT-046 sha256:c8f09a3c...: this lifecycle Stage is a distinct domain
   # from research evidence phases and CUDA tensor projection checkpoints; see disposition.
   "crates/jope-pipeline/src/resource_ledger.rs",
+  # Prodlang HLT-027 sha256:7985f857...: explanatory ledger refusal comment is not a
+  # human-review or proof claim; exact-path disposition is documented.
+  "crates/jope-learning/src/hwm.rs",
   # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
   # Variety B HLT-001/HLT-043: versioned trace-archive copies are hash-pinned; see disposition.
