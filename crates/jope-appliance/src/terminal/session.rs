@@ -100,6 +100,8 @@ struct Session {
     screen: crate::terminal::screen::Screen,
     cloud_events: mpsc::Receiver<Vec<String>>,
     cloud_sender: mpsc::Sender<Vec<String>>,
+    sync_events: mpsc::Receiver<anyhow::Result<Vec<String>>>,
+    sync_sender: mpsc::Sender<anyhow::Result<Vec<String>>>,
     login_cancel: Option<Arc<AtomicBool>>,
     run_lists: mpsc::Receiver<anyhow::Result<(Vec<crate::terminal::runs::Entry>, String)>>,
     run_list_sender: mpsc::Sender<anyhow::Result<(Vec<crate::terminal::runs::Entry>, String)>>,
@@ -119,6 +121,7 @@ impl Session {
     ) -> anyhow::Result<Self> {
         let (event_sender, events) = mpsc::channel();
         let (cloud_sender, cloud_events) = mpsc::channel();
+        let (sync_sender, sync_events) = mpsc::channel();
         let (run_list_sender, run_lists) = mpsc::channel();
         let (synced_terminal_sender, synced_terminal) = mpsc::channel();
         let history = home.join("history");
@@ -140,6 +143,8 @@ impl Session {
             screen,
             cloud_events,
             cloud_sender,
+            sync_events,
+            sync_sender,
             login_cancel: None,
             run_lists,
             run_list_sender,
@@ -199,6 +204,16 @@ impl Session {
                     self.screen.push(&line);
                 }
                 self.screen.cloud_label = crate::cloud::account_label();
+                last_draw = None;
+            }
+            while let Ok(result) = self.sync_events.try_recv() {
+                let lines = match result {
+                    Ok(lines) => lines,
+                    Err(error) => vec![format!("Sync: {error:#}")],
+                };
+                for line in lines {
+                    self.screen.push(&line);
+                }
                 last_draw = None;
             }
             while let Ok(event) = self.events.try_recv() {
@@ -360,6 +375,13 @@ impl Session {
             while let Ok(lines) = self.cloud_events.try_recv() {
                 output.transcript(&lines)?;
             }
+            while let Ok(result) = self.sync_events.try_recv() {
+                let lines = match result {
+                    Ok(lines) => lines,
+                    Err(error) => vec![format!("Sync: {error:#}")],
+                };
+                output.transcript(&lines)?;
+            }
             while let Ok(result) = self.run_lists.try_recv() {
                 match result {
                     Ok((entries, notice)) => {
@@ -434,7 +456,7 @@ impl Session {
         let busy = Arc::clone(&self.cloud_busy);
         let done = self.synced_terminal_sender.clone();
         let client = self.client.clone();
-        let sender = self.cloud_sender.clone();
+        let sender = self.sync_sender.clone();
         thread::spawn(move || {
             let result = (|| -> anyhow::Result<Vec<String>> {
                 let version = client.system_info()?.version;
@@ -462,7 +484,7 @@ impl Session {
                 Ok(lines)
             })();
             busy.store(false, Ordering::SeqCst);
-            let _ = sender.send(result.unwrap_or_else(|error| vec![format!("Sync: {error:#}")]));
+            let _ = sender.send(result);
         });
     }
 
