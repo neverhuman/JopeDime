@@ -395,7 +395,7 @@ mod tests {
                             buffer[(x, y)]
                                 .symbol()
                                 .chars()
-                                .any(|c| "▘▝▀▖▌▞▛▗▚▐▜▄▙▟█".contains(c))
+                                .any(|c| ".:+*#@".contains(c))
                         })
                     })
                     .collect();

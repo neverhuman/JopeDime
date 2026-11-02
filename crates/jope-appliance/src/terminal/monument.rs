@@ -3,7 +3,7 @@
 use super::super::{ColorLevel, Theme, ThemeMode};
 use ratatui::{
     layout::Rect,
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::Paragraph,
     Frame,
@@ -208,49 +208,65 @@ fn inside(x: f32, y: f32) -> bool {
     filled
 }
 
-fn ink(theme: Theme, x: f32, y: f32, seconds: f32, animated: bool) -> Style {
+fn wave(x: f32, y: f32, seconds: f32, animated: bool) -> f32 {
+    if !animated {
+        return 0.0;
+    }
+    let sweep = (seconds % 7.2) / 5.2 * 1.6 - 0.3;
+    let distance =
+        x - sweep + (y - 0.5) * 0.10 + 0.055 * (y * std::f32::consts::TAU - seconds * 0.9).sin();
+    let pulse = 0.88 + 0.12 * (seconds * std::f32::consts::TAU / 2.4).sin();
+    let crest = (-(distance / 0.15).powi(2)).exp() * pulse;
+    let wake = 0.16 * (-((distance + 0.23) / 0.11).powi(2)).exp();
+    (crest + wake).min(1.0)
+}
+
+fn character(coverage: u8, energy: f32) -> char {
+    if coverage == 0 {
+        return ' ';
+    }
+    // Quiet punctuation becomes denser ASCII at the wave's crest. Occupancy and
+    // the brand silhouette stay fixed; only the material within the strokes changes.
+    const INK: [char; 6] = ['.', ':', '+', '*', '#', '@'];
+    let base = usize::from(coverage >= 3);
+    INK[base + (energy * 4.0).round() as usize]
+}
+
+fn ink(theme: Theme, energy: f32) -> Style {
     if theme.color_level() == ColorLevel::None {
         return Style::default();
     }
-    let sweep = (seconds % 8.0) / 4.5 * 1.6 - 0.3;
-    let distance = x - sweep + y * 0.12 + 0.035 * (y * std::f32::consts::TAU - seconds).sin();
-    let shimmer = if animated {
-        (-(distance / 0.14).powi(2)).exp()
-    } else {
-        0.0
-    };
     let light = theme.mode() == ThemeMode::Light;
     let color = match theme.color_level() {
         ColorLevel::TrueColor => {
             let (base, peak) = if light {
-                ([65.0, 73.0, 83.0], [148.0, 112.0, 67.0])
+                ([168.0, 174.0, 181.0], [56.0, 66.0, 79.0])
             } else {
-                ([163.0, 174.0, 187.0], [250.0, 243.0, 224.0])
+                ([49.0, 60.0, 73.0], [235.0, 231.0, 219.0])
             };
             let rgb =
-                std::array::from_fn::<_, 3, _>(|i| (base[i] + (peak[i] - base[i]) * shimmer) as u8);
+                std::array::from_fn::<_, 3, _>(|i| (base[i] + (peak[i] - base[i]) * energy) as u8);
             Color::Rgb(rgb[0], rgb[1], rgb[2])
         }
         ColorLevel::Ansi256 => Color::Indexed(if light {
-            238 + (shimmer * 5.0) as u8
+            248 - (energy * 11.0) as u8
         } else {
-            248 + (shimmer * 7.0) as u8
+            237 + (energy * 18.0) as u8
         }),
-        _ => {
-            if light {
-                Color::DarkGray
-            } else {
-                Color::Gray
-            }
-        }
+        _ => Color::DarkGray,
     };
-    Style::default().fg(color)
+    let style = Style::default().fg(color);
+    if energy > 0.55 {
+        style.add_modifier(Modifier::BOLD)
+    } else {
+        style
+    }
 }
 
 #[derive(Default)]
 pub(super) struct Monument {
     size: (u16, u16),
-    mask: Vec<Vec<char>>,
+    mask: Vec<Vec<u8>>,
 }
 
 impl Monument {
@@ -262,10 +278,7 @@ impl Monument {
         seconds: f32,
         animated: bool,
     ) {
-        // Cache the vector raster until resize. Animation changes only the ink.
-        const QUADRANTS: [char; 16] = [
-            ' ', '▘', '▝', '▀', '▖', '▌', '▞', '▛', '▗', '▚', '▐', '▜', '▄', '▙', '▟', '█',
-        ];
+        // Cache vector coverage until resize; only ASCII density and ink animate.
         if self.size != (area.width, area.height) {
             self.size = (area.width, area.height);
             self.mask = (0..area.height)
@@ -286,7 +299,7 @@ impl Monument {
                                     }
                                 }
                             }
-                            QUADRANTS[mask]
+                            (mask as u8).count_ones() as u8
                         })
                         .collect()
                 })
@@ -301,18 +314,18 @@ impl Monument {
                     row.iter()
                         .enumerate()
                         .map(|(x, glyph)| {
+                            let energy = wave(
+                                x as f32 / f32::from(area.width),
+                                y as f32 / f32::from(area.height),
+                                seconds,
+                                animated,
+                            );
                             Span::styled(
-                                glyph.to_string(),
-                                if *glyph == ' ' {
+                                character(*glyph, energy).to_string(),
+                                if *glyph == 0 {
                                     Style::default()
                                 } else {
-                                    ink(
-                                        theme,
-                                        x as f32 / f32::from(area.width),
-                                        y as f32 / f32::from(area.height),
-                                        seconds,
-                                        animated,
-                                    )
+                                    ink(theme, energy)
                                 },
                             )
                         })
@@ -345,12 +358,28 @@ mod tests {
             .content
             .iter()
             .zip(&second.content)
-            .all(|(a, b)| a.symbol() == b.symbol()));
+            .all(|(a, b)| (a.symbol() == " ") == (b.symbol() == " ")));
         assert!(first
             .content
             .iter()
             .zip(&second.content)
             .any(|(a, b)| a.fg != b.fg));
+        assert!(
+            first
+                .content
+                .iter()
+                .zip(&second.content)
+                .any(|(a, b)| a.symbol() != b.symbol()),
+            "wave must change ASCII density"
+        );
+        assert!(
+            second
+                .content
+                .iter()
+                .any(|cell| cell.modifier.contains(Modifier::BOLD)),
+            "wave crest must become bold"
+        );
+        assert!(second.content.iter().all(|cell| cell.symbol().is_ascii()));
         terminal.backend_mut().resize(80, 10);
         terminal
             .draw(|frame| logo.draw(frame, frame.area(), theme, 2.3, true))
@@ -363,15 +392,15 @@ mod tests {
     fn shimmer_changes_ink_while_monochrome_stays_static() {
         let color = Theme::new(ThemeMode::Dark, ColorLevel::TrueColor, None);
         assert_ne!(
-            ink(color, 0.5, 0.5, 0.0, true),
-            ink(color, 0.5, 0.5, 2.3, true)
+            ink(color, wave(0.5, 0.5, 0.0, true)),
+            ink(color, wave(0.5, 0.5, 2.3, true))
         );
         assert_eq!(
-            ink(color, 0.5, 0.5, 0.0, false),
-            ink(color, 0.5, 0.5, 2.3, false)
+            ink(color, wave(0.5, 0.5, 0.0, false)),
+            ink(color, wave(0.5, 0.5, 2.3, false))
         );
         let mono = Theme::new(ThemeMode::Dark, ColorLevel::None, None);
-        assert_eq!(ink(mono, 0.5, 0.5, 2.3, true), Style::default());
+        assert_eq!(ink(mono, wave(0.5, 0.5, 2.3, true)), Style::default());
         assert!(inside(42.5, 10.0));
         assert!(!inside(50.0, 10.0), "O counter must stay open");
     }
