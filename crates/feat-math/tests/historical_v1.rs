@@ -777,6 +777,12 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         "b794bf1026c11441fe17495f41249c0fccd234cd"
     );
     assert_eq!(browser_wasm["fixtures"].as_array().unwrap().len(), 2);
+    let p35_corpus_identity =
+        old_fixture("transitions/p35_sealed_corpus_identity_rebaseline.v1.json");
+    assert_eq!(
+        p35_corpus_identity["source_commit"],
+        "44840c49c0ceba7f161d42fa7726089343bf7d49"
+    );
     let api03_id_newtypes =
         old_fixture("transitions/api03_id_newtypes_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
@@ -1366,6 +1372,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
+                p35_corpus_identity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1442,6 +1449,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
+                p35_corpus_identity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1511,6 +1519,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
+                p35_corpus_identity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1611,6 +1620,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
+                p35_corpus_identity.clone(),
             ],
         ),
         (
@@ -1671,6 +1681,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
+                p35_corpus_identity.clone(),
             ],
         ),
     ] {
@@ -1779,6 +1790,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         rustmem_cpu_affinity,
         rustunsafe_authority,
         browser_wasm,
+        p35_corpus_identity,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

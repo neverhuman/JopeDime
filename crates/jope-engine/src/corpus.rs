@@ -237,56 +237,23 @@ fn copy_record_bytes(
 
 /// Read-only memory mapping of the immutable training artifact.
 pub struct Records {
-    ptr: *mut libc::c_void,
-    len: usize,
+    mapping: memmap2::Mmap,
 }
 impl Records {
     pub fn open(path: &Path, count: usize) -> Result<Self> {
-        let file = fs::File::open(path)?;
-        Self::from_file(file, count)
+        let bytes = record_byte_len(count)?;
+        let source = fs::File::open(path)?;
+        Self::from_file(sealed_record_copy(source, bytes, None)?, count)
     }
     /// Hash the bytes actually copied into sealed shared storage. A subsequent
     /// source mutation cannot change training inputs or cause mmap SIGBUS.
     pub fn open_verified(path: &Path, count: usize, expected: &str) -> Result<Self> {
-        use std::os::fd::{AsRawFd, FromRawFd};
         let bytes = record_byte_len(count)?;
         if let Some(file) = crate::sealed_storage::shared(path, expected, bytes)? {
             return Self::from_file(file, count);
         }
-        // SAFETY: the static name is NUL-terminated and flags are supported
-        // integer constants. Check the result before constructing its sole owner.
-        let fd = unsafe {
-            libc::memfd_create(
-                c"jope-teaching-records".as_ptr(),
-                libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING,
-            )
-        };
-        ensure!(fd >= 0, "cannot create sealed teaching storage");
-        // SAFETY: memfd_create returned this fresh nonnegative descriptor;
-        // ownership is transferred once and File closes it on every error path.
-        let mut sealed = unsafe { fs::File::from_raw_fd(fd) };
-        let mut source = fs::File::open(path)?;
-        let metadata = source.metadata()?;
-        ensure!(
-            metadata.is_file() && metadata.len() == bytes as u64,
-            "record artifact dimensions changed"
-        );
-        // A matching initial length is not enough: a mutable source can grow
-        // after fstat. Never copy beyond the count-bound artifact into memfd.
-        let digest = copy_record_bytes(&mut source, &mut sealed, bytes)?;
-        ensure!(
-            hex::encode(digest) == expected,
-            "record content changed during verification"
-        );
-        let seals =
-            libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
-        // SAFETY: sealed owns this descriptor; F_ADD_SEALS takes integer flags,
-        // not a pointer. Successful sealing freezes exactly the bytes just hashed.
-        ensure!(
-            unsafe { libc::fcntl(sealed.as_raw_fd(), libc::F_ADD_SEALS, seals) } == 0,
-            "cannot seal teaching storage"
-        );
-        Self::from_file(sealed, count)
+        let source = fs::File::open(path)?;
+        Self::from_file(sealed_record_copy(source, bytes, Some(expected))?, count)
     }
     fn from_file(file: fs::File, count: usize) -> Result<Self> {
         use std::os::fd::AsRawFd;
@@ -294,39 +261,67 @@ impl Records {
         let len = usize::try_from(file.metadata()?.len())
             .context("record artifact exceeds addressable byte capacity")?;
         ensure!(len == expected, "record artifact dimensions changed");
-        // SAFETY: len is positive, addressable and matches the file length;
-        // mmap owns its mapping independently of the borrowed file descriptor.
-        // Only read access is requested and MAP_FAILED is checked before storage.
-        let ptr = unsafe {
-            libc::mmap(
-                std::ptr::null_mut(),
-                len,
-                libc::PROT_READ,
-                libc::MAP_SHARED,
-                file.as_raw_fd(),
-                0,
-            )
-        };
-        ensure!(ptr != libc::MAP_FAILED, "mmap failed");
-        Ok(Self { ptr, len })
+        let seals =
+            libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+        // SAFETY: F_GET_SEALS reads flags from this live borrowed descriptor and takes no pointer.
+        let actual_seals = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GET_SEALS) };
+        ensure!(
+            actual_seals >= 0 && actual_seals & seals == seals,
+            "record artifact is not fully sealed"
+        );
+        // SAFETY: verified seals prevent writes and size changes; `len` is positive, <= isize::MAX,
+        // and equals the initialized file length for this read-only mapping.
+        let mapping = unsafe { memmap2::MmapOptions::new().len(len).map(&file) }
+            .map_err(|_| anyhow::anyhow!("mmap failed"))?;
+        Ok(Self { mapping })
     }
     pub fn get(&self, i: usize) -> Record {
-        assert!(i < self.len / RECORD_BYTES, "record index out of bounds");
-        // SAFETY: construction caps the mapping at isize::MAX bytes. This division-based
-        // bound keeps the offset multiplication and complete record within that live mapping.
-        Record::parse(unsafe {
-            std::slice::from_raw_parts((self.ptr as *const u8).add(i * RECORD_BYTES), RECORD_BYTES)
-        })
+        assert!(
+            i < self.mapping.len() / RECORD_BYTES,
+            "record index out of bounds"
+        );
+        let start = i * RECORD_BYTES;
+        Record::parse(&self.mapping[start..start + RECORD_BYTES])
     }
 }
-impl Drop for Records {
-    fn drop(&mut self) {
-        // SAFETY: this unique owner stores the exact successful mmap base and
-        // length; shared methods cannot outlive &self and no mapping slice escapes.
-        unsafe {
-            libc::munmap(self.ptr, self.len);
-        }
+
+fn sealed_record_copy(
+    mut source: fs::File,
+    bytes: usize,
+    expected_digest: Option<&str>,
+) -> Result<fs::File> {
+    use std::os::fd::{AsRawFd, FromRawFd};
+    let metadata = source.metadata()?;
+    ensure!(
+        metadata.is_file() && metadata.len() == bytes as u64,
+        "record artifact dimensions changed"
+    );
+    // SAFETY: the static name is NUL-terminated and flags are supported integer constants.
+    let fd = unsafe {
+        libc::memfd_create(
+            c"jope-teaching-records".as_ptr(),
+            libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING,
+        )
+    };
+    ensure!(fd >= 0, "cannot create sealed teaching storage");
+    // SAFETY: memfd_create returned this fresh nonnegative descriptor; ownership is transferred
+    // exactly once and File closes it on every error path.
+    let mut sealed = unsafe { fs::File::from_raw_fd(fd) };
+    // Copy exactly the bounded artifact and reject truncation or growth after the initial stat.
+    let digest = copy_record_bytes(&mut source, &mut sealed, bytes)?;
+    if let Some(expected) = expected_digest {
+        ensure!(
+            hex::encode(digest) == expected,
+            "record content changed during verification"
+        );
     }
+    let seals = libc::F_SEAL_WRITE | libc::F_SEAL_GROW | libc::F_SEAL_SHRINK | libc::F_SEAL_SEAL;
+    // SAFETY: `sealed` owns the fresh descriptor; F_ADD_SEALS takes integer flags, not pointers.
+    ensure!(
+        unsafe { libc::fcntl(sealed.as_raw_fd(), libc::F_ADD_SEALS, seals) } == 0,
+        "cannot seal teaching storage"
+    );
+    Ok(sealed)
 }
 
 pub(crate) type Selected = BTreeMap<usize, BTreeMap<String, (Vec<usize>, f64, f64, String)>>;
