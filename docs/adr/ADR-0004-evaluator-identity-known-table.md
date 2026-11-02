@@ -206,12 +206,12 @@ expansion into the reusable `jope-datasets` contract. Adding that crate as a
 direct campaign dependency changes `Cargo.lock` and therefore the recorded
 evaluator identity, even though evaluator calculations, DSL ABI and emitted
 behavior fixtures are unchanged. The transition advances implementation hash
-`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` to
-`42f65ee246ac36f0b88d6284cc68437e79d69f6b8c7630e9963e865853cf8f61`, Cargo.lock
-hash `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401` to
-`5f919275e2480127a0893d8ceb623a4623472c018d9a33398beb81328e7a19b8`, and
-identity digest `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d`
-to `a2a8538e5b83e741ebbef94ffbec279a8346a35dc42d02fca798749ad64e0a5b`. The
+`10fe3dee6daf50c3b54362df80cbcb60774c6169563fcba2c3c0036ab5e3dfda` to
+`a6f3a33426e62c46f7e552dc7ea2e5aaef4dec4ab816116eec7554f8d03d9c0c`, Cargo.lock
+hash `7d90c1d3f86960fcfbbf66e848d22e665c446debec38e386f512ef09c8a28042` to
+`2a6d41eac882df5122e2958cd4bc5845156b2d7b7d198bd9e52c59bac02b50ed`, and
+identity digest `8fe007189bca9fe7e0d92b85b509ac79c116616e41a16bb5a0c4bf93d1dda9d6`
+to `4cd44107343b99360a15811bbc6ca0fed80af3d359040efbdeaa3cecdbb6b18c`. The
 identity-only regeneration is bound to source commit
-`942453867de2c6335343b51118c744d1d235fcff`. No known-identity row is added
+`0749059b647e93691285bfb27e0f164331f291ad`. No known-identity row is added
 because this change has no shipped receipt proving that the new identity existed.

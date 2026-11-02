@@ -2,17 +2,17 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "P21 moved the stable self-play source-family train/validation split into the jope-datasets contract. The direct campaign dependency and Cargo.lock entry mint a new evaluator identity; evaluator calculations, DSL ABI, and behavior fixtures are unchanged. The two identity fixtures are regenerated only for those declared identity inputs. No known-identity row is added without a shipped receipt.",
   "plan_reference": "P21 pytruth Rust family-contract migration; ADR-0004 identity-only procedure",
-  "source_commit": "16ff3c6d6bdede463155c36081f26059f28c7048",
+  "source_commit": "0749059b647e93691285bfb27e0f164331f291ad",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "c0e9775a3538e93c069a9041cd71c77cdfb47c182396c803f26f8f12795b9bac",
-      "after": "ecc7c34fe8209f20c7cfbaf2e6de017b550d5fbdc39a2c401781432d6b13d717"
+      "before": "5f8fc35bec84b9d9630b4316e2d15ef086b777602edad7a0750e1ef04ce3a773",
+      "after": "e3a5e7be5fa853f6a84764c96b96623dd58348f378e9d558e2bb776c656fea9a"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "7bdd2c734a36fb9f184fb292cdbaf42285f959fc8cdc6cfddbab6f149f410b2d",
-      "after": "6484a39bff8d69b6747800ecba9b8c2c9978a0583523e643f503917253ebca36"
+      "before": "8d225fb703ab5b0ed29ec93cfdd3007cc3b797dd8e51fe78f173041f629ee5d4",
+      "after": "c92a8390e87a04b65b14a886baf6ed1213b60fd8267effa9a01432b33e9f9454"
     }
   ]
 }
