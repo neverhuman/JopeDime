@@ -486,11 +486,11 @@ class RecorderSession:
             lease, _ = read_object(marker, "recorder identity")
             pid = lease.get("pid")
             require(
-                lease.get("schema") == "jopedime.mcp-recorder-session/v1"
+                lease.get("schema") == "jopedime.mcp-recorder-session/v2"
                 and type(pid) is int
                 and pid > 1
                 and pid != os.getpid()
-                and lease.get("owner_pgid") == self.client_pid
+                and lease.get("owner_session") == self.client_pid
                 and type(lease.get("start_ticks")) is int
                 and lease["start_ticks"] > 0
                 and lease.get("producer_sha256") == self.producer_pin
@@ -543,13 +543,10 @@ class RecorderSession:
                 ),
                 "recorder command is outside the owned capture",
             )
-            if current["session"] != pid:
-                require(
-                    current["group"] == self.client_pid,
-                    "recorder is in a foreign session",
-                )
-                return set()
-            require(current["group"] == pid, "recorder must lead its own process group")
+            require(
+                current["session"] == pid and current["group"] == pid,
+                "recorder is not isolated in its owned session",
+            )
             self.identity = lease
         pid = self.identity["pid"]
         current = _process_info(pid)

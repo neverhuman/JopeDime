@@ -82,6 +82,34 @@ def publish_private_json(path, value):
     pending.unlink()
 
 
+def _isolate_recorder_session():
+    """Return the launching client session and detach before publishing ownership."""
+    pid = os.getpid()
+    owner_session = os.getsid(os.getppid())
+    if os.getsid(0) == pid:
+        return owner_session, None
+    if os.getpgrp() == pid:
+        child = os.fork()
+        if child:
+            while True:
+                try:
+                    _waited, status = os.waitpid(child, 0)
+                    break
+                except InterruptedError:
+                    continue
+            if os.WIFEXITED(status):
+                return owner_session, os.WEXITSTATUS(status)
+            if os.WIFSIGNALED(status):
+                return owner_session, min(255, 128 + os.WTERMSIG(status))
+            return owner_session, 1
+    os.setsid()
+    require(
+        os.getsid(0) == os.getpgrp() == os.getpid(),
+        "recorder session isolation failed",
+    )
+    return owner_session, None
+
+
 def record(command, directory, seconds, max_bytes, env_allow=()):
     require(
         hasattr(os, "WNOWAIT")
@@ -93,6 +121,9 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
         command and math.isfinite(seconds) and seconds > 0 and max_bytes > 0,
         "a server command and positive finite bounds are required",
     )
+    owner_session, supervisor_exit = _isolate_recorder_session()
+    if supervisor_exit is not None:
+        return supervisor_exit
     environment = child_environment(env_allow)
     directory.mkdir(mode=0o700)  # Exclusive: never reuse or delete capture evidence.
     paths = {
@@ -182,16 +213,14 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
         publish_private_json(
             directory / "recorder.json",
             dict(
-                schema="jopedime.mcp-recorder-session/v1",
+                schema="jopedime.mcp-recorder-session/v2",
                 pid=own_pid,
-                owner_pgid=os.getpgid(os.getppid()),
+                owner_session=owner_session,
                 start_ticks=start_ticks,
                 producer_sha256=source_pins["producer_sha256"],
                 argv=command,
             ),
         )
-        if os.getsid(0) != own_pid:
-            os.setsid()
         require(
             os.getsid(0) == os.getpgrp() == own_pid, "recorder session isolation failed"
         )
