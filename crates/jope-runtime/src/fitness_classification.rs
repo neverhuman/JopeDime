@@ -7,6 +7,7 @@
 //! [`FitnessError::Undefined`]; the caller must fail that candidate, never assign a placeholder.
 //! Calibration, event publication and discovery-loop integration belong to their owning tasks.
 
+pub use crate::fitness::Aggregation;
 use crate::fitness::{Direction, Score};
 use serde::{Deserialize, Serialize};
 
@@ -47,13 +48,6 @@ pub enum Metric {
     CostMatrixLoss,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Aggregation {
-    Mean,
-    Sum,
-}
-
 /// No omission, fallback score, probability clipping or replacement of non-finite predictions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -68,12 +62,44 @@ pub struct ClassificationFitness {
     pub schema: String,
     pub metric: Metric,
     pub class_order: [String; 2],
+    #[serde(with = "classification_aggregation_serde")]
     pub aggregation: Aggregation,
     pub undefined: UndefinedPolicy,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub threshold: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cost_matrix: Option<[[f64; 2]; 2]>,
+}
+
+mod classification_aggregation_serde {
+    use super::Aggregation;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S>(value: &Aggregation, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match value {
+            Aggregation::Mean {} => "mean".serialize(serializer),
+            Aggregation::Sum {} => "sum".serialize(serializer),
+            _ => Err(serde::ser::Error::custom(
+                "classification aggregation supports only mean or sum",
+            )),
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Aggregation, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        match String::deserialize(deserializer)?.as_str() {
+            "mean" => Ok(Aggregation::Mean {}),
+            "sum" => Ok(Aggregation::Sum {}),
+            other => Err(serde::de::Error::custom(format!(
+                "unsupported classification aggregation `{other}`"
+            ))),
+        }
+    }
 }
 
 /// Aligned held-out rows. Each probability pair follows `class_order`, which must match the
@@ -166,7 +192,7 @@ impl ClassificationFitness {
                 | Metric::F1
                 | Metric::BalancedAccuracy
                 | Metric::CostMatrixLoss
-        ) && self.aggregation != Aggregation::Mean
+        ) && self.aggregation != (Aggregation::Mean {})
         {
             return Err(FitnessError::InvalidSpecification(
                 "dataset-level metrics require mean aggregation".into(),
@@ -235,7 +261,7 @@ impl ClassificationFitness {
         let value = self.metric.value(
             &labels,
             inputs.probabilities,
-            self.aggregation,
+            self.aggregation.clone(),
             self.threshold.unwrap_or(DEFAULT_CLASSIFICATION_THRESHOLD),
             self.cost_matrix,
         )?;
@@ -290,8 +316,13 @@ impl Metric {
                     };
                 }
                 Ok(match aggregation {
-                    Aggregation::Mean => total / labels.len() as f64,
-                    Aggregation::Sum => total,
+                    Aggregation::Mean {} => total / labels.len() as f64,
+                    Aggregation::Sum {} => total,
+                    _ => {
+                        return Err(FitnessError::InvalidSpecification(
+                            "classification aggregation supports only mean or sum".into(),
+                        ));
+                    }
                 })
             }
             Self::RocAuc => roc_auc(labels, probabilities),

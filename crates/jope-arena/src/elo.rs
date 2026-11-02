@@ -39,24 +39,7 @@ fn elo_scale() -> f64 {
 }
 
 /// Whether lower or higher metric values win.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum Direction {
-    /// Higher is better (`roc_auc`, `macro_f1`).
-    Maximize,
-    /// Lower is better (`rmse`, `mase`).
-    Minimize,
-}
-
-impl Direction {
-    /// The JSON spelling.
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Self::Maximize => "maximize",
-            Self::Minimize => "minimize",
-        }
-    }
-}
+pub use jope_api::Direction;
 
 /// The reporter's `config.json` `elo` block.
 #[derive(Clone, Debug, Deserialize, PartialEq)]

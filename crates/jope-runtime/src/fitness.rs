@@ -36,12 +36,7 @@ pub fn schema() -> serde_json::Value {
     .expect("committed fitness schema")
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Direction {
-    Minimize,
-    Maximize,
-}
+pub use jope_api::Direction;
 
 /// Every parameter is part of the serialized objective identity.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

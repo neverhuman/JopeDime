@@ -9,6 +9,7 @@ description = "Appliance runtime: native method roster, table ingress, local fit
 
 [dependencies]
 jope-narrator = { path = "../jope-narrator" }
+jope-api = { path = "../jope-api" }
 clap.workspace = true
 anyhow.workspace = true
 jope-paths = { path = "../jope-paths" }
