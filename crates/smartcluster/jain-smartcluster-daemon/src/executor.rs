@@ -4,19 +4,19 @@ use std::io;
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::Stdio;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::sync::OnceLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use jain_smartcluster_core::{
     ControlMessage, FencedAttempt, IoMode, JainWorkload, PriorityClass, ProtocolVersion,
     ResourceRequest, WorkerControlFrame, WorkerReport, WorkerReportFrame, Workload,
 };
-use nix::pty::{openpty, Winsize};
-use nix::sys::signal::{kill, raise, Signal};
-use nix::sys::wait::{waitpid, WaitPidFlag, WaitStatus};
-use nix::unistd::{setsid, Pid};
+use nix::pty::{Winsize, openpty};
+use nix::sys::signal::{Signal, kill, raise};
+use nix::sys::wait::{WaitPidFlag, WaitStatus, waitpid};
+use nix::unistd::{Pid, setsid};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -28,7 +28,7 @@ use crate::cgroup::{
     AttemptKey, CgroupError, CgroupLimits, CgroupManager, IsolationMode, JobCgroup,
 };
 use crate::config::{ExecutionConfig, WorkerConfig};
-use crate::control::{ControlChannel, ControlPair, DaemonControlFrameError, CONTROL_FD_ENV};
+use crate::control::{CONTROL_FD_ENV, ControlChannel, ControlPair, DaemonControlFrameError};
 
 pub const EXEC_HELPER_MARKER: &str = "__scqd_exec_helper";
 
@@ -119,10 +119,16 @@ mod helper;
 mod launch;
 mod lifecycle;
 
+#[cfg(test)]
+use helper::parse_helper_arguments;
 pub use helper::run_exec_helper;
 pub(super) use launch::terminate_failed_launch;
 pub use launch::{ExecutionAllocation, Executor, LaunchPlan, WorkloadResolver};
+#[cfg(test)]
+use launch::{cuda_visible_devices, reserved_environment_name};
 pub(super) use lifecycle::LaunchGuard;
+#[cfg(test)]
+use lifecycle::signal_process_group;
 pub use lifecycle::{
     CancelOutcome, ProcessWaiter, RunningParts, RunningWorkload, WorkloadInput, WorkloadIo,
     WorkloadOutput, WorkloadOutputOwned,
