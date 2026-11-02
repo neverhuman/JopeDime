@@ -42,7 +42,7 @@ fn the_dope_gpu_appliance_closure_obeys_its_separate_policy() {
 }
 
 #[test]
-fn full_cpu_matrix_covers_production_defaults_without_cpp_or_tls() {
+fn full_cpu_matrix_covers_production_defaults_with_scoped_account_tls() {
     use std::collections::BTreeSet;
     let repo = jope_dist::repo_root();
     let manifest: toml::Value = toml::from_str(
@@ -89,7 +89,19 @@ fn full_cpu_matrix_covers_production_defaults_without_cpp_or_tls() {
         assert!(resolved.contains_key(name), "full selection omitted {name}");
     }
     assert!(!resolved["feat-math"].contains("fitted-cpp"));
-    assert!(resolved["ureq"].is_empty());
-    assert!(!resolved.contains_key("rustls"));
+    assert!(resolved["ureq"].contains("rustls-no-provider"));
+    assert!(resolved.contains_key("rustls"));
+    assert!(resolved.contains_key("aws-lc-rs"));
+    let minimal = jope_dist::audit::closure_features(
+        &repo.join("Cargo.toml"),
+        &policy.package,
+        &policy.target,
+        &[],
+    )
+    .unwrap();
+    assert!(minimal["ureq"].is_empty());
+    for name in ["rustls", "aws-lc-rs", "aws-lc-sys", "cc", "cmake"] {
+        assert!(!minimal.contains_key(name), "minimal edition gained {name}");
+    }
     assert!(!resolved.contains_key("cudarc"));
 }

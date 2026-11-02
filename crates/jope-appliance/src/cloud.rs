@@ -202,19 +202,28 @@ pub fn account_label() -> String {
 }
 impl Client {
     pub fn new(workspace: &str, token: Option<String>, gateway: Option<Gateway>) -> Result<Self> {
-        let tls = ureq::tls::TlsConfig::builder()
-            .unversioned_rustls_crypto_provider(Arc::new(
-                rustls::crypto::aws_lc_rs::default_provider(),
-            ))
-            .build();
-        let config = ureq::Agent::config_builder()
-            .tls_config(tls)
+        let workspace = origin(workspace)?;
+        #[cfg(not(feature = "client"))]
+        anyhow::ensure!(
+            workspace.starts_with("http://"),
+            "HTTPS workspace connection requires a build with the client feature"
+        );
+        let config = ureq::Agent::config_builder();
+        #[cfg(feature = "client")]
+        let config = {
+            let tls = ureq::tls::TlsConfig::builder()
+                .unversioned_rustls_crypto_provider(std::sync::Arc::new(
+                    rustls::crypto::aws_lc_rs::default_provider(),
+                ))
+                .build();
+            config.tls_config(tls)
+        };
+        let config = config
             .proxy(None)
             .max_redirects(0)
             .http_status_as_error(false)
             .timeout_global(Some(Duration::from_secs(20)))
             .build();
-        let workspace = origin(workspace)?;
         if let Some(gateway) = &gateway {
             anyhow::ensure!(
                 origin(&gateway.origin)? == workspace,

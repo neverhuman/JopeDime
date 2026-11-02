@@ -37,6 +37,9 @@ jobs:
           NODE_VERSION='${{ matrix.node }}' bash ops/ci/typescript.sh prepare
       - name: Formatting and complete source checks
         run: bash ops/ci/typescript.sh source-check
+      - name: Native browser runtime integrity and WASM parity
+        if: matrix.node == '26.1.0'
+        run: bash web/browser-predict/check.sh
       - name: Complete census, golden parity, 100 percent facade coverage and publication contracts
         run: bash ops/ci/typescript.sh qualify
       - name: Every census fixture in Chromium, Firefox, WebKit and module workers

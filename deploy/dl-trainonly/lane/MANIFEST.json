@@ -1,28 +1,14 @@
 {
  "changes_since_prior": {
-  "added": {
-   "dltrain/replacement.py": "f4e1a7ebc49a7f606fe51bb7a96ba4dcdbccb5249c21f78c61adaa50f54b7672"
-  },
+  "added": {},
   "changed": {
-   "tests/test_v2_partial_refusal_manifest.py": {
-    "from": "1af1664176c4ffe140c6e5b66bb91e431f4f107de02ed9ffcb4aca74de39a76a",
-    "to": "62e037d071979cf1f95161a2acbc33d7e26a7d8f6746ab29495c407e9aa77cc9"
-   },
-   "tools/v2_build_local.py": {
-    "from": "62643625f2809a054e6ff2364c9535a5fa950639393ab9702ce8c14597ba91fa",
-    "to": "de3ebc11bdd6507ee28501a7e065e8c43c861a015a94e5c768cde3980447bce9"
-   },
-   "tools/v2_rowsel_build.py": {
-    "from": "c562ae23da44d9d87a83022ae94e5e8562cd102a7cbbcca614b79fbfea0a72ce",
-    "to": "b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00"
-   },
-   "tools/v2_rowsel_raw.py": {
-    "from": "dfecc2d31b184b6c9d92528813b4a3b4e265ccdd4c248767be74a7e31ce7afb3",
-    "to": "f35614e441742f43bf9fee5cea96a8273f1832532a20df59016634b2664e66e6"
+   "tests_p3/test_p3_verify.py": {
+    "from": "2c98d995424b02eed0da09170c94dc3ecce5b7ab2acc25f0831ec4ac419096f4",
+    "to": "a6d9996c089a8cc7ab38c089ac6af4bdf6ae629dab021e2f9e398af752215782"
    }
   }
  },
- "created_utc": "2026-10-07T16:50:06.409017+00:00",
+ "created_utc": "2026-11-02T04:14:46.390700+00:00",
  "dependencies": {
   "Dope": "dope-kernel built from ~/dope 63696a5d into RUN/build/dope-target (bc3c4460)",
   "GPU encode": "system /usr/bin/python3.12 with torch 2.7.0+cu12x, safetensors, psutil; Codex's gpu_encoders.py ff419384 read-only from /home/ubuntu/scratch/jopedime-regression-neural-encoding-v1; lane-owned TabPFN runtime tabpfn 9.0.0 + pandas 2.3.2 + skrub 0.10.1 (manifest RUN/pydeps/tab35-runtime-v1.files.sha256 8ad8cb6e)",
@@ -556,8 +542,8 @@
    "sha256": "2f426a17ecfe67df3987387ed356b045f6c463a4ecee3cd30d57fa63338c4e9b"
   },
   "src/dl_training_v1/tests_p3/test_p3_verify.py": {
-   "bytes": 25196,
-   "sha256": "2c98d995424b02eed0da09170c94dc3ecce5b7ab2acc25f0831ec4ac419096f4"
+   "bytes": 25266,
+   "sha256": "a6d9996c089a8cc7ab38c089ac6af4bdf6ae629dab021e2f9e398af752215782"
   },
   "src/dl_training_v1/tests_p4/__init__.py": {
    "bytes": 261,
@@ -1284,6 +1270,10 @@
   "test_admission_fail_closed.py.e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c": {
    "bytes": 3951,
    "sha256": "e3c16b5ea27a43103b4e5a3411ee9d7aa9faf3d4eb036de96a5c640bd526791c"
+  },
+  "test_p3_verify.py.2c98d995424b02eed0da09170c94dc3ecce5b7ab2acc25f0831ec4ac419096f4": {
+   "bytes": 25196,
+   "sha256": "2c98d995424b02eed0da09170c94dc3ecce5b7ab2acc25f0831ec4ac419096f4"
   },
   "test_p7_restore.py.adf52bb8d2494cce3f49c29529fe8f278b55345d70d345b854af49deea5ad050": {
    "bytes": 69350,
@@ -2034,9 +2024,17 @@
   "sept29_materializer_spec": "NOT found locally by the S1 pilot agent; its findings and the engine's expected inputs are in RUN/receipts/trainonly-v2/s1-pilot/README.md and pilot-receipt.json (eb61ad68)"
  },
  "schema": "jope.dl-lane-handoff/v2",
+ "source_correction": {
+  "id": "source-closure-correction-20261102",
+  "kind": "strict-import-closure-assertion",
+  "predecessor_manifest": "predecessor/source-closure-correction-20261102/MANIFEST.json",
+  "predecessor_sha256": "cc9609693ada637ed1cc3308c514ecb52de9d35aa8ed1d45a17103c432a76414",
+  "reason": "The static receipt closure includes jtt1.py and quarantine.py; correct stale expected dependency enumeration. No production/numerical code, fixture rows, tolerances, host exclusions or gate weakened.",
+  "reproduction": "tests_p3.test_p3_verify.SelectionCodeIdentity.test_every_receipt_names_the_source_tree_and_runtime"
+ },
  "source_root": "deploy/dl-trainonly/lane/src/dl_training_v1 (ROOT writer correction on dl/fold1-main-routes; immutable parent retained)",
  "supersedes": "predecessor/root-pr251-resume-20261007T1640Z/MANIFEST.json",
- "supersedes_sha256": "e88de3c63c574a133b0742f7c179a217f26f2dee5cffc14f7b82189c63a06143",
+ "supersedes_sha256": "cc9609693ada637ed1cc3308c514ecb52de9d35aa8ed1d45a17103c432a76414",
  "test_commands": [
   "cd src/dl_training_v1 && python -m unittest discover -s tests -t .   # lane suites (unittest; pytest not used)",
   "python -m unittest tests.test_v2_publish tests.test_s3io tests.test_v2_rowsel_build tests.test_v2_rowsel_raw tests.test_nonnumeric tests.test_rowsel tests.test_t1raw tests.test_t1prep tests.test_trainonly",

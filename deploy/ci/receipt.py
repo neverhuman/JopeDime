@@ -16,7 +16,7 @@ ENV_KEYS = ("CARGO_BUILD_JOBS", "CARGO_INCREMENTAL", "CARGO_PROFILE_DEV_DEBUG", 
             "JOPE_PARITY_STRICT", "JOPE_RUNNER_LANE", "JOPE_CPU_CLASS", "JOPE_RUST_TEST_PARTITION",
             "RUSTC_WRAPPER", "SCCACHE_DIR", "SCCACHE_CONF", "SCCACHE_SERVER_UDS")
 
-INPUTS = ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py", "deploy/ci/full-lane.sh", "deploy/ci/full-main.py", "deploy/ci/pytest-evidence.sh")
+INPUTS = ("Cargo.lock", "rust-toolchain.toml", "python/uv.lock", "benchmarks/pyproject.toml", "benchmarks/uv.lock", "deploy/ci/coverage.json", "deploy/ci/fast-lane.sh", "deploy/ci/receipt.py", "deploy/ci/results.py", "deploy/ci/ci-plan.py", "deploy/ci/full-lane.sh", "deploy/ci/full-main.py", "deploy/ci/pytest-evidence.sh")
 
 
 def digest(path):
