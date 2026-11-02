@@ -1367,6 +1367,8 @@ crates/jope-engine/src/eval_registry/service/transport.rs
 crates/jope-engine/src/eval_registry/service/worker.rs
 crates/jope-engine/src/eval_registry/witness.rs
 crates/jope-engine/src/eval_registry/witness/epochs.rs
+crates/jope-engine/src/eval_registry/witness/epochs/store_ops.rs
+crates/jope-engine/src/eval_registry/witness/epochs/transition.rs
 crates/jope-engine/src/eval_registry/witness/epochs/tests.rs
 crates/jope-engine/src/eval_registry/witness/funding_tests.rs
 crates/jope-engine/src/eval_registry/witness/native_grants.rs
