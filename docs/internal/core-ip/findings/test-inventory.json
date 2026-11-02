@@ -1695,6 +1695,10 @@
       "reason": "REL-07 PR1382 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_qualification_receipt_draft.py": {
+      "reason": "Non-signable qualification receipt draft schema and disclosure controls; static fixtures do not authorize release qualification.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_release_command_scaffold.py": {
       "reason": "REL-07 PR1454 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
