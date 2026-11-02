@@ -31,27 +31,24 @@ use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
+#[path = "jope_encoder_supervisor/artifact_helpers.rs"]
+mod artifact_helpers;
+#[path = "jope_encoder_supervisor/sandbox.rs"]
+mod sandbox;
+
+use artifact_helpers::{
+    collect_files, encoder_artifacts, sha256_bytes, verify_declared_inputs,
+    verify_runtime_artifacts,
+};
+use sandbox::{
+    LandlockRuleset, SandboxPolicy, ACCESS_EXECUTE, ACCESS_MAKE_DIR, ACCESS_MAKE_REG,
+    ACCESS_MAKE_SYM, ACCESS_READ_DIR, ACCESS_READ_FILE, ACCESS_REFER, ACCESS_REMOVE_DIR,
+    ACCESS_REMOVE_FILE, ACCESS_TRUNCATE, ACCESS_WRITE_FILE,
+};
+
 const CHILD_SCHEMA: &str = "JopeEncoderChildReceipt.v2";
 const SANDBOX_SCHEMA: &str = "JopeEncoderLandlockPolicy.v1";
 const CHILD_RECEIPT_FD: RawFd = 198;
-const LANDLOCK_CREATE_RULESET_VERSION: u32 = 1;
-const LANDLOCK_RULE_PATH_BENEATH: u32 = 1;
-const ACCESS_EXECUTE: u64 = 1 << 0;
-const ACCESS_WRITE_FILE: u64 = 1 << 1;
-const ACCESS_READ_FILE: u64 = 1 << 2;
-const ACCESS_READ_DIR: u64 = 1 << 3;
-const ACCESS_REMOVE_DIR: u64 = 1 << 4;
-const ACCESS_REMOVE_FILE: u64 = 1 << 5;
-const ACCESS_MAKE_CHAR: u64 = 1 << 6;
-const ACCESS_MAKE_DIR: u64 = 1 << 7;
-const ACCESS_MAKE_REG: u64 = 1 << 8;
-const ACCESS_MAKE_SOCK: u64 = 1 << 9;
-const ACCESS_MAKE_FIFO: u64 = 1 << 10;
-const ACCESS_MAKE_BLOCK: u64 = 1 << 11;
-const ACCESS_MAKE_SYM: u64 = 1 << 12;
-const ACCESS_REFER: u64 = 1 << 13;
-const ACCESS_TRUNCATE: u64 = 1 << 14;
-
 #[derive(Parser, Debug)]
 #[command(name = "jope-encoder-supervisor")]
 struct Args {
@@ -93,134 +90,6 @@ struct ChildReceiptV2 {
     output_finite: bool,
     extra_output_count: u32,
     timing: EncoderStageTiming,
-}
-
-#[derive(Serialize)]
-struct SandboxPolicy<'a> {
-    schema: &'static str,
-    landlock_abi: i32,
-    runtime_read_execute_root: &'a Path,
-    input_read_root: &'a Path,
-    output_write_root: &'a Path,
-    system_read_execute_roots: &'a [PathBuf],
-    device_read_write_paths: &'a [PathBuf],
-    denied_classes: [&'static str; 5],
-}
-
-#[repr(C)]
-struct LandlockRulesetAttr {
-    handled_access_fs: u64,
-}
-
-#[repr(C)]
-struct LandlockPathBeneathAttr {
-    allowed_access: u64,
-    parent_fd: i32,
-    _reserved: u32,
-}
-
-struct LandlockRuleset {
-    fd: OwnedFd,
-    abi: i32,
-}
-
-impl LandlockRuleset {
-    fn new() -> Result<Self> {
-        // SAFETY: LANDLOCK_CREATE_RULESET_VERSION requires a null attr and size 0, which are
-        // passed; the kernel then only returns the ABI version and dereferences no memory.
-        let abi = unsafe {
-            libc::syscall(
-                libc::SYS_landlock_create_ruleset,
-                std::ptr::null::<LandlockRulesetAttr>(),
-                0usize,
-                LANDLOCK_CREATE_RULESET_VERSION,
-            )
-        } as i32;
-        ensure!(abi >= 3, "working Landlock ABI >=3 is required");
-        let handled_access_fs = ACCESS_EXECUTE
-            | ACCESS_WRITE_FILE
-            | ACCESS_READ_FILE
-            | ACCESS_READ_DIR
-            | ACCESS_REMOVE_DIR
-            | ACCESS_REMOVE_FILE
-            | ACCESS_MAKE_CHAR
-            | ACCESS_MAKE_DIR
-            | ACCESS_MAKE_REG
-            | ACCESS_MAKE_SOCK
-            | ACCESS_MAKE_FIFO
-            | ACCESS_MAKE_BLOCK
-            | ACCESS_MAKE_SYM
-            | ACCESS_REFER
-            | ACCESS_TRUNCATE;
-        let attr = LandlockRulesetAttr { handled_access_fs };
-        // SAFETY: attr is a live repr(C) landlock_ruleset_attr (one u64) and its exact size is
-        // passed, so the kernel reads only initialized bytes; flags are 0 and nothing is retained.
-        let fd = unsafe {
-            libc::syscall(
-                libc::SYS_landlock_create_ruleset,
-                &attr,
-                std::mem::size_of::<LandlockRulesetAttr>(),
-                0u32,
-            )
-        } as i32;
-        if fd < 0 {
-            return Err(std::io::Error::last_os_error()).context("create Landlock ruleset");
-        }
-        Ok(Self {
-            // SAFETY: landlock_create_ruleset just returned this fresh nonnegative fd and no other
-            // owner holds it; OwnedFd takes sole ownership and closes it exactly once.
-            fd: unsafe { OwnedFd::from_raw_fd(fd) },
-            abi,
-        })
-    }
-
-    fn allow_path(&self, path: &Path, requested_access: u64) -> Result<()> {
-        let metadata = fs::symlink_metadata(path)
-            .with_context(|| format!("stat Landlock path {}", path.display()))?;
-        ensure!(
-            !metadata.file_type().is_symlink(),
-            "Landlock allow path is a symlink"
-        );
-        let access = if metadata.is_dir() {
-            requested_access
-        } else {
-            requested_access & !(ACCESS_READ_DIR | ACCESS_REMOVE_DIR | ACCESS_MAKE_DIR)
-        };
-        let c_path = CString::new(path.as_os_str().as_bytes())?;
-        // SAFETY: c_path is a live NUL-terminated CString borrowed for this call.
-        // The c_int flags request neither O_CREAT nor O_TMPFILE (no mode argument).
-        // open retains no pointer; negative results are checked before FD ownership.
-        let path_fd = unsafe { libc::open(c_path.as_ptr(), libc::O_PATH | libc::O_CLOEXEC) };
-        if path_fd < 0 {
-            return Err(std::io::Error::last_os_error())
-                .with_context(|| format!("open Landlock path {}", path.display()));
-        }
-        // SAFETY: successful open returned a new nonnegative descriptor owned
-        // only here. It has not been closed or wrapped elsewhere; this transfers
-        // ownership exactly once to OwnedFd, which closes it after add_rule.
-        let path_fd = unsafe { OwnedFd::from_raw_fd(path_fd) };
-        let attr = LandlockPathBeneathAttr {
-            allowed_access: access,
-            parent_fd: path_fd.as_raw_fd(),
-            _reserved: 0,
-        };
-        // SAFETY: the kernel copies just the 12 bytes of packed landlock_path_beneath_attr, which
-        // match live attr's repr(C) prefix; self.fd and path_fd stay open for the call.
-        let result = unsafe {
-            libc::syscall(
-                libc::SYS_landlock_add_rule,
-                self.fd.as_raw_fd(),
-                LANDLOCK_RULE_PATH_BENEATH,
-                &attr,
-                0u32,
-            )
-        };
-        if result != 0 {
-            return Err(std::io::Error::last_os_error())
-                .with_context(|| format!("add Landlock rule for {}", path.display()));
-        }
-        Ok(())
-    }
 }
 
 fn main() -> Result<()> {
@@ -570,121 +439,6 @@ fn ensure_private_directory(path: &Path, must_be_empty: bool) -> Result<()> {
     Ok(())
 }
 
-fn verify_declared_inputs(root: &Path, input: &FoundationDatasetInputV2) -> Result<()> {
-    let actual = collect_files(root)?;
-    let expected = input
-        .files_read
-        .iter()
-        .map(|read| read.artifact.path.clone())
-        .collect::<BTreeSet<_>>();
-    ensure!(
-        actual == expected,
-        "job-private input tree differs from declared inputs"
-    );
-    for read in &input.files_read {
-        verify_artifact(root, &read.artifact)?;
-    }
-    Ok(())
-}
-
-fn collect_files(root: &Path) -> Result<BTreeSet<String>> {
-    fn visit(root: &Path, directory: &Path, output: &mut BTreeSet<String>) -> Result<()> {
-        for entry in fs::read_dir(directory)? {
-            let entry = entry?;
-            let metadata = fs::symlink_metadata(entry.path())?;
-            ensure!(
-                !metadata.file_type().is_symlink(),
-                "job tree contains a symlink"
-            );
-            if metadata.is_dir() {
-                visit(root, &entry.path(), output)?;
-            } else {
-                ensure!(metadata.is_file(), "job tree contains a non-regular file");
-                output.insert(
-                    entry
-                        .path()
-                        .strip_prefix(root)?
-                        .to_string_lossy()
-                        .into_owned(),
-                );
-            }
-        }
-        Ok(())
-    }
-    let mut output = BTreeSet::new();
-    visit(root, root, &mut output)?;
-    Ok(output)
-}
-
-fn encoder_artifacts(encoder: &FoundationEncoderIdentityV2) -> Vec<ArtifactIdentity> {
-    let mut artifacts = vec![
-        encoder.protocol.clone(),
-        encoder.python_encoder.clone(),
-        encoder.wrapper.clone(),
-        encoder.batch_driver.clone(),
-        encoder.native_supervisor.clone(),
-        encoder.model_config.clone(),
-    ];
-    artifacts.extend(encoder.python_support.clone());
-    artifacts.extend(encoder.model_manifests.clone());
-    artifacts.extend(encoder.model_weights.clone());
-    artifacts.extend(encoder.prime_support.clone());
-    artifacts.extend(encoder.build.lockfiles.clone());
-    artifacts.sort_by(|left, right| left.path.cmp(&right.path));
-    artifacts
-}
-
-fn verify_runtime_artifacts(root: &Path, artifacts: &[ArtifactIdentity]) -> Result<()> {
-    let mut paths = BTreeSet::new();
-    for artifact in artifacts {
-        ensure!(
-            paths.insert(artifact.path.as_str()),
-            "runtime artifact path repeats"
-        );
-        verify_artifact(root, artifact)?;
-    }
-    Ok(())
-}
-
-fn verify_artifact(root: &Path, artifact: &ArtifactIdentity) -> Result<()> {
-    artifact.validate()?;
-    let path = root.join(&artifact.path);
-    let metadata = fs::symlink_metadata(&path)?;
-    ensure!(
-        metadata.is_file() && !metadata.file_type().is_symlink(),
-        "artifact is not regular"
-    );
-    ensure!(
-        metadata.len() == artifact.size_bytes,
-        "artifact size drift: {}",
-        artifact.path
-    );
-    ensure!(
-        sha256_file(&path)? == artifact.sha256,
-        "artifact hash drift: {}",
-        artifact.path
-    );
-    Ok(())
-}
-
-fn sha256_file(path: &Path) -> Result<String> {
-    let mut file = File::open(path)?;
-    let mut hash = Sha256::new();
-    let mut buffer = [0u8; 64 * 1024];
-    loop {
-        let read = file.read(&mut buffer)?;
-        if read == 0 {
-            break;
-        }
-        hash.update(&buffer[..read]);
-    }
-    Ok(hex::encode(hash.finalize()))
-}
-
-fn sha256_bytes(bytes: &[u8]) -> String {
-    hex::encode(Sha256::digest(bytes))
-}
-
 fn write_json_new<T: Serialize>(path: &Path, value: &T) -> Result<()> {
     let bytes = serde_json::to_vec(value)?;
     let mut file = OpenOptions::new()
@@ -720,77 +474,5 @@ fn is_sha256(value: &str) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn output_names_cannot_escape_the_job_directory() {
-        assert!(validate_simple_name("output.f32le").is_ok());
-        assert!(validate_simple_name("../output.f32le").is_err());
-        assert!(validate_simple_name("nested/output.f32le").is_err());
-        assert!(validate_simple_name("/tmp/output.f32le").is_err());
-    }
-
-    #[test]
-    fn landlock_abi_is_a_capability_gate() {
-        match LandlockRuleset::new() {
-            Ok(ruleset) => assert!(ruleset.abi >= 3),
-            Err(error) => assert!(error.to_string().contains("Landlock")),
-        }
-    }
-
-    #[test]
-    fn landlock_denies_test_v1_checkout_and_undeclared_bytes() {
-        let temporary = tempfile::tempdir().unwrap();
-        let allowed = temporary.path().join("job-input");
-        fs::create_dir(&allowed).unwrap();
-        fs::write(allowed.join("train.csv"), b"train").unwrap();
-        let denied = [
-            temporary.path().join("test-bytes/test.csv"),
-            temporary.path().join("expanded-v1/cache.bin"),
-            temporary.path().join("jope-dime/source.py"),
-            temporary.path().join("undeclared/metadata.json"),
-        ];
-        for path in &denied {
-            fs::create_dir_all(path.parent().unwrap()).unwrap();
-            fs::write(path, b"denied").unwrap();
-        }
-        let ruleset = LandlockRuleset::new().expect("Landlock is a required capability");
-        let read_execute = ACCESS_READ_FILE | ACCESS_READ_DIR | ACCESS_EXECUTE;
-        for path in ["/usr", "/lib", "/lib64", "/etc/ld.so.cache"] {
-            let path = Path::new(path);
-            if path.exists() {
-                ruleset
-                    .allow_path(&fs::canonicalize(path).unwrap(), read_execute)
-                    .unwrap();
-            }
-        }
-        ruleset
-            .allow_path(&allowed, ACCESS_READ_FILE | ACCESS_READ_DIR)
-            .unwrap();
-        let ruleset_fd = ruleset.fd.as_raw_fd();
-        let mut command = Command::new("/bin/sh");
-        command
-            .arg("-c")
-            .arg(
-                "/usr/bin/cat \"$1\" && ! /usr/bin/cat \"$2\" && ! /usr/bin/cat \"$3\" && ! /usr/bin/cat \"$4\" && ! /usr/bin/cat \"$5\"",
-            )
-            .arg("landlock-test")
-            .arg(allowed.join("train.csv"))
-            .args(&denied);
-        // SAFETY: the closure makes only async-signal-safe prctl/landlock syscalls and reads errno,
-        // never allocating or locking; `ruleset`, which owns ruleset_fd, outlives status().
-        unsafe {
-            command.pre_exec(move || {
-                if libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-                if libc::syscall(libc::SYS_landlock_restrict_self, ruleset_fd, 0u32) != 0 {
-                    return Err(std::io::Error::last_os_error());
-                }
-                Ok(())
-            });
-        }
-        assert!(command.status().unwrap().success());
-    }
-}
+#[path = "jope_encoder_supervisor/tests.rs"]
+mod tests;
