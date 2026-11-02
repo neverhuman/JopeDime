@@ -905,6 +905,10 @@ crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/promotion_eval.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/proposal_cache.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/sealed_panels.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests/dataset.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests/panels.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests/promotion.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests/proposal.rs
 crates/jope-campaigns/src/selfplay_shadow/state.rs
 crates/jope-campaigns/src/selfplay_shadow/state/accepted.rs
 crates/jope-campaigns/src/selfplay_shadow/state/lineage.rs
