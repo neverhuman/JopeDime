@@ -939,13 +939,12 @@ def run_capture(args: argparse.Namespace) -> dict:
                         if client_exit is not None:
                             break
                         time.sleep(min(0.05, remaining))
-                    if client_exit == 0 and not timed_out:
+                    if client_exit == 0 and not timed_out and not deadline_reached:
                         try:
                             # The client deadline bounds client execution. Once a
-                            # normal exit is observed, allow a separate finite
-                            # window for recorder EOF drain and durable receipt
-                            # publication; clamping this to client_deadline can
-                            # leave no time for a client that exits at its bound.
+                            # zero exit is observed within that bound, allow a
+                            # separate finite window for recorder EOF drain and
+                            # durable receipt publication.
                             flush_deadline = time.monotonic() + min(
                                 RECORDER_DRAIN_SECONDS,
                                 NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS,
