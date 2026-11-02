@@ -5721,28 +5721,36 @@
       "sha256": "f497299e4b356d2975797f3057bd5c166a3b211c07ca1c29d69cab654673e740"
     },
     "python:research/flywheel_selfplay/publish_phase7_addendum_v2.py": {
-      "bytes": 16988,
+      "bytes": 15275,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "fa59c8d36ada413c388f10737036a82c14b96720a5a2df8e9ad418168ed774ca"
+      "sha256": "d8fa317133216f8d28128f5b02f589f81be53e67c9dbec5d880e7d308efa78cf"
     },
     "python:research/flywheel_selfplay/publish_phase7_addendum_v3.py": {
-      "bytes": 21858,
+      "bytes": 20145,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "0f747bf94bf6247af67d2ee4523d1c34b20f57310d9020a4a092693b836b3e1c"
+      "sha256": "9bc3bf6b182869c7960fbadb7eb8cc1d070c6ef3a97892327138e82bfb777960"
     },
     "python:research/flywheel_selfplay/publish_phase7_addendum_v4.py": {
-      "bytes": 22778,
+      "bytes": 21065,
       "classification": {
         "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
         "role": "research"
       },
-      "sha256": "a0ba7ec0f01c9b000884196dc7914781ed2eb5846361b422032b59ac05aab90b"
+      "sha256": "4d54facb7fdc56925be591cd43bd11479afda7e0d1cfb3ed3bfc3af70efb4688"
+    },
+    "python:research/flywheel_selfplay/phase7_s3_upload.py": {
+      "bytes": 2196,
+      "classification": {
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "1bf9d138aa966e7892f9646c349f27832ee9881e58c0be58b110fcba4e62dab7"
     },
     "python:research/flywheel_selfplay/reconcile_provenance_audit.py": {
       "bytes": 14512,
