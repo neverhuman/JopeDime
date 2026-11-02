@@ -6,11 +6,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import struct
 import time
 from pathlib import Path
 
-import joblib
 import numpy as np
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import Ridge
@@ -299,6 +299,158 @@ def interval(values, draws=20000):
     return np.quantile(means, [0.0125, 0.9875]).tolist()
 
 
+def save_models(tree, residual, path):
+    """Persist fitted estimators as validated numeric arrays, never Python objects."""
+    import sklearn
+
+    model, sx, sc, projection = residual
+    if tree.loss != "squared_error" or tree._preprocessor is not None or tree.is_categorical_ is not None:
+        raise ValueError("H09 archive supports numeric squared-error HistGradientBoosting models only")
+    if not isinstance(model, Ridge) or sx.n_features_in_ != 412 or sc.n_features_in_ != 8:
+        raise ValueError("invalid H09 residual model dimensions")
+    arrays = {
+        "baseline": np.asarray(tree._baseline_prediction),
+        "categorical": np.asarray(tree._bin_mapper.is_categorical_, dtype=np.uint8),
+        "non_missing": np.asarray(tree._bin_mapper.n_bins_non_missing_, dtype=np.uint32),
+        "projection": np.asarray(projection, dtype=np.float64),
+        "ridge_coef": np.asarray(model.coef_, dtype=np.float64),
+        "ridge_intercept": np.asarray(model.intercept_, dtype=np.float64),
+        "sx_mean": np.asarray(sx.mean_, dtype=np.float64),
+        "sx_scale": np.asarray(sx.scale_, dtype=np.float64),
+        "sx_var": np.asarray(sx.var_, dtype=np.float64),
+        "sc_mean": np.asarray(sc.mean_, dtype=np.float64),
+        "sc_scale": np.asarray(sc.scale_, dtype=np.float64),
+        "sc_var": np.asarray(sc.var_, dtype=np.float64),
+    }
+    thresholds = []
+    for i, values in enumerate(tree._bin_mapper.bin_thresholds_):
+        name = f"threshold_{i}"
+        arrays[name] = np.asarray(values, dtype=np.float64)
+        thresholds.append(name)
+    trees = []
+    for iteration, row in enumerate(tree._predictors):
+        if len(row) != 1:
+            raise ValueError("H09 archive expects one tree per boosting iteration")
+        predictor = row[0]
+        names = {field: f"tree_{iteration}_{field}" for field in ("nodes", "binned_bits", "raw_bits")}
+        arrays[names["nodes"]] = np.asarray(predictor.nodes)
+        arrays[names["binned_bits"]] = np.asarray(predictor.binned_left_cat_bitsets)
+        arrays[names["raw_bits"]] = np.asarray(predictor.raw_left_cat_bitsets)
+        trees.append(names)
+    arrays["metadata"] = np.asarray(json.dumps({
+        "format": "jopedime-h09-numeric-v1", "sklearn_version": sklearn.__version__,
+        "n_features": int(tree.n_features_in_), "n_iter": int(tree.n_iter_),
+        "mapper": {"n_bins": int(tree._bin_mapper.n_bins),
+                   "subsample": int(tree._bin_mapper.subsample),
+                   "random_state": int(tree._bin_mapper.random_state),
+                   "n_threads": int(tree._bin_mapper.n_threads),
+                   "missing_values_bin_idx": int(tree._bin_mapper.missing_values_bin_idx_)},
+        "thresholds": thresholds, "trees": trees, "ridge_alpha": float(model.alpha),
+    }, sort_keys=True))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    with temporary.open("wb") as stream:
+        np.savez_compressed(stream, **arrays)
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(path)
+
+
+def load_models(path):
+    """Rebuild H09 estimators only from finite, numeric NPZ arrays."""
+    import sklearn
+    from sklearn._loss.loss import HalfSquaredError
+    from sklearn.ensemble import HistGradientBoostingRegressor
+    from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+    from sklearn.ensemble._hist_gradient_boosting.predictor import PREDICTOR_RECORD_DTYPE, TreePredictor
+
+    with np.load(path, allow_pickle=False) as archive:
+        metadata = json.loads(str(archive["metadata"].item()))
+        n_features = metadata.get("n_features")
+        n_iter = metadata.get("n_iter")
+        if (metadata.get("format") != "jopedime-h09-numeric-v1"
+                or metadata.get("sklearn_version") != sklearn.__version__
+                or not isinstance(n_features, int) or n_features != 420
+                or not isinstance(n_iter, int) or not 1 <= n_iter <= 128):
+            raise ValueError("unsupported H09 model archive")
+        mapper_spec = metadata["mapper"]
+        if (mapper_spec["n_bins"] != 256 or mapper_spec["missing_values_bin_idx"] != 255
+                or not 1 <= mapper_spec["n_threads"] <= 4096 or mapper_spec["subsample"] <= 0):
+            raise ValueError("invalid H09 mapper metadata")
+        mapper = _BinMapper(n_bins=mapper_spec["n_bins"], subsample=mapper_spec["subsample"],
+                            is_categorical=None, known_categories=None,
+                            random_state=mapper_spec["random_state"], n_threads=mapper_spec["n_threads"])
+        mapper.is_categorical_ = archive["categorical"].copy()
+        mapper.n_bins_non_missing_ = archive["non_missing"].copy()
+        mapper.missing_values_bin_idx_ = mapper_spec["missing_values_bin_idx"]
+        mapper.bin_thresholds_ = [archive[key].copy() for key in metadata["thresholds"]]
+        if (mapper.is_categorical_.shape != (n_features,) or np.any(mapper.is_categorical_)
+                or mapper.n_bins_non_missing_.shape != (n_features,)
+                or len(mapper.bin_thresholds_) != n_features
+                or any(v.ndim != 1 or not np.isfinite(v).all() or np.any(v[1:] <= v[:-1])
+                       or len(v) + 1 != int(mapper.n_bins_non_missing_[i])
+                       for i, v in enumerate(mapper.bin_thresholds_))):
+            raise ValueError("invalid H09 numeric mapper arrays")
+        tree = HistGradientBoostingRegressor(loss="squared_error", max_iter=128, max_leaf_nodes=31,
+                                             learning_rate=0.05, l2_regularization=1,
+                                             early_stopping=False, random_state=SEED)
+        tree._loss = HalfSquaredError()
+        tree._bin_mapper = mapper
+        tree._preprocessor = None
+        tree.is_categorical_ = None
+        tree._is_categorical_remapped = None
+        tree.n_features_in_ = n_features
+        tree.n_trees_per_iteration_ = 1
+        tree._baseline_prediction = archive["baseline"].copy()
+        if tree._baseline_prediction.shape != (1, 1) or not np.isfinite(tree._baseline_prediction).all():
+            raise ValueError("invalid H09 baseline")
+        if len(metadata["trees"]) != n_iter:
+            raise ValueError("invalid H09 tree inventory")
+        tree._predictors = []
+        for names in metadata["trees"]:
+            nodes = archive[names["nodes"]].copy()
+            binned = archive[names["binned_bits"]].copy()
+            raw = archive[names["raw_bits"]].copy()
+            if (nodes.ndim != 1 or not 1 <= len(nodes) <= 100_000 or nodes.dtype != PREDICTOR_RECORD_DTYPE
+                    or binned.dtype != np.uint32 or raw.dtype != np.uint32
+                    or binned.shape != raw.shape or binned.shape[1:] != (8,)
+                    or np.any(binned) or np.any(raw) or np.any(nodes["is_categorical"])
+                    or not np.isfinite(nodes["value"]).all()):
+                raise ValueError("invalid H09 tree arrays")
+            leaves = nodes["is_leaf"].astype(bool)
+            internal = np.flatnonzero(~leaves)
+            if (np.any(~np.isin(nodes["is_leaf"], (0, 1)))
+                    or np.any(nodes["feature_idx"][~leaves] < 0)
+                    or np.any(nodes["feature_idx"][~leaves] >= n_features)
+                    or np.any(nodes["left"][~leaves] >= len(nodes))
+                    or np.any(nodes["right"][~leaves] >= len(nodes))
+                    or np.any(nodes["left"][~leaves] <= internal)
+                    or np.any(nodes["right"][~leaves] <= internal)
+                    or not np.isfinite(nodes["num_threshold"][~leaves]).all()):
+                raise ValueError("invalid H09 tree node links")
+            tree._predictors.append([TreePredictor(nodes, binned, raw)])
+        ridge = Ridge(alpha=metadata["ridge_alpha"])
+        ridge.coef_ = archive["ridge_coef"].copy()
+        ridge.intercept_ = float(archive["ridge_intercept"].item())
+        ridge.n_features_in_ = 540
+        if ridge.coef_.shape != (540,) or not np.isfinite(ridge.coef_).all() or not np.isfinite(ridge.intercept_):
+            raise ValueError("invalid H09 ridge arrays")
+        sx = StandardScaler(); sc = StandardScaler()
+        for scaler, prefix, size in ((sx, "sx", 412), (sc, "sc", 8)):
+            scaler.mean_ = archive[f"{prefix}_mean"].copy()
+            scaler.scale_ = archive[f"{prefix}_scale"].copy()
+            scaler.var_ = archive[f"{prefix}_var"].copy()
+            scaler.n_features_in_ = size
+            scaler.n_samples_seen_ = 1
+            if any(getattr(scaler, key).shape != (size,) or not np.isfinite(getattr(scaler, key)).all()
+                   for key in ("mean_", "scale_", "var_")):
+                raise ValueError("invalid H09 scaler arrays")
+        projection = archive["projection"].copy()
+        if projection.shape != (412, 16) or not np.isfinite(projection).all():
+            raise ValueError("invalid H09 interaction projection")
+        return tree, (ridge, sx, sc, projection)
+
+
 def plan(args):
     rows = roster(args.input, args.catalog)
     args.output.mkdir(parents=True, exist_ok=False)
@@ -379,12 +531,13 @@ def train(args):
         candidates.append((value, alpha, residual))
         print("TRAIN SELECTION", alpha, value, flush=True)
     best = min(candidates, key=lambda t: (t[0], t[1]))
-    joblib.dump((tree, best[2]), args.output / "models.joblib")
+    model_path = args.output / "models.npz"
+    save_models(tree, best[2], model_path)
     write_once(
         args.output / "trained.json",
         {
             "plan_sha": digest(args.output / "plan.json"),
-            "models_sha": digest(args.output / "models.joblib"),
+            "models_sha": digest(model_path),
             "alpha": best[1],
             "selection": [{"alpha": a, "mean_fitness": v} for v, a, _ in candidates],
             "dope_after": dope_snapshot(args.checkpoint),
@@ -400,12 +553,12 @@ def score(args):
     trained = read(args.output / "trained.json")
     if (
         trained["plan_sha"] != digest(args.output / "plan.json")
-        or trained["models_sha"] != digest(args.output / "models.joblib")
+        or trained["models_sha"] != digest(args.output / "models.npz")
         or trained["dope_after"] != p["dope_before"]
     ):
         raise ValueError("training identity changed")
     write_once(args.output / "score-start.json", {"unix": time.time()})
-    tree, residual = joblib.load(args.output / "models.joblib")
+    tree, residual = load_models(args.output / "models.npz")
     data = [load_context(args.input, r) for r in p["rows"] if r["group"] == "validate"]
     base, corrected = choices(data, tree), choices(data, tree, residual)
     b, c = family_mean(base), family_mean(corrected)

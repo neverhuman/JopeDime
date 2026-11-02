@@ -366,8 +366,7 @@ fn supervised(cli: &DemoCli, plan: &CampaignPlan, output: &Path, unit: &str) -> 
         &cancel,
     )?;
     super::worker::write_private(&output.join("origin-proof.json"), &proof)?;
-    let budgets = pair_availability(plan, &output.join("journal"), &proof)
-        .unwrap_or_else(|error| json!({"matched":false,"reason":format!("{error:#}")}));
+    let budgets = pair_availability(plan, &output.join("journal"), &proof)?;
     let completed = proof["generation_zero_and_evolution_proved"] == true;
     let matched = budgets["matched"] == true;
     let (ok, result, reason) = if !matched {

@@ -60,27 +60,19 @@ class QualificationReceiptDraftTests(unittest.TestCase):
             self.receipt["current_evidence"]["final_controller_rows_promoted"], 0
         )
 
-    def test_gate_observations_preserve_provenance_and_pending_a5(self):
+    def test_all_final_controller_rows_are_not_run_without_borrowed_results(self):
         observations = self.receipt["current_evidence"]["observations"]
         by_gate = {row["gate"]: row for row in observations}
         self.assertEqual(set(by_gate), GATE_IDS)
         self.assertEqual(len(observations), len(GATE_IDS))
-        self.assertEqual(
-            sum(
-                row["observed_status"] == "PASS"
-                for row in observations
-                if row["gate"] not in {"M2"}
-            ),
-            25,
-        )
-        self.assertEqual(by_gate["M2"]["observed_status"], "PASS")
-        self.assertEqual(by_gate["M2"]["final_controller_status"], "NOT_RUN")
-        self.assertEqual(by_gate["M3"]["observed_status"], "FAIL")
-        self.assertIn("WAIVED_V1_0_0", by_gate["M3"]["disposition"])
-        self.assertEqual(by_gate["A5"]["observed_status"], "PENDING")
-        self.assertTrue(
-            all(row["final_controller_status"] == "NOT_RUN" for row in observations)
-        )
+        for row in observations:
+            with self.subTest(gate=row["gate"]):
+                self.assertEqual(row["observed_status"], "NOT_RUN")
+                self.assertEqual(row["final_controller_status"], "NOT_RUN")
+                self.assertEqual(row["evidence"], [])
+                self.assertEqual(row["qualification_use"], "NO_RESULT_PROMOTED")
+        self.assertEqual(self.receipt["blockers"]["A5"]["status"], "PENDING")
+        self.assertEqual(self.receipt["current_evidence"]["final_controller_rows_promoted"], 0)
 
     def test_m3_raw_failure_and_waiver_are_distinct_and_version_limited(self):
         m3 = self.receipt["owner_decisions"]["M3"]

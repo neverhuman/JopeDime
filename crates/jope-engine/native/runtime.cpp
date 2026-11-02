@@ -37,25 +37,29 @@ extern "C" int jp_device_uuid(int index,char* out) {
 // W7-T03: the communicator rank is not the CUDA ordinal. The caller passes the
 // validated local device index and, when assigned, its GPU UUID; both are checked
 // against what this process can see before the device is selected or NCCL starts.
-extern "C" void* jp_nccl_init(const unsigned char* bytes,int rank,int world,int device,
-                              const char* expected_uuid) {
-  int visible=jp_device_count(); if(visible<0) return nullptr;
+extern "C" int jp_nccl_init(const unsigned char* bytes,int rank,int world,int device,
+                             const char* expected_uuid,void** comm_out) {
+  if(!comm_out){last_error="NCCL communicator output pointer is null";return -1;}
+  *comm_out=nullptr;
+  int visible=jp_device_count(); if(visible<0) return -1;
   if(device<0||device>=visible){
     last_error="assigned CUDA device index "+std::to_string(device)+" is not visible ("
       +std::to_string(visible)+" visible)";
-    return nullptr;
+    return -1;
   }
   if(expected_uuid&&*expected_uuid){
-    char actual[41]; if(jp_device_uuid(device,actual)!=0) return nullptr;
+    char actual[41]; if(jp_device_uuid(device,actual)!=0) return -1;
     if(std::strcmp(actual,expected_uuid)!=0){
       last_error="CUDA device "+std::to_string(device)+" is "+actual+", not the assigned "+expected_uuid;
-      return nullptr;
+      return -1;
     }
   }
-  auto cr=cudaSetDevice(device);if(cr!=cudaSuccess){last_error=cudaGetErrorString(cr);return nullptr;}
+  auto cr=cudaSetDevice(device);if(cr!=cudaSuccess){last_error=cudaGetErrorString(cr);return -1;}
   ncclUniqueId id;std::memcpy(&id,bytes,128); ncclComm_t comm;
   auto r=ncclCommInitRank(&comm,world,id,rank);
-  if(r!=ncclSuccess){last_error=ncclGetErrorString(r);return nullptr;}return comm;
+  if(r!=ncclSuccess){last_error=ncclGetErrorString(r);return -1;}
+  *comm_out=comm;
+  return 0;
 }
 extern "C" int jp_allreduce(void* comm,torch::Tensor* t) {
   try {

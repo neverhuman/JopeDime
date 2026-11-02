@@ -9,6 +9,7 @@ import signal
 import subprocess
 import sys
 import time
+
 import psutil
 
 HERE = Path(__file__).resolve().parent
@@ -98,11 +99,8 @@ def stop(child):
             child.wait()
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("--custody", type=Path, required=True)
-    p.add_argument("--smoke", action="store_true")
-    args = p.parse_args()
+
+def run_monitor(args, here, environment_fn, sample_fn, classify_fn, stop_fn):
     os.setpriority(os.PRIO_PROCESS, 0, 19)
     c = args.custody.resolve()
     c.mkdir(parents=True, exist_ok=True)
@@ -120,21 +118,21 @@ def main():
     )
     started = time.monotonic()
     try:
-        s = sample(c)
-        action, why = classify(s)
+        s = sample_fn(c)
+        action, why = classify_fn(s)
         if action != "run":
             raise RuntimeError("prelaunch guard " + str(why))
         cmd = [
             sys.executable,
             "-B",
-            str(HERE / "runner.py"),
+            str(here / "runner.py"),
             "--output",
             str(c / label),
         ] + (["--smoke"] if args.smoke else [])
         with (c / f"{label}.log").open("w") as log:
             child = subprocess.Popen(
                 cmd,
-                env=environment(),
+                env=environment_fn(),
                 stdout=log,
                 stderr=subprocess.STDOUT,
                 start_new_session=True,
@@ -142,10 +140,10 @@ def main():
             record.update(status="RUNNING", command=cmd, pid=child.pid)
             with (c / f"{label}-resources.jsonl").open("w") as resources:
                 while child.poll() is None:
-                    s = sample(c, child)
+                    s = sample_fn(c, child)
                     resources.write(json.dumps(s) + "\n")
                     resources.flush()
-                    action, why = classify(s)
+                    action, why = classify_fn(s)
                     if action == "abort":
                         raise RuntimeError("guard " + why)
                     time.sleep(0.25)
@@ -158,10 +156,17 @@ def main():
         record.update(status="INCOMPLETE", error=str(e))
         raise
     finally:
-        stop(child)
+        stop_fn(child)
         record["wall_seconds"] = time.monotonic() - started
         (c / f"{label}-monitor.json").write_text(json.dumps(record, indent=2) + "\n")
 
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--custody", type=Path, required=True)
+    p.add_argument("--smoke", action="store_true")
+    args = p.parse_args()
+    run_monitor(args, HERE, environment, sample, classify, stop)
 
 if __name__ == "__main__":
     main()

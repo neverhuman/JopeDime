@@ -7,6 +7,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 
 SPEC = importlib.util.spec_from_file_location(
@@ -166,6 +168,50 @@ def test_component_weighting_does_not_favor_more_contexts():
     assert h09.interval([-2, -2, -2]) == [-2, -2]
     with pytest.raises(ValueError):
         h09.interval([np.nan, 1])
+
+
+def test_numeric_model_archive_roundtrip_and_object_payload_refusal(tmp_path):
+    rng = np.random.default_rng(91)
+    x = rng.normal(size=(40, 412))
+    c = rng.normal(size=(40, 8))
+    y = x[:, 0] - 0.25 * c[:, 0]
+    tree = HistGradientBoostingRegressor(
+        max_iter=4, max_leaf_nodes=31, learning_rate=0.05,
+        l2_regularization=1, early_stopping=False, random_state=h09.SEED,
+    ).fit(np.concatenate((x, c), axis=1), y)
+    sx, sc = StandardScaler().fit(x), StandardScaler().fit(c)
+    projection = rng.normal(size=(412, 16)) / np.sqrt(412)
+    z = h09.residual_features(x, c, sx, sc, projection)
+    residual = (Ridge(alpha=10).fit(z, y - tree.predict(np.concatenate((x, c), axis=1))),
+                sx, sc, projection)
+    archive = tmp_path / "models.npz"
+    h09.save_models(tree, residual, archive)
+    restored_tree, restored_residual = h09.load_models(archive)
+    np.testing.assert_array_equal(
+        restored_tree.predict(np.concatenate((x, c), axis=1)),
+        tree.predict(np.concatenate((x, c), axis=1)),
+    )
+    np.testing.assert_array_equal(
+        restored_residual[0].predict(h09.residual_features(x, c, *restored_residual[1:])),
+        residual[0].predict(z),
+    )
+    hostile = tmp_path / "hostile.npz"
+    import sklearn
+
+    hostile_metadata = {
+        "format": "jopedime-h09-numeric-v1",
+        "sklearn_version": sklearn.__version__,
+        "n_features": 420,
+        "n_iter": 1,
+        "mapper": {"n_bins": 256, "missing_values_bin_idx": 255, "n_threads": 1,
+                   "subsample": 1000, "random_state": 1},
+        "thresholds": [],
+        "trees": [],
+    }
+    np.savez(hostile, metadata=np.asarray(json.dumps(hostile_metadata)),
+             categorical=np.asarray([object()], dtype=object))
+    with pytest.raises(ValueError):
+        h09.load_models(hostile)
 
 
 def test_phase_receipts_cannot_be_overwritten(tmp_path):

@@ -258,34 +258,23 @@ class _FixtureAnchor(nn.Module):
 
 
 def inherited_fused():
-    # Execute the ORIGINAL tracked Fused methods, not a copied MockInheritedEngine.
-    # Skip its asset-loading constructor; all state below is explicitly fixture-only.
-    tree = ast.parse(FUSED_SOURCE.read_text())
-    cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "FusedJopeNetwork")
-    wanted = {
-        "_run_dope_mlc_v3_and_lm48",
-        "_compute_lm_smart_80d_gpu",
-        "_svd_slot_project",
-        "_project_stage1b_tokens_batched_gpu",
-    }
-    methods = [n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name in wanted]
-    assert {n.name for n in methods} == wanted
-    selected = ast.Module(
-        body=[
-            ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0),
-            ast.ClassDef(
-                name="InheritedFused",
-                bases=[ast.Attribute(value=ast.Name(id="nn", ctx=ast.Load()), attr="Module", ctx=ast.Load())],
-                keywords=[],
-                body=methods,
-                decorator_list=[],
-            ),
-        ],
-        type_ignores=[],
-    )
-    namespace = {"torch": torch, "nn": nn, "np": np}
-    exec(compile(ast.fix_missing_locations(selected), str(FUSED_SOURCE), "exec"), namespace)
-    net = namespace["InheritedFused"]()
+    # Import the ORIGINAL tracked Fused module, then bypass its asset-loading
+    # constructor while supplying only fixture state below.
+    import sys
+    import research
+
+    micro_research = Path("/home/ubuntu/JopeDimeMicro/python/research")
+    if micro_research.is_dir() and str(micro_research) not in research.__path__:
+        research.__path__.append(str(micro_research))
+    spec = importlib.util.spec_from_file_location("h206_inherited_fused", FUSED_SOURCE)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot import pinned FusedJopeNetwork source")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    fused_type = module.FusedJopeNetwork
+    net = fused_type.__new__(fused_type)
+    nn.Module.__init__(net)
     net.dope_model = nn.Module()
     net.dope_model.router = _FixtureRouter()
     net.dope_model.target_net = nn.Module()

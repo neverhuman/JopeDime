@@ -271,7 +271,6 @@ def make_tokens(net, tables, device):
         tokens[cid], masks[cid] = tok[0].detach(), mask[0].detach()
     return tokens, masks
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", type=Path, default=Path.home() / "jope-data/h46/input")

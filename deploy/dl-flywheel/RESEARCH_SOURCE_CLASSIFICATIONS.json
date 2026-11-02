@@ -4905,12 +4905,12 @@
       "sha256": "1af8e2b1cb2c375566feca1248a291b2f593ec01191a8f9e276770a0c77d00bd"
     },
     "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/analysis.py": {
-      "bytes": 8760,
+      "bytes": 8923,
       "classification": {
         "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion.",
         "role": "research"
       },
-      "sha256": "4904da8ba7f997ddcf9a2ab8d2dad9801be95f2e82e972f221013b1220fac721"
+      "sha256": "38a8e85d0c1a03ae9d8c6d06912f5419107c705a883465659aae8d28ea0efd43"
     },
     "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/monitor.py": {
       "bytes": 7064,
@@ -5041,12 +5041,12 @@
       "sha256": "cfe8e5c1cc5d9e1c8431aad4c6a4098097afa8a7386b14d79f3711016b803cb8"
     },
     "python:research/flywheel_selfplay/h199_blend025_native/analysis.py": {
-      "bytes": 9149,
+      "bytes": 8076,
       "classification": {
         "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion.",
         "role": "research"
       },
-      "sha256": "57c40ae02b882e2840ab57c6f88121487b1604052d3d5536b5659a7753a54c73"
+      "sha256": "9fa23649347400dc14ecd4bfc743e5b501d17c31905c5f2d6c992cd9b75cc916"
     },
     "python:research/flywheel_selfplay/h199_blend025_native/monitor.py": {
       "bytes": 7032,
@@ -5161,12 +5161,12 @@
       "sha256": "ebad7a2c0ed60a575234550ae4a05e76151d883440b045a06fa088ebb4ff7251"
     },
     "python:research/flywheel_selfplay/h203_blend025_gated/analysis.py": {
-      "bytes": 12399,
+      "bytes": 11326,
       "classification": {
         "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion.",
         "role": "research"
       },
-      "sha256": "3b3377ef1b19b34bf58f85145f00043d94dc9f2a9d036d56795757a67cc18ec2"
+      "sha256": "62a6ac4856fb8ec09285fc21bfb351b1fcfee19bd28502428586e49d10d52330"
     },
     "python:research/flywheel_selfplay/h203_blend025_gated/monitor.py": {
       "bytes": 7433,
@@ -5185,20 +5185,20 @@
       "sha256": "bc8a23c909c580c9b33edd4bb9591b73da280f01e4c19f37f6de66ec422f0d37"
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/launch.py": {
-      "bytes": 7775,
+      "bytes": 7705,
       "classification": {
         "reason": "H209 exact merged-source and exclusive xbabe2 GPU supervisor, create-only attempt claim and independent resource/deadline enforcement; no model imports or self-merge.",
         "role": "research"
       },
-      "sha256": "19dbc24ee60a6921ff6d6363f846cdb6f28e7dfa203c8da58ef307fc8cffa800"
+      "sha256": "d06a86b383892401e66bf752659a4e39731abd2a21fcb44e3a14bb94fe1cc2e4"
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/runner.py": {
-      "bytes": 29531,
+      "bytes": 30393,
       "classification": {
         "reason": "H209 single-attempt CUDA training on pinned historical real-S3 TRAIN pools, frozen r882 exact-vector gate, role-scoped labels, B lock before A, actual-update proofs and versioned S3 custody; not fresh labels or promotion. Prospective reentry fix; original H209 execution remains pinned to d609dab4, no retry.",
         "role": "research"
       },
-      "sha256": "06a4412fe3dd81e1557ec7a3254674e007f1e75dc609db831f3fe2941412a2f0"
+      "sha256": "f860c7f5cd24da0fe1ce87482634e5484c7248199acc1fe38613b38476e298aa"
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/science.py": {
       "bytes": 5334,
@@ -5209,12 +5209,12 @@
       "sha256": "a825937950469310a0a827d0b7d286949b606899c0dc96947495c9893b8610d8"
     },
     "python:research/flywheel_selfplay/h210_blend025_gated_retry/analysis.py": {
-      "bytes": 12399,
+      "bytes": 11326,
       "classification": {
         "reason": "H210 preregistered CPU-only diagnostic (H203 retry, fresh seeds, xbabe1 load gate): BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion.",
         "role": "research"
       },
-      "sha256": "a1d99f211bfd0158e9b906dc0d42631d68e2f53cc10a9012d92aaeaf3446aa1b"
+      "sha256": "620ac046211d51c36a59ab74e9d98c4e83be96f7c76fb3fbd5b04ee29bf3832e"
     },
     "python:research/flywheel_selfplay/h210_blend025_gated_retry/monitor.py": {
       "bytes": 8938,
@@ -5233,20 +5233,20 @@
       "sha256": "96f227cc5e54188b5052982a65460bcddcb518e90b5021a44a7542858f82ad81"
     },
     "python:research/flywheel_selfplay/h211_gpu_delta_calibration/launch.py": {
-      "bytes": 8328,
+      "bytes": 8258,
       "classification": {
         "reason": "H211 prospective GPU utility-delta rerun with nonreentrant resource check, fixed static-TRAIN scientific protocol, one attempt and explicit exact-open-PR launch authority; no serving promotion.",
         "role": "research"
       },
-      "sha256": "8d68c92b047a2190b6979b6a4897c470536aa194d65eae60b79f57536176c518"
+      "sha256": "30beb1ae8d4ed16cc4f4a53d04d3451ccb164831e9776ca87affc9e224c04299"
     },
     "python:research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py": {
-      "bytes": 29531,
+      "bytes": 30393,
       "classification": {
         "reason": "H211 prospective GPU utility-delta rerun with nonreentrant resource check, fixed static-TRAIN scientific protocol, one attempt and explicit exact-open-PR launch authority; no serving promotion.",
         "role": "research"
       },
-      "sha256": "e8be61a63ce24e77ec786ed48b9ce86c60981ebfe3640058c93f4324a6cbc6b6"
+      "sha256": "0482ca51b6714408724e6f2a613bfa0b9ca36f7fb4b6df4534933e927880446a"
     },
     "python:research/flywheel_selfplay/h211_gpu_delta_calibration/science.py": {
       "bytes": 5334,
@@ -5257,20 +5257,20 @@
       "sha256": "0849dc9fad90d4176a7d4f775d279a8845be25c1ebe17d454d954449065cfc17"
     },
     "python:research/flywheel_selfplay/h213_gpu_delta_sustained/launch.py": {
-      "bytes": 9615,
+      "bytes": 9545,
       "classification": {
         "reason": "H213 prospective H211 hypothesis with fresh213 seeds and sustained-load resource guard; one90min GPU attempt, frozen native models, exact open PR admission; no serving promotion.",
         "role": "research"
       },
-      "sha256": "7ef61a34d7fc9a5ac1a10d49baa0c606efd195896bcec789b859683b388c00a6"
+      "sha256": "0f4eaa8e371a9c8b2b4bac54c7c7d6927f29e3b66fb60e6a5ce04f8092991e4d"
     },
     "python:research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py": {
-      "bytes": 30715,
+      "bytes": 31577,
       "classification": {
         "reason": "H213 prospective H211 hypothesis with fresh213 seeds and sustained-load resource guard; one90min GPU attempt, frozen native models, exact open PR admission; no serving promotion.",
         "role": "research"
       },
-      "sha256": "7a49350b8c8368550ef187c346e2753d3b8665c96c77ab8d2e1f1d4c12a0eb70"
+      "sha256": "dc6e99be09d9142f47df4d28c007994afb975e9180b4a97bf10bd1a30c701b3a"
     },
     "python:research/flywheel_selfplay/h213_gpu_delta_sustained/science.py": {
       "bytes": 5334,
@@ -5313,20 +5313,20 @@
       "sha256": "4b168819b1a92b32d57696fe658174689f1f7c09d4f71e808a8311c8e7729e74"
     },
     "python:research/flywheel_selfplay/h215_pess_disagreement/launch.py": {
-      "bytes": 11733,
+      "bytes": 11663,
       "classification": {
         "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion.",
         "role": "research"
       },
-      "sha256": "27d4473610359918630125969ef75ffa9bb68d45788eff1db8a7df69cc97db49"
+      "sha256": "20901c0d92b20ff601165cda533c90386fbab95da0fa5539e8ddd57a423ae5d7"
     },
     "python:research/flywheel_selfplay/h215_pess_disagreement/runner.py": {
-      "bytes": 23607,
+      "bytes": 24231,
       "classification": {
         "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion.",
         "role": "research"
       },
-      "sha256": "622f3a83c6cbf8185e24b6fd04a2b771b442e173ee7efa0efb0bf576b2011c07"
+      "sha256": "8955dc2539594894db4943a52f0b1d7adb889d4bbf6cf1b031c1f424d9c65c27"
     },
     "python:research/flywheel_selfplay/h215_pess_disagreement/science.py": {
       "bytes": 4970,
@@ -5369,12 +5369,12 @@
       "sha256": "f7326b7df4fb21bb036507c3d0da2ddcb7fb5179b51047624af446be2ca38b43"
     },
     "python:research/flywheel_selfplay/h217_gated025_confirm/analysis.py": {
-      "bytes": 15875,
+      "bytes": 15062,
       "classification": {
         "reason": "H217 preregistered CPU-only diagnostic: fresh-fold confirmation of H210 GATED_025 with the frozen recipe (BLEND_025 = r882 + 0.25*(calibrated HistGBM - r882), gated per context by the outcome-free zgap cost signal with a FIT-only threshold, max FIT native gain s.t. FIT harm <= 5%, else r882; no retuning; H129 disagreement placebo), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit with fresh seeds/folds; stage-1 lock before A; primary CONFIRMED iff LCB95>0, 3/3 seeds positive, harm<=10%; co-primary DL-Val plateau gain>+0.002 with family-bootstrap LCB95>0; xbabe2 CPU with effective-affinity limits, absolute deadline and pre-claim source binding; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion.",
         "role": "research"
       },
-      "sha256": "a509ff6d6f0531a6ce6a051e03aee1e3170534d939ddaa277dc983222d6f1431"
+      "sha256": "87b57d9797030d6e72b473fa75b3710f489511c1aced3d6edf63857c4454134f"
     },
     "python:research/flywheel_selfplay/h217_gated025_confirm/monitor.py": {
       "bytes": 11280,
@@ -5393,12 +5393,12 @@
       "sha256": "0d8bbbd39460fe5bb729e5c1f0beadff52b9dcb63224bb62b4b18d52daffe136"
     },
     "python:research/flywheel_selfplay/h218_gated_lambda_nest/analysis.py": {
-      "bytes": 18395,
+      "bytes": 17061,
       "classification": {
         "reason": "H218 pure-numpy fold partitions (H124 folds per fresh fold seed; fold manifest with cross-wave Jaccard vs H203/H210/H217 and refusal of reused partitions), minimal 45-fit plan, byte-identical H210/H217 zgap/disagreement/tau_grid/gated/choose_tau/blend functions with lambda grid {0.125,0.25,0.5}, nested FIT-only choose_lambda_tau and context-permuted zgap placebo, paired family-cluster bootstrap contrasts, Bradley-Terry Elo, DL-Val flywheel91 plateau co-primary (gain > +0.002 with family-bootstrap LCB95 > 0) and combined verdict; no data, model or live-loop access.",
         "role": "research"
       },
-      "sha256": "67e5cc7d518495fad72bde9843ffe5f367a992538c59dca2c0b42dda634c97da"
+      "sha256": "fb66cb9fdd20dfb4af97f1f2aae96bbdf37e49b92a33034ae4190ca0a84a5a6e"
     },
     "python:research/flywheel_selfplay/h218_gated_lambda_nest/monitor.py": {
       "bytes": 11320,
@@ -5425,20 +5425,20 @@
       "sha256": "04f91411a70eda95044a100f7c0986fbe2f5c87978a70908ee5ed70387e138d5"
     },
     "python:research/flywheel_selfplay/h219_fbal_accum_run/launch.py": {
-      "bytes": 11640,
+      "bytes": 11570,
       "classification": {
         "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "6a350c958ee6e9c5a10c1d9b808bb5195a5998ca980dafa256fdc0a44cffb99f"
+      "sha256": "979586b8abf6729a7e775e8adef42deb5ac9e3c8f406577fcdf69907be6b9bb9"
     },
     "python:research/flywheel_selfplay/h219_fbal_accum_run/runner.py": {
-      "bytes": 22932,
+      "bytes": 23555,
       "classification": {
         "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "bc81674b6e523ec341984d8647b259a607c941c1112f81465eab7a3c0ba1f537"
+      "sha256": "aca3dfc25083061c9ed81762f6f7c57b9a0db75dbc98bb626866fce95973b134"
     },
     "python:research/flywheel_selfplay/h219_fbal_accum_run/science.py": {
       "bytes": 5089,
@@ -5465,12 +5465,12 @@
       "sha256": "ce4d6770691121ba33a9c3a632afb01d97afe173826ee354cadea30605387835"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/launch.py": {
-      "bytes": 11637,
+      "bytes": 11567,
       "classification": {
         "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "6c23b98259fec88ca2cdc40f3ed0ba479a31acd49130e2b745aeb83a14e851f8"
+      "sha256": "9258c0627212d092f04d43832e3c107f05315f1dc11e70c82ae1e0af00765290"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/mixup.py": {
       "bytes": 1959,
@@ -5481,12 +5481,12 @@
       "sha256": "132eff7e58e3fad226e0a96ec930c47cac01a5ed4605f7ff5a439736aa09be6b"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/runner.py": {
-      "bytes": 24885,
+      "bytes": 25394,
       "classification": {
         "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "d8731991b6edaf527e84217ce5fe3026fc29db57eca5c34116eda178b067441e"
+      "sha256": "59c62c0b0598e113cd03de82a63d2a5494b0d3712907315b174e0d70ab3a7af8"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/science.py": {
       "bytes": 5505,
@@ -5513,20 +5513,20 @@
       "sha256": "94543734011f7c552e5c57da35f82152da0aa39288ee7829c40f472b6b6cb2ae"
     },
     "python:research/flywheel_selfplay/h221_bagged_delta_head/launch.py": {
-      "bytes": 11790,
+      "bytes": 11720,
       "classification": {
         "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "2ff4df29339c6038c8d1bf012c0b8a0f2a9d14e1c0bf4294cc3f85e3d848890d"
+      "sha256": "7d819c899eed957055befa64a4555ef45629606e01097b28431b3fd3b75bfadb"
     },
     "python:research/flywheel_selfplay/h221_bagged_delta_head/runner.py": {
-      "bytes": 22939,
+      "bytes": 23445,
       "classification": {
         "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "a658d9117764472bb16e25cdc98f8621c441b7d0d3d6f4e91c36d9fbb866ce54"
+      "sha256": "925fb86c27d357d7a05a14c93f97715843910c3c496dd0ac6b9d2c3a66389347"
     },
     "python:research/flywheel_selfplay/h221_bagged_delta_head/science.py": {
       "bytes": 7783,
@@ -5585,12 +5585,12 @@
       "sha256": "4c2369bc1e0022bbff758bf724ae0d07c759be9525b74c77e82a05e9fab165a2"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/analysis.py": {
-      "bytes": 17865,
+      "bytes": 15688,
       "classification": {
         "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
         "role": "research"
       },
-      "sha256": "0638c6ff0caabf1b6a62df3f8c39697f2921456f80e41cf3b5e672ba2709c938"
+      "sha256": "1f7df1064955de15ac2a8e2367fb7a66b58bf6d3c4be59a94cb535a9710fca46"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/monitor.py": {
       "bytes": 13713,
@@ -5609,12 +5609,12 @@
       "sha256": "40592ec66b97e08f15371c23b5dead8c2e454d31f9d77356f31de62a4e486fe1"
     },
     "python:research/flywheel_selfplay/h224_learned_switch_gate/analysis.py": {
-      "bytes": 14695,
+      "bytes": 13775,
       "classification": {
         "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
         "role": "research"
       },
-      "sha256": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434"
+      "sha256": "63cfbe436bf4e267f810fadfdc5dad9582be1ed0389289a43d3b5b36aae01195"
     },
     "python:research/flywheel_selfplay/h224_learned_switch_gate/gate.py": {
       "bytes": 5894,

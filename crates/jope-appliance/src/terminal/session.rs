@@ -38,6 +38,22 @@ pub enum Launch {
     Attach(Option<String>),
 }
 
+enum BackgroundResult {
+    Sync(anyhow::Result<Vec<String>>),
+    Publish(anyhow::Result<String>),
+}
+
+impl BackgroundResult {
+    fn into_messages(self) -> Vec<String> {
+        match self {
+            Self::Sync(Ok(messages)) => messages,
+            Self::Sync(Err(error)) => vec![format!("Sync: {error:#}")],
+            Self::Publish(Ok(message)) => vec![message],
+            Self::Publish(Err(error)) => vec![format!("Publish: {error:#}")],
+        }
+    }
+}
+
 pub fn requested(args: &[String]) -> Option<Launch> {
     requested_with_tty(args, io::stdin().is_terminal(), io::stdout().is_terminal())
 }
@@ -100,6 +116,8 @@ struct Session {
     screen: crate::terminal::screen::Screen,
     cloud_events: mpsc::Receiver<Vec<String>>,
     cloud_sender: mpsc::Sender<Vec<String>>,
+    background_events: mpsc::Receiver<BackgroundResult>,
+    background_sender: mpsc::Sender<BackgroundResult>,
     login_cancel: Option<Arc<AtomicBool>>,
     run_lists: mpsc::Receiver<anyhow::Result<(Vec<crate::terminal::runs::Entry>, String)>>,
     run_list_sender: mpsc::Sender<anyhow::Result<(Vec<crate::terminal::runs::Entry>, String)>>,
@@ -119,6 +137,7 @@ impl Session {
     ) -> anyhow::Result<Self> {
         let (event_sender, events) = mpsc::channel();
         let (cloud_sender, cloud_events) = mpsc::channel();
+        let (background_sender, background_events) = mpsc::channel();
         let (run_list_sender, run_lists) = mpsc::channel();
         let (synced_terminal_sender, synced_terminal) = mpsc::channel();
         let history = home.join("history");
@@ -140,6 +159,8 @@ impl Session {
             screen,
             cloud_events,
             cloud_sender,
+            background_events,
+            background_sender,
             login_cancel: None,
             run_lists,
             run_list_sender,
@@ -199,6 +220,13 @@ impl Session {
                     self.screen.push(&line);
                 }
                 self.screen.cloud_label = crate::cloud::account_label();
+                last_draw = None;
+            }
+            while let Ok(result) = self.background_events.try_recv() {
+                let lines = result.into_messages();
+                for line in lines {
+                    self.screen.push(&line);
+                }
                 last_draw = None;
             }
             while let Ok(event) = self.events.try_recv() {
@@ -360,6 +388,10 @@ impl Session {
             while let Ok(lines) = self.cloud_events.try_recv() {
                 output.transcript(&lines)?;
             }
+            while let Ok(result) = self.background_events.try_recv() {
+                let lines = result.into_messages();
+                output.transcript(&lines)?;
+            }
             while let Ok(result) = self.run_lists.try_recv() {
                 match result {
                     Ok((entries, notice)) => {
@@ -434,7 +466,7 @@ impl Session {
         let busy = Arc::clone(&self.cloud_busy);
         let done = self.synced_terminal_sender.clone();
         let client = self.client.clone();
-        let sender = self.cloud_sender.clone();
+        let sender = self.background_sender.clone();
         thread::spawn(move || {
             let result = (|| -> anyhow::Result<Vec<String>> {
                 let version = client.system_info()?.version;
@@ -462,7 +494,7 @@ impl Session {
                 Ok(lines)
             })();
             busy.store(false, Ordering::SeqCst);
-            let _ = sender.send(result.unwrap_or_else(|error| vec![format!("Sync: {error:#}")]));
+            let _ = sender.send(BackgroundResult::Sync(result));
         });
     }
 
@@ -609,7 +641,7 @@ impl Session {
                 if self.cloud_busy.swap(true, Ordering::SeqCst) {
                     return Ok(vec!["A cloud operation is already in progress.".into()]);
                 }
-                let sender = self.cloud_sender.clone();
+                let sender = self.background_sender.clone();
                 let busy = Arc::clone(&self.cloud_busy);
                 thread::spawn(move || {
                     let result = if let Some(model) = model {
@@ -618,7 +650,7 @@ impl Session {
                         crate::cloud::publish_best(&run.to_string())
                     };
                     busy.store(false, Ordering::SeqCst);
-                    let _ = sender.send(vec![result.unwrap_or_else(|e| format!("Publish: {e:#}"))]);
+                    let _ = sender.send(BackgroundResult::Publish(result));
                 });
                 return Ok(vec!["Publishing the selected fitted model explicitly. Fitted state can include training rows.".into()]);
             }

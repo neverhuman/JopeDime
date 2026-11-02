@@ -45,6 +45,23 @@ def add_admission_arguments(parser):
     return parser
 
 
+def add_restart_optimizer_argument(parser):
+    """Register the opt-in proposal-moment restart threshold."""
+    parser.add_argument(
+        "--restart-optimizer-after-rejections",
+        type=int,
+        default=0,
+        help="full-cohort proposals: clear Adam moments after this rejection streak; 0 disables",
+    )
+    return parser
+
+
+def validate_restart_optimizer_argument(parser, args):
+    if args.restart_optimizer_after_rejections < 0:
+        parser.error("--restart-optimizer-after-rejections must be nonnegative")
+    return args.restart_optimizer_after_rejections
+
+
 def publish_checkpoint_archive(path, s3_prefix, profile="veox-jepson-prod"):
     """Host AWS CLI only; deletion requires a version-pinned independent GET."""
     import hashlib

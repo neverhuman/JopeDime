@@ -749,8 +749,20 @@ fn guard_metrics(node: &str, runs_root: &str, root: &Path, names: &[String]) -> 
                     let quiescent = if node == LOCAL_NODE {
                         th::tail_is_abandoned(*mtime_ms, now_ms())
                     } else {
+                        let state = match th::SegmentState::load(&th::segment_dir(&archive, key)) {
+                            Ok(state) => state,
+                            Err(error) => {
+                                covered = false;
+                                detail.push(json!({
+                                    "source": source,
+                                    "reason": "segment_state_unreadable",
+                                    "error": format!("{error:#}"),
+                                }));
+                                continue;
+                            }
+                        };
                         th::remote_tail_is_abandoned(
-                            th::SegmentState::load(&th::segment_dir(&archive, key)).as_ref(),
+                            state.as_ref(),
                             &format!("{source_len}:{mtime_ms}"),
                             now_ms(),
                             th::TAIL_QUIESCENT_SECS,

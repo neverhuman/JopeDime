@@ -1458,6 +1458,45 @@ def _s3_put_create_only_and_verify(
     )
 
 
+def verify_final_bundle_before_summary(
+    *,
+    s3_bucket,
+    s3_prefix,
+    bundle_dir,
+    replay_dir,
+    deadline_spec,
+    _s3_put_create_only_and_verify,
+    stat,
+    mon,
+    time,
+    nq0_enc,
+    expected_eval_bin_sha,
+    roster,
+):
+    """Verify final replay and deadline before the success summary is built."""
+    custody_upload = _s3_put_create_only_and_verify(
+        s3_bucket,
+        f"{s3_prefix}/s3_custody_receipt.json",
+        bundle_dir / "s3_custody_receipt.json",
+        replay_dest_path=replay_dir / "s3_custody_receipt.json",
+        deadline_spec=deadline_spec,
+    )
+    verified_bundle = stat.verify_single_context_regression_seam_bundle(
+        replay_dir,
+        expected_train_sha256=nq0_enc["csv_sha256"],
+        expected_train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+        expected_train_rows=nq0_enc["nt"],
+        expected_evaluator_binary_sha256=expected_eval_bin_sha,
+        forbidden_cids=roster["forbidden_cids"],
+        forbidden_families=roster["forbidden_families"],
+        forbidden_datasets=roster["forbidden_datasets"],
+    )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_final_bundle_verification"
+    )
+    return custody_upload, verified_bundle
+
+
 def construct_and_consume_single_regression_context(
     out,
     launch,
@@ -2093,27 +2132,21 @@ def construct_and_consume_single_regression_context(
     )
     save(bundle_dir / "s3_custody_receipt.json", s3_custody)
 
-    custody_upload = _s3_put_create_only_and_verify(
-        s3_bucket,
-        f"{s3_prefix}/s3_custody_receipt.json",
-        bundle_dir / "s3_custody_receipt.json",
-        replay_dest_path=replay_dir / "s3_custody_receipt.json",
-        deadline_spec=deadline_spec,
-    )
-
     # 8. Run end-to-end fail-closed bundle verification on the replayed S3 bundle
-    verified_bundle = stat.verify_single_context_regression_seam_bundle(
-        replay_dir,
-        expected_train_sha256=nq0_enc["csv_sha256"],
-        expected_train_matrix_sha256=nq0_enc["train_matrix_sha256"],
-        expected_train_rows=nq0_enc["nt"],
-        expected_evaluator_binary_sha256=expected_eval_bin_sha,
-        forbidden_cids=roster["forbidden_cids"],
-        forbidden_families=roster["forbidden_families"],
-        forbidden_datasets=roster["forbidden_datasets"],
-    )
-    mon.enforce_shared_process_deadline(
-        time.monotonic(), deadline_spec, stage="after_final_bundle_verification"
+    # and enforce the shared deadline before any qualified summary is constructed.
+    custody_upload, verified_bundle = verify_final_bundle_before_summary(
+        s3_bucket=s3_bucket,
+        s3_prefix=s3_prefix,
+        bundle_dir=bundle_dir,
+        replay_dir=replay_dir,
+        deadline_spec=deadline_spec,
+        _s3_put_create_only_and_verify=_s3_put_create_only_and_verify,
+        stat=stat,
+        mon=mon,
+        time=time,
+        nq0_enc=nq0_enc,
+        expected_eval_bin_sha=expected_eval_bin_sha,
+        roster=roster,
     )
     # Final invocation accounting and a successful worker exit are also required;
     # this earlier scientific/custody summary cannot certify its own transport tail.

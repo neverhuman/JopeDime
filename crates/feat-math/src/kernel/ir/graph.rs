@@ -13,10 +13,13 @@ pub const PURE_FEATURE_DAG_SCHEMA: &str = "jope.selfplay.pure-feature-dag/v1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum RowSemantics {
+pub enum GraphRowSemantics {
     Iid,
     Ordered,
 }
+
+/// Graph inputs record only whether row order matters; they do not identify the ordering columns.
+pub type RowSemantics = GraphRowSemantics;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

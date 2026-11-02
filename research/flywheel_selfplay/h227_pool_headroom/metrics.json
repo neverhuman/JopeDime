@@ -129,5 +129,5 @@
     "raw_roots_retained": true,
     "scientific_retry": false
   },
-  "next_step": "Retain partial evidence. A future complete measurement needs a prospective resource-admission window and an exact violating-observation receipt. No H227 retry or H228 execution is authorized by this closeout."
+  "next_step": "Retain partial evidence. A future complete measurement needs a prospective resource-admission window and an exact violating-observation receipt. No H227 retry occurred. The complete candidate-generation headroom diagnostic remains unresolved."
 }

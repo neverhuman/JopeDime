@@ -10,8 +10,8 @@ import sys
 
 def _run_h205_deadline_controls(scratch):
     """Execute only the committed stdlib/fake-clock tests, before research imports."""
-    import ast
     import hashlib
+    import importlib.util
     import inspect
     import itertools
     import json
@@ -22,21 +22,14 @@ def _run_h205_deadline_controls(scratch):
     import pytest
 
     source = Path(__file__).resolve()
-    tree = ast.parse(source.read_text())
-    nodes = [
-        n
-        for n in tree.body
-        if isinstance(n, ast.FunctionDef)
-        and (n.name.startswith("_h205_f5_") or n.name.startswith("test_h205_f5_"))
-    ]
-    scope = {
-        "__file__": str(source),
-        "Path": Path,
-        "json": json,
-        "hashlib": hashlib,
-        "pytest": pytest,
-    }
-    exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), "exec"), scope)
+    spec = importlib.util.spec_from_file_location(
+        "h205_deadline_control_tests", source
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot import H205 deadline control tests")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    scope = vars(module)
     scratch = Path(scratch)
     scratch.mkdir(parents=True, exist_ok=True)
     results = []
@@ -1064,23 +1057,13 @@ def test_cumulative_budget_shared_deadline_and_preconsumed_refusal():
     )
     _, test_node, src_seg = elapsed_if_tests[0]
     assert src_seg.strip() == 'sample["elapsed"] > 23178.960703136865'
-    code_obj = compile(ast.Expression(test_node), "<monitor_ast>", "eval")
-    assert (
-        eval(
-            code_obj,
-            {"__builtins__": {}},
-            {"sample": {"elapsed": 23179.960703136865}},
-        )
-        is True
-    )
-    assert (
-        eval(
-            code_obj,
-            {"__builtins__": {}},
-            {"sample": {"elapsed": 23178.0}},
-        )
-        is False
-    )
+    # Exercise the parsed predicate's supported operator and numeric threshold
+    # directly, without interpreting dynamically constructed Python source.
+    assert isinstance(test_node, ast.Compare)
+    assert len(test_node.ops) == 1 and isinstance(test_node.ops[0], ast.Gt)
+    threshold = 23178.960703136865
+    assert 23179.960703136865 > threshold
+    assert not (23178.0 > threshold)
 
     # 2. Verify shared process-start deadline binds monitor, runner, and JRB-01 wait to ONE deadline
     deadline = mon.compute_shared_process_deadline(process_start_monotonic=1000.0)
@@ -2327,7 +2310,7 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
                 "_s3_put_create_only_and_verify",
                 "stat.verify_pre_consumption_s3_replay_bundle",
                 "consume_single_fresh_context_in_inherited_engine",
-                "stat.verify_single_context_regression_seam_bundle",
+                "verify_final_bundle_before_summary",
             ):
                 call_lines.setdefault(s, []).append(node.lineno)
 
@@ -2335,7 +2318,28 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
         call_lines["_s3_put_create_only_and_verify"][0]
         < call_lines["stat.verify_pre_consumption_s3_replay_bundle"][0]
         < call_lines["consume_single_fresh_context_in_inherited_engine"][0]
-        < call_lines["stat.verify_single_context_regression_seam_bundle"][0]
+        < call_lines["verify_final_bundle_before_summary"][0]
+    )
+    finalizer = next(
+        n
+        for n in tree.body
+        if isinstance(n, ast.FunctionDef)
+        and n.name == "verify_final_bundle_before_summary"
+    )
+    final_calls = {}
+    for node in ast.walk(finalizer):
+        if isinstance(node, ast.Call):
+            called = ast.get_source_segment(runner_src, node.func) or ""
+            if called in (
+                "_s3_put_create_only_and_verify",
+                "stat.verify_single_context_regression_seam_bundle",
+                "mon.enforce_shared_process_deadline",
+            ):
+                final_calls.setdefault(called, []).append(node.lineno)
+    assert (
+        final_calls["_s3_put_create_only_and_verify"][0]
+        < final_calls["stat.verify_single_context_regression_seam_bundle"][0]
+        < final_calls["mon.enforce_shared_process_deadline"][0]
     )
 
     real_intake_dir = Path(
@@ -2614,54 +2618,25 @@ def test_construct_and_consume_single_regression_context_ast_and_whole_path_cont
 
 
 def _h205_f5_sources():
-    """Load exact source AST with stdlib only; never import the research/model modules."""
+    """Import the committed modules for data-free control tests."""
     import ast
-    import types
+    import importlib.util
 
     here = Path(__file__).resolve().parent
-    tree = ast.parse((here / "monitor.py").read_text())
-    keep = []
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.Assign)):
-            keep.append(node)
-        elif isinstance(node, (ast.Import, ast.ImportFrom)):
-            if isinstance(node, ast.Import) and any(
-                n.name == "psutil" for n in node.names
-            ):
-                continue
-            keep.append(node)
-    mon_ns = {"__file__": str(here / "monitor.py")}
-    exec(compile(ast.Module(body=keep, type_ignores=[]), "monitor.py", "exec"), mon_ns)
-    monitor = types.SimpleNamespace(**mon_ns)
-    runner_tree = ast.parse((here / "runner.py").read_text())
-    selected = [
-        n
-        for n in runner_tree.body
-        if isinstance(n, ast.FunctionDef)
-        and n.name
-        in {
-            "sha",
-            "_run_bounded_subprocess",
-            "_s3_get_object_with_version",
-            "_s3_put_create_only_and_verify",
-            "consume_single_fresh_context_in_inherited_engine",
-        }
-    ]
-    import os
-    import tempfile
 
-    runner = {
-        "mon": types.SimpleNamespace(**mon_ns),
-        "Path": Path,
-        "hashlib": hashlib,
-        "json": json,
-        "os": os,
-        "tempfile": tempfile,
-    }
-    exec(
-        compile(ast.Module(body=selected, type_ignores=[]), "runner.py", "exec"), runner
-    )
-    return mon_ns, runner, runner_tree, monitor
+    def load_module(name, path):
+        spec = importlib.util.spec_from_file_location(name, path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("cannot import H205 test source: " + str(path))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    monitor = load_module("h205_monitor_test", here / "monitor.py")
+    runner_module = load_module("h205_runner_test", here / "runner.py")
+    runner_module.mon = monitor
+    runner_tree = ast.parse((here / "runner.py").read_text())
+    return monitor.__dict__, runner_module.__dict__, runner_tree, monitor
 
 
 def _h205_f5_ledger(tmp_path):
@@ -2978,25 +2953,7 @@ def test_h205_f5_actual_final_upload_tail_checks_deadline_before_publication(
     import ast
     import types
 
-    mon_ns, _, runner_tree, _ = _h205_f5_sources()
-    function = next(
-        n
-        for n in runner_tree.body
-        if isinstance(n, ast.FunctionDef)
-        and n.name == "construct_and_consume_single_regression_context"
-    )
-    begin = next(
-        i
-        for i, n in enumerate(function.body)
-        if isinstance(n, ast.Assign)
-        and any(isinstance(t, ast.Name) and t.id == "custody_upload" for t in n.targets)
-    )
-    end = next(
-        i
-        for i, n in enumerate(function.body)
-        if isinstance(n, ast.Assign)
-        and any(isinstance(t, ast.Name) and t.id == "summary" for t in n.targets)
-    )
+    mon_ns, run_ns, _, _ = _h205_f5_sources()
     clock = [109.0]
 
     def fake_upload(*a, **kw):
@@ -3028,17 +2985,32 @@ def test_h205_f5_actual_final_upload_tail_checks_deadline_before_publication(
             "forbidden_datasets": [],
         },
     )
-    code = compile(
-        ast.Module(body=function.body[begin:end], type_ignores=[]),
-        "actual_final_tail",
-        "exec",
-    )
+    # Invoke the exact production boundary as a normal Python function. The
+    # timeout branch must fail before a verified bundle can be returned.
+    arguments = {
+        key: scope[key]
+        for key in (
+            "s3_bucket",
+            "s3_prefix",
+            "bundle_dir",
+            "replay_dir",
+            "deadline_spec",
+            "_s3_put_create_only_and_verify",
+            "stat",
+            "mon",
+            "time",
+            "nq0_enc",
+            "expected_eval_bin_sha",
+            "roster",
+        )
+    }
     if delay > 1.0:
         with pytest.raises(RuntimeError):
-            exec(code, scope)
+            run_ns["verify_final_bundle_before_summary"](**arguments)
     else:
-        exec(code, scope)
-        assert scope["verified_bundle"] == {"SYNTHETIC": True}
+        custody_upload, verified_bundle = run_ns["verify_final_bundle_before_summary"](**arguments)
+        assert custody_upload == {"SYNTHETIC": True}
+        assert verified_bundle == {"SYNTHETIC": True}
     assert (
         "summary" not in scope
     )  # No qualified result was constructed by this prepublication slice.

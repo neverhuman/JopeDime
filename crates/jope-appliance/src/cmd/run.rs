@@ -155,8 +155,50 @@ fn parse_json<T: DeserializeOwned>(raw: &str) -> anyhow::Result<T> {
 }
 
 fn parse_value<T: DeserializeOwned>(raw: &str) -> anyhow::Result<T> {
-    let value = serde_json::from_str(raw).unwrap_or_else(|_| Value::String(raw.to_owned()));
-    serde_json::from_value(value).map_err(Into::into)
+    let syntax = match serde_json::from_str::<Value>(raw) {
+        Ok(value) => ValueSyntax::Json(value),
+        Err(json_error) => ValueSyntax::BareText {
+            value: raw.to_owned(),
+            json_error,
+        },
+    };
+    match syntax {
+        ValueSyntax::Json(value) => serde_json::from_value(value).map_err(Into::into),
+        ValueSyntax::BareText { value, json_error } => {
+            serde_json::from_value(Value::String(value.clone()))
+                .map_err(|source| anyhow::Error::new(BareTextValueError { json_error, source }))
+        }
+    }
+}
+
+enum ValueSyntax {
+    Json(Value),
+    BareText {
+        value: String,
+        json_error: serde_json::Error,
+    },
+}
+
+#[derive(Debug)]
+struct BareTextValueError {
+    json_error: serde_json::Error,
+    source: serde_json::Error,
+}
+
+impl std::fmt::Display for BareTextValueError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "input is neither valid JSON ({}) nor a valid plain-text value ({})",
+            self.json_error, self.source
+        )
+    }
+}
+
+impl std::error::Error for BareTextValueError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.source)
+    }
 }
 
 /// Keep the hidden local probe ahead of the ordinary engine-client preflight.
@@ -745,6 +787,22 @@ mod tests {
     #[test]
     fn hidden_m1_requires_json_preserves_public_requirements_and_conflicts_with_transport_modes() {
         use clap::CommandFactory;
+        assert_eq!(parse_value::<String>("regression").unwrap(), "regression");
+        assert_eq!(
+            parse_value::<String>(r#""regression""#).unwrap(),
+            "regression"
+        );
+        assert_eq!(
+            parse_value::<Value>(r#"{"kind":"random"}"#).unwrap(),
+            json!({"kind": "random"})
+        );
+        let error = parse_value::<bool>("not a boolean").unwrap_err();
+        let typed = error
+            .downcast_ref::<BareTextValueError>()
+            .expect("plain-text parse failure has its typed error");
+        assert!(typed.json_error.is_syntax());
+        assert!(typed.source.to_string().contains("invalid type"));
+
         let argv = m1_argv(std::path::Path::new("prepared.json"));
         let parsed = Args::try_parse_from(&argv).unwrap();
         let crate::cli::Command::Run(args) = parsed.command else {

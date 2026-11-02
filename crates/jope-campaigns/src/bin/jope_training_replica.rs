@@ -861,11 +861,17 @@ fn gc(target: &Target, rroot: &str, present: &BTreeSet<String>) -> Result<usize>
 // receipt
 // ---------------------------------------------------------------------------
 
-fn load_status(root: &Path) -> Value {
-    fs::read(root.join(STATUS_RELATIVE))
-        .ok()
-        .and_then(|b| serde_json::from_slice(&b).ok())
-        .unwrap_or_else(|| json!({}))
+fn load_status(root: &Path) -> Result<Value> {
+    let path = root.join(STATUS_RELATIVE);
+    let bytes = match fs::read(&path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(json!({})),
+        Err(error) => {
+            return Err(error).with_context(|| format!("read status receipt {}", path.display()))
+        }
+    };
+    serde_json::from_slice(&bytes)
+        .with_context(|| format!("parse status receipt {}", path.display()))
 }
 
 /// A target that fails today must still report when it last worked, otherwise
@@ -915,7 +921,7 @@ fn cmd_replicate(root: &Path) -> Result<Value> {
     fs::create_dir_all(&replica)?;
     let targets = targets_from_env()?;
     let rroot = remote_root();
-    let previous = load_status(root);
+    let previous = load_status(root)?;
     let started = now_ms();
 
     // Hold the capture lock only while the payload is frozen into the stage, so
@@ -1373,6 +1379,19 @@ fn main() -> Result<()> {
             match cmd_replicate(&root) {
                 Ok(report) => println!("{}", serde_json::to_string_pretty(&report)?),
                 Err(err) => {
+                    let mut last_success_ms = Value::Null;
+                    let error = match load_status(&root) {
+                        Ok(status) => {
+                            last_success_ms = match status.get("last_success_ms") {
+                                Some(value) => value.clone(),
+                                None => Value::Null,
+                            };
+                            format!("{err:#}")
+                        }
+                        Err(status_err) => {
+                            format!("{err:#}; status receipt unavailable: {status_err:#}")
+                        }
+                    };
                     let report = json!({
                         "schema": STATUS_SCHEMA,
                         "generated_at_ms": now_ms(),
@@ -1380,8 +1399,8 @@ fn main() -> Result<()> {
                         "ok": false,
                         "healthy_targets": 0,
                         "target_count": 0,
-                        "error": format!("{err:#}"),
-                        "last_success_ms": load_status(&root).get("last_success_ms").and_then(Value::as_u64).unwrap_or(0),
+                        "error": error,
+                        "last_success_ms": last_success_ms,
                         "targets": [],
                     });
                     let _ = write_status(&root, &report);
@@ -1440,7 +1459,7 @@ fn main() -> Result<()> {
             Ok(())
         }
         Some("status") => {
-            println!("{}", serde_json::to_string_pretty(&load_status(&root))?);
+            println!("{}", serde_json::to_string_pretty(&load_status(&root)?)?);
             Ok(())
         }
         _ => usage(),

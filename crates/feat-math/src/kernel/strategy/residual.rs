@@ -12,10 +12,13 @@ const PROPOSAL_SOURCE: &str = "fit_residual_v1";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum RowSemantics {
+pub enum ResidualRowSemantics {
     Unordered,
     Ordered { identity: OrderedInputIdentity },
 }
+
+/// Residual closures bind ordered rows to a validated identity, a distinct contract from table and graph schemas.
+pub type RowSemantics = ResidualRowSemantics;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct FitClosure<'a> {

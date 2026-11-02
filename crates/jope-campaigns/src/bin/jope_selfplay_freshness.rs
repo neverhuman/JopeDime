@@ -254,7 +254,7 @@ impl ScqScheduler {
         if text.is_empty() {
             return Ok(json!({}));
         }
-        Ok(serde_json::from_str(&text).unwrap_or_else(|_| json!({"output": text})))
+        serde_json::from_str(&text).with_context(|| format!("parse SCQ JSON for {args:?}"))
     }
 
     fn load_jobs(&self) -> Result<Vec<SchedulerJob>> {
