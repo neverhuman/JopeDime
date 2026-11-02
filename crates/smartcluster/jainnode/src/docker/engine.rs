@@ -1,3 +1,4 @@
+use super::protocol::read_stream_header;
 use super::*;
 
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -156,7 +156,7 @@ async fn wait_gpu_attempt(directory: &Path) -> Result<serde_json::Value> {
         sleep(Duration::from_millis(20)).await;
     }
 }
-fn populated(path: &Path) -> Result<bool> {
+pub(super) fn populated(path: &Path) -> Result<bool> {
     Ok(fs::read_to_string(path.join("cgroup.events"))?
         .lines()
         .any(|l| l == "populated 1"))

@@ -1,5 +1,6 @@
 use super::*;
 
+#[tokio::test]
 async fn concurrent_runtime_persists_ack_before_spawning_and_terminalizes_success() {
     let harness = runtime_harness(
         DockerMock {

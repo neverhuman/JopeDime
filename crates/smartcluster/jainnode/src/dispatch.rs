@@ -16,7 +16,7 @@ use crate::{
 };
 
 mod execution_types;
-pub(super) use execution_types::{ExecutionKey, PreparedExecution, ProductExecutor};
+use execution_types::{ExecutionKey, PreparedExecution, ProductExecutor};
 
 #[async_trait]
 pub trait NodeExecutionPort: Send + Sync {

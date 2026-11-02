@@ -142,7 +142,7 @@ fn jain_subcommand(template: JainWorkload) -> &'static str {
 }
 
 impl LaunchPlan {
-    fn validate(&self) -> Result<(), ExecutorError> {
+    pub(super) fn validate(&self) -> Result<(), ExecutorError> {
         if !self.program.is_absolute() {
             return Err(ExecutorError::ProgramNotAbsolute(self.program.clone()));
         }
@@ -162,7 +162,7 @@ impl LaunchPlan {
     }
 }
 
-fn reserved_environment_name(name: &str) -> bool {
+pub(super) fn reserved_environment_name(name: &str) -> bool {
     name == "PATH"
         || name.starts_with("LD_")
         || name.starts_with("DYLD_")
@@ -381,7 +381,7 @@ fn limits(resources: ResourceRequest, priority: PriorityClass, cpus: CpuSet) -> 
     }
 }
 
-fn cuda_visible_devices(devices: &[String]) -> String {
+pub(super) fn cuda_visible_devices(devices: &[String]) -> String {
     if devices.is_empty() {
         "-1".to_owned()
     } else {

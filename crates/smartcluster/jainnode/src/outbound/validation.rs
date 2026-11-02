@@ -1,6 +1,6 @@
 use super::*;
 
-fn empty_node_signature(identity: &NodeRuntimeIdentity) -> DomainSignature {
+pub(super) fn empty_node_signature(identity: &NodeRuntimeIdentity) -> DomainSignature {
     DomainSignature {
         authority: SignatureAuthority::NodeSession,
         issuer: identity.node_id().to_owned(),

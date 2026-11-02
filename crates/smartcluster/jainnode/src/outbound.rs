@@ -10,7 +10,7 @@ use crate::{
 };
 
 const ASSIGNMENT_ACCEPTED_DOMAIN: &[u8] = b"jain.node.assignment-accepted.v1\0";
-const EVENT_DOMAIN: &[u8] = b"jain.node.event.v1\0";
+pub(super) const EVENT_DOMAIN: &[u8] = b"jain.node.event.v1\0";
 const TERMINAL_DOMAIN: &[u8] = b"jain.node.terminal.v1\0";
 const STORAGE_TELEMETRY_FRAME_DOMAIN: &[u8] = b"jain.node.storage-telemetry-frame.v1\0";
 const STORAGE_FRAGMENT_RECEIPT_FRAME_DOMAIN: &[u8] =

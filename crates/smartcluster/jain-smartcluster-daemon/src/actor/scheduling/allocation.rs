@@ -1,4 +1,3 @@
-use super::super::mps::allocation_uses_mps;
 use super::*;
 
 impl DaemonActor {

@@ -247,7 +247,7 @@ impl DurableControlOutbox {
         self.retire_exact(sequence, digest)
     }
 
-    fn retire_exact(
+    pub(super) fn retire_exact(
         &self,
         sequence: u64,
         digest: Digest32,

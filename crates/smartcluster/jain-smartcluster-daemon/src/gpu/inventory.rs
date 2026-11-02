@@ -1,3 +1,4 @@
+use super::idle::complete_process_inventory;
 use super::*;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

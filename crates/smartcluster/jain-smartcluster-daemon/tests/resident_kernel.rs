@@ -412,6 +412,7 @@ impl Harness {
 mod admission_tests;
 #[path = "resident_kernel/lease.rs"]
 mod lease_tests;
+use lease_tests::populated;
 #[path = "resident_kernel/placement.rs"]
 mod placement_tests;
 #[path = "resident_kernel/restarts.rs"]

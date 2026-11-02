@@ -294,9 +294,7 @@ fn write_control(path: &Path, name: &str, value: &str) -> Result<(), CgroupError
 }
 
 mod metrics;
-use metrics::{
-    cpu_max, memory_limit, parse_named, read_cgroup_events, read_named_u64, read_pids, read_u64,
-};
+use metrics::{cpu_max, memory_limit, read_cgroup_events, read_named_u64, read_pids, read_u64};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct AttemptKey {

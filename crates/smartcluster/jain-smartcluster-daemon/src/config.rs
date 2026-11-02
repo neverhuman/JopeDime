@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use jain_smartcluster_core::TenantId;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[cfg(test)]
