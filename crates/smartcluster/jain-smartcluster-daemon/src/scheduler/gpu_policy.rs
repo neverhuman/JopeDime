@@ -85,10 +85,10 @@ struct DeviceState {
 }
 
 #[derive(Clone)]
-pub(super) struct DeviceStates(Vec<DeviceState>);
+pub(crate) struct DeviceStates(Vec<DeviceState>);
 
 impl DeviceStates {
-    pub(super) fn new(devices: &[GpuDevice]) -> Self {
+    pub(crate) fn new(devices: &[GpuDevice]) -> Self {
         let mut devices: Vec<_> = devices
             .iter()
             .filter(|device| device.healthy)
@@ -104,7 +104,7 @@ impl DeviceStates {
         Self(devices)
     }
 
-    pub(super) fn add_running(
+    pub(crate) fn add_running(
         &mut self,
         allocations: &[GpuAllocation],
     ) -> Result<(), SchedulerError> {
@@ -149,7 +149,7 @@ impl DeviceStates {
         Ok(())
     }
 
-    pub(super) fn allocate(
+    pub(crate) fn allocate(
         &mut self,
         request: Option<GpuRequest>,
         compatibility: GpuCompatibility,

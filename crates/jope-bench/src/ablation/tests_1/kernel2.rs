@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-pub(super) fn ablation_kernel2_a_equals_a_replays_byte_for_byte() {
+pub(crate) fn ablation_kernel2_a_equals_a_replays_byte_for_byte() {
     let config = kernel2_config();
     let (first_dir, second_dir) = (scratch(), scratch());
     let first = run(&config, first_dir.path()).unwrap();
@@ -94,7 +94,7 @@ pub(super) fn ablation_kernel2_a_equals_a_replays_byte_for_byte() {
 }
 
 #[test]
-pub(super) fn ablation_legacy_document_is_unchanged_by_the_kernel2_arms() {
+pub(crate) fn ablation_legacy_document_is_unchanged_by_the_kernel2_arms() {
     let budget = Budget {
         evaluations: SMALL_EVALUATIONS,
         seconds: SEARCH_SECONDS,
@@ -184,7 +184,7 @@ pub(super) fn ablation_legacy_document_is_unchanged_by_the_kernel2_arms() {
 /// The kernel2 arms refuse what `jope pipeline run` refuses for a kernel2 profile, before any
 /// search starts, and the command line refuses a refinement option given alone.
 #[test]
-pub(super) fn ablation_kernel2_refuses_what_the_pipeline_refuses() {
+pub(crate) fn ablation_kernel2_refuses_what_the_pipeline_refuses() {
     assert_eq!(
         Profile::parse("kernel2-baseline").unwrap(),
         Profile::Kernel2Baseline

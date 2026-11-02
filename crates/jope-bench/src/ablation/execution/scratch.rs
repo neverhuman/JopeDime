@@ -1,13 +1,13 @@
 use super::*;
 
 /// The refusal of a kernel2 search output that already exists.
-pub(super) const SCRATCH_IN_USE: &str = "already holds a kernel2 search; choose a new --scratch";
+pub(crate) const SCRATCH_IN_USE: &str = "already holds a kernel2 search; choose a new --scratch";
 
 /// Refuse a kernel2 search's output directory when anything is already there, a symbolic link
 /// included. The route publishes `search/cut-0` with plain writes, so a second search into the
 /// same directory would replace the first one's evidence; the legacy search refuses its own
 /// published `search.json` the same way, and `jope pipeline run` refuses a used `--output`.
-pub(super) fn check_unused(output: &Path) -> Result<()> {
+pub(crate) fn check_unused(output: &Path) -> Result<()> {
     match std::fs::symlink_metadata(output) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(error) => Err(error).with_context(|| format!("inspect {}", output.display())),
@@ -17,14 +17,14 @@ pub(super) fn check_unused(output: &Path) -> Result<()> {
 
 /// The refusal of a scratch directory that a comparison with a kernel2 profile cannot use
 /// ([`check_scratch_kind`], [`check_scratch_unused`]).
-pub(super) const SCRATCH_NOT_UNUSED: &str =
+pub(crate) const SCRATCH_NOT_UNUSED: &str =
     "already holds ablation output; a kernel2 comparison needs an absent or empty --scratch";
 
 /// Refuse, for a comparison with a kernel2 profile, a scratch path that exists but is not a
 /// directory, a symbolic link included, also when the path ends in `/` (which would make
 /// `symlink_metadata` follow the link). An absent path is admitted: [`Reservation::take`]
 /// creates it. Anything else, an inspection error included, is refused.
-pub(super) fn check_scratch_kind(scratch: &Path) -> Result<()> {
+pub(crate) fn check_scratch_kind(scratch: &Path) -> Result<()> {
     let refused = || format!("{}: {SCRATCH_NOT_UNUSED}", scratch.display());
     let path: PathBuf = scratch.components().collect();
     match std::fs::symlink_metadata(path) {
@@ -46,7 +46,7 @@ pub(super) fn check_scratch_kind(scratch: &Path) -> Result<()> {
 /// and it then marks the scratch ([`mark_kernel2`]). A later comparison through this harness
 /// refuses the marked scratch as its scratch ([`check_not_kernel2`]) and as the place of its
 /// `--out` document ([`check_out`]). Writers outside the harness are not covered.
-pub(super) fn check_scratch_unused(scratch: &Path) -> Result<()> {
+pub(crate) fn check_scratch_unused(scratch: &Path) -> Result<()> {
     let refused = || format!("{}: {SCRATCH_NOT_UNUSED}", scratch.display());
     check_scratch_kind(scratch)?;
     for entry in std::fs::read_dir(scratch).with_context(refused)? {
@@ -60,14 +60,14 @@ pub(super) fn check_scratch_unused(scratch: &Path) -> Result<()> {
 }
 
 /// The file a comparison holds in its scratch directory while it runs ([`Reservation`]).
-pub(super) const LOCK_FILE: &str = ".ablation-lock";
+pub(crate) const LOCK_FILE: &str = ".ablation-lock";
 /// The permanent marker of a scratch directory a comparison with a kernel2 profile used
 /// ([`mark_kernel2`]).
-pub(super) const KERNEL2_MARKER: &str = ".ablation-kernel2";
+pub(crate) const KERNEL2_MARKER: &str = ".ablation-kernel2";
 /// The refusal of a scratch directory whose [`LOCK_FILE`] exists.
-pub(super) const SCRATCH_RESERVED: &str = "another comparison holds this --scratch";
+pub(crate) const SCRATCH_RESERVED: &str = "another comparison holds this --scratch";
 /// The refusal, by every comparison, of a scratch directory that holds [`KERNEL2_MARKER`].
-pub(super) const SCRATCH_HOLDS_KERNEL2: &str =
+pub(crate) const SCRATCH_HOLDS_KERNEL2: &str =
     "holds a kernel2 comparison's evidence; use a new --scratch";
 
 /// An exclusive reservation of a scratch directory for one comparison: its [`LOCK_FILE`],
@@ -77,14 +77,14 @@ pub(super) const SCRATCH_HOLDS_KERNEL2: &str =
 /// while the first holds it. The file records the holder's process id and start time for a
 /// person; it holds no evidence. A crash can leave it behind; it is then removed by hand, once no
 /// comparison is running.
-pub(super) struct Reservation {
+pub(crate) struct Reservation {
     lock: PathBuf,
 }
 
 impl Reservation {
     /// Create `scratch` when it is absent (an empty directory changes no evidence), then its
     /// [`LOCK_FILE`], refusing a lock file that already exists.
-    pub(super) fn take(scratch: &Path) -> Result<Reservation> {
+    pub(crate) fn take(scratch: &Path) -> Result<Reservation> {
         use std::io::Write as _;
         std::fs::create_dir_all(scratch)
             .with_context(|| format!("create {}", scratch.display()))?;
@@ -124,7 +124,7 @@ impl Drop for Reservation {
 /// [`KERNEL2_MARKER`], so no later comparison through this harness, legacy-only included, uses a
 /// kernel2 comparison's scratch as its own scratch. An inspection error is refused too. The
 /// `--out` document is admitted separately ([`check_out`]).
-pub(super) fn check_not_kernel2(scratch: &Path) -> Result<()> {
+pub(crate) fn check_not_kernel2(scratch: &Path) -> Result<()> {
     let refused = || format!("{}: {SCRATCH_HOLDS_KERNEL2}", scratch.display());
     match std::fs::symlink_metadata(scratch.join(KERNEL2_MARKER)) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
@@ -136,7 +136,7 @@ pub(super) fn check_not_kernel2(scratch: &Path) -> Result<()> {
 /// Mark a scratch directory, under the [`Reservation`] and before any other write, as one a
 /// comparison with a kernel2 profile used: [`KERNEL2_MARKER`], created atomically and never
 /// removed. Every later comparison refuses the scratch ([`check_not_kernel2`]).
-pub(super) fn mark_kernel2(scratch: &Path) -> Result<()> {
+pub(crate) fn mark_kernel2(scratch: &Path) -> Result<()> {
     use std::io::Write as _;
     let marker = scratch.join(KERNEL2_MARKER);
     let mut file = std::fs::OpenOptions::new()
@@ -149,7 +149,7 @@ pub(super) fn mark_kernel2(scratch: &Path) -> Result<()> {
 }
 
 /// The refusal of a `--out` destination ([`check_out`]); the message names the reason.
-pub(super) const OUT_REFUSED: &str = "--out refused";
+pub(crate) const OUT_REFUSED: &str = "--out refused";
 
 /// `path` with its symbolic links and `..` resolved, also when it does not exist yet: the nearest
 /// existing ancestor (inspected without following a final symbolic link, so a dangling link
@@ -157,7 +157,7 @@ pub(super) const OUT_REFUSED: &str = "--out refused";
 /// exist yet are appended. A `..` among those is refused, since what it names depends on
 /// directories that do not exist yet, and so is an ancestor that cannot be inspected. The error
 /// is the reason, for the caller's message.
-pub(super) fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, String> {
+pub(crate) fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, String> {
     let path: PathBuf = path.components().collect();
     let mut existing = Path::new("");
     for ancestor in path.ancestors() {
@@ -223,7 +223,7 @@ pub(super) fn resolve_destination(path: &Path) -> std::result::Result<PathBuf, S
 /// hard link at `out` is admitted: [`replace_document`] renames a new file over it, so the inode
 /// it shares is not written. The check and the rename are separate steps; a change to `out`'s
 /// directory between them is not prevented.
-pub(super) fn check_out(out: &Path, scratch: Option<&Path>, kernel2: bool) -> Result<()> {
+pub(crate) fn check_out(out: &Path, scratch: Option<&Path>, kernel2: bool) -> Result<()> {
     let refused = |reason: &str| {
         format!(
             "{}: {OUT_REFUSED} ({reason}); choose another --out",

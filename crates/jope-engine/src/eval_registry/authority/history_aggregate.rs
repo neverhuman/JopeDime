@@ -165,9 +165,12 @@ impl Lines {
     }
 }
 
+#[path = "history_aggregate/artifact.rs"]
 mod artifact;
 use artifact::*;
+#[path = "history_aggregate/validation.rs"]
 mod validation;
 use validation::*;
 #[cfg(test)]
+#[path = "history_aggregate/tests.rs"]
 mod tests;

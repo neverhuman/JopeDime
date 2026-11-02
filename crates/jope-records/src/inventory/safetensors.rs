@@ -17,7 +17,7 @@ pub struct Safetensors<'a> {
 }
 
 /// `(begin, end)` of an entry's `data_offsets`, as Python's two-name unpacking read it.
-pub(super) fn offsets(name: &str, entry: &Value) -> Result<(i128, i128)> {
+pub(crate) fn offsets(name: &str, entry: &Value) -> Result<(i128, i128)> {
     let items = entry
         .get("data_offsets")
         .and_then(py::iterate)
@@ -41,7 +41,7 @@ pub(super) fn offsets(name: &str, entry: &Value) -> Result<(i128, i128)> {
 }
 
 /// `math.prod(shape)`; `None` when the product leaves the representable range.
-pub(super) fn product(name: &str, shape: &Value) -> Result<Option<i128>> {
+pub(crate) fn product(name: &str, shape: &Value) -> Result<Option<i128>> {
     let dims = shape
         .as_list()
         .ok_or_else(|| Error::Shape(format!("{name}: shape is not a list")))?;

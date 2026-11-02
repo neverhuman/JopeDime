@@ -61,7 +61,7 @@ fn request_daemon(record: &DaemonFile, method: &str, path: &str) -> Result<(), E
     runtime.block_on(request_daemon_async(record, method, path))
 }
 
-pub(super) async fn request_daemon_async(
+pub(crate) async fn request_daemon_async(
     record: &DaemonFile,
     method: &str,
     path: &str,
@@ -105,7 +105,7 @@ pub(super) async fn request_daemon_async(
     .map_err(|_| EngineError::Daemon("request timed out".into()))?
 }
 
-pub(super) fn parse_duration(value: &str) -> Result<Duration, EngineError> {
+pub(crate) fn parse_duration(value: &str) -> Result<Duration, EngineError> {
     let split = value
         .find(|character: char| !character.is_ascii_digit())
         .unwrap_or(value.len());

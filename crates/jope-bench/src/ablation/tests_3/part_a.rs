@@ -3,7 +3,7 @@ use super::*;
 /// The reviewer's PR0-R4 regression test (review 03), adopted with its name and intent. Its
 /// scratch directory is in a fresh test directory instead of the review's evidence directory.
 #[test]
-pub(super) fn review03_legacy_followup_preserves_kernel2_preparation() {
+pub(crate) fn review03_legacy_followup_preserves_kernel2_preparation() {
     let root = scratch();
     let dir = root.path().join("rust-legacy-followup");
     let config = shared_scratch_config();
@@ -40,7 +40,7 @@ pub(super) fn review03_legacy_followup_preserves_kernel2_preparation() {
 /// The reviewer's PR0-R6 regression test (review 03), adopted with its name and intent. Its
 /// directories are in a fresh test directory instead of the review's evidence directory.
 #[test]
-pub(super) fn review03_concurrent_library_runs_preserve_both_preparations() {
+pub(crate) fn review03_concurrent_library_runs_preserve_both_preparations() {
     use std::sync::{Arc, Barrier};
     let temporary = scratch();
     let root = temporary.path().join("concurrent");
@@ -129,7 +129,7 @@ pub(super) fn review03_concurrent_library_runs_preserve_both_preparations() {
 /// keeps its kind, modification time and bytes, the kernel2 marker included, and the first
 /// document's `prepared_sha256` still names `prepared.json`.
 #[test]
-pub(super) fn ablation_legacy_refuses_a_scratch_a_kernel2_comparison_used() {
+pub(crate) fn ablation_legacy_refuses_a_scratch_a_kernel2_comparison_used() {
     let dir = scratch();
     let first = run(&shared_scratch_config(), dir.path()).unwrap();
     let record = &first.document.body.datasets[0];
@@ -163,7 +163,7 @@ pub(super) fn ablation_legacy_refuses_a_scratch_a_kernel2_comparison_used() {
 /// directory is refused because the scratch is not empty, with nothing changed and no marker
 /// written.
 #[test]
-pub(super) fn ablation_kernel2_refuses_a_scratch_a_legacy_comparison_used() {
+pub(crate) fn ablation_kernel2_refuses_a_scratch_a_legacy_comparison_used() {
     let dir = scratch();
     run(&legacy_scratch_config(7, 20_260_908), dir.path()).unwrap();
     let before = tree(dir.path());
@@ -181,7 +181,7 @@ pub(super) fn ablation_kernel2_refuses_a_scratch_a_legacy_comparison_used() {
 /// same comparison in a fresh scratch, and neither scratch holds a lock file or a kernel2
 /// marker afterwards.
 #[test]
-pub(super) fn ablation_legacy_reruns_into_a_legacy_scratch_as_before() {
+pub(crate) fn ablation_legacy_reruns_into_a_legacy_scratch_as_before() {
     let dir = scratch();
     run(&legacy_scratch_config(6, 20_260_907), dir.path()).unwrap();
     let again = legacy_scratch_config(7, 20_260_908);
@@ -200,7 +200,7 @@ pub(super) fn ablation_legacy_reruns_into_a_legacy_scratch_as_before() {
 /// The kernel2 marker stays after a comparison with a kernel2 profile, and a legacy-only
 /// comparison writes none; neither leaves its lock file.
 #[test]
-pub(super) fn ablation_kernel2_marker_persists_and_legacy_writes_none() {
+pub(crate) fn ablation_kernel2_marker_persists_and_legacy_writes_none() {
     let dir = scratch();
     run(&shared_scratch_config(), dir.path()).unwrap();
     assert_eq!(
@@ -218,7 +218,7 @@ pub(super) fn ablation_kernel2_marker_persists_and_legacy_writes_none() {
 /// included; a symbolic link there counts too. A comparison removes its own lock after it
 /// succeeds and after a refusal made under its reservation.
 #[test]
-pub(super) fn ablation_a_lock_file_refuses_and_a_comparison_removes_its_own() {
+pub(crate) fn ablation_a_lock_file_refuses_and_a_comparison_removes_its_own() {
     let dir = scratch();
     let lock = dir.path().join(LOCK_FILE);
     std::fs::write(&lock, b"pid 1 started_unix 0\n").unwrap();
@@ -278,7 +278,7 @@ pub(super) fn ablation_a_lock_file_refuses_and_a_comparison_removes_its_own() {
 /// The reservation removes its lock file, and nothing else, when it is dropped, also while a
 /// panic unwinds.
 #[test]
-pub(super) fn ablation_reservation_is_released_while_unwinding() {
+pub(crate) fn ablation_reservation_is_released_while_unwinding() {
     let dir = scratch();
     let lock = dir.path().join(LOCK_FILE);
     std::fs::write(dir.path().join("kept"), b"kept").unwrap();
@@ -300,7 +300,7 @@ pub(super) fn ablation_reservation_is_released_while_unwinding() {
 /// with the document's `prepared_sha256`, and in each slot only the search of its seed,
 /// whose published best program and RMSE are the document's M1. No lock file is left.
 #[test]
-pub(super) fn ablation_concurrent_comparisons_on_one_scratch_admit_exactly_one() {
+pub(crate) fn ablation_concurrent_comparisons_on_one_scratch_admit_exactly_one() {
     use std::sync::{Arc, Barrier};
     let contenders = [(6, 20_260_907), (7, 20_260_908), (6, 20_260_907)];
     let refusals = [
@@ -404,7 +404,7 @@ pub(super) fn ablation_concurrent_comparisons_on_one_scratch_admit_exactly_one()
 /// follow the link, with nothing written through it.
 #[cfg(unix)]
 #[test]
-pub(super) fn ablation_kernel2_refuses_a_symlinked_scratch_ending_in_a_slash() {
+pub(crate) fn ablation_kernel2_refuses_a_symlinked_scratch_ending_in_a_slash() {
     let root = scratch();
     std::fs::create_dir(root.path().join("empty")).unwrap();
     std::os::unix::fs::symlink("empty", root.path().join("link")).unwrap();
@@ -422,7 +422,7 @@ pub(super) fn ablation_kernel2_refuses_a_symlinked_scratch_ending_in_a_slash() {
 
 /// [`shared_scratch_args`] for a legacy-only comparison: legacy A=A, seed 7, fold seed
 /// 20260908, as [`legacy_scratch_config`]`(7, 20_260_908)`.
-pub(super) fn legacy_out_args(scratch: PathBuf, out: PathBuf) -> AblationArgs {
+pub(crate) fn legacy_out_args(scratch: PathBuf, out: PathBuf) -> AblationArgs {
     AblationArgs {
         profile_a: Profile::Legacy.id().to_owned(),
         profile_b: Profile::Legacy.id().to_owned(),
@@ -437,7 +437,7 @@ pub(super) fn legacy_out_args(scratch: PathBuf, out: PathBuf) -> AblationArgs {
 /// `execute` refused for its `--out`: the message holds [`OUT_REFUSED`] and `reason` and,
 /// with the test directory left out, passes the shipped-text lint; nothing under `root`
 /// changed (no scratch created, no document written, no evidence touched).
-pub(super) fn out_refusal(args: &AblationArgs, root: &Path, reason: &str) -> String {
+pub(crate) fn out_refusal(args: &AblationArgs, root: &Path, reason: &str) -> String {
     let before = tree(root);
     let error = format!("{:#}", execute(args).unwrap_err());
     assert!(
@@ -459,7 +459,7 @@ pub(super) fn out_refusal(args: &AblationArgs, root: &Path, reason: &str) -> Str
 /// intent. Its directories are in a fresh test directory instead of the review's evidence
 /// directory.
 #[test]
-pub(super) fn review04_execute_output_preserves_marked_kernel2_evidence() {
+pub(crate) fn review04_execute_output_preserves_marked_kernel2_evidence() {
     let temporary = scratch();
     let root = temporary.path().join("out-regression");
     let first_dir = root.join("first");

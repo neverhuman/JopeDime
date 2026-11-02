@@ -18,7 +18,7 @@ pub enum DrainCause {
     CoordinatorRestart,
 }
 /// When [`group_window_closed`] first closes the window (Unix ms).
-pub(super) fn group_window_end(contract: &BoundedRunContract) -> u64 {
+pub(crate) fn group_window_end(contract: &BoundedRunContract) -> u64 {
     contract
         .participants
         .iter()
@@ -42,7 +42,7 @@ pub fn group_window_closed(contract: &BoundedRunContract, now: u64) -> Option<Dr
         })
 }
 /// Wall consumption starts at the first durable dispatch intent, not at recovery.
-pub(super) fn journal_window_closed(
+pub(crate) fn journal_window_closed(
     contract: &BoundedRunContract,
     records: &[(JournalRecord, String)],
     now: u64,

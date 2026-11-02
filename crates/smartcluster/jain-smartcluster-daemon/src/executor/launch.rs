@@ -470,7 +470,7 @@ async fn wait_for_helper_stop(pid: u32) -> Result<(), ExecutorError> {
     .map_err(ExecutorError::Join)?
 }
 
-pub(super) async fn terminate_failed_launch(
+pub(crate) async fn terminate_failed_launch(
     child: &mut Child,
     cgroup: Option<&JobCgroup>,
     cgroups: &CgroupManager,

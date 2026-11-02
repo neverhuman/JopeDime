@@ -97,7 +97,7 @@ fn command_inventory(journal: &Path, experiment_sha256: &str) -> Result<CommandI
 pub fn accounting(plan: &CampaignPlan, journal: &Path) -> Result<Value> {
     accounting_for_experiment(&plan.experiment.identity()?, journal)
 }
-pub(super) fn accounting_for_experiment(experiment_sha256: &str, journal: &Path) -> Result<Value> {
+pub(crate) fn accounting_for_experiment(experiment_sha256: &str, journal: &Path) -> Result<Value> {
     use std::collections::BTreeSet;
     let inventory = command_inventory(journal, experiment_sha256)?;
     let missing_finished = inventory

@@ -21,7 +21,7 @@ struct DatasetTarget {
     packer: Artifact,
 }
 impl Loop {
-    pub(super) async fn materialize_request(
+    pub(crate) async fn materialize_request(
         &self,
         graph: &Graph,
         client: &Client,

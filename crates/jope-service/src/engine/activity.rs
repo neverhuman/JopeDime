@@ -56,7 +56,7 @@ impl InProcessEngine {
         self.router_with_activity(auth, Arc::clone(&self.activity))
     }
 
-    pub(super) fn router_with_activity(
+    pub(crate) fn router_with_activity(
         &self,
         auth: LocalAuth,
         activity: Arc<EngineActivity>,
@@ -155,7 +155,7 @@ impl EngineActivity {
         }
     }
 
-    pub(super) fn connected_client(self: &Arc<Self>) -> ActivityGuard {
+    pub(crate) fn connected_client(self: &Arc<Self>) -> ActivityGuard {
         let mut counts = self
             .counts
             .lock()
@@ -169,7 +169,7 @@ impl EngineActivity {
         }
     }
 
-    pub(super) fn idle_for(&self, duration: Duration) -> bool {
+    pub(crate) fn idle_for(&self, duration: Duration) -> bool {
         let counts = self
             .counts
             .lock()
@@ -208,9 +208,9 @@ impl Drop for ActivityGuard {
     }
 }
 
-pub(super) struct TrackedListener {
-    pub(super) listener: TcpListener,
-    pub(super) activity: Arc<EngineActivity>,
+pub(crate) struct TrackedListener {
+    pub(crate) listener: TcpListener,
+    pub(crate) activity: Arc<EngineActivity>,
 }
 
 struct TrackedStream {

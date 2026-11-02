@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn promotion_observations(
+pub(crate) fn promotion_observations(
     pending: &PendingIntent,
     work: &Path,
     proposal_set: &Path,
@@ -167,7 +167,7 @@ pub(super) fn promotion_observations(
     Ok(observation_set)
 }
 
-pub(super) fn promotion_prefix(
+pub(crate) fn promotion_prefix(
     work: &Path,
     promotion: &TaskPromotionEvaluationIntentV3,
 ) -> Result<(usize, Option<TaskPromotionEvaluationV3>)> {
@@ -191,7 +191,7 @@ pub(super) fn promotion_prefix(
     }
 }
 
-pub(super) fn finalize_promotion_intent(
+pub(crate) fn finalize_promotion_intent(
     args: &Args,
     pending: &PendingIntent,
     evaluation: &TaskPromotionEvaluationV3,
@@ -237,7 +237,7 @@ pub(super) fn finalize_promotion_intent(
     }))
 }
 
-pub(super) fn consume_promotion_intent(args: &Args, pending: &PendingIntent) -> Result<Value> {
+pub(crate) fn consume_promotion_intent(args: &Args, pending: &PendingIntent) -> Result<Value> {
     let promotion = pending
         .promotion
         .as_ref()

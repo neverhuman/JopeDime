@@ -6,7 +6,7 @@ use super::*;
 /// already exists empty.
 #[test]
 
-pub(super) fn ablation_execute_refuses_an_out_inside_its_own_kernel2_scratch() {
+pub(crate) fn ablation_execute_refuses_an_out_inside_its_own_kernel2_scratch() {
     let root = scratch();
     let hash = load_dataset(&d5("pmlb-first-principles-supernovae-zg"))
         .unwrap()
@@ -34,7 +34,7 @@ pub(super) fn ablation_execute_refuses_an_out_inside_its_own_kernel2_scratch() {
 /// exist yet). Nothing is written anywhere, and the first document's `prepared_sha256` still
 /// names `prepared.json`.
 #[test]
-pub(super) fn ablation_execute_refuses_an_out_in_a_kernel2_scratch() {
+pub(crate) fn ablation_execute_refuses_an_out_in_a_kernel2_scratch() {
     let root = scratch();
     let first_dir = root.path().join("first");
     let first = run(&shared_scratch_config(), &first_dir).unwrap();
@@ -70,7 +70,7 @@ pub(super) fn ablation_execute_refuses_an_out_in_a_kernel2_scratch() {
 /// Review finding PR0-R8: a `--out` in, or anywhere under, a directory that holds
 /// `.ablation-lock` (a comparison in progress) is refused, with nothing written.
 #[test]
-pub(super) fn ablation_execute_refuses_an_out_under_a_lock_file() {
+pub(crate) fn ablation_execute_refuses_an_out_under_a_lock_file() {
     let root = scratch();
     let held = root.path().join("held");
     std::fs::create_dir(&held).unwrap();
@@ -91,7 +91,7 @@ pub(super) fn ablation_execute_refuses_an_out_under_a_lock_file() {
 /// A `--out` that is a symbolic link (to an ordinary file) or an existing directory is
 /// refused, for a legacy-only comparison too, with nothing written.
 #[test]
-pub(super) fn ablation_execute_refuses_an_out_that_is_not_a_regular_file() {
+pub(crate) fn ablation_execute_refuses_an_out_that_is_not_a_regular_file() {
     let root = scratch();
     let second = root.path().join("second");
     #[cfg(unix)]
@@ -116,7 +116,7 @@ pub(super) fn ablation_execute_refuses_an_out_that_is_not_a_regular_file() {
 /// of the same comparison run through the library, and inside its own legacy scratch, which
 /// then holds the document beside its evidence and no lock file or marker.
 #[test]
-pub(super) fn ablation_execute_writes_a_legacy_out_as_before() {
+pub(crate) fn ablation_execute_writes_a_legacy_out_as_before() {
     let root = scratch();
     let out = root.path().join("out/ablation.json");
     execute(&legacy_out_args(root.path().join("scratch"), out.clone())).unwrap();
@@ -137,7 +137,7 @@ pub(super) fn ablation_execute_writes_a_legacy_out_as_before() {
 // fix-05: the --out document is written by rename, never by truncating an existing file.
 
 /// The names directly under `dir` that look like [`replace_document`]'s temporary files.
-pub(super) fn temporary_documents(dir: &Path) -> Vec<String> {
+pub(crate) fn temporary_documents(dir: &Path) -> Vec<String> {
     names(dir)
         .into_iter()
         .filter(|name| name.contains(".tmp-"))
@@ -150,7 +150,7 @@ pub(super) fn temporary_documents(dir: &Path) -> Vec<String> {
 /// document's `prepared_sha256` still names `prepared.json`, and no temporary file is left.
 #[cfg(unix)]
 #[test]
-pub(super) fn ablation_execute_replaces_an_out_hard_linked_to_kernel2_evidence() {
+pub(crate) fn ablation_execute_replaces_an_out_hard_linked_to_kernel2_evidence() {
     use std::os::unix::fs::MetadataExt as _;
     let root = scratch();
     let first_dir = root.path().join("first");
@@ -201,7 +201,7 @@ pub(super) fn ablation_execute_replaces_an_out_hard_linked_to_kernel2_evidence()
 /// temporary file is left.
 #[cfg(unix)]
 #[test]
-pub(super) fn ablation_execute_replaces_an_out_hard_linked_to_an_ordinary_file() {
+pub(crate) fn ablation_execute_replaces_an_out_hard_linked_to_an_ordinary_file() {
     use std::os::unix::fs::MetadataExt as _;
     let root = scratch();
     let other = root.path().join("other.txt");
@@ -224,7 +224,7 @@ pub(super) fn ablation_execute_replaces_an_out_hard_linked_to_an_ordinary_file()
 /// bytes is left after it), with the body of the same comparison run through the library,
 /// and no temporary file is left.
 #[test]
-pub(super) fn ablation_execute_overwrites_an_existing_legacy_out() {
+pub(crate) fn ablation_execute_overwrites_an_existing_legacy_out() {
     let root = scratch();
     let out = root.path().join("ablation.json");
     std::fs::write(&out, vec![b'x'; 1 << 20]).unwrap();
@@ -244,7 +244,7 @@ pub(super) fn ablation_execute_overwrites_an_existing_legacy_out() {
 /// [`replace_document`] writes exactly [`write_document`]'s bytes, for a legacy and a kernel2
 /// document, also over an existing longer file, and returns the same sha256.
 #[test]
-pub(super) fn ablation_document_replacement_writes_the_same_bytes() {
+pub(crate) fn ablation_document_replacement_writes_the_same_bytes() {
     let root = scratch();
     for (name, config) in [
         ("legacy", legacy_scratch_config(7, 20_260_908)),
@@ -269,7 +269,7 @@ pub(super) fn ablation_document_replacement_writes_the_same_bytes() {
 /// A write that fails after the temporary file was created and written (the rename onto a
 /// directory fails) leaves no temporary file and changes nothing: the error names the rename.
 #[test]
-pub(super) fn ablation_document_replacement_removes_its_temporary_file_on_failure() {
+pub(crate) fn ablation_document_replacement_removes_its_temporary_file_on_failure() {
     let root = scratch();
     let report = run(
         &legacy_scratch_config(6, 20_260_907),
@@ -300,7 +300,7 @@ pub(super) fn ablation_document_replacement_removes_its_temporary_file_on_failur
 /// kernel2 comparison's, outside or inside its own scratch. A name that only begins with a
 /// reserved name is not refused.
 #[test]
-pub(super) fn ablation_execute_refuses_a_reserved_out_name() {
+pub(crate) fn ablation_execute_refuses_a_reserved_out_name() {
     let root = scratch();
     let reason = "is reserved for a comparison's lock file or marker";
     for name in [LOCK_FILE, KERNEL2_MARKER] {

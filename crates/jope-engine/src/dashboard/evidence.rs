@@ -73,7 +73,7 @@ pub fn campaign_with_manifest(root: &Path, selection: Option<&Path>) -> Result<V
     Ok(run)
 }
 
-pub(super) fn experimental_gpu_rank(command: &[u8]) -> bool {
+pub(crate) fn experimental_gpu_rank(command: &[u8]) -> bool {
     let args = command.split(|&byte| byte == 0).collect::<Vec<_>>();
     let number = |flag: &[u8]| {
         args.windows(2).find_map(|pair| {
@@ -93,7 +93,7 @@ pub(super) fn experimental_gpu_rank(command: &[u8]) -> bool {
 #[cfg(test)]
 mod worker_identity_tests;
 
-pub(super) fn experiment_worker_evidence(root: &Path) -> Value {
+pub(crate) fn experiment_worker_evidence(root: &Path) -> Value {
     use std::os::unix::fs::MetadataExt;
     let locks = std::fs::read_to_string("/proc/locks");
     let lock_owner = |name: &str| -> Option<u32> {
@@ -147,7 +147,7 @@ pub(super) fn experiment_worker_evidence(root: &Path) -> Value {
 
 // Read current workers as well as counters: lifetime memory.high events alone
 // cannot establish that a campaign is blocked now.
-pub(super) fn campaign_resource_evidence(root: &Path) -> Value {
+pub(crate) fn campaign_resource_evidence(root: &Path) -> Value {
     let directory = Path::new("/sys/fs/cgroup/system.slice/jope-parallel-campaign.service");
     let mut result = serde_json::json!({"timestamp":now(),"available":false});
     let Ok(pids) = std::fs::read_to_string(directory.join("cgroup.procs")) else {
@@ -204,7 +204,7 @@ pub(super) fn campaign_resource_evidence(root: &Path) -> Value {
     result
 }
 
-pub(super) fn memory_throttle_reason(run: &Value) -> Option<String> {
+pub(crate) fn memory_throttle_reason(run: &Value) -> Option<String> {
     let evidence = &run["campaign_resource_evidence"];
     if number(evidence, "throttled_workers") == 0 {
         return None;
@@ -227,14 +227,14 @@ pub(super) fn memory_throttle_reason(run: &Value) -> Option<String> {
         number(evidence,"memory_high") as f64 / 1024f64.powi(3)))
 }
 
-pub(super) fn panel(title: &str) -> Block<'_> {
+pub(crate) fn panel(title: &str) -> Block<'_> {
     Block::bordered()
         .title(title)
         .border_type(BorderType::Rounded)
         .title_style(Style::default().fg(BLUE).bold())
         .border_style(Style::default().fg(Color::Rgb(50, 74, 98)))
 }
-pub(super) fn tail(path: &Path, bytes: u64) -> String {
+pub(crate) fn tail(path: &Path, bytes: u64) -> String {
     (|| -> std::io::Result<String> {
         let mut file = std::fs::File::open(path)?;
         let start = file.metadata()?.len().saturating_sub(bytes);
@@ -251,17 +251,17 @@ pub(super) fn tail(path: &Path, bytes: u64) -> String {
     })()
     .unwrap_or_default()
 }
-pub(super) fn metrics(path: &Path) -> Vec<Value> {
+pub(crate) fn metrics(path: &Path) -> Vec<Value> {
     metric_tail(path, 8 * 1024 * 1024)
 }
-pub(super) fn metric_tail(path: &Path, bytes: u64) -> Vec<Value> {
+pub(crate) fn metric_tail(path: &Path, bytes: u64) -> Vec<Value> {
     tail(path, bytes)
         .lines()
         .filter_map(|line| serde_json::from_str::<Value>(line).ok())
         .filter(|v| v["rank"].as_u64().unwrap_or(0) == 0 && v["invalidated"] != true)
         .collect()
 }
-pub(super) fn policy_receipt(v: &Value) -> bool {
+pub(crate) fn policy_receipt(v: &Value) -> bool {
     v["invalidated"] != true
         && v["corpus_sha256"].is_string()
         && !v["run"].as_str().is_some_and(|path| {
@@ -270,7 +270,7 @@ pub(super) fn policy_receipt(v: &Value) -> bool {
                 .any(|part| part.as_os_str() == "parity")
         })
 }
-pub(super) fn duration(seconds: u64) -> String {
+pub(crate) fn duration(seconds: u64) -> String {
     if seconds >= 3600 {
         format!("{}h {:02}m", seconds / 3600, (seconds % 3600) / 60)
     } else if seconds >= 60 {
@@ -279,19 +279,19 @@ pub(super) fn duration(seconds: u64) -> String {
         format!("{seconds}s")
     }
 }
-pub(super) fn state(path: &Path) -> Value {
+pub(crate) fn state(path: &Path) -> Value {
     read_json(path).unwrap_or_default()
 }
-pub(super) fn number(v: &Value, key: &str) -> u64 {
+pub(crate) fn number(v: &Value, key: &str) -> u64 {
     v[key].as_u64().unwrap_or(0)
 }
-pub(super) fn decimal(v: &Value, key: &str) -> String {
+pub(crate) fn decimal(v: &Value, key: &str) -> String {
     v[key]
         .as_f64()
         .map(|n| format!("{n:.4}"))
         .unwrap_or_else(|| "—".into())
 }
-pub(super) fn rmse(v: &Value, key: &str) -> String {
+pub(crate) fn rmse(v: &Value, key: &str) -> String {
     v[key]
         .as_f64()
         .filter(|x| x.is_finite())
@@ -304,13 +304,13 @@ pub(super) fn rmse(v: &Value, key: &str) -> String {
         })
         .unwrap_or_else(|| "—".into())
 }
-pub(super) fn phase(v: &Value) -> &str {
+pub(crate) fn phase(v: &Value) -> &str {
     v["phase"].as_str().unwrap_or("waiting for work")
 }
-pub(super) fn age(v: &Value) -> String {
+pub(crate) fn age(v: &Value) -> String {
     age_with_limit(v, 5)
 }
-pub(super) fn age_with_limit(v: &Value, stale_after: u64) -> String {
+pub(crate) fn age_with_limit(v: &Value, stale_after: u64) -> String {
     let t = number(v, "timestamp");
     if t == 0 {
         "unavailable".into()
@@ -323,14 +323,14 @@ pub(super) fn age_with_limit(v: &Value, stale_after: u64) -> String {
         }
     }
 }
-pub(super) fn completed(v: &Value) -> bool {
+pub(crate) fn completed(v: &Value) -> bool {
     v["invalidated"] != true
         && (phase(v).starts_with("completed") || v["complete"] == true || v["status"] == "complete")
 }
-pub(super) fn status_age(v: &Value) -> String {
+pub(crate) fn status_age(v: &Value) -> String {
     status_age_with_limit(v, 5)
 }
-pub(super) fn status_age_with_limit(v: &Value, stale_after: u64) -> String {
+pub(crate) fn status_age_with_limit(v: &Value, stale_after: u64) -> String {
     if v["invalidated"] == true {
         "INVALIDATED · rerun required".into()
     } else if completed(v) {
@@ -339,7 +339,7 @@ pub(super) fn status_age_with_limit(v: &Value, stale_after: u64) -> String {
         age_with_limit(v, stale_after)
     }
 }
-pub(super) fn count_pair(done: u64, total: u64) -> String {
+pub(crate) fn count_pair(done: u64, total: u64) -> String {
     if total == 0 {
         "awaiting manifest".into()
     } else {
@@ -352,10 +352,10 @@ pub(super) fn count_pair(done: u64, total: u64) -> String {
 /// Each name must therefore have a tracked template under `deploy/systemd/engine/`.
 /// `jope-parallel-console` was dropped when the Python removal P1 (ADR-0006) archived its
 /// template, which ran the archived `tui-session.py`; no view read its row.
-pub(super) const OBSERVED_SERVICES: [&str; 2] = ["jope-parallel-campaign", "jope-parallel-gp"];
+pub(crate) const OBSERVED_SERVICES: [&str; 2] = ["jope-parallel-campaign", "jope-parallel-gp"];
 /// Read durable campaign receipts, without traversing candidate directories or opening data.
 /// Called every five seconds; hardware and worker progress retain their one-second refresh.
-pub(super) fn live_operations(root: &Path) -> Value {
+pub(crate) fn live_operations(root: &Path) -> Value {
     let mut services = serde_json::Map::new();
     for name in OBSERVED_SERVICES {
         let output = std::process::Command::new("timeout")

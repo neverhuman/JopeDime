@@ -10,14 +10,14 @@ fn empty_node_signature(identity: &NodeRuntimeIdentity) -> DomainSignature {
     }
 }
 
-pub(super) fn clear_signature(signature: &mut DomainSignature) {
+pub(crate) fn clear_signature(signature: &mut DomainSignature) {
     signature.issuer.clear();
     signature.key_id.clear();
     signature.public_key = [0; 32];
     signature.signature.clear();
 }
 
-pub(super) fn validate_acknowledgement(
+pub(crate) fn validate_acknowledgement(
     acknowledgement: &WorkerAcknowledgement,
     expected_node_id: &str,
     expected_session_id: &str,
@@ -48,7 +48,7 @@ pub(super) fn validate_acknowledgement(
         .map_err(|_| ProtocolError::InvalidOutbound)
 }
 
-pub(super) fn validate_event(event: &NodeEvent) -> Result<(), ProtocolError> {
+pub(crate) fn validate_event(event: &NodeEvent) -> Result<(), ProtocolError> {
     validate_event_identity(event.identity())?;
     match event {
         NodeEvent::SmokeStarted(_) | NodeEvent::SmokePassed(_) | NodeEvent::Metrics { .. } => {}
@@ -89,7 +89,7 @@ pub(super) fn validate_event(event: &NodeEvent) -> Result<(), ProtocolError> {
     Ok(())
 }
 
-pub(super) fn validate_event_identity(identity: &EventIdentity) -> Result<(), ProtocolError> {
+pub(crate) fn validate_event_identity(identity: &EventIdentity) -> Result<(), ProtocolError> {
     if !valid_identifier(&identity.run_id)
         || identity.attempt == 0
         || identity.fence == 0
@@ -101,7 +101,7 @@ pub(super) fn validate_event_identity(identity: &EventIdentity) -> Result<(), Pr
     Ok(())
 }
 
-pub(super) fn validate_outcome(outcome: &NodeTerminalOutcome) -> Result<(), ProtocolError> {
+pub(crate) fn validate_outcome(outcome: &NodeTerminalOutcome) -> Result<(), ProtocolError> {
     match outcome {
         NodeTerminalOutcome::Success(receipt) => {
             if receipt.outputs.len() > MAX_EVENT_ARTIFACTS
@@ -130,7 +130,7 @@ pub(super) fn validate_outcome(outcome: &NodeTerminalOutcome) -> Result<(), Prot
     Ok(())
 }
 
-pub(super) fn validate_artifact(artifact: &PublishedArtifact) -> Result<(), ProtocolError> {
+pub(crate) fn validate_artifact(artifact: &PublishedArtifact) -> Result<(), ProtocolError> {
     if !valid_identifier(&artifact.artifact_id)
         || artifact.relative_path.is_empty()
         || artifact.relative_path.starts_with('/')
@@ -148,7 +148,7 @@ pub(super) fn validate_artifact(artifact: &PublishedArtifact) -> Result<(), Prot
     Ok(())
 }
 
-pub(super) fn validate_message(message: &str, allow_empty: bool) -> Result<(), ProtocolError> {
+pub(crate) fn validate_message(message: &str, allow_empty: bool) -> Result<(), ProtocolError> {
     if (!allow_empty && message.is_empty()) || message.len() > MAX_EVENT_MESSAGE_BYTES {
         return Err(ProtocolError::InvalidOutbound);
     }

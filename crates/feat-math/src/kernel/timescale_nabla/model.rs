@@ -12,11 +12,11 @@ use sha2::{Digest, Sha256};
 
 #[derive(Clone)]
 pub struct TimeGradientModel {
-    pub(super) program: TimeGradientProgram,
-    pub(super) task: TaskMode,
-    pub(super) fold: FoldBoundary,
-    pub(super) state: TimeGradientState,
-    pub(super) predictor: BoundModel,
+    pub(crate) program: TimeGradientProgram,
+    pub(crate) task: TaskMode,
+    pub(crate) fold: FoldBoundary,
+    pub(crate) state: TimeGradientState,
+    pub(crate) predictor: BoundModel,
 }
 
 impl std::fmt::Debug for TimeGradientModel {

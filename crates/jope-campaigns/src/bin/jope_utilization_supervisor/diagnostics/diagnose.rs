@@ -5,7 +5,7 @@ use super::*;
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Health {
+pub(crate) enum Health {
     Producing,
     Erroring,
     Stale,
@@ -16,7 +16,7 @@ pub(super) enum Health {
 }
 
 impl Health {
-    pub(super) fn as_str(self) -> &'static str {
+    pub(crate) fn as_str(self) -> &'static str {
         match self {
             Health::Producing => "producing",
             Health::Erroring => "erroring",
@@ -27,39 +27,39 @@ impl Health {
             Health::Unknown => "unknown",
         }
     }
-    pub(super) fn healthy(self) -> bool {
+    pub(crate) fn healthy(self) -> bool {
         matches!(self, Health::Producing)
     }
 }
 
 #[derive(Debug)]
-pub(super) struct Stage {
-    pub(super) name: &'static str,
-    pub(super) health: Health,
-    pub(super) detail: String,
+pub(crate) struct Stage {
+    pub(crate) name: &'static str,
+    pub(crate) health: Health,
+    pub(crate) detail: String,
     /// Receipt this verdict came from, so the verdict is auditable.
-    pub(super) receipt: String,
+    pub(crate) receipt: String,
     /// Bounded repair, if one exists for this stage. `None` means "there is no
     /// safe automatic repair" — escalate instead of improvising.
-    pub(super) repair: Option<Repair>,
+    pub(crate) repair: Option<Repair>,
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct Repair {
-    pub(super) key: String,
-    pub(super) verb: &'static str,
-    pub(super) unit: &'static str,
+pub(crate) struct Repair {
+    pub(crate) key: String,
+    pub(crate) verb: &'static str,
+    pub(crate) unit: &'static str,
 }
 
 impl Repair {
-    pub(super) fn restart(unit: &'static str) -> Self {
+    pub(crate) fn restart(unit: &'static str) -> Self {
         Self {
             key: format!("restart:{unit}"),
             verb: "restart",
             unit,
         }
     }
-    pub(super) fn start(unit: &'static str) -> Self {
+    pub(crate) fn start(unit: &'static str) -> Self {
         Self {
             key: format!("start:{unit}"),
             verb: "start",
@@ -68,7 +68,7 @@ impl Repair {
     }
 }
 
-pub(super) fn content_age_secs(value: &Value, now: u64) -> Option<u64> {
+pub(crate) fn content_age_secs(value: &Value, now: u64) -> Option<u64> {
     let generated = u64_at(value, "generated_at_ms")?;
     Some(now.saturating_sub(generated) / 1000)
 }
@@ -77,7 +77,7 @@ pub(super) fn content_age_secs(value: &Value, now: u64) -> Option<u64> {
 /// `submit_cohort_proposer` for longer than any healthy dispatch would take.
 /// Returns None when the proposer pipeline is moving (no stage row at all —
 /// absence of a proposer stage means "not the bottleneck").
-pub(super) fn proposer_stage(args: &Args, now: u64) -> Option<Stage> {
+pub(crate) fn proposer_stage(args: &Args, now: u64) -> Option<Stage> {
     let state_dir = args.root.join("ops/cohort-supply-state-v2");
     let newest = std::fs::read_dir(&state_dir)
         .ok()?
@@ -119,7 +119,7 @@ pub(super) fn proposer_stage(args: &Args, now: u64) -> Option<Stage> {
 /// Diagnose every stage, in pipeline order. Order matters for repair priority:
 /// the stage closest to the scheduler is the one whose repair puts work on the
 /// cluster soonest.
-pub(super) fn diagnose(args: &Args, util: &Utilization, work: &WorkOnDisk) -> Vec<Stage> {
+pub(crate) fn diagnose(args: &Args, util: &Utilization, work: &WorkOnDisk) -> Vec<Stage> {
     let now = now_ms();
     let mut stages = Vec::new();
 

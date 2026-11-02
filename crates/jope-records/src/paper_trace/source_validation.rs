@@ -16,7 +16,7 @@ fn has_unsafe_path_component(path: &str) -> bool {
 /// The file a `ROOT:path[:lines|#jq]` source part names, or `None` when its root is undeclared,
 /// the relative path is unsafe (`..` or absolute), or the part names no single file (a commit, a
 /// brace range, a glob).
-pub(super) fn source_file(
+pub(crate) fn source_file(
     part: &str,
     roots: &BTreeMap<String, String>,
 ) -> Option<std::path::PathBuf> {
@@ -120,13 +120,13 @@ pub fn check_sources(ledger_text: &str) -> Result<(Vec<String>, String)> {
     Ok((problems, summary))
 }
 
-pub(super) fn is_lower_hex(s: &str, len: usize) -> bool {
+pub(crate) fn is_lower_hex(s: &str, len: usize) -> bool {
     s.len() == len
         && s.bytes()
             .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
 }
 
-pub(super) fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
     Sha256::digest(bytes)
         .iter()

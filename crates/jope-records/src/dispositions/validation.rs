@@ -9,7 +9,7 @@ fn role_count(roles: &HashMap<String, usize>, role: &str) -> usize {
 }
 
 /// Validate one disposition record; returns its disposition and whether it closes the finding.
-pub(super) fn validate_record(
+pub(crate) fn validate_record(
     root: &Path,
     record: &Value,
     register_entry: &Value,

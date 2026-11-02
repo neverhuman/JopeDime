@@ -363,7 +363,7 @@ fn finished_width(op: &FittedOp, input: usize) -> Result<usize> {
 }
 
 /// `AtLeast(max + 1)` over fitted column indices, `Any` when there is none.
-pub(super) fn past_max(indices: impl Iterator<Item = usize>) -> WidthReq {
+pub(crate) fn past_max(indices: impl Iterator<Item = usize>) -> WidthReq {
     indices.max().map_or(WidthReq::Any, |max| {
         WidthReq::AtLeast(max.saturating_add(1))
     })

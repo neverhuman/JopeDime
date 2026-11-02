@@ -66,7 +66,7 @@ pub fn funding_admission(
     funding_admission_installed(&installation, request, started)
 }
 
-pub(super) fn funding_admission_installed(
+pub(crate) fn funding_admission_installed(
     installation: &InstalledFunding,
     request: &FundingRequest,
     started: u64,
@@ -84,7 +84,7 @@ pub(super) fn funding_admission_installed(
     })
 }
 impl FundingRequest {
-    pub(super) fn task(&self) -> Option<(&f::SignedAuthorization, &f::SignedReservation, &Value)> {
+    pub(crate) fn task(&self) -> Option<(&f::SignedAuthorization, &f::SignedReservation, &Value)> {
         match self {
             Self::Register { .. } => None,
             Self::Reserve {
@@ -110,7 +110,7 @@ impl FundingRequest {
             } => Some((authorization, reservation, descriptor_json)),
         }
     }
-    pub(super) fn validate(&self, trust: &f::FundingTrust) -> Result<()> {
+    pub(crate) fn validate(&self, trust: &f::FundingTrust) -> Result<()> {
         let clock = f::FundingClock::current()?;
         if let Some((authorization, reservation, descriptor)) = self.task() {
             ensure!(

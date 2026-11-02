@@ -12,7 +12,7 @@ pub(crate) fn parameter_hash(vs: &nn::VarStore) -> Result<String> {
     }
     Ok(hex::encode(h.finalize()))
 }
-pub(super) fn hash_parameter_values(h: &mut sha2::Sha256, values: &[f32]) {
+pub(crate) fn hash_parameter_values(h: &mut sha2::Sha256, values: &[f32]) {
     use sha2::Digest;
     #[cfg(target_endian = "little")]
     h.update(bytemuck::cast_slice(values));
@@ -21,7 +21,7 @@ pub(super) fn hash_parameter_values(h: &mut sha2::Sha256, values: &[f32]) {
         h.update(value.to_le_bytes());
     }
 }
-pub(super) fn checkpoint(
+pub(crate) fn checkpoint(
     root: &Path,
     run: &Path,
     launch: &Path,

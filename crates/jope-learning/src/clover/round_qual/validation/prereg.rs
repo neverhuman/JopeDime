@@ -80,7 +80,7 @@ pub fn parse_parent_map(bytes: &[u8]) -> Result<BTreeMap<String, String>> {
     Ok(map)
 }
 
-pub(super) fn validate_plan_and_identity(
+pub(crate) fn validate_plan_and_identity(
     plan: &RoundQualPlan,
     identity: &ExperimentIdentity,
 ) -> Result<String> {
@@ -135,7 +135,7 @@ pub(super) fn validate_plan_and_identity(
     Ok(computed_id)
 }
 
-pub(super) fn validate_and_bind_prereg(
+pub(crate) fn validate_and_bind_prereg(
     prereg_bytes: &[u8],
     plan: &RoundQualPlan,
     identity: &ExperimentIdentity,

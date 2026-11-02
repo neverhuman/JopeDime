@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-pub(super) fn ablation_paired_summary_arithmetic() {
+pub(crate) fn ablation_paired_summary_arithmetic() {
     let runs: Vec<RunRecord> = [
         // (dataset, seed, A RMSE, B RMSE, A program, B program)
         ("d0", 1, 1.0, 0.75, "p", "q"), // win, -0.25

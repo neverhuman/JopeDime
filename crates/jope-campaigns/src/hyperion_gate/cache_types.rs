@@ -1,22 +1,22 @@
 use super::*;
 
 #[derive(Debug, Clone)]
-pub(super) struct RegressionTable {
-    pub(super) features: Vec<Vec<f64>>,
-    pub(super) targets: Vec<f64>,
+pub(crate) struct RegressionTable {
+    pub(crate) features: Vec<Vec<f64>>,
+    pub(crate) targets: Vec<f64>,
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct FoldEncoding {
-    pub(super) cell_fit: Vec<Vec<f64>>,
-    pub(super) cell_hold: Vec<Vec<f64>>,
-    pub(super) row_fit: Vec<Vec<f64>>,
-    pub(super) row_hold: Vec<Vec<f64>>,
-    pub(super) sidecars: Vec<MatrixArtifactV1>,
-    pub(super) cache_key_sha256: String,
-    pub(super) cache_receipt_sha256: String,
-    pub(super) milliseconds: u64,
-    pub(super) cache_replay: bool,
+pub(crate) struct FoldEncoding {
+    pub(crate) cell_fit: Vec<Vec<f64>>,
+    pub(crate) cell_hold: Vec<Vec<f64>>,
+    pub(crate) row_fit: Vec<Vec<f64>>,
+    pub(crate) row_hold: Vec<Vec<f64>>,
+    pub(crate) sidecars: Vec<MatrixArtifactV1>,
+    pub(crate) cache_key_sha256: String,
+    pub(crate) cache_receipt_sha256: String,
+    pub(crate) milliseconds: u64,
+    pub(crate) cache_replay: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -279,7 +279,7 @@ impl RegistryCacheCoverageV2 {
 }
 
 mod precomputed;
-pub(super) use precomputed::PrecomputedTrainFeatureBlocks;
+pub(crate) use precomputed::PrecomputedTrainFeatureBlocks;
 pub use precomputed::{
     HistoricalTrain3EntryV1, HistoricalTrain3InventoryV1, PrecomputedTrainFeatureCoverageV1,
     PrecomputedTrainFeatureReceiptV1,

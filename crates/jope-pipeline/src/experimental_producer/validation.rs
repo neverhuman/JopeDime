@@ -1,5 +1,5 @@
 mod candidates;
-pub(super) use candidates::check_candidates;
+pub(crate) use candidates::check_candidates;
 
 use super::{
     digest, hash, read, same, AdmittedPopulation, Artifact, CandidateClaim, Claims, Evidence,
@@ -260,18 +260,18 @@ pub fn verify_inputs<V: Variation>(
 
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct Canonicalization {
-    pub(super) schema: String,
-    pub(super) input_sha256: String,
-    pub(super) results: Vec<CanonicalResult>,
+pub(crate) struct Canonicalization {
+    pub(crate) schema: String,
+    pub(crate) input_sha256: String,
+    pub(crate) results: Vec<CanonicalResult>,
 }
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct CanonicalResult {
-    pub(super) index: usize,
-    pub(super) original_bytes_sha256: String,
-    pub(super) recipe: Option<SynthesizedRecipe>,
-    pub(super) error: Option<String>,
+pub(crate) struct CanonicalResult {
+    pub(crate) index: usize,
+    pub(crate) original_bytes_sha256: String,
+    pub(crate) recipe: Option<SynthesizedRecipe>,
+    pub(crate) error: Option<String>,
 }
 fn task_spec(task: Task) -> Result<TaskSpec> {
     match task {
@@ -281,7 +281,7 @@ fn task_spec(task: Task) -> Result<TaskSpec> {
         _ => anyhow::bail!("experimental tabular task required"),
     }
 }
-pub(super) fn validate_recipe(recipe: &SynthesizedRecipe, plan: &RequestPlan) -> Result<()> {
+pub(crate) fn validate_recipe(recipe: &SynthesizedRecipe, plan: &RequestPlan) -> Result<()> {
     recipe.validate()?;
     validate_v3_genome(
         &GenomeIr::parse(&recipe.executable_canonical)?,

@@ -47,11 +47,11 @@ pub(crate) fn ensure_regression_support(data: &Dataset) -> Result<()> {
 }
 
 /// The held-out score is the validation split. There is no fallback to test rows.
-pub(super) fn holdout(data: &Dataset) -> Result<(feat_math::Rows, Vec<f64>)> {
+pub(crate) fn holdout(data: &Dataset) -> Result<(feat_math::Rows, Vec<f64>)> {
     matrix(data, Split::Validation)
 }
 
-pub(super) fn matrix(data: &Dataset, split: Split) -> Result<(feat_math::Rows, Vec<f64>)> {
+pub(crate) fn matrix(data: &Dataset, split: Split) -> Result<(feat_math::Rows, Vec<f64>)> {
     ensure_regression_support(data)?;
     let mut xs = Vec::new();
     let mut ys = Vec::new();
@@ -75,7 +75,7 @@ pub(super) fn matrix(data: &Dataset, split: Split) -> Result<(feat_math::Rows, V
     Ok((xs, ys))
 }
 
-pub(super) fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64> {
+pub(crate) fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64> {
     let predictions = model.predict(x)?;
     anyhow::ensure!(
         predictions.len() == y.len() && predictions.iter().all(|value| value.is_finite()),
@@ -86,6 +86,6 @@ pub(super) fn score(model: &Model, x: &feat_math::Rows, y: &[f64]) -> Result<f64
     Ok(score)
 }
 
-pub(super) fn digest(source: &str) -> String {
+pub(crate) fn digest(source: &str) -> String {
     format!("{:x}", Sha256::digest(source.as_bytes()))
 }

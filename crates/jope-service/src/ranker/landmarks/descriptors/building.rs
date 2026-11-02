@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn building_blocks(s: &ProbeStage, n: usize, p: usize) -> BlockStage {
+pub(crate) fn building_blocks(s: &ProbeStage, n: usize, p: usize) -> BlockStage {
     let max_probe = |k: usize| s.probes.iter().map(|r| r[k]).fold(0.0_f64, f64::max);
     let row_gain = s.row_corr.iter().copied().fold(0.0_f64, f64::max);
     let mut gain = [0.0; 16];

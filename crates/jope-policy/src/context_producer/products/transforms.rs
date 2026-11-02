@@ -3,7 +3,7 @@ use super::*;
 /// The accepted frozen context transforms, parsed from exactly the bytes whose sha256 is
 /// [`TRANSFORMS_SHA256`].
 pub struct FrozenTransforms {
-    pub(super) tensors: BTreeMap<String, Tensor>,
+    pub(crate) tensors: BTreeMap<String, Tensor>,
 }
 impl FrozenTransforms {
     /// Read the pinned transforms file once and parse exactly those bytes.

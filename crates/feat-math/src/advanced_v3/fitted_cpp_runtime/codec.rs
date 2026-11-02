@@ -1,13 +1,13 @@
 use super::*;
 
 #[derive(Debug)]
-pub(super) struct DecodedCodec {
-    pub(super) model: BoundModel,
-    pub(super) emitter_revision: u32,
-    pub(super) model_library: Vec<u8>,
+pub(crate) struct DecodedCodec {
+    pub(crate) model: BoundModel,
+    pub(crate) emitter_revision: u32,
+    pub(crate) model_library: Vec<u8>,
 }
 
-pub(super) fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
+pub(crate) fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     if bytes.len() < HEADER_LEN + CHECKSUM_LEN || bytes.len() > MAX_CODEC_LEN {
         bail!("fitted codec length is outside the permitted range");
     }
@@ -91,7 +91,7 @@ pub(super) fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     })
 }
 
-pub(super) fn compile_model_library(source: &[u8]) -> Result<(Vec<u8>, String)> {
+pub(crate) fn compile_model_library(source: &[u8]) -> Result<(Vec<u8>, String)> {
     let compiler = crate::cxx::version().context("query fitted C++ compiler version")?;
     if !compiler.contains("13.3") {
         bail!("fitted model compilation requires g++ 13.3, found {compiler:?}");
@@ -142,7 +142,7 @@ pub(super) fn compile_model_library(source: &[u8]) -> Result<(Vec<u8>, String)> 
     Ok((bytes, compiler))
 }
 
-pub(super) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
+pub(crate) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
     let text = raw.trim();
     if text.is_empty()
         || text.eq_ignore_ascii_case("na")
@@ -157,31 +157,31 @@ pub(super) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
     Ok(value.is_finite().then_some(value))
 }
 
-pub(super) fn category_is_missing(raw: &str) -> bool {
+pub(crate) fn category_is_missing(raw: &str) -> bool {
     let text = raw.trim();
     text.is_empty() || text.eq_ignore_ascii_case("null") || text.eq_ignore_ascii_case("na")
 }
 
-pub(super) fn put_u16(output: &mut Vec<u8>, value: u16) {
+pub(crate) fn put_u16(output: &mut Vec<u8>, value: u16) {
     output.extend_from_slice(&value.to_le_bytes());
 }
 
-pub(super) fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
         .iter()
         .map(|byte| format!("{byte:02x}"))
         .collect()
 }
 
-pub(super) fn put_u32(output: &mut Vec<u8>, value: u32) {
+pub(crate) fn put_u32(output: &mut Vec<u8>, value: u32) {
     output.extend_from_slice(&value.to_le_bytes());
 }
 
-pub(super) fn put_u64(output: &mut Vec<u8>, value: u64) {
+pub(crate) fn put_u64(output: &mut Vec<u8>, value: u64) {
     output.extend_from_slice(&value.to_le_bytes());
 }
 
-pub(super) fn read_u16(bytes: &[u8], at: usize) -> Result<u16> {
+pub(crate) fn read_u16(bytes: &[u8], at: usize) -> Result<u16> {
     Ok(u16::from_le_bytes(
         bytes
             .get(at..at + 2)
@@ -190,7 +190,7 @@ pub(super) fn read_u16(bytes: &[u8], at: usize) -> Result<u16> {
     ))
 }
 
-pub(super) fn read_u32(bytes: &[u8], at: usize) -> Result<u32> {
+pub(crate) fn read_u32(bytes: &[u8], at: usize) -> Result<u32> {
     Ok(u32::from_le_bytes(
         bytes
             .get(at..at + 4)
@@ -199,7 +199,7 @@ pub(super) fn read_u32(bytes: &[u8], at: usize) -> Result<u32> {
     ))
 }
 
-pub(super) fn read_u64(bytes: &[u8], at: usize) -> Result<u64> {
+pub(crate) fn read_u64(bytes: &[u8], at: usize) -> Result<u64> {
     Ok(u64::from_le_bytes(
         bytes
             .get(at..at + 8)

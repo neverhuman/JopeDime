@@ -6,7 +6,7 @@ use super::*;
 /// `Σ a_k x^k` in Horner form over the leaf `x`, as ordinary AST nodes: `Add`/`Sub` of finite
 /// literals and `Mul` by `x`. A negative non-leading coefficient becomes a `Sub`, and a zero one
 /// is skipped. No `Pow` (its precision is unspecified) and no new node type.
-pub(super) fn lower(coefficients: &[f64], x: &Expr) -> Option<Expr> {
+pub(crate) fn lower(coefficients: &[f64], x: &Expr) -> Option<Expr> {
     if coefficients.is_empty() || coefficients.iter().any(|c| !c.is_finite()) {
         return None;
     }
@@ -27,7 +27,7 @@ pub(super) fn lower(coefficients: &[f64], x: &Expr) -> Option<Expr> {
 
 /// The lowered tree's value at `v`, in exactly the operation order [`lower`] builds: `x * acc`,
 /// then `+ a` or `- (-a)`, which the evaluator computes with the same bits.
-pub(super) fn horner(coefficients: &[f64], v: f64) -> f64 {
+pub(crate) fn horner(coefficients: &[f64], v: f64) -> f64 {
     let n = coefficients.len() - 1;
     let mut acc = coefficients[n];
     for &a in coefficients[..n].iter().rev() {
@@ -47,7 +47,7 @@ pub(super) fn horner(coefficients: &[f64], v: f64) -> f64 {
 /// order, or `None` when a value leaves the finite range the output clamp keeps unchanged. The
 /// monomial conversion is ill-conditioned away from 0, so this can be far above the fit's
 /// Chebyshev `max_error`.
-pub(super) fn lowered_error(coefficients: &[f64], unique: &[(f64, f64)]) -> Option<f64> {
+pub(crate) fn lowered_error(coefficients: &[f64], unique: &[(f64, f64)]) -> Option<f64> {
     if coefficients.is_empty() {
         return None;
     }
@@ -59,11 +59,11 @@ pub(super) fn lowered_error(coefficients: &[f64], unique: &[(f64, f64)]) -> Opti
 
 /// A lowering worth proposing: the lowered tree, its own error on the samples and its size.
 #[derive(Clone, Debug, PartialEq)]
-pub(super) struct Proposal {
-    pub(super) tree: Expr,
+pub(crate) struct Proposal {
+    pub(crate) tree: Expr,
     /// What the proposal is held to: the lowered tree's error, never the fit's alone.
-    pub(super) lowered_error: f64,
-    pub(super) nodes: usize,
+    pub(crate) lowered_error: f64,
+    pub(crate) nodes: usize,
 }
 
 /// The lowered form of `fit` over the variable leaf `x`, when it is worth proposing in place of
@@ -76,7 +76,7 @@ pub(super) struct Proposal {
 /// Its checks are [`assess`]'s, which also names the first that fails; outside the tests the
 /// linearization calls `assess` directly.
 #[cfg(test)]
-pub(super) fn propose(
+pub(crate) fn propose(
     fit: &Minimax,
     samples: &[(f64, f64)],
     x: &Expr,
@@ -98,7 +98,7 @@ pub(super) fn propose(
 }
 
 /// The largest `|f|` over samples.
-pub(super) fn largest(unique: &[(f64, f64)]) -> f64 {
+pub(crate) fn largest(unique: &[(f64, f64)]) -> f64 {
     unique.iter().map(|(_, f)| f.abs()).fold(0.0f64, f64::max)
 }
 
@@ -107,19 +107,19 @@ pub(super) fn largest(unique: &[(f64, f64)]) -> f64 {
 /// in lowering the fit to ordinary nodes, not the line's quality: a poor fit has a large
 /// `max_error` and a bound to match. Whether the line is any good is for the native score of the
 /// whole program to decide.
-pub(super) fn allowance(max_error: f64, f_max: f64) -> f64 {
+pub(crate) fn allowance(max_error: f64, f_max: f64) -> f64 {
     max_error * (1.0 + 1e-6) + 64.0 * f64::EPSILON * f_max
 }
 
 /// `x` is not a variable leaf, so the samples do not give the lowered tree's values.
-pub(super) const NOT_A_LEAF: &str = "the lowered variable is not a leaf";
+pub(crate) const NOT_A_LEAF: &str = "the lowered variable is not a leaf";
 
 /// A refused lowering: the first check that failed, and what was measured before it.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct Refused {
-    pub(super) reason: &'static str,
-    pub(super) nodes: Option<usize>,
-    pub(super) lowered_error: Option<f64>,
+pub(crate) struct Refused {
+    pub(crate) reason: &'static str,
+    pub(crate) nodes: Option<usize>,
+    pub(crate) lowered_error: Option<f64>,
 }
 
 /// The checks of a proposal, in order, for the polynomial `coefficients` (ascending powers) of a
@@ -133,7 +133,7 @@ pub(super) struct Refused {
 /// - its own error must stay in the output range and within [`allowance`]: the minimax bound,
 ///   which holds the lowered tree to its fit's own training error, so it rejects lowerings that
 ///   lose precision and never judges the fit itself.
-pub(super) fn assess(
+pub(crate) fn assess(
     coefficients: &[f64],
     max_error: f64,
     f_max: f64,

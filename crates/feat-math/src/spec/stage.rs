@@ -4,7 +4,7 @@ use super::*;
 /// `target_transform.rs::fit_target` so the emitted literals equal what the
 /// runtime would compute from the same stage.
 
-pub(super) fn plan_target(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedTarget> {
+pub(crate) fn plan_target(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedTarget> {
     let kind = match stage.params.get("kind") {
         Some(ParamValue::Str(s)) => match s.as_str() {
             "rank_gauss" => TargetKind::RankGauss,
@@ -25,7 +25,7 @@ pub(super) fn plan_target(stage: &Stage, problems: &mut Vec<String>) -> Option<P
     Some(PlannedTarget { kind, q })
 }
 
-pub(super) fn plan_op(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedOp> {
+pub(crate) fn plan_op(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedOp> {
     let op = match stage.op.as_str() {
         "standardize" | "norm_features" => PlannedOp::Standardize,
         "robust_scale" => PlannedOp::RobustScale,
@@ -184,7 +184,7 @@ pub(super) fn plan_op(stage: &Stage, problems: &mut Vec<String>) -> Option<Plann
 /// member's inner pipeline with the same op/head planner the outer pipeline
 /// uses — literals in the emitted member components therefore equal what the
 /// runtime computes from the same stages.
-pub(super) fn plan_portfolio_head(stage: &Stage, problems: &mut Vec<String>) -> PlannedHead {
+pub(crate) fn plan_portfolio_head(stage: &Stage, problems: &mut Vec<String>) -> PlannedHead {
     let empty = PortfolioPlan {
         folds: 5,
         repeats_auto: true,
@@ -221,7 +221,7 @@ pub(super) fn plan_portfolio_head(stage: &Stage, problems: &mut Vec<String>) -> 
     })
 }
 
-pub(super) fn plan_member(
+pub(crate) fn plan_member(
     m: &crate::members::ResolvedMember,
     hidden: bool,
     problems: &mut Vec<String>,
@@ -293,7 +293,7 @@ pub(super) fn plan_member(
 
 /// Plan a single head stage (shared by the outer pipeline and portfolio
 /// members). Returns None for unknown head ops.
-pub(super) fn plan_head_stage(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedHead> {
+pub(crate) fn plan_head_stage(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedHead> {
     let head = match stage.op.as_str() {
         "ridge" | "logistic" => PlannedHead::Ridge {
             lambda_frac: finite_f64(stage, "lambda_frac", 0.02, problems),

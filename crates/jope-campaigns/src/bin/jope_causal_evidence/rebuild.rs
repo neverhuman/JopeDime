@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn rebuild(
+pub(crate) fn rebuild(
     root: &Path,
 ) -> Result<(CausalEvidenceLedgerV2, CausalEvidenceLedgerV3, Value)> {
     let (accepted, accepted_lineage_valid) = accepted_parents(root)?;
@@ -91,7 +91,7 @@ pub(super) fn rebuild(
     Ok((ledger_v2, ledger_v3, audit))
 }
 
-pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.is_file() {
         ensure!(
             fs::read(path)? == bytes,
@@ -114,7 +114,7 @@ pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn retained_evaluator(root: &Path, digest: &str) -> Result<bool> {
+pub(crate) fn retained_evaluator(root: &Path, digest: &str) -> Result<bool> {
     let path = root
         .join("training/evaluator-vault")
         .join(digest)
@@ -122,7 +122,7 @@ pub(super) fn retained_evaluator(root: &Path, digest: &str) -> Result<bool> {
     Ok(path.is_file() && sha256_file(&path)? == digest)
 }
 
-pub(super) fn failure_class(root: &Path, entry: &Value) -> Result<&'static str> {
+pub(crate) fn failure_class(root: &Path, entry: &Value) -> Result<&'static str> {
     let Some(evaluator) = entry
         .get("original_evaluator_sha256")
         .and_then(Value::as_str)
@@ -153,7 +153,7 @@ pub(super) fn failure_class(root: &Path, entry: &Value) -> Result<&'static str> 
 /// Publish permanent causal failures without evaluator substitution or outcome
 /// imputation. Pair identities live in a content-addressed JSONL object so the
 /// summary stays small and can be grouped without exposing a mutable ID list.
-pub(super) fn unreplayable_pair_disposition(root: &Path, generated_at_ms: u128) -> Result<Value> {
+pub(crate) fn unreplayable_pair_disposition(root: &Path, generated_at_ms: u128) -> Result<Value> {
     let path = root.join("ops/causal-pair-repair-state.v1.json");
     let mut identities = BTreeMap::<(String, String), Value>::new();
     let mut groups = BTreeMap::<(String, String), usize>::new();

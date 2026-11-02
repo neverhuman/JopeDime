@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn parse_nodes(scq: &Value) -> Vec<NodeRow> {
+pub(crate) fn parse_nodes(scq: &Value) -> Vec<NodeRow> {
     let mut rows = scq
         .get("nodes")
         .and_then(Value::as_array)
@@ -57,7 +57,7 @@ pub(super) fn parse_nodes(scq: &Value) -> Vec<NodeRow> {
     rows
 }
 
-pub(super) fn aggregate_cluster(scq: &Value, nodes: &[NodeRow]) -> ClusterSummary {
+pub(crate) fn aggregate_cluster(scq: &Value, nodes: &[NodeRow]) -> ClusterSummary {
     let active = nodes
         .iter()
         .filter(|node| node.state == "up")
@@ -93,7 +93,7 @@ pub(super) fn aggregate_cluster(scq: &Value, nodes: &[NodeRow]) -> ClusterSummar
     }
 }
 
-pub(super) fn parse_families(scq: &Value) -> Vec<FamilyRow> {
+pub(crate) fn parse_families(scq: &Value) -> Vec<FamilyRow> {
     let mut jobs_by_family: BTreeMap<String, FamilyRow> = BTreeMap::new();
     if let Some(jobs) = scq.get("jobs").and_then(Value::as_array) {
         for job in jobs {

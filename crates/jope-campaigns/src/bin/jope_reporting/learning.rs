@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) fn task_name(task: Task) -> &'static str {
+pub(crate) fn task_name(task: Task) -> &'static str {
     task.as_str()
 }
 
-pub(super) fn promotion_cas_valid(
+pub(crate) fn promotion_cas_valid(
     root: &Path,
     task: Task,
     checkpoint: &str,
@@ -44,7 +44,7 @@ pub(super) fn promotion_cas_valid(
     Ok(Some(path))
 }
 
-pub(super) fn observation_sets(
+pub(crate) fn observation_sets(
     root: &Path,
     panels: &BTreeSet<String>,
 ) -> Result<BTreeMap<String, (TaskPromotionObservationSetV3, PathBuf)>> {
@@ -75,7 +75,7 @@ pub(super) fn observation_sets(
     Ok(output)
 }
 
-pub(super) fn immutable_learning_report(
+pub(crate) fn immutable_learning_report(
     root: &Path,
     task: Task,
     checkpoint: &str,
@@ -272,7 +272,7 @@ pub(super) fn immutable_learning_report(
     Ok(Some(output))
 }
 
-pub(super) fn publish_terminal_learning_reports(root: &Path) -> Result<usize> {
+pub(crate) fn publish_terminal_learning_reports(root: &Path) -> Result<usize> {
     let mut grouped = BTreeMap::<(Task, String), Vec<(TaskPromotionEvaluationV3, PathBuf)>>::new();
     for tier in ["accepted", "rejected"] {
         for path in json_files(&root.join("training/task-promotion-evaluations").join(tier)) {
@@ -301,7 +301,7 @@ pub(super) fn publish_terminal_learning_reports(root: &Path) -> Result<usize> {
     Ok(published)
 }
 
-pub(super) fn terminal_learning_inventory(root: &Path) -> TerminalLearningInventory {
+pub(crate) fn terminal_learning_inventory(root: &Path) -> TerminalLearningInventory {
     let mut inventory = TerminalLearningInventory::default();
     let mut terminal = Vec::<(String, String)>::new();
     for tier in ["accepted", "rejected"] {

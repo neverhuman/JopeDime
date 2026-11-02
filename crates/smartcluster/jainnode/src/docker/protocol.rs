@@ -1,37 +1,37 @@
 use super::*;
 
 #[derive(Deserialize)]
-pub(super) struct CreateResponse {
+pub(crate) struct CreateResponse {
     #[serde(rename = "Id")]
-    pub(super) id: String,
+    pub(crate) id: String,
 }
 
 #[derive(Deserialize)]
-pub(super) struct WaitResponse {
+pub(crate) struct WaitResponse {
     #[serde(rename = "StatusCode")]
-    pub(super) status_code: i32,
+    pub(crate) status_code: i32,
 }
 
 #[derive(Deserialize)]
-pub(super) struct InspectResponse {
+pub(crate) struct InspectResponse {
     #[serde(rename = "State")]
-    pub(super) state: InspectState,
+    pub(crate) state: InspectState,
 }
 
 #[derive(Deserialize)]
-pub(super) struct InspectState {
+pub(crate) struct InspectState {
     #[serde(rename = "OOMKilled")]
-    pub(super) oom_killed: bool,
+    pub(crate) oom_killed: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(super) enum HttpBodyFraming {
+pub(crate) enum HttpBodyFraming {
     Chunked,
     ContentLength(usize),
     Empty,
 }
 
-pub(super) fn decode_http_body(
+pub(crate) fn decode_http_body(
     header: &str,
     body: &[u8],
     status: u16,
@@ -45,7 +45,7 @@ pub(super) fn decode_http_body(
     }
 }
 
-pub(super) fn parse_http_body_framing(
+pub(crate) fn parse_http_body_framing(
     header: &str,
     status: u16,
 ) -> Result<HttpBodyFraming, DockerError> {
@@ -105,7 +105,7 @@ pub(super) fn parse_http_body_framing(
     Ok(framing)
 }
 
-pub(super) fn decode_chunked(mut body: &[u8]) -> Result<Vec<u8>, DockerError> {
+pub(crate) fn decode_chunked(mut body: &[u8]) -> Result<Vec<u8>, DockerError> {
     let mut output = Vec::new();
     loop {
         let line_end = find_subsequence(body, b"\r\n").ok_or(DockerError::MalformedResponse)?;
@@ -173,7 +173,7 @@ async fn read_stream_header(
     }
 }
 
-pub(super) fn drain_chunked(wire: &mut Vec<u8>, output: &mut Vec<u8>) -> Result<bool, DockerError> {
+pub(crate) fn drain_chunked(wire: &mut Vec<u8>, output: &mut Vec<u8>) -> Result<bool, DockerError> {
     loop {
         let Some(line_end) = find_subsequence(wire, b"\r\n") else {
             return Ok(false);
@@ -219,7 +219,7 @@ pub(super) fn drain_chunked(wire: &mut Vec<u8>, output: &mut Vec<u8>) -> Result<
     }
 }
 
-pub(super) fn drain_content_length(
+pub(crate) fn drain_content_length(
     wire: &mut Vec<u8>,
     output: &mut Vec<u8>,
     remaining: &mut usize,
@@ -232,7 +232,7 @@ pub(super) fn drain_content_length(
     Ok(*remaining == 0)
 }
 
-pub(super) fn take_multiplexed_logs(
+pub(crate) fn take_multiplexed_logs(
     body: &mut Vec<u8>,
 ) -> Result<Vec<DockerLogChunk>, DockerError> {
     let mut chunks = Vec::new();
@@ -259,7 +259,7 @@ pub(super) fn take_multiplexed_logs(
     }
 }
 
-pub(super) fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+pub(crate) fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack
         .windows(needle.len())
         .position(|window| window == needle)

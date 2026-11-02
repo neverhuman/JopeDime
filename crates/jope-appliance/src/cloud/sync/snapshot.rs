@@ -120,7 +120,7 @@ pub fn sync_snapshot_for(
     }
     anyhow::bail!("metadata remains queued locally")
 }
-pub(super) fn pack_object(object: &jope_runtime::model_object::ModelObject) -> Result<Vec<u8>> {
+pub(crate) fn pack_object(object: &jope_runtime::model_object::ModelObject) -> Result<Vec<u8>> {
     let total =
         object.manifest_bytes().len() + object.parts().values().map(Vec::len).sum::<usize>();
     anyhow::ensure!(total as u64 <= MAX_MODEL, "model exceeds 32 MiB");
@@ -140,7 +140,7 @@ pub(super) fn pack_object(object: &jope_runtime::model_object::ModelObject) -> R
     );
     Ok(bytes)
 }
-pub(super) fn unpack_object(bytes: &[u8]) -> Result<jope_runtime::model_object::ModelObject> {
+pub(crate) fn unpack_object(bytes: &[u8]) -> Result<jope_runtime::model_object::ModelObject> {
     let mut archive = zip::ZipArchive::new(io::Cursor::new(bytes))?;
     let nested = archive.by_name("model/manifest.json").is_ok();
     anyhow::ensure!(archive.len() <= 260, "model has too many parts");

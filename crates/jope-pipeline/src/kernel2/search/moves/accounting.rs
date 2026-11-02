@@ -233,7 +233,7 @@ pub(crate) fn check(
 
 /// What a measurement scores, as bits: its status, training and held-out R², RMSE, selection
 /// score, and fault counts.
-pub(super) type Scored = (
+pub(crate) type Scored = (
     &'static str,
     Option<u64>,
     Option<u64>,
@@ -242,7 +242,7 @@ pub(super) type Scored = (
     Faults,
 );
 
-pub(super) fn scored(o: &Kernel2Observation) -> Scored {
+pub(crate) fn scored(o: &Kernel2Observation) -> Scored {
     (
         o.observation.status,
         o.observation.train_r2.map(f64::to_bits),

@@ -6,28 +6,28 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering as AtomicOrdering};
 use std::sync::{Arc, Barrier, Mutex};
 use std::time::{Duration, Instant};
 
-pub(super) const SCQ_BATCH_SCHEMA: &str = "JopeGolden42ScqBatchManifest.v1";
-pub(super) const SCQ_BATCH_RECEIPT_SCHEMA: &str = "JopeGolden42ScqBatchReceipt.v1";
-pub(super) const SCQ_WORKER_RECEIPT_SCHEMA: &str = "JopeGolden42ScqBatchWorkerReceipt.v1";
-pub(super) const SCQ_STAGING_SCHEMA: &str = "JopeGolden42ScqStagingReceipt.v1";
-pub(super) const AGGRESSIVE_BATCH_SCHEMA: &str = "JopeGolden42AggressiveBatchManifest.v1";
-pub(super) const AGGRESSIVE_BATCH_RECEIPT_SCHEMA: &str = "JopeGolden42AggressiveBatchReceipt.v1";
-pub(super) const AGGRESSIVE_WORKER_RECEIPT_SCHEMA: &str =
+pub(crate) const SCQ_BATCH_SCHEMA: &str = "JopeGolden42ScqBatchManifest.v1";
+pub(crate) const SCQ_BATCH_RECEIPT_SCHEMA: &str = "JopeGolden42ScqBatchReceipt.v1";
+pub(crate) const SCQ_WORKER_RECEIPT_SCHEMA: &str = "JopeGolden42ScqBatchWorkerReceipt.v1";
+pub(crate) const SCQ_STAGING_SCHEMA: &str = "JopeGolden42ScqStagingReceipt.v1";
+pub(crate) const AGGRESSIVE_BATCH_SCHEMA: &str = "JopeGolden42AggressiveBatchManifest.v1";
+pub(crate) const AGGRESSIVE_BATCH_RECEIPT_SCHEMA: &str = "JopeGolden42AggressiveBatchReceipt.v1";
+pub(crate) const AGGRESSIVE_WORKER_RECEIPT_SCHEMA: &str =
     "JopeGolden42AggressiveBatchWorkerReceipt.v1";
-pub(super) const SCQ_PROJECT: &str = "jope";
-pub(super) const SCQ_CPUS: usize = 90;
-pub(super) const AGGRESSIVE_CPUS: usize = 120;
-pub(super) const AGGRESSIVE_WORKERS: usize = 240;
-pub(super) const AGGRESSIVE_DATASET_LANES: usize = 42;
-pub(super) const AGGRESSIVE_CANDIDATES_PER_NODE: usize = 12;
+pub(crate) const SCQ_PROJECT: &str = "jope";
+pub(crate) const SCQ_CPUS: usize = 90;
+pub(crate) const AGGRESSIVE_CPUS: usize = 120;
+pub(crate) const AGGRESSIVE_WORKERS: usize = 240;
+pub(crate) const AGGRESSIVE_DATASET_LANES: usize = 42;
+pub(crate) const AGGRESSIVE_CANDIDATES_PER_NODE: usize = 12;
 const AGGRESSIVE_DATASET_POPULATION: usize = AGGRESSIVE_CANDIDATES_PER_NODE * NODES.len();
 const WAVE_MAX_LANE_POPULATION: usize = 36;
 const WAVE_MAX_CANDIDATES_PER_NODE: usize = 12;
 const AGGRESSIVE_MAX_REQUESTS_PER_NODE: usize =
     AGGRESSIVE_DATASET_LANES * AGGRESSIVE_CANDIDATES_PER_NODE;
-pub(super) const CANDIDATE_TIMEOUT_SECONDS: usize = 30;
-pub(super) const AGGRESSIVE_CANDIDATE_TIMEOUT_SECONDS: usize = 120;
-pub(super) const NODES: [&str; 3] = ["xbabe1", "xbabe2", "xbabe3"];
+pub(crate) const CANDIDATE_TIMEOUT_SECONDS: usize = 30;
+pub(crate) const AGGRESSIVE_CANDIDATE_TIMEOUT_SECONDS: usize = 120;
+pub(crate) const NODES: [&str; 3] = ["xbabe1", "xbabe2", "xbabe3"];
 const GOLDEN46_RUN_ID: &str = "golden46-new3-20260723-v4";
 const GOLDEN46_TRANSFER_RUN_ID: &str = "golden46-new3-20260723-v4-target-family-informed";
 const GOLDEN46_EFFECTIVELY_UNBOUNDED_RUNTIME_HOURS: usize = 876_000;
@@ -156,7 +156,7 @@ impl Drop for NodeLease {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub(super) struct ScqPolicy {
+pub(crate) struct ScqPolicy {
     pub nodes: Vec<String>,
     pub project: String,
     pub core_cap_per_node: usize,
@@ -173,7 +173,7 @@ pub(super) struct ScqPolicy {
 }
 
 impl ScqPolicy {
-    pub(super) fn fixed() -> Self {
+    pub(crate) fn fixed() -> Self {
         Self {
             nodes: NODES.iter().map(|node| (*node).to_string()).collect(),
             project: SCQ_PROJECT.to_string(),
@@ -194,7 +194,7 @@ impl ScqPolicy {
         }
     }
 
-    pub(super) fn aggressive_wave() -> Self {
+    pub(crate) fn aggressive_wave() -> Self {
         Self {
             nodes: NODES.iter().map(|node| (*node).to_string()).collect(),
             project: SCQ_PROJECT.to_string(),
@@ -215,7 +215,7 @@ impl ScqPolicy {
     }
 
     #[cfg(test)]
-    pub(super) fn golden46_wave() -> Self {
+    pub(crate) fn golden46_wave() -> Self {
         let mut policy = Self::aggressive_wave();
         policy.candidate_timeout_seconds = 0;
         policy.batch_max_runtime_hours = GOLDEN46_EFFECTIVELY_UNBOUNDED_RUNTIME_HOURS;
@@ -227,7 +227,7 @@ impl ScqPolicy {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub(super) struct StagedDataset {
+pub(crate) struct StagedDataset {
     pub dataset_hash: String,
     pub train_sha256: String,
     pub test_sha256: String,
@@ -235,7 +235,7 @@ pub(super) struct StagedDataset {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub(super) struct StagedNode {
+pub(crate) struct StagedNode {
     pub node: String,
     pub hostname: String,
     pub bundle_root: String,
@@ -247,7 +247,7 @@ pub(super) struct StagedNode {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub(super) struct ScqStagingReceipt {
+pub(crate) struct ScqStagingReceipt {
     pub schema: String,
     pub benchmark_valid: bool,
     pub scq_binary_sha256: String,
@@ -258,7 +258,7 @@ pub(super) struct ScqStagingReceipt {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-pub(super) struct ScqBatchManifest {
+pub(crate) struct ScqBatchManifest {
     pub schema: String,
     pub benchmark_valid: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -281,7 +281,7 @@ pub(super) struct ScqBatchManifest {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-pub(super) struct BatchCandidateReceipt {
+pub(crate) struct BatchCandidateReceipt {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub test_adaptive: Option<bool>,
     pub dataset_hash: String,
@@ -311,7 +311,7 @@ struct ScqWorkerReceipt {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-pub(super) struct ScqBatchReceipt {
+pub(crate) struct ScqBatchReceipt {
     pub schema: String,
     pub benchmark_valid: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -338,7 +338,7 @@ pub(super) struct ScqBatchReceipt {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub(super) struct ExpectedFresh {
+pub(crate) struct ExpectedFresh {
     pub dataset_hash: String,
     pub generation: usize,
     pub slot: usize,
@@ -348,7 +348,7 @@ pub(super) struct ExpectedFresh {
     pub scq_job_id: String,
 }
 
-pub(super) fn command_output(mut command: Command, label: &str) -> Result<std::process::Output> {
+pub(crate) fn command_output(mut command: Command, label: &str) -> Result<std::process::Output> {
     let output = command
         .output()
         .with_context(|| format!("launch {label}"))?;
@@ -362,14 +362,14 @@ pub(super) fn command_output(mut command: Command, label: &str) -> Result<std::p
     Ok(output)
 }
 
-pub(super) fn scq_json(args: &[&str]) -> Result<Value> {
+pub(crate) fn scq_json(args: &[&str]) -> Result<Value> {
     let mut command = Command::new(scq_binary_str());
     command.arg("--json").args(args);
     let output = command_output(command, "scq")?;
     serde_json::from_slice(&output.stdout).context("parse scq JSON")
 }
 
-pub(super) fn scq_job<'a>(
+pub(crate) fn scq_job<'a>(
     value: &'a Value,
     id: &str,
 ) -> Result<&'a serde_json::Map<String, Value>> {
@@ -483,7 +483,7 @@ fn ensure_node_available_after_lease(node: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn wait_for_job(id: &str) -> Result<Value> {
+pub(crate) fn wait_for_job(id: &str) -> Result<Value> {
     loop {
         let show = scq_json(&["show", id])?;
         let state = scq_job(&show, id)?
@@ -520,7 +520,7 @@ fn submit_true(node: &str, suffix: &str) -> Result<(String, String)> {
     Ok((id, sha256_bytes(&canonical_json(&show)?)))
 }
 
-pub(super) fn ssh_output(
+pub(crate) fn ssh_output(
     node: &str,
     remote_args: &[&str],
     label: &str,
@@ -542,7 +542,7 @@ fn ssh_raw(node: &str, remote_args: &[&str], label: &str) -> Result<std::process
     command.output().with_context(|| format!("launch {label}"))
 }
 
-pub(super) fn remote_sha256(node: &str, path: &str) -> Result<String> {
+pub(crate) fn remote_sha256(node: &str, path: &str) -> Result<String> {
     let output = ssh_output(node, &["sha256sum", path], "remote sha256sum")?;
     String::from_utf8(output.stdout)?
         .split_whitespace()
@@ -583,7 +583,7 @@ fn remote_file_mode(node: &str, path: &str) -> Result<Option<u32>> {
     Ok(None)
 }
 
-pub(super) fn validate_remote_immutable(
+pub(crate) fn validate_remote_immutable(
     node: &str,
     path: &str,
     expected_sha256: &str,
@@ -618,7 +618,7 @@ fn remove_remote_temporary(node: &str, temporary: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn copy_atomic(
+pub(crate) fn copy_atomic(
     node: &str,
     source: &Path,
     destination: &str,
@@ -699,25 +699,25 @@ pub(super) fn copy_atomic(
     validate_remote_immutable(node, destination, &expected_sha256, expected_permissions)
 }
 
-pub(super) fn scq_binary_sha256() -> Result<String> {
+pub(crate) fn scq_binary_sha256() -> Result<String> {
     sha256_file(Path::new(scq_binary_str()))
 }
 
-pub(super) fn remote_bundle_root(release_binary_sha256: &str) -> String {
+pub(crate) fn remote_bundle_root(release_binary_sha256: &str) -> String {
     format!(
         "{remote_root_str}/bundles/{release_binary_sha256}",
         remote_root_str = remote_root_str()
     )
 }
 
-pub(super) fn remote_dataset_root(release_binary_sha256: &str, dataset_hash: &str) -> String {
+pub(crate) fn remote_dataset_root(release_binary_sha256: &str, dataset_hash: &str) -> String {
     format!(
         "{}/datasets/{dataset_hash}",
         remote_bundle_root(release_binary_sha256)
     )
 }
 
-pub(super) fn preflight_and_stage(
+pub(crate) fn preflight_and_stage(
     registry: &Path,
     release_binary: &Path,
     release_binary_sha256: &str,
@@ -808,7 +808,7 @@ pub(super) fn preflight_and_stage(
     })
 }
 
-pub(super) fn validate_staging(
+pub(crate) fn validate_staging(
     staging: &ScqStagingReceipt,
     release_binary_sha256: &str,
     specs: &[DatasetSpec],
@@ -841,7 +841,7 @@ pub(super) fn validate_staging(
     Ok(())
 }
 
-pub(super) fn verify_remote_staging(staging: &ScqStagingReceipt) -> Result<()> {
+pub(crate) fn verify_remote_staging(staging: &ScqStagingReceipt) -> Result<()> {
     for node in &staging.nodes {
         let binary = format!("{}/jope-dime-regressor", node.bundle_root);
         validate_remote_immutable(&node.node, &binary, &node.release_binary_sha256, 0o555)?;
@@ -864,12 +864,12 @@ pub(super) fn verify_remote_staging(staging: &ScqStagingReceipt) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn primary_node(dataset_index: usize, generation: usize, batch_ordinal: usize) -> usize {
+pub(crate) fn primary_node(dataset_index: usize, generation: usize, batch_ordinal: usize) -> usize {
     (dataset_index + generation.saturating_sub(ISLAND_START_GENERATION) + batch_ordinal)
         % NODES.len()
 }
 
-pub(super) fn retry_node(primary: usize) -> usize {
+pub(crate) fn retry_node(primary: usize) -> usize {
     (primary + 1) % NODES.len()
 }
 
@@ -1301,7 +1301,7 @@ fn candidate_key(receipt: &CandidateReceipt) -> (String, usize, usize) {
 
 // Keep staging, campaign identity and batch scheduling inputs explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn evaluate_batches(
+pub(crate) fn evaluate_batches(
     campaign_root: &Path,
     identity: &CampaignIdentity,
     registry: &Path,
@@ -1403,7 +1403,7 @@ type AggressiveLane<'a> = (
 /// as one wave. Full generations contribute twelve requests to each node; cached
 /// generations may contribute fewer. A fixed pool of 120 pinned workers drains
 /// each over-decomposed node queue.
-pub(super) fn evaluate_aggressive_wave(
+pub(crate) fn evaluate_aggressive_wave(
     campaign_root: &Path,
     registry: &Path,
     release_binary_sha256: &str,
@@ -1607,7 +1607,7 @@ pub(super) fn evaluate_aggressive_wave(
 
 // Keep aggressive scheduling limits and campaign identity explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn evaluate_aggressive_batches(
+pub(crate) fn evaluate_aggressive_batches(
     campaign_root: &Path,
     identity: &CampaignIdentity,
     registry: &Path,
@@ -1630,7 +1630,7 @@ pub(super) fn evaluate_aggressive_batches(
 
 // Keep replay identity, node policy and result collection inputs explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn replay_across_nodes(
+pub(crate) fn replay_across_nodes(
     campaign_root: &Path,
     identity: &CampaignIdentity,
     registry: &Path,
@@ -1689,7 +1689,7 @@ pub(super) fn replay_across_nodes(
 
 // Keep aggressive replay policy, budget and artifact identity explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn replay_aggressive_across_nodes(
+pub(crate) fn replay_aggressive_across_nodes(
     campaign_root: &Path,
     identity: &CampaignIdentity,
     registry: &Path,
@@ -1837,7 +1837,7 @@ fn validate_request_contract(request: &CandidateRequest) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn evaluate_request(request: &CandidateRequest) -> Result<CandidateReceipt> {
+pub(crate) fn evaluate_request(request: &CandidateRequest) -> Result<CandidateReceipt> {
     validate_request_contract(request)?;
     if current_binary_sha256()? != request.binary_sha256 {
         bail!("candidate request binary mismatch");
@@ -1982,7 +1982,7 @@ fn parse_cpu_list(value: &str) -> Result<Vec<usize>> {
     Ok(cpus.into_iter().collect())
 }
 
-pub(super) fn job_allowed_cpus() -> Result<Vec<usize>> {
+pub(crate) fn job_allowed_cpus() -> Result<Vec<usize>> {
     let status = fs::read_to_string("/proc/self/status").context("read process CPU allowance")?;
     let encoded = status
         .lines()
@@ -2039,7 +2039,7 @@ fn constrain_job_cpus(allowed: &[usize], reserved: usize) -> Result<Vec<usize>> 
     Ok(allowed[..reserved].to_vec())
 }
 
-pub(super) fn pin_current_thread(cpu: usize) -> Result<()> {
+pub(crate) fn pin_current_thread(cpu: usize) -> Result<()> {
     if cpu >= nix::sched::CpuSet::count() {
         bail!("CPU {cpu} exceeds cpu_set_t capacity");
     }
@@ -2541,7 +2541,7 @@ pub(crate) fn aggressive_batch_worker(manifest_path: &Path, output_dir: &Path) -
     aggressive_batch_worker_direct(manifest_path, output_dir)
 }
 
-pub(super) fn validate_batch_records(
+pub(crate) fn validate_batch_records(
     campaign_root: &Path,
     release_binary_sha256: &str,
     scq_binary_sha256: &str,

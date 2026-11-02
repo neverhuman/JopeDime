@@ -3,7 +3,7 @@ use super::*;
 mod references;
 mod run;
 
-pub(super) use references::{
+pub(crate) use references::{
     immutable_json, load_transforms, normalize_frozen, reference_component, training_parity_rows,
     verify_original_contexts,
 };

@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) type EpochAccounting = (
+pub(crate) type EpochAccounting = (
     BTreeMap<Task, CausalEvidenceEpochV1>,
     BTreeMap<Task, bool>,
     BTreeMap<Task, usize>,
     BTreeMap<Task, usize>,
 );
 
-pub(super) fn load_promotion_epochs(
+pub(crate) fn load_promotion_epochs(
     root: &Path,
     accepted: &BTreeMap<Task, Sha256Digest>,
 ) -> Result<EpochAccounting> {
@@ -70,7 +70,7 @@ pub(super) fn load_promotion_epochs(
     ))
 }
 
-pub(super) fn apply_permanent_repair_failures(
+pub(crate) fn apply_permanent_repair_failures(
     root: &Path,
     ledger: &mut CausalEvidenceLedgerV2,
 ) -> Result<()> {

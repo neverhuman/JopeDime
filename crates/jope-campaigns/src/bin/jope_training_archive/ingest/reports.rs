@@ -3,7 +3,7 @@ use super::*;
 /// Annotations that must come from the DATA, not from a constant: model-version
 /// transitions and the first appearance of each validation metric. Re-derived on
 /// every ingest so a future schema change annotates itself.
-pub(super) fn derive_annotations(tx: &rusqlite::Transaction) -> Result<()> {
+pub(crate) fn derive_annotations(tx: &rusqlite::Transaction) -> Result<()> {
     // model_version transitions along the wall-clock run order
     let mut st = tx.prepare(
         "SELECT model_version, MIN(started_at_ms), MAX(COALESCE(ended_at_ms, started_at_ms))
@@ -95,7 +95,7 @@ pub(super) fn derive_annotations(tx: &rusqlite::Transaction) -> Result<()> {
 /// kept verbatim next to the segment, and the run directory becomes prunable.
 /// That decision has to be visible to anyone querying this database, or the
 /// curve would silently read as if the run simply ended one epoch earlier.
-pub(super) fn ingest_truncations(tx: &rusqlite::Transaction, root: &Path) -> Result<usize> {
+pub(crate) fn ingest_truncations(tx: &rusqlite::Transaction, root: &Path) -> Result<usize> {
     let Ok(text) = fs::read_to_string(root.join("truncations.v1.jsonl")) else {
         return Ok(0);
     };
@@ -146,7 +146,7 @@ pub(super) fn ingest_truncations(tx: &rusqlite::Transaction, root: &Path) -> Res
     Ok(count)
 }
 
-pub(super) fn recompute_flags(tx: &rusqlite::Transaction) -> Result<()> {
+pub(crate) fn recompute_flags(tx: &rusqlite::Transaction) -> Result<()> {
     let stmts = [
         // epoch-level
         ("INSERT OR REPLACE INTO flag SELECT e.run_key,e.epoch,e.phase,'val_loss_missing','error',
@@ -219,7 +219,7 @@ pub(super) fn recompute_flags(tx: &rusqlite::Transaction) -> Result<()> {
 
 // ------------------------------------------------------------------ reports
 
-pub(super) fn open_db(root: &Path) -> Result<Connection> {
+pub(crate) fn open_db(root: &Path) -> Result<Connection> {
     let p = root.join("db/history.sqlite3");
     if !p.is_file() {
         bail!("no archive at {} — run `ingest` first", p.display());

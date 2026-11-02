@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn inter_descriptors(
+pub(crate) fn inter_descriptors(
     r: &ReportStage,
     _t: &TableStage,
     b: &BlockStage,

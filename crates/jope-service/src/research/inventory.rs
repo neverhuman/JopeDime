@@ -28,7 +28,7 @@ pub struct RecordInventory {
 }
 
 impl RecordInventory {
-    pub(super) fn committed(records: &[ResearchRound], bytes: &[u8]) -> Result<Self> {
+    pub(crate) fn committed(records: &[ResearchRound], bytes: &[u8]) -> Result<Self> {
         let first = records.first().context("empty committed research stream")?;
         let mut counts = RecordCounts::default();
         for record in records {

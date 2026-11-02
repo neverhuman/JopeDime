@@ -11,11 +11,11 @@ use sha2::{Digest, Sha256};
 
 #[derive(Clone)]
 pub struct IntegrationModel {
-    pub(super) program: IntegrationProgram,
-    pub(super) task: TaskMode,
-    pub(super) fold: FoldBoundary,
-    pub(super) state: IntegrationState,
-    pub(super) predictor: BoundModel,
+    pub(crate) program: IntegrationProgram,
+    pub(crate) task: TaskMode,
+    pub(crate) fold: FoldBoundary,
+    pub(crate) state: IntegrationState,
+    pub(crate) predictor: BoundModel,
 }
 
 impl std::fmt::Debug for IntegrationModel {

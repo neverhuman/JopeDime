@@ -1,18 +1,18 @@
 use super::*;
 
-pub(super) struct LogitRidgeModel {
-    pub(super) means: Vec<f64>,
-    pub(super) scales: Vec<f64>,
-    pub(super) weights: Vec<f64>,
+pub(crate) struct LogitRidgeModel {
+    pub(crate) means: Vec<f64>,
+    pub(crate) scales: Vec<f64>,
+    pub(crate) weights: Vec<f64>,
 }
 
 impl LogitRidgeModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], l2: f64, class_weight: ClassWeight) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], l2: f64, class_weight: ClassWeight) -> Result<Self> {
         validate_binary_fit_target(y, x.len())?;
         Self::fit_binary_unchecked(x, y, l2, class_weight)
     }
 
-    pub(super) fn fit_ovr(x: &Rows, y: &[f64], l2: f64) -> Result<Self> {
+    pub(crate) fn fit_ovr(x: &Rows, y: &[f64], l2: f64) -> Result<Self> {
         if y.len() != x.len() || x.is_empty() {
             bail!("multiclass OvR target length differs from nonempty training rows");
         }
@@ -107,7 +107,7 @@ impl LogitRidgeModel {
         })
     }
 
-    pub(super) fn predict(&self, x: &Rows) -> Vec<f64> {
+    pub(crate) fn predict(&self, x: &Rows) -> Vec<f64> {
         x.iter()
             .map(|row| {
                 let mut linear = self.weights[0];
@@ -124,7 +124,7 @@ impl LogitRidgeModel {
     }
 }
 
-pub(super) fn sigmoid(value: f64) -> f64 {
+pub(crate) fn sigmoid(value: f64) -> f64 {
     if value >= 0.0 {
         1.0 / (1.0 + (-value.min(40.0)).exp())
     } else {

@@ -1,25 +1,25 @@
-pub(super) const RECOVERY_SCHEMA: &str = "JopeRecoveryReport.v2";
-pub(super) const CONTINUITY_SCHEMA: &str = "JopeRecoveryContinuity.v1";
-pub(super) const REQUIRED_GREEN_SECONDS: u64 = 86_400;
-pub(super) const MAXIMUM_OBSERVATION_GAP_SECONDS: u64 = 120;
+pub(crate) const RECOVERY_SCHEMA: &str = "JopeRecoveryReport.v2";
+pub(crate) const CONTINUITY_SCHEMA: &str = "JopeRecoveryContinuity.v1";
+pub(crate) const REQUIRED_GREEN_SECONDS: u64 = 86_400;
+pub(crate) const MAXIMUM_OBSERVATION_GAP_SECONDS: u64 = 120;
 
 use super::*;
 
 mod component_check;
 mod materialize;
 
-pub(super) use component_check::recovery_component_check;
-pub(super) use materialize::{materialize_recovery, verify_continuity_observation};
+pub(crate) use component_check::recovery_component_check;
+pub(crate) use materialize::{materialize_recovery, verify_continuity_observation};
 
 #[derive(Clone, Copy)]
-pub(super) struct RecoveryComponent {
-    pub(super) name: &'static str,
-    pub(super) path: &'static str,
-    pub(super) schema: &'static str,
-    pub(super) freshness_budget_seconds: u64,
+pub(crate) struct RecoveryComponent {
+    pub(crate) name: &'static str,
+    pub(crate) path: &'static str,
+    pub(crate) schema: &'static str,
+    pub(crate) freshness_budget_seconds: u64,
 }
 
-pub(super) const RECOVERY_COMPONENTS: &[RecoveryComponent] = &[
+pub(crate) const RECOVERY_COMPONENTS: &[RecoveryComponent] = &[
     RecoveryComponent {
         name: "controller",
         path: "ops/task-learning-controller.v2.json",
@@ -94,7 +94,7 @@ pub(super) const RECOVERY_COMPONENTS: &[RecoveryComponent] = &[
     },
 ];
 
-pub(super) fn json_files(directory: &Path) -> Vec<PathBuf> {
+pub(crate) fn json_files(directory: &Path) -> Vec<PathBuf> {
     let Ok(entries) = fs::read_dir(directory) else {
         return Vec::new();
     };
@@ -107,7 +107,7 @@ pub(super) fn json_files(directory: &Path) -> Vec<PathBuf> {
     paths
 }
 
-pub(super) fn collect_named(directory: &Path, suffix: &str, output: &mut Vec<PathBuf>) {
+pub(crate) fn collect_named(directory: &Path, suffix: &str, output: &mut Vec<PathBuf>) {
     let Ok(entries) = fs::read_dir(directory) else {
         return;
     };
@@ -125,13 +125,13 @@ pub(super) fn collect_named(directory: &Path, suffix: &str, output: &mut Vec<Pat
     }
 }
 
-pub(super) fn read_json(path: &Path) -> Result<Value> {
+pub(crate) fn read_json(path: &Path) -> Result<Value> {
     Ok(serde_json::from_reader(std::io::BufReader::new(
         File::open(path).with_context(|| format!("open {}", path.display()))?,
     ))?)
 }
 
-pub(super) fn read_optional_json(path: &Path) -> Result<Value> {
+pub(crate) fn read_optional_json(path: &Path) -> Result<Value> {
     let file = match File::open(path) {
         Ok(file) => file,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(json!({})),
@@ -141,7 +141,7 @@ pub(super) fn read_optional_json(path: &Path) -> Result<Value> {
         .with_context(|| format!("parse {}", path.display()))
 }
 
-pub(super) fn native_timestamp(value: &Value) -> Option<u128> {
+pub(crate) fn native_timestamp(value: &Value) -> Option<u128> {
     [
         "heartbeat_at_ms",
         "last_heartbeat_at_ms",
@@ -153,7 +153,7 @@ pub(super) fn native_timestamp(value: &Value) -> Option<u128> {
     .find_map(|key| value.get(key).and_then(Value::as_u64).map(u128::from))
 }
 
-pub(super) fn useful_queue_depth(value: &Value) -> u64 {
+pub(crate) fn useful_queue_depth(value: &Value) -> u64 {
     value
         .get("useful_work")
         .and_then(Value::as_u64)

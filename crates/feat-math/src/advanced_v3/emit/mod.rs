@@ -23,8 +23,8 @@ mod tests;
 
 pub use bound::{emit_bound, emit_bound_rust_only, BoundEmitted};
 pub(crate) use bound::{lint_shipped_masked, user_text};
-pub(super) use python::emit_bound_python;
-pub(super) use rust::emit_bound_rust;
+pub(crate) use python::emit_bound_python;
+pub(crate) use rust::emit_bound_rust;
 
 #[cfg(test)]
 mod typescript_support {

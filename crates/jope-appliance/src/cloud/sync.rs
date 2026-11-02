@@ -1,15 +1,15 @@
 use super::*;
 
 pub use telemetry::sync_events;
-pub(super) use telemetry::{record_publication, telemetry_command};
-pub(super) use upload::check_upload;
+pub(crate) use telemetry::{record_publication, telemetry_command};
+pub(crate) use upload::check_upload;
 pub use upload::{publish_file, Upload};
 
 mod telemetry;
 mod upload;
 
 #[derive(Serialize, Deserialize)]
-pub(super) struct SyncRecord {
+pub(crate) struct SyncRecord {
     origin: String,
     account_id: String,
     local_run_id: String,

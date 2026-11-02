@@ -14,7 +14,7 @@ fn exit_code(status: ExitStatus) -> i32 {
 }
 
 /// `subprocess.run(args, cwd=dir, capture_output=True, timeout=...)`, bounded by the cutoff.
-pub(super) fn run_process(args: &[String], dir: &Path, cutoff_ms: u64) -> Attempt<Finished> {
+pub(crate) fn run_process(args: &[String], dir: &Path, cutoff_ms: u64) -> Attempt<Finished> {
     let (limit, spelling) = timeout(cutoff_ms);
     let timed_out = || {
         let command = Json::Array(args.iter().map(|a| Json::Str(a.clone())).collect());
@@ -102,7 +102,7 @@ fn utf8_error(bytes: &[u8], error: &std::str::Utf8Error) -> String {
     }
 }
 
-pub(super) fn strings(items: &[&str]) -> Vec<String> {
+pub(crate) fn strings(items: &[&str]) -> Vec<String> {
     items.iter().map(|s| (*s).to_owned()).collect()
 }
 
@@ -178,7 +178,7 @@ fn parity(actual: &Json, rows: usize, expected: &Json) -> Attempt<()> {
 }
 
 /// One timed attempt: the completed receipt members, or the failure text.
-pub(super) fn attempt(
+pub(crate) fn attempt(
     backend: &str,
     out: &Path,
     selected: &[Json],
@@ -297,12 +297,12 @@ pub(super) fn attempt(
 /// Run the stage for a plan and journal until `cutoff_ms` (Unix milliseconds). An error stops
 /// the whole stage, as an uncaught exception stopped the retired driver; receipts already
 /// written stay.
-pub(super) fn run(plan: &Path, journal: &Path, cutoff_ms: u64) -> Result<()> {
+pub(crate) fn run(plan: &Path, journal: &Path, cutoff_ms: u64) -> Result<()> {
     stage(plan, journal, cutoff_ms, &SIZES)
 }
 
 /// [`run`] over the given batch sizes; unit tests skip the 1024-row compile.
-pub(super) fn stage(plan: &Path, journal: &Path, cutoff_ms: u64, sizes: &[usize]) -> Result<()> {
+pub(crate) fn stage(plan: &Path, journal: &Path, cutoff_ms: u64, sizes: &[usize]) -> Result<()> {
     let plan = load(plan)?;
     for dataset in py_iter(index(&plan, "inputs")?)? {
         let raw = index(&dataset, "raw")?;

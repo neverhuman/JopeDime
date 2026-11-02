@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn rmse_slice(truth: &[f64], predictions: &[f64]) -> Result<f64, String> {
+pub(crate) fn rmse_slice(truth: &[f64], predictions: &[f64]) -> Result<f64, String> {
     if truth.is_empty() || truth.len() != predictions.len() {
         return Err("RMSE vectors are empty or have different lengths".into());
     }

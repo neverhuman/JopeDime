@@ -115,7 +115,7 @@ impl RecordKey {
         }
     }
 
-    pub(super) fn bytes(&self) -> super::Result<Vec<u8>> {
+    pub(crate) fn bytes(&self) -> super::Result<Vec<u8>> {
         Ok(match self {
             Self::Run(id) => id.to_string().into_bytes(),
             Self::Dataset(id) => id.to_string().into_bytes(),

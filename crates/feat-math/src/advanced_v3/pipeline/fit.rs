@@ -146,7 +146,7 @@ pub fn fit_table(
     }
 }
 
-pub(super) fn restore_missing_values(block: &mut FeatureBlock) {
+pub(crate) fn restore_missing_values(block: &mut FeatureBlock) {
     for (row, mask) in block.values.iter_mut().zip(&block.missing_masks) {
         for (value, missing) in row.iter_mut().zip(mask) {
             if *missing {
@@ -156,11 +156,11 @@ pub(super) fn restore_missing_values(block: &mut FeatureBlock) {
     }
 }
 
-pub(super) struct ParsedPipeline<'a> {
-    pub(super) target: Option<&'a Stage>,
+pub(crate) struct ParsedPipeline<'a> {
+    pub(crate) target: Option<&'a Stage>,
     input: Option<&'a Stage>,
     transforms: &'a [Stage],
-    pub(super) head: Option<&'a Stage>,
+    pub(crate) head: Option<&'a Stage>,
 }
 
 fn is_v3_head(op: &str) -> bool {
@@ -179,7 +179,7 @@ fn is_v3_head(op: &str) -> bool {
         )
 }
 
-pub(super) fn split_v3_pipeline(dsl: &DslExpr) -> Result<ParsedPipeline<'_>> {
+pub(crate) fn split_v3_pipeline(dsl: &DslExpr) -> Result<ParsedPipeline<'_>> {
     let mut cursor = 0usize;
     let target = if dsl
         .stages

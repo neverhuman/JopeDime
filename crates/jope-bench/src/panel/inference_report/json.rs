@@ -5,7 +5,7 @@ use super::*;
 
 /// A JSON value that keeps member order, as Python's `json` module does.
 #[derive(Clone, Debug, PartialEq)]
-pub(super) enum Json {
+pub(crate) enum Json {
     Null,
     Bool(bool),
     Int(i128),
@@ -17,19 +17,19 @@ pub(super) enum Json {
 
 /// Members in first-insertion order; a repeated key keeps its first position and last value.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub(super) struct Object(pub(super) Vec<(String, Json)>);
+pub(crate) struct Object(pub(crate) Vec<(String, Json)>);
 
-pub(super) static NULL: Json = Json::Null;
-pub(super) static ZERO: Json = Json::Int(0);
-pub(super) static EMPTY_ARRAY: Json = Json::Array(Vec::new());
-pub(super) static EMPTY_OBJECT: Json = Json::Object(Object(Vec::new()));
-pub(super) static EMPTY_STRING: Json = Json::Str(String::new());
+pub(crate) static NULL: Json = Json::Null;
+pub(crate) static ZERO: Json = Json::Int(0);
+pub(crate) static EMPTY_ARRAY: Json = Json::Array(Vec::new());
+pub(crate) static EMPTY_OBJECT: Json = Json::Object(Object(Vec::new()));
+pub(crate) static EMPTY_STRING: Json = Json::Str(String::new());
 
 impl Object {
-    pub(super) fn get(&self, key: &str) -> Option<&Json> {
+    pub(crate) fn get(&self, key: &str) -> Option<&Json> {
         self.0.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
-    pub(super) fn set(&mut self, key: &str, value: Json) {
+    pub(crate) fn set(&mut self, key: &str, value: Json) {
         match self.0.iter_mut().find(|(k, _)| k == key) {
             Some(slot) => slot.1 = value,
             None => self.0.push((key.to_owned(), value)),
@@ -115,7 +115,7 @@ impl<'de> Deserialize<'de> for Json {
     }
 }
 
-pub(super) fn members<const N: usize>(entries: [(&str, Json); N]) -> Object {
+pub(crate) fn members<const N: usize>(entries: [(&str, Json); N]) -> Object {
     Object(
         entries
             .into_iter()
@@ -123,23 +123,23 @@ pub(super) fn members<const N: usize>(entries: [(&str, Json); N]) -> Object {
             .collect(),
     )
 }
-pub(super) fn object<const N: usize>(entries: [(&str, Json); N]) -> Json {
+pub(crate) fn object<const N: usize>(entries: [(&str, Json); N]) -> Json {
     Json::Object(members(entries))
 }
 
-pub(super) fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
 /// `json.loads` of a file, or an empty object when it cannot be read or parsed.
-pub(super) fn read(path: &Path) -> Json {
+pub(crate) fn read(path: &Path) -> Json {
     fs::read(path)
         .ok()
         .and_then(|bytes| serde_json::from_slice(&bytes).ok())
         .unwrap_or_else(|| EMPTY_OBJECT.clone())
 }
 
-pub(super) fn kind(value: &Json) -> &'static str {
+pub(crate) fn kind(value: &Json) -> &'static str {
     match value {
         Json::Null => "null",
         Json::Bool(_) => "bool",
@@ -152,19 +152,19 @@ pub(super) fn kind(value: &Json) -> &'static str {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) enum JsonNumber {
+pub(crate) enum JsonNumber {
     Int(i128),
     Float(f64),
 }
 
 impl JsonNumber {
-    pub(super) fn to_f64(self) -> f64 {
+    pub(crate) fn to_f64(self) -> f64 {
         match self {
             JsonNumber::Int(i) => i as f64,
             JsonNumber::Float(f) => f,
         }
     }
-    pub(super) fn is_finite(self) -> bool {
+    pub(crate) fn is_finite(self) -> bool {
         match self {
             JsonNumber::Int(_) => true,
             JsonNumber::Float(f) => f.is_finite(),
@@ -173,7 +173,7 @@ impl JsonNumber {
 }
 
 /// `isinstance(value, (int, float))`; a bool is an int.
-pub(super) fn number(value: &Json) -> Option<JsonNumber> {
+pub(crate) fn number(value: &Json) -> Option<JsonNumber> {
     match value {
         Json::Bool(b) => Some(JsonNumber::Int(i128::from(*b))),
         Json::Int(i) => Some(JsonNumber::Int(*i)),
@@ -183,7 +183,7 @@ pub(super) fn number(value: &Json) -> Option<JsonNumber> {
 }
 
 /// Exact numeric comparison across ints and floats, as Python compares them.
-pub(super) fn compare(a: JsonNumber, b: JsonNumber) -> Option<Ordering> {
+pub(crate) fn compare(a: JsonNumber, b: JsonNumber) -> Option<Ordering> {
     match (a, b) {
         (JsonNumber::Int(x), JsonNumber::Int(y)) => Some(x.cmp(&y)),
         (JsonNumber::Float(x), JsonNumber::Float(y)) => x.partial_cmp(&y),
@@ -191,7 +191,7 @@ pub(super) fn compare(a: JsonNumber, b: JsonNumber) -> Option<Ordering> {
         (JsonNumber::Float(x), JsonNumber::Int(y)) => int_float(y, x).map(Ordering::reverse),
     }
 }
-pub(super) fn int_float(i: i128, f: f64) -> Option<Ordering> {
+pub(crate) fn int_float(i: i128, f: f64) -> Option<Ordering> {
     const LIMIT: f64 = 1.701_411_834_604_692_3e38; // 2^127
     if f.is_nan() {
         return None;
@@ -209,16 +209,16 @@ pub(super) fn int_float(i: i128, f: f64) -> Option<Ordering> {
         other => other,
     })
 }
-pub(super) fn at_least_zero(n: JsonNumber) -> bool {
+pub(crate) fn at_least_zero(n: JsonNumber) -> bool {
     compare(n, JsonNumber::Int(0)).is_some_and(Ordering::is_ge)
 }
-pub(super) fn above_zero(n: JsonNumber) -> bool {
+pub(crate) fn above_zero(n: JsonNumber) -> bool {
     compare(n, JsonNumber::Int(0)).is_some_and(Ordering::is_gt)
 }
 
 /// Python `==` between JSON values: numbers (and bools) by value, containers structurally,
 /// objects regardless of member order.
-pub(super) fn py_eq(a: &Json, b: &Json) -> bool {
+pub(crate) fn py_eq(a: &Json, b: &Json) -> bool {
     if let (Some(x), Some(y)) = (number(a), number(b)) {
         return compare(x, y) == Some(Ordering::Equal);
     }
@@ -237,14 +237,14 @@ pub(super) fn py_eq(a: &Json, b: &Json) -> bool {
         _ => false,
     }
 }
-pub(super) fn is(value: &Json, text: &str) -> bool {
+pub(crate) fn is(value: &Json, text: &str) -> bool {
     matches!(value, Json::Str(s) if s == text)
 }
 /// `value is True`.
-pub(super) fn is_true(value: Option<&Json>) -> bool {
+pub(crate) fn is_true(value: Option<&Json>) -> bool {
     matches!(value, Some(Json::Bool(true)))
 }
-pub(super) fn truthy(value: &Json) -> bool {
+pub(crate) fn truthy(value: &Json) -> bool {
     match value {
         Json::Null => false,
         Json::Bool(b) => *b,
@@ -255,7 +255,7 @@ pub(super) fn truthy(value: &Json) -> bool {
         Json::Object(o) => !o.0.is_empty(),
     }
 }
-pub(super) fn py_len(value: &Json) -> Result<usize> {
+pub(crate) fn py_len(value: &Json) -> Result<usize> {
     Ok(match value {
         Json::Str(s) => s.chars().count(),
         Json::Array(items) => items.len(),
@@ -264,7 +264,7 @@ pub(super) fn py_len(value: &Json) -> Result<usize> {
     })
 }
 /// Python iteration: array items, object keys or string characters.
-pub(super) fn py_iter(value: &Json) -> Result<Vec<Json>> {
+pub(crate) fn py_iter(value: &Json) -> Result<Vec<Json>> {
     Ok(match value {
         Json::Str(s) => s.chars().map(|c| Json::Str(c.to_string())).collect(),
         Json::Array(items) => items.clone(),
@@ -273,7 +273,7 @@ pub(super) fn py_iter(value: &Json) -> Result<Vec<Json>> {
     })
 }
 /// `needle in container`.
-pub(super) fn py_contains(container: &Json, needle: &str) -> Result<bool> {
+pub(crate) fn py_contains(container: &Json, needle: &str) -> Result<bool> {
     Ok(match container {
         Json::Str(s) => s.contains(needle),
         Json::Array(items) => items.iter().any(|x| is(x, needle)),
@@ -285,7 +285,7 @@ pub(super) fn py_contains(container: &Json, needle: &str) -> Result<bool> {
     })
 }
 /// `all(needle in x for x in container)`.
-pub(super) fn all_contain(container: &Json, needle: &str) -> Result<bool> {
+pub(crate) fn all_contain(container: &Json, needle: &str) -> Result<bool> {
     for item in py_iter(container)? {
         if !py_contains(&item, needle)? {
             return Ok(false);
@@ -293,7 +293,7 @@ pub(super) fn all_contain(container: &Json, needle: &str) -> Result<bool> {
     }
     Ok(true)
 }
-pub(super) fn hashable(value: &Json) -> Result<()> {
+pub(crate) fn hashable(value: &Json) -> Result<()> {
     ensure!(
         !matches!(value, Json::Array(_) | Json::Object(_)),
         "TypeError: unhashable JSON {}",
@@ -302,7 +302,7 @@ pub(super) fn hashable(value: &Json) -> Result<()> {
     Ok(())
 }
 /// Distinct members of a Python set built from the values.
-pub(super) fn distinct(values: Vec<Json>) -> Result<Vec<Json>> {
+pub(crate) fn distinct(values: Vec<Json>) -> Result<Vec<Json>> {
     let mut seen: Vec<Json> = Vec::new();
     for value in values {
         hashable(&value)?;
@@ -313,7 +313,7 @@ pub(super) fn distinct(values: Vec<Json>) -> Result<Vec<Json>> {
     Ok(seen)
 }
 /// Python `<` ordering where it is defined.
-pub(super) fn py_order(a: &Json, b: &Json) -> Result<Ordering> {
+pub(crate) fn py_order(a: &Json, b: &Json) -> Result<Ordering> {
     if let (Some(x), Some(y)) = (number(a), number(b)) {
         return compare(x, y).context("unordered numbers");
     }
@@ -339,22 +339,22 @@ pub(super) fn py_order(a: &Json, b: &Json) -> Result<Ordering> {
 // Member access with Python's failure modes.
 
 /// `value.get(key)`: only an object has `get`; anything else fails the report.
-pub(super) fn get<'a>(value: &'a Json, key: &str) -> Result<Option<&'a Json>> {
+pub(crate) fn get<'a>(value: &'a Json, key: &str) -> Result<Option<&'a Json>> {
     match value {
         Json::Object(o) => Ok(o.get(key)),
         other => bail!("AttributeError: a JSON {} has no get({key:?})", kind(other)),
     }
 }
 /// `value.get(key, default)`.
-pub(super) fn get_or<'a>(value: &'a Json, key: &str, default: &'a Json) -> Result<&'a Json> {
+pub(crate) fn get_or<'a>(value: &'a Json, key: &str, default: &'a Json) -> Result<&'a Json> {
     Ok(get(value, key)?.unwrap_or(default))
 }
 /// `value.get(key)`, absent as `None`.
-pub(super) fn at<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
+pub(crate) fn at<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
     get_or(value, key, &NULL)
 }
 /// `value[key]`: a missing member or a non-object fails the report.
-pub(super) fn index<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
+pub(crate) fn index<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
     match value {
         Json::Object(o) => o.get(key).with_context(|| format!("KeyError: {key:?}")),
         other => bail!(
@@ -364,14 +364,14 @@ pub(super) fn index<'a>(value: &'a Json, key: &str) -> Result<&'a Json> {
     }
 }
 /// `value[key]` inside a `try` that treats KeyError and TypeError as absence.
-pub(super) fn lookup<'a>(value: &'a Json, key: &str) -> Option<&'a Json> {
+pub(crate) fn lookup<'a>(value: &'a Json, key: &str) -> Option<&'a Json> {
     match value {
         Json::Object(o) => o.get(key),
         _ => None,
     }
 }
 /// `value[key] = item` on a receipt.
-pub(super) fn assign(value: &mut Json, key: &str, item: Json) -> Result<()> {
+pub(crate) fn assign(value: &mut Json, key: &str, item: Json) -> Result<()> {
     match value {
         Json::Object(o) => {
             o.set(key, item);
@@ -388,7 +388,7 @@ pub(super) fn assign(value: &mut Json, key: &str, item: Json) -> Result<()> {
 // Artifact identity and exact-bit parity.
 
 /// A pin names a readable file whose SHA-256 matches; anything else is unverified.
-pub(super) fn verified(pin: &Json) -> Result<bool> {
+pub(crate) fn verified(pin: &Json) -> Result<bool> {
     let Some(Json::Str(path)) = lookup(pin, "path") else {
         return Ok(false);
     };
@@ -405,7 +405,7 @@ pub(super) fn verified(pin: &Json) -> Result<bool> {
 }
 
 /// The JSON behind an already verified pin, `read(Path(owner[key]['path']))`.
-pub(super) fn pinned(owner: &Json, key: &str) -> Result<Json> {
+pub(crate) fn pinned(owner: &Json, key: &str) -> Result<Json> {
     match lookup(index(owner, key)?, "path") {
         Some(Json::Str(path)) => Ok(read(Path::new(path))),
         _ => bail!("TypeError: pin {key:?} has no path"),
@@ -413,7 +413,7 @@ pub(super) fn pinned(owner: &Json, key: &str) -> Result<Json> {
 }
 
 /// `struct.pack('>d', value)`: the IEEE-754 bits of a number; anything else fails the report.
-pub(super) fn pack(value: &Json) -> Result<u64> {
+pub(crate) fn pack(value: &Json) -> Result<u64> {
     match number(value) {
         Some(JsonNumber::Int(i)) => Ok((i as f64).to_bits()),
         Some(JsonNumber::Float(f)) => Ok(f.to_bits()),
@@ -426,7 +426,7 @@ pub(super) fn pack(value: &Json) -> Result<u64> {
 
 /// A backend's predictions equal its qualification plan's expected values bit for bit, and
 /// the plan is bound to the pinned bundle and its backend.
-pub(super) fn parity_verified(b: &Json) -> Result<bool> {
+pub(crate) fn parity_verified(b: &Json) -> Result<bool> {
     if !verified(get_or(b, "qualification_plan", &EMPTY_OBJECT)?)?
         || !verified(get_or(b, "prediction", &EMPTY_OBJECT)?)?
     {

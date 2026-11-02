@@ -75,7 +75,7 @@ fn produced_context(state: &State, handoff: &HandoffRecord) -> Result<Vec<u8>> {
 ///   scope and the controller's attestation of the retained context execution.
 ///
 /// Returns the handoff digest the qualification records.
-pub(super) fn verify_handoff(
+pub(crate) fn verify_handoff(
     state: &State,
     policy: &FrozenPolicy,
     plan: &ContextPlan,

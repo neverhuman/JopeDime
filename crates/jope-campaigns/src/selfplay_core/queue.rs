@@ -110,6 +110,6 @@ pub fn family_disjoint_split(
         .collect())
 }
 
-pub(super) fn family_order_digest(seed: u64, family: &str) -> [u8; 32] {
+pub(crate) fn family_order_digest(seed: u64, family: &str) -> [u8; 32] {
     sha256_bytes(format!("{seed}|{family}").as_bytes())
 }

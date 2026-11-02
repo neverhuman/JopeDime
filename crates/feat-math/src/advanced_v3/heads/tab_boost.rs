@@ -1,24 +1,24 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct BoostStump {
-    pub(super) feature: usize,
-    pub(super) threshold: f64,
-    pub(super) left: f64,
-    pub(super) right: f64,
-    pub(super) missing_left: bool,
+pub(crate) struct BoostStump {
+    pub(crate) feature: usize,
+    pub(crate) threshold: f64,
+    pub(crate) left: f64,
+    pub(crate) right: f64,
+    pub(crate) missing_left: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct TabBoostModel {
-    pub(super) base: f64,
-    pub(super) learning_rate: f64,
-    pub(super) binary: bool,
-    pub(super) stumps: Vec<BoostStump>,
+pub(crate) struct TabBoostModel {
+    pub(crate) base: f64,
+    pub(crate) learning_rate: f64,
+    pub(crate) binary: bool,
+    pub(crate) stumps: Vec<BoostStump>,
 }
 
 impl TabBoostModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], stage: &Stage, binary: bool) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], stage: &Stage, binary: bool) -> Result<Self> {
         if binary {
             validate_binary_fit_target(y, x.len())?;
         }
@@ -128,7 +128,7 @@ impl TabBoostModel {
         })
     }
 
-    pub(super) fn predict(&self, x: &Rows) -> Vec<f64> {
+    pub(crate) fn predict(&self, x: &Rows) -> Vec<f64> {
         x.iter()
             .map(|row| {
                 let mut value = self.base;

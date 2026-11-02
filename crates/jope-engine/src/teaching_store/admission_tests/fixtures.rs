@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) struct Fixture {
+pub(crate) struct Fixture {
     directory: tempfile::TempDir,
 }
 impl Fixture {

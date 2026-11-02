@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_claims(path: &Path) -> Result<HashMap<String, Claim>> {
+pub(crate) fn load_claims(path: &Path) -> Result<HashMap<String, Claim>> {
     let connection = Connection::open_with_flags(
         path,
         OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
@@ -30,7 +30,7 @@ pub(super) fn load_claims(path: &Path) -> Result<HashMap<String, Claim>> {
     Ok(claims)
 }
 
-pub(super) fn scheduler_jobs(scq: &Path, socket: &Path) -> Result<Vec<Value>> {
+pub(crate) fn scheduler_jobs(scq: &Path, socket: &Path) -> Result<Vec<Value>> {
     let socket = socket
         .to_str()
         .context("SCQ socket path is not valid UTF-8")?;
@@ -44,7 +44,7 @@ pub(super) fn scheduler_jobs(scq: &Path, socket: &Path) -> Result<Vec<Value>> {
         .unwrap_or_default())
 }
 
-pub(super) fn join_inventory(
+pub(crate) fn join_inventory(
     jobs: &[Value],
     claims: &HashMap<String, Claim>,
     mode: ValidationMode,
@@ -63,7 +63,7 @@ pub(super) fn join_inventory(
         })
 }
 
-pub(super) fn join_job(
+pub(crate) fn join_job(
     job: &Value,
     claims: &HashMap<String, Claim>,
     mode: ValidationMode,
@@ -141,7 +141,7 @@ pub(super) fn join_job(
     })
 }
 
-pub(super) fn validate_manifest(claim: &Claim) -> Result<Value> {
+pub(crate) fn validate_manifest(claim: &Claim) -> Result<Value> {
     if claim.manifest_sha256.len() != 64
         || !claim
             .manifest_sha256
@@ -199,7 +199,7 @@ pub(super) fn validate_manifest(claim: &Claim) -> Result<Value> {
     Ok(manifest)
 }
 
-pub(super) fn protected_lane(manifest: &Value) -> bool {
+pub(crate) fn protected_lane(manifest: &Value) -> bool {
     let lane = manifest
         .get("evaluation_lane")
         .and_then(Value::as_str)
@@ -208,7 +208,7 @@ pub(super) fn protected_lane(manifest: &Value) -> bool {
     lane.contains("gate") || lane.contains("sealed") || lane.contains("canary")
 }
 
-pub(super) fn strict_wave(manifest: &Value) -> Option<String> {
+pub(crate) fn strict_wave(manifest: &Value) -> Option<String> {
     manifest
         .get("strict_wave")
         .and_then(Value::as_str)
@@ -222,7 +222,7 @@ pub(super) fn strict_wave(manifest: &Value) -> Option<String> {
         .map(str::to_owned)
 }
 
-pub(super) fn generation(manifest: &Value) -> Option<String> {
+pub(crate) fn generation(manifest: &Value) -> Option<String> {
     manifest
         .get("generation")
         .and_then(Value::as_str)
@@ -236,7 +236,7 @@ pub(super) fn generation(manifest: &Value) -> Option<String> {
         .map(str::to_owned)
 }
 
-pub(super) fn manifest_checkpoint_binding(manifest: &Value) -> Option<String> {
+pub(crate) fn manifest_checkpoint_binding(manifest: &Value) -> Option<String> {
     let candidates = manifest.get("candidates")?.as_array()?;
     let checkpoint = candidates
         .first()?
@@ -264,11 +264,11 @@ pub(super) fn manifest_checkpoint_binding(manifest: &Value) -> Option<String> {
     Some(checkpoint.to_owned())
 }
 
-pub(super) fn is_sha256(value: &str) -> bool {
+pub(crate) fn is_sha256(value: &str) -> bool {
     value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
-pub(super) fn strict_wave_from_path(path: &Path) -> Option<String> {
+pub(crate) fn strict_wave_from_path(path: &Path) -> Option<String> {
     path.ancestors()
         .filter_map(Path::file_name)
         .filter_map(|name| name.to_str())

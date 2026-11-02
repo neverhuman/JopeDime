@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn lock_with_deadline<T>(
+pub(crate) fn lock_with_deadline<T>(
     mutex: &std::sync::Mutex<T>,
     deadline: u64,
 ) -> Result<std::sync::MutexGuard<'_, T>> {
@@ -44,7 +44,7 @@ fn dispatch_gate_until(
     Ok(gate)
 }
 
-pub(super) fn serve_request(
+pub(crate) fn serve_request(
     state: &Arc<State>,
     stream: &mut UnixStream,
     peer: &ProcessIdentity,

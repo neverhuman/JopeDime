@@ -23,7 +23,7 @@ impl ProcessLock {
     }
 }
 
-pub(super) fn run() -> Result<()> {
+pub(crate) fn run() -> Result<()> {
     let args = Args::parse();
     if args.explain_checkpoint {
         return explain_checkpoint(&args);

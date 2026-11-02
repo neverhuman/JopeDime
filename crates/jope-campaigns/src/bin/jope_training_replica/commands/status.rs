@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_status(root: &Path) -> Result<Value> {
+pub(crate) fn load_status(root: &Path) -> Result<Value> {
     let path = root.join(STATUS_RELATIVE);
     let bytes = match fs::read(&path) {
         Ok(bytes) => bytes,
@@ -15,7 +15,7 @@ pub(super) fn load_status(root: &Path) -> Result<Value> {
 
 /// A target that fails today must still report when it last worked, otherwise
 /// "no successes ever" and "no successes for six hours" look identical.
-pub(super) fn previous_success(previous: &Value, label: &str) -> u64 {
+pub(crate) fn previous_success(previous: &Value, label: &str) -> u64 {
     previous
         .get("targets")
         .and_then(Value::as_array)
@@ -27,13 +27,13 @@ pub(super) fn previous_success(previous: &Value, label: &str) -> u64 {
         .unwrap_or(0)
 }
 
-pub(super) fn write_status(root: &Path, report: &Value) -> Result<()> {
+pub(crate) fn write_status(root: &Path, report: &Value) -> Result<()> {
     let path = root.join(STATUS_RELATIVE);
     th::write_atomic(&path, &serde_json::to_vec_pretty(report)?)?;
     Ok(())
 }
 
-pub(super) fn append_event(root: &Path, record: &Value) {
+pub(crate) fn append_event(root: &Path, record: &Value) {
     let dir = replica_dir(root);
     if fs::create_dir_all(&dir).is_err() {
         return;

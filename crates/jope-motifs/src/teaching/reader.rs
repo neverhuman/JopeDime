@@ -93,7 +93,7 @@ fn require_qualified(entry: &QualifiedEntry) -> Result<()> {
 /// folds, the improved-fold count recounted and at least the guard's minimum, both means
 /// recomputed bit for bit (the scorer divides the fold sum by 5, eligibility.rs:955-964), and
 /// the mean gain above the margin.
-pub(super) fn guard_admits(entry: &QualifiedEntry) -> bool {
+pub(crate) fn guard_admits(entry: &QualifiedEntry) -> bool {
     let guard = &entry.guard;
     let losses = &entry.fold_losses;
     let improved = losses

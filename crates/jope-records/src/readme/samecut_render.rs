@@ -3,7 +3,7 @@ use super::*;
 /// The `--adapter` argument that recorded this engine, rendered so a shell reads it back
 /// exactly; a token that would need quoting refuses rather than print a wrong command.
 
-pub(super) fn adapter_flag(spec: &Value) -> Result<String> {
+pub(crate) fn adapter_flag(spec: &Value) -> Result<String> {
     // `re.compile(r"^[A-Za-z0-9_./=:+-]+$").match`: Python's `$` also matches before a final
     // newline, so a token ending in one newline passed there, and passes here.
     let safe = Regex::new(r"^[A-Za-z0-9_./=:+-]+\n?\z").expect("static pattern");
@@ -43,7 +43,7 @@ pub(super) fn adapter_flag(spec: &Value) -> Result<String> {
     Ok(format!("--adapter \"{}={command}\"", name.py_str()))
 }
 
-pub(super) fn samecut_row(r: &Dict, versions: &BTreeMap<String, String>) -> Result<String> {
+pub(crate) fn samecut_row(r: &Dict, versions: &BTreeMap<String, String>) -> Result<String> {
     let method_id = cell(r, "method_id")?;
     let b = if method_id == SEARCHED { "**" } else { "" };
     let mut name = cell(r, "method")?.to_owned();
@@ -64,7 +64,7 @@ pub(super) fn samecut_row(r: &Dict, versions: &BTreeMap<String, String>) -> Resu
     ))
 }
 
-pub(super) fn render_samecut(p: &Paths) -> Result<String> {
+pub(crate) fn render_samecut(p: &Paths) -> Result<String> {
     let e = load_samecut(p)?;
     let (deep, reports, ours) = (&e.deep, &e.reports, &e.ours);
     let first = &reports[0];

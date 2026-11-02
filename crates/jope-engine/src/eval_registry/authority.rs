@@ -197,7 +197,7 @@ pub fn numerical_contract_sha256(c: &NumericalContract) -> Result<String> {
 pub fn current_runtime_digest(contract: &NumericalContract) -> Result<String> {
     process_runtime_digest(std::process::id(), contract)
 }
-pub(super) fn process_runtime_digest(pid: u32, contract: &NumericalContract) -> Result<String> {
+pub(crate) fn process_runtime_digest(pid: u32, contract: &NumericalContract) -> Result<String> {
     contract.validate()?;
     let mut paths = BTreeSet::new();
     for line in fs::read_to_string(format!("/proc/{pid}/maps"))?.lines() {
@@ -319,7 +319,7 @@ impl VerifiedFit {
         )
     }
 
-    pub(super) fn from_verified_runtime(
+    pub(crate) fn from_verified_runtime(
         program: &str,
         inputs: FitInputs,
         fit_seed: u64,
@@ -428,7 +428,7 @@ thread_local! {
     };
 }
 
-pub(super) fn monotonic_ns() -> Result<u64> {
+pub(crate) fn monotonic_ns() -> Result<u64> {
     #[cfg(test)]
     if let Some(now) = SYNTHETIC_MONOTONIC_NS.with(std::cell::Cell::get) {
         return Ok(now);
@@ -647,7 +647,7 @@ pub struct QueryRecord {
     pub model_sha256: String,
     pub query_key: String,
 }
-pub(super) enum QueryClaim {
+pub(crate) enum QueryClaim {
     Accepted,
     Existing(QueryRecord),
 }
@@ -1074,14 +1074,14 @@ impl ExecutionCustody {
     }
 }
 
-pub(super) struct SupervisedCustody {
+pub(crate) struct SupervisedCustody {
     lock: FileLock,
 }
 impl SupervisedCustody {
-    pub(super) fn fd(&self) -> i32 {
+    pub(crate) fn fd(&self) -> i32 {
         self.lock.file.as_raw_fd()
     }
-    pub(super) fn identity(&self) -> Result<(u64, u64)> {
+    pub(crate) fn identity(&self) -> Result<(u64, u64)> {
         self.lock.verify()?;
         let m = self.lock.file.metadata()?;
         Ok((m.dev(), m.ino()))
@@ -1089,7 +1089,7 @@ impl SupervisedCustody {
 }
 /// Authenticate kernel credentials and original process incarnation, not a PID
 /// field supplied in JSON. Scope authorization is checked separately.
-pub(super) fn authenticated_peer(
+pub(crate) fn authenticated_peer(
     stream: &std::os::unix::net::UnixStream,
 ) -> Result<ProcessIdentity> {
     let credential =
@@ -1115,7 +1115,7 @@ impl ObservedCompletion {
     /// Call before releasing the executor's descriptor/start handshake. Timeout
     /// cleanup kills the original child and reaps it; descendant reconciliation
     /// remains the resource supervisor's responsibility.
-    pub(super) fn wait_owned_group(
+    pub(crate) fn wait_owned_group(
         child: &mut Child,
         start: &StartToken,
         deadline: Duration,
@@ -1696,12 +1696,8 @@ impl Authority {
         match table {
             "entries" => Ok("SELECT * FROM entries WHERE key=?"),
             "queries" => Ok("SELECT * FROM queries WHERE key=?"),
-            "authorization_witness" => {
-                Ok("SELECT * FROM authorization_witness WHERE fit_key=?")
-            }
-            "funding_authorizations" => {
-                Ok("SELECT * FROM funding_authorizations WHERE id=?")
-            }
+            "authorization_witness" => Ok("SELECT * FROM authorization_witness WHERE fit_key=?"),
+            "funding_authorizations" => Ok("SELECT * FROM funding_authorizations WHERE id=?"),
             "funding_reservations" => Ok("SELECT * FROM funding_reservations WHERE id=?"),
             "funding_participants" => Ok("SELECT * FROM funding_participants WHERE id=?"),
             "funding_witness" => Ok("SELECT * FROM funding_witness WHERE event_key=?"),
@@ -2589,7 +2585,7 @@ impl Authority {
 
     /// Private peer adapter: only the service owning the original Child can
     /// consume its token. Retain returned custody through the observed exit.
-    pub(super) fn consume_owned_child_start(
+    pub(crate) fn consume_owned_child_start(
         &mut self,
         fit: &VerifiedFit,
         start: &StartToken,
@@ -2649,7 +2645,7 @@ impl Authority {
     }
     /// Native admission requires explicitly initialized v6 storage. Older stores
     /// and all legacy activation routes remain byte-preserved and held.
-    pub(super) fn claim_native(
+    pub(crate) fn claim_native(
         &mut self,
         fit: &VerifiedFit,
         native: &mut super::native_scq::NativeAdmission,
@@ -2820,7 +2816,7 @@ impl Authority {
         );
         Ok(())
     }
-    pub(super) fn authorize_native(
+    pub(crate) fn authorize_native(
         &mut self,
         fit: &VerifiedFit,
         claim: &Claim,
@@ -2842,7 +2838,7 @@ impl Authority {
             Some(native),
         )
     }
-    pub(super) fn consume_native_owned_child_start(
+    pub(crate) fn consume_native_owned_child_start(
         &mut self,
         fit: &VerifiedFit,
         start: &StartToken,
@@ -2871,7 +2867,7 @@ impl Authority {
         self.consume_owned_child_start_admission(fit, start, child, stream, Some(native))
     }
 
-    pub(super) fn require_reconciled_service_start(&mut self) -> Result<()> {
+    pub(crate) fn require_reconciled_service_start(&mut self) -> Result<()> {
         let _lock = FileLock::acquire(&self.root.join("authority.lock"), false, false)?;
         self.verify_tail()?;
         let unresolved: u64 = self.db.query_row(
@@ -3718,7 +3714,7 @@ impl Authority {
 
     /// The access capability binds this exact descriptor independently of fit
     /// eligibility. Acceptance is durable before prediction and can occur once.
-    pub(super) fn prepare_query(
+    pub(crate) fn prepare_query(
         &mut self,
         inputs: &super::query::QueryInputs,
         access: &super::query::VerifiedQueryAccess,
@@ -3790,7 +3786,7 @@ impl Authority {
 
     /// Original-result retrieval has no accept, predict, completion or mutation
     /// path. An expired execution deadline cannot prevent reading its evidence.
-    pub(super) fn retrieve_query(
+    pub(crate) fn retrieve_query(
         &mut self,
         inputs: &super::query::QueryInputs,
         access: &super::query::VerifiedQueryAccess,
@@ -3825,7 +3821,7 @@ impl Authority {
 
     /// Only opaque scorer output can be published. A lost accepted response or
     /// failed score cannot be converted into a new evaluation by this API.
-    pub(super) fn commit_query(
+    pub(crate) fn commit_query(
         &mut self,
         inputs: &super::query::QueryInputs,
         artifacts: &super::query::QueryArtifacts,
@@ -3902,7 +3898,7 @@ impl Authority {
         }
         Ok(receipt)
     }
-    pub(super) fn verify_committed_record(&mut self, sha: &str) -> Result<CompletionReceipt> {
+    pub(crate) fn verify_committed_record(&mut self, sha: &str) -> Result<CompletionReceipt> {
         let receipt = self.completion(sha)?;
         ensure!(
             receipt.authority_instance == self.manifest.instance,
@@ -3929,7 +3925,7 @@ impl Authority {
         drop(_lock);
         Ok(receipt)
     }
-    pub(super) fn verify_record_in_scope(
+    pub(crate) fn verify_record_in_scope(
         &mut self,
         sha: &str,
         scope: &str,
@@ -3998,7 +3994,7 @@ impl Authority {
 
     /// Idempotently adopts the original immutable completion after a lost reply.
     /// It cannot create a result from a caller's exit assertion or restart a fit.
-    pub(super) fn commit_original_completion(
+    pub(crate) fn commit_original_completion(
         &mut self,
         fit: &VerifiedFit,
         start: &StartToken,
@@ -4053,7 +4049,7 @@ impl Authority {
 }
 
 /// Prepare large immutable artifacts outside the long-lived authority mutex.
-pub(super) fn prepare_observed_completion(
+pub(crate) fn prepare_observed_completion(
     root: &Path,
     instance: &str,
     fit: &VerifiedFit,

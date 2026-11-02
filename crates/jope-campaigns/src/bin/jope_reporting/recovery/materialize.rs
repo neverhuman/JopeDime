@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
+pub(crate) fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
     let mut components = serde_json::Map::new();
     let mut gates = serde_json::Map::new();
     for component in RECOVERY_COMPONENTS {
@@ -204,7 +204,7 @@ pub(super) fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
     Ok(report)
 }
 
-pub(super) fn verify_continuity_observation(
+pub(crate) fn verify_continuity_observation(
     root: &Path,
     observation: &RecoveryContinuityObservationV1,
     at_ms: u128,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn extract_probes(x: &[f64], y: &[f64], n: usize, p: usize) -> ProbeStage {
+pub(crate) fn extract_probes(x: &[f64], y: &[f64], n: usize, p: usize) -> ProbeStage {
     let ym = mean(y);
     let ys = stddev(y);
     let yz: Vec<f64> = y

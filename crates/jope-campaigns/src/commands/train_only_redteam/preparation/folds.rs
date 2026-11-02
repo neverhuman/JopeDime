@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_repeat(
+pub(crate) fn build_repeat(
     purpose: &str,
     repeat: usize,
     seed: u64,
@@ -61,7 +61,7 @@ pub(super) fn build_repeat(
     })
 }
 
-pub(super) fn build_fold_bank(
+pub(crate) fn build_fold_bank(
     run_id: &str,
     dataset_hash: &str,
     train_sha256: &str,
@@ -90,7 +90,7 @@ pub(super) fn build_fold_bank(
     Ok(bank)
 }
 
-pub(super) fn validate_fold_bank(
+pub(crate) fn validate_fold_bank(
     bank: &FoldBankReceipt,
     config: &TrainOnlyRedteamConfig,
 ) -> Result<()> {

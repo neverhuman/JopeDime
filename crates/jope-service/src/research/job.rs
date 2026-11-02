@@ -33,7 +33,7 @@ use std::{
 };
 
 mod live;
-pub(super) use live::{LiveProvenance, NativeRoundInputs, RecordingSpace};
+pub(crate) use live::{LiveProvenance, NativeRoundInputs, RecordingSpace};
 
 const JOB: &str = "qlt03-slump85-v1";
 const CATALOG: &str = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba";

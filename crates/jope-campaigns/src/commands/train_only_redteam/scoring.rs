@@ -1,14 +1,14 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct CvScore {
-    pub(super) repeat_nrmse: Vec<f64>,
-    pub(super) fold_nrmse: Vec<Vec<f64>>,
-    pub(super) robust_loss: f64,
-    pub(super) worst_fold_nrmse: f64,
+pub(crate) struct CvScore {
+    pub(crate) repeat_nrmse: Vec<f64>,
+    pub(crate) fold_nrmse: Vec<Vec<f64>>,
+    pub(crate) robust_loss: f64,
+    pub(crate) worst_fold_nrmse: f64,
 }
 
-pub(super) fn robust_cv_score(
+pub(crate) fn robust_cv_score(
     repeat_squared_error: &[f64],
     repeat_rows: &[usize],
     fold_nrmse: Vec<Vec<f64>>,
@@ -52,7 +52,7 @@ pub(super) fn robust_cv_score(
     })
 }
 
-pub(super) fn target_sd(targets: &[f64]) -> Result<f64> {
+pub(crate) fn target_sd(targets: &[f64]) -> Result<f64> {
     if targets.is_empty() || targets.iter().any(|value| !value.is_finite()) {
         bail!("target SD needs finite values");
     }
@@ -70,15 +70,15 @@ pub(super) fn target_sd(targets: &[f64]) -> Result<f64> {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct OneSeCandidate {
-    pub(super) semantic_sha256: String,
-    pub(super) complexity: usize,
-    pub(super) robust_loss: f64,
-    pub(super) repeat_nrmse: Vec<f64>,
-    pub(super) worst_fold_nrmse: f64,
+pub(crate) struct OneSeCandidate {
+    pub(crate) semantic_sha256: String,
+    pub(crate) complexity: usize,
+    pub(crate) robust_loss: f64,
+    pub(crate) repeat_nrmse: Vec<f64>,
+    pub(crate) worst_fold_nrmse: f64,
 }
 
-pub(super) fn one_standard_error_select(candidates: &[OneSeCandidate]) -> Result<usize> {
+pub(crate) fn one_standard_error_select(candidates: &[OneSeCandidate]) -> Result<usize> {
     let (best_index, best) = candidates
         .iter()
         .enumerate()
@@ -126,12 +126,12 @@ pub(super) fn one_standard_error_select(candidates: &[OneSeCandidate]) -> Result
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub(super) struct EloRating {
-    pub(super) method_id: String,
-    pub(super) rating: f64,
+pub(crate) struct EloRating {
+    pub(crate) method_id: String,
+    pub(crate) rating: f64,
 }
 
-pub(super) fn bradley_terry_elo(
+pub(crate) fn bradley_terry_elo(
     scores: &BTreeMap<String, BTreeMap<String, f64>>,
     config: &ScoringConfig,
 ) -> Result<Vec<EloRating>> {

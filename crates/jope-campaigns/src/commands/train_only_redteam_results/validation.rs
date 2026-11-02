@@ -4,13 +4,13 @@ fn arm_receipt_path(root: &Path, arm: &str) -> PathBuf {
     root.join(format!("{arm}-complete.v1.json"))
 }
 
-pub(super) fn selector_path(root: &Path, dataset_hash: &str) -> PathBuf {
+pub(crate) fn selector_path(root: &Path, dataset_hash: &str) -> PathBuf {
     root.join("datasets")
         .join(dataset_hash)
         .join("selector-complete.v1.json")
 }
 
-pub(super) fn validation_shard_path(root: &Path, dataset_hash: &str) -> PathBuf {
+pub(crate) fn validation_shard_path(root: &Path, dataset_hash: &str) -> PathBuf {
     root.join("datasets")
         .join(dataset_hash)
         .join("validation-shard.v1.json")
@@ -82,7 +82,7 @@ fn validate_selector_cohort(
     Ok(digest)
 }
 
-pub(super) fn validate_run(
+pub(crate) fn validate_run(
     study_root: &Path,
     run_id: &str,
     _sotarena_root: &Path,

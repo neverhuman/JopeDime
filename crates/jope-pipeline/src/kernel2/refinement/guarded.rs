@@ -111,7 +111,7 @@ impl Kernel2Evaluator {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(super) fn refine_stage_guarded(
+    pub(crate) fn refine_stage_guarded(
         &self,
         pipe: &mut DslExpr,
         index: usize,

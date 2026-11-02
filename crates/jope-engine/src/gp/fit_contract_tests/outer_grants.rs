@@ -8,11 +8,11 @@ use super::*;
 // between its check (or its write) and its consumption.
 // ---------------------------------------------------------------------------
 
-pub(super) const OTHER_TEST: &str = "12,1000\n13,1000\n14,1000\n";
+pub(crate) const OTHER_TEST: &str = "12,1000\n13,1000\n14,1000\n";
 
 /// An exported selected subject of the view fixture, the sealed labels its
 /// preparation binds (written after export), and another label file.
-pub(super) struct OuterCase {
+pub(crate) struct OuterCase {
     root: PathBuf,
     prepared: PathBuf,
     output: PathBuf,
@@ -25,7 +25,7 @@ pub(super) struct OuterCase {
     _temp: tempfile::TempDir,
 }
 
-pub(super) fn outer_case() -> OuterCase {
+pub(crate) fn outer_case() -> OuterCase {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let prepared = root.join(prepared.strip_prefix(temp.path()).unwrap());
@@ -75,7 +75,7 @@ impl OuterCase {
 }
 
 /// How often a receiver reports `target` verified while `run` runs.
-pub(super) fn verifications(target: &Path, run: impl FnOnce()) -> usize {
+pub(crate) fn verifications(target: &Path, run: impl FnOnce()) -> usize {
     let target = target.canonicalize().unwrap();
     let count = std::rc::Rc::new(std::cell::Cell::new(0));
     let seen = std::rc::Rc::clone(&count);
@@ -90,7 +90,7 @@ pub(super) fn verifications(target: &Path, run: impl FnOnce()) -> usize {
 
 /// Replace `target` (new inode, via rename) with `bytes` at its `nth` reported
 /// verification: the last one, as counted by an identical run.
-pub(super) fn swap_at(
+pub(crate) fn swap_at(
     target: &Path,
     nth: usize,
     bytes: Vec<u8>,
@@ -118,7 +118,7 @@ pub(super) fn swap_at(
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_outer_grant_takes_its_labels_and_metadata_from_the_verified_preparation() {
+pub(crate) fn an_outer_grant_takes_its_labels_and_metadata_from_the_verified_preparation() {
     let case = outer_case();
     let prepared = case.prepared.join("prepared.json");
     let bound: Value = read_json(&prepared).unwrap();
@@ -175,7 +175,7 @@ pub(super) fn an_outer_grant_takes_its_labels_and_metadata_from_the_verified_pre
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_outer_grant_is_bound_to_the_seal_it_checked() {
+pub(crate) fn an_outer_grant_is_bound_to_the_seal_it_checked() {
     let case = outer_case();
     let mut handoff: Value = read_json(&case.handoff()).unwrap();
     let seal = case.root.join(handoff["seal"]["path"].as_str().unwrap());
@@ -213,7 +213,7 @@ pub(super) fn an_outer_grant_is_bound_to_the_seal_it_checked() {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_outer_grant_is_for_the_predictor_it_verified() {
+pub(crate) fn an_outer_grant_is_for_the_predictor_it_verified() {
     let case = outer_case();
     let mut handoff: Value = read_json(&case.handoff()).unwrap();
     let exported = fs::read(&case.predictor).unwrap();
@@ -249,7 +249,7 @@ pub(super) fn an_outer_grant_is_for_the_predictor_it_verified() {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_outer_grant_records_the_handoff_it_checked() {
+pub(crate) fn an_outer_grant_records_the_handoff_it_checked() {
     let case = outer_case();
     let recorded = fs::read(case.handoff()).unwrap();
     // Positive control, counting the handoff's verifications.
@@ -286,7 +286,7 @@ pub(super) fn an_outer_grant_records_the_handoff_it_checked() {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_outer_grant_consumes_the_fit_completion_it_verified() {
+pub(crate) fn an_outer_grant_consumes_the_fit_completion_it_verified() {
     let case = outer_case();
     let exported: Value = read_json(&case.predictor).unwrap();
     let completion = PathBuf::from(exported["fit_completion"]["path"].as_str().unwrap());
@@ -307,7 +307,7 @@ pub(super) fn an_outer_grant_consumes_the_fit_completion_it_verified() {
 
 /// Replace the first file the authority reports written under `dir` with
 /// `edit` applied to it.
-pub(super) fn swap_written(
+pub(crate) fn swap_written(
     dir: PathBuf,
     edit: impl Fn(&mut Value) + 'static,
 ) -> crate::manifest::verification_hook::Guard {
@@ -331,7 +331,7 @@ pub(super) fn swap_written(
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
+pub(crate) fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
     let case = outer_case();
     let other = hash(OTHER_TEST.as_bytes());
     // A grant replaced right after it is written, naming other labels.
@@ -411,7 +411,7 @@ pub(super) fn the_release_ledger_binds_the_bytes_the_authority_wrote() {
 // ---------------------------------------------------------------------------
 
 /// Add one to the first floating-point parameter of `value` (depth first).
-pub(super) fn change_one_parameter(value: &mut Value) -> bool {
+pub(crate) fn change_one_parameter(value: &mut Value) -> bool {
     if value.is_f64() {
         *value = json!(value.as_f64().unwrap() + 1.0);
         return true;
@@ -432,7 +432,7 @@ pub(super) fn change_one_parameter(value: &mut Value) -> bool {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_exported_predictors_model_parameters_are_those_of_its_verified_final_refit() {
+pub(crate) fn an_exported_predictors_model_parameters_are_those_of_its_verified_final_refit() {
     let case = outer_case();
     let inputs = handoff::Inputs {
         root: &case.root,
@@ -489,7 +489,7 @@ pub(super) fn an_exported_predictors_model_parameters_are_those_of_its_verified_
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_outer_grant_names_the_model_its_final_refit_verified() {
+pub(crate) fn an_outer_grant_names_the_model_its_final_refit_verified() {
     let case = outer_case();
     let honest = case.grant("honest", &case.sealed).unwrap();
     let mut handoff: Value = read_json(&case.handoff()).unwrap();

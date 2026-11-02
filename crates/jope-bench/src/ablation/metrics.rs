@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn finite(what: &str, value: f64) -> Result<f64> {
+pub(crate) fn finite(what: &str, value: f64) -> Result<f64> {
     ensure!(value.is_finite(), "{what} is not finite: {value}");
     Ok(value)
 }
@@ -30,7 +30,7 @@ pub fn sample_sd(values: &[f64]) -> Option<f64> {
     Some((squares / (values.len() - 1) as f64).sqrt())
 }
 
-pub(super) fn mean_of(values: impl Iterator<Item = f64>) -> f64 {
+pub(crate) fn mean_of(values: impl Iterator<Item = f64>) -> f64 {
     let (sum, count) = values.fold((0.0, 0usize), |(sum, count), v| (sum + v, count + 1));
     if count == 0 {
         0.0
@@ -39,7 +39,7 @@ pub(super) fn mean_of(values: impl Iterator<Item = f64>) -> f64 {
     }
 }
 
-pub(super) fn mean_of_options(values: impl Iterator<Item = Option<f64>>) -> Option<f64> {
+pub(crate) fn mean_of_options(values: impl Iterator<Item = Option<f64>>) -> Option<f64> {
     let values: Option<Vec<f64>> = values.collect();
     let values = values?;
     (!values.is_empty()).then(|| mean_of(values.into_iter()))
@@ -72,7 +72,7 @@ pub fn evaluations_to_fraction(rmse: &[Option<f64>], fraction: f64) -> Option<u6
 }
 
 /// A program's stage count and the node count and depth of each of its expressions.
-pub(super) fn program_shape(program: &str) -> Result<(usize, Vec<(usize, usize)>)> {
+pub(crate) fn program_shape(program: &str) -> Result<(usize, Vec<(usize, usize)>)> {
     let genome = GenomeIr::parse(program).with_context(|| format!("parse {program}"))?;
     Ok(match genome {
         GenomeIr::Pipeline(dsl) => {
@@ -128,7 +128,7 @@ pub fn expression_size(expr: &Expr) -> (usize, usize) {
     }
 }
 
-pub(super) fn cost(program: &str) -> Cost {
+pub(crate) fn cost(program: &str) -> Cost {
     let unsupported = |reason: String| Cost {
         python_bytes: None,
         rust_bytes: None,
@@ -158,7 +158,7 @@ pub(super) fn cost(program: &str) -> Cost {
 }
 
 /// One program of a route's selection ranking, best first.
-pub(super) struct Ranked<'a> {
+pub(crate) struct Ranked<'a> {
     rmse: f64,
     r2: f64,
     cuts_measured: usize,
@@ -237,7 +237,7 @@ pub fn kernel2_metrics(
 
 /// Every metric from a route's ranking and each cut's exploration observations, in evaluation
 /// order.
-pub(super) fn ranked_metrics(
+pub(crate) fn ranked_metrics(
     ranking: &[Ranked<'_>],
     exploration: &[Vec<&Observation>],
 ) -> Result<Metrics> {

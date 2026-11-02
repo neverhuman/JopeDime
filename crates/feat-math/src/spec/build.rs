@@ -22,7 +22,7 @@ fn get_append(stage: &Stage) -> bool {
         || stage.get_usize("append", 0) == 1
 }
 
-pub(super) fn finite_f64(
+pub(crate) fn finite_f64(
     stage: &Stage,
     key: &str,
     default: f64,

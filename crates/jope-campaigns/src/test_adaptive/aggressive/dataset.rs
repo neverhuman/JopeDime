@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run_dataset(
+pub(crate) fn run_dataset(
     manifest: &AggressiveManifest,
     spec: &DatasetSpec,
 ) -> Result<DatasetResult> {
@@ -134,25 +134,25 @@ pub(super) fn run_dataset(
     }
 }
 
-pub(super) struct DatasetLane {
-    pub(super) dataset_index: usize,
-    pub(super) spec: DatasetSpec,
-    pub(super) test: RegressionData,
-    pub(super) population: Vec<Member>,
-    pub(super) cache: HashMap<String, CachedEvaluation>,
-    pub(super) history: HashSet<String>,
-    pub(super) cumulative_fresh_evaluations: usize,
-    pub(super) cumulative_cache_hits: usize,
-    pub(super) previous: Option<String>,
-    pub(super) generation: usize,
+pub(crate) struct DatasetLane {
+    pub(crate) dataset_index: usize,
+    pub(crate) spec: DatasetSpec,
+    pub(crate) test: RegressionData,
+    pub(crate) population: Vec<Member>,
+    pub(crate) cache: HashMap<String, CachedEvaluation>,
+    pub(crate) history: HashSet<String>,
+    pub(crate) cumulative_fresh_evaluations: usize,
+    pub(crate) cumulative_cache_hits: usize,
+    pub(crate) previous: Option<String>,
+    pub(crate) generation: usize,
 }
 
-pub(super) enum PreparedLane {
+pub(crate) enum PreparedLane {
     Finished(usize, DatasetResult),
     Active(DatasetLane),
 }
 
-pub(super) fn prepare_lane(
+pub(crate) fn prepare_lane(
     manifest: &AggressiveManifest,
     dataset_index: usize,
     spec: &DatasetSpec,
@@ -221,12 +221,12 @@ pub(super) fn prepare_lane(
     }))
 }
 
-pub(super) enum CompletedLaneGeneration {
+pub(crate) enum CompletedLaneGeneration {
     Finished(usize, DatasetResult),
     Active(DatasetLane),
 }
 
-pub(super) fn complete_lane_generation(
+pub(crate) fn complete_lane_generation(
     manifest: &AggressiveManifest,
     mut lane: DatasetLane,
     members: Vec<(usize, Member)>,
@@ -364,7 +364,7 @@ pub(super) fn complete_lane_generation(
     Ok(CompletedLaneGeneration::Active(lane))
 }
 
-pub(super) fn run_dataset_waves(manifest: &AggressiveManifest) -> Result<Vec<DatasetResult>> {
+pub(crate) fn run_dataset_waves(manifest: &AggressiveManifest) -> Result<Vec<DatasetResult>> {
     let mut results = vec![None; manifest.datasets.len()];
     let mut next_dataset = 0usize;
     let mut active = Vec::<DatasetLane>::new();

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn report_descriptors(
+pub(crate) fn report_descriptors(
     s: &ProbeStage,
     b: &BlockStage,
     n: usize,

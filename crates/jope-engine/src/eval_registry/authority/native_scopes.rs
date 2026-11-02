@@ -3,7 +3,7 @@ use super::*;
 use crate::native_graph::Artifact;
 use ed25519_dalek::{Signature, VerifyingKey};
 const DOMAIN: &[u8] = b"jope.native_scope_registration.signature.v1\0";
-pub(super) const TABLE_SQL: &str = "CREATE TABLE IF NOT EXISTS native_scopes(scope TEXT PRIMARY KEY,registration_sha TEXT NOT NULL,json TEXT NOT NULL) WITHOUT ROWID";
+pub(crate) const TABLE_SQL: &str = "CREATE TABLE IF NOT EXISTS native_scopes(scope TEXT PRIMARY KEY,registration_sha TEXT NOT NULL,json TEXT NOT NULL) WITHOUT ROWID";
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct NativeScopeRegistrationBody {
@@ -130,7 +130,7 @@ fn verify_scope_event_bindings(
     Ok(())
 }
 impl Authority {
-    pub(super) fn verify_native_scope_event(&self, event: &Event) -> Result<()> {
+    pub(crate) fn verify_native_scope_event(&self, event: &Event) -> Result<()> {
         if event.kind != "native_scope_register" {
             return Ok(());
         }
@@ -145,10 +145,10 @@ impl Authority {
         verified(&signed)?;
         verify_scope_event_bindings(event, &signed, sha, &self.manifest_sha)
     }
-    pub(super) fn native_scope_table_exists(&self) -> bool {
+    pub(crate) fn native_scope_table_exists(&self) -> bool {
         table_exists(&self.db).unwrap_or(false)
     }
-    pub(super) fn registered_native_scope(&self, scope: &str) -> Result<Option<ScopePolicy>> {
+    pub(crate) fn registered_native_scope(&self, scope: &str) -> Result<Option<ScopePolicy>> {
         if self.manifest.schema != NATIVE_SCHEMA || !table_exists(&self.db)? {
             return Ok(None);
         }
@@ -175,7 +175,7 @@ impl Authority {
         );
         Ok(Some(signed.body.scope))
     }
-    pub(super) fn retained_scope(
+    pub(crate) fn retained_scope(
         &self,
         scope: &str,
         allow_native: bool,
@@ -189,7 +189,7 @@ impl Authority {
             Ok(None)
         }
     }
-    pub(super) fn all_retained_scopes(&self) -> Result<Vec<ScopePolicy>> {
+    pub(crate) fn all_retained_scopes(&self) -> Result<Vec<ScopePolicy>> {
         let mut scopes = self.manifest.scopes.clone();
         if table_exists(&self.db)? {
             let mut q = self
@@ -209,7 +209,7 @@ impl Authority {
         }
         Ok(scopes)
     }
-    pub(super) fn scope_state_keys_sql(table: &str, column: &str) -> Result<&'static str> {
+    pub(crate) fn scope_state_keys_sql(table: &str, column: &str) -> Result<&'static str> {
         match (table, column) {
             ("entries", "key") => Ok("SELECT key FROM entries"),
             ("coverage", "scope") => Ok("SELECT scope FROM coverage"),
@@ -220,25 +220,19 @@ impl Authority {
             ("activations", "scope") => Ok("SELECT scope FROM activations"),
             ("recovery_epochs", "id") => Ok("SELECT id FROM recovery_epochs"),
             ("queries", "key") => Ok("SELECT key FROM queries"),
-            ("authorization_witness", "fit_key") => {
-                Ok("SELECT fit_key FROM authorization_witness")
-            }
-            ("funding_authorizations", "id") => {
-                Ok("SELECT id FROM funding_authorizations")
-            }
+            ("authorization_witness", "fit_key") => Ok("SELECT fit_key FROM authorization_witness"),
+            ("funding_authorizations", "id") => Ok("SELECT id FROM funding_authorizations"),
             ("funding_reservations", "id") => Ok("SELECT id FROM funding_reservations"),
             ("funding_participants", "id") => Ok("SELECT id FROM funding_participants"),
             ("funding_witness", "event_key") => Ok("SELECT event_key FROM funding_witness"),
             ("native_tasks", "id") => Ok("SELECT id FROM native_tasks"),
             ("native_slots", "id") => Ok("SELECT id FROM native_slots"),
             ("native_scopes", "scope") => Ok("SELECT scope FROM native_scopes"),
-            ("scope_training", "scope") => {
-                Ok("SELECT scope FROM native_scopes ORDER BY scope")
-            }
+            ("scope_training", "scope") => Ok("SELECT scope FROM native_scopes ORDER BY scope"),
             _ => anyhow::bail!("unknown authority scope-state key query"),
         }
     }
-    pub(super) fn scope_training_postimage(db: &Connection, scope: &str) -> Result<Value> {
+    pub(crate) fn scope_training_postimage(db: &Connection, scope: &str) -> Result<Value> {
         let mut q =
             db.prepare("SELECT training FROM scope_training WHERE scope=? ORDER BY training")?;
         let training = q
@@ -246,7 +240,7 @@ impl Authority {
             .collect::<std::result::Result<Vec<_>, _>>()?;
         Ok(json!({"scope":scope,"training_json":serde_json::to_string(&training)?}))
     }
-    pub(super) fn replay_scope_training(db: &Connection, key: &str, row: &Value) -> Result<()> {
+    pub(crate) fn replay_scope_training(db: &Connection, key: &str, row: &Value) -> Result<()> {
         ensure!(row["scope"] == key, "scope-training replay key differs");
         let hashes: Vec<String> = serde_json::from_str(
             row["training_json"]
@@ -273,7 +267,7 @@ impl Authority {
         }
         Ok(())
     }
-    pub(super) fn verify_scope_registration_evidence(
+    pub(crate) fn verify_scope_registration_evidence(
         &self,
         s: &SignedNativeScopeRegistration,
     ) -> Result<()> {

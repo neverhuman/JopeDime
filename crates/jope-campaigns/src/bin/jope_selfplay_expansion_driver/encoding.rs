@@ -3,7 +3,7 @@ use super::*;
 /// Ids of encode jobs scq still considers alive. `None` means scq could not be
 /// read — callers must then assume a job MIGHT be live (never submit a
 /// duplicate, never reclaim a marker) rather than guess.
-pub(super) fn live_encode_jobs() -> Option<HashSet<String>> {
+pub(crate) fn live_encode_jobs() -> Option<HashSet<String>> {
     let out = sh(scq_str(), &["--json", "ls"]).ok()?;
     let value = serde_json::from_str::<Value>(&out).ok()?;
     let binding = Vec::new();
@@ -28,7 +28,7 @@ pub(super) fn live_encode_jobs() -> Option<HashSet<String>> {
     )
 }
 
-pub(super) fn live_encode_job(live: &Option<HashSet<String>>) -> bool {
+pub(crate) fn live_encode_job(live: &Option<HashSet<String>>) -> bool {
     // Unknown scq state is treated as "a job is live": refusing to submit is
     // recoverable next cycle, double-submitting the same chunk is not.
     live.as_ref().map(|ids| !ids.is_empty()).unwrap_or(true)
@@ -44,7 +44,7 @@ pub(super) fn live_encode_job(live: &Option<HashSet<String>>) -> bool {
 /// candidate pool became permanently empty, and the binary lane went silent
 /// while regression kept flowing. Clearing markers here is what makes "new
 /// datasets always being added" hold for binary without a human.
-pub(super) fn reclaim_stale_encode_markers(
+pub(crate) fn reclaim_stale_encode_markers(
     conn: &Connection,
     live: &Option<HashSet<String>>,
     log: &mut Vec<Value>,
@@ -110,7 +110,7 @@ pub(super) fn reclaim_stale_encode_markers(
     Ok(())
 }
 
-pub(super) fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission>> {
+pub(crate) fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChunkSubmission>> {
     // Un-encoded = binary datasets with data but incomplete sidecars, not active,
     // not already present in the fetch dir.
     let fetched: HashSet<String> = std::fs::read_dir(Path::new(fetch_binary_str()).join("targets"))
@@ -328,7 +328,7 @@ pub(super) fn submit_encode_chunk(conn: &Connection) -> Result<Option<EncodeChun
 /// Once nothing submittable is left, un-park everything and start over: broken
 /// datasets are only ever retried after the healthy backlog is exhausted, so
 /// this cannot starve real work, and the binary lane can never permanently die.
-pub(super) fn unpark_exhausted_if_starved(conn: &Connection, log: &mut Vec<Value>) -> Result<()> {
+pub(crate) fn unpark_exhausted_if_starved(conn: &Connection, log: &mut Vec<Value>) -> Result<()> {
     let submittable: i64 = conn.query_row(
         "SELECT COUNT(*) FROM datasets WHERE task='binary' AND has_train_test_meta=1
            AND sidecars_complete=0 AND catalog_active=0 AND encode_job_state IS NULL",
@@ -349,7 +349,7 @@ pub(super) fn unpark_exhausted_if_starved(conn: &Connection, log: &mut Vec<Value
     Ok(())
 }
 
-pub(super) fn fetch_root(task: &str) -> PathBuf {
+pub(crate) fn fetch_root(task: &str) -> PathBuf {
     if task == "binary" {
         PathBuf::from(fetch_binary_str())
     } else {
@@ -357,7 +357,7 @@ pub(super) fn fetch_root(task: &str) -> PathBuf {
     }
 }
 
-pub(super) fn hash_directory(path: &Path) -> Result<String> {
+pub(crate) fn hash_directory(path: &Path) -> Result<String> {
     let mut files = Vec::new();
     let mut stack = vec![path.to_path_buf()];
     while let Some(directory) = stack.pop() {
@@ -386,7 +386,7 @@ pub(super) fn hash_directory(path: &Path) -> Result<String> {
     Ok(sha256_bytes(&identity))
 }
 
-pub(super) fn encoding_chunk_listing(job_id: &str) -> Result<Option<Value>> {
+pub(crate) fn encoding_chunk_listing(job_id: &str) -> Result<Option<Value>> {
     let directory = paths::flywheel_encodings_root().join("_batch_manifests");
     for entry in std::fs::read_dir(directory)?.flatten() {
         let path = entry.path();
@@ -405,7 +405,7 @@ pub(super) fn encoding_chunk_listing(job_id: &str) -> Result<Option<Value>> {
     Ok(None)
 }
 
-pub(super) fn publish_encoding_receipt(receipt: &Value) -> Result<()> {
+pub(crate) fn publish_encoding_receipt(receipt: &Value) -> Result<()> {
     let dataset_content = receipt
         .pointer("/dataset/content_sha256")
         .and_then(Value::as_str)
@@ -457,7 +457,7 @@ pub(super) fn publish_encoding_receipt(receipt: &Value) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn emit_chunk_adoption_receipts(
+pub(crate) fn emit_chunk_adoption_receipts(
     job_id: &str,
     job_state: &str,
     task: &str,
@@ -538,7 +538,7 @@ pub(super) fn emit_chunk_adoption_receipts(
 /// Pull outputs of completed encode chunks into the per-task fetch dirs.
 /// Encoding and fetching are deliberately OUTSIDE the guardrail/valve — the
 /// valve paces catalog admission only, never encode throughput.
-pub(super) fn reconcile_encode_fetches(log: &mut Vec<Value>) -> Result<()> {
+pub(crate) fn reconcile_encode_fetches(log: &mut Vec<Value>) -> Result<()> {
     let Ok(out) = sh(scq_str(), &["--json", "ls"]) else {
         return Ok(());
     };

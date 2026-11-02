@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) fn is_sha256(value: &str) -> bool {
+pub(crate) fn is_sha256(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
-pub(super) fn validate_transaction_id(value: &str) -> Result<()> {
+pub(crate) fn validate_transaction_id(value: &str) -> Result<()> {
     ensure!(
         !value.is_empty()
             && value.len() <= 128
@@ -19,19 +19,19 @@ pub(super) fn validate_transaction_id(value: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn prefix(digest: &str) -> &str {
+pub(crate) fn prefix(digest: &str) -> &str {
     &digest[..2]
 }
 
-pub(super) fn object_relative_path(output_sha256: &str) -> String {
+pub(crate) fn object_relative_path(output_sha256: &str) -> String {
     format!("objects/sha256/{}/{}", prefix(output_sha256), output_sha256)
 }
 
-pub(super) fn metadata_relative_path(output_sha256: &str) -> String {
+pub(crate) fn metadata_relative_path(output_sha256: &str) -> String {
     format!("metadata/{}/{}", prefix(output_sha256), output_sha256)
 }
 
-pub(super) fn binding_relative_path(cache_key_sha256: &str) -> String {
+pub(crate) fn binding_relative_path(cache_key_sha256: &str) -> String {
     format!(
         "bindings/{}/{}/binding.v2.json",
         prefix(cache_key_sha256),
@@ -39,16 +39,16 @@ pub(super) fn binding_relative_path(cache_key_sha256: &str) -> String {
     )
 }
 
-pub(super) fn namespace_relative_path(encoder: &str, input: &str) -> String {
+pub(crate) fn namespace_relative_path(encoder: &str, input: &str) -> String {
     format!("namespaces/{encoder}/{input}.pointer.json")
 }
 
-pub(super) fn ensure_parent(path: &Path) -> Result<()> {
+pub(crate) fn ensure_parent(path: &Path) -> Result<()> {
     fs::create_dir_all(path.parent().context("publication path has no parent")?)?;
     Ok(())
 }
 
-pub(super) fn write_new_synced(path: &Path, bytes: &[u8], mode: u32) -> Result<()> {
+pub(crate) fn write_new_synced(path: &Path, bytes: &[u8], mode: u32) -> Result<()> {
     ensure_parent(path)?;
     let mut file = OpenOptions::new().write(true).create_new(true).open(path)?;
     file.write_all(bytes)?;
@@ -57,17 +57,17 @@ pub(super) fn write_new_synced(path: &Path, bytes: &[u8], mode: u32) -> Result<(
     sync_directory(path.parent().context("new file has no parent")?)
 }
 
-pub(super) fn sync_file(path: &Path) -> Result<()> {
+pub(crate) fn sync_file(path: &Path) -> Result<()> {
     File::open(path)?.sync_all()?;
     Ok(())
 }
 
-pub(super) fn sync_directory(path: &Path) -> Result<()> {
+pub(crate) fn sync_directory(path: &Path) -> Result<()> {
     File::open(path)?.sync_all()?;
     Ok(())
 }
 
-pub(super) fn sha256_file(path: &Path) -> Result<String> {
+pub(crate) fn sha256_file(path: &Path) -> Result<String> {
     let mut file = File::open(path)?;
     let mut hash = Sha256::new();
     let mut buffer = [0u8; 64 * 1024];
@@ -81,7 +81,7 @@ pub(super) fn sha256_file(path: &Path) -> Result<String> {
     Ok(hex::encode(hash.finalize()))
 }
 
-pub(super) fn publish_file_exclusive(staged: &Path, target: &Path, digest: &str) -> Result<()> {
+pub(crate) fn publish_file_exclusive(staged: &Path, target: &Path, digest: &str) -> Result<()> {
     match fs::hard_link(staged, target) {
         Ok(()) => Ok(()),
         Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {

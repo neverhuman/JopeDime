@@ -11,14 +11,14 @@ pub fn write_document(path: &Path, document: &Document) -> Result<String> {
 }
 
 /// The bytes of a written document: pretty JSON plus a newline.
-pub(super) fn document_text(document: &Document) -> Result<String> {
+pub(crate) fn document_text(document: &Document) -> Result<String> {
     let mut text = serde_json::to_string_pretty(document)?;
     text.push('\n');
     Ok(text)
 }
 
 /// Create the directory that will hold the document at `path`, when it has one.
-pub(super) fn create_document_parent(path: &Path) -> Result<()> {
+pub(crate) fn create_document_parent(path: &Path) -> Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {
             std::fs::create_dir_all(parent)
@@ -29,11 +29,11 @@ pub(super) fn create_document_parent(path: &Path) -> Result<()> {
 }
 
 /// Temporary files [`replace_document`] has named in this process, for unique names.
-pub(super) static TEMPORARY_DOCUMENTS: AtomicUsize = AtomicUsize::new(0);
+pub(crate) static TEMPORARY_DOCUMENTS: AtomicUsize = AtomicUsize::new(0);
 
 /// A temporary document file, removed, and nothing else, when dropped before it was renamed into
 /// place, also while unwinding.
-pub(super) struct TemporaryDocument {
+pub(crate) struct TemporaryDocument {
     path: PathBuf,
     renamed: bool,
 }
@@ -58,7 +58,7 @@ impl Drop for TemporaryDocument {
 /// rename, an error removes the temporary file and nothing else (a failure to remove it leaves
 /// it); a failure to sync the directory is reported with the document already at `out`. `out`'s
 /// directory must exist.
-pub(super) fn replace_document(out: &Path, document: &Document) -> Result<String> {
+pub(crate) fn replace_document(out: &Path, document: &Document) -> Result<String> {
     use std::io::Write as _;
     let text = document_text(document)?;
     let name = out

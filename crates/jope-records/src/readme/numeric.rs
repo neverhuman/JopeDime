@@ -9,7 +9,7 @@ use super::*;
 /// conversion ([`py_cmp`]).
 
 #[derive(Clone, Copy, Debug)]
-pub(super) enum Num {
+pub(crate) enum Num {
     Int(i128),
     Float(f64),
 }
@@ -80,7 +80,7 @@ impl Num {
 
 /// A JSON number read as Python read it, or the refusal naming what was found instead (the Python
 /// raised `ValueError` or `TypeError` where it formatted, added or compared it).
-pub(super) fn num_of(value: &Value, what: &str) -> Result<Num> {
+pub(crate) fn num_of(value: &Value, what: &str) -> Result<Num> {
     Num::of(value).ok_or_else(|| {
         Error::Shape(format!(
             "{what}: expected a number, found {} ({})",
@@ -93,7 +93,7 @@ pub(super) fn num_of(value: &Value, what: &str) -> Result<Num> {
 /// Python's comparison of two numbers: exact, an `int` against a `float` included (CPython's
 /// `float_richcompare` never rounds the integer to a double first), `None` when either is a NaN,
 /// with which every comparison is false.
-pub(super) fn py_cmp(a: Num, b: Num) -> Option<std::cmp::Ordering> {
+pub(crate) fn py_cmp(a: Num, b: Num) -> Option<std::cmp::Ordering> {
     match (a, b) {
         (Num::Int(x), Num::Int(y)) => Some(x.cmp(&y)),
         (Num::Float(x), Num::Float(y)) => x.partial_cmp(&y),
@@ -105,7 +105,7 @@ pub(super) fn py_cmp(a: Num, b: Num) -> Option<std::cmp::Ordering> {
 /// An integer against a double, exactly: a double of magnitude 2^127 or more is beyond every
 /// `i128`; any other is split into its integral part, which `as i128` holds exactly, and its
 /// fraction, which decides between an integer and the double just past it.
-pub(super) fn int_float_cmp(i: i128, f: f64) -> Option<std::cmp::Ordering> {
+pub(crate) fn int_float_cmp(i: i128, f: f64) -> Option<std::cmp::Ordering> {
     use std::cmp::Ordering;
     const TWO_127: f64 = 170_141_183_460_469_231_731_687_303_715_884_105_728.0;
     if f.is_nan() {
@@ -126,12 +126,12 @@ pub(super) fn int_float_cmp(i: i128, f: f64) -> Option<std::cmp::Ordering> {
 }
 
 /// `a < b` for two numbers, as Python compares them ([`py_cmp`]).
-pub(super) fn py_lt(a: Num, b: Num) -> bool {
+pub(crate) fn py_lt(a: Num, b: Num) -> bool {
     py_cmp(a, b) == Some(std::cmp::Ordering::Less)
 }
 
 /// `a == b` for two numbers, as Python compares them ([`py_cmp`]).
-pub(super) fn py_eq(a: Num, b: Num) -> bool {
+pub(crate) fn py_eq(a: Num, b: Num) -> bool {
     py_cmp(a, b) == Some(std::cmp::Ordering::Equal)
 }
 
@@ -140,7 +140,7 @@ pub(super) fn py_eq(a: Num, b: Num) -> bool {
 /// a double first and the quotient rounded again. The quotient is developed in binary from the
 /// exact integer division until it holds at least 55 significant bits, and the remainder that is
 /// left decides a tie.
-pub(super) fn int_true_div(a: i128, b: u64) -> f64 {
+pub(crate) fn int_true_div(a: i128, b: u64) -> f64 {
     assert!(b > 0, "a count of at least one");
     let magnitude = a.unsigned_abs();
     if magnitude == 0 {
@@ -179,7 +179,7 @@ pub(super) fn int_true_div(a: i128, b: u64) -> f64 {
 }
 
 /// `format(x, ".Nf")`: `nan` for any NaN (Python ignores its sign), `inf` and `-inf`.
-pub(super) fn fixed(x: f64, precision: usize) -> String {
+pub(crate) fn fixed(x: f64, precision: usize) -> String {
     if x.is_finite() {
         format!("{x:.precision$}")
     } else {
@@ -193,7 +193,7 @@ pub(super) fn fixed(x: f64, precision: usize) -> String {
 /// With a NaN (every comparison with it false) the result depends on the algorithm, which is
 /// reproduced for fewer than 64 values (one `count_run` then `binarysort`, all timsort does below
 /// its minimum run); a longer list holding a NaN is refused rather than ordered differently.
-pub(super) fn py_sorted(values: &[Num], what: &str) -> Result<Vec<Num>> {
+pub(crate) fn py_sorted(values: &[Num], what: &str) -> Result<Vec<Num>> {
     let mut out = values.to_vec();
     let lt = py_lt;
     if !out.iter().any(|v| v.is_nan()) {
@@ -238,7 +238,7 @@ pub(super) fn py_sorted(values: &[Num], what: &str) -> Result<Vec<Num>> {
 
 /// `max(values)`: the first value no later value is greater than, compared exactly ([`py_cmp`];
 /// `>` is false for a NaN).
-pub(super) fn py_max(values: &[Num]) -> Num {
+pub(crate) fn py_max(values: &[Num]) -> Num {
     let (&first, rest) = values.split_first().expect("at least one report");
     let mut best = first;
     for &value in rest {
@@ -255,7 +255,7 @@ pub(super) fn py_max(values: &[Num]) -> Num {
 /// plainly, without compensation. A float met on the `long` path is added to the integer sum
 /// instead and starts the float path: floats add with Neumaier's compensation, integers add
 /// plainly, and the compensation is applied once at the end when it is finite.
-pub(super) fn py_sum(values: &[Num], what: &str) -> Result<Num> {
+pub(crate) fn py_sum(values: &[Num], what: &str) -> Result<Num> {
     let refused = |e: String| Error::Shape(format!("{what}: {e}"));
     let mut rest = values.iter().copied();
     let mut long: i64 = 0;
@@ -310,7 +310,7 @@ pub(super) fn py_sum(values: &[Num], what: &str) -> Result<Num> {
 
 /// `total / n` (true division) for a [`py_sum`] result: a float divided by `float(n)`, an int
 /// divided exactly and rounded once ([`int_true_div`]).
-pub(super) fn py_div(total: Num, n: usize) -> f64 {
+pub(crate) fn py_div(total: Num, n: usize) -> f64 {
     match total {
         Num::Float(f) => f / n as f64,
         Num::Int(i) => int_true_div(i, u64::try_from(n).expect("a count fits 64 bits")),
@@ -318,7 +318,7 @@ pub(super) fn py_div(total: Num, n: usize) -> f64 {
 }
 
 /// `format(n, ",")` for an integer.
-pub(super) fn thousands(n: i64) -> String {
+pub(crate) fn thousands(n: i64) -> String {
     let digits = n.unsigned_abs().to_string();
     let mut out = String::new();
     for (i, c) in digits.chars().enumerate() {
@@ -335,7 +335,7 @@ pub(super) fn thousands(n: i64) -> String {
 }
 
 /// `format(x, ".4g")` (Python's general format, precision 4).
-pub(super) fn general4(x: f64) -> String {
+pub(crate) fn general4(x: f64) -> String {
     const P: i32 = 4;
     if x == 0.0 {
         return if x.is_sign_negative() { "-0" } else { "0" }.to_owned();
@@ -357,7 +357,7 @@ pub(super) fn general4(x: f64) -> String {
     }
 }
 
-pub(super) fn py_nonfinite(x: f64) -> String {
+pub(crate) fn py_nonfinite(x: f64) -> String {
     if x.is_nan() {
         "nan".to_owned()
     } else if x > 0.0 {
@@ -367,7 +367,7 @@ pub(super) fn py_nonfinite(x: f64) -> String {
     }
 }
 
-pub(super) fn strip_zeros(text: &str) -> String {
+pub(crate) fn strip_zeros(text: &str) -> String {
     if text.contains('.') {
         text.trim_end_matches('0').trim_end_matches('.').to_owned()
     } else {

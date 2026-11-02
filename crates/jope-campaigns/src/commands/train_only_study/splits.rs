@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_splits(
+pub(crate) fn build_splits(
     run_id: &str,
     dataset_hash: &str,
     train_sha256: &str,
@@ -142,7 +142,7 @@ pub(super) fn build_splits(
     })
 }
 
-pub(super) fn build_final_cv_splits(
+pub(crate) fn build_final_cv_splits(
     run_id: &str,
     dataset_hash: &str,
     train_sha256: &str,
@@ -253,7 +253,7 @@ pub(super) fn build_final_cv_splits(
     })
 }
 
-pub(super) fn rank_final_cv(left: &FinalCvCandidate, right: &FinalCvCandidate) -> Ordering {
+pub(crate) fn rank_final_cv(left: &FinalCvCandidate, right: &FinalCvCandidate) -> Ordering {
     match (left.robust_fitness, right.robust_fitness) {
         (Some(left_fitness), Some(right_fitness)) => right_fitness
             .total_cmp(&left_fitness)

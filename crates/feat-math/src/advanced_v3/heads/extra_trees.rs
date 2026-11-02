@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) enum ExtraNode {
+pub(crate) enum ExtraNode {
     Leaf(f64),
     Split {
         feature: usize,
@@ -13,13 +13,13 @@ pub(super) enum ExtraNode {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ExtraTreesModel {
-    pub(super) binary: bool,
-    pub(super) trees: Vec<ExtraNode>,
+pub(crate) struct ExtraTreesModel {
+    pub(crate) binary: bool,
+    pub(crate) trees: Vec<ExtraNode>,
 }
 
 impl ExtraTreesModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], stage: &Stage, binary: bool) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], stage: &Stage, binary: bool) -> Result<Self> {
         if binary {
             validate_binary_fit_target(y, x.len())?;
         }
@@ -51,7 +51,7 @@ impl ExtraTreesModel {
         })
     }
 
-    pub(super) fn predict(&self, x: &Rows) -> Vec<f64> {
+    pub(crate) fn predict(&self, x: &Rows) -> Vec<f64> {
         x.iter()
             .map(|row| {
                 let value = self

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn execute_campaign(
+pub(crate) fn execute_campaign(
     config: &CampaignConfig,
     train: &RegressionData,
     mut population: Vec<PopulationMember>,

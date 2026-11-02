@@ -1,48 +1,48 @@
 use super::*;
 
 #[derive(Debug, Default)]
-pub(super) struct Utilization {
-    pub(super) scq_reachable: bool,
-    pub(super) scq_error: Option<String>,
-    pub(super) epoch: u64,
-    pub(super) nodes_up: u64,
-    pub(super) nodes_total: u64,
+pub(crate) struct Utilization {
+    pub(crate) scq_reachable: bool,
+    pub(crate) scq_error: Option<String>,
+    pub(crate) epoch: u64,
+    pub(crate) nodes_up: u64,
+    pub(crate) nodes_total: u64,
     /// Sum of per-node `running_job_slots` — the operator's "N of 1,052 slots".
-    pub(super) slots_in_use: u64,
-    pub(super) slots_total: u64,
+    pub(crate) slots_in_use: u64,
+    pub(crate) slots_total: u64,
     /// Core budget is the constraint that actually binds; slot targets are a
     /// 4x multiplier over it on the 3 big nodes.
-    pub(super) core_budget_total: u64,
-    pub(super) core_budget_free: u64,
-    pub(super) jobs_queued: u64,
-    pub(super) jobs_running: u64,
-    pub(super) jobs_dispatching: u64,
-    pub(super) throughput_per_min: u64,
-    pub(super) eval_running: u64,
-    pub(super) eval_queued: u64,
-    pub(super) per_node: Vec<Value>,
+    pub(crate) core_budget_total: u64,
+    pub(crate) core_budget_free: u64,
+    pub(crate) jobs_queued: u64,
+    pub(crate) jobs_running: u64,
+    pub(crate) jobs_dispatching: u64,
+    pub(crate) throughput_per_min: u64,
+    pub(crate) eval_running: u64,
+    pub(crate) eval_queued: u64,
+    pub(crate) per_node: Vec<Value>,
 }
 
 impl Utilization {
-    pub(super) fn core_pct(&self) -> f64 {
+    pub(crate) fn core_pct(&self) -> f64 {
         if self.core_budget_total == 0 {
             return 0.0;
         }
         let used = self.core_budget_total.saturating_sub(self.core_budget_free);
         used as f64 * 100.0 / self.core_budget_total as f64
     }
-    pub(super) fn slot_pct(&self) -> f64 {
+    pub(crate) fn slot_pct(&self) -> f64 {
         if self.slots_total == 0 {
             return 0.0;
         }
         self.slots_in_use as f64 * 100.0 / self.slots_total as f64
     }
-    pub(super) fn queue_depth(&self) -> u64 {
+    pub(crate) fn queue_depth(&self) -> u64 {
         self.jobs_queued + self.jobs_dispatching
     }
 }
 
-pub(super) fn measure(args: &Args) -> Utilization {
+pub(crate) fn measure(args: &Args) -> Utilization {
     let mut u = Utilization::default();
     let output = Command::new("/usr/bin/timeout")
         .arg("--kill-after=5")
@@ -136,26 +136,26 @@ pub(super) fn measure(args: &Args) -> Utilization {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Default)]
-pub(super) struct WorkOnDisk {
+pub(crate) struct WorkOnDisk {
     /// Manifests sitting in the newest built waves. `--max-overlap-waves 8` is
     /// supply's own overlap ceiling, so 8 is the honest horizon.
-    pub(super) wave_manifests: u64,
-    pub(super) waves_scanned: u64,
-    pub(super) newest_wave: Option<String>,
-    pub(super) newest_wave_age_secs: Option<u64>,
+    pub(crate) wave_manifests: u64,
+    pub(crate) waves_scanned: u64,
+    pub(crate) newest_wave: Option<String>,
+    pub(crate) newest_wave_age_secs: Option<u64>,
     /// Datasets encoded (sidecars complete) but not yet in the live catalog.
-    pub(super) activation_backlog: u64,
+    pub(crate) activation_backlog: u64,
     /// Last first-touch backlog the coverage builder reported.
-    pub(super) coverage_backlog_unclaimed: u64,
+    pub(crate) coverage_backlog_unclaimed: u64,
 }
 
 impl WorkOnDisk {
-    pub(super) fn total(&self) -> u64 {
+    pub(crate) fn total(&self) -> u64 {
         self.wave_manifests + self.activation_backlog + self.coverage_backlog_unclaimed
     }
 }
 
-pub(super) fn survey_work(args: &Args) -> WorkOnDisk {
+pub(crate) fn survey_work(args: &Args) -> WorkOnDisk {
     let mut work = WorkOnDisk::default();
     let waves_root = args.root.join("waves");
     let mut waves: Vec<(u64, PathBuf)> = Vec::new();
@@ -217,7 +217,7 @@ pub(super) fn survey_work(args: &Args) -> WorkOnDisk {
 /// Tail the coverage lane's append-only event log for the newest event of a
 /// kind. Bounded read: the lane writes ~2 rows every 3 min, so 256 KiB is
 /// several days of history.
-pub(super) fn last_coverage_event(args: &Args, kind: &str) -> Option<Value> {
+pub(crate) fn last_coverage_event(args: &Args, kind: &str) -> Option<Value> {
     let path = args.root.join("coverage/ops/coverage-events.v1.jsonl");
     let bytes = tail_bytes(&path, 256 * 1024)?;
     let text = String::from_utf8_lossy(&bytes);
@@ -227,7 +227,7 @@ pub(super) fn last_coverage_event(args: &Args, kind: &str) -> Option<Value> {
         .find(|value| str_at(value, "kind") == Some(kind))
 }
 
-pub(super) fn tail_bytes(path: &Path, limit: u64) -> Option<Vec<u8>> {
+pub(crate) fn tail_bytes(path: &Path, limit: u64) -> Option<Vec<u8>> {
     use std::io::{Read, Seek, SeekFrom};
     let mut file = fs::File::open(path).ok()?;
     let length = file.metadata().ok()?.len();
@@ -239,4 +239,4 @@ pub(super) fn tail_bytes(path: &Path, limit: u64) -> Option<Vec<u8>> {
 }
 
 mod diagnose;
-pub(super) use diagnose::*;
+pub(crate) use diagnose::*;

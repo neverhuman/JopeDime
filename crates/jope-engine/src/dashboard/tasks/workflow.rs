@@ -1,7 +1,7 @@
 use super::state::*;
 use super::*;
 
-pub(super) fn workflow_rows(run: &Value, gp: &Value, neural: &Value) -> Vec<TaskRow> {
+pub(crate) fn workflow_rows(run: &Value, gp: &Value, neural: &Value) -> Vec<TaskRow> {
     let contexts = &run["contexts"];
     let boot = &run["bootstrap"];
     let cycle = &run["cycle"];

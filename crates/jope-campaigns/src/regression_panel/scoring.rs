@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn relation(left: f64, right: f64) -> &'static str {
+pub(crate) fn relation(left: f64, right: f64) -> &'static str {
     match left.total_cmp(&right) {
         Ordering::Less => "win",
         Ordering::Equal => "tie",
@@ -8,7 +8,7 @@ pub(super) fn relation(left: f64, right: f64) -> &'static str {
     }
 }
 
-pub(super) fn baseline_comparisons(
+pub(crate) fn baseline_comparisons(
     jope_rmse: f64,
     baselines: &BTreeMap<String, f64>,
 ) -> Result<(Value, f64, Vec<String>, String, String)> {
@@ -38,7 +38,7 @@ pub(super) fn baseline_comparisons(
     ))
 }
 
-pub(super) fn score_dataset(
+pub(crate) fn score_dataset(
     registry: &Path,
     hash: &str,
     freeze: &ValidatedFreeze,

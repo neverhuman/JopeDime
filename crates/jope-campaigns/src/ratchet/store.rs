@@ -9,7 +9,7 @@ pub(crate) struct RatchetArtifactPointerV1 {
 }
 
 impl RatchetArtifactPointerV1 {
-    pub(super) fn validate(&self, serving_authority: bool) -> Result<()> {
+    pub(crate) fn validate(&self, serving_authority: bool) -> Result<()> {
         if self.schema != POINTER_SCHEMA || self.serving_authority != serving_authority {
             bail!("ratchet pointer has the wrong authority class");
         }
@@ -30,7 +30,7 @@ impl RatchetStore {
 mod serving_state;
 mod training_head;
 
-pub(super) struct WriterGuard {
+pub(crate) struct WriterGuard {
     path: PathBuf,
 }
 
@@ -55,7 +55,7 @@ impl Drop for WriterGuard {
     }
 }
 
-pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -76,11 +76,11 @@ pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     }
 }
 
-pub(super) fn atomic_pointer_write(path: &Path, pointer: &RatchetArtifactPointerV1) -> Result<()> {
+pub(crate) fn atomic_pointer_write(path: &Path, pointer: &RatchetArtifactPointerV1) -> Result<()> {
     atomic_bytes_write(path, &canonical_json(pointer)?)
 }
 
-pub(super) fn atomic_bytes_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn atomic_bytes_write(path: &Path, bytes: &[u8]) -> Result<()> {
     let parent = path.parent().context("atomic pointer path has no parent")?;
     fs::create_dir_all(parent)?;
     let temporary = parent.join(format!(

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn encode_full_train(
+pub(crate) fn encode_full_train(
     encoder: &HyperionEncoderIdentityV1,
     source: &RegressionTable,
     dataset: &TrainOnlyDatasetV1,
@@ -124,7 +124,7 @@ pub(super) fn encode_full_train(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn build_measured_decision(
+pub(crate) fn build_measured_decision(
     dataset_id: &str,
     dataset: &TrainOnlyDatasetV1,
     predictor_sha256: &str,
@@ -178,7 +178,7 @@ pub(super) fn build_measured_decision(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn execute_stage(
+pub(crate) fn execute_stage(
     encoder: &HyperionEncoderIdentityV1,
     dataset: &TrainOnlyDatasetV1,
     source: &RegressionTable,
@@ -351,7 +351,7 @@ pub(super) fn execute_stage(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn cache_key(
+pub(crate) fn cache_key(
     registry_sha256: &str,
     dataset: &TrainOnlyDatasetV1,
     encoder: &HyperionEncoderIdentityV1,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn publish_new(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn publish_new(path: &Path, bytes: &[u8]) -> Result<()> {
     let parent = path.parent().context("publication path has no parent")?;
     fs::create_dir_all(parent)?;
     if path.exists() {
@@ -28,7 +28,7 @@ pub(super) fn publish_new(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn ensure_publication_targets_absent(registry: &Path, panel_id: &str) -> Result<()> {
+pub(crate) fn ensure_publication_targets_absent(registry: &Path, panel_id: &str) -> Result<()> {
     let root = run_root(panel_id);
     let ledger = root.join("jope-dime-panel-results.v1.json");
     if ledger.exists() {
@@ -51,7 +51,7 @@ pub(super) fn ensure_publication_targets_absent(registry: &Path, panel_id: &str)
     Ok(())
 }
 
-pub(super) fn score_panel(registry: &Path, panel_id: &str) -> Result<()> {
+pub(crate) fn score_panel(registry: &Path, panel_id: &str) -> Result<()> {
     // The baseline manifest and every test.csv remain unopened until this
     // complete panel-wide training-only validation returns successfully.
     let frozen = load_validated_panel(registry, panel_id)?;
@@ -162,7 +162,7 @@ pub(super) fn score_panel(registry: &Path, panel_id: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn summarize(registry: &Path, panel_id: &str) -> Result<()> {
+pub(crate) fn summarize(registry: &Path, panel_id: &str) -> Result<()> {
     let path = run_root(panel_id).join("jope-dime-panel-results.v1.json");
     let value: Value = serde_json::from_slice(&fs::read(&path)?)?;
     if value["schema"] == "JopeDimePanelResults.v2" {

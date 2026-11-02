@@ -1,14 +1,14 @@
 use super::*;
 
 /// Whether the search runs [`finish_round`]: some move is selected.
-pub(super) fn selected(options: &Options) -> bool {
+pub(crate) fn selected(options: &Options) -> bool {
     let engine = options.evaluator.engine();
     // laneD:B19-minimax-linearize: or the linearization pass.
     engine.simplify || engine.linearize
 }
 
 /// Runs the selected moves after a round's measurements and refinements, in a fixed order.
-pub(super) fn finish_round(
+pub(crate) fn finish_round(
     state: &mut State,
     cut: &Cut,
     options: &Options,
@@ -183,7 +183,7 @@ fn has_expression_stage(text: &str) -> bool {
 /// ranked programs, each at its first place, that the pass can read (an expression stage for the
 /// rewrite pass, a subtree it would consider for the linearization pass), at most `top_k`, in
 /// rank order. The search and [`check`] both call it.
-pub(super) fn ranked_parents<'a>(
+pub(crate) fn ranked_parents<'a>(
     evaluator: &Kernel2Evaluator,
     observations: &'a [Kernel2Observation],
     id: &str,
@@ -212,7 +212,7 @@ pub(super) fn ranked_parents<'a>(
 }
 
 /// Each parent's program and sha256, so the search state can change while the pass reads them.
-pub(super) fn owned(parents: Vec<&Kernel2Observation>) -> Vec<(String, String)> {
+pub(crate) fn owned(parents: Vec<&Kernel2Observation>) -> Vec<(String, String)> {
     parents
         .into_iter()
         .map(|o| {

@@ -1,12 +1,12 @@
 use super::*;
 
-pub(super) fn decimal_count(v: &Value, key: &str) -> String {
+pub(crate) fn decimal_count(v: &Value, key: &str) -> String {
     v[key]
         .as_u64()
         .map(|n| n.to_string())
         .unwrap_or_else(|| "—".into())
 }
-pub(super) fn learning_chart(f: &mut Frame, area: Rect, run: &Value) {
+pub(crate) fn learning_chart(f: &mut Frame, area: Rect, run: &Value) {
     let samples = run["learning_curve"].as_array();
     let train = samples
         .into_iter()
@@ -82,7 +82,7 @@ pub(super) fn learning_chart(f: &mut Frame, area: Rect, run: &Value) {
         area,
     );
 }
-pub(super) fn neural_lines(v: &Value) -> Vec<Line<'static>> {
+pub(crate) fn neural_lines(v: &Value) -> Vec<Line<'static>> {
     if v["encoding"].as_bool() == Some(true) {
         return vec![
             Line::styled(

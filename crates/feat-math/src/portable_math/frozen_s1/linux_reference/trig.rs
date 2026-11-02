@@ -64,7 +64,7 @@ fn quadrant(a: f64, da: f64, n: i32) -> f64 {
         y
     }
 }
-pub(super) fn sin(x: f64) -> f64 {
+pub(crate) fn sin(x: f64) -> f64 {
     let k = (x.to_bits() >> 32) as u32 & 0x7fffffff;
     if k < 0x3e500000 {
         x
@@ -79,7 +79,7 @@ pub(super) fn sin(x: f64) -> f64 {
         x.sin()
     }
 }
-pub(super) fn cos(x: f64) -> f64 {
+pub(crate) fn cos(x: f64) -> f64 {
     let k = (x.to_bits() >> 32) as u32 & 0x7fffffff;
     if k < 0x3e400000 {
         1.0

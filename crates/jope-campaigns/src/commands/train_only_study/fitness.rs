@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
+pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
-pub(super) fn sha256_file(path: &Path) -> Result<String> {
+pub(crate) fn sha256_file(path: &Path) -> Result<String> {
     let mut file = File::open(path).with_context(|| format!("open {}", path.display()))?;
     let mut hash = Sha256::new();
     let mut buffer = [0_u8; 1024 * 1024];
@@ -18,7 +18,7 @@ pub(super) fn sha256_file(path: &Path) -> Result<String> {
     Ok(hex::encode(hash.finalize()))
 }
 
-pub(super) fn canonicalize_json(value: Value) -> Value {
+pub(crate) fn canonicalize_json(value: Value) -> Value {
     match value {
         Value::Object(object) => {
             let mut sorted = Map::new();
@@ -34,16 +34,16 @@ pub(super) fn canonicalize_json(value: Value) -> Value {
     }
 }
 
-pub(super) fn canonical_json_bytes(value: &Value) -> Result<Vec<u8>> {
+pub(crate) fn canonical_json_bytes(value: &Value) -> Result<Vec<u8>> {
     Ok(serde_json::to_vec(&canonicalize_json(value.clone()))?)
 }
 
-pub(super) fn receipt_digest<T: Serialize>(receipt: &T) -> Result<String> {
+pub(crate) fn receipt_digest<T: Serialize>(receipt: &T) -> Result<String> {
     let value = serde_json::to_value(receipt)?;
     Ok(sha256_bytes(&canonical_json_bytes(&value)?))
 }
 
-pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     let parent = path
         .parent()
         .with_context(|| format!("{} has no parent", path.display()))?;
@@ -76,7 +76,7 @@ pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn write_receipt<T: Serialize>(path: &Path, receipt: &T) -> Result<String> {
+pub(crate) fn write_receipt<T: Serialize>(path: &Path, receipt: &T) -> Result<String> {
     let mut value = serde_json::to_value(receipt)?;
     let digest = sha256_bytes(&canonical_json_bytes(&value)?);
     value
@@ -89,7 +89,7 @@ pub(super) fn write_receipt<T: Serialize>(path: &Path, receipt: &T) -> Result<St
     Ok(digest)
 }
 
-pub(super) fn read_receipt<T: DeserializeOwned>(path: &Path) -> Result<(T, String)> {
+pub(crate) fn read_receipt<T: DeserializeOwned>(path: &Path) -> Result<(T, String)> {
     let mut value: Value = serde_json::from_slice(
         &fs::read(path).with_context(|| format!("read receipt {}", path.display()))?,
     )?;
@@ -105,14 +105,14 @@ pub(super) fn read_receipt<T: DeserializeOwned>(path: &Path) -> Result<(T, Strin
     Ok((serde_json::from_value(value)?, actual))
 }
 
-pub(super) fn validate_sha256(value: &str, label: &str) -> Result<()> {
+pub(crate) fn validate_sha256(value: &str, label: &str) -> Result<()> {
     if value.len() != 64 || !value.bytes().all(|byte| byte.is_ascii_hexdigit()) {
         bail!("{label} is not a SHA-256");
     }
     Ok(())
 }
 
-pub(super) fn study_dir(study_root: &Path, run_id: &str) -> Result<PathBuf> {
+pub(crate) fn study_dir(study_root: &Path, run_id: &str) -> Result<PathBuf> {
     if run_id.is_empty()
         || run_id == "."
         || run_id == ".."
@@ -125,18 +125,18 @@ pub(super) fn study_dir(study_root: &Path, run_id: &str) -> Result<PathBuf> {
     Ok(study_root.join(run_id))
 }
 
-pub(super) fn semantic_identity(canonical_genome: &str) -> String {
+pub(crate) fn semantic_identity(canonical_genome: &str) -> String {
     sha256_bytes(canonical_genome.as_bytes())
 }
 
-pub(super) fn genome_complexity(genome: &GenomeIr) -> usize {
+pub(crate) fn genome_complexity(genome: &GenomeIr) -> usize {
     match genome {
         GenomeIr::Pipeline(pipeline) => pipeline.stages.len(),
         _ => 0,
     }
 }
 
-pub(super) fn genome_compatible(canonical_genome: &str, features: usize) -> bool {
+pub(crate) fn genome_compatible(canonical_genome: &str, features: usize) -> bool {
     let Ok(genome) = GenomeIr::parse(canonical_genome) else {
         return false;
     };
@@ -170,7 +170,7 @@ pub(super) fn genome_compatible(canonical_genome: &str, features: usize) -> bool
     true
 }
 
-pub(super) fn expression_column_indices(expression: &str) -> Vec<usize> {
+pub(crate) fn expression_column_indices(expression: &str) -> Vec<usize> {
     let bytes = expression.as_bytes();
     let mut result = Vec::new();
     let mut index = 0;
@@ -205,7 +205,7 @@ pub(super) fn expression_column_indices(expression: &str) -> Vec<usize> {
     result
 }
 
-pub(super) fn sotarena_metadata_path(sotarena_root: &Path, dataset_hash: &str) -> PathBuf {
+pub(crate) fn sotarena_metadata_path(sotarena_root: &Path, dataset_hash: &str) -> PathBuf {
     let legacy = sotarena_root.join(dataset_hash).join("meta.json");
     if legacy.is_file() {
         legacy
@@ -217,7 +217,7 @@ pub(super) fn sotarena_metadata_path(sotarena_root: &Path, dataset_hash: &str) -
     }
 }
 
-pub(super) fn target_identity(sotarena_root: &Path, dataset_hash: &str) -> Result<String> {
+pub(crate) fn target_identity(sotarena_root: &Path, dataset_hash: &str) -> Result<String> {
     let meta_path = sotarena_metadata_path(sotarena_root, dataset_hash);
     let value: Value = serde_json::from_slice(
         &fs::read(&meta_path).with_context(|| format!("read {}", meta_path.display()))?,
@@ -247,7 +247,7 @@ pub(super) fn target_identity(sotarena_root: &Path, dataset_hash: &str) -> Resul
     }
 }
 
-pub(super) fn registry_source_family(
+pub(crate) fn registry_source_family(
     sotarena_root: &Path,
     dataset_hash: &str,
 ) -> Result<Option<String>> {
@@ -269,7 +269,7 @@ pub(super) fn registry_source_family(
         .map(str::to_string))
 }
 
-pub(super) fn selection_key(dataset_hash: &str) -> String {
+pub(crate) fn selection_key(dataset_hash: &str) -> String {
     let mut hash = Sha256::new();
     hash.update(b"checkpoint-assisted-transfer-v2\0");
     hash.update(STUDY_SEED.to_string().as_bytes());
@@ -278,7 +278,7 @@ pub(super) fn selection_key(dataset_hash: &str) -> String {
     hex::encode(hash.finalize())
 }
 
-pub(super) fn metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64, f64)> {
+pub(crate) fn metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64, f64)> {
     if truth.is_empty()
         || truth.len() != predictions.len()
         || truth
@@ -329,7 +329,7 @@ pub(crate) fn paired_robust_fitness(split_r2: &[f64]) -> Result<f64> {
     Ok(mean - 0.25 * population_sd.min(1.0))
 }
 
-pub(super) fn rank_scored(left: &ScoredMember, right: &ScoredMember) -> Ordering {
+pub(crate) fn rank_scored(left: &ScoredMember, right: &ScoredMember) -> Ordering {
     match (left.robust_fitness, right.robust_fitness) {
         (Some(left_fitness), Some(right_fitness)) => right_fitness
             .total_cmp(&left_fitness)

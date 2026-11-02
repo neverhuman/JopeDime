@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn recovery_component_check(name: &str, value: &Value) -> (bool, String) {
+pub(crate) fn recovery_component_check(name: &str, value: &Value) -> (bool, String) {
     let error = value
         .get("error")
         .and_then(Value::as_str)

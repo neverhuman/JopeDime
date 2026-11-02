@@ -8,16 +8,16 @@ use super::tasks::{policy_task_state, workflow_rows};
 
 #[derive(Default)]
 pub struct History {
-    pub(super) gpu: [VecDeque<u64>; 8],
+    pub(crate) gpu: [VecDeque<u64>; 8],
     last: u64,
-    pub(super) worker_offset: usize,
+    pub(crate) worker_offset: usize,
     pub compact_offsets: [u16; 5],
     pub learning: std::sync::Arc<crate::learning_history::Snapshot>,
     pub learning_navigation: crate::learning_history::Navigation,
     pub learning_details: bool,
 }
 impl History {
-    pub(super) fn update(&mut self, h: &Hardware) {
+    pub(crate) fn update(&mut self, h: &Hardware) {
         if h.timestamp == self.last {
             return;
         }
@@ -32,13 +32,13 @@ impl History {
         }
     }
 }
-pub(super) fn compact_layout(area: Rect) -> bool {
+pub(crate) fn compact_layout(area: Rect) -> bool {
     area.width < 100 || area.height < 40
 }
 
 // Reflow whole records before scrolling so narrow terminals retain every field,
 // including long paths. Full layouts retain their existing tables and charts.
-pub(super) fn compact_wrap(lines: Vec<Line<'static>>, width: u16) -> Vec<Line<'static>> {
+pub(crate) fn compact_wrap(lines: Vec<Line<'static>>, width: u16) -> Vec<Line<'static>> {
     let mut output = Vec::new();
     for line in lines {
         let text = line
@@ -84,7 +84,7 @@ pub struct DashboardData<'a> {
     pub history: &'a History,
 }
 
-pub(super) fn compact_lines(
+pub(crate) fn compact_lines(
     view: usize,
     h: &Hardware,
     data: DashboardData<'_>,
@@ -271,7 +271,7 @@ pub(super) fn compact_lines(
     );
     compact_wrap(lines, width)
 }
-pub(super) fn render_compact(f: &mut Frame, view: usize, h: &Hardware, data: DashboardData<'_>) {
+pub(crate) fn render_compact(f: &mut Frame, view: usize, h: &Hardware, data: DashboardData<'_>) {
     let DashboardData {
         gp,
         neural,

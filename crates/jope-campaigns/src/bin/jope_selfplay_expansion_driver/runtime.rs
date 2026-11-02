@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn reject_v1_quarantine_window(encodings_root: &Path) -> Result<()> {
+pub(crate) fn reject_v1_quarantine_window(encodings_root: &Path) -> Result<()> {
     let quarantine_root = encodings_root.join("incident-quarantine");
     if !quarantine_root.exists() {
         return Ok(());
@@ -18,14 +18,14 @@ pub(super) fn reject_v1_quarantine_window(encodings_root: &Path) -> Result<()> {
     bail!("legacy expansion driver is disabled throughout the Encoder V2 quarantine window")
 }
 
-pub(super) fn now_ms() -> u64 {
+pub(crate) fn now_ms() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0)
 }
 
-pub(super) fn sh(program: &str, args: &[&str]) -> Result<String> {
+pub(crate) fn sh(program: &str, args: &[&str]) -> Result<String> {
     let output = Command::new(program).args(args).output()?;
     if !output.status.success() {
         bail!(
@@ -40,7 +40,7 @@ pub(super) fn sh(program: &str, args: &[&str]) -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
-pub(super) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
+pub(crate) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
     message.contains("dependency-unsatisfied")
         && (message.contains("no eligible launch-ready node currently")
             || message.contains("eligible_node launch-ready-capacity")
@@ -55,14 +55,14 @@ pub(super) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
 /// Retry submission in case capacity opened between check and submit; permanent
 /// dependency failures still fail closed.
 #[derive(Clone, Debug, Serialize)]
-pub(super) struct EncodeChunkSubmission {
-    pub(super) job_id: String,
-    pub(super) disposition: &'static str,
+pub(crate) struct EncodeChunkSubmission {
+    pub(crate) job_id: String,
+    pub(crate) disposition: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(super) backoff_reason: Option<String>,
+    pub(crate) backoff_reason: Option<String>,
 }
 
-pub(super) fn pending_breadth_admission(root: &Path) -> Result<Option<EncodeChunkSubmission>> {
+pub(crate) fn pending_breadth_admission(root: &Path) -> Result<Option<EncodeChunkSubmission>> {
     let path = root.join("ops/gpu-lane-admission/requests/breadth_encoder.json");
     if !path.is_file() {
         return Ok(None);
@@ -83,7 +83,7 @@ pub(super) fn pending_breadth_admission(root: &Path) -> Result<Option<EncodeChun
     }))
 }
 
-pub(super) fn register_gpu_admission(spec: &Path, job_id: &str) -> Result<()> {
+pub(crate) fn register_gpu_admission(spec: &Path, job_id: &str) -> Result<()> {
     let controller = bundled_binary("jope_gpu_lane_admission")?;
     let output = Command::new(controller)
         .args([
@@ -105,7 +105,7 @@ pub(super) fn register_gpu_admission(spec: &Path, job_id: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn scq_check_submit(spec: &Path, job_id: &str) -> Result<EncodeChunkSubmission> {
+pub(crate) fn scq_check_submit(spec: &Path, job_id: &str) -> Result<EncodeChunkSubmission> {
     let spec_text = spec.to_string_lossy();
     let check = Command::new(scq_str())
         .args(["check", spec_text.as_ref()])
@@ -179,7 +179,7 @@ pub(super) fn scq_check_submit(spec: &Path, job_id: &str) -> Result<EncodeChunkS
     )
 }
 
-pub(super) fn runtime_bundle_root() -> Result<PathBuf> {
+pub(crate) fn runtime_bundle_root() -> Result<PathBuf> {
     let executable = std::fs::canonicalize(std::env::current_exe()?)?;
     let bin = executable
         .parent()
@@ -198,7 +198,7 @@ pub(super) fn runtime_bundle_root() -> Result<PathBuf> {
     Ok(bundle.to_path_buf())
 }
 
-pub(super) fn bundled_binary(name: &str) -> Result<PathBuf> {
+pub(crate) fn bundled_binary(name: &str) -> Result<PathBuf> {
     let path = runtime_bundle_root()?.join("runtime/bin").join(name);
     if !path.is_file() {
         bail!("runtime bundle lacks required binary {}", path.display());
@@ -206,7 +206,7 @@ pub(super) fn bundled_binary(name: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-pub(super) fn bundled_encoding_asset(name: &str) -> Result<PathBuf> {
+pub(crate) fn bundled_encoding_asset(name: &str) -> Result<PathBuf> {
     let path = runtime_bundle_root()?.join("pytorch/encoding").join(name);
     if !path.is_file() {
         bail!("runtime bundle lacks encoding asset {}", path.display());
@@ -214,7 +214,7 @@ pub(super) fn bundled_encoding_asset(name: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-pub(super) fn publish_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn publish_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.is_file() {
         if std::fs::read(path)? != bytes {
             bail!("immutable content drift: {}", path.display());
@@ -234,7 +234,7 @@ pub(super) fn publish_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn normalized_runtime_bundle_paths(body: &str) -> String {
+pub(crate) fn normalized_runtime_bundle_paths(body: &str) -> String {
     const MARKER: &str = "/runtime-bundles/";
     let mut parts = body.split(MARKER);
     let mut normalized = parts.next().unwrap_or_default().to_owned();
@@ -254,7 +254,7 @@ pub(super) fn normalized_runtime_bundle_paths(body: &str) -> String {
     normalized
 }
 
-pub(super) fn publish_equivalent_bundle_spec(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn publish_equivalent_bundle_spec(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.is_file() {
         let existing = std::fs::read_to_string(path)?;
         let proposed = std::str::from_utf8(bytes).context("rendered SCQ spec is not UTF-8")?;
@@ -266,7 +266,7 @@ pub(super) fn publish_equivalent_bundle_spec(path: &Path, bytes: &[u8]) -> Resul
     publish_immutable(path, bytes)
 }
 
-pub(super) fn append_spec_input(
+pub(crate) fn append_spec_input(
     lines: &mut Vec<String>,
     name: &str,
     source: &Path,
@@ -292,13 +292,13 @@ pub(super) fn append_spec_input(
     Ok(())
 }
 
-pub(super) fn read_json(path: &Path) -> Result<Value> {
+pub(crate) fn read_json(path: &Path) -> Result<Value> {
     Ok(serde_json::from_str(
         &std::fs::read_to_string(path).with_context(|| path.display().to_string())?,
     )?)
 }
 
-pub(super) fn file_age_secs(path: &Path) -> Option<u64> {
+pub(crate) fn file_age_secs(path: &Path) -> Option<u64> {
     let modified = path.metadata().ok()?.modified().ok()?;
     SystemTime::now()
         .duration_since(modified)

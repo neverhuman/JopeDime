@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn field<'a>(v: &'a Value, name: &str) -> Result<&'a str> {
+pub(crate) fn field<'a>(v: &'a Value, name: &str) -> Result<&'a str> {
     v[name]
         .as_str()
         .with_context(|| format!("missing review field {name}"))

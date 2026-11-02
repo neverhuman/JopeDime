@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn yeo_johnson(value: f64, lambda: f64) -> f64 {
+pub(crate) fn yeo_johnson(value: f64, lambda: f64) -> f64 {
     if value >= 0.0 {
         if lambda.abs() < 1e-12 {
             value.ln_1p()
@@ -14,7 +14,7 @@ pub(super) fn yeo_johnson(value: f64, lambda: f64) -> f64 {
     }
 }
 
-pub(super) fn fit_yeo_lambda(values: impl Iterator<Item = f64> + Clone) -> f64 {
+pub(crate) fn fit_yeo_lambda(values: impl Iterator<Item = f64> + Clone) -> f64 {
     let data: Vec<f64> = values.collect();
     let n = data.len().max(1) as f64;
     let mut best = 1.0;
@@ -47,7 +47,7 @@ pub(super) fn fit_yeo_lambda(values: impl Iterator<Item = f64> + Clone) -> f64 {
     best
 }
 
-pub(super) fn piecewise_row(row: &[f64], edges: &[Vec<f64>]) -> Vec<f64> {
+pub(crate) fn piecewise_row(row: &[f64], edges: &[Vec<f64>]) -> Vec<f64> {
     let mut out = Vec::new();
     for (value, column_edges) in row.iter().zip(edges) {
         for interval in column_edges.windows(2) {
@@ -63,7 +63,7 @@ pub(super) fn piecewise_row(row: &[f64], edges: &[Vec<f64>]) -> Vec<f64> {
     out
 }
 
-pub(super) fn fit_pls_weights(x: &Rows, y: &[f64], k: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
+pub(crate) fn fit_pls_weights(x: &Rows, y: &[f64], k: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
     let n = x.len();
     let cols = x.first().map_or(0, Vec::len);
     let mut means = vec![0.0; cols];

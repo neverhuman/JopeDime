@@ -3,7 +3,7 @@ use super::*;
 /// Relocate the pointer view's declared `root` below a workspace ancestor
 /// `outer` that holds a byte-identical copy of the backing table, and remove
 /// the root's own workspace markers. Returns the decoy copy.
-pub(super) fn decoy_workspace_ancestor(outer: &Path, root: &Path) -> PathBuf {
+pub(crate) fn decoy_workspace_ancestor(outer: &Path, root: &Path) -> PathBuf {
     fs::remove_dir_all(root.join("manifests")).unwrap();
     fs::remove_file(root.join("Cargo.toml")).unwrap();
     let decoy = outer.join("data/originals/raw.csv");
@@ -16,7 +16,7 @@ pub(super) fn decoy_workspace_ancestor(outer: &Path, root: &Path) -> PathBuf {
 
 /// A contained (table) view of the same cut: `train.csv`/`validation.csv`
 /// beside its preparation state, no backing table and no root.
-pub(super) fn contained_view_fixture(root: &Path, pointer: &Path, name: &str) -> PathBuf {
+pub(crate) fn contained_view_fixture(root: &Path, pointer: &Path, name: &str) -> PathBuf {
     let prepared = root.join("data/prepared").join(name);
     let dir = prepared.join("cut-0");
     fs::create_dir_all(&dir).unwrap();
@@ -41,7 +41,7 @@ pub(super) fn contained_view_fixture(root: &Path, pointer: &Path, name: &str) ->
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn the_public_fit_view_projects_under_its_declared_root_and_never_resolves_an_ancestor()
+pub(crate) fn the_public_fit_view_projects_under_its_declared_root_and_never_resolves_an_ancestor()
 {
     let temp = tempfile::tempdir().unwrap();
     let outer = temp.path().canonicalize().unwrap();
@@ -97,7 +97,7 @@ pub(super) fn the_public_fit_view_projects_under_its_declared_root_and_never_res
 }
 
 /// The cut's recorded training identity.
-pub(super) fn training_of(prepared: &Path) -> String {
+pub(crate) fn training_of(prepared: &Path) -> String {
     let p: Prepared = read_json(&prepared.join("prepared.json")).unwrap();
     p.cuts[0].training_sha256.clone()
 }
@@ -107,7 +107,7 @@ pub(super) fn training_of(prepared: &Path) -> String {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn the_legacy_isolated_export_never_resolves_a_pointer_view_from_its_ancestors() {
+pub(crate) fn the_legacy_isolated_export_never_resolves_a_pointer_view_from_its_ancestors() {
     let temp = tempfile::tempdir().unwrap();
     let outer = temp.path().canonicalize().unwrap();
     let root = outer.join("declared");

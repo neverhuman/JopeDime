@@ -1,12 +1,12 @@
 use super::*;
 
 /// The most parameters one pass differentiates.
-pub(super) const MAX_PARAMS: usize = 16;
+pub(crate) const MAX_PARAMS: usize = 16;
 
 /// One tangent lane per parameter. Lanes at and above the parameter count stay zero.
-pub(super) type Lanes = [f64; MAX_PARAMS];
+pub(crate) type Lanes = [f64; MAX_PARAMS];
 
-pub(super) const ZERO: Lanes = [0.0; MAX_PARAMS];
+pub(crate) const ZERO: Lanes = [0.0; MAX_PARAMS];
 
 /// 2^600 and 2^-600. Multiplying by either is exact while the product stays a normal number.
 const SCALE_UP: f64 = f64::from_bits((1023 + 600) << 52);
@@ -14,7 +14,7 @@ const SCALE_DOWN: f64 = f64::from_bits((1023 - 600) << 52);
 
 /// `x = m · 2^e` with `1 ≤ |m| < 2` for a finite nonzero `x`, subnormals included. Zero and
 /// non-finite `x` come back as `(x, 0)`.
-pub(super) fn split(x: f64) -> (f64, i32) {
+pub(crate) fn split(x: f64) -> (f64, i32) {
     if x == 0.0 || !x.is_finite() {
         return (x, 0);
     }
@@ -32,7 +32,7 @@ pub(super) fn split(x: f64) -> (f64, i32) {
 
 /// `m · 2^e`, rounded once: the steps before the last are exact power-of-two scalings that keep
 /// the value normal, so only the last can round (to a subnormal) or overflow.
-pub(super) fn join(m: f64, e: i32) -> f64 {
+pub(crate) fn join(m: f64, e: i32) -> f64 {
     if m == 0.0 || !m.is_finite() {
         return m;
     }
@@ -51,7 +51,7 @@ pub(super) fn join(m: f64, e: i32) -> f64 {
 /// `Π numerators / Π denominators`, formed on mantissas and exponents separately and joined once,
 /// so no intermediate under- or overflows: the result is lost only where it is itself out of range.
 /// A zero numerator gives 0; a denominator is never 0.
-pub(super) fn product(numerators: &[f64], denominators: &[f64]) -> f64 {
+pub(crate) fn product(numerators: &[f64], denominators: &[f64]) -> f64 {
     let (mut m, mut e) = (1.0f64, 0i32);
     for &x in numerators {
         if x == 0.0 {
@@ -71,7 +71,7 @@ pub(super) fn product(numerators: &[f64], denominators: &[f64]) -> f64 {
 
 /// `±exp(log_c) · d` for a slope coefficient `±exp(log_c)` outside the normal range, formed in the
 /// log domain so a large or small lane still gets its product. An underflow is an exact +0.
-pub(super) fn log_lane(negative: bool, log_c: f64, d: f64) -> f64 {
+pub(crate) fn log_lane(negative: bool, log_c: f64, d: f64) -> f64 {
     if d == 0.0 || log_c == f64::NEG_INFINITY {
         return 0.0;
     }

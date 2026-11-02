@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn parse_queue(raw: &RawSources, scq: &Value, families: &[FamilyRow]) -> QueueSummary {
+pub(crate) fn parse_queue(raw: &RawSources, scq: &Value, families: &[FamilyRow]) -> QueueSummary {
     let queue = raw.queue.as_ref().unwrap_or(&Value::Null);
     let freshness = raw.freshness.as_ref().unwrap_or(&Value::Null);
     let counters = scq.get("counters").unwrap_or(&Value::Null);
@@ -31,7 +31,7 @@ pub(super) fn parse_queue(raw: &RawSources, scq: &Value, families: &[FamilyRow])
     }
 }
 
-pub(super) fn parse_learning(raw: &RawSources, scq: &Value) -> LearningSummary {
+pub(crate) fn parse_learning(raw: &RawSources, scq: &Value) -> LearningSummary {
     let status = raw.status.as_ref().unwrap_or(&Value::Null);
     let trainer = status.get("trainer").unwrap_or(&Value::Null);
     let ingestion = status.get("ingestion").unwrap_or(&Value::Null);
@@ -89,7 +89,7 @@ pub(super) fn parse_learning(raw: &RawSources, scq: &Value) -> LearningSummary {
     }
 }
 
-pub(super) fn parse_wave(raw: &RawSources) -> WaveSummary {
+pub(crate) fn parse_wave(raw: &RawSources) -> WaveSummary {
     let status = raw.status.as_ref().unwrap_or(&Value::Null);
     let queue = raw.queue.as_ref().unwrap_or(&Value::Null);
     let supply = raw.supply.as_ref().unwrap_or(&Value::Null);
@@ -127,7 +127,7 @@ pub(super) fn parse_wave(raw: &RawSources) -> WaveSummary {
     }
 }
 
-pub(super) fn parse_events(scq: &Value, local: &[Value]) -> Vec<String> {
+pub(crate) fn parse_events(scq: &Value, local: &[Value]) -> Vec<String> {
     let mut events = scq
         .get("events")
         .and_then(Value::as_array)
@@ -142,7 +142,7 @@ pub(super) fn parse_events(scq: &Value, local: &[Value]) -> Vec<String> {
     events
 }
 
-pub(super) fn parse_failures(scq: &Value) -> Vec<String> {
+pub(crate) fn parse_failures(scq: &Value) -> Vec<String> {
     scq.get("jobs")
         .and_then(Value::as_array)
         .into_iter()

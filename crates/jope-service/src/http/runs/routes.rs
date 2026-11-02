@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) async fn start(
+pub(crate) async fn start(
     Extension(service): Extension<Arc<RunService>>,
     request: Request<Body>,
 ) -> Response {
@@ -93,7 +93,7 @@ pub(super) async fn start(
     result
 }
 
-pub(super) async fn control(
+pub(crate) async fn control(
     Extension(service): Extension<Arc<RunService>>,
     path: std::result::Result<axum::extract::Path<String>, axum::extract::rejection::PathRejection>,
     request: Request<Body>,
@@ -187,7 +187,7 @@ pub(super) async fn control(
 }
 
 /// Execute one Q1 request and return the same compact bytes durably retained by the engine.
-pub(super) async fn q1_evaluate(
+pub(crate) async fn q1_evaluate(
     Extension(service): Extension<Arc<RunService>>,
     request: Request<Body>,
 ) -> Response {
@@ -208,12 +208,12 @@ pub(super) async fn q1_evaluate(
 
 #[derive(Default, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct ListQuery {
+pub(crate) struct ListQuery {
     after: Option<String>,
     limit: Option<usize>,
 }
 
-pub(super) async fn list(
+pub(crate) async fn list(
     Extension(service): Extension<Arc<RunService>>,
     query: std::result::Result<Query<ListQuery>, axum::extract::rejection::QueryRejection>,
 ) -> Response {

@@ -123,7 +123,7 @@ impl Wide {
     }
 }
 
-pub(super) fn power_of_two(exponent: i32) -> f64 {
+pub(crate) fn power_of_two(exponent: i32) -> f64 {
     if exponent >= -1022 {
         f64::from_bits(((exponent + 1023) as u64) << 52)
     } else {
@@ -132,7 +132,7 @@ pub(super) fn power_of_two(exponent: i32) -> f64 {
 }
 
 /// The correctly rounded quotient of an exact signed sum and a count.
-pub(super) fn rational(values: &[JsonNumber], count: u64) -> f64 {
+pub(crate) fn rational(values: &[JsonNumber], count: u64) -> f64 {
     let (mut positive, mut negative) = (Wide::zero(), Wide::zero());
     for value in values {
         match *value {
@@ -149,7 +149,7 @@ pub(super) fn rational(values: &[JsonNumber], count: u64) -> f64 {
 }
 
 /// `statistics.mean`: an exact mean, an int when every value is an int and it divides.
-pub(super) fn mean(values: &[Json]) -> Result<Json> {
+pub(crate) fn mean(values: &[Json]) -> Result<Json> {
     let numbers = values
         .iter()
         .map(|v| number(v).context("TypeError: mean of a non-number"))
@@ -171,7 +171,7 @@ pub(super) fn mean(values: &[Json]) -> Result<Json> {
 }
 
 /// `statistics.median` of an even-length sorted pair: `(a + b) / 2`.
-pub(super) fn midpoint(a: &Json, b: &Json) -> Result<Json> {
+pub(crate) fn midpoint(a: &Json, b: &Json) -> Result<Json> {
     let (Some(x), Some(y)) = (number(a), number(b)) else {
         bail!("TypeError: median of a non-number");
     };
@@ -182,7 +182,7 @@ pub(super) fn midpoint(a: &Json, b: &Json) -> Result<Json> {
 }
 
 /// Sample count, median, 95th-percentile order statistic and mean, or nulls without samples.
-pub(super) fn distribution(values: &[Json]) -> Result<Json> {
+pub(crate) fn distribution(values: &[Json]) -> Result<Json> {
     let mut sorted = values.to_vec();
     let mut failure = None;
     sorted.sort_by(|a, b| {

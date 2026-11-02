@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn lane_metrics(
+pub(crate) fn lane_metrics(
     requested: &[Value],
     scores: &BTreeMap<String, (f64, f64)>,
 ) -> LaneMetrics {
@@ -22,7 +22,7 @@ pub(super) fn lane_metrics(
     output
 }
 
-pub(super) fn mean(values: &[f64]) -> f64 {
+pub(crate) fn mean(values: &[f64]) -> f64 {
     if values.is_empty() {
         0.0
     } else {
@@ -33,7 +33,7 @@ pub(super) fn mean(values: &[f64]) -> f64 {
 /// Registered shadow-screen lower bound over independent context clusters.
 /// Candidate rows within one context are correlated, so the uncertainty unit
 /// is the context mean rather than the individual proposal comparison.
-pub(super) fn registered_context_lower_bound(values: &[f64]) -> f64 {
+pub(crate) fn registered_context_lower_bound(values: &[f64]) -> f64 {
     if values.len() < 2 || values.iter().any(|value| !value.is_finite()) {
         return -2.0;
     }
@@ -46,7 +46,7 @@ pub(super) fn registered_context_lower_bound(values: &[f64]) -> f64 {
     (center - 1.96 * (variance / values.len() as f64).sqrt()).clamp(-2.0, 2.0)
 }
 
-pub(super) fn dataset_slices(
+pub(crate) fn dataset_slices(
     train: &Path,
     task: Task,
 ) -> Result<(usize, usize, String, String, String, String, String)> {
@@ -127,7 +127,7 @@ pub(super) fn dataset_slices(
     ))
 }
 
-pub(super) fn promotion_context_facts(
+pub(crate) fn promotion_context_facts(
     args: &Args,
     pending: &PendingIntent,
     context_limit: usize,

@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) const FITTED_STANDALONE: &str = jope_pipeline::emit::fitted::STANDALONE;
+pub(crate) const FITTED_STANDALONE: &str = jope_pipeline::emit::fitted::STANDALONE;
 
-pub(super) fn read_numeric_training_csv(path: &Path) -> Result<(feat_math::Rows, Vec<f64>)> {
+pub(crate) fn read_numeric_training_csv(path: &Path) -> Result<(feat_math::Rows, Vec<f64>)> {
     let (x, y, _) = read_numeric_training_csv_with_schema(path)?;
     Ok((x, y))
 }
 
-pub(super) fn read_numeric_training_csv_with_schema(
+pub(crate) fn read_numeric_training_csv_with_schema(
     path: &Path,
 ) -> Result<(feat_math::Rows, Vec<f64>, Vec<String>)> {
     let parent = path

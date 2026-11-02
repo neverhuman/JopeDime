@@ -1,7 +1,7 @@
 use super::*;
 
 /// Copy a retained receipt to `$JOPE_W1_RECEIPTS/<group>/` when set.
-pub(super) fn retain(group: &str, name: &str, path: &Path) {
+pub(crate) fn retain(group: &str, name: &str, path: &Path) {
     if let Some(dir) = std::env::var_os("JOPE_W1_RECEIPTS") {
         let dir = Path::new(&dir).join(group);
         fs::create_dir_all(&dir).unwrap();
@@ -9,7 +9,7 @@ pub(super) fn retain(group: &str, name: &str, path: &Path) {
     }
 }
 
-pub(super) fn refusal<T: std::fmt::Debug>(result: Result<T>) -> String {
+pub(crate) fn refusal<T: std::fmt::Debug>(result: Result<T>) -> String {
     format!(
         "{:#}",
         result.expect_err("the release authority accepted a request it must refuse")
@@ -23,7 +23,7 @@ pub(super) fn refusal<T: std::fmt::Debug>(result: Result<T>) -> String {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once() {
+pub(crate) fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release_once() {
     use outer_release::{Authority as Release, GrantRequest};
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -251,18 +251,18 @@ pub(super) fn outer_scores_need_a_grant_read_only_the_granted_labels_and_release
 /// proven here; `tests/outer_release_cli.rs` proves the binary's wiring.
 #[derive(clap::Parser)]
 #[command(name = "jope-parallel")]
-pub(super) struct OuterReleaseArgv {
+pub(crate) struct OuterReleaseArgv {
     #[command(subcommand)]
     command: OuterReleaseVerb,
 }
 #[derive(clap::Subcommand)]
-pub(super) enum OuterReleaseVerb {
+pub(crate) enum OuterReleaseVerb {
     OuterRelease {
         #[command(subcommand)]
         command: outer_release_cli::OuterReleaseCommand,
     },
 }
-pub(super) fn outer_release_cli_run(argv: &[&str]) -> Result<Value> {
+pub(crate) fn outer_release_cli_run(argv: &[&str]) -> Result<Value> {
     use clap::Parser;
     let OuterReleaseVerb::OuterRelease { command } = OuterReleaseArgv::try_parse_from(
         std::iter::once("jope-parallel").chain(argv.iter().copied()),
@@ -278,7 +278,7 @@ pub(super) fn outer_release_cli_run(argv: &[&str]) -> Result<Value> {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn the_outer_release_cli_grants_scores_and_releases_once() {
+pub(crate) fn the_outer_release_cli_grants_scores_and_releases_once() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let prepared = root.join(prepared.strip_prefix(temp.path()).unwrap());
@@ -387,7 +387,7 @@ pub(super) fn the_outer_release_cli_grants_scores_and_releases_once() {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself() {
+pub(crate) fn the_export_worker_receives_its_projected_input_and_never_resolves_the_view_itself() {
     let temp = tempfile::tempdir().unwrap();
     let outer = temp.path().canonicalize().unwrap();
     let root = outer.join("declared");

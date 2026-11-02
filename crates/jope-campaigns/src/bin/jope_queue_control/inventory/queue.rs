@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn queue_report(records: &[JobRecord]) -> QueueReport {
+pub(crate) fn queue_report(records: &[JobRecord]) -> QueueReport {
     let mut counts = BTreeMap::new();
     let mut waves = BTreeMap::new();
     let mut generations = BTreeMap::new();
@@ -66,7 +66,7 @@ pub(super) fn queue_report(records: &[JobRecord]) -> QueueReport {
     }
 }
 
-pub(super) fn newest_wave(records: &[JobRecord]) -> Option<String> {
+pub(crate) fn newest_wave(records: &[JobRecord]) -> Option<String> {
     records
         .iter()
         .filter(|row| row.project == SELFPLAY_PROJECT && row.claim_state.is_some())
@@ -75,7 +75,7 @@ pub(super) fn newest_wave(records: &[JobRecord]) -> Option<String> {
         .cloned()
 }
 
-pub(super) fn wave_number(wave: &str) -> (u64, &str) {
+pub(crate) fn wave_number(wave: &str) -> (u64, &str) {
     (
         wave.rsplit('-')
             .next()
@@ -85,7 +85,7 @@ pub(super) fn wave_number(wave: &str) -> (u64, &str) {
     )
 }
 
-pub(super) fn hold_candidates(
+pub(crate) fn hold_candidates(
     records: &[JobRecord],
     legacy: bool,
     superseded_waves: bool,
@@ -124,7 +124,7 @@ pub(super) fn hold_candidates(
     candidates
 }
 
-pub(super) fn retirement_candidates(
+pub(crate) fn retirement_candidates(
     records: &[JobRecord],
     legacy: bool,
     superseded_waves: bool,
@@ -163,7 +163,7 @@ pub(super) fn retirement_candidates(
     candidates
 }
 
-pub(super) fn checkpoint_bridge_candidates(
+pub(crate) fn checkpoint_bridge_candidates(
     records: &[JobRecord],
     active_checkpoint: &str,
     limit: usize,
@@ -202,11 +202,11 @@ pub(super) fn checkpoint_bridge_candidates(
     candidates
 }
 
-pub(super) fn is_holdable_state(state: &str) -> bool {
+pub(crate) fn is_holdable_state(state: &str) -> bool {
     matches!(state, "queued" | "starting")
 }
 
-pub(super) fn states_by_id(jobs: &[Value]) -> HashMap<String, (String, String)> {
+pub(crate) fn states_by_id(jobs: &[Value]) -> HashMap<String, (String, String)> {
     jobs.iter()
         .filter_map(|job| {
             let id = text_field(job, "id").or_else(|| text_field(job, "job_id"))?;
@@ -221,6 +221,6 @@ pub(super) fn states_by_id(jobs: &[Value]) -> HashMap<String, (String, String)> 
         .collect()
 }
 
-pub(super) fn text_field(value: &Value, field: &str) -> Option<String> {
+pub(crate) fn text_field(value: &Value, field: &str) -> Option<String> {
     value.get(field).and_then(Value::as_str).map(str::to_owned)
 }

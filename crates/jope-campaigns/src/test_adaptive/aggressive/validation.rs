@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_preflight_receipt(receipt: &PreflightReceipt) -> Result<()> {
+pub(crate) fn validate_preflight_receipt(receipt: &PreflightReceipt) -> Result<()> {
     if receipt.schema != PREFLIGHT_SCHEMA
         || receipt.benchmark_valid
         || !receipt.test_adaptive
@@ -29,7 +29,7 @@ pub(super) fn validate_preflight_receipt(receipt: &PreflightReceipt) -> Result<(
 
 // Keep the expected manifest identity and scheduling contract inputs explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn expected_manifest(
+pub(crate) fn expected_manifest(
     registry: &Path,
     run_id: &str,
     release_binary_sha256: &str,
@@ -86,7 +86,7 @@ pub(super) fn expected_manifest(
     }
 }
 
-pub(super) fn manifest_matches_golden46_bindings(
+pub(crate) fn manifest_matches_golden46_bindings(
     manifest: &AggressiveManifest,
     golden46: Option<&Golden46Bindings>,
 ) -> bool {

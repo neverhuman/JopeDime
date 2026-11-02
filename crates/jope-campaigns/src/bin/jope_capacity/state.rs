@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_state(
+pub(crate) fn load_state(
     path: &Path,
     effective_cores: i64,
     baseline: PressureBaseline,
@@ -29,7 +29,7 @@ pub(super) fn load_state(
     RampState::baseline(effective_cores, baseline).map_err(Into::into)
 }
 
-pub(super) fn stage_name(stage: RampStage) -> &'static str {
+pub(crate) fn stage_name(stage: RampStage) -> &'static str {
     match stage {
         RampStage::Baseline => "baseline",
         RampStage::Ramp30 => "ramp_30",
@@ -38,7 +38,7 @@ pub(super) fn stage_name(stage: RampStage) -> &'static str {
     }
 }
 
-pub(super) fn parse_stage(value: &str) -> Result<RampStage> {
+pub(crate) fn parse_stage(value: &str) -> Result<RampStage> {
     match value {
         "baseline" => Ok(RampStage::Baseline),
         "ramp_30" => Ok(RampStage::Ramp30),
@@ -48,7 +48,7 @@ pub(super) fn parse_stage(value: &str) -> Result<RampStage> {
     }
 }
 
-pub(super) fn fresh_queue_depth(path: &Path) -> Result<i64> {
+pub(crate) fn fresh_queue_depth(path: &Path) -> Result<i64> {
     if !path.is_file() {
         return Ok(0);
     }

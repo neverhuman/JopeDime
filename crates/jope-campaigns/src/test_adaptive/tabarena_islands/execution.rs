@@ -408,7 +408,7 @@ fn complete_tabarena_generation(
     Ok(CompletedTabArenaGeneration::Active(pending.lane))
 }
 
-pub(super) fn run_tabarena_dataset_waves(
+pub(crate) fn run_tabarena_dataset_waves(
     campaign: &Path,
     registry: &Path,
     manifest: &TabArenaManifest,

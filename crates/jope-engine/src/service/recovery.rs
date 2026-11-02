@@ -2,7 +2,7 @@ use super::*;
 
 /// Recover compact durable results before dispatch starts. Retain only pending
 /// jobs, preserving their order; never walk the much larger observation ledgers.
-pub(super) fn restore_completed(
+pub(crate) fn restore_completed(
     root: &Path,
     jobs: &mut Vec<GpJob>,
     coverage: &mut coverage::Ledger,

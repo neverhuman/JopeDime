@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) fn provider() -> Arc<CryptoProvider> {
+pub(crate) fn provider() -> Arc<CryptoProvider> {
     Arc::new(aws_lc_rs::default_provider())
 }
 
 /// This host's certificate and PKCS#8 private key.
 pub struct HostCredential {
-    pub(super) certificate: CertificateDer<'static>,
-    pub(super) key: PrivateKeyDer<'static>,
+    pub(crate) certificate: CertificateDer<'static>,
+    pub(crate) key: PrivateKeyDer<'static>,
     certificate_sha256: String,
 }
 impl HostCredential {
@@ -143,9 +143,9 @@ fn days_from_civil(year: i64, month: i64, day: i64) -> i64 {
 
 /// The certificates one side accepts (`certificate SHA-256 -> host`).
 #[derive(Debug)]
-pub(super) struct Pinned {
-    pub(super) accepted: BTreeMap<String, String>,
-    pub(super) provider: Arc<CryptoProvider>,
+pub(crate) struct Pinned {
+    pub(crate) accepted: BTreeMap<String, String>,
+    pub(crate) provider: Arc<CryptoProvider>,
 }
 impl Pinned {
     fn check(

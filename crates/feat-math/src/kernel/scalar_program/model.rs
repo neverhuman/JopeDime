@@ -100,7 +100,7 @@ impl ScalarExpressionProgram {
 }
 
 impl ScalarModel {
-    pub(super) fn ridge(&self) -> &RidgeModel {
+    pub(crate) fn ridge(&self) -> &RidgeModel {
         &self.ridge
     }
 
@@ -127,7 +127,7 @@ impl ScalarModel {
         Ok((self.ridge.predict(&features), faults))
     }
 
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         validate_config(&self.program, self.carrier, self.input_width, self.lambda)?;
         let width = self.carrier.output_width(self.input_width);
         // Prevent even forged finite weights overflowing the bounded-score dot
@@ -256,7 +256,7 @@ impl ScalarModel {
     }
 }
 
-pub(super) fn validate_config(
+pub(crate) fn validate_config(
     program: &ScalarExpressionProgram,
     carrier: ScalarCarrier,
     width: usize,
@@ -327,6 +327,6 @@ fn transform(
     Ok((features, faults))
 }
 
-pub(super) fn grammar_sha256() -> String {
+pub(crate) fn grammar_sha256() -> String {
     format!("{:x}", Sha256::digest(CONTRACT.as_bytes()))
 }

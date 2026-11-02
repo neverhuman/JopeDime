@@ -1,7 +1,7 @@
 use super::*;
 use super::{receipts::*, setup::*, transport::*};
 
-pub(super) fn shared_run_surfaces() -> Result<()> {
+pub(crate) fn shared_run_surfaces() -> Result<()> {
     let bytes = input()?;
     let (server, spec) = Server::start(&bytes)?;
     let output = batch_command(server.home.path(), &spec).output()?;
@@ -215,7 +215,7 @@ pub(super) fn shared_run_surfaces() -> Result<()> {
     Ok(())
 }
 
-pub(super) fn batch_fallback() -> Result<()> {
+pub(crate) fn batch_fallback() -> Result<()> {
     let home = directory()?;
     let bytes = input()?;
     let (engine, spec) = initialize(home.path(), &bytes)?;

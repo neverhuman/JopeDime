@@ -14,8 +14,8 @@ pub const HVC2_TRAIN_FILENAME: &str = "train.hvc2";
 pub const HVC2_TEST_FILENAME: &str = "test.hvc2";
 pub const HVC2_RECEIPT_FILENAME: &str = "hyperion_v2.receipt.json";
 
-pub(super) const PREAMBLE_BYTES: u64 = 4 + 2 + 8;
-pub(super) const MAX_HEADER_BYTES: u64 = 1024 * 1024;
+pub(crate) const PREAMBLE_BYTES: u64 = 4 + 2 + 8;
+pub(crate) const MAX_HEADER_BYTES: u64 = 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -387,7 +387,7 @@ fn validate_binding(
     Ok(())
 }
 
-pub(super) fn canonical_header_bytes(header: &Hvc2Header) -> Result<Vec<u8>> {
+pub(crate) fn canonical_header_bytes(header: &Hvc2Header) -> Result<Vec<u8>> {
     let bytes = serde_json::to_vec(header)?;
     if bytes.is_empty() || u64::try_from(bytes.len()).unwrap_or(u64::MAX) > MAX_HEADER_BYTES {
         bail!("HVC2 canonical header is empty or too large");
@@ -395,7 +395,7 @@ pub(super) fn canonical_header_bytes(header: &Hvc2Header) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
-pub(super) fn sha256_f32_le(values: &[f32]) -> String {
+pub(crate) fn sha256_f32_le(values: &[f32]) -> String {
     let mut digest = Sha256::new();
     for value in values {
         digest.update(value.to_le_bytes());
@@ -403,7 +403,7 @@ pub(super) fn sha256_f32_le(values: &[f32]) -> String {
     digest_hex(digest.finalize())
 }
 
-pub(super) fn validate_sha256(value: &str, label: &str) -> Result<()> {
+pub(crate) fn validate_sha256(value: &str, label: &str) -> Result<()> {
     if value.len() != 64
         || !value
             .as_bytes()
@@ -415,7 +415,7 @@ pub(super) fn validate_sha256(value: &str, label: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn digest_hex(bytes: impl AsRef<[u8]>) -> String {
+pub(crate) fn digest_hex(bytes: impl AsRef<[u8]>) -> String {
     let mut output = String::with_capacity(64);
     for byte in bytes.as_ref() {
         use std::fmt::Write as _;

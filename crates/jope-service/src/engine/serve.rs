@@ -62,7 +62,7 @@ pub fn serve_q1_qualification(release: &Path) -> Result<usize, EngineError> {
 }
 
 #[cfg(feature = "research")]
-pub(super) fn open_q1_engine(
+pub(crate) fn open_q1_engine(
     home: &Path,
     release: &Path,
 ) -> Result<(InProcessEngine, Arc<std::sync::atomic::AtomicUsize>), EngineError> {
@@ -92,7 +92,7 @@ fn serve_engine(
     ))
 }
 
-pub(super) async fn serve_locked(
+pub(crate) async fn serve_locked(
     home: PathBuf,
     engine: InProcessEngine,
     idle_exit: Duration,
@@ -101,7 +101,7 @@ pub(super) async fn serve_locked(
     serve_with_activity(home, engine, idle_exit, activity).await
 }
 
-pub(super) async fn serve_with_activity(
+pub(crate) async fn serve_with_activity(
     home: PathBuf,
     engine: InProcessEngine,
     idle_exit: Duration,

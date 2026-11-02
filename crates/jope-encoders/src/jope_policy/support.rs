@@ -24,17 +24,17 @@ pub struct JopePolicyConfig {
 }
 
 #[derive(Debug, Deserialize)]
-pub(super) struct PolicyMetadata {
-    pub(super) model_version: String,
-    pub(super) config: JopePolicyConfig,
+pub(crate) struct PolicyMetadata {
+    pub(crate) model_version: String,
+    pub(crate) config: JopePolicyConfig,
 }
 
-pub(super) struct Weights {
+pub(crate) struct Weights {
     map: HashMap<String, Tensor>,
 }
 
 impl Weights {
-    pub(super) fn load_buffer(bytes: &[u8], device: &Device) -> Result<Self> {
+    pub(crate) fn load_buffer(bytes: &[u8], device: &Device) -> Result<Self> {
         let map = candle_core::safetensors::load_buffer(bytes, device)
             .context("load verified JOPE policy safetensors")?
             .into_iter()
@@ -43,7 +43,7 @@ impl Weights {
         Ok(Self { map })
     }
 
-    pub(super) fn get(&self, name: &str) -> Result<&Tensor> {
+    pub(crate) fn get(&self, name: &str) -> Result<&Tensor> {
         self.map
             .get(name)
             .with_context(|| format!("JOPE policy tensor missing: {name}"))
@@ -91,11 +91,11 @@ fn projection(x: &Tensor, weight: &Tensor, bias: Option<&Tensor>) -> Result<Tens
     Ok(Tensor::from_vec(output, dimensions, x.device())?)
 }
 
-pub(super) fn linear(x: &Tensor, weight: &Tensor, bias: &Tensor) -> Result<Tensor> {
+pub(crate) fn linear(x: &Tensor, weight: &Tensor, bias: &Tensor) -> Result<Tensor> {
     projection(x, weight, Some(bias))
 }
 
-pub(super) fn layer_norm(
+pub(crate) fn layer_norm(
     x: &Tensor,
     weight: &Tensor,
     bias: &Tensor,
@@ -134,7 +134,7 @@ pub(super) fn layer_norm(
     Ok(Tensor::from_vec(output, dimensions.to_vec(), x.device())?)
 }
 
-pub(super) fn causal_mask(sequence: usize, device: &Device) -> Result<Tensor> {
+pub(crate) fn causal_mask(sequence: usize, device: &Device) -> Result<Tensor> {
     let mut values = vec![0.0f32; sequence * sequence];
     for row in 0..sequence {
         for column in (row + 1)..sequence {
@@ -144,7 +144,7 @@ pub(super) fn causal_mask(sequence: usize, device: &Device) -> Result<Tensor> {
     Ok(Tensor::from_vec(values, (sequence, sequence), device)?)
 }
 
-pub(super) fn validate_config(config: &JopePolicyConfig) -> Result<()> {
+pub(crate) fn validate_config(config: &JopePolicyConfig) -> Result<()> {
     if config.d_model != 512
         || config.n_layers != 6
         || config.n_heads != 4

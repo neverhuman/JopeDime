@@ -25,7 +25,7 @@ pub fn grammar(vocab: &Vocab, seed: u64, ridge_first: bool) -> Result<Vec<String
     anyhow::bail!("unable to produce deterministic grammar64")
 }
 
-pub(super) fn sample(
+pub(crate) fn sample(
     policy: &Policy,
     vocab: &Vocab,
     values: &[f32],
@@ -129,7 +129,7 @@ pub(super) fn sample(
     Ok((valid, receipt))
 }
 
-pub(super) fn values(root: &Path, p: &Path, sha: &str) -> Result<Vec<f32>> {
+pub(crate) fn values(root: &Path, p: &Path, sha: &str) -> Result<Vec<f32>> {
     let bytes = fs::read(path(root, p))?;
     ensure!(
         hash(&bytes) == sha && bytes.len() == 2048 * 4,
@@ -143,7 +143,7 @@ pub(super) fn values(root: &Path, p: &Path, sha: &str) -> Result<Vec<f32>> {
     Ok(values)
 }
 
-pub(super) fn load(
+pub(crate) fn load(
     root: &Path,
     checkpoint: &Path,
     vocab_sha: &str,
@@ -171,11 +171,11 @@ pub(super) fn load(
     Ok((vs, model, file_hash(&checkpoint.join("state.json"))?, state))
 }
 
-pub(super) fn ordered(ranking: &Ranking) -> Vec<String> {
+pub(crate) fn ordered(ranking: &Ranking) -> Vec<String> {
     ranking.ranked.iter().map(|p| p.program.clone()).collect()
 }
 
-pub(super) fn scoring_parity(
+pub(crate) fn scoring_parity(
     policy: &Policy,
     vocab: &Vocab,
     context: &[f32],

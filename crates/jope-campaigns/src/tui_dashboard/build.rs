@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_dashboard(raw: &RawSources, slow: &SlowView) -> Dashboard {
+pub(crate) fn build_dashboard(raw: &RawSources, slow: &SlowView) -> Dashboard {
     let mut dashboard = Dashboard {
         collected_at_ms: raw.collected_at_ms,
         collection_latency_ms: raw.collection_latency_ms,

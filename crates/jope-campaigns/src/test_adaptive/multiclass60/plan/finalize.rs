@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) fn run_root(campaign_root: &Path, run_id: &str) -> PathBuf {
+pub(crate) fn run_root(campaign_root: &Path, run_id: &str) -> PathBuf {
     campaign_root.join(run_id)
 }
 
-pub(super) fn plan(
+pub(crate) fn plan(
     run_id: &str,
     campaign_root: &Path,
     corpus_manifest: &Path,
@@ -46,7 +46,7 @@ pub(super) fn plan(
     Ok(())
 }
 
-pub(super) fn read_plan(campaign_root: &Path, run_id: &str) -> Result<Plan> {
+pub(crate) fn read_plan(campaign_root: &Path, run_id: &str) -> Result<Plan> {
     let path = run_root(campaign_root, run_id).join("plan.v1.json");
     let plan: Plan = serde_json::from_slice(&fs::read(&path)?)
         .with_context(|| format!("read {}", path.display()))?;
@@ -83,7 +83,7 @@ pub(super) fn read_plan(campaign_root: &Path, run_id: &str) -> Result<Plan> {
     Ok(plan)
 }
 
-pub(super) fn ready_dataset_bindings(plan: &Plan, root: &Path) -> Result<Vec<DatasetBinding>> {
+pub(crate) fn ready_dataset_bindings(plan: &Plan, root: &Path) -> Result<Vec<DatasetBinding>> {
     let comparator_root = Path::new(&plan.comparator_root);
     let gate = coverage_gate(comparator_root)?;
     let mut ready = Vec::new();

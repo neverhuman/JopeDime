@@ -1,7 +1,7 @@
 use super::*;
 
 /// Where a source checkout keeps the self-play unit templates.
-pub(super) fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
+pub(crate) fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
     source.join("deploy/systemd/selfplay")
 }
 
@@ -17,7 +17,7 @@ pub(super) fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
 const HOST_INSTALLED_UNITS: [&str; 2] =
     ["jope-workspace-sync.service", "jope-workspace-sync.timer"];
 
-pub(super) fn is_host_installed_unit(path: &Path) -> bool {
+pub(crate) fn is_host_installed_unit(path: &Path) -> bool {
     path.file_name()
         .and_then(|name| name.to_str())
         .is_some_and(|name| {
@@ -31,7 +31,7 @@ pub(super) fn is_host_installed_unit(path: &Path) -> bool {
 /// the services work in and the `current` bundle's binaries (the activation
 /// symlink every unit follows), so a rendered unit never names a specific
 /// bundle identity.
-pub(super) fn unit_roots() -> jope_paths::systemd::Roots {
+pub(crate) fn unit_roots() -> jope_paths::systemd::Roots {
     jope_paths::systemd::Roots {
         home: paths::jope_home(),
         state: paths::jope_state(),
@@ -42,14 +42,14 @@ pub(super) fn unit_roots() -> jope_paths::systemd::Roots {
 
 /// Per-process scratch directory the templates are rendered into before they
 /// are copied into the bundle; removed once the bundle is staged.
-pub(super) fn rendered_units_dir(args: &Args) -> PathBuf {
+pub(crate) fn rendered_units_dir(args: &Args) -> PathBuf {
     args.output_root
         .join(format!(".units-rendered.tmp-{}", std::process::id()))
 }
 
 /// Renders `deploy/systemd/selfplay/*.in` into `<dir>/systemd/` so the bundle
 /// carries concrete units (`runtime/systemd/<unit>`), never templates.
-pub(super) fn render_unit_templates(source: &Path, dir: &Path) -> Result<PathBuf> {
+pub(crate) fn render_unit_templates(source: &Path, dir: &Path) -> Result<PathBuf> {
     let templates = selfplay_unit_templates_in(source);
     ensure!(
         templates.is_dir(),
@@ -69,7 +69,7 @@ pub(super) fn render_unit_templates(source: &Path, dir: &Path) -> Result<PathBuf
     Ok(out)
 }
 
-pub(super) fn sources(
+pub(crate) fn sources(
     args: &Args,
     service_manifest: &ServiceManifest,
     service_manifest_path: &Path,
@@ -225,7 +225,7 @@ pub(super) fn sources(
     Ok(selected)
 }
 
-pub(super) fn add(
+pub(crate) fn add(
     selected: &mut Vec<Candidate>,
     source: PathBuf,
     target: String,
@@ -238,7 +238,7 @@ pub(super) fn add(
     });
 }
 
-pub(super) fn collect_extension(
+pub(crate) fn collect_extension(
     directory: &Path,
     relative_root: &Path,
     extension: &str,
@@ -275,7 +275,7 @@ pub(super) fn collect_extension(
     Ok(())
 }
 
-pub(super) fn resolve_locator(
+pub(crate) fn resolve_locator(
     locator: &str,
     source: &Path,
     prime: &Path,
@@ -299,7 +299,7 @@ pub(super) fn resolve_locator(
     bail!("invalid Python allowlist locator {locator}")
 }
 
-pub(super) fn validate_python_candidate(
+pub(crate) fn validate_python_candidate(
     candidate: &Candidate,
     source: &Path,
     prime: &Path,
@@ -340,7 +340,7 @@ pub(super) fn validate_python_candidate(
     Ok(())
 }
 
-pub(super) fn validate_systemd_unit(contents: &str) -> Result<()> {
+pub(crate) fn validate_systemd_unit(contents: &str) -> Result<()> {
     for line in systemd_logical_lines(contents)? {
         let line = line.trim();
         if let Some(working_directory) = line.strip_prefix("WorkingDirectory=") {
@@ -372,7 +372,7 @@ pub(super) fn validate_systemd_unit(contents: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn systemd_logical_lines(contents: &str) -> Result<Vec<String>> {
+pub(crate) fn systemd_logical_lines(contents: &str) -> Result<Vec<String>> {
     let mut logical = Vec::new();
     let mut continued = String::new();
     for physical in contents.lines() {
@@ -396,7 +396,7 @@ pub(super) fn systemd_logical_lines(contents: &str) -> Result<Vec<String>> {
     Ok(logical)
 }
 
-pub(super) fn validate_systemd_python_boundary(line: &str) -> Result<()> {
+pub(crate) fn validate_systemd_python_boundary(line: &str) -> Result<()> {
     let allowed_root = Path::new(active_bundle_pytorch_root_str());
     for (index, token) in line.split_ascii_whitespace().enumerate() {
         let value = token
@@ -436,7 +436,7 @@ pub(super) fn validate_systemd_python_boundary(line: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_supply_pytorch_boundary(line: &str) -> Result<()> {
+pub(crate) fn validate_supply_pytorch_boundary(line: &str) -> Result<()> {
     let normalized = line.to_ascii_lowercase();
     let pytorch = active_bundle_pytorch_root_str().to_ascii_lowercase();
     ensure!(

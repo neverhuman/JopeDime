@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn summary<'a>(runs: impl Iterator<Item = &'a RunRecord> + Clone) -> Summary {
+pub(crate) fn summary<'a>(runs: impl Iterator<Item = &'a RunRecord> + Clone) -> Summary {
     Summary {
         m1_rmse: mean_of(runs.clone().map(|r| r.metrics.m1.rmse)),
         m1_r2: mean_of(runs.clone().map(|r| r.metrics.m1.r2)),
@@ -19,7 +19,7 @@ pub(super) fn summary<'a>(runs: impl Iterator<Item = &'a RunRecord> + Clone) -> 
     }
 }
 
-pub(super) fn aggregate(
+pub(crate) fn aggregate(
     slot: &'static str,
     profile: Profile,
     datasets: &[Dataset],
@@ -65,7 +65,7 @@ pub(super) fn aggregate(
 }
 
 /// A clause comparing B with A where lower is better: pass when `b <= a * limit`.
-pub(super) fn ratio_clause(
+pub(crate) fn ratio_clause(
     metric: &'static str,
     rule: &'static str,
     a: f64,
@@ -92,7 +92,7 @@ pub(super) fn ratio_clause(
 /// A clause over a value both profiles may lack for the same reason, such as the M7 expression
 /// size when no best program of either profile has a `map` or `derive` stage: equal absence is no
 /// difference.
-pub(super) fn optional_ratio_clause(
+pub(crate) fn optional_ratio_clause(
     metric: &'static str,
     rule: &'static str,
     a: Option<f64>,
@@ -123,7 +123,7 @@ pub(super) fn optional_ratio_clause(
 /// A clause over a value every run should supply, such as M8: an aggregate is `None` when some
 /// run lacks it, so the clause is evaluated only when both profiles have a value. A value missing
 /// from both profiles was never compared, so it is not evaluated, never no difference.
-pub(super) fn every_run_ratio_clause(
+pub(crate) fn every_run_ratio_clause(
     metric: &'static str,
     rule: &'static str,
     a: Option<f64>,
@@ -146,7 +146,7 @@ pub(super) fn every_run_ratio_clause(
     }
 }
 
-pub(super) fn not_evaluated(
+pub(crate) fn not_evaluated(
     metric: &'static str,
     rule: &'static str,
     note: &'static str,
@@ -163,7 +163,7 @@ pub(super) fn not_evaluated(
 
 /// A gate whose clauses must all hold: it fails on any failing clause, reports no difference
 /// when every evaluated clause does, and is not evaluated when no clause could be.
-pub(super) fn all_of(rule: &'static str, clauses: Vec<Clause>) -> Gate {
+pub(crate) fn all_of(rule: &'static str, clauses: Vec<Clause>) -> Gate {
     let evaluated: Vec<&Clause> = clauses
         .iter()
         .filter(|c| c.status != NOT_EVALUATED)
@@ -188,7 +188,7 @@ pub(super) fn all_of(rule: &'static str, clauses: Vec<Clause>) -> Gate {
 
 /// G-A: not worse than A by more than 0.25 sigma on any dataset, and better by at least one
 /// sigma on two datasets or M3 at least 10% lower.
-pub(super) fn quality_gate(a: &SlotAggregate, b: &SlotAggregate) -> Gate {
+pub(crate) fn quality_gate(a: &SlotAggregate, b: &SlotAggregate) -> Gate {
     const RULE: &str = "mean M1 RMSE of B is not worse than A by more than 0.25 sigma_seed on any \
                         dataset, and better by at least 1 sigma_seed on at least 2 datasets or \
                         mean M3 at least 10% lower";
@@ -271,7 +271,7 @@ pub(super) fn quality_gate(a: &SlotAggregate, b: &SlotAggregate) -> Gate {
 }
 
 /// The gates of workplan §17.3 over the two profiles' aggregates.
-pub(super) fn gates(
+pub(crate) fn gates(
     profile_a: Profile,
     profile_b: Profile,
     a: &SlotAggregate,
@@ -373,7 +373,7 @@ pub(super) fn gates(
 
 /// [`NO_DIFFERENCE`] when every B run's metrics and cut accounting equal the A run's for the
 /// same dataset and seed.
-pub(super) fn verdict(runs: &[RunRecord]) -> &'static str {
+pub(crate) fn verdict(runs: &[RunRecord]) -> &'static str {
     let key = |r: &RunRecord| (r.dataset.clone(), r.seed);
     let a: BTreeMap<_, _> = runs
         .iter()

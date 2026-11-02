@@ -40,7 +40,7 @@ pub fn funding_request(config: &Path, request: &FundingRequest) -> Result<Value>
 
 // The public entry always loads a protected root-owned installation. Private
 // unit fixtures inject an InstalledFunding into this same transport path.
-pub(super) fn funding_request_installed(
+pub(crate) fn funding_request_installed(
     installation: &InstalledFunding,
     request: &FundingRequest,
     started: u64,

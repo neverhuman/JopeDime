@@ -1,7 +1,7 @@
 // Extracted from inference_contract_tests.rs; test behavior is unchanged.
 use super::*;
 
-pub(super) fn run(directory: &Path, argv: &[String]) -> std::process::Output {
+pub(crate) fn run(directory: &Path, argv: &[String]) -> std::process::Output {
     let output = Command::new(&argv[0])
         .args(&argv[1..])
         .current_dir(directory)
@@ -17,7 +17,7 @@ pub(super) fn run(directory: &Path, argv: &[String]) -> std::process::Output {
     output
 }
 
-pub(super) fn rust_literal(rows: &[Vec<Option<String>>]) -> String {
+pub(crate) fn rust_literal(rows: &[Vec<Option<String>>]) -> String {
     format!(
         "vec![{}]",
         rows.iter()
@@ -262,7 +262,7 @@ pub(crate) fn divergences(
 }
 
 /// Every applicable case produced exactly the declared accept/refuse outcome count.
-pub(super) fn assert_tallies(cases: &[Case], tallies: &[Tally], backends: usize) {
+pub(crate) fn assert_tallies(cases: &[Case], tallies: &[Tally], backends: usize) {
     assert_eq!(tallies.len(), backends);
     for tally in tallies {
         let applicable = |case: &&Case| tally.backend != Backend::Rust || case.typed.is_some();
@@ -286,7 +286,7 @@ pub(super) fn assert_tallies(cases: &[Case], tallies: &[Tally], backends: usize)
     }
 }
 
-pub(super) fn scratch() -> tempfile::TempDir {
+pub(crate) fn scratch() -> tempfile::TempDir {
     let scratch = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../target/fitted-inference-tests");
     std::fs::create_dir_all(&scratch).unwrap();

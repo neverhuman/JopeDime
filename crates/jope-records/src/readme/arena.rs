@@ -2,7 +2,7 @@ use super::*;
 
 /// A snapshot and the CSV it hashes, cross-checked. Fails closed on any disagreement.
 
-pub(super) fn load_ladder(
+pub(crate) fn load_ladder(
     p: &Paths,
     snapshot: &str,
     csv: &str,
@@ -45,7 +45,7 @@ pub(super) fn load_ladder(
     Ok((snap, rows))
 }
 
-pub(super) struct Evidence {
+pub(crate) struct Evidence {
     track: Value,
     published: Value,
     published_rows: Vec<Dict>,
@@ -54,7 +54,7 @@ pub(super) struct Evidence {
     corrections: Value,
 }
 
-pub(super) fn load_evidence(p: &Paths) -> Result<Evidence> {
+pub(crate) fn load_evidence(p: &Paths) -> Result<Evidence> {
     let track = p.json(TRACK)?;
     let (published, published_rows) = load_ladder(p, SNAPSHOT, LEADERBOARD, "published")?;
     let (valid, valid_rows) = load_ladder(p, VALID_SNAPSHOT, VALID_LEADERBOARD, "benchmark-valid")?;
@@ -187,7 +187,7 @@ pub(super) fn load_evidence(p: &Paths) -> Result<Evidence> {
     })
 }
 
-pub(super) fn table_row(r: &Dict) -> Result<String> {
+pub(crate) fn table_row(r: &Dict) -> Result<String> {
     let ours = OURS.contains(&cell(r, "method_id")?);
     let bold = |text: &str| {
         if ours {
@@ -210,7 +210,7 @@ pub(super) fn table_row(r: &Dict) -> Result<String> {
 }
 
 /// The top N plus every one of our entries, in rank order, with an ellipsis row per gap.
-pub(super) fn ladder_table(rows: &[Dict]) -> Result<Vec<String>> {
+pub(crate) fn ladder_table(rows: &[Dict]) -> Result<Vec<String>> {
     let mut shown: std::collections::BTreeSet<usize> = (0..TOP_N).collect();
     for (i, r) in rows.iter().enumerate() {
         if OURS.contains(&cell(r, "method_id")?) {
@@ -232,7 +232,7 @@ pub(super) fn ladder_table(rows: &[Dict]) -> Result<Vec<String>> {
     Ok(out)
 }
 
-pub(super) fn render_arena(p: &Paths) -> Result<String> {
+pub(crate) fn render_arena(p: &Paths) -> Result<String> {
     let e = load_evidence(p)?;
     let (track, corrections, published, valid) = (&e.track, &e.corrections, &e.published, &e.valid);
     let empty = Value::Dict(Dict::new());

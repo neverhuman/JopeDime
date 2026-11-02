@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn bounded_task_score(task: Task, score: f64) -> f64 {
+pub(crate) fn bounded_task_score(task: Task, score: f64) -> f64 {
     let score = if task == Task::Timeseries {
         score + 1.0
     } else {
@@ -9,7 +9,7 @@ pub(super) fn bounded_task_score(task: Task, score: f64) -> f64 {
     score.clamp(-1.0, 1.0)
 }
 
-pub(super) fn summarize(
+pub(crate) fn summarize(
     args: &Args,
     pending: &PendingIntent,
     proposal_set: &Path,

@@ -1,10 +1,10 @@
 use super::*;
 
 mod reports;
-pub(super) use reports::{derive_annotations, ingest_truncations, open_db, recompute_flags};
+pub(crate) use reports::{derive_annotations, ingest_truncations, open_db, recompute_flags};
 
 #[allow(clippy::too_many_lines)]
-pub(super) fn ingest(root: &Path, dry_run: bool) -> Result<()> {
+pub(crate) fn ingest(root: &Path, dry_run: bool) -> Result<()> {
     let db_dir = root.join("db");
     fs::create_dir_all(&db_dir)?;
     let db_path = db_dir.join("history.sqlite3");

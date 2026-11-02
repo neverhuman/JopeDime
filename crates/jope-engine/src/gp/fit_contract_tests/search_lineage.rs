@@ -8,7 +8,7 @@ use super::*;
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn recorded_search_inputs_verify_without_caller_paths_and_refuse_substitution() {
+pub(crate) fn recorded_search_inputs_verify_without_caller_paths_and_refuse_substitution() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
@@ -50,7 +50,7 @@ pub(super) fn recorded_search_inputs_verify_without_caller_paths_and_refuse_subs
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores() {
+pub(crate) fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_scores() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().canonicalize().unwrap();
     // Same training rows and preprocessing; only the scored membership differs.
@@ -175,7 +175,7 @@ pub(super) fn reused_fits_are_rescored_on_their_own_rows_and_never_inherit_score
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule() {
+pub(crate) fn feasibility_estimates_are_recorded_beside_observed_outcomes_under_one_rule() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
@@ -234,7 +234,7 @@ pub(super) fn feasibility_estimates_are_recorded_beside_observed_outcomes_under_
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_resume_under_other_selection_rules_is_refused_not_restarted() {
+pub(crate) fn a_resume_under_other_selection_rules_is_refused_not_restarted() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
@@ -305,7 +305,7 @@ pub(super) fn a_resume_under_other_selection_rules_is_refused_not_restarted() {
 /// Live (non-zombie) helper processes among those a faulting evaluator
 /// recorded. Only the fixture's own `sleep 300` helpers are counted, so a
 /// reused pid is never mistaken for one.
-pub(super) fn live_left_behind(census: &Path) -> Vec<i32> {
+pub(crate) fn live_left_behind(census: &Path) -> Vec<i32> {
     let Ok(entries) = fs::read_dir(census) else {
         return Vec::new();
     };
@@ -335,7 +335,7 @@ pub(super) fn live_left_behind(census: &Path) -> Vec<i32> {
 }
 
 /// A killed orphan is reaped by init asynchronously: poll briefly.
-pub(super) fn settled_left_behind(census: &Path) -> Vec<i32> {
+pub(crate) fn settled_left_behind(census: &Path) -> Vec<i32> {
     let deadline = Instant::now() + Duration::from_secs(5);
     loop {
         let live = live_left_behind(census);
@@ -347,7 +347,7 @@ pub(super) fn settled_left_behind(census: &Path) -> Vec<i32> {
 }
 
 /// A failing test must not leak the helpers it provoked.
-pub(super) struct CensusGuard(PathBuf);
+pub(crate) struct CensusGuard(PathBuf);
 
 impl Drop for CensusGuard {
     fn drop(&mut self) {
@@ -361,10 +361,10 @@ impl Drop for CensusGuard {
     }
 }
 
-pub(super) fn recorded(census: &Path) -> usize {
+pub(crate) fn recorded(census: &Path) -> usize {
     fs::read_dir(census).map_or(0, |entries| entries.count())
 }
 
-pub(super) fn completion(root: &Path, row: &Value) -> Value {
+pub(crate) fn completion(root: &Path, row: &Value) -> Value {
     crate::label_admission::artifact(root, &row["clean_completion"]).unwrap()
 }

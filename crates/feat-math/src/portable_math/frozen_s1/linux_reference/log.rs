@@ -1,6 +1,6 @@
 use super::log_tables::*;
 
-pub(super) fn ln(x: f64) -> f64 {
+pub(crate) fn ln(x: f64) -> f64 {
     let mut ix = x.to_bits();
     if ix.wrapping_sub((1.0f64 - 0.0625).to_bits())
         < (1.0f64 + f64::from_bits(0x3fb0900000000000)).to_bits() - (1.0f64 - 0.0625).to_bits()

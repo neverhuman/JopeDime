@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn collect_alerts(raw: &RawSources, scq: &Value, dashboard: &Dashboard) -> Vec<String> {
+pub(crate) fn collect_alerts(raw: &RawSources, scq: &Value, dashboard: &Dashboard) -> Vec<String> {
     let mut alerts = BTreeSet::new();
     for source in raw.source_states.iter().filter(|source| !source.healthy) {
         alerts.insert(format!(
@@ -104,7 +104,7 @@ pub(super) fn collect_alerts(raw: &RawSources, scq: &Value, dashboard: &Dashboar
     alerts.into_iter().collect()
 }
 
-pub(super) fn add_stale_source_alert(
+pub(crate) fn add_stale_source_alert(
     alerts: &mut BTreeSet<String>,
     name: &str,
     value: Option<&Value>,
@@ -129,7 +129,7 @@ pub(super) fn add_stale_source_alert(
 /// after a cpu-overload-guard episode stranded 996 held eval jobs for ~3 h
 /// with only a quiet queue panel to show for it. Returns the most severe
 /// active condition, or None when work flows normally.
-pub(super) fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
+pub(crate) fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
     let queue = &dashboard.queue;
     let below_floor_without_ready = queue.target > 0
         && queue.useful_depth < queue.target
@@ -250,7 +250,7 @@ pub(super) fn blocked_banner(dashboard: &Dashboard) -> Option<String> {
         .map(|alert| format!("{alert} — scheduler is degraded"))
 }
 
-pub(super) fn why_idle_chain(dashboard: &Dashboard) -> String {
+pub(crate) fn why_idle_chain(dashboard: &Dashboard) -> String {
     if let Some(blocker) = blocked_banner(dashboard) {
         return format!("WHY IDLE → {blocker}");
     }
@@ -273,7 +273,7 @@ pub(super) fn why_idle_chain(dashboard: &Dashboard) -> String {
     "WHY IDLE → resources are owned or scientifically authorized work is running".to_owned()
 }
 
-pub(super) fn cockpit_state(dashboard: &Dashboard) -> &'static str {
+pub(crate) fn cockpit_state(dashboard: &Dashboard) -> &'static str {
     if dashboard.supply_circuit_open
         || dashboard.stranded_trainer
         || dashboard.stranded_proposer

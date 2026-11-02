@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn binary_replay_detail(run: &Value) -> String {
+pub(crate) fn binary_replay_detail(run: &Value) -> String {
     format!(
         "{} admitted · {} bindings verified · {} exact replay pairs · {} raw components recomputed",
         decimal_count(run, "binary_admitted_contexts"),
@@ -12,7 +12,7 @@ pub(super) fn binary_replay_detail(run: &Value) -> String {
         )
     )
 }
-pub(super) fn comparison_lines(run: &Value) -> Vec<Line<'static>> {
+pub(crate) fn comparison_lines(run: &Value) -> Vec<Line<'static>> {
     let mut lines = vec![Line::styled(
         "POLICY VALUE · MATCHED SEARCH BUDGETS",
         Style::default().fg(VIOLET).bold(),

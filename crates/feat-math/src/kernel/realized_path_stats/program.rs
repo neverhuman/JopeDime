@@ -11,9 +11,9 @@ pub const PROFILE_ID: &str = "feat-math.causal-path-stats-program.v2";
 
 #[derive(Clone, Debug)]
 pub struct PathStatsProgram {
-    pub(super) config: Config,
-    pub(super) input: OrderedInputIdentity,
-    pub(super) downstream: GenomeIr,
+    pub(crate) config: Config,
+    pub(crate) input: OrderedInputIdentity,
+    pub(crate) downstream: GenomeIr,
 }
 impl PathStatsProgram {
     pub fn new(

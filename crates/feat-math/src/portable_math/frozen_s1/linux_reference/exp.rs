@@ -1,7 +1,7 @@
 use super::exp_tables::*;
 use super::trig_tables::TOINT;
 
-pub(super) fn exp(x: f64) -> f64 {
+pub(crate) fn exp(x: f64) -> f64 {
     if !x.is_finite() || x.abs() > 500.0 {
         return x.exp();
     }

@@ -29,7 +29,7 @@ pub fn cleanup_expired_tickets(dir: &Path, expired_after: Duration) -> Result<us
     Ok(removed)
 }
 
-pub(super) fn create_ticket(dir: &Path) -> Result<PathBuf> {
+pub(crate) fn create_ticket(dir: &Path) -> Result<PathBuf> {
     for _ in 0..16 {
         let now_ns = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -54,7 +54,7 @@ pub(super) fn create_ticket(dir: &Path) -> Result<PathBuf> {
     Err(anyhow!("could not allocate unique gpu queue ticket"))
 }
 
-pub(super) fn touch_ticket(path: &Path) -> Result<()> {
+pub(crate) fn touch_ticket(path: &Path) -> Result<()> {
     let now_ns = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -69,7 +69,7 @@ pub(super) fn touch_ticket(path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn list_tickets(dir: &Path) -> Result<Vec<PathBuf>> {
+pub(crate) fn list_tickets(dir: &Path) -> Result<Vec<PathBuf>> {
     if !dir.exists() {
         return Ok(Vec::new());
     }
@@ -87,7 +87,7 @@ pub(super) fn list_tickets(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(tickets)
 }
 
-pub(super) fn env_duration_secs(key: &str, default_secs: u64) -> Duration {
+pub(crate) fn env_duration_secs(key: &str, default_secs: u64) -> Duration {
     std::env::var(key)
         .ok()
         .and_then(|value| value.trim().parse::<u64>().ok())
@@ -96,7 +96,7 @@ pub(super) fn env_duration_secs(key: &str, default_secs: u64) -> Duration {
         .unwrap_or_else(|| Duration::from_secs(default_secs))
 }
 
-pub(super) fn env_duration_millis(key: &str, default_ms: u64) -> Duration {
+pub(crate) fn env_duration_millis(key: &str, default_ms: u64) -> Duration {
     std::env::var(key)
         .ok()
         .and_then(|value| value.trim().parse::<u64>().ok())

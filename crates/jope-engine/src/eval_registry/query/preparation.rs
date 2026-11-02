@@ -4,7 +4,7 @@ const MAX_ROWS: usize = 10_000;
 const MAX_COLUMNS: usize = 1_024;
 const MAX_CELLS: usize = 1_000_000;
 
-pub(super) fn valid_sha(value: &str) -> bool {
+pub(crate) fn valid_sha(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
@@ -13,7 +13,7 @@ pub(super) fn valid_sha(value: &str) -> bool {
 
 /// Decode only the retained fitted state. Every caller, including private
 /// contract fixtures, uses the same rejection contract; no fitting fallback.
-pub(super) fn load_retained_model(bytes: &[u8]) -> Result<feat_math::Model> {
+pub(crate) fn load_retained_model(bytes: &[u8]) -> Result<feat_math::Model> {
     serde_json::from_slice(bytes)
         .context("retained model format unavailable; refitting is forbidden")
 }
@@ -41,14 +41,14 @@ fn vector_bits(values: &[f64]) -> Vec<u8> {
     }
     bytes
 }
-pub(super) fn matrix_sha256(rows: &[Vec<f64>]) -> String {
+pub(crate) fn matrix_sha256(rows: &[Vec<f64>]) -> String {
     let mut bytes = (rows.len() as u64).to_le_bytes().to_vec();
     for row in rows {
         bytes.extend_from_slice(&vector_bits(row));
     }
     hash(&bytes)
 }
-pub(super) fn receipt_digest(receipt: &QueryReceipt) -> Result<String> {
+pub(crate) fn receipt_digest(receipt: &QueryReceipt) -> Result<String> {
     let mut value = serde_json::to_value(receipt)?;
     value
         .as_object_mut()
@@ -56,7 +56,7 @@ pub(super) fn receipt_digest(receipt: &QueryReceipt) -> Result<String> {
         .remove("receipt_sha256");
     Ok(hash(&serde_json::to_vec(&value)?))
 }
-pub(super) fn execution_query_key(
+pub(crate) fn execution_query_key(
     input_key: &str,
     executable: &str,
     runtime: &str,
@@ -70,15 +70,15 @@ pub(super) fn execution_query_key(
     )?))
 }
 
-pub(super) struct PreparedQuery {
-    pub(super) original: CompletionReceipt,
-    pub(super) rows: Vec<Vec<f64>>,
-    pub(super) preprocessing: Preprocessing,
-    pub(super) query_key: String,
-    pub(super) query_rows_sha256: String,
-    pub(super) targets_sha256: String,
+pub(crate) struct PreparedQuery {
+    pub(crate) original: CompletionReceipt,
+    pub(crate) rows: Vec<Vec<f64>>,
+    pub(crate) preprocessing: Preprocessing,
+    pub(crate) query_key: String,
+    pub(crate) query_rows_sha256: String,
+    pub(crate) targets_sha256: String,
 }
-pub(super) fn prepare_query(
+pub(crate) fn prepare_query(
     completion: &[u8],
     model: &[u8],
     inputs: &QueryInputs,
@@ -193,7 +193,7 @@ pub(super) fn prepare_query(
     })
 }
 
-pub(super) fn metrics(targets: &[f64], predictions: &[f64]) -> Result<Vec<u8>> {
+pub(crate) fn metrics(targets: &[f64], predictions: &[f64]) -> Result<Vec<u8>> {
     ensure!(
         !targets.is_empty()
             && targets.len() == predictions.len()

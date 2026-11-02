@@ -108,7 +108,7 @@ impl HistGbm2Params {
 }
 
 /// Holdout early-stopping criterion (see the module notes).
-pub(super) fn holdout_error(y: &[f64], p: &[f64], stop_mae: bool) -> f64 {
+pub(crate) fn holdout_error(y: &[f64], p: &[f64], stop_mae: bool) -> f64 {
     if stop_mae {
         mae(y, p)
     } else {

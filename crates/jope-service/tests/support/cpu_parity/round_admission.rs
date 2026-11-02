@@ -1,6 +1,5 @@
 use super::{
-    hashed, intervene_on_landmark_tokens, output_oracle_matches, Fixtures, Provider, Stats, BUNDLE,
-    JOPE_SHA, R882_JOPE_SHA,
+    hashed, output_oracle_matches, Fixtures, Provider, Stats, BUNDLE, JOPE_SHA, R882_JOPE_SHA,
 };
 use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext, RoundMeasurement};
 use crate::ranker::admission::{select_costs, CpuRoundAdmission, RevealedRule};
@@ -13,7 +12,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{cell::Cell, env, fs, path::PathBuf};
 
-pub(super) fn round_admission_fixture(causal_measurements_only: bool) {
+pub(crate) fn round_admission_fixture(causal_measurements_only: bool) {
     let fixtures = Fixtures::open();
     let spec = &fixtures.index["files"]["programs.jsonl"];
     let bytes = hashed(

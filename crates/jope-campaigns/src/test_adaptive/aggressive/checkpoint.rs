@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_checkpoints(
+pub(crate) fn load_checkpoints(
     run_id: &str,
     spec: &DatasetSpec,
 ) -> Result<Vec<(AggressiveCheckpoint, String)>> {
@@ -159,7 +159,7 @@ pub(super) fn load_checkpoints(
     Ok(checkpoints)
 }
 
-pub(super) fn validate_checkpoint_receipts(
+pub(crate) fn validate_checkpoint_receipts(
     manifest: &AggressiveManifest,
     spec: &DatasetSpec,
     checkpoint: &AggressiveCheckpoint,
@@ -225,7 +225,7 @@ pub(super) fn validate_checkpoint_receipts(
     Ok(())
 }
 
-pub(super) fn confirm_winner(
+pub(crate) fn confirm_winner(
     manifest: &AggressiveManifest,
     spec: &DatasetSpec,
     checkpoint: &AggressiveCheckpoint,
@@ -345,7 +345,7 @@ pub(super) fn confirm_winner(
     Ok((confirmation, digest))
 }
 
-pub(super) fn finish_dataset(
+pub(crate) fn finish_dataset(
     manifest: &AggressiveManifest,
     spec: &DatasetSpec,
     checkpoint: &AggressiveCheckpoint,

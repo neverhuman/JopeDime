@@ -1,7 +1,7 @@
 use super::*;
 
 /// `1234567` as `1,234,567`.
-pub(super) fn grouped(n: usize) -> String {
+pub(crate) fn grouped(n: usize) -> String {
     let digits = n.to_string();
     let mut out = String::new();
     for (i, d) in digits.chars().enumerate() {
@@ -14,7 +14,7 @@ pub(super) fn grouped(n: usize) -> String {
 }
 
 /// Small counts the README spells out ("nine jobs", "forty ... fixtures").
-pub(super) fn words(n: usize) -> String {
+pub(crate) fn words(n: usize) -> String {
     const ONES: [&str; 20] = [
         "zero",
         "one",

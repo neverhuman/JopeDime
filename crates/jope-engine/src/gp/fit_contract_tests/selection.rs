@@ -1,11 +1,11 @@
 mod release;
-pub(super) use release::*;
+pub(crate) use release::*;
 
 use super::*;
 
 /// Seed population whose programs equal `base`'s but whose origin labels are
 /// all `origin`: only the labels differ.
-pub(super) fn relabelled_population(base: &Path, path: &Path, origin: &str) {
+pub(crate) fn relabelled_population(base: &Path, path: &Path, origin: &str) {
     let mut population: SeedPopulation = read_json(base).unwrap();
     for candidate in &mut population.candidates {
         candidate.origin = origin.into();
@@ -18,7 +18,7 @@ pub(super) fn relabelled_population(base: &Path, path: &Path, origin: &str) {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other() {
+pub(crate) fn a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_other() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
@@ -175,7 +175,7 @@ pub(super) fn a_paired_comparison_names_its_sole_arm_difference_and_refuses_any_
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams() {
+pub(crate) fn a_refused_proposal_in_one_slot_does_not_shift_another_slots_random_streams() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
@@ -255,7 +255,7 @@ pub(super) fn a_refused_proposal_in_one_slot_does_not_shift_another_slots_random
 
 /// Rewrite the fixture preparation's family partition (identity recomputed by
 /// every consumer, as a producer of that partition would publish it).
-pub(super) fn set_partition(prepared: &Path, partition: &str) {
+pub(crate) fn set_partition(prepared: &Path, partition: &str) {
     let mut p: Value = read_json(&prepared.join("prepared.json")).unwrap();
     p["meta_partition"] = json!(partition);
     write_json(&prepared.join("prepared.json"), &p).unwrap();
@@ -270,7 +270,7 @@ pub(super) fn set_partition(prepared: &Path, partition: &str) {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit()
+pub(crate) fn qualification_search_of_a_sealed_meta_test_family_is_refused_before_any_view_or_fit()
 {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
@@ -311,7 +311,7 @@ pub(super) fn qualification_search_of_a_sealed_meta_test_family_is_refused_befor
 /// raw label cells replaced. Cut 0 trains on rows 0..8 and validates on 8, 9;
 /// rows 10 and 11 sit in the backing file outside every membership, where a
 /// shared source keeps rows no stage may use.
-pub(super) fn label_variant(root: &Path, name: &str, labels: &[(usize, &str)]) -> PathBuf {
+pub(crate) fn label_variant(root: &Path, name: &str, labels: &[(usize, &str)]) -> PathBuf {
     fs::create_dir_all(root.join("manifests")).unwrap();
     fs::write(root.join("Cargo.toml"), "[workspace]\n").unwrap();
     fs::create_dir_all(root.join("data/originals")).unwrap();

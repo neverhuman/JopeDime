@@ -16,7 +16,7 @@ pub fn build(root: &Path, manifest: &Artifact, output: &Path) -> Result<()> {
     immutable(&output.join("index.json"), &index)
 }
 /// Pure deterministic rendering also drives independent native Graph verification.
-pub(crate) fn render(root: &Path, manifest: &Artifact) -> Result<BTreeMap<String, Vec<u8>>> {
+pub fn render(root: &Path, manifest: &Artifact) -> Result<BTreeMap<String, Vec<u8>>> {
     let set: TargetSet = native_genome::load(root, manifest)?;
     ensure!(
         set.schema == "jope.continuation_target_set.v1"

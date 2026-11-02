@@ -9,12 +9,12 @@ struct Node {
     value: f64,
 }
 
-pub(super) struct Tree {
+pub(crate) struct Tree {
     nodes: Vec<Node>,
 }
 
 impl Tree {
-    pub(super) fn prediction(&self, bins: &[u8], stride: usize, row: usize) -> f64 {
+    pub(crate) fn prediction(&self, bins: &[u8], stride: usize, row: usize) -> f64 {
         let mut at = 0;
         loop {
             let node = &self.nodes[at];
@@ -146,7 +146,7 @@ fn round_limit(n: usize, p: usize) -> usize {
     (480_000_000usize / estimate.max(1)).clamp(16, 320)
 }
 
-pub(super) struct Booster {
+pub(crate) struct Booster {
     rng: Random,
     rows: Vec<usize>,
     columns: Vec<usize>,
@@ -155,7 +155,7 @@ pub(super) struct Booster {
 }
 
 impl Booster {
-    pub(super) fn new(n: usize, prep: &Preparation, seed: u64) -> Self {
+    pub(crate) fn new(n: usize, prep: &Preparation, seed: u64) -> Self {
         Self {
             rng: Random::new(seed),
             rows: (0..n).collect(),
@@ -165,7 +165,7 @@ impl Booster {
         }
     }
 
-    pub(super) fn step(&mut self, matrix: &Matrix, y: &[f64]) -> Tree {
+    pub(crate) fn step(&mut self, matrix: &Matrix, y: &[f64]) -> Tree {
         let n = matrix.n;
         let residual: Vec<f64> = y
             .iter()

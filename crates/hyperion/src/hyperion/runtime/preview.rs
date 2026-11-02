@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) struct HyperionEvent<'a> {
+pub(crate) struct HyperionEvent<'a> {
     rows: usize,
     cols: usize,
     output_dim: usize,
@@ -12,7 +12,7 @@ pub(super) struct HyperionEvent<'a> {
     preview: Option<HyperionPreview>,
 }
 
-pub(super) fn emit_hyperion(
+pub(crate) fn emit_hyperion(
     sink: &dyn Sink,
     t0: Instant,
     event: &str,
@@ -52,7 +52,7 @@ pub(super) fn emit_hyperion(
     sink.emit(&e);
 }
 
-pub(super) fn build_hyperion_preview(block: &Matrix) -> HyperionPreview {
+pub(crate) fn build_hyperion_preview(block: &Matrix) -> HyperionPreview {
     let mut scores = vec![0.0_f64; block.n];
     for col in 0..block.c.min(DEFAULT_OUTPUT_DIM) {
         let off = col * block.n;

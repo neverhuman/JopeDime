@@ -146,7 +146,7 @@ fn process_gone(p: &crate::eval_registry::ProcessIdentity) -> Result<()> {
     Ok(())
 }
 impl Loop {
-    pub(super) fn verify_run_approval(&self) -> Result<RunApprovalBody> {
+    pub(crate) fn verify_run_approval(&self) -> Result<RunApprovalBody> {
         let bytes = policy::protected(&self.config.run_approval)?;
         let signed: SignedRunApproval = serde_json::from_slice(&bytes)?;
         crate::native_review::require_signer(&signed.authorization_public_key)?;

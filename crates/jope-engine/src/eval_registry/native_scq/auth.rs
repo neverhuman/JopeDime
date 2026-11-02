@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn exchange(policy: &InstalledPolicy, request: Request) -> Result<Response> {
+pub(crate) fn exchange(policy: &InstalledPolicy, request: Request) -> Result<Response> {
     policy.revalidate()?;
     let grant = &policy.signed.body;
     authenticated_exchange(
@@ -85,7 +85,7 @@ pub(crate) fn authenticated_exchange(
     );
     Ok(response)
 }
-pub(super) fn current_job(policy: &InstalledPolicy, id: JobId) -> Result<JobRecord> {
+pub(crate) fn current_job(policy: &InstalledPolicy, id: JobId) -> Result<JobRecord> {
     match exchange(policy, Request::Get(GetRequest { job_id: id }))? {
         Response::Job(record) => record.context("native allocation missing"),
         _ => anyhow::bail!("native job response differs"),
@@ -111,7 +111,7 @@ pub(crate) fn active_process(
     };
     inspected_process(inspection, attempt)
 }
-pub(super) fn inspected_process(
+pub(crate) fn inspected_process(
     inspection: jain_smartcluster::AttemptInspection,
     attempt: FencedAttempt,
 ) -> Result<ProcessIdentity> {
@@ -147,7 +147,7 @@ pub(super) fn inspected_process(
     );
     Ok(process)
 }
-pub(super) fn native_leader(
+pub(crate) fn native_leader(
     policy: &InstalledPolicy,
     attempt: FencedAttempt,
 ) -> Result<ProcessIdentity> {
@@ -161,7 +161,7 @@ pub(super) fn native_leader(
     )
 }
 
-pub(super) fn process_parent(pid: u32) -> Result<u32> {
+pub(crate) fn process_parent(pid: u32) -> Result<u32> {
     let stat = fs::read_to_string(format!("/proc/{pid}/stat"))?;
     let mut fields = stat
         .rsplit_once(')')
@@ -180,7 +180,7 @@ pub(super) fn process_parent(pid: u32) -> Result<u32> {
         .context("native ancestry parent malformed")
 }
 
-pub(super) fn verify_ancestry(requester: &ProcessIdentity, leader: &ProcessIdentity) -> Result<()> {
+pub(crate) fn verify_ancestry(requester: &ProcessIdentity, leader: &ProcessIdentity) -> Result<()> {
     ensure!(
         requester.boot_id == leader.boot_id && ProcessIdentity::read(leader.pid)? == *leader,
         "native leader identity changed"
@@ -217,7 +217,7 @@ pub(super) fn verify_ancestry(requester: &ProcessIdentity, leader: &ProcessIdent
     anyhow::bail!("native requester ancestry exceeds bound")
 }
 
-pub(super) fn cgroup(pid: u32) -> Result<PathBuf> {
+pub(crate) fn cgroup(pid: u32) -> Result<PathBuf> {
     let text = fs::read_to_string(format!("/proc/{pid}/cgroup"))?;
     let name = text
         .lines()
@@ -225,20 +225,20 @@ pub(super) fn cgroup(pid: u32) -> Result<PathBuf> {
         .context("unified native cgroup absent")?;
     Ok(Path::new("/sys/fs/cgroup").join(name.trim_start_matches('/')))
 }
-pub(super) fn attempt_path(policy: &InstalledPolicy, attempt: FencedAttempt) -> PathBuf {
+pub(crate) fn attempt_path(policy: &InstalledPolicy, attempt: FencedAttempt) -> PathBuf {
     policy.signed.body.cgroup_root.join(format!(
         "scq-{}-attempt-{}-fence-{}",
         attempt.job_id, attempt.number, attempt.fence
     ))
 }
-pub(super) fn live(record: &JobRecord) -> Result<FencedAttempt> {
+pub(crate) fn live(record: &JobRecord) -> Result<FencedAttempt> {
     ensure!(
         record.state == JobState::Running,
         "native allocation not live"
     );
     record.active_attempt.context("native attempt absent")
 }
-pub(super) fn service(record: &JobRecord) -> Result<(&str, &[String])> {
+pub(crate) fn service(record: &JobRecord) -> Result<(&str, &[String])> {
     match &record.spec.workload {
         Workload::TrustedService {
             service, arguments, ..
@@ -246,7 +246,7 @@ pub(super) fn service(record: &JobRecord) -> Result<(&str, &[String])> {
         _ => anyhow::bail!("native fit requires fixed trusted service"),
     }
 }
-pub(super) fn monotonic_ns() -> Result<u64> {
+pub(crate) fn monotonic_ns() -> Result<u64> {
     let mut t = libc::timespec {
         tv_sec: 0,
         tv_nsec: 0,

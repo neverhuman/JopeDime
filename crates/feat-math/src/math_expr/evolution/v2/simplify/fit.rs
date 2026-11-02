@@ -4,18 +4,18 @@ use super::*;
 /// [`assess`]: a dense Horner tree over a variable leaf has depth at least `2n + 1`, so under the
 /// expression depth limit of 16 the largest dense degree that lowers is 7 (a sparse one, its zero
 /// coefficients skipped, can be shallower).
-pub(super) const MAX_DEGREE: usize = 12;
+pub(crate) const MAX_DEGREE: usize = 12;
 /// The exchange stops after this many steps.
-pub(super) const MAX_ITERATIONS: usize = 32;
+pub(crate) const MAX_ITERATIONS: usize = 32;
 /// The relative width of the bracket at which the exchange stops `Converged`.
-pub(super) const TOLERANCE: f64 = 1e-12;
+pub(crate) const TOLERANCE: f64 = 1e-12;
 /// The deepest subdivision [`certify`] accepts.
 #[cfg(test)]
-pub(super) const MAX_CERTIFY_DEPTH: usize = 64;
+pub(crate) const MAX_CERTIFY_DEPTH: usize = 64;
 
 /// Why a fit stopped.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Stop {
+pub(crate) enum Stop {
     /// `max|e| - levelled ≤ TOLERANCE max|e|` and `|h| - max|e| ≤ TOLERANCE max|e|`.
     Converged,
     /// Both bracket measures are within `64 ε max|f|`, the rounding level of the errors, but not
@@ -33,7 +33,7 @@ pub(super) enum Stop {
 
 impl Stop {
     /// The public name of this stop, for records.
-    pub(super) fn public(self) -> MinimaxStop {
+    pub(crate) fn public(self) -> MinimaxStop {
         match self {
             Self::Converged => MinimaxStop::Converged,
             Self::NoiseLimited => MinimaxStop::NoiseLimited,
@@ -47,44 +47,44 @@ impl Stop {
 
 /// A discrete minimax fit.
 #[derive(Clone, Debug, PartialEq)]
-pub(super) struct Minimax {
+pub(crate) struct Minimax {
     /// The fit interval: the smallest and largest sample abscissa. The error is controlled only at
     /// the samples.
-    pub(super) lo: f64,
-    pub(super) hi: f64,
+    pub(crate) lo: f64,
+    pub(crate) hi: f64,
     /// Chebyshev coefficients in `t`.
-    pub(super) chebyshev: Vec<f64>,
+    pub(crate) chebyshev: Vec<f64>,
     /// The smaller of `|h|` and the smallest `|e|` on the final reference, never above
     /// `max_error`. In exact arithmetic it would bound the discrete minimax error from below (de
     /// la Vallée Poussin); as computed it does so only up to rounding.
-    pub(super) levelled: f64,
+    pub(crate) levelled: f64,
     /// The largest computed error over the samples, by Clenshaw at the rounded `t`. Not a
     /// certified upper bound: the exact errors, and the discrete minimax error with them, can
     /// exceed it by up to the rounding of that evaluation.
-    pub(super) max_error: f64,
+    pub(crate) max_error: f64,
     /// The exchange step that produced this fit.
-    pub(super) iterations: usize,
+    pub(crate) iterations: usize,
     /// The exchange steps run, at most `MAX_ITERATIONS`.
-    pub(super) steps: usize,
-    pub(super) stop: Stop,
+    pub(crate) steps: usize,
+    pub(crate) stop: Stop,
     /// The final reference, as indices into the sorted unique samples.
-    pub(super) reference: Vec<usize>,
+    pub(crate) reference: Vec<usize>,
 }
 
 impl Minimax {
     #[cfg(test)]
-    pub(super) fn t(&self, v: f64) -> f64 {
+    pub(crate) fn t(&self, v: f64) -> f64 {
         (2.0 * v - (self.lo + self.hi)) / (self.hi - self.lo)
     }
 
     #[cfg(test)]
-    pub(super) fn eval(&self, v: f64) -> f64 {
+    pub(crate) fn eval(&self, v: f64) -> f64 {
         clenshaw(&self.chebyshev, self.t(v))
     }
 
     /// Monomial coefficients in `v` (ascending powers). This conversion is ill-conditioned when
     /// the interval sits far from 0; the native re-score decides.
-    pub(super) fn monomial(&self) -> Vec<f64> {
+    pub(crate) fn monomial(&self) -> Vec<f64> {
         let alpha = 2.0 / (self.hi - self.lo);
         let beta = -(self.lo + self.hi) / (self.hi - self.lo);
         let n = self.chebyshev.len();
@@ -114,14 +114,14 @@ impl Minimax {
     }
 }
 
-pub(super) fn add_scaled(out: &mut [f64], polynomial: &[f64], scale: f64) {
+pub(crate) fn add_scaled(out: &mut [f64], polynomial: &[f64], scale: f64) {
     for (o, &a) in out.iter_mut().zip(polynomial) {
         *o += scale * a;
     }
 }
 
 /// `Σ c_k T_k(t)` by Clenshaw's recurrence.
-pub(super) fn clenshaw(c: &[f64], t: f64) -> f64 {
+pub(crate) fn clenshaw(c: &[f64], t: f64) -> f64 {
     let (mut b1, mut b2) = (0.0f64, 0.0f64);
     for &ck in c.iter().skip(1).rev() {
         let b0 = ck + 2.0 * t * b1 - b2;
@@ -132,7 +132,7 @@ pub(super) fn clenshaw(c: &[f64], t: f64) -> f64 {
 }
 
 /// `T_0(t) .. T_n(t)`.
-pub(super) fn chebyshev_row(t: f64, n: usize) -> Vec<f64> {
+pub(crate) fn chebyshev_row(t: f64, n: usize) -> Vec<f64> {
     let mut row = Vec::with_capacity(n + 1);
     row.push(1.0);
     if n >= 1 {
@@ -146,7 +146,7 @@ pub(super) fn chebyshev_row(t: f64, n: usize) -> Vec<f64> {
 
 /// `A x = b` by Gaussian elimination with partial pivoting (pivot ties go to the lowest row), or
 /// `None` when a pivot is zero or a result is not finite.
-pub(super) fn solve(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
+pub(crate) fn solve(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
     let m = b.len();
     for k in 0..m {
         let pivot = (k..m).fold(k, |p, r| if a[r][k].abs() > a[p][k].abs() { r } else { p });
@@ -183,7 +183,7 @@ pub(super) fn solve(mut a: Vec<Vec<f64>>, mut b: Vec<f64>) -> Option<Vec<f64>> {
 /// The sorted unique samples, or why the fit cannot start. A non-finite sample is refused, and so
 /// is one above `MAX_ABS`, the evaluator's output range and the only range [`samples`] produces:
 /// near `f64::MAX` the map to `t` and the Clenshaw sums overflow.
-pub(super) fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
+pub(crate) fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'static str> {
     if samples
         .iter()
         .any(|(v, f)| !v.is_finite() || !f.is_finite())
@@ -216,28 +216,28 @@ pub(super) fn prepare(samples: &[(f64, f64)]) -> Result<Vec<(f64, f64)>, &'stati
 
 /// The fit's refusal of too few distinct abscissae. With [`EMPTY_INTERVAL`], it depends on the
 /// variable's values alone, never on the subtree's.
-pub(super) const FEW_ABSCISSAE: &str = "fewer than degree + 2 distinct abscissae";
+pub(crate) const FEW_ABSCISSAE: &str = "fewer than degree + 2 distinct abscissae";
 /// [`prepare`]'s refusal of a sample past the evaluator's range.
-pub(super) const OUTSIDE_RANGE: &str = "a sample is outside the evaluator's range";
+pub(crate) const OUTSIDE_RANGE: &str = "a sample is outside the evaluator's range";
 /// [`prepare`]'s refusal of one abscissa with two targets (merged signed zeros that differ).
-pub(super) const TWO_TARGETS: &str = "one abscissa has two targets";
+pub(crate) const TWO_TARGETS: &str = "one abscissa has two targets";
 /// The fit's refusal when its first reference system is singular.
-pub(super) const SINGULAR_FIRST: &str = "singular first reference";
+pub(crate) const SINGULAR_FIRST: &str = "singular first reference";
 /// The fit's refusal when its first fit's errors are not finite.
-pub(super) const NONFINITE_ERROR: &str = "an error is not finite";
+pub(crate) const NONFINITE_ERROR: &str = "an error is not finite";
 /// Every reason the fit can refuse the samples [`samples`] gives for a line: [`prepare`]'s and
 /// [`minimax`]'s own, less four. [`samples`] gives only fault-free finite samples, and the
 /// evaluator raises a fault for every value it brings back into its range, so neither `a sample
 /// is not finite` nor [`OUTSIDE_RANGE`] occurs; a line's degree is under the cap; and three
 /// distinct abscissae within that range span an interval that is neither empty nor overflowing,
 /// so [`EMPTY_INTERVAL`] does not occur either.
-pub(super) const FIT_REFUSALS: [&str; 4] =
+pub(crate) const FIT_REFUSALS: [&str; 4] =
     [TWO_TARGETS, FEW_ABSCISSAE, SINGULAR_FIRST, NONFINITE_ERROR];
 /// The fit's refusal of an interval that is empty or overflows.
-pub(super) const EMPTY_INTERVAL: &str = "empty or overflowing interval";
+pub(crate) const EMPTY_INTERVAL: &str = "empty or overflowing interval";
 
 /// The discrete minimax polynomial of `degree` on `samples` of `(v, f(v))`.
-pub(super) fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static str> {
+pub(crate) fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, &'static str> {
     if degree > MAX_DEGREE {
         return Err("degree above the cap");
     }
@@ -274,7 +274,7 @@ pub(super) fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, 
         reference.push(nearest);
     }
     /// The best fit so far, stopped for `stop` after `steps` steps.
-    pub(super) fn ending(best: Option<Minimax>, stop: Stop, steps: usize) -> Option<Minimax> {
+    pub(crate) fn ending(best: Option<Minimax>, stop: Stop, steps: usize) -> Option<Minimax> {
         best.map(|b| Minimax { stop, steps, ..b })
     }
     let noise = 64.0 * f64::EPSILON * f_max;
@@ -375,7 +375,7 @@ pub(super) fn minimax(samples: &[(f64, f64)], degree: usize) -> Result<Minimax, 
 /// The next reference: the maximum of each run of same-sign errors, those with `|e| ≥ |h|`,
 /// same-sign neighbours merged to the larger, then `size` consecutive points containing the
 /// global maximum. `None` when fewer than `size` alternate.
-pub(super) fn exchange(errors: &[f64], h: f64, global: usize, size: usize) -> Option<Vec<usize>> {
+pub(crate) fn exchange(errors: &[f64], h: f64, global: usize, size: usize) -> Option<Vec<usize>> {
     let sign = |e: f64| (e > 0.0) as i8 - (e < 0.0) as i8;
     let mut extrema: Vec<usize> = Vec::new();
     let mut run: Option<(i8, usize)> = None;
@@ -430,7 +430,7 @@ pub(super) fn exchange(errors: &[f64], h: f64, global: usize, size: usize) -> Op
 /// maximum replaces the reference point beside it whose error has the same sign, or enters at an
 /// end, shifting the reference, so the signs keep alternating. `None` when the global maximum is
 /// already a reference point.
-pub(super) fn single_exchange(
+pub(crate) fn single_exchange(
     errors: &[f64],
     reference: &[usize],
     global: usize,

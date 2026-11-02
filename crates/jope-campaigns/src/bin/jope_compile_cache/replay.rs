@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run_replay(
+pub(crate) fn run_replay(
     args: &Args,
     request: &Request,
     request_sha256: &str,
@@ -156,7 +156,7 @@ pub(super) fn run_replay(
     }))
 }
 
-pub(super) fn validate_native_elf(path: &Path, label: &str) -> Result<()> {
+pub(crate) fn validate_native_elf(path: &Path, label: &str) -> Result<()> {
     let metadata =
         fs::metadata(path).with_context(|| format!("{label} {} is unavailable", path.display()))?;
     ensure!(metadata.is_file(), "{label} is not a regular file");
@@ -236,7 +236,7 @@ fn validate_replay_jsonl(
     Ok((observed.len(), valid))
 }
 
-pub(super) fn validate_replay_receipt(
+pub(crate) fn validate_replay_receipt(
     receipt: &ReplayReceipt,
     request: &Request,
     request_sha256: &str,

@@ -169,7 +169,7 @@ fn commit_batch(
     Ok(())
 }
 
-pub(super) fn bounded_narration(
+pub(crate) fn bounded_narration(
     evidence: &str,
     max_frame: usize,
     variant: Option<u8>,
