@@ -25,7 +25,6 @@ extra_excluded_paths = [
   "docs/paper/innovationzero/artifacts/sources/Gemini4_argon_high.rs",
   "docs/paper/innovationzero/artifacts/sources/Opus5p5_Extra.rs",
   "deploy/ci/test-gitleaks-config.py",
-  "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
   "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
