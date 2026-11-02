@@ -903,6 +903,7 @@ crates/jope-engine/src/eval_registry/witness.rs
 crates/jope-engine/src/eval_registry/witness/epochs.rs
 crates/jope-engine/src/eval_registry/witness/funding_tests.rs
 crates/jope-engine/src/eval_registry/witness/native_grants.rs
+crates/jope-engine/src/eval_registry/witness/store.rs
 crates/jope-engine/src/eval_registry/witness/tests.rs
 crates/jope-engine/src/experimental_gpr.rs
 crates/jope-engine/src/families.rs
