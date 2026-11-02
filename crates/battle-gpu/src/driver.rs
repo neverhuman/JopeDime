@@ -102,9 +102,10 @@ pub struct Library {
     handle: *mut c_void,
 }
 
-// SAFETY: the loader handle has no thread affinity. Ownership moves with Gpu,
-// which serializes CUDA calls and makes its context current on the calling thread.
-// Moving Library never unloads it; its sole Drop closes the owned loader reference.
+// SAFETY: `dlopen` returns an owned loader reference. POSIX loader handles have
+// no creating-thread affinity: `dlsym` and `dlclose` may run on any thread.
+// This wrapper is moved, never cloned, and its sole Drop closes that reference
+// exactly once. It exposes no operation that can race a close.
 unsafe impl Send for Library {}
 
 impl Library {

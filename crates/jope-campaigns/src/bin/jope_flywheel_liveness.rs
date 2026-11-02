@@ -1,6 +1,6 @@
 //! Join the flywheel's independent control-plane status into one fail-closed view.
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{Context, Result};
 use clap::Parser;
 use jope_dime_regressor::selfplay_runtime::{
     atomic_json, default_root_str, default_scq_str, now_ms, read_json, scq_json,
@@ -70,18 +70,10 @@ fn scheduler_job_active(scheduler: &Value, exact_id: Option<&str>, prefixes: &[&
 }
 
 fn disk_used_percent(path: &Path) -> Result<u8> {
-    let material = std::ffi::CString::new(path.to_string_lossy().as_bytes())?;
-    // Zeroed, not uninit: statvfs holds only integer fields, so all-zero is a valid value and
-    // the read below never depends on libc writing every field.
-    let mut status = std::mem::MaybeUninit::<libc::statvfs>::zeroed();
-    // SAFETY: `material` is a CString that outlives the call, so the path is NUL-terminated;
-    // `status` is a writable, aligned MaybeUninit<statvfs> that statvfs may overwrite.
-    let result = unsafe { libc::statvfs(material.as_ptr(), status.as_mut_ptr()) };
-    ensure!(result == 0, "statvfs failed for {}", path.display());
-    // SAFETY: `status` started as a valid all-zero statvfs and statvfs only writes integers.
-    let status = unsafe { status.assume_init() };
-    let blocks = status.f_blocks as u128;
-    let available = status.f_bavail as u128;
+    let status = nix::sys::statvfs::statvfs(path)
+        .with_context(|| format!("statvfs failed for {}", path.display()))?;
+    let blocks = status.blocks() as u128;
+    let available = status.blocks_available() as u128;
     let used_percent = blocks
         .saturating_sub(available)
         .saturating_mul(100)
