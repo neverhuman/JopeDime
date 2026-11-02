@@ -275,14 +275,14 @@ def _package_imports(tree: ast.AST, package_dir: Path) -> set[str]:
 def _source_tree() -> tuple[tuple[str, str], ...]:
     package_dir = Path(__file__).resolve().parent
     digests: dict[str, str] = {}
-    todo = [_TRAINER_MODULE]
-    while todo:
-        name = todo.pop()
+    pending_modules = [_TRAINER_MODULE]
+    while pending_modules:
+        name = pending_modules.pop()
         if f"{name}.py" in digests:
             continue
         raw = (package_dir / f"{name}.py").read_bytes()
         digests[f"{name}.py"] = common.sha256_bytes(raw)
-        todo.extend(sorted(_package_imports(ast.parse(raw, filename=f"{name}.py"), package_dir)))
+        pending_modules.extend(sorted(_package_imports(ast.parse(raw, filename=f"{name}.py"), package_dir)))
     digests["__init__.py"] = common.sha256_file(package_dir / "__init__.py")
     return tuple((f"{_PACKAGE}/{name}", digest) for name, digest in sorted(digests.items()))
 
