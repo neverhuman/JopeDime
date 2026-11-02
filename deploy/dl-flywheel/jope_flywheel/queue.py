@@ -8,7 +8,7 @@ import json
 import sqlite3
 import time
 import uuid
-from pathlib import Path
+import pathlib
 from .protocol import canonical, digest, sha256
 
 STAGES = ('augment','encode','baseline','propose','evaluate','publish','admit','train','compare')
@@ -17,7 +17,7 @@ STATES = ('pending','running','completed','failed','needs_reconcile','cancelled'
 
 class Queue:
     def __init__(self, path, *, max_jobs=1000000, max_payload_bytes=65536):
-        self.path = Path(path)
+        self.path = pathlib.Path(path)
         if self.path.is_symlink(): raise ValueError('queue may not be a symlink')
         self.path.parent.mkdir(parents=True,exist_ok=True)
         if type(max_jobs) is not int or max_jobs<1 or type(max_payload_bytes) is not int or not 1<=max_payload_bytes<=1048576:

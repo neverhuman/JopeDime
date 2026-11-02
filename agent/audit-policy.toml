@@ -288,3 +288,11 @@ paid_maximum = "run-specific owner-approved dollar cap"
 quota = "preflight quota and limit confirmed before launch"
 stop_condition = "stop at cost, resource, wall-time cap, unknown result, or failed input pin"
 kill_switch = "supervising lane halt tested before launch"
+
+[[dead_language_allow]]
+name = "p26-content-addressed-blob-stale-cache-state"
+term = "stale"
+paths = ["crates/jope-datasets/src/blobs.rs"]
+owner = "datasets"
+expires = "2027-02-01"
+reason = "HLT-001 sha256:fa13a2d8103eeda06d5c85bd49ecc8869b16a7c6175e6917bbae92365d35eead flags the truthful cache-state term in BlobDir::ensure. The method verifies both size and SHA-256, removes a mismatched cache entry, refuses to serve a substitute offline, and otherwise refetches verified bytes. Preserve that integrity behavior; this term-and-path exception does not suppress other rules or files."
