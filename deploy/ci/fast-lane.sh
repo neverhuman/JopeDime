@@ -63,6 +63,8 @@ cargo run -q --locked -p jope-records -- task-status
 cargo run -q --locked -p jope-records -- progress-view
 cargo run -q --locked -p jope-records -- elo-history --require-all
     # Hygiene
+    # check.sh runs the secret, dependency, and workflow scans unconditionally;
+    # its receipt therefore records the real scan result and scanner failures.
 bash deploy/ci/check.sh
     # Lambda workspaces (deploy/lambda: standalone Cargo workspaces, not part of the jope build)
 bash deploy/ci/lambda.sh
