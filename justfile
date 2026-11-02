@@ -64,9 +64,10 @@ test-real-corpus custody:
     bash deploy/ci/real-corpus-lane.sh {{custody}}
 
 python-check:
-    cd python && uv run ruff check . && uv run ruff format --check . && uv run pytest -q -m "not xbabe2"
-    python3 deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py
-    python3 deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py
+    cd python && uv sync --locked --extra dev --extra cpu --extra benchmark --extra foundry --extra dl-custody
+    cd python && uv run --no-sync ruff check . && uv run --no-sync ruff format --check . && uv run --no-sync pytest -q -m "not xbabe2"
+    cd python && uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/run_rlfw_offline.py
+    cd python && uv run --no-sync python ../deploy/dl-flywheel/pipelines/rlfw/multiseed/run_multiseed_offline.py
 
 # ADR-0003: no absolute home paths in code or units (python/src is informational until WP6 lands)
 # These two immutable evidence records retain literal custody locations, not runtime roots.
