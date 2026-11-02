@@ -60,6 +60,38 @@ Keep `target/` evidence and frozen numerical fixtures intact. Run builds with
 claimed lane's build directory and leave global `CARGO_TARGET_DIR` unset.
 Do not publish checkpoints, training claims, models or defaults from fixture tests.
 
+## Budget, quota and stop conditions
+
+Use the owning task's recorded resource budget and concurrency quota. Shared-host checks retain
+that task's CPU, build-job, memory and disk limits; this repository's bounded lanes use no more
+than eight Cargo build jobs. External paid services require the task's recorded spend cap. An
+already authorized command keeps its existing authorization and limits; this guide adds no
+approval step or new cloud/API allowance.
+
+Reaching a quota, spend cap, input-pin failure or unknown required result is a stop condition,
+not permission for an automatic retry. The kill switch is the owning operator's documented
+supervisor stop path for that lane's own processes. Never cancel another owner's jobs. Preserve
+partial evidence, actual duration, attempts, external charges and the reason for stopping.
+
+## Release gate evidence
+
+A release gate is an artifact checklist bound to the exact candidate and source. This policy
+requires evidence; it does not assert that any candidate has passed. Preserve the current owner,
+timestamp, artifact identity and outcome for each control:
+
+| Control | Evidence required before a release claim |
+| --- | --- |
+| Security | Current source-bound security results and unresolved findings. |
+| Backup | Recovery artifact identity plus an actual restore verification. |
+| Monitoring | Probe results, alert routing and the responsible operator. |
+| Rollback | The preserved prior artifact and an executed rollback rehearsal. |
+| Abuse and rate limits | Executed control/refusal cases and their limits. |
+| Cost | The task budget, quota, spend cap, stop condition and owning-lane kill switch. |
+
+Missing, stale, failed or unknown required evidence remains open. Unit tests, a signed stage,
+an inventory check and merged-PR provenance do not replace release qualification. Preserve raw
+failures separately from any explicitly authorized bounded disposition; do not relabel them PASS.
+
 ## Human Review Evidence
 
 A review record must bind to the full source SHA and identify the reviewer, author relationship,
