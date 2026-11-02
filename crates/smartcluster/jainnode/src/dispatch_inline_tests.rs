@@ -372,5 +372,5 @@ fn protocol(root: PathBuf) -> NodeProtocolState {
     .unwrap()
 }
 
-#[path = "dispatch_inline_tests/cases.rs"]
+#[path = "../dispatch_inline_tests/cases.rs"]
 mod cases;
