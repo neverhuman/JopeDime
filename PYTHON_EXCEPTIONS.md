@@ -270,11 +270,3 @@ Historical inventory totals above are dated and are not recomputed by this entry
 | `research/flywheel_selfplay/device_pool_cache.py` | 100 | `PR-EXCEPT-TORCH` | PyTorch device-resident pool gathers avoid repeated multi-GB host slates while preserving exact inputs and own-target alignment. |
 
 | `research/flywheel_selfplay/test_device_pool_cache.py` | 129 | `PR-EXCEPT-TORCH` | Parity and promotion/replacement invalidation proofs for the tensor training-input boundary. |
-
-## Current Python AI/data boundary (review by 2027-02-01)
-
-- **Owner:** Python AI/data maintainers; repository-level owner: `python-ai` in `agent/owner-map.json`.
-- **Scope:** the existing `python/src/jope/` AI, training and research modules and `python/tests/`; this is a bounded migration exception, not approval for new Python tooling or product truth.
-- **Proof lane:** `just python-check`, plus `cd python && python3 -m pytest -q tests/test_training_input_closure.py tests/test_policy_training_contract.py` for boundary changes.
-- **Expiry/review:** 2027-02-01. Renew only with a dated owner review and fresh migration status.
-- **Migration plan:** continue the staged Python-to-Rust work in [`PY_TO_RUST_PLAN.md`](PY_TO_RUST_PLAN.md); preserve tensor/model training code behind the documented advanced-ML boundary, migrate orchestration and durable behavior by owned slices, and do not relocate files merely to satisfy the canonical `python/ai-service/` detector.

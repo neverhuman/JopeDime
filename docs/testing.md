@@ -78,30 +78,3 @@ Keep `target/` evidence and frozen numerical fixtures intact. Run builds with
 `CARGO_INCREMENTAL=0` and `CARGO_PROFILE_DEV_DEBUG=line-tables-only`; reuse the
 claimed lane's build directory and leave global `CARGO_TARGET_DIR` unset.
 Do not publish checkpoints, training claims, models or defaults from fixture tests.
-
-## Cost bounds and stop conditions
-
-Every job that can spend money, consume shared compute, read external corpora, or retry work must
-record its owner, exact command, maximum wall time, concurrency, input scope, and stop condition before
-launch. The stop condition must be enforced by the command or supervising lane; reaching a bound,
-losing an input pin, or receiving an unknown result stops the run without an automatic retry. Record
-actual duration, attempts, resources and any external charges with the run receipt. A command that has
-no declared cap is not an approved paid or shared-resource lane. Keep one reused `target/` per lane,
-`CARGO_TARGET_DIR` unset, `CARGO_BUILD_JOBS` at or below 16, and the BLAS/Rayon limits from the owning
-proof lane. Do not infer a compute or cloud budget from a test pass.
-
-## Release readiness evidence
-
-A passing unit, integration, smoke, audit or main-guard job is evidence only for its stated scope. A
-release-readiness claim also needs current, reviewable evidence for security controls, recoverable
-backups, monitoring and alert ownership, a tested rollback path, and abuse/rate controls. Link each
-artifact to the release candidate and record its owner and timestamp. Missing, stale, untested, or
-unknown evidence remains open; this page does not certify that a particular release has met those
-gates.
-
-## Canonical path aliases
-
-The repository keeps its implementation paths. Jankurai's `apps/web/` route maps to
-`web/training-dashboard/` and its existing npm/Playwright lanes; `db/` maps to the dataset boundary in
-`crates/jope-datasets/` and its locked Rust tests. These aliases are recorded in `agent/owner-map.json`
-and `agent/test-map.json`; do not create duplicate `apps/web/` or `db/` trees to satisfy a detector.
