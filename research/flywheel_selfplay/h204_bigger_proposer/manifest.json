@@ -8,6 +8,7 @@
   ],
   "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
   "boot_seed": 204141,
+  "decision": "NO_ADVANCE",
   "evaluator_contract_id": "fixed-dev-cost-argmin-negative-fitness/v1",
   "fold_seed": 204140,
   "gpu_device": "cuda:0",
@@ -17,6 +18,7 @@
     8,
     16
   ],
+  "local_run_dir": "/home/ubuntu/jope-data/h204/run-20261102T0511Z",
   "merged_unblock_prs": [
     1726,
     1730
@@ -36,6 +38,8 @@
     "selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
     "source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
   },
+  "prereg_pr": 1729,
+  "primary_run_id": "run-20261102T0511Z",
   "r882_expected_dl_val_mean_cost": 1.1377941898164525,
   "research_dope_unfreeze_flag": "JOPE_RESEARCH_DOPE_UNFREEZE=1",
   "research_run_id_required": true,
@@ -53,8 +57,34 @@
     "min_disk_free_bytes": 42949672960,
     "required_nice": 19
   },
+  "run_20261102T0511Z_sha256": {
+    "REPORT.md": "35e06769af7779ceb0d0939ef4c212cda32929cf8648d58b91d13057bbdf8b27",
+    "cache/h204_labels_seed204101_k16.json": "959bc58f71dca87bf5b58bad329251d1cf227c7508ed0de46ce0ed3e4686a96b",
+    "launch.json": "2d33d6f0f351a35659123af2755bd23ea03751715caadf9bfbade450452dbb9b",
+    "manifest.json": "ec2f6d4a2165a0c033347f6d1a72ec9b4d47b1e26275b7bcc58a33a3ee7e7da6",
+    "metrics.json": "b183e49f2021a8c53397794bf3a204a48a4c4fe1bc238ca45df0c9b88bc842ca",
+    "progress.json": "07d7bd46a6a6536abeff51e5ec9e74bc0562f5739039f858d05b8fb77ff3d84a",
+    "resource_monitor.jsonl": "ca700653461987bf5177bfc88c4d664b2cb5622b53a14b0dc23eed91122a9153",
+    "stage1_results.json": "e0b2b8fbbd6143fd0fea1156061fda85a55a3a7b739f5c4c2b42ce82ad62c5e2",
+    "stdout.log": "9c3a39858ee110398c1325684eea10b2dd7e346c21e59b64f8670fd047fc0893"
+  },
   "s3_datasets_bucket": "s3://veox-jopedime-datasets-use2",
+  "s3_evidence_objects": {
+    "root_manifest_json": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/manifest.json",
+    "root_metrics_json": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/metrics.json",
+    "root_prereg_md": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/PREREG.md",
+    "root_readme_md": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/README.md",
+    "root_report_md": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/REPORT.md",
+    "run_labels_cache_json": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/cache/h204_labels_seed204101_k16.json",
+    "run_launch_json": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/launch.json",
+    "run_manifest_json": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/manifest.json",
+    "run_metrics_json": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/metrics.json",
+    "run_report_md": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/REPORT.md",
+    "run_resource_monitor_jsonl": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/resource_monitor.jsonl",
+    "run_stage1_results_json": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/stage1_results.json"
+  },
   "s3_evidence_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/",
+  "s3_run_evidence_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/run-20261102T0511Z/",
   "seeds": [
     204101,
     204102,
@@ -66,11 +96,14 @@
     "PROPOSER_W128"
   ],
   "stage1_width": 128,
-  "status": "PREREGISTERED",
+  "stage2_launched": false,
+  "status": "COMPLETED_STAGE1_NO_ADVANCE",
+  "verdict": "NO_ADVANCE",
   "wave": "H204",
   "widths": [
     128,
     256,
     512
-  ]
+  ],
+  "xbabe2_gpu_released": true
 }

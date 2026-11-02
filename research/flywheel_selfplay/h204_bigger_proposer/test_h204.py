@@ -154,9 +154,18 @@ def test_prereg_and_manifest_contain_verbatim_authority(tmp_path: Path) -> None:
     assert manifest["widths"] == list(WIDTHS)
     assert manifest["stage1_arms"] == list(STAGE1_ARMS)
     assert manifest["merged_unblock_prs"] == [1726, 1730]
+    assert manifest["decision"] == "NO_ADVANCE"
+    assert manifest["s3_run_evidence_uri"].startswith(
+        "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/"
+    )
 
     metrics = json.loads((WAVE_DIR / "metrics.json").read_text(encoding="utf-8"))
     assert metrics["authority"] == AUTHORITY_STRING
+    assert metrics["decision"] == "NO_ADVANCE"
+    assert metrics["stage2_launched"] is False
+    assert metrics["r882_baseline_dl_val_mean_cost"] == pytest.approx(
+        R882_EXPECTED_DL_VAL_MEAN_COST, abs=1e-12
+    )
 
     launch = build_launch_manifest(
         run_dir=tmp_path / "run-test",
