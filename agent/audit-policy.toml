@@ -20,6 +20,8 @@ extra_excluded_paths = [
   # verifies the bytes. A source header would invalidate that evidence.
   "docs/paper/innovationzero/artifacts/sources/GPT6_Astra_Max.rs",
   "docs/paper/innovationzero/artifacts/sources/GPT6p1_Sol_Max.rs",
+  "docs/paper/innovationzero/artifacts/sources/Gemini4_argon_high.rs",
+  "docs/paper/innovationzero/artifacts/sources/Opus5p5_Extra.rs",
   "deploy/ci/test-gitleaks-config.py",
   "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
