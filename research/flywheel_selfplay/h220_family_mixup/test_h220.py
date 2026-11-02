@@ -650,3 +650,13 @@ def test_actual_cohort_uses_dev_key_and_refuses_overlap_and_protected_rows():
     packet["train"][0]["has_meta_test"] = True
     with pytest.raises(RuntimeError):
         runner.cohort(packet)
+
+
+def test_real_boolean_feature_mask_is_mixed_as_float_without_mutation():
+    mix = load("mixup")
+    a = torch.tensor([[True, False], [True, True]])
+    b = torch.tensor([[False, True], [False, False]])
+    got = mix.blend(a, b, [0.25, 1.0])
+    assert got.dtype == torch.float32
+    assert torch.equal(got, torch.tensor([[0.25, 0.75], [1.0, 1.0]]))
+    assert a.dtype == torch.bool and b.dtype == torch.bool

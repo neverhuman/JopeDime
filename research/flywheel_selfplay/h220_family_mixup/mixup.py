@@ -22,6 +22,8 @@ def plan(cids, groups, family_by_cid, seed):
 def blend(a, b, weights):
     if a.shape != b.shape or a.shape[0] != len(weights):
         raise ValueError("paired tensor shapes required")
+    if not a.is_floating_point():
+        a, b = a.float(), b.float()
     w = torch.as_tensor(weights, dtype=a.dtype, device=a.device)
     w = w.reshape((len(weights),) + (1,) * (a.ndim - 1))
     return w * a + (1 - w) * b

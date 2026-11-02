@@ -5473,12 +5473,12 @@
       "sha256": "6c23b98259fec88ca2cdc40f3ed0ba479a31acd49130e2b745aeb83a14e851f8"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/mixup.py": {
-      "bytes": 1889,
+      "bytes": 1959,
       "classification": {
         "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "7fbf224b608407ae7817d4b980103d1f232525d994ff5d802f75aabc030b6a58"
+      "sha256": "132eff7e58e3fad226e0a96ec930c47cac01a5ed4605f7ff5a439736aa09be6b"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/runner.py": {
       "bytes": 24885,

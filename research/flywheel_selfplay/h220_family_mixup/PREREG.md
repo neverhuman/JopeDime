@@ -48,7 +48,7 @@ Each partner has its own 24-candidate slate with four best-fitness reveals and
 20 random remaining candidates. Pair slots by position (four reveal ranks,
 then random slots); this does not assert semantic identity between programs.
 The shared lambda convexly mixes program features, continuous context tokens,
-masks, priors, scale, revealed raw fitness and gate weights, and separately
+masks (Boolean source masks are converted to float), priors, scale, revealed raw fitness and gate weights, and separately
 computed frozen anchor costs/priors. The discrete reveal indices are identical
 0–3 on both sides and remain fixed. The frozen anchor is evaluated on each
 unmixed context; it is not trained or evaluated on synthetic programs.

@@ -107,18 +107,18 @@
     "research/flywheel_selfplay/h218_gated_lambda_nest/analysis.py": "67e5cc7d518495fad72bde9843ffe5f367a992538c59dca2c0b42dda634c97da"
   },
   "source_sha256": {
-    "PREREG.md": "83e252f3b14630e4081c48390f1705cfa8b4068cfc4c675740689da66e3211da",
+    "PREREG.md": "a766d0e3e29fc3760d0508e41b215b12cc4119415cac5ab40c488ddf3c92cb32",
     "README.md": "a0537302540b3e74db0e9dd01f9b1f844b7b186ad897a57c2a5b84bfaf9b6624",
     "backend.py": "ce4d6770691121ba33a9c3a632afb01d97afe173826ee354cadea30605387835",
     "fold_jaccard.json": "db0395f1cfd2e58d92a15a7f96d4fbc2bae806022bec34a1d5c3097ae10b648b",
     "fold_manifest.json": "4179fe30e347b2fc5856355f87d42680b2fda36adf6f3a7ab63384db5d17d4e4",
     "launch.py": "6c23b98259fec88ca2cdc40f3ed0ba479a31acd49130e2b745aeb83a14e851f8",
-    "mixup.py": "7fbf224b608407ae7817d4b980103d1f232525d994ff5d802f75aabc030b6a58",
+    "mixup.py": "132eff7e58e3fad226e0a96ec930c47cac01a5ed4605f7ff5a439736aa09be6b",
     "provenance.json": "5869697043366cd4eba9eac1e4a14b69183da515b7debcf7132ca59edef50ac9",
     "runner.py": "d8731991b6edaf527e84217ce5fe3026fc29db57eca5c34116eda178b067441e",
     "science.py": "dc4e803d273888603376811761d67fb8fce0bd1f9aed0ca0c51eb6fc929fc4ae",
     "study.py": "7f4fbaa5c43a2104b72b5e12948c1cb1cf069c31bffafe1031a98df51e87412d",
-    "test_h220.py": "1a2f532ad23142d3236dee371df962b949f52a0b3897a145f0182c2eeac88036"
+    "test_h220.py": "c05a4a0c1541c486ed6e3f94f9a9361fd76cbf7e6bed0ec0e2360af4e733e96b"
   },
   "authority": "hw_t0500_astra_h220.md",
   "launch_gate": "Exact merged preregistration commit before timing smoke and full run",
