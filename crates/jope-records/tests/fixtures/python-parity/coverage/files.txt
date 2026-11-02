@@ -227,6 +227,8 @@ crates/hyperion/src/hyperion.rs
 crates/hyperion/src/hyperion/config.rs
 crates/hyperion/src/hyperion/encoder.rs
 crates/hyperion/src/hyperion/hvc2.rs
+crates/hyperion/src/hyperion/hvc2/format.rs
+crates/hyperion/src/hyperion/hvc2/io.rs
 crates/hyperion/src/hyperion/orig_v2.rs
 crates/hyperion/src/hyperion/runtime.rs
 crates/hyperion/src/hyperion/tests.rs
