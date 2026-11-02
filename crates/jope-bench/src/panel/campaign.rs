@@ -890,12 +890,18 @@ pub fn run(
         let fitted_inference = super::fitted_export::report(journal, &confirmed, &observations)?;
         #[cfg(not(feature = "asm"))]
         let fitted_inference = json!({"status":"unavailable_build_requires_asm_feature"});
+        let asm_status = match asm_inventory.get(&dataset.dataset.id) {
+            Some(inventory) => inventory.clone(),
+            // Preserve this emitted qualification status when no comparator
+            // inventory exists for the dataset.
+            None => json!("not_run_comparator_qualification_only"),
+        };
         datasets_report.push(
             json!({"dataset":dataset.dataset.id,"task":dataset.dataset.task,
             "screen":screen_data,"frozen":frozen,"confirmation":observations,"recipes":confirmed,
             "fitted_inference":fitted_inference,
             "selection_exposure":super::selection_exposure::report(dataset,frozen,&roster[&dataset.dataset.id])?,
-            "asm":asm_inventory.get(&dataset.dataset.id).cloned().unwrap_or_else(||json!("not_run_comparator_qualification_only"))}),
+            "asm":asm_status}),
         );
     }
     let all: Vec<_> = screen.iter().chain(&confirmation).collect();
