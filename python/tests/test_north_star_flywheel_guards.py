@@ -749,7 +749,7 @@ def _ns20_gate():
     """Exercise the exact scalar gate AST without importing models or research runtimes."""
     import ast
     from pathlib import Path
-    from typing import Mapping, Sequence
+    from collections.abc import Mapping, Sequence
 
     source = Path(__file__).parents[1] / "src/jope/north_star/elo_tracker.py"
     nodes = [
@@ -806,9 +806,7 @@ def test_ns20_empty_history_preserves_missing_baseline_error(axis):
     ratings = {name: {"H": 1500.0} for name in ["overall", "regression", "binary"]}
     ratings[axis].clear()
     with pytest.raises(KeyError):
-        _ns20_gate()(
-            [], ratings["overall"], ratings["regression"], ratings["binary"], "H"
-        )
+        _ns20_gate()([], ratings["overall"], ratings["regression"], ratings["binary"], "H")
 
 
 def test_ns20_empty_history_accepts_present_zero_baselines():

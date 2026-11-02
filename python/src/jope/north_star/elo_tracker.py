@@ -71,18 +71,14 @@ def load_authoritative_s3_metadata(
     Preserves `None` when `family_key` is JSON `null` (never coerces `None` to literal `"None"`).
     """
     if not inventory_path.exists():
-        raise FileNotFoundError(
-            f"Authoritative S3 manifest inventory not found at {inventory_path}"
-        )
+        raise FileNotFoundError(f"Authoritative S3 manifest inventory not found at {inventory_path}")
     data = json.loads(inventory_path.read_text(encoding="utf-8"))
     items = data.get("items", [])
     meta: dict[str, dict[str, object]] = {}
     for item in items:
         did = str(item["id"])
         raw_fk = item.get("family_key")
-        fam_id: str | None = (
-            None if _is_unresolved_family_id(raw_fk) else str(raw_fk).strip()
-        )
+        fam_id: str | None = None if _is_unresolved_family_id(raw_fk) else str(raw_fk).strip()
         meta[did] = {
             "family_id": fam_id,
             "task_type": str(item["task"]),
@@ -104,14 +100,10 @@ def resolve_authoritative_family_and_task(
       - `family_id` must be a resolved non-null, non-`"None"` authoritative family identifier.
     """
     if dataset_id not in s3_meta:
-        raise KeyError(
-            f"Dataset ID {dataset_id!r} not found in authoritative S3 manifest inventory."
-        )
+        raise KeyError(f"Dataset ID {dataset_id!r} not found in authoritative S3 manifest inventory.")
     info = s3_meta[dataset_id]
     if info.get("origin") != "real":
-        raise ValueError(
-            f"Dataset {dataset_id!r} has non-real origin={info.get('origin')!r}"
-        )
+        raise ValueError(f"Dataset {dataset_id!r} has non-real origin={info.get('origin')!r}")
     if bool(info.get("has_meta_test", False)):
         raise ValueError(
             f"Dataset {dataset_id!r} is flagged has_meta_test=True (sealed meta-test forbidden)."
@@ -132,9 +124,7 @@ def resolve_authoritative_family_and_task(
         "timeseries",
     )
     if task_type not in allowed_tasks:
-        raise ValueError(
-            f"Dataset {dataset_id!r} has unsupported task_type={task_type!r}"
-        )
+        raise ValueError(f"Dataset {dataset_id!r} has unsupported task_type={task_type!r}")
     norm_task = (
         "binary_classification"
         if task_type in ("binary", "binary_classification", "classification")
@@ -182,9 +172,7 @@ def compute_family_grouped_bradley_terry_elo(
 
     for r in records:
         if _is_unresolved_family_id(r.family_id):
-            raise ValueError(
-                f"Record {r.dataset_id!r} has unresolved/null family_id={r.family_id!r}."
-            )
+            raise ValueError(f"Record {r.dataset_id!r} has unresolved/null family_id={r.family_id!r}.")
         all_families.add(r.family_id)
         avail: list[str] = []
         for c in contenders:
@@ -208,12 +196,8 @@ def compute_family_grouped_bradley_terry_elo(
             for j_idx in range(i_idx + 1, len(avail)):
                 ia = c_to_idx[avail[i_idx]]
                 ib = c_to_idx[avail[j_idx]]
-                pair_fam_counts[(ia, ib, r.family_id)] = (
-                    pair_fam_counts.get((ia, ib, r.family_id), 0) + 1
-                )
-                pair_fam_counts[(ib, ia, r.family_id)] = (
-                    pair_fam_counts.get((ib, ia, r.family_id), 0) + 1
-                )
+                pair_fam_counts[(ia, ib, r.family_id)] = pair_fam_counts.get((ia, ib, r.family_id), 0) + 1
+                pair_fam_counts[(ib, ia, r.family_id)] = pair_fam_counts.get((ib, ia, r.family_id), 0) + 1
 
     # Accumulate family-weighted pairwise outcomes W[a, b] where each family with >=1 valid (a,b) comparison
     # contributes total weight 1.0 split evenly across its eligible (a,b) member tables.
@@ -290,10 +274,7 @@ def compute_family_grouped_bradley_terry_elo(
         gamma = new_gamma
 
     ratings = {
-        c: round(
-            anchor_elo + 400.0 * math.log10(max(float(gamma[c_to_idx[c]]), 1e-9)), 2
-        )
-        for c in contenders
+        c: round(anchor_elo + 400.0 * math.log10(max(float(gamma[c_to_idx[c]]), 1e-9)), 2) for c in contenders
     }
     return {
         "ratings": ratings,
@@ -331,19 +312,13 @@ def check_phase_d_elo_gate(
         or h_baseline_name not in regression_ratings
         or h_baseline_name not in binary_ratings
     ):
-        raise KeyError(
-            f"Baseline {h_baseline_name!r} missing from ratings dictionaries."
-        )
+        raise KeyError(f"Baseline {h_baseline_name!r} missing from ratings dictionaries.")
     reg_seq = [require_finite_score(regression_ratings, r) for r in round_names]
     bin_seq = [require_finite_score(binary_ratings, r) for r in round_names]
     ovr_seq = [require_finite_score(overall_ratings, r) for r in round_names]
 
-    reg_rising = len(reg_seq) >= 3 and all(
-        reg_seq[i] > reg_seq[i - 1] for i in range(1, len(reg_seq))
-    )
-    bin_rising = len(bin_seq) >= 3 and all(
-        bin_seq[i] > bin_seq[i - 1] for i in range(1, len(bin_seq))
-    )
+    reg_rising = len(reg_seq) >= 3 and all(reg_seq[i] > reg_seq[i - 1] for i in range(1, len(reg_seq)))
+    bin_rising = len(bin_seq) >= 3 and all(bin_seq[i] > bin_seq[i - 1] for i in range(1, len(bin_seq)))
     baseline_reg = require_finite_score(regression_ratings, h_baseline_name)
     baseline_bin = require_finite_score(binary_ratings, h_baseline_name)
     baseline_ovr = require_finite_score(overall_ratings, h_baseline_name)
@@ -351,9 +326,7 @@ def check_phase_d_elo_gate(
     beats_h_bin = bool(bin_seq) and bin_seq[-1] >= baseline_bin
     beats_h_ovr = bool(ovr_seq) and ovr_seq[-1] >= baseline_ovr
 
-    gate_pass = bool(
-        reg_rising and bin_rising and beats_h_reg and beats_h_bin and beats_h_ovr
-    )
+    gate_pass = bool(reg_rising and bin_rising and beats_h_reg and beats_h_bin and beats_h_ovr)
     return {
         "gate_pass": gate_pass,
         "num_rounds": len(round_names),
@@ -386,37 +359,23 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
 
     # Check 1: 2-table winning family vs 1-table losing family -> exact 1500.0
     bal_records = [
-        DatasetEvalRecord(
-            "d1", "fam_win_2", "regression", {"anchor": 0.70, "challenger": 0.80}
-        ),
-        DatasetEvalRecord(
-            "d2", "fam_win_2", "regression", {"anchor": 0.72, "challenger": 0.82}
-        ),
-        DatasetEvalRecord(
-            "d3", "fam_lose_1", "regression", {"anchor": 0.85, "challenger": 0.65}
-        ),
+        DatasetEvalRecord("d1", "fam_win_2", "regression", {"anchor": 0.70, "challenger": 0.80}),
+        DatasetEvalRecord("d2", "fam_win_2", "regression", {"anchor": 0.72, "challenger": 0.82}),
+        DatasetEvalRecord("d3", "fam_lose_1", "regression", {"anchor": 0.85, "challenger": 0.65}),
     ]
     bal_elo = compute_family_grouped_bradley_terry_elo(
         bal_records, anchor_contender="anchor", anchor_elo=1500.0
     )
-    assert abs(bal_elo["ratings"]["challenger"] - 1500.0) < 1e-6, (
-        f"Expected 1500.0, got {bal_elo}"
-    )
-    codex_checks["balanced_2table_vs_1table_family_elo"] = bal_elo["ratings"][
-        "challenger"
-    ]
+    assert abs(bal_elo["ratings"]["challenger"] - 1500.0) < 1e-6, f"Expected 1500.0, got {bal_elo}"
+    codex_checks["balanced_2table_vs_1table_family_elo"] = bal_elo["ratings"]["challenger"]
 
     # Check 2: Incomplete-panel counterexample
     # Suppose fam_win_2 has a 2nd row where `challenger` is absent (only `anchor` and `third` present).
     # By default (`allow_incomplete_panel=False`), this MUST raise ValueError.
     incomp_records = [
-        DatasetEvalRecord(
-            "d1", "fam_win_2", "regression", {"anchor": 0.70, "challenger": 0.80}
-        ),
+        DatasetEvalRecord("d1", "fam_win_2", "regression", {"anchor": 0.70, "challenger": 0.80}),
         DatasetEvalRecord("d2", "fam_win_2", "regression", {"anchor": 0.72}),
-        DatasetEvalRecord(
-            "d3", "fam_lose_1", "regression", {"anchor": 0.85, "challenger": 0.65}
-        ),
+        DatasetEvalRecord("d3", "fam_lose_1", "regression", {"anchor": 0.85, "challenger": 0.65}),
     ]
     try:
         compute_family_grouped_bradley_terry_elo(
@@ -430,23 +389,14 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
     # And when `allow_incomplete_panel=True` is explicitly enabled, per-pair eligible family member
     # normalization keeps `challenger` at exact 1500.00 (not 1381.30!):
     incomp_elo = compute_family_grouped_bradley_terry_elo(
-        incomp_records,
-        anchor_contender="anchor",
-        anchor_elo=1500.0,
-        allow_incomplete_panel=True,
+        incomp_records, anchor_contender="anchor", anchor_elo=1500.0, allow_incomplete_panel=True
     )
-    assert abs(incomp_elo["ratings"]["challenger"] - 1500.0) < 1e-6, (
-        f"Expected 1500.0, got {incomp_elo}"
-    )
-    codex_checks["incomplete_panel_per_pair_normalized_elo"] = incomp_elo["ratings"][
-        "challenger"
-    ]
+    assert abs(incomp_elo["ratings"]["challenger"] - 1500.0) < 1e-6, f"Expected 1500.0, got {incomp_elo}"
+    codex_checks["incomplete_panel_per_pair_normalized_elo"] = incomp_elo["ratings"]["challenger"]
 
     # Check 3: Missing requested anchor must raise ValueError
     try:
-        compute_family_grouped_bradley_terry_elo(
-            bal_records, anchor_contender="NONEXISTENT_ANCHOR"
-        )
+        compute_family_grouped_bradley_terry_elo(bal_records, anchor_contender="NONEXISTENT_ANCHOR")
         codex_checks["missing_anchor_rejected"] = False
     except ValueError:
         codex_checks["missing_anchor_rejected"] = True
@@ -455,8 +405,7 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
     # Check 4: Missing score field (`landmarks_off_hold_r2`) must raise KeyError
     try:
         require_finite_score(
-            {"dataset_id": "x", "gpu_nolm_exact_ridge_hold_r2": 0.5},
-            "landmarks_off_hold_r2",
+            {"dataset_id": "x", "gpu_nolm_exact_ridge_hold_r2": 0.5}, "landmarks_off_hold_r2"
         )
         codex_checks["missing_score_field_rejected"] = False
     except KeyError:
@@ -483,27 +432,13 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
     for bad_fam in ("None", "null", "unknown", "", "   "):
         try:
             compute_family_grouped_bradley_terry_elo(
-                [
-                    DatasetEvalRecord(
-                        "d_bad",
-                        bad_fam,
-                        "regression",
-                        {"anchor": 0.5, "challenger": 0.6},
-                    )
-                ],
+                [DatasetEvalRecord("d_bad", bad_fam, "regression", {"anchor": 0.5, "challenger": 0.6})],
                 anchor_contender="anchor",
             )
-            codex_checks[
-                f"elo_solver_rejected_bad_family_{bad_fam.strip() or 'empty'}"
-            ] = False
+            codex_checks[f"elo_solver_rejected_bad_family_{bad_fam.strip() or 'empty'}"] = False
         except ValueError:
-            codex_checks[
-                f"elo_solver_rejected_bad_family_{bad_fam.strip() or 'empty'}"
-            ] = True
-        assert (
-            codex_checks[f"elo_solver_rejected_bad_family_{bad_fam.strip() or 'empty'}"]
-            is True
-        )
+            codex_checks[f"elo_solver_rejected_bad_family_{bad_fam.strip() or 'empty'}"] = True
+        assert codex_checks[f"elo_solver_rejected_bad_family_{bad_fam.strip() or 'empty'}"] is True
 
     q10_path = Path("/home/ubuntu/gpu_bench/fused/quick10_and_parity_report.json")
     q10_records: list[DatasetEvalRecord] = []
@@ -523,9 +458,7 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
                     family_id=fam_id,
                     task_type=task_type,
                     scores_by_contender={
-                        "H40b_Chained_Ref": require_finite_score(
-                            row, "chained_hold_r2"
-                        ),
+                        "H40b_Chained_Ref": require_finite_score(row, "chained_hold_r2"),
                         "Fused_LM_CPU_Exact_SameDSL": require_finite_score(
                             row, "fused_lm_cpu_exact_eval_hold_r2"
                         ),
@@ -548,18 +481,12 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
     q10_bin_records = [r for r in q10_records if r.task_type == "binary_classification"]
     q10_elo["by_task_type"] = {
         "regression": compute_family_grouped_bradley_terry_elo(
-            q10_reg_records,
-            anchor_contender="H40b_Chained_Ref",
-            anchor_elo=1500.0,
-            prior=0.01,
+            q10_reg_records, anchor_contender="H40b_Chained_Ref", anchor_elo=1500.0, prior=0.01
         )
         if q10_reg_records
         else {"status": "0_verified_family_datasets_in_subset"},
         "binary_classification": compute_family_grouped_bradley_terry_elo(
-            q10_bin_records,
-            anchor_contender="H40b_Chained_Ref",
-            anchor_elo=1500.0,
-            prior=0.01,
+            q10_bin_records, anchor_contender="H40b_Chained_Ref", anchor_elo=1500.0, prior=0.01
         )
         if q10_bin_records
         else {"status": "0_verified_family_datasets_in_subset"},
@@ -583,9 +510,7 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
             if line.strip()
         }
         if set(on_map.keys()) != set(off_map.keys()):
-            raise ValueError(
-                "Mismatched dataset IDs between landmarks_on and landmarks_off JSONL receipts."
-            )
+            raise ValueError("Mismatched dataset IDs between landmarks_on and landmarks_off JSONL receipts.")
         for did in sorted(on_map.keys()):
             if s3_meta.get(did, {}).get("family_id") is None:
                 c915_excluded_unresolved_count += 1
@@ -597,31 +522,21 @@ def evaluate_current_real_s3_baseline_elo() -> dict[str, object]:
                     family_id=fam_id,
                     task_type=task_type,
                     scores_by_contender={
-                        "Fused_Phase1_LandmarksOn": require_finite_score(
-                            on_map[did], "hold_r2"
-                        ),
-                        "Fused_Phase1_LandmarksOff": require_finite_score(
-                            off_map[did], "hold_r2"
-                        ),
+                        "Fused_Phase1_LandmarksOn": require_finite_score(on_map[did], "hold_r2"),
+                        "Fused_Phase1_LandmarksOff": require_finite_score(off_map[did], "hold_r2"),
                     },
                 )
             )
 
     c915_elo = compute_family_grouped_bradley_terry_elo(
-        c915_records,
-        anchor_contender="Fused_Phase1_LandmarksOn",
-        anchor_elo=1500.0,
-        prior=0.01,
+        c915_records, anchor_contender="Fused_Phase1_LandmarksOn", anchor_elo=1500.0, prior=0.01
     )
     c915_elo["excluded_null_family_count"] = c915_excluded_unresolved_count
     c915_by_task: dict[str, object] = {}
     for t_name in sorted({r.task_type for r in c915_records}):
         sub_recs = [r for r in c915_records if r.task_type == t_name]
         c915_by_task[t_name] = compute_family_grouped_bradley_terry_elo(
-            sub_recs,
-            anchor_contender="Fused_Phase1_LandmarksOn",
-            anchor_elo=1500.0,
-            prior=0.01,
+            sub_recs, anchor_contender="Fused_Phase1_LandmarksOn", anchor_elo=1500.0, prior=0.01
         )
     c915_elo["by_task_type"] = c915_by_task
 
