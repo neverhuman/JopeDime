@@ -1128,6 +1128,12 @@ crates/jope-engine/src/eval_registry/authority/native_recovery.rs
 crates/jope-engine/src/eval_registry/authority/native_recovery_tests.rs
 crates/jope-engine/src/eval_registry/authority/native_scopes.rs
 crates/jope-engine/src/eval_registry/authority/tests.rs
+crates/jope-engine/src/eval_registry/authority/tests/admission.rs
+crates/jope-engine/src/eval_registry/authority/tests/execution.rs
+crates/jope-engine/src/eval_registry/authority/tests/history.rs
+crates/jope-engine/src/eval_registry/authority/tests/integrity.rs
+crates/jope-engine/src/eval_registry/authority/tests/legacy.rs
+crates/jope-engine/src/eval_registry/authority/tests/recovery.rs
 crates/jope-engine/src/eval_registry/funding.rs
 crates/jope-engine/src/eval_registry/funding/tests.rs
 crates/jope-engine/src/eval_registry/funding_config.rs
