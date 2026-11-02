@@ -37,6 +37,24 @@ Only the exact finding source path is excluded from Jankurai scoring. Tests and
 other security scans remain in place. Revisit if the pinned provenance is retired
 or either recorded hash changes; this does not cover other findings in the file.
 
+## Frozen `evergreen.py` package copies
+
+HLT-043 fingerprint
+`sha256:ae6b84149c1e2e8b40e58f874b8d4b4b20d82beb3e59e1b550905af706177a71`
+in `rerun/j_8df4fe341.json` includes four frozen copies, each SHA-256
+`334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe`:
+
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/evergreen.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/evergreen.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/evergreen.py`
+- `deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py`
+
+The hashes are bound by the revision 2 packaged-offline receipt, revision 3
+packaged-tests receipt, v1 source manifest and package receipt, and hpc-v5
+provenance. These exact paths alone are excluded from Jankurai scoring; the
+mutable canonical `deploy/dl-flywheel/jope_flywheel/evergreen.py` remains in the
+scan. No pinned bytes or other security scans change.
+
 ## Frozen `training_snapshot_kumos.py` instance
 
 HLT-043 fingerprint

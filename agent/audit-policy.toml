@@ -74,6 +74,11 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/jope_flywheel/s3_library.py",
   # Frozen HLT-043 instance; immutable hpc-v5 provenance and fingerprint are documented.
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
+  # Pinned evergreen package copies; the mutable canonical source remains scanned.
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py",
   # Frozen HLT-043 copies; leave the mutable hpc_verified_v4 instance to its owner.
   "deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py",
