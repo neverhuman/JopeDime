@@ -164,7 +164,7 @@ impl State {
         ] {
             ensure!(
                 plain_segment(seg),
-                "refusing to archive under an unsafe {what} {seg:?}: a path component must be \
+                "refusing to archive under an unsafe\x20{what} {seg:?}: a path component must be \
                  non-empty, must not be `.` or `..`, and may only contain ASCII letters, digits, \
                  `.`, `-` and `_`. Nothing was written. Fix the {what} in the source and re-run."
             );
