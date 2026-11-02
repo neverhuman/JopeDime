@@ -1,26 +1,26 @@
-# H225 — multi-step candidate generation and continuous regret
+# H225 — multi-step proposals with continuous-regret selection
 
-Status: **PREREGISTERED / NOT_RUN**. Owner: sol_v1_dsc01.
+Status: **INCOMPLETE / INCOMPLETE / None**.
 
-The hypothesis is that larger adapter proposals move beyond the r882 top-1
-plateau and TRAIN inner-family continuous regret selects them more reliably
-than discrete utility. MSCR is primary; MSTOP1 isolates the selection score;
-MSCR_SHUF is the within-family selection-label placebo; r882 is the reference.
+The hypothesis was that larger adapter proposals escape the r882 top-1 plateau,
+with continuous TRAIN regret selecting them more reliably than discrete utility.
+The frozen design used MSCR, MSTOP1 and within-family MSCR_SHUF, eight proposals
+per seed/outer cell, three seeds, and fresh five-fold family partitions. The
+120 outer proposals plus240 shared inner fits have a logical budget of8280 updates, plus
+the two-update TRAIN smoke. Selection is locked before candidate A/DL-Val scores.
+Full protocol and input pins are in [PREREG.md](PREREG.md) and [manifest.json](manifest.json).
+Those prereg source hashes refer to immutable execution source `bd028747af73f0e72f66c9ddb64b1c486a382b13`.
 
-The fixed eight-proposal grid spans 8/32 steps and 0.5/1/2 times the r882 learning
-rate plus two independent minibatch replicas. Three seeds and five fresh outer
-family folds give 120 outer proposals, 240 inner fits, 360 total fits and 8,280
-updates, plus a two-update TRAIN smoke. Details, strict selection fallback,
-input pins and family assignments are in [PREREG.md](PREREG.md),
-[manifest.json](manifest.json) and [fold_manifest.json](fold_manifest.json).
+No complete A/DL-Val cohort was measured; gain, CI, harm and Elo are unknown.
 
-Primary: pooled-A native gain LCB95>0, all three seed gains positive and
-per-seed harm<=10%. Co-primary: DL-Val91 context-mean gain>+0.002 with positive
-family-bootstrap lower bound. No candidate outcome, CI, harm, Elo, proposal
-diversity count or verdict has been measured. r882's Elo reference is1500.
+Failure: The sole admitted CPU continuation was interrupted by the host reboot initiated19:27Z (final shutdownSIGTERM19:29:09Z). Both controller and worker are absent; only120/360 unique completed-fit proofs exist. Preregistered ONE continuation is consumed; no scientific restart. Original scheduled19:00 stop/admission facts and all costs remain preserved.. Ledger and fit counts are in metrics.json; no partial result was promoted.
 
-Next step: merge the locally tested preregistration, bind its merged source,
-archive the prereg metadata to S3, pass the bounded smoke, then launch the single
-CPU attempt. The supervisor pauses the owned worker on load5>60; compute stops
-at19:00Z and closeout is due19:30Z on2026-11-02. Run data stays in
-`~/jope-data/h225`; the live checkpoint and other studies stay outside its writes.
+Raw artifacts, state hashes, optimizer ledger, frozen-DOPE proofs and exact input
+audit are preserved in the version-replayed S3 objects in [metrics.json](metrics.json).
+S3 custody: REMOTE_VERIFIED. The local run root remains `~/jope-data/h225`.
+Reference r882 Elo is1500. Missing observations remain unknown; no protected,
+holdout or live-run qualification is inferred. The fixed compute deadline was
+22:30Z; actual terminal timestamps remain in raw receipts. Closeout authority is
+the original H225 instruction.
+
+Next step: Retain r882. Review the recorded failure and obtain a new prospective attempt before any scientific retry.

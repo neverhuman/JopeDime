@@ -1,10 +1,90 @@
 {
   "wave": "H225",
-  "status": "NOT_RUN",
-  "verdict": null,
-  "primary_gain": null,
-  "ci95": null,
+  "source_commit": "bd028747af73f0e72f66c9ddb64b1c486a382b13",
+  "amendment_source": "835f07f3b9c61493f4ce9295eac2090389efca2f",
+  "prereg_pr": 1878,
+  "status": "INCOMPLETE",
+  "verdict": "INCOMPLETE",
+  "plateau_verdict": null,
+  "disposition": "INTERRUPTED_HOST_REBOOT",
+  "interruption": {
+    "status": "INCOMPLETE",
+    "disposition": "INTERRUPTED_HOST_REBOOT",
+    "interruption_reported_utc": "2026-11-02T19:27:00Z",
+    "wtmp_shutdown_utc": "2026-11-02T19:27:11Z",
+    "final_shutdown_sigterm_utc": "2026-11-02T19:29:09Z",
+    "last_supervisor_observation_utc": "2026-11-02T19:29:08.216342+00:00",
+    "current_boot_id": "d88c3842-46da-4e10-9c6d-a198879d2c02",
+    "source_commit": "bd028747af73f0e72f66c9ddb64b1c486a382b13",
+    "amendment_source": "835f07f3b9c61493f4ce9295eac2090389efca2f",
+    "former_controller_pid": 1099284,
+    "former_worker_pid": 2243240,
+    "current_processes_absent": true,
+    "continuation_activations": 1,
+    "further_scientific_attempts": 0,
+    "compute_stop": "2026-11-02T22:30:00Z",
+    "closeout": "2026-11-02T23:00:00Z",
+    "original_scheduled_stop_preserved": true,
+    "operator_generated": true,
+    "scope": "Derived interruption evidence only; never an original scheduled-stop admission receipt.",
+    "recorded_utc": "2026-11-02T19:48:42.348317+00:00"
+  },
+  "optimizer_ledger": {
+    "original": {
+      "ledger_present": true,
+      "completed_lower_bound": 2760,
+      "unacknowledged_intents": 0,
+      "truncated_tail": false
+    },
+    "continuation": {
+      "ledger_present": false,
+      "completed_lower_bound": 0,
+      "unacknowledged_intents": 0,
+      "truncated_tail": false
+    },
+    "smoke": {
+      "ledger_present": true,
+      "completed_lower_bound": 2,
+      "unacknowledged_intents": 0,
+      "truncated_tail": false
+    }
+  },
+  "completed_fit_proofs": 120,
+  "reused_fit_markers": 120,
+  "new_complete_fit_proofs": 0,
+  "unique_completed_fit_proofs": 120,
+  "required_logical_fits": 360,
+  "proof_steps": 2760,
+  "acknowledged_optimizer_events_including_smoke": 2762,
+  "actual_new_optimizer_updates": null,
+  "actual_total_optimizer_updates": null,
+  "cost_scope": "Preserved acknowledged-event lower bounds only. Missing continuation ledger and unacknowledged interruption tail do not establish an actual-work total. All original/reused/partial/discarded cost remains charged; no budget reset.",
+  "physical_updates_upper_cap_including_smoke_and_one_interrupted_fit": 8314,
+  "primary": null,
+  "co_primary": null,
   "elo": null,
-  "optimizer_updates": 0,
-  "candidate_readouts": 0
+  "MSCR_minus_MSTOP1": null,
+  "distinct_DL_Val_values": null,
+  "protected_payload_reads": null,
+  "reason": "The sole admitted CPU continuation was interrupted by the host reboot initiated19:27Z (final shutdownSIGTERM19:29:09Z). Both controller and worker are absent; only120/360 unique completed-fit proofs exist. Preregistered ONE continuation is consumed; no scientific restart. Original scheduled19:00 stop/admission facts and all costs remain preserved.",
+  "missing_statistics": "Incomplete cohort: gain/CI/harm/Elo remain unknown/null; no partial-cohort inference.",
+  "finished_utc": "2026-11-02T19:48:42.378262+00:00",
+  "archive_status": "REMOTE_VERIFIED",
+  "archive_objects": [
+    {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H225/dsc01-t1945-reboot/terminal/bd028747af73-fad49321ff579e8e/payload.tar.gz",
+      "version_id": "9c2NqTIw_OAhj0Bggcz0DrT5UWrP0Wdo",
+      "sha256": "fad49321ff579e8ee07026a3964e13c6f3005d783880b7110bf8cb75a8e634bb",
+      "bytes": 21546446,
+      "replay_verified": true
+    },
+    {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H225/dsc01-t1945-reboot/terminal/bd028747af73-fad49321ff579e8e/manifest.json",
+      "version_id": "DjFp4NbJX9fuoXPkVAofsJoE5_IermYp",
+      "sha256": "ca406b8e1dd248ffd11813e02c9c97b7eed7f3a53be23a9274d8f90fdbbf388e",
+      "bytes": 93997,
+      "replay_verified": true
+    }
+  ],
+  "archive_receipt_sha256": "f284fdbab92630c58e93ed0702ef90d0b2d61710c3c9e8cc71ce99312929c088"
 }
