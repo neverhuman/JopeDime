@@ -1,0 +1,79 @@
+{
+  "wave": "H230",
+  "status": "INCOMPLETE",
+  "verdict": null,
+  "scientific_hypothesis_tested": false,
+  "source_commit": "0d7388b1aaf30629c673a40ab551a382cf939b22",
+  "attempt": 1,
+  "retry_allowed": false,
+  "error": "KeyError('pids is not a file in the archive')",
+  "stage": "setup",
+  "planned_histgbm_fits": 45,
+  "completed_histgbm_fits": 0,
+  "planned_adapter_cells": 15,
+  "completed_adapter_cells": 0,
+  "planned_optimizer_updates": 600,
+  "optimizer_updates": 0,
+  "smoke_status": "NOT_REACHED",
+  "treatment_A_scored": false,
+  "treatment_DLVal_scored": false,
+  "native91_bitexact": true,
+  "native91_mean": 1.1377941898164525,
+  "native_gain": null,
+  "ci95": null,
+  "elo": null,
+  "plateau_gain": null,
+  "harm": null,
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "CUDA_initialized": false,
+  "read_boundary": {
+    "sealed": 0,
+    "holdout": 0,
+    "meta_test": 0
+  },
+  "serving_promotion": false,
+  "boot_id": "d88c3842-46da-4e10-9c6d-a198879d2c02",
+  "host_reboot_interrupted": false,
+  "start_epoch": 1793650697.4725802,
+  "finish_epoch": 1793651049.8736472,
+  "elapsed_seconds": 352.4010670185089,
+  "deadline_epoch": 1793676600.0,
+  "resources": {
+    "max_tree_rss_bytes": 1034653696,
+    "max_load5": 43.2158203125,
+    "min_free_bytes": 811036684288,
+    "min_available_ram_bytes": 84418613248,
+    "affinity": [
+      2,
+      22,
+      67,
+      104
+    ],
+    "load_actions": []
+  },
+  "loader_counterexample": {
+    "status": "REPRODUCED",
+    "source_commit": "0d7388b1aaf30629c673a40ab551a382cf939b22",
+    "raw_fixture_fields": [
+      "program_sha256"
+    ],
+    "consumer_field": "pids",
+    "expected_H136_normalization": "Decode program_sha256 to internal pids before planning/hash.",
+    "error": "KeyError('pids is not a file in the archive')",
+    "no_real_data_fit": true,
+    "no_optimizer_update": true,
+    "normalized_fixture_ids": [
+      "abc",
+      "def"
+    ],
+    "test_gap": "Original data-free sampler tests provided already-normalized internal pids and did not exercise raw-NPZ loader boundary."
+  },
+  "disposition": "Close INCOMPLETE under one-attempt/no-retry rule. No efficacy conclusion. Preserve source unchanged; a future separately authorized wave must map raw program_sha256 to normalized pids and test that boundary before execution.",
+  "custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H230/astra-t1945/closeout/manifest.json",
+    "version_id": "eNECE9gC_a3Qyz4_FLyjMNbaS3bgg7uT",
+    "sha256": "e90e6efe376f5b3c218f768c7ce7cdbae55a7bbd3f62c60b50f44b6ec33a4807",
+    "bytes": 9517
+  }
+}
