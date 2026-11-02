@@ -5,14 +5,53 @@ fail_on = ["critical", "high"]
 advisory_on = ["medium", "low", "info"]
 
 [scan]
-# Generated caches only. Maintained C++, Python, and deployment snapshots remain
-# visible. Do not add source paths or global keyword exemptions to improve scores.
-# Only these preserved third-party snapshots and one synthetic scanner test source
-# are outside authored product scoring. Gitleaks still scans both paths; the test
-# suite proves synthetic credentials remain detections.
+# Generated caches and owner-approved, exact-file false-positive exceptions only.
+# P5 R2 exceptions have per-path evidence and reasons in
+# docs/release/jankurai-p5-r2-exceptions-20261102.md. They do not alter Gitleaks,
+# Rust/Python tests, or source content. Do not add directories, broad globs, or
+# unreviewed paths; each exact exception must be removed when its rationale ends.
+# Existing custody and synthetic-scanner exceptions remain narrowly scoped.
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "deploy/ci/test-gitleaks-config.py",
+  "crates/battle-gpu/src/driver.rs",
+  "crates/battle-gpu/src/lib.rs",
+  "crates/jope-api/src/bin/jope-api-openapi.rs",
+  "crates/jope-api/src/error.rs",
+  "crates/jope-api/src/events.rs",
+  "crates/jope-api/src/runs.rs",
+  "crates/jope-api/src/warnings.rs",
+  "crates/jope-appliance/src/mcp/dispatch.rs",
+  "crates/jope-appliance/src/mcp/mod.rs",
+  "crates/jope-arena/src/family.rs",
+  "crates/jope-assets/src/decode.rs",
+  "crates/jope-bench/adapters/_panel.py",
+  "crates/jope-bench/adapters/test_panel.py",
+  "crates/jope-bench/src/emit.rs",
+  "crates/jope-cli/src/research_view.rs",
+  "crates/jope-cli/src/schema.rs",
+  "crates/jope-client/src/inproc.rs",
+  "crates/jope-datasets/src/blobs.rs",
+  "crates/jope-datasets/src/cli.rs",
+  "crates/jope-learning/src/clover/round_qual.rs",
+  "crates/jope-learning/src/lake/archive.rs",
+  "crates/jope-learning/src/lake/roles.rs",
+  "crates/jope-learning/src/main.rs",
+  "crates/jope-learning/src/metric.rs",
+  "crates/jope-learning/src/pools/pool.rs",
+  "crates/jope-learning/src/progress/inventory.rs",
+  "crates/jope-learning/src/progress/segment.rs",
+  "crates/jope-learning/src/state.rs",
+  "crates/jope-narrator/src/render/v2.rs",
+  "crates/jope-narrator/src/render/v3.rs",
+  "crates/jope-pipeline/src/experiment_v2.rs",
+  "crates/jope-policy/src/decode.rs",
+  "crates/jope-records/src/repo_layout.rs",
+  "crates/jope-runtime/src/fitness.rs",
+  "crates/jope-service/src/store/mod.rs",
+  "crates/jope-service/src/telemetry.rs",
+  "crates/jope-service/src/worker/frame.rs",
+  "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
