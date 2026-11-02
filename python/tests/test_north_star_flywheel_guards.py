@@ -13,13 +13,16 @@ from jope.north_star import (
     DatasetEvalRecord,
     DopeFreezeViolationError,
     assert_optimizer_excludes_dope,
+    assert_research_optimizer_policy,
     batched_roc_auc_gpu,
     compile_and_eval_rust_fitness,
     compute_family_grouped_bradley_terry_elo,
+    configure_research_dope,
     emit_rust_only_flywheel_source,
     evaluate_unified_regression_and_binary_batched_gpu,
     get_trainable_param_counts_by_submodule,
     lock_dope_weights_and_eval_mode,
+    reject_research_dope_unfreeze,
     resolve_authoritative_family_and_task,
     snapshot_dope_weights,
     verify_dope_frozen_unchanged,
@@ -265,3 +268,92 @@ def test_ns7_elo_tracker_and_null_family_rejection() -> None:
                 }
             },
         )
+
+
+@pytest.mark.parametrize("flag", ["1", "true", "", "2"])
+def test_ns3_serving_and_flywheel_refuse_research_flag(monkeypatch, flag) -> None:
+    monkeypatch.setenv("JOPE_RESEARCH_DOPE_UNFREEZE", flag)
+    monkeypatch.setenv("JOPE_RESEARCH_RUN_ID", "H206-test")
+    model = _ToyFusedNet()
+    with pytest.raises(DopeFreezeViolationError, match="refuses"):
+        lock_dope_weights_and_eval_mode(model)
+    with pytest.raises(DopeFreezeViolationError, match="refuses"):
+        reject_research_dope_unfreeze("fused closed-loop flywheel")
+
+
+def test_ns3_research_default_stays_byte_identical(monkeypatch) -> None:
+    monkeypatch.delenv("JOPE_RESEARCH_DOPE_UNFREEZE", raising=False)
+    model = _ToyFusedNet()
+    metadata = {}
+    configure_research_dope(model, launch_metadata=metadata)
+    before = snapshot_dope_weights(model)
+    opt = torch.optim.SGD(model.head.parameters(), lr=0.1)
+    assert_research_optimizer_policy(opt, model, research_run_id="H206-default")
+    model.train()
+    opt.zero_grad()
+    model.head(model.dope_model.sub(torch.ones(2, 4))).sum().backward()
+    opt.step()
+    verify_dope_frozen_unchanged(model, before)
+    assert metadata["dope_policy"]["research_dope_unfreeze"] is False
+
+
+@pytest.mark.parametrize("use_env", [False, True])
+def test_ns3_explicit_research_harness_updates_dope_only(monkeypatch, use_env) -> None:
+    monkeypatch.delenv("JOPE_RESEARCH_DOPE_UNFREEZE", raising=False)
+    model = _ToyFusedNet()
+    model.gamenet_anchor = nn.Linear(4, 4)
+    original = {k: v.clone() for k, v in model.state_dict().items()}
+    metadata = {}
+    if use_env:
+        monkeypatch.setenv("JOPE_RESEARCH_DOPE_UNFREEZE", "1")
+        monkeypatch.setenv("JOPE_RESEARCH_RUN_ID", "H206-unit")
+        configure_research_dope(model, launch_metadata=metadata)
+    else:
+        configure_research_dope(model, launch_metadata=metadata, unfreeze=True, research_run_id="H206-unit")
+    model.train()
+    model.dope_model.sub.train()
+    assert all(not m.training for m in model.dope_model.modules())
+    assert all(p.requires_grad for p in model.dope_model.parameters())
+    opt = torch.optim.SGD(model.dope_model.parameters(), lr=0.1)
+    assert assert_research_optimizer_policy(opt, model, research_run_id="H206-unit")
+    with pytest.raises(DopeFreezeViolationError):
+        assert_optimizer_excludes_dope(opt, model)
+    with pytest.raises(DopeFreezeViolationError, match="run id"):
+        assert_research_optimizer_policy(opt, model, research_run_id="another-run")
+    opt.zero_grad()
+    model.dope_model.bn(model.dope_model.sub(torch.ones(2, 4))).sum().backward()
+    opt.step()
+    assert not torch.equal(original["dope_model.sub.weight"], model.dope_model.sub.weight)
+    for k, v in model.state_dict().items():
+        if k.startswith("gamenet_anchor.") or k not in dict(model.named_parameters()):
+            assert torch.equal(v, original[k]), k
+    assert metadata["dope_policy"] == {
+        "research_dope_unfreeze": True,
+        "research_run_id": "H206-unit",
+        "entrypoint": "research",
+        "dope_eval_mode": True,
+        "serving_eligible": False,
+    }
+    monkeypatch.delenv("JOPE_RESEARCH_DOPE_UNFREEZE", raising=False)
+    lock_dope_weights_and_eval_mode(model)
+    model.train()
+    assert all(not p.requires_grad and p.grad is None for p in model.dope_model.parameters())
+    with pytest.raises(DopeFreezeViolationError):
+        assert_research_optimizer_policy(opt, model, research_run_id="H206-unit")
+
+
+@pytest.mark.parametrize("run_id", [None, "", "bad/run", "bad run", "x" * 129])
+def test_ns3_research_unfreeze_requires_run_identity(monkeypatch, run_id) -> None:
+    monkeypatch.delenv("JOPE_RESEARCH_RUN_ID", raising=False)
+    with pytest.raises(DopeFreezeViolationError, match="run id"):
+        configure_research_dope(_ToyFusedNet(), launch_metadata={}, unfreeze=True, research_run_id=run_id)
+
+
+def test_ns3_research_flag_cannot_hide_environment_or_unfreeze_anchor(monkeypatch) -> None:
+    monkeypatch.setenv("JOPE_RESEARCH_DOPE_UNFREEZE", "1")
+    with pytest.raises(DopeFreezeViolationError, match="conflicts"):
+        configure_research_dope(_ToyFusedNet(), launch_metadata={}, unfreeze=False)
+    model = _ToyFusedNet()
+    model.gamenet_anchor = model.dope_model
+    with pytest.raises(DopeFreezeViolationError, match="share parameters"):
+        configure_research_dope(model, launch_metadata={}, research_run_id="H206-unit")

@@ -2,21 +2,54 @@
   "wave": "H200",
   "authority": "/home/ubuntu/nudges/hw_t1350_h200_hbaseline.md",
   "claim": "/home/ubuntu/jope_plan/ns/receipts/H200_claim.txt",
-  "arms": ["R882", "FIX025", "NEST_L", "RANK025", "NEST_SHUF"],
+  "arms": [
+    "R882",
+    "FIX025",
+    "NEST_L",
+    "RANK025",
+    "NEST_SHUF"
+  ],
   "primary": "NEST_L",
   "holm_m": 2,
-  "lambda_grid": [0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5],
+  "lambda_grid": [
+    0,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.4,
+    0.5
+  ],
   "nested_selection_margin": 0.001,
-  "seeds": [200101, 200102, 200103],
-  "fold_seeds": {"200101": 200141, "200102": 200142, "200103": 200143},
+  "seeds": [
+    200101,
+    200102,
+    200103
+  ],
+  "fold_seeds": {
+    "200101": 200141,
+    "200102": 200142,
+    "200103": 200143
+  },
   "sample_seed": 200140,
   "boot_seed": 200150,
   "elo_boot_seed": 200151,
   "shuffle_seed": 200160,
   "bootstrap_draws": 10000,
   "elo_draws": 1000,
-  "folds": {"families": 205, "contexts": 1219, "outer": "A=k, B=(k+1)%5, FIT=remaining folds"},
-  "fits": {"outer": 5, "inner": 10, "calibrator": 5, "per_seed": 20, "total": 60},
+  "folds": {
+    "families": 205,
+    "contexts": 1219,
+    "outer": "A=k, B=(k+1)%5, FIT=remaining folds"
+  },
+  "fits": {
+    "outer": 5,
+    "inner": 10,
+    "calibrator": 5,
+    "per_seed": 20,
+    "total": 60
+  },
   "gbm": {
     "class": "sklearn.ensemble.HistGradientBoostingRegressor",
     "max_iter": 300,
@@ -61,5 +94,77 @@
     "deadline_seconds": 14400,
     "resume": false
   },
-  "forbidden": ["xbabe0", "xbabe2", "xbabe3", "GPU", "live writes", "holdout", "sealed", "meta-test"]
+  "forbidden": [
+    "xbabe0",
+    "xbabe2",
+    "xbabe3",
+    "GPU",
+    "live writes",
+    "holdout",
+    "sealed",
+    "meta-test"
+  ],
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "protocol_qualification": "DEVIATIONS_RECORDED",
+  "attempt": "attempt-001",
+  "execution_source_commit": "af2825452ec98bd0fc044c826f3c812f1fc02339",
+  "original_owner": "luna_ns_hbaseline",
+  "closeout_owner": "rd_astra",
+  "closeout_authority": "gbw_2040_rd_astra.md",
+  "execution_manifest_file": "execution-manifest-attempt-001.json",
+  "execution_manifest_sha256": "7fed9fe184f1aadc0a4f5bd3b9cdc9b9cc24b0bb937ecf77dedabc461aaab6cb",
+  "metrics_file": "metrics.json",
+  "replay_file": "replay.json",
+  "custody_file": "custody.json",
+  "evidence": {
+    "status": "PASS",
+    "manifest": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H200/astra-closeout-t2040/manifest.json",
+      "version_id": "8L1IkhXCiSBGgA.P3Hz7UOlwlSAzklR1",
+      "sha256": "6c0a44cc020e685c34c8de7c0023982d266c2fac3d4e9283f45174856f3b0547",
+      "bytes": 41712
+    },
+    "outputs": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H200/astra-closeout-t2040/evidence.zip",
+      "version_id": "E8wpUvJ9G5KldL3rpMn9v591yQwhFWaU",
+      "sha256": "85f00cce924c6eaf4cb11673db722859db0b9f65f260501e9d9a57ff1d630f4f",
+      "bytes": 212591958
+    },
+    "verified_members": 153,
+    "source_host_files_verified": 137
+  },
+  "summary": {
+    "fits": 60,
+    "outer_cells": 15,
+    "optimizer_updates": 0,
+    "native91_reference": 1.1377941898164525,
+    "nest_l": {
+      "ci95": [
+        -0.000677051386395517,
+        0.07216009868008408
+      ],
+      "exact_tie_families": 13,
+      "exact_tie_families_all_seeds": 13,
+      "families": 205,
+      "family_win_tie_loss": [
+        103,
+        13,
+        89
+      ],
+      "harm_families": 71,
+      "harm_fraction": 0.3463414634146341,
+      "median_gain": 0.0357410467268559,
+      "p_one_sided_vs_margin": 0.032396760323967606,
+      "per_seed_gain": [
+        0.0357410467268559,
+        0.020570490479125084,
+        0.037995334780997196
+      ],
+      "positive_seeds": 3
+    },
+    "holm_adjusted_p": 0.06479352064793521,
+    "early_stopped_fits": 7,
+    "original_938_disk_guard_pass": false
+  }
 }

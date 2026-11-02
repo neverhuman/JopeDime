@@ -458,5 +458,167 @@ class ScaffoldAssemblyTests(unittest.TestCase):
         self.assertEqual(self.output.read_text(), "earlier receipt")
 
 
+class M3WaiverTests(unittest.TestCase):
+    """Owner waiver preserves raw failure and never waives CV or another operator."""
+
+    def setUp(self):
+        import runpy
+
+        self.fixture = ScaffoldAssemblyTests()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        helpers = runpy.run_path(str(Path(__file__).with_name("test_provider_m3")))
+        self.full = helpers["full"]
+        self.report = helpers["full_report"](self.fixture.source)
+        proposer = self.report["clauses"]["r0_proposer"]
+        for row, reference, native in zip(
+            proposer["strata"][1:],
+            [(64, 64, 64), (278, 277, 277)],
+            [(688, 616, 616), (2902, 2589, 2589)],
+        ):
+            for key, values in [
+                ("reference_counts", reference),
+                ("native_counts", native),
+            ]:
+                row[key] = {op: 0 for op in self.full.OPERATOR_FAMILIES}
+                for op, value in zip(
+                    ["edit_replace_head", "champion_retrieval", "edit_parameter"],
+                    values,
+                ):
+                    row[key][op] = value
+            row["passed"] = False
+        for key in ["reference_counts", "native_counts"]:
+            proposer["strata"][0][key] = {
+                op: sum(row[key][op] for row in proposer["strata"][1:])
+                for op in self.full.OPERATOR_FAMILIES
+            }
+        proposer["strata"][0]["passed"] = False
+        proposer["passed"] = False
+        self.report["status"] = "NUMERICAL_FAIL"
+        self.report["counts"].update(passed=3, failed=1)
+        ctx = helpers["Context"](
+            "M3",
+            self.fixture.artifact,
+            self.fixture.digest,
+            self.fixture.source,
+            self.fixture.root / "M3.json",
+        )
+        self.ctx = ctx
+        self.payload = self.full.gate_payload(ctx, self.report, "b" * 64)
+        self.path = next(p for p in self.fixture.paths if p.stem == "M3")
+        self.path.write_text(json.dumps(self.payload))
+        self.ruling = self.fixture.root / "owner-ruling.md"
+        self.ruling.write_text("synthetic ruling fixture; not owner authorization")
+        self.addCleanup(patch.stopall)
+        patch.object(
+            runner,
+            "M3_WAIVER_RULING_SHA256",
+            hashlib.sha256(self.ruling.read_bytes()).hexdigest(),
+            create=True,
+        ).start()
+        patch.object(
+            runner,
+            "_source_proposer_sha256",
+            return_value="48ebbfc081451baf0470ae25e1ae04621823ac4de3dfb0d8e93576206c8dbe39",
+            create=True,
+        ).start()
+
+    def assemble(self, **changes):
+        kwargs = dict(m3_waiver_ruling=self.ruling, release_version="v1.0.0")
+        kwargs.update(changes)
+        return self.fixture.assemble(**kwargs)
+
+    def test_authorized_waiver_preserves_raw_fail_and_counts(self):
+        receipt = self.assemble()
+        row = next(x for x in receipt["gates"] if x["id"] == "M3")
+        self.assertEqual(row["status"], "FAIL")
+        self.assertEqual(row["disposition"], "WAIVED_V1_0_0")
+        self.assertEqual(row["counts"], self.payload["counts"])
+        self.assertEqual(receipt["release_version"], "v1.0.0")
+        self.assertEqual(receipt["waivers"][0]["expires_at"], "v1.0.1")
+        self.assertEqual(len(receipt["gates"]), 28)
+        self.assertEqual(self.payload, json.loads(self.path.read_text()))
+
+    def test_waiver_cannot_carry_into_future_release_or_unknown_ruling(self):
+        for version in ["v1.0.1", "v2.0.0", None]:
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                self.assemble(release_version=version)
+        self.ruling.write_text("different bytes")
+        with self.assertRaises(ValueError):
+            self.assemble()
+
+    def test_no_waiver_without_current_proposer_and_complete_fresh_m3(self):
+        with patch.object(runner, "_source_proposer_sha256", return_value="0" * 64):
+            with self.assertRaises(ValueError):
+                self.assemble()
+        for update in [
+            {"counts": {**self.payload["counts"], "skipped": 1}},
+            {"clauses": {}},
+            {"source_sha": "b" * 40},
+            {"artifact_sha256": "0" * 64},
+        ]:
+            with self.subTest(update=update), self.assertRaises(ValueError):
+                self.path.write_text(json.dumps({**self.payload, **update}))
+                self.assemble()
+
+    def test_numerical_failure_cannot_be_waived(self):
+        report = copy.deepcopy(self.report)
+        report["clauses"]["full_train_cv"].update(passed=False, mismatches=1)
+        report["counts"].update(passed=2, failed=2)
+        payload = self.full.gate_payload(self.ctx, report, "b" * 64)
+        self.path.write_text(json.dumps(payload))
+        with self.assertRaises(ValueError):
+            self.assemble()
+
+    def test_guard_is_count_derived_for_head_and_every_other_operator(self):
+        for op, amount in [("edit_replace_head", 60), ("edit_crossover", 50)]:
+            payload = copy.deepcopy(self.payload)
+            rows = payload["clauses"]["r0_proposer"]["strata"]
+            for row in rows[:2]:
+                row["native_counts"]["champion_retrieval"] -= amount
+                row["native_counts"][op] += amount
+            self.path.write_text(json.dumps(payload))
+            with self.subTest(operator=op), self.assertRaises(ValueError):
+                self.assemble()
+
+    def test_another_gate_cannot_use_the_m3_waiver(self):
+        path = next(p for p in self.fixture.paths if p.stem == "M2")
+        value = json.loads(path.read_text())
+        value["status"] = "FAIL"
+        path.write_text(json.dumps(value))
+        with self.assertRaises(ValueError):
+            self.assemble()
+
+    def test_cli_keeps_raw_fail_and_does_not_claim_all_pass(self):
+        args = self.fixture.argv()[1:] + [
+            "--m3-waiver-ruling",
+            str(self.ruling),
+            "--release-version",
+            "v1.0.0",
+        ]
+        stdout = io.StringIO()
+        with patch.object(sys, "argv", args), contextlib.redirect_stdout(stdout):
+            self.assertEqual(runner.main(), 0)
+        self.assertEqual(
+            json.loads(stdout.getvalue()), {"gates": 28, "all_pass": False}
+        )
+        receipt = json.loads(self.fixture.output.read_text())
+        row = next(x for x in receipt["gates"] if x["id"] == "M3")
+        self.assertEqual((row["status"], row["disposition"]), ("FAIL", "WAIVED_V1_0_0"))
+
+    def test_ruling_changed_during_assembly_refuses(self):
+        original = runner._assembly_json
+
+        def mutate(path):
+            result = original(path)
+            if path == self.fixture.paths[-1]:
+                self.ruling.write_text("changed owner record")
+            return result
+
+        with patch.object(runner, "_assembly_json", side_effect=mutate):
+            with self.assertRaisesRegex(ValueError, "ruling changed"):
+                self.assemble()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -221,8 +221,12 @@ pub fn serve_with_native_policy(
 
     if let Ok(value) = std::env::var("SCQ_CONTROL_FD") {
         let fd: i32 = value.parse()?;
+        // SAFETY: fcntl inspects this caller-supplied integer descriptor and
+        // returns a scalar flag value; the negative result is rejected below.
         let flags = unsafe { libc::fcntl(fd, libc::F_GETFD) };
         ensure!(
+            // SAFETY: this runs only when F_GETFD succeeded; it updates flags on
+            // the same open descriptor and passes no pointers.
             flags >= 0 && unsafe { libc::fcntl(fd, libc::F_SETFD, flags | libc::FD_CLOEXEC) } == 0,
             "native controller control descriptor unavailable"
         );
@@ -244,12 +248,15 @@ pub fn serve_with_native_policy(
     let stop = Arc::new(AtomicBool::new(false));
     let finished = AtomicBool::new(false);
     STOP_REQUESTED.store(false, Ordering::SeqCst);
+    // SAFETY: `request_stop` has the C signal-handler ABI and uses only
+    // async-signal-safe atomic stores; signal takes scalar arguments.
     let previous_term = unsafe {
         libc::signal(
             libc::SIGTERM,
             request_stop as *const () as libc::sighandler_t,
         )
     };
+    // SAFETY: same handler and scalar arguments as the SIGTERM registration.
     let previous_int = unsafe {
         libc::signal(
             libc::SIGINT,
@@ -271,6 +278,8 @@ pub fn serve_with_native_policy(
         finished.store(true, Ordering::SeqCst);
         result
     });
+    // SAFETY: restore the exact handler values returned by the two successful
+    // signal registrations; signal takes scalar arguments and returns a value.
     unsafe {
         libc::signal(libc::SIGTERM, previous_term);
         libc::signal(libc::SIGINT, previous_int);

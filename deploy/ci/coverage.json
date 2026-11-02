@@ -5902,7 +5902,17 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H205 data-free controls: verbatim t2022 authority and H204/H205/H206/H207 wave separation, thread rule (b) distinguishing <=4 numeric threads from exempt CUDA runtime/driver helper threads while retaining CPU/RSS/disk/nice/flywheel-PID guards, 205-family 5-fold cross-fit partition and 50-round equal-compute schedule across STATIC-DATA/STATIC-TEACHER/FRESH, native r882 91/91 exact parity gate before candidate forward, H178 per-round pooled selector with LCB95>0 and <=10% family harm cap, JRB-01 ADMISSION PASS gate for FRESH arm, and smoke runner."
+      "scope": "H205 fresh vs static data and static teacher 50-round r882 study (STATIC-DATA, STATIC-TEACHER, FRESH): data-free equal-compute 50x16 microbatch schedule, shared fresh schedule, frozen-teacher identity, H178 per-round 205-family pooled cross-fit selector, native r882 91/91 parity gate, JRB-01 fresh D4 regression admission/label validator, and thread-rule-(b) monitor controls. Research only; no product or sealed qualification."
+    },
+    "python:research/flywheel_selfplay/h206_search_distill/test_h206.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H206 queued search-distillation preregistration and disabled executor skeleton: authority/unknown-result integrity, queue and reserved-cache admission, numeric versus driver limits, and research anchor optimizer refusal. Data-free CPU controls only; no GPU, corpus, scientific or sealed qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -6393,6 +6403,16 @@
       ],
       "lanes": [],
       "scope": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the release lanes."
+    },
+    "python:research/flywheel_selfplay/test_hwave_numeric_threads.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Prospective H-wave numeric-thread admission controls: runtime numeric caps and native pools, multiworker bound, CUDA/OS overhead diagnostics and unknown-evidence refusal. Data-free CPU research fixtures; not a live GPU or serving qualification."
     },
     "python:research/flywheel_selfplay/test_phase3_gates.py": {
       "discovery": {
@@ -16141,6 +16161,8 @@
     "lanes": [],
     "scope": "H169 data-free controls: family exclusion/assessment coverage, repeatable FIT-only minibatches, strict selection, drift calibration, exact optimizer pins, None-gradient materialization, bootstrap/Holm/Elo, and resource guards. No study data, checkpoint, model, or serving qualification."
   },
+  "schema": "jope.coverage/v1",
+  "stage": "static",
   "python:research/flywheel_selfplay/h174_swag/test_h174.py": {
     "discovery": {
       "kind": "python-family"
@@ -16180,7 +16202,5 @@
     ],
     "lanes": [],
     "scope": "H182 data-free controls for nested ENS5/ENS10/ENS20 member prefixes, all 60 fresh member seeds and synthetic init hashes, FIT/A/B isolation, score-before-argmin, axis=0 paired bootstrap, strict ENS20 verdict/Holm gates, timing-only four-hour fold rule, and resource guards. No study data or model checkpoint loaded."
-  },
-  "schema": "jope.coverage/v1",
-  "stage": "static"
+  }
 }
