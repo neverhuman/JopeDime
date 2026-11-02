@@ -1,148 +1,136 @@
 {
   "schema": "whitepaper.current-program-clock-source/v1",
-  "csv_sha256": "0b13a289d84b8cb27e41db43c36f32d00782a419d42b8012950dcbe15a54f900",
+  "csv_sha256": "5783621e173e8ab553876816f5e5456cbe87ab97945aae0790deec6eb80eb610",
   "capture": {
-    "at": "2026-11-02T20:31:41.534576+00:00",
+    "at": "2026-11-02T23:00:00.993431+00:00",
     "rows": 20,
     "round_window": [
-      3853,
-      3872
+      3931,
+      3950
     ],
     "sources": [
       {
-        "name": "summary.jsonl",
-        "sha256": "d3b47fcbc53599e20dc913c91a1be641844768586097e3c050e9656e2e6ab847",
-        "source_prefix": {
-          "at": "2026-11-02T20:31:40.989232+00:00",
-          "complete_prefix_bytes": 3358632,
-          "complete_prefix_sha256": "49d40d1bd8465cd68bd8dc2c882d3fe13e01d2bd488287d7d9a258556a86c8b6",
-          "incomplete_trailing_bytes_omitted": 0,
-          "stable_prefix_reread": true
-        },
-        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
+        "name": "adapter_admissions.jsonl",
+        "at": "2026-11-02T23:00:00.600514+00:00",
+        "observed_bytes": 1680837,
+        "complete_prefix_bytes": 1680837,
+        "complete_prefix_sha256": "9943c684037f109b3889e33bfd1e0d2cded511d314f5cd1247f5d5cf244c2f10",
+        "trailing_incomplete_bytes_omitted": 0,
+        "stable_prefix_reread": true
       },
       {
-        "name": "admissions.jsonl",
-        "sha256": "ca77d6c35c3b80605b231436049c931a067f6a92eec213d89f72e7597e3558fc",
-        "source_prefix": {
-          "at": "2026-11-02T20:31:41.016687+00:00",
-          "complete_prefix_bytes": 1638742,
-          "complete_prefix_sha256": "9c72785105db049df43cf135890ad7a2d05f0988b45086aa30f51b5520b6114c",
-          "incomplete_trailing_bytes_omitted": 0,
-          "stable_prefix_reread": true
-        },
-        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
+        "name": "summary.jsonl",
+        "at": "2026-11-02T23:00:00.625190+00:00",
+        "observed_bytes": 3526662,
+        "complete_prefix_bytes": 3526662,
+        "complete_prefix_sha256": "f554299ce491a0f2da0ca1a0145ed016c33c34238cb518fd21e7cd74ec4c8ffd",
+        "trailing_incomplete_bytes_omitted": 0,
+        "stable_prefix_reread": true
       },
       {
         "name": "per-round.jsonl",
-        "sha256": "907f80f73d0de17a7b80f1be54b4afb718bfc93a7a1cd769490c12f7cfcdb688",
-        "source_prefix": {
-          "at": "2026-11-02T20:31:41.045416+00:00",
-          "complete_prefix_bytes": 2326648,
-          "complete_prefix_sha256": "f0c236b121bd2750107195f46eb7cd36d0aa72d6a15730f7d2578c929ca567e6",
-          "incomplete_trailing_bytes_omitted": 0,
-          "stable_prefix_reread": true
-        },
-        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
+        "at": "2026-11-02T23:00:00.660578+00:00",
+        "observed_bytes": 2387373,
+        "complete_prefix_bytes": 2387373,
+        "complete_prefix_sha256": "0c84936c4f657f4b7c04597918f1121b9f0a6fc0c4f12a3563c05a163e0a9aa8",
+        "trailing_incomplete_bytes_omitted": 0,
+        "stable_prefix_reread": true
       },
       {
         "name": "promotions.jsonl",
-        "sha256": "14bc84c28c55e107409f7cae7a84c45b5ddfab48a547a69f29aa14f419997715",
-        "source_prefix": {
-          "at": "2026-11-02T20:31:41.094977+00:00",
-          "complete_prefix_bytes": 11721968,
-          "complete_prefix_sha256": "b70d04b45f779a923cfa146146c535d8a3d0abb06d93fdfc0e37f8d7d64520ae",
-          "incomplete_trailing_bytes_omitted": 0,
-          "stable_prefix_reread": true
-        },
-        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
+        "at": "2026-11-02T23:00:00.959866+00:00",
+        "observed_bytes": 11855568,
+        "complete_prefix_bytes": 11855568,
+        "complete_prefix_sha256": "33bc57f43ca9f8ce960e7d4a49e3deae89b57abbd051bf1dfd020c51c857d211",
+        "trailing_incomplete_bytes_omitted": 0,
+        "stable_prefix_reread": true
       }
     ],
     "journal_counts": [
       {
-        "round": 3853,
+        "round": 3931,
+        "program_events": 3
+      },
+      {
+        "round": 3932,
         "program_events": 0
       },
       {
-        "round": 3854,
+        "round": 3933,
         "program_events": 0
       },
       {
-        "round": 3855,
+        "round": 3934,
         "program_events": 0
       },
       {
-        "round": 3856,
-        "program_events": 0
-      },
-      {
-        "round": 3857,
-        "program_events": 0
-      },
-      {
-        "round": 3858,
-        "program_events": 0
-      },
-      {
-        "round": 3859,
-        "program_events": 0
-      },
-      {
-        "round": 3860,
-        "program_events": 0
-      },
-      {
-        "round": 3861,
-        "program_events": 2
-      },
-      {
-        "round": 3862,
-        "program_events": 0
-      },
-      {
-        "round": 3863,
-        "program_events": 0
-      },
-      {
-        "round": 3864,
-        "program_events": 0
-      },
-      {
-        "round": 3865,
-        "program_events": 0
-      },
-      {
-        "round": 3866,
+        "round": 3935,
         "program_events": 1
       },
       {
-        "round": 3867,
+        "round": 3936,
+        "program_events": 1
+      },
+      {
+        "round": 3937,
         "program_events": 0
       },
       {
-        "round": 3868,
+        "round": 3938,
         "program_events": 0
       },
       {
-        "round": 3869,
+        "round": 3939,
+        "program_events": 1
+      },
+      {
+        "round": 3940,
         "program_events": 0
       },
       {
-        "round": 3870,
-        "program_events": 2
-      },
-      {
-        "round": 3871,
+        "round": 3941,
         "program_events": 0
       },
       {
-        "round": 3872,
+        "round": 3942,
+        "program_events": 1
+      },
+      {
+        "round": 3943,
+        "program_events": 1
+      },
+      {
+        "round": 3944,
+        "program_events": 1
+      },
+      {
+        "round": 3945,
+        "program_events": 1
+      },
+      {
+        "round": 3946,
+        "program_events": 1
+      },
+      {
+        "round": 3947,
+        "program_events": 0
+      },
+      {
+        "round": 3948,
+        "program_events": 1
+      },
+      {
+        "round": 3949,
+        "program_events": 0
+      },
+      {
+        "round": 3950,
         "program_events": 0
       }
     ],
     "all20_summary_counts_matched": true,
     "all20_summary_admission_perround_matches": true,
-    "program_events": 5,
+    "program_events": 12,
     "adapter_admissions": 0,
     "retained_utility_values": [
       "1.1389572403748425"
@@ -151,5 +139,12 @@
   "definitions": "Per-round rate=3600*kind=promotion journal count/full logged round seconds. Dashed window rate=3600*sum(counts)/sum(seconds), not mean of per-round rates; clock includes all within-round work/waits.",
   "source_binding": "Logged aggregate field interpretation only; installed source/adapter/evaluation population/normalization closure remains unqualified",
   "scope": "Adaptive training-side program-incumbent events, distinct from adapter admissions and independent first-proposal/serving performance",
-  "reproduce": "python3 figures/scripts/make_latest_event_rates_figure.py --current-program-clock"
+  "reproduce": "python3 figures/scripts/make_latest_event_rates_figure.py --current-program-clock",
+  "capture_script_sha256": "d3d52acb0ca3c834e0fab029759a73f75204ddd020cd04b6e4eea59c9ba53bba",
+  "projection_sha256": {
+    "admissions": "b8438390eb5fcd1b7e35213dbef09f4ae5601b3379fc90ded5f730507dfcda91",
+    "summary": "8db708e267b65d7630efe6ccaa47da0411d6d2a785bef3996bd41367b54a141a",
+    "per_round": "aec5ad11ac2a8bc2e079ec20b0348ab1edf634c9822cf5c3201901d062bacb99",
+    "promotions": "7a51fe75f3170be0901fc64391ca98a6ac94029e70787ea5672205eddeebe085"
+  }
 }

@@ -1,18 +1,18 @@
 {
   "schema": "whitepaper.current-program-clock-figure/v1",
-  "input_csv_sha256": "0b13a289d84b8cb27e41db43c36f32d00782a419d42b8012950dcbe15a54f900",
-  "source_receipt_sha256": "6244ac992719c3133e11a6aa65ffd44cd96d6823b859f99350bf1deeb2c47a7b",
+  "input_csv_sha256": "5783621e173e8ab553876816f5e5456cbe87ab97945aae0790deec6eb80eb610",
+  "source_receipt_sha256": "409851fb54d0dfa49c711cbcc15d089781d2a69d2acf15e78806a6cb06169ed7",
   "generator_sha256": "c5cc98ecac70ab66e310f34a3ee98ba886685090a57adc5e95c4fbd9a5875446",
-  "figure_sha256": "58c07ab02059e32fef723b5b2029b2820f17a19be546a6d17fd75e43b295f8bf",
+  "figure_sha256": "c6b53e6d66b6de02a27c321d628ca7b3f19e99387b99f74e004c5908328c1cc2",
   "rows": 20,
   "round_window": [
-    3853,
-    3872
+    3931,
+    3950
   ],
-  "program_events": 5,
-  "logged_wall_seconds": "2033.959894627",
-  "events_per_logged_hour": "8.8497320166192116792936892968465074419393836061076",
-  "zero_event_rounds": 17,
+  "program_events": 12,
+  "logged_wall_seconds": "1987.267776596",
+  "events_per_logged_hour": "21.738389012676226350909727172498469881690927166985",
+  "zero_event_rounds": 10,
   "adapter_admissions": 0,
   "definitions": "Per-round rate=3600*kind=promotion journal count/full logged round seconds. Dashed window rate=3600*sum(counts)/sum(seconds), not mean of per-round rates; clock includes all within-round work/waits.",
   "scope": "Adaptive training-side program-incumbent events, distinct from adapter admissions and independent first-proposal/serving performance",
