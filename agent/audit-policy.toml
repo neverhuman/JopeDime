@@ -118,9 +118,11 @@ extra_excluded_paths = [
 "research/flywheel_selfplay/h158_distillation/runtime.py",
   "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
   "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+  # H230 closed INCOMPLETE wave; exact manifest-pinned files and HLT-033 dispositions are recorded in docs/release/jankurai-ciaudit-frozen-exceptions-20261102.md.
+  "research/flywheel_selfplay/h230_coswr_gated025_stack/analysis.py",
+  "research/flywheel_selfplay/h230_coswr_gated025_stack/gate.py",
+  "research/flywheel_selfplay/h230_coswr_gated025_stack/runner.py",
   # Exact copies retained as part of immutable experiment manifests/results.
-  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
-  "research/flywheel_selfplay/h192_margin_gate/runner.py",
   "research/flywheel_selfplay/h192_margin_gate/treatment.py",
   "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/run_acceptance.py",
 
@@ -329,6 +331,14 @@ paths = ["deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.
 owner = "ops"
 expires = "2027-02-01"
 reason = "HLT-001 sha256:f721d1bd0ddfef70ad394a991b174cb29a4ee513b2d69f7abd2ab7351bdf2e16 is a false positive: old/new name prior/candidate states in the append-only transition validator. Its 905-byte source hash fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30 is pinned by generated_target_admission_v1/SOURCE_PINS.json and deploy/dl-flywheel/SOURCE_MANIFEST.json. See docs/release/jankurai-t1900-transition-hlt001-exception-20261102.md."
+
+[[dead_language_allow]]
+name = "p3-registry-fixture-old"
+term = "old"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_registry.py"]
+owner = "dl-trainonly"
+expires = "2099-12-31"
+reason = "Byte-pinned P3 registry fixture tests retired-family ID rejection using literal key old (deploy/dl-trainonly/lane/MANIFEST.json)."
 
 # Paid/shared work is governed by docs/testing.md; this declares its preflight surface
 # so the auditor can validate the documented cost controls. No spend is approved here.
@@ -938,3 +948,77 @@ pinned_by = [
 ]
 owner = "research"
 reason = "frozen evidence package research/flywheel_selfplay/h228_family_invariant; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "fresh-gp-v2-revision2"
+paths = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/authority_lease.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/execution_boundary.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/executor.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/global_attempts.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/prepare.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/staged_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/transport.py",
+]
+pinned_by = ["deploy/dl-flywheel/SOURCE_MANIFEST.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
+
+[[evidence_snapshot]]
+name = "fresh-gp-v2-revision3"
+paths = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/authority_lease.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/execution_boundary.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/executor.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/global_attempts.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/prepare.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/staged_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/transport.py",
+]
+pinned_by = ["deploy/dl-flywheel/SOURCE_MANIFEST.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
+
+[[evidence_snapshot]]
+name = "fresh-gp-v2-v1-frozen"
+paths = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/authority_lease.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/staged_inputs.py",
+]
+pinned_by = ["deploy/dl-flywheel/SOURCE_MANIFEST.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
+
+[[evidence_snapshot]]
+name = "generated-target-callbacks-revision1"
+paths = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/callbacks.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_contracts.py",
+]
+pinned_by = ["deploy/dl-flywheel/SOURCE_MANIFEST.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
+
+[[evidence_snapshot]]
+name = "generated-target-callbacks-revision2"
+paths = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/callbacks.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_contracts.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_custody.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_semantics.py",
+]
+pinned_by = ["deploy/dl-flywheel/SOURCE_MANIFEST.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
+
+[[evidence_snapshot]]
+name = "generated-target-callbacks-revision3"
+paths = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/callbacks.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_contracts.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_custody.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_semantics.py",
+]
+pinned_by = ["deploy/dl-flywheel/SOURCE_MANIFEST.json"]
+owner = "dl-flywheel"
+reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
