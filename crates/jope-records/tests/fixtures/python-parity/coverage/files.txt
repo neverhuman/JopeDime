@@ -246,6 +246,9 @@ crates/hyperion/src/hyperion_v7/model.rs
 crates/hyperion/src/hyperion_v7/ops.rs
 crates/hyperion/src/hyperion_v7/pooling.rs
 crates/hyperion/src/hyperion_v7/sweep/driver.rs
+crates/hyperion/src/hyperion_v7/sweep/driver/execution.rs
+crates/hyperion/src/hyperion_v7/sweep/driver/output.rs
+crates/hyperion/src/hyperion_v7/sweep/driver/raw_vector.rs
 crates/hyperion/src/hyperion_v7/sweep/flush.rs
 crates/hyperion/src/hyperion_v7/sweep/mod.rs
 crates/hyperion/src/hyperion_v7/sweep/orig_v2.rs
@@ -1157,6 +1160,8 @@ crates/jope-engine/src/telemetry.rs
 crates/jope-engine/src/tournament.rs
 crates/jope-engine/src/training.rs
 crates/jope-engine/src/training/ancestry.rs
+crates/jope-engine/src/training/ancestry/exposure.rs
+crates/jope-engine/src/training/ancestry/genealogy.rs
 crates/jope-engine/src/training/checkpoint_commit.rs
 crates/jope-engine/src/training/consumption.rs
 crates/jope-engine/src/training/continuation.rs
@@ -1387,6 +1392,8 @@ crates/jope-policy/src/context_producer/admission.rs
 crates/jope-policy/src/context_producer/classification.rs
 crates/jope-policy/src/context_producer/input.rs
 crates/jope-policy/src/context_producer/products.rs
+crates/jope-policy/src/context_producer/products/transforms.rs
+crates/jope-policy/src/context_producer/products/types.rs
 crates/jope-policy/src/context_producer/worker.rs
 crates/jope-policy/src/decode.rs
 crates/jope-policy/src/decode/replay.rs
@@ -1484,6 +1491,8 @@ crates/smartcluster/jain-smartcluster-daemon/src/config.rs
 crates/smartcluster/jain-smartcluster-daemon/src/config/deployed_tests.rs
 crates/smartcluster/jain-smartcluster-daemon/src/config/fabric.rs
 crates/smartcluster/jain-smartcluster-daemon/src/config/product_worker.rs
+crates/smartcluster/jain-smartcluster-daemon/src/config/settings.rs
+crates/smartcluster/jain-smartcluster-daemon/src/config/tests.rs
 crates/smartcluster/jain-smartcluster-daemon/src/control.rs
 crates/smartcluster/jain-smartcluster-daemon/src/event_log.rs
 crates/smartcluster/jain-smartcluster-daemon/src/executor.rs
