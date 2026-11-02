@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Announced identity successor for P35's safe cgroup filesystem queries and sealed corpus mapping. Records::open now snapshots count-bounded input into sealed memfd storage; Records::get reads through safe memmap2 slice access. The identity-only rebaseline records the new corpus.rs and Cargo.lock inputs. DSL ABI and behavior fixtures remain unchanged. No known-identity row is added without a shipped receipt.",
+  "plan_reference": "jankurai rustunsafe cap P35; ADR-0004 and compat_freeze identity-only procedure",
+  "source_commit": "1af2e6e337a3aa1d27c85bcdf3a1d68840222d53",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "58e1ac3f3907a3b7c5239447a8e89c2df5f619220c667e06044fe4fcf7b55d30",
+      "after": "98138e61ecab06d77285ac755503506f650c1998baa4f401db965a69db96703c"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "cddee93e84223fa23bbb744b560f965034d8fbc320ace50c04335ca37dc74e0d",
+      "after": "8c01e09b7ceb3c8d27c38ad44ce3fc00d09106662f394a8787d58cc4ede7773c"
+    }
+  ]
+}

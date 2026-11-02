@@ -758,6 +758,12 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/rustmem_cpu_affinity_identity_rebaseline.v1.json");
     let rustunsafe_authority =
         old_fixture("transitions/rustunsafe_authority_lineage_rebaseline.v1.json");
+    let p35_corpus_identity =
+        old_fixture("transitions/p35_sealed_corpus_identity_rebaseline.v1.json");
+    assert_eq!(
+        p35_corpus_identity["source_commit"],
+        "1af2e6e337a3aa1d27c85bcdf3a1d68840222d53"
+    );
     assert_eq!(
         gov04_portable_pty["source_commit"],
         "4b51c5528129c3fc4c170f2c4074a1a176c25eb3"
@@ -1358,6 +1364,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gov04_portable_pty.clone(),
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
+                p35_corpus_identity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1433,6 +1440,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gov04_portable_pty.clone(),
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
+                p35_corpus_identity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1501,6 +1509,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gov04_portable_pty.clone(),
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
+                p35_corpus_identity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1600,6 +1609,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gov04_portable_pty.clone(),
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
+                p35_corpus_identity.clone(),
             ],
         ),
         (
@@ -1659,6 +1669,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 gov04_portable_pty.clone(),
                 rustmem_cpu_affinity.clone(),
                 rustunsafe_authority.clone(),
+                p35_corpus_identity.clone(),
             ],
         ),
     ] {
@@ -1766,6 +1777,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gov04_portable_pty,
         rustmem_cpu_affinity,
         rustunsafe_authority,
+        p35_corpus_identity,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

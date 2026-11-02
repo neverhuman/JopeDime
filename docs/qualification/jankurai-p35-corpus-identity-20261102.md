@@ -24,4 +24,6 @@ The identity-only rebaseline ran with `JOPE_COMPAT_FREEZE_REGENERATE=identity` a
 13 `compat_freeze` tests. It changed only the evaluator identity and lineage source fixtures;
 emitted bytes, model serialization, numerical values, seeded streams, DSL ABI, and historical
 identity rows were retained. The known-identity table remains unchanged because this new identity
-has no shipped receipt to add as a historical row.
+has no shipped receipt to add as a historical row. The append-only edge in
+`crates/feat-math/tests/fixtures/compat_freeze/transitions/p35_sealed_corpus_identity_rebaseline.v1.json`
+links both fixture successors; `historical_v1` passes 3/3.

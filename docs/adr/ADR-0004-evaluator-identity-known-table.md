@@ -36,6 +36,8 @@ changes from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` 
 `545bf844bebb344e6f17dba49c6050bf98bcabe330326a0beb75e506aafe6f39`. The DSL ABI is
 unchanged. The identity-only regeneration and its receipt are documented in
 [`P35 corpus identity transition`](../qualification/jankurai-p35-corpus-identity-20261102.md).
+The append-only historical chain records both fixture successors in
+`crates/feat-math/tests/fixtures/compat_freeze/transitions/p35_sealed_corpus_identity_rebaseline.v1.json`.
 The append-only known-identity table gains no row because this identity has no shipped receipt.
 
 ## Current identity transition: public stage names (2026-10-30)
