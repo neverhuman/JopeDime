@@ -2239,7 +2239,7 @@ fn observe_batch_watchdog(
 }
 
 fn reject_expired_batch_watchdog(expired: bool) -> Result<()> {
-    ensure!(
+    anyhow::ensure!(
         !expired,
         "aggressive batch watchdog expired before the batch completed"
     );
