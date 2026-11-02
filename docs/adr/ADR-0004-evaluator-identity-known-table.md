@@ -138,3 +138,15 @@ implementation hash, Cargo.lock hash and identity digest are unchanged; the eval
 fixture changes only its generation SHA. The transition is registered in
 `rustunsafe_authority_lineage_rebaseline.v1.json`. No known-identity row is added because this
 work has no shipped receipt proving a new identity existed.
+## Current identity transition: browser wasm32 portability (2026-11-02)
+
+The browser successor follows the already-merged CPU-affinity and authority-lineage
+transitions above. It changes only the hashed stage-cache source so the default byte cap is
+representable on 32-bit targets, retaining the native 64-bit 6 GiB default. Announced
+identity-only regeneration will advance the current implementation
+`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` and identity
+`6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` from the merged
+main fixture. Cargo.lock, numerical/model/emitter/generator/search fixtures, every historical
+transition and the known-identity table remain unchanged. The two metadata fixture hashes,
+old/new identities and committed generation source are recorded in
+`browser_wasm_identity_rebaseline.v1.json`; no shipped receipt or behavior rebaseline is claimed.

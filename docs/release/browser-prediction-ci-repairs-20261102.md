@@ -1,0 +1,118 @@
+# Browser prediction merge: inherited CI repairs — 2026-11-02
+
+Manual full CI41383543203 at fa98944 failed three checks already broken on its base. No failed lane is claimed as passed. These repairs retain actual execution, scientific identities and existing security boundaries.
+
+## Imported source custody
+
+PR1702 and subsequent audit cleanups renamed variables or rewrote equivalent expressions in nine frozen producer files. The existing byte-for-byte verifier correctly refused them. Restore the eight production files EXACTLY to their unchanged producer bindings. A ninth, stale source-closure assertion needs the identified successor correction below. No numerical fixture/tolerance or production computation changes. These are historical imported sources, not new producer authorization. The general heuristic auditor's variable-name/empty-fixture findings are exact-file false positives here. Only the eight restored production files below are excluded from that heuristic; the corrected P3 test remains normally audited. The P3 row lists its preserved predecessor binding; its successor is recorded below. their stronger hash/syntax/custody checks and Gitleaks remain active. The exceptions last only while these bytes remain frozen and this heuristic applies.
+
+- `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/encodings.py`: SHA-256 `e08ab26c0de16db05c6c37ba7005a55e1263e42b982935d8ea41410acdcf9427`; restored from `5619bf999a36730944a53428eb077ddc73a9ae2f^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py`: SHA-256 `6d25d3a4228ac073a6c17b0f1b78d73db79477c2108485e353203501dcac73d6`; restored from `5619bf999a36730944a53428eb077ddc73a9ae2f^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/metafeatures.py`: SHA-256 `2b9ea218f5cbf7161edb012b69773e78faa10567362971281c5bf68461b861f2`; restored from `5619bf999a36730944a53428eb077ddc73a9ae2f^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/train.py`: SHA-256 `5e42507aaab86ab5eb46646cab43305a78678eb60cd180eb3908f883315eaf09`; restored from `5619bf999a36730944a53428eb077ddc73a9ae2f^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_verify.py`: SHA-256 `2c98d995424b02eed0da09170c94dc3ecce5b7ab2acc25f0831ec4ac419096f4`; restored from `5619bf999a36730944a53428eb077ddc73a9ae2f^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/tools/s1_outer_test_scorer.py`: SHA-256 `9ee08fbb91f8209007c12281559efc32e8ea19790e4b485238939b6a850a59c4`; restored from `1dc2320b8f3bbe4a7ebd7eb157341ed5adaf8fcc^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py`: SHA-256 `b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00`; restored from `1dc2320b8f3bbe4a7ebd7eb157341ed5adaf8fcc^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_coverage.py`: SHA-256 `0382899423a1b7407e213983a366a94673c4e27bd21ff20b33752fbfec4e0585`; restored from `1dc2320b8f3bbe4a7ebd7eb157341ed5adaf8fcc^`.
+- `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_helper.py`: SHA-256 `13e68a9dda3cd346e7332ac9daefd036fd670100f54f295d06274ac659cca733`; restored from `1dc2320b8f3bbe4a7ebd7eb157341ed5adaf8fcc^`.
+
+## Frozen benchmark split environment
+
+The application now locks sklearn1.9.1, but benchmarks/prepare.py explicitly requires1.7.2 for its frozen split identity. Keep the application lock untouched. Run every benchmark preparation test in its own locked Python3.12 project with sklearn1.7.2, preserving a separate identity-bound nonzero execution receipt and full JUnit. The parent Python receipt continues to count its own application/adaptor pytest run once. Benchmark lock and project are bound in CI receipt inputs. No splitter/labels/partitions change, no version guard is relaxed.
+
+## Authenticated CLI HTTPS follow-through (A20)
+
+The original candidate fenced HTTPS behind `client` using exact package exceptions. Main PR1796
+subsequently made ureq/zip optional behind `client` and HTTPS an explicit `cloud-tls` capability.
+Adopt that merged architecture and withdraw the candidate's now-superseded dependency-policy
+and parser exceptions; the original inference fences remain unchanged. Connected development
+source builds select `--features cloud-tls`. The existing verified development installation is
+not replaced by an unqualified build.
+
+## Local authoritative base
+
+This host retains an older forge `origin/main` alongside authoritative GitHub `github/main`. Add an explicit `JOPE_CUSTODY_BASE` argument for the local custody-additions comparison; `JOPE_CUSTODY_BASE=github/main just required` checks the same real PR base as hosted CI. Defaults and hosted base selection remain unchanged. No protection, file-size threshold or custody refusal changes. The direct check against GitHub main passes; the old local origin compares unrelated historical custody imports and correctly refuses them.
+
+## Identified source-closure correction (no numerical change)
+
+After restoring the imported bytes, the original P3 receipt assertion fails because its expected dependency list omits jtt1.py and quarantine.py, which the original static-import closure already includes. The earlier audit cleanup had corrected the assertion without a custody successor, causing the original hash refusal. Preserve the prior current manifest byte-for-byte under `predecessor/source-closure-correction-20261102/`, retain the original test bytes in historical/, and create successor `9afa6c81dc7e4ce0df2d45b76b7d871fe0ea5f660c932f4bb1e6f4553ca49ef7` that changes ONLY this stricter expected dependency enumeration. The verifier retains the full predecessor chain, and its tests require177 current/285 historical with the old177-file closure reconstructible. No producer source behavior, rows/labels/splits, numerical test or tolerance, host exclusions or offline test counts change. This is a separately identified source correction with reproducing failure and passing strict assertion, not blanket repinning to make edited sources pass. See SOURCE_CUSTODY.md and the manifest source_correction record.
+
+## Local/hosted Python parity
+
+`just python-check` now explicitly syncs the same locked CPU/dev/benchmark/foundry/custody extras as the hosted Python lane, then uses `uv run --no-sync` for Ruff, pytest and both research fixture runners. A fresh checkout previously had neither Ruff nor the selected CPU extras, and ambient system Python was used for Torch fixtures. This changes environment preparation only; tests/markers remain intact and no application dependency lock is changed.
+
+## Native compatibility and local test isolation
+
+All13 compatibility surfaces compare successfully in the documented identity-only mode; only source/lock/lineage metadata changes, with old/new identities announced before regeneration and a recorded transition. No numerical or emitted/model fixture is rewritten. The local full suite also exposed default-engine interference and invalid fixture placement when TMPDIR was inside a registered checkout. The typed in-process API unit now owns a private temporary engine instead of opening a user's running default engine. Test scratch is staged outside registered checkouts and parallel fixtures are bounded. Qualified RES07 fixtures are materialized from the README's independently SHA-pinned catalog a16efb5c3a8bd09ea08caaaf030c199f5d2d733153874d112b928a3f1cd2bb86, using original read-only custody objects from xbabe2, never fabricated or regenerated numerical fixtures. These are environment corrections and stronger isolation, not skipped assertions.
+
+## Measured development-package gate
+
+The old A18 fixture size gate also failed unchanged pre-connected-CLI main. Paired same-host dist-ci builds measure8144488/8267461B code/package before PR1659 and8144648/8268941B for this candidate. Only160B code and1480B net package growth are new; compressed dependency notices account for the net package delta, with model bytes unchanged. A21 records exact source/code/package hashes and explicitly unattributed inherited main growth. Only the development fixture baseline updates, keeping5% tolerance and every release profile/ceiling unchanged. The candidate passes development-key cryptographic verification, the updated size gate and the network-isolated clean-host fit/predict check.
+
+## Native-only immutable runner and canceled-audit recovery
+
+The shared runner image has no wasm32 standard library. The runtime builder now provisions the same pinned Rust toolchain/target in the lane target cache when needed; it never edits the immutable shared image. An actual read-only native-only runner-container build with no capabilities passes, followed by all11 real native/WASM parity/tamper/no-import checks.
+
+Canceling superseded audit41388179289 left its read-only source copy in xbabe1's CI workspace. Subsequent checkout removed writable metadata but could not remove that source tree. Recovery archived the remaining copy, verified all13645 files byte-for-byte against the historical d1537a7eef1552d50225cda965fae03da720481c Git blobs (zero mismatches), and restored owner-write permission only on that own canceled snapshot. No source bytes, peer checkout, service configuration or provenance/admission rule changed. CI's audit now mirrors full-main's existing always-run post-upload permission restoration; the real immutable-source filesystem test covers both workflows. Normal cancellation is used for subsequent superseded runs so their cleanup can run. Recovery proof and archive remain under the browser-canceled-audit evidence paths outside the lane.
+
+## Reusable paper workflow concurrency
+
+The paper source-check reusable workflow used `github.workflow-ref` as its concurrency group. Called by manual ci.yml, `github.workflow` is the caller name ci, so its key equals the parent ci-ref group. Manual41398271392 stayed queued with active children and no paper job; official GitHub reusable workflow documentation warns against this caller/callee collision. Prefix only the reusable paper key with paper-, retaining cancellation of genuinely superseded paper checks and every gate. An existing runner-contract test evaluates the real caller/callee expressions for manual, PR and trusted-main contexts: it fails before the correction and passes after. No paper typesetting is restored. See https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations.
+
+## Captured effective audit policy fingerprint
+
+Manual41399605228/PR41399614338 correctly refused reports at the verifier's old default-policy
+fingerprint. Pinned Jankurai1.7.5 audit/outcome.rs fingerprints canonical effective settings plus
+SHA-256 of the complete repository policy source. Independently applying that algorithm to the
+captured e15 policy derives the actual c96d07ea30c035ef0f338d8246e23c55e063a0a20af78b2f159a6ab012d353ec.
+Derive the expected fingerprint only after validating the complete immutable Git-bound input,
+using captured policy bytes and pinned tool/schema/standard constants. Floor85, critical/high,
+standard mode, source/archive/blob/mode checks and every failure decision remain mandatory.
+The new repository-policy positive case reproduces failure before the fix; all17 contract tests
+pass afterward, including invalid fingerprint/advisory and existing corruption/refusal controls.
+A read-only replay of the actual retained CI artifact verifies all13707 files and reports
+artifact_valid:true, audit_passed:false, score64/85,204hard findings. The existing owner-approved
+below-floor report-only disposition remains separate from the failed audit; no new finding is
+waived or marked fixed. New source retains main's existing P37 exception verifier and expiry checks.
+
+## Latest upstream reconciliation
+
+Current main includes the default external RES07 inventory's explicit opt-in guard and isolated
+dashboard test evidence/browser fonts. Preserve those authored fixes. The browser successor now
+follows the already-merged CPU-affinity and authority-lineage identity transitions, with only its
+two metadata fixtures regenerated at b794bf1026c11441fe17495f41249c0fccd234cd. All13 behavioral
+compatibility cases and three historical joins pass; numerical fixtures and known identities
+remain unchanged. The app's original source-pinned runtime artifact is unchanged.
+
+## Optional classifier ancestor status
+
+Main split PR and manual source classification into two optional jobs and an always-run fan-in. In PR41450376934 the real path plan selected every lane, but all dependent jobs were skipped because their implicit success guard inherited the skipped alternate classifier. Give each of the nine direct changes dependents an explicit !cancelled() status guard plus successful-classifier condition, preserving every original path expression. The regression checks both event routes against the real job graph, reproducing skipped selected jobs before the fix and retaining failure/cancellation refusals afterward. No selected lane is accepted as skipped-by-path. Manual runs use the existing native runner option and default source provenance binding; no admission check is removed.
+
+## Read-only cross-file report placement
+
+The real pinned1.7.5 P37 verifier passed its16 exact-file checks but the inherited cross-file command produced no report: --read-only requires fresh report paths outside its audited checkout, while the helper selected checkout/target. Allocate a fresh private report directory in runner scratch (or external private home cache), keep --read-only and all source/expiry/fingerprint checks, restore policy bytes in finally, and exclusively copy complete reports into retained evidence before scratch cleanup. Reject scratch inside the checkout and refuse overwriting earlier evidence. The actual corrected command passes16 exact files and58 exact rule/fingerprint findings including the registered cross-file identity; the register, findings and exceptions are unchanged. The complete JSON/Markdown reports are retained and SHA-256 recorded in browser-final-p37-receipt evidence. No source bytes or producer authorization changes.
+
+## Canonical font runtime, with unchanged visual baselines
+
+The exact original hosted six-test screenshot failure reproduces locally with the pinned browser runtime: its custom fontconfig supplied only a font directory/cache, selecting Liberation Mono for proportional text and omitting font aliases/hinting. The normal host environment passes all six tests. Add Ubuntu's835172-byte fonts-dejavu-core2.37-8 package at its official published SHA25640049660c194f3b8a2541fc7369efebb10e9f94bdac836a2f38fafedd10fa73a, providing missing geometric glyphs. Compose only match/alias/selectfont rules from verified runtime Fontconfig defaults/drop-ins, excluding host/user/local configuration and rebasing packaged absolute links into the verified runtime. One task-local font directory/cache remains; no host/image install occurs. Generic-lock behavior and every archive/cache-integrity check remain. The new hermetic-font control also refuses a foreign configuration link. All11controls and all6 rendered tests nowPASS against the original18PNGbaselines, including layout/keyboard/accessibility checks. No applicationCSS, baseline bytes, visual-review ledger or0.002pixel tolerance changes. Node26.1/Playwright1.64.1 and the locked assets are recorded in browser-ui-canonical-hermetic3 evidence.
+
+## Distinct study and compact-wave indices
+
+The Rust slices each passed every selected test except one MR03 root-verification case after newer main appended H220/H221 study-pointer rows to the compact-wave projection index. Those rows have a separate jope.hwave-study-index/v1 schema and no four-file projection card/context, so sorting alone is insufficient. Move the two original raw rows unchanged to docs/research/studies/INDEX.jsonl and retain the canonically ordered compact-wave index. Combined row bytes/hash multiset is exactly preserved; no study result, S3 version, source receipt or numerical fixture is altered. The canonical HWave page links the two schemas. All3spq1_prereg_provenance tests, including existing tamper/count controls, PASS.
+
+## Reviewed source tree and synthetic PR checkout
+
+Hosted PR audit P37 verification passes16files/58findings, but its artifact check previously required reviewed branch SHA equal GitHub's distinct synthetic merge SHA. Source capture now resolves both real commits and requires their Git trees be identical before exporting any input, retaining source_sha, checkout_sha and source_tree_sha. Artifact verification requires that tree attestation for distinct identities, while original same-commit v1 receipts remain readable. The manifest/archive/blob/mode/policy/failure checks stay intact. A same-tree two-commit positive case reproduces the old failure; missing/mismatched attestations and a genuinely different source tree are refused. All18audit controls PASS. This preserves both source identities required by AGENTS.md instead of relabeling a merge commit as the reviewed head.
+
+## Repeated corpus identity secret-scan findings
+
+New main a1d3d690 repeats the exact already-reviewed H205 corpus family_key in README96,PREREG122,andmetrics460/911. Allfourmatches are the same deterministic40-hex dataset family identity, byte-identical to existing approved0e81131f metrics81 (valueSHA256efaa175511d242946df65864407d184f3d1670ca54704ebbcfd9220b0f12abc4), not a credential. Record only the four new exact commit/path/generic-api-key/line fingerprints. No file, rule, entropy setting or history scope is excluded. The prior failed redacted full-history scan and the passing rerun remain evidence.
+
+
+## Independent browser review corrections
+
+Review5737997954 identified four genuine P2 gaps that the earlier regression-only live journey did not cover. Integrate the retained push-monitor runtime/routing proposals, correcting the calibration type import to the actual public module. Read calibrated input metadata through ModelObject::calibrated_input and preserve execution through the complete object; do not export the bare fitted head and lose its stored map. Match native predictions_csv strict-greater argmax, preserving the first tied class. New native tests reproduce both former failures; five native cases now generate40 WASM comparisons spanning regression, categorical binary, multiclass ties/non-ties and eight calibrated appliance/bound maps. Assert labels as well as class order/probabilities, including a non-identity calibration.
+
+Browser-only Rust, manifest, lock and probe paths now select the existing Rust output that runs TypeScript/WASM parity. Three classifier controls cover all seven paths, neighboring exclusions and manual selection. The aggregate producer test now accounts exactly for the two mutually exclusive classifier event producers while retaining the one logical changes receipt and all command/source checks;26 aggregate/routing controls pass. A real standalone cargo-deny0.20.2 all-features scan under root deny.toml passes, independently of command-stub tests. The maintained browser validation entry point now runs that standalone scan independently under the same root policy, leaving P44-owned root files untouched. New main1889's main-only manual-dispatch guard is retained; the old feature-branch full-manual requirement needs a maintained secure route or owner contract clarification. No rejected dispatch or unrelated-main CI will be called candidate qualification.
+
+The standalone scan is now wired inside the existing browser check.sh entry point executed by the Node26 CI job, avoiding any edit to actively P44-owned root security files. Its actual pinned cargo-deny graph requires browser/feat-math/runtime canaries, locked all-features inputs and all four root-policy checks. Eight command controls cover successful dispatch, graph/check error propagation, exact tool-version refusal and each missing canary. The real scan is separate from stubs and retains source/manifest/lock/policy/log hashes in target/browser-predict/security/receipt.json. Browser-prefix routing ensures browser-only changes execute that entry point.

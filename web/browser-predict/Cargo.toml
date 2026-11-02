@@ -1,0 +1,24 @@
+[package]
+name = "jope-browser-predict"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+feat-math = { path = "../../crates/feat-math", default-features = false }
+jope-runtime = { path = "../../crates/jope-runtime" }
+anyhow = "1"
+base64 = "0.22"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+panic = "abort"
