@@ -1,6 +1,6 @@
 {
   "wave": "H230",
-  "status": "PREREGISTERED",
+  "status": "INCOMPLETE",
   "authority": "hw_t1945_astra_h224close_h230.md",
   "parent_commit": "973298e282eadfbefb159d13bfaf4d788a24c1b9",
   "parent_sources": {
@@ -88,6 +88,18 @@
   },
   "source_sha256": {
     "PREREG.md": "5b82858e312bfe9639b84fec0ca523d96dae44cfdb588edbe76ea522cae15e52",
+    "README.md": "53ddbeac3435bed06cf0ec02c379c38a6379bd22d9285af197ab9c4b13ae4bdc",
+    "analysis.py": "0c648fde0a59d43ec70c781076753c086563adb71fa657a2882a941c1111fbc9",
+    "fold_manifest.json": "bcf20a4a10db4551dabf3fd75a998c5c881e795cffdd09063ce165fb1cdc969a",
+    "gate.py": "6943da4fef95e86b7d498b31d22e4ea078c0021f1a0bd05e779d3899359dc0f9",
+    "monitor.py": "b6f98cb5e54f460cdac0ba6c23db0b9ca55d5d4428a4d60e2073dc80c98d79e3",
+    "provenance.json": "aaab3096757b1d3e4859af22fcd0451d8f5c380e23599330b34513b04ee60b6c",
+    "runner.py": "c293080c8332b0a507e95545506f3f5e1dccb24903f8c8307bd71030c9b99acc",
+    "test_h230.py": "efb69f2b78fbd9ebf7c779ad39f268fa83ce907747d027c88fbec1af254b941b"
+  },
+  "execution_source_commit": "0d7388b1aaf30629c673a40ab551a382cf939b22",
+  "execution_source_sha256": {
+    "PREREG.md": "5b82858e312bfe9639b84fec0ca523d96dae44cfdb588edbe76ea522cae15e52",
     "README.md": "297ee279700f4a9ffc5a8a00d6c20701288b0730fa1f6b046b04bddea1e34ff3",
     "analysis.py": "0c648fde0a59d43ec70c781076753c086563adb71fa657a2882a941c1111fbc9",
     "fold_manifest.json": "bcf20a4a10db4551dabf3fd75a998c5c881e795cffdd09063ce165fb1cdc969a",
@@ -96,5 +108,20 @@
     "provenance.json": "aaab3096757b1d3e4859af22fcd0451d8f5c380e23599330b34513b04ee60b6c",
     "runner.py": "c293080c8332b0a507e95545506f3f5e1dccb24903f8c8307bd71030c9b99acc",
     "test_h230.py": "efb69f2b78fbd9ebf7c779ad39f268fa83ce907747d027c88fbec1af254b941b"
-  }
+  },
+  "metrics_sha256": "dfd5019636074193101c30b2190efa7504c4e921936edc184e857cc5670bd96a",
+  "archive_manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H230/astra-t1945/closeout/manifest.json",
+    "version_id": "eNECE9gC_a3Qyz4_FLyjMNbaS3bgg7uT",
+    "sha256": "e90e6efe376f5b3c218f768c7ce7cdbae55a7bbd3f62c60b50f44b6ec33a4807",
+    "bytes": 9517
+  },
+  "actual_inventory": {
+    "histgbm_fits": 0,
+    "adapter_cells": 0,
+    "optimizer_updates": 0,
+    "smoke_status": "NOT_REACHED"
+  },
+  "failure": "KeyError('pids is not a file in the archive')",
+  "scientific_hypothesis_tested": false
 }
