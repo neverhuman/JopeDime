@@ -7,7 +7,6 @@ import os
 import tempfile
 from unittest.mock import patch
 import hashlib
-import pickle
 import sys
 import unittest
 from pathlib import Path
@@ -110,7 +109,7 @@ class PanelTests(unittest.TestCase):
             allocate.assert_not_called()
         with patch.object(_panel, "MAX_TRANSFORMED_CELLS", 63, create=True):
             result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
-            self.assertEqual(_panel.replay(artifact, checksum, data["predict"]["features"]), result)
+            self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
 
     def test_transform_refuses_oversized_or_invalid_width_before_numpy_allocation(self):
         state = _panel.fit_preprocessing(request()["columns"], request()["train"]["features"])
@@ -155,44 +154,44 @@ class PanelTests(unittest.TestCase):
             expected = np.arange(1, len(data["classes"]) + 1, dtype=float)
             expected /= expected.sum()
             np.testing.assert_array_equal(result["data"]["values"][0], expected)
-            self.assertEqual(_panel.replay(artifact, checksum, data["predict"]["features"]), result)
+            self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
             self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
-            saved = pickle.loads(artifact)
+            saved = _panel._load_trusted_artifact(artifact)
             self.assertEqual(saved["classes"], data["classes"])
             self.assertEqual(saved["preprocessing"]["policy"], _panel.INPUT_POLICY)
             with self.assertRaisesRegex(ValueError, "checksum"):
-                _panel.replay(artifact + b"changed", checksum, data["predict"]["features"])
+                _panel._replay_trusted_artifact(artifact + b"changed", checksum, data["predict"]["features"])
 
     def test_regression_reload_preserves_complete_preprocessing(self):
         data = request("regression")
         result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
         self.assertEqual(result, {"kind": "values", "data": [6.0, 6.0, 6.0]})
-        self.assertEqual(_panel.replay(artifact, checksum, data["predict"]["features"]), result)
+        self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
 
     def test_replay_good_pin_loads_and_mismatch_refuses_before_pickle(self):
         data = request("regression")
         result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
-        with patch.object(_panel.pickle, "loads", wraps=pickle.loads) as loader:
-            self.assertEqual(_panel.replay(artifact, checksum, data["predict"]["features"]), result)
+        with patch.object(_panel, "_load_trusted_artifact", wraps=_panel._load_trusted_artifact) as loader:
+            self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
             loader.assert_called_once()
         for pin in ("0" * 64, None, "not-a-sha256"):
-            with self.subTest(pin=pin), patch.object(_panel.pickle, "loads") as loader:
+            with self.subTest(pin=pin), patch.object(_panel, "_load_trusted_artifact") as loader:
                 with self.assertRaisesRegex(ValueError, "checksum|SHA-256 pin"):
-                    _panel.replay(artifact, pin, data["predict"]["features"])
+                    _panel._replay_trusted_artifact(artifact, pin, data["predict"]["features"])
                 loader.assert_not_called()
 
     def test_replay_deserializes_verified_snapshot_of_mutable_buffer(self):
         data = request("regression")
         result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
         buffer = bytearray(artifact)
-        original_loads = pickle.loads
+        original_loads = _panel._load_trusted_artifact
 
         def mutate_then_load(snapshot):
             buffer[:] = b"replaced"
             return original_loads(snapshot)
 
-        with patch.object(_panel.pickle, "loads", side_effect=mutate_then_load):
-            self.assertEqual(_panel.replay(buffer, checksum, data["predict"]["features"]), result)
+        with patch.object(_panel, "_load_trusted_artifact", side_effect=mutate_then_load):
+            self.assertEqual(_panel._replay_trusted_artifact(buffer, checksum, data["predict"]["features"]), result)
 
     def test_leaked_labels_unknown_fields_and_missing_classes_are_refused(self):
         for mutate in (lambda r: r["predict"].update(targets=["leak"]),
@@ -248,9 +247,9 @@ class PanelTests(unittest.TestCase):
                         output, artifact, checksum = _panel.fit(
                             data, adapter.create_panel_model, engine_version)
                         self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
-                        self.assertEqual(_panel.replay(
+                        self.assertEqual(_panel._replay_trusted_artifact(
                             artifact, checksum, data["predict"]["features"]), output)
-                        saved = pickle.loads(artifact)
+                        saved = _panel._load_trusted_artifact(artifact)
                         self.assertEqual(saved["schema"], _panel.ARTIFACT)
                         self.assertEqual(saved["engine_version"], engine_version)
                         self.assertEqual(saved["task"], task)
