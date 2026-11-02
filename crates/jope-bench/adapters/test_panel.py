@@ -108,8 +108,10 @@ class PanelTests(unittest.TestCase):
             create.assert_not_called()
             allocate.assert_not_called()
         with patch.object(_panel, "MAX_TRANSFORMED_CELLS", 63, create=True):
-            result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
-            self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
+            with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+                result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
+            self.assertEqual(result, {"kind": "values", "data": [6.0, 6.0, 6.0]})
+            self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
 
     def test_transform_refuses_oversized_or_invalid_width_before_numpy_allocation(self):
         state = _panel.fit_preprocessing(request()["columns"], request()["train"]["features"])
@@ -146,52 +148,23 @@ class PanelTests(unittest.TestCase):
         # Rust total_cmp sorts negative zero first; the interpolation then adds +0.
         self.assertEqual(math.copysign(1.0, state["fitted"][0]["fill"]), 1.0)
 
-    def test_probability_columns_match_declared_original_class_order(self):
+    def test_probability_columns_match_declared_original_class_order_without_pickle_reload(self):
         for task in ("binary", "multiclass"):
             data = request(task)
-            result, artifact, checksum = _panel.fit(data, lambda _: ReversedClassifier(), "toy 1")
+            with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+                result, artifact, checksum = _panel.fit(data, lambda _: ReversedClassifier(), "toy 1")
             self.assertEqual(result["data"]["classes"], data["classes"])
             expected = np.arange(1, len(data["classes"]) + 1, dtype=float)
             expected /= expected.sum()
             np.testing.assert_array_equal(result["data"]["values"][0], expected)
-            self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
             self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
-            saved = _panel._load_trusted_artifact(artifact)
-            self.assertEqual(saved["classes"], data["classes"])
-            self.assertEqual(saved["preprocessing"]["policy"], _panel.INPUT_POLICY)
-            with self.assertRaisesRegex(ValueError, "checksum"):
-                _panel._replay_trusted_artifact(artifact + b"changed", checksum, data["predict"]["features"])
 
-    def test_regression_reload_preserves_complete_preprocessing(self):
+    def test_regression_fit_preserves_predictions_without_pickle_reload(self):
         data = request("regression")
-        result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
+        with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+            result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
         self.assertEqual(result, {"kind": "values", "data": [6.0, 6.0, 6.0]})
-        self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
-
-    def test_replay_good_pin_loads_and_mismatch_refuses_before_pickle(self):
-        data = request("regression")
-        result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
-        with patch.object(_panel, "_load_trusted_artifact", wraps=_panel._load_trusted_artifact) as loader:
-            self.assertEqual(_panel._replay_trusted_artifact(artifact, checksum, data["predict"]["features"]), result)
-            loader.assert_called_once()
-        for pin in ("0" * 64, None, "not-a-sha256"):
-            with self.subTest(pin=pin), patch.object(_panel, "_load_trusted_artifact") as loader:
-                with self.assertRaisesRegex(ValueError, "checksum|SHA-256 pin"):
-                    _panel._replay_trusted_artifact(artifact, pin, data["predict"]["features"])
-                loader.assert_not_called()
-
-    def test_replay_deserializes_verified_snapshot_of_mutable_buffer(self):
-        data = request("regression")
-        result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
-        buffer = bytearray(artifact)
-        original_loads = _panel._load_trusted_artifact
-
-        def mutate_then_load(snapshot):
-            buffer[:] = b"replaced"
-            return original_loads(snapshot)
-
-        with patch.object(_panel, "_load_trusted_artifact", side_effect=mutate_then_load):
-            self.assertEqual(_panel._replay_trusted_artifact(buffer, checksum, data["predict"]["features"]), result)
+        self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
 
     def test_leaked_labels_unknown_fields_and_missing_classes_are_refused(self):
         for mutate in (lambda r: r["predict"].update(targets=["leak"]),
@@ -228,7 +201,7 @@ class PanelTests(unittest.TestCase):
                 self.assertEqual(result_path.stat().st_mode & 0o777, 0o600)
                 self.assertEqual(artifact.stat().st_mode & 0o777, 0o600)
 
-    def test_all_external_engines_fit_and_reload_each_task_on_synthetic_rows(self):
+    def test_all_external_engines_fit_each_task_without_pickle_reload(self):
         from threadpoolctl import threadpool_limits
 
         adapters = ("xgboost_adapter", "lightgbm_adapter", "catboost_adapter", "sklearn_rf_adapter")
@@ -244,18 +217,10 @@ class PanelTests(unittest.TestCase):
                 for task in ("regression", "binary", "multiclass"):
                     with self.subTest(engine=engine_version, task=task):
                         data = request(task)  # Six synthetic training rows, null/unseen predictions.
-                        output, artifact, checksum = _panel.fit(
-                            data, adapter.create_panel_model, engine_version)
+                        with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+                            output, artifact, checksum = _panel.fit(
+                                data, adapter.create_panel_model, engine_version)
                         self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
-                        self.assertEqual(_panel._replay_trusted_artifact(
-                            artifact, checksum, data["predict"]["features"]), output)
-                        saved = _panel._load_trusted_artifact(artifact)
-                        self.assertEqual(saved["schema"], _panel.ARTIFACT)
-                        self.assertEqual(saved["engine_version"], engine_version)
-                        self.assertEqual(saved["task"], task)
-                        self.assertEqual(saved["classes"], data["classes"])
-                        self.assertEqual(saved["preprocessing"], _panel.fit_preprocessing(
-                            data["columns"], data["train"]["features"]))
                         if task == "regression":
                             self.assertEqual(output["kind"], "values")
                             values = np.asarray(output["data"])
@@ -269,7 +234,7 @@ class PanelTests(unittest.TestCase):
                             self.assertTrue(np.all(np.abs(values.sum(axis=1) - 1.0) <= 1e-6))
                         self.assertTrue(np.all(np.isfinite(values)))
                         completed += 1
-                        print(f"synthetic panel fit/reload: {engine_version}; task={task}; "
+                        print(f"synthetic panel fit/emit: {engine_version}; task={task}; "
                               f"train_rows=6; prediction_rows=3; artifact_bytes={len(artifact)}")
         self.assertEqual(completed, 12)
 

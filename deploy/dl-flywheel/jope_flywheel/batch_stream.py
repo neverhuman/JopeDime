@@ -18,7 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib,itertools,json,math,os,sqlite3,time
 from pathlib import Path
-from .protocol import canonical,digest,sha256
+from .protocol import canonical,digest,require as need,sha256
 
 SCHEMA='jope.flywheel-batch-manifest/v1'
 RUN_SCHEMA='jope.flywheel-data-run/v1'
@@ -29,8 +29,6 @@ MAX_ATTEMPTS=4096
 RUN_KEYS={'schema','variant_identity','context_id','dataset_sha256','target_sha256','split_sha256','protocol_sha256','cut_id'}
 
 
-def need(ok,msg):
-    if not ok:raise ValueError(msg)
 def byte_sha(b):return hashlib.sha256(b).hexdigest()
 def decode(raw):
     def pairs(items):

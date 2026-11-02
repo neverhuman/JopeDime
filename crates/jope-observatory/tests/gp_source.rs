@@ -353,7 +353,7 @@ fn missing_compiler_is_loss_and_once_restart_does_not_double_count() {
 }
 #[cfg(unix)]
 #[test]
-fn compiler_timeout_charges_loss_and_retains_the_timeout_exit() {
+fn rust_compiler_kill_is_recorded_as_failed_lost_work() {
     use std::os::unix::fs::PermissionsExt;
     let journals = test_dir();
     let state = test_dir();
@@ -372,10 +372,13 @@ fn compiler_timeout_charges_loss_and_retains_the_timeout_exit() {
         .lines()
         .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
         .any(|e| e["kind"] == "checked"
+            && e["occurrence_id"] == "fixture"
             && e["language"] == "rust"
             && e["status"] == "failed"
             && e["diagnostic"].as_str().unwrap().contains("signal")
-            && e["tool"].as_str().unwrap().contains("timeout=15s")));
+            && e["tool"].as_str().unwrap().contains("slow-rustc")
+            && e["tool"].as_str().unwrap().contains("timeout=15s")
+            && e["elapsed_ns"].as_u64().unwrap() >= 15_000_000_000));
 }
 
 #[test]

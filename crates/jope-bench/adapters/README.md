@@ -24,36 +24,34 @@ process and resource limits.
 ## Private fitted artifacts remain a trusted-code boundary
 
 `jope.panel-fitted-python/v1` retains the complete estimator and preprocessing in
-Python pickle so that reload reproduces the fitted predictor. The CLI verifies
-reload only for bytes it has just created itself, then writes the artifact and
-result with mode 0600 and exclusive creation. It refuses existing output paths.
+Python pickle. The CLI emits the artifact bytes and digest but does not deserialize
+the artifact or claim reload verification. It writes the artifact and result with
+mode 0600 and exclusive creation, and refuses existing output paths.
 
-**Pickle can execute code. SHA-256 checks integrity, not authenticity.** The internal
-replay helper must receive its digest from trusted custody and the caller must trust
-the artifact's producer. Supplying an arbitrary pickle together with its own
-hash does not make it safe. There is no public/untrusted artifact import endpoint,
-and this function is not a deserialization sandbox. The closed same-invocation
-flow is recorded in `docs/release/jankurai-pysqlpickle-exceptions-20261102.md`.
-That exception does not cover arbitrary artifacts or make untrusted pickle safe.
+**Pickle can execute code. SHA-256 checks integrity, not authenticity.** This adapter
+never loads a fitted pickle, including bytes it just emitted. A downstream consumer
+must not deserialize the artifact without a separately qualified trusted execution
+boundary. There is no public/untrusted artifact import endpoint, and this function
+is not a deserialization sandbox.
 
-Removing this trusted-code requirement needs an explicit format migration: native
+Portable reload remains unsupported. It needs an explicit format migration: native
 model formats for all four engines, complete preprocessing/state/version schemas,
 and the twelve engine/task replay equivalence cases. An allowlist of package name
-prefixes does not establish safe object construction. Until that migration is
-qualified, do not import arbitrary fitted artifacts into this process.
+prefixes does not establish safe object construction. Do not import fitted artifacts
+into this process.
 
 ## Verification
 
 Run `python -m pytest crates/jope-bench/adapters/test_panel.py -q` in the pinned
 benchmark environment. The full suite requires all four external estimators and
-exercises all twelve regression/binary/multiclass fit/reload combinations on six
+exercises all twelve regression/binary/multiclass fit combinations on six
 artificial training rows. Missing required engines are failures in that lane.
 
 For a lightweight boundary check with NumPy/pytest only, use
 `python -m pytest crates/jope-bench/adapters/test_panel.py -q -k 'not all_external_engines'`.
 That deliberate subset does not qualify the four real engines. Tests cover invalid
 and valid input, refusal before construction/allocation, exact-limit acceptance,
-private immutable output, train-only preprocessing and SHA-bound reload. CLI errors
+private immutable output, train-only preprocessing and SHA-bound artifact output. CLI errors
 fail with status 1; missing dependencies use status 69. The final exception handler
 reports a failed adapter call; it does not retry with another estimator or report
 success after failure.

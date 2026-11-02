@@ -878,7 +878,7 @@ fn accounting_for_experiment(experiment_sha256: &str, journal: &Path) -> Result<
                         .as_str()
                         .context("external fitted checksum absent")?;
                     ensure!(
-                        output["fitted"]["reload_verified"] == true
+                        output["fitted"]["reload_verified"] == false
                             && outcome
                                 .outputs
                                 .iter()

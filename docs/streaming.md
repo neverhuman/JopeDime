@@ -1,5 +1,28 @@
 # Streaming runtime boundary exception
 
+## Pinned KL reference fixture unit false positive
+
+- **Owner authorization:** Jepson's direct t1955 assignment and t205
+  merge-first order (2026-11-02), recorded for this lane in `AGENT_CHAT.md` and
+  the audit coordination log.
+- **Owner:** `dl-flywheel` maintainers.
+- **Scope:** the exact file
+  `deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py`,
+  reported as HLT-019 fingerprint
+  `sha256:cb962d49435f4b0ec40e4582a6c870fc1431a64925b8c56e763782c2cb6af9e0`.
+  Its line 155 says “nats per program” to name the unit of natural-log KL and
+  entropy values. The fixture is a verbatim reference copy, not a streaming
+  client; its module bytes are pinned by `kl_pins.json` to SHA256
+  `9740fc788ddf63e5630d876703fcd79495aa3246583b5279451d538c03e9cc38`.
+- **Review expiry:** 2027-02-01. Reconfirm the exact finding and module pin
+  before renewal.
+- **Migration path:** remove this exact-file scoring exception when the
+  detector distinguishes logarithmic-unit text from NATS client usage and a
+  fresh full audit confirms this HLT-019 match is gone. Preserve the fixture
+  bytes and `kl_pins.json` entry.
+- **Evidence:** the fixture's pinned verbatim reference role, its line 155
+  unit description, and the exact source report `rerun/j_cf49650df.json`.
+
 ## Telemetry entropy wire-name false positive
 
 - **Owner authorization:** Jepson's HLT-019 ruling recorded in COORD at

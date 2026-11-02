@@ -3,7 +3,7 @@
 The caller supplies training labels and prediction features only. Median imputation,
 missing indicators and capped one-hot dictionaries are fitted on training rows. The
 complete estimator and preprocessing state are retained in a checksummed private
-pickle; never load a pickle obtained from an untrusted source.
+pickle. This process writes but never deserializes that executable artifact.
 """
 import hashlib
 import json
@@ -217,34 +217,6 @@ def predictions(model, x, task, classes):
     return {"kind": "probabilities", "data": {"classes": list(classes), "values": probabilities.tolist()}}
 
 
-def _load_trusted_artifact(artifact_bytes):
-    """Load the private artifact emitted by this invocation's fit call."""
-    return pickle.loads(artifact_bytes)
-
-
-def _replay_trusted_artifact(artifact_bytes, expected_sha256, rows):
-    """Replay an internally produced artifact after verifying its complete digest.
-
-    The pin must come from the caller's trusted custody record, never from an
-    untrusted artifact's accompanying JSON. SHA-256 provides integrity, not
-    authenticity; Python estimator pickle is executable and is not a sandbox.
-    Only fit calls this helper, on bytes just produced by the same invocation.
-    """
-    if (not isinstance(expected_sha256, str) or len(expected_sha256) != 64
-            or any(c not in "0123456789abcdef" for c in expected_sha256)):
-        raise ValueError("fitted artifact SHA-256 pin is missing or invalid")
-    # Snapshot mutable byte buffers before hashing and deserializing the same bytes.
-    artifact_bytes = bytes(artifact_bytes)
-    if hashlib.sha256(artifact_bytes).hexdigest() != expected_sha256:
-        raise ValueError("fitted artifact checksum mismatch")
-    state = _load_trusted_artifact(artifact_bytes)
-    if state["schema"] != ARTIFACT:
-        raise ValueError("unsupported fitted artifact")
-    if any(len(row) != len(state["preprocessing"]["columns"]) for row in rows):
-        raise ValueError("prediction feature width mismatch")
-    return predictions(state["model"], transform(state["preprocessing"], rows), state["task"], state["classes"])
-
-
 def fit(request, create_model, engine_version):
     import numpy as np
 
@@ -269,8 +241,6 @@ def fit(request, create_model, engine_version):
                              "task": request["task"], "classes": list(classes),
                              "preprocessing": preprocessing, "model": model}, protocol=5)
     checksum = hashlib.sha256(artifact).hexdigest()
-    if _replay_trusted_artifact(artifact, checksum, request["predict"]["features"]) != output:
-        raise ValueError("fitted artifact reload changed predictions")
     return output, artifact, checksum
 
 
@@ -308,7 +278,8 @@ def run(create_model, version):
         result = {"contract": CONTRACT, "engine_version": engine_version,
                   "input_sha256": hashlib.sha256(request_bytes).hexdigest(), "predictions": output,
                   "fitted": {"path": artifact_path.name, "sha256": checksum, "bytes": len(artifact),
-                             "format": ARTIFACT, "preprocessing_policy": INPUT_POLICY, "reload_verified": True}}
+                             "format": ARTIFACT, "preprocessing_policy": INPUT_POLICY,
+                             "reload_verified": False}}
         result_bytes = (json.dumps(result, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
         write_private(artifact_path, artifact)
         write_private(result_path, result_bytes)

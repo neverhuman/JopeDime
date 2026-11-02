@@ -104,3 +104,11 @@ reassessed against fresh source and test evidence.
 - **Evidence:** `Custody.test_actual_import_matches_frozen_producer_pins` passes on the restored
   bytes. The P37 register entry for `tools/v2_rowsel_build.py` keeps its four finding
   fingerprints, and only its file digest returns to the restored bytes.
+
+
+## Frozen trace recovery v2 legacy-unit check
+
+- **Scope:** term `old` in `deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py` (HLT-001 fingerprint `sha256:9dac31749c4d4a0bb0f1201e55b3fbb050ed128259f8f8ed0196a51f19e22843`).
+- **Reason:** the term labels the prior archive unit in a shutdown preflight. The archived implementation is immutable evidence and remains byte-identical to its reviewed source.
+- **Pin:** SHA256 `c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69`, recorded in `deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/README.md` and `provenance/validation.json`.
+- **Disposition:** exact `old` plus exact path allowance only. The frozen source bytes and all other detector coverage remain unchanged.
