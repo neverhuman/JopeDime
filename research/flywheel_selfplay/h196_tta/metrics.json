@@ -1,31 +1,45 @@
 {
   "wave": "H196",
-  "attempt": 3,
+  "attempt": 4,
   "status": "INCOMPLETE",
   "verdict": null,
   "source_commit": "37126b5587712f443f2e02c09cba572da850da0b",
   "scientific_source_commit": "7fe61149b7ed5e07f93444765a85b136b8ee0317",
+  "host": "xbabe1",
+  "device": "cuda:0",
+  "gpu": "RTX 4090",
+  "supervisor_pid": 3321509,
+  "worker_pid": 3321653,
   "wall_budget_seconds": 25200,
+  "thread_amendment": {
+    "authority": "Jepson via user message / Grok Bot relay, card answer 7:35 PM MT",
+    "approval": "Yes, Jepson approves raising only the aggregate thread limit to 5 for H196 attempt 4; keep one numeric thread and all other guards; record this amendment in launch.json; launch now on xbabe1 on the 4090.",
+    "recorded_utc": "2026-11-02T02:37:32.368567+00:00",
+    "attempt": 4,
+    "aggregate_threads_before": 4,
+    "aggregate_threads_after": 5,
+    "numeric_threads": 1,
+    "other_guards_unchanged": true
+  },
+  "numeric_threads": 1,
   "monitor": {
     "status": "INCOMPLETE",
     "exit_code": 1,
-    "reasons": [
-      "disk user-visible used>93.8%"
-    ],
-    "elapsed_seconds": 4613.756627893075,
+    "reasons": [],
+    "elapsed_seconds": 32.55145422928035,
     "host_online_cores": 128,
     "load_limit": 108.8
   },
   "resource_observations": {
-    "max_rss": 3347161088,
-    "max_threads": 2,
-    "max_disk_used_fraction": 0.9380135079437933,
-    "max_output_bytes": 17825954,
-    "max_cpu": 63.2,
-    "max_load": 42.71875,
-    "min_available": 82651836416,
-    "min_free": 486975954944,
-    "samples": 8167
+    "max_rss": 3899215872,
+    "max_threads": 5,
+    "max_cpu": 15.5,
+    "max_load": 39.77392578125,
+    "max_disk_used_fraction": 0.9053297231784295,
+    "max_output_bytes": 8361249,
+    "min_available": 36348792832,
+    "min_free": 176726347776,
+    "samples": 60
   },
   "baseline": {
     "status": "PASS",
@@ -126,16 +140,16 @@
       0.39140362965590164
     ]
   },
-  "completed_B_cells": 6,
+  "completed_B_cells": 0,
   "completed_A_cells": 0,
   "b_locked": false,
   "optimizer_updates": 0,
   "backward_calls": 0,
   "failure": {
-    "error": "RuntimeError('signal 15; no scientific retry')",
-    "elapsed_seconds": 4607.243601039052,
+    "error": "RuntimeError('native batching/cached cost identity failure')",
+    "elapsed_seconds": 28.507383419200778,
     "audit": {
-      "opened_count": 1332,
+      "opened_count": 1333,
       "refused": [],
       "protected_reads": 0
     }
@@ -145,8 +159,8 @@
     "scope": "partial evidence only; scientific attempt INCOMPLETE",
     "model_forwards": 0,
     "optimizer_updates": 0,
-    "remote_objects_verified": 18,
-    "remote_array_members_verified": 4457,
+    "remote_objects_verified": 5,
+    "remote_array_members_verified": 1316,
     "raw_pool_hashes_verified": 1310,
     "remote_prefix_inventory_matches_receipts": true,
     "native91_bitexact": true,
@@ -179,7 +193,7 @@
         }
       }
     },
-    "completed_B_cells": 6,
+    "completed_B_cells": 0,
     "completed_A_cells": 0,
     "b_locked": false,
     "partial_lock_verified": false,
@@ -187,6 +201,22 @@
     "missing_outcomes_not_zero_filled": true,
     "source_commit": "37126b5587712f443f2e02c09cba572da850da0b"
   },
+  "manifest_sha256": "4d0c9d432047acea6b5e4b4519cd7bbc90ee8f02fcd634c82e5e52f5e394fa93",
+  "prereg_sha256": "2140d51205dd682235c92538f0d5a528649e7f8b10ecc9de0aed84f753d2a033",
+  "fold_manifest_sha256": "f5983a8837b6a065a30b0ac45948e36c3d0d348183963de7b127245abbf3b3ad",
+  "operational_wrapper_sha256": {
+    "runner.py": "5dfc083011aa1400d281f5b71723b48532c8fd19d1c657ae2716f0f83d5ec200",
+    "monitor.py": "7712fdb2b2114588f0ae3b306e1ef3a561112f418f08b265ffd68b726e7cc708",
+    "launch.py": "dd1773ddaf05cf19e4069a3a072b83b806537ee5388fdb7e0e87534ae16dd789"
+  },
+  "launch_custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/preparation/attempt4-xbabe1-gpu/launch.json",
+    "version_id": "pRPa.qsomP_1OlRTUw8m_9n68M4J0CNH",
+    "sha256": "30f44b9dd194261b9c1efb0b3a5ab631a9983cb801a0a434c64d10f65a4090b9",
+    "bytes": 3330,
+    "readback": "exact-version full payload SHA256"
+  },
+  "reused_predictions_or_B_selections": false,
   "per_seed_gains": null,
   "median_gain": null,
   "ci95": null,
@@ -197,8 +227,6 @@
   "adapter_sha256_after": null,
   "dope_sha256_after": null,
   "serving_promotion": false,
-  "next_attempt_authority": "n1615_rd_astra.md; lanes_t1615.md",
-  "next_attempt_authorized": 4,
-  "prior_predictions_reusable": false,
+  "next_attempt_authorized": false,
   "closeout_self_merge_authorized": false
 }
