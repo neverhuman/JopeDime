@@ -29,6 +29,7 @@ pub mod loop_selection;
 /// ADR-0003 locations: every former home-directory path, by root.
 pub mod paths;
 pub mod recovery_contracts;
+pub mod remote_eval_driver;
 pub mod router_contracts;
 pub mod search_v3;
 pub mod selfplay_core;
