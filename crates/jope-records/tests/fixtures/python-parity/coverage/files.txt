@@ -1653,6 +1653,7 @@ crates/jope-learning/src/progress/tests/outbox.rs
 crates/jope-learning/src/progress/tests/publish.rs
 crates/jope-learning/src/progress/tests/rebuild.rs
 crates/jope-learning/src/record.rs
+crates/jope-learning/src/retention/plan/report.rs
 crates/jope-learning/src/scores.rs
 crates/jope-learning/src/sources/champions.rs
 crates/jope-learning/src/sources/genebank.rs
