@@ -1051,9 +1051,28 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/src/gp.rs",
-      "tree_sha256": "7e5ee064d0eb051ac991dcf007c5dbd79b93cab06e8813e05e1e0aa0fe310328",
+      "tree_sha256": "6ec8a80a311cdcfab1757ec58cae02cab52d46c8545da57b52f0dbb59bb6b3f6",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "HLT-043: share duplicate audit-isolation tests and canonical Lambda entrypoint"
+    },
+    {
+      "body": "csv",
+      "path": "rust/src/gp_projection_vocabulary_audit_test.rs",
+      "source": "derived from duplicate audit-isolation tests in the six GP Rust sources",
+      "sha256": "d29bfc0d2a84da3f04ec46544f481074376d8dabd269fd920cdc86af1442e980",
+      "bytes": 5217,
+      "mode": "100644",
+      "anchors": [
+        "csv-survey-manifest",
+        "csv-s3-source-bundle"
+      ],
+      "disposition": "tracked",
+      "tree_path": "deploy/lambda/csv/rust/src/gp_projection_vocabulary_audit_test.rs",
+      "tree_sha256": "6d218103754355986058acf108c36ebdfbe4d15728ea7789f5c34002aa5604b5",
+      "custody_tarball": null,
+      "reason": "Test-only shared macros extracted from exact duplicate frozen Rust tests under HLT-043; runtime behavior is unchanged",
+      "tree_change": "HLT-043: share duplicate audit-isolation regression tests; macro formatting"
     },
     {
       "body": "csv",
@@ -1068,9 +1087,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/src/gp_diagnose.rs",
-      "tree_sha256": "56cbdcb204dc8585ff2c904f47bbccdbb37218bc7d79a9275573ea369fcb9cc3",
+      "tree_sha256": "21b4bc8a2e74aa54cf0e00e0ac40cacc5387ea612316c877cf0063f06de77bb8",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "HLT-043: share duplicate audit-isolation tests and canonical Lambda entrypoint"
     },
     {
       "body": "csv",
@@ -1085,9 +1105,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/src/gp_v1.rs",
-      "tree_sha256": "33358cc1b116898436e67ea17956a502efdb1082d52f5156a36a5e1162c62f05",
+      "tree_sha256": "f6655d1dc32793b87767dda16b46da8dc4c6e51225ae075a6085520f6554e556",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "HLT-043: share duplicate audit-isolation tests and canonical Lambda entrypoint"
     },
     {
       "body": "csv",
@@ -1102,9 +1123,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/src/gp_v1_pre_archive.rs",
-      "tree_sha256": "42775359f369ee359b7d1b8ec0a5015151c92e2e1aec59501298346c816f9a96",
+      "tree_sha256": "4ec5319b07acc96c8615de1c79c99d7d84c13b5f692632b93b1ca57ad797566e",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "HLT-043: share duplicate audit-isolation tests and canonical Lambda entrypoint"
     },
     {
       "body": "csv",
@@ -1119,9 +1141,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/src/gp_v2.rs",
-      "tree_sha256": "5c9d614afada84702796b0e5839056a17d647bf3c4b731765776d1a1cf83f09d",
+      "tree_sha256": "009474114d8c1cb17e7a8648cf7f685af7dd32c7c3ab20c4b15c916369e0ba74",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "HLT-043: share duplicate audit-isolation tests and canonical Lambda entrypoint"
     },
     {
       "body": "csv",
@@ -1136,9 +1159,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/rust/src/gp_v2_pre_archive.rs",
-      "tree_sha256": "3895c3d2d54524ec3ecff43e737f27e7a1f44ddad81aa27c00278f96821d05d1",
+      "tree_sha256": "0a0cf8fbd26020481b0a8aa23986dd41c599d831b856486c0511af4a942c1648",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "HLT-043: share duplicate audit-isolation tests and canonical Lambda entrypoint"
     },
     {
       "body": "csv",
@@ -1346,9 +1370,10 @@
       ],
       "disposition": "tracked",
       "tree_path": "deploy/lambda/csv/versions/rust-single-v2/rust/src/main.rs",
-      "tree_sha256": "fdf6c7c93c4ece21cf58385d386329305f9a9d30e7a1948fe2c7c347fc3efbcc",
+      "tree_sha256": "f1498931b79a6e9273f4bd73213ceed27f66319503b9eac04d8ae65c28bf5a8b",
       "custody_tarball": null,
-      "reason": "frozen source, verbatim"
+      "reason": "frozen source, verbatim",
+      "tree_change": "HLT-043: share duplicate audit-isolation tests and canonical Lambda entrypoint"
     },
     {
       "body": "csv",

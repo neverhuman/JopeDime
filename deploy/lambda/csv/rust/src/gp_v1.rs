@@ -1,4 +1,8 @@
 //! Isolated, bounded Lambda GP screening. Never canonical benchmark/learning admission.
+#[cfg(test)]
+#[macro_use]
+#[path = "gp_projection_vocabulary_audit_test.rs"]
+mod gp_projection_vocabulary_audit_test;
 use feat_math::{
     dsl::{ParamValue, Stage},
     evolve, BoundModel, ColumnSpec, DataSchema, GenomeIr, Objective, RawTable, RowSemantics,
@@ -920,81 +924,17 @@ mod tests {
             );
         }
     }
-    #[test]
-    fn projection_and_vocabulary_ignore_audit_data() {
-        for task in ["regression", "binary", "multi_label"] {
-            let (raw, mut job) = fixture(task);
-            let p = prepare(&raw, &job, 42).unwrap();
-            let poisoned = std::str::from_utf8(&raw)
-                .unwrap()
-                .lines()
-                .enumerate()
-                .map(|(i, line)| {
-                    if p.fold.audit.contains(&i) {
-                        let mut row = line.split(',').map(str::to_owned).collect::<Vec<_>>();
-                        row[0] = "999999999".into();
-                        row[3] = "987654321".into();
-                        row.join(",") + "\n"
-                    } else {
-                        line.to_owned() + "\n"
-                    }
-                })
-                .collect::<String>()
-                .into_bytes();
-            job.sha256 = hash(&poisoned);
-            job.bytes = poisoned.len();
-            let q = prepare(&poisoned, &job, 42).unwrap();
-            assert_eq!(p.columns, q.columns);
-            assert_eq!(p.labels, q.labels);
-            assert_eq!(p.fit.rows, q.fit.rows);
-            assert_eq!(p.fit_y, q.fit_y);
-            assert_eq!(p.selection.rows, q.selection.rows);
-            assert_eq!(p.selection_y, q.selection_y);
-        }
-        let make = |poison: bool| {
-            let f = fold(100, "wide", 42, false);
-            (0..100)
-                .map(|i| {
-                    let mut row = (0..70)
-                        .map(|j| {
-                            if poison && f.audit.contains(&i) && j == 69 {
-                                "10000000".into()
-                            } else {
-                                format!("{}", (i * (j + 1)) % 101)
-                            }
-                        })
-                        .collect::<Vec<_>>();
-                    row.push(i.to_string());
-                    row.join(",") + "\n"
-                })
-                .collect::<String>()
-                .into_bytes()
-        };
-        let raw = make(false);
-        let mut job = Job {
-            dataset_hash: "wide".into(),
-            name: "wide".into(),
-            key: "x".into(),
-            sha256: hash(&raw),
-            version: "v".into(),
-            rows: 100,
-            columns: 71,
-            bytes: raw.len(),
-            task: "regression".into(),
-            partition: "".into(),
-            metadata: BTreeMap::new(),
-        };
-        let p = prepare(&raw, &job, 42).unwrap();
-        let raw = make(true);
-        job.sha256 = hash(&raw);
-        job.bytes = raw.len();
-        let q = prepare(&raw, &job, 42).unwrap();
-        assert_eq!(p.columns.len(), 64);
-        assert_eq!(p.columns, q.columns);
-        assert_eq!(p.fit.rows, q.fit.rows);
-        assert_eq!(
-            p.fit.rows.len() + p.selection.rows.len() + p.audit.rows.len(),
-            100
-        );
-    }
+    projection_and_vocabulary_ignore_audit_data!(|raw: &[u8]| Job {
+                dataset_hash: "wide".into(),
+                name: "wide".into(),
+                key: "x".into(),
+                sha256: hash(raw),
+                version: "v".into(),
+                rows: 100,
+                columns: 71,
+                bytes: raw.len(),
+                task: "regression".into(),
+                partition: "".into(),
+                metadata: BTreeMap::new(),
+            });
 }
