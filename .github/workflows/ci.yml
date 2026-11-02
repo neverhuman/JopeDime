@@ -183,7 +183,7 @@ jobs:
         id: run-jankurai-audit
         env:
           JANKURAI_NO_UPDATE_CHECK: "1"
-          JANKURAI_BIN: ${{ github.workspace }}/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai
+          JANKURAI_BIN: ${{ github.workspace }}/target/jankurai/jankurai-1.7.6-x86_64-unknown-linux-gnu/jankurai
           # Owner decision 2026-10-22: report-only below the score floor of 85; the audit decision
           # and verified source evidence remain retained until the floor is reached.
           JOPE_AUDIT_REPORT_ONLY: "1"

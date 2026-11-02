@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 [[ $# == 1 ]] || { echo 'usage: jankurai.sh NEW_REPORT_DIRECTORY' >&2; exit 2; }
 auditor=${JANKURAI_BIN:-jankurai}
-[[ "$("$auditor" --version)" == 'jankurai 1.7.5' ]] || { echo 'audit requires pinned jankurai 1.7.5' >&2; exit 2; }
+[[ "$("$auditor" --version)" == 'jankurai 1.7.6' ]] || { echo 'audit requires pinned jankurai 1.7.6' >&2; exit 2; }
 output=$(realpath -m -- "$1")
 [[ ! -e "$output" && ! -L "$output" ]] || { echo 'audit report directory must be fresh' >&2; exit 2; }
 mkdir -p -- "$output"

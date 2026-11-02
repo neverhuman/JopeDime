@@ -163,7 +163,7 @@ jobs:
       - name: Full default-policy Jankurai audit and source re-verification
         env:
           JANKURAI_NO_UPDATE_CHECK: "1"
-          JANKURAI_BIN: ${{ github.workspace }}/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai
+          JANKURAI_BIN: ${{ github.workspace }}/target/jankurai/jankurai-1.7.6-x86_64-unknown-linux-gnu/jankurai
           # Owner decision 2026-10-22: report-only until the score reaches 85 (54 at bdf9441aa).
           # Integrity and consistency failures still fail; remove this line at 85.
           JOPE_AUDIT_REPORT_ONLY: "1"
