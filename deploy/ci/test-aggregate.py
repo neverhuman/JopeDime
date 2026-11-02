@@ -16,6 +16,7 @@ from results import counts
 class BrowserRoutingTests(unittest.TestCase):
     def test_browser_only_changes_require_the_typescript_rust_gate(self):
         for path in ('web/browser-predict/src/lib.rs',
+                     'web/browser-predict/src/tests.rs',
                      'web/browser-predict/src/future_module.rs',
                      'web/browser-predict/Cargo.toml',
                      'web/browser-predict/Cargo.lock',
