@@ -567,6 +567,10 @@ crates/jope-campaigns/src/bin/jope_selfplay_tui.rs
 crates/jope-campaigns/src/bin/jope_selfplay_wave.rs
 crates/jope-campaigns/src/bin/jope_spec_drift.rs
 crates/jope-campaigns/src/bin/jope_strategy_screen.rs
+crates/jope-campaigns/src/bin/jope_strategy_screen/evaluation.rs
+crates/jope-campaigns/src/bin/jope_strategy_screen/evaluation/execution.rs
+crates/jope-campaigns/src/bin/jope_strategy_screen/evaluation/folds.rs
+crates/jope-campaigns/src/bin/jope_strategy_screen/evaluation/metrics.rs
 crates/jope-campaigns/src/bin/jope_task_elo.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller/execution.rs
