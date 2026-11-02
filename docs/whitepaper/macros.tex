@@ -26,8 +26,8 @@
 % Venue-style captions and a compact reference list.
 \captionsetup{font=small}
 \renewcommand{\ttdefault}{lmtt}% Latin Modern Typewriter: cmtt metrics, Type 1 at every size, in stock TeX Live
-\renewcommand{\bibfont}{\footnotesize}% IEEE-style reference size: 124 entries end on a full last page
-\setlength{\bibsep}{2pt plus 1pt minus 1pt}
+\renewcommand{\bibfont}{\fontsize{7.5}{8.5}\selectfont}% compact reference size with leading in the 8/9 proportion; at 8pt the paper cannot end on page 28 without content cuts
+\setlength{\bibsep}{0pt plus 1pt}% hanging labels separate the entries; the stretch only balances the last page
 \urlstyle{same}
 % Link DOI identifiers using the same URL style as the bibliography.
 \newcommand{\doi}[1]{doi: \href{https://doi.org/#1}{\nolinkurl{#1}}}
