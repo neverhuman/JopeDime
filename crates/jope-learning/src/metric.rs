@@ -37,19 +37,23 @@ pub type Metric = LearningMetric;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
+#[schemars(rename = "MetricDirection")]
 #[cfg_attr(
     doc,
-    doc = "`MetricDirection` is an enum for the direction contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."
+    doc = "`LearningMetricDirection` is an enum for the direction contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."
 )]
-pub enum MetricDirection {
-    #[cfg_attr(doc, doc = "The `Higher` case of `MetricDirection`.")]
+pub enum LearningMetricDirection {
+    #[cfg_attr(doc, doc = "The `Higher` case of `LearningMetricDirection`.")]
     Higher,
-    #[cfg_attr(doc, doc = "The `Lower` case of `MetricDirection`.")]
+    #[cfg_attr(doc, doc = "The `Lower` case of `LearningMetricDirection`.")]
     Lower,
 }
 
+/// Compatibility path; this concrete enum is specific to learning metric improvement.
+pub type MetricDirection = LearningMetricDirection;
+
 /// Compatibility path; the concrete enum has a domain-specific name.
-pub type Direction = MetricDirection;
+pub type Direction = LearningMetricDirection;
 
 impl LearningMetric {
     #[cfg_attr(doc, doc = "Constant identifying the all.")]
@@ -103,7 +107,7 @@ impl std::fmt::Display for Metric {
     }
 }
 
-impl MetricDirection {
+impl LearningMetricDirection {
     /// Strict improvement only: an equal score is never an improvement (`champions.rs:452`).
     pub fn strictly_improves(self, candidate: f64, incumbent: f64) -> bool {
         if !candidate.is_finite() {
