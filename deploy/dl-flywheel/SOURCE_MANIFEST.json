@@ -464,10 +464,16 @@
       "sha256": "0912e7216320a82dc34d9af13554de91656aba558977bd213905a541fbaf9807"
     },
     {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/labels.py",
-      "origin_sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd",
+      "origin": "Compatibility facade for canonical continuous consumer label implementation",
+      "origin_sha256": "bcbb141d9441b8063914cec02a6a4cbd70abeb5256b2e1ce245e8f1df4f367eb",
       "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/labels.py",
-      "sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd"
+      "sha256": "bebc94deb1350c07ad3d0ef9527bb424a824646c7b3dd840b149b21c9907f8ca"
+    },
+    {
+      "origin": "Refactored from deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/labels.py; internal implementation names separated from frozen counterpart",
+      "origin_sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd",
+      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/labels_core.py",
+      "sha256": "bcbb141d9441b8063914cec02a6a4cbd70abeb5256b2e1ce245e8f1df4f367eb"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/model.py",
@@ -566,10 +572,16 @@
       "sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33"
     },
     {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/protocol.py",
-      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "origin": "Compatibility facade for the canonical continuous-runtime protocol implementation",
+      "origin_sha256": "c4ead6a91176178671c6949fc7915a03f867ff1710e091ae85437224ebc073db",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py",
-      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+      "sha256": "c3a6aa41d5e478a881be72e4dfb589dd93d3be85b0ba1e08fab7ffc0069d0d04"
+    },
+    {
+      "origin": "Refactored from deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py; internal API names separated from frozen copies",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol_core.py",
+      "sha256": "c4ead6a91176178671c6949fc7915a03f867ff1710e091ae85437224ebc073db"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/timing.py",
