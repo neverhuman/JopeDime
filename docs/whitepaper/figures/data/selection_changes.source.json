@@ -66,5 +66,24 @@
   "field_definition": "Observer compares selected program identities against the recorded round882reference; candidate is pre-decision, retained is post-decision; counts use91ordereddevelopmentcontexts. Changes may reflect both adapter and candidate-pool variation.",
   "source_binding": "Observer script hash and reference receipt metadata checked; installed loop source/adapter/population/normalization closure remains unqualified",
   "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
-  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --selection-changes"
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --selection-changes",
+  "method_source_pins": {
+    "source_snapshot_commit": "02f613533632e53f0a9135412e1b523661c9dafd",
+    "observer": {
+      "sha256": "3a5828c9f03e6c9e35df2257d79cd66f65831b7d4feb94608a7a0e0dd57a422f",
+      "existing_pin": "capture.producer_script_sha256",
+      "claims": [
+        "Changed evaluation identity, mismatched selection/context counts and duplicate context IDs are refused.",
+        "Candidate and post-decision retained program IDs are compared with the stored reference, not with their utilities."
+      ]
+    },
+    "admission": {
+      "path": "research/flywheel_selfplay/dev_incumbent.py",
+      "sha256": "81ebdafa5fe1accb1da56a424bee669f0e381fee2bd5e23c751c17618079523f",
+      "claims": [
+        "Unrounded finite utility is compared with retained utility; ties are accepted by default.",
+        "Accepted ties can update the recorded best-round identity without a strict score gain."
+      ]
+    }
+  }
 }
