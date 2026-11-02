@@ -21,6 +21,10 @@ the immutable external-custody recovery-map pin. Other removals and new model
 or bulk copies remain refused. A shared module restored in a later tree is not
 required to be deleted again.
 
+The guard follows each pinned bootstrap's ordered package paths, including its
+canonical fallback, and resolves source symlinks within the repository. It does
+not require a later deduplication to retain an intermediate duplicate location.
+
 The package selector reads the pinned root workspace's member paths and each
 changed member's actual manifest. Nested smartcluster packages are selected by
 their package names; no aggregate `crates/smartcluster/Cargo.toml` is assumed.

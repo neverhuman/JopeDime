@@ -48,6 +48,20 @@ def candidates(originals, policy_raw):
         EXPECTED_DELETIONS=EXPECTED_DELETIONS | SHARED_DELETIONS
 
         def validate_shared_source_ruling(head, git):
+            import posixpath
+            def source_exists(path):
+                for _ in range(16):
+                    entry=git('ls-tree',head,'--',path)
+                    if not entry:
+                        return False
+                    mode=entry.split()[0]
+                    if mode!='120000':
+                        return mode.startswith('100')
+                    target=git('show',head+':'+path)
+                    path=posixpath.normpath(posixpath.join(posixpath.dirname(path),target))
+                    if path.startswith('../') or path.startswith('/'):
+                        raise RuntimeError('shared module link escapes repository')
+                raise RuntimeError('shared module link cycle')
             commits={row['introduced_by']['commit'] for row in SHARED_POLICY['source_deletions']}
             for commit in sorted(commits):
                 git('merge-base','--is-ancestor',commit,head)
@@ -55,7 +69,11 @@ def candidates(originals, policy_raw):
                 if git('rev-parse',head+':'+path) != record['git_blob']:
                     raise RuntimeError('reviewed package search-path bootstrap differs: '+path)
             for record in SHARED_POLICY['source_deletions']:
-                git('cat-file','-e',head+':'+record['shared']['audited']['resolved'])
+                roots=SHARED_POLICY['bootstraps'][record['bootstrap']]['shared_roots']
+                name=posixpath.basename(record['deleted_path'])
+                candidates=[record['deleted_path']]+[root+'/'+name for root in roots]
+                if not any(source_exists(path) for path in candidates):
+                    raise RuntimeError('shared module is no longer locatable: '+record['module'])
     ''').replace("__POLICY_SHA__", repr(digest(policy_raw)))
     prepare = replace_once(prepare,
         "EXPECTED_DELETIONS=EXPECTED_DELETIONS | CUSTODY_DELETIONS\n",
