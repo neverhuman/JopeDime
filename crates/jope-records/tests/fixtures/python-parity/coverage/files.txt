@@ -220,6 +220,7 @@ crates/hyperion/src/battle_gpu/queue/storage.rs
 crates/hyperion/src/battle_gpu/queue_tests.rs
 crates/hyperion/src/bin/hyperion-batch-worker.rs
 crates/hyperion/src/bin/hyperion-v5-reference.rs
+crates/hyperion/src/bin/hyperion-v5-reference/tests.rs
 crates/hyperion/src/data.rs
 crates/hyperion/src/diagnostics.rs
 crates/hyperion/src/hashing.rs
