@@ -8,6 +8,19 @@
     "source_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
     "started_utc": "2026-11-02T08:19:00Z"
   },
+  "attempt_003_read_boundary": {
+    "CUDA_initialized": false,
+    "holdout": 0,
+    "meta_test": 0,
+    "optimizer_updates": 0,
+    "outer_rows": 0,
+    "sealed": 0,
+    "smoke_train_contexts": 1,
+    "train_baseline_contexts": 1219,
+    "treatment_candidate_proposals": 0,
+    "treatment_utility_outcomes": 0,
+    "validation_baseline_contexts": 91
+  },
   "attempts": [
     {
       "deviation": "D0 runner false-positive identity check",
@@ -30,6 +43,26 @@
       "source_commit": "9f4eee0fad5b71581280ed4a52efe47ed270df9e",
       "status": "INCOMPLETE",
       "traceback": "predict_dynamic -> runner.py:250 -> cid = context_row['context_sha256'] -> KeyError: context_sha256; H124 feature dict fields: dope629, lm48_z, mask_10, tokens_10x32. Reproduced using the first TRAIN context."
+    },
+    {
+      "baseline_parity": "PASS 91/91 exact mean 1.1377941898164525, max error 0.0",
+      "deviation": "D3 last authorized attempt; runner defect after smoke gate",
+      "elapsed_seconds": 368.412088238867,
+      "error": "FileExistsError creating attempt-003/rust_eval twice after the smoke gate",
+      "evidence": {
+        "attempt_output_bytes": 14406977,
+        "baseline_costs_sha256": "c3c5c2ee7d5707dfc7881454b9a70ff17c7c38e79ee6c2e307a781219f843475",
+        "baseline_parity_sha256": "d5ada77a5224440963f1d97dafc9132a53bb45e4dcaa3dbb3d9391a936d37f58",
+        "dope_receipt_sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+        "metrics_sha256": "2cdedf646094a41196576850663ef8699cc255d91ed906432cfa588edf02c41c"
+      },
+      "id": "attempt-003",
+      "root": "/home/ubuntu/jope-data/h212/attempt-003",
+      "root_mutated_after_closeout": false,
+      "smoke": "PASS one TRAIN context, widths 16/32/64, Rust evaluation, prediction and pool/analysis output; scratch removed",
+      "source_commit": "7ffda29568fee6f34d2fe06b369ea0d774051fe3",
+      "status": "INCOMPLETE",
+      "treatment_outcomes": 0
     }
   ],
   "baseline_parity": {
@@ -82,7 +115,7 @@
     "online_cores": 128,
     "swap_free_bytes": 26611712
   },
-  "next_step": "Merge explicit-context identity fix and all-width end-to-end TRAIN smoke gate; launch only attempt-003 from exact merged head before 10:15Z.",
+  "next_step": "Close H212 INCOMPLETE and stop. Correct the duplicate scratch directory creation for H214 runner reuse; do not launch H212 again.",
   "owner_deviation_D1": {
     "attempt": "attempt-002",
     "authorized_at_utc": "2026-11-02T08:30:00Z",
@@ -98,8 +131,7 @@
   "owner_deviation_D3": {
     "attempt": "attempt-003",
     "authorized_by": "ENG H-wave loop owner nudge hw_t0200_luna.md",
-    "scope": "same preregistered seeds and widths; fresh root; merged-head smoke gate required",
-    "status": "AUTHORIZED; last attempt"
+    "status": "CONSUMED; INCOMPLETE; final authorized run; no further H212 attempt"
   },
   "prelaunch_smoke_development": {
     "analysis_row_written": true,
@@ -136,7 +168,7 @@
     "train_treatment_utility_scored": 0,
     "validation_baseline_contexts": 91
   },
-  "reason": "Attempts 001 and 002 stopped on runner defects before any utility outcomes. Attempt 002 reached proposal generation and Rust evaluation but failed when predict_dynamic expected context identity inside a feature-only dict. Both attempt roots are retained unchanged.",
+  "reason": "All three authorized attempts stopped before any registered treatment outcomes. Attempt-003 passed exact baseline parity and its TRAIN-only all-width end-to-end smoke, then hit a duplicate rust_eval mkdir before entering the treatment loop. D3 was the last authorized attempt; H212 is closed INCOMPLETE with no efficacy verdict.",
   "schema": "jope.h212.pool-width-closeout/v1",
   "status": "INCOMPLETE",
   "treatment": {

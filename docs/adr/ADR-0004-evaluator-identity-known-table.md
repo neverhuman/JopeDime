@@ -124,3 +124,17 @@ calculations, DSL ABI, behavior fixtures and lineage source hashes are unchanged
 fixture changes only its generation SHA. The transition is registered in
 `rustmem_cpu_affinity_identity_rebaseline.v1.json`. No known-identity row is added because this
 work has no shipped receipt proving the new identity existed.
+
+## Current identity transition: rustunsafe authority lineage (2026-11-02)
+
+The jankurai rustunsafe cap (#1782) replaced libc `getsockopt(SO_PEERCRED)` and `waitid` in
+`crates/jope-engine/src/eval_registry/authority.rs` with `nix` safe wrappers. That file is a
+lineage source hashed into the teaching-store `semantic_dependencies_sha256`, and #1782 merged
+without recording it, so `compat_freeze` `lineage_sources_match_the_recorded_sources` was red on
+`origin/main`. The identity-only regeneration at `1b5154d82787ea955f9e989a52eeb2f23c51627f`
+records the new hash (`a4c02980707758e3067dc68cfc5e34f18f9544a8cb1f4a098ee3f883fd4b7a74` to
+`5755ac38ea47c03427f2357b3e65c17c0822f7f780c2c29561094f1128e5de05`). The evaluator
+implementation hash, Cargo.lock hash and identity digest are unchanged; the evaluator identity
+fixture changes only its generation SHA. The transition is registered in
+`rustunsafe_authority_lineage_rebaseline.v1.json`. No known-identity row is added because this
+work has no shipped receipt proving a new identity existed.
