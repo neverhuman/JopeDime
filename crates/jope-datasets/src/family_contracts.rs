@@ -71,7 +71,7 @@ fn python_ascii_json(canonical: &str) -> String {
     let mut escaped = String::with_capacity(canonical.len());
     for character in canonical.chars() {
         let codepoint = character as u32;
-        if codepoint <= 0x7f {
+        if (0x20..=0x7e).contains(&codepoint) {
             escaped.push(character);
         } else if codepoint <= 0xffff {
             escaped.push_str(&format!("\\u{codepoint:04x}"));
