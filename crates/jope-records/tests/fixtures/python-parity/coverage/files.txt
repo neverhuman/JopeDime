@@ -221,6 +221,10 @@ crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256
 crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp
 crates/feat-math/tests/golden.rs
 crates/feat-math/tests/ip_scrub.rs
+crates/feat-math/tests/ip_scrub/compatibility.rs
+crates/feat-math/tests/ip_scrub/emitters.rs
+crates/feat-math/tests/ip_scrub/names.rs
+crates/feat-math/tests/ip_scrub/phrases.rs
 crates/feat-math/tests/kernel_codec.rs
 crates/feat-math/tests/kernel_emission_safety.rs
 crates/feat-math/tests/kernel_expression.rs
