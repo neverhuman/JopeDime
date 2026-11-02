@@ -61,6 +61,9 @@ const KEEPER_RETIRED_STATE: &str = "retired_stale";
 /// transitions out of (:2206).
 const PAIR_LAUNCH_READY: [&str; 2] = ["reserved", "infrastructure_retry"];
 
+/// Claim states the keeper's `ready_claims` path will submit.
+const SUBMITTABLE_CLAIM_STATES: [&str; 2] = ["checked", "submitting"];
+
 /// Registry attempt states that count as "this pair already has a live attempt".
 /// `reserved`/`submitted` are the partial unique index on the registry side;
 /// `infrastructure_retry` is additionally matched by :2206 so a second row
@@ -227,6 +230,12 @@ struct MissingAttempt {
 fn active_claim_manifests(backlog: &Connection, claim_states: &[String]) -> Result<Vec<String>> {
     if claim_states.is_empty() {
         bail!("--claim-states must name at least one claim state");
+    }
+    if let Some(state) = claim_states
+        .iter()
+        .find(|state| !SUBMITTABLE_CLAIM_STATES.contains(&state.as_str()))
+    {
+        bail!("unsupported --claim-states value: {state}");
     }
     let placeholders = vec!["?"; claim_states.len()].join(",");
     let mut statement = backlog.prepare(&format!(
@@ -864,23 +873,18 @@ mod tests {
                    reservation_owner TEXT);
                  INSERT INTO claims VALUES('m1','/1.json','job-1','/s.toml','checked',0,1,NULL);
                  INSERT INTO claims VALUES('m2','/2.json','job-2','/s.toml','submitting',0,1,NULL);
-                 INSERT INTO claims VALUES('m3','/3.json','job-3','/s.toml','x'' OR ''1''=''1',0,1,NULL);",
+                 INSERT INTO claims VALUES('m3','/3.json','job-3','/s.toml','submitted',0,1,NULL);",
             )
             .unwrap();
         let states = |values: &[&str]| values.iter().map(|v| (*v).to_owned()).collect::<Vec<_>>();
-        // Only the placeholder list is formatted into the SQL; a quote-bearing state matches
-        // its own literal row and cannot widen the filter.
         assert_eq!(
-            active_claim_manifests(&backlog, &states(&["checked", "x' OR '1'='1"])).unwrap(),
-            ["m1", "m3"]
+            active_claim_manifests(&backlog, &states(&["checked", "submitting"])).unwrap(),
+            ["m1", "m2"]
         );
-        assert!(active_claim_manifests(&backlog, &states(&["') OR 1=1 --"]))
-            .unwrap()
-            .is_empty());
+        assert!(active_claim_manifests(&backlog, &states(&["') OR 1=1 --"])).is_err());
         assert!(
             active_claim_manifests(&backlog, &states(&["checked'); DROP TABLE claims; --"]))
-                .unwrap()
-                .is_empty()
+                .is_err()
         );
         let rows: i64 = backlog
             .query_row("SELECT COUNT(*) FROM claims", [], |row| row.get(0))
