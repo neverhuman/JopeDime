@@ -1753,6 +1753,8 @@ crates/smartcluster/jainnode/src/replay.rs
 crates/smartcluster/jainnode/src/role.rs
 crates/smartcluster/jainnode/src/role/validation.rs
 crates/smartcluster/jainnode/src/role_tests.rs
+crates/smartcluster/jainnode/src/role_tests/provisioning_and_rejection.rs
+crates/smartcluster/jainnode/src/role_tests/signatures.rs
 crates/smartcluster/jainnode/src/session_state.rs
 crates/smartcluster/jainnode/src/storage_config.rs
 crates/smartcluster/jainnode/src/storage_config_tests.rs
