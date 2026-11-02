@@ -1,4 +1,93 @@
-# Q1 CPU preparation — not a qualification report
+# QLT-04 Q1 — interrupted one-shot report
+
+**Current outcome (2026-11-02): INCOMPLETE. Guidance default: OFF under OWNER-R21.**
+The signed Q1 attempt started, then the maintained FIFO stopped the driver when its
+host load exceeded the existing guard. The candidate is consumed; there is no
+statistical PASS/FAIL or automatic retry. Earlier preparation entries below are
+historical observations, not the current execution state.
+
+## Actual one-shot outcome — 2026-11-02 T0115
+
+**Design note.** Record the actual signed attempt, incomplete coverage, observed
+compute and owner default without changing the preregistration, cohort, evaluator,
+budgets or source protocol (spec §§13–14). Reject a partial-panel effect estimate
+and an automatic resume: both would depart from the signed single-use protocol.
+Keep unknown charges and outcomes explicit and retain the original evidence.
+
+The original API01 publisher admitted the nine preserved Linux components, then
+ENG signed the exact 97-family R20 plan. OpenSSH verification passed. Execution
+used the original xbabe2 driver, physical ledger, queue and qualification lock,
+and the pinned CPU evaluator on xbabe1:
+
+| Execution identity | Value |
+|---|---|
+| Compiled source | `ccaf14b210b3b55a350218e60f6b49ef76524cf3` |
+| Signed metadata source | `fa07e1336c8fc7c04994faadf8f6efabded0a195` |
+| Linux evaluator SHA-256 | `4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177` |
+| Canonical plan digest | `d71ebeda6fe7c5575025a063807662b66c93c5f743689dc96bc5bae0fe26d19a` |
+| Delegated signing receipt | `signing/receipts/q1-20261102T082653Z.json`, verify PASS |
+
+The original ledger recorded the candidate started at 08:58 UTC. At 09:02:53 UTC,
+the maintained launcher exited 2 with
+`ValueError: host load exceeds 85/102; no study dispatch`. Its recorded last phase
+is `driver_started_outcome_unknown`. The evaluator's separate resource guard did
+not breach. This is an interrupted Q1 panel, not a learned-quality verdict.
+
+| Coverage | Planned | Observed in driver receipts |
+|---|---:|---:|
+| Families | 97 | 3 started; 2 have all six policy/seed results |
+| Policy runs (three seeds, both policies) | 582 | 18 started; 16 valid complete responses |
+| Charged rung-0 admissions | 13,968 | 384 known charged and completed; interrupted charges unknown |
+| Completed fold scores | 41,904 if every admission completed | 1,152 known |
+
+There are 17 finished events: 16 complete responses and one interruption record
+with unknown charged/completed counts. A further started request has no terminal
+driver record. The known complete responses contain no candidate failures; that
+observation does not turn the interrupted requests into zero charges or failures.
+The remaining 564 planned runs were not started. Independent recount verified the
+complete responses against the frozen plan, request identities and closed schema.
+
+| Subgroup | Frozen family count | Fully paired families observed | Verdict |
+|---|---:|---:|---|
+| small | 70 | 2 | UNKNOWN / incomplete |
+| large | 27 | 0 | UNKNOWN / incomplete |
+| narrow | 94 | 2 | UNKNOWN / incomplete |
+| wide | 3 (OWNER-R20 census) | 0 | UNKNOWN / incomplete |
+
+**Effect estimate, confidence interval and subgroup bounds are unavailable.**
+The maintained analyzer, invoked with the real owner signature, refused the saved
+panel (`ValueError: invalid response fields/schema`). No substitute scores,
+partial-panel bootstrap or analysis file were manufactured. Elo was not measured.
+
+Actual launcher wall time was 328.417775 seconds,
+including 45.002839 seconds of queue courtesy. Recorded finished
+policy wall times sum to 280.338173 seconds; this excludes unknown unfinished
+work. CPU seconds were not instrumented; execution was CPU-only, with no GPU use.
+The pinned engine recorded 32 learned forwards and stopped cleanly (stop exit 0).
+Its own tunnel, daemon credentials and FIFO ticket were removed; the original
+ledger and all receipts remain intact.
+
+**Disposition.** OWNER-R21 keeps guidance OFF for v1.0.0. This records the existing
+owner decision, not a default selected from the incomplete panel. Linux worker CV
+remains 1,024/1,024 PASS. Raw M3 remains `NUMERICAL_FAIL` with the separate
+operator-mix disposition `WAIVED_V1_0_0`; numerical CV is not waived, the historical
+Darwin 58/1,024 failures remain unchanged, and future ±2.0pp requirements stand.
+The original ledger retains its started marker and has no finished marker.
+Any resume or repeat requires a separate owner-reviewed protocol under the
+[preregistration](PREREGISTRATION.md); none was attempted here.
+
+Evidence root: `/home/ubuntu/jope_plan/evidence/QLT-04/gov03-t0115/`.
+`run/receipts.jsonl` SHA-256: `8e1250610419bec534e88a118a1450414d112de79dd6b7f4fa0edfa72887966d`.
+`run/launch-receipt.json` SHA-256: `bd6bab49b9657be221a56caf120e6f77547578ffd29f0032de055d3916bb2a96`.
+`OUTCOME.json`, `PARTIAL-INDEPENDENT-RECOUNT.json`,
+`SIGNED-PLAN-VERIFIED.json`, `POST-RUN-INPUTS-VERIFIED.json` and
+`ENGINE-STOPPED.json` retain the source, signature, counts, unchanged inputs and
+teardown proofs. Engine-side operational evidence has an independently verified
+archive under `/home/ubuntu/jope_plan/custody/gov03-q1-t0115-engine/` (220 regular files; SHA-256
+`61a1fe226ab778c769ee541964b45f157bf1dde56c149425f7dc4b2a461f044c`).
+The private engine journal and input CAS remain preserved in place.
+
+## Historical CPU preparation record
 
 **Status: CPU_PREPARED / Q1 NOT RUN.** This file records only driver readiness and a synthetic CPU protocol dry-run. It contains no empirical Q1 effect estimate and makes no guidance-default decision.
 
