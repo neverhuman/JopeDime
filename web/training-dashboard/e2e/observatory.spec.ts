@@ -43,6 +43,23 @@ async function evidence(page: Page, testInfo: TestInfo, name: string) {
   await testInfo.attach(`${name}.png`, { body: await page.screenshot({ fullPage: !geometry.dialog, animations: "disabled" }), contentType: "image/png" });
 }
 
+async function cumulativeLayoutShift(page: Page): Promise<number> {
+  return page.evaluate(() => new Promise<number>((resolve) => {
+    const shifts: PerformanceEntry[] = [];
+    const observer = new PerformanceObserver((list) => shifts.push(...list.getEntries()));
+    observer.observe({ type: "layout-shift", buffered: true });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      setTimeout(() => {
+        observer.disconnect();
+        resolve(shifts.reduce((total, entry) => {
+          const shift = entry as PerformanceEntry & { value: number; hadRecentInput: boolean };
+          return total + (shift.hadRecentInput ? 0 : shift.value);
+        }, 0));
+      }, 250);
+    }));
+  }));
+}
+
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date(observedAt * 1000));
   await page.route("**/api/**", async (route) => {
@@ -59,6 +76,13 @@ test("all six sections retain bounded layout, screenshots and accessible semanti
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "synthetic-rendered-ui-only", exact: true })).toBeVisible();
+  const tokens = await page.evaluate(() => {
+    const styles = getComputedStyle(document.documentElement);
+    return ["--color-canvas", "--color-text", "--color-border", "--color-focus-ring"]
+      .map((token) => styles.getPropertyValue(token).trim());
+  });
+  expect(tokens.every((token) => token.length > 0), "Shared design tokens must load in the rendered app").toBe(true);
+  expect(await cumulativeLayoutShift(page), "Initial rendered state must stay below the 0.1 CLS budget").toBeLessThanOrEqual(0.1);
   for (const section of ["Overview", "Training", "Fleet", "Storage & datasets", "GP library", "Results & lineage"]) {
     const button = page.getByRole("navigation").getByRole("button", { name: section, exact: true });
     await button.click();
