@@ -1226,6 +1226,9 @@ class WorkflowAdmissionTests(unittest.TestCase):
     def test_workflow_delegates_full_evidence_checks_without_dropping_them(self):
         ci = (ROOT/'.github/workflows/ci.yml').read_text()
         full = (ROOT/'.github/workflows/full-main.yml').read_text()
+        hygiene = self.job(ci, 'hygiene')
+        self.assertIn('run: bash tools/security-lane.sh', hygiene)
+        self.assertIn('JOPE_LANE_EVIDENCE:', hygiene)
         for command in ('publication', 'frontend', 'rendered-ux', 'export-parity', 'filter-needs'):
             self.assertIn(f'aggregate-evidence.py {command}', ci)
         self.assertIn('aggregate-evidence.py filter-needs', full)
