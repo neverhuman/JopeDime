@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum HttpMethod {
     Get,
     Post,
