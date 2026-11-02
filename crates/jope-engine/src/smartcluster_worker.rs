@@ -888,10 +888,12 @@ fn available_storage_bytes(path: &Path) -> Result<u64> {
     Ok(storage_bytes_from_stats(stats))
 }
 
+fn storage_bytes(blocks_available: u64, fragment_size: u64) -> u64 {
+    blocks_available.saturating_mul(fragment_size)
+}
+
 fn storage_bytes_from_stats(stats: nix::sys::statvfs::Statvfs) -> u64 {
-    stats
-        .blocks_available()
-        .saturating_mul(stats.fragment_size())
+    storage_bytes(stats.blocks_available(), stats.fragment_size())
 }
 
 fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
@@ -941,7 +943,13 @@ fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
 
 #[cfg(test)]
 mod storage_measurement_tests {
-    use super::{available_storage_bytes, storage_bytes_from_stats};
+    use super::{available_storage_bytes, storage_bytes, storage_bytes_from_stats};
+
+    #[test]
+    fn storage_byte_calculation_uses_available_blocks_and_saturates() {
+        assert_eq!(storage_bytes(3, 4096), 12_288);
+        assert_eq!(storage_bytes(u64::MAX, 2), u64::MAX);
+    }
 
     #[test]
     fn available_storage_uses_available_blocks_and_fragment_size() {
