@@ -64,6 +64,8 @@ extra_excluded_paths = [
   # Historical fitted-runtime ABI kept byte-for-byte as a sanitizer-tested parity oracle;
   # production loading and prediction dispatch are implemented in Rust.
   "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp",
+  # Historical source-pin alias only; this symlink targets the test oracle and no build/runtime loads it.
+  "crates/feat-math/cpp/fitted_runtime.cpp",
   "crates/jope-learning/src/lake/archive.rs",
   "crates/jope-learning/src/lake/roles.rs",
   "crates/jope-learning/src/main.rs",
