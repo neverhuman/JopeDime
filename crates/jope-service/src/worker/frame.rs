@@ -12,7 +12,7 @@ const LENGTH_PREFIX_BYTES: usize = std::mem::size_of::<u32>();
 
 /// Errors raised while encoding or decoding a worker frame.
 #[derive(Debug)]
-pub enum FrameError {
+pub enum WorkerFrameError {
     /// The length prefix or encoded JSON exceeds the protocol's maximum payload size.
     Oversized { length: usize, maximum: usize },
     /// The stream ended before all four bytes of the length prefix arrived.
@@ -27,7 +27,10 @@ pub enum FrameError {
     Io(io::Error),
 }
 
-impl fmt::Display for FrameError {
+/// Backwards-compatible name for the JSON worker-frame error type.
+pub type FrameError = WorkerFrameError;
+
+impl fmt::Display for WorkerFrameError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Oversized { length, maximum } => {
@@ -48,7 +51,7 @@ impl fmt::Display for FrameError {
     }
 }
 
-impl std::error::Error for FrameError {
+impl std::error::Error for WorkerFrameError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::InvalidUtf8(error) => Some(error),
@@ -63,15 +66,15 @@ impl std::error::Error for FrameError {
 
 /// Encode a JSON value as a little-endian `u32` payload length followed by JSON bytes.
 pub fn encode_frame(value: &Value) -> Result<Vec<u8>, FrameError> {
-    let payload = serde_json::to_vec(value).map_err(FrameError::InvalidJson)?;
+    let payload = serde_json::to_vec(value).map_err(WorkerFrameError::InvalidJson)?;
     if payload.len() > MAX_FRAME_BYTES {
-        return Err(FrameError::Oversized {
+        return Err(WorkerFrameError::Oversized {
             length: payload.len(),
             maximum: MAX_FRAME_BYTES,
         });
     }
 
-    let length = u32::try_from(payload.len()).map_err(|_| FrameError::Oversized {
+    let length = u32::try_from(payload.len()).map_err(|_| WorkerFrameError::Oversized {
         length: payload.len(),
         maximum: MAX_FRAME_BYTES,
     })?;
@@ -84,32 +87,32 @@ pub fn encode_frame(value: &Value) -> Result<Vec<u8>, FrameError> {
 /// Read and decode one frame, leaving any following frame bytes in the stream.
 pub fn decode_frame<R: Read>(reader: &mut R) -> Result<Value, FrameError> {
     let mut header = [0; LENGTH_PREFIX_BYTES];
-    let header_read = read_available(reader, &mut header).map_err(FrameError::Io)?;
+    let header_read = read_available(reader, &mut header).map_err(WorkerFrameError::Io)?;
     if header_read != LENGTH_PREFIX_BYTES {
-        return Err(FrameError::TruncatedHeader {
+        return Err(WorkerFrameError::TruncatedHeader {
             received: header_read,
         });
     }
 
     let payload_length = u32::from_le_bytes(header) as usize;
     if payload_length > MAX_FRAME_BYTES {
-        return Err(FrameError::Oversized {
+        return Err(WorkerFrameError::Oversized {
             length: payload_length,
             maximum: MAX_FRAME_BYTES,
         });
     }
 
     let mut payload = vec![0; payload_length];
-    let payload_read = read_available(reader, &mut payload).map_err(FrameError::Io)?;
+    let payload_read = read_available(reader, &mut payload).map_err(WorkerFrameError::Io)?;
     if payload_read != payload_length {
-        return Err(FrameError::TruncatedPayload {
+        return Err(WorkerFrameError::TruncatedPayload {
             expected: payload_length,
             received: payload_read,
         });
     }
 
-    let json = str::from_utf8(&payload).map_err(FrameError::InvalidUtf8)?;
-    serde_json::from_str(json).map_err(FrameError::InvalidJson)
+    let json = str::from_utf8(&payload).map_err(WorkerFrameError::InvalidUtf8)?;
+    serde_json::from_str(json).map_err(WorkerFrameError::InvalidJson)
 }
 
 fn read_available<R: Read>(reader: &mut R, buffer: &mut [u8]) -> io::Result<usize> {
@@ -130,7 +133,7 @@ mod tests {
     use proptest::prelude::*;
     use serde_json::{Map, Number, Value};
 
-    use super::{decode_frame, encode_frame, FrameError, MAX_FRAME_BYTES};
+    use super::{decode_frame, encode_frame, FrameError, WorkerFrameError, MAX_FRAME_BYTES};
 
     fn json_values() -> BoxedStrategy<Value> {
         let leaves = prop_oneof![
@@ -161,6 +164,15 @@ mod tests {
         assert_eq!(decode_frame(&mut frame.as_slice()).unwrap(), value);
     }
 
+    #[test]
+    fn frame_error_compatibility_alias_remains_usable() {
+        let error: FrameError = WorkerFrameError::Oversized {
+            length: MAX_FRAME_BYTES + 1,
+            maximum: MAX_FRAME_BYTES,
+        };
+        assert!(error.to_string().contains("maximum"));
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig { cases: 64, ..ProptestConfig::default() })]
 
@@ -177,7 +189,7 @@ mod tests {
             let bytes = [0x01, 0x02, 0x03][..received.min(3)].to_vec();
             assert!(matches!(
                 decode_frame(&mut bytes.as_slice()),
-                Err(FrameError::TruncatedHeader { received: actual }) if actual == received
+                Err(WorkerFrameError::TruncatedHeader { received: actual }) if actual == received
             ));
         }
     }
@@ -188,7 +200,7 @@ mod tests {
         bytes.extend_from_slice(b"{} ");
         assert!(matches!(
             decode_frame(&mut bytes.as_slice()),
-            Err(FrameError::TruncatedPayload {
+            Err(WorkerFrameError::TruncatedPayload {
                 expected: 5,
                 received: 3
             })
@@ -201,14 +213,14 @@ mod tests {
         invalid_utf8.push(0xff);
         assert!(matches!(
             decode_frame(&mut invalid_utf8.as_slice()),
-            Err(FrameError::InvalidUtf8(_))
+            Err(WorkerFrameError::InvalidUtf8(_))
         ));
 
         let mut invalid_json = 1_u32.to_le_bytes().to_vec();
         invalid_json.push(b"x"[0]);
         assert!(matches!(
             decode_frame(&mut invalid_json.as_slice()),
-            Err(FrameError::InvalidJson(_))
+            Err(WorkerFrameError::InvalidJson(_))
         ));
     }
 
@@ -217,7 +229,7 @@ mod tests {
         let header = ((MAX_FRAME_BYTES as u32) + 1).to_le_bytes();
         assert!(matches!(
             decode_frame(&mut header.as_slice()),
-            Err(FrameError::Oversized { length, maximum })
+            Err(WorkerFrameError::Oversized { length, maximum })
                 if length == MAX_FRAME_BYTES + 1 && maximum == MAX_FRAME_BYTES
         ));
     }
@@ -227,7 +239,7 @@ mod tests {
         let value = Value::String("x".repeat(MAX_FRAME_BYTES));
         assert!(matches!(
             encode_frame(&value),
-            Err(FrameError::Oversized { maximum, .. }) if maximum == MAX_FRAME_BYTES
+            Err(WorkerFrameError::Oversized { maximum, .. }) if maximum == MAX_FRAME_BYTES
         ));
     }
 

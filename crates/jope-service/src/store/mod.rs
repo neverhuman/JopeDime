@@ -25,7 +25,7 @@ fn definition(table: Table) -> BytesTable {
 }
 
 #[derive(Debug)]
-pub enum StoreError {
+pub enum MetadataStoreError {
     Io(std::io::Error),
     Database(String),
     Json(serde_json::Error),
@@ -34,7 +34,10 @@ pub enum StoreError {
     Invalid(&'static str),
 }
 
-impl std::fmt::Display for StoreError {
+/// Backwards-compatible name for metadata/CAS store errors.
+pub type StoreError = MetadataStoreError;
+
+impl std::fmt::Display for MetadataStoreError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Io(e) => write!(f, "store IO: {e}"),
@@ -49,20 +52,20 @@ impl std::fmt::Display for StoreError {
         }
     }
 }
-impl std::error::Error for StoreError {}
-impl From<std::io::Error> for StoreError {
+impl std::error::Error for MetadataStoreError {}
+impl From<std::io::Error> for MetadataStoreError {
     fn from(e: std::io::Error) -> Self {
         Self::Io(e)
     }
 }
-impl From<serde_json::Error> for StoreError {
+impl From<serde_json::Error> for MetadataStoreError {
     fn from(e: serde_json::Error) -> Self {
         Self::Json(e)
     }
 }
-pub type Result<T> = std::result::Result<T, StoreError>;
-fn db(e: impl std::fmt::Display) -> StoreError {
-    StoreError::Database(e.to_string())
+pub type Result<T> = std::result::Result<T, MetadataStoreError>;
+fn db(e: impl std::fmt::Display) -> MetadataStoreError {
+    MetadataStoreError::Database(e.to_string())
 }
 
 #[cfg(feature = "failpoints")]
@@ -135,13 +138,17 @@ impl Store {
             builder.create(home)?;
         }
         if !fs::symlink_metadata(home)?.file_type().is_dir() {
-            return Err(StoreError::Integrity("home is not a real directory"));
+            return Err(MetadataStoreError::Integrity(
+                "home is not a real directory",
+            ));
         }
         let home = home.canonicalize()?;
         let path = home.join("state.redb");
         if let Ok(meta) = fs::symlink_metadata(&path) {
             if !meta.file_type().is_file() {
-                return Err(StoreError::Integrity("state.redb is not a regular file"));
+                return Err(MetadataStoreError::Integrity(
+                    "state.redb is not a regular file",
+                ));
             }
         }
         let database = Database::create(&path).map_err(db)?;
@@ -175,14 +182,14 @@ impl Store {
             let version = meta
                 .get(VERSION_KEY)
                 .map_err(db)?
-                .ok_or(StoreError::Integrity("schema version missing"))?;
+                .ok_or(MetadataStoreError::Integrity("schema version missing"))?;
             let bytes: [u8; 8] = version
                 .value()
                 .try_into()
-                .map_err(|_| StoreError::Integrity("invalid schema version bytes"))?;
+                .map_err(|_| MetadataStoreError::Integrity("invalid schema version bytes"))?;
             let found = u64::from_le_bytes(bytes);
             if found != SCHEMA_VERSION {
-                return Err(StoreError::SchemaVersion {
+                return Err(MetadataStoreError::SchemaVersion {
                     found,
                     supported: SCHEMA_VERSION,
                 });
@@ -193,15 +200,17 @@ impl Store {
                 .chain(["meta"])
                 .collect();
             if tables.iter().map(String::as_str).collect::<HashSet<_>>() != expected {
-                return Err(StoreError::Integrity("schema table inventory mismatch"));
+                return Err(MetadataStoreError::Integrity(
+                    "schema table inventory mismatch",
+                ));
             }
             let id = meta
                 .get(STORE_ID_KEY)
                 .map_err(db)?
-                .ok_or(StoreError::Integrity("store ID missing"))?;
+                .ok_or(MetadataStoreError::Integrity("store ID missing"))?;
             id.value()
                 .try_into()
-                .map_err(|_| StoreError::Integrity("invalid store ID bytes"))?
+                .map_err(|_| MetadataStoreError::Integrity("invalid store ID bytes"))?
         };
         let store = Self {
             database,
@@ -222,7 +231,7 @@ impl Store {
         let _guard = self
             .writer
             .lock()
-            .map_err(|_| StoreError::Integrity("writer lock poisoned"))?;
+            .map_err(|_| MetadataStoreError::Integrity("writer lock poisoned"))?;
         self.cas.publish(data)
     }
 
@@ -257,17 +266,19 @@ impl Store {
             path.parent().unwrap().to_path_buf(),
         ] {
             if !fs::symlink_metadata(parent)?.file_type().is_dir() {
-                return Err(StoreError::Integrity("CAS parent is not a real directory"));
+                return Err(MetadataStoreError::Integrity(
+                    "CAS parent is not a real directory",
+                ));
             }
         }
         let metadata = fs::symlink_metadata(&path)?;
         if !metadata.file_type().is_file() || metadata.len() != reference.bytes {
-            return Err(StoreError::Integrity("blob hash/size mismatch"));
+            return Err(MetadataStoreError::Integrity("blob hash/size mismatch"));
         }
         let bytes = fs::read(path)?;
         let digest: [u8; 32] = Sha256::digest(&bytes).into();
         if bytes.len() as u64 != reference.bytes || digest != reference.sha256 {
-            return Err(StoreError::Integrity("blob hash/size mismatch"));
+            return Err(MetadataStoreError::Integrity("blob hash/size mismatch"));
         }
         Ok(bytes)
     }
@@ -278,7 +289,7 @@ impl Store {
         let _guard = self
             .writer
             .lock()
-            .map_err(|_| StoreError::Integrity("writer lock poisoned"))?;
+            .map_err(|_| MetadataStoreError::Integrity("writer lock poisoned"))?;
         let mut inner = self.database.begin_write().map_err(db)?;
         inner.set_durability(Durability::Immediate);
         let mut write = Write {
@@ -297,7 +308,7 @@ impl Store {
         let table = read.open_table(definition(key.table())).map_err(db)?;
         let value = table.get(key.bytes()?.as_slice()).map_err(db)?;
         value
-            .map(|v| serde_json::from_slice(v.value()).map_err(StoreError::from))
+            .map(|v| serde_json::from_slice(v.value()).map_err(MetadataStoreError::from))
             .transpose()
     }
 
@@ -308,7 +319,7 @@ impl Store {
         limit: usize,
     ) -> Result<Vec<jope_api::ids::DatasetId>> {
         if !(1..=257).contains(&limit) {
-            return Err(StoreError::Invalid("dataset page size"));
+            return Err(MetadataStoreError::Invalid("dataset page size"));
         }
         let read = self.database.begin_read().map_err(db)?;
         let table = read.open_table(definition(Table::Datasets)).map_err(db)?;
@@ -320,9 +331,9 @@ impl Store {
                 continue;
             }
             let id = std::str::from_utf8(key.value())
-                .map_err(|_| StoreError::Integrity("invalid dataset key"))?
+                .map_err(|_| MetadataStoreError::Integrity("invalid dataset key"))?
                 .parse()
-                .map_err(|_| StoreError::Integrity("invalid dataset ID"))?;
+                .map_err(|_| MetadataStoreError::Integrity("invalid dataset ID"))?;
             ids.push(id);
             if ids.len() == limit {
                 break;
@@ -346,9 +357,9 @@ impl Store {
                 continue;
             }
             let id = std::str::from_utf8(key.value())
-                .map_err(|_| StoreError::Integrity("invalid run key"))?
+                .map_err(|_| MetadataStoreError::Integrity("invalid run key"))?
                 .parse()
-                .map_err(|_| StoreError::Integrity("invalid run ID"))?;
+                .map_err(|_| MetadataStoreError::Integrity("invalid run ID"))?;
             ids.push(id);
             if ids.len() == limit {
                 break;
@@ -394,7 +405,7 @@ impl Store {
                         let value = table
                             .get(key.as_slice())
                             .map_err(db)?
-                            .ok_or(StoreError::Integrity("recovery run disappeared"))?;
+                            .ok_or(MetadataStoreError::Integrity("recovery run disappeared"))?;
                         serde_json::from_slice(value.value())?
                     };
                     let run = record.run.as_mut().unwrap();
@@ -403,7 +414,7 @@ impl Store {
                     run.revision = run
                         .revision
                         .checked_add(1)
-                        .ok_or(StoreError::Integrity("recovery revision exhausted"))?;
+                        .ok_or(MetadataStoreError::Integrity("recovery revision exhausted"))?;
                     table
                         .insert(key.as_slice(), serde_json::to_vec(&record)?.as_slice())
                         .map_err(db)?;
@@ -421,7 +432,7 @@ fn validate(table: Table, record: &Record) -> Result<()> {
     if (table == Table::Runs) != record.run.is_some()
         || record.run.as_ref().is_some_and(|run| run.revision == 0)
     {
-        return Err(StoreError::Invalid(
+        return Err(MetadataStoreError::Invalid(
             "run table requires positive revision/state; other tables have no run metadata",
         ));
     }
@@ -439,7 +450,7 @@ impl Write<'_> {
         let table = self.inner.open_table(definition(key.table())).map_err(db)?;
         let value = table.get(key.bytes()?.as_slice()).map_err(db)?;
         value
-            .map(|v| serde_json::from_slice(v.value()).map_err(StoreError::from))
+            .map(|v| serde_json::from_slice(v.value()).map_err(MetadataStoreError::from))
             .transpose()
     }
 
@@ -480,7 +491,7 @@ mod blob_read_tests {
         };
         assert!(matches!(
             store.read_blob(&wrong_size),
-            Err(StoreError::Integrity(_))
+            Err(MetadataStoreError::Integrity(_))
         ));
 
         let digest: String = reference
@@ -497,7 +508,7 @@ mod blob_read_tests {
         fs::write(&path, b"stored model object bytex").unwrap();
         assert!(matches!(
             store.read_blob(&reference),
-            Err(StoreError::Integrity(_))
+            Err(MetadataStoreError::Integrity(_))
         ));
     }
 }
