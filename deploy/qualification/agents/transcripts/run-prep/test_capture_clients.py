@@ -33,7 +33,7 @@ THREE_CLIENTS_MODULE = importlib.util.module_from_spec(THREE_CLIENTS_SPEC)
 THREE_CLIENTS_SPEC.loader.exec_module(THREE_CLIENTS_MODULE)
 
 
-def _runner_fixture(tmp_path, *, sleep_key=None, descendant_key=None):
+def _runner_fixture(tmp_path, *, sleep_key=None, descendant_key=None, drain_key=None):
     repo = tmp_path / "source"
     repo.mkdir()
     capture_script = (
@@ -100,6 +100,15 @@ def _runner_fixture(tmp_path, *, sleep_key=None, descendant_key=None):
             from pathlib import Path
             _, capture_stdio, capture_dir, candidate, engine_home, key = sys.argv
             Path('client.pid').write_text(str(os.getpid()))
+            if key == {drain_key!r}:
+                child_code = "import hashlib, json, os, signal, sys, time; from pathlib import Path; signal.signal(signal.SIGTERM, lambda *_: sys.exit(0)); Path('drain-child.pid').write_text(str(os.getpid())); Path('drain-child.ready').write_text('ready'); deadline=time.monotonic()+5\\nwhile not Path('drain-child.release').exists() and time.monotonic()<deadline: time.sleep(0.01)\\nif Path('drain-child.release').exists():\\n output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
+                subprocess.Popen([sys.executable, '-c', child_code, capture_dir, candidate])
+                deadline = time.monotonic() + 5
+                while not Path('drain-child.ready').exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                if not Path('drain-child.ready').exists():
+                    raise SystemExit('drain descendant did not start')
+                raise SystemExit(0)
             if key == {descendant_key!r}:
                 child_code = "import os, signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); open('descendant.pid', 'w').write(str(os.getpid())); time.sleep(120)"
                 subprocess.Popen([sys.executable, '-c', child_code])
@@ -186,6 +195,69 @@ def test_synthetic_package_contract():
 
 def test_three_client_capture_plan_self_test():
     THREE_CLIENTS_MODULE.self_test()
+
+
+def test_normal_exit_drains_owned_recorder_descendant(monkeypatch, a5_tmp_path):
+    red = a5_tmp_path / "immediate-cleanup"
+    red.mkdir()
+    red_args, _plan, _candidate, _client = _runner_fixture(red, drain_key="claude_code")
+    with monkeypatch.context() as patch:
+        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", lambda *_args: None)
+        red_result = THREE_CLIENTS_MODULE.run_capture(red_args)
+    assert red_result["status"] == "INCOMPLETE"
+    assert not (
+        red_args.out_dir / "clients/claude_code/transport/capture.json"
+    ).exists()
+
+    green = a5_tmp_path / "bounded-natural-drain"
+    green.mkdir()
+    green_args, _plan, _candidate, _client = _runner_fixture(
+        green, drain_key="claude_code"
+    )
+    real_drain = THREE_CLIENTS_MODULE.drain_group
+
+    def release_then_drain(process, deadline, check_interrupted):
+        (green_args.out_dir / "clients/claude_code/drain-child.release").write_text(
+            "go", encoding="utf-8"
+        )
+        return real_drain(process, deadline, check_interrupted)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", release_then_drain)
+        green_result = THREE_CLIENTS_MODULE.run_capture(green_args)
+    assert green_result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+    assert green_result["clients"]["claude_code"]["client_exit"] == 0
+
+
+def test_normal_exit_drain_is_bounded_before_forced_cleanup(monkeypatch, a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path, drain_key="claude_code"
+    )
+    original_terminate = THREE_CLIENTS_MODULE.terminate_group
+
+    def short_forced_cleanup(process, grace_seconds=5):
+        return original_terminate(process, grace_seconds=0.1)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "NORMAL_EXIT_DRAIN_MAX_SECONDS", 0.1)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "terminate_group", short_forced_cleanup)
+    original_drain = THREE_CLIENTS_MODULE.drain_group
+    drain_elapsed = []
+
+    def measure_drain(*positional):
+        drain_started = time.monotonic()
+        try:
+            return original_drain(*positional)
+        finally:
+            drain_elapsed.append(time.monotonic() - drain_started)
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "drain_group", measure_drain)
+    started = time.monotonic()
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    elapsed = time.monotonic() - started
+    assert elapsed < 8
+    assert drain_elapsed and drain_elapsed[0] <= 0.2
+    assert result["status"] == "INCOMPLETE"
+    assert result["clients"]["claude_code"]["client_exit"] == 0
 
 
 def test_invalid_placeholder_refuses_before_any_candidate_process(monkeypatch):
