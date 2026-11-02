@@ -29,7 +29,6 @@ import hashlib
 import json
 import math
 import os
-import pickle
 import struct
 import subprocess
 import sys
@@ -333,8 +332,155 @@ def fit_models(out: Path, threads: int) -> dict:
                                               random_state=800 + k).fit(X[FK != k], Y[FK != k])
             models[k] = m
             print("fold model", k, "rows", int((FK != k).sum()), flush=True)
-    with open(out / "models.pkl", "wb") as f:
-        pickle.dump(models, f, protocol=pickle.HIGHEST_PROTOCOL)
+    save_models(models, out / "models.npz")
+    return models
+
+
+def save_models(models: dict, path: Path) -> None:
+    """Store numeric HistGB state without a Python-object deserialization format."""
+    import sklearn
+
+    if sorted(models) != list(range(5)):
+        raise ValueError("expected one H81 model for each of the five folds")
+    arrays = {}
+    folds = []
+    for fold, model in sorted(models.items()):
+        if model.loss != "squared_error" or model._preprocessor is not None or model.is_categorical_ is not None:
+            raise ValueError("H81 safe model archive supports numeric squared-error models only")
+        prefix = f"fold_{fold}"
+        mapper = model._bin_mapper
+        if mapper.is_categorical is not None or mapper.known_categories is not None:
+            raise ValueError("H81 model archive does not support categorical features")
+        arrays[f"{prefix}_baseline"] = np.asarray(model._baseline_prediction)
+        arrays[f"{prefix}_categorical"] = np.asarray(mapper.is_categorical_, dtype=np.uint8)
+        arrays[f"{prefix}_non_missing"] = np.asarray(mapper.n_bins_non_missing_, dtype=np.uint32)
+        thresholds = []
+        for i, values in enumerate(mapper.bin_thresholds_):
+            name = f"{prefix}_threshold_{i}"
+            arrays[name] = np.asarray(values, dtype=np.float64)
+            thresholds.append(name)
+        trees = []
+        for iteration, row in enumerate(model._predictors):
+            tree_row = []
+            for tree_index, tree in enumerate(row):
+                names = {field: f"{prefix}_tree_{iteration}_{tree_index}_{field}"
+                         for field in ("nodes", "binned_bits", "raw_bits")}
+                arrays[names["nodes"]] = np.asarray(tree.nodes)
+                arrays[names["binned_bits"]] = np.asarray(tree.binned_left_cat_bitsets)
+                arrays[names["raw_bits"]] = np.asarray(tree.raw_left_cat_bitsets)
+                tree_row.append(names)
+            trees.append(tree_row)
+        folds.append({
+            "fold": fold,
+            "n_features": int(model.n_features_in_),
+            "mapper": {
+                "n_bins": int(mapper.n_bins),
+                "subsample": int(mapper.subsample),
+                "random_state": int(mapper.random_state),
+                "n_threads": int(mapper.n_threads),
+                "missing_values_bin_idx": int(mapper.missing_values_bin_idx_),
+            },
+            "baseline": f"{prefix}_baseline",
+            "categorical": f"{prefix}_categorical",
+            "non_missing": f"{prefix}_non_missing",
+            "thresholds": thresholds,
+            "trees": trees,
+        })
+    metadata = {"format": "jopedime-h81-histgb-numeric-v1",
+                "sklearn_version": sklearn.__version__, "folds": folds}
+    arrays["metadata"] = np.asarray(json.dumps(metadata, sort_keys=True))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    with temporary.open("wb") as stream:
+        np.savez_compressed(stream, **arrays)
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(path)
+
+
+def load_models(path: Path) -> dict:
+    """Load only validated numeric arrays; object/pickle payloads are refused."""
+    import sklearn
+    from sklearn._loss.loss import HalfSquaredError
+    from sklearn.ensemble import HistGradientBoostingRegressor
+    from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+    from sklearn.ensemble._hist_gradient_boosting.predictor import PREDICTOR_RECORD_DTYPE, TreePredictor
+
+    with np.load(path, allow_pickle=False) as archive:
+        metadata = json.loads(str(archive["metadata"].item()))
+        if (metadata.get("format") != "jopedime-h81-histgb-numeric-v1"
+                or metadata.get("sklearn_version") != sklearn.__version__
+                or len(metadata.get("folds", [])) != 5):
+            raise ValueError("unsupported or incompatible H81 model archive")
+        models = {}
+        for fold, spec in enumerate(metadata["folds"]):
+            if spec.get("fold") != fold:
+                raise ValueError("invalid H81 fold metadata")
+            n_features = spec.get("n_features")
+            if not isinstance(n_features, int) or not 1 <= n_features <= 4096:
+                raise ValueError("invalid H81 feature count")
+            mapper_spec = spec["mapper"]
+            if (mapper_spec["n_bins"] != 256 or mapper_spec["subsample"] <= 0
+                    or not 1 <= mapper_spec["n_threads"] <= 4096
+                    or mapper_spec["missing_values_bin_idx"] != mapper_spec["n_bins"] - 1):
+                raise ValueError("invalid H81 bin mapper parameters")
+            mapper = _BinMapper(n_bins=mapper_spec["n_bins"], subsample=mapper_spec["subsample"],
+                                is_categorical=None, known_categories=None,
+                                random_state=mapper_spec["random_state"], n_threads=mapper_spec["n_threads"])
+            mapper.is_categorical_ = archive[spec["categorical"]].copy()
+            mapper.n_bins_non_missing_ = archive[spec["non_missing"]].copy()
+            mapper.missing_values_bin_idx_ = mapper_spec["missing_values_bin_idx"]
+            mapper.bin_thresholds_ = [archive[name].copy() for name in spec["thresholds"]]
+            if (len(mapper.bin_thresholds_) != n_features
+                    or mapper.is_categorical_.shape != (n_features,)
+                    or mapper.n_bins_non_missing_.shape != (n_features,)
+                    or np.any(mapper.is_categorical_)
+                    or any(values.ndim != 1 or not np.all(np.isfinite(values))
+                           or np.any(values[1:] <= values[:-1]) for values in mapper.bin_thresholds_)
+                    or any(len(values) + 1 != int(mapper.n_bins_non_missing_[i])
+                           for i, values in enumerate(mapper.bin_thresholds_))):
+                raise ValueError("invalid H81 numeric bin mapper")
+            model = HistGradientBoostingRegressor(loss="squared_error", learning_rate=0.08,
+                max_iter=300, max_leaf_nodes=63, l2_regularization=1.0, random_state=800 + fold)
+            model._loss = HalfSquaredError()
+            model._bin_mapper = mapper
+            model._preprocessor = None
+            model.is_categorical_ = None
+            model._is_categorical_remapped = None
+            model.n_features_in_ = n_features
+            model.n_trees_per_iteration_ = 1
+            baseline = archive[spec["baseline"]].copy()
+            if baseline.shape != (1, 1) or not np.all(np.isfinite(baseline)):
+                raise ValueError("invalid H81 model baseline")
+            model._baseline_prediction = baseline
+            trees = spec["trees"]
+            if not 1 <= len(trees) <= 300 or any(len(row) != 1 for row in trees):
+                raise ValueError("invalid H81 tree inventory")
+            model._predictors = []
+            for row in trees:
+                tree = row[0]
+                nodes = archive[tree["nodes"]].copy()
+                binned = archive[tree["binned_bits"]].copy()
+                raw = archive[tree["raw_bits"]].copy()
+                if (nodes.ndim != 1 or not 1 <= len(nodes) <= 100_000
+                        or nodes.dtype != PREDICTOR_RECORD_DTYPE
+                        or binned.dtype != np.uint32 or raw.dtype != np.uint32
+                        or binned.shape != raw.shape or binned.shape[1:] != (8,)
+                        or np.any(binned) or np.any(raw) or np.any(nodes["is_categorical"])):
+                    raise ValueError("invalid H81 tree arrays")
+                leaves = nodes["is_leaf"].astype(bool)
+                if (not np.all(np.isfinite(nodes["value"]))
+                        or np.any(nodes["feature_idx"][~leaves] < 0)
+                        or np.any(nodes["feature_idx"][~leaves] >= n_features)
+                        or np.any(nodes["left"][~leaves] >= len(nodes))
+                        or np.any(nodes["right"][~leaves] >= len(nodes))
+                        or np.any(nodes["left"][~leaves] <= np.flatnonzero(~leaves))
+                        or np.any(nodes["right"][~leaves] <= np.flatnonzero(~leaves))
+                        or np.any(~np.isin(nodes["is_leaf"], (0, 1)))
+                        or np.any(~np.isfinite(nodes["num_threshold"][~leaves]))):
+                    raise ValueError("invalid H81 numeric tree nodes")
+                model._predictors.append([TreePredictor(nodes, binned, raw)])
+            models[fold] = model
     return models
 
 
@@ -403,8 +549,7 @@ def run(out: Path, run_id: str, workers: int, threads: int):
     train, fold_by_cid, ctxf, acq = load_inputs()
     idx = {r["context_sha256"]: i for i, r in enumerate(train)}
     fam = {r["context_sha256"]: r["family_id"] for r in train}
-    with open(out / "models.pkl", "rb") as f:
-        models = pickle.load(f)
+    models = load_models(out / "models.npz")
     cal = calibration()
     W = get_w1_sign_matrix().astype(np.float64)
     champs = json.loads((INPUT / "champions.json").read_text())
@@ -558,10 +703,9 @@ def main():
         if a.stage == "models":
             models = fit_models(a.out, a.threads)
         else:  # re-evaluate the guard on already fitted models without refitting
-            with open(a.out / "models.pkl", "rb") as f:
-                models = pickle.load(f)
+            models = load_models(a.out / "models.npz")
         rep = dict(replication_vs_w1_stored=replication_check(models), comparator=comparator_check(models),
-                   models_pkl_sha256=sha256_file(a.out / "models.pkl"))
+                   models_npz_sha256=sha256_file(a.out / "models.npz"))
         (a.out / "comparator_check.json").write_text(json.dumps(rep, indent=1))
         print("comparator check", json.dumps(rep, indent=1))
         if not rep["comparator"]["passed"]:
@@ -570,8 +714,8 @@ def main():
         chk = a.out / "comparator_check.json"
         if not chk.exists() or not json.loads(chk.read_text())["comparator"]["passed"]:
             raise SystemExit("comparator check missing or failed; run the models stage first")
-        if json.loads(chk.read_text())["models_pkl_sha256"] != sha256_file(a.out / "models.pkl"):
-            raise SystemExit("models.pkl changed after the comparator check")
+        if json.loads(chk.read_text())["models_npz_sha256"] != sha256_file(a.out / "models.npz"):
+            raise SystemExit("models.npz changed after the comparator check")
         run(a.out, a.run_id, a.workers, a.threads)
     else:
         rows = [json.loads(l) for l in (a.out / "rows.jsonl").read_text().splitlines() if l.strip()]

@@ -42,7 +42,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 H81_PATH = HERE.parent / "h81_w4_prospective_2plus2" / "run_prospective.py"
-H81_SHA = "9ad50be577a30c616f7668d52f621d5411e70019ba9f1d1960eb8a45a448c999"  # merged H81 runner (helpers only: pins, inputs, native fit, ledger)
+H81_SHA = "5d0dd1afb7952e7ac2dc9a13185827088a9705b77d472bfd06dfd9086b6d9d5a"  # H81 safe numeric model archive helpers
 CTX_MODELS_SHA = "c8bfbe94f74d6ffe3f40b9848e43e22e832ada8672828d31f8ada647ee3096a1"
 ARMS = ("PRIOR_top4", "CTX_top4", "HEDGE_CTX")
 ANCHOR = "PRIOR_top4"

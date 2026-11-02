@@ -1,7 +1,6 @@
 """H81 structural tests: tiny synthetic fixtures only (no data payloads, models or native calls)."""
 import hashlib
 import importlib.util
-import json
 import sys
 from pathlib import Path
 
@@ -22,17 +21,37 @@ def test_rules_match_merged_h79_exactly():
     path = h.HERE.parent / "h79_w4_prior_2plus2_cached" / "run_shard.py"
     if not path.exists():
         pytest.skip("H79 not present in this tree")
-    src = path.read_text()
-    ns = {}
-    for name in ("ranked", "lengthscale", "posterior_mean"):  # execute H79's own definitions, not a copy
-        start = src.index(f"def {name}(")
-        end = src.index("\ndef ", start + 1)
-        exec(compile("import math\nimport numpy as np\nNOISE_RATIO = 1.0\n" + src[start:end], str(path), "exec"), ns)
+    spec = importlib.util.spec_from_file_location("h79_w4_parity", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
     mu, x, ids = fixture()
-    assert ns["ranked"](mu, ids) == h.ranked(mu, ids)
-    assert ns["lengthscale"](x) == h.lengthscale(x)
+    assert module.ranked(mu, ids) == h.ranked(mu, ids)
+    assert module.lengthscale(x) == h.lengthscale(x)
     shown, res = [3, 7], [0.4, -1.1]
-    assert np.array_equal(ns["posterior_mean"](mu, x, shown, res, 1.7), h.posterior_mean(mu, x, shown, res, 1.7))
+    assert np.array_equal(module.posterior_mean(mu, x, shown, res, 1.7), h.posterior_mean(mu, x, shown, res, 1.7))
+
+
+def test_numeric_model_archive_round_trips_and_rejects_object_arrays(tmp_path):
+    from sklearn.ensemble import HistGradientBoostingRegressor
+
+    rng = np.random.default_rng(81)
+    X = rng.normal(size=(80, 4)).astype(np.float32)
+    y = (X[:, 0] + X[:, 1] ** 2 - X[:, 3]).astype(np.float32)
+    model = HistGradientBoostingRegressor(max_iter=5, max_leaf_nodes=4, random_state=800).fit(X, y)
+    path = tmp_path / "models.npz"
+    h.save_models({fold: model for fold in range(5)}, path)
+    restored = h.load_models(path)
+    assert all(np.array_equal(model.predict(X), restored[fold].predict(X)) for fold in range(5))
+
+    with np.load(path, allow_pickle=False) as archive:
+        payload = {name: archive[name].copy() for name in archive.files}
+    payload["fold_0_baseline"] = np.asarray([object()], dtype=object)
+    hostile = tmp_path / "hostile.npz"
+    np.savez_compressed(hostile, **payload)
+    with pytest.raises(ValueError, match="Object arrays cannot be loaded"):
+        h.load_models(hostile)
 
 
 def test_two_plus_two_first_pair_is_prior_top_two_and_zero_residual_reduces_to_top4():
