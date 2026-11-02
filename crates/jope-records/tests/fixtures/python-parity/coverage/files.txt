@@ -1873,9 +1873,12 @@ crates/jope-policy/src/challenger_tests.rs
 crates/jope-policy/src/config.rs
 crates/jope-policy/src/context_producer.rs
 crates/jope-policy/src/context_producer/admission.rs
+crates/jope-policy/src/context_producer/artifact.rs
 crates/jope-policy/src/context_producer/classification.rs
 crates/jope-policy/src/context_producer/classification/tests.rs
+crates/jope-policy/src/context_producer/cuda.rs
 crates/jope-policy/src/context_producer/input.rs
+crates/jope-policy/src/context_producer/producer.rs
 crates/jope-policy/src/context_producer/products.rs
 crates/jope-policy/src/context_producer/products/transforms.rs
 crates/jope-policy/src/context_producer/products/types.rs
