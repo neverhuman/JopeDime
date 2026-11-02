@@ -1,0 +1,28 @@
+{
+  "schema": "whitepaper.admission-outcomes-figure/v1",
+  "input_csv_sha256": "45434af46868347e5cceb0492247125b58fbff939dc08316de6efe44287edb46",
+  "source_receipt_sha256": "d11514de533602e5786c6f2571b3632b2bb46badecb0a13b9eda0d9bd4419d9e",
+  "generator_sha256": "a61c33d1fb43452c5220da736628092945da8a78085d3073bacb369c7516bd8b",
+  "figure_sha256": "097776a7f4bf2b69dceae84a8d168565d3ccb8a16d6832dc5aefeb9a969a2bf0",
+  "round_window": [
+    883,
+    3819
+  ],
+  "rows": 2937,
+  "strict_gain_rounds": [
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    2795,
+    3100
+  ],
+  "rejections": 2933,
+  "final_accepted_numerator": 4,
+  "final_denominator": 2937,
+  "final_cumulative_percent": "0.13619339462036091249574395641811372148450800136193",
+  "definition": "At completed round r, divide the cumulative accepted decisions in rounds883..r by r-882; split accepted strict utility gains from accepted exact ties using unrounded logged values and actual admission flags. Rejections remain in every denominator. This is a descriptive cumulative frequency, not a prospective or independent probability of improvement.",
+  "scope": "Adaptive reused development observations, not independent first-proposal, training causality, transfer, serving or Elo qualification; exact loop/adapter/population/normalization closure remains pending.",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --admission-outcomes"
+}

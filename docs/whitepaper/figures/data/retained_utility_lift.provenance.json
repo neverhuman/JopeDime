@@ -2,7 +2,7 @@
   "schema": "whitepaper.retained-utility-lift-figure/v1",
   "input_csv_sha256": "47a4847715670ce132ff15ba64baee9a8df94fc89423e362bfe3b3309892fafa",
   "source_receipt_sha256": "5ad219c6017394c42b4bcd9d2fedd52e555862c01727eec7979696c450d44467",
-  "generator_sha256": "dea8a6ca573fbfa7b3087713be087c3b27d84ee3da531e2a663f4d105ef0cbfe",
+  "generator_sha256": "a61c33d1fb43452c5220da736628092945da8a78085d3073bacb369c7516bd8b",
   "figure_sha256": "39af4f8fd659e74be479a0dcdeb0f8bde75bb08ca8e1c38662681fe12a12b3cc",
   "round_window": [
     883,

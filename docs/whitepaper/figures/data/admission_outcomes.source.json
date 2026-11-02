@@ -1,0 +1,74 @@
+{
+  "schema": "whitepaper.admission-outcomes-source/v1",
+  "csv_sha256": "45434af46868347e5cceb0492247125b58fbff939dc08316de6efe44287edb46",
+  "capture": {
+    "at": "2026-11-02T18:27:43.714584+00:00",
+    "round_window": [
+      883,
+      3819
+    ],
+    "rows": 2937,
+    "baseline_round": 882,
+    "baseline_retained_utility": "1.1377941898164525",
+    "baseline_projection_sha256": "83eb42105e1698f2e5c48937a936488b2d27cd100b883d31d60100d4d198a9ff",
+    "development_contexts": 91,
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "strict_gain_rounds": [
+      2750,
+      3175
+    ],
+    "accepted_tie_rounds": [
+      2795,
+      3100
+    ],
+    "rejections": 2933,
+    "summary_join_rows": 21,
+    "all_selected_per_round_scalars_match": true,
+    "all_retained_summaries_match": true,
+    "selection": "All consecutive complete records after the fixed recorded round882incumbent, through the common complete cutoff of admission/per-round/summary logs; no outcome filtering",
+    "sources": [
+      {
+        "name": "admissions.jsonl",
+        "sha256": "b5e18bff196b47fdafa604aadd75120bd6671729d7cfa8ce60b78487b8d23433",
+        "source_prefix": {
+          "at": "2026-11-02T18:27:43.584543+00:00",
+          "complete_prefix_bytes": 1610141,
+          "complete_prefix_sha256": "6618dd4521250f0132b79a20253dc9ffbcafbbc97390a1a08f1888eaad8ffc47",
+          "complete_rows": 3045,
+          "stable_prefix_reread_verified": true,
+          "trailing_partial_bytes_omitted": 0
+        },
+        "scope": "Round-level scalar metadata projection only"
+      },
+      {
+        "name": "per-round.jsonl",
+        "sha256": "b713f9628d334e0bc612a828f319e780986cd8f268b30f3e84697363b19450d9",
+        "source_prefix": {
+          "at": "2026-11-02T18:27:43.617062+00:00",
+          "complete_prefix_bytes": 2285376,
+          "complete_prefix_sha256": "ab27d283586f4dca1b7e90586900b712cbb648972d2e19db4de6e73d44b21d4c",
+          "complete_rows": 2937,
+          "stable_prefix_reread_verified": true,
+          "trailing_partial_bytes_omitted": 0
+        },
+        "scope": "Round-level scalar metadata projection only"
+      },
+      {
+        "name": "summary.jsonl",
+        "sha256": "3bd9334bca8e436d57e1a1c0bbdc111deecc319f47ad4da04e58dc5110d957fe",
+        "source_prefix": {
+          "at": "2026-11-02T18:27:43.647263+00:00",
+          "complete_prefix_bytes": 3528229,
+          "complete_prefix_sha256": "cac1f5e8250d9b69ebb2d4da80714f309cfca4c81485067e6c56106119c05a59",
+          "complete_rows": 21,
+          "stable_prefix_reread_verified": true,
+          "trailing_partial_bytes_omitted": 0
+        },
+        "scope": "Round-level scalar metadata projection only"
+      }
+    ]
+  },
+  "definition": "At completed round r, divide the cumulative accepted decisions in rounds883..r by r-882; split accepted strict utility gains from accepted exact ties using unrounded logged values and actual admission flags. Rejections remain in every denominator. This is a descriptive cumulative frequency, not a prospective or independent probability of improvement.",
+  "scope": "Adaptive reused development observations, not independent first-proposal, training causality, transfer, serving or Elo qualification; exact loop/adapter/population/normalization closure remains pending.",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --admission-outcomes"
+}

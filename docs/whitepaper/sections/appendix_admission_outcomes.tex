@@ -1,0 +1,22 @@
+\FloatBarrier
+\section{Recorded Admission Frequencies}\label{app:admission-outcomes}
+
+\Cref{fig:fw-admission-outcomes} retains every completed decision in its
+cumulative denominator. Admission includes exact ties; a separate line
+counts only strict utility gains. Both are descriptive frequencies on
+reused development contexts, under the limits in \cref{sec:method-status}.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_admission_outcomes.pdf}
+  \caption{\textbf{Cumulative adapter admission frequencies.}
+  All \num{2937} completed records in rounds 883--3819, captured at 18:27 UTC
+  on 2 November 2026. At round $r$, the denominator is all $r-882$ decisions
+  since round 883. Blue counts every admission; dashed red counts strict
+  gains, and the shaded difference counts accepted ties. The final
+  numerator is four: two strict gains and two ties; the other \num{2933}
+  decisions are rejections. Classification uses unrounded logged values.
+  These adaptive frequencies do not estimate independent proposal quality
+  or a training effect. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-admission-outcomes}
+\end{figure}
