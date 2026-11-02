@@ -119,6 +119,20 @@ The revision 2 and revision 3 source packets pin these hashes, and hpc-v5
 `provenance/FINAL_VALIDATION.json` pins its copy. These exact paths alone are
 excluded from Jankurai scoring. No source bytes or other security scans change.
 
+## Pinned continuous `training_snapshot_native.py`
+
+HLT-043 fingerprint
+`sha256:ba3c18c6747fe11d6deeae2f13faf266a973631bfcd1b7b90ceca97a4431e965`
+in `rerun/j_8df4fe341.json` includes
+`deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot_native.py`,
+which has SHA-256
+`fcb26123b4143741b973e5d1feb053fbb063dfc767785aba9601328448683cf2`, pinned by
+`deploy/dl-flywheel/pipelines/final_capture_v1/SOURCE_PINS.json`. The related
+hpc-v5 copy is separately covered by the exact hpc-v5 evidence snapshot path in
+`agent/audit-policy.toml`. Only the pinned continuous path is added here; the
+canonical root module remains scanned. `test_continuous_state_review.py` requires
+the continuous import path, so its source and pin remain unchanged.
+
 ## `s3_library.py`
 
 The full audit `rerun/j_ffba82986.json` reports HLT-043 fingerprint
