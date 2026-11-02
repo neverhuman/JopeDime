@@ -122,7 +122,10 @@ pub fn fitted_public_cpp_unsupported(model: &BoundModel) -> Result<Option<Portab
 /// Versioned downstream artifact templates; Rust emits them but never executes them.
 pub fn fitted_portable_templates() -> BTreeMap<String, String> {
     [
-        ("matrix.py", include_str!("../../contracts/fitted_portable_py.template")),
+        (
+            "matrix.py",
+            include_str!("../../contracts/fitted_portable_py.template"),
+        ),
         (
             "matrix.js",
             include_str!("../../contracts/fitted_portable.template"),
