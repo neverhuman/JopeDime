@@ -131,12 +131,12 @@ fn compute_implementation_sha256() -> String {
     let mut hash = SemanticHasher::new("jope-dime/evaluator-implementation/v1");
     for (name, bytes) in [
         (
-            "src/evaluation_v2.rs",
-            include_bytes!("evaluation_v2.rs").as_slice(),
+            "src/campaign_evaluator.rs",
+            include_bytes!("campaign_evaluator.rs").as_slice(),
         ),
         (
-            "src/commands/exact_cv_v2.rs",
-            include_bytes!("commands/exact_cv_v2.rs").as_slice(),
+            "src/commands/single_fold_proof.rs",
+            include_bytes!("commands/single_fold_proof.rs").as_slice(),
         ),
         ("src/data.rs", include_bytes!("data.rs").as_slice()),
         (
@@ -1351,7 +1351,7 @@ fn score_regression_tape(tape: &PredictionTapeV1) -> Result<RegressionFitnessV1>
         .map(|bits| f64::from_bits(*bits))
         .collect::<Vec<_>>();
     let (rmse, r2) = independent_regression_metrics(&truth, &predictions)?;
-    let robust = crate::commands::exact_cv_v2::legacy_robust_fitness(r2, &[r2]);
+    let robust = crate::commands::single_fold_proof::legacy_robust_fitness(r2, &[r2]);
     if !robust.is_finite() {
         bail!("robust regression fitness is non-finite");
     }
@@ -1644,7 +1644,7 @@ mod tests {
     use super::*;
 
     fn robust(r2: f64, folds: &[f64]) -> f64 {
-        crate::commands::exact_cv_v2::legacy_robust_fitness(r2, folds)
+        crate::commands::single_fold_proof::legacy_robust_fitness(r2, folds)
     }
 
     fn fixture_data() -> (Rows, Vec<f64>, Vec<String>) {

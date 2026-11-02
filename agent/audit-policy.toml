@@ -86,8 +86,6 @@ extra_excluded_paths = [
   "crates/jope-learning/src/progress/segment.rs",
   "crates/jope-learning/src/state.rs",
   "crates/feat-math/src/advanced_v3.rs",
-  "crates/jope-campaigns/src/commands/exact_cv_v2.rs",
-  "crates/jope-campaigns/src/evaluation_v2.rs",
   "crates/jope-policy/src/decode.rs",
   "crates/jope-records/src/repo_layout.rs",
   "crates/jope-runtime/src/fitness.rs",
