@@ -76,7 +76,7 @@ def test_first_cost_argmin_and_oracle_are_separate():
     )
 
 
-def test_context_id_is_external_in_actual_h212_prediction():
+def test_context_id_is_external_in_actual_h212_prediction(tmp_path):
     import torch
 
     torch.set_num_threads(1)
@@ -94,11 +94,12 @@ def test_context_id_is_external_in_actual_h212_prediction():
         for n in ast.parse(source).body
         if isinstance(n, ast.FunctionDef) and n.name == "predict_dynamic"
     )
-    scope = {"np": np}
-    exec(
-        compile(ast.Module(body=[fn], type_ignores=[]), "H212-predict-dynamic", "exec"),
-        scope,
-    )
+    module_path = tmp_path / "h212_predict_dynamic.py"
+    module_path.write_text("import numpy as np\n\n" + ast.unparse(fn) + "\n")
+    spec = importlib.util.spec_from_file_location("h212_predict_dynamic", module_path)
+    assert spec is not None and spec.loader is not None
+    scope = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(scope)
     cid = "a" * 64
     net = NS(
         adapter_10tok=NS(
@@ -116,7 +117,7 @@ def test_context_id_is_external_in_actual_h212_prediction():
         NS(rows=lambda lo, hi: np.zeros((hi - lo, 16), np.float32)),
         {cid: (0, 4)},
     )
-    result = scope["predict_dynamic"](
+    result = scope.predict_dynamic(
         net,
         h124,
         cid,

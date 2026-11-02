@@ -3,12 +3,14 @@
 from __future__ import annotations
 import contextlib
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
-import types
+import tempfile
 
 REPO = Path("/home/ubuntu/JopeDime")
 PREFIX = "research/flywheel_selfplay/h229_pool_headroom_replication/"
@@ -26,8 +28,11 @@ def digest(path):
 
 
 def blob(path, source=None):
+    revision = source or SOURCE
+    if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("source must be a full Git commit ID")
     return subprocess.check_output(
-        ["git", "show", (source or SOURCE) + ":" + path], cwd=REPO
+        ["git", "show", revision + ":" + path], cwd=REPO
     )
 
 
@@ -35,10 +40,25 @@ def module(path, name, source=None, expected=None):
     raw = blob(path, source)
     if expected and hashlib.sha256(raw).hexdigest() != expected:
         raise ValueError("pinned source changed: " + path)
-    m = types.ModuleType(name)
+    source_dir = tempfile.TemporaryDirectory(prefix="h229-source-")
+    source_path = Path(source_dir.name) / (Path(path).name or "module.py")
+    source_path.write_bytes(raw)
+    spec = importlib.util.spec_from_file_location(name, source_path)
+    if spec is None or spec.loader is None:
+        source_dir.cleanup()
+        raise ImportError("cannot import committed Python source: " + path)
+    m = importlib.util.module_from_spec(spec)
+    # Keep the historical path contract used by H212/H139/H124 data lookups.
     m.__file__ = str(REPO / path)
     sys.modules[name] = m
-    exec(compile(raw, m.__file__, "exec"), m.__dict__)
+    try:
+        spec.loader.exec_module(m)
+    except BaseException:
+        sys.modules.pop(name, None)
+        source_dir.cleanup()
+        raise
+    # Some loaded modules use __file__ at call time; retain their extracted source.
+    m.__source_dir__ = source_dir
     return m
 
 
