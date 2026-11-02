@@ -1,5 +1,5 @@
 """Owned queue consumer: real local S1 fit, emitted Rust, parity, versioned S3."""
-from dataclasses import asdict
+import dataclasses
 import json
 import math
 from pathlib import Path
@@ -54,7 +54,7 @@ class LocalStore:
 def local_entry(context,program,bodies):
     refs = {name:{'bucket':'local-semantic-preflight-only','key':name,'version_id':'local-semantic-preflight-only',
                   'bytes':len(body),'sha256':sha(body)} for name,body in bodies.items()}
-    return {'schema':SCHEMA,'context':asdict(context),'evaluation_key':request_identity(context,program),
+    return {'schema':SCHEMA,'context':dataclasses.asdict(context),'evaluation_key':request_identity(context,program),
             'program_sha256':sha(program.encode()),'status':'completed','measurement':'executed',
             'artifacts':refs,'teaching_eligible':False}
 
@@ -86,7 +86,7 @@ class ProgramWorker:
         if previous is not None:
             measured = verified_measurement(self.store,context,program,previous)
             return create(dest/'result.json',canonical({'schema':'jope.flywheel-worker-result/v1','state':'cached',
-                'context':asdict(context),'program':program,'measurement':measured,'teaching_eligible':False}))
+                'context':dataclasses.asdict(context),'program':program,'measurement':measured,'teaching_eligible':False}))
         create(dest/'input.jtt1',raw); create(dest/'input-descriptor.json',canonical(descriptor))
         candidate = {'dsl':program,'program_sha256':sha(program.encode()),'birth_seq':0,'parents':[],
                      'operator':'observed_external_program'}
@@ -156,7 +156,7 @@ class ProgramWorker:
         for role,body in bodies.items(): artifacts[role] = create(dest/('artifact-'+role),body)
         tick(self.deadline)
         return create(dest/'result.json',canonical({'schema':'jope.flywheel-worker-result/v1','state':'executed',
-            'context':asdict(context),'program':program,'artifacts':artifacts,'teaching_eligible':False}))
+            'context':dataclasses.asdict(context),'program':program,'artifacts':artifacts,'teaching_eligible':False}))
 
     def publish(self,job):
         key = job['payload']['evaluation_key']; prerequisite = 'gp-evaluate-'+key
