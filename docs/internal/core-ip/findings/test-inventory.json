@@ -5647,6 +5647,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/test_h222.py": {
+      "role": "research",
+      "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
