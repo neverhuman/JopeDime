@@ -143,5 +143,11 @@
     },
     "attempt_consumed": true,
     "retry_allowed": false
-  }
+  },
+  "current_source_sha256": {
+    "launch.py": "30beb1ae8d4ed16cc4f4a53d04d3451ccb164831e9776ca87affc9e224c04299",
+    "runner.py": "0482ca51b6714408724e6f2a613bfa0b9ca36f7fb4b6df4534933e927880446a",
+    "test_h211.py": "86c47cb7430c4c5f16845e7d16d8227d5306d8d22fdd833ed21a39789db0d254"
+  },
+  "current_source_sha256_scope": "Prospective P47 source on this merged commit. Original execution-manifest-attempt1.json and source_sha256 retain the historical execution bytes."
 }
