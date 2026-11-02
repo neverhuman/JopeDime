@@ -355,6 +355,14 @@ owner = "ops"
 expires = "2027-02-01"
 reason = "The late overlay-refusal sidecar is diagnostic only; if its create-only write fails, the build raises and cannot produce the caller-owned positive acceptance envelope required for admission."
 
+[[dead_language_allow]]
+name = "vibe-generated-admission-prior-state"
+term = "old"
+paths = ["deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "HLT-001 sha256:f721d1bd0ddfef70ad394a991b174cb29a4ee513b2d69f7abd2ab7351bdf2e16 is a false positive: old/new name prior/candidate states in the append-only transition validator. Its 905-byte source hash fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30 is pinned by generated_target_admission_v1/SOURCE_PINS.json and deploy/dl-flywheel/SOURCE_MANIFEST.json. See docs/release/jankurai-t1900-transition-hlt001-exception-20261102.md."
+
 # Paid/shared work is governed by docs/testing.md; this declares its preflight surface
 # so the auditor can validate the documented cost controls. No spend is approved here.
 [[cost_surface]]
