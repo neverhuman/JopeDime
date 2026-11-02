@@ -1,0 +1,38 @@
+{
+  "kind": "data_free_exact_head_source_contract_probe",
+  "head": "357fc075c913b4e4b883d305ce6009c4d727327f",
+  "path": "research/flywheel_selfplay/h205_fresh_vs_static/runner.py",
+  "sha256": "e2e3de3d45741ee39b9f6f06f5a06ed8c72a2c39a472ba1c5051e8b614a78cab",
+  "run_arm_cell_parameters": [
+    "arm_name",
+    "si",
+    "seed",
+    "outer",
+    "orders_map"
+  ],
+  "partition_calls": [
+    {
+      "line": 263,
+      "source": "stat.partition(train, outer)"
+    }
+  ],
+  "static_data_args": [
+    "Name(id='si', ctx=Load())",
+    "Name(id='seed', ctx=Load())",
+    "Name(id='outer', ctx=Load())",
+    "Name(id='gt_orders', ctx=Load())"
+  ],
+  "fresh_args": [
+    "Name(id='si', ctx=Load())",
+    "Name(id='seed', ctx=Load())",
+    "Name(id='outer', ctx=Load())",
+    "Name(id='gt_orders', ctx=Load())"
+  ],
+  "same_actual_arguments_except_arm_label": true,
+  "pooled_selector_lines": [
+    426
+  ],
+  "pooled_selector_inside_run_arm_cell": false,
+  "result": "FAIL_H205_FRESH_AND_PER_ROUND_ADMISSION_CONTRACT",
+  "scientific_inference_calls_executed": 0
+}

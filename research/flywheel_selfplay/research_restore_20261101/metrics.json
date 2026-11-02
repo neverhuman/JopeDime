@@ -58,5 +58,17 @@
       "next_action": "Original opus owner must publish stopped/progress receipt and one-resume disposition; preserve waiter and budget."
     }
   ],
-  "verification_scope": "All-H summary/source audit; five S3 metadata HEADs and bounded live runtime observations. Archive payload verification is recorded separately in manifest.json."
+  "verification_scope": "All-H summary/source audit; five S3 metadata HEADs and bounded live runtime observations. Archive payload verification is recorded separately in manifest.json.",
+  "subsequent_source_review": {
+    "observed_utc": "2026-11-02T03:52:32.071073+00:00",
+    "pr": 1723,
+    "head": "357fc075c913b4e4b883d305ce6009c4d727327f",
+    "status": "HOLD_SCIENTIFIC_LAUNCH_PENDING_CORRECTION",
+    "findings": [
+      "FRESH reuses static train rows and orders; no actual new-family input path.",
+      "Within-cell candidate retention uses mean-only margin; pooled confidence selector runs only at the end."
+    ],
+    "qualification": "Two source reads plus data-free AST probe; no scored inference executed.",
+    "owner_route": "Immutable review packet and locked canonical coordination entry; original rd_argon/merger ownership retained."
+  }
 }

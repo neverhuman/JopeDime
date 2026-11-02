@@ -25,9 +25,19 @@
   },
   "summary_files": [
     {
+      "path": "H205-SOURCE-REVIEW.md",
+      "bytes": 2379,
+      "sha256": "ff6bf383a75834b7ee20d8089caeb5132c67607418bfed035907858f63fcf5af"
+    },
+    {
+      "path": "H205-STATIC-SOURCE-PROBE.json",
+      "bytes": 1060,
+      "sha256": "0940496489995ff701a09acaf9869acc1121885ad88a3ab700c2c31e2ceb50b2"
+    },
+    {
       "path": "README.md",
-      "bytes": 2436,
-      "sha256": "2934d22268f849ddb45619b99f5d80014c99a17e66b1eb6779e40ef8c233bc32"
+      "bytes": 2895,
+      "sha256": "779d6e82053a3559db1881d8f6a5ef56e741b253219c389875ebe087a3652251"
     },
     {
       "path": "WORKPLAN.md",
@@ -56,8 +66,8 @@
     },
     {
       "path": "metrics.json",
-      "bytes": 2250,
-      "sha256": "c707246ae5ba90ad8c0a1d04b9436263369e2bf9ae1da47147a4d39c611f6540"
+      "bytes": 2924,
+      "sha256": "72cd15bd20f967bff048e38e5cb06d6aaf40ec84c5295aa72c5fa96ab4eb8b28"
     },
     {
       "path": "s3/REPORT.md",
@@ -70,5 +80,7 @@
     "This audit archive was independently exact-version downloaded and every member hash checked.",
     "Source readiness, scientific launch, optimizer progress, result, PR and merged-main are separate milestones.",
     "Live source owners and launch budgets remain unchanged; no serving or live-loop changes."
-  ]
+  ],
+  "updated_utc": "2026-11-02T03:57:05.346637+00:00",
+  "addendum_scope": "H205 source review was added after the initial audit archive; its exact Git source and probe are bound below. No new scientific result."
 }
