@@ -6172,6 +6172,16 @@
       "lanes": [],
       "scope": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification."
     },
+    "python:research/flywheel_selfplay/h226_gated025_r3175/test_h226.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H226 preregistered frozen GATED_025 fresh-fold confirmation: synthetic data-free design, statistics, source identity, fold and owned CPU guard controls. Research tests do not establish study execution, outcomes or serving qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
