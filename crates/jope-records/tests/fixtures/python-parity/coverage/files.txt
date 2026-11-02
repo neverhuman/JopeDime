@@ -1002,6 +1002,7 @@ crates/jope-engine/native/runtime.cpp
 crates/jope-engine/rust-toolchain.parallel-legacy.toml
 crates/jope-engine/src/audit.rs
 crates/jope-engine/src/auxiliary_training.rs
+crates/jope-engine/src/auxiliary_training/tests.rs
 crates/jope-engine/src/bin/jope-build-receipt.rs
 crates/jope-engine/src/bin/jope-continuation-corpus.rs
 crates/jope-engine/src/bin/jope-gp-population.rs
