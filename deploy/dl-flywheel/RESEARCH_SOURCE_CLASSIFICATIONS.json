@@ -4312,6 +4312,38 @@
         "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
       }
     },
+    "python:research/flywheel_selfplay/h235_betanll/analysis.py": {
+      "bytes": 9944,
+      "sha256": "1b7e85d36352043aa447f3767a974b3f6bc5c4d05d3e0e0241ce01d20c06586c",
+      "classification": {
+        "role": "research",
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h235_betanll/monitor.py": {
+      "bytes": 7633,
+      "sha256": "29860ca244025e0b4b3bb4805f63dd4c6d1f79e39b7779ba472eee45fc1e6a2a",
+      "classification": {
+        "role": "research",
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h235_betanll/runner.py": {
+      "bytes": 31406,
+      "sha256": "20596c411bb9e9dab7838dcaa5cff9e9e0228f6b6ac4574ce13a617a5e585755",
+      "classification": {
+        "role": "research",
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h235_betanll/treatment.py": {
+      "bytes": 6143,
+      "sha256": "dd2fcc3011c3714bc967e010edd5b70de5b8969b45396720c66f8f42a02bd9ba",
+      "classification": {
+        "role": "research",
+        "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {

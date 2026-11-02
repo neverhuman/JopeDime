@@ -6305,6 +6305,16 @@
       "lanes": [],
       "scope": "H234 data-free controls: identical H170 CTRL AdamW recipe for every arm (schedules.json), LambdaLoss NDCG-weighted pairwise loss equal to an explicit pairwise reference (1e-9), ordering/ties/gate and gradient direction, arm loss composition (CONTROL, LAMBDAMIX = CTRL + 0.5 Lambda, LAMBDA), pinned reading that the inherited CTRL loss already contains a ListNet KL term, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe1 monitor hard limits with load5 60/55 pause hysteresis and 04:30Z compute stop, launch binding"
     },
+    "python:research/flywheel_selfplay/h235_betanll/test_h235.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H235 data-free controls: identical H170 CTRL AdamW recipe for every arm (schedules.json), CTRL loss split exactly into its smooth-L1 regression and listwise KL terms, beta-NLL (beta 0.5) equal to Seitzer et al. 2022 with stop-gradient weights (value, log-variance gradient, sigma^2=1 limit), zero-initialised and clamped log-variance head, arm loss composition (CONTROL, BNLL_MIX = beta-NLL + CTRL KL, BNLL_ADD = CTRL + 0.5 beta-NLL), pinned reading of the inherited CTRL loss (smooth-L1 regression term), fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor hard limits (RSS 4 GiB, MemAvailable 20 GiB, free 300 GB, 4 threads, 05:00Z) with load5 60/55 pause hysteresis, launch binding"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
