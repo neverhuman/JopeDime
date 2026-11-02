@@ -758,6 +758,14 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/rustmem_cpu_affinity_identity_rebaseline.v1.json");
     let rustunsafe_authority =
         old_fixture("transitions/rustunsafe_authority_lineage_rebaseline.v1.json");
+    let p21_family_split = old_fixture("transitions/p21_family_split_identity_rebaseline.v1.json");
+    assert_eq!(
+        p21_family_split["source_commit"],
+        "e240a9f27e3bba296acf77d29dae10fd2529a0c1"
+    );
+    assert_eq!(p21_family_split["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(p21_family_split["fixtures"][0]["path"], changed_fixtures[0]);
+    assert_eq!(p21_family_split["fixtures"][1]["path"], changed_fixtures[1]);
     assert_eq!(
         gov04_portable_pty["source_commit"],
         "4b51c5528129c3fc4c170f2c4074a1a176c25eb3"
@@ -1383,6 +1391,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1462,6 +1471,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1534,6 +1544,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1637,6 +1648,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone(),
             ],
         ),
         (
@@ -1700,6 +1712,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 p35_corpus_identity.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone(),
             ],
         ),
     ] {
@@ -1811,6 +1824,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         p35_corpus_identity,
         p45_race_pool_identity,
         prodlang_rust_runtime,
+        p21_family_split,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);

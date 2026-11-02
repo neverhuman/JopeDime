@@ -199,3 +199,21 @@ regeneration records the fitted runtime source change; the DSL ABI, emitted byte
 and known-identity table remain unchanged. The transition is registered in
 `prodlang_rust_runtime_identity_rebaseline.v1.json`. No shipped receipt or behavior rebaseline
 is claimed.
+## Current identity transition: P21 campaign family split contract (2026-11-02)
+
+P21 moved the stable source-family train/validation assignment used by self-play
+expansion into the reusable `jope-datasets` contract. Adding that crate as a
+direct campaign dependency changes `Cargo.lock` and therefore the recorded
+evaluator identity, even though evaluator calculations, DSL ABI and emitted
+behavior fixtures are unchanged. The transition advances implementation hash
+`10fe3dee6daf50c3b54362df80cbcb60774c6169563fcba2c3c0036ab5e3dfda` to
+`9425373d24b3e6b2782ea50a17abcab8d84d20e4cb8ce12ff70600eb3fa9089e`, Cargo.lock
+hash `7d90c1d3f86960fcfbbf66e848d22e665c446debec38e386f512ef09c8a28042` to
+`2a6d41eac882df5122e2958cd4bc5845156b2d7b7d198bd9e52c59bac02b50ed`, and
+identity digest `8fe007189bca9fe7e0d92b85b509ac79c116616e41a16bb5a0c4bf93d1dda9d6`
+to `f5dff2d6cef17cf237eb11c2f45df318490b4ebba66b3b8c47cdc264b4e49b7b`. The
+identity-only regeneration is bound to source commit
+`e240a9f27e3bba296acf77d29dae10fd2529a0c1`. The candidate tree also includes
+the already merged Rust enum naming change in `crates/feat-math/src/full_rust.rs`;
+the recorded identity reflects the complete rebased source tree. No known-identity row is added
+because this change has no shipped receipt proving that the new identity existed.

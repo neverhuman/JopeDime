@@ -2707,6 +2707,7 @@ dependencies = [
  "feat-math",
  "hex",
  "jope-arena",
+ "jope-datasets",
  "jope-paths",
  "libc",
  "memmap2",
