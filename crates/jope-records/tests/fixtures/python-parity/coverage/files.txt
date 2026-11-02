@@ -333,6 +333,8 @@ crates/jope-bench/src/panel/demo_asm.rs
 crates/jope-bench/src/panel/experimental_proposal.rs
 crates/jope-bench/src/panel/fitted_export.rs
 crates/jope-bench/src/panel/fitted_export_run.rs
+crates/jope-bench/src/panel/fitted_export_run/run_support.rs
+crates/jope-bench/src/panel/fitted_export_run/runner.rs
 crates/jope-bench/src/panel/inference.rs
 crates/jope-bench/src/panel/inference_benchmark.rs
 crates/jope-bench/src/panel/inference_boundary.js
