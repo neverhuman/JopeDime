@@ -436,62 +436,8 @@ impl Drop for PeerConnectionPermit {
     }
 }
 
-fn prepare_parent(parent: &Path) -> Result<(), ServerStartupError> {
-    if !parent.exists() {
-        fs::create_dir_all(parent).map_err(|source| ServerStartupError::Parent {
-            path: parent.to_path_buf(),
-            source,
-        })?;
-        fs::set_permissions(parent, fs::Permissions::from_mode(0o750)).map_err(|source| {
-            ServerStartupError::Permissions {
-                path: parent.to_path_buf(),
-                source,
-            }
-        })?;
-    }
-    let metadata = fs::metadata(parent).map_err(|source| ServerStartupError::Parent {
-        path: parent.to_path_buf(),
-        source,
-    })?;
-    if !metadata.is_dir() || metadata.mode() & 0o002 != 0 {
-        return Err(ServerStartupError::InsecureParent(parent.to_path_buf()));
-    }
-    Ok(())
-}
-
-fn remove_abandoned_socket(path: &Path) -> Result<(), ServerStartupError> {
-    let metadata = match fs::symlink_metadata(path) {
-        Ok(metadata) => metadata,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(source) => {
-            return Err(ServerStartupError::Inspect {
-                path: path.to_path_buf(),
-                source,
-            });
-        }
-    };
-    if !metadata.file_type().is_socket() {
-        return Err(ServerStartupError::NonSocket(path.to_path_buf()));
-    }
-    match std::os::unix::net::UnixStream::connect(path) {
-        Ok(_) => return Err(ServerStartupError::AlreadyRunning(path.to_path_buf())),
-        Err(error)
-            if matches!(
-                error.kind(),
-                std::io::ErrorKind::ConnectionRefused | std::io::ErrorKind::NotFound
-            ) => {}
-        Err(source) => {
-            return Err(ServerStartupError::Inspect {
-                path: path.to_path_buf(),
-                source,
-            });
-        }
-    }
-    fs::remove_file(path).map_err(|source| ServerStartupError::Remove {
-        path: path.to_path_buf(),
-        source,
-    })
-}
+mod socket_setup;
+use socket_setup::{prepare_parent, remove_abandoned_socket};
 
 #[derive(Debug, Error)]
 pub enum ServerStartupError {
@@ -545,44 +491,4 @@ pub enum ServerErrorKind {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn per_uid_connection_limit_releases_capacity() {
-        let counts = Arc::new(Mutex::new(HashMap::from([(
-            42,
-            MAX_CONNECTIONS_PER_UID - 1,
-        )])));
-        let permit = PeerConnectionPermit::try_acquire(Arc::clone(&counts), 42)
-            .expect("last per-uid permit");
-        assert!(PeerConnectionPermit::try_acquire(Arc::clone(&counts), 42).is_none());
-        drop(permit);
-        assert!(PeerConnectionPermit::try_acquire(counts, 42).is_some());
-    }
-
-    #[test]
-    fn refuses_to_replace_regular_file() {
-        let temp = tempfile::tempdir().expect("tempdir");
-        let path = temp.path().join("scqd.sock");
-        fs::write(&path, "do not replace").expect("file");
-        assert!(matches!(
-            remove_abandoned_socket(&path),
-            Err(ServerStartupError::NonSocket(_))
-        ));
-        assert_eq!(
-            fs::read_to_string(path).expect("contents"),
-            "do not replace"
-        );
-    }
-
-    #[test]
-    fn world_writable_parent_is_rejected() {
-        let temp = tempfile::tempdir().expect("tempdir");
-        fs::set_permissions(temp.path(), fs::Permissions::from_mode(0o777)).expect("chmod");
-        assert!(matches!(
-            prepare_parent(temp.path()),
-            Err(ServerStartupError::InsecureParent(_))
-        ));
-    }
-}
+mod tests;
