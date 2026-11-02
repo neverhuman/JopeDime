@@ -239,6 +239,39 @@ def test_three_client_capture_plan_self_test():
     THREE_CLIENTS_MODULE.self_test()
 
 
+def test_partial_client_selection_requires_exclusion_reason():
+    with pytest.raises(THREE_CLIENTS_MODULE.CaptureError, match="exclude-reason"):
+        THREE_CLIENTS_MODULE.client_selection(["claude_code", "codex_cli"], None)
+
+
+def test_partial_client_capture_records_excluded_client(a5_tmp_path):
+    original_mask = signal.pthread_sigmask(signal.SIG_BLOCK, ())
+    original_handler = signal.getsignal(signal.SIGINT)
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    args.clients = ["claude_code", "codex_cli"]
+    args.exclude_reason = "Gemini CLI MCP configuration unavailable"
+
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert signal.pthread_sigmask(signal.SIG_BLOCK, ()) == original_mask
+    assert signal.getsignal(signal.SIGINT) is original_handler
+
+    assert result["status"] == "PARTIAL_CAPTURES_PENDING_SEMANTIC_REVIEW"
+    assert result["selected_clients"] == ["claude_code", "codex_cli"]
+    assert result["excluded_clients"] == {
+        "gemini_cli": "Gemini CLI MCP configuration unavailable"
+    }
+    assert result["clients"]["gemini_cli"]["status"] == "EXCLUDED"
+    assert not (args.out_dir / "clients/gemini_cli").exists()
+    excluded_execution = json.loads(
+        (args.out_dir / "sidecars/gemini-cli.execution.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert excluded_execution["status"] == "EXCLUDED"
+    assert excluded_execution["exclusion_reason"] == args.exclude_reason
+
+
 def test_normal_exit_drains_owned_recorder_descendant(monkeypatch, a5_tmp_path):
     red = a5_tmp_path / "immediate-cleanup"
     red.mkdir()
@@ -327,7 +360,9 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
     def drain_must_not_run(process, deadline, check_interrupted, *extra):
         if process.args[-1] == "claude_code":
             drain_calls.append(True)
-            raise AssertionError("no recorder drain budget remains at the client deadline")
+            raise AssertionError(
+                "no recorder drain budget remains at the client deadline"
+            )
         return real_drain(process, deadline, check_interrupted, *extra)
 
     with monkeypatch.context() as patch:
@@ -347,7 +382,9 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
     assert not (args.out_dir / "clients/claude_code/transport/capture.json").exists()
 
 
-def test_normal_exit_drain_deadline_is_not_replaced_with_grace(monkeypatch, a5_tmp_path):
+def test_normal_exit_drain_deadline_is_not_replaced_with_grace(
+    monkeypatch, a5_tmp_path
+):
     args, plan, _candidate, client = _runner_fixture(
         a5_tmp_path, drain_key="claude_code"
     )

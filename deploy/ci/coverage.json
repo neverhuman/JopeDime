@@ -1276,7 +1276,27 @@
       "lanes": [
         "changes"
       ],
-      "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
+      "scope": "Hosted output-only join of the PR-hosted and provenance-bound manual classifiers; requires exactly the selected classifier to succeed and passes its verified applicability outputs to dependent jobs."
+    },
+    "job:.github/workflows/ci.yml/changes-dispatch": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "changes"
+      ],
+      "scope": "Manual-dispatch classifier only; uses the existing admitted native runner, verifies runner provenance, records the source-bound changes plan, and retains its run/attempt receipt."
+    },
+    "job:.github/workflows/ci.yml/changes-pr": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "changes"
+      ],
+      "scope": "Pull-request-only source-diff classifier on disposable ubuntu-24.04; no self-hosted resources or runner tokens. Produces the exact plan and run/attempt receipt consumed by the workflow aggregate."
     },
     "job:.github/workflows/ci.yml/e2e-smoke": {
       "discovery": {
