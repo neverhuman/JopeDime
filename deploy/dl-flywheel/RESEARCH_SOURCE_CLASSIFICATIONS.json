@@ -5544,29 +5544,101 @@
       },
       "sha256": "6b68dcedd1edee25d4dfd13dd807f6a1d5c14f887bcf048d4438811d945aae50"
     },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/backend.py": {
+      "bytes": 14110,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "cd50c64809d21bef1ff658aa65afd77bc172e9b023b7d19c7d4187f1e04898e2"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/launcher.py": {
+      "bytes": 8105,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "6d403b2bb9c9e28000ed56f9a4330e04930519a1801dc460df8ea26d09170995"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/regularize.py": {
+      "bytes": 2612,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "30f49bbb45183f47de1defdca6b49d32c486c8fcec2b51d1dde5870d87d9621b"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/runner.py": {
+      "bytes": 13814,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "008159b546643094d0ef9d784f7059c6266cb6fde81f5ec8c64cd322082f629c"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/science.py": {
+      "bytes": 5057,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "4c2369bc1e0022bbff758bf724ae0d07c759be9525b74c77e82a05e9fab165a2"
+    },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/analysis.py": {
       "bytes": 17865,
-      "sha256": "0638c6ff0caabf1b6a62df3f8c39697f2921456f80e41cf3b5e672ba2709c938",
       "classification": {
-        "role": "research",
-        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads."
-      }
+        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "0638c6ff0caabf1b6a62df3f8c39697f2921456f80e41cf3b5e672ba2709c938"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/monitor.py": {
       "bytes": 11204,
-      "sha256": "bdf1f9975311055d8861066e40096d36d61579b78991b99c4a2e6397a9a33d01",
       "classification": {
-        "role": "research",
-        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads."
-      }
+        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "bdf1f9975311055d8861066e40096d36d61579b78991b99c4a2e6397a9a33d01"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/runner.py": {
       "bytes": 37246,
-      "sha256": "33988986096568ee75ea301342466a58b790656a5cfa602d6f1956f1b5b2e3dc",
       "classification": {
-        "role": "research",
-        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads."
-      }
+        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "33988986096568ee75ea301342466a58b790656a5cfa602d6f1956f1b5b2e3dc"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/analysis.py": {
+      "bytes": 14695,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/gate.py": {
+      "bytes": 5894,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "b6da8ad57f940aeef3a504439f4848df2e06344d14652e768adf32858637ebc3"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/monitor.py": {
+      "bytes": 7192,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "49637aa31d8972131baf5bc105e89fe893f1050d8ced66c59f937802379fb435"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/runner.py": {
+      "bytes": 20750,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "ca3a8aee72a6158e600671a07e9870ac4db1b219c9a915cec95b5ecc2d11e64d"
     },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
@@ -5829,46 +5901,6 @@
         "role": "research"
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
-    },
-    "python:research/flywheel_selfplay/h222_lipschitz_adapter/backend.py": {
-      "bytes": 14110,
-      "sha256": "cd50c64809d21bef1ff658aa65afd77bc172e9b023b7d19c7d4187f1e04898e2",
-      "classification": {
-        "role": "research",
-        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
-      }
-    },
-    "python:research/flywheel_selfplay/h222_lipschitz_adapter/science.py": {
-      "bytes": 5057,
-      "sha256": "4c2369bc1e0022bbff758bf724ae0d07c759be9525b74c77e82a05e9fab165a2",
-      "classification": {
-        "role": "research",
-        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
-      }
-    },
-    "python:research/flywheel_selfplay/h222_lipschitz_adapter/launcher.py": {
-      "bytes": 8105,
-      "sha256": "6d403b2bb9c9e28000ed56f9a4330e04930519a1801dc460df8ea26d09170995",
-      "classification": {
-        "role": "research",
-        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
-      }
-    },
-    "python:research/flywheel_selfplay/h222_lipschitz_adapter/regularize.py": {
-      "bytes": 2612,
-      "sha256": "30f49bbb45183f47de1defdca6b49d32c486c8fcec2b51d1dde5870d87d9621b",
-      "classification": {
-        "role": "research",
-        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
-      }
-    },
-    "python:research/flywheel_selfplay/h222_lipschitz_adapter/runner.py": {
-      "bytes": 13814,
-      "sha256": "008159b546643094d0ef9d784f7059c6266cb6fde81f5ec8c64cd322082f629c",
-      "classification": {
-        "role": "research",
-        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
-      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

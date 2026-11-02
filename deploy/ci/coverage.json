@@ -6132,6 +6132,16 @@
       "lanes": [],
       "scope": "H221 actual128-update separate heads, family-bootstrap multiplicities, paired real/shuffle init and plans, immutable feature/role cache, prediction mean before B gate,165-fit45-gate global lock, strict owner Holm1/point-margin/harm/two-seed criteria, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification."
     },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/test_h222.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
+    },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/test_h223.py": {
       "discovery": {
         "kind": "python-family"
@@ -6141,6 +6151,16 @@
       ],
       "lanes": [],
       "scope": "H223 (bagged blend component inside the frozen GATED_025 recipe) data-free controls: frozen H210/H217 gate, statistics and fold bodies identical to H217, SINGLE-prior arms equal to H217 arm_costs, member 0 of each 3-member fit unit equal to H217 fit_gbm bit for bit, family-bootstrap member weights (whole families, as many draws as families), per-prior gating and fallback, cyclic A/B/FIT cells, 45-unit/135-fit plan, fresh fold manifest with best-match Jaccard <= 0.20 vs H203/H210/H217/H218 and reused-partition refusal, plateau co-primary and CANDIDATE verdict rules, xbabe2 guards (load5 60, 300 GB disk, 4 GiB RSS, 8-core tree, MemAvailable 20 GiB, absolute deadline capped at 17:25Z, source check before claim)"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/test_h224.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H224 data-free OOF FIT label/C/threshold boundaries, unchanged H217 reference gate AST, family folds, strict plateau tie correction, CPU affinity/RSS/load/disk/RAM stops and exact-version S3 recovery; no study qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -15073,16 +15093,6 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
-    },
-    "python:research/flywheel_selfplay/h222_lipschitz_adapter/test_h222.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
     }
   },
   "lanes": {

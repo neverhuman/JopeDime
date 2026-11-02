@@ -2347,8 +2347,16 @@
       "reason": "H221 actual128-update separate heads, family-bootstrap multiplicities, paired real/shuffle init and plans, immutable feature/role cache, prediction mean before B gate,165-fit45-gate global lock, strict owner Holm1/point-margin/harm/two-seed criteria, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/test_h222.py": {
+      "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/test_h223.py": {
       "reason": "Owner-requested H223 data-free controls for the bagged blend component inside the frozen GATED_025 recipe (frozen H217 gate/statistics bodies, member 0 = H217 fit bit for bit, family-bootstrap member weights, per-prior gating, fresh fold manifest with Jaccard <= 0.20, CANDIDATE/plateau verdict rules, xbabe2 hw_t1325 guards and absolute deadline).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/test_h224.py": {
+      "reason": "H224 data-free OOF FIT label/C/threshold boundaries, unchanged H217 reference gate AST, family folds, strict plateau tie correction, CPU affinity/RSS/load/disk/RAM stops and exact-version S3 recovery; no study qualification.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
@@ -5651,10 +5659,6 @@
       "subsystems": [
         "encoders"
       ]
-    },
-    "python:research/flywheel_selfplay/h222_lipschitz_adapter/test_h222.py": {
-      "role": "research",
-      "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
