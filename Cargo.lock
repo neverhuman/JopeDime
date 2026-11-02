@@ -2989,6 +2989,7 @@ dependencies = [
  "arrow-array",
  "arrow-schema",
  "clap",
+ "jope-datasets",
  "nvml-wrapper",
  "parquet",
  "pyo3",

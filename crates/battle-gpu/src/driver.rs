@@ -102,12 +102,6 @@ pub struct Library {
     handle: *mut c_void,
 }
 
-// SAFETY: `dlopen` returns an owned loader reference. POSIX loader handles have
-// no creating-thread affinity: `dlsym` and `dlclose` may run on any thread.
-// This wrapper is moved, never cloned, and its sole Drop closes that reference
-// exactly once. It exposes no operation that can race a close.
-unsafe impl Send for Library {}
-
 impl Library {
     pub fn open(path: &str) -> Result<Library, String> {
         let name = CString::new(path).map_err(|_| "library path contains NUL".to_string())?;

@@ -17,7 +17,7 @@ FAKE = r'''
 import hashlib, json, os, pathlib, sys, tomllib
 mode = os.environ["AUDIT_TEST_MODE"]
 if sys.argv[1:] == ["--version"]:
-    print("jankurai 1.7.4" if mode == "version" else "jankurai 1.7.5")
+    print("jankurai 1.7.5" if mode == "version" else "jankurai 1.7.6")
     sys.exit(0)
 args = sys.argv[1:]
 assert args[0] == "audit"
@@ -30,7 +30,7 @@ failed = mode in ("failed", "false-green", "failed-above-floor")
 low = mode in ("failed", "false-green")
 floor = 0 if mode == "floor" else 85
 report = {
-    "auditor_version": "1.7.5", "schema_version": "1.9.0",
+    "auditor_version": "1.7.6", "schema_version": "1.9.0",
     "standard_version": "0.9.0", "paper_edition": "2026.05-ed8",
     "scope": {"mode": "full", "paths": []},
     "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111",
@@ -49,7 +49,7 @@ if policy_file.exists():
     binding = {"format": "jankurai-effective-audit-policy-v1",
                "source_sha256": "sha256:" + hashlib.sha256(policy_bytes).hexdigest(),
                "minimum_score": floor, "fail_on": ["critical", "high"], "advisory_on": advisory,
-               "auditor_version": "1.7.5", "schema_version": "1.9.0", "standard_version": "0.9.0"}
+               "auditor_version": "1.7.6", "schema_version": "1.9.0", "standard_version": "0.9.0"}
     report["policy_fingerprint"] = "sha256:" + hashlib.sha256(json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 if mode == "advisory":
     report["policy"]["advisory_on"] = ["info"]

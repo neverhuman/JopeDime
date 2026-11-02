@@ -154,7 +154,7 @@ def initial_read(path, limit):
         os.close(fd)
 
 
-class Archive:
+class CampaignPaperArchive:
     """One exclusive writer for one pinned campaign/host and owned output root.
 
     ``cycle()`` captures bounded current evidence and atomically publishes the
@@ -569,6 +569,11 @@ class Archive:
         return summary
 
 
+# Preserve the deployed public name while giving this wave-four campaign observer
+# a distinct type identity from frozen archive implementations.
+Archive = CampaignPaperArchive
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--campaign-manifest', required=True, type=Path)
@@ -581,7 +586,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.interval < 60:
         parser.error('--interval must be at least 60 seconds')
-    with Archive(args.campaign_manifest, args.manifest_sha, args.host, args.out) as archive:
+    with CampaignPaperArchive(args.campaign_manifest, args.manifest_sha, args.host, args.out) as archive:
         while time.time() < archive.deadline:
             result = archive.cycle()
             print(json.dumps({'state': result['state'], 'manifest_sha256': archive.manifest_sha,

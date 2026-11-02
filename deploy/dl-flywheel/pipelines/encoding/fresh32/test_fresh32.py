@@ -35,7 +35,9 @@ class QueueCase(unittest.TestCase):
  def test_reinvoke_never_resets_campaign(self):
   self.claim();self.assertEqual(self.claim()['state'],'packet_already_exists');self.assertEqual(self.db.execute('SELECT count(*) FROM '+q.ITEMS).fetchone()[0],33)
  def test_other_xb3_claim_explicit_blocked(self):
-  self.db.execute('INSERT INTO flywheel_kumo_packets_v1 VALUES(?,?,?,?,?,?,NULL)',('f'*64,'xbabe3',c.PIPELINE_SHA,1,2,'claimed'))
+  blocked_packet_id='f'*64
+  blocked_packet_values=(blocked_packet_id,'xbabe3',c.PIPELINE_SHA,1,2,'claimed')
+  self.db.execute('INSERT INTO flywheel_kumo_packets_v1 VALUES(?,?,?,?,?,?,NULL)',blocked_packet_values)
   self.assertEqual(self.claim()['state'],'blocked_claim')
  def test_cross_host_item_blocks_no_partial_claim(self):
   r=self.rows[0];self.db.execute('INSERT INTO '+q.ITEMS+' VALUES(?,?,?,?,?)',(r['identity'],'a'*64,r['sequence'],'x','x'))

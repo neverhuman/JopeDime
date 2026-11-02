@@ -209,11 +209,33 @@ impl Authority {
         }
         Ok(scopes)
     }
-    pub(super) fn scope_state_keys_sql(table: &str, column: &str) -> String {
-        if table == "scope_training" {
-            "SELECT scope FROM native_scopes ORDER BY scope".into()
-        } else {
-            format!("SELECT {column} FROM {table}")
+    pub(super) fn scope_state_keys_sql(table: &str, column: &str) -> Result<&'static str> {
+        match (table, column) {
+            ("entries", "key") => Ok("SELECT key FROM entries"),
+            ("coverage", "scope") => Ok("SELECT scope FROM coverage"),
+            ("exclusions", "id") => Ok("SELECT id FROM exclusions"),
+            ("numerical_guards", "work_key") => Ok("SELECT work_key FROM numerical_guards"),
+            ("history_stages", "id") => Ok("SELECT id FROM history_stages"),
+            ("history_batches", "id") => Ok("SELECT id FROM history_batches"),
+            ("activations", "scope") => Ok("SELECT scope FROM activations"),
+            ("recovery_epochs", "id") => Ok("SELECT id FROM recovery_epochs"),
+            ("queries", "key") => Ok("SELECT key FROM queries"),
+            ("authorization_witness", "fit_key") => {
+                Ok("SELECT fit_key FROM authorization_witness")
+            }
+            ("funding_authorizations", "id") => {
+                Ok("SELECT id FROM funding_authorizations")
+            }
+            ("funding_reservations", "id") => Ok("SELECT id FROM funding_reservations"),
+            ("funding_participants", "id") => Ok("SELECT id FROM funding_participants"),
+            ("funding_witness", "event_key") => Ok("SELECT event_key FROM funding_witness"),
+            ("native_tasks", "id") => Ok("SELECT id FROM native_tasks"),
+            ("native_slots", "id") => Ok("SELECT id FROM native_slots"),
+            ("native_scopes", "scope") => Ok("SELECT scope FROM native_scopes"),
+            ("scope_training", "scope") => {
+                Ok("SELECT scope FROM native_scopes ORDER BY scope")
+            }
+            _ => anyhow::bail!("unknown authority scope-state key query"),
         }
     }
     pub(super) fn scope_training_postimage(db: &Connection, scope: &str) -> Result<Value> {

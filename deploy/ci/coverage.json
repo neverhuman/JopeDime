@@ -1191,6 +1191,7 @@
     "feature:jope-telemetry/python": {
       "discovery": {
         "dependencies": [
+          "dep:jope-datasets",
           "dep:pyo3"
         ],
         "kind": "feature"
@@ -1199,7 +1200,7 @@
       "lanes": [
         "rust-check"
       ],
-      "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; jope-parallel telemetry feature is checked without enabling the neural/LibTorch feature."
+      "scope": "Explicit Rust check in deploy/ci/fast-lane.sh rust-check; the Python extension includes jope-datasets without enabling the neural/LibTorch feature."
     },
     "feature:starforge/cuda": {
       "discovery": {
@@ -1366,7 +1367,7 @@
       "lanes": [
         "source-audit"
       ],
-      "scope": "Required same-repository ci.yml PR/manual job; checksum-pinned Jankurai 1.7.5 runs via ops/ci/jankurai.sh, verifies the captured checkout, publishes canonical .jankurai/repo-score.json and .jankurai/repo-score.md repair paths, and uploads the full target/full-audit package containing both reports. Fork PRs are deliberately skipped. Report-only below score 85 preserves the failed audit decision and does not establish a passing audit."
+      "scope": "Required same-repository ci.yml PR/manual job; checksum-pinned Jankurai 1.7.6 runs via ops/ci/jankurai.sh, verifies the captured checkout, publishes canonical .jankurai/repo-score.json and .jankurai/repo-score.md repair paths, and uploads the full target/full-audit package containing both reports. Fork PRs are deliberately skipped. Report-only below score 85 preserves the failed audit decision and does not establish a passing audit."
     },
     "job:.github/workflows/ci.yml/observatory-ui": {
       "discovery": {
@@ -1558,7 +1559,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Jankurai v1.7.5 repository audit job on pull requests and main; execution requires JANKURAI_HOSTED_RUNNER=true."
+      "scope": "Jankurai v1.7.6 repository audit job on pull requests and main; execution requires JANKURAI_HOSTED_RUNNER=true."
     },
     "job:.github/workflows/lite-client.yml/lite-client": {
       "discovery": {
@@ -15074,7 +15075,7 @@
       "lanes": [
         "hygiene"
       ],
-      "scope": "Jankurai v1.7.5 repository audit workflow on pull requests and main."
+      "scope": "Jankurai v1.7.6 repository audit workflow on pull requests and main."
     },
     "workflow:.github/workflows/lite-client.yml": {
       "discovery": {
@@ -16390,7 +16391,7 @@
         "target/full-audit/RUN_ID/RUN_ATTEMPT"
       ],
       "environment": {
-        "JANKURAI_BIN": "checksum-pinned Jankurai 1.7.5 installed by deploy/ci/install-jankurai.sh",
+        "JANKURAI_BIN": "checksum-pinned Jankurai 1.7.6 installed by deploy/ci/install-jankurai.sh",
         "JANKURAI_NO_UPDATE_CHECK": "1",
         "JOPE_AUDIT_REPORT_ONLY": "1 on trusted main and required CI until the score reaches 85 (owner decision 2026-10-22)"
       },
@@ -16404,7 +16405,7 @@
       "feature_selection": "not-applicable",
       "inputs": [
         "exact full Git source SHA",
-        "checksum-pinned Jankurai 1.7.5 binary",
+        "checksum-pinned Jankurai 1.7.6 binary",
         "default audit policy and unchanged score floor 85",
         "captured source path, mode and blob digest manifest"
       ],
