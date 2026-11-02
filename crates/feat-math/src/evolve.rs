@@ -6530,60 +6530,44 @@ mod tests {
         assert_eq!(a.rung_evals, b.rung_evals);
     }
 
-    fn host_load_guard_allows_wall_assertion() -> bool {
-        // Mirror remote_test.sh: cap at 32 slots, then reserve eight per queued Cargo job.
-        let cpus = std::thread::available_parallelism().map_or(0, |n| n.get()) as f64;
-        let load_1 = std::fs::read_to_string("/proc/loadavg")
-            .ok()
-            .and_then(|contents| contents.split_whitespace().next()?.parse::<f64>().ok());
-        let queued = std::process::Command::new("pgrep")
-            .args(["-fc", r"remote_tests/src\.[0-9]+ &&"])
-            .output()
-            .ok()
-            .filter(|output| output.status.success())
-            .and_then(|output| String::from_utf8(output.stdout).ok())
-            .and_then(|count| count.trim().parse::<i64>().ok());
-        match (load_1, queued) {
-            (Some(load_1), Some(queued)) => {
-                let mut slots = (cpus * 0.85 - load_1) as i64;
-                slots = slots.min(32) - 8 * queued;
-                slots >= 4
-            }
-            _ => false,
-        }
-    }
-
-    /// Even a budget already exhausted by setup admits exactly one bounded
-    /// rung-0 chunk, then terminates promptly. This is deterministic under
-    /// concurrent test load and prevents a positive-budget race from returning
-    /// no ranking merely because its worker was descheduled before admission.
-    /// The elapsed backstop uses remote_test.sh's documented 85%-load guard
-    /// (at least four available slots); the rung admission assertions always run.
+    /// The exhausted budget admits exactly one bounded rung-0 chunk, then stops
+    /// before either promotion rung. Keep this wall backstop unconditional while
+    /// limiting the proof to one chunk of small, fixed ridge candidates.
     #[test]
     fn race_respects_tiny_time_budget() {
-        let (x, y) = race_fixture(5, 400);
+        let (x, y) = race_fixture(5, 32);
         let metric = |yt: &[f64], yp: &[f64]| crate::metrics::r2(yt, yp);
+        let initial_population = (0..RACE_CHUNK)
+            .map(|index| {
+                format!(
+                    "(pipe X (ridge lambda_frac={:.5}))",
+                    0.02 + index as f64 * 0.001
+                )
+            })
+            .collect::<Vec<_>>();
         let mut cfg = race_cfg(13);
-        cfg.pop = 64;
+        cfg.pop = RACE_CHUNK;
         cfg.gens = 10_000;
         cfg.time_budget_secs = f64::MIN_POSITIVE;
-        // Match remote_test.sh's preflight guard: at least four unreserved CPU slots.
-        let assert_wall_bound = host_load_guard_allows_wall_assertion();
         let t = Instant::now();
-        let out = evolve_lite_race(&x, &y, &metric, &cfg, &quiet_obs());
+        let out = evolve_lite_race_with_exact_initial_population(
+            &x,
+            &y,
+            &metric,
+            &cfg,
+            &quiet_obs(),
+            &initial_population,
+        )
+        .expect("small exact initial race population is valid");
         let elapsed = t.elapsed().as_secs_f64();
         assert!(!out.ranked.is_empty());
         assert_eq!(out.rung_evals[0], RACE_CHUNK as u64);
         assert_eq!(out.rung_evals[1], 0, "tiny budget must stop before rung 1");
         assert_eq!(out.rung_evals[2], 0, "tiny budget must stop before rung 2");
-        if assert_wall_bound {
-            // 30s is 5.45x the slowest valid unloaded-main sample so far (5.51s).
-            assert!(elapsed < 30.0, "race exceeded 30s on a load-guarded host");
-        } else {
-            eprintln!(
-                "skipping 30s wall backstop: remote_test.sh load guard has fewer than four slots"
-            );
-        }
+        assert!(
+            elapsed < 30.0,
+            "race exceeded the 30s wall bound on a 32-row, one-chunk fixture: {elapsed:.2}s"
+        );
     }
 
     #[test]
