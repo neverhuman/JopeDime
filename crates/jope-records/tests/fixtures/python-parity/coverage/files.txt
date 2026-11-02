@@ -1150,6 +1150,7 @@ crates/jope-engine/src/training/consumption.rs
 crates/jope-engine/src/training/continuation.rs
 crates/jope-engine/src/training/inputs.rs
 crates/jope-engine/src/training/objective.rs
+crates/jope-engine/src/training/objective/identity.rs
 crates/jope-engine/src/training/partition.rs
 crates/jope-engine/src/training/topology.rs
 crates/jope-engine/src/training_exposure.rs
