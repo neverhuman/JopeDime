@@ -129,7 +129,7 @@ def ok_sample(**kw):
         cpu_over_s=0.0,
         cpu=10.0,
         available=64 * 2**30,
-        free=100_000_000_000,
+        free=465_000_000_000,
         disk_used_fraction=0.93,
         rss=1_000_000_000,
         threads=9,
@@ -156,15 +156,17 @@ def test_monitor_guards():
     for kw in [
         dict(tree_cores=4.6),
         dict(available=19 * 2**30),
-        dict(free=39_000_000_000),
-        dict(disk_used_fraction=0.938),
+        dict(free=199_000_000_000),
         dict(rss=6_000_000_000),
         dict(cpu_over_s=300.0),
         dict(load_over_s=300.0),
         dict(load5=monitor.LOAD_LIMIT + 1),
     ]:
         assert len(monitor.violations(ok_sample(**kw))) == 1
-    assert monitor.violations(ok_sample(disk_used_fraction=0.9379)) == []
+    # amendment A1: on xbabe2 only free space stops the run; 94% used with 465 GB free passes
+    assert monitor.violations(ok_sample(disk_used_fraction=0.94)) == []
+    assert monitor.violations(ok_sample(free=200_000_000_000)) == []
+    assert monitor.MIN_FREE == 200_000_000_000 and monitor.ADMIT_FREE == 220_000_000_000
     assert monitor.DEADLINE == 4 * 3600 and monitor.CORE_LIMIT == 4.5
     assert monitor.WINDOW == 30.0 and monitor.MEM_MIN == 20 * 2**30
 
@@ -203,8 +205,8 @@ def test_monitor_admission_needs_a_quiet_host_and_margins():
     assert monitor.admission_refusals(ok_sample(available=23 * 2**30)) == [
         "admission: MemAvailable<24GiB"
     ]
-    assert monitor.admission_refusals(ok_sample(disk_used_fraction=0.937)) == [
-        "admission: disk used>=93.7%"
+    assert monitor.admission_refusals(ok_sample(free=219_000_000_000)) == [
+        "admission: disk free<220GB"
     ]
     assert monitor.SUSTAIN == 300.0
 
@@ -330,7 +332,7 @@ def guarded_runner(
     return runner
 
 
-def test_runner_guard_uses_effective_load5_the_938_disk_rule_and_the_deadline(
+def test_runner_guard_uses_effective_load5_the_a1_disk_rule_and_the_deadline(
     tmp_path, monkeypatch
 ):
     runner = guarded_runner(monkeypatch, load=(10_000.0, 1.0, 1.0))
@@ -342,7 +344,11 @@ def test_runner_guard_uses_effective_load5_the_938_disk_rule_and_the_deadline(
     runner = guarded_runner(monkeypatch, load=(1.0, 0.85 * runner.CORES + 0.1, 1.0))
     with pytest.raises(RuntimeError, match="load5"):
         runner.guards(tmp_path / "absent")
-    runner = guarded_runner(monkeypatch, disk=(10**13, 9381 * 10**9, 619 * 10**9))
+    runner = guarded_runner(monkeypatch, disk=(7856 * 10**9, 7391 * 10**9, 465 * 10**9))
+    assert (
+        runner.guards(tmp_path / "absent")["used"] > 0.94
+    )  # A1: percent used alone passes
+    runner = guarded_runner(monkeypatch, disk=(7856 * 10**9, 7657 * 10**9, 199 * 10**9))
     with pytest.raises(RuntimeError, match="disk guard"):
         runner.guards(tmp_path / "absent")
     runner = guarded_runner(monkeypatch)

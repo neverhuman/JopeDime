@@ -140,7 +140,7 @@ Only Elo and utility are reported: no AUC and no speed numbers.
   - load1 ≤ 51 and load5 ≤ 51 (50%);
   - host CPU ≤ 50%;
   - **MemAvailable ≥ 24 GiB**;
-  - disk used < 93.7%.
+  - disk free ≥ 220 GB (amendment A1; originally used < 93.7%).
 - **Source binding before the claim (fixes H210 D1).** The monitor runs `runner.py --check-launch`, which checks the
   host, the PREREG hash, the HEAD and the bound blobs at both the reviewed head and the merged commit. It does this
   before writing the claim. A failure there creates no claim.
@@ -148,7 +148,7 @@ Only Elo and utility are reported: no AUC and no speed numbers.
   - **load5 > 86.7 (85%)**;
   - load1 > 86.7 or host CPU > 85%, either **continuously for 300 s**;
   - **MemAvailable < 20 GiB** (xbabe2 swap is full);
-  - disk free < 40 GB or used ≥ 93.8% (lanes_t1615);
+  - disk free < 200 GB (amendment A1; originally free < 40 GB or used ≥ 93.8%);
   - aggregate RSS ≥ 6 GB;
   - worker tree > 4.5 cores over a 30 s window. H210 tripped a 4.0-core, 10 s cap at 4.0136 from OpenMP helper
     threads.
@@ -157,7 +157,7 @@ Only Elo and utility are reported: no AUC and no speed numbers.
 - **One absolute deadline (fixes H210 E1).** The attempt claim records claim time + 4 h. A resume inherits that
   deadline from the claim and is refused once it has passed. The worker receives it and stops at it. No clock restarts.
 - **Disk and inputs.**
-  - xbabe2 was at 93.53% used (508 GB free) at prereg.
+  - xbabe2 was at 93.53% used (508 GB free) at prereg, and at 93.92% (477 GB free) when A1 was recorded.
   - The output root must stay < 500 MB; about 180 MB is expected under `~/jope-data/h217/`.
   - `~/jope-data/h217/inputs` is a symlink to the verified H195 staging (hash list `2f7a3642…`, 2,628 files), checked
     before launch.
@@ -177,3 +177,16 @@ Only Elo and utility are reported: no AUC and no speed numbers.
   - a README (hypothesis, setup, outcome, metrics, verdict and next step, with caveats);
   - `custody.json`;
   - an index row.
+
+## Amendment A1 (pre-outcome): disk rule on xbabe2
+
+- **When and who.** Recorded 2026-11-02 at about 11:05Z by the H-wave owner (rd_opus), under hw_t0400. This was
+  before any H217 claim, root, read, fit or outcome; no H217 attempt had started.
+- **Why.** xbabe2's root is a 7.86 TB disk. At 93.9% used it still has about 477 GB free, so the 93.8% percentage rule
+  (written for xbabe1's 1.87 TB disk, where 6.2% is about 116 GB) refused a launch with ample space.
+- **Change, xbabe2 only.**
+  - The runtime disk stop is **free < 200 GB**, in both the monitor and the runner. It replaces "free < 40 GB or
+    used ≥ 93.8%".
+  - Admission needs **free ≥ 220 GB**, a 20 GB margin above the stop. It replaces "used < 93.7%".
+- **Unchanged.** The 93.8% rule stays for xbabe1, where the shadow logger writes. Nothing else changes: science,
+  seeds, folds, arms, decision rules, the load gate, memory, RSS, the core cap, the deadline and the single resume.

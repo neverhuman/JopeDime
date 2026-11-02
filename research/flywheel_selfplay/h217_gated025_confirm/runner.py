@@ -34,7 +34,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 DATA = Path.home() / "jope-data/h217"
 INPUTS = DATA / "inputs"
-PREREG_SHA = "5dd45d81cbab18c29e264b67cfff223722d72a3fa8896e3ec043ad04f2d7da9d"
+PREREG_SHA = "7a03ef848ff68637855610b0068c2c5bc0a8c9cd351e542804685ec69831ff42"
 H139_PATH = REPO / "research/flywheel_selfplay/h139_selection_audit/runner.py"
 H139_SHA = "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
 BOUND_FILES = (
@@ -47,7 +47,9 @@ BOUND_FILES = (
     "python/src/jope/north_star/dope_freeze_guard.py",
 )
 HOST_RULES = {
-    "xbabe2": dict(min_free=40_000_000_000, max_used=0.938),  # lanes_t1615 disk guard
+    "xbabe2": dict(
+        min_free=200_000_000_000, max_used=None
+    ),  # amendment A1 (hw_t0400): stop at free < 200 GB
 }
 MEM_MIN = 20 * 2**30  # hw_t0330: xbabe2 swap is full; stop below 20 GiB available
 CORES = len(
@@ -157,7 +159,7 @@ def deadline():
 
 
 def guards(root):
-    """xbabe2 disk rule (free >= 40 GB, used < 93.8%), MemAvailable >= 20 GiB, load5 <= 85% of the effective CPU
+    """xbabe2 disk rule (amendment A1: free >= 200 GB), MemAvailable >= 20 GiB, load5 <= 85% of the effective CPU
     affinity, nice 19, own root < 500 MB, and the absolute deadline. The 5-minute load is used here, so a one-minute
     spike from other jobs does not end the attempt (H203). Checked before every fit and stage."""
     host = admit_host()

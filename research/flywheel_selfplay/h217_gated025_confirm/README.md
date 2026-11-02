@@ -26,7 +26,7 @@
   - Limits are sized from the effective CPU affinity (102 of 128).
   - The source is bound before the claim.
   - One absolute deadline: claim time + 4 h, inherited by any resume.
-  - Stop at MemAvailable < 20 GiB (swap is full) or disk ≥ 93.8%.
+  - Stop at MemAvailable < 20 GiB (swap is full) or disk free < 200 GB (amendment A1; admission needs 220 GB).
 - **Budget.** 45 HistGBM fits, about 1 h 30 min to 2 h; root about 180 MB.
 - **Code.** [runner.py](runner.py), [analysis.py](analysis.py), [monitor.py](monitor.py) and
   [test_h217.py](test_h217.py) (34 data-free tests).
