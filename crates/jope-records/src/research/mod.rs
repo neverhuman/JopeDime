@@ -8,14 +8,17 @@ pub mod state;
 pub mod wave_git;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Stage {
+pub enum ResearchEvidenceStage {
     Synthetic,
     Shadow,
     Adaptive,
     Confirmatory,
 }
 
-impl Stage {
+/// Compatibility name for the evidence stage used by research projections.
+pub type Stage = ResearchEvidenceStage;
+
+impl ResearchEvidenceStage {
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             Self::Synthetic => "synthetic",
