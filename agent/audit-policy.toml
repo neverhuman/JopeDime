@@ -60,6 +60,8 @@ extra_excluded_paths = [
   "crates/jope-engine/manifests/opportunistic-proposals-v44.sha256",
   "crates/jope-engine/manifests/opportunistic-proposals-v53.json",
   "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256",
+  # HLT-040 05b639e6...: immutable ExecStartPre integrity pin; see exact disposition.
+  "crates/jope-engine/manifests/champion-import-v44.sha256",
   "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
   # Ciaudit HLT-043 sha256:fac8174f...: exact hash-pinned package copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/evidence.py",
