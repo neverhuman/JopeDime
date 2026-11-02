@@ -1,0 +1,19 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "P23 fitted-language product runtime port, following merged P36 and the #1792 rustunsafe authority lineage repair. The fitted runtime moved from C++ to Rust; the C++ implementation remains only as a test parity oracle. This mints a new evaluator implementation identity. DSL ABI, emitted bytes and Cargo.lock are unchanged. The evaluator identity and lineage source fixtures are regenerated for the P23 source. No known-identity row is added without a shipped receipt.",
+  "plan_reference": "jankurai P23 non-optimal-product-language cap; ADR-0004; compat_freeze identity-only procedure",
+  "base_commit": "4cbb66807a08124e89c5350361f68e8cc71fb699",
+  "source_commit": "e8388b00920e9a304ba497b7b8d89064cf4fbeda",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "58e1ac3f3907a3b7c5239447a8e89c2df5f619220c667e06044fe4fcf7b55d30",
+      "after": "8e94b706e19f7e59c755211327f898be48ca1e6a14dca7972b3a6bbe7116e224"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "cddee93e84223fa23bbb744b560f965034d8fbc320ace50c04335ca37dc74e0d",
+      "after": "8b7db9419f75fa5b7d14e1526a75c20b9ec20811bbe9a7a13e9311c8c1f21f11"
+    }
+  ]
+}
