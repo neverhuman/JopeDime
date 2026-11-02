@@ -1,0 +1,64 @@
+{
+  "wave": "H205",
+  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
+  "assignment": "/home/ubuntu/nudges/n2022_rd_argon_h205.md",
+  "plan": "/home/ubuntu/nudges/hwave_t2022_plan.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H205_claim.txt",
+  "arms": [
+    "R882",
+    "STATIC-DATA",
+    "STATIC-TEACHER",
+    "FRESH"
+  ],
+  "primary": "FRESH",
+  "holm_m": 2,
+  "rounds": 50,
+  "microbatches_per_round": 16,
+  "families_per_microbatch": 8,
+  "seeds": [
+    205101,
+    205102,
+    205103
+  ],
+  "fold_seed": 205140,
+  "boot_seed": 205141,
+  "selector": "H178_calibrated_pooled_205_family",
+  "checkpoint": "/home/ubuntu/jope-data/h196/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525
+  },
+  "common_gate": {
+    "native_r882_parity_91_exact": 1.1377941898164525,
+    "pooled_families": 205,
+    "lcb95_min": 0.0,
+    "max_harm_fraction": 0.1,
+    "sealed_d4_confirmation_excluded_from_training": true
+  },
+  "host": "xbabe1",
+  "device": "cuda:0",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "live_flywheel_pid_untouched": 2297929,
+  "numeric_threads_max": 4,
+  "cuda_runtime_threads_exempt": true,
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h196/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "source_sha256": {
+    "PREREG.md": "7b2b042b4a40dbb9ecc04e587d51647f9431527e7ff74a277f5ead4bd605c18d",
+    "README.md": "95f795a54e8e4d234f9fd2c5f9b69559f74f5ba44bef007124c7b7c0f9e7a26d",
+    "analysis.py": "129d069464d6ae0ec898a50b67ed992401634242c26fb97f73147ad7ef0bf7d0",
+    "monitor.py": "3e973a997bc3578cd6362b712eba580d033302082e5cdf221348c9b6d2e03d1e",
+    "runner.py": "ad5c228ae5f44e7353bb90bb1c0e52cf333295318f625e3463e5272c5f50bd31",
+    "test_h205.py": "fad9b4772dff9c4e064a03971de35d0fe9bd80bdadcef6e762d0573a3c6a9795"
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/"
+}
