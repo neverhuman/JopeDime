@@ -366,7 +366,7 @@ fn read_task_lanes(root: &Path, binding: &ProposalBinding) -> Result<Option<Vec<
     if selected.iter().all(|(_, sha, _)| *sha == selected[0].1) {
         return Ok(None);
     }
-    let published = read_task_proposal_pointer(root);
+    let published = read_task_proposal_pointer(root)?;
     let mut lanes = Vec::new();
     for (task, sha, declared) in selected {
         let bound = published
@@ -389,9 +389,15 @@ fn read_task_lanes(root: &Path, binding: &ProposalBinding) -> Result<Option<Vec<
     Ok(Some(lanes))
 }
 
-fn read_task_proposal_pointer(root: &Path) -> Value {
-    read_json(&root.join("proposals/current-by-task.json"))
-        .unwrap_or_else(|_| json!({"schema": TASK_POINTER_SCHEMA, "tasks": {}}))
+fn read_task_proposal_pointer(root: &Path) -> Result<Value> {
+    let path = root.join("proposals/current-by-task.json");
+    match fs::symlink_metadata(&path) {
+        Ok(_) => read_json(&path),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            Ok(json!({"schema": TASK_POINTER_SCHEMA, "tasks": {}}))
+        }
+        Err(error) => Err(error).with_context(|| format!("inspect {}", path.display())),
+    }
 }
 
 fn resolve(pointer: &Path, target: &Path) -> PathBuf {
@@ -848,7 +854,7 @@ fn rebind(binding: &ProposalBinding, installed: &Installed) -> Result<Value> {
 /// two-checkpoint pointer would fail the wave build, not improve it.
 fn rebind_task(root: &Path, lane: &Lane, installed: &Installed) -> Result<Value> {
     let pointer_path = root.join("proposals/current-by-task.json");
-    let mut document = read_task_proposal_pointer(root);
+    let mut document = read_task_proposal_pointer(root)?;
     if document.get("tasks").and_then(Value::as_object).is_none() {
         document["tasks"] = json!({});
     }
