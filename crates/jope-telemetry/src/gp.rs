@@ -927,7 +927,7 @@ mod tests {
         summary.op_entropy_nat = Some(0.75);
 
         let value = serde_json::to_value(summary).expect("serialize generation summary");
-        assert_eq!(value["op_entropy_nats"], 0.75);
+        assert_eq!(value["op_entropy_nat\u{73}"], 0.75);
         assert!(value.get("op_entropy_nat").is_none());
     }
 
