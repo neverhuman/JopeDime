@@ -14845,6 +14845,16 @@
       ],
       "lanes": [],
       "scope": "H209 data-free CPU fixtures: actual optimizer/forward change, zero-reference/tie semantics, B harm and strict-gain boundary, role refusal before reads, limited reveal decoding, current-load/disk guards, independent family folds, exact native vector, pooled primary gate, create-only versioned S3 corruption refusal and unmerged-launch refusal. No real cohort or GPU opened."
+    },
+    "python:research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H205 fresh vs static data and static teacher 50-round r882 study (STATIC-DATA, STATIC-TEACHER, FRESH): data-free equal-compute 50x16 microbatch schedule, shared fresh schedule, frozen-teacher identity, H178 per-round 205-family pooled cross-fit selector, native r882 91/91 parity gate, JRB-01 fresh D4 regression admission/label validator, and thread-rule-(b) monitor controls. Research only; no product or sealed qualification."
     }
   },
   "lanes": {
