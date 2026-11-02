@@ -222,6 +222,33 @@ def test_terminal_closeout_and_missing_panel_ledger_recorded():
         assert m["local_sha256"] == m["downloaded_version_sha256"]
         assert len(m["local_sha256"]) == 64
 
+    seam = metrics["single_regression_context_milestone"]
+    assert seam["status"] == "PASS"
+    assert seam["causal_h205_claim_status"] == "NOT_QUALIFIED_NO_ADVANCE"
+    assert seam["dataset_id"] == "1db3750d4ceccab9"
+    assert (
+        seam["context_sha256"]
+        == "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45"
+    )
+    assert seam["allowed_roster_datasets"] == 1928
+    assert seam["allowed_roster_families"] == 1928
+    assert (
+        seam["pure_s3_train_csv_nq0_protocol_check"]["nq0_refused_by_header_guard"]
+        is True
+    )
+    assert seam["s1_prod_context_bundle"]["outer_test_rows_decoded"] == 0
+    assert (
+        seam["engine_consumption"]["adapter_sha256_before"]
+        != seam["engine_consumption"]["adapter_sha256_after"]
+    )
+    assert (
+        seam["engine_consumption"]["dope_sha256_before"]
+        == seam["engine_consumption"]["dope_sha256_after"]
+    )
+    for m in seam["s3_bundle_custody"]["verified_members"]:
+        assert m["local_sha256"] == m["downloaded_version_sha256"]
+        assert len(m["local_sha256"]) == 64
+
 
 def test_thread_rule_b_distinguishes_numeric_from_cuda_helper_threads():
     classified = mon.classify_thread_names(
