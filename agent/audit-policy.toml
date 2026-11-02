@@ -574,6 +574,7 @@ reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_
 name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision2-package"
 paths = [
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/readonly_io.py",
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_io.py",
 ]
 pinned_by = [
@@ -586,6 +587,7 @@ reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_
 name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision3-package"
 paths = [
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/readonly_io.py",
   "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_io.py",
 ]
 pinned_by = [
