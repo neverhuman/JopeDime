@@ -11,6 +11,15 @@ The full reports `rerun/j_ffba82986.json` and `rerun/j_27137b5fb.json` record th
 | `sha256:8d62b1c2766e42b6582260dfb31706d227fb9df1af56c32986dc9fc331a565ff` | `crates/jope-engine/manifests/opportunistic-proposals-v53.sha256` | `75bc8045972ca9204a0cafaa8213bfcc6a036752aee0629ef47cfcbf456fb78b` |
 | `sha256:05b639e645eb0fdd1b57c7206423e4a7fa445137d567797770d997434abf0252` | `crates/jope-engine/manifests/champion-import-v44.sha256` | `4977c3d84c5d86baefe89acac30d1df094d71932e59ead3fc1f2d133066bffd9` |
 
+Report refresh: `rerun/j_161a8216d.json` at source
+`161a8216daa3d257ca2e6d27a89cb725f098e385` still emits HLT-040 fingerprint
+`sha256:207ba054c98c30dd37a16ee13f9326b61ba012a008d22c55d64ace08e0ce32a8`
+for `crates/jope-engine/manifests/opportunistic-proposals-v53.json`. Its exact
+path is present in that source commit's `agent/audit-policy.toml`, and its
+current content still matches the recorded SHA-256 above. This is an observed
+audit residual: the custody rationale requires preserving the pinned bytes,
+and this note does not claim that the finding was suppressed or cleared.
+
 These files are versioned integrity evidence, not parked implementation source. The
 engine manifest registry describes `hyperion-concurrent-v30.sha256` as binding the
 v30 executable, specification and generated job manifest. It describes the v44/v53
