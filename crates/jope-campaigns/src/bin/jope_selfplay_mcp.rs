@@ -62,10 +62,10 @@ fn handle(message: &Value, socket_path: &std::path::Path) -> Option<Value> {
                     Err(json!({"code": -32601, "message": format!("unknown tool {name}")})),
                 ));
             }
-            let arguments = params
-                .get("arguments")
-                .cloned()
-                .unwrap_or_else(|| json!({}));
+            let arguments = match params.get("arguments") {
+                Some(arguments) => arguments.clone(),
+                None => json!({}),
+            };
             let result = match socket_request(socket_path, name, &arguments) {
                 Ok(value) => json!({
                     "content": [{
