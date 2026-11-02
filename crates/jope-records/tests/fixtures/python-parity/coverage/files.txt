@@ -161,6 +161,7 @@ crates/feat-math/src/emit_rs.rs
 crates/feat-math/src/evolve.rs
 crates/feat-math/src/explain.rs
 crates/feat-math/src/feasibility.rs
+crates/feat-math/src/feasibility/tests.rs
 crates/feat-math/src/folds.rs
 crates/feat-math/src/full_rust.rs
 crates/feat-math/src/genome.rs
