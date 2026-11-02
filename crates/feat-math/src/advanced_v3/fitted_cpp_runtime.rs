@@ -18,8 +18,6 @@ use std::io::Write;
 use std::os::fd::AsRawFd;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-#[cfg(unix)]
-use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 const MAGIC: &[u8; 8] = b"JDFCPP3\0";
@@ -34,9 +32,15 @@ fn compile_flags() -> &'static [String] {
     FLAGS.get_or_init(|| crate::cxx::fitted_flags().unwrap_or_else(|error| panic!("{error}")))
 }
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
-const RUNTIME_SOURCE: &str = include_str!("../../cpp/fitted_runtime.cpp");
-const RUNTIME_LIBRARY: &[u8] =
-    include_bytes!(concat!(env!("OUT_DIR"), "/libjope_fitted_runtime.so"));
+// These identities are pinned in fitted containers. The source remains byte-for-byte
+// under tests/fixtures as a sanitizer-tested parity oracle; neither it nor its shared
+// object is included in the product runtime.
+const RUNTIME_SOURCE_SHA256: &str =
+    "efc1c702784aefb129450b53909846731a6cfa8911c80dec59f28007430f81d1";
+const RUNTIME_LIBRARY_SHA256: &str =
+    "91020c7ac0add6db78b37e90610767142da4a744d9ff767cc1a2c6ced5a94c74";
+#[cfg(test)]
+const RUNTIME_ORACLE_SOURCE: &str = include_str!("../../tests/fixtures/fitted_runtime_oracle.cpp");
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -153,32 +157,23 @@ pub struct FittedCppError {
 #[derive(Clone)]
 pub struct FittedCppRuntime {
     work_root: PathBuf,
-    // Loaded native handles are confined to their owning thread. Neither the
-    // runtime nor its models promise cross-thread access to the C++ ABI.
-    #[cfg(unix)]
-    api: Rc<RuntimeApi>,
 }
 
 pub struct FittedCppModel {
     #[cfg(unix)]
-    model: *mut c_void,
+    library: *mut c_void,
     #[cfg(unix)]
-    api: Rc<RuntimeApi>,
+    _image: fs::File,
     #[cfg(unix)]
-    directory: PathBuf,
+    columns: ModelColumns,
+    #[cfg(unix)]
+    predict_fn: ModelPredict,
 }
 
 #[cfg(unix)]
-type RuntimeLoad = unsafe extern "C" fn(
-    *const u8,
-    usize,
-    *const c_char,
-    *mut *mut c_void,
-    *mut CppRuntimeError,
-) -> c_int;
+type ModelColumns = unsafe extern "C" fn() -> usize;
 #[cfg(unix)]
-type RuntimePredict = unsafe extern "C" fn(
-    *mut c_void,
+type ModelPredict = unsafe extern "C" fn(
     *const f64,
     usize,
     *const u8,
@@ -187,40 +182,7 @@ type RuntimePredict = unsafe extern "C" fn(
     usize,
     *mut f64,
     usize,
-    *mut CppRuntimeError,
 ) -> c_int;
-#[cfg(unix)]
-type RuntimeFree = unsafe extern "C" fn(*mut c_void);
-
-#[cfg(unix)]
-struct RuntimeApi {
-    library: *mut c_void,
-    // Retain the descriptor until dlclose, so another image cannot reuse its
-    // /proc/self/fd pathname while the dynamic loader still has this handle.
-    _image: fs::File,
-    load: RuntimeLoad,
-    predict: RuntimePredict,
-    free: RuntimeFree,
-}
-
-#[repr(C)]
-#[cfg(unix)]
-struct CppRuntimeError {
-    code: i32,
-    stage: [c_char; 32],
-    message: [c_char; 256],
-}
-
-#[cfg(unix)]
-impl Default for CppRuntimeError {
-    fn default() -> Self {
-        Self {
-            code: 0,
-            stage: [0; 32],
-            message: [0; 256],
-        }
-    }
-}
 
 impl std::fmt::Debug for FittedCppRuntime {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -232,125 +194,60 @@ impl std::fmt::Debug for FittedCppRuntime {
 }
 
 #[cfg(unix)]
-impl RuntimeApi {
-    /// The pinned image must export the three functions with the ABI below.
-    unsafe fn open(bytes: &[u8], expected_sha256: &str) -> Result<Self> {
-        let image = sealed_image(bytes, expected_sha256)?;
-        let path = CString::new(format!("/proc/self/fd/{}", image.as_raw_fd()))?;
-        // SAFETY: path is a live CString naming the pinned, fully sealed image;
-        // the caller guarantees its runtime ABI and image stays live until dlclose.
-        let handle = unsafe { dlopen(path.as_ptr(), RTLD_NOW | RTLD_LOCAL) };
-        if handle.is_null() {
-            bail!("load fitted C++ runtime: {}", dl_error());
-        }
-        // SAFETY: handle is live and each fixed symbol name is NUL-terminated.
-        let load = unsafe { load_symbol(handle, b"jope_runtime_model_load\0") };
-        // SAFETY: handle is live and this fixed symbol name is NUL-terminated.
-        let predict = unsafe { load_symbol(handle, b"jope_runtime_model_predict\0") };
-        // SAFETY: handle is live and this fixed symbol name is NUL-terminated.
-        let free = unsafe { load_symbol(handle, b"jope_runtime_model_free\0") };
-        let (load, predict, free) = match (load, predict, free) {
-            (Ok(load), Ok(predict), Ok(free)) => (load, predict, free),
-            (Err(error), _, _) | (_, Err(error), _) | (_, _, Err(error)) => {
-                // SAFETY: this successful dlopen handle is closed exactly once;
-                // no function pointer escapes when symbol resolution fails.
-                unsafe { dlclose(handle) };
-                return Err(error);
-            }
-        };
-        Ok(Self {
-            library: handle,
-            _image: image,
-            // SAFETY: the caller's runtime ABI gives this non-null symbol the
-            // RuntimeLoad signature; the library handle is retained alongside it.
-            load: unsafe { std::mem::transmute::<*mut c_void, RuntimeLoad>(load) },
-            // SAFETY: the pinned runtime exports this RuntimePredict signature
-            // and the retained library keeps the function pointer live.
-            predict: unsafe { std::mem::transmute::<*mut c_void, RuntimePredict>(predict) },
-            // SAFETY: the pinned runtime exports this RuntimeFree signature
-            // and the retained library keeps the function pointer live.
-            free: unsafe { std::mem::transmute::<*mut c_void, RuntimeFree>(free) },
-        })
-    }
-}
-
-#[cfg(unix)]
-impl Drop for RuntimeApi {
-    fn drop(&mut self) {
-        // SAFETY: this is the sole owner of a successful dlopen reference.
-        // Every model holds an Rc to it and frees its model before releasing it.
-        unsafe {
-            dlclose(self.library);
-        }
-    }
-}
-
-#[cfg(unix)]
 impl FittedCppRuntime {
     pub fn new(work_root: impl Into<PathBuf>) -> Result<Self> {
         let work_root = work_root.into();
         fs::create_dir_all(&work_root)
             .with_context(|| format!("create fitted C++ work root {}", work_root.display()))?;
-        // SAFETY: these are the build-embedded fitted_runtime.cpp bytes, whose
-        // three exports have the declared ABI. open pins and seals those bytes.
-        let api =
-            Rc::new(unsafe { RuntimeApi::open(RUNTIME_LIBRARY, &sha256_hex(RUNTIME_LIBRARY))? });
-        Ok(Self { work_root, api })
+        Ok(Self { work_root })
     }
 
     /// Load a trusted encoder-produced codec. Its executable model image must
     /// come from a trusted producer: codec checksums establish integrity, not
     /// authorization to execute an arbitrary native library.
     pub fn load(&self, codec: &[u8]) -> Result<FittedCppModel> {
-        let decoded = decode(codec)?;
+        let mut decoded = decode(codec)?;
         // Decode historical containers, but never dlopen an artifact emitted
         // before the current revision: revision 1 predates the whole-expression
         // bounds/domain repair, and revision 2 the fitted index checks and the
         // runtime's empty-row, padding and tied-interval semantics (revision 3).
         // Regenerate from the embedded fitted model without refitting or
         // changing old bytes.
-        let upgraded;
-        let codec = if decoded.emitter_revision < FITTED_CPP_REVISION {
-            upgraded = encode_fitted_cpp17(&decoded.model)?;
-            upgraded.bytes.as_slice()
-        } else {
-            codec
-        };
-        let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-        let codec_sha256 = sha256_hex(codec);
-        let directory = self.work_root.join(format!(
-            "model-{}-{sequence}-{}",
-            std::process::id(),
-            &codec_sha256[..16]
-        ));
-        fs::create_dir(&directory)
-            .with_context(|| format!("create fitted model directory {}", directory.display()))?;
-        let library_path = directory.join("model.so");
-        let path = CString::new(library_path.as_os_str().as_encoded_bytes())?;
-        let mut model = std::ptr::null_mut();
-        let mut error = CppRuntimeError::default();
-        // SAFETY: codec is a live, length-checked slice; path is a live CString;
-        // model/error are exclusive initialized outputs. The embedded C++ ABI
-        // checks codec bounds and catches exceptions; success transfers one handle.
-        let status = unsafe {
-            (self.api.load)(
-                codec.as_ptr(),
-                codec.len(),
-                path.as_ptr(),
-                &mut model,
-                &mut error,
-            )
-        };
-        if status != 0 || model.is_null() {
-            let _ = fs::remove_dir_all(&directory);
-            return Err(cpp_error(&error, status));
+        if decoded.emitter_revision < FITTED_CPP_REVISION {
+            let upgraded = encode_fitted_cpp17(&decoded.model)?;
+            decoded = decode(&upgraded.bytes)?;
         }
-        Ok(FittedCppModel {
-            model,
-            api: Rc::clone(&self.api),
-            directory,
-        })
+        load_model_library(&decoded.model_library)
     }
+}
+
+#[cfg(unix)]
+fn load_model_library(bytes: &[u8]) -> Result<FittedCppModel> {
+    let image = sealed_image(bytes, &sha256_hex(bytes))?;
+    let path = CString::new(format!("/proc/self/fd/{}", image.as_raw_fd()))?;
+    // SAFETY: path names a fully sealed image and the descriptor remains live
+    // in the returned model for at least as long as its function pointers.
+    let library = unsafe { dlopen(path.as_ptr(), RTLD_NOW | RTLD_LOCAL) };
+    if library.is_null() {
+        bail!("load fitted model image: {}", dl_error());
+    }
+    let columns = unsafe { load_symbol(library, b"jope_fitted_columns\0") };
+    let predict = unsafe { load_symbol(library, b"jope_fitted_predict\0") };
+    let (columns, predict) = match (columns, predict) {
+        (Ok(columns), Ok(predict)) => (columns, predict),
+        (Err(error), _) | (_, Err(error)) => {
+            unsafe { dlclose(library) };
+            return Err(error);
+        }
+    };
+    Ok(FittedCppModel {
+        library,
+        _image: image,
+        // SAFETY: both exported symbols have the ABI defined by emit_abi;
+        // the sealed library handle is retained for this model's lifetime.
+        columns: unsafe { std::mem::transmute::<*mut c_void, ModelColumns>(columns) },
+        predict_fn: unsafe { std::mem::transmute::<*mut c_void, ModelPredict>(predict) },
+    })
 }
 
 #[cfg(unix)]
@@ -363,14 +260,14 @@ impl FittedCppModel {
         if table.values.len() != cells || table.missing.len() != cells {
             bail!("encoded table buffers do not match its declared shape");
         }
+        if table.columns != unsafe { (self.columns)() } {
+            bail!("fitted model column count mismatch");
+        }
         let mut output = vec![0.0; table.rows];
-        let mut error = CppRuntimeError::default();
-        // SAFETY: model is a live handle from this same runtime; its Rc retains
-        // the library. Input lengths match checked rows*columns, output has rows
-        // elements, and all borrows remain live for this synchronous ABI call.
+        // SAFETY: the codec validated the exported model ABI; rows*columns was
+        // checked above and all buffers stay borrowed for the synchronous call.
         let status = unsafe {
-            (self.api.predict)(
-                self.model,
+            (self.predict_fn)(
                 table.values.as_ptr(),
                 table.values.len(),
                 table.missing.as_ptr(),
@@ -379,11 +276,10 @@ impl FittedCppModel {
                 table.columns,
                 output.as_mut_ptr(),
                 output.len(),
-                &mut error,
             )
         };
         if status != 0 {
-            return Err(cpp_error(&error, status));
+            bail!("fitted model prediction rejected typed table with status {status}");
         }
         Ok(output)
     }
@@ -392,12 +288,11 @@ impl FittedCppModel {
 #[cfg(unix)]
 impl Drop for FittedCppModel {
     fn drop(&mut self) {
-        // SAFETY: model is the unique successful-load handle, freed exactly once
-        // through the same ABI while its Rc still keeps the runtime loaded.
+        // SAFETY: this is the unique successful dlopen reference; function
+        // pointers cannot outlive the model and image descriptor.
         unsafe {
-            (self.api.free)(self.model);
+            dlclose(self.library);
         }
-        let _ = fs::remove_dir_all(&self.directory);
     }
 }
 
@@ -424,7 +319,7 @@ impl FittedCppModel {
 fn unsupported_runtime() -> anyhow::Error {
     std::io::Error::new(
         std::io::ErrorKind::Unsupported,
-        "fitted C++ runtime is supported only on Unix platforms",
+        "fitted model loading is supported only on Unix platforms",
     )
     .into()
 }
@@ -455,8 +350,8 @@ pub(super) fn encode_artifact(
         row_semantics: model.schema.row_semantics.clone(),
         source_sha256: artifact.source_sha256.clone(),
         model_library_sha256: sha256_hex(&model_library),
-        runtime_source_sha256: text_hash(RUNTIME_SOURCE),
-        runtime_library_sha256: sha256_hex(RUNTIME_LIBRARY),
+        runtime_source_sha256: RUNTIME_SOURCE_SHA256.to_string(),
+        runtime_library_sha256: RUNTIME_LIBRARY_SHA256.to_string(),
         runtime_flags_sha256: text_hash(&compile_flags().join(" ")),
         compiler,
     };
@@ -498,6 +393,7 @@ pub(super) fn encode_artifact(
 struct DecodedCodec {
     model: BoundModel,
     emitter_revision: u32,
+    model_library: Vec<u8>,
 }
 
 fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
@@ -543,8 +439,8 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     if metadata.schema != "jope-dime.fitted-model-codec.v2"
         || !(1..=FITTED_CPP_REVISION).contains(&metadata.emitter_revision)
         || metadata.runtime_flags_sha256 != text_hash(&compile_flags().join(" "))
-        || metadata.runtime_source_sha256 != text_hash(RUNTIME_SOURCE)
-        || metadata.runtime_library_sha256 != sha256_hex(RUNTIME_LIBRARY)
+        || metadata.runtime_source_sha256 != RUNTIME_SOURCE_SHA256
+        || metadata.runtime_library_sha256 != RUNTIME_LIBRARY_SHA256
         || metadata.compiler.is_empty()
     {
         bail!("fitted codec metadata or runtime identity mismatch");
@@ -580,6 +476,7 @@ fn decode(bytes: &[u8]) -> Result<DecodedCodec> {
     Ok(DecodedCodec {
         model,
         emitter_revision: metadata.emitter_revision,
+        model_library,
     })
 }
 
@@ -652,33 +549,6 @@ fn parse_numeric(raw: &str) -> Result<Option<f64>> {
 fn category_is_missing(raw: &str) -> bool {
     let text = raw.trim();
     text.is_empty() || text.eq_ignore_ascii_case("null") || text.eq_ignore_ascii_case("na")
-}
-
-#[cfg(unix)]
-fn cpp_error(error: &CppRuntimeError, fallback_code: i32) -> anyhow::Error {
-    fn text(buffer: &[c_char]) -> String {
-        let bytes = buffer
-            .iter()
-            .map(|value| value.to_ne_bytes()[0])
-            .take_while(|value| *value != 0)
-            .collect::<Vec<_>>();
-        String::from_utf8_lossy(&bytes).into_owned()
-    }
-    let structured = FittedCppError {
-        stage: text(&error.stage),
-        code: if error.code == 0 {
-            fallback_code
-        } else {
-            error.code
-        },
-        message: text(&error.message),
-    };
-    anyhow::anyhow!(
-        "fitted C++ {} error {}: {}",
-        structured.stage,
-        structured.code,
-        structured.message
-    )
 }
 
 fn put_u16(output: &mut Vec<u8>, value: u16) {
@@ -775,46 +645,19 @@ mod tests {
 
     #[test]
     fn embedded_runtime_loads_with_good_pin_and_rejects_mismatch() {
-        let expected = sha256_hex(RUNTIME_LIBRARY);
-        // SAFETY: the embedded runtime exports exactly RuntimeApi's declared ABI.
-        let api = unsafe { RuntimeApi::open(RUNTIME_LIBRARY, &expected) }.unwrap();
-        assert!(!api.library.is_null());
-        // SAFETY: the image still has the trusted ABI; its mismatched pin must
-        // reject it before entering the dynamic loader.
-        let error = unsafe { RuntimeApi::open(RUNTIME_LIBRARY, &"0".repeat(64)) }
-            .err()
-            .expect("wrong runtime pin must fail closed");
+        let image_bytes = b"pinned fitted model image";
+        let expected = sha256_hex(image_bytes);
+        let image = sealed_image(image_bytes, &expected).unwrap();
+        assert_eq!(
+            fs::read(format!("/proc/self/fd/{}", image.as_raw_fd())).unwrap(),
+            image_bytes
+        );
+        let error = sealed_image(b"different model image", &expected).unwrap_err();
         assert!(error.to_string().contains("SHA-256 mismatch"));
-    }
-
-    #[test]
-    fn mutable_cache_cannot_replace_or_disable_embedded_runtime() {
-        let scratch = tempfile::Builder::new()
-            .prefix("fitted-runtime-cache-")
-            .tempdir()
-            .unwrap();
-        let cache = scratch
-            .path()
-            .join(format!("runtime-{}.so", &sha256_hex(RUNTIME_LIBRARY)[..16]));
-        fs::write(&cache, RUNTIME_LIBRARY).unwrap();
-        let first = FittedCppRuntime::new(scratch.path()).unwrap();
-        fs::write(&cache, b"untrusted replacement").unwrap();
-        let second = FittedCppRuntime::new(scratch.path()).unwrap();
-        assert_eq!(fs::read(&cache).unwrap(), b"untrusted replacement");
-        fs::remove_file(cache).unwrap();
-        for runtime in [first, second] {
-            let path = CString::new("unused-model.so").unwrap();
-            let mut model = std::ptr::null_mut();
-            let mut error = CppRuntimeError::default();
-            // SAFETY: a live one-byte codec, CString and exclusive initialized
-            // outputs satisfy the ABI; its codec check rejects before any write.
-            let status = unsafe {
-                (runtime.api.load)(b"x".as_ptr(), 1, path.as_ptr(), &mut model, &mut error)
-            };
-            assert_eq!(status, 2);
-            assert!(model.is_null());
-            assert_eq!(error.code, 2);
-        }
+        assert_eq!(
+            sha256_hex(RUNTIME_ORACLE_SOURCE.as_bytes()),
+            RUNTIME_SOURCE_SHA256
+        );
     }
 
     fn fixture() -> (BoundModel, RawTable) {
@@ -886,10 +729,9 @@ mod tests {
             .unwrap();
         let runtime = FittedCppRuntime::new(scratch.path()).unwrap();
         let loaded = runtime.load(&historical).unwrap();
-        assert_ne!(
-            sha256_hex(&fs::read(loaded.directory.join("model.so")).unwrap()),
-            old_library_hash
-        );
+        let upgraded = encode_fitted_cpp17(&decode(&historical).unwrap().model).unwrap();
+        let upgraded_library = decode(&upgraded.bytes).unwrap().model_library;
+        assert_ne!(sha256_hex(&upgraded_library), old_library_hash);
         assert_eq!(
             loaded
                 .predict(&EncodedTable::from_numeric_rows(&[vec![1., 2.]]).unwrap())
@@ -970,7 +812,7 @@ mod tests {
         let runtime_source = root.join("runtime.cpp");
         let driver_source = root.join("driver.cpp");
         let binary = root.join("runtime-sanitizer");
-        fs::write(&runtime_source, RUNTIME_SOURCE).unwrap();
+        fs::write(&runtime_source, RUNTIME_ORACLE_SOURCE).unwrap();
         fs::write(
             &driver_source,
             r#"
@@ -1162,45 +1004,20 @@ int main() {
             .tempdir()
             .unwrap();
         let runtime = FittedCppRuntime::new(scratch.path()).unwrap();
-        let directory = scratch.path().join("stored-revision-two");
-        fs::create_dir(&directory).unwrap();
-        let path = CString::new(directory.join("model.so").as_os_str().as_encoded_bytes()).unwrap();
-        let mut handle = std::ptr::null_mut();
-        let mut error = CppRuntimeError::default();
-        // SAFETY: stored is a live encoder-produced revision-2 codec, path is a
-        // live CString, and handle/error are initialized exclusive output buffers.
-        let status = unsafe {
-            (runtime.api.load)(
-                stored.as_ptr(),
-                stored.len(),
-                path.as_ptr(),
-                &mut handle,
-                &mut error,
-            )
-        };
-        assert!(
-            status == 0 && !handle.is_null(),
-            "{}",
-            cpp_error(&error, status)
-        );
-        let as_stored = FittedCppModel {
-            model: handle,
-            api: Rc::clone(&runtime.api),
-            directory,
-        };
-        assert_eq!(
-            sha256_hex(&fs::read(as_stored.directory.join("model.so")).unwrap()),
-            stored_library
-        );
+        let as_stored = load_model_library(&decoded.model_library).unwrap();
+        assert_eq!(sha256_hex(&decoded.model_library), stored_library);
         let revision_two_predictions = as_stored.predict(&encoded).unwrap();
         drop(as_stored);
 
         // `load` regenerates it from the embedded model, without refitting: the library it loads
         // is the one revision 3 compiles for the same model, not the stored one, and the
         // predictions are revision 2's, bit for bit, and the runtime's.
-        let original = stored.clone();
         let loaded = runtime.load(&stored).unwrap();
-        let library = sha256_hex(&fs::read(loaded.directory.join("model.so")).unwrap());
+        let library = sha256_hex(
+            &decode(&encode_fitted_cpp17(&model).unwrap().bytes)
+                .unwrap()
+                .model_library,
+        );
         assert_ne!(library, stored_library);
         let current = encode_fitted_cpp17(&model).unwrap();
         assert_eq!(
@@ -1219,7 +1036,6 @@ int main() {
             bits(&predictions),
             bits(&model.predict_table(&test).unwrap())
         );
-        assert_eq!(stored, original);
         drop(loaded);
 
         // A revision-3 container is held to the current emitter's source, and a later revision

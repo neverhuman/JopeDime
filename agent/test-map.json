@@ -126,10 +126,10 @@
       "lane": "emitters",
       "purpose": "exercise the feature math build generator"
     },
-    "crates/feat-math/cpp/fitted_runtime.cpp": {
+    "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp": {
       "command": "just emitters-check",
       "lane": "emitters",
-      "purpose": "compile and parity-check the generated C++ runtime"
+      "purpose": "sanitizer-check the frozen fitted-runtime ABI parity oracle"
     },
     "crates/feat-math/examples/emit.rs": {
       "command": "just emitters-check",

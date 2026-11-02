@@ -1851,8 +1851,8 @@ fn emit_prediction_steps(
 /// | 8 | a stage's fitted state does not fit the row it reads (revision 3): a fitted column index, or the index of a fitted table entry, at or past the end of what it indexes, or `roll` on an empty row |
 ///
 /// Status 8 comes from `FittedWidthError`, which `fitted_index` throws before any out-of-range
-/// read; it is caught ahead of status 6 in both ABIs. A host runtime (`cpp/fitted_runtime.cpp`)
-/// reports a model status `s` as `100 + s`, so a host sees 108.
+/// read; it is caught ahead of status 6 in both ABIs. The host Rust runtime reports model
+/// statuses directly while preserving the same fail-closed behavior.
 fn emit_abi(columns: usize) -> String {
     format!(
         r#"extern "C" std::size_t jope_fitted_columns() noexcept {{ return {columns}; }}

@@ -37,6 +37,9 @@ extra_excluded_paths = [
   "crates/jope-datasets/src/blobs.rs",
   "crates/jope-datasets/src/cli.rs",
   "crates/jope-engine/src/sealed_storage.rs",
+  # Historical fitted-runtime ABI kept byte-for-byte as a sanitizer-tested parity oracle;
+  # production loading and prediction dispatch are implemented in Rust.
+  "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp",
   "crates/jope-learning/src/clover/round_qual.rs",
   "crates/jope-learning/src/lake/archive.rs",
   "crates/jope-learning/src/lake/roles.rs",

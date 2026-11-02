@@ -14,8 +14,8 @@ default = ["fitted-cpp"]
 gpr-scratch-reuse = []
 # Explicit local CUDA qualification only; never selected by standard CI.
 cuda-parity-tests = []
-# The fitted C++ runtime: build.rs compiles cpp/fitted_runtime.cpp with g++ into a shared library
-# that is embedded and loaded with memfd + dlopen. Default-on so every existing build keeps it.
+# Fitted C++17 model artifacts, loaded and dispatched by the Rust host runtime. Default-on so
+# existing fitted-model APIs remain available.
 # The `jopedime` appliance must not carry C++ (deploy/appliance/AMENDMENTS.md A1): crates in its
 # dependency graph (jope-runtime, jope-policy) take feat-math with `default-features = false`.
 fitted-cpp = []
