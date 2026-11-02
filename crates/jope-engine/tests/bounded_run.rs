@@ -35,6 +35,10 @@ include!("bounded_run/plan.rs");
 include!("bounded_run/status.rs");
 include!("bounded_run/cli.rs");
 include!("bounded_run/rendezvous.rs");
+#[path = "bounded_run/rendezvous/admission_tests.rs"]
+mod rendezvous_admission_tests;
+#[path = "bounded_run/rendezvous/artifact_exchange_tests.rs"]
+mod rendezvous_artifact_exchange_tests;
 include!("bounded_run/socket_rendezvous.rs");
 include!("bounded_run/window.rs");
 include!("bounded_run/training_partition.rs");
