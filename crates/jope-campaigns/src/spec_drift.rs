@@ -264,7 +264,7 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
         None,
     ),
     (
-        "crates/jope-campaigns/src/test_adaptive/timeseries42.rs",
+        "crates/jope-campaigns/src/test_adaptive/timeseries42/scq_jobs.rs",
         "scq_spec",
         None,
     ),
