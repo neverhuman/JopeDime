@@ -47,7 +47,7 @@
     "LION_LR3"
   ],
   "total_updates": 1800,
-  "parent_commit": "3978dc8ef0f3f1393980245f06c0b2c20a74df31",
+  "parent_commit": "cf1e5788c31b835c9f8a496b7ff37097c4e36671",
   "inputs": {
     "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
     "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
@@ -57,7 +57,7 @@
     "/home/ubuntu/jope-data/h232/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
   },
   "parent_sources": {
-    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
     "research/h156/run.py": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c",
     "research/h156/analysis.py": "6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0",
     "research/h148/analysis.py": "912201520712f406252aec5129f4532748571d6911a526be89d1b3a01bcc205a",
@@ -68,7 +68,8 @@
     "research/flywheel_selfplay/h170_onecycle/runner.py": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
     "research/flywheel_selfplay/h170_onecycle/treatment.py": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
     "research/flywheel_selfplay/h170_onecycle/analysis.py": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
-    "research/flywheel_selfplay/h170_onecycle/monitor.py": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df"
+    "research/flywheel_selfplay/h170_onecycle/monitor.py": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
+    "research/flywheel_selfplay/runtime_audit.py": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4"
   },
   "source_sha256": {
     "test_h232.py": "021f2392e8aaa4984cef57551915c6228dbf80592d7bb656c22abaf26ec08ef5",
@@ -76,11 +77,19 @@
     "schedules.json": "ef48a1133796f47be3b78d4f1a03569b643114e0a2d13fa49be5c268fd563cb3",
     "analysis.py": "9643a2fcef4d5cc4fdc7181ff6a15b806914d4e981fe9dc63bb398e2d8842cf5",
     "treatment.py": "a2aa29abe68f49ea2d0bf53df737c68a64e6b523f425159b0f46949241415d4f",
-    "PREREG.md": "edbe879edd322aeeb1b9f49d2941e31b3137fa6be0a3f74aae7da794e611796e",
+    "PREREG.md": "dbea51cfce7655258a746445f364f73c8adce7482a7457ff83f472cd00d6a977",
     "monitor.py": "5de09684efe35e2399fcd2a15208957f9103fb79cb754510c10b69a6a1bf4ea8",
     "fold_manifest.json": "fb66fff4361d75ddedb6be072c7d803eaa516b1b97d27609292359a217f3af09",
     "runner.py": "1f51e89f6538d29252cfa2823a5e2f776ee7ca60344771eeb0b278b9e3ce99dc"
   },
   "host": "xbabe1 CPU (taskset 4 cores, nice 19, 1 math thread)",
-  "compute_stop": "2026-11-03T04:00:00Z"
+  "compute_stop": "2026-11-03T04:00:00Z",
+  "amendments": [
+    {
+      "id": "A1",
+      "utc": "2026-11-02T21:35:33Z",
+      "pre_outcome": true,
+      "change": "parent pins: h146 runtime.py re-pinned to main (#2006 moved Audit, identical body) and runtime_audit.py added; manifest only"
+    }
+  ]
 }
