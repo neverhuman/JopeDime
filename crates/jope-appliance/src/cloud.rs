@@ -202,19 +202,27 @@ pub fn account_label() -> String {
 }
 impl Client {
     pub fn new(workspace: &str, token: Option<String>, gateway: Option<Gateway>) -> Result<Self> {
-        let tls = ureq::tls::TlsConfig::builder()
-            .unversioned_rustls_crypto_provider(Arc::new(
-                rustls::crypto::aws_lc_rs::default_provider(),
-            ))
-            .build();
-        let config = ureq::Agent::config_builder()
-            .tls_config(tls)
+        let workspace = origin(workspace)?;
+        #[cfg(not(feature = "cloud-tls"))]
+        anyhow::ensure!(
+            workspace.starts_with("http://"),
+            "this jopedime build has no TLS; HTTPS workspaces need the cloud-tls feature"
+        );
+        let builder = ureq::Agent::config_builder();
+        #[cfg(feature = "cloud-tls")]
+        let builder = builder.tls_config(
+            ureq::tls::TlsConfig::builder()
+                .unversioned_rustls_crypto_provider(Arc::new(
+                    rustls::crypto::aws_lc_rs::default_provider(),
+                ))
+                .build(),
+        );
+        let config = builder
             .proxy(None)
             .max_redirects(0)
             .http_status_as_error(false)
             .timeout_global(Some(Duration::from_secs(20)))
             .build();
-        let workspace = origin(workspace)?;
         if let Some(gateway) = &gateway {
             anyhow::ensure!(
                 origin(&gateway.origin)? == workspace,
@@ -1317,10 +1325,10 @@ mod tests {
     #[test]
     fn basic_gateway_and_account_credentials_are_distinct_sensitive_headers() {
         let c = Client::new(
-            "https://example.test",
+            "http://127.0.0.1:9",
             Some(FIXTURE_ACCOUNT_TOKEN.into()),
             Some(Gateway {
-                origin: "https://example.test".into(),
+                origin: "http://127.0.0.1:9".into(),
                 username: FIXTURE_GATEWAY_USER.into(),
                 password: FIXTURE_GATEWAY_PASS.into(),
             }),
@@ -1336,6 +1344,16 @@ mod tests {
             request.headers()["x-veox-api-token"]
         );
         assert_eq!(basic_auth("u", "p"), "Basic dTpw");
+    }
+
+    #[cfg(not(feature = "cloud-tls"))]
+    #[test]
+    fn https_workspace_needs_a_tls_build() {
+        let error = Client::new("https://example.test", None, None)
+            .err()
+            .unwrap();
+        assert!(error.to_string().contains("cloud-tls"), "{error}");
+        assert!(Client::new("http://127.0.0.1:9", None, None).is_ok());
     }
 
     #[test]
