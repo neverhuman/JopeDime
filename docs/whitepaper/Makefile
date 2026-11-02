@@ -33,5 +33,6 @@ figs:
 	python3 figures/scripts/make_program_gain_distribution.py --rolling-admissions
 	python3 figures/scripts/make_program_gain_distribution.py --selection-changes
 	python3 figures/scripts/make_program_gain_distribution.py --retained-utility-lift
+	python3 figures/scripts/make_program_gain_distribution.py --admission-outcomes
 clean:
 	latexmk -C

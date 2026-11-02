@@ -2,7 +2,7 @@
   "schema": "whitepaper.rolling-admissions-figure/v1",
   "input_csv_sha256": "5da2c00a93c91088760a38d83bbf9aaf2848e194947eca3e1623aba0b6d2ff39",
   "source_receipt_sha256": "911174e044892c913abdb864c67646deeb0b3d571a83bdc0a24b7a5dace6af21",
-  "generator_sha256": "dea8a6ca573fbfa7b3087713be087c3b27d84ee3da531e2a663f4d105ef0cbfe",
+  "generator_sha256": "a61c33d1fb43452c5220da736628092945da8a78085d3073bacb369c7516bd8b",
   "figure_sha256": "56874289b19ce36ae6625feccfcb909677589506ee6ec14200f5bea2f4c8620a",
   "rows": 1000,
   "round_window": [
