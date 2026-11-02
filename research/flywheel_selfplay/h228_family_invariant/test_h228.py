@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import math
+import subprocess
 from pathlib import Path
 import types
 import numpy as np
@@ -770,5 +771,8 @@ def test_manifest_and_prereg_artifacts_integrity():
         assert actual == expected, f"hash mismatch for {rel}"
     repo_root = HERE.parents[2]
     for rel, expected in manifest["parent_sources"].items():
-        actual = hashlib.sha256((repo_root / rel).read_bytes()).hexdigest()
+        raw = subprocess.check_output(
+            ["git", "-C", str(repo_root), "show", f"{manifest['source_base']}:{rel}"]
+        )
+        actual = hashlib.sha256(raw).hexdigest()
         assert actual == expected, f"parent_sources hash mismatch for {rel}"
