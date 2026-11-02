@@ -4397,6 +4397,16 @@
       "lanes": [],
       "scope": "REL-07 signer-compatible gate-receipt adapter controls; exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, artifact SHA256 binding, and missing/duplicate/malformed gate refusals."
     },
+    "python:deploy/qualification/v1.0/test_qualification_receipt_draft.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 non-signable receipt-draft schema and disclosure controls; keeps historical/current gate evidence separate, preserves raw M3 FAIL plus v1.0.0 waiver, and refuses qualification while final controller, A5 and Q1 remain incomplete."
+    },
     "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
       "discovery": {
         "kind": "python-family"

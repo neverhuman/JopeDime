@@ -1,0 +1,635 @@
+{
+  "$schema": "./qualification_receipt.draft.schema.json",
+  "schema": "jope.rel07.qualification-receipt-draft/v2",
+  "state": "DRAFT_NOT_QUALIFIED_NOT_SIGNER_COMPATIBLE",
+  "generated_at_utc": "2026-11-02T14:25:00Z",
+  "release_version": "v1.0.0",
+  "candidate": {
+    "generation": "RC4",
+    "scope": "internal-restricted",
+    "runtime_source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+    "runtime_tree_sha": "2e4324f0bb387ece970664eac193a7ef6a8eb05c",
+    "candidate_manifest": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/res08-t1955/candidate-ccaf14b210b3/rc4-manifest.json",
+      "sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff"
+    },
+    "artifacts": [
+      {
+        "id": "full-linux-x86_64",
+        "sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+        "bytes": 293673722,
+        "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+        "signature_status": "PASS",
+        "seal_status": "PASS"
+      },
+      {
+        "id": "full-darwin-arm64",
+        "sha256": "e78bef5a71952df03f705fc18f2704b668ab4bd05f7e5ebde8ef996c8c317097",
+        "bytes": 290728940,
+        "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+        "signature_status": "PASS",
+        "seal_status": "PASS"
+      },
+      {
+        "id": "fused-cpu-linux-x86_64",
+        "sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+        "bytes": 25791221,
+        "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+        "signature_status": "PASS",
+        "seal_status": "PASS"
+      }
+    ]
+  },
+  "qualification": {
+    "status": "NOT_QUALIFIED",
+    "release_qualified": false,
+    "final_controller_status": "INCOMPLETE_PENDING_A5_AND_FINAL_REPLAY",
+    "required_gate_count": 28,
+    "owner_release_approval": null,
+    "aggregate_signature": null
+  },
+  "controller_snapshot": {
+    "attempt_path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3",
+    "status_table": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+      "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+    },
+    "execution": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/execution.json",
+      "sha256": "a93fbe0bc48f10019fc6cef13b2b10627c20dac4caea07c75f268e112f14844f"
+    },
+    "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+    "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+    "outcomes": {
+      "PASS": 25,
+      "FAIL": 2,
+      "BLOCKED": 1,
+      "NOT_RUN": 0
+    },
+    "qualification_use": "HISTORICAL_SNAPSHOT_ONLY_NOT_PROMOTED_OR_COMBINED"
+  },
+  "current_evidence": {
+    "observations": [
+      {
+        "gate": "M1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/M1/result.json",
+            "sha256": "6b5597621a252a57054b3d21bfce5f8ea63e52f67788d44494650e847f9ae577"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "M4",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/M4/result.json",
+            "sha256": "9871145edf63ef2616cc79cca49653372703ef98cba65eda0f9b758d1ca27e27"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "M5",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/M5/result.json",
+            "sha256": "da5720bc66dcaefdecee61ba56022b7dbd154d5a49227132be76d7e6db58750f"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "S1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S1/result.json",
+            "sha256": "5f95769746c5ce006c86a846fc2ec4435101f61829a7ba9ea3f708653619a866"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "S2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S2/result.json",
+            "sha256": "8de737436e9a4cc46ec82dfb883a2a402230cfd6035881cddb276937412cf374"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "S3",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S3/result.json",
+            "sha256": "59f63a4adf1a245b55b788c7fbc808d2c814e7526da396426264d992bf58436b"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "S4",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/S4/result.json",
+            "sha256": "bb037e800ecefa2b1ee6a313bdc87d5863a9f869d6ac68e577401f4b6ba92e6b"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "R1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R1/result.json",
+            "sha256": "a5186ea95249c2f041a5f5dacda3b5a556e7e06081a0f4352f325cf6408a3d3a"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "R2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R2/result.json",
+            "sha256": "3e315678c968325d4510509e2accee2b155065e287b19e1655ffb6267746dccb"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "R3",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R3/result.json",
+            "sha256": "b7ec87ea23425ebccb90c830571c3b0ed61e57b82828d7c525b51f79dfdc1fa5"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "R4",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/R4/result.json",
+            "sha256": "ecdfc4c6697ea4a114fad8664b2f4e7b0b7013a791bd121444bdc9ffd7b1ba86"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "A1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A1/result.json",
+            "sha256": "db850fae911062d414356b8180fc5b1618fbb51fb71b5895b86b11b988698114"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "A2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A2/result.json",
+            "sha256": "fdec2249680db971a9539154c5a6fa7296ff0b0ff01907ef32562ecd7a7d460b"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "A3",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A3/result.json",
+            "sha256": "a15e1a7860162454ef08d6723cbae6fc4d0c69509e2b9ce51505b891883ec5bb"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "A4",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/A4/result.json",
+            "sha256": "121baa9d19444fd7bc019b14a1052515e956592a42361b0bf511dde5c4f7b976"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "E1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/E1/result.json",
+            "sha256": "e227f6399ce516d933ece520f3195096e26ad22785cf1da19fe0d0223c5d36a8"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "E2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/E2/result.json",
+            "sha256": "8fe4a63f989340d18bf66c25f75f273d6f0715cff9071c175ee886b517bcb6f5"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "E3",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/E3/result.json",
+            "sha256": "9f7eefcf5fc9aff53fbef29cb4520185ff6f65d29dc0884fe37da7c715a2d2d5"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "U1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/U1/result.json",
+            "sha256": "f34db730219f26bd8e09518372bd9f7fdc65cbc2ee1bb1701ea5a88580637cb7"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "U2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/U2/result.json",
+            "sha256": "1d87cb1a20adc5fb8fabc33527ffe41c6c5b72c1b6cbe0c69bf8fda2f0f9d43f"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "T1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/T1/result.json",
+            "sha256": "7147e92b2e7d1300c88f2899835641827cbd50431ccc222036b50b91761bded5"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "T2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/T2/result.json",
+            "sha256": "19995b3e983a4eeb5791550a1f584e75589e50f2089d0130cac041c5ce6dbbab"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "T3",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/T3/result.json",
+            "sha256": "f4c875383e7f126482fe1383b4add20825fbe90277a4b61275a552e46075682a"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "D1",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/D1/result.json",
+            "sha256": "030857627345f0ea00bfb971a445c693b36799204220c11d567b496985b35e9c"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "D2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PASS in prior exact-RC4 controller snapshot only; not promoted into the final assembled receipt.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/D2/result.json",
+            "sha256": "579d562d92a2c7b79c66e2b4289ed16613286b42649eca252b6d85e5f0ca27e7"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/pub-t0612-28-v3/status_table.json",
+            "sha256": "deb05384ff9fad84288e4ca3382c0919e14816b0e6258ee4e9a7230453685ce2"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "M2",
+        "observed_status": "PASS",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "Fresh standalone exact-RC4 M2 provider PASS is recorded separately; immutable candidate-inputs-v5 binds D1/M2/M3/M5 and reserves a fresh final-controller report path. The final controller must execute M2 again at that path; do not promote or reuse the standalone report.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/dsc01-t0415-m2-20261102T113225Z/M2/result.json",
+            "sha256": "557605e2eb1067f79192356afffdeae0ab7e0064a66da51d1ff8954927a3e66d"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/dsc01-t0415-m2-20261102T113225Z/M2-HANDOFF.json",
+            "sha256": "8093acdc6bb3ef7e886e34a3c14e4c8fbc8d6b479d36d4ac8d84a71526113cb6"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/candidate-inputs-v5.json",
+            "sha256": "9736afbf396c4f2ab4a3c8f59921c5e9ac1ab0e7dc98a98be7539519a635eeec"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/candidate-inputs-v5-handoff.json",
+            "sha256": "c4bfbcd3a243fab4ae9a097ca37a2a42a9d119560df17688e2908b524787476b"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/dsc01-t0415-m2-20261102T113225Z/M2-FINAL-CONTROLLER-BINDING.json",
+            "sha256": "f6257ecc261739aab8d3d439831dbee32bcd97e68fa8e0b602b4e0d359b86d20"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "M3",
+        "observed_status": "FAIL",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "Raw FAIL retained. Separate v1.0.0-only disposition WAIVED_V1_0_0 under M3-WAIVER-V1.0.0-T1955. The post-fix frozen-input preflight verifies inputs only, not qualification; final same-controller run must retain its own raw result and validate the ruling guard.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/RAW-CANDIDATE-M3.json",
+            "sha256": "99ee6a670f97d49992a7e5325931657c1eee27fb88d310bb8153d2e08e9606e6"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/WAIVER-GUARD-SUMMARY.json",
+            "sha256": "63107cb1d641b78931543750941f641c567b4ced4f6baf5a8c16bc0310956b57"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t1955-a5-rc4/M3-DISPOSITION.json",
+            "sha256": "986a0ca71c6d687398b013d9a0c16543a081b4990e261da08ab2e039eb57d780"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
+            "sha256": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/m3-full-inputs-v2.json",
+            "sha256": "195ed8251fe6edbc1658998f9df03b9a0ccb2b4d9376baeb951cf84df6bb2c51"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t0445-controller-support/M3-FROZEN-INPUTS-PREFLIGHT.json",
+            "sha256": "1fa35225c699e6852cbc7f7eaa64172b548879eb2a9ecbedcff98ce34076bc7d"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      },
+      {
+        "gate": "A5",
+        "observed_status": "PENDING",
+        "final_controller_status": "NOT_RUN",
+        "disposition": "PENDING: candidate-inputs-v5 binds D1/M2/M3/M5 but correctly omits A5. The last formal three-client attempt (v9) was incomplete and excluded; v12 passed a no-client preflight only, then stopped because Gemini effective config was stale. The t1425 ruling authorizes RNK11 v13 with isolated per-run HOME/XDG config; no v13 capture or accepted provider manifest/semantic receipts exist yet.",
+        "evidence": [
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t0445c/CLIENT-RESULTS.json",
+            "sha256": "00787ec03288d8a252d50504006d50c46b859021b361c3c8772c0f2742ea3ffd"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/candidate-inputs-v5.json",
+            "sha256": "9736afbf396c4f2ab4a3c8f59921c5e9ac1ab0e7dc98a98be7539519a635eeec"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/inputs-t0545/candidate-inputs-v5-handoff.json",
+            "sha256": "c4bfbcd3a243fab4ae9a097ca37a2a42a9d119560df17688e2908b524787476b"
+          },
+          {
+            "path": "/home/ubuntu/jope_plan/evidence/REL-07/rnk11-t1525-rehearsal/bat02-a5-capture-v12-PREFLIGHT-RETRY.json",
+            "sha256": "178fb92759cf304861147c2cb9787bf4f68d49dba8caacb6699a465a2c738ee1"
+          }
+        ],
+        "qualification_use": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"
+      }
+    ],
+    "final_controller_rows_promoted": 0
+  },
+  "blockers": {
+    "A5": {
+      "status": "PENDING",
+      "manifest": null,
+      "manifest_sha256": null,
+      "reason": "No accepted complete three-client provider manifest or semantic receipts. Candidate-inputs-v5 exists and correctly omits A5 until that manifest is produced. BAT02 v12 stopped at no-client preflight because Gemini effective configuration was stale; t1425 authorizes RNK11 v13 with isolated per-run HOME/XDG config, after which BAT02 must preflight and capture.",
+      "latest_attempt": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t0445c/CLIENT-RESULTS.json",
+        "sha256": "00787ec03288d8a252d50504006d50c46b859021b361c3c8772c0f2742ea3ffd"
+      }
+    },
+    "final_controller": "Candidate-inputs-v5 binds D1/M2/M3/M5, with the M2 final report path reserved and absent. M2 must rerun at that path and M3 must emit a same-controller raw result with the ruling guard. Run one completed versioned provider-input execution with all 28 rows bound to the same RC4 signed bytes and fused-cpu D2; currently blocked by missing accepted A5 manifest/semantic receipts.",
+    "Q1": "QLT-04 runtime binding is READY (receipt SHA 1190a5135e88c461910057075991b396457bb94dd9342985f520ab75813f18e3); QLT-04 is armed and waiting on the current JRB claim. No Q1 outcome or owner-recorded guidance default decision is present here."
+  },
+  "owner_decisions": {
+    "M3": {
+      "raw_status": "FAIL",
+      "disposition": "WAIVED_V1_0_0",
+      "ruling_id": "M3-WAIVER-V1.0.0-T1955",
+      "expires_at": "v1.0.1",
+      "raw_result": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/RAW-CANDIDATE-M3.json",
+        "sha256": "99ee6a670f97d49992a7e5325931657c1eee27fb88d310bb8153d2e08e9606e6"
+      },
+      "waiver_guard": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/hwv-t1955-rc4-m3/WAIVER-GUARD-SUMMARY.json",
+        "sha256": "63107cb1d641b78931543750941f641c567b4ced4f6baf5a8c16bc0310956b57"
+      },
+      "disposition_record": {
+        "path": "/home/ubuntu/jope_plan/evidence/REL-07/bat02-t1955-a5-rc4/M3-DISPOSITION.json",
+        "sha256": "986a0ca71c6d687398b013d9a0c16543a081b4990e261da08ab2e039eb57d780"
+      },
+      "ruling": {
+        "path": "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
+        "sha256": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf"
+      },
+      "measured_delta_pp": {
+        "overall": 2.30015625,
+        "non_exploring": 0.052083333333333336,
+        "exploring": 2.7908415841584153
+      },
+      "future_tolerance_pp": 2.0,
+      "future_tolerance_changed": false
+    },
+    "Q1": "PENDING_OWNER_RECORD: no QLT-04 Q1 outcome or owner-recorded guidance default decision is included in this packet."
+  },
+  "replacement_condition": "Replace this draft only with the maintained provenance-bearing assembler output after a single completed candidate-bound final controller run. Bind all 28 gate results to the same signed RC4 candidate and fused-cpu D2 bytes, record raw M3 FAIL plus WAIVED_V1_0_0 only under the ruling guard, bind a valid A5 provider manifest, and attach the separate Q1/default owner decision."
+}
