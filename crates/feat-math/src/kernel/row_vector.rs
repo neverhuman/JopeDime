@@ -3,6 +3,7 @@
 //! row stages followed by the existing ridge learner, with train-only fit.
 use super::codec::{Reader, Writer, MAX_BYTES};
 use super::goertzel;
+use super::ordered_axis;
 use super::savgol;
 use super::wire_v2::{VersionError, VersionResult, MAGIC_V2};
 use super::{Error, Result};
@@ -28,6 +29,7 @@ const GOERTZEL_EMITTER_IDENTITY: &str = "feat-math.feature-row.recipes.v2+wire58
 mod model;
 mod program;
 
+pub(crate) use model::check_stage_wires;
 pub use model::Model;
 use model::{
     goertzel_config, goertzel_stages, grid_frequency, savgol_stages, transform, validate_rows,

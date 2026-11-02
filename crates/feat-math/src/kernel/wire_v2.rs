@@ -16,6 +16,7 @@ use super::finite_difference::{
 };
 use super::ordered_axis::{FoldBoundary, TaskMode};
 use super::Program;
+use super::{cumulative_integration, realized_path_stats, row_vector, timescale_nabla};
 use crate::{GenomeIr, Model};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -226,9 +227,8 @@ fn check_reservations(rows: &[ReservationRef]) -> VersionResult<()> {
 }
 
 /// Reservation-only v2 program. It carries no executable AST or fit state.
-#[derive(Clone, Debug, PartialEq, Eq)]
 mod model;
 mod program;
 
 pub use model::{ReservedModel, VersionedModel};
-pub use program::{export_report, VersionedProgram};
+pub use program::{export_report, ReservedProgram, VersionedProgram};

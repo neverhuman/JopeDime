@@ -11,35 +11,35 @@ pub enum ArtifactDomain {
 pub type Domain = ArtifactDomain;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct OwnId {
+pub(crate) struct OwnId {
     formula: String,
-    schema_id: String,
+    pub(crate) schema_id: String,
     payload_byte_len: u64,
     sha256: String,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct ArtifactEnvelope {
-    envelope_schema: String,
-    domain: ArtifactDomain,
-    schema_id: String,
-    own_id: OwnId,
-    payload: ArtifactManifestV3,
+pub(crate) struct ArtifactEnvelope {
+    pub(crate) envelope_schema: String,
+    pub(crate) domain: ArtifactDomain,
+    pub(crate) schema_id: String,
+    pub(crate) own_id: OwnId,
+    pub(crate) payload: ArtifactManifestV3,
 }
 
 // This closed schema has only ASCII field names, safe positive integers, strings,
 // booleans and arrays. Sorted serde_json Value keys therefore have JCS UTF-16 order.
-fn canonical(value: &impl Serialize) -> Result<Vec<u8>> {
+pub(crate) fn canonical(value: &impl Serialize) -> Result<Vec<u8>> {
     Ok(serde_json::to_vec(&serde_json::to_value(value)?)?)
 }
-fn domain_hash(payload: &[u8]) -> String {
+pub(crate) fn domain_hash(payload: &[u8]) -> String {
     let mut bytes = SCHEMA.as_bytes().to_vec();
     bytes.push(0);
     bytes.extend_from_slice(&(payload.len() as u64).to_be_bytes());
     bytes.extend_from_slice(payload);
     sha256(&bytes)
 }
-fn check_digest(d: &str) -> Result<()> {
+pub(crate) fn check_digest(d: &str) -> Result<()> {
     ensure!(
         d.len() == 64
             && d.bytes()
@@ -48,7 +48,7 @@ fn check_digest(d: &str) -> Result<()> {
     );
     Ok(())
 }
-fn safe_relative(path: &str) -> Result<()> {
+pub(crate) fn safe_relative(path: &str) -> Result<()> {
     ensure!(
         !path.is_empty()
             && !path.contains('\\')

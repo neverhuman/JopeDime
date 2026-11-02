@@ -26,8 +26,8 @@ pub(crate) fn exp(x: f64) -> f64 {
     );
     scale.mul_add(tmp, scale)
 }
-const SN3: f64 = f64::from_bits(0xbfc5555555555515);
-const SN5: f64 = f64::from_bits(0x3f811110e829872f);
-const CS2: f64 = f64::from_bits(0x3fe0000000000000);
-const CS4: f64 = f64::from_bits(0xbfa5555555555535);
-const CS6: f64 = f64::from_bits(0x3f56c16bedd9e239);
+pub(super) const SN3: f64 = f64::from_bits(0xbfc5555555555515);
+pub(super) const SN5: f64 = f64::from_bits(0x3f811110e829872f);
+pub(super) const CS2: f64 = f64::from_bits(0x3fe0000000000000);
+pub(super) const CS4: f64 = f64::from_bits(0xbfa5555555555535);
+pub(super) const CS6: f64 = f64::from_bits(0x3f56c16bedd9e239);

@@ -1,8 +1,8 @@
 use super::{
     ArmWeight, CountRule, DomainRow, EditSpec, ExprPool, ExprStages, ExpressionArm,
-    ExpressionArmWeight, JitterVersion, KernelMutationArm, Limit, Negation, PipelineArm,
-    PipelineArmWeight, PipelineOperators, SearchParamDomain, SearchProfile, SimplifyFallback,
-    SpliceKind, SpliceSpec,
+    ExpressionArmWeight, JitterVersion, KernelMutationArm, Limit, MaxTransforms, Negation,
+    PipelineArm, PipelineArmWeight, PipelineOperators, SearchParamDomain, SearchProfile,
+    SimplifyFallback, SpliceKind, SpliceSpec, TextChoice,
 };
 use std::collections::BTreeMap;
 

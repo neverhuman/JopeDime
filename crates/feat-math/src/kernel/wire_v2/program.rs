@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ReservedProgram {
     reservations: Vec<ReservationRef>,
 }
@@ -29,7 +30,7 @@ impl ReservedProgram {
         Ok(writer.finish())
     }
 
-    fn from_bytes(bytes: &[u8]) -> VersionResult<Self> {
+    pub(super) fn from_bytes(bytes: &[u8]) -> VersionResult<Self> {
         let mut reader = Reader::new(bytes)?;
         if reader.take(MAGIC_V2.len())? != MAGIC_V2 {
             return Err(VersionError::UnsupportedVersion(

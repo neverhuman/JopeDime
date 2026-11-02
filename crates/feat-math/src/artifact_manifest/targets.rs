@@ -106,7 +106,7 @@ impl Target {
         }
     }
 }
-fn validate_requests(requested: &[Target]) -> Result<()> {
+pub(crate) fn validate_requests(requested: &[Target]) -> Result<()> {
     ensure!(!requested.is_empty(), "empty requested target set");
     ensure!(
         requested.iter().collect::<BTreeSet<_>>().len() == requested.len(),
