@@ -4280,6 +4280,38 @@
         "reason": "H232 preregistered CPU-only diagnostic: Lion optimizer (Chen et al. 2023; sign of interpolated momentum, decoupled weight decay) for the r882 adapter continuation versus the exact merged H170 CTRL AdamW recipe at the same 40-update budget (LION lr 1e-5 primary, LION_LR3 lr 3.33e-5 secondary, Holm m=2); merged H170 cross-fit machinery, 205 families, 5 family folds, seeds 232101-232103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
       }
     },
+    "python:research/flywheel_selfplay/h234_lambdaloss/analysis.py": {
+      "bytes": 9938,
+      "sha256": "7ea925baece47d79db8e57b1f1888e8c6fa3eac638012cdf380326bdee5aa0e1",
+      "classification": {
+        "role": "research",
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h234_lambdaloss/monitor.py": {
+      "bytes": 7643,
+      "sha256": "62947186e8e120eac841343ef0e05234a934b84eee90279306566f18d3a7ce5a",
+      "classification": {
+        "role": "research",
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h234_lambdaloss/runner.py": {
+      "bytes": 29582,
+      "sha256": "573ffae88dd282a381a9800dab11e725c95a6c2200dad1396785e9f44c3fa289",
+      "classification": {
+        "role": "research",
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h234_lambdaloss/treatment.py": {
+      "bytes": 6194,
+      "sha256": "e4e8aab640e2d7c6118f60809c601a1876ff2d836dc2c30b6c294f4ce77777e3",
+      "classification": {
+        "role": "research",
+        "reason": "H234 preregistered CPU-only diagnostic: LambdaLoss NDCG-weighted pairwise loss (LambdaRank weights) for the r882 adapter continuation versus the inherited CTRL loss (which already contains a ListNet KL term), identical H170 CTRL AdamW (LAMBDAMIX = CTRL + 0.5 Lambda primary, LAMBDA secondary, Holm m=2); merged H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 234101-234103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset 4 cores, nice 19; adapter only on a read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {

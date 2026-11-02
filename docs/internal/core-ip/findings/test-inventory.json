@@ -437,6 +437,10 @@
       "reason": "Owner-requested H232 data-free controls for the Lion vs AdamW r882 adapter continuation (arm settings, Lion reference update, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor limits and load-pause hysteresis, launch binding).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h234_lambdaloss/test_h234.py": {
+      "reason": "Owner-requested H234 data-free controls for the LambdaLoss vs CTRL-loss r882 adapter continuation (identical AdamW, LambdaLoss reference equality, loss composition, CTRL-already-ListNet pin, per-seed folds, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor limits and pause hysteresis).",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [
