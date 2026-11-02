@@ -49,12 +49,50 @@ pub(super) fn string_at<'a>(value: &'a Value, path: &[&str]) -> Option<&'a str> 
 pub(super) fn u64_at(value: &Value, path: &[&str]) -> Option<u64> {
     path.iter()
         .try_fold(value, |current, key| current.get(*key))
-        .and_then(|value| {
-            value
-                .as_u64()
-                .or_else(|| value.as_i64().and_then(|number| u64::try_from(number).ok()))
-                .or_else(|| value.as_f64().map(|number| number.max(0.0) as u64))
-        })
+        .and_then(|value| unsigned_number_state(value).into_u64())
+}
+
+enum UnsignedNumberState {
+    Unsigned(u64),
+    Signed(i64, Option<f64>),
+    Floating(f64),
+    Invalid,
+}
+
+impl UnsignedNumberState {
+    fn from_json(value: &Value) -> Self {
+        let Value::Number(number) = value else {
+            return Self::Invalid;
+        };
+        if let Some(value) = number.as_u64() {
+            Self::Unsigned(value)
+        } else if let Some(value) = number.as_i64() {
+            Self::Signed(value, number.as_f64())
+        } else if let Some(value) = number.as_f64() {
+            Self::Floating(value)
+        } else {
+            Self::Invalid
+        }
+    }
+
+    fn into_u64(self) -> Option<u64> {
+        match self {
+            Self::Unsigned(value) => Some(value),
+            Self::Signed(value, float_fallback) => match u64::try_from(value) {
+                Ok(value) => Some(value),
+                Err(_) => match float_fallback {
+                    Some(value) => Some(value.max(0.0) as u64),
+                    None => None,
+                },
+            },
+            Self::Floating(value) => Some(value.max(0.0) as u64),
+            Self::Invalid => None,
+        }
+    }
+}
+
+fn unsigned_number_state(value: &Value) -> UnsignedNumberState {
+    UnsignedNumberState::from_json(value)
 }
 
 pub(super) fn f64_at(value: &Value, path: &[&str]) -> Option<f64> {
