@@ -175,17 +175,22 @@ pub fn migrate_vocab_v4(path: impl AsRef<Path>, write: bool) -> Result<Value> {
     }
 
     let mut migrated = original.clone();
-    let object = migrated
-        .as_object_mut()
-        .context("vocabulary root must be a JSON object")?;
-    object.insert("engines".into(), Value::Object(engines_out));
-    object.insert("schema_version".into(), json!(VOCAB_SCHEMA_VERSION));
+    {
+        let object = migrated
+            .as_object_mut()
+            .context("vocabulary root must be a JSON object")?;
+        object.insert("engines".into(), Value::Object(engines_out));
+        object.insert("schema_version".into(), json!(VOCAB_SCHEMA_VERSION));
+    }
 
     let source_hash = grammar_structure_hash(&source);
     let frozen_after = grammars_from_vocab_v3(&migrated, &source)?;
     let frozen_hash = grammar_structure_hash(&frozen_after);
     let drift_resolved = source_hash == frozen_hash;
-    object.insert("grammar_structure_hash".into(), json!(frozen_hash));
+    migrated
+        .as_object_mut()
+        .expect("vocabulary root was validated above")
+        .insert("grammar_structure_hash".into(), json!(frozen_hash));
     let report = json!({
         "schema_version": VOCAB_SCHEMA_VERSION,
         "drift_resolved": drift_resolved,

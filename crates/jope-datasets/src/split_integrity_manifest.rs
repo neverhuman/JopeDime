@@ -1,6 +1,6 @@
 //! Frozen split-manifest validation shared by the row partition boundary.
 
-use super::{
+use super::split_integrity_partition::{
     python_number, SplitIntegrityError, ASSIGNABLE_SPLITS, SPLIT_MANIFEST_V1, TEMPORAL_AUDIT_SPLIT,
 };
 use serde_json::Value;
@@ -49,7 +49,10 @@ pub fn validate_split_manifest(manifest: &Value) -> Result<(), SplitIntegrityErr
     for field in ["development_fraction", "temporal_audit_fraction"] {
         let value = object.get(field).expect("required key set");
         let fraction = value.as_f64().filter(|_| !value.is_boolean());
-        if fraction.map_or(true, |fraction| !fraction.is_finite()) {
+        if match fraction {
+            Some(fraction) => !fraction.is_finite(),
+            None => true,
+        } {
             return Err(SplitIntegrityError::new(format!(
                 "split manifest {field} must be finite"
             )));

@@ -77,7 +77,7 @@ fn write_creates_backup_once_and_censors_runtime_at_the_cap() {
 
     let report = prep_v31_labels(&path, true).unwrap();
     let backup = directory.path().join("corpus.v3.bak.jsonl");
-    assert_eq!(fs::read(backup).unwrap(), original);
+    assert_eq!(fs::read(&backup).unwrap(), original);
     assert_eq!(report.rows_censored_runtime, 1);
 
     let rows = fs::read_to_string(&path)
@@ -93,7 +93,7 @@ fn write_creates_backup_once_and_censors_runtime_at_the_cap() {
         + rows[1]["metadata"]["rwr_weight_global"].as_f64().unwrap();
     assert!((weight_total - 2.0).abs() < 1e-6);
 
-    fs::write(&path, original).unwrap();
+    fs::write(&path, &original).unwrap();
     prep_v31_labels(&path, true).unwrap();
     assert_eq!(fs::read(backup).unwrap(), original);
 }

@@ -284,9 +284,15 @@ impl InjectedBackend for MockVersionedBackend {
     }
 }
 
+#[path = "verified_object/fresh_and_existing.rs"]
 mod fresh_and_existing;
+#[path = "verified_object/lost_put.rs"]
 mod lost_put;
+#[path = "verified_object/malformed.rs"]
 mod malformed;
+#[path = "verified_object/readback.rs"]
 mod readback;
+#[path = "verified_object/versions.rs"]
 mod versions;
+#[path = "verified_object/wrong_content.rs"]
 mod wrong_content;

@@ -46,38 +46,42 @@ pub struct TrainingRow {
     pub metadata: Map<String, Value>,
 }
 
+struct TrainingRowParts {
+    dataset: String,
+    source: String,
+    embedding: Vec<f64>,
+    target: Option<Vec<f64>>,
+    genome: String,
+    engine: String,
+    valid: bool,
+    score: Option<f64>,
+    cost_ms: Option<f64>,
+    metadata: Map<String, Value>,
+}
+
 impl TrainingRow {
-    fn new(
-        dataset: String,
-        source: String,
-        embedding: Vec<f64>,
-        target: Option<Vec<f64>>,
-        genome: String,
-        engine: String,
-        valid: bool,
-        score: Option<f64>,
-        cost_ms: Option<f64>,
-        metadata: Map<String, Value>,
-    ) -> Self {
+    fn from_parts(parts: TrainingRowParts) -> Self {
         Self {
-            dataset_id: dataset,
-            source,
-            embedding: normalize_embedding(embedding, &[512, 1536]),
-            target_embedding: target.map(|values| normalize_embedding(values, &[512])),
-            genome: genome.clone(),
-            canonical_genome: Some(genome),
-            valid,
+            dataset_id: parts.dataset,
+            source: parts.source,
+            embedding: normalize_embedding(parts.embedding, &[512, 1536]),
+            target_embedding: parts
+                .target
+                .map(|values| normalize_embedding(values, &[512])),
+            genome: parts.genome.clone(),
+            canonical_genome: Some(parts.genome),
+            valid: parts.valid,
             metric: None,
-            score,
+            score: parts.score,
             rank: None,
             elo: None,
-            cost_ms,
+            cost_ms: parts.cost_ms,
             family_bitmap: BTreeMap::new(),
             complexity: None,
             runtime_class: None,
             feedback_origin: None,
-            engine,
-            metadata,
+            engine: parts.engine,
+            metadata: parts.metadata,
         }
     }
 }
@@ -272,7 +276,7 @@ pub fn label_to_training_row<R: GenomeEngineResolver, E: DatasetEmbedder>(
             "oof_r2_raw",
             parsed
                 .get("oof_r2")
-                .and_then(finite)
+                .and_then(|value| finite(Some(value)))
                 .or(Some(reward))
                 .map(Value::from)
                 .unwrap(),
@@ -282,18 +286,18 @@ pub fn label_to_training_row<R: GenomeEngineResolver, E: DatasetEmbedder>(
         put("eval_error", Value::Bool(true));
     }
     Ok((
-        Some(TrainingRow::new(
-            dataset.into(),
-            provenance.into(),
+        Some(TrainingRow::from_parts(TrainingRowParts {
+            dataset: dataset.into(),
+            source: provenance.into(),
             embedding,
             target,
-            genome.into(),
+            genome: genome.into(),
             engine,
-            !failed,
-            reward,
-            finite(parsed.get("runtime_seconds")).map(|v| v * 1_000.0),
+            valid: !failed,
+            score: reward,
+            cost_ms: finite(parsed.get("runtime_seconds")).map(|v| v * 1_000.0),
             metadata,
-        )),
+        })),
         "ok",
     ))
 }
@@ -372,7 +376,7 @@ pub fn build_corpus<R: GenomeEngineResolver, E: DatasetEmbedder>(
                 lo
             } else if frac > 0.5 {
                 lo + 1.0
-            } else if (lo as u64) % 2 == 0 {
+            } else if (lo as u64) & 1 == 0 {
                 lo
             } else {
                 lo + 1.0

@@ -49,9 +49,9 @@ fn dry_run_replaces_expr_bins_and_repairs_legacy_task_fields() {
         migrated["report"]["frozen_hash"]
     );
     assert!(!path.with_extension("v3.bak.json").exists());
-    let patched = &migrated["vocab"]["engines"][&engine][field][name]["params"][index];
+    let patched = &migrated["vocab"]["engines"][&engine][&field][&name]["params"][index];
     assert_eq!(patched["bins"], json!(bins));
-    let source_op = &source[&engine][field][name];
+    let source_op = &source[&engine][&field][&name];
     assert_eq!(patched["tasks"], source_op["tasks"]);
     assert_eq!(patched["generate"], source_op["generate"]);
 }

@@ -72,7 +72,7 @@ fn python_ascii(encoded_json: &str) -> String {
     output
 }
 
-fn python_float(value: f64) -> String {
+pub(super) fn python_float(value: f64) -> String {
     if value == 0.0 {
         return if value.is_sign_negative() {
             "-0.0"

@@ -16,11 +16,13 @@ pub use object_store::{ObjectStoreScheme, UpdateVersion};
 
 mod location;
 mod transfer;
+#[cfg(test)]
+use location::injected_registry;
+use location::injected_registry_guard;
 pub use location::{
     datasets_url, InjectedBackend, ObservedObject, PutOutcome, S3Location, Store, StoreLocation,
     StoreRoute,
 };
-use location::{injected_registry_guard, InjectedRegistry};
 
 impl Store {
     pub fn from_env() -> Result<Store> {
