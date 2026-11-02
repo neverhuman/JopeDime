@@ -685,6 +685,7 @@ crates/jope-campaigns/src/bin/jope_training_replica/local.rs
 crates/jope-campaigns/src/bin/jope_training_replica/publish.rs
 crates/jope-campaigns/src/bin/jope_training_replica/remote.rs
 crates/jope-campaigns/src/bin/jope_utilization_supervisor.rs
+crates/jope-campaigns/src/bin/jope_utilization_supervisor/arguments.rs
 crates/jope-campaigns/src/bin/jope_v3_control.rs
 crates/jope-campaigns/src/bin/scq_runs_gc.rs
 crates/jope-campaigns/src/bin/search-v3.rs
