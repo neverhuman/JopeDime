@@ -421,20 +421,18 @@ def run(args):
     thread_path = "research/flywheel_selfplay/hwave_numeric_threads.py"
     numeric = load_module(
         args.repo,
-        args.commit,
+        pins["source_base"],
         thread_path,
         "h228_numeric",
         pins["parent_sources"][thread_path],
-        fallback_commit=pins.get("source_base"),
     )
     runtime_path = "research/flywheel_selfplay/h146_lookahead_exec/runtime.py"
     rt = load_module(
         args.repo,
-        args.commit,
+        pins["source_base"],
         runtime_path,
         "h228_runtime",
         pins["parent_sources"][runtime_path],
-        fallback_commit=pins.get("source_base"),
     )
     rt.HERE = (
         args.repo
@@ -660,11 +658,10 @@ def run(args):
         def parent_module(path, name):
             return load_module(
                 args.repo,
-                args.commit,
+                pins["source_base"],
                 path,
                 name,
                 pins["parent_sources"][path],
-                fallback_commit=pins.get("source_base"),
             )
 
         treatment = parent_module(

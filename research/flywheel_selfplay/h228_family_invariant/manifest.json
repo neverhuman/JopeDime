@@ -47,7 +47,7 @@
   "source_manifest": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
   "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
   "gpu_uuid": "GPU-784030c4-b1f9-d5a3-f0eb-9337f133f503",
-  "s3_prefix": "experiments/rd_breakthrough_20261102/H228/argon-t1640/",
+  "s3_prefix": "experiments/rd_breakthrough_20261102/H228/argon-xbabe1/",
   "seeds": [
     228101,
     228102,
@@ -121,7 +121,7 @@
   "data_scope": "Real S3 DL-Train 1,219 contexts / 205 families (5-fold OOF) + pre-fit native91 r882 baseline parity + post-lock DL-Val91 readout (91 contexts / 19 families); zero sealed/holdout/meta-test access",
   "serving_promotion": false,
   "parent_sources": {
-    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
     "research/flywheel_selfplay/h177_pooled_selector/treatment.py": "167a0d8d3fdf9d3f811e79259b6bf7e38b6ea810d15bdcc40e128b68317a044a",
     "research/flywheel_selfplay/h200_nested_blend/analysis.py": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2",
     "research/flywheel_selfplay/h109_family_balanced_accum/runner.py": "68ed53d5ba80ce52b2450de526c54f2468129eb13d0cb93cba93a8562953866b",
@@ -140,10 +140,10 @@
     "invariant.py": "071a6512cf9bde7d94ddc6c7f90dd61c5f01f78d9d72cb6812472fc0dff4e07e",
     "launch.py": "144969713280354d6ac2dc95912159a5721e32fc43d66f62c8ea7cbc9b64b306",
     "provenance.json": "b9d8caccadd2d289cf0d6a7c72477a88c00d7364808d9e9c4cac0a349410b302",
-    "runner.py": "7eec57f2286f36c0b2c6f16330c777ac724bc928e73e816293f910851537bc8d",
+    "runner.py": "3e69b263cf0e32cfac6753190afa2ce4c73287289280456fc5d2b6b3bcd034e4",
     "science.py": "f867746b289a348b8fdcbef8a90cf92f4bdfd363de3bcda9029c4da549ca7c21",
     "study.py": "f95370083326ce7671cc1862d6d879b898770ebd3d47a21cca0e24b8190eaba8",
-    "test_h228.py": "3feca3693fe1aae9af7729a5256a9b4c657bd0675f0a071e3cc6a31646fb1f4d"
+    "test_h228.py": "a6799232b56dfbc27ff0c4f8213284f152e8aa8dcfb9e71676a02828f98699d3"
   },
   "authority": "hw_t1640_argon_h228.md; hw_t1700_argon_h228_launch.md; hw_t1905_argon_h228_gpulost.md",
   "launch_gate": "Exact merged preregistration commit before timing smoke and full run",
