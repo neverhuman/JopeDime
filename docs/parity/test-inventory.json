@@ -9652,9 +9652,8 @@
       ]
      },
      "tests/test_training_campaign.py": {
-      "count": 24,
+      "count": 20,
       "tests": [
-       "tests/test_training_campaign.py::test_campaign_recovers_committed_update_in_original_window",
        "tests/test_training_campaign.py::test_checkpoint_hashing_cannot_extend_category_deadline",
        "tests/test_training_campaign.py::test_context_missing_dimensions_and_cross_split_family_are_refused",
        "tests/test_training_campaign.py::test_cpu_requires_explicit_fixture_and_tmp_state_is_always_rejected",
@@ -9667,17 +9666,23 @@
        "tests/test_training_campaign.py::test_original_windows_never_reset_on_resume_or_verification",
        "tests/test_training_campaign.py::test_parent_observed_late_zero_exit_is_budget_exhausted",
        "tests/test_training_campaign.py::test_plan_has_no_clock_and_pins_each_category",
-       "tests/test_training_campaign.py::test_real_cpu_optimizer_reload_continuation_and_export",
-       "tests/test_training_campaign.py::test_real_f32_context_identity_refuses_lossy_numbers_and_changed_bytes",
        "tests/test_training_campaign.py::test_requested_coverage_exposes_missing_regression_and_classifier_fallbacks",
        "tests/test_training_campaign.py::test_runtime_and_corpus_drift_refuse_resume",
        "tests/test_training_campaign.py::test_runtime_pins_cuda_bindings_and_preprocessing_dependencies",
        "tests/test_training_campaign.py::test_runtime_pins_installed_bytes_not_only_version",
-       "tests/test_training_campaign.py::test_stopped_recovery_refuses_unproven_and_rejected_attempts",
        "tests/test_training_campaign.py::test_synthetic_classifier_target_width_is512_without_changing_regression",
        "tests/test_training_campaign.py::test_unselected_task_cannot_hide_forbidden_authority",
        "tests/test_training_campaign.py::test_unused_context_is_rejected_before_training",
        "tests/test_training_campaign.py::test_worker_failures_cancel_group_and_preserve_accounting"
+      ]
+     },
+     "tests/test_training_campaign_execution.py": {
+      "count": 4,
+      "tests": [
+       "tests/test_training_campaign_execution.py::test_campaign_recovers_committed_update_in_original_window",
+       "tests/test_training_campaign_execution.py::test_real_cpu_optimizer_reload_continuation_and_export",
+       "tests/test_training_campaign_execution.py::test_real_f32_context_identity_refuses_lossy_numbers_and_changed_bytes",
+       "tests/test_training_campaign_execution.py::test_stopped_recovery_refuses_unproven_and_rejected_attempts"
       ]
      },
      "tests/test_training_comparison.py": {
