@@ -31,10 +31,42 @@ both continuous Regression and Binary Classification without modifying frozen DO
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
 import torch
+
+
+def _validate_2d_tensor(
+    x: torch.Tensor, name: str, expected_shape: tuple[int, int] | None = None
+) -> tuple[int, int]:
+    if not isinstance(x, torch.Tensor) or x.ndim != 2:
+        raise ValueError(
+            f"{name} must be a 2D torch.Tensor, got {type(x).__name__} with ndim={getattr(x, 'ndim', None)}"
+        )
+    B, N = int(x.shape[0]), int(x.shape[1])
+    if B < 1 or N < 1:
+        raise ValueError(f"{name} must have non-empty 2D shape [B >= 1, N >= 1], got {tuple(x.shape)}")
+    if expected_shape is not None and (B, N) != expected_shape:
+        raise ValueError(f"{name} shape {(B, N)} does not match expected shape {expected_shape}")
+    return B, N
+
+
+def _validate_2d_mask(
+    mask: torch.Tensor, expected_shape: tuple[int, int], name: str = "valid_mask"
+) -> torch.Tensor:
+    _validate_2d_tensor(mask, name, expected_shape=expected_shape)
+    if mask.dtype == torch.bool:
+        return mask
+    if mask.is_complex():
+        raise ValueError(f"{name} cannot be a complex tensor")
+    if mask.is_floating_point() and not bool(torch.isfinite(mask).all()):
+        raise ValueError(f"{name} contains non-finite values (NaN/Inf)")
+    valid_vals = (mask == 0) | (mask == 1)
+    if not bool(valid_vals.all()):
+        raise ValueError(f"{name} must be bool or contain only {{0, 1}} values")
+    return mask.bool()
 
 
 @dataclass
@@ -67,9 +99,17 @@ def detect_binary_target_batched_gpu(
     - A table is binary iff `y_max > y_min + tol`, every valid element is within `tol` of
       either `y_min` or `y_max`, and both classes have at least 2 observations.
     """
-    B, N = y.shape
+    if (
+        isinstance(tol, bool)
+        or not isinstance(tol, (int, float))
+        or not math.isfinite(float(tol))
+        or float(tol) < 0.0
+    ):
+        raise ValueError(f"tol must be a finite non-negative float, got {tol!r}")
+    B, N = _validate_2d_tensor(y, "y")
+    req_mask = _validate_2d_mask(valid_mask, (B, N), "valid_mask")
     y_f = y.float()
-    mask_f = valid_mask.bool() & torch.isfinite(y_f)
+    mask_f = req_mask & torch.isfinite(y_f)
     y_clean = torch.where(mask_f, y_f, torch.zeros_like(y_f))
 
     pos_inf = torch.full_like(y_f, float("inf"))
@@ -114,8 +154,19 @@ def fit_batched_platt_calibration_gpu(
     using 6 batched Newton-Raphson (IRLS) steps on GPU (`2x2` closed-form solve, zero host sync).
     Initialized at `a = 1.0`, `b = logit(pos_rate)`.
     """
-    B, N = raw_score_tr.shape
-    mask_b = valid_mask_tr.bool() & torch.isfinite(raw_score_tr) & torch.isfinite(y_bin_tr)
+    if (
+        isinstance(l2_reg, bool)
+        or not isinstance(l2_reg, (int, float))
+        or not math.isfinite(float(l2_reg))
+        or float(l2_reg) <= 0.0
+    ):
+        raise ValueError(f"l2_reg must be a finite positive float, got {l2_reg!r}")
+    if isinstance(n_iters, bool) or not isinstance(n_iters, int) or n_iters < 0:
+        raise ValueError(f"n_iters must be a non-negative int, got {n_iters!r}")
+    B, N = _validate_2d_tensor(raw_score_tr, "raw_score_tr")
+    _validate_2d_tensor(y_bin_tr, "y_bin_tr", expected_shape=(B, N))
+    req_mask = _validate_2d_mask(valid_mask_tr, (B, N), "valid_mask_tr")
+    mask_b = req_mask & torch.isfinite(raw_score_tr) & torch.isfinite(y_bin_tr)
     mask_f = mask_b.float()
     s = _sanitize_masked(raw_score_tr, mask_b, 0.0)
     y = _sanitize_masked(y_bin_tr, mask_b, 0.0)
@@ -160,18 +211,23 @@ def batched_roc_auc_gpu(
     Computes exact tie-aware ROC-AUC per table `[B]` on GPU via Mann-Whitney U statistics
     with exact mid-rank averaging (`torch.searchsorted` left/right bounds) and zero CPU loops.
     Preserves `valid_mask` strictly: if any required (`valid_mask == True`) entry has non-finite
-    `prob_pred` or `y_bin_true`, or if `valid_mask` has 0 valid rows, returns `NaN` for that table.
+    `prob_pred` or `y_bin_true`, or non-binary `y_bin_true` outside `{0.0, 1.0}`, or if
+    `valid_mask` has 0 valid rows, returns `NaN` for that table.
     AUC is also unavailable (`NaN`) when either target class has no observed valid row.
     """
-    B, N = prob_pred.shape
-    req_mask = valid_mask.bool()
+    B, N = _validate_2d_tensor(prob_pred, "prob_pred")
+    _validate_2d_tensor(y_bin_true, "y_bin_true", expected_shape=(B, N))
+    req_mask = _validate_2d_mask(valid_mask, (B, N), "valid_mask")
     has_nonfinite_req = ((~torch.isfinite(prob_pred) | ~torch.isfinite(y_bin_true)) & req_mask).any(
         dim=1, keepdim=True
     )
+    y_f = y_bin_true.float()
+    is_zero_or_one = (y_f.abs() <= 1e-5) | ((y_f - 1.0).abs() <= 1e-5)
+    has_nonbinary_req = (req_mask & torch.isfinite(y_bin_true) & ~is_zero_or_one).any(dim=1, keepdim=True)
     zero_coverage = req_mask.sum(dim=1, keepdim=True) == 0
-    invalid_table = has_nonfinite_req | zero_coverage
+    invalid_table = has_nonfinite_req | has_nonbinary_req | zero_coverage
 
-    mask_b = req_mask & torch.isfinite(prob_pred) & torch.isfinite(y_bin_true)
+    mask_b = req_mask & torch.isfinite(prob_pred) & torch.isfinite(y_bin_true) & is_zero_or_one
     y_clean = _sanitize_masked(y_bin_true, mask_b, 0.0)
 
     # Place invalid rows at -inf so they sort strictly before all finite valid scores
@@ -214,28 +270,33 @@ def evaluate_unified_regression_and_binary_batched_gpu(
 ) -> dict[str, torch.Tensor]:
     """
     Evaluates both Regression and Binary Classification tables in a single batched GPU pass:
+    - Validates 2D tensor shapes and boolean/{0,1} masks across train and evaluation inputs.
     - Sanitizes all masked-out (`mask == False`) entries before arithmetic so padded NaNs/Infs
       never poison reductions.
     - Strictly preserves the required evaluation masks `mask_tr` and `mask_te`: if any required
-      (`mask == True`) prediction or label is non-finite (`NaN`/`Inf`), or if a table has zero
-      valid train or evaluation rows, marks `valid_eval_mask = False` and sets all metrics for
-      that table to `NaN` (or raises `ValueError` when `reject_nonfinite_eval=True`); NEVER
+      (`mask == True`) prediction or label is non-finite (`NaN`/`Inf`), if a table has zero
+      valid train or evaluation rows, if a regression table has a zero-variance (constant)
+      holdout target (`sst <= 1e-12`), or if a binary table has out-of-domain holdout labels
+      outside `{y0_val, y1_val}`, marks `valid_eval_mask = False` and sets all evaluation metrics
+      for that table to `NaN` (or raises `ValueError` when `reject_nonfinite_eval=True`); NEVER
       drops required evaluation rows or awards `1.0`.
     - ROC-AUC additionally requires both classes in the evaluation rows. A single-class
       evaluation has unavailable (`NaN`) AUC while input validity and other metrics are preserved.
     """
-    req_tr_b = mask_tr.bool()
-    req_te_b = mask_te.bool()
+    B_tr, N_tr = _validate_2d_tensor(raw_pred_tr, "raw_pred_tr")
+    _validate_2d_tensor(y_tr, "y_tr", expected_shape=(B_tr, N_tr))
+    req_tr_b = _validate_2d_mask(mask_tr, (B_tr, N_tr), "mask_tr")
+
+    B_te, N_te = _validate_2d_tensor(raw_pred_te, "raw_pred_te")
+    if B_te != B_tr:
+        raise ValueError(f"Batch size mismatch between train ({B_tr}) and evaluation ({B_te}) tensors")
+    _validate_2d_tensor(y_te, "y_te", expected_shape=(B_te, N_te))
+    req_te_b = _validate_2d_mask(mask_te, (B_te, N_te), "mask_te")
+
     nonfinite_tr = ((~torch.isfinite(raw_pred_tr) | ~torch.isfinite(y_tr)) & req_tr_b).any(dim=1)
     nonfinite_te = ((~torch.isfinite(raw_pred_te) | ~torch.isfinite(y_te)) & req_te_b).any(dim=1)
     zero_tr = req_tr_b.sum(dim=1) == 0
     zero_te = req_te_b.sum(dim=1) == 0
-    invalid_eval = nonfinite_tr | nonfinite_te | zero_tr | zero_te
-
-    if reject_nonfinite_eval and bool(invalid_eval.any()):
-        raise ValueError(
-            "Invalid evaluation batch: non-finite predictions/labels on required valid mask or zero valid coverage."
-        )
 
     m_tr_b = req_tr_b & torch.isfinite(raw_pred_tr) & torch.isfinite(y_tr)
     m_te_b = req_te_b & torch.isfinite(raw_pred_te) & torch.isfinite(y_te)
@@ -255,10 +316,26 @@ def evaluate_unified_regression_and_binary_batched_gpu(
     diff_err = torch.where(m_te_b, y_te_c - p_te_c, torch.zeros_like(y_te_c))
     diff_tot = torch.where(m_te_b, y_te_c - y_te_mean, torch.zeros_like(y_te_c))
     sse_reg = (diff_err * diff_err).sum(dim=1)
-    sst_reg = (diff_tot * diff_tot).sum(dim=1).clamp_min(1e-12)
+    sst_raw = (diff_tot * diff_tot).sum(dim=1)
+    sst_reg = sst_raw.clamp_min(1e-12)
     reg_r2 = 1.0 - sse_reg / sst_reg
 
+    # Constant holdout target on a regression table has undefined R^2 (must never award 1.0)
+    degen_reg_te = (~is_bin) & (sst_raw <= 1e-12)
+
     # 2. Binary Classification path (map y_te using train's y0_val, y1_val)
+    near_y0_te = (y_te_c - det_tr.y0_val).abs() <= 1e-5
+    near_y1_te = (y_te_c - det_tr.y1_val).abs() <= 1e-5
+    ood_bin_te = (is_bin.unsqueeze(1) & m_te_b & ~near_y0_te & ~near_y1_te).any(dim=1)
+
+    invalid_eval = nonfinite_tr | nonfinite_te | zero_tr | zero_te | degen_reg_te | ood_bin_te
+
+    if reject_nonfinite_eval and bool(invalid_eval.any()):
+        raise ValueError(
+            "Invalid evaluation batch: non-finite predictions/labels on required valid mask, "
+            "zero valid coverage, degenerate constant regression holdout target, or out-of-domain binary holdout labels."
+        )
+
     denom_bin = (det_tr.y1_val - det_tr.y0_val).clamp_min(1e-6)
     y_te_bin = torch.where(
         m_te_b,
