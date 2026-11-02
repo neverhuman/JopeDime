@@ -28,19 +28,12 @@ in all three views, and the head-replacement residual must remain at or below
 the waiver expires at v1.0.1. REL-07-F01 blocks v1.0.1 until the exploring
 stratum gap is fixed.
 
-A5 is **PENDING**. Candidate-inputs-v5 is now published and binds D1/M2/M3/M5,
-but it correctly omits A5 until BAT02 supplies a complete candidate-bound
-three-client provider manifest, semantic receipts, and verified sidecars. The
-last formal capture (v9) was incomplete and excluded. BAT02's v12 no-client
-preflight stopped because Gemini's effective configuration was stale. The t1425
-ruling authorizes RNK11 v13 to use an isolated per-run HOME/XDG configuration
-with the existing supported auth reference, then BAT02 must rerun preflight and
-perform the three-client capture. No v13 capture or accepted A5 manifest exists
-yet. The final same-controller run has not completed: M2's standalone PASS must
-be rerun at its reserved fresh report path, and M3 must produce its own raw
-result under the waiver guard. The separate QLT-04 Q1 outcome and
-owner-recorded guidance default decision also remain pending. No owner release
-approval or aggregate signature is recorded; `release_qualified` remains false.
+A5 is **PENDING**: the latest three-client capture was incomplete, all clients
+were excluded, and no accepted provider manifest or immutable
+`candidate-inputs-v5` binding exists. The final same-controller run has not
+completed. The separate QLT-04 Q1 result, its SHA-256, and an owner-recorded
+guidance default decision also remain pending. No owner release approval or aggregate signature
+is recorded; `release_qualified` remains false.
 
 ## Candidate artifacts
 
