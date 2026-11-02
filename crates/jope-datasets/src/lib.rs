@@ -16,6 +16,7 @@ pub mod meta;
 pub mod paths;
 pub mod prep_v31_labels;
 pub mod prime_label_to_corpus;
+pub mod prime_label_to_corpus_rows;
 pub mod regression_release;
 pub mod repo;
 pub mod schema;
