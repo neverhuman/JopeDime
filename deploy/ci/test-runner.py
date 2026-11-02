@@ -1217,7 +1217,11 @@ class WorkflowAdmissionTests(unittest.TestCase):
         # inherit its fail-closed refusal through the default needs-success condition.
         observatory = self.job(workflow, 'observatory-ui')
         self.assertIn('needs: changes', observatory)
-        self.assertIsNone(re.search(r'^    if:', observatory, re.M))
+        # The only job-level guard allowed keeps the fail-closed classifier refusal: it runs
+        # only when the classifier succeeded (needed so a skipped optional ancestor does not
+        # starve it, see test_selected_jobs_survive_the_optional_classifier_ancestor).
+        guards = re.findall(r'^    if:(.*)$', observatory, re.M)
+        self.assertTrue(all("needs.changes.result == 'success'" in guard for guard in guards), guards)
 
     def test_workflow_delegates_full_evidence_checks_without_dropping_them(self):
         ci = (ROOT/'.github/workflows/ci.yml').read_text()
