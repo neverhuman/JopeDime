@@ -1389,9 +1389,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
-                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone()
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1469,9 +1469,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
-                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone()
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1542,9 +1542,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
-                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone()
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1646,9 +1646,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
-                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone()
             ],
         ),
         (
@@ -1710,9 +1710,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
-                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
+                p21_family_split.clone()
             ],
         ),
     ] {
@@ -1822,9 +1822,9 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         rustunsafe_authority,
         browser_wasm,
         p35_corpus_identity,
-        p21_family_split,
         p45_race_pool_identity,
         prodlang_rust_runtime,
+        p21_family_split
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
