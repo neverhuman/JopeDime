@@ -675,6 +675,11 @@ crates/jope-campaigns/src/dime_activation/tests.rs
 crates/jope-campaigns/src/dime_activation/types.rs
 crates/jope-campaigns/src/dime_activation/unit_ops.rs
 crates/jope-campaigns/src/dime_runtime_contracts.rs
+crates/jope-campaigns/src/dime_runtime_contracts/attempts.rs
+crates/jope-campaigns/src/dime_runtime_contracts/budget_campaign.rs
+crates/jope-campaigns/src/dime_runtime_contracts/drain.rs
+crates/jope-campaigns/src/dime_runtime_contracts/recovery.rs
+crates/jope-campaigns/src/dime_runtime_contracts/tests.rs
 crates/jope-campaigns/src/encoder_v2_authority.rs
 crates/jope-campaigns/src/encoder_v2_capacity.rs
 crates/jope-campaigns/src/encoder_v2_execution.rs
