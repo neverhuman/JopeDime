@@ -24,6 +24,7 @@ s3 = ["object_store/aws"]
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
+jope-api = { path = "../jope-api" }
 csv = "1.4"
 flate2 = "1"
 object_store = { version = "0.14", default-features = false, features = ["fs"] }
