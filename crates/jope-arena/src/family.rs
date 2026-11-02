@@ -238,7 +238,7 @@ pub fn validate_blacklist_complements(
                 .map(|hash| format!("; add {hash}"))
                 .unwrap_or_default();
             bail!(
-                "stale analysis blacklist for {}: {} listed, {} required{remove}{add}",
+                "analysis blacklist does not match the computed complement for {}: {} listed, {} required{remove}{add}",
                 task.id,
                 actual.len(),
                 expected.len()
@@ -619,7 +619,7 @@ mod tests {
             1
         );
 
-        // A stale blacklist (listing the only dataset) is rejected with the fix spelled out.
+        // A blacklist that disagrees with the derived complement is rejected with the fix spelled out.
         std::fs::write(
             dir.path().join("data/binary/analysis-blacklist.json"),
             r#"{"schema":"sotarena.analysis-blacklist","task":"binary","datasets":["0123456789abcdef"]}"#,
@@ -627,7 +627,7 @@ mod tests {
         .unwrap();
         let error = render_report(dir.path()).unwrap_err().to_string();
         assert!(
-            error.contains("stale analysis blacklist for binary"),
+            error.contains("analysis blacklist does not match the computed complement for binary"),
             "{error}"
         );
         assert!(error.contains("remove 0123456789abcdef"), "{error}");
