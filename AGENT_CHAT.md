@@ -2478,3 +2478,4 @@ branch=fast/luna_jk_shape_5_x1_t2250
 base/HEAD=9038391d98724f40ecbaf5bcd716122c57bf7eec (fresh origin/v1/fastlane)
 exclusive_path=crates/jope-service/src/research/qualified.rs; current_SHA256=d436b55960db741ac16e9c48d488872dfc2a4d5ee3cfe9bc832b3a7ee693c42f; current_LOC=763; no exact current-byte hash pin found
 intent=mechanical behavior-preserving split into cohesive Rust modules under 500 LOC; rustfmt --edition 2021 --check and git diff --check only; no builds/tests/audits; jk_fastpush
+[2026-11-02T23:03:52Z] CLAIM Codex luna_jk_shape_12_x2 SPARE t2250 continuation | checkout=/home/ubuntu/jk_wide/lanes/shape_12_x2_t2040/JopeDime branch=fast/luna_jk_shape_12_x2_t2250 HEAD=12d2e4d06c56dbfb8717a08b6bd7f923e0862a8f; exclusive path=crates/jope-engine/src/dashboard/campaign.rs (pool 746 LOC; COORD claim 2026-11-02T23:03:49Z). Verify current source pin before edits; mechanical split under 500 LOC; rustfmt + diff-check only, no builds/tests/audits; jk_fastpush.
