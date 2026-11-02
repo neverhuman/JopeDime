@@ -977,3 +977,197 @@ def test_restart_scale_endpoints_respect_previous_bounds(monkeypatch, digest):
     result = warm_restart_adapter(model, optimizer, 42, 1361)
     assert 1e-5 <= result["sigma"] <= 3e-4
     assert 2.5e-5 <= result["lr"] <= 3e-4
+
+
+@pytest.mark.parametrize(
+    ("streak", "threshold", "restart"), [(565, 0, False), (7, 8, False), (8, 8, True), (565, 8, True)]
+)
+def test_proposal_moment_restart_threshold_and_disabled_default(streak, threshold, restart):
+    from dev_incumbent import restart_proposal_optimizer
+
+    model = torch.nn.Linear(1, 1)
+    opt = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    model(torch.ones((1, 1))).sum().backward()
+    opt.step()
+    previous = copy.deepcopy(opt.state_dict())
+    receipt = restart_proposal_optimizer(opt, streak, threshold)
+    assert receipt["restarted"] is restart
+    assert receipt["optimizer_step_before"] == 1
+    assert receipt["optimizer_step_after"] == (0 if restart else 1)
+    if restart:
+        assert not opt.state
+    else:
+        for key, state in previous["state"].items():
+            for name, value in state.items():
+                assert torch.equal(opt.state_dict()["state"][key][name], value)
+    assert opt.state_dict()["param_groups"] == previous["param_groups"]
+    opt.zero_grad(set_to_none=True)
+    model(torch.ones((1, 1))).sum().backward()
+    opt.step()
+    assert {int(s["step"]) for s in opt.state.values()} == {1 if restart else 2}
+
+
+@pytest.mark.parametrize(("streak", "threshold"), [(-1, 8), (8, -1), (1.5, 8), (8, True)])
+def test_proposal_moment_restart_invalid_counts_do_not_mutate(streak, threshold):
+    from dev_incumbent import restart_proposal_optimizer
+
+    model = torch.nn.Linear(1, 1)
+    opt = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    with pytest.raises(ValueError, match="nonnegative integers"):
+        restart_proposal_optimizer(opt, streak, threshold)
+    assert not opt.state
+
+
+def test_proposal_restart_replay_escapes_stale_momentum_and_rejection_restores_best():
+    from dev_incumbent import restart_proposal_optimizer, warm_restart_adapter
+
+    torch.manual_seed(91)
+    model = torch.nn.Sequential(torch.nn.Linear(1, 1, bias=False), torch.nn.Linear(1, 1, bias=False))
+    model[0].requires_grad_(False)
+    with torch.no_grad():
+        model[0].weight.fill_(1)
+        model[1].weight.fill_(1)
+    opt = torch.optim.AdamW(model[1].parameters(), lr=1e-4, weight_decay=0)
+    for _ in range(487):
+        opt.zero_grad(set_to_none=True)
+        model(torch.ones((1, 1))).sum().backward()
+        opt.step()
+    incumbent = DevIncumbent(model, opt, {"mean": 2.0}, "fixed-dev", "best.pt", 3175)
+    saved_model = copy.deepcopy(incumbent.model_state)
+    saved_opt = copy.deepcopy(incumbent.optimizer_state)
+    rng = torch.random.get_rng_state().clone()
+    results = []
+    for threshold in [0, 8, 8]:
+        incumbent.restore(model, opt)
+        receipt = restart_proposal_optimizer(opt, 565, threshold)
+        warm = warm_restart_adapter(model, opt, 411947489, 3740)
+        before = model[1].weight.detach().clone()
+        # The current gradient opposes the restored 487-step positive momentum.
+        for _ in range(2):
+            opt.zero_grad(set_to_none=True)
+            (-model(torch.ones((1, 1))).sum()).backward()
+            opt.step()
+        candidate = model[1].weight.detach().clone()
+        steps = {int(s["step"]) for s in opt.state.values()}
+        decision = incumbent.decide(model, opt, {"mean": 1.0}, "fixed-dev", "reject.pt", 3740)
+        assert not decision["accepted"]
+        for name, value in saved_model.items():
+            assert torch.equal(model.state_dict()[name], value)
+        for key, state in saved_opt["state"].items():
+            for name, value in state.items():
+                assert torch.equal(opt.state_dict()["state"][key][name], value)
+        assert torch.equal(model[0].weight, saved_model["0.weight"])
+        results.append((receipt, warm, candidate, float((candidate - before).item()), steps))
+    assert results[0][3] < 0 < results[1][3]
+    assert results[0][4] == {489} and results[1][4] == {2}
+    assert results[1][:2] == results[2][:2]
+    assert torch.equal(results[1][2], results[2][2])
+    assert torch.equal(torch.random.get_rng_state(), rng)
+    # A genuinely admitted candidate also retains the new optimizer trajectory.
+    restart_proposal_optimizer(opt, 565, 8)
+    opt.zero_grad(set_to_none=True)
+    (-model(torch.ones((1, 1))).sum()).backward()
+    opt.step()
+    assert incumbent.decide(model, opt, {"mean": 2.1}, "fixed-dev", "new.pt", 3741)["accepted"]
+    assert {int(s["step"]) for s in incumbent.optimizer_state["state"].values()} == {1}
+
+
+def test_actual_runner_moment_restart_wiring_keeps_two_update_cap():
+    import ast
+    from types import SimpleNamespace
+
+    from dev_incumbent import restart_proposal_optimizer, warm_restart_adapter
+
+    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
+    main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    loop = next(
+        n
+        for n in main.body
+        if isinstance(n, ast.For) and isinstance(n.target, ast.Name) and n.target.id == "rnd"
+    )
+    restart_block = next(
+        n
+        for n in loop.body
+        if isinstance(n, ast.If)
+        and any(
+            isinstance(x, ast.Call)
+            and isinstance(x.func, ast.Name)
+            and x.func.id == "restart_proposal_optimizer"
+            for x in ast.walk(n)
+        )
+    )
+    step_before = next(
+        n
+        for n in loop.body
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "optimizer_step_before" for t in n.targets)
+    )
+    assert loop.body.index(restart_block) < loop.body.index(step_before)
+    model = torch.nn.Linear(1, 1)
+    opt = torch.optim.AdamW(model.parameters())
+    model(torch.ones((1, 1))).sum().backward()
+    opt.step()
+    env = {
+        "full": True,
+        "plan": {"consecutive_rejections": 565, "round_seed": 123, "steps": 2},
+        "opt": opt,
+        "net": model,
+        "rnd": 3740,
+        "args": SimpleNamespace(restart_optimizer_after_rejections=8),
+        "restart_proposal_optimizer": restart_proposal_optimizer,
+        "warm_restart_adapter": warm_restart_adapter,
+    }
+    exec(
+        compile(
+            ast.Module(body=[restart_block, step_before], type_ignores=[]), "actual-restart-prelude", "exec"
+        ),
+        env,
+    )  # noqa: S102
+    assert env["plan"]["optimizer_restart"]["restarted"]
+    assert env["optimizer_step_before"] == 0 and not opt.state
+    assert env["plan"]["steps"] == 2
+
+
+@pytest.mark.parametrize(
+    ("option", "expected"),
+    [
+        ([], 0),
+        (["--restart-optimizer-after-rejections", "8"], 8),
+        (["--restart-optimizer-after-rejections", "-1"], None),
+    ],
+)
+def test_actual_runner_restart_cli_is_opt_in_and_rejects_negative(monkeypatch, option, expected):
+    import ast
+    from types import SimpleNamespace
+
+    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
+    main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    prefix = []
+    for node in main.body:
+        if (
+            isinstance(node, ast.Expr)
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Attribute)
+            and node.value.func.attr == "mkdir"
+        ):
+            break
+        prefix.append(node)
+    env = {
+        "guard": SimpleNamespace(reject_research_dope_unfreeze=lambda _: None),
+        "argparse": argparse,
+        "__doc__": "fixture CLI",
+        "Path": Path,
+        "add_admission_arguments": add_admission_arguments,
+        "validate_admission_options": validate_admission_options,
+    }
+    monkeypatch.setattr(
+        sys, "argv", ["runner", "--input", "fixture-input", "--output", "fixture-output", *option]
+    )
+    code = compile(ast.Module(body=prefix, type_ignores=[]), "actual-runner-argparse", "exec")
+    if expected is None:
+        with pytest.raises(SystemExit) as error:
+            exec(code, env)  # noqa: S102
+        assert error.value.code == 2
+    else:
+        exec(code, env)  # noqa: S102
+        assert env["args"].restart_optimizer_after_rejections == expected

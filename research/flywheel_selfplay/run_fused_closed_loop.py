@@ -67,6 +67,7 @@ from dev_incumbent import (  # noqa: E402
     proposal_plan,
     publish_checkpoint_archive,
     retain_checkpoint_payloads,
+    restart_proposal_optimizer,
     validate_admission_options,
     warm_restart_adapter,
 )
@@ -195,7 +196,15 @@ def main():
         type=Path,
         help="directory containing round-NN.json keyed-S3 qualification bundles",
     )
+    ap.add_argument(
+        "--restart-optimizer-after-rejections",
+        type=int,
+        default=0,
+        help="full-cohort proposals: clear Adam moments after this rejection streak; 0 disables",
+    )
     args = ap.parse_args()
+    if args.restart_optimizer_after_rejections < 0:
+        ap.error("--restart-optimizer-after-rejections must be nonnegative")
     try:
         args.adapter_min_gain = validate_admission_options(
             args.strict_adapter_admission, args.adapter_min_gain
@@ -224,6 +233,8 @@ def main():
     selected, pools, tables = load_packet(args.input)
     full = selected.get("protocol") == "full-DL-Train1219-DL-Val91/v1"
     reporter = None
+    if args.restart_optimizer_after_rejections and not full:
+        raise ValueError("optimizer restart is supported only for the full cohort")
     if full:
         from jope._telemetry import FullFlywheelReporter
 
@@ -930,19 +941,24 @@ def main():
         projection_failed = False
         executed_steps = 0
         training_batches = []
-        optimizer_step_before = max(
-            (int(v["step"]) for v in opt.state.values() if "step" in v), default=0
-        )
         effective_lr = [g["lr"] for g in opt.param_groups]
         net.train()
         snap = {
             n: p.detach().clone() for n, p in net.named_parameters() if p.requires_grad
         }
         if full:
+            plan["optimizer_restart"] = restart_proposal_optimizer(
+                opt,
+                plan["consecutive_rejections"],
+                args.restart_optimizer_after_rejections,
+            )
             plan["warm_restart"] = warm_restart_adapter(
                 net, opt, plan["round_seed"], rnd
             )
             effective_lr = [g["lr"] for g in opt.param_groups]
+        optimizer_step_before = max(
+            (int(v["step"]) for v in opt.state.values() if "step" in v), default=0
+        )
         for step in range(plan["steps"]):
             phase_start = time.monotonic()
             headroom()
