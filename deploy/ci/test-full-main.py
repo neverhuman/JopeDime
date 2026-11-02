@@ -21,6 +21,9 @@ ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('full_main', ROOT / 'deploy/ci/full-main.py')
 full = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(full)
+evidence_spec = importlib.util.spec_from_file_location('aggregate_evidence', ROOT / 'deploy/ci/aggregate-evidence.py')
+aggregate_evidence = importlib.util.module_from_spec(evidence_spec)
+evidence_spec.loader.exec_module(aggregate_evidence)
 partition_spec = importlib.util.spec_from_file_location('check_test_partition', ROOT / 'deploy/ci/check_test_partition.py')
 partition = importlib.util.module_from_spec(partition_spec)
 partition_spec.loader.exec_module(partition)
@@ -34,6 +37,139 @@ class FullMainTests(unittest.TestCase):
     def test_static_partition_uses_main_for_zero_push_base(self):
         self.assertEqual('origin/main', partition.static_base('0' * 40))
         self.assertEqual('a' * 40, partition.static_base('a' * 40))
+
+    def test_aggregate_needs_filter_preserves_all_nonpublication_results(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            source, output = root/'all-needs.json', root/'nested'/'needs.json'
+            needs = {'cpu': {'result': 'success'}, 'paper': {'result': 'success'}}
+            source.write_text(json.dumps(needs))
+            aggregate_evidence.filter_needs(source, output, ['paper'])
+            self.assertEqual({'cpu': {'result': 'success'}}, json.loads(output.read_text()))
+            with self.assertRaisesRegex(ValueError, 'missing expected workflow dependency'):
+                aggregate_evidence.filter_needs(source, root/'bad.json', ['go'])
+            self.assertFalse((root/'bad.json').exists())
+
+    def test_frontend_verifier_requires_exact_source_nonzero_and_full_pass(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)/'nested'
+            root.mkdir(parents=True)
+            receipt_path = root/'receipt.json'
+            receipt_path.write_text(json.dumps({
+                'schema': 'jope.observatory-ui-ci/v1', 'source_sha': 'a'*40,
+                'run_id': '123', 'attempt': '1', 'executed': 4, 'passed': 4, 'failed': 0,
+            }))
+            aggregate_evidence.verify_frontend(Path(scratch), 'a'*40, '123', '2')
+            data = json.loads(receipt_path.read_text())
+            data['executed'] = data['passed'] = 0
+            receipt_path.write_text(json.dumps(data))
+            with self.assertRaises(AssertionError):
+                aggregate_evidence.verify_frontend(Path(scratch), 'a'*40, '123', '2')
+
+    def test_publication_verifier_requires_exact_head_and_complete_hash_manifest(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)/'publication'
+            (root/'evidence').mkdir(parents=True)
+            command = root/'command.log'
+            identity_path = root/'evidence'/'source-identity.json'
+            command.write_text('publication checks passed\n')
+            tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], cwd=ROOT, text=True).strip()
+            identity = {
+                'schema': 'jope.publication-source/v1', 'source_sha': 'a'*40,
+                'checkout_sha': 'b'*40, 'event_sha': 'b'*40, 'run_id': '123',
+                'attempt': 1, 'event': 'workflow_dispatch', 'source_tree': tree,
+                'checkout_tree': tree,
+            }
+            identity_path.write_text(json.dumps(identity))
+            evidence = {
+                'command.log': hashlib.sha256(command.read_bytes()).hexdigest(),
+                'evidence/source-identity.json': hashlib.sha256(identity_path.read_bytes()).hexdigest(),
+            }
+            receipt_path = root/'receipt.json'
+            receipt_path.write_text(json.dumps({
+                'schema': 'jope.ci-receipt/v1', 'lane': 'paper', 'source_sha': 'a'*40,
+                'checkout_sha': 'b'*40, 'run_id': '123', 'attempt': 1,
+                'event': 'workflow_dispatch', 'status': 'passed', 'exit_status': 0,
+                'dirty_source': [], 'dirty_source_after': [],
+                'command': ['make', '-C', 'docs/paper/innovationzero', 'check', 'self-test'],
+                'evidence': evidence,
+            }))
+            aggregate_evidence.verify_publication(Path(scratch), 'a'*40, 'b'*40, '123', '1', 'workflow_dispatch')
+            command.write_text('changed evidence\n')
+            with self.assertRaises(AssertionError):
+                aggregate_evidence.verify_publication(Path(scratch), 'a'*40, 'b'*40, '123', '1', 'workflow_dispatch')
+
+    def test_rendered_ux_verifier_binds_ui_attempt_and_event_sha(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            (root/'ui').mkdir()
+            (root/'ui'/'receipt.json').write_text(json.dumps({'attempt': '2'}))
+            (root/'ui'/'rendered-receipt.json').write_text('{}')
+            with patch.object(aggregate_evidence.subprocess, 'run') as run:
+                aggregate_evidence.verify_rendered(root, 'a'*40, '123', '3', 'b'*40)
+            argv = run.call_args.args[0]
+            self.assertEqual(['python3', 'deploy/ci/rendered-ux-receipt.py', 'verify'], argv[:3])
+            self.assertEqual(str(root/'ui'), argv[argv.index('--root') + 1])
+            self.assertEqual(['--attempt', '2'], argv[argv.index('--attempt'):argv.index('--attempt') + 2])
+            self.assertEqual(['--event-sha', 'b'*40], argv[-2:])
+            (root/'ui'/'receipt.json').write_text(json.dumps({'attempt': '4'}))
+            with self.assertRaises(AssertionError):
+                aggregate_evidence.verify_rendered(root, 'a'*40, '123', '3', 'b'*40)
+
+
+    def test_export_parity_verifier_checks_all_emitted_bytes_and_source_identity(self):
+        with tempfile.TemporaryDirectory() as scratch:
+            root = Path(scratch)
+            payloads = {
+                'harness.sh': b'harness', 'generate.rs': b'generator',
+                'registry.json': json.dumps({'entries': [
+                    {'kind': 'module', 'name': 'sample', 'supported': {'rust': True, 'python': False}},
+                ]}).encode(),
+                'fixtures.json': b'{}', 'sample/model.json': b'{}',
+                'sample/predictor.rs': b'rust', 'sample/predictor.py': b'python',
+                'sample/predictor.mjs': b'javascript', 'stdout.log': b'ok', 'stderr.log': b'',
+            }
+            for name, data in payloads.items():
+                path = root/name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+            files = {name: {'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+                     for name, data in payloads.items()}
+            source_sha = 'a'*40
+            report = {
+                'schema': 'jope.export-parity/v1', 'status': 'pass', 'passed': True,
+                'ci_executed': True, 'source_stable': True, 'source_dirty': [],
+                'source_sha': source_sha, 'source_end': source_sha,
+                'harness_sha256': hashlib.sha256((ROOT/'deploy/ci/export-parity.sh').read_bytes()).hexdigest(),
+                'cargo_lock_sha256': hashlib.sha256((ROOT/'Cargo.lock').read_bytes()).hexdigest(),
+                'ci_context': {'GITHUB_REPOSITORY': 'neverhuman/JopeDime',
+                    'GITHUB_EVENT_NAME': 'workflow_dispatch', 'GITHUB_RUN_ID': '123', 'GITHUB_RUN_ATTEMPT': '1'},
+                'fault_injected': False,
+                'toolchains': {'rustc': 'rustc 1.97.1 (fixture)', 'python': 'Python 3.12.3', 'node': 'v26.1.0'},
+                'registry_sha256': files['registry.json']['sha256'],
+                'fixture_sha256': files['fixtures.json']['sha256'],
+                'cells': [
+                    {'key': 'Module/sample', 'language': 'rust', 'supported': True, 'status': 'pass'},
+                    {'key': 'Module/sample', 'language': 'python', 'supported': False, 'status': 'unsupported_registry'},
+                ],
+                'expected_supported_cells': 1, 'executed_supported_cells': 1,
+                'cases': [
+                    {'status': 'pass', 'self_check_rows': 64, 'language': 'rust',
+                     'decision_measurement': True, 'golden_flip_rate': 0, 'randomized_flip_rate': 0},
+                    {'status': 'pass', 'self_check_rows': 64, 'language': 'python'},
+                    {'status': 'pass', 'self_check_rows': 64, 'language': 'javascript'},
+                ],
+                'expected_emitted_modules': 3, 'executed_emitted_modules': 3,
+                'raw_numeric_contract': [{'status': 'pass', 'rows': 1} for _ in range(3)],
+                'commands': [{'argv': ['fixture'], 'exit': 0, 'stdout': 'stdout.log', 'stderr': 'stderr.log', 'seconds': 0.1}],
+                'files': files,
+            }
+            report_path = root/'report.json'
+            report_path.write_text(json.dumps(report))
+            aggregate_evidence.verify_export_parity(root, source_sha, '123', '1', 'neverhuman/JopeDime', 'workflow_dispatch')
+            (root/'sample/predictor.py').write_bytes(b'tampered')
+            with self.assertRaises(AssertionError):
+                aggregate_evidence.verify_export_parity(root, source_sha, '123', '1', 'neverhuman/JopeDime', 'workflow_dispatch')
 
     def fixture(self, root):
         folder = root / 'full-one'
