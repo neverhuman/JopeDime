@@ -24,10 +24,10 @@
 //!
 //! A "render site" is any line containing the literal `[resource]` or a call to
 //! the central `render_resource_block()` policy helper in a source file under
-//! `crates/jope-campaigns/src/bin/` or `python/src/jope/research/`. Comments and Rust `mod tests` blocks are
+//! `crates/jope-campaigns/src/bin/` or `python/test-support/jope/research/`. Comments and Rust `mod tests` blocks are
 //! stripped first, because a commented-out `ram_mb = 49152` is documentation,
 //! not a reservation -- an earlier version of this scanner reported exactly that
-//! false positive against `python/src/jope/research/test_exact_ops.py`.
+//! false positive against `python/test-support/jope/research/test_exact_ops.py`.
 //!
 //! Every render site MUST be listed in `REGISTRY`. An unregistered site fails the
 //! test: adding a sixth renderer is precisely the event that caused this outage
@@ -59,7 +59,7 @@ pub enum DepForm {
     /// `smoke` IS a field of DependencySpec, so this is enforced too. Kept as a
     /// distinct variant because an earlier version of this scanner recognised
     /// only the `[[dependencies.smoke]]` spelling and therefore reported
-    /// `python/src/jope/research/test_exact_canary.py` as having NO placement constraint when it
+    /// `python/test-support/jope/research/test_exact_canary.py` as having NO placement constraint when it
     /// in fact has an enforced one.
     SmokeInline,
     /// `[dependencies] hostname = [...]` -- a serde NO-OP. `hostname` is not a
@@ -190,27 +190,27 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
         Some(Family::Eval),
     ),
     (
-        "python/src/jope/research/test_exact_backlog.py",
+        "python/test-support/jope/research/test_exact_backlog.py",
         "render_spec",
         Some(Family::Eval),
     ),
     (
-        "python/src/jope/research/test_exact_canary.py",
+        "python/test-support/jope/research/test_exact_canary.py",
         "render",
         Some(Family::Eval),
     ),
     (
-        "python/src/jope/research/test_exact_ops.py",
+        "python/test-support/jope/research/test_exact_ops.py",
         "render_checkpoint_proposal_spec",
         Some(Family::Propose),
     ),
     (
-        "python/src/jope/research/test_exact_train.py",
+        "python/test-support/jope/research/test_exact_train.py",
         "render_spec",
         Some(Family::Trainer),
     ),
     (
-        "python/src/jope/research/test_exact_train.py",
+        "python/test-support/jope/research/test_exact_train.py",
         "render_resource_block",
         Some(Family::Trainer),
     ),
@@ -223,7 +223,7 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     // campaign renderer outside the flywheel families, but it still belongs
     // in the registry so its SCQ syntax is audited by the repository test.
     (
-        "python/src/jope/research/smart_v3_cpu_scq.py",
+        "python/test-support/jope/research/smart_v3_cpu_scq.py",
         "render_spec",
         None,
     ),
@@ -295,18 +295,18 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
 /// Verified 2026-07-29 by grepping the tree for `[resource]`: outside these
 /// directories the only remaining hits in `src/` are `spec_policy.rs` and
 /// `spec_drift.rs` themselves (the source of truth, see `EXEMPT_FILES`), and in
-/// `python/src/jope/research/` there are none below the top level.
+/// `python/test-support/jope/research/` there are none below the top level.
 pub const SCAN_DIRS: &[&str] = &[
     "crates/jope-campaigns/src/bin",
     "crates/jope-campaigns/src/test_adaptive",
-    "python/src/jope/research",
+    "python/test-support/jope/research",
 ];
 
 /// The shared spec builder itself, and its checker. These files necessarily
 /// contain the literals they exist to police, so scanning them yields phantom
 /// render sites. They are the source of truth, not a competing renderer.
 pub const EXEMPT_FILES: &[&str] = &[
-    "python/src/jope/research/jope_spec_policy.py",
+    "python/test-support/jope/research/jope_spec_policy.py",
     "crates/jope-campaigns/src/bin/jope_spec_drift.rs",
 ];
 
@@ -462,7 +462,7 @@ impl fmt::Display for Finding {
 // ---------------------------------------------------------------------------
 
 /// Strip whole-line comments so a commented-out value is never read as a
-/// reservation. This is load-bearing: `python/src/jope/research/test_exact_ops.py` documents the
+/// reservation. This is load-bearing: `python/test-support/jope/research/test_exact_ops.py` documents the
 /// old 49152 value in a comment directly above the live 12288, and a naive
 /// scanner reports the comment.
 fn strip_comments(src: &str, is_py: bool) -> Vec<String> {
@@ -902,7 +902,7 @@ mod tests {
                 "fn render_spec() {\n let s = \"[resource]\\nram_mb = 768\\n\";\n}\n",
             ),
             (
-                "python/src/jope/research",
+                "python/test-support/jope/research",
                 "new.py",
                 "def render_spec():\n return '''[resource]\nram_mb = 768\n'''\n",
             ),
@@ -924,7 +924,7 @@ mod tests {
     }
 
     /// A commented-out reservation must never be read as a live one. This
-    /// regression is real: `python/src/jope/research/test_exact_ops.py` documents the old 49152
+    /// regression is real: `python/test-support/jope/research/test_exact_ops.py` documents the old 49152
     /// directly above the live 12288.
     #[test]
     fn commented_out_values_are_not_parsed() {
@@ -1009,30 +1009,30 @@ mod tests {
         );
     }
 
-    /// The checked-in JSON the python/src/jope/research/ lane reads must match this crate exactly.
+    /// The checked-in JSON the python/test-support/jope/research/ lane reads must match this crate exactly.
     /// Without this the Python renderers would silently keep a stale copy of the
     /// numbers -- which is the very failure mode this workstream exists to end.
     ///
     /// Regenerate with:
     ///   cargo run --release -p jope-dime-regressor --bin jope_spec_drift -- --emit-json \
-    ///     > python/src/jope/research/jope-spec-policy.json
+    ///     > python/test-support/jope/research/jope-spec-policy.json
     #[test]
     fn checked_in_policy_json_matches_this_module() {
-        let path = repo_root().join("python/src/jope/research/jope-spec-policy.json");
+        let path = repo_root().join("python/test-support/jope/research/jope-spec-policy.json");
         let on_disk = std::fs::read_to_string(&path).unwrap_or_else(|e| {
             panic!(
                 "{} is missing ({e}). Regenerate: cargo run --release -p jope-dime-regressor \
-                 --bin jope_spec_drift -- --emit-json > python/src/jope/research/jope-spec-policy.json",
+                 --bin jope_spec_drift -- --emit-json > python/test-support/jope/research/jope-spec-policy.json",
                 path.display()
             )
         });
         assert_eq!(
             on_disk,
             spec_policy::policy_json(),
-            "python/src/jope/research/jope-spec-policy.json is STALE -- the Python lane is reading \
+            "python/test-support/jope/research/jope-spec-policy.json is STALE -- the Python lane is reading \
              different numbers from the Rust policy. Regenerate: cargo run --release \
              -p jope-dime-regressor --bin jope_spec_drift -- --emit-json \
-             > python/src/jope/research/jope-spec-policy.json"
+             > python/test-support/jope/research/jope-spec-policy.json"
         );
     }
 
@@ -1067,7 +1067,7 @@ for family in p.FAMILIES:
     print(p.render_resource_block(family) + p.render_placement_block(family), end='')
 "#,
             )
-            .arg(repo_root().join("python/src/jope/research"))
+            .arg(repo_root().join("python/test-support/jope/research"))
             .output()
             .expect("python3 is required for cross-language policy verification");
         assert!(
@@ -1094,7 +1094,7 @@ for family in p.FAMILIES:
         let s = sites();
         let canary = s
             .iter()
-            .find(|x| x.file == "python/src/jope/research/test_exact_canary.py")
+            .find(|x| x.file == "python/test-support/jope/research/test_exact_canary.py")
             .expect("canary render site");
         assert_eq!(
             canary.dep_form,
@@ -1110,14 +1110,14 @@ for family in p.FAMILIES:
         );
 
         let root = tempfile::tempdir().expect("temporary synthetic renderer root");
-        std::fs::create_dir_all(root.path().join("python/src/jope/research")).unwrap();
+        std::fs::create_dir_all(root.path().join("python/test-support/jope/research")).unwrap();
         std::fs::write(
-            root.path().join("python/src/jope/research/test_exact_canary.py"),
+            root.path().join("python/test-support/jope/research/test_exact_canary.py"),
             "def render():\n    return '''[resource]\nram_mb = 768\n[dependencies]\nsmoke = [{ command = \"/usr/bin/grep\", args = [\"-qx\", \"xbabe2\", \"/etc/hostname\"] }]\n'''\n",
         )
         .unwrap();
         let synthetic =
-            scan_file(root.path(), "python/src/jope/research/test_exact_canary.py").unwrap();
+            scan_file(root.path(), "python/test-support/jope/research/test_exact_canary.py").unwrap();
         let legacy = synthetic.first().expect("synthetic inline smoke site");
         assert_eq!(legacy.dep_form, DepForm::SmokeInline);
         assert!(legacy.probes_etc_hostname);
