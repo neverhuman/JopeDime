@@ -81,6 +81,10 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/evergreen.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/evergreen.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py",
+  # Frozen fresh_gp_v2 label_campaign package copies; all source hashes are pinned.
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/label_campaign.py",
   # Frozen HLT-043 copies; leave the mutable hpc_verified_v4 instance to its owner.
   "deploy/dl-flywheel/pipelines/continuous/neural_outbox.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py",
