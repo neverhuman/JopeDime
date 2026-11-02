@@ -25,7 +25,7 @@ verifier deliberately keeps integrity and qualification as separate results.
 
 ### Candidate-bound three-client custody package
 
-`capture_clients.py` packages already captured, fresh sidecars for exactly
+`capture_clients.py` packages already captured, fresh sidecars for
 `claude_code`, `gemini_cli` and `codex_cli`. It does not start clients, an engine,
 or inspect dataset contents. The caller supplies a clean checkout SHA, the exact
 candidate file and SHA-256, a DSC01 handoff JSON and its independently supplied
@@ -44,8 +44,14 @@ nice -n 10 python3 -B deploy/qualification/agents/transcripts/run-prep/capture_c
   --capture-root "$FRESH_CAPTURE_SIDECARS" --out-dir "$PRIVATE_CUSTODY/FRESH-package"
 ```
 
-The tool copies only the nine required sidecars into a private new directory and
-writes `capture-manifest.json` plus `trusted-manifest.sha256`. Recompute and
+By default the tool copies the nine required sidecars into a private new
+directory and writes `capture-manifest.json` plus `trusted-manifest.sha256`.
+For an explicit partial custody package, pass `--clients claude_code codex_cli`;
+the metadata must mark each omitted client `EXCLUDED` with a nonblank
+`exclusion_reason`, and its bound execution sidecar must repeat that disposition.
+The manifest inventories those exclusion receipts and lists selected and
+excluded clients. `--provider-ready` refuses a partial roster, and every package
+remains `NOT_QUALIFIED`. Recompute and
 independently review that pin after the manifest is finalized; the pin is a
 content identity, not a signature or an authority by itself. The custody schema
 is deliberately separate from the A5 provider manifest. It records
@@ -357,9 +363,13 @@ requirements. Source/build identities and a passing subset must stay explicit.
 
 ## Candidate-bound three-client capture preparation
 
-`capture_three_clients.py` runs exactly the pinned Claude Code, Gemini CLI and
-Codex CLI commands in sequence against one candidate. Each client gets its own
-new engine home and store, so every recorded run inventory begins at zero and
+`capture_three_clients.py` runs the pinned Claude Code, Gemini CLI and Codex CLI
+commands in sequence against one candidate by default. `--clients` may select a
+nonempty subset; partial selection requires `--exclude-reason` and marks every
+omitted client `EXCLUDED` with that reason in both `capture-run.json` and its
+execution sidecar. Partial captures use a separate status and always remain
+`NOT_QUALIFIED`. The default still runs all three clients. Each selected
+client gets its own new engine home and store, so every recorded run inventory begins at zero and
 the frozen `[0, 1, 1]` retry contract remains independently testable. The runner
 writes per-client command/stdout/stderr logs, bounded `capture_stdio.py`
 transport receipts and wire captures, plus source/candidate/client-bound
@@ -381,7 +391,7 @@ starting any process. Actual client execution requires the explicit
 `--execute-named-clients` option, an RC2 candidate, and a separately authorized
 capture window. Never place credentials in argv or allow them into transcripts.
 
-The follow-on `capture_clients.py --provider-ready` mode packages the three
+The follow-on `capture_clients.py --provider-ready` mode packages all three
 execution, semantic-verification and wire sidecars into the provider's
 `jopedime.named-client-transcripts/v1` manifest format. It refuses any client
 whose semantic receipt does not record the exact 16 successful calls and zero

@@ -200,6 +200,30 @@ def plan_clients(plan: dict, source_sha: str, candidate_sha: str) -> dict[str, d
     return clients
 
 
+def client_selection(requested: list[str] | None, exclusion_reason: str | None):
+    selected = list(CLIENTS) if requested is None else requested
+    require(bool(selected), "at least one named client must be selected")
+    require(
+        all(isinstance(key, str) and key in CLIENTS for key in selected),
+        "selected clients must be named in the pinned client plan",
+    )
+    require(len(selected) == len(set(selected)), "selected clients must be unique")
+    selected_set = set(selected)
+    selected = [key for key in CLIENTS if key in selected_set]
+    excluded = [key for key in CLIENTS if key not in selected_set]
+    if excluded:
+        require(
+            isinstance(exclusion_reason, str) and exclusion_reason.strip(),
+            "--exclude-reason is required when clients are omitted",
+        )
+    else:
+        require(
+            exclusion_reason is None,
+            "--exclude-reason is only valid when a client is omitted",
+        )
+    return selected, {key: exclusion_reason.strip() for key in excluded}
+
+
 def selected_environment(extra_names: list[str], engine_home: Path) -> dict[str, str]:
     selected = {
         name: os.environ[name]
@@ -700,6 +724,10 @@ def run_capture(args: argparse.Namespace) -> dict:
     require(train_path.is_file(), "TRAIN input must be a regular file")
     plan, _ = read_object(args.client_plan, "client command plan")
     clients = plan_clients(plan, args.source_sha, candidate_sha)
+    selected_keys, excluded_clients = client_selection(
+        getattr(args, "clients", None), getattr(args, "exclude_reason", None)
+    )
+    selected_clients = {key: clients[key] for key in selected_keys}
     require(
         plan.get("capture_source_sha", args.source_sha) == capture_source_sha,
         "client plan capture-tool source SHA mismatch",
@@ -716,7 +744,7 @@ def run_capture(args: argparse.Namespace) -> dict:
         "capture_stdio.py must be a regular source file",
     )
 
-    for key, row in clients.items():
+    for key, row in selected_clients.items():
         executable = Path(row["executable"])
         require(
             executable.is_file() and os.access(executable, os.X_OK),
@@ -727,7 +755,7 @@ def run_capture(args: argparse.Namespace) -> dict:
             f"client executable changed: {key}",
         )
     commands = render_client_commands(
-        clients,
+        selected_clients,
         candidate=candidate,
         output=output,
         engine_home=engine_home,
@@ -745,7 +773,8 @@ def run_capture(args: argparse.Namespace) -> dict:
             "capture_source_sha": capture_source_sha,
             "candidate_artifact_sha256": candidate_sha,
             "input_handoff_sha256": handoff_sha,
-            "clients": sorted(clients),
+            "clients": selected_keys,
+            "excluded_clients": excluded_clients,
             "rendered_client_commands": commands,
             "a5_status": "NOT_QUALIFIED",
         }
@@ -788,7 +817,8 @@ def run_capture(args: argparse.Namespace) -> dict:
     engine_homes = {}
     started = datetime.now(timezone.utc).isoformat()
 
-    for key, (slug, _client_name) in CLIENTS.items():
+    for key in selected_keys:
+        slug, _client_name = CLIENTS[key]
         row = clients[key]
         case = logs / key
         case.mkdir(mode=0o700)
@@ -1044,6 +1074,7 @@ def run_capture(args: argparse.Namespace) -> dict:
                 raise teardown_error
 
         rows[key] = {
+            "status": "INCLUDED",
             "version": row["version"],
             "executable": row["executable"],
             "executable_sha256": row["executable_sha256"],
@@ -1063,28 +1094,72 @@ def run_capture(args: argparse.Namespace) -> dict:
             "capture": capture,
         }
 
-    complete = (
-        len(rows) == len(CLIENTS)
-        and all(row["engine_stop_exit"] == 0 for row in rows.values())
-        and all(row["engine_exit"] == 0 for row in rows.values())
+    for key, reason in excluded_clients.items():
+        rows[key] = {
+            "status": "EXCLUDED",
+            "exclusion_reason": reason,
+            "version": clients[key]["version"],
+            "executable": clients[key]["executable"],
+            "executable_sha256": clients[key]["executable_sha256"],
+            "implementation": clients[key]["implementation"],
+            "client_exit": None,
+            "timed_out": False,
+            "capture_error": None,
+            "capture_receipt_sha256": None,
+            "engine_home": None,
+            "engine_exit": None,
+            "engine_stop_exit": None,
+            "capture": None,
+        }
+
+    selected_complete = (
+        all(rows[key]["engine_stop_exit"] == 0 for key in selected_keys)
+        and all(rows[key]["engine_exit"] == 0 for key in selected_keys)
         and all(
-            row["client_exit"] == 0
-            and not row["timed_out"]
-            and row["capture_error"] is None
-            for row in rows.values()
+            rows[key]["client_exit"] == 0
+            and not rows[key]["timed_out"]
+            and rows[key]["capture_error"] is None
+            for key in selected_keys
         )
     )
+    complete = selected_complete and not excluded_clients
     metadata = {
         key: {
             "version": row["version"],
             "executable": row["executable"],
             "executable_sha256": row["executable_sha256"],
             "implementation": row["implementation"],
+            "status": "EXCLUDED" if key in excluded_clients else "INCLUDED",
+            **(
+                {"exclusion_reason": excluded_clients[key]}
+                if key in excluded_clients
+                else {}
+            ),
         }
         for key, row in clients.items()
     }
     for key, (slug, _client_name) in CLIENTS.items():
         row = rows[key]
+        if row["status"] == "EXCLUDED":
+            execution = {
+                "schema": "jopedime.named-client-execution/v1",
+                "source": args.source_sha,
+                "capture_source_sha": capture_source_sha,
+                "binary_sha256": candidate_sha,
+                "client": key,
+                "client_version": row["version"],
+                "client_resolved_path": row["executable"],
+                "client_launcher_sha256": row["executable_sha256"],
+                "status": "EXCLUDED",
+                "exclusion_reason": row["exclusion_reason"],
+            }
+            execution_path = sidecars / f"{slug}.execution.json"
+            execution_path.write_text(
+                json.dumps(execution, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            os.chmod(execution_path, 0o600)
+            continue
         execution = {
             "schema": "jopedime.named-client-execution/v1",
             "source": args.source_sha,
@@ -1129,13 +1204,17 @@ def run_capture(args: argparse.Namespace) -> dict:
         json.dumps(metadata, sort_keys=True, indent=2) + "\n", encoding="utf-8"
     )
     os.chmod(metadata_path, 0o600)
-    engine_exits = [row["engine_exit"] for row in rows.values()]
-    stop_exits = [row["engine_stop_exit"] for row in rows.values()]
+    engine_exits = [rows[key]["engine_exit"] for key in selected_keys]
+    stop_exits = [rows[key]["engine_stop_exit"] for key in selected_keys]
     result = {
         "schema": "jopedime.a5-three-client-capture/v1",
-        "status": "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
-        if complete
-        else "INCOMPLETE",
+        "status": (
+            "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+            if complete
+            else "PARTIAL_CAPTURES_PENDING_SEMANTIC_REVIEW"
+            if selected_complete and excluded_clients
+            else "INCOMPLETE"
+        ),
         "started_at": started,
         "finished_at": datetime.now(timezone.utc).isoformat(),
         "source_sha": args.source_sha,
@@ -1144,6 +1223,8 @@ def run_capture(args: argparse.Namespace) -> dict:
         "input_handoff_sha256": handoff_sha,
         "input_split": "TRAIN",
         "dataset_id": dataset_id,
+        "selected_clients": selected_keys,
+        "excluded_clients": excluded_clients,
         "engine_home": str(engine_home),
         "engine_homes": engine_homes,
         "engine_exit": 0
@@ -1243,6 +1324,15 @@ def main() -> int:
     parser.add_argument("--client-plan", type=Path)
     parser.add_argument("--engine-home", type=Path)
     parser.add_argument("--out-dir", type=Path)
+    parser.add_argument(
+        "--clients",
+        nargs="+",
+        choices=CLIENTS,
+        help="named clients to run (default: all)",
+    )
+    parser.add_argument(
+        "--exclude-reason", help="required explanation for each omitted client"
+    )
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--execute-named-clients", action="store_true")
     args = parser.parse_args()
