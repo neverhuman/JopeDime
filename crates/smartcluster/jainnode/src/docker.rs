@@ -163,7 +163,8 @@ mod tests {
         let server = tokio::spawn(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
             let mut request = [0_u8; 4096];
-            stream.read(&mut request).await.unwrap();
+            let request_bytes = stream.read(&mut request).await.unwrap();
+            assert!(request_bytes > 0);
             stream.write_all(&response).await.unwrap();
             stream.shutdown().await.unwrap();
         });
