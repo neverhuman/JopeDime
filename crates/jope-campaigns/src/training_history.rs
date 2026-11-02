@@ -210,6 +210,10 @@ pub struct SegmentState {
 }
 
 impl SegmentState {
+    fn initial() -> Self {
+        Self::default()
+    }
+
     fn path(seg_dir: &Path) -> PathBuf {
         seg_dir.join("segment.v1.json")
     }
@@ -762,7 +766,7 @@ pub fn record_truncation(
     let seg_dir = segment_dir(archive, key);
     let mut state = match SegmentState::load(&seg_dir)? {
         Some(state) => state,
-        None => SegmentState::default(),
+        None => SegmentState::initial(),
     };
     let residual = fragment.len() as u64;
     let sha = sha256_hex(fragment);
@@ -931,7 +935,7 @@ pub fn ingest_source<R: SourceReader>(
 
     let mut state = match SegmentState::load(&seg_dir)? {
         Some(state) => state,
-        None => SegmentState::default(),
+        None => SegmentState::initial(),
     };
     state.schema = SEGMENT_SCHEMA.to_string();
     state.run_id = key.run_id.clone();
