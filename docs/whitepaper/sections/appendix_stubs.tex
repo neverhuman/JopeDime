@@ -71,12 +71,12 @@ qualification pending. The separate adapter snapshot is in
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
   \num{2048}-value context $z_p = \encP(p)$ joins three blocks:
-  (i)~\num{512} pooled values from a pretrained row encoder of width \num{128}
+  (i)~512 pooled values from a pretrained row encoder of width 128
   across training rows by mean, population standard deviation, and 10th and 90th
   percentiles; (ii)~\num{1024} values projected from a \num{2048}-value third-party tabular
-  regressor state capped at \num{768} context rows and \num{256} query
+  regressor state capped at 768 context rows and 256 query
   rows (the external CPU path first subsamples to at most \num{1000} training
-  rows; third-party provenance pending; restricted; redistribution prohibited); and (iii)~\num{512} values from two
+  rows; third-party provenance pending; restricted; redistribution prohibited); and (iii)~512 values from two
   frozen seed-17 target-summary windows. Each block is normalized before
   concatenation and clipping to $\pm32$. Non-finite contexts are refused. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
@@ -116,14 +116,14 @@ qualification pending. The separate adapter snapshot is in
   The global-batch route uses separate reductions.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
   The network has \num{27796494} parameters in total (six
-  decoder blocks, width \num{512}, four attention heads, prefix context token
-  and maximum length \num{128} tokens over the \num{401}-token grammar).
-  Each of the writer $\writer$ and ranking-map $\mapv$ token tables allocates \num{657} rows:
-  \num{401} grammar rows plus \num{256} reserved rows. The reserved rows
+  decoder blocks, width 512, four attention heads, prefix context token
+  and maximum length 128 tokens over the 401-token grammar).
+  Each of the writer $\writer$ and ranking-map $\mapv$ token tables allocates 657 rows:
+  401 grammar rows plus 256 reserved rows. The reserved rows
   are never indexed as valid input or output tokens; the tied writer
   projection is restricted to the grammar rows. The registered total also
   includes zero-weight stability and loss-scale terms, so it does not
-  measure learned or exercised capacity. Approximately \num{6.90} million parameters lie outside the writer's token
+  measure learned or exercised capacity. Approximately 6.90 million parameters lie outside the writer's token
   generation path. Decoding bypasses them, but the native checkpoint loader
   still requires them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
