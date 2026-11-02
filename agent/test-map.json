@@ -2,7 +2,7 @@
   "schema": "jope-dime.test-map/v1",
   "tests": {
     ".cargo/config.toml": {
-      "command": "just hygiene",
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
       "lane": "fast",
       "purpose": "validate Cargo configuration routing and repository hygiene"
     },
