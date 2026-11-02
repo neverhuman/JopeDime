@@ -217,13 +217,18 @@ def predictions(model, x, task, classes):
     return {"kind": "probabilities", "data": {"classes": list(classes), "values": probabilities.tolist()}}
 
 
-def replay(artifact_bytes, expected_sha256, rows):
-    """Replay a trusted private artifact after verifying its complete digest.
+def _load_trusted_artifact(artifact_bytes):
+    """Load the private artifact emitted by this invocation's fit call."""
+    return pickle.loads(artifact_bytes)
+
+
+def _replay_trusted_artifact(artifact_bytes, expected_sha256, rows):
+    """Replay an internally produced artifact after verifying its complete digest.
 
     The pin must come from the caller's trusted custody record, never from an
     untrusted artifact's accompanying JSON. SHA-256 provides integrity, not
     authenticity; Python estimator pickle is executable and is not a sandbox.
-    The CLI only calls this on bytes just produced by its own fit invocation.
+    Only fit calls this helper, on bytes just produced by the same invocation.
     """
     if (not isinstance(expected_sha256, str) or len(expected_sha256) != 64
             or any(c not in "0123456789abcdef" for c in expected_sha256)):
@@ -232,7 +237,7 @@ def replay(artifact_bytes, expected_sha256, rows):
     artifact_bytes = bytes(artifact_bytes)
     if hashlib.sha256(artifact_bytes).hexdigest() != expected_sha256:
         raise ValueError("fitted artifact checksum mismatch")
-    state = pickle.loads(artifact_bytes)
+    state = _load_trusted_artifact(artifact_bytes)
     if state["schema"] != ARTIFACT:
         raise ValueError("unsupported fitted artifact")
     if any(len(row) != len(state["preprocessing"]["columns"]) for row in rows):
@@ -264,7 +269,7 @@ def fit(request, create_model, engine_version):
                              "task": request["task"], "classes": list(classes),
                              "preprocessing": preprocessing, "model": model}, protocol=5)
     checksum = hashlib.sha256(artifact).hexdigest()
-    if replay(artifact, checksum, request["predict"]["features"]) != output:
+    if _replay_trusted_artifact(artifact, checksum, request["predict"]["features"]) != output:
         raise ValueError("fitted artifact reload changed predictions")
     return output, artifact, checksum
 

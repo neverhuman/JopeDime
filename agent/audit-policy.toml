@@ -10,7 +10,8 @@ advisory_on = ["medium", "low", "info"]
 # docs/release/jankurai-p5-r2-exceptions-20261102.md and docs/streaming.md. They
 # do not alter Gitleaks, Rust/Python tests, or source content. Do not add
 # directories, broad globs, or unreviewed paths; each exact exception must be
-# removed when its rationale ends.
+# removed when its rationale ends. P38 SQL/pinned-input dispositions are recorded
+# in docs/release/jankurai-pysqlpickle-exceptions-20261102.md.
 # Existing custody and synthetic-scanner exceptions remain narrowly scoped.
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
@@ -56,5 +57,20 @@ extra_excluded_paths = [
   "crates/jope-service/src/telemetry.rs",
   "crates/jope-service/src/worker/frame.rs",
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
+  # P38: pinned research artifacts load only inputs whose complete identity is checked.
+  "research/flywheel_selfplay/h101_w6_proposer_transfer_prep/w6_transfer_prep.py",
+  "research/flywheel_selfplay/h106_w9_proposal_scorer_replay/run_h106.py",
+  "research/flywheel_selfplay/h115_w6_xfamily/run_h114.py",
+  # P38: in-memory SQLite fixtures bind row values; only fixed table/placeholder syntax is composed.
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p2/test_family_pin.py",
+  # P38: these fixed SQL probes are part of reviewed, byte-pinned qualification inputs.
+  "deploy/dl-flywheel/pipelines/final_capture_v1/probe.py",
+  "deploy/dl-flywheel/pipelines/generated_target_admission_v1/cutoff.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/readonly_snapshot.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/readonly_snapshot.py",
+  # P38: joblib models are emitted with producer-generated identity pins and consumed only by trusted pipeline code.
+  "python/src/jope/target_maker/artifact_pins.py",
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]

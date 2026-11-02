@@ -28,12 +28,13 @@ Python pickle so that reload reproduces the fitted predictor. The CLI verifies
 reload only for bytes it has just created itself, then writes the artifact and
 result with mode 0600 and exclusive creation. It refuses existing output paths.
 
-**Pickle can execute code. SHA-256 checks integrity, not authenticity.** A caller
-of `replay` must obtain its digest from a trusted custody record and independently
-trust the artifact's source. Supplying an arbitrary pickle together with its own
+**Pickle can execute code. SHA-256 checks integrity, not authenticity.** The internal
+replay helper must receive its digest from trusted custody and the caller must trust
+the artifact's producer. Supplying an arbitrary pickle together with its own
 hash does not make it safe. There is no public/untrusted artifact import endpoint,
-and this function is not a deserialization sandbox. This records the existing
-boundary; it is not an audit waiver or a claim that untrusted pickle is safe.
+and this function is not a deserialization sandbox. The closed same-invocation
+flow is recorded in `docs/release/jankurai-pysqlpickle-exceptions-20261102.md`.
+That exception does not cover arbitrary artifacts or make untrusted pickle safe.
 
 Removing this trusted-code requirement needs an explicit format migration: native
 model formats for all four engines, complete preprocessing/state/version schemas,
