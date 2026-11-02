@@ -18,6 +18,7 @@ pub mod manifest;
 pub mod native_graph;
 #[cfg(feature = "neural")]
 pub mod neural;
+pub mod newmath_grammar;
 pub mod operations;
 #[cfg(feature = "neural")]
 pub mod policy_export;
