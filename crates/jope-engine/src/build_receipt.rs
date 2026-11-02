@@ -247,20 +247,32 @@ fn run(program: &str, args: &[&str], dir: Option<&Path>) -> Option<String> {
 /// Read-only git identity of `dir`: HEAD commit, the tree object of `dir` at
 /// HEAD, and whether the working tree under `dir` differs from HEAD.
 fn git_identity(dir: &Path) -> Value {
-    let Some(commit) = run("git", &["rev-parse", "HEAD"], Some(dir)) else {
+    git_identity_with(dir, |args, dir| run("git", args, dir))
+}
+
+fn git_identity_with<F>(dir: &Path, mut run_git: F) -> Value
+where
+    F: FnMut(&[&str], Option<&Path>) -> Option<String>,
+{
+    let Some(commit) = run_git(&["rev-parse", "HEAD"], Some(dir)) else {
         return Value::Null;
     };
-    let prefix = run("git", &["rev-parse", "--show-prefix"], Some(dir)).unwrap_or_default();
-    let spec = format!("HEAD:{}", prefix.trim_end_matches('/'));
-    let tree = run("git", &["rev-parse", &spec], Some(dir));
-    let status = run(
-        "git",
+    let prefix = run_git(&["rev-parse", "--show-prefix"], Some(dir));
+    let (path, tree) = prefix.map_or((None, None), |prefix| {
+        let path = prefix.trim_end_matches('/');
+        let spec = format!("HEAD:{path}");
+        (
+            Some(path.to_owned()),
+            run_git(&["rev-parse", &spec], Some(dir)),
+        )
+    });
+    let status = run_git(
         &["status", "--porcelain", "--untracked-files=all", "--", "."],
         Some(dir),
     );
     json!({
         "commit": commit,
-        "path": prefix.trim_end_matches('/'),
+        "path": path,
         "tree": tree,
         "clean": status.map(|s| s.is_empty()),
     })
@@ -465,6 +477,30 @@ pub fn apply_bounds(receipt: &mut Value, max_glibc: Option<&str>, forbid_gpu: bo
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn git_identity_keeps_path_and_tree_unknown_when_prefix_lookup_fails() {
+        let dir = Path::new("/source/subdir");
+        let mut calls = Vec::new();
+        let identity = git_identity_with(dir, |args, requested_dir| {
+            assert_eq!(requested_dir, Some(dir));
+            calls.push(args.iter().map(|arg| (*arg).to_owned()).collect::<Vec<_>>());
+            match args {
+                ["rev-parse", "HEAD"] => Some("commit-id".to_owned()),
+                ["rev-parse", "--show-prefix"] => None,
+                ["status", "--porcelain", "--untracked-files=all", "--", "."] => {
+                    Some(String::new())
+                }
+                _ => panic!("unexpected git command: {args:?}"),
+            }
+        });
+
+        assert_eq!(identity["commit"], "commit-id");
+        assert_eq!(identity["path"], Value::Null);
+        assert_eq!(identity["tree"], Value::Null);
+        assert_eq!(identity["clean"], true);
+        assert_eq!(calls.len(), 3);
+    }
 
     #[test]
     fn bounds_are_numeric_and_fail_closed() {

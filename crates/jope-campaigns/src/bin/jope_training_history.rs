@@ -294,29 +294,28 @@ fn capture_remote_node(
         };
         let source = reader.display();
         let fingerprint = found.fingerprint();
-        let prior = th::SegmentState::load(&th::segment_dir(archive, &found.key));
+        let prior = th::SegmentState::load(&th::segment_dir(archive, &found.key))?;
         let held = th::archived_bytes(archive, &found.key);
         // Already on the truncation ledger: the outstanding bytes are a row
         // that will never be finished, so there is nothing left to fetch.
-        let settled = prior
-            .as_ref()
-            .map(|state| {
+        let settled = match prior.as_ref() {
+            Some(state) => {
                 state.truncation_count > 0 && held + state.truncated_tail_bytes >= found.len
-            })
-            .unwrap_or(false);
+            }
+            None => false,
+        };
         // Skipping on an unchanged size+mtime is what keeps an idle remote
         // segment free. It is ONLY safe when nothing is outstanding: a killed
         // trainer's file keeps its mtime forever, so skipping while bytes are
         // still unarchived would mean its truncated tail is never recorded and
         // the directory blocks pruning for good — the exact deadlock this
         // workstream exists to remove.
-        let unchanged = prior
-            .as_ref()
-            .map(|state| {
+        let unchanged = match prior.as_ref() {
+            Some(state) => {
                 !state.source_fingerprint.is_empty() && state.source_fingerprint == fingerprint
-            })
-            .unwrap_or(false)
-            && (held >= found.len || settled);
+            }
+            None => false,
+        } && (held >= found.len || settled);
         if !unchanged {
             match th::ingest_source_fingerprinted(
                 archive,
@@ -492,7 +491,7 @@ fn capture(cfg: &Cfg) -> Result<Value> {
     // belonging to a node we could not reach is left alone.
     let mut sealed = 0u64;
     let mut seal_deferred = 0u64;
-    for (key, state) in th::load_segments(&archive) {
+    for (key, state) in th::load_segments(&archive)? {
         if seen.contains(&key) {
             continue;
         }
@@ -566,20 +565,21 @@ fn idle_receipt_due(archive: &Path) -> bool {
 /// bytes will never arrive. A partial row that has not been recorded yet (the
 /// trainer is mid-write, or the tail is not yet quiescent) still counts, which
 /// is what keeps `verify` honest about a live run.
-fn uncovered(root: &Path, runs_root: &Path) -> Vec<Value> {
+fn uncovered(root: &Path, runs_root: &Path) -> Result<Vec<Value>> {
     let archive = th::archive_root(root);
     let mut behind = Vec::new();
-    for run_id in th::discover_trainer_runs(runs_root).unwrap_or_default() {
+    for run_id in th::discover_trainer_runs(runs_root)? {
         for found in th::scan_run_dir(runs_root, &run_id) {
             let held = th::archived_bytes(&archive, &found.key);
             if held >= found.len {
                 continue;
             }
-            let recorded = th::SegmentState::load(&th::segment_dir(&archive, &found.key))
-                .map(|state| {
+            let recorded = match th::SegmentState::load(&th::segment_dir(&archive, &found.key))? {
+                Some(state) => {
                     state.truncation_count > 0 && held + state.truncated_tail_bytes >= found.len
-                })
-                .unwrap_or(false);
+                }
+                None => false,
+            };
             if recorded {
                 continue;
             }
@@ -600,7 +600,7 @@ fn uncovered(root: &Path, runs_root: &Path) -> Vec<Value> {
             }));
         }
     }
-    behind
+    Ok(behind)
 }
 
 fn main() -> Result<()> {
@@ -676,7 +676,7 @@ fn main() -> Result<()> {
             Ok(())
         }
         Cmd::Verify { root, runs_root } => {
-            let behind = uncovered(Path::new(&root), Path::new(&runs_root));
+            let behind = uncovered(Path::new(&root), Path::new(&runs_root))?;
             println!("{}", json!({"uncovered": behind.len(), "segments": behind}));
             if behind.is_empty() {
                 Ok(())
@@ -749,7 +749,7 @@ mod tests {
         let third = capture(&local(&root, &runs))?;
         assert_eq!(third["appended_rows"], 0);
         assert_eq!(third["archive_rows"], 2);
-        assert!(uncovered(&root, &runs).is_empty());
+        assert!(uncovered(&root, &runs)?.is_empty());
 
         // The collector reclaims the 12 GB run directory. The rows stay.
         std::fs::remove_dir_all(runs.join(run_id))?;
@@ -773,9 +773,9 @@ mod tests {
         let run_id = "jope-selfplay-train-001805437-c";
         write_run(&runs, run_id, "0", "{\"epoch\":1}\n");
         // Nothing captured yet, so the run is uncovered.
-        assert_eq!(uncovered(&root, &runs).len(), 1);
+        assert_eq!(uncovered(&root, &runs)?.len(), 1);
         capture(&local(&root, &runs))?;
-        assert!(uncovered(&root, &runs).is_empty());
+        assert!(uncovered(&root, &runs)?.is_empty());
         Ok(())
     }
 
@@ -863,8 +863,8 @@ mod tests {
         let live = capture(&local(&root, &runs))?;
         assert_eq!(live["appended_rows"], 2);
         assert_eq!(live["truncations"].as_array().unwrap().len(), 0);
-        assert_eq!(uncovered(&root, &runs).len(), 1);
-        assert_eq!(uncovered(&root, &runs)[0]["residual"], "partial_row");
+        assert_eq!(uncovered(&root, &runs)?.len(), 1);
+        assert_eq!(uncovered(&root, &runs)?[0]["residual"], "partial_row");
 
         // Once the writer has been gone long enough, the hole is recorded.
         age_file(&source, th::TAIL_QUIESCENT_SECS + 120);
@@ -874,7 +874,7 @@ mod tests {
         assert_eq!(truncations[0]["residual_bytes"], 20);
         assert_eq!(after["archive_rows"], 2, "complete rows kept");
         // ...and the run directory is no longer reported as holding rows we lack.
-        assert!(uncovered(&root, &runs).is_empty());
+        assert!(uncovered(&root, &runs)?.is_empty());
 
         // Recording is idempotent: the next tick adds nothing.
         let again = capture(&local(&root, &runs))?;
@@ -956,7 +956,8 @@ mod tests {
         assert_eq!(record["nodes_skipped"][0]["node"], "xbabe1");
         assert_eq!(record["sealed_now"], 0);
         assert_eq!(record["seal_deferred"], 1);
-        let state = th::SegmentState::load(&th::segment_dir(&archive, &key)).unwrap();
+        let state = th::SegmentState::load(&th::segment_dir(&archive, &key))?
+            .expect("state exists after capture");
         assert!(
             state.source_present,
             "an unreachable node says nothing about whether its runs still exist"

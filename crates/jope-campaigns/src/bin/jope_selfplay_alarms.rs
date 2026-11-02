@@ -1192,7 +1192,18 @@ fn check_training_history(root: &Path, runs_root: &Path, alarms: &mut Alarms) {
         _ => {}
     }
 
-    let states = th::load_segments(&archive);
+    let states = match th::load_segments(&archive) {
+        Ok(states) => states,
+        Err(error) => {
+            alarms.push(
+                "training_history_segment_state_unreadable",
+                "critical",
+                format!("{error:#}"),
+                "all archived segment state files are readable and valid".into(),
+            );
+            return;
+        }
+    };
     let now = th::now_ms();
 
     // A trainer the scheduler says finished, with nothing in the archive under

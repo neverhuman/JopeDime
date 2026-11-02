@@ -210,13 +210,26 @@ pub struct SegmentState {
 }
 
 impl SegmentState {
+    fn initial() -> Self {
+        Self::default()
+    }
+
     fn path(seg_dir: &Path) -> PathBuf {
         seg_dir.join("segment.v1.json")
     }
 
-    pub fn load(seg_dir: &Path) -> Option<Self> {
-        let text = fs::read_to_string(Self::path(seg_dir)).ok()?;
-        serde_json::from_str(&text).ok()
+    pub fn load(seg_dir: &Path) -> Result<Option<Self>> {
+        let path = Self::path(seg_dir);
+        let text = match fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => {
+                return Err(error).with_context(|| format!("read segment state {}", path.display()))
+            }
+        };
+        serde_json::from_str(&text)
+            .map(Some)
+            .with_context(|| format!("parse segment state {}", path.display()))
     }
 
     fn save(&self, seg_dir: &Path) -> Result<()> {
@@ -751,7 +764,10 @@ pub fn record_truncation(
         anyhow::bail!("refusing unsafe segment key {key:?}");
     }
     let seg_dir = segment_dir(archive, key);
-    let mut state = SegmentState::load(&seg_dir).unwrap_or_default();
+    let mut state = match SegmentState::load(&seg_dir)? {
+        Some(state) => state,
+        None => SegmentState::initial(),
+    };
     let residual = fragment.len() as u64;
     let sha = sha256_hex(fragment);
     // Same hole, already on the ledger.
@@ -917,7 +933,10 @@ pub fn ingest_source<R: SourceReader>(
     fs::create_dir_all(&seg_dir)?;
     let metrics = SegmentState::metrics_path(&seg_dir);
 
-    let mut state = SegmentState::load(&seg_dir).unwrap_or_default();
+    let mut state = match SegmentState::load(&seg_dir)? {
+        Some(state) => state,
+        None => SegmentState::initial(),
+    };
     state.schema = SEGMENT_SCHEMA.to_string();
     state.run_id = key.run_id.clone();
     state.attempt = key.attempt.clone();
@@ -970,7 +989,7 @@ pub fn ingest_source<R: SourceReader>(
             if metrics.exists() {
                 fs::rename(&metrics, rewrites.join(format!("{stamp}.jsonl")))?;
             }
-            if let Some(previous) = SegmentState::load(&seg_dir) {
+            if let Some(previous) = SegmentState::load(&seg_dir)? {
                 let _ = write_atomic(
                     &rewrites.join(format!("{stamp}.segment.json")),
                     &serde_json::to_vec_pretty(&previous)?,
@@ -1067,7 +1086,7 @@ pub fn ingest_source_fingerprinted<R: SourceReader>(
 ) -> Result<IngestOutcome> {
     let outcome = ingest_source(archive, key, reader, source_path, node)?;
     let seg_dir = segment_dir(archive, key);
-    if let Some(mut state) = SegmentState::load(&seg_dir) {
+    if let Some(mut state) = SegmentState::load(&seg_dir)? {
         if state.source_fingerprint != fingerprint || state.fingerprint_since_ms == 0 {
             state.source_fingerprint = fingerprint.to_string();
             state.fingerprint_since_ms = now_ms();
@@ -1104,7 +1123,7 @@ pub fn remote_tail_is_abandoned(
 /// pruned). Purely informational; no archived byte is touched.
 pub fn seal_segment(archive: &Path, key: &SegmentKey) -> Result<()> {
     let seg_dir = segment_dir(archive, key);
-    let Some(mut state) = SegmentState::load(&seg_dir) else {
+    let Some(mut state) = SegmentState::load(&seg_dir)? else {
         return Ok(());
     };
     if !state.source_present {
@@ -1215,35 +1234,52 @@ pub fn discover_trainer_runs(runs_root: &Path) -> Result<Vec<String>> {
 }
 
 /// Load every segment currently in the archive, keyed for lookup.
-pub fn load_segments(archive: &Path) -> BTreeMap<SegmentKey, SegmentState> {
+fn read_dir_if_exists(path: &Path) -> Result<Option<fs::ReadDir>> {
+    match fs::read_dir(path) {
+        Ok(entries) => Ok(Some(entries)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error).with_context(|| format!("read directory {}", path.display())),
+    }
+}
+
+pub fn load_segments(archive: &Path) -> Result<BTreeMap<SegmentKey, SegmentState>> {
     let mut out = BTreeMap::new();
     let runs = archive.join("runs");
-    let Ok(run_entries) = fs::read_dir(&runs) else {
-        return out;
+    let Some(run_entries) = read_dir_if_exists(&runs)? else {
+        return Ok(out);
     };
-    for run in run_entries.flatten() {
+    for run in run_entries {
+        let run = run.with_context(|| format!("read run entry under {}", runs.display()))?;
         let run_id = run.file_name().to_string_lossy().into_owned();
-        let Ok(attempts) = fs::read_dir(run.path()) else {
+        let run_path = run.path();
+        let Some(attempts) = read_dir_if_exists(&run_path)? else {
             continue;
         };
-        for attempt in attempts.flatten() {
+        for attempt in attempts {
+            let attempt = attempt
+                .with_context(|| format!("read attempt entry under {}", run_path.display()))?;
             let attempt_name = attempt.file_name().to_string_lossy().into_owned();
-            let Ok(watermarks) = fs::read_dir(attempt.path()) else {
+            let attempt_path = attempt.path();
+            let Some(watermarks) = read_dir_if_exists(&attempt_path)? else {
                 continue;
             };
-            for watermark in watermarks.flatten() {
+            for watermark in watermarks {
+                let watermark = watermark.with_context(|| {
+                    format!("read watermark entry under {}", attempt_path.display())
+                })?;
                 let key = SegmentKey {
                     run_id: run_id.clone(),
                     attempt: attempt_name.clone(),
                     watermark: watermark.file_name().to_string_lossy().into_owned(),
                 };
-                if let Some(state) = SegmentState::load(&watermark.path()) {
+                let watermark_path = watermark.path();
+                if let Some(state) = SegmentState::load(&watermark_path)? {
                     out.insert(key, state);
                 }
             }
         }
     }
-    out
+    Ok(out)
 }
 
 /// How many bytes of a given segment the archive already holds. Read straight
@@ -1381,7 +1417,7 @@ fn result_annotations(seg_dir: &Path) -> Map<String, Value> {
 /// consumer (TUI, plotters, the alarm) reads; nothing downstream should ever
 /// touch a run directory again.
 pub fn rebuild_index(root: &Path, archive: &Path) -> Result<Value> {
-    let segments = load_segments(archive);
+    let segments = load_segments(archive)?;
     let mut rows = Vec::new();
     let mut total_rows = 0u64;
     let mut total_bytes = 0u64;
@@ -1705,7 +1741,9 @@ mod tests {
         // the offset must fall back to the file, and the counters with it.
         let seg = segment_dir(&archive, &key());
         fs::remove_file(SegmentState::metrics_path(&seg))?;
-        let stale = SegmentState::load(&seg).expect("state survived");
+        let stale = SegmentState::load(&seg)
+            .expect("state could be read")
+            .expect("state survived");
         assert_eq!(stale.archived_rows, 3);
 
         let after = ingest_source(
@@ -1900,7 +1938,7 @@ mod tests {
         )?;
         let before = archived_bytes(&archive, &key());
         seal_segment(&archive, &key())?;
-        let state = SegmentState::load(&segment_dir(&archive, &key())).unwrap();
+        let state = SegmentState::load(&segment_dir(&archive, &key()))?.unwrap();
         assert!(!state.source_present);
         assert_eq!(archived_bytes(&archive, &key()), before);
         Ok(())
@@ -2052,7 +2090,9 @@ mod tests {
         )?);
 
         let seg = segment_dir(&archive, &key());
-        let state = SegmentState::load(&seg).expect("state");
+        let state = SegmentState::load(&seg)
+            .expect("state could be read")
+            .expect("state");
         assert_eq!(state.truncation_count, 1);
         assert_eq!(state.truncated_tail_bytes, fragment.len() as u64);
         assert_eq!(state.archived_rows, 2, "complete rows untouched");

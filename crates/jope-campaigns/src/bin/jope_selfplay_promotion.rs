@@ -2451,11 +2451,10 @@ fn advance_task_accepted_pointers(
         .get("corpus_watermark")
         .cloned()
         .unwrap_or(Value::Null);
-    let evidence_sha256 = evidence
-        .get("artifact_sha256")
-        .and_then(Value::as_str)
-        .map(str::to_owned)
-        .unwrap_or_else(|| sha256_bytes(&serde_json::to_vec(evidence).unwrap_or_default()));
+    let evidence_sha256 = match evidence.get("artifact_sha256").and_then(Value::as_str) {
+        Some(sha256) => sha256.to_owned(),
+        None => sha256_bytes(&serde_json::to_vec(evidence)?),
+    };
     let immutable = root.join("training/immutable");
     let pointer_path = task_accepted_pointer(root);
     fs::create_dir_all(pointer_path.parent().unwrap())?;

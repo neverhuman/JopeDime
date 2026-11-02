@@ -143,9 +143,8 @@ pub struct S3Location {
     /// for an HTTPS URL, where object_store's classifier splits it off the prefix (the first path
     /// segment of a path-style AWS or an R2 URL, else the first label of the host).
     pub bucket: String,
-    /// The location's prefix. Empty when the store writes at the bucket root. On the S3 route, a
-    /// path `object_store` cannot parse as a prefix (an empty segment, for one) is the root as
-    /// well: that is where the store writes.
+    /// The location's prefix. Empty when the store writes at the bucket root. Invalid S3 prefixes
+    /// are rejected so a malformed path cannot silently redirect writes to the bucket root.
     pub prefix: ObjPath,
 }
 
@@ -160,7 +159,8 @@ impl StoreLocation {
         };
         let parsed = Url::parse(&url_string).with_context(|| format!("parse {url_string}"))?;
         let (route, backend, prefix) = if matches!(parsed.scheme(), "s3" | "s3a") {
-            let prefix = ObjPath::parse(parsed.path().trim_matches('/')).unwrap_or_default();
+            let prefix = ObjPath::parse(parsed.path().trim_matches('/'))
+                .with_context(|| format!("parse S3 object prefix in {url_string}"))?;
             (StoreRoute::S3, ObjectStoreScheme::AmazonS3, prefix)
         } else {
             // The two steps `object_store::parse_url` takes before it builds the store.

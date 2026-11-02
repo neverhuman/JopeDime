@@ -147,45 +147,52 @@ struct Args {
 
 impl Args {
     fn catalog_pointer(&self) -> PathBuf {
-        self.catalog_pointer
-            .clone()
-            .unwrap_or_else(|| self.root.join("catalog/current.json"))
+        match &self.catalog_pointer {
+            Some(path) => path.clone(),
+            None => self.root.join("catalog/current.json"),
+        }
     }
 
     fn proposals_pointer(&self) -> PathBuf {
-        self.proposals_pointer
-            .clone()
-            .unwrap_or_else(|| self.root.join("proposals/current.json"))
+        match &self.proposals_pointer {
+            Some(path) => path.clone(),
+            None => self.root.join("proposals/current.json"),
+        }
     }
 
     fn corpus(&self) -> PathBuf {
-        self.corpus
-            .clone()
-            .unwrap_or_else(|| self.root.join("corpus/strict-test-exact.sqlite"))
+        match &self.corpus {
+            Some(path) => path.clone(),
+            None => self.root.join("corpus/strict-test-exact.sqlite"),
+        }
     }
 
     fn sealed_cohort(&self) -> PathBuf {
-        self.sealed_cohort
-            .clone()
-            .unwrap_or_else(|| self.root.join("catalog/private/sealed-current-v1.json"))
+        match &self.sealed_cohort {
+            Some(path) => path.clone(),
+            None => self.root.join("catalog/private/sealed-current-v1.json"),
+        }
     }
 
     fn robust_seed_bank(&self) -> PathBuf {
-        self.robust_seed_bank
-            .clone()
-            .unwrap_or_else(|| self.root.join("corpus/robust-gp-seed-bank.v1.json"))
+        match &self.robust_seed_bank {
+            Some(path) => path.clone(),
+            None => self.root.join("corpus/robust-gp-seed-bank.v1.json"),
+        }
     }
 
     fn pair_registry(&self) -> PathBuf {
-        self.pair_registry
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/pair-registry.sqlite"))
+        match &self.pair_registry {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/pair-registry.sqlite"),
+        }
     }
 
     fn queue_status(&self) -> PathBuf {
-        self.queue_status
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/queue-keeper-v3.json"))
+        match &self.queue_status {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/queue-keeper-v3.json"),
+        }
     }
 }
 

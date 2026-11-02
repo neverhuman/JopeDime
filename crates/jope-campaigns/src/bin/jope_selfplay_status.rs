@@ -144,7 +144,10 @@ fn main() -> Result<()> {
         }
         Command::RebuildIndexes => selfplay_ingest::rebuild_indexes(&args.root)?,
         Command::ExportGeneEvidence { output } => {
-            let output = output.unwrap_or_else(|| args.root.join("indexes/gene-evidence.v2.jsonl"));
+            let output = match output {
+                Some(path) => path,
+                None => args.root.join("indexes/gene-evidence.v2.jsonl"),
+            };
             selfplay_ingest::export_gene_evidence(&args.root, &output)?
         }
         Command::EvidenceQuery {

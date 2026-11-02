@@ -178,15 +178,17 @@ struct Args {
 
 impl Args {
     fn label_pointer(&self) -> PathBuf {
-        self.label_pointer
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/last-ingest.json"))
+        match &self.label_pointer {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/last-ingest.json"),
+        }
     }
 
     fn corpus_pointer(&self) -> PathBuf {
-        self.corpus_pointer
-            .clone()
-            .unwrap_or_else(|| self.root.join("training/current-corpus.json"))
+        match &self.corpus_pointer {
+            Some(path) => path.clone(),
+            None => self.root.join("training/current-corpus.json"),
+        }
     }
 }
 
@@ -463,8 +465,8 @@ impl CycleReport {
             protected_work_mutations: 0,
             promotion_mutations: 0,
         };
-        let mut value =
-            serde_json::to_value(&report).unwrap_or_else(|_| json!({ "schema": WATCHDOG_SCHEMA }));
+        let mut value = serde_json::to_value(&report)
+            .expect("CycleReport fields have infallible JSON serialization");
         if let Some(object) = value.as_object_mut() {
             object.insert("degraded".to_owned(), Value::Bool(true));
             object.insert("error".to_owned(), Value::String(error.to_owned()));

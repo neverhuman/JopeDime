@@ -184,8 +184,14 @@ fn read_json(path: &Path) -> Result<Value> {
     ))?)
 }
 
-fn read_optional_json(path: &Path) -> Value {
-    read_json(path).unwrap_or_else(|_| json!({}))
+fn read_optional_json(path: &Path) -> Result<Value> {
+    let file = match File::open(path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(json!({})),
+        Err(error) => return Err(error).with_context(|| format!("open {}", path.display())),
+    };
+    serde_json::from_reader(std::io::BufReader::new(file))
+        .with_context(|| format!("parse {}", path.display()))
 }
 
 fn native_timestamp(value: &Value) -> Option<u128> {
@@ -385,7 +391,7 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
     let mut gates = serde_json::Map::new();
     for component in RECOVERY_COMPONENTS {
         let path = root.join(component.path);
-        let value = read_optional_json(&path);
+        let value = read_optional_json(&path)?;
         let present = value.as_object().is_some_and(|object| !object.is_empty());
         let schema_valid = value.get("schema").and_then(Value::as_str) == Some(component.schema);
         let timestamp = native_timestamp(&value);
@@ -432,7 +438,7 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
             }),
         );
     }
-    let queue = read_optional_json(&root.join("ops/queue-keeper-v3.json"));
+    let queue = read_optional_json(&root.join("ops/queue-keeper-v3.json"))?;
     let queue_depth = useful_queue_depth(&queue);
     let gates_green = gates.values().all(|value| value.as_bool() == Some(true));
     let queue_fresh = components
@@ -441,7 +447,7 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
         .and_then(Value::as_bool)
         == Some(true);
     let observation_path = root.join("ops/recovery-continuity-observation.v1.json");
-    let observation_value = read_optional_json(&observation_path);
+    let observation_value = read_optional_json(&observation_path)?;
     let observation =
         serde_json::from_value::<RecoveryContinuityObservationV1>(observation_value.clone());
     let now_ms = at_ms.min(u128::from(u64::MAX)) as u64;
@@ -490,7 +496,7 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
     );
     let green = gates_green && queue_fresh && queue_depth > 0 && observation_green;
     let continuity_path = root.join("ops/recovery-continuity.v1.json");
-    let previous = read_optional_json(&continuity_path);
+    let previous = read_optional_json(&continuity_path)?;
     let previous_observed = previous.get("last_observed_at_ms").and_then(Value::as_u64);
     let gap_ok = previous_observed.is_some_and(|previous| {
         at_ms.saturating_sub(u128::from(previous))
@@ -555,7 +561,7 @@ fn materialize_recovery(root: &Path, at_ms: u128) -> Result<Value> {
         "reset_reason": reset_reason,
     });
     atomic_json(&continuity_path, &continuity)?;
-    let telemetry = read_optional_json(&root.join("ops/four-task-telemetry.v1.json"));
+    let telemetry = read_optional_json(&root.join("ops/four-task-telemetry.v1.json"))?;
     let report = json!({
         "schema": RECOVERY_SCHEMA,
         "generated_at_ms": at_ms,

@@ -1,18 +1,40 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
+use std::ffi::OsString;
+use std::io;
 use std::path::PathBuf;
 
 use jope_api::registry::{MediaType, Operation, PayloadTypeRef, OPERATIONS};
 use serde_json::{json, Map, Value};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let output = std::env::args_os()
-        .nth(1)
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("schemas/jope.api.v1.openapi.json"));
+    let output = match parse_output_destination(std::env::args_os().skip(1))? {
+        OutputDestination::DefaultSchema => PathBuf::from("schemas/jope.api.v1.openapi.json"),
+        OutputDestination::Explicit(path) => path,
+    };
     let document = generate()?;
     std::fs::write(output, serde_json::to_vec_pretty(&document)?)?;
     Ok(())
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum OutputDestination {
+    DefaultSchema,
+    Explicit(PathBuf),
+}
+
+fn parse_output_destination(
+    args: impl IntoIterator<Item = OsString>,
+) -> Result<OutputDestination, io::Error> {
+    let mut args = args.into_iter();
+    match (args.next(), args.next()) {
+        (None, None) => Ok(OutputDestination::DefaultSchema),
+        (Some(path), None) => Ok(OutputDestination::Explicit(PathBuf::from(path))),
+        (_, Some(_)) => Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "usage: jope-api-openapi [OUTPUT_PATH]",
+        )),
+    }
 }
 
 fn generate() -> Result<Value, Box<dyn Error>> {
@@ -199,11 +221,7 @@ fn collect_named_schema(
     schemas: &mut Map<String, Value>,
 ) -> Result<(), Box<dyn Error>> {
     let mut value = serde_json::to_value(schema)?;
-    let definitions = value
-        .as_object_mut()
-        .and_then(|root| root.remove("$defs"))
-        .unwrap_or_else(|| json!({}));
-    let mut additions = definitions.as_object().cloned().unwrap_or_default();
+    let mut additions = take_schema_definitions(&mut value, name)?;
     additions.insert(name.to_owned(), value);
     for schema in additions.values_mut() {
         rewrite_definition_refs(schema);
@@ -220,6 +238,26 @@ fn collect_named_schema(
         }
     }
     Ok(())
+}
+
+fn take_schema_definitions(
+    schema: &mut Value,
+    name: &str,
+) -> Result<Map<String, Value>, io::Error> {
+    let root = schema.as_object_mut().ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("generated schema {name} must be an object"),
+        )
+    })?;
+    match root.remove("$defs") {
+        None => Ok(Map::new()),
+        Some(Value::Object(definitions)) => Ok(definitions),
+        Some(_) => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("generated schema {name} $defs must be an object"),
+        )),
+    }
 }
 
 fn without_schema_metadata(value: &Value) -> Value {
@@ -259,6 +297,21 @@ mod tests {
 
     #[test]
     fn generated_document_matches_committed_openapi() {
+        let destination = parse_output_destination(std::iter::empty()).unwrap();
+        assert_eq!(destination, OutputDestination::DefaultSchema);
+        let destination =
+            parse_output_destination([OsString::from("target/openapi.json")]).unwrap();
+        assert_eq!(
+            destination,
+            OutputDestination::Explicit(PathBuf::from("target/openapi.json"))
+        );
+        let error = parse_output_destination([
+            OsString::from("target/openapi.json"),
+            OsString::from("unexpected"),
+        ])
+        .unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(error.to_string(), "usage: jope-api-openapi [OUTPUT_PATH]");
         let generated = serde_json::to_vec_pretty(&generate().unwrap()).unwrap();
         let committed = include_bytes!("../../../../schemas/jope.api.v1.openapi.json");
         assert_eq!(generated.as_slice(), committed.as_slice());
@@ -268,6 +321,13 @@ mod tests {
     fn generated_document_covers_registry_without_pending_exchanges() {
         let document = generate().expect("all registered exchange schemas are materialized");
         assert!(document.get("x-jope-pending-exchanges").is_none());
+        let mut malformed_schema = json!({"$defs": []});
+        let error = take_schema_definitions(&mut malformed_schema, "Problem").unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert_eq!(
+            error.to_string(),
+            "generated schema Problem $defs must be an object"
+        );
 
         let emitted: BTreeSet<_> = document["paths"]
             .as_object()

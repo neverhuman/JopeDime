@@ -3042,24 +3042,37 @@ fn task_status(
 ) -> Result<Value> {
     let accepted = optional_json(&root.join("training/accepted-by-task.json"))?;
     let controller = optional_json(&root.join("ops/task-learning-controller.v2.json"))?;
-    let accepted_tasks = accepted.get("tasks").cloned().unwrap_or_else(|| json!({}));
-    let shadows = controller
-        .get("shadow_models")
-        .cloned()
-        .unwrap_or_else(|| json!({}));
-    let learning = promotion
-        .get("internal_learning")
-        .cloned()
-        .unwrap_or_else(|| json!({}));
+    let accepted_tasks = match accepted.get("tasks") {
+        Some(Value::Object(tasks)) => Some(tasks),
+        Some(_) => bail!("accepted-by-task tasks must be a JSON object"),
+        None => None,
+    };
+    let shadows = match controller.get("shadow_models") {
+        Some(Value::Object(shadows)) => Some(shadows),
+        Some(_) => bail!("task-learning-controller shadow_models must be a JSON object"),
+        None => None,
+    };
+    let learning = match promotion.get("internal_learning") {
+        Some(Value::Object(learning)) => Some(learning),
+        Some(_) => bail!("promotion internal_learning must be a JSON object"),
+        None => None,
+    };
+    let learning_tasks = match learning.and_then(|learning| learning.get("tasks")) {
+        Some(Value::Object(tasks)) => Some(tasks),
+        Some(_) => bail!("promotion internal_learning.tasks must be a JSON object"),
+        None => None,
+    };
     let mut tasks = Map::new();
     for task in crate::selfplay_expansion::TASKS {
-        let accepted_row = accepted_tasks.get(task).cloned().unwrap_or(Value::Null);
-        let shadow_row = shadows.get(task).cloned().unwrap_or(Value::Null);
-        let task_learning = learning
-            .get("tasks")
-            .and_then(|value| value.get(task))
+        let accepted_row = accepted_tasks
+            .and_then(|tasks| tasks.get(task))
             .cloned()
-            .unwrap_or_else(|| json!({}));
+            .unwrap_or(Value::Null);
+        let shadow_row = shadows
+            .and_then(|shadows| shadows.get(task))
+            .cloned()
+            .unwrap_or(Value::Null);
+        let task_learning = learning_tasks.and_then(|tasks| tasks.get(task));
         tasks.insert(
             task.to_owned(),
             json!({
@@ -3067,11 +3080,15 @@ fn task_status(
                 "latest_shadow": shadow_row.get("checkpoint_sha256").cloned().unwrap_or(Value::Null),
                 "corpus_watermark": corpus_watermark,
                 "queue_fresh": queue_fresh,
-                "promotion_eligibility": task_learning.get("promotion_eligible").cloned().unwrap_or(Value::Null),
-                "blocking_gate": task_learning.get("blocking_gate")
-                    .or_else(|| task_learning.get("gate_reason"))
-                    .cloned().unwrap_or(Value::Null),
-                "last_verified_learning_delta": task_learning.get("last_verified_learning_delta").cloned().unwrap_or(Value::Null),
+                "promotion_eligibility": task_learning.and_then(|row| row.get("promotion_eligible")).cloned().unwrap_or(Value::Null),
+                "blocking_gate": match task_learning.and_then(|row| row.get("blocking_gate")) {
+                    Some(gate) => gate.clone(),
+                    None => match task_learning.and_then(|row| row.get("gate_reason")) {
+                        Some(gate) => gate.clone(),
+                        None => Value::Null,
+                    },
+                },
+                "last_verified_learning_delta": task_learning.and_then(|row| row.get("last_verified_learning_delta")).cloned().unwrap_or(Value::Null),
             }),
         );
     }
@@ -3115,16 +3132,32 @@ pub fn build_status(root: &Path) -> Result<Value> {
         }
         services.insert(service.to_owned(), state);
     }
-    let queue_result = services
-        .get("queue")
-        .and_then(|value| value.get("result"))
-        .cloned()
-        .unwrap_or_else(|| json!({}));
-    let reserve = services
+    let (queue_result, queue_result_available) =
+        match services.get("queue").and_then(|value| value.get("result")) {
+            Some(Value::Object(result)) => (Value::Object(result.clone()), true),
+            Some(_) => bail!("queue service result must be a JSON object"),
+            None => {
+                alerts.insert("queue:result_unavailable".to_owned());
+                (Value::Object(Map::new()), false)
+            }
+        };
+    let (mut reserve, reserve_result_available) = match services
         .get("reserve")
         .and_then(|value| value.get("result"))
-        .cloned()
-        .unwrap_or_else(|| json!({}));
+    {
+        Some(Value::Object(result)) => (Value::Object(result.clone()), true),
+        Some(_) => bail!("reserve service result must be a JSON object"),
+        None => {
+            alerts.insert("reserve:result_unavailable".to_owned());
+            (Value::Object(Map::new()), false)
+        }
+    };
+    if let Some(reserve) = reserve.as_object_mut() {
+        reserve.insert(
+            "result_available".to_owned(),
+            json!(reserve_result_available),
+        );
+    }
     let useful_depth = queue_result
         .get("useful_depth_after")
         .or_else(|| queue_result.get("useful_depth"))
@@ -3138,25 +3171,27 @@ pub fn build_status(root: &Path) -> Result<Value> {
         .get("queued_hard_cap")
         .and_then(Value::as_i64)
         .unwrap_or(512);
-    if useful_depth < target {
+    if queue_result_available && useful_depth < target {
         alerts.insert("queue:below_fresh_horizon".to_owned());
     }
-    if useful_depth > hard_cap {
+    if queue_result_available && useful_depth > hard_cap {
         alerts.insert("queue:above_hard_cap".to_owned());
     }
-    if queue_result
-        .get("maximum_queue_age_seconds")
-        .and_then(Value::as_f64)
-        .unwrap_or(0.0)
-        > 1_800.0
+    if queue_result_available
+        && queue_result
+            .get("maximum_queue_age_seconds")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0)
+            > 1_800.0
     {
         alerts.insert("queue:older_than_30_minutes".to_owned());
     }
-    if reserve
-        .get("ready_after")
-        .and_then(Value::as_i64)
-        .unwrap_or(0)
-        > target
+    if reserve_result_available
+        && reserve
+            .get("ready_after")
+            .and_then(Value::as_i64)
+            .unwrap_or(0)
+            > target
     {
         alerts.insert("reserve:above_one_launch_ready_horizon".to_owned());
     }
@@ -3201,6 +3236,7 @@ pub fn build_status(root: &Path) -> Result<Value> {
     let queue_object = queue
         .as_object_mut()
         .context("queue service result is not an object")?;
+    queue_object.insert("result_available".to_owned(), json!(queue_result_available));
     queue_object.insert("queued_target".to_owned(), json!(target));
     queue_object.insert("queued_hard_cap".to_owned(), json!(hard_cap));
     queue_object.insert("useful_depth".to_owned(), json!(useful_depth));
