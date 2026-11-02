@@ -2757,18 +2757,44 @@ fn update_native_attempts_submitted(
     let Some(attempts) = &schema.attempts else {
         return Ok(());
     };
-    let select = format!(
-        "SELECT {},state,{},manifest_sha256,job_id FROM attempts \
-         WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
-           AND state IN ('reserved','submitted') ORDER BY {} DESC",
-        attempts.number_column, attempts.owner_column, attempts.number_column
-    );
-    let update = format!(
-        "UPDATE attempts SET state='submitted',job_id=? \
-         WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
-           AND {}=? AND {}=? AND manifest_sha256=? AND state='reserved'",
-        attempts.number_column, attempts.owner_column
-    );
+    let (select, update) = match (attempts.number_column, attempts.owner_column) {
+        ("attempt_no", "owner") => (
+            "SELECT attempt_no,state,owner,manifest_sha256,job_id FROM attempts \
+             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+               AND state IN ('reserved','submitted') ORDER BY attempt_no DESC",
+            "UPDATE attempts SET state='submitted',job_id=? \
+             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+               AND attempt_no=? AND owner=? AND manifest_sha256=? AND state='reserved'",
+        ),
+        ("attempt_no", "reservation_owner") => (
+            "SELECT attempt_no,state,reservation_owner,manifest_sha256,job_id FROM attempts \
+             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+               AND state IN ('reserved','submitted') ORDER BY attempt_no DESC",
+            "UPDATE attempts SET state='submitted',job_id=? \
+             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+               AND attempt_no=? AND reservation_owner=? AND manifest_sha256=? \
+               AND state='reserved'",
+        ),
+        ("attempt_number", "owner") => (
+            "SELECT attempt_number,state,owner,manifest_sha256,job_id FROM attempts \
+             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+               AND state IN ('reserved','submitted') ORDER BY attempt_number DESC",
+            "UPDATE attempts SET state='submitted',job_id=? \
+             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+               AND attempt_number=? AND owner=? AND manifest_sha256=? AND state='reserved'",
+        ),
+        ("attempt_number", "reservation_owner") => (
+            "SELECT attempt_number,state,reservation_owner,manifest_sha256,job_id \
+             FROM attempts WHERE task=? AND dataset_hash=? AND semantic_sha256=? \
+               AND protocol_sha256=? AND state IN ('reserved','submitted') \
+             ORDER BY attempt_number DESC",
+            "UPDATE attempts SET state='submitted',job_id=? \
+             WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+               AND attempt_number=? AND reservation_owner=? AND manifest_sha256=? \
+               AND state='reserved'",
+        ),
+        _ => bail!("attempt ledger schema is not supported"),
+    };
     let mut select_statement = tx.prepare_cached(&select)?;
     let mut update_statement = tx.prepare_cached(&update)?;
     for pair in &manifest.pairs {
@@ -2852,23 +2878,51 @@ fn ensure_native_reserved_attempts(
     let Some(attempts) = &schema.attempts else {
         return Ok(());
     };
-    let active_query = format!(
-        "SELECT {},state,{},manifest_sha256,job_id FROM attempts \
-         WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
-           AND state IN ('reserved','submitted') ORDER BY {} DESC",
-        attempts.number_column, attempts.owner_column, attempts.number_column
-    );
-    let next_query = format!(
-        "SELECT COALESCE(MAX({}),0)+1 FROM attempts WHERE task=? AND dataset_hash=? \
-         AND semantic_sha256=? AND protocol_sha256=?",
-        attempts.number_column
-    );
-    let insert = format!(
-        "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
-         {},state,{},manifest_path,manifest_sha256,job_id,created_at_ms) \
-         VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
-        attempts.number_column, attempts.owner_column
-    );
+    let (active_query, next_query, insert) = match (attempts.number_column, attempts.owner_column) {
+        ("attempt_no", "owner") => (
+            "SELECT attempt_no,state,owner,manifest_sha256,job_id FROM attempts \
+                 WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+                   AND state IN ('reserved','submitted') ORDER BY attempt_no DESC",
+            "SELECT COALESCE(MAX(attempt_no),0)+1 FROM attempts WHERE task=? \
+                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
+                 attempt_no,state,owner,manifest_path,manifest_sha256,job_id,created_at_ms) \
+                 VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
+        ),
+        ("attempt_no", "reservation_owner") => (
+            "SELECT attempt_no,state,reservation_owner,manifest_sha256,job_id \
+                 FROM attempts WHERE task=? AND dataset_hash=? AND semantic_sha256=? \
+                   AND protocol_sha256=? AND state IN ('reserved','submitted') \
+                 ORDER BY attempt_no DESC",
+            "SELECT COALESCE(MAX(attempt_no),0)+1 FROM attempts WHERE task=? \
+                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
+                 attempt_no,state,reservation_owner,manifest_path,manifest_sha256,job_id,\
+                 created_at_ms) VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
+        ),
+        ("attempt_number", "owner") => (
+            "SELECT attempt_number,state,owner,manifest_sha256,job_id FROM attempts \
+                 WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
+                   AND state IN ('reserved','submitted') ORDER BY attempt_number DESC",
+            "SELECT COALESCE(MAX(attempt_number),0)+1 FROM attempts WHERE task=? \
+                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
+                 attempt_number,state,owner,manifest_path,manifest_sha256,job_id,created_at_ms) \
+                 VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
+        ),
+        ("attempt_number", "reservation_owner") => (
+            "SELECT attempt_number,state,reservation_owner,manifest_sha256,job_id \
+                 FROM attempts WHERE task=? AND dataset_hash=? AND semantic_sha256=? \
+                   AND protocol_sha256=? AND state IN ('reserved','submitted') \
+                 ORDER BY attempt_number DESC",
+            "SELECT COALESCE(MAX(attempt_number),0)+1 FROM attempts WHERE task=? \
+                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
+                 attempt_number,state,reservation_owner,manifest_path,manifest_sha256,job_id,\
+                 created_at_ms) VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
+        ),
+        _ => bail!("attempt ledger schema is not supported"),
+    };
     let mut active_statement = tx.prepare_cached(&active_query)?;
     let mut next_statement = tx.prepare_cached(&next_query)?;
     let mut insert_statement = tx.prepare_cached(&insert)?;
