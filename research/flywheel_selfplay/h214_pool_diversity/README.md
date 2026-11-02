@@ -55,3 +55,23 @@ The frozen source, prior pin-refusal receipt and both launch controls are retain
 The next step is a separately authorized prospective reference-path fix and a
 source/input-only setup preflight before registering any new execution. This
 closeout makes no scientific ADVANCE or NO_ADVANCE claim and authorizes no retry.
+
+
+## Versioned terminal evidence custody
+
+The allowlisted terminal evidence is published at
+`s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-manifest.json`,
+VersionId `ZgyLPLG.9ot3uGweg46CvUavdAgy3qOJ`, SHA-256
+`dcb079443c89701c5114d1b74c033d71f716558a841665abec145bff2d0cebc1`. The manifest binds the archive's exact
+VersionId and all48 member names, sizes and SHA-256s; [manifest.json](manifest.json)
+and [metrics.json](metrics.json) retain both versioned object pointers.
+Both objects were uploaded with create-only `If-None-Match: *`, downloaded using
+the returned VersionIds, and checked byte-for-byte; every archive member hash matched.
+
+This publication contains only explicitly allowlisted launch/error/closeout
+metadata and pinned H214 source blobs. It is not a full raw-root or REL-07 lane
+archive. Original raw roots remain retained. Missing periodic resource samples,
+the second detached process exit status and post-model tensor-composite observation
+remain unavailable. CLOSED_INCOMPLETE, null outcomes, both startup failures and
+the original campaign clock are unchanged. No scientific retry or model/data/native
+evaluation was performed for this publication.
