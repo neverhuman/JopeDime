@@ -74,7 +74,7 @@ pub use advanced_v3::{
     TaskKind, TaskSpec, V3Archive, V3Candidate, V3EvolutionConfig, V3ScoredCandidate,
     MAX_GENERATED_DENSE_WIDTH, MULTICLASS_MAX_TRANSFORMED_FEATURES,
 };
-/// The fitted C++ runtime and its codec (feature `fitted-cpp`, default-on).
+/// The fitted-model codec and Rust host runtime for C++17 model artifacts (feature `fitted-cpp`, default-on).
 #[cfg(feature = "fitted-cpp")]
 pub use advanced_v3::{
     encode_fitted_cpp17, validate_fitted_cpp_codec, EncodedTable, FittedCppError, FittedCppModel,

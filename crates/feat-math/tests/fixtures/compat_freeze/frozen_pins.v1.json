@@ -35,10 +35,6 @@
       "sha256": "0bc6e75d8f12173ac6e2acf432233e48457cf773e1bedef56f536384513c158d"
     },
     {
-      "path": "crates/feat-math/cpp/fitted_runtime.cpp",
-      "sha256": "efc1c702784aefb129450b53909846731a6cfa8911c80dec59f28007430f81d1"
-    },
-    {
       "path": "crates/feat-math/tests/fixtures/emitted/8944cbdf.predictions.sha256",
       "sha256": "1fb60f16effb08bf9cda2bd1d49b4cd10650046191d84699859e80920ec08f6a"
     },
@@ -81,6 +77,10 @@
     {
       "path": "crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256",
       "sha256": "8f09f7c42830b03c83c2a00eacbd21419cae00d802970648940f8fc7c10afbf6"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp",
+      "sha256": "efc1c702784aefb129450b53909846731a6cfa8911c80dec59f28007430f81d1"
     }
   ],
   "values": [

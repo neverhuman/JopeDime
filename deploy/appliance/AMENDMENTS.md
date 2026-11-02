@@ -468,6 +468,17 @@ stage sizes; the 5% tolerance remains unchanged. REL-07 D2 separately retains it
 The stage is an implementation diagnostic, not an RC2 cut, signing request,
 cryptographic verification, qualification or serving promotion.
 
+## A3 — Fitted-model host loading moved to Rust (2026-11-02)
+
+The default `feat-math/fitted-cpp` feature still emits fitted model artifacts as C++17, but
+`build.rs` no longer compiles or embeds a C++ host runtime. `advanced_v3/fitted_cpp_runtime.rs`
+validates codec sections in Rust, seals the authenticated model image, resolves its two model ABI
+symbols, and dispatches predictions. The prior host loader is preserved byte-for-byte only at
+`tests/fixtures/fitted_runtime_oracle.cpp` for sanitizer parity checks. Its frozen source and
+canonical shared-image digests remain in codec metadata, so existing fitted container bytes do
+not change. The fixture is explicitly excluded from product-language scoring by
+`agent/audit-policy.toml`; it is not included in production builds.
+
 The regenerated model lock, required-asset closure assertion, 36 passing package
 tests, build/features/source receipts, fixture comparison and unsigned stage bytes
 are retained under `/home/ubuntu/jope_plan/evidence/REL-07/res08-t0940/`, with build
