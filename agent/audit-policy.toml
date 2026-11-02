@@ -89,6 +89,11 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py",
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
+  # HLT-043 score_join.py instances are pinned package copies; the mutable root stays scanned.
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",

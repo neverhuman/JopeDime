@@ -170,3 +170,26 @@ and for the frozen copy in
 Only the exact finding source path is excluded from Jankurai scoring. Tests and
 other security scans remain in place. Revisit if the pinned provenance is retired
 or either recorded hash changes; this does not cover other findings in the file.
+
+## Frozen `score_join.py` package copies
+
+The full audit `rerun/j_8df4fe341.json` reports HLT-043 fingerprint
+`sha256:757778574f5dde94ee0438f24257386f97f4170f6f038d9ab3cf6f9be0028172` at
+`deploy/dl-flywheel/jope_flywheel/score_join.py`. Its frozen package copies are:
+
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/score_join.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/score_join.py`
+- `deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/score_join.py`
+- `deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py`
+
+Each frozen copy has SHA-256
+`712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06`. Their
+identities are bound by the revision 2 and revision 3 `SOURCE_PACKET.json`
+receipts and packaged provenance, the v1 `source-manifest.json` and packaged
+receipt, hpc-v5 `provenance/FINAL_VALIDATION.json`, `ORIGIN.json`, and
+`REVISION2_PACKET.json`, and the deploy-level `SOURCE_MANIFEST.json`.
+
+Only these four exact paths are excluded from Jankurai scoring. The mutable
+canonical `deploy/dl-flywheel/jope_flywheel/score_join.py` remains in scope.
+No package bytes, tests, or other security scans change. Revisit the disposition
+if these provenance pins are retired or a recorded hash changes.
