@@ -51,14 +51,8 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
         transport::serve(self, input, output).await
     }
     pub fn serve_stdio(self) -> anyhow::Result<()> {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
-            .worker_threads(2)
-            .max_blocking_threads(16)
-            .enable_all()
-            .build()?;
-        let result = runtime.block_on(self.serve_io(tokio::io::stdin(), tokio::io::stdout()));
-        runtime.shutdown_timeout(Duration::from_secs(1));
-        result
+        ensure_stdio_runtime_context()?;
+        drive_stdio(self)
     }
     async fn call(
         &self,
@@ -233,6 +227,24 @@ impl<T: Transport + Send + Sync + 'static> Adapter<T> {
             }
         }
     }
+}
+
+fn ensure_stdio_runtime_context() -> anyhow::Result<()> {
+    if tokio::runtime::Handle::try_current().is_ok() {
+        anyhow::bail!("stdio MCP serving cannot run inside an async runtime");
+    }
+    Ok(())
+}
+
+fn drive_stdio<T: Transport + Send + Sync + 'static>(adapter: Adapter<T>) -> anyhow::Result<()> {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .max_blocking_threads(16)
+        .enable_all()
+        .build()?;
+    let result = runtime.block_on(adapter.serve_io(tokio::io::stdin(), tokio::io::stdout()));
+    runtime.shutdown_timeout(Duration::from_secs(1));
+    result
 }
 
 impl<T: Transport + Send + Sync + 'static> ServerHandler for Adapter<T> {
