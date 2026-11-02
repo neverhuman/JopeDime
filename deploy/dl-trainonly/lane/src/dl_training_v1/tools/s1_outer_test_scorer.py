@@ -367,18 +367,18 @@ def main():
                     free.append(slot)
         while True:
             finals = ledger_finals()
-            pending_contexts = [c for c in sorted(finals) if finals[c]["outcome"] == "selection_reached"
+            todo = [c for c in sorted(finals) if finals[c]["outcome"] == "selection_reached"
                     and not (OUT / "scores" / f"{c}.json").exists()]
-            if pending_contexts:
+            if todo:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as pool:
-                    total += sum(pool.map(lambda c: work(c, finals), pending_contexts))
+                    total += sum(pool.map(lambda c: work(c, finals), todo))
             assigned = set()
             for name in ("production", "research"):
                 for line in (P / f"ledger-{name}.jsonl").read_bytes().splitlines():
                     r = json.loads(line)
                     if r.get("event") == "assign":
                         assigned.add(r["context_sha256"])
-            if not follow or (assigned <= set(finals) and not pending_contexts):
+            if not follow or (assigned <= set(finals) and not todo):
                 break
             time.sleep(60)
         fl = flush_scratch(jobs)

@@ -25,11 +25,11 @@ jope-runtime = { path = "../jope-runtime" }
 jope-service = { path = "../jope-service", optional = true }
 ratatui = { version = "=0.29.0", default-features = false, features = ["crossterm"] }
 signal-hook = "=0.3.18"
-rustls.workspace = true
+rustls = { workspace = true, optional = true }
 serde.workspace = true
 serde_json.workspace = true
 ulid.workspace = true
-ureq = { version = "=3.5.0", default-features = false, features = ["rustls-no-provider", "rustls-webpki-roots"] }
+ureq = { version = "=3.5.0", default-features = false }
 zip = { version = "=9.1.3", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
@@ -50,7 +50,7 @@ engine = ["dep:jope-service", "jope-client?/engine"]
 # Internal research CLI; ordinary and embedded release builds do not select it.
 research = ["engine", "jope-service/research"]
 # Build service client commands without requiring the embedded engine.
-client = ["dep:jope-client"]
+client = ["dep:jope-client", "dep:rustls", "ureq/rustls-no-provider", "ureq/rustls-webpki-roots"]
 dope-encoding = ["dep:starforge"]
 dope-cuda = ["dope-encoding", "starforge/dope-cuda"]
 # The executable refuses to run without its sealed package: every release build sets it, so a

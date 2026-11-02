@@ -19,7 +19,7 @@ deny = [
   "jope-datasets", "jope-models", "jope-arena", "jope-engine", "jope-ci", "jope-dist",
   "jain-*", "scq", "hyperion", "starforge", "jope-encoders",
   # Remote-fetch/TLS stacks stay out; full v1 loopback HTTP exceptions are scoped below.
-  "object_store", "reqwest", "hyper", "ureq", "rustls", "aws-*", "openssl*", "native-tls",
+  "object_store", "reqwest", "hyper", "ureq", "rustls", "aws-*", "openssl*", "native-tls", "cc", "cmake", "pkg-config",
   # The zstd C library is the packer's encoder only; the appliance decodes with ruzstd.
   "zstd", "zstd-safe", "zstd-sys",
   # Minimal builds exclude tensor runtimes. Full v1 CPU exceptions pin the reviewed versions
@@ -38,6 +38,10 @@ native = [
 denied_features = ["feat-math/fitted-cpp", "jope-assets/pack"]
 
 [native_allowed]
+aws-lc-sys = "Existing workspace AWS-LC provider for authenticated CLI HTTPS only; exact version/features/root selections fenced below."
+cc = "Build-only AWS-LC compiler wrapper; exact version/features/root selections fenced below."
+cmake = "Build-only AWS-LC configuration; exact version/features/root selections fenced below."
+pkg-config = "Build-only AWS-LC probe; exact version/features/root selections fenced below."
 
 # T0115 owner-authorized v1 CPU server/client/ranker scope. Every global deny above remains.
 # Exact versions + root selections + dependency feature caps; no native approval is granted.
@@ -106,9 +110,59 @@ feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "clie
 allowed_features = ["default", "http1", "server"]
 reason = "Axum HTTP1 engine server; existing loopback/auth boundary remains required; no HTTP client/TLS allowance."
 
+# A24: retain the featureless HTTP client in minimal editions; HTTPS is client-only.
+[[package_exceptions]]
+name = "ureq"
+version = "3.5.0"
+feature_sets = [[], ["embedded"], ["embedded", "dev-keys"]]
+allowed_features = []
+reason = "Featureless HTTP types and loopback client only; HTTPS refuses without the client feature."
+
 [[package_exceptions]]
 name = "ureq"
 version = "3.5.0"
 feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["_rustls", "_tls", "rustls-no-provider", "rustls-webpki-roots"]
+reason = "A24: explicitly connected CLI needs HTTPS with the existing single AWS-LC provider. Only these exact client selections/version/features; model inference and minimal editions gain no TLS."
+
+[[package_exceptions]]
+name = "rustls"
+version = "0.23.46"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["aws-lc-rs", "aws_lc_rs", "default", "log", "logging", "prefer-post-quantum", "std", "tls12"]
+reason = "A24: explicitly connected CLI needs HTTPS with the existing single AWS-LC provider. Only these exact client selections/version/features; model inference and minimal editions gain no TLS."
+
+[[package_exceptions]]
+name = "aws-lc-rs"
+version = "1.18.1"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["aws-lc-sys", "prebuilt-nasm"]
+reason = "A24: explicitly connected CLI needs HTTPS with the existing single AWS-LC provider. Only these exact client selections/version/features; model inference and minimal editions gain no TLS."
+
+[[package_exceptions]]
+name = "aws-lc-sys"
+version = "0.45.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["prebuilt-nasm"]
+reason = "A24: explicitly connected CLI needs HTTPS with the existing single AWS-LC provider. Only these exact client selections/version/features; model inference and minimal editions gain no TLS."
+
+[[package_exceptions]]
+name = "cc"
+version = "1.10.0"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = ["parallel"]
+reason = "A24: explicitly connected CLI needs HTTPS with the existing single AWS-LC provider. Only these exact client selections/version/features; model inference and minimal editions gain no TLS."
+
+[[package_exceptions]]
+name = "cmake"
+version = "0.1.58"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
 allowed_features = []
-reason = "Featureless local HTTP client; defaults, TLS and remote-fetch dependencies stay disabled and denied."
+reason = "A24: explicitly connected CLI needs HTTPS with the existing single AWS-LC provider. Only these exact client selections/version/features; model inference and minimal editions gain no TLS."
+
+[[package_exceptions]]
+name = "pkg-config"
+version = "0.3.34"
+feature_sets = [["engine", "mcp", "client"], ["embedded", "engine", "mcp", "client"]]
+allowed_features = []
+reason = "A24: explicitly connected CLI needs HTTPS with the existing single AWS-LC provider. Only these exact client selections/version/features; model inference and minimal editions gain no TLS."

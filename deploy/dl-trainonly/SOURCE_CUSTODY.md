@@ -1,5 +1,13 @@
 # DL lane source custody
 
+## 2026-11-02 source-closure assertion correction
+
+The source-custody successor is `9afa6c81dc7e4ce0df2d45b76b7d871fe0ea5f660c932f4bb1e6f4553ca49ef7`:177 current files,285 historical versions. The previous current manifest `cc9609693ada637ed1cc3308c514ecb52de9d35aa8ed1d45a17103c432a76414` is retained byte-for-byte at `lane/predecessor/source-closure-correction-20261102/MANIFEST.json`; its entire current closure is reconstructible. The original test bytes are retained as `lane/historical/test_p3_verify.py.2c98d995424b02eed0da09170c94dc3ecce5b7ab2acc25f0831ec4ac419096f4`.
+
+Only the stale expected dependency list in `tests_p3/test_p3_verify.py` changes: the receipt already includes `jtt1.py` and `quarantine.py`, and the corrected test explicitly requires them. The original assertion reproduces a failure on the original imported source; the corrected strict assertion passes. Production source, data, labels, numerical methods/tolerances, host exclusions and offline counts remain unchanged. This is an identified source correction and receipt, not a reauthorization of historical experiments. Eight heuristic-linter variable renames elsewhere are restored to the unchanged producer bytes; the historical manifest/pins are preserved rather than edited.
+
+The records below describe the retained predecessor and its historical review.
+
 The ROOT correction for PR #251 review 5444902657 is the current source-custody head `cc9609693ada637ed1cc3308c514ecb52de9d35aa8ed1d45a17103c432a76414`:
 177 current files and 284 historical versions. It retains the prior producer manifest
 `e88de3c63c574a133b0742f7c179a217f26f2dee5cffc14f7b82189c63a06143` byte for byte at

@@ -11,8 +11,19 @@ advisory_on = ["medium", "low", "info"]
 # do not alter Gitleaks, Rust/Python tests, or source content. Do not add
 # directories, broad globs, or unreviewed paths; each exact exception must be
 # removed when its rationale ends.
+# The nine restored DL exact-file custody exceptions and SHA bindings are recorded
+# in docs/release/browser-prediction-ci-repairs-20261102.md; frozen hash checks remain.
 # Existing custody and synthetic-scanner exceptions remain narrowly scoped.
 extra_excluded_paths = [
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/encodings.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/metafeatures.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/train.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p3/test_p3_verify.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/s1_outer_test_scorer.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_coverage.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_helper.py",
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "deploy/ci/test-gitleaks-config.py",

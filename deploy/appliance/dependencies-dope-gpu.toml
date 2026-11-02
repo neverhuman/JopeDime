@@ -39,3 +39,11 @@ pkg-config = "Oniguruma system-library probe; bundled build remains source pinne
 onig_sys = "Mandatory reviewed Candle tokenizer dependency, unused by Dope inference"
 candle-kernels = "Pinned Candle CUDA kernels compiled into embedded PTX at build time"
 cudaforge = "Pinned build wrapper invoking CUDA compiler for Candle PTX; no runtime downloads"
+
+# No client feature is selected in these inference-only GPU editions.
+[[package_exceptions]]
+name = "ureq"
+version = "3.5.0"
+feature_sets = [["dope-cuda"], ["embedded", "dope-cuda"], ["embedded", "dev-keys", "dope-cuda"]]
+allowed_features = []
+reason = "Featureless HTTP types/loopback client only; HTTPS refuses without client, no TLS/native-crypto exception."

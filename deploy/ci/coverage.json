@@ -505,7 +505,10 @@
     "feature:jope-appliance/client": {
       "discovery": {
         "dependencies": [
-          "dep:jope-client"
+          "dep:jope-client",
+          "dep:rustls",
+          "ureq/rustls-no-provider",
+          "ureq/rustls-webpki-roots"
         ],
         "kind": "feature"
       },
