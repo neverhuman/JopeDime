@@ -2,29 +2,30 @@
   "schema": "h206-prereg-source-manifest-v1",
   "authority": "Jepson via Grok Bot, card answer 8:22 PM MT",
   "status": "QUEUED_NOT_RUN",
-  "scope": "Native search/TRAIN loader/live DOPE student/durable CPU-round interfaces with controlled and generated-native protocol proofs; scientific model/input/native91/GPU qualification remains pending.",
+  "scope": "Native-search/learner CPU interfaces and recovered model/native/reference custody; canonical ledger registered UNRECONCILED; scientific qualification remains pending.",
   "source_sha256": {
-    "MISSING_PINS.md": "4330fec9b9119533eeabad982d5c144739a547fa0cec0741063041ed2a34b3df",
+    "MISSING_PINS.md": "c7f0574d0e29fd1bcd81b3c5fb7c57af2a2e6e04bdf509c1bed79454d76f0128",
     "PREREG.md": "66de18ae00b9c3d184a890938004e1f623d82d20694d2683021e243b1d8cfea0",
-    "README.md": "7282721633c05c1a88fa20fb5d46ebcfef0550402f64058b53b9cf42a194aa03",
+    "README.md": "7c638d98c12fc9239ff55bcf218873285d74d8f139c5ea2f543534e530e8f93f",
     "contracts.py": "b6a29ef722b52ca708a4dc2bd7bbaa544249673a8ea76b2c1b8423b66d068081",
-    "executor.py": "83bc3e91faf7db3af72b0a7f9a20ff2413c0526f0e1ecd8ddbfb7ecc18ebe216",
-    "launch.json": "c85775114d3859b173df4a602fb9135be53a5baec90d5edec2f28ef65a32d087",
+    "executor.py": "98fb13dc9a1a275a927bb0a0546cee07c8dc695c5ffe1ebd838f6359a9f2643f",
+    "launch.json": "c58c3736636804f608cad012fa8bf64a9fd226eaf7781c1275e9139f869c00bc",
     "launch.sh": "10f3f0daaae300c16683eedf4c0ad7222de2f2303067f6bc488254ca435d6658",
     "metrics.json": "9b4aae68af0139aa71df5fe9d883b0d7c889881234f3670f080c7528facf8cd9",
     "native.py": "4a15304aceb472d1b37b6d419ba3dabed4b64d4be61c1715dc068ab0b53d62fd",
-    "runner.py": "4421fbbd78fdfa10d1316b1e314356e8d986cebde9ea411bc2b64e52f31b29fc",
+    "runner.py": "2410ddcde8fc55006e11b473843849c3c341e73f6a02ed3f44c781243bf78477",
     "student.py": "c47e8b93ef150e178046bd7eec5e2e7278e0d79d15665c40d84c6e5ab94039da",
-    "test_h206.py": "580ec5523d275615a1b0c1f04ecbf2a880f1dc25ae2c7012f2248c063f3e3306"
+    "test_h206.py": "0bbbd8827f666cdce3c309aea8d07175f7a73baa033c5837f3c7759dee4b846e",
+    "bindings.json": "62e41c27478662eb94756953ae89668ab2717a5e0de6190a805664c3626bc5b6"
   },
   "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
   "evidence": [],
   "pending": [
-    "MISSING_PINS.md: original model/tensor/state/asset ObjectRefs",
-    "approved normalized regression TRAIN role/closure and raw live-encoder tensors",
-    "genuine r88291 full-vector/pick replay",
-    "reconciled original cumulative campaign ledger",
-    "GPU phase/study/selector bindings and explicit queue release"
+    "MISSING_PINS.md: actual loaded factory and permitted transitive closure",
+    "approved same-original-TRAIN role/cut/tensor acquisition",
+    "genuine r88291 full-vector/pick scorer replay",
+    "canonical accounting reconciliation without budget reset",
+    "complete CUDA study/supervisor/selector qualification and fresh admission"
   ],
   "dependency_source_sha256": {
     "python/src/jope/north_star/dope_freeze_guard.py": "908547a91fcb6841868aed68e1c0811befbdc2cf182053125fdf4004549fd2b1",

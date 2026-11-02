@@ -331,6 +331,7 @@ def fixture_ledger(path, used_cpu=0):
         canonical(
             {
                 "campaign_id": "H206",
+                "accounting_status": "RECONCILED",
                 "purpose": "controlled data-free fixture, not the scientific campaign ledger",
                 "cpu_cap_seconds": 400 * 3600,
                 "gpu_cap_seconds": 18 * 3600,
@@ -969,3 +970,47 @@ def test_student_refuses_teacher_from_a_different_native_binary(integrated):
         with pytest.raises(ValueError, match="full identity"):
             learner.update(row, wrong, store)
     assert learner.updates == 0
+
+
+@pytest.mark.parametrize("status", ["UNRECONCILED", None])
+def test_unreconciled_ledger_refuses_before_reservation(tmp_path, status):
+    path = tmp_path / "campaign-ledger.json"
+    budget = fixture_ledger(path)
+    state = json.loads(path.read_text())
+    if status is None:
+        state.pop("accounting_status")
+    else:
+        state["accounting_status"] = status
+    state["cpu_used_seconds"] = None
+    state["cpu_used_seconds_lower_bound"] = 206.771232
+    state["conservative_unmeasured_cpu_reservation_seconds"] = 1440000 - 206.771232
+    path.write_bytes(canonical(state))
+    before = path.read_bytes()
+    with pytest.raises(ValueError, match="^campaign accounting is not reconciled$"):
+        with budget.operation("must-not-start", cpu_reserve=1, gpu_reserve=0):
+            pytest.fail("unreconciled usage must not start an operation")
+    assert path.read_bytes() == before
+    assert not path.with_suffix(".next").exists()
+    assert not budget.active
+
+
+@pytest.mark.parametrize("update_hash", [False, True])
+def test_recovered_binding_poison_is_refused(tmp_path, monkeypatch, update_hash):
+    from research.flywheel_selfplay.h206_search_distill import runner
+
+    for name in ("launch.json", "bindings.json"):
+        (tmp_path / name).write_bytes((HERE / name).read_bytes())
+    monkeypatch.setattr(runner, "HERE", tmp_path)
+    assert runner.load_plan()["scientific_execution_enabled"] is False
+    binding_path = tmp_path / "bindings.json"
+    binding = json.loads(binding_path.read_text())
+    binding["initial_checkpoint"]["sha256"] = "f" * 64
+    binding_path.write_bytes(canonical(binding))
+    if update_hash:
+        plan_path = tmp_path / "launch.json"
+        plan = json.loads(plan_path.read_text())
+        plan["recovered_bindings_sha256"] = sha(binding_path.read_bytes())
+        plan_path.write_bytes(canonical(plan))
+    error = "recovered binding plan mismatch" if update_hash else "recovered binding manifest hash mismatch"
+    with pytest.raises(ValueError, match=error):
+        runner.load_plan()
