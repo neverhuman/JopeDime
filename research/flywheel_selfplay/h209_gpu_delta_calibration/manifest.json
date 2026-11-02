@@ -171,5 +171,11 @@
       "training_attempt": false,
       "scope": "CPU-only reproduction of logging failure, not a scientific retry"
     }
-  }
+  },
+  "current_source_sha256": {
+    "launch.py": "d06a86b383892401e66bf752659a4e39731abd2a21fcb44e3a14bb94fe1cc2e4",
+    "runner.py": "f860c7f5cd24da0fe1ce87482634e5484c7248199acc1fe38613b38476e298aa",
+    "test_h209.py": "c2ea3e67c4c5e999b7e17dbb0e4edc79296b6c120dfdef8c545a5ffc632786b5"
+  },
+  "current_source_sha256_scope": "Prospective P47 source on this merged commit. Original execution-manifest-attempt1.json and source_sha256 retain the historical execution bytes."
 }

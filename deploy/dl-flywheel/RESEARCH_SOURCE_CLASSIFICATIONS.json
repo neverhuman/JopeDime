@@ -5185,20 +5185,20 @@
       "sha256": "bc8a23c909c580c9b33edd4bb9591b73da280f01e4c19f37f6de66ec422f0d37"
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/launch.py": {
-      "bytes": 7775,
+      "bytes": 7705,
       "classification": {
         "reason": "H209 exact merged-source and exclusive xbabe2 GPU supervisor, create-only attempt claim and independent resource/deadline enforcement; no model imports or self-merge.",
         "role": "research"
       },
-      "sha256": "19dbc24ee60a6921ff6d6363f846cdb6f28e7dfa203c8da58ef307fc8cffa800"
+      "sha256": "d06a86b383892401e66bf752659a4e39731abd2a21fcb44e3a14bb94fe1cc2e4"
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/runner.py": {
-      "bytes": 29531,
+      "bytes": 30393,
       "classification": {
         "reason": "H209 single-attempt CUDA training on pinned historical real-S3 TRAIN pools, frozen r882 exact-vector gate, role-scoped labels, B lock before A, actual-update proofs and versioned S3 custody; not fresh labels or promotion. Prospective reentry fix; original H209 execution remains pinned to d609dab4, no retry.",
         "role": "research"
       },
-      "sha256": "06a4412fe3dd81e1557ec7a3254674e007f1e75dc609db831f3fe2941412a2f0"
+      "sha256": "f860c7f5cd24da0fe1ce87482634e5484c7248199acc1fe38613b38476e298aa"
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/science.py": {
       "bytes": 5334,
@@ -5233,20 +5233,20 @@
       "sha256": "96f227cc5e54188b5052982a65460bcddcb518e90b5021a44a7542858f82ad81"
     },
     "python:research/flywheel_selfplay/h211_gpu_delta_calibration/launch.py": {
-      "bytes": 8328,
+      "bytes": 8258,
       "classification": {
         "reason": "H211 prospective GPU utility-delta rerun with nonreentrant resource check, fixed static-TRAIN scientific protocol, one attempt and explicit exact-open-PR launch authority; no serving promotion.",
         "role": "research"
       },
-      "sha256": "8d68c92b047a2190b6979b6a4897c470536aa194d65eae60b79f57536176c518"
+      "sha256": "30beb1ae8d4ed16cc4f4a53d04d3451ccb164831e9776ca87affc9e224c04299"
     },
     "python:research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py": {
-      "bytes": 29531,
+      "bytes": 30393,
       "classification": {
         "reason": "H211 prospective GPU utility-delta rerun with nonreentrant resource check, fixed static-TRAIN scientific protocol, one attempt and explicit exact-open-PR launch authority; no serving promotion.",
         "role": "research"
       },
-      "sha256": "e8be61a63ce24e77ec786ed48b9ce86c60981ebfe3640058c93f4324a6cbc6b6"
+      "sha256": "0482ca51b6714408724e6f2a613bfa0b9ca36f7fb4b6df4534933e927880446a"
     },
     "python:research/flywheel_selfplay/h211_gpu_delta_calibration/science.py": {
       "bytes": 5334,
@@ -5257,20 +5257,20 @@
       "sha256": "0849dc9fad90d4176a7d4f775d279a8845be25c1ebe17d454d954449065cfc17"
     },
     "python:research/flywheel_selfplay/h213_gpu_delta_sustained/launch.py": {
-      "bytes": 9615,
+      "bytes": 9545,
       "classification": {
         "reason": "H213 prospective H211 hypothesis with fresh213 seeds and sustained-load resource guard; one90min GPU attempt, frozen native models, exact open PR admission; no serving promotion.",
         "role": "research"
       },
-      "sha256": "7ef61a34d7fc9a5ac1a10d49baa0c606efd195896bcec789b859683b388c00a6"
+      "sha256": "0f4eaa8e371a9c8b2b4bac54c7c7d6927f29e3b66fb60e6a5ce04f8092991e4d"
     },
     "python:research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py": {
-      "bytes": 30715,
+      "bytes": 31577,
       "classification": {
         "reason": "H213 prospective H211 hypothesis with fresh213 seeds and sustained-load resource guard; one90min GPU attempt, frozen native models, exact open PR admission; no serving promotion.",
         "role": "research"
       },
-      "sha256": "7a49350b8c8368550ef187c346e2753d3b8665c96c77ab8d2e1f1d4c12a0eb70"
+      "sha256": "dc6e99be09d9142f47df4d28c007994afb975e9180b4a97bf10bd1a30c701b3a"
     },
     "python:research/flywheel_selfplay/h213_gpu_delta_sustained/science.py": {
       "bytes": 5334,
@@ -5313,20 +5313,20 @@
       "sha256": "4b168819b1a92b32d57696fe658174689f1f7c09d4f71e808a8311c8e7729e74"
     },
     "python:research/flywheel_selfplay/h215_pess_disagreement/launch.py": {
-      "bytes": 11733,
+      "bytes": 11663,
       "classification": {
         "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion.",
         "role": "research"
       },
-      "sha256": "27d4473610359918630125969ef75ffa9bb68d45788eff1db8a7df69cc97db49"
+      "sha256": "20901c0d92b20ff601165cda533c90386fbab95da0fa5539e8ddd57a423ae5d7"
     },
     "python:research/flywheel_selfplay/h215_pess_disagreement/runner.py": {
-      "bytes": 23607,
+      "bytes": 24231,
       "classification": {
         "reason": "H215 preregistered GPU fresh-adapter ensemble disagreement penalty with nested FIT-only kappa CV and exact H178-calibrated pooled selector; one90min attempt, immutable source/input and native91 gates; no serving promotion.",
         "role": "research"
       },
-      "sha256": "622f3a83c6cbf8185e24b6fd04a2b771b442e173ee7efa0efb0bf576b2011c07"
+      "sha256": "8955dc2539594894db4943a52f0b1d7adb889d4bbf6cf1b031c1f424d9c65c27"
     },
     "python:research/flywheel_selfplay/h215_pess_disagreement/science.py": {
       "bytes": 4970,
@@ -5425,20 +5425,20 @@
       "sha256": "04f91411a70eda95044a100f7c0986fbe2f5c87978a70908ee5ed70387e138d5"
     },
     "python:research/flywheel_selfplay/h219_fbal_accum_run/launch.py": {
-      "bytes": 11640,
+      "bytes": 11570,
       "classification": {
         "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "6a350c958ee6e9c5a10c1d9b808bb5195a5998ca980dafa256fdc0a44cffb99f"
+      "sha256": "979586b8abf6729a7e775e8adef42deb5ac9e3c8f406577fcdf69907be6b9bb9"
     },
     "python:research/flywheel_selfplay/h219_fbal_accum_run/runner.py": {
-      "bytes": 22932,
+      "bytes": 23555,
       "classification": {
         "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "bc81674b6e523ec341984d8647b259a607c941c1112f81465eab7a3c0ba1f537"
+      "sha256": "aca3dfc25083061c9ed81762f6f7c57b9a0db75dbc98bb626866fce95973b134"
     },
     "python:research/flywheel_selfplay/h219_fbal_accum_run/science.py": {
       "bytes": 5089,
@@ -5465,12 +5465,12 @@
       "sha256": "ce4d6770691121ba33a9c3a632afb01d97afe173826ee354cadea30605387835"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/launch.py": {
-      "bytes": 11637,
+      "bytes": 11567,
       "classification": {
         "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "6c23b98259fec88ca2cdc40f3ed0ba479a31acd49130e2b745aeb83a14e851f8"
+      "sha256": "9258c0627212d092f04d43832e3c107f05315f1dc11e70c82ae1e0af00765290"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/mixup.py": {
       "bytes": 1959,
@@ -5481,12 +5481,12 @@
       "sha256": "132eff7e58e3fad226e0a96ec930c47cac01a5ed4605f7ff5a439736aa09be6b"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/runner.py": {
-      "bytes": 24885,
+      "bytes": 25394,
       "classification": {
         "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "d8731991b6edaf527e84217ce5fe3026fc29db57eca5c34116eda178b067441e"
+      "sha256": "59c62c0b0598e113cd03de82a63d2a5494b0d3712907315b174e0d70ab3a7af8"
     },
     "python:research/flywheel_selfplay/h220_family_mixup/science.py": {
       "bytes": 5505,
@@ -5513,20 +5513,20 @@
       "sha256": "94543734011f7c552e5c57da35f82152da0aa39288ee7829c40f472b6b6cb2ae"
     },
     "python:research/flywheel_selfplay/h221_bagged_delta_head/launch.py": {
-      "bytes": 11790,
+      "bytes": 11720,
       "classification": {
         "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "2ff4df29339c6038c8d1bf012c0b8a0f2a9d14e1c0bf4294cc3f85e3d848890d"
+      "sha256": "7d819c899eed957055befa64a4555ef45629606e01097b28431b3fd3b75bfadb"
     },
     "python:research/flywheel_selfplay/h221_bagged_delta_head/runner.py": {
-      "bytes": 22939,
+      "bytes": 23445,
       "classification": {
         "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
         "role": "research"
       },
-      "sha256": "a658d9117764472bb16e25cdc98f8621c441b7d0d3d6f4e91c36d9fbb866ce54"
+      "sha256": "925fb86c27d357d7a05a14c93f97715843910c3c496dd0ac6b9d2c3a66389347"
     },
     "python:research/flywheel_selfplay/h221_bagged_delta_head/science.py": {
       "bytes": 7783,

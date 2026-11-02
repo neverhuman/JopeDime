@@ -159,5 +159,11 @@
       "bytes": 70240
     },
     "retry_allowed": false
-  }
+  },
+  "current_source_sha256": {
+    "launch.py": "9258c0627212d092f04d43832e3c107f05315f1dc11e70c82ae1e0af00765290",
+    "runner.py": "59c62c0b0598e113cd03de82a63d2a5494b0d3712907315b174e0d70ab3a7af8",
+    "test_h220.py": "0c3115397cdabc4841c8ca3e86011374090a43b419329461653fb713f2a45a6e"
+  },
+  "current_source_sha256_scope": "Prospective P47 source on this merged commit. Original execution-manifest-attempt1.json and source_sha256 retain the historical execution bytes."
 }
