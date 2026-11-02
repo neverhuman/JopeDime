@@ -1,0 +1,243 @@
+{
+  "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+  "gates": [
+    {
+      "id": "M1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M1/result.json; receipt_sha256=6b5597621a252a57054b3d21bfce5f8ea63e52f67788d44494650e847f9ae577; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "M2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M2/result.json; receipt_sha256=557605e2eb1067f79192356afffdeae0ab7e0064a66da51d1ff8954927a3e66d; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "M3",
+      "status": "FAIL",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M3/result.json; receipt_sha256=02215ae078ef3f1510a4a49582ce43c829e4816bd25195ac60eeee7e95f2d73c; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998",
+      "disposition": "WAIVED_V1_0_0",
+      "counts": {
+        "collected": 4,
+        "excluded": 0,
+        "executed": 4,
+        "failed": 1,
+        "passed": 3,
+        "skipped": 0
+      }
+    },
+    {
+      "id": "M4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M4/result.json; receipt_sha256=9871145edf63ef2616cc79cca49653372703ef98cba65eda0f9b758d1ca27e27; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "M5",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/M5/result.json; receipt_sha256=da5720bc66dcaefdecee61ba56022b7dbd154d5a49227132be76d7e6db58750f; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S1/result.json; receipt_sha256=5f95769746c5ce006c86a846fc2ec4435101f61829a7ba9ea3f708653619a866; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S2/result.json; receipt_sha256=8de737436e9a4cc46ec82dfb883a2a402230cfd6035881cddb276937412cf374; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S3/result.json; receipt_sha256=59f63a4adf1a245b55b788c7fbc808d2c814e7526da396426264d992bf58436b; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "S4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/S4/result.json; receipt_sha256=bb037e800ecefa2b1ee6a313bdc87d5863a9f869d6ac68e577401f4b6ba92e6b; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R1/result.json; receipt_sha256=a5186ea95249c2f041a5f5dacda3b5a556e7e06081a0f4352f325cf6408a3d3a; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R2/result.json; receipt_sha256=d044f0085db6c468c5b0258445dec98b3ab50baf3d149f406c3d51b8945ef3ed; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R3/result.json; receipt_sha256=b7ec87ea23425ebccb90c830571c3b0ed61e57b82828d7c525b51f79dfdc1fa5; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "R4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/R4/result.json; receipt_sha256=ecdfc4c6697ea4a114fad8664b2f4e7b0b7013a791bd121444bdc9ffd7b1ba86; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A1/result.json; receipt_sha256=db850fae911062d414356b8180fc5b1618fbb51fb71b5895b86b11b988698114; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A2/result.json; receipt_sha256=fdec2249680db971a9539154c5a6fa7296ff0b0ff01907ef32562ecd7a7d460b; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A3/result.json; receipt_sha256=a15e1a7860162454ef08d6723cbae6fc4d0c69509e2b9ce51505b891883ec5bb; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A4",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A4/result.json; receipt_sha256=121baa9d19444fd7bc019b14a1052515e956592a42361b0bf511dde5c4f7b976; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "A5",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/A5/result.json; receipt_sha256=fa4ea46e3ce6cbb2529ffad07a1e070b92074d5eb5a2c6f20a379a74f49c4913; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "E1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E1/result.json; receipt_sha256=e227f6399ce516d933ece520f3195096e26ad22785cf1da19fe0d0223c5d36a8; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "E2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E2/result.json; receipt_sha256=acd3c0446075c3eee6fe78de70c784e8a4f446d8b01df1f293d59d58e623d379; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "E3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/E3/result.json; receipt_sha256=9f7eefcf5fc9aff53fbef29cb4520185ff6f65d29dc0884fe37da7c715a2d2d5; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "U1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U1/result.json; receipt_sha256=f34db730219f26bd8e09518372bd9f7fdc65cbc2ee1bb1701ea5a88580637cb7; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "U2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/U2/result.json; receipt_sha256=1d87cb1a20adc5fb8fabc33527ffe41c6c5b72c1b6cbe0c69bf8fda2f0f9d43f; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "T1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T1/result.json; receipt_sha256=7147e92b2e7d1300c88f2899835641827cbd50431ccc222036b50b91761bded5; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "T2",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T2/result.json; receipt_sha256=19995b3e983a4eeb5791550a1f584e75589e50f2089d0130cac041c5ce6dbbab; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "T3",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/T3/result.json; receipt_sha256=f4c875383e7f126482fe1383b4add20825fbe90277a4b61275a552e46075682a; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "D1",
+      "status": "PASS",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D1/result.json; receipt_sha256=a77ca214d754dc7a8c0fd80263bb0076ca45d9d6d77f9a57964627c8cdd6242c; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    },
+    {
+      "id": "D2",
+      "status": "PASS",
+      "artifact_sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+      "evidence": "receipt=/home/ubuntu/jope_plan/evidence/REL-07/pub-t1650-final-controller-v3/D2/result.json; receipt_sha256=579d562d92a2c7b79c66e2b4289ed16613286b42649eca252b6d85e5f0ca27e7; source_sha=ccaf14b210b3b55a350218e60f6b49ef76524cf3; scaffold=/home/ubuntu/JopeDime/.agent/worktrees/pub-02/deploy/qualification/v1.0/release-command-scaffold.json; scaffold_sha256=702be418fdc509d310d501009d8078b7fee7b68161cf07487970017ae3dc1998"
+    }
+  ],
+  "gate_artifacts": {
+    "D2": {
+      "path": "/home/ubuntu/jope_plan/evidence/REL-07/tui-t1525/build-ccaf14b210b3-20261102T000809Z/output/jopedime",
+      "sha256": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a",
+      "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+      "candidate_manifest_sha256": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff",
+      "seal_receipt_sha256": "097cbf56819d4fa001314eaf0c97b3bb271b5c0750e486de2ea3f99d8406bc7a"
+    }
+  },
+  "release_version": "v1.0.0",
+  "waivers": [
+    {
+      "id": "M3-WAIVER-V1.0.0-T1955",
+      "gate": "M3",
+      "disposition": "WAIVED_V1_0_0",
+      "expires_at": "v1.0.1",
+      "ruling": "/home/ubuntu/jope_plan/master/status/REL-07-M3-RULING-v1.0.0-WAIVER-t1955.md",
+      "ruling_sha256": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf",
+      "source_sha": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+      "artifact_sha256": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20",
+      "raw_status": "FAIL",
+      "guard_views": [
+        {
+          "mode": "all",
+          "deltas_pp": {
+            "champion_retrieval": -0.489375,
+            "edit_crossover": -0.1615625,
+            "edit_delete_stage": 0.3346875,
+            "edit_insert_stage": -0.94171875,
+            "edit_parameter": -1.0421875,
+            "edit_replace_head": 2.30015625,
+            "landmark_synthesis": 0.0
+          }
+        },
+        {
+          "mode": false,
+          "deltas_pp": {
+            "champion_retrieval": 0.3645833333333333,
+            "edit_crossover": 0.0,
+            "edit_delete_stage": 1.3020833333333333,
+            "edit_insert_stage": -0.5208333333333334,
+            "edit_parameter": -1.1979166666666667,
+            "edit_replace_head": 0.052083333333333336,
+            "landmark_synthesis": 0.0
+          }
+        },
+        {
+          "mode": true,
+          "deltas_pp": {
+            "champion_retrieval": -0.6878332063975628,
+            "edit_crossover": -0.17183929931454683,
+            "edit_delete_stage": 0.1347105864432597,
+            "edit_insert_stage": -1.0379379284082255,
+            "edit_parameter": -1.0279417364813404,
+            "edit_replace_head": 2.7908415841584158,
+            "landmark_synthesis": 0.0
+          }
+        }
+      ]
+    }
+  ]
+}
