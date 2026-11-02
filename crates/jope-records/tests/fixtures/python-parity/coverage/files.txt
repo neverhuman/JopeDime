@@ -467,6 +467,11 @@ crates/jope-campaigns/src/bin/jope_expanded_catalog.rs
 crates/jope-campaigns/src/bin/jope_flywheel_liveness.rs
 crates/jope-campaigns/src/bin/jope_generalized_gp.rs
 crates/jope-campaigns/src/bin/jope_gp_bridge.rs
+crates/jope-campaigns/src/bin/jope_gp_bridge/lineage.rs
+crates/jope-campaigns/src/bin/jope_gp_bridge/population.rs
+crates/jope-campaigns/src/bin/jope_gp_bridge/receipts.rs
+crates/jope-campaigns/src/bin/jope_gp_bridge/tests.rs
+crates/jope-campaigns/src/bin/jope_gp_bridge/verification.rs
 crates/jope-campaigns/src/bin/jope_gpu_lane_admission.rs
 crates/jope-campaigns/src/bin/jope_hyperion_cache.rs
 crates/jope-campaigns/src/bin/jope_hyperion_gate.rs
