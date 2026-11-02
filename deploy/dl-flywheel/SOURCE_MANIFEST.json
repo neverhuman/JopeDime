@@ -4348,43 +4348,7 @@
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/__init__.py",
       "origin_sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c",
       "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/__init__.py",
-      "sha256": "93e2ea001d40548d0a8d10eae74d567d6ea4e46d375692d874fc2acb443428be"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/automaton.py",
-      "origin_sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/automaton.py",
-      "sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/common.py",
-      "origin_sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/common.py",
-      "sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/labels.py",
-      "origin_sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/labels.py",
-      "sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/model.py",
-      "origin_sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/model.py",
-      "sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/objective.py",
-      "origin_sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/objective.py",
-      "sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/oracle.py",
-      "origin_sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/oracle.py",
-      "sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a"
+      "sha256": "dced0dcee3a3c58861a08bd6f9d3b9a8ab92dd93d1740a80adade26f90bbecfc"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/native_corpus_authority.py",
@@ -5365,7 +5329,7 @@
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_decode.py",
       "origin_sha256": "f059ba3f4355295debf29515989c41d9ff89cd8553dae45dba81a268dcb8d2d3",
       "path": "deploy/dl-flywheel/tests_native/test_neural_decode.py",
-      "sha256": "966af6b0b7eb051a276a2c63093299ea20bc7555e86e0d0dff0f4f2749502c50"
+      "sha256": "4a858d377333bedbbaf901dc41dd3c5dac1fa8b9bcaee231de82d04755f5be24"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_native_batch.py",

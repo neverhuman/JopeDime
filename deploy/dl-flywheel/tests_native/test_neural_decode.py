@@ -1,6 +1,6 @@
 import sys,time,unittest,torch
 from pathlib import Path
-from dltrain import model as M,dsl_tokenizer as T,sampler as S
+from dltrain import automaton as A,common as C,dsl_tokenizer as T,labels as L,model as M,objective as O,oracle as R,sampler as S
 from jope_flywheel.program_io import sha
 from neural_core import ProposalTrie
 from neural_decode import BatchedTrie
@@ -21,8 +21,8 @@ class DecoderTests(unittest.TestCase):
   self.assertNotEqual(rows[0]['trie_sha256'],expected['trie_sha256']) # explicitly versioned compact catalog
  def test_deterministic_multirow_traces_and_native_program_membership(self):
   shared=Path(__file__).resolve().parents[1]/'pipelines/continuous/consumer/dltrain'
-  self.assertEqual(Path(T.__file__).resolve(),shared/'dsl_tokenizer.py')
-  self.assertEqual(Path(S.__file__).resolve(),shared/'sampler.py')
+  for module,name in ((A,'automaton.py'),(C,'common.py'),(T,'dsl_tokenizer.py'),(L,'labels.py'),(M,'model.py'),(O,'objective.py'),(R,'oracle.py'),(S,'sampler.py')):
+   self.assertEqual(Path(module.__file__).resolve(),shared/name)
   a,meta=self.trie.decode_many(self.net,self.z,seeds=[1,2,3,4],temperature=.7,deadline=time.time()+10);b,_=self.trie.decode_many(self.net,self.z,seeds=[1,2,3,4],temperature=.7,deadline=time.time()+10)
   self.assertEqual(a,b);self.assertEqual(len(a),4);self.assertLess(meta['forward_calls'],meta['tokens_generated'])
   for r in a:self.assertIn(r['program'],self.programs);self.assertEqual(T.detokenize(r['tokens'],self.vocab),r['program']['dsl'])
