@@ -812,7 +812,9 @@ fn v3_admission_matches_manifest() {
                 OpKind::Transform => "transform",
                 OpKind::Head => "head",
             };
-            assert_eq!(descriptor.advanced_facts().role, role, "{name}");
+            let entry = crate::kernel::registry_v2::operator("advanced_v3", name)
+                .unwrap_or_else(|| panic!("missing advanced-v3 registry entry for {name}"));
+            assert_eq!(entry.facts().role, role, "{name}");
             assert_eq!(row.requires_labels, descriptor.target_aware, "{name}");
             assert_eq!(
                 row.requires_row_order,

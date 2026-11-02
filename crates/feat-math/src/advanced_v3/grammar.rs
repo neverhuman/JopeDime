@@ -1243,7 +1243,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "ridge",
         aliases = &["logistic"],
-        class = Head,
+        class = Learner,
         tasks = REGRESSION_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1261,7 +1261,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "logit_ridge",
         aliases = &["logistic"],
-        class = Head,
+        class = Learner,
         tasks = BINARY_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1279,7 +1279,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "multiclass_ridge",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = REGRESSION_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1297,7 +1297,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "tab_boost",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BOTH_TASKS,
         roles = Any / NumericOrNative,
         rows = Any,
@@ -1315,7 +1315,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "extra_trees",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BOTH_TASKS,
         roles = Any / NumericOrNative,
         rows = Any,
@@ -1333,7 +1333,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "gam_boost",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BOTH_TASKS,
         roles = Any / NumericOrNative,
         rows = Any,
@@ -1351,7 +1351,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "pls",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = REGRESSION_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1369,7 +1369,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "portfolio",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BINARY_ONLY,
         roles = Any / NumericLike,
         rows = Any,
