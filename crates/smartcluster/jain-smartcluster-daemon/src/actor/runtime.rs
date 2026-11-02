@@ -124,7 +124,7 @@ pub(super) fn spawn_control_reports(
         loop {
             let frame = match receiver.receive::<WorkerReportFrame>().await {
                 Ok(frame) => frame,
-                Err(ControlError::Io(error))
+                Err(DaemonControlFrameError::Io(error))
                     if matches!(
                         error.kind(),
                         std::io::ErrorKind::UnexpectedEof
@@ -273,7 +273,7 @@ pub(super) async fn send_control(
         Ok(result) => result.map_err(ExecutorError::from),
         Err(_) => {
             active.control = None;
-            Err(ExecutorError::Control(ControlError::Timeout))
+            Err(ExecutorError::Control(DaemonControlFrameError::Timeout))
         }
     }
 }
