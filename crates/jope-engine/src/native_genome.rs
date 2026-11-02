@@ -26,10 +26,11 @@ pub enum Arm {
 }
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Stage {
+pub enum GenomeEvaluationStage {
     Direct,
     Continuation,
 }
+pub type Stage = GenomeEvaluationStage;
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Candidate {
@@ -52,7 +53,7 @@ pub struct Candidate {
 #[serde(deny_unknown_fields)]
 pub struct GenomeTask {
     pub schema: String,
-    pub stage: Stage,
+    pub stage: GenomeEvaluationStage,
     pub candidate: Artifact,
     pub output: PathBuf,
     pub vocabulary: Artifact,
@@ -72,7 +73,7 @@ pub struct GenomeResult {
     pub schema: String,
     pub task: Artifact,
     pub candidate: Artifact,
-    pub stage: Stage,
+    pub stage: GenomeEvaluationStage,
     pub search: Artifact,
     pub observations: Artifact,
     pub direct_parent: Option<Artifact>,
@@ -174,8 +175,10 @@ impl GenomeTask {
         crate::manifest::relative(&self.output)?;
         ensure!(
             match self.stage {
-                Stage::Direct => self.evaluations == 1 && self.direct_parent.is_none(),
-                Stage::Continuation => self.direct_parent.is_some(),
+                GenomeEvaluationStage::Direct => {
+                    self.evaluations == 1 && self.direct_parent.is_none()
+                }
+                GenomeEvaluationStage::Continuation => self.direct_parent.is_some(),
             },
             "native genome direct/continuation contract mismatch"
         );
@@ -376,14 +379,14 @@ pub(crate) fn verify_result(
             },
             &mut authority,
         )?;
-        if task.stage == Stage::Direct {
+        if task.stage == GenomeEvaluationStage::Direct {
             ensure!(
                 row["genome"] == candidate.genome,
                 "direct task evaluated another program"
             );
         }
     }
-    if task.stage == Stage::Direct {
+    if task.stage == GenomeEvaluationStage::Direct {
         ensure!(
             rows.len() == 1,
             "direct task lacks its exact original evaluation outcome"
@@ -401,7 +404,7 @@ pub(crate) fn direct_parent(
     };
     let (old, prior, result, rows) = verified_rows(root, parent)?;
     ensure!(
-        old.stage == Stage::Direct
+        old.stage == GenomeEvaluationStage::Direct
             && result.candidate == task.candidate
             && prior.genome_sha256 == c.genome_sha256
             && old.vocabulary == task.vocabulary
@@ -560,7 +563,7 @@ fn prepared_closure(
 pub(crate) fn execute(
     root: &Path,
     reference: &Artifact,
-    expected: Stage,
+    expected: GenomeEvaluationStage,
     receipt: &Path,
 ) -> Result<()> {
     let task: GenomeTask = load(root, reference)?;
@@ -603,7 +606,7 @@ pub(crate) fn execute(
 pub fn target(root: &Path, continuation: &Artifact) -> Result<ContinuationTarget> {
     let (task, c, result, rows) = verified_rows(root, continuation)?;
     ensure!(
-        task.stage == Stage::Continuation,
+        task.stage == GenomeEvaluationStage::Continuation,
         "population/direct score is not a continuation target"
     );
     let direct = task
@@ -717,7 +720,7 @@ mod tests {
         GenomeTask {
             preparation_overlay: None,
             schema: "jope.native_genome_task.v1".into(),
-            stage: Stage::Direct,
+            stage: GenomeEvaluationStage::Direct,
             candidate: a.clone(),
             output: "out".into(),
             vocabulary: a.clone(),
@@ -792,11 +795,11 @@ mod tests {
         assert!(t.validate().is_ok());
         t.evaluations = 2;
         assert!(t.validate().is_err());
-        t.stage = Stage::Continuation;
+        t.stage = GenomeEvaluationStage::Continuation;
         assert!(t.validate().is_err());
         t.direct_parent = Some(t.candidate.clone());
         assert!(t.validate().is_ok());
-        t.stage = Stage::Direct;
+        t.stage = GenomeEvaluationStage::Direct;
         assert!(t.validate().is_err());
     }
     #[test]
