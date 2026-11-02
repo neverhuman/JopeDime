@@ -1402,6 +1402,9 @@ crates/jope-engine/src/families.rs
 crates/jope-engine/src/family_growth.rs
 crates/jope-engine/src/fit_boundary.rs
 crates/jope-engine/src/gp.rs
+crates/jope-engine/src/gp/artifact_identity.rs
+crates/jope-engine/src/gp/csv_identity.rs
+crates/jope-engine/src/gp/evaluation.rs
 crates/jope-engine/src/gp/fit_contract_tests.rs
 crates/jope-engine/src/gp/fit_contract_tests/cli.rs
 crates/jope-engine/src/gp/fit_contract_tests/fit_views.rs
@@ -1418,6 +1421,8 @@ crates/jope-engine/src/gp/fit_contract_tests/search_trials.rs
 crates/jope-engine/src/gp/fit_contract_tests/selection.rs
 crates/jope-engine/src/gp/fit_contract_tests/support.rs
 crates/jope-engine/src/gp/fit_contract_tests/view_exports.rs
+crates/jope-engine/src/gp/fit_memory.rs
+crates/jope-engine/src/gp/fitting.rs
 crates/jope-engine/src/gp/handoff.rs
 crates/jope-engine/src/gp/lineage.rs
 crates/jope-engine/src/gp/lineage/tests.rs
@@ -1425,6 +1430,17 @@ crates/jope-engine/src/gp/outer_release.rs
 crates/jope-engine/src/gp/outer_release/helpers.rs
 crates/jope-engine/src/gp/outer_release_cli.rs
 crates/jope-engine/src/gp/paired.rs
+crates/jope-engine/src/gp/parent_selection.rs
+crates/jope-engine/src/gp/predictor.rs
+crates/jope-engine/src/gp/search_api.rs
+crates/jope-engine/src/gp/search_evaluation.rs
+crates/jope-engine/src/gp/search_inner.rs
+crates/jope-engine/src/gp/search_inner/dispatch.rs
+crates/jope-engine/src/gp/search_inner/finalize.rs
+crates/jope-engine/src/gp/search_inner/observation.rs
+crates/jope-engine/src/gp/search_inner/setup.rs
+crates/jope-engine/src/gp/search_inner/slot.rs
+crates/jope-engine/src/gp/search_types.rs
 crates/jope-engine/src/gp/selection_replay.rs
 crates/jope-engine/src/gpu_worker.rs
 crates/jope-engine/src/grammar.rs
