@@ -446,6 +446,75 @@ def retain_checkpoint_payloads(
     return receipt
 
 
+def prune_local_archive_copies(archive_root, keep_newest):
+    """Drop local ``.tar.zst`` copies whose S3 custody is already proven.
+
+    ``retain_checkpoint_payloads`` uploads every archive with a version-pinned
+    readback before it prunes anything, so after that the local copy is a
+    duplicate. Keep the newest ``keep_newest`` archives as a fast-restore cache and
+    delete an older one only when its receipt binds an S3 VersionId, a matching
+    SHA256 and a matching byte count, and the local bytes still hash to it.
+    Manifests and receipts are never deleted; they are the reproduction record.
+    """
+    import hashlib
+    import json
+    from pathlib import Path
+
+    if keep_newest < 0:
+        raise ValueError("keep_newest must be >= 0")
+    archive_root = Path(archive_root)
+    if not archive_root.is_dir():
+        return {"local_archives_pruned": 0, "local_bytes_pruned": 0, "held": []}
+    receipts = sorted(
+        archive_root.glob("retention-*.receipt.json"),
+        key=lambda p: (p.stat().st_mtime_ns, p.name),
+    )
+    pruned, freed, held = 0, 0, []
+    for receipt_path in receipts[: max(len(receipts) - keep_newest, 0)]:
+        try:
+            receipt = json.loads(receipt_path.read_text())
+        except (OSError, ValueError):
+            held.append({"receipt": str(receipt_path), "reason": "unreadable receipt"})
+            continue
+        archive = Path(receipt.get("archive", ""))
+        remote = receipt.get("s3_archive") or {}
+        if (
+            archive.parent.resolve() != archive_root.resolve()
+            or not archive.name.endswith(".tar.zst")
+        ):
+            held.append(
+                {"receipt": str(receipt_path), "reason": "archive outside root"}
+            )
+            continue
+        if not archive.exists():
+            continue  # already pruned on an earlier pass
+        if archive.is_symlink() or not archive.is_file():
+            held.append({"receipt": str(receipt_path), "reason": "archive not regular"})
+            continue
+        size = archive.stat().st_size
+        if not (
+            remote.get("version_id")
+            and str(remote.get("uri", "")).startswith("s3://")
+            and remote.get("sha256") == receipt.get("archive_sha256")
+            and remote.get("bytes") == size
+        ):
+            held.append({"receipt": str(receipt_path), "reason": "no S3 version proof"})
+            continue
+        with archive.open("rb") as stream:
+            if (
+                hashlib.file_digest(stream, "sha256").hexdigest()
+                != receipt["archive_sha256"]
+            ):
+                held.append(
+                    {"receipt": str(receipt_path), "reason": "local hash drift"}
+                )
+                continue
+        archive.unlink()
+        pruned += 1
+        freed += size
+    return {"local_archives_pruned": pruned, "local_bytes_pruned": freed, "held": held}
+
+
 def batch_seed(seed: int, round_idx: int, step: int):
     """A private batch stream advances by logical round/step, never best_round."""
     import hashlib

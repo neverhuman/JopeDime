@@ -1003,3 +1003,70 @@ def test_actual_runner_restart_cli_is_opt_in_and_rejects_negative(option, expect
     main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
     calls = {n.func.id for n in ast.walk(main) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
     assert {"add_restart_optimizer_argument", "validate_restart_optimizer_argument"} <= calls
+
+
+def _local_archive_fixture(tmp_path, count=4):
+    import hashlib
+    import os
+
+    root = tmp_path / "archives"
+    root.mkdir()
+    for n in range(count):
+        archive = root / f"retention-{n}-x.tar.zst"
+        archive.write_bytes(f"archive-{n}".encode() * 10)
+        digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+        (root / f"retention-{n}-x.manifest.json").write_text("{}")
+        receipt = {
+            "archive": str(archive),
+            "archive_sha256": digest,
+            "s3_archive": {
+                "uri": f"s3://bucket/retention-{n}-x.tar.zst",
+                "version_id": f"v{n}",
+                "sha256": digest,
+                "bytes": archive.stat().st_size,
+            },
+        }
+        path = root / f"retention-{n}-x.receipt.json"
+        path.write_text(json.dumps(receipt))
+        os.utime(path, ns=(n * 10**9, n * 10**9))
+    return root
+
+
+def test_local_archive_prune_keeps_newest_and_all_receipts(tmp_path):
+    from dev_incumbent import prune_local_archive_copies
+
+    root = _local_archive_fixture(tmp_path)
+    result = prune_local_archive_copies(root, keep_newest=1)
+    assert result["local_archives_pruned"] == 3 and not result["held"]
+    assert [p.name for p in root.glob("*.tar.zst")] == ["retention-3-x.tar.zst"]
+    assert len(list(root.glob("*.receipt.json"))) == 4
+    assert len(list(root.glob("*.manifest.json"))) == 4
+    assert prune_local_archive_copies(root, keep_newest=1)["local_archives_pruned"] == 0
+
+
+def test_local_archive_prune_holds_without_s3_version_or_on_hash_drift(tmp_path):
+    from dev_incumbent import prune_local_archive_copies
+
+    root = _local_archive_fixture(tmp_path)
+    receipt = root / "retention-0-x.receipt.json"
+    body = json.loads(receipt.read_text())
+    body["s3_archive"].pop("version_id")
+    receipt.write_text(json.dumps(body))
+    (root / "retention-1-x.tar.zst").write_bytes(b"archive-X" * 10)
+    result = prune_local_archive_copies(root, keep_newest=0)
+    assert result["local_archives_pruned"] == 2
+    assert (root / "retention-0-x.tar.zst").exists()
+    assert (root / "retention-1-x.tar.zst").exists()
+    assert {h["reason"] for h in result["held"]} == {
+        "no S3 version proof",
+        "local hash drift",
+    }
+
+
+def test_local_archive_prune_is_opt_in_in_runner():
+    source = (Path(__file__).parent / "run_fused_closed_loop.py").read_text()
+    assert (
+        '"--checkpoint-archive-local-keep",\n        type=int,\n        default=None,'
+        in source
+    )
+    assert "if args.checkpoint_archive_local_keep is not None:" in source
