@@ -30,7 +30,7 @@
 //!
 //! Shadow-only: never claims `qualified = true` or `l6`.
 
-use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, Verdict};
+use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, IntervalVerdict};
 use super::evaluate::{
     evaluate_with_fold_train_pools_and_priors, fold_of, Config as EvalConfig, Inputs, Summary,
 };
@@ -187,15 +187,15 @@ pub struct FlywheelReceipt {
     /// Surrogate beats strongest baseline recorded for this flywheel receipt.
     pub surrogate_beats_strongest_baseline: bool,
     /// Final vs round0 primary verdict recorded for this flywheel receipt.
-    pub final_vs_round0_primary_verdict: Verdict,
+    pub final_vs_round0_primary_verdict: IntervalVerdict,
     /// Final vs round0 pairwise verdict recorded for this flywheel receipt.
-    pub final_vs_round0_pairwise_verdict: Verdict,
+    pub final_vs_round0_pairwise_verdict: IntervalVerdict,
     /// Active beats passive discovery verdict recorded for this flywheel receipt.
-    pub active_beats_passive_discovery_verdict: Verdict,
+    pub active_beats_passive_discovery_verdict: IntervalVerdict,
     /// Active beats passive primary verdict recorded for this flywheel receipt.
-    pub active_beats_passive_primary_verdict: Verdict,
+    pub active_beats_passive_primary_verdict: IntervalVerdict,
     /// Active beats passive pairwise verdict recorded for this flywheel receipt.
-    pub active_beats_passive_pairwise_verdict: Verdict,
+    pub active_beats_passive_pairwise_verdict: IntervalVerdict,
     /// Active discovery established recorded for this flywheel receipt.
     pub active_discovery_established: bool,
     /// Data accumulation lift established recorded for this flywheel receipt.
@@ -1154,26 +1154,26 @@ pub fn run_distilled_flywheel_with_s3_prior(
         .iter()
         .find(|l| l.budget == primary_b)
         .map(|l| l.realized_gain_lift.verdict)
-        .unwrap_or(Verdict::Inconclusive);
+        .unwrap_or(IntervalVerdict::Inconclusive);
     let final_vs_round0_pairwise_verdict = round_lifts
         .iter()
         .find(|l| l.budget == primary_b)
         .and_then(|l| l.pairwise_accuracy_lift.as_ref())
         .map(|c| c.verdict)
-        .unwrap_or(Verdict::Inconclusive);
+        .unwrap_or(IntervalVerdict::Inconclusive);
 
     let active_beats_passive_discovery_verdict = active_vs_passive_discovery_lift.verdict;
     let active_beats_passive_primary_verdict = active_vs_passive_lifts
         .iter()
         .find(|l| l.budget == primary_b)
         .map(|l| l.realized_gain_lift.verdict)
-        .unwrap_or(Verdict::Inconclusive);
+        .unwrap_or(IntervalVerdict::Inconclusive);
     let active_beats_passive_pairwise_verdict = active_vs_passive_lifts
         .iter()
         .find(|l| l.budget == primary_b)
         .and_then(|l| l.pairwise_accuracy_lift.as_ref())
         .map(|c| c.verdict)
-        .unwrap_or(Verdict::Inconclusive);
+        .unwrap_or(IntervalVerdict::Inconclusive);
 
     // Evaluate Round R-1's outer-fold distilled training sub-pools against the full held-out pools
     // at the primary budget so `final_round_receipt` matches Round R-1's held-out evaluation bit-for-bit.
@@ -1211,22 +1211,22 @@ pub fn run_distilled_flywheel_with_s3_prior(
                 && c.baseline == final_round_receipt.strongest_baseline
         })
         .map(|c| {
-            c.realized_gain.verdict == Verdict::Greater
-                && c.pairwise_accuracy.as_ref().map(|p| p.verdict) == Some(Verdict::Greater)
+            c.realized_gain.verdict == IntervalVerdict::Greater
+                && c.pairwise_accuracy.as_ref().map(|p| p.verdict) == Some(IntervalVerdict::Greater)
         })
         .unwrap_or(false);
 
     let active_discovery_established =
-        all_rounds_kl_admissible && active_beats_passive_discovery_verdict == Verdict::Greater;
+        all_rounds_kl_admissible && active_beats_passive_discovery_verdict == IntervalVerdict::Greater;
     let data_accumulation_lift_established = monotonic_train_hwm_gain
         && all_rounds_kl_admissible
-        && final_vs_round0_primary_verdict == Verdict::Greater
-        && final_vs_round0_pairwise_verdict == Verdict::Greater;
+        && final_vs_round0_primary_verdict == IntervalVerdict::Greater
+        && final_vs_round0_pairwise_verdict == IntervalVerdict::Greater;
     let flywheel_established = active_discovery_established
         && data_accumulation_lift_established
         && surrogate_beats_strongest_baseline
-        && active_beats_passive_primary_verdict == Verdict::Greater
-        && active_beats_passive_pairwise_verdict == Verdict::Greater;
+        && active_beats_passive_primary_verdict == IntervalVerdict::Greater
+        && active_beats_passive_pairwise_verdict == IntervalVerdict::Greater;
 
     Ok(FlywheelReceipt {
         schema: FLYWHEEL_RECEIPT_SCHEMA,

@@ -3694,10 +3694,11 @@
       "sha256": "d914727c8dc3fd4ea686d5ed2892117ba6092f00456600d041964bd86fdff400"
     },
     {
+      "normalization": "FASTLANE: the hpc-v4 compatibility module loads the unchanged continuous KumoS implementation; the hpc-v5 pinned copy remains untouched.",
       "origin": "work/heartbeat-20261009-0616/native-v4/jope_flywheel/training_snapshot_kumos.py",
       "origin_sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/jope_flywheel/training_snapshot_kumos.py",
-      "sha256": "c571fb67d2b12739e15f0d1b79c5193a1e252178bfeea29725cb042b8ac65cb2"
+      "sha256": "8e3967b7ee1440ce279a4897d553254a1f0a8eca654d95aa1e0eed4dbf552b13"
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/native_corpus_authority.py",

@@ -6,7 +6,7 @@
 //! pools, so per-context differences are paired. The primary contrast is each candidate against
 //! the strongest baseline by mean realized gain; beating uniform alone never passes.
 
-use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, Verdict};
+use super::bootstrap::{cluster_bootstrap_ci, PairedInterval, IntervalVerdict};
 use super::metrics::{score_context, uniform_context, ContextMetrics};
 use super::pool::{verify, Manifest, Pool, Reference};
 use super::selectors::{
@@ -629,7 +629,7 @@ pub fn evaluate_with_fold_train_pools_and_priors(
             else {
                 continue;
             };
-            if base.name == strongest_baseline && gain.verdict == Verdict::Greater {
+            if base.name == strongest_baseline && gain.verdict == IntervalVerdict::Greater {
                 established = true;
             }
             comparisons.push(Comparison {
