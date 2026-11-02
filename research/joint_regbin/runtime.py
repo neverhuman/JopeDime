@@ -142,6 +142,27 @@ def _load_pinned_h144_runtime() -> ModuleType:
     return module
 
 
+def _load_pinned_fused_source() -> ModuleType:
+    """Load fused model code only from bytes covered by its source pin."""
+    if FUSED_SOURCE.is_symlink() or not FUSED_SOURCE.is_file():
+        raise SourcePinError("pinned fused source is missing or not regular")
+    source = FUSED_SOURCE.read_bytes()
+    if hashlib.sha256(source).hexdigest() != FUSED_SOURCE_SHA256:
+        raise SourcePinError("pinned fused source hash mismatch")
+    module = ModuleType("h144_fused")
+    module.__file__ = str(FUSED_SOURCE)
+    sys.modules[module.__name__] = module
+    exec(compile(source, str(FUSED_SOURCE), "exec"), module.__dict__)
+    return module
+
+
+def _bind_pinned_fused_loader(h144_runtime: ModuleType) -> None:
+    """Replace H144's path reread with the source-pinned in-memory loader."""
+    if not callable(getattr(h144_runtime, "load_fused", None)):
+        raise SourcePinError("pinned H144 runtime has no fused-source loader")
+    h144_runtime.load_fused = _load_pinned_fused_source
+
+
 def _expose_pinned_model_namespace() -> None:
     """Expose H144's already-verified research modules beside this namespace."""
     micro_research = MICRO_PYTHON / "research"
@@ -362,6 +383,7 @@ def initialize_r882_worker(
     manifest = _runtime_manifest()
     assets = _verify_runtime_closure(manifest)
     h144_runtime = _load_pinned_h144_runtime()
+    _bind_pinned_fused_loader(h144_runtime)
     _expose_pinned_model_namespace()
     net, guard, h144_names, frozen_sha, fused = h144_runtime.build(checkpoint_path)
     verify_file_pin(checkpoint_path, R882_CHECKPOINT_SHA256)
