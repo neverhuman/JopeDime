@@ -1,0 +1,406 @@
+#[test]
+fn frozen_input_manifest_change_rejects_without_authorizing_dispatch() {
+    let d = tempfile::tempdir().unwrap();
+    let q = manifest_request(d.path());
+    let path = d.path().join("run/request.json");
+    let deadline = now_ms().unwrap() + 60_000;
+    let saved = freeze_request(&path, q.clone(), deadline).unwrap();
+    assert_eq!(
+        freeze_request(&path, q.clone(), deadline + 10_000).unwrap(),
+        saved
+    );
+    write_json(
+        &d.path().join("corpus/index.json"),
+        &json!({"schema":"changed"}),
+    )
+    .unwrap();
+    assert!(freeze_request(&path, q, deadline).is_err());
+    assert!(verify_request_inputs(&saved).is_err());
+    assert!(!d.path().join("dispatches").exists());
+}
+
+#[test]
+fn funding_common_task_is_rank_invariant_and_binds_inputs_and_original_deadline() {
+    let d = tempfile::tempdir().unwrap();
+    let q = manifest_request(d.path());
+    let deadline = now_ms().unwrap() + 60_000;
+    let saved = freeze_request(&d.path().join("request.json"), q, deadline).unwrap();
+    let first = serde_json::to_value(common_task_descriptor(&saved).unwrap()).unwrap();
+    let mut other_rank = saved.clone();
+    other_rank["rank"] = json!(7);
+    assert_eq!(
+        first,
+        serde_json::to_value(common_task_descriptor(&other_rank).unwrap()).unwrap()
+    );
+    other_rank["deadline_unix_ms"] = json!(deadline + 1);
+    assert_ne!(
+        first,
+        serde_json::to_value(common_task_descriptor(&other_rank).unwrap()).unwrap()
+    );
+    assert!(first.get("rank").is_none() && first.get("reservation").is_none());
+    fs::write(d.path().join("corpus/records.bin"), b"changed records").unwrap();
+    assert!(common_task_descriptor(&saved).is_err());
+    assert!(!d.path().join("dispatches").exists());
+}
+
+#[test]
+fn unchanged_manifest_cannot_hide_mutated_payload_on_reuse_or_fresh_capture() {
+    let d = tempfile::tempdir().unwrap();
+    let q = manifest_request(d.path());
+    let deadline = now_ms().unwrap() + 60_000;
+    let path = d.path().join("request.json");
+    let saved = freeze_request(&path, q.clone(), deadline).unwrap();
+    fs::write(d.path().join("corpus/records.bin"), b"changed records").unwrap();
+    assert!(verify_request_inputs(&saved).is_err());
+    assert!(freeze_request(&path, q.clone(), deadline).is_err());
+    assert!(freeze_request(&d.path().join("new-request.json"), q, deadline).is_err());
+    assert!(!d.path().join("new-request.json").exists());
+}
+
+#[test]
+fn supplied_subset_cannot_omit_required_input_artifacts() {
+    let d = tempfile::tempdir().unwrap();
+    let q = manifest_request(d.path());
+    let mut saved = freeze_request(
+        &d.path().join("request.json"),
+        q,
+        now_ms().unwrap() + 60_000,
+    )
+    .unwrap();
+    saved["input_artifacts"]
+        .as_object_mut()
+        .unwrap()
+        .remove("corpus/records.bin");
+    assert!(verify_request_inputs(&saved).is_err());
+}
+
+#[test]
+fn resume_uses_frozen_selection_while_latest_may_advance() {
+    let d = tempfile::tempdir().unwrap();
+    let mut q = manifest_request(d.path());
+    let first_sha = checkpoint_fixture(d.path(), "checkpoint-a");
+    let second_sha = checkpoint_fixture(d.path(), "checkpoint-b");
+    let first = json!({"checkpoint":"checkpoint-a","state_sha256":first_sha});
+    let second = json!({"checkpoint":"checkpoint-b","state_sha256":second_sha});
+    fs::create_dir_all(d.path().join("run/launch")).unwrap();
+    write_json(
+        &d.path().join("run/initialization.json"),
+        &json!({"kind":"fresh"}),
+    )
+    .unwrap();
+    write_json(&d.path().join("run/launch/resume-input.json"), &first).unwrap();
+    write_json(&d.path().join("run/latest.json"), &first).unwrap();
+    q["task"]["resume"] = json!(true);
+    q["task"]["launch"] = json!(d.path().join("run/launch"));
+    let saved = freeze_request(
+        &d.path().join("request.json"),
+        q,
+        now_ms().unwrap() + 60_000,
+    )
+    .unwrap();
+    write_json(&d.path().join("run/latest.json"), &second).unwrap();
+    verify_request_inputs(&saved).unwrap();
+    assert!(saved["input_artifacts"]
+        .get("checkpoint-a/state.json")
+        .is_some());
+    assert!(saved["input_artifacts"]
+        .get("checkpoint-b/state.json")
+        .is_none());
+    write_json(&d.path().join("run/launch/resume-input.json"), &second).unwrap();
+    assert!(verify_request_inputs(&saved).is_err());
+}
+
+#[test]
+fn proposal_run_seed_champion_and_teacher_labels_are_required_inputs() {
+    let d = tempfile::tempdir().unwrap();
+    let mut q = manifest_request(d.path());
+    checkpoint_fixture(d.path(), "checkpoint");
+    fs::write(d.path().join("corpus/labels.jsonl"), b"teacher labels").unwrap();
+    write_json(
+        &d.path().join("corpus/provenance.json"),
+        &json!({
+        "labels_sha256":manifest::file_hash(&d.path().join("corpus/labels.jsonl")).unwrap()}),
+    )
+    .unwrap();
+    fs::create_dir_all(d.path().join("proposal")).unwrap();
+    write_json(
+        &d.path().join("champions.json"),
+        &json!({"metadata":"same","genome":"first"}),
+    )
+    .unwrap();
+    let spec = json!({"proposal_seed":17,
+        "champion_snapshot_sha256":manifest::file_hash(&d.path().join("champions.json")).unwrap()});
+    write_json(&d.path().join("proposal/run.json"), &spec).unwrap();
+    q["task"] = json!({"kind":"Proposal","corpus":d.path().join("corpus"),
+        "checkpoint":"checkpoint","output":"proposal"});
+    q["env"] = json!({"JOPE_CHAMPION_SNAPSHOT":"champions.json"});
+    let saved = freeze_request(
+        &d.path().join("request.json"),
+        q,
+        now_ms().unwrap() + 60_000,
+    )
+    .unwrap();
+    for path in [
+        "proposal/run.json",
+        "champions.json",
+        "corpus/labels.jsonl",
+        "corpus/provenance.json",
+    ] {
+        assert!(saved["input_artifacts"].get(path).is_some());
+    }
+    let mut changed = spec.clone();
+    changed["proposal_seed"] = json!(18);
+    write_json(&d.path().join("proposal/run.json"), &changed).unwrap();
+    assert!(verify_request_inputs(&saved).is_err());
+    write_json(&d.path().join("proposal/run.json"), &spec).unwrap();
+    write_json(
+        &d.path().join("champions.json"),
+        &json!({"metadata":"same","genome":"second"}),
+    )
+    .unwrap();
+    assert!(verify_request_inputs(&saved).is_err());
+}
+
+#[test]
+fn train_refuses_excluded_contexts_before_touching_them_while_proposal_is_unaffected() {
+    let d = tempfile::tempdir().unwrap();
+    let mut q = manifest_request(d.path());
+    let index_path = d.path().join("corpus/index.json");
+    let mut index: Value = read_json(&index_path).unwrap();
+    index["contexts"] = json!([{"partition":"meta_test","path":"excluded/context.json",
+        "sha256":"0".repeat(64),"prepared":"excluded","prepared_sha256":"0".repeat(64)}]);
+    write_json(&index_path, &index).unwrap();
+    let frozen = d.path().join("request.json");
+    let deadline = now_ms().unwrap() + 60_000;
+    std::os::unix::fs::symlink("missing-target", d.path().join("excluded")).unwrap();
+    let error = freeze_request(&frozen, q.clone(), deadline).unwrap_err();
+    assert!(error.to_string().contains("non-admitted context"));
+    assert!(error.to_string().ends_with("0: \"meta_test\""));
+    assert!(!frozen.exists());
+    fs::remove_file(d.path().join("excluded")).unwrap();
+    fs::create_dir_all(d.path().join("excluded")).unwrap();
+    fs::write(d.path().join("excluded/context.json"), b"context").unwrap();
+    fs::write(d.path().join("excluded/prepared.json"), b"prepared").unwrap();
+    let context = manifest::file_hash(&d.path().join("excluded/context.json")).unwrap();
+    let prepared = manifest::file_hash(&d.path().join("excluded/prepared.json")).unwrap();
+    index["contexts"][0]["sha256"] = json!(context);
+    index["contexts"][0]["prepared_sha256"] = json!(prepared);
+    write_json(&index_path, &index).unwrap();
+    assert!(freeze_request(&frozen, q.clone(), deadline)
+        .unwrap_err()
+        .to_string()
+        .contains("non-admitted context"));
+    checkpoint_fixture(d.path(), "checkpoint");
+    fs::write(d.path().join("corpus/labels.jsonl"), b"teacher labels").unwrap();
+    write_json(
+        &d.path().join("corpus/provenance.json"),
+        &json!({
+        "labels_sha256":manifest::file_hash(&d.path().join("corpus/labels.jsonl")).unwrap()}),
+    )
+    .unwrap();
+    fs::create_dir_all(d.path().join("proposal")).unwrap();
+    write_json(
+        &d.path().join("champions.json"),
+        &json!({"metadata":"same","genome":"first"}),
+    )
+    .unwrap();
+    let spec = json!({"proposal_seed":17,
+        "champion_snapshot_sha256":manifest::file_hash(&d.path().join("champions.json")).unwrap()});
+    write_json(&d.path().join("proposal/run.json"), &spec).unwrap();
+    q["task"] = json!({"kind":"Proposal","corpus":d.path().join("corpus"),
+        "checkpoint":"checkpoint","output":"proposal"});
+    q["env"] = json!({"JOPE_CHAMPION_SNAPSHOT":"champions.json"});
+    let saved = freeze_request(&frozen, q, deadline).unwrap();
+    for path in ["excluded/context.json", "excluded/prepared.json"] {
+        assert!(saved["input_artifacts"].get(path).is_some());
+    }
+    verify_request_inputs(&saved).unwrap();
+}
+
+#[test]
+fn frozen_request_deadline_cannot_be_renewed_or_torn_request_replaced() {
+    let d = tempfile::tempdir().unwrap();
+    let q = manifest_request(d.path());
+    let path = d.path().join("request.json");
+    let deadline = now_ms().unwrap() + 60_000;
+    let mut saved = freeze_request(&path, q.clone(), deadline).unwrap();
+    saved["deadline_unix_ms"] = json!(1);
+    write_json(&path, &saved).unwrap();
+    assert!(freeze_request(&path, q.clone(), deadline).is_err());
+    fs::write(&path, b"{").unwrap();
+    assert!(freeze_request(&path, q, deadline).is_err());
+    assert_eq!(fs::read(path).unwrap(), b"{");
+}
+
+#[test]
+fn expired_deadline_rejects_before_request_publication() {
+    let d = tempfile::tempdir().unwrap();
+    let q = manifest_request(d.path());
+    let path = d.path().join("request.json");
+    assert!(freeze_request(&path, q, 1).is_err());
+    assert!(!path.exists());
+}
+
+#[test]
+fn partial_ipc_message_does_not_renew_absolute_deadline() {
+    use std::io::Write;
+    let (mut client, mut server) = UnixStream::pair().unwrap();
+    let producer = std::thread::spawn(move || {
+        for _ in 0..10 {
+            if server.write_all(b"x").is_err() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    });
+    let started = Instant::now();
+    assert!(read_line_until(&mut client, 1024, now_ms().unwrap() + 35).is_err());
+    assert!(started.elapsed() < Duration::from_secs(1));
+    drop(client);
+    producer.join().unwrap();
+}
+
+#[test]
+fn interrupted_dispatch_is_permanent_even_before_descriptor_transfer() {
+    let d = tempfile::tempdir().unwrap();
+    let q = request();
+    ensure_undispatched(d.path(), &q).unwrap();
+    authorize_dispatch(d.path(), &q).unwrap();
+    verify_dispatch(d.path(), &q, std::process::id()).unwrap();
+    assert!(ensure_undispatched(d.path(), &q).is_err());
+    assert!(authorize_dispatch(d.path(), &q).is_err());
+    assert!(verify_dispatch(d.path(), &q, 1).is_err());
+}
+
+#[test]
+fn torn_dispatch_does_not_become_unseen() {
+    let d = tempfile::tempdir().unwrap();
+    let q = request();
+    fs::create_dir(d.path().join("dispatches")).unwrap();
+    fs::write(
+        d.path().join("dispatches").join(request_id(&q).unwrap()),
+        b"{",
+    )
+    .unwrap();
+    assert!(ensure_undispatched(d.path(), &q).is_err());
+    assert!(verify_dispatch(d.path(), &q, std::process::id()).is_err());
+}
+
+#[test]
+fn only_one_concurrent_acceptance_can_start() {
+    let d = tempfile::tempdir().unwrap();
+    let barrier = Arc::new(Barrier::new(32));
+    let jobs = (0..32)
+        .map(|_| {
+            let barrier = barrier.clone();
+            let pool = d.path().to_owned();
+            std::thread::spawn(move || {
+                barrier.wait();
+                AcceptedTask::begin(&pool, &request(), &worker()).is_ok()
+            })
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(
+        jobs.into_iter()
+            .map(|job| job.join().unwrap())
+            .filter(|started| *started)
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn accepted_without_result_never_runs_again() {
+    let d = tempfile::tempdir().unwrap();
+    let q = request();
+    drop(AcceptedTask::begin(d.path(), &q, &worker()).unwrap());
+    assert!(committed(d.path(), &q, &d.path().join("output")).is_err());
+    assert!(AcceptedTask::begin(d.path(), &q, &worker()).is_err());
+}
+
+#[test]
+fn interrupted_acceptance_directory_is_also_a_tombstone() {
+    let d = tempfile::tempdir().unwrap();
+    let q = request();
+    fs::create_dir_all(d.path().join("tasks").join(request_id(&q).unwrap())).unwrap();
+    assert!(committed(d.path(), &q, &d.path().join("output")).is_err());
+    assert!(AcceptedTask::begin(d.path(), &q, &worker()).is_err());
+}
+
+#[test]
+fn failure_cannot_be_laundered_by_a_valid_looking_output() {
+    let d = tempfile::tempdir().unwrap();
+    let q = request();
+    let output = d.path().join("output");
+    fs::write(&output, b"stale success").unwrap();
+    let receipt = AcceptedTask::begin(d.path(), &q, &worker())
+        .unwrap()
+        .finish(&output, Some("injected failure".into()))
+        .unwrap();
+    assert_eq!(receipt["success"], false);
+    assert!(receipt["receipt_sha256"].is_null());
+    assert!(committed(d.path(), &q, &output).is_err());
+    assert!(AcceptedTask::begin(d.path(), &q, &worker()).is_err());
+}
+
+#[test]
+fn original_completion_is_adoptable_after_lost_response() {
+    let d = tempfile::tempdir().unwrap();
+    let q = request();
+    let output = d.path().join("output");
+    fs::write(&output, b"original output").unwrap();
+    let task = AcceptedTask::begin(d.path(), &q, &worker()).unwrap();
+    let result = task.finish(&output, None).unwrap();
+    assert_eq!(committed(d.path(), &q, &output).unwrap(), Some(result));
+    assert!(AcceptedTask::begin(d.path(), &q, &worker()).is_err());
+    fs::write(&output, b"changed output").unwrap();
+    assert!(committed(d.path(), &q, &output).is_err());
+}
+
+#[test]
+fn completion_requires_its_original_acceptance_digest() {
+    let d = tempfile::tempdir().unwrap();
+    let q = request();
+    let output = d.path().join("output");
+    fs::write(&output, b"original output").unwrap();
+    AcceptedTask::begin(d.path(), &q, &worker())
+        .unwrap()
+        .finish(&output, None)
+        .unwrap();
+    let accepted = d
+        .path()
+        .join("tasks")
+        .join(request_id(&q).unwrap())
+        .join("accepted.json");
+    let mut value: Value = read_json(&accepted).unwrap();
+    value["worker"]["process"]["start_ticks"] = json!(0);
+    write_json(&accepted, &value).unwrap();
+    assert!(committed(d.path(), &q, &output).is_err());
+}
+
+#[test]
+fn socket_and_peer_birth_are_both_verified() {
+    let d = tempfile::tempdir().unwrap();
+    let socket = d.path().join("worker.sock");
+    let listener = UnixListener::bind(&socket).unwrap();
+    let identity = WorkerIdentity::capture(
+        &socket,
+        manifest::file_hash(std::path::Path::new("/proc/self/exe")).unwrap(),
+    )
+    .unwrap();
+    let stream = UnixStream::connect(&socket).unwrap();
+    let _server = listener.accept().unwrap();
+    identity.verify_connection(&socket, &stream).unwrap();
+    let mut stale = identity.clone();
+    stale.process.start_ticks += 1;
+    assert!(stale.verify_connection(&socket, &stream).is_err());
+    stale = identity.clone();
+    stale.process.boot_id = "other boot".into();
+    assert!(stale.verify_connection(&socket, &stream).is_err());
+    stale = identity.clone();
+    stale.process.pid += 1;
+    assert!(stale.verify_connection(&socket, &stream).is_err());
+    fs::remove_file(&socket).unwrap();
+    let _replacement = UnixListener::bind(&socket).unwrap();
+    assert!(identity.verify_connection(&socket, &stream).is_err());
+}
