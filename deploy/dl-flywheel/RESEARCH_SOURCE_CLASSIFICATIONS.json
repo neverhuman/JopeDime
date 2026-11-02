@@ -5585,12 +5585,12 @@
       "sha256": "4c2369bc1e0022bbff758bf724ae0d07c759be9525b74c77e82a05e9fab165a2"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/analysis.py": {
-      "bytes": 15714,
+      "bytes": 15688,
       "classification": {
         "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
         "role": "research"
       },
-      "sha256": "e9837e4c435bd99b1b832109abc6101e24034e575fc5e93d6c9e9a31b16520e3"
+      "sha256": "1f7df1064955de15ac2a8e2367fb7a66b58bf6d3c4be59a94cb535a9710fca46"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/monitor.py": {
       "bytes": 13713,
