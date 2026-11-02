@@ -743,3 +743,83 @@ def test_ns19_dope_freeze_storage_aliases_normalizers_and_anchor_guards(monkeypa
         assert_research_optimizer_policy(opt_anchor_alias, model, research_run_id="H206-ns19")
     with pytest.raises(DopeFreezeViolationError, match="normalizer buffer"):
         assert_research_optimizer_policy(opt_buf_alias, model, research_run_id="H206-ns19")
+
+
+def _ns20_gate():
+    """Exercise the exact scalar gate AST without importing models or research runtimes."""
+    import ast
+    from pathlib import Path
+    from typing import Mapping, Sequence
+
+    source = Path(__file__).parents[1] / "src/jope/north_star/elo_tracker.py"
+    nodes = [
+        node
+        for node in ast.parse(source.read_text()).body
+        if isinstance(node, ast.FunctionDef)
+        and node.name in {"require_finite_score", "check_phase_d_elo_gate"}
+    ]
+    scope = {"math": math, "Mapping": Mapping, "Sequence": Sequence}
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), "exec"), scope)
+    return scope["check_phase_d_elo_gate"]
+
+
+@pytest.mark.parametrize("round_count", [0, 1, 2, 3, 4])
+def test_ns20_empty_and_short_histories_preserve_gate_schema(round_count):
+    gate = _ns20_gate()
+    rounds = [f"ROUND_{i}" for i in range(round_count)]
+    ratings = {
+        "H": 1500.0,
+        **{name: 1490.0 + 10.0 * i for i, name in enumerate(rounds)},
+    }
+    result = gate(rounds, ratings, ratings, ratings, "H")
+    assert result["num_rounds"] == round_count
+    assert result["gate_pass"] is (round_count >= 3)
+    assert result["regression_trending_up"] is (round_count >= 3)
+    assert result["binary_clf_trending_up"] is (round_count >= 3)
+    expected = {name: ratings[name] for name in rounds}
+    for key in [
+        "regression_elo_trajectory",
+        "binary_clf_elo_trajectory",
+        "overall_elo_trajectory",
+    ]:
+        assert result[key] == expected
+    for key in [
+        "beats_h_baseline_regression",
+        "beats_h_baseline_binary_clf",
+        "beats_h_baseline_overall",
+    ]:
+        assert result[key] is (round_count >= 2)
+
+
+@pytest.mark.parametrize("axis", ["overall", "regression", "binary"])
+@pytest.mark.parametrize("invalid", [math.nan, math.inf, -math.inf, True, None])
+def test_ns20_empty_history_still_rejects_invalid_baseline(axis, invalid):
+    gate = _ns20_gate()
+    ratings = {name: {"H": 1500.0} for name in ["overall", "regression", "binary"]}
+    ratings[axis]["H"] = invalid
+    with pytest.raises(ValueError):
+        gate([], ratings["overall"], ratings["regression"], ratings["binary"], "H")
+
+
+@pytest.mark.parametrize("axis", ["overall", "regression", "binary"])
+def test_ns20_empty_history_preserves_missing_baseline_error(axis):
+    ratings = {name: {"H": 1500.0} for name in ["overall", "regression", "binary"]}
+    ratings[axis].clear()
+    with pytest.raises(KeyError):
+        _ns20_gate()(
+            [], ratings["overall"], ratings["regression"], ratings["binary"], "H"
+        )
+
+
+def test_ns20_empty_history_accepts_present_zero_baselines():
+    result = _ns20_gate()([], {"H": 0.0}, {"H": 0.0}, {"H": 0.0}, "H")
+    assert result["gate_pass"] is False
+    assert result["num_rounds"] == 0
+    assert all(
+        result[key] == {}
+        for key in [
+            "regression_elo_trajectory",
+            "binary_clf_elo_trajectory",
+            "overall_elo_trajectory",
+        ]
+    )
