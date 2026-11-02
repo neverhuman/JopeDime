@@ -376,7 +376,7 @@ impl InstallationPins {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Origin {
+pub enum CandidateOrigin {
     NeuralPolicy,
     NeuralRejectionFallback,
     RandomExploration,
@@ -386,6 +386,9 @@ pub enum Origin {
     /// A prior round's arm winner, measured again in this arm. Never a new proposal.
     Incumbent,
 }
+
+/// Compatibility name for a candidate's search provenance.
+pub type Origin = CandidateOrigin;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]

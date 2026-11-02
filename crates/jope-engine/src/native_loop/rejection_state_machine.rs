@@ -115,12 +115,15 @@ pub struct Campaign {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Error {
+pub enum CampaignTransitionError {
     Invalid(&'static str),
     Conflict(&'static str),
     Exhausted(&'static str),
     Terminal,
 }
+
+/// Compatibility name for errors returned by the campaign transition state machine.
+pub type Error = CampaignTransitionError;
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

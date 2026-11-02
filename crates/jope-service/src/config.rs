@@ -32,12 +32,15 @@ const KEYS: [&str; 13] = [
 
 /// Where an effective setting was obtained.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Origin {
+pub enum ConfigOrigin {
     Flag,
     Environment,
     File,
     BuiltInDefault,
 }
+
+/// Compatibility name for a configuration value's source.
+pub type Origin = ConfigOrigin;
 
 impl fmt::Display for Origin {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
