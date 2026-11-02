@@ -670,6 +670,11 @@
       "command": "python3 deploy/ci/test-runner.py && python3 deploy/ci/test-security-lane.py",
       "lane": "ops",
       "purpose": "verify receipt-backed hygiene wiring and security-lane failure propagation"
+    },
+    ".jankurai/repo-score.md": {
+      "command": "python3 deploy/ci/test-runner.py && bash deploy/ci/install-jankurai.sh && report_dir=\"target/full-audit/local-$(date +%s)-$$\" && JANKURAI_BIN=\"$PWD/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai\" JOPE_AUDIT_REPORT_ONLY=1 bash ops/ci/jankurai.sh \"$report_dir\" && mkdir -p .jankurai && cp \"$report_dir/repo-score.md\" .jankurai/repo-score.md",
+      "lane": "audit",
+      "purpose": "generate the verified full-audit report and publish the canonical repair-routing summary"
     }
   }
 }

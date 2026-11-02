@@ -1250,6 +1250,9 @@ class WorkflowAdmissionTests(unittest.TestCase):
 
 
 class AgentMapTests(unittest.TestCase):
+    # This report is emitted by the full-main Jankurai publisher and is excluded from
+    # git status as generated evidence, so it has no tracked file to match in the maps.
+    GENERATED_OUTPUTS = {'.jankurai/repo-score.md'}
     ALIASES = {
         'apps/web/': 'web/training-dashboard/',
         'apps/web/**': 'web/training-dashboard/**',
@@ -1280,6 +1283,8 @@ class AgentMapTests(unittest.TestCase):
         cls.tracked = set(result.stdout.splitlines())
 
     def key_matches_tree(self, key):
+        if key in self.GENERATED_OUTPUTS:
+            return True
         pattern = self.ALIASES.get(key, key)
         if any(char in pattern for char in '*?['):
             return any(fnmatch.fnmatchcase(path, pattern) for path in self.tracked)

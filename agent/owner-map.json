@@ -111,6 +111,7 @@
     "deploy/ci/cuda/evidence.py": "ops",
     "deploy/ci/emitters.sh": "ops",
     "test-support/": "data",
-    "test-support/**": "data"
+    "test-support/**": "data",
+    ".jankurai/repo-score.md": "agent"
   }
 }
