@@ -1,0 +1,97 @@
+{
+  "wave": "H233",
+  "status": "PREREGISTERED",
+  "owner": "rd_argon",
+  "authority": "/home/ubuntu/nudges/hw_t2205_argon_h233.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H233_claim.txt",
+  "prereg_sha256": "6f2bec113c1fc3161db0ff822c8472881ffbd83262772eb597f0d4e9114fddad",
+  "parent_waves": {
+    "H217": "CONFIRMED: GATED_025 + NO_PLATEAU_WIN (native +0.0216 [+0.0038,+0.0418], harm 4.4%, Elo 1504.8; DL-Val +0.00145 < +0.002)",
+    "H223": "NO_ADVANCE (mean-of-3 bagged blend cost averaging inside GATED_025)",
+    "H215": "NO_ADVANCE (disagreement cost penalty)",
+    "H228": "INCOMPLETE 58/60 (LOCK_UNAVAILABLE_QLT04; gradient continuation on static 1,219-context pool closed)"
+  },
+  "hypothesis": "Apply the frozen H217 GATED_025 blend to a context ONLY when (a) the H217 zgap gate passes AND (b) the blended first-argmin pick is unanimous across 3 outer HistGBM members (member 0 = H217 unweighted fit, members 1-2 = FIT-family bootstrap refits with the same recipe); else use the r882 pick.",
+  "arms": [
+    "R882",
+    "G025",
+    "STABLE_G025",
+    "STABLE_SHUF",
+    "BAG_VOTE_UNGATED"
+  ],
+  "arm_roles": {
+    "R882": "reference (1.1377942, native91 bit-exact first, Elo 1500)",
+    "G025": "frozen H217 GATED_025 recipe, replication anchor",
+    "STABLE_G025": "sole primary (Holm m=1): zgap <= tau_cell AND unanimous 3-member blended argmin pick",
+    "STABLE_SHUF": "placebo: same vote rate, 3-member agreement mask permuted across contexts within each FIT-calibrated cell",
+    "BAG_VOTE_UNGATED": "unanimity vote without zgap, report-only"
+  },
+  "primary": "STABLE_G025",
+  "reference": "G025",
+  "placebo": "STABLE_SHUF",
+  "lambda": 0.25,
+  "seeds": [
+    233101,
+    233102,
+    233103
+  ],
+  "fold_seeds": {
+    "233101": 233141,
+    "233102": 233142,
+    "233103": 233143
+  },
+  "sample_seed": 233140,
+  "boot_seed": 233150,
+  "elo_boot_seed": 233151,
+  "plateau_boot_seed": 233152,
+  "shuf_seed": 233160,
+  "bag_seed": 233170,
+  "bootstrap_draws": 10000,
+  "elo_draws": 1000,
+  "fits": {
+    "outer_units_per_seed": 5,
+    "outer_members_per_unit": 3,
+    "inner_units_per_seed": 10,
+    "inner_members_per_unit": 1,
+    "fits_per_seed": 25,
+    "total_fits": 75
+  },
+  "admission_criteria": {
+    "median_equal_family_gain_vs_r882_gt": 0.002,
+    "family_bootstrap_10k_ci95_lower_gt": 0.0,
+    "positive_seeds_required": "3/3",
+    "harm_fraction_lt_minus_001_le": 0.10,
+    "must_beat": [
+      "STABLE_SHUF",
+      "G025"
+    ],
+    "ties": "NO_ADVANCE",
+    "holm_m": 1
+  },
+  "inputs": {
+    "staging": "xbabe2 ~/jope-data/h233/inputs -> ~/jope-data/h195/inputs",
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686",
+    "dope_freeze_guard": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2"
+  },
+  "host": "xbabe2 CPU only at nice 19; no GPU, no qualification.lock",
+  "guards": {
+    "taskset_cores": "<= 4 cores when load5 >= 50, up to 8 cores when load5 < 50 (30 s window hard cap 8.0 cores)",
+    "rss_max_bytes": 4294967296,
+    "mem_available_min_bytes": 21474836480,
+    "disk_free_min_bytes": 300000000000,
+    "load_pause": "pause own worker group when load5 > 60, resume when load5 <= 55",
+    "compute_stop_utc": "2026-11-03T05:00:00Z",
+    "closeout_deadline_utc": "2026-11-03T05:30:00Z"
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H233/",
+  "fold_overlap": {
+    "max_best_match_jaccard_vs_H203_H231": 0.199300137965634,
+    "bound": 0.20
+  }
+}
