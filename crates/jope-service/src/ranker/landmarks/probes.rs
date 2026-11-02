@@ -1,6 +1,11 @@
 use super::*;
 
-pub(crate) fn extract_probes(x: &[f64], y: &[f64], n: usize, p: usize) -> ProbeStage {
+pub(crate) fn extract_probes(
+    x: &[f64],
+    y: &[f64],
+    n: usize,
+    p: usize,
+) -> Result<ProbeStage, RecipeError> {
     let ym = mean(y);
     let ys = stddev(y);
     let yz: Vec<f64> = y
@@ -31,8 +36,7 @@ pub(crate) fn extract_probes(x: &[f64], y: &[f64], n: usize, p: usize) -> ProbeS
         let q50 = quantile(&sorted, 0.5);
         let q75 = quantile(&sorted, 0.75);
         let q95 = quantile(&sorted, 0.95);
-        let q10 = quantile(&sorted, 0.10).clamp(-8.0, 8.0);
-        let q90 = quantile(&sorted, 0.90).clamp(-8.0, 8.0);
+        let (q10, q90) = probe_bounds(quantile(&sorted, 0.10), quantile(&sorted, 0.90))?;
         let tail = ((q95 - q05) / (q75 - q25).max(1e-6)).clamp(0.0, 20.0) / 10.0;
         let skew = mean(&unc.iter().map(|v| v.powi(3)).collect::<Vec<_>>());
         let kurt =
@@ -112,7 +116,7 @@ pub(crate) fn extract_probes(x: &[f64], y: &[f64], n: usize, p: usize) -> ProbeS
         let _ = q10;
     }
     let row_corr = row_summary_corr(&z, n, p, &yz);
-    ProbeStage {
+    Ok(ProbeStage {
         y_scaled: y.to_vec(),
         z,
         z_unc,
@@ -120,7 +124,7 @@ pub(crate) fn extract_probes(x: &[f64], y: &[f64], n: usize, p: usize) -> ProbeS
         probes,
         table_cols,
         row_corr,
-    }
+    })
 }
 
 fn erf_approx(x: f64) -> f64 {

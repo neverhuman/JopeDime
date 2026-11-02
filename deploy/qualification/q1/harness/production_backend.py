@@ -8,7 +8,7 @@ import os
 import stat
 import sys
 from pathlib import Path
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
@@ -344,6 +344,17 @@ def validate_receipt(receipt, request):
     }
 
 
+class EngineRequestError(ValueError):
+    def __init__(self, phase, http_status=None, engine_code=None):
+        super().__init__("production engine request failed")
+        self.diagnostic = {
+            "schema": "jope.q1-backend-error/v1",
+            "phase": phase,
+            "http_status": http_status,
+            "engine_code": engine_code,
+        }
+
+
 def call_engine(request, endpoint, timeout=600):
     endpoint = loopback_endpoint(endpoint)
     token = read_daemon_token(endpoint)
@@ -363,8 +374,29 @@ def call_engine(request, endpoint, timeout=600):
             require(response.geturl() == url, "engine response URL changed")
             require(response.status == 200, "engine returned non-success status")
             raw = response.read(8 * 1024 * 1024 + 1)
+    except HTTPError as error:
+        code = None
+        try:
+            problem = decode(error.read(4097))
+            candidate = problem.get("code") if isinstance(problem, dict) else None
+            # Retain only catalog-shaped codes, never problem detail, URLs,
+            # headers, credentials or a returned data/score payload.
+            if isinstance(candidate, str) and candidate in {
+                "IO_FAILURE",
+                "NUMERICAL_FAILURE",
+                "INVALID_INPUT",
+                "CAPABILITY_UNAVAILABLE",
+                "BACKEND_UNAVAILABLE",
+                "MODEL_INTEGRITY_FAILED",
+                "ENGINE_BUSY",
+                "UNAUTHORIZED",
+            }:
+                code = candidate
+        except (OSError, ValueError, TypeError):
+            pass  # The HTTP status remains evidence if its body is unreadable.
+        raise EngineRequestError("engine_http", error.code, code) from error
     except (OSError, URLError) as error:
-        raise ValueError("production engine request failed") from error
+        raise EngineRequestError("engine_transport") from error
     require(len(raw) <= 8 * 1024 * 1024, "engine receipt exceeds size limit")
     return decode(raw)
 
@@ -381,8 +413,20 @@ def main():
         receipt = call_engine(request, os.environ.get("JOPE_Q1_ENGINE_URL", ""))
         response = validate_receipt(receipt, request)
         sys.stdout.buffer.write(canonical(response) + b"\n")
+    except EngineRequestError as error:
+        print(json.dumps(error.diagnostic, sort_keys=True), file=sys.stderr)
+        return 2
     except (ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
-        print("production backend refused: " + str(error), file=sys.stderr)
+        print(
+            json.dumps(
+                {
+                    "schema": "jope.q1-backend-error/v1",
+                    "phase": "request_or_receipt_validation",
+                    "error_class": type(error).__name__,
+                }
+            ),
+            file=sys.stderr,
+        )
         return 2
     return 0
 

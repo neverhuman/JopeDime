@@ -61,10 +61,47 @@ pub fn serve_q1_qualification(release: &Path) -> Result<usize, EngineError> {
     Ok(forwards.load(std::sync::atomic::Ordering::Relaxed))
 }
 
+/// Research-only infrastructure retry: the repaired host retains the original
+/// Q1 numerical worker bytes. This does not grant a study admission.
+#[cfg(feature = "research")]
+pub fn serve_q1_infra_retry(release: &Path, worker: &Path) -> Result<usize, EngineError> {
+    let worker = q1_retry_worker(worker)?;
+    let home = jope_paths::jopedime_home();
+    let (engine, forwards) = open_q1_engine_with_worker(&home, release, &worker)?;
+    serve_engine(home, engine, None)?;
+    Ok(forwards.load(std::sync::atomic::Ordering::Relaxed))
+}
+
+#[cfg(feature = "research")]
+fn q1_retry_worker(worker: &Path) -> Result<PathBuf, EngineError> {
+    const EXPECTED: &str = "4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177";
+    if !worker.is_absolute() || !std::fs::symlink_metadata(worker)?.file_type().is_file() {
+        return Err(EngineError::Runtime(
+            "Q1 retry worker must be an absolute regular file".into(),
+        ));
+    }
+    let bytes = std::fs::read(worker)?;
+    if jope_runtime::sha256_hex(&bytes) != EXPECTED {
+        return Err(EngineError::Runtime(
+            "Q1 retry numerical evaluator pin mismatch".into(),
+        ));
+    }
+    Ok(worker.to_path_buf())
+}
+
 #[cfg(feature = "research")]
 pub(crate) fn open_q1_engine(
     home: &Path,
     release: &Path,
+) -> Result<(InProcessEngine, Arc<std::sync::atomic::AtomicUsize>), EngineError> {
+    open_q1_engine_with_worker(home, release, &std::env::current_exe()?)
+}
+
+#[cfg(feature = "research")]
+fn open_q1_engine_with_worker(
+    home: &Path,
+    release: &Path,
+    worker: &Path,
 ) -> Result<(InProcessEngine, Arc<std::sync::atomic::AtomicUsize>), EngineError> {
     // Authenticate before lock acquisition, store creation or daemon publication.
     let bundle = crate::ranker::cuda::release::load_r782_release(release)
@@ -72,8 +109,25 @@ pub(crate) fn open_q1_engine(
     let ranker = crate::run::learned::AdmittedRanker::r782(bundle)
         .map_err(|error| EngineError::Runtime(format!("frozen r782 admission: {error:#}")))?;
     let forwards = ranker.execution_counter();
-    let engine = InProcessEngine::open_with_ranker(home, std::env::current_exe()?, ranker)?;
+    let engine = InProcessEngine::open_with_ranker(home, worker, ranker)?;
     Ok((engine, forwards))
+}
+
+#[cfg(all(test, feature = "research"))]
+#[test]
+fn q1_retry_worker_refuses_changed_bytes_and_symlinks() {
+    let directory = tempfile::tempdir().unwrap();
+    let worker = directory.path().join("worker");
+    std::fs::write(&worker, b"synthetic unpinned executable").unwrap();
+    assert!(q1_retry_worker(&worker).is_err());
+    assert!(q1_retry_worker(Path::new("worker")).is_err());
+    #[cfg(unix)]
+    {
+        let link = directory.path().join("worker-link");
+        std::os::unix::fs::symlink(&worker, &link).unwrap();
+        assert!(q1_retry_worker(&link).is_err());
+    }
+    assert!(!directory.path().join("daemon.json").exists());
 }
 
 fn serve_engine(

@@ -212,6 +212,80 @@ async fn q1_receipt_uses_real_fold_values_and_replays_identical_durable_bytes() 
     }
 }
 #[test]
+fn q1_preparation_failure_does_not_poison_admission_or_reserve() {
+    let (directory, service) = q1_service_fixture();
+    let request = q1_request(directory.path(), &service.store);
+    let request_sha = request["request_sha256"].as_str().unwrap();
+    let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        service.q1_evaluate_using(request.clone(), || -> anyhow::Result<InlineQ1Native> {
+            panic!("synthetic preparation panic")
+        })
+    }));
+    assert!(panic.is_err());
+    assert!(!service.admission.is_poisoned());
+    assert!(service
+        .store
+        .get(&q1_command_key(request_sha))
+        .unwrap()
+        .is_none());
+
+    let error = service.q1_evaluate_using(request.clone(), || -> anyhow::Result<InlineQ1Native> {
+        assert!(
+            service.admission.try_lock().is_ok(),
+            "preparation held admission"
+        );
+        anyhow::bail!("synthetic preparation error")
+    });
+    assert!(error.is_err());
+    assert!(!service.admission.is_poisoned());
+    assert!(service
+        .store
+        .get(&q1_command_key(request_sha))
+        .unwrap()
+        .is_none());
+
+    let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let bytes = service
+        .q1_evaluate_using(request, || {
+            Ok(InlineQ1Native {
+                calls: Arc::clone(&calls),
+            })
+        })
+        .unwrap();
+    let receipt: EvaluationReceipt = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(receipt.charged, 24);
+    assert!(!service.admission.is_poisoned());
+}
+
+#[test]
+fn q1_admission_rechecks_busy_state_after_unlocked_preparation() {
+    let (directory, service) = q1_service_fixture();
+    let request = q1_request(directory.path(), &service.store);
+    let request_sha = request["request_sha256"].as_str().unwrap();
+    let busy = std::cell::RefCell::new(None);
+    let error = service
+        .q1_evaluate_using(request.clone(), || {
+            assert!(service.admission.try_lock().is_ok());
+            busy.replace(Some(service.activity.begin_run()));
+            Ok(Q1AllFailed)
+        })
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::CapabilityUnavailable);
+    assert!(service
+        .store
+        .get(&q1_command_key(request_sha))
+        .unwrap()
+        .is_none());
+    busy.replace(None);
+    assert_eq!(service.activity.active_runs(), 0);
+    let bytes = service
+        .q1_evaluate_using(request, || Ok(Q1AllFailed))
+        .unwrap();
+    let receipt: EvaluationReceipt = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(receipt.charged, 24);
+}
+
+#[test]
 fn q1_threefold_binding_is_refused_before_executor_or_reservation() {
     for case in 0..9 {
         let (directory, service) = q1_service_fixture();

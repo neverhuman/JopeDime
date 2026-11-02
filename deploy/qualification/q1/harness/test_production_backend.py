@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).parent))
 import production_backend as backend
@@ -14,6 +15,57 @@ import q1 as q1_harness
 
 
 class ProductionBackendTests(unittest.TestCase):
+    def test_http_problem_preserves_status_code_without_secret_details(self):
+        problem = io.BytesIO(
+            json.dumps(
+                {
+                    "code": "IO_FAILURE",
+                    "detail": "Bearer PRIVATE_SENTINEL",
+                }
+            ).encode()
+        )
+        error = HTTPError(
+            "http://127.0.0.1:8765/v1/q1/evaluations",
+            500,
+            "Internal error",
+            {},
+            problem,
+        )
+        with patch.object(
+            backend, "read_daemon_token", return_value="PRIVATE_SENTINEL"
+        ):
+            with patch.object(backend, "build_opener") as opener:
+                opener.return_value.open.side_effect = error
+                with self.assertRaises(backend.EngineRequestError) as caught:
+                    backend.call_engine(self.request, "http://127.0.0.1:8765")
+        diagnostic = caught.exception.diagnostic
+        self.assertEqual(diagnostic["http_status"], 500)
+        self.assertEqual(diagnostic["engine_code"], "IO_FAILURE")
+        self.assertNotIn("PRIVATE_SENTINEL", json.dumps(diagnostic))
+
+    def test_http_error_entrypoint_emits_bounded_diagnostic_and_no_response(self):
+        errors = io.StringIO()
+        output = io.BytesIO()
+        with (
+            patch.object(
+                backend.sys,
+                "stdin",
+                SimpleNamespace(buffer=io.BytesIO(backend.canonical(self.request))),
+            ),
+            patch.object(backend.sys, "stdout", SimpleNamespace(buffer=output)),
+            patch.object(backend.sys, "stderr", errors),
+            patch.object(
+                backend,
+                "call_engine",
+                side_effect=backend.EngineRequestError(
+                    "engine_http", 500, "IO_FAILURE"
+                ),
+            ),
+        ):
+            self.assertEqual(backend.main(), 2)
+        self.assertEqual(output.getvalue(), b"")
+        self.assertEqual(json.loads(errors.getvalue())["engine_code"], "IO_FAILURE")
+
     def setUp(self):
         self.request = {
             "schema": "jope.q1-request/v1",

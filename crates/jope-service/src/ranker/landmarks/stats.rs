@@ -1,5 +1,55 @@
 use super::*;
 
+#[cfg(test)]
+mod q1_regression_tests {
+    use super::*;
+
+    #[test]
+    fn q1_plateau_quantiles_do_not_reverse_adjacent_bounds() {
+        let value = 0.22722722974481582_f64;
+        for rows in 2..=1_024 {
+            let values = vec![value; rows];
+            assert_eq!(quantile(&values, 0.10), value, "rows={rows}");
+            assert_eq!(quantile(&values, 0.90), value, "rows={rows}");
+        }
+    }
+
+    #[test]
+    fn q1_near_endpoint_quantiles_stay_ordered_and_in_range() {
+        let lower = 0.22722722974481582_f64;
+        let upper = f64::from_bits(lower.to_bits() + 1);
+        for values in [vec![lower, upper], vec![lower, lower, upper, upper]] {
+            let mut previous = lower;
+            for percentile in 0..=100 {
+                let value = quantile(&values, f64::from(percentile) / 100.0);
+                assert!((lower..=upper).contains(&value));
+                assert!(previous <= value);
+                previous = value;
+            }
+        }
+    }
+
+    #[test]
+    fn q1_invalid_probe_bounds_return_typed_failure() {
+        let upper = 0.22722722974481582_f64;
+        let lower = f64::from_bits(upper.to_bits() + 1);
+        for (lower, upper) in [
+            (lower, upper),
+            (f64::NAN, 1.0),
+            (0.0, f64::NAN),
+            (f64::NEG_INFINITY, 1.0),
+            (0.0, f64::INFINITY),
+        ] {
+            assert_eq!(
+                probe_bounds(lower, upper),
+                Err(RecipeError::InvalidProbeBounds)
+            );
+        }
+        assert_eq!(probe_bounds(0.25, 0.25), Ok((0.25, 0.25)));
+        assert_eq!(probe_bounds(-10.0, 10.0), Ok((-8.0, 8.0)));
+    }
+}
+
 pub(crate) fn quantile(sorted: &[f64], q: f64) -> f64 {
     if sorted.len() <= 1 {
         return sorted.first().copied().unwrap_or(0.0);
@@ -7,7 +57,27 @@ pub(crate) fn quantile(sorted: &[f64], q: f64) -> f64 {
     let at = q * (sorted.len() - 1) as f64;
     let lo = at.floor() as usize;
     let hi = (lo + 1).min(sorted.len() - 1);
-    sorted[lo] * (1.0 - (at - lo as f64)) + sorted[hi] * (at - lo as f64)
+    let (lower, upper) = (sorted[lo], sorted[hi]);
+    if lower == upper {
+        return lower;
+    }
+    let fraction = at - lo as f64;
+    // Weighted sums can round a tied/adjacent plateau out of order. Keep
+    // the pinned arithmetic elsewhere, and interpolate close endpoints once.
+    if lower.is_finite()
+        && upper.is_finite()
+        && upper - lower <= 4.0 * f64::EPSILON * lower.abs().max(upper.abs())
+    {
+        return (lower + (upper - lower) * fraction).clamp(lower, upper);
+    }
+    lower * (1.0 - fraction) + upper * fraction
+}
+
+pub(crate) fn probe_bounds(lower: f64, upper: f64) -> Result<(f64, f64), RecipeError> {
+    if !lower.is_finite() || !upper.is_finite() || lower > upper {
+        return Err(RecipeError::InvalidProbeBounds);
+    }
+    Ok((lower.clamp(-8.0, 8.0), upper.clamp(-8.0, 8.0)))
 }
 
 pub(crate) fn mean(values: &[f64]) -> f64 {

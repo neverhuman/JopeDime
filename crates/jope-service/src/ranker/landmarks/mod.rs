@@ -8,8 +8,8 @@ pub(crate) use descriptors::{
 };
 pub(crate) use probes::extract_probes;
 pub(crate) use stats::{
-    abs_corr_with_y, corr, gini, mean, quantile, recipe_argsort, scale_numeric_regression, squash,
-    stddev,
+    abs_corr_with_y, corr, gini, mean, probe_bounds, quantile, recipe_argsort,
+    scale_numeric_regression, squash, stddev,
 };
 
 /// Full CPU implementation of the numeric-regression `high` landmark recipe.
@@ -39,7 +39,7 @@ pub(crate) fn build_high_full_table(
         return Err(RecipeError::ShapeMismatch);
     }
     let (scaled_x, scaled_y) = scale_numeric_regression(x, rows, features, y);
-    let stage = extract_probes(&scaled_x, &scaled_y, rows, features);
+    let stage = extract_probes(&scaled_x, &scaled_y, rows, features)?;
     let blocks = building_blocks(&stage, rows, features);
     let report = report_descriptors(&stage, &blocks, rows, features);
     let table = table_descriptors(&stage, rows, features);
@@ -63,6 +63,7 @@ pub enum RecipeError {
     EmptyTable,
     FitSampleOverLimit,
     ShapeMismatch,
+    InvalidProbeBounds,
 }
 
 impl std::fmt::Display for RecipeError {
@@ -71,6 +72,9 @@ impl std::fmt::Display for RecipeError {
             Self::EmptyTable => f.write_str("landmark FIT table must be nonempty"),
             Self::FitSampleOverLimit => f.write_str("landmark FIT sample exceeds 1,024 rows"),
             Self::ShapeMismatch => f.write_str("landmark FIT matrix and target shapes differ"),
+            Self::InvalidProbeBounds => {
+                f.write_str("landmark probe bounds must be finite and ordered")
+            }
         }
     }
 }

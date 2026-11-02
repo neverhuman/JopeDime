@@ -45,21 +45,25 @@ impl RunService {
         let request: Q1Request = serde_json::from_value(raw.clone())
             .map_err(|_| invalid("Expected a closed jope.q1-request/v1 object."))?;
         validate_q1_request(&request, &raw)?;
-        let admission = self
-            .admission
-            .lock()
-            .map_err(|_| io("Run admission lock is poisoned."))?;
-        if let Some(record) = self
-            .store
-            .get(&q1_command_key(&request.request_sha256))
-            .map_err(io)?
         {
-            return q1_replay_or_unknown(record.data)?
-                .ok_or_else(|| io("Q1 replay bytes missing."));
+            let _admission = self
+                .admission
+                .lock()
+                .map_err(|_| io("Run admission lock is poisoned."))?;
+            if let Some(record) = self
+                .store
+                .get(&q1_command_key(&request.request_sha256))
+                .map_err(io)?
+            {
+                return q1_replay_or_unknown(record.data)?
+                    .ok_or_else(|| io("Q1 replay bytes missing."));
+            }
+            if self.activity.active_runs() != 0 {
+                return Err(unavailable("The bounded evaluation backend is busy."));
+            }
         }
-        if self.activity.active_runs() != 0 {
-            return Err(unavailable("The bounded evaluation backend is busy."));
-        }
+        // FIT binding and executor preparation must never unwind through the
+        // admission guard. Recheck replay/busy state under the guard below.
         // This spec only selects the trusted backend. No public-run split is
         // performed: the Q1 matrix and every evaluation fold come from the
         // independently pinned protocol manifest below.
@@ -235,6 +239,21 @@ impl RunService {
         std::fs::create_dir(&search_home).map_err(io)?;
         let search_store = Arc::new(Store::open(search_home.join("store")).map_err(io)?);
         let mut discovery = Discovery::open(search_store, search_plan).map_err(io)?;
+        let admission = self
+            .admission
+            .lock()
+            .map_err(|_| io("Run admission lock is poisoned."))?;
+        if let Some(record) = self
+            .store
+            .get(&q1_command_key(&request.request_sha256))
+            .map_err(io)?
+        {
+            return q1_replay_or_unknown(record.data)?
+                .ok_or_else(|| io("Q1 replay bytes missing."));
+        }
+        if self.activity.active_runs() != 0 {
+            return Err(unavailable("The bounded evaluation backend is busy."));
+        }
         let started = self.reserve_q1_request(&request, &run_id)?;
         if let Some(bytes) = started {
             return Ok(bytes);
