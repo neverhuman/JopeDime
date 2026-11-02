@@ -1338,6 +1338,8 @@ crates/jope-policy/src/model/cached.rs
 crates/jope-policy/src/producer.rs
 crates/jope-policy/src/producer/tests.rs
 crates/jope-policy/src/proposal_ledger.rs
+crates/jope-policy/src/proposal_ledger/builder.rs
+crates/jope-policy/src/proposal_ledger/decision_links.rs
 crates/jope-policy/src/ranking.rs
 crates/jope-policy/src/seeds.rs
 crates/jope-policy/tests/decode_outcomes.rs
