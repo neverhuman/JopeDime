@@ -27,8 +27,8 @@ pub struct SourceObject {
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "snake_case")]
-/// `Outcome` is an enum for the outcome contract in this module: Hash- and version-pinned reads from immutable source manifests.
-pub enum Outcome {
+/// Result of reading a manifest-pinned lake row.
+pub enum LakeReadOutcome {
     /// The `Ok` case of `Outcome`.
     Ok {
         /// Measured value carried by this outcome.
@@ -47,6 +47,9 @@ pub enum Outcome {
     /// The `Unknown` case of `Outcome`.
     Unknown,
 }
+
+/// Compatibility name for callers using the original lake reader API.
+pub type Outcome = LakeReadOutcome;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
