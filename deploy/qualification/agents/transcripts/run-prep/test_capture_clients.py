@@ -42,6 +42,7 @@ def _runner_fixture(
     transport_key=None,
     flush_seconds=0.2,
     async_recorder_key=None,
+    recorder_group_key=None,
 ):
     repo = tmp_path / "source"
     repo.mkdir()
@@ -148,7 +149,8 @@ def _runner_fixture(
                 if not Path('descendant.pid').exists():
                     raise SystemExit('descendant did not start')
             if key == {transport_key!r}:
-                recorder = subprocess.Popen([sys.executable, '-B', capture_stdio, '--out-dir', capture_dir, '--seconds', '2', '--max-bytes', '1048576', '--', candidate, 'mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                recorder_options = {{'process_group': 0}} if key == {recorder_group_key!r} else {{}}
+                recorder = subprocess.Popen([sys.executable, '-B', capture_stdio, '--out-dir', capture_dir, '--seconds', '2', '--max-bytes', '1048576', '--', candidate, 'mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, **recorder_options)
                 recorder.stdin.write(b'{{"jsonrpc":"2.0","id":1,"method":"ping"}}\\n')
                 recorder.stdin.flush()
                 if not recorder.stdout.readline():
@@ -1233,6 +1235,23 @@ def test_normal_cli_exit_preserves_real_claude_recorder_flush(a5_tmp_path):
     assert _processes_with_paths_under(a5_tmp_path) == []
 
 
+def test_process_group_leader_recorder_is_reisolated(a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path,
+        transport_key="claude_code",
+        recorder_group_key="claude_code",
+    )
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+    assert result["clients"]["claude_code"]["client_exit"] == 0
+    transport = args.out_dir / "clients/claude_code/transport"
+    receipt = json.loads((transport / "capture.json").read_text())
+    assert receipt["complete"] is True
+    assert receipt["server_exit_code"] == receipt["relay_exit_code"] == 0
+    assert _processes_with_paths_under(a5_tmp_path) == []
+
+
 def test_timeout_cleans_isolated_recorder_and_server(monkeypatch, a5_tmp_path):
     args, plan, _candidate, _client = _runner_fixture(
         a5_tmp_path, transport_key="claude_code", sleep_key="claude_code"
@@ -1298,9 +1317,9 @@ def test_foreign_recorder_and_reused_pid_are_never_signaled(monkeypatch, a5_tmp_
     )
     info = THREE_CLIENTS_MODULE._process_info(foreign.pid)
     lease = dict(
-        schema="jopedime.mcp-recorder-session/v1",
+        schema="jopedime.mcp-recorder-session/v2",
         pid=foreign.pid,
-        owner_pgid=12345,
+        owner_session=12345,
         start_ticks=info["start_ticks"],
         producer_sha256=hashlib.sha256(producer.read_bytes()).hexdigest(),
         argv=[str(args.candidate), "mcp"],

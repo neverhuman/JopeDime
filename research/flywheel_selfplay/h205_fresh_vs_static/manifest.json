@@ -44,6 +44,22 @@
     "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
     "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
   },
+  "invocation_accounting_contract": {
+    "budget_reset": false,
+    "known_prior_floor_seconds": 2021.039296863135,
+    "no_automatic_ledger_initialization": true,
+    "owner_exit_cost_reconciliation_required": true,
+    "pending_or_unknown_history_blocks_next_invocation": true,
+    "required_launch_fields": [
+      "campaign_ledger_path",
+      "campaign_ledger_sha256",
+      "accounting_invocation_id"
+    ],
+    "schema": "h205-campaign-accounting/v1",
+    "standalone_worker_is_unqualified": true,
+    "terminal_bookkeeping_seconds": null,
+    "worker_result_qualified": false
+  },
   "live_flywheel_pid_untouched": 2297929,
   "microbatches_per_round": 16,
   "numeric_threads_max": 4,
@@ -66,7 +82,69 @@
     "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
     "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING"
   },
+  "qualified_single_context_20261102T1251Z": {
+    "accounting_invocation_id": "h205-single-regression-context-20261102T1251Z",
+    "adapter_sha256_after": "14e878421781ab95f3ca483a68caf1a0624d5ab969fcf16f83e26846ccb9d929",
+    "adapter_sha256_before": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+    "adapter_sha256_restored": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+    "context_sha256": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+    "dataset_id": "1db3750d4ceccab9",
+    "engine_consumption_receipt_s3_version_id": "KZj76VlAAwchJ3medjHEvwuX4JZ9_x3n",
+    "engine_consumption_receipt_sha256": "1ae188e98bddc7dbaf7477137942a9aa81192d846d4efac4067f1ee0ad097540",
+    "failure_custody_1237z_archive_s3_version_id": "r0OtLX2y6BZom9u1QJhLMx7eBQM5yYR6",
+    "failure_custody_1237z_archive_sha256": "6fb1dc1622dcdc8521aadbc9e78f47f2f12094d49a97c4197414ba82d7e46307",
+    "failure_custody_1249z_archive_s3_version_id": "netQc.2TsR3f7hAreBVksXElweSlA7_h",
+    "failure_custody_1249z_archive_sha256": "cbb34ba4f67ef9b1354c405998fb8139416b8eacc385cd3cc8b9243a2485cb47",
+    "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+    "features_npz_s3_version_id": "mjTuhpPKycw9MbZIBSD_8FqzSH8tc5ws",
+    "features_npz_sha256": "107bf0feaa58d5e483e7edb5b4005a006303a0b132d65f73d3c01f829642aec0",
+    "features_sha256": "a84271417a25b285aed0b5612ebfc0bb953c9cb863e32f24a484ab6127fff33a",
+    "final_reconciled_bundle_manifest_sha256": "538a36df34e5d02410df043b138d56e0b24c79f7b7b3ec61a07e994245ec3041",
+    "fpool_family_alias": "f00161",
+    "full_50_round_h205_study_status": "ON_HOLD_SEPARATELY_GATED",
+    "h206_runtime_distillation_status": "ON_HOLD_SEPARATELY_GATED",
+    "labels_sha256": "3e1d225b92f20c3af9907d7a3747a8b45829f779e5a7cb86cd0fe7427e47f61b",
+    "loss_value": 4.187907695770264,
+    "native_evaluator_input_sha256": "be5800a4dfda8d3497c0ec1db4a3df8f0101e2b850fb489a385f9982491b4de9",
+    "pointer_reconciliation_receipt_s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1410Z/H205_POINTER_RECONCILIATION_AND_OPTION_A_TARGET_20261102T1410Z.json",
+    "pointer_reconciliation_receipt_s3_version_id": "YjUHh2vw0wNPQwJ3NF_vx3KtqWJrfk2X",
+    "pointer_reconciliation_receipt_sha256": "2e2239ed6ebf8b5918e0348e477eee434b908032fce80d92fe409c20c53f8d3a",
+    "pool_s3_version_id": "ukhGlpp3DBN_92B0BUolQ0WqEu_dXlGU",
+    "pool_sha256": "1c54e242793faa6d890375866b51e62bceb765a1ba41f7417122722066eb398f",
+    "producer_decision_s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1338Z/H205_H206_PRODUCER_DECISION_AND_HIST10_PROOF_20261102T1338Z.json",
+    "producer_decision_s3_version_id": "0b52EwEEj8W6cFdHyxX7_Q7BJqB4JEX2",
+    "producer_decision_sha256": "3c2bf59d7d46802826508e4feb91b933ada452d2cd2a31da788cda13ac6712ca",
+    "programs_sha256": "edafbd65a4bf52b2c46abead6f151e28f35cf1f8cabd25fb132c28a76a4ddcfd",
+    "s3_pre_consumption_custody_receipt_s3_version_id": "lbiN0EuqBAIfiN2SboS5svAj_PIT790S",
+    "s3_pre_consumption_custody_receipt_sha256": "4798f49653e44e7a2934094d709d02d15be118dfed076ff9480aab86d15313d8",
+    "s3_prefix": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/",
+    "selected_h206_producer_option": "OPTION_A_KEEP_H206_REGISTERED_1219_205_H50_COHORT_AND_SPECIFY_IN_COHORT_FULL_RAW_ABI_PRODUCER",
+    "selected_in_cohort_h206_target_context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "selected_in_cohort_h206_target_dataset_id": "64d58df1e45d2857",
+    "selected_in_cohort_h206_target_family_id": "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+    "single_context_is_full_study_coverage": false,
+    "specification_is_constructed_data": false
+  },
   "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "reconciled_campaign_ledger_20261102T1338Z": {
+    "baseline_elapsed_seconds": 2021.039296863135,
+    "campaign_cap_seconds": 25200.0,
+    "remaining_wall_budget_seconds": 14868.999988737889,
+    "s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1338Z/campaign_ledger.reconciled.json",
+    "s3_version_id": "FwSgbi9Nh1W0HF79q_en16XXKBsQloep",
+    "sha256": "035cecab9cade308467cc4aac475988a6c3f7733c9b43c13a65c004817ab99a6",
+    "total_prior_elapsed_seconds": 10331.000011262111
+  },
+  "reconciled_campaign_ledger_20261102T1410Z": {
+    "baseline_elapsed_seconds": 2021.039296863135,
+    "campaign_cap_seconds": 25200.0,
+    "hist_11_charged_seconds": 420.0,
+    "remaining_wall_budget_seconds": 14448.999988737889,
+    "s3_key": "experiments/rd_breakthrough_20261101/H205/regression-seam/1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec-20261102T125205Z/reconciled-20261102T1410Z/campaign_ledger.reconciled.json",
+    "s3_version_id": ".yu26GzCvyfAHU0MPQl1Vp5K9_R5H376",
+    "sha256": "e376f44e9a6c47d7d98cab31b15b60695a6a42dc5bbf63e1bf73014da181bb94",
+    "total_prior_elapsed_seconds": 10751.000011262111
+  },
   "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
   "regression": {
     "dl_val_contexts": 91,
@@ -80,8 +158,8 @@
   ],
   "selector": "H178_calibrated_pooled_205_family",
   "source_sha256": {
-    "PREREG.md": "4827c2884a682449de69363299673e5a067df7c45904be1aff260be2a6aad72c",
-    "README.md": "39ac9695275e02d7e5f30972af36b28e9767ae70fc1700070271f2db05b758f1",
+    "PREREG.md": "a7aa33128ebc3cb6d8ba1017789981b5fc1b4c6f4f3f52f2221d32300c55f807",
+    "README.md": "4a1a08fa40ac4035e7a28129bbbf5a2d29a21eacd61f453c67e001991f099e9b",
     "analysis.py": "bb402d63f05cfc247987f2999fdf5df52f3629557781359d7d0b1716c0416e17",
     "monitor.py": "91baa39155459017e7349bf7587b03cc8c8d8b04eb201f9ceac560f81a8a8127",
     "runner.py": "7b6f0d5def0af1e2add386b1d5928bf64557c78a6c0afabd8e0830c2cdfac7e6",
@@ -120,21 +198,5 @@
     "target_same_s3_train_context_sha256_1db3750d4ceccab9": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
     "train_matrix_sha256_1db3750d4ceccab9": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7"
   },
-  "wave": "H205",
-  "invocation_accounting_contract": {
-    "schema": "h205-campaign-accounting/v1",
-    "required_launch_fields": [
-      "campaign_ledger_path",
-      "campaign_ledger_sha256",
-      "accounting_invocation_id"
-    ],
-    "no_automatic_ledger_initialization": true,
-    "pending_or_unknown_history_blocks_next_invocation": true,
-    "known_prior_floor_seconds": 2021.039296863135,
-    "budget_reset": false,
-    "terminal_bookkeeping_seconds": null,
-    "owner_exit_cost_reconciliation_required": true,
-    "worker_result_qualified": false,
-    "standalone_worker_is_unqualified": true
-  }
+  "wave": "H205"
 }

@@ -1,0 +1,134 @@
+{
+  "wave": "H223",
+  "authority": "/home/ubuntu/nudges/hw_t1325_opus_h223.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H223_claim.txt",
+  "parent_waves": {
+    "H217": "CONFIRMED: GATED_025 + NO_PLATEAU_WIN (native +0.0216 [+0.0038,+0.0418], harm 4.4%, Elo 1504.8; DL-Val +0.00145 < +0.002; closeout 973298e28)",
+    "H210": "CANDIDATE: GATED_025",
+    "H129": "BLEND_025 recipe; disagreement statistic"
+  },
+  "arms": [
+    "R882",
+    "GATED_BAG3",
+    "GATED_025",
+    "GATED_BAG3_DIS",
+    "BLEND_BAG3",
+    "BLEND_025"
+  ],
+  "arm_roles": {
+    "GATED_BAG3": "primary and co-primary",
+    "GATED_025": "frozen H210/H217 reference, report-only (paired GATED_BAG3 - GATED_025 reported)",
+    "GATED_BAG3_DIS": "H129 disagreement placebo on the bagged blend, report-only",
+    "BLEND_BAG3": "ungated bagged component, report-only",
+    "BLEND_025": "ungated member-0 component, report-only"
+  },
+  "primary": "GATED_BAG3",
+  "lambda": 0.25,
+  "bag": {
+    "members": 3,
+    "member_0": "unweighted H217 fit (same features, targets, h124.MODEL, random_state=seed); GATED_025 component; tested bit-identical to H217 fit_gbm",
+    "members_1_2": "family-cluster bootstrap refits: FIT families drawn with replacement (n draws = n families), row sample_weight = family multiplicity; seed stream_seed(223170, seed, member, *excluded)",
+    "prior": "mean of the 3 members raw predictions, then H124 positive-slope calibration on FIT inner OOF predictions",
+    "design_decision": "member 0 shared with the reference keeps 135 fits (hw_t1325 budget) instead of 180; disclosed pre-outcome in PREREG"
+  },
+  "gate": {
+    "frozen_from": "H210/H217 (function bodies tested identical)",
+    "primary_signal": "zgap on the arm prior blend; costs only",
+    "placebo_signal": "H129 disagreement of the BAG prior",
+    "selection": "per cell and gated arm, FIT only: max FIT equal-family native gain s.t. FIT harm <= 0.05; ties -> smaller tau; closed always feasible"
+  },
+  "endpoint": "flywheel native fixed-dev-cost-argmin-negative-fitness/v1",
+  "seeds": [
+    223101,
+    223102,
+    223103
+  ],
+  "fold_seeds": {
+    "223101": 223141,
+    "223102": 223142,
+    "223103": 223143
+  },
+  "sample_seed": 223140,
+  "boot_seed": 223150,
+  "elo_boot_seed": 223151,
+  "plateau_boot_seed": 223152,
+  "bag_seed": 223170,
+  "bootstrap_draws": 10000,
+  "elo_draws": 1000,
+  "fits": {
+    "units": 45,
+    "members_per_unit": 3,
+    "total": 135
+  },
+  "decision": {
+    "primary": "CANDIDATE: GATED_BAG3 iff LCB95>0 AND 3/3 seeds positive AND harm<=10% (205 families, pooled-A native, 10k paired family-cluster bootstrap); else NO_CANDIDATE; p reported not gated",
+    "co_primary": "PLATEAU_WIN iff DL-Val 91-context context-mean gain vs r882 1.1377942 > +0.002 AND family-bootstrap LCB95 > 0; ties not a win; else NO_PLATEAU_WIN",
+    "combined": "<primary> + <co_primary>"
+  },
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525
+  },
+  "inputs": {
+    "staging": "xbabe2 ~/jope-data/h223/inputs -> ~/jope-data/h195/inputs",
+    "hash_list_sha256": "2f7a364221e809d86abca30d14c3b80f5be1e2ba36db5b45ca1fe09ba82792e8",
+    "files": 2628,
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "host": "xbabe2 CPU only (admission before any side effect); no GPU, no GPU claim",
+  "guards": {
+    "effective_cores": "len(os.sched_getaffinity) = 102 of 128 online on xbabe2",
+    "threads": "OMP 7, other pools 1, torch 1",
+    "admission": "load1 <= 60 and load5 <= 55 (A1), host CPU <= 50%, MemAvailable >= 24 GiB, disk free >= 320 GB; refusal = no claim",
+    "source_check": "runner.py --check-launch before the claim",
+    "runtime": "hard stop on MemAvailable < 20 GiB, disk free < 300 GB, process-tree RSS >= 4 GiB, worker tree > 8.0 cores over 30 s",
+    "deadline": "absolute: min(claim + 4 h, 2026-11-02T17:25:00Z); resume inherits it",
+    "load_pause": "A1: SIGSTOP own worker group when load5 > 60 or load1/host CPU > 85% for 300 s; SIGCONT when load5 <= 55 and both < 85%; runner waits between units while load5 > 60 until <= 55 (60 s polls)"
+  },
+  "budget": {
+    "fits": 135,
+    "expected_wall": "~3h",
+    "closeout_deadline": "2026-11-02T18:00:00Z",
+    "root_max_bytes": 1000000000
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H223/<run_id>/ (create-only)",
+  "never": [
+    "sealed",
+    "holdout",
+    "meta-test",
+    "live flywheel",
+    "xbabe0",
+    "xbabe1",
+    "xbabe3",
+    "GPU"
+  ],
+  "fold_overlap": {
+    "within_best_match_range": [
+      0.15502123854236532,
+      0.18239744268224575
+    ],
+    "cross_wave_best_match_max": {
+      "H203": 0.19367581090407177,
+      "H210": 0.17190703756497494,
+      "H217": 0.19200097430276458,
+      "H218": 0.17541104003790572
+    },
+    "bound": 0.20
+  },
+  "amendments": [
+    {
+      "id": "A1",
+      "utc": "2026-11-02T14:00:27Z",
+      "authority": "hw_t1400_loadguard.md",
+      "pre_outcome": true,
+      "change": "host load guard converted from abort to pause (load5 > 60 pause, <= 55 resume; sustained load1/CPU > 85% pauses); admission load1 <= 60, load5 <= 55; RSS, memory, disk, core cap and deadline remain hard aborts",
+      "note": "recorded after prereg merge 530eef65 (PR #1865, 13:52Z), before any claim, read, fit or outcome"
+    }
+  ]
+}

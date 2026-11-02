@@ -1,0 +1,6342 @@
+{
+  "schema": "whitepaper.rolling-admissions-figure/v1",
+  "input_csv_sha256": "5da2c00a93c91088760a38d83bbf9aaf2848e194947eca3e1623aba0b6d2ff39",
+  "source_receipt_sha256": "911174e044892c913abdb864c67646deeb0b3d571a83bdc0a24b7a5dace6af21",
+  "generator_sha256": "495d88bcd2530d3557317f0b5ca4d3163b23d87de4e4320e70932193ab8e45e2",
+  "figure_sha256": "56874289b19ce36ae6625feccfcb909677589506ee6ec14200f5bea2f4c8620a",
+  "rows": 1000,
+  "round_window": [
+    2710,
+    3709
+  ],
+  "rolling_window": 100,
+  "full_windows": 901,
+  "plotted_end_rounds": [
+    2809,
+    3709
+  ],
+  "accepted": 4,
+  "rejected": 996,
+  "strict_gain_rounds": [
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    2795,
+    3100
+  ],
+  "windows": [
+    {
+      "first_round": 2710,
+      "last_round": 2809,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2711,
+      "last_round": 2810,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2712,
+      "last_round": 2811,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2713,
+      "last_round": 2812,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2714,
+      "last_round": 2813,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2715,
+      "last_round": 2814,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2716,
+      "last_round": 2815,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2717,
+      "last_round": 2816,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2718,
+      "last_round": 2817,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2719,
+      "last_round": 2818,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2720,
+      "last_round": 2819,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2721,
+      "last_round": 2820,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2722,
+      "last_round": 2821,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2723,
+      "last_round": 2822,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2724,
+      "last_round": 2823,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2725,
+      "last_round": 2824,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2726,
+      "last_round": 2825,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2727,
+      "last_round": 2826,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2728,
+      "last_round": 2827,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2729,
+      "last_round": 2828,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2730,
+      "last_round": 2829,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2731,
+      "last_round": 2830,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2732,
+      "last_round": 2831,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2733,
+      "last_round": 2832,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2734,
+      "last_round": 2833,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2735,
+      "last_round": 2834,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2736,
+      "last_round": 2835,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2737,
+      "last_round": 2836,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2738,
+      "last_round": 2837,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2739,
+      "last_round": 2838,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2740,
+      "last_round": 2839,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2741,
+      "last_round": 2840,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2742,
+      "last_round": 2841,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2743,
+      "last_round": 2842,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2744,
+      "last_round": 2843,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2745,
+      "last_round": 2844,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2746,
+      "last_round": 2845,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2747,
+      "last_round": 2846,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2748,
+      "last_round": 2847,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2749,
+      "last_round": 2848,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2750,
+      "last_round": 2849,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 2751,
+      "last_round": 2850,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2752,
+      "last_round": 2851,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2753,
+      "last_round": 2852,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2754,
+      "last_round": 2853,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2755,
+      "last_round": 2854,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2756,
+      "last_round": 2855,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2757,
+      "last_round": 2856,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2758,
+      "last_round": 2857,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2759,
+      "last_round": 2858,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2760,
+      "last_round": 2859,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2761,
+      "last_round": 2860,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2762,
+      "last_round": 2861,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2763,
+      "last_round": 2862,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2764,
+      "last_round": 2863,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2765,
+      "last_round": 2864,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2766,
+      "last_round": 2865,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2767,
+      "last_round": 2866,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2768,
+      "last_round": 2867,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2769,
+      "last_round": 2868,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2770,
+      "last_round": 2869,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2771,
+      "last_round": 2870,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2772,
+      "last_round": 2871,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2773,
+      "last_round": 2872,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2774,
+      "last_round": 2873,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2775,
+      "last_round": 2874,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2776,
+      "last_round": 2875,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2777,
+      "last_round": 2876,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2778,
+      "last_round": 2877,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2779,
+      "last_round": 2878,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2780,
+      "last_round": 2879,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2781,
+      "last_round": 2880,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2782,
+      "last_round": 2881,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2783,
+      "last_round": 2882,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2784,
+      "last_round": 2883,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2785,
+      "last_round": 2884,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2786,
+      "last_round": 2885,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2787,
+      "last_round": 2886,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2788,
+      "last_round": 2887,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2789,
+      "last_round": 2888,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2790,
+      "last_round": 2889,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2791,
+      "last_round": 2890,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2792,
+      "last_round": 2891,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2793,
+      "last_round": 2892,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2794,
+      "last_round": 2893,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2795,
+      "last_round": 2894,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 2796,
+      "last_round": 2895,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2797,
+      "last_round": 2896,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2798,
+      "last_round": 2897,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2799,
+      "last_round": 2898,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2800,
+      "last_round": 2899,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2801,
+      "last_round": 2900,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2802,
+      "last_round": 2901,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2803,
+      "last_round": 2902,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2804,
+      "last_round": 2903,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2805,
+      "last_round": 2904,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2806,
+      "last_round": 2905,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2807,
+      "last_round": 2906,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2808,
+      "last_round": 2907,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2809,
+      "last_round": 2908,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2810,
+      "last_round": 2909,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2811,
+      "last_round": 2910,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2812,
+      "last_round": 2911,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2813,
+      "last_round": 2912,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2814,
+      "last_round": 2913,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2815,
+      "last_round": 2914,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2816,
+      "last_round": 2915,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2817,
+      "last_round": 2916,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2818,
+      "last_round": 2917,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2819,
+      "last_round": 2918,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2820,
+      "last_round": 2919,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2821,
+      "last_round": 2920,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2822,
+      "last_round": 2921,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2823,
+      "last_round": 2922,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2824,
+      "last_round": 2923,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2825,
+      "last_round": 2924,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2826,
+      "last_round": 2925,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2827,
+      "last_round": 2926,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2828,
+      "last_round": 2927,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2829,
+      "last_round": 2928,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2830,
+      "last_round": 2929,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2831,
+      "last_round": 2930,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2832,
+      "last_round": 2931,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2833,
+      "last_round": 2932,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2834,
+      "last_round": 2933,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2835,
+      "last_round": 2934,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2836,
+      "last_round": 2935,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2837,
+      "last_round": 2936,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2838,
+      "last_round": 2937,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2839,
+      "last_round": 2938,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2840,
+      "last_round": 2939,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2841,
+      "last_round": 2940,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2842,
+      "last_round": 2941,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2843,
+      "last_round": 2942,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2844,
+      "last_round": 2943,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2845,
+      "last_round": 2944,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2846,
+      "last_round": 2945,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2847,
+      "last_round": 2946,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2848,
+      "last_round": 2947,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2849,
+      "last_round": 2948,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2850,
+      "last_round": 2949,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2851,
+      "last_round": 2950,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2852,
+      "last_round": 2951,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2853,
+      "last_round": 2952,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2854,
+      "last_round": 2953,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2855,
+      "last_round": 2954,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2856,
+      "last_round": 2955,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2857,
+      "last_round": 2956,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2858,
+      "last_round": 2957,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2859,
+      "last_round": 2958,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2860,
+      "last_round": 2959,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2861,
+      "last_round": 2960,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2862,
+      "last_round": 2961,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2863,
+      "last_round": 2962,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2864,
+      "last_round": 2963,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2865,
+      "last_round": 2964,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2866,
+      "last_round": 2965,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2867,
+      "last_round": 2966,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2868,
+      "last_round": 2967,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2869,
+      "last_round": 2968,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2870,
+      "last_round": 2969,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2871,
+      "last_round": 2970,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2872,
+      "last_round": 2971,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2873,
+      "last_round": 2972,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2874,
+      "last_round": 2973,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2875,
+      "last_round": 2974,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2876,
+      "last_round": 2975,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2877,
+      "last_round": 2976,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2878,
+      "last_round": 2977,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2879,
+      "last_round": 2978,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2880,
+      "last_round": 2979,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2881,
+      "last_round": 2980,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2882,
+      "last_round": 2981,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2883,
+      "last_round": 2982,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2884,
+      "last_round": 2983,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2885,
+      "last_round": 2984,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2886,
+      "last_round": 2985,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2887,
+      "last_round": 2986,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2888,
+      "last_round": 2987,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2889,
+      "last_round": 2988,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2890,
+      "last_round": 2989,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2891,
+      "last_round": 2990,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2892,
+      "last_round": 2991,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2893,
+      "last_round": 2992,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2894,
+      "last_round": 2993,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2895,
+      "last_round": 2994,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2896,
+      "last_round": 2995,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2897,
+      "last_round": 2996,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2898,
+      "last_round": 2997,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2899,
+      "last_round": 2998,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2900,
+      "last_round": 2999,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2901,
+      "last_round": 3000,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2902,
+      "last_round": 3001,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2903,
+      "last_round": 3002,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2904,
+      "last_round": 3003,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2905,
+      "last_round": 3004,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2906,
+      "last_round": 3005,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2907,
+      "last_round": 3006,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2908,
+      "last_round": 3007,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2909,
+      "last_round": 3008,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2910,
+      "last_round": 3009,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2911,
+      "last_round": 3010,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2912,
+      "last_round": 3011,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2913,
+      "last_round": 3012,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2914,
+      "last_round": 3013,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2915,
+      "last_round": 3014,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2916,
+      "last_round": 3015,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2917,
+      "last_round": 3016,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2918,
+      "last_round": 3017,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2919,
+      "last_round": 3018,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2920,
+      "last_round": 3019,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2921,
+      "last_round": 3020,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2922,
+      "last_round": 3021,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2923,
+      "last_round": 3022,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2924,
+      "last_round": 3023,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2925,
+      "last_round": 3024,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2926,
+      "last_round": 3025,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2927,
+      "last_round": 3026,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2928,
+      "last_round": 3027,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2929,
+      "last_round": 3028,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2930,
+      "last_round": 3029,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2931,
+      "last_round": 3030,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2932,
+      "last_round": 3031,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2933,
+      "last_round": 3032,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2934,
+      "last_round": 3033,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2935,
+      "last_round": 3034,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2936,
+      "last_round": 3035,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2937,
+      "last_round": 3036,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2938,
+      "last_round": 3037,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2939,
+      "last_round": 3038,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2940,
+      "last_round": 3039,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2941,
+      "last_round": 3040,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2942,
+      "last_round": 3041,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2943,
+      "last_round": 3042,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2944,
+      "last_round": 3043,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2945,
+      "last_round": 3044,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2946,
+      "last_round": 3045,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2947,
+      "last_round": 3046,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2948,
+      "last_round": 3047,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2949,
+      "last_round": 3048,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2950,
+      "last_round": 3049,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2951,
+      "last_round": 3050,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2952,
+      "last_round": 3051,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2953,
+      "last_round": 3052,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2954,
+      "last_round": 3053,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2955,
+      "last_round": 3054,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2956,
+      "last_round": 3055,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2957,
+      "last_round": 3056,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2958,
+      "last_round": 3057,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2959,
+      "last_round": 3058,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2960,
+      "last_round": 3059,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2961,
+      "last_round": 3060,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2962,
+      "last_round": 3061,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2963,
+      "last_round": 3062,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2964,
+      "last_round": 3063,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2965,
+      "last_round": 3064,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2966,
+      "last_round": 3065,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2967,
+      "last_round": 3066,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2968,
+      "last_round": 3067,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2969,
+      "last_round": 3068,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2970,
+      "last_round": 3069,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2971,
+      "last_round": 3070,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2972,
+      "last_round": 3071,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2973,
+      "last_round": 3072,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2974,
+      "last_round": 3073,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2975,
+      "last_round": 3074,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2976,
+      "last_round": 3075,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2977,
+      "last_round": 3076,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2978,
+      "last_round": 3077,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2979,
+      "last_round": 3078,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2980,
+      "last_round": 3079,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2981,
+      "last_round": 3080,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2982,
+      "last_round": 3081,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2983,
+      "last_round": 3082,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2984,
+      "last_round": 3083,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2985,
+      "last_round": 3084,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2986,
+      "last_round": 3085,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2987,
+      "last_round": 3086,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2988,
+      "last_round": 3087,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2989,
+      "last_round": 3088,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2990,
+      "last_round": 3089,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2991,
+      "last_round": 3090,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2992,
+      "last_round": 3091,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2993,
+      "last_round": 3092,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2994,
+      "last_round": 3093,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2995,
+      "last_round": 3094,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2996,
+      "last_round": 3095,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2997,
+      "last_round": 3096,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2998,
+      "last_round": 3097,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 2999,
+      "last_round": 3098,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3000,
+      "last_round": 3099,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3001,
+      "last_round": 3100,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3002,
+      "last_round": 3101,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3003,
+      "last_round": 3102,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3004,
+      "last_round": 3103,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3005,
+      "last_round": 3104,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3006,
+      "last_round": 3105,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3007,
+      "last_round": 3106,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3008,
+      "last_round": 3107,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3009,
+      "last_round": 3108,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3010,
+      "last_round": 3109,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3011,
+      "last_round": 3110,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3012,
+      "last_round": 3111,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3013,
+      "last_round": 3112,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3014,
+      "last_round": 3113,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3015,
+      "last_round": 3114,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3016,
+      "last_round": 3115,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3017,
+      "last_round": 3116,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3018,
+      "last_round": 3117,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3019,
+      "last_round": 3118,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3020,
+      "last_round": 3119,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3021,
+      "last_round": 3120,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3022,
+      "last_round": 3121,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3023,
+      "last_round": 3122,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3024,
+      "last_round": 3123,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3025,
+      "last_round": 3124,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3026,
+      "last_round": 3125,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3027,
+      "last_round": 3126,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3028,
+      "last_round": 3127,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3029,
+      "last_round": 3128,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3030,
+      "last_round": 3129,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3031,
+      "last_round": 3130,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3032,
+      "last_round": 3131,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3033,
+      "last_round": 3132,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3034,
+      "last_round": 3133,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3035,
+      "last_round": 3134,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3036,
+      "last_round": 3135,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3037,
+      "last_round": 3136,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3038,
+      "last_round": 3137,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3039,
+      "last_round": 3138,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3040,
+      "last_round": 3139,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3041,
+      "last_round": 3140,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3042,
+      "last_round": 3141,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3043,
+      "last_round": 3142,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3044,
+      "last_round": 3143,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3045,
+      "last_round": 3144,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3046,
+      "last_round": 3145,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3047,
+      "last_round": 3146,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3048,
+      "last_round": 3147,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3049,
+      "last_round": 3148,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3050,
+      "last_round": 3149,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3051,
+      "last_round": 3150,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3052,
+      "last_round": 3151,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3053,
+      "last_round": 3152,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3054,
+      "last_round": 3153,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3055,
+      "last_round": 3154,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3056,
+      "last_round": 3155,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3057,
+      "last_round": 3156,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3058,
+      "last_round": 3157,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3059,
+      "last_round": 3158,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3060,
+      "last_round": 3159,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3061,
+      "last_round": 3160,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3062,
+      "last_round": 3161,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3063,
+      "last_round": 3162,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3064,
+      "last_round": 3163,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3065,
+      "last_round": 3164,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3066,
+      "last_round": 3165,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3067,
+      "last_round": 3166,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3068,
+      "last_round": 3167,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3069,
+      "last_round": 3168,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3070,
+      "last_round": 3169,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3071,
+      "last_round": 3170,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3072,
+      "last_round": 3171,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3073,
+      "last_round": 3172,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3074,
+      "last_round": 3173,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3075,
+      "last_round": 3174,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3076,
+      "last_round": 3175,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3077,
+      "last_round": 3176,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3078,
+      "last_round": 3177,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3079,
+      "last_round": 3178,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3080,
+      "last_round": 3179,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3081,
+      "last_round": 3180,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3082,
+      "last_round": 3181,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3083,
+      "last_round": 3182,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3084,
+      "last_round": 3183,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3085,
+      "last_round": 3184,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3086,
+      "last_round": 3185,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3087,
+      "last_round": 3186,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3088,
+      "last_round": 3187,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3089,
+      "last_round": 3188,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3090,
+      "last_round": 3189,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3091,
+      "last_round": 3190,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3092,
+      "last_round": 3191,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3093,
+      "last_round": 3192,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3094,
+      "last_round": 3193,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3095,
+      "last_round": 3194,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3096,
+      "last_round": 3195,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3097,
+      "last_round": 3196,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3098,
+      "last_round": 3197,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3099,
+      "last_round": 3198,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3100,
+      "last_round": 3199,
+      "observed_rounds": 100,
+      "accepted": 2,
+      "rejected": 98
+    },
+    {
+      "first_round": 3101,
+      "last_round": 3200,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3102,
+      "last_round": 3201,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3103,
+      "last_round": 3202,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3104,
+      "last_round": 3203,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3105,
+      "last_round": 3204,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3106,
+      "last_round": 3205,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3107,
+      "last_round": 3206,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3108,
+      "last_round": 3207,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3109,
+      "last_round": 3208,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3110,
+      "last_round": 3209,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3111,
+      "last_round": 3210,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3112,
+      "last_round": 3211,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3113,
+      "last_round": 3212,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3114,
+      "last_round": 3213,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3115,
+      "last_round": 3214,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3116,
+      "last_round": 3215,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3117,
+      "last_round": 3216,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3118,
+      "last_round": 3217,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3119,
+      "last_round": 3218,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3120,
+      "last_round": 3219,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3121,
+      "last_round": 3220,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3122,
+      "last_round": 3221,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3123,
+      "last_round": 3222,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3124,
+      "last_round": 3223,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3125,
+      "last_round": 3224,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3126,
+      "last_round": 3225,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3127,
+      "last_round": 3226,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3128,
+      "last_round": 3227,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3129,
+      "last_round": 3228,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3130,
+      "last_round": 3229,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3131,
+      "last_round": 3230,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3132,
+      "last_round": 3231,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3133,
+      "last_round": 3232,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3134,
+      "last_round": 3233,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3135,
+      "last_round": 3234,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3136,
+      "last_round": 3235,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3137,
+      "last_round": 3236,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3138,
+      "last_round": 3237,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3139,
+      "last_round": 3238,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3140,
+      "last_round": 3239,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3141,
+      "last_round": 3240,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3142,
+      "last_round": 3241,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3143,
+      "last_round": 3242,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3144,
+      "last_round": 3243,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3145,
+      "last_round": 3244,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3146,
+      "last_round": 3245,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3147,
+      "last_round": 3246,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3148,
+      "last_round": 3247,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3149,
+      "last_round": 3248,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3150,
+      "last_round": 3249,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3151,
+      "last_round": 3250,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3152,
+      "last_round": 3251,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3153,
+      "last_round": 3252,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3154,
+      "last_round": 3253,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3155,
+      "last_round": 3254,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3156,
+      "last_round": 3255,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3157,
+      "last_round": 3256,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3158,
+      "last_round": 3257,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3159,
+      "last_round": 3258,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3160,
+      "last_round": 3259,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3161,
+      "last_round": 3260,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3162,
+      "last_round": 3261,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3163,
+      "last_round": 3262,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3164,
+      "last_round": 3263,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3165,
+      "last_round": 3264,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3166,
+      "last_round": 3265,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3167,
+      "last_round": 3266,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3168,
+      "last_round": 3267,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3169,
+      "last_round": 3268,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3170,
+      "last_round": 3269,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3171,
+      "last_round": 3270,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3172,
+      "last_round": 3271,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3173,
+      "last_round": 3272,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3174,
+      "last_round": 3273,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3175,
+      "last_round": 3274,
+      "observed_rounds": 100,
+      "accepted": 1,
+      "rejected": 99
+    },
+    {
+      "first_round": 3176,
+      "last_round": 3275,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3177,
+      "last_round": 3276,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3178,
+      "last_round": 3277,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3179,
+      "last_round": 3278,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3180,
+      "last_round": 3279,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3181,
+      "last_round": 3280,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3182,
+      "last_round": 3281,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3183,
+      "last_round": 3282,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3184,
+      "last_round": 3283,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3185,
+      "last_round": 3284,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3186,
+      "last_round": 3285,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3187,
+      "last_round": 3286,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3188,
+      "last_round": 3287,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3189,
+      "last_round": 3288,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3190,
+      "last_round": 3289,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3191,
+      "last_round": 3290,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3192,
+      "last_round": 3291,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3193,
+      "last_round": 3292,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3194,
+      "last_round": 3293,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3195,
+      "last_round": 3294,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3196,
+      "last_round": 3295,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3197,
+      "last_round": 3296,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3198,
+      "last_round": 3297,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3199,
+      "last_round": 3298,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3200,
+      "last_round": 3299,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3201,
+      "last_round": 3300,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3202,
+      "last_round": 3301,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3203,
+      "last_round": 3302,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3204,
+      "last_round": 3303,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3205,
+      "last_round": 3304,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3206,
+      "last_round": 3305,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3207,
+      "last_round": 3306,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3208,
+      "last_round": 3307,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3209,
+      "last_round": 3308,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3210,
+      "last_round": 3309,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3211,
+      "last_round": 3310,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3212,
+      "last_round": 3311,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3213,
+      "last_round": 3312,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3214,
+      "last_round": 3313,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3215,
+      "last_round": 3314,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3216,
+      "last_round": 3315,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3217,
+      "last_round": 3316,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3218,
+      "last_round": 3317,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3219,
+      "last_round": 3318,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3220,
+      "last_round": 3319,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3221,
+      "last_round": 3320,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3222,
+      "last_round": 3321,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3223,
+      "last_round": 3322,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3224,
+      "last_round": 3323,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3225,
+      "last_round": 3324,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3226,
+      "last_round": 3325,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3227,
+      "last_round": 3326,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3228,
+      "last_round": 3327,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3229,
+      "last_round": 3328,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3230,
+      "last_round": 3329,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3231,
+      "last_round": 3330,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3232,
+      "last_round": 3331,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3233,
+      "last_round": 3332,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3234,
+      "last_round": 3333,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3235,
+      "last_round": 3334,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3236,
+      "last_round": 3335,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3237,
+      "last_round": 3336,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3238,
+      "last_round": 3337,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3239,
+      "last_round": 3338,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3240,
+      "last_round": 3339,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3241,
+      "last_round": 3340,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3242,
+      "last_round": 3341,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3243,
+      "last_round": 3342,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3244,
+      "last_round": 3343,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3245,
+      "last_round": 3344,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3246,
+      "last_round": 3345,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3247,
+      "last_round": 3346,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3248,
+      "last_round": 3347,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3249,
+      "last_round": 3348,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3250,
+      "last_round": 3349,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3251,
+      "last_round": 3350,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3252,
+      "last_round": 3351,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3253,
+      "last_round": 3352,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3254,
+      "last_round": 3353,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3255,
+      "last_round": 3354,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3256,
+      "last_round": 3355,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3257,
+      "last_round": 3356,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3258,
+      "last_round": 3357,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3259,
+      "last_round": 3358,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3260,
+      "last_round": 3359,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3261,
+      "last_round": 3360,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3262,
+      "last_round": 3361,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3263,
+      "last_round": 3362,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3264,
+      "last_round": 3363,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3265,
+      "last_round": 3364,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3266,
+      "last_round": 3365,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3267,
+      "last_round": 3366,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3268,
+      "last_round": 3367,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3269,
+      "last_round": 3368,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3270,
+      "last_round": 3369,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3271,
+      "last_round": 3370,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3272,
+      "last_round": 3371,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3273,
+      "last_round": 3372,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3274,
+      "last_round": 3373,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3275,
+      "last_round": 3374,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3276,
+      "last_round": 3375,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3277,
+      "last_round": 3376,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3278,
+      "last_round": 3377,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3279,
+      "last_round": 3378,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3280,
+      "last_round": 3379,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3281,
+      "last_round": 3380,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3282,
+      "last_round": 3381,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3283,
+      "last_round": 3382,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3284,
+      "last_round": 3383,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3285,
+      "last_round": 3384,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3286,
+      "last_round": 3385,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3287,
+      "last_round": 3386,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3288,
+      "last_round": 3387,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3289,
+      "last_round": 3388,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3290,
+      "last_round": 3389,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3291,
+      "last_round": 3390,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3292,
+      "last_round": 3391,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3293,
+      "last_round": 3392,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3294,
+      "last_round": 3393,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3295,
+      "last_round": 3394,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3296,
+      "last_round": 3395,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3297,
+      "last_round": 3396,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3298,
+      "last_round": 3397,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3299,
+      "last_round": 3398,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3300,
+      "last_round": 3399,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3301,
+      "last_round": 3400,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3302,
+      "last_round": 3401,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3303,
+      "last_round": 3402,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3304,
+      "last_round": 3403,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3305,
+      "last_round": 3404,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3306,
+      "last_round": 3405,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3307,
+      "last_round": 3406,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3308,
+      "last_round": 3407,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3309,
+      "last_round": 3408,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3310,
+      "last_round": 3409,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3311,
+      "last_round": 3410,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3312,
+      "last_round": 3411,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3313,
+      "last_round": 3412,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3314,
+      "last_round": 3413,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3315,
+      "last_round": 3414,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3316,
+      "last_round": 3415,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3317,
+      "last_round": 3416,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3318,
+      "last_round": 3417,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3319,
+      "last_round": 3418,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3320,
+      "last_round": 3419,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3321,
+      "last_round": 3420,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3322,
+      "last_round": 3421,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3323,
+      "last_round": 3422,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3324,
+      "last_round": 3423,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3325,
+      "last_round": 3424,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3326,
+      "last_round": 3425,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3327,
+      "last_round": 3426,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3328,
+      "last_round": 3427,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3329,
+      "last_round": 3428,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3330,
+      "last_round": 3429,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3331,
+      "last_round": 3430,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3332,
+      "last_round": 3431,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3333,
+      "last_round": 3432,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3334,
+      "last_round": 3433,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3335,
+      "last_round": 3434,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3336,
+      "last_round": 3435,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3337,
+      "last_round": 3436,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3338,
+      "last_round": 3437,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3339,
+      "last_round": 3438,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3340,
+      "last_round": 3439,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3341,
+      "last_round": 3440,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3342,
+      "last_round": 3441,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3343,
+      "last_round": 3442,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3344,
+      "last_round": 3443,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3345,
+      "last_round": 3444,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3346,
+      "last_round": 3445,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3347,
+      "last_round": 3446,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3348,
+      "last_round": 3447,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3349,
+      "last_round": 3448,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3350,
+      "last_round": 3449,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3351,
+      "last_round": 3450,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3352,
+      "last_round": 3451,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3353,
+      "last_round": 3452,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3354,
+      "last_round": 3453,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3355,
+      "last_round": 3454,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3356,
+      "last_round": 3455,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3357,
+      "last_round": 3456,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3358,
+      "last_round": 3457,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3359,
+      "last_round": 3458,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3360,
+      "last_round": 3459,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3361,
+      "last_round": 3460,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3362,
+      "last_round": 3461,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3363,
+      "last_round": 3462,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3364,
+      "last_round": 3463,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3365,
+      "last_round": 3464,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3366,
+      "last_round": 3465,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3367,
+      "last_round": 3466,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3368,
+      "last_round": 3467,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3369,
+      "last_round": 3468,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3370,
+      "last_round": 3469,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3371,
+      "last_round": 3470,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3372,
+      "last_round": 3471,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3373,
+      "last_round": 3472,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3374,
+      "last_round": 3473,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3375,
+      "last_round": 3474,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3376,
+      "last_round": 3475,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3377,
+      "last_round": 3476,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3378,
+      "last_round": 3477,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3379,
+      "last_round": 3478,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3380,
+      "last_round": 3479,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3381,
+      "last_round": 3480,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3382,
+      "last_round": 3481,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3383,
+      "last_round": 3482,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3384,
+      "last_round": 3483,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3385,
+      "last_round": 3484,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3386,
+      "last_round": 3485,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3387,
+      "last_round": 3486,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3388,
+      "last_round": 3487,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3389,
+      "last_round": 3488,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3390,
+      "last_round": 3489,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3391,
+      "last_round": 3490,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3392,
+      "last_round": 3491,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3393,
+      "last_round": 3492,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3394,
+      "last_round": 3493,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3395,
+      "last_round": 3494,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3396,
+      "last_round": 3495,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3397,
+      "last_round": 3496,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3398,
+      "last_round": 3497,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3399,
+      "last_round": 3498,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3400,
+      "last_round": 3499,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3401,
+      "last_round": 3500,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3402,
+      "last_round": 3501,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3403,
+      "last_round": 3502,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3404,
+      "last_round": 3503,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3405,
+      "last_round": 3504,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3406,
+      "last_round": 3505,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3407,
+      "last_round": 3506,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3408,
+      "last_round": 3507,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3409,
+      "last_round": 3508,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3410,
+      "last_round": 3509,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3411,
+      "last_round": 3510,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3412,
+      "last_round": 3511,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3413,
+      "last_round": 3512,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3414,
+      "last_round": 3513,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3415,
+      "last_round": 3514,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3416,
+      "last_round": 3515,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3417,
+      "last_round": 3516,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3418,
+      "last_round": 3517,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3419,
+      "last_round": 3518,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3420,
+      "last_round": 3519,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3421,
+      "last_round": 3520,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3422,
+      "last_round": 3521,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3423,
+      "last_round": 3522,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3424,
+      "last_round": 3523,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3425,
+      "last_round": 3524,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3426,
+      "last_round": 3525,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3427,
+      "last_round": 3526,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3428,
+      "last_round": 3527,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3429,
+      "last_round": 3528,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3430,
+      "last_round": 3529,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3431,
+      "last_round": 3530,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3432,
+      "last_round": 3531,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3433,
+      "last_round": 3532,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3434,
+      "last_round": 3533,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3435,
+      "last_round": 3534,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3436,
+      "last_round": 3535,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3437,
+      "last_round": 3536,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3438,
+      "last_round": 3537,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3439,
+      "last_round": 3538,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3440,
+      "last_round": 3539,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3441,
+      "last_round": 3540,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3442,
+      "last_round": 3541,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3443,
+      "last_round": 3542,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3444,
+      "last_round": 3543,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3445,
+      "last_round": 3544,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3446,
+      "last_round": 3545,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3447,
+      "last_round": 3546,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3448,
+      "last_round": 3547,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3449,
+      "last_round": 3548,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3450,
+      "last_round": 3549,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3451,
+      "last_round": 3550,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3452,
+      "last_round": 3551,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3453,
+      "last_round": 3552,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3454,
+      "last_round": 3553,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3455,
+      "last_round": 3554,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3456,
+      "last_round": 3555,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3457,
+      "last_round": 3556,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3458,
+      "last_round": 3557,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3459,
+      "last_round": 3558,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3460,
+      "last_round": 3559,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3461,
+      "last_round": 3560,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3462,
+      "last_round": 3561,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3463,
+      "last_round": 3562,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3464,
+      "last_round": 3563,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3465,
+      "last_round": 3564,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3466,
+      "last_round": 3565,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3467,
+      "last_round": 3566,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3468,
+      "last_round": 3567,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3469,
+      "last_round": 3568,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3470,
+      "last_round": 3569,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3471,
+      "last_round": 3570,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3472,
+      "last_round": 3571,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3473,
+      "last_round": 3572,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3474,
+      "last_round": 3573,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3475,
+      "last_round": 3574,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3476,
+      "last_round": 3575,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3477,
+      "last_round": 3576,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3478,
+      "last_round": 3577,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3479,
+      "last_round": 3578,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3480,
+      "last_round": 3579,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3481,
+      "last_round": 3580,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3482,
+      "last_round": 3581,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3483,
+      "last_round": 3582,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3484,
+      "last_round": 3583,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3485,
+      "last_round": 3584,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3486,
+      "last_round": 3585,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3487,
+      "last_round": 3586,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3488,
+      "last_round": 3587,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3489,
+      "last_round": 3588,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3490,
+      "last_round": 3589,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3491,
+      "last_round": 3590,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3492,
+      "last_round": 3591,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3493,
+      "last_round": 3592,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3494,
+      "last_round": 3593,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3495,
+      "last_round": 3594,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3496,
+      "last_round": 3595,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3497,
+      "last_round": 3596,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3498,
+      "last_round": 3597,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3499,
+      "last_round": 3598,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3500,
+      "last_round": 3599,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3501,
+      "last_round": 3600,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3502,
+      "last_round": 3601,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3503,
+      "last_round": 3602,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3504,
+      "last_round": 3603,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3505,
+      "last_round": 3604,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3506,
+      "last_round": 3605,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3507,
+      "last_round": 3606,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3508,
+      "last_round": 3607,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3509,
+      "last_round": 3608,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3510,
+      "last_round": 3609,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3511,
+      "last_round": 3610,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3512,
+      "last_round": 3611,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3513,
+      "last_round": 3612,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3514,
+      "last_round": 3613,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3515,
+      "last_round": 3614,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3516,
+      "last_round": 3615,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3517,
+      "last_round": 3616,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3518,
+      "last_round": 3617,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3519,
+      "last_round": 3618,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3520,
+      "last_round": 3619,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3521,
+      "last_round": 3620,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3522,
+      "last_round": 3621,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3523,
+      "last_round": 3622,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3524,
+      "last_round": 3623,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3525,
+      "last_round": 3624,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3526,
+      "last_round": 3625,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3527,
+      "last_round": 3626,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3528,
+      "last_round": 3627,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3529,
+      "last_round": 3628,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3530,
+      "last_round": 3629,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3531,
+      "last_round": 3630,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3532,
+      "last_round": 3631,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3533,
+      "last_round": 3632,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3534,
+      "last_round": 3633,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3535,
+      "last_round": 3634,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3536,
+      "last_round": 3635,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3537,
+      "last_round": 3636,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3538,
+      "last_round": 3637,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3539,
+      "last_round": 3638,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3540,
+      "last_round": 3639,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3541,
+      "last_round": 3640,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3542,
+      "last_round": 3641,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3543,
+      "last_round": 3642,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3544,
+      "last_round": 3643,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3545,
+      "last_round": 3644,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3546,
+      "last_round": 3645,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3547,
+      "last_round": 3646,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3548,
+      "last_round": 3647,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3549,
+      "last_round": 3648,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3550,
+      "last_round": 3649,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3551,
+      "last_round": 3650,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3552,
+      "last_round": 3651,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3553,
+      "last_round": 3652,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3554,
+      "last_round": 3653,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3555,
+      "last_round": 3654,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3556,
+      "last_round": 3655,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3557,
+      "last_round": 3656,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3558,
+      "last_round": 3657,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3559,
+      "last_round": 3658,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3560,
+      "last_round": 3659,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3561,
+      "last_round": 3660,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3562,
+      "last_round": 3661,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3563,
+      "last_round": 3662,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3564,
+      "last_round": 3663,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3565,
+      "last_round": 3664,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3566,
+      "last_round": 3665,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3567,
+      "last_round": 3666,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3568,
+      "last_round": 3667,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3569,
+      "last_round": 3668,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3570,
+      "last_round": 3669,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3571,
+      "last_round": 3670,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3572,
+      "last_round": 3671,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3573,
+      "last_round": 3672,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3574,
+      "last_round": 3673,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3575,
+      "last_round": 3674,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3576,
+      "last_round": 3675,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3577,
+      "last_round": 3676,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3578,
+      "last_round": 3677,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3579,
+      "last_round": 3678,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3580,
+      "last_round": 3679,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3581,
+      "last_round": 3680,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3582,
+      "last_round": 3681,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3583,
+      "last_round": 3682,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3584,
+      "last_round": 3683,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3585,
+      "last_round": 3684,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3586,
+      "last_round": 3685,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3587,
+      "last_round": 3686,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3588,
+      "last_round": 3687,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3589,
+      "last_round": 3688,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3590,
+      "last_round": 3689,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3591,
+      "last_round": 3690,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3592,
+      "last_round": 3691,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3593,
+      "last_round": 3692,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3594,
+      "last_round": 3693,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3595,
+      "last_round": 3694,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3596,
+      "last_round": 3695,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3597,
+      "last_round": 3696,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3598,
+      "last_round": 3697,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3599,
+      "last_round": 3698,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3600,
+      "last_round": 3699,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3601,
+      "last_round": 3700,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3602,
+      "last_round": 3701,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3603,
+      "last_round": 3702,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3604,
+      "last_round": 3703,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3605,
+      "last_round": 3704,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3606,
+      "last_round": 3705,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3607,
+      "last_round": 3706,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3608,
+      "last_round": 3707,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3609,
+      "last_round": 3708,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    },
+    {
+      "first_round": 3610,
+      "last_round": 3709,
+      "observed_rounds": 100,
+      "accepted": 0,
+      "rejected": 100
+    }
+  ],
+  "warmup_rows_not_plotted": 99,
+  "definition": "Each plotted endpoint uses exactly 100 consecutive observed decisions; accepted plus rejected equals 100. Overlapping descriptive windows, without padding or independent-trial interpretation.",
+  "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --rolling-admissions"
+}

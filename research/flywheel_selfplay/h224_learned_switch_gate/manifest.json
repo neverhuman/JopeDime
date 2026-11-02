@@ -1,0 +1,112 @@
+{
+  "wave": "H224",
+  "status": "PREREGISTERED",
+  "authority": "hw_t1325_astra_h224.md",
+  "parent_commit": "973298e282eadfbefb159d13bfaf4d788a24c1b9",
+  "parent_sources": {
+    "research/flywheel_selfplay/h217_gated025_confirm/runner.py": "0d8bbbd39460fe5bb729e5c1f0beadff52b9dcb63224bb62b4b18d52daffe136",
+    "research/flywheel_selfplay/h217_gated025_confirm/analysis.py": "a509ff6d6f0531a6ce6a051e03aee1e3170534d939ddaa277dc983222d6f1431",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "seeds": [
+    224101,
+    224102,
+    224103
+  ],
+  "fold_seeds": {
+    "224101": 224141,
+    "224102": 224142,
+    "224103": 224143
+  },
+  "staging": "/home/ubuntu/jope-data/h195/inputs",
+  "sample_seed": 224140,
+  "arms": [
+    "R882",
+    "GATED_025",
+    "LGATE",
+    "LGATE_SHUF"
+  ],
+  "primary": "LGATE",
+  "fits": {
+    "unique_histgbm": 45,
+    "logical_cell_fit_uses": 60,
+    "smoke_subset_reused": 4,
+    "extra_histgbm": 0
+  },
+  "gate": {
+    "C_grid": [
+      0.01,
+      0.1,
+      1.0,
+      10.0
+    ],
+    "features": [
+      "zgap capped1e6",
+      "native second-smallest minus min cost",
+      "normalized stable rank of native pick under blend",
+      "calibrated GBM cost nativepick minus blendpick",
+      "candidate pool size"
+    ],
+    "C_selection": "3 inner FIT family groups, equal-family weighted log loss on fixed OOF HistGBM feature table",
+    "threshold": "FIT gate-OOF probability quantiles, max equal-family true gain subject harm<=.05, tie higher threshold; closed fallback",
+    "placebo": "permute binary labels within FIT switching families only; same true-utility threshold criterion"
+  },
+  "resources": {
+    "host": "xbabe2",
+    "cpu_only": true,
+    "nice": 19,
+    "affinity_cores": 4,
+    "process_tree_rss_less_than": 4294967296,
+    "min_free_bytes": 300000000000,
+    "min_available_ram": 21474836480,
+    "compute_stop": "2026-11-02T18:00:00Z",
+    "closeout_deadline": "2026-11-02T18:30:00Z",
+    "retry_allowed": false,
+    "load_pause_above": 60,
+    "load_resume_at_or_below": 55,
+    "load_pause_check_seconds": 60,
+    "load_pause_only_own_worker_pid": true
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.16.3",
+    "scikit-learn": "1.7.2",
+    "torch": "2.7.0",
+    "psutil": "7.1.0",
+    "boto3": "1.35.49"
+  },
+  "s3_prefix": "experiments/rd_breakthrough_20261102/H224/astra-t1325/",
+  "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "best_match_jaccard": 0.1927922014576975,
+  "source_sha256": {
+    "PREREG.md": "a3bea119f192211a9f276b0965984ebda859ecf588f58bcf8c848941ebd89b52",
+    "README.md": "43a26ab83916450c7e2b70b19300b5b7928f908652dee71691397a80482a3845",
+    "analysis.py": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434",
+    "fold_manifest.json": "eee7551b3bc87140ece979b93fab865be71e383fc63d93e4a303b9e5bc6d2e9e",
+    "gate.py": "b6da8ad57f940aeef3a504439f4848df2e06344d14652e768adf32858637ebc3",
+    "monitor.py": "3d5062e39aae1c00b619f8096c12fc3b98bbe30a492683f728de01a08811df4a",
+    "provenance.json": "2a9a583133f7fe119563586f8ee7263c55f9f088451ec6a16642859439046ed9",
+    "runner.py": "ca3a8aee72a6158e600671a07e9870ac4db1b219c9a915cec95b5ecc2d11e64d",
+    "test_h224.py": "8ca1a1db857abdbde05dff4fee31113e5dc14f0d75bf84d992d69d4159c23b76"
+  },
+  "amendments": [
+    {
+      "id": "A1",
+      "pre_launch": true,
+      "reason": "Ignore already-exited short-lived children during RSS/thread sampling; retain all live resource failures.",
+      "science_unchanged": true,
+      "attempt_consumed": false
+    },
+    {
+      "id": "A2",
+      "utc": "2026-11-02T14:00:10.506879+00:00",
+      "authority": "hw_t1400_loadguard.md",
+      "pre_outcome": true,
+      "change": "Load>60 pauses only own worker; recheck60s/resume<=55; hard guards and absolute deadlines unchanged.",
+      "attempt_consumed": false
+    }
+  ]
+}
