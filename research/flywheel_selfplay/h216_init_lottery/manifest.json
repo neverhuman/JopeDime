@@ -1,7 +1,7 @@
 {
   "schema": "jope.h216-init-lottery/v1",
   "wave": "H216",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "owner": "rd_argon",
   "authority": "/home/ubuntu/nudges/hw_t0300_argon_h216.md",
   "arms": [
@@ -176,12 +176,52 @@
   },
   "source_sha256": {
     "PREREG.md": "cfbf9eb6be5604713c3221058e5f32191ffa1c295e47001012eaecd625a7b3a0",
-    "README.md": "3d5e28e034b443bd21bb39233e2cf237cf020708e7943c7b53a922f90c3e655b",
+    "README.md": "6d5ca0f1ebc9b5e74e0c43ef0291c12889a95c965d53cf07523f085154fdc480",
     "analysis.py": "dfa22e9e7165d9e1356619e3ea7635122dde9190088bc5b969bbd7ddfa0a1824",
     "fold_manifest.json": "92c4ca7852db8a09072df7bcfec46ee08d7024aa6d4572f33f8eff90f590ff30",
     "parents.py": "7072249c7b471240f2b561df1540bcc3b43eea6c9172d95c91e9ab70def5330a",
     "provenance.json": "94baa31da32710f1cbba1cb725b48c6687ea8dd77bbddf77136bb4873ae71376",
     "runner.py": "f7326b7df4fb21bb036507c3d0da2ddcb7fb5179b51047624af446be2ca38b43",
     "test_h216.py": "20973f466abeab80b5ae3d36221afb57c4192db162bf3c18daf3282159a2bbfd"
+  },
+  "verdict": "NO_ADVANCE",
+  "s3_custody": {
+    "b_selection_lock.json": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H216/argon-t0300/b_selection_lock.json",
+      "version_id": "nxllTYYPBxoLZFRzx2lmwRZW5PzoVy9Q",
+      "sha256": "70323592e1c6764a83091224cd039a0fae784d357f54881d5d997f95bef11c61",
+      "bytes": 476325
+    },
+    "OOF-panels.npz": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H216/argon-t0300/OOF-panels.npz",
+      "version_id": "GlCjyLXa8lH.1zc.lGou6JqgFpoTeTTc",
+      "sha256": "f5f45c7a85ecf7cf03646e06ae03a582f4d5c8e86f56fe6d2120f3de9065bee1",
+      "bytes": 159637
+    },
+    "audit.json": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H216/argon-t0300/audit.json",
+      "version_id": "eP7RVKX494wnXbdQYTF8pe2TffYfK_kC",
+      "sha256": "718fdbcb1c32b829e06d3458aaf51eed47bb046ddfc540c584b5545f88094701",
+      "bytes": 153521
+    },
+    "initial_hashes.json": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H216/argon-t0300/initial_hashes.json",
+      "version_id": "18LbKMiNZAuZxEd_AkTkc6IFUKNaUdrI",
+      "sha256": "bbb4f3e2d2a81c585462d17862f61fbe68a7171ba58267708d541dd58729a831",
+      "bytes": 3843
+    },
+    "metrics.json": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H216/argon-t0300/metrics.json",
+      "version_id": "Meayw7e0yLIqdb.zWUZ5o9y7oXQLyCv2",
+      "sha256": "0ab037b10b899e640451377e334fb46b86619d2b700f10fa7a32322e43b78f02",
+      "bytes": 18742
+    },
+    "evidence.tar.gz": {
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H216/argon-t0300/evidence.tar.gz",
+      "version_id": "8ZcuWWmkIhh8qZ4SPNej.JZfqCIQTQYP",
+      "sha256": "613e9b29fc041738405407318e344e9c66f08d920e45b8c1118fbb3e967a9eac",
+      "bytes": 565539646,
+      "member_count": 541
+    }
   }
 }
