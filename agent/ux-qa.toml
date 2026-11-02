@@ -1,0 +1,18 @@
+version = 1
+app = "web/training-dashboard"
+canonical_alias = "apps/web"
+proof_command = "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard run test:rendered"
+artifact_root = "target/ci-evidence/rendered-ux"
+
+[rendered]
+runner = "playwright"
+browser = "chromium"
+viewports = ["1440x1000", "390x844"]
+api_fixture = "web/training-dashboard/e2e/observer-fixture.ts"
+accessibility = "axe-core wcag2a,wcag2aa,wcag21aa"
+visual_evidence = "screenshots attached by e2e/observatory.spec.ts"
+geometry = "viewport overflow, landmark/panel bounds, and dialog bounds"
+workers = 1
+retries = 0
+
+design_tokens = "web/training-dashboard/src/design-tokens.css"

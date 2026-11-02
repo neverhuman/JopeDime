@@ -86,7 +86,12 @@ record its owner, exact command, maximum wall time, concurrency, input scope, an
 launch. The stop condition must be enforced by the command or supervising lane; reaching a bound,
 losing an input pin, or receiving an unknown result stops the run without an automatic retry. Record
 actual duration, attempts, resources and any external charges with the run receipt. A command that has
-no declared cap is not an approved paid or shared-resource lane. Keep one reused `target/` per lane,
+no declared cap is not an approved paid or shared-resource lane. The default permitted external spend
+for an invocation is **$0**. A paid invocation requires a run-specific, owner-approved maximum cost in
+its preflight record; unknown pricing, missing quota, or unavailable kill-switch evidence means no
+launch. The supervising lane must stop before the approved cost or resource ceiling, and the receipt
+records the estimate, ceiling, actual charge when available, stop reason, and kill-switch result. This
+policy does not invent a dollar ceiling for an unapproved operation. Keep one reused `target/` per lane,
 `CARGO_TARGET_DIR` unset, `CARGO_BUILD_JOBS` at or below 16, and the BLAS/Rayon limits from the owning
 proof lane. Do not infer a compute or cloud budget from a test pass.
 
@@ -96,8 +101,9 @@ A passing unit, integration, smoke, audit or main-guard job is evidence only for
 release-readiness claim also needs current, reviewable evidence for security controls, recoverable
 backups, monitoring and alert ownership, a tested rollback path, and abuse/rate controls. Link each
 artifact to the release candidate and record its owner and timestamp. Missing, stale, untested, or
-unknown evidence remains open; this page does not certify that a particular release has met those
-gates.
+unknown evidence remains open. This page makes no release-readiness claim; no gate is considered passed
+without a candidate-bound artifact and an owner/time record. Release promotion must stop while any of
+those artifacts is missing or unknown.
 
 ## Canonical path aliases
 

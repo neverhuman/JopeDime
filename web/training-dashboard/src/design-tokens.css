@@ -1,0 +1,12 @@
+/* Shared dashboard color tokens; contrast is exercised by the rendered axe lane. */
+:root {
+  --muted: #52665c;
+  --text-muted: #52665c;
+  --text-subtle: #586e62;
+  --status-success: #3e6b34;
+  --status-warning: #77501f;
+  --focus-ring: #3174bb;
+  --line: #e5eae6;
+  --green: #137b60;
+  --purple: #8181d5;
+}

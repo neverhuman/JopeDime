@@ -30,6 +30,7 @@ from runtime import (
     MIXED_H58_CACHE,
     TRAIN_CACHE,
     VAL_CACHE,
+    ABSOLUTE_DEADLINE_UNIX,
     Audit,
     assert_frozen_anchor,
     atomic_claim,
@@ -366,6 +367,7 @@ class H147Tests(unittest.TestCase):
                 ),
                 mock.patch("os.getloadavg", return_value=(10.0, 10.0, 10.0)),
                 mock.patch("runtime.tree_bytes", return_value=1000),
+                mock.patch("runtime.time.time", return_value=ABSOLUTE_DEADLINE_UNIX - 1),
             ):
                 res = guards(tmp)
                 self.assertEqual(res["disk_free_bytes"], 50_000_000_000)

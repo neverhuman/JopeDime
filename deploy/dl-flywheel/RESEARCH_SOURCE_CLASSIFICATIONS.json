@@ -3825,12 +3825,12 @@
       "sha256": "ec15b5a127c0aee5323d08798678ab930a0f968b4a02696853a429a4056fe7fd"
     },
     "python:research/flywheel_selfplay/h144_reg_sweep/runtime.py": {
-      "bytes": 6220,
+      "bytes": 4942,
       "classification": {
         "reason": "H144 owner-directed regularization sweep controls: median-seed equal-family bootstrap, Holm-four with prospectively excluded dropout arms, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc"
+      "sha256": "426dbf23a3343fdefcfdf4c9d7591bed387cd2ba5a2158d58fa115eb36147a82"
     },
     "python:research/flywheel_selfplay/h144_reg_sweep/science.py": {
       "bytes": 5131,
@@ -3839,6 +3839,14 @@
         "role": "research"
       },
       "sha256": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c"
+    },
+    "python:research/flywheel_selfplay/h146_lookahead_exec/runtime.py": {
+      "bytes": 5868,
+      "sha256": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
+      "classification": {
+        "role": "research",
+        "reason": "h146_lookahead_exec historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification."
+      }
     },
     "python:research/flywheel_selfplay/h147_reveal_alignment/monitor.py": {
       "bytes": 5539,
@@ -3857,12 +3865,12 @@
       "sha256": "72f88b0b59021913b94f048a4063da90167bbb7cc45cfc478cd622fcb0b6bfac"
     },
     "python:research/flywheel_selfplay/h147_reveal_alignment/runtime.py": {
-      "bytes": 19145,
+      "bytes": 19287,
       "classification": {
         "reason": "H147 owner-directed matched-support reveal alignment 5-fold CV executor: SUPPORT_CTRL, STORAGE_REVEAL, and STORAGE_MASK over common 192-candidate support S across 205 DL-Train families (1,219 contexts), intersection Holm m=2 gates vs SUPPORT_CTRL and r882, pinned Bradley-Terry MM Elo, bytewise frozen state, squash-compatible source binding and hard-stop offline CPU guards. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+      "sha256": "5c5dbfa5c0c7df2828989193dab7c9505c53c1c7da1667495aa62836cac12c3b"
     },
     "python:research/flywheel_selfplay/h147_reveal_alignment/science.py": {
       "bytes": 17445,
@@ -3889,12 +3897,12 @@
       "sha256": "2a1b5108b24433f4d73077629a69ec4e1d71791b10cb9c374972a34f0c372a24"
     },
     "python:research/flywheel_selfplay/h149_wd_dose/runtime.py": {
-      "bytes": 6220,
+      "bytes": 4942,
       "classification": {
         "reason": "H149 owner-directed weight-decay dose controls: median-seed equal-family bootstrap, Holm-two and inclusive five-percent drift manipulation gate, strict ties/completeness, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6"
+      "sha256": "c4a7f15ca73c51c2024d8bca622fdef312dface655dc888dd25da2a7a6f232b9"
     },
     "python:research/flywheel_selfplay/h149_wd_dose/science.py": {
       "bytes": 6139,
@@ -3921,12 +3929,12 @@
       "sha256": "88b25f0cd44b2e4907ea598bc30b93f7273092ae74dcfd316836591ccc612760"
     },
     "python:research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": {
-      "bytes": 7368,
+      "bytes": 6090,
       "classification": {
         "reason": "H151 owner-directed Lookahead drift-matched control suite: median-seed equal-family bootstrap, inclusive [0.85, 1.15] 15% drift-matching manipulation gate, three-seed r882 advancement and Holm-four gates across all executed arms, Lookahead k=5 alpha=0.5 schedule, input audit, bytewise frozen state and bounded offline CPU resources. Research only; no product or sealed-test qualification.",
         "role": "research"
       },
-      "sha256": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b"
+      "sha256": "9b8fea3e714947a69753524485a68c70226c9df05514306f563f4db35853e3af"
     },
     "python:research/flywheel_selfplay/h151_lookahead_drift_control/science.py": {
       "bytes": 8414,
@@ -3935,6 +3943,14 @@
         "role": "research"
       },
       "sha256": "3e38deb3a719403ac1a5c4fdf8ffe6a73d586697e57dd31db2f5a27d26eb6905"
+    },
+    "python:research/flywheel_selfplay/h153_sam/runtime.py": {
+      "bytes": 4942,
+      "sha256": "334b8e4968b42da9a054656ca17bc960db6e476239b5dcaf74a2658e4ecd43ae",
+      "classification": {
+        "role": "research",
+        "reason": "h153_sam historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification."
+      }
     },
     "python:research/flywheel_selfplay/h154_trajectory_ema_swa/monitor.py": {
       "bytes": 5959,
@@ -3985,12 +4001,12 @@
       "sha256": "9e7babd00b0df66ab4c60d474ee04ef59341f879c1f6ad901881993f1459fc74"
     },
     "python:research/flywheel_selfplay/h158_distillation/runtime.py": {
-      "bytes": 7515,
+      "bytes": 6237,
       "classification": {
         "reason": "H158 owner-directed fit-only frozen-teacher KL distillation, full-context gate veto, KD-three Holm family, strict ties/completeness, frozen state and bounded offline CPU resources. Research only; no product/sealed qualification.",
         "role": "research"
       },
-      "sha256": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4"
+      "sha256": "9c4f07b473a252f62a7cb65590c2f884c8da4a66466ad132a1b90654d9b888e7"
     },
     "python:research/flywheel_selfplay/h158_distillation/science.py": {
       "bytes": 5680,
@@ -3999,6 +4015,1198 @@
         "role": "research"
       },
       "sha256": "fb26f152ff7cf735835be887ee3bde0365007045f6d3a7c312781b39ae81ff19"
+    },
+    "python:research/flywheel_selfplay/h161_robust_fambal/runtime.py": {
+      "bytes": 5767,
+      "sha256": "dc34737eb6ebe47cfe617f7893cf45566d52f8c7b755cf27b41032304a3245fa",
+      "classification": {
+        "role": "research",
+        "reason": "h161_robust_fambal historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/analysis.py": {
+      "bytes": 7623,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "7461ef085d22587a48838067c13a09e8691a38e38eacb18d08a028fbec9e1569"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/monitor.py": {
+      "bytes": 4521,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "5ef2442c1f56996464488651e0b9674efa9447c0c93c1e32583732c31c7857b7"
+    },
+    "python:research/flywheel_selfplay/h163_prediction_ensemble/run.py": {
+      "bytes": 20112,
+      "classification": {
+        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a344a7aff13401a46e7be1851a14ce3dff984fe5296b9dd4cdd90a70839cf584"
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/launch.py": {
+      "bytes": 1390,
+      "sha256": "3b83896fea04603de0879f5ed4e564e419e1bcc1d5b620de62c93738f92b482b",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/monitor.py": {
+      "bytes": 6048,
+      "sha256": "e28621ac02345227619e1aef6401395a95044640dac75950eaf11329e787909f",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/runner.py": {
+      "bytes": 27478,
+      "sha256": "767e785158f44c7581a7a67b52e9105e4ebdcf5293007594e44c4463661e11db",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/runtime.py": {
+      "bytes": 4942,
+      "sha256": "f10fdb163f214d6e7cdb5d95504d0d61a96cf6acc3cd08c54c807080142e7318",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h164_sam_retry/science.py": {
+      "bytes": 8270,
+      "sha256": "5debc7d42a5745649627da5b7084a876bef2b1964d844eb975b55d3a666bee0f",
+      "classification": {
+        "role": "research",
+        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/analysis.py": {
+      "bytes": 6581,
+      "sha256": "e5e3138ac7487edbff956012f0ba4dba86fc5198a3c1f79c99ead6d353857086",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/monitor.py": {
+      "bytes": 4891,
+      "sha256": "71f0a2882f80e53dea484b29921fd45a57a101d16c0a06280de8dd247213535a",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/runner.py": {
+      "bytes": 32574,
+      "sha256": "52697b71220c57bef2e7b718a27a5ea451570512e0da921211019ffd374f7f6f",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h167_input_noise/treatment.py": {
+      "bytes": 6747,
+      "sha256": "e1d2f89934523c369667345b474db8395dd35b17bfa210dcc1bb028ef9a7c501",
+      "classification": {
+        "role": "research",
+        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/monitor.py": {
+      "bytes": 5840,
+      "sha256": "0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/runner.py": {
+      "bytes": 46887,
+      "sha256": "9c35e10456cee9c0f5c3d2eea6b2b75a6e311848a5534c8b18130a7519ee3249",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/runtime.py": {
+      "bytes": 15824,
+      "sha256": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h168_selector_remedy/science.py": {
+      "bytes": 15063,
+      "sha256": "805d7f23188217e252e50a611421c065e69e2d25a09fa61f74a47de8f38b8ba7",
+      "classification": {
+        "role": "research",
+        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/analysis.py": {
+      "bytes": 7086,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "30af2ebeda438de7db1d7e4e592a46dffbc273b4cb31dabb3925ab7d1fcac527"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/monitor.py": {
+      "bytes": 5293,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "b1d173305ac59c60f4d34b355df62479ebdfb5ac6103ac0646a6d6525c7ea2a3"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/runner.py": {
+      "bytes": 30768,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "8ec30b06f92c8ad9b369c2c2c3257c61bcac557f1a1d65ad10e94664557e85b6"
+    },
+    "python:research/flywheel_selfplay/h169_optimizer_geometry/treatment.py": {
+      "bytes": 2340,
+      "classification": {
+        "role": "research",
+        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "30f243e772dbb123ed81cb25e8f32c14e800afef50b6d840802dabddcb443634"
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/analysis.py": {
+      "bytes": 9598,
+      "sha256": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/monitor.py": {
+      "bytes": 5212,
+      "sha256": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/runner.py": {
+      "bytes": 28560,
+      "sha256": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h170_onecycle/treatment.py": {
+      "bytes": 3477,
+      "sha256": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
+      "classification": {
+        "role": "research",
+        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
+      "bytes": 12151,
+      "sha256": "16640f1dd5f0f9375cbea3470e3a0199071488dfb47dcaa97b7abc71eb48fb75",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/monitor.py": {
+      "bytes": 4891,
+      "sha256": "1e99dd69ac8292ad18982e5f24c6e62633d5f83858a9ec5936af27dafab20596",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/runner.py": {
+      "bytes": 53098,
+      "sha256": "3c07b93e5ad0c34cadfdab1a7e072275f00069202da46740799aee6469d68512",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h171_grad_accum/treatment.py": {
+      "bytes": 9404,
+      "sha256": "de8de6c4f0030893577641435c8894cc014b90f3a73438ddb9fe252299d3cdf1",
+      "classification": {
+        "role": "research",
+        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/monitor.py": {
+      "bytes": 5850,
+      "sha256": "52806f32db92dd98af7748b1961ccd10e28877cb2079e3f5b2ae187da4c1553d",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/runner.py": {
+      "bytes": 49831,
+      "sha256": "f5cefaa52c5a3bff7e8a4377ccc1c69104d1910d197ae624a545b5d7f2def6a8",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/runtime.py": {
+      "bytes": 10004,
+      "sha256": "4c4342bcb8de9a9c157dc400ba062e061742f90e2cac96a4a61546ec498be05e",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h173_hard_context_reweight/science.py": {
+      "bytes": 20882,
+      "sha256": "ea469183ebf623ed19e7d859630b89c32c663eed5f68a69e49b1d0f07a84eb6a",
+      "classification": {
+        "role": "research",
+        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h174_swag/analysis.py": {
+      "bytes": 8046,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "5c49bd20a3865ca3bb3a2833c4701b95b66cb00d0e295640751b461a9c701c4c"
+    },
+    "python:research/flywheel_selfplay/h174_swag/monitor.py": {
+      "bytes": 5480,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "6f8e7d28a730daaf6b59009e8168c19de2a2ab494cfbeded5efcc73964d1c4aa"
+    },
+    "python:research/flywheel_selfplay/h174_swag/runner.py": {
+      "bytes": 39305,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "fb33e03e266c34ab16f72de16a92cb8d8a87cad78e5db720aa0cd3727d33bcd7"
+    },
+    "python:research/flywheel_selfplay/h174_swag/treatment.py": {
+      "bytes": 6366,
+      "classification": {
+        "role": "research",
+        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
+      },
+      "sha256": "48ee6dce13cd8ccb608162b2a11d0d7cc6eef251dda5c5a7638953f64ae9374d"
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/monitor.py": {
+      "bytes": 5212,
+      "sha256": "f9c057520bf6937ba36d8493a24bce156b04757d4e86f9903ba18fbbb5411a7d",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/power.py": {
+      "bytes": 21152,
+      "sha256": "c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/protocol.py": {
+      "bytes": 8547,
+      "sha256": "de98f5824f2750fa89e21205d70ffa80f226224e4093cff746eb3b26e9b47197",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h175_selector_power/runner.py": {
+      "bytes": 10525,
+      "sha256": "276f0853e3e41452562aeae5c35a2a8f791ec085fc31a739a2ee7e0110749ff5",
+      "classification": {
+        "role": "research",
+        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/analysis.py": {
+      "bytes": 13501,
+      "sha256": "4623f888133d15fc5f6653b61f394260145c98b5bd4b8b19161fac9c946fe67f",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
+      "bytes": 5200,
+      "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/runner.py": {
+      "bytes": 27102,
+      "sha256": "c54bc8e72c1500db056743c499d8d959e09272db9d2d597e4035a4f223511795",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h176_data_scaling/treatment.py": {
+      "bytes": 2139,
+      "sha256": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe",
+      "classification": {
+        "role": "research",
+        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/analysis.py": {
+      "bytes": 22246,
+      "sha256": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/monitor.py": {
+      "bytes": 4891,
+      "sha256": "276684ebfe140643d50a4c38106d9b7db0b6303272b1883ee891b2a6362badba",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/runner.py": {
+      "bytes": 39544,
+      "sha256": "214f0fe82d3e81a5a30b380b7057555792a50437ccf82637c3fcfb4c6019a182",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h177_pooled_selector/treatment.py": {
+      "bytes": 12777,
+      "sha256": "167a0d8d3fdf9d3f811e79259b6bf7e38b6ea810d15bdcc40e128b68317a044a",
+      "classification": {
+        "role": "research",
+        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/calibration.py": {
+      "bytes": 55577,
+      "sha256": "c8351c915e04c5efa436530fdedbcb4594817aa78edf2497eead3d08e9378700",
+      "classification": {
+        "role": "research",
+        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/monitor.py": {
+      "bytes": 5378,
+      "sha256": "961cdec04d8f7d207e61e14412f9abad04ea43a021bbbae667021486a6e68095",
+      "classification": {
+        "role": "research",
+        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h178_pooled_calibration/runner.py": {
+      "bytes": 12345,
+      "sha256": "5316aa33812d2ad46627323839dc0ad985faa726a76dcc380490b96dc2a31f6b",
+      "classification": {
+        "role": "research",
+        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/analysis.py": {
+      "bytes": 11013,
+      "sha256": "fb6d52dca4cf6d411e6bf27e1832b80d7010093aa7fbdaba8ed29d3e7fac60e1",
+      "classification": {
+        "role": "research",
+        "reason": "H179 data-free ensemble inference, family-bootstrap, Holm correction, Elo, verdict, seed, fold, and timing-plan implementation. Research only; no model or product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/monitor.py": {
+      "bytes": 5192,
+      "sha256": "6d1c29e0f46ff91d157ec6bc8356f00c88ba969113549df6d7073b1b90579b4e",
+      "classification": {
+        "role": "research",
+        "reason": "H179 CPU-only xbabe2 attempt supervisor with 93.8% disk-use stop and process resource guards. Research only; no product or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/runner.py": {
+      "bytes": 28873,
+      "sha256": "3869448c9f0abee36a7573fff481bbbf64bd5f0dff88ba7c10ddf84127c19764",
+      "classification": {
+        "role": "research",
+        "reason": "H179 pinned CPU-only runner for independent fresh adapter members and candidate-score ensembles, with fold isolation and fixed timing pilot. Research only; no product or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h179_deep_ensemble/treatment.py": {
+      "bytes": 2139,
+      "sha256": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe",
+      "classification": {
+        "role": "research",
+        "reason": "H179 reuses the H176 pinned adapter forward/loss support for frozen DOPE and adapter-only CPU research. Research only; no product or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/analysis.py": {
+      "bytes": 14437,
+      "sha256": "4ba3ed98c32a913c2bfad1015bd5f75945a8a2633ecb56ddb614daf7ebe2441b",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/monitor.py": {
+      "bytes": 5235,
+      "sha256": "3e03e97d4c9d4aa141248bb65987b8640e2988655cdf8aaf7b36e35f50d0afc5",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/runner.py": {
+      "bytes": 35260,
+      "sha256": "a58fffea1d432b15613287b0786aaf8c5190cfe1127c33ad1e9a4e93e10d191e",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h180_adapter_ablation/treatment.py": {
+      "bytes": 3556,
+      "sha256": "d4752ba7fd6430157161ec707ff1ef588925b3baeb82a12c36a9516d7ea2ec9d",
+      "classification": {
+        "role": "research",
+        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/monitor.py": {
+      "bytes": 5215,
+      "sha256": "282aa760d26cc71500a013eaef421f3bc58d42946b46a105974d1e2fc2839ada",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/posthoc.py": {
+      "bytes": 4050,
+      "sha256": "81b39df69e3f092dd78aa4ce8ac4518bcd705653423afec73e766fcb962bcfaf",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/replay.py": {
+      "bytes": 17706,
+      "sha256": "ceb9ba2b8811482ef74ba510990b147ea12190178df1e1aa79e89a77a3b05fbe",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/runner.py": {
+      "bytes": 9133,
+      "sha256": "4a7d47cb63b27b2007d3ba7ba748e53632f0e6fed83af5067251489b44e4461a",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h181_covariate_selector/science.py": {
+      "bytes": 8647,
+      "sha256": "519b069f438f38c4527488394a0565df2cea62b55fc24322056ae37ea049afaa",
+      "classification": {
+        "role": "research",
+        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
+      }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/analysis.py": {
+      "bytes": 13172,
+      "sha256": "6c6c955f99a347629d2e4660589b3370472b3a8ceb8f186ad48bc3d2c9fa80b7",
+      "classification": {
+        "role": "research",
+        "reason": "H182 ensemble-size bootstrap/Holm/Elo/verdict and strict nested member-seed/fold/timing rules; research only, no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/monitor.py": {
+      "bytes": 5193,
+      "sha256": "0aaf571f391f1be7bed8efec31fb219a5a466faf7fb6bb7f4333c02634feea33",
+      "classification": {
+        "role": "research",
+        "reason": "H182 xbabe2 CPU supervisor with four-hour deadline and process/resource guards; research only, no product or serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/runner.py": {
+      "bytes": 41760,
+      "sha256": "b837328d6835e12eb0f5514044600e976f774175e062ed110afa7499adcbc471",
+      "classification": {
+        "role": "research",
+        "reason": "H182 pinned CPU-only runner for 20 distinct fresh adapter members, nested 5/10/20 ensembles, FIT-only training, and custody-only member A scores; research only."
+      }
+    },
+    "python:research/flywheel_selfplay/h182_ensemble_size_dose/treatment.py": {
+      "bytes": 2199,
+      "sha256": "fe0156ad79db3b70849963f86d4d78615000f36ead201e82d95e1c9b61766407",
+      "classification": {
+        "role": "research",
+        "reason": "H182 reuses H179/H176 pinned adapter forward/loss support for fresh adapter-only CPU research; no product qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/analysis.py": {
+      "bytes": 7701,
+      "sha256": "a2cc7f12ca18f31c39a346428426c3c101dd86f736368249dd51dc14a7ae0257",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/distill.py": {
+      "bytes": 1721,
+      "sha256": "984db24f24ed4eef2d55beea107f9dcee6592cf65c00035089e9040d2c7bcee2",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/monitor.py": {
+      "bytes": 5193,
+      "sha256": "f14b2684077c390d548101cf86771966b0642651143014103ba64836e0a0aeed",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/parents.py": {
+      "bytes": 1151,
+      "sha256": "03c8fa1d332f998103f62896a375488ceaa96327a83f0940c81972dea0f041f8",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h183_ensemble_distill/runner.py": {
+      "bytes": 26337,
+      "sha256": "516619a3e230a39464d7b03c45ae638ca293195b58e008a0c03b142962cc4213",
+      "classification": {
+        "role": "research",
+        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/analysis.py": {
+      "bytes": 14238,
+      "sha256": "08a7af01e725c68e041ac1a522ca097e4d81c1c58d46f319559a332263a1390e",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/monitor.py": {
+      "bytes": 5240,
+      "sha256": "9afc0055f458b056bae49b37b756a154051b29c0a945ce3fd76ef0309cea6356",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/runner.py": {
+      "bytes": 32752,
+      "sha256": "0fdf87d9091ca24af361ef8190c57b8881993f51fc5e18dbc446a42af43928a6",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h184_adapter_components/treatment.py": {
+      "bytes": 8723,
+      "sha256": "64ff420beaf466e444192b5bdf5bbd9714900b17e19abbe3a2eea484b001582e",
+      "classification": {
+        "role": "research",
+        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/analysis.py": {
+      "bytes": 22527,
+      "sha256": "6371dfd6f1b731f79f5e15c21acd3c7e4aa30432cc2f6b71d6521aaf3bff52db",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/monitor.py": {
+      "bytes": 4892,
+      "sha256": "26f43d55c09995aaa101aebce4dcacf55d8c29fe3212670a1cb431dad9f42834",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/runner.py": {
+      "bytes": 59887,
+      "sha256": "fd41edb3073f71b90d16042e6adb350b28322cbb36a1b54aeebd0c867303c25a",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/treatment.py": {
+      "bytes": 2527,
+      "sha256": "6facc59a28d80cc47bf7441a72f431502f10284020e22c7a0655133d43c4c710",
+      "classification": {
+        "role": "research",
+        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/analysis.py": {
+      "bytes": 5209,
+      "sha256": "0395ef2fe9742095da39331f18bfcef30c306756e1e791fd3593d77a99028b80",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/monitor.py": {
+      "bytes": 5240,
+      "sha256": "abe13cf865679c53b56a21acb19370f6c2029d3b70916f5d5de0f4c74ea2a10e",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/parents.py": {
+      "bytes": 1356,
+      "sha256": "d13246aa00208b704c63e52f8e53328cdaf5b370ca30b0b3067ab2a147843a9d",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/runner.py": {
+      "bytes": 17638,
+      "sha256": "58ed3b3f2526318f4f968b447f277bf6453bfb00fbe4ab014893fbfff2f4ba61",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h186_kernel_sweep/treatment.py": {
+      "bytes": 4340,
+      "sha256": "c98fb48bab25a98cb13b27627ef6a8b3859502fa4e86a87e1983088f8dd11e35",
+      "classification": {
+        "role": "research",
+        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/design.py": {
+      "bytes": 7634,
+      "sha256": "5e4c8070aec47b5d28845b87c589a605a806788de3e0bc9b0ab4d32519554ec5",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/monitor.py": {
+      "bytes": 6334,
+      "sha256": "97cdb5c0cdacacf1229d0317b69f98c029c4e684a381b5b7af1d894777999bfa",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/objectives.py": {
+      "bytes": 1221,
+      "sha256": "9cd6a8c93bc32f9cb32e362d6b792d543afb517a72477779f6bc410375ecd72f",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h187_robust_family/runner.py": {
+      "bytes": 25611,
+      "sha256": "150fe320963c433763a30705396eb78db78d70800f21af732f4b713773a1e5b1",
+      "classification": {
+        "role": "research",
+        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/analysis.py": {
+      "bytes": 13629,
+      "sha256": "669b4c07f4cd00ce41a05f79a02c0b14f177023b922f17425475cf69f29ae891",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/monitor.py": {
+      "bytes": 5245,
+      "sha256": "f52c65ffa65ac3eff86ffcf11971cc345ff8408beaf6b14c3788e3c0230708c5",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/runner.py": {
+      "bytes": 34691,
+      "sha256": "7bf491f9333761ffc1a50c689279de633d843b5e6f260e40896bb1b7c363775b",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h188_kernel_inputs/treatment.py": {
+      "bytes": 13293,
+      "sha256": "534ed8e9700797f0bbae00166e50cfd739c85caa90d4e1479c3700b58577de15",
+      "classification": {
+        "role": "research",
+        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/analysis.py": {
+      "bytes": 8368,
+      "sha256": "95848b31a33b4512e14c883a2b2b2413663e813082de31a4ba9ebfe757418879",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/monitor.py": {
+      "bytes": 5493,
+      "sha256": "c35174c41c4e93ddc00aa3373a104c96832136ebd07def4b0dcc14299c6a06c5",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/parents.py": {
+      "bytes": 1885,
+      "sha256": "e4fdb64adcfaad1a5a97558cc4314fc1901665697d0bf3093f6cc9150284e354",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/runner.py": {
+      "bytes": 13340,
+      "sha256": "a7e5f19cc6794180dfbc126095e039f39ce52e9c267a2d1f0cc396f3ca46c735",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h191_nested_kernel/treatment.py": {
+      "bytes": 434,
+      "sha256": "0edc8aa0eb2eaa81938925e4a1bbe97ad214277fff8312d84581db3e0b39b5c3",
+      "classification": {
+        "role": "research",
+        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/analysis.py": {
+      "bytes": 11090,
+      "sha256": "9f76b0b0f32aea68ed7b663256b77380a32703e4c0bb1b456091c516bf1fe181",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/monitor.py": {
+      "bytes": 5250,
+      "sha256": "df695fa9656076360cf6b71270ba2a4699f7832bf5596066cd5110284169aac7",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/runner.py": {
+      "bytes": 31868,
+      "sha256": "40c46967d3882bfb4d40a6756a2f639e635568557249b7e4c74e8a9fc38fe908",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h192_margin_gate/treatment.py": {
+      "bytes": 13293,
+      "sha256": "534ed8e9700797f0bbae00166e50cfd739c85caa90d4e1479c3700b58577de15",
+      "classification": {
+        "role": "research",
+        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/analysis.py": {
+      "bytes": 8328,
+      "sha256": "bd5ee2b3d48eddd9dbce04a54ec6eef4fd8d50f1ba25bc279799c5fce0fc6c6e",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/monitor.py": {
+      "bytes": 5989,
+      "sha256": "ac7e97f4df3c57ac7e53d74350ca2a734b3a9ebb06cd8885916f51a02e9cdc66",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/parents.py": {
+      "bytes": 1180,
+      "sha256": "f301880508e087f3c86e9928b99f53b371fd4cd74e8b1909fefa5a8271798890",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/runner.py": {
+      "bytes": 13664,
+      "sha256": "065747356d78ad6dc7175661cb7a3faa3dbc9e4eca4243b8be1ecdb7407d8ae2",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h193_invalid_veto/treatment.py": {
+      "bytes": 2722,
+      "sha256": "3e1c0209f1eeb48960e23ee045bbb7855df6331c48692ffef443f24b4e482311",
+      "classification": {
+        "role": "research",
+        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/design.py": {
+      "bytes": 6020,
+      "sha256": "84d89963ed96c18495f109a642d19f1fb11a70defce52e84675d17779a604138",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/monitor.py": {
+      "bytes": 6038,
+      "sha256": "f3560f5b3d8e05ab91ef50b4c3a9572833136ab1f448e3cf1c0277fff9200cf4",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/objective.py": {
+      "bytes": 3102,
+      "sha256": "cdae7a81d45c137797b96786ec81e78773c669c2c121cf067197bf4700a24237",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/parents.py": {
+      "bytes": 1151,
+      "sha256": "767059a7068e34b412c93259436e10fbcc5e00354c21543bf9d5fe60bafa7226",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h194_invalid_margin/runner.py": {
+      "bytes": 20970,
+      "sha256": "1af8e2b1cb2c375566feca1248a291b2f593ec01191a8f9e276770a0c77d00bd",
+      "classification": {
+        "role": "research",
+        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/analysis.py": {
+      "bytes": 8760,
+      "sha256": "4904da8ba7f997ddcf9a2ab8d2dad9801be95f2e82e972f221013b1220fac721",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/monitor.py": {
+      "bytes": 7064,
+      "sha256": "808459b28206cb82f705cf66c8aab47263c07cd95c3ad0e78146e4e8fc1dab87",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py": {
+      "bytes": 29433,
+      "sha256": "cd23328e73fef9a343ccd1a46b79d0568692411175f54c4a30fb0086a96491a5",
+      "classification": {
+        "role": "research",
+        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/analysis.py": {
+      "bytes": 6106,
+      "sha256": "b7edc2b3dfd9b13bd31e24a8e33b939192736d906f3f2037e5b236daa0130101",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/engine.py": {
+      "bytes": 5899,
+      "sha256": "575881872e37567f4cbffb67bc7913d7b8e4bcf003926acb2d7c59899aa5f8e2",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/monitor.py": {
+      "bytes": 6157,
+      "sha256": "d43990fb7b3482db34eb867eb04fede3455a666450e6b18f9b6b1e21f04303b2",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/parents.py": {
+      "bytes": 513,
+      "sha256": "ca1a983c6bc13334e4e7ad691d3733dd49e52047f7de673e8726e23c9f39f01c",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/runner.py": {
+      "bytes": 13878,
+      "sha256": "f95df2ac87bed61fef4d811218fe7f9060e61e94d783d82f3101ba08cd81bd8d",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/s3_arrays.py": {
+      "bytes": 2486,
+      "sha256": "10807c57276a164781c23eacfe3e29112069a48c984164c7a22d7eb0f2966af4",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h196_tta/treatment.py": {
+      "bytes": 3648,
+      "sha256": "ddc6c912d900e77c6a07e270770be3630d6e82e681f6a903bfdd3c02e0288e2b",
+      "classification": {
+        "role": "research",
+        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/analysis.py": {
+      "bytes": 5403,
+      "classification": {
+        "role": "research",
+        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      },
+      "sha256": "15eade053f86d4e97f11cd7f5068858848323417a7a14b40c62509e97a677a1a"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/design.py": {
+      "bytes": 5090,
+      "classification": {
+        "role": "research",
+        "reason": "H197 independent TRAIN-fold and batch protocol plus zero-update preflight acceptance guard; no outcomes read by helper tests."
+      },
+      "sha256": "edabb2d0666514b7f46cf13497beb58459c70cfb77a33393d12867200b19d7b2"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/json_writer.py": {
+      "bytes": 329,
+      "classification": {
+        "role": "research",
+        "reason": "Single durable H197 JSON writer using json.dumps(allow_nan=False), used by every trace, receipt, summary, metrics, audit and failure record."
+      },
+      "sha256": "99135f2c304b6558c25291913484982e0a7f5cd10b37520d3cbd0e109cdf50a5"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/monitor.py": {
+      "bytes": 6041,
+      "classification": {
+        "role": "research",
+        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
+      },
+      "sha256": "eb60e02e0291f7cba75d3f5b7302555ae7f8ed1707e7afad68d1b56ef85424fb"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/runner.py": {
+      "bytes": 32031,
+      "classification": {
+        "role": "research",
+        "reason": "H197 CPU fixed-step continuation runner with exact source binding, H197-rooted local pin verification, full-corpus zero-update preflight, FIT-only training, B lock before A, and a shared strict JSON record writer; research only."
+      },
+      "sha256": "ca123ce220f76a625208e59e3997a72576715daddddb2ece9d16e5fc4f3ac1dd"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/source_pins.py": {
+      "bytes": 874,
+      "classification": {
+        "role": "research",
+        "reason": "H197 read-only source hash validator confined to the study directory; path traversal and mismatch refusal."
+      },
+      "sha256": "92dc24bb84a1a378e59d4b2c1f69d39f24f7645dfdb79d00e91138408657063a"
+    },
+    "python:research/flywheel_selfplay/h197_pcgc/treatment.py": {
+      "bytes": 5606,
+      "classification": {
+        "role": "research",
+        "reason": "H197 per-context gradient clipping and JSON-safe permutation encoding for the within-batch shuffled-factor placebo; research only."
+      },
+      "sha256": "cfe8e5c1cc5d9e1c8431aad4c6a4098097afa8a7386b14d79f3711016b803cb8"
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/analysis.py": {
+      "bytes": 9149,
+      "sha256": "57c40ae02b882e2840ab57c6f88121487b1604052d3d5536b5659a7753a54c73",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/monitor.py": {
+      "bytes": 7032,
+      "sha256": "9d8b23d03ae7eeb1571b3efa33d8daa30051439831316e8318495e4de9e77917",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/runner.py": {
+      "bytes": 26753,
+      "sha256": "59a4c0209f5b313b11cfbaa4e87bcf0f4b60cb512140d78560181394847fe41f",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/analysis.py": {
+      "bytes": 7619,
+      "classification": {
+        "role": "research",
+        "reason": "H200 pure-data-free fold, nested-lambda, rank-blend, family-bootstrap, Holm and Elo analysis primitives; no data access."
+      },
+      "sha256": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/monitor.py": {
+      "bytes": 6672,
+      "classification": {
+        "role": "research",
+        "reason": "H200 xbabe1-only supervisor enforcing nice 19, four-core, memory, RSS, load, disk, deadline and output guards for one attempt."
+      },
+      "sha256": "078c8d4221d51d6024e0e48a1429cf76c29d8aac3f6716c040d9664f9d5188d4"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/runner.py": {
+      "bytes": 23364,
+      "classification": {
+        "role": "research",
+        "reason": "H200 xbabe1-only, single-attempt CPU runner for exact r882 regression, FIT-only nested calibration/lambda selection, native A scoring, source pins, and resource guards; no updates or promotion."
+      },
+      "sha256": "69addcb1c86ca87a231d44510674b89c64870d86590c56c33f734c47c964dbe1"
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/analysis.py": {
+      "bytes": 8730,
+      "sha256": "51d54087125d824479e842705d3e1308a31e11a9e68fd0b041a3a0cb7c3cf292",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/monitor.py": {
+      "bytes": 4683,
+      "sha256": "55ccae8a383ccd0d02f1f4efa5b665cc629ba869dbc8b052d34c12e414a615b8",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/runner.py": {
+      "bytes": 13494,
+      "sha256": "0e7457d31dc2403e22ce43babf9348c3f87f735a0c0ecb4d142c84262d9c0c1b",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/analysis.py": {
+      "bytes": 4717,
+      "sha256": "64e1df8b3ae11ff8332e2e7ffa07f2d1f0bcf93484f542fc4e081af89adb0667",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/artifacts.py": {
+      "bytes": 1786,
+      "sha256": "135028eb5571148f2a89ee555f34cdbcd5214080c504409786d7b76fbaab779f",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/design.py": {
+      "bytes": 4475,
+      "sha256": "a4505ad651f9aabb4ca21d0f7530d4fb50a5fc10614115dd31e1a39d5aa855f6",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/monitor.py": {
+      "bytes": 5550,
+      "sha256": "a1182d142d62f251de0777f7d9fdae309009e45836be3b2f7492682b62338bdc",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/objectives.py": {
+      "bytes": 2272,
+      "sha256": "1d68987f555c2388c4af2eb1a75eb601f979060393f940ab25f602a5193c06f6",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/runner.py": {
+      "bytes": 28616,
+      "sha256": "ebad7a2c0ed60a575234550ae4a05e76151d883440b045a06fa088ebb4ff7251",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/analysis.py": {
+      "bytes": 12399,
+      "sha256": "3b3377ef1b19b34bf58f85145f00043d94dc9f2a9d036d56795757a67cc18ec2",
+      "classification": {
+        "role": "research",
+        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/monitor.py": {
+      "bytes": 7032,
+      "sha256": "268e7f9cf6b18c90520daf0a21bde4a07866b4eb0c874c18d5a09b19fa6c327e",
+      "classification": {
+        "role": "research",
+        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h203_blend025_gated/runner.py": {
+      "bytes": 30235,
+      "sha256": "bdeb44b6e54cc5096d6d288c68f3cbda568aac5c83bc0e55799339976a855cb3",
+      "classification": {
+        "role": "research",
+        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
@@ -4071,6 +5279,68 @@
         "role": "research"
       },
       "sha256": "a41eb02e405da6af3fd9747be3468697ce53ca8d3ff3f780a1693bdaa9370fe9"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py": {
+      "bytes": 33291,
+      "classification": {
+        "reason": "RNK-10 R10 research-only candidate-loading M5/dev-Elo reproduction. M5 validates pinned batched fixture shapes, and dev Elo reports a reproducible descriptive family-bootstrap interval. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "379cd94040124c36bd9cbdee0b7b54bdca0f6524774c948866311f3f4b52b478"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/objective.py": {
+      "bytes": 3285,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "25e784f667292075a1d8178d96f4b2bd631ecb1aba610135af4f408387905946"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_packet.py": {
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "bytes": 6193,
+      "sha256": "c84a0468d709ed988f2c3a712129dc44bf2d6172bf3dd7e81107c15f223a10b8"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_roster.py": {
+      "bytes": 2231,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "fad477aedc837578b48ced28c1e8f8404d83d09ab4e9b69045ed80ba2f969a73"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_train_packet.py": {
+      "bytes": 9300,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "3396bced69ba492486649f3fdedceb865b052f7f7a7d377300b253cc98d0fdbb"
+    },
+    "python:research/flywheel_selfplay/rnk10_m5_causal/train_candidate.py": {
+      "bytes": 27161,
+      "classification": {
+        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
+        "role": "research"
+      },
+      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
+      "sha256": "7276cc681efdc83e10733ff6389eea3173ef5ae9c64566024730a3a00d905bf4"
+    },
+    "python:research/flywheel_selfplay/runtime_audit.py": {
+      "bytes": 1647,
+      "sha256": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4",
+      "classification": {
+        "role": "research",
+        "reason": "Shared input/output boundary audit support used by historical CPU runners; not a test-bearing regression family. Refusal behavior is exercised by the CI test-runner."
+      }
     },
     "python:research/flywheel_selfplay/rust_evaluator.py": {
       "bytes": 53182,
@@ -4160,102 +5430,6 @@
       },
       "sha256": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c"
     },
-    "python:research/flywheel_selfplay/h164_sam_retry/runtime.py": {
-      "bytes": 6220,
-      "sha256": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7",
-      "classification": {
-        "role": "research",
-        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h164_sam_retry/science.py": {
-      "bytes": 8270,
-      "sha256": "5debc7d42a5745649627da5b7084a876bef2b1964d844eb975b55d3a666bee0f",
-      "classification": {
-        "role": "research",
-        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h164_sam_retry/monitor.py": {
-      "bytes": 6048,
-      "sha256": "e28621ac02345227619e1aef6401395a95044640dac75950eaf11329e787909f",
-      "classification": {
-        "role": "research",
-        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h164_sam_retry/runner.py": {
-      "bytes": 27478,
-      "sha256": "767e785158f44c7581a7a67b52e9105e4ebdcf5293007594e44c4463661e11db",
-      "classification": {
-        "role": "research",
-        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h164_sam_retry/launch.py": {
-      "bytes": 1390,
-      "sha256": "3b83896fea04603de0879f5ed4e564e419e1bcc1d5b620de62c93738f92b482b",
-      "classification": {
-        "role": "research",
-        "reason": "H164 owner-directed CPU SAM/ASAM continuation retry; audited launch regression, family cross-fit and strict four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h163_prediction_ensemble/analysis.py": {
-      "bytes": 7623,
-      "classification": {
-        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
-        "role": "research"
-      },
-      "sha256": "7461ef085d22587a48838067c13a09e8691a38e38eacb18d08a028fbec9e1569"
-    },
-    "python:research/flywheel_selfplay/h163_prediction_ensemble/run.py": {
-      "bytes": 20112,
-      "classification": {
-        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
-        "role": "research"
-      },
-      "sha256": "a344a7aff13401a46e7be1851a14ce3dff984fe5296b9dd4cdd90a70839cf584"
-    },
-    "python:research/flywheel_selfplay/h163_prediction_ensemble/monitor.py": {
-      "bytes": 4521,
-      "classification": {
-        "reason": "H163 owner-directed prediction-level accepted-adapter ensemble preregistration, inference and bounded CPU attempt controls. Research only; no product runtime, protected-data qualification, or serving promotion.",
-        "role": "research"
-      },
-      "sha256": "5ef2442c1f56996464488651e0b9674efa9447c0c93c1e32583732c31c7857b7"
-    },
-    "python:research/flywheel_selfplay/h167_input_noise/analysis.py": {
-      "bytes": 6581,
-      "sha256": "e5e3138ac7487edbff956012f0ba4dba86fc5198a3c1f79c99ead6d353857086",
-      "classification": {
-        "role": "research",
-        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h167_input_noise/treatment.py": {
-      "bytes": 6747,
-      "sha256": "e1d2f89934523c369667345b474db8395dd35b17bfa210dcc1bb028ef9a7c501",
-      "classification": {
-        "role": "research",
-        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h167_input_noise/runner.py": {
-      "bytes": 32574,
-      "sha256": "52697b71220c57bef2e7b718a27a5ea451570512e0da921211019ffd374f7f6f",
-      "classification": {
-        "role": "research",
-        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h167_input_noise/monitor.py": {
-      "bytes": 4891,
-      "sha256": "71f0a2882f80e53dea484b29921fd45a57a101d16c0a06280de8dd247213535a",
-      "classification": {
-        "role": "research",
-        "reason": "H167 owner-directed adapter input-feature Gaussian noise continuation study (CTRL, IN05, IN10, IN10_FIXED); data-free selector, fit-only std, dynamic/fixed noise, None-grad and resource controls. Research only; no product or sealed qualification."
-      }
-    },
     "python:research/h166/analysis.py": {
       "bytes": 21053,
       "sha256": "aeecc30b1fbff9479b568dd54a140825d00b16a53bf4dc928a6cf0fe32195918",
@@ -4280,134 +5454,6 @@
         "reason": "H166 owner-directed C-Mixup label-similarity mixup r882 adapter continuation study; family cross-fit runner, target-similarity kernel, and bounded CPU supervisor. Research only; no product/sealed qualification."
       }
     },
-    "python:research/flywheel_selfplay/h168_selector_remedy/monitor.py": {
-      "bytes": 5840,
-      "sha256": "0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7",
-      "classification": {
-        "role": "research",
-        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h168_selector_remedy/runner.py": {
-      "bytes": 46887,
-      "sha256": "9c35e10456cee9c0f5c3d2eea6b2b75a6e311848a5534c8b18130a7519ee3249",
-      "classification": {
-        "role": "research",
-        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h168_selector_remedy/runtime.py": {
-      "bytes": 15824,
-      "sha256": "162f97bd111dfa016c500d8db187ba714a1acab0715a00bcb91addb8671ef22d",
-      "classification": {
-        "role": "research",
-        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h168_selector_remedy/science.py": {
-      "bytes": 15063,
-      "sha256": "805d7f23188217e252e50a611421c065e69e2d25a09fa61f74a47de8f38b8ba7",
-      "classification": {
-        "role": "research",
-        "reason": "H168 owner-directed prospective selector remedy on H156 W10/W20 adapter continuations; family cross-fit and dual OLD/NEW four-arm Holm selection. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h170_onecycle/analysis.py": {
-      "bytes": 9598,
-      "sha256": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
-      "classification": {
-        "role": "research",
-        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h170_onecycle/treatment.py": {
-      "bytes": 3477,
-      "sha256": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
-      "classification": {
-        "role": "research",
-        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h170_onecycle/runner.py": {
-      "bytes": 28560,
-      "sha256": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
-      "classification": {
-        "role": "research",
-        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h170_onecycle/monitor.py": {
-      "bytes": 5212,
-      "sha256": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
-      "classification": {
-        "role": "research",
-        "reason": "H170 preregistered one-cycle LR/inverse-momentum continuation on a read-only r882 copy. Offline research source only; no product, protected-data, speed or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h169_optimizer_geometry/analysis.py": {
-      "bytes": 7086,
-      "classification": {
-        "role": "research",
-        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "30af2ebeda438de7db1d7e4e592a46dffbc273b4cb31dabb3925ab7d1fcac527"
-    },
-    "python:research/flywheel_selfplay/h169_optimizer_geometry/treatment.py": {
-      "bytes": 2340,
-      "classification": {
-        "role": "research",
-        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "30f243e772dbb123ed81cb25e8f32c14e800afef50b6d840802dabddcb443634"
-    },
-    "python:research/flywheel_selfplay/h169_optimizer_geometry/runner.py": {
-      "bytes": 30768,
-      "classification": {
-        "role": "research",
-        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "8ec30b06f92c8ad9b369c2c2c3257c61bcac557f1a1d65ad10e94664557e85b6"
-    },
-    "python:research/flywheel_selfplay/h169_optimizer_geometry/monitor.py": {
-      "bytes": 5293,
-      "classification": {
-        "role": "research",
-        "reason": "H169 preregistered optimizer-geometry r882 continuation study; research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "b1d173305ac59c60f4d34b355df62479ebdfb5ac6103ac0646a6d6525c7ea2a3"
-    },
-    "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
-      "bytes": 12151,
-      "sha256": "16640f1dd5f0f9375cbea3470e3a0199071488dfb47dcaa97b7abc71eb48fb75",
-      "classification": {
-        "role": "research",
-        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h171_grad_accum/treatment.py": {
-      "bytes": 9404,
-      "sha256": "de8de6c4f0030893577641435c8894cc014b90f3a73438ddb9fe252299d3cdf1",
-      "classification": {
-        "role": "research",
-        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h171_grad_accum/runner.py": {
-      "bytes": 53098,
-      "sha256": "3c07b93e5ad0c34cadfdab1a7e072275f00069202da46740799aee6469d68512",
-      "classification": {
-        "role": "research",
-        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h171_grad_accum/monitor.py": {
-      "bytes": 4891,
-      "sha256": "1e99dd69ac8292ad18982e5f24c6e62633d5f83858a9ec5936af27dafab20596",
-      "classification": {
-        "role": "research",
-        "reason": "H171 owner-directed large effective batch via family-stratified gradient accumulation r882 continuation study (CTRL, ACC4, ACC16, CTRL_EX4); data-free family-stratified batch plan, None-as-zero 29,211-param gradient cosine diagnostic, strict selector and resource controls. Research only; no product or sealed qualification."
-      }
-    },
     "python:research/h172/analysis.py": {
       "bytes": 19861,
       "sha256": "0c5fbd4eb6fd7e31aad0b5bc773133aab24b608b2664bd386d621e2ff7afc610",
@@ -4430,1020 +5476,6 @@
       "classification": {
         "role": "research",
         "reason": "H172 owner-directed anchored convex output-layer L-BFGS refit + 8-bag family bootstrap + within-family target-permuted placebo r882 study; family cross-fit L-BFGS runner and bounded CPU supervisor. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h174_swag/analysis.py": {
-      "bytes": 8046,
-      "classification": {
-        "role": "research",
-        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "5c49bd20a3865ca3bb3a2833c4701b95b66cb00d0e295640751b461a9c701c4c"
-    },
-    "python:research/flywheel_selfplay/h174_swag/treatment.py": {
-      "bytes": 6366,
-      "classification": {
-        "role": "research",
-        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "48ee6dce13cd8ccb608162b2a11d0d7cc6eef251dda5c5a7638953f64ae9374d"
-    },
-    "python:research/flywheel_selfplay/h174_swag/runner.py": {
-      "bytes": 39305,
-      "classification": {
-        "role": "research",
-        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "fb33e03e266c34ab16f72de16a92cb8d8a87cad78e5db720aa0cd3727d33bcd7"
-    },
-    "python:research/flywheel_selfplay/h174_swag/monitor.py": {
-      "bytes": 5480,
-      "classification": {
-        "role": "research",
-        "reason": "H174 preregistered SWAG posterior-predictive r882 continuation experiment; offline research only, no product runtime, protected-data qualification, or serving promotion."
-      },
-      "sha256": "6f8e7d28a730daaf6b59009e8168c19de2a2ab494cfbeded5efcc73964d1c4aa"
-    },
-    "python:research/flywheel_selfplay/h173_hard_context_reweight/monitor.py": {
-      "bytes": 5850,
-      "sha256": "52806f32db92dd98af7748b1961ccd10e28877cb2079e3f5b2ae187da4c1553d",
-      "classification": {
-        "role": "research",
-        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h173_hard_context_reweight/runner.py": {
-      "bytes": 49831,
-      "sha256": "f5cefaa52c5a3bff7e8a4377ccc1c69104d1910d197ae624a545b5d7f2def6a8",
-      "classification": {
-        "role": "research",
-        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h173_hard_context_reweight/runtime.py": {
-      "bytes": 10004,
-      "sha256": "4c4342bcb8de9a9c157dc400ba062e061742f90e2cac96a4a61546ec498be05e",
-      "classification": {
-        "role": "research",
-        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h173_hard_context_reweight/science.py": {
-      "bytes": 20882,
-      "sha256": "ea469183ebf623ed19e7d859630b89c32c663eed5f68a69e49b1d0f07a84eb6a",
-      "classification": {
-        "role": "research",
-        "reason": "H173 owner-directed hard-context regret-weighted r882 adapter continuation study; leak-free FIT-only step-0 regret weights, ESS-matched shuffled-weight placebo, and 5-fold family cross-fit. Research only; no product/sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h175_selector_power/protocol.py": {
-      "bytes": 8547,
-      "sha256": "de98f5824f2750fa89e21205d70ffa80f226224e4093cff746eb3b26e9b47197",
-      "classification": {
-        "role": "research",
-        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h175_selector_power/power.py": {
-      "bytes": 21152,
-      "sha256": "c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe",
-      "classification": {
-        "role": "research",
-        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h175_selector_power/runner.py": {
-      "bytes": 10525,
-      "sha256": "276f0853e3e41452562aeae5c35a2a8f791ec085fc31a739a2ee7e0110749ff5",
-      "classification": {
-        "role": "research",
-        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h175_selector_power/monitor.py": {
-      "bytes": 5212,
-      "sha256": "f9c057520bf6937ba36d8493a24bce156b04757d4e86f9903ba18fbbb5411a7d",
-      "classification": {
-        "role": "research",
-        "reason": "H175 registered CPU-only zero-update oracle-headroom and selector-power counterfactual audit on real S3 TRAIN outcomes. DL-Val descriptive headroom only; all model weights frozen, no protected/GPU/speed/serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h177_pooled_selector/analysis.py": {
-      "bytes": 22246,
-      "sha256": "707c4903a77d48ffc8ae14c820a626df5c2858d3d24df35db3f9718d120bafc4",
-      "classification": {
-        "role": "research",
-        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h177_pooled_selector/treatment.py": {
-      "bytes": 12777,
-      "sha256": "167a0d8d3fdf9d3f811e79259b6bf7e38b6ea810d15bdcc40e128b68317a044a",
-      "classification": {
-        "role": "research",
-        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h177_pooled_selector/runner.py": {
-      "bytes": 39544,
-      "sha256": "214f0fe82d3e81a5a30b380b7057555792a50437ccf82637c3fcfb4c6019a182",
-      "classification": {
-        "role": "research",
-        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h177_pooled_selector/monitor.py": {
-      "bytes": 4891,
-      "sha256": "276684ebfe140643d50a4c38106d9b7db0b6303272b1883ee891b2a6362badba",
-      "classification": {
-        "role": "research",
-        "reason": "H177 owner-directed pooled cross-fit confirmatory selector (205-family pooled B selection + single prespecified candidate step per arm + separate A-family confirmation) on r882 continuation (CTRL, ACC4, ACC16, OC15); data-free pooled B disjointness, stage-order fsync barrier, exact-null 0-admission, +0.01 shift admission, H175 MDE80 gate and resource controls. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h176_data_scaling/analysis.py": {
-      "bytes": 13501,
-      "sha256": "4623f888133d15fc5f6653b61f394260145c98b5bd4b8b19161fac9c946fe67f",
-      "classification": {
-        "role": "research",
-        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h176_data_scaling/runner.py": {
-      "bytes": 27102,
-      "sha256": "c54bc8e72c1500db056743c499d8d959e09272db9d2d597e4035a4f223511795",
-      "classification": {
-        "role": "research",
-        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h176_data_scaling/treatment.py": {
-      "bytes": 2139,
-      "sha256": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe",
-      "classification": {
-        "role": "research",
-        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h180_adapter_ablation/analysis.py": {
-      "bytes": 14437,
-      "sha256": "4ba3ed98c32a913c2bfad1015bd5f75945a8a2633ecb56ddb614daf7ebe2441b",
-      "classification": {
-        "role": "research",
-        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h180_adapter_ablation/monitor.py": {
-      "bytes": 5235,
-      "sha256": "3e03e97d4c9d4aa141248bb65987b8640e2988655cdf8aaf7b36e35f50d0afc5",
-      "classification": {
-        "role": "research",
-        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h180_adapter_ablation/runner.py": {
-      "bytes": 35260,
-      "sha256": "a58fffea1d432b15613287b0786aaf8c5190cfe1127c33ad1e9a4e93e10d191e",
-      "classification": {
-        "role": "research",
-        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h180_adapter_ablation/treatment.py": {
-      "bytes": 3556,
-      "sha256": "d4752ba7fd6430157161ec707ff1ef588925b3baeb82a12c36a9516d7ea2ec9d",
-      "classification": {
-        "role": "research",
-        "reason": "H180 preregistered CPU-only diagnostic: adapter-contribution ablation (anchor-only ZERO_ADAPTER, fresh RAND0) and fresh-init update-budget dose (FRESH40 prefix of FRESH160) against r882 on the H176 family-grouped harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h184_adapter_components/analysis.py": {
-      "bytes": 14238,
-      "sha256": "08a7af01e725c68e041ac1a522ca097e4d81c1c58d46f319559a332263a1390e",
-      "classification": {
-        "role": "research",
-        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h184_adapter_components/monitor.py": {
-      "bytes": 5240,
-      "sha256": "9afc0055f458b056bae49b37b756a154051b29c0a945ce3fd76ef0309cea6356",
-      "classification": {
-        "role": "research",
-        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h184_adapter_components/runner.py": {
-      "bytes": 32752,
-      "sha256": "0fdf87d9091ca24af361ef8190c57b8881993f51fc5e18dbc446a42af43928a6",
-      "classification": {
-        "role": "research",
-        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h184_adapter_components/treatment.py": {
-      "bytes": 8723,
-      "sha256": "64ff420beaf466e444192b5bdf5bbd9714900b17e19abbe3a2eea484b001582e",
-      "classification": {
-        "role": "research",
-        "reason": "H184 preregistered CPU-only diagnostic: adapter-structure component ablation (PRIOR/KERNEL/ATTN output terms, proved bit-exact against the live adapter delta) under 0-update random weights against r882 on the H180/H176 family harness; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h188_kernel_inputs/analysis.py": {
-      "bytes": 13629,
-      "sha256": "669b4c07f4cd00ce41a05f79a02c0b14f177023b922f17425475cf69f29ae891",
-      "classification": {
-        "role": "research",
-        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h188_kernel_inputs/monitor.py": {
-      "bytes": 5245,
-      "sha256": "f52c65ffa65ac3eff86ffcf11971cc345ff8408beaf6b14c3788e3c0230708c5",
-      "classification": {
-        "role": "research",
-        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h188_kernel_inputs/runner.py": {
-      "bytes": 34691,
-      "sha256": "7bf491f9333761ffc1a50c689279de633d843b5e6f260e40896bb1b7c363775b",
-      "classification": {
-        "role": "research",
-        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h188_kernel_inputs/treatment.py": {
-      "bytes": 13293,
-      "sha256": "534ed8e9700797f0bbae00166e50cfd739c85caa90d4e1479c3700b58577de15",
-      "classification": {
-        "role": "research",
-        "reason": "H188 preregistered CPU-only diagnostic: kernel-input ablation (anchor similarity features, rank-normalized and Huber-winsorized revealed residuals) on the trained r882 adapter at 0 updates, with the H177-derived pooled-B selector, bit-exact kernel replay gates, DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h192_margin_gate/analysis.py": {
-      "bytes": 11090,
-      "sha256": "9f76b0b0f32aea68ed7b663256b77380a32703e4c0bb1b456091c516bf1fe181",
-      "classification": {
-        "role": "research",
-        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h192_margin_gate/monitor.py": {
-      "bytes": 5250,
-      "sha256": "df695fa9656076360cf6b71270ba2a4699f7832bf5596066cd5110284169aac7",
-      "classification": {
-        "role": "research",
-        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h192_margin_gate/runner.py": {
-      "bytes": 31868,
-      "sha256": "40c46967d3882bfb4d40a6756a2f639e635568557249b7e4c74e8a9fc38fe908",
-      "classification": {
-        "role": "research",
-        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h192_margin_gate/treatment.py": {
-      "bytes": 13293,
-      "sha256": "534ed8e9700797f0bbae00166e50cfd739c85caa90d4e1479c3700b58577de15",
-      "classification": {
-        "role": "research",
-        "reason": "H192 preregistered CPU-only diagnostic: strict-margin gate between the anchor-only base pick and the r882 full pick (0 updates), FIT-quantile tau grid, B-selected tau* locked before A, pooled-A H177 rule at m=1 with the H178 receipt gate, DL-Val descriptive. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h176_data_scaling/monitor.py": {
-      "bytes": 5200,
-      "sha256": "79079503077af4097423089e1b22d921049f047f2e641f7fb62fef30f1cfb100",
-      "classification": {
-        "role": "research",
-        "reason": "H176 preregistered CPU-only diagnostic of the r882 zero-update generalization gap and nested FIT-family data-scaling curve; DL-Val descriptive and A-family assessment only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h179_deep_ensemble/analysis.py": {
-      "bytes": 11013,
-      "sha256": "fb6d52dca4cf6d411e6bf27e1832b80d7010093aa7fbdaba8ed29d3e7fac60e1",
-      "classification": {
-        "role": "research",
-        "reason": "H179 data-free ensemble inference, family-bootstrap, Holm correction, Elo, verdict, seed, fold, and timing-plan implementation. Research only; no model or product qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h179_deep_ensemble/runner.py": {
-      "bytes": 28873,
-      "sha256": "3869448c9f0abee36a7573fff481bbbf64bd5f0dff88ba7c10ddf84127c19764",
-      "classification": {
-        "role": "research",
-        "reason": "H179 pinned CPU-only runner for independent fresh adapter members and candidate-score ensembles, with fold isolation and fixed timing pilot. Research only; no product or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h179_deep_ensemble/treatment.py": {
-      "bytes": 2139,
-      "sha256": "336b759b6bbd81288425c4fcaf244d4f8160f8c69e0178c29106e77323b8f6fe",
-      "classification": {
-        "role": "research",
-        "reason": "H179 reuses the H176 pinned adapter forward/loss support for frozen DOPE and adapter-only CPU research. Research only; no product or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h179_deep_ensemble/monitor.py": {
-      "bytes": 5192,
-      "sha256": "6d1c29e0f46ff91d157ec6bc8356f00c88ba969113549df6d7073b1b90579b4e",
-      "classification": {
-        "role": "research",
-        "reason": "H179 CPU-only xbabe2 attempt supervisor with 93.8% disk-use stop and process resource guards. Research only; no product or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h178_pooled_calibration/calibration.py": {
-      "bytes": 55577,
-      "sha256": "c8351c915e04c5efa436530fdedbcb4594817aa78edf2497eead3d08e9378700",
-      "classification": {
-        "role": "research",
-        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h178_pooled_calibration/runner.py": {
-      "bytes": 12345,
-      "sha256": "5316aa33812d2ad46627323839dc0ad985faa726a76dcc380490b96dc2a31f6b",
-      "classification": {
-        "role": "research",
-        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h178_pooled_calibration/monitor.py": {
-      "bytes": 5378,
-      "sha256": "961cdec04d8f7d207e61e14412f9abad04ea43a021bbbae667021486a6e68095",
-      "classification": {
-        "role": "research",
-        "reason": "H178 empirical calibration of the H177 pooled 205-family cross-fit selector (pooled_b_select imported directly from h177_pooled_selector/analysis.py) on the H175 counterfactual bank; data-free controls for imported H177 rule object identity, 10k-draw step-down Holm counterexample, LocalOnlyPayload role isolation, StageOrderGuard fsync barrier, exact Clopper-Pearson bounds, zero optimizer/backward calls, and resource guards. Research only; no product or sealed qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h182_ensemble_size_dose/analysis.py": {
-      "bytes": 13172,
-      "sha256": "6c6c955f99a347629d2e4660589b3370472b3a8ceb8f186ad48bc3d2c9fa80b7",
-      "classification": {
-        "role": "research",
-        "reason": "H182 ensemble-size bootstrap/Holm/Elo/verdict and strict nested member-seed/fold/timing rules; research only, no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h182_ensemble_size_dose/runner.py": {
-      "bytes": 41760,
-      "sha256": "b837328d6835e12eb0f5514044600e976f774175e062ed110afa7499adcbc471",
-      "classification": {
-        "role": "research",
-        "reason": "H182 pinned CPU-only runner for 20 distinct fresh adapter members, nested 5/10/20 ensembles, FIT-only training, and custody-only member A scores; research only."
-      }
-    },
-    "python:research/flywheel_selfplay/h182_ensemble_size_dose/monitor.py": {
-      "bytes": 5193,
-      "sha256": "0aaf571f391f1be7bed8efec31fb219a5a466faf7fb6bb7f4333c02634feea33",
-      "classification": {
-        "role": "research",
-        "reason": "H182 xbabe2 CPU supervisor with four-hour deadline and process/resource guards; research only, no product or serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h182_ensemble_size_dose/treatment.py": {
-      "bytes": 2199,
-      "sha256": "fe0156ad79db3b70849963f86d4d78615000f36ead201e82d95e1c9b61766407",
-      "classification": {
-        "role": "research",
-        "reason": "H182 reuses H179/H176 pinned adapter forward/loss support for fresh adapter-only CPU research; no product qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h181_covariate_selector/monitor.py": {
-      "bytes": 5215,
-      "sha256": "282aa760d26cc71500a013eaef421f3bc58d42946b46a105974d1e2fc2839ada",
-      "classification": {
-        "role": "research",
-        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
-      }
-    },
-    "python:research/flywheel_selfplay/h181_covariate_selector/posthoc.py": {
-      "bytes": 4050,
-      "sha256": "81b39df69e3f092dd78aa4ce8ac4518bcd705653423afec73e766fcb962bcfaf",
-      "classification": {
-        "role": "research",
-        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
-      }
-    },
-    "python:research/flywheel_selfplay/h181_covariate_selector/replay.py": {
-      "bytes": 17706,
-      "sha256": "ceb9ba2b8811482ef74ba510990b147ea12190178df1e1aa79e89a77a3b05fbe",
-      "classification": {
-        "role": "research",
-        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
-      }
-    },
-    "python:research/flywheel_selfplay/h181_covariate_selector/runner.py": {
-      "bytes": 9133,
-      "sha256": "4a7d47cb63b27b2007d3ba7ba748e53632f0e6fed83af5067251489b44e4461a",
-      "classification": {
-        "role": "research",
-        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
-      }
-    },
-    "python:research/flywheel_selfplay/h181_covariate_selector/science.py": {
-      "bytes": 8647,
-      "sha256": "519b069f438f38c4527488394a0565df2cea62b55fc24322056ae37ea049afaa",
-      "classification": {
-        "role": "research",
-        "reason": "H181 frozen real-S3 TRAIN-bank CUPED estimator development; no network updates or live rule change"
-      }
-    },
-    "python:research/flywheel_selfplay/h183_ensemble_distill/parents.py": {
-      "bytes": 1151,
-      "sha256": "03c8fa1d332f998103f62896a375488ceaa96327a83f0940c81972dea0f041f8",
-      "classification": {
-        "role": "research",
-        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h183_ensemble_distill/distill.py": {
-      "bytes": 1721,
-      "sha256": "984db24f24ed4eef2d55beea107f9dcee6592cf65c00035089e9040d2c7bcee2",
-      "classification": {
-        "role": "research",
-        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h183_ensemble_distill/analysis.py": {
-      "bytes": 7701,
-      "sha256": "a2cc7f12ca18f31c39a346428426c3c101dd86f736368249dd51dc14a7ae0257",
-      "classification": {
-        "role": "research",
-        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h183_ensemble_distill/monitor.py": {
-      "bytes": 5193,
-      "sha256": "f14b2684077c390d548101cf86771966b0642651143014103ba64836e0a0aeed",
-      "classification": {
-        "role": "research",
-        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h183_ensemble_distill/runner.py": {
-      "bytes": 26337,
-      "sha256": "516619a3e230a39464d7b03c45ae638ca293195b58e008a0c03b142962cc4213",
-      "classification": {
-        "role": "research",
-        "reason": "H183 CPU-only ensemble distillation research; pinned frozen parent forward, FIT-only teachers/targets/student, RENS10 zero-update diagnostic, strict paired bootstrap/verdict and resource guard; no serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/analysis.py": {
-      "bytes": 22527,
-      "sha256": "6371dfd6f1b731f79f5e15c21acd3c7e4aa30432cc2f6b71d6521aaf3bff52db",
-      "classification": {
-        "role": "research",
-        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/monitor.py": {
-      "bytes": 4892,
-      "sha256": "26f43d55c09995aaa101aebce4dcacf55d8c29fe3212670a1cb431dad9f42834",
-      "classification": {
-        "role": "research",
-        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/runner.py": {
-      "bytes": 59887,
-      "sha256": "fd41edb3073f71b90d16042e6adb350b28322cbb36a1b54aeebd0c867303c25a",
-      "classification": {
-        "role": "research",
-        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h185_pooled_fresh_ensemble/treatment.py": {
-      "bytes": 2527,
-      "sha256": "6facc59a28d80cc47bf7441a72f431502f10284020e22c7a0655133d43c4c710",
-      "classification": {
-        "role": "research",
-        "reason": "H185 preregistered CPU-only confirmatory test of FRESH160 (160-step fresh adapter), ENS5 (5x40-step fresh score ensemble), and RENS5 (5x0-step untrained member init control) vs R882 using the imported H177 205-family pooled-B selector and H178 calibration receipt; DL-Val descriptive and correlated cross-fold A readout only. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h186_kernel_sweep/parents.py": {
-      "bytes": 1356,
-      "sha256": "d13246aa00208b704c63e52f8e53328cdaf5b370ca30b0b3067ab2a147843a9d",
-      "classification": {
-        "role": "research",
-        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h186_kernel_sweep/analysis.py": {
-      "bytes": 5209,
-      "sha256": "0395ef2fe9742095da39331f18bfcef30c306756e1e791fd3593d77a99028b80",
-      "classification": {
-        "role": "research",
-        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h186_kernel_sweep/treatment.py": {
-      "bytes": 4340,
-      "sha256": "c98fb48bab25a98cb13b27627ef6a8b3859502fa4e86a87e1983088f8dd11e35",
-      "classification": {
-        "role": "research",
-        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h186_kernel_sweep/monitor.py": {
-      "bytes": 5240,
-      "sha256": "abe13cf865679c53b56a21acb19370f6c2029d3b70916f5d5de0f4c74ea2a10e",
-      "classification": {
-        "role": "research",
-        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h186_kernel_sweep/runner.py": {
-      "bytes": 17638,
-      "sha256": "58ed3b3f2526318f4f968b447f277bf6453bfb00fbe4ab014893fbfff2f4ba61",
-      "classification": {
-        "role": "research",
-        "reason": "H186 owner-directed zero-update kernel constant sweep. Imported H177 pooled selection with seven-arm Holm; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h187_robust_family/design.py": {
-      "bytes": 7634,
-      "sha256": "5e4c8070aec47b5d28845b87c589a605a806788de3e0bc9b0ab4d32519554ec5",
-      "classification": {
-        "role": "research",
-        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h187_robust_family/monitor.py": {
-      "bytes": 6334,
-      "sha256": "97cdb5c0cdacacf1229d0317b69f98c029c4e684a381b5b7af1d894777999bfa",
-      "classification": {
-        "role": "research",
-        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h187_robust_family/objectives.py": {
-      "bytes": 1221,
-      "sha256": "9cd6a8c93bc32f9cb32e362d6b792d543afb517a72477779f6bc410375ecd72f",
-      "classification": {
-        "role": "research",
-        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h187_robust_family/runner.py": {
-      "bytes": 25611,
-      "sha256": "150fe320963c433763a30705396eb78db78d70800f21af732f4b713773a1e5b1",
-      "classification": {
-        "role": "research",
-        "reason": "H187 registered CPU fresh-adapter loss normalization/family-balancing experiment; frozen DOPE, TRAIN-only, imported pooled selector, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h191_nested_kernel/parents.py": {
-      "bytes": 1885,
-      "sha256": "e4fdb64adcfaad1a5a97558cc4314fc1901665697d0bf3093f6cc9150284e354",
-      "classification": {
-        "role": "research",
-        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h191_nested_kernel/analysis.py": {
-      "bytes": 8368,
-      "sha256": "95848b31a33b4512e14c883a2b2b2413663e813082de31a4ba9ebfe757418879",
-      "classification": {
-        "role": "research",
-        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h191_nested_kernel/treatment.py": {
-      "bytes": 434,
-      "sha256": "0edc8aa0eb2eaa81938925e4a1bbe97ad214277fff8312d84581db3e0b39b5c3",
-      "classification": {
-        "role": "research",
-        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h191_nested_kernel/monitor.py": {
-      "bytes": 5493,
-      "sha256": "c35174c41c4e93ddc00aa3373a104c96832136ebd07def4b0dcc14299c6a06c5",
-      "classification": {
-        "role": "research",
-        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h191_nested_kernel/runner.py": {
-      "bytes": 13340,
-      "sha256": "a7e5f19cc6794180dfbc126095e039f39ce52e9c267a2d1f0cc396f3ca46c735",
-      "classification": {
-        "role": "research",
-        "reason": "H191 owner-directed zero-update nested kernel selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/rnk10_m5_causal/objective.py": {
-      "bytes": 3285,
-      "classification": {
-        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
-        "role": "research"
-      },
-      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "25e784f667292075a1d8178d96f4b2bd631ecb1aba610135af4f408387905946"
-    },
-    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_train_packet.py": {
-      "bytes": 9300,
-      "classification": {
-        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
-        "role": "research"
-      },
-      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "3396bced69ba492486649f3fdedceb865b052f7f7a7d377300b253cc98d0fdbb"
-    },
-    "python:research/flywheel_selfplay/rnk10_m5_causal/train_candidate.py": {
-      "bytes": 27161,
-      "classification": {
-        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
-        "role": "research"
-      },
-      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "7276cc681efdc83e10733ff6389eea3173ef5ae9c64566024730a3a00d905bf4"
-    },
-    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_roster.py": {
-      "bytes": 2231,
-      "classification": {
-        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
-        "role": "research"
-      },
-      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "fad477aedc837578b48ced28c1e8f8404d83d09ab4e9b69045ed80ba2f969a73"
-    },
-    "python:research/flywheel_selfplay/rnk10_m5_causal/evaluate_candidate.py": {
-      "bytes": 33291,
-      "classification": {
-        "reason": "RNK-10 R10 research-only candidate-loading M5/dev-Elo reproduction. M5 validates pinned batched fixture shapes, and dev Elo reports a reproducible descriptive family-bootstrap interval. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
-        "role": "research"
-      },
-      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "sha256": "379cd94040124c36bd9cbdee0b7b54bdca0f6524774c948866311f3f4b52b478"
-    },
-    "python:research/flywheel_selfplay/rnk10_m5_causal/stage_dev_packet.py": {
-      "classification": {
-        "reason": "RNK-10 R10 research-only implementation of train-only landmark-causality candidate inputs and candidate-loading M5/dev-Elo reproduction. Runs require externally supplied pinned artifacts; this source confers no qualification, release, speed claim, or serving promotion.",
-        "role": "research"
-      },
-      "migration": "New RNK-10 research-only source classification; no product runtime claim.",
-      "bytes": 6193,
-      "sha256": "c84a0468d709ed988f2c3a712129dc44bf2d6172bf3dd7e81107c15f223a10b8"
-    },
-    "python:research/flywheel_selfplay/h193_invalid_veto/parents.py": {
-      "bytes": 1180,
-      "sha256": "f301880508e087f3c86e9928b99f53b371fd4cd74e8b1909fefa5a8271798890",
-      "classification": {
-        "role": "research",
-        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h193_invalid_veto/analysis.py": {
-      "bytes": 8328,
-      "sha256": "bd5ee2b3d48eddd9dbce04a54ec6eef4fd8d50f1ba25bc279799c5fce0fc6c6e",
-      "classification": {
-        "role": "research",
-        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h193_invalid_veto/treatment.py": {
-      "bytes": 2722,
-      "sha256": "3e1c0209f1eeb48960e23ee045bbb7855df6331c48692ffef443f24b4e482311",
-      "classification": {
-        "role": "research",
-        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h193_invalid_veto/monitor.py": {
-      "bytes": 5989,
-      "sha256": "ac7e97f4df3c57ac7e53d74350ca2a734b3a9ebb06cd8885916f51a02e9cdc66",
-      "classification": {
-        "role": "research",
-        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h193_invalid_veto/runner.py": {
-      "bytes": 13664,
-      "sha256": "065747356d78ad6dc7175661cb7a3faa3dbc9e4eca4243b8be1ecdb7407d8ae2",
-      "classification": {
-        "role": "research",
-        "reason": "H193 owner-directed zero-update nested invalid-veto selection. Imported H177 pooled A selection with sole primary Holm1; stage lock, exact component parity and fresh family reshuffles. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h194_invalid_margin/design.py": {
-      "bytes": 6020,
-      "sha256": "84d89963ed96c18495f109a642d19f1fb11a70defce52e84675d17779a604138",
-      "classification": {
-        "role": "research",
-        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h194_invalid_margin/objective.py": {
-      "bytes": 3102,
-      "sha256": "cdae7a81d45c137797b96786ec81e78773c669c2c121cf067197bf4700a24237",
-      "classification": {
-        "role": "research",
-        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h194_invalid_margin/parents.py": {
-      "bytes": 1151,
-      "sha256": "767059a7068e34b412c93259436e10fbcc5e00354c21543bf9d5fe60bafa7226",
-      "classification": {
-        "role": "research",
-        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h194_invalid_margin/monitor.py": {
-      "bytes": 6038,
-      "sha256": "f3560f5b3d8e05ab91ef50b4c3a9572833136ab1f448e3cf1c0277fff9200cf4",
-      "classification": {
-        "role": "research",
-        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h194_invalid_margin/runner.py": {
-      "bytes": 20970,
-      "sha256": "1af8e2b1cb2c375566feca1248a291b2f593ec01191a8f9e276770a0c77d00bd",
-      "classification": {
-        "role": "research",
-        "reason": "H194 registered CPU invalid-candidate hinge continuation; frozen DOPE, independent TRAIN family folds, B-before-A selection, no live changes"
-      }
-    },
-    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/analysis.py": {
-      "bytes": 8760,
-      "sha256": "4904da8ba7f997ddcf9a2ab8d2dad9801be95f2e82e972f221013b1220fac721",
-      "classification": {
-        "role": "research",
-        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/monitor.py": {
-      "bytes": 7064,
-      "sha256": "808459b28206cb82f705cf66c8aab47263c07cd95c3ad0e78146e4e8fc1dab87",
-      "classification": {
-        "role": "research",
-        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py": {
-      "bytes": 29433,
-      "sha256": "cd23328e73fef9a343ccd1a46b79d0568692411175f54c4a30fb0086a96491a5",
-      "classification": {
-        "role": "research",
-        "reason": "H195 preregistered CPU-only diagnostic: prospective confirmation of H129 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed) on fresh per-seed family folds; GBM and calibration from FIT folds only, stage-1 lock before pooled-A U4 scoring, m=1 CANDIDATE gate (LCB95>0, p vs +0.001 <0.05, harm<=10%); NOKERNEL/SHUF descriptive; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h196_tta/s3_arrays.py": {
-      "bytes": 2486,
-      "sha256": "10807c57276a164781c23eacfe3e29112069a48c984164c7a22d7eb0f2966af4",
-      "classification": {
-        "role": "research",
-        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h196_tta/parents.py": {
-      "bytes": 513,
-      "sha256": "ca1a983c6bc13334e4e7ad691d3733dd49e52047f7de673e8726e23c9f39f01c",
-      "classification": {
-        "role": "research",
-        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h196_tta/engine.py": {
-      "bytes": 5899,
-      "sha256": "575881872e37567f4cbffb67bc7913d7b8e4bcf003926acb2d7c59899aa5f8e2",
-      "classification": {
-        "role": "research",
-        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h196_tta/analysis.py": {
-      "bytes": 6106,
-      "sha256": "b7edc2b3dfd9b13bd31e24a8e33b939192736d906f3f2037e5b236daa0130101",
-      "classification": {
-        "role": "research",
-        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h196_tta/treatment.py": {
-      "bytes": 3648,
-      "sha256": "ddc6c912d900e77c6a07e270770be3630d6e82e681f6a903bfdd3c02e0288e2b",
-      "classification": {
-        "role": "research",
-        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h196_tta/monitor.py": {
-      "bytes": 6157,
-      "sha256": "d43990fb7b3482db34eb867eb04fede3455a666450e6b18f9b6b1e21f04303b2",
-      "classification": {
-        "role": "research",
-        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h196_tta/runner.py": {
-      "bytes": 13878,
-      "sha256": "f95df2ac87bed61fef4d811218fe7f9060e61e94d783d82f3101ba08cd81bd8d",
-      "classification": {
-        "role": "research",
-        "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/analysis.py": {
-      "bytes": 5403,
-      "classification": {
-        "role": "research",
-        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
-      },
-      "sha256": "15eade053f86d4e97f11cd7f5068858848323417a7a14b40c62509e97a677a1a"
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/design.py": {
-      "bytes": 5090,
-      "classification": {
-        "role": "research",
-        "reason": "H197 independent TRAIN-fold and batch protocol plus zero-update preflight acceptance guard; no outcomes read by helper tests."
-      },
-      "sha256": "edabb2d0666514b7f46cf13497beb58459c70cfb77a33393d12867200b19d7b2"
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/monitor.py": {
-      "bytes": 6041,
-      "classification": {
-        "role": "research",
-        "reason": "H197 data-free controls for per-context gradient clipping: independent TRAIN-family folds, frozen fit-only clip calibration, four matched arms, immutable B-stage lock, strict paired-family bootstrap/verdict, and CPU resource guards; no corpus/checkpoint reads or model passes in fixtures."
-      },
-      "sha256": "eb60e02e0291f7cba75d3f5b7302555ae7f8ed1707e7afad68d1b56ef85424fb"
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/runner.py": {
-      "bytes": 32031,
-      "classification": {
-        "role": "research",
-        "reason": "H197 CPU fixed-step continuation runner with exact source binding, H197-rooted local pin verification, full-corpus zero-update preflight, FIT-only training, B lock before A, and a shared strict JSON record writer; research only."
-      },
-      "sha256": "ca123ce220f76a625208e59e3997a72576715daddddb2ece9d16e5fc4f3ac1dd"
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/treatment.py": {
-      "bytes": 5606,
-      "classification": {
-        "role": "research",
-        "reason": "H197 per-context gradient clipping and JSON-safe permutation encoding for the within-batch shuffled-factor placebo; research only."
-      },
-      "sha256": "cfe8e5c1cc5d9e1c8431aad4c6a4098097afa8a7386b14d79f3711016b803cb8"
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/source_pins.py": {
-      "bytes": 874,
-      "classification": {
-        "role": "research",
-        "reason": "H197 read-only source hash validator confined to the study directory; path traversal and mismatch refusal."
-      },
-      "sha256": "92dc24bb84a1a378e59d4b2c1f69d39f24f7645dfdb79d00e91138408657063a"
-    },
-    "python:research/flywheel_selfplay/h197_pcgc/json_writer.py": {
-      "bytes": 329,
-      "classification": {
-        "role": "research",
-        "reason": "Single durable H197 JSON writer using json.dumps(allow_nan=False), used by every trace, receipt, summary, metrics, audit and failure record."
-      },
-      "sha256": "99135f2c304b6558c25291913484982e0a7f5cd10b37520d3cbd0e109cdf50a5"
-    },
-    "python:research/flywheel_selfplay/h199_blend025_native/analysis.py": {
-      "bytes": 9149,
-      "sha256": "57c40ae02b882e2840ab57c6f88121487b1604052d3d5536b5659a7753a54c73",
-      "classification": {
-        "role": "research",
-        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h199_blend025_native/monitor.py": {
-      "bytes": 7032,
-      "sha256": "9d8b23d03ae7eeb1571b3efa33d8daa30051439831316e8318495e4de9e77917",
-      "classification": {
-        "role": "research",
-        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h199_blend025_native/runner.py": {
-      "bytes": 26753,
-      "sha256": "59a4c0209f5b313b11cfbaa4e87bcf0f4b60cb512140d78560181394847fe41f",
-      "classification": {
-        "role": "research",
-        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h200_nested_blend/analysis.py": {
-      "bytes": 7619,
-      "classification": {
-        "role": "research",
-        "reason": "H200 pure-data-free fold, nested-lambda, rank-blend, family-bootstrap, Holm and Elo analysis primitives; no data access."
-      },
-      "sha256": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2"
-    },
-    "python:research/flywheel_selfplay/h200_nested_blend/runner.py": {
-      "bytes": 23364,
-      "classification": {
-        "role": "research",
-        "reason": "H200 xbabe1-only, single-attempt CPU runner for exact r882 regression, FIT-only nested calibration/lambda selection, native A scoring, source pins, and resource guards; no updates or promotion."
-      },
-      "sha256": "69addcb1c86ca87a231d44510674b89c64870d86590c56c33f734c47c964dbe1"
-    },
-    "python:research/flywheel_selfplay/h200_nested_blend/monitor.py": {
-      "bytes": 6672,
-      "classification": {
-        "role": "research",
-        "reason": "H200 xbabe1-only supervisor enforcing nice 19, four-core, memory, RSS, load, disk, deadline and output guards for one attempt."
-      },
-      "sha256": "078c8d4221d51d6024e0e48a1429cf76c29d8aac3f6716c040d9664f9d5188d4"
-    },
-    "python:research/flywheel_selfplay/h201_strict_admission/analysis.py": {
-      "bytes": 8730,
-      "sha256": "51d54087125d824479e842705d3e1308a31e11a9e68fd0b041a3a0cb7c3cf292",
-      "classification": {
-        "role": "research",
-        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
-      }
-    },
-    "python:research/flywheel_selfplay/h201_strict_admission/monitor.py": {
-      "bytes": 4683,
-      "sha256": "55ccae8a383ccd0d02f1f4efa5b665cc629ba869dbc8b052d34c12e414a615b8",
-      "classification": {
-        "role": "research",
-        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
-      }
-    },
-    "python:research/flywheel_selfplay/h201_strict_admission/runner.py": {
-      "bytes": 13494,
-      "sha256": "0e7457d31dc2403e22ce43babf9348c3f87f735a0c0ecb4d142c84262d9c0c1b",
-      "classification": {
-        "role": "research",
-        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
-      }
-    },
-    "python:research/flywheel_selfplay/h202_hard_negative/design.py": {
-      "bytes": 4475,
-      "sha256": "a4505ad651f9aabb4ca21d0f7530d4fb50a5fc10614115dd31e1a39d5aa855f6",
-      "classification": {
-        "role": "research",
-        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
-      }
-    },
-    "python:research/flywheel_selfplay/h202_hard_negative/artifacts.py": {
-      "bytes": 1786,
-      "sha256": "135028eb5571148f2a89ee555f34cdbcd5214080c504409786d7b76fbaab779f",
-      "classification": {
-        "role": "research",
-        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
-      }
-    },
-    "python:research/flywheel_selfplay/h202_hard_negative/analysis.py": {
-      "bytes": 4717,
-      "sha256": "64e1df8b3ae11ff8332e2e7ffa07f2d1f0bcf93484f542fc4e081af89adb0667",
-      "classification": {
-        "role": "research",
-        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
-      }
-    },
-    "python:research/flywheel_selfplay/h202_hard_negative/monitor.py": {
-      "bytes": 5550,
-      "sha256": "a1182d142d62f251de0777f7d9fdae309009e45836be3b2f7492682b62338bdc",
-      "classification": {
-        "role": "research",
-        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
-      }
-    },
-    "python:research/flywheel_selfplay/h202_hard_negative/objectives.py": {
-      "bytes": 2272,
-      "sha256": "1d68987f555c2388c4af2eb1a75eb601f979060393f940ab25f602a5193c06f6",
-      "classification": {
-        "role": "research",
-        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
-      }
-    },
-    "python:research/flywheel_selfplay/h202_hard_negative/runner.py": {
-      "bytes": 28616,
-      "sha256": "ebad7a2c0ed60a575234550ae4a05e76151d883440b045a06fa088ebb4ff7251",
-      "classification": {
-        "role": "research",
-        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
-      }
-    },
-    "python:research/flywheel_selfplay/h203_blend025_gated/analysis.py": {
-      "bytes": 12399,
-      "sha256": "3b3377ef1b19b34bf58f85145f00043d94dc9f2a9d036d56795757a67cc18ec2",
-      "classification": {
-        "role": "research",
-        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h203_blend025_gated/monitor.py": {
-      "bytes": 7032,
-      "sha256": "268e7f9cf6b18c90520daf0a21bde4a07866b4eb0c874c18d5a09b19fa6c327e",
-      "classification": {
-        "role": "research",
-        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
-      }
-    },
-    "python:research/flywheel_selfplay/h203_blend025_gated/runner.py": {
-      "bytes": 30235,
-      "sha256": "bdeb44b6e54cc5096d6d288c68f3cbda568aac5c83bc0e55799339976a855cb3",
-      "classification": {
-        "role": "research",
-        "reason": "H203 preregistered CPU-only diagnostic: BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
       }
     }
   },

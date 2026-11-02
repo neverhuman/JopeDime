@@ -5021,6 +5021,17 @@
       ],
       "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
     },
+    "python:python/tests/test_dime_score_worker_validation.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "scope": "Synthetic worker reopen control: the mmap collator repeats corpus integrity verification in a spawned worker; no live corpus or model evaluation."
+    },
     "python:python/tests/test_training_corpus_contract.py": {
       "discovery": {
         "kind": "python-family"

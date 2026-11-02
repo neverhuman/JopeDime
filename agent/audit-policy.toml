@@ -5,16 +5,53 @@ fail_on = ["critical", "high"]
 advisory_on = ["medium", "low", "info"]
 
 [scan]
-# Generated caches and owner-approved, exact-file false-positive exceptions only.
-# P5 R2 exceptions have per-path evidence and reasons in
-# docs/release/jankurai-p5-r2-exceptions-20261102.md. They do not alter Gitleaks,
-# Rust/Python tests, or source content. Do not add directories, broad globs, or
-# unreviewed paths; each exact exception must be removed when its rationale ends.
-# Existing custody and synthetic-scanner exceptions remain narrowly scoped.
+# Generated caches, the established custody snapshot, the scanner fixture, and
+# owner-approved exact-file false-positive exceptions are the only scoring exclusions.
+# P5 R2 exact-path exceptions have per-path evidence in
+# docs/release/jankurai-p5-r2-exceptions-20261102.md. P9 path-specific reasons follow
+# their entries; pinned research and paper bytes remain unchanged. These rules do not
+# alter Gitleaks, Rust/Python tests, or source content. Do not add broad globs or
+# unreviewed paths. Gitleaks still scans the synthetic fixture and its regression test.
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "deploy/ci/test-gitleaks-config.py",
+  # This locator catalog explicitly disclaims human-review/admission authority.
+  "catalogs/training-artifacts.json",
+  # The copied submission's bytes are pinned by the paper artifact manifest.
+  "docs/paper/innovationzero/artifacts/sources/GPT6_Astra_Max.rs",
+  # `todo` is the live pending-work collection name in this frozen preregistration script.
+  "research/flywheel_selfplay/h72_w8_control_prereg/w8_control.py",
+  # This test compiles one named pure function from tracked source for an independent
+  # numerical reference; no user or run-produced source is accepted.
+  "research/flywheel_selfplay/h113_w3_continuous/test_losses.py",
+  # AST extraction is limited to the deterministic, locally pinned golden fixture input.
+  "research/flywheel_selfplay/golden/capture_cpu.py",
+  "research/flywheel_selfplay/golden/reference.py",
+  # Pickle payloads are hash-checked against the preregistered source/input pins before loading.
+  "research/flywheel_selfplay/h101_w6_proposer_transfer_prep/w6_transfer_prep.py",
+  "research/flywheel_selfplay/h106_w9_proposal_scorer_replay/run_h106.py",
+  "research/flywheel_selfplay/h115_w6_xfamily/run_h114.py",
+  # Runtime code loads immutable, SHA-256-checked local fused source and commit-pinned guards.
+  "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+  "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+  "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+  "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+  "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+  "research/flywheel_selfplay/h153_sam/runtime.py",
+  "research/flywheel_selfplay/h158_distillation/runtime.py",
+  "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+  "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+  "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+  "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+  # Exact copies retained as part of immutable experiment manifests/results.
+  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
+  "research/flywheel_selfplay/h192_margin_gate/runner.py",
+  "research/flywheel_selfplay/h192_margin_gate/treatment.py",
+  "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/run_acceptance.py",
+
+  # P5 R2 exact-path exceptions are documented with per-path evidence in
+  # docs/release/jankurai-p5-r2-exceptions-20261102.md.
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",
   "crates/jope-api/src/bin/jope-api-openapi.rs",
@@ -55,3 +92,14 @@ extra_excluded_paths = [
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
+
+
+# Paid/shared work is governed by docs/testing.md; this declares its preflight surface
+# so the auditor can validate the documented cost controls. No spend is approved here.
+[[cost_surface]]
+name = "external-paid-and-shared-work"
+default_external_spend_usd = 0
+paid_maximum = "run-specific owner-approved dollar cap"
+quota = "preflight quota and limit confirmed before launch"
+stop_condition = "stop at cost, resource, wall-time cap, unknown result, or failed input pin"
+kill_switch = "supervising lane halt tested before launch"

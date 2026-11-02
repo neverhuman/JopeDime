@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import fnmatch
+import json
 import re
 import importlib.util
 import os
@@ -1069,6 +1071,7 @@ class LocalRetentionTests(unittest.TestCase):
             self.assertIn('retained at', result.stdout)
             self.assertIn('receipt.json: OK', result.stdout)
 
+
     def test_local_retention_success_has_verified_recoverable_bytes(self):
         scratch = ROOT/'target'/'tmp'
         scratch.mkdir(parents=True, exist_ok=True)
@@ -1099,6 +1102,103 @@ class LocalRetentionTests(unittest.TestCase):
                                       cwd=destination, capture_output=True, text=True)
             self.assertEqual(0, verified.returncode, verified.stderr)
             self.assertIn('receipt.json: OK', result.stdout)
+
+class AgentMapTests(unittest.TestCase):
+    ALIASES = {
+        'apps/web/': 'web/training-dashboard/',
+        'apps/web/**': 'web/training-dashboard/**',
+        'db/': 'crates/jope-datasets/',
+        'db/**': 'crates/jope-datasets/**',
+    }
+    TEST_COMMAND_MARKERS = (
+        'test-runner.py',
+        'test-gitleaks-config.py',
+        'cargo test ',
+        'just test-pr',
+        'just required',
+        'just ci-pr',
+        'just python-check',
+        'pytest',
+        'npm ci ',
+        'npm test',
+        'npm run test:rendered',
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        result = subprocess.run(
+            ['git', 'ls-files'], cwd=ROOT, capture_output=True, text=True, check=True
+        )
+        cls.tracked = set(result.stdout.splitlines())
+
+    def key_matches_tree(self, key):
+        pattern = self.ALIASES.get(key, key)
+        if any(char in pattern for char in '*?['):
+            return any(fnmatch.fnmatchcase(path, pattern) for path in self.tracked)
+        prefix = pattern.rstrip('/')
+        return prefix in self.tracked or any(
+            path.startswith(prefix + '/') for path in self.tracked
+        )
+
+    def test_owner_map_keys_match_tracked_paths_or_explicit_aliases(self):
+        owner_map = json.loads((ROOT / 'agent/owner-map.json').read_text())['owners']
+        missing = [key for key in owner_map if not self.key_matches_tree(key)]
+        self.assertEqual([], missing, f'untracked owner-map keys: {missing}')
+
+    def test_test_map_keys_match_tracked_paths_or_explicit_aliases(self):
+        test_map = json.loads((ROOT / 'agent/test-map.json').read_text())['tests']
+        missing = [key for key in test_map if not self.key_matches_tree(key)]
+        self.assertEqual([], missing, f'untracked test-map keys: {missing}')
+
+    def test_policy_and_generated_zone_routes_are_valid(self):
+        import tomllib
+
+        with (ROOT / 'agent/audit-policy.toml').open('rb') as source:
+            policy = tomllib.load(source)
+        with (ROOT / 'agent/generated-zones.toml').open('rb') as source:
+            generated = tomllib.load(source)
+        with (ROOT / 'agent/ux-qa.toml').open('rb') as source:
+            ux = tomllib.load(source)
+        self.assertIn('minimum_score', policy)
+        self.assertEqual('web/training-dashboard', ux['app'])
+        self.assertEqual('playwright', ux['rendered']['runner'])
+        self.assertTrue(generated['zone'])
+        missing = [
+            zone['path'] for zone in generated['zone']
+            if (not zone['path'].startswith('target/')
+                and not self.key_matches_tree(zone['path']))
+            or not zone.get('source') or not zone.get('command')
+        ]
+        self.assertEqual([], missing, f'incomplete generated-zone routes: {missing}')
+
+    def test_each_mapped_proof_command_invokes_a_test_suite(self):
+        test_map = json.loads((ROOT / 'agent/test-map.json').read_text())['tests']
+        commands = sorted({route.get('command', '') for route in test_map.values()})
+        no_tests = [
+            command
+            for command in commands
+            if not any(marker in command for marker in self.TEST_COMMAND_MARKERS)
+        ]
+        self.assertEqual([], no_tests, f'proof commands without tests: {no_tests}')
+
+    def test_shared_research_audit_refuses_protected_reads_and_input_writes(self):
+        helper = ROOT / 'research/flywheel_selfplay/runtime_audit.py'
+        spec = importlib.util.spec_from_file_location('research_runtime_audit', helper)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        Audit = module.Audit
+
+        with tempfile.TemporaryDirectory(prefix='research-audit-') as name:
+            allowed = Path(name) / 'input.bin'
+            audit = Audit([allowed], Path(name) / 'output')
+            audit.check('open', (str(allowed), 'rb', 0))
+            with self.assertRaisesRegex(RuntimeError, 'input/output boundary refusal'):
+                audit.check('open', ('/home/ubuntu/jope-data/sealed/row.bin', 'rb', 0))
+            with self.assertRaisesRegex(RuntimeError, 'input/output boundary refusal'):
+                audit.check('open', (str(allowed), 'wb', 0))
+            self.assertEqual(2, len(audit.refused))
+
+
 
 
 if __name__ == '__main__':
