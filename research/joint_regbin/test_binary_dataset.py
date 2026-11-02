@@ -599,34 +599,34 @@ class TaskRoleCandidateManifestTests(unittest.TestCase):
             " ".join(manifest["blockers"]),
         )
 
-    def test_role_candidates_reject_srcfile_binary_rows_under_r15_d4(self):
+    def test_role_candidates_keep_keyed_srcfile_binary_rows_under_r15_d4(self):
         inputs = list(self._inputs())
         catalog, catalog_pool = inputs[0], inputs[4]
         sourcefile_row = next(
             row for row in catalog["datasets"] if row["task"] == "binary"
         )
+        self.assertTrue(sourcefile_row["family_key"])
         sourcefile_row["family_key_derived"] = "srcfile:conservative-alias"
         sourcefile_row["source_file"] = "binary/conservative-alias.csv"
         catalog_pool["closure"] = {
             "owner_aliases_fully_closed": True,
             "family_exclusion_sha256": "ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651",
         }
-        catalog_pool["candidate_pools"]["binary"] = [
-            row
-            for row in catalog_pool["candidate_pools"]["binary"]
-            if row["dataset"] != sourcefile_row["id"]
-        ]
 
         manifest = self._build(inputs)
 
-        self.assertEqual(manifest["role_counts"]["train"]["binary"], 9)
+        self.assertEqual(manifest["role_counts"]["train"]["binary"], 10)
         self.assertTrue(manifest["closure"]["owner_r15_d4_exclusion_verified"])
         self.assertTrue(
             manifest["closure"]["sourcefile_dependent_binary_rows_excluded"]
         )
-        self.assertNotIn(
+        self.assertIn(
             sourcefile_row["id"],
             {row["dataset"] for row in manifest["records"]["binary_train"]},
+        )
+        self.assertEqual(
+            manifest["protected_exclusion"]["excluded_role_counts"]["train"]["binary"],
+            0,
         )
         self.assertFalse(manifest["eligibility_verified"])
 

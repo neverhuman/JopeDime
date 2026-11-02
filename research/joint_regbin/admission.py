@@ -1149,7 +1149,9 @@ def build_task_role_candidate_manifest(
     }
     if d4_alias_closure:
         role_exclusion_counts["train"]["binary"] = sum(
-            row.get("task") == "binary" and _srcfile_key(row) is not None
+            row.get("task") == "binary"
+            and not row.get("family_key")
+            and _srcfile_key(row) is not None
             for row in catalog_rows
         )
 
@@ -1171,7 +1173,10 @@ def build_task_role_candidate_manifest(
             if row.get("task") == task
             and row["id"] not in d4_excluded_ids
             and not (
-                d4_alias_closure and task == "binary" and _srcfile_key(row) is not None
+                d4_alias_closure
+                and task == "binary"
+                and not row.get("family_key")
+                and _srcfile_key(row) is not None
             )
         }
         if len(pool_by_id) != len(rows) or set(pool_by_id) != expected_ids:
