@@ -226,7 +226,8 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
                 ),
             )
             require(
-                os.getsid(0) == os.getpgrp() == own_pid, "recorder session isolation failed"
+                os.getsid(0) == os.getpgrp() == own_pid,
+                "recorder session isolation failed",
             )
             child = subprocess.Popen(
                 command,
@@ -348,7 +349,10 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
                     "server executable changed during capture",
                 )
             require(
-                all(digest(source_paths[name]) == pin for name, pin in source_pins.items()),
+                all(
+                    digest(source_paths[name]) == pin
+                    for name, pin in source_pins.items()
+                ),
                 "capture source changed during execution",
             )
         except (CaptureError, OSError) as exc:
@@ -386,7 +390,9 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
             and error is None
         ):
             error = error or "capture interrupted"
-        code = 125 if error else (server_exit if server_exit >= 0 else 128 - server_exit)
+        code = (
+            125 if error else (server_exit if server_exit >= 0 else 128 - server_exit)
+        )
         receipt = dict(
             schema="jopedime.mcp-stdio-capture/v1",
             started_at=started,
@@ -408,7 +414,9 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
             complete=error is None,
             error=error,
             a5_status="UNVERIFIED",
-            limits=dict(seconds=seconds, stream_bytes=max_bytes, frame_bytes=1024 * 1024),
+            limits=dict(
+                seconds=seconds, stream_bytes=max_bytes, frame_bytes=1024 * 1024
+            ),
             frames=frames,
             retained_stream_bytes=retained,
             files={
@@ -574,7 +582,7 @@ def self_test():
                     process.communicate(timeout=5)
 
         def run_signal_harness(self, mode, server_code, data=b"", seconds="2"):
-            harness = r'''import json, os, signal, sys
+            harness = r"""import json, os, signal, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(sys.argv[1]).parent))
 import capture_stdio as recorder
@@ -606,7 +614,7 @@ elif mode == "second-term":
         pending.unlink()
     recorder.publish_private_json = publish
 sys.exit(recorder.record([sys.executable, "-c", server_code], Path(output), float(seconds), 1048576))
-'''
+"""
             command = [
                 sys.executable,
                 "-B",
@@ -631,7 +639,9 @@ sys.exit(recorder.record([sys.executable, "-c", server_code], Path(output), floa
             receipt = self.receipt()
             self.assertTrue(receipt["complete"])
             self.assertEqual(receipt["server_exit_code"], 0)
-            self.assertEqual(receipt["frames"], {"client_to_server": 1, "server_to_client": 1})
+            self.assertEqual(
+                receipt["frames"], {"client_to_server": 1, "server_to_client": 1}
+            )
             self.assertFalse((self.out / "capture.json.pending").exists())
 
         def test_second_term_during_publication_preserves_incomplete_receipt(self):
