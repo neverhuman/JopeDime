@@ -1595,6 +1595,10 @@
       "reason": "REL-07 PR1436 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
+      "reason": "REL-07 PR1794 normal-exit Codex MCP recorder drain regression test over synthetic child processes; not actual release-gate execution.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "reason": "QLT-04 FIFO launcher controls with private queue/key/backend fixtures; admission, lease, mutation, ledger and process cleanup proofs, not live qualification.",
       "role": "infrastructure"
