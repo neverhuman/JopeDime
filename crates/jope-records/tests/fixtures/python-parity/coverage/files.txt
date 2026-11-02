@@ -1858,6 +1858,7 @@ crates/jope-policy/src/lib.rs
 crates/jope-policy/src/model.rs
 crates/jope-policy/src/model/cached.rs
 crates/jope-policy/src/producer.rs
+crates/jope-policy/src/producer/context_bundle.rs
 crates/jope-policy/src/producer/tests.rs
 crates/jope-policy/src/proposal_ledger.rs
 crates/jope-policy/src/proposal_ledger/builder.rs
