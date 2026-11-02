@@ -139,19 +139,20 @@ fixture changes only its generation SHA. The transition is registered in
 `rustunsafe_authority_lineage_rebaseline.v1.json`. No known-identity row is added because this
 work has no shipped receipt proving a new identity existed.
 
-## Current identity transition: P45 tiny-budget test hardening (2026-11-02)
+## Current identity transition: P45 load-guarded tiny-budget backstop (2026-11-02)
 
-P45 hardens `race_respects_tiny_time_budget` by asserting that the exhausted budget admits only
-the bounded rung-0 chunk and by retaining a generous wall-clock hang guard. The test-only edit to
-`crates/feat-math/src/evolve.rs` changes a hashed evaluator source input, although evaluator
-calculations, DSL ABI, Cargo.lock and runtime behavior are unchanged. The implementation hash
-advances from `e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` to
-`034d6836456f2e7cb96a88b393bb435979dbfe443342196f6eff3eab9da439c9`; the identity digest
-advances from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` to
-`f09606a184af4e783ebaf750c6d3e21d0ec442f01f578436cac873c3186388e4`. The DSL ABI remains
+P45 hardens `race_respects_tiny_time_budget` with unconditional rung admission counts and a
+30-second elapsed backstop gated by the documented `remote_test.sh` host-load admission (including
+queued-job reservations). A skipped elapsed check is logged. The test-only `evolve.rs` edit changes
+a hashed evaluator source input, although evaluator calculations, DSL ABI, Cargo.lock and runtime
+behavior are unchanged. The implementation hash advances from
+`034d6836456f2e7cb96a88b393bb435979dbfe443342196f6eff3eab9da439c9` to
+`135d14006ae46aa22801b8c1a8bacf432c18156e95e8a921dbda16dce7a72884`; the identity digest advances
+from `f09606a184af4e783ebaf750c6d3e21d0ec442f01f578436cac873c3186388e4` to
+`f98fd62d588375253f46904c63641349164b78b92df1318810b04f47d0b7ab1c`. The DSL ABI remains
 `c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389`, and the Cargo.lock hash
 remains `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`. The compatibility
-identity fixtures were regenerated at source commit `c6c46d5783a83276c6b8f953dbff770191b4ce19`
-using the announced identity-only procedure; the transition is recorded in
-`p45_feat_math_race_budget_identity_rebaseline.v1.json`. No known-identity row is added because
-this work has no shipped receipt proving the new identity existed.
+identity fixtures were regenerated at source commit
+`6641b6b34249e5bf7eb5a92847e8a3e33f2ff782` using the announced identity-only procedure; the follow-up
+transition is recorded in `p45_feat_math_race_load_guard_identity_rebaseline.v1.json`. No known-identity
+row is added because this work has no shipped receipt proving the new identity existed.
