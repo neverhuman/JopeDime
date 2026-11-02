@@ -492,6 +492,8 @@ crates/jope-campaigns/seeds/generation-zero-binary.txt
 crates/jope-campaigns/seeds/generation-zero.txt
 crates/jope-campaigns/src/aggressive.rs
 crates/jope-campaigns/src/args.rs
+crates/jope-campaigns/src/broad_shadow_cli.rs
+crates/jope-campaigns/src/broad_shadow_cli/tests.rs
 crates/jope-campaigns/src/bin/aspfm_recovery_evolve.rs
 crates/jope-campaigns/src/bin/corpus_eval.rs
 crates/jope-campaigns/src/bin/jope_canary_executor.rs
