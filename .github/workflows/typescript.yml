@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+
+concurrency:
+  group: typescript-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   typescript-parity:
     # Reusable under ci.yml, the existing PR/manual admission context.
