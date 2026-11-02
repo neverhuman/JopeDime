@@ -3004,6 +3004,26 @@
       ],
       "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_cli.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_recovery.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Explicit data-free arena fixtures via run_rlfw_offline.py: measured toy scores, parent-cluster uncertainty, blind logical charging, durable replay, isolated paths and mock evaluator only. No corpus, live execution, training or serving qualification."
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
       "discovery": {
         "kind": "python-family"

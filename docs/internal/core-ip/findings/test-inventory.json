@@ -935,6 +935,22 @@
         "orchestration"
       ]
     },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_cli.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_arena_scheduler_recovery.py": {
+      "role": "regression",
+      "subsystems": [
+        "evaluation",
+        "evidence",
+        "orchestration"
+      ]
+    },
     "python:deploy/dl-flywheel/pipelines/rlfw/tests/test_binding.py": {
       "reason": "Executing synthetic research interface invariants; toy likelihood, append-only custody and refusal behavior. Does not establish live service capability.",
       "role": "regression",
