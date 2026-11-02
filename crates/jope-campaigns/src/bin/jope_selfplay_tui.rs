@@ -3877,7 +3877,7 @@ fn cockpit_state(dashboard: &Dashboard) -> &'static str {
     "RUNNING"
 }
 
-#[path = "tui_render.rs"]
+#[path = "../tui_render.rs"]
 mod tui_render;
 
 fn format_event(value: &Value) -> String {
