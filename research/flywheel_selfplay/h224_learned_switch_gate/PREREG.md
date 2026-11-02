@@ -144,7 +144,7 @@ multiplicity claim. A primary or plateau success does not authorize deployment.
 
 xbabe2 CPU only, nice19; monitor and worker inherit the same <=4 logical CPU
 kernel affinity. HistGBM OpenMP<=4; BLAS/MKL1; native torch1. Monitor the complete
-process tree every .25s: RSS strictly<4GiB, load5<=60, free disk>=300GB,
+process tree every .25s: RSS strictly<4GiB, free disk>=300GB,
 MemAvailable>=20GiB. Swap-free is recorded. Own run output<600MB. Guards apply
 during native baseline, fits, scoring and transport. Stop compute at18:00Z,
 leaving30min to close by18:30Z on2026-11-02. One create-only attempt, no retry.
@@ -168,3 +168,14 @@ sampling. Ignore only those already-exited children/threads; retain all live
 RSS/affinity/host/deadline stops. No scientific source, inputs, seeds, choices or
 budget changes. Execute the exact merged prelaunch-amendment source. The failure
 and corrected control are retained in custody. No attempt has been consumed.
+
+## Pre-outcome amendment A2 — load pause (2026-11-02T14:00:10.506879+00:00)
+
+Owner `hw_t1400_loadguard.md` replaces load-triggered abort with pause. The
+supervisor sends SIGSTOP only to its own H224 worker PID when load5>60, keeps
+all hard guards active, and checks the pause decision every60 seconds. Resume
+with SIGCONT only when load5<=55. A hard RSS/MemAvailable/free-disk/deadline
+failure resumes a stopped worker only to terminate its owned process group.
+The absolute18:00Z compute stop and18:30Z closeout do not move during pauses.
+No H224 claim, baseline, fit or outcome existed at this amendment. Science,
+seeds, fits, logistic choices and all other limits are unchanged.

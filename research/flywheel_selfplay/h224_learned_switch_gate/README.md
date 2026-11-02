@@ -16,3 +16,14 @@ and [manifest.json](manifest.json). No sealed, holdout or meta-test reads.
 
 Next: merge preregistration, pass the four-fit non-scored smoke, then finish the
 fixed CPU-only attempt and publish the result by18:30Z on2026-11-02.
+
+## Pre-outcome amendment A2 — load pause (2026-11-02T14:00:10.506879+00:00)
+
+Owner `hw_t1400_loadguard.md` replaces load-triggered abort with pause. The
+supervisor sends SIGSTOP only to its own H224 worker PID when load5>60, keeps
+all hard guards active, and checks the pause decision every60 seconds. Resume
+with SIGCONT only when load5<=55. A hard RSS/MemAvailable/free-disk/deadline
+failure resumes a stopped worker only to terminate its owned process group.
+The absolute18:00Z compute stop and18:30Z closeout do not move during pauses.
+No H224 claim, baseline, fit or outcome existed at this amendment. Science,
+seeds, fits, logistic choices and all other limits are unchanged.
