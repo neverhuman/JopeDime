@@ -32,13 +32,16 @@ pub struct Candidate {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case", tag = "outcome", content = "reason")]
-/// `Decision` is an enum for the decision contract in this module: The high-water-mark ledger: admission rules, ingest, show, verify and freeze.
-pub enum Decision {
-    /// The `Accepted` case of `Decision`.
+/// `HwmDecision` is the decision contract for high-water-mark admission and ingest.
+pub enum HwmDecision {
+    /// The `Accepted` case of `HwmDecision`.
     Accepted,
-    /// The `Rejected` case of `Decision`.
+    /// The `Rejected` case of `HwmDecision`.
     Rejected(RejectReason),
 }
+
+/// Compatibility name for the high-water-mark decision contract.
+pub type Decision = HwmDecision;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]

@@ -921,6 +921,8 @@ class EmitterEvidenceTests(unittest.TestCase):
         scratch = ROOT / 'target' / 'tmp'
         scratch.mkdir(parents=True, exist_ok=True)
         script = r'''rustup() { :; }
+gcc() { echo fixture; }
+clang() { echo fixture; }
 g++() { echo fixture; }
 clang++() { echo fixture; }
 node() { echo fixture; }

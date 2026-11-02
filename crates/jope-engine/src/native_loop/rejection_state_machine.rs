@@ -35,13 +35,16 @@ impl Grant {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Decision {
+pub enum LoopDecision {
     Accepted,
     Rejected,
     Inconclusive,
     Quarantined,
     Aborted,
 }
+
+/// Compatibility name retained for callers of the test-only state model.
+pub type Decision = LoopDecision;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
