@@ -787,9 +787,9 @@ class SecretScanTests(unittest.TestCase):
         # Hygiene delegates to the fail-closed shared security entry point.
         fast_lane = (ROOT/'deploy/ci/fast-lane.sh').read_text()
         check = (ROOT/'deploy/ci/check.sh').read_text()
-        self.assertIn('bash tools/security-lane.sh', fast_lane)
-        self.assertIn('JOPE_SECURITY_LANE_PRECHECKED=1 bash deploy/ci/check.sh', fast_lane)
-        self.assertIn('JOPE_SECURITY_LANE_PRECHECKED', check)
+        self.assertIn('bash deploy/ci/check.sh', fast_lane)
+        self.assertNotIn('JOPE_SECURITY_LANE_PRECHECKED', fast_lane)
+        self.assertNotIn('JOPE_SECURITY_LANE_PRECHECKED', check)
         self.assertIn('bash tools/security-lane.sh', check)
         self.assertIn('bash deploy/ci/secret-scan.sh', (ROOT/'tools/security-lane.sh').read_text())
 
@@ -1118,6 +1118,8 @@ class AgentMapTests(unittest.TestCase):
     TEST_COMMAND_MARKERS = (
         'test-runner.py',
         'test-gitleaks-config.py',
+        'test-security-lane.py',
+        'python3 -m unittest',
         'cargo test ',
         'just test-pr',
         'just required',

@@ -52,14 +52,14 @@
       "purpose": "validate generated and secret exclusions"
     },
     ".gitleaks.toml": {
-      "command": "python3 deploy/ci/test-gitleaks-config.py",
+      "command": "python3 deploy/ci/test-gitleaks-config.py && bash tools/security-lane.sh",
       "lane": "security",
-      "purpose": "validate secret scanning policy"
+      "purpose": "validate secret policy fixtures and run the full secret, dependency, frontend, and workflow scan lane"
     },
     "deny.toml": {
-      "command": "python3 deploy/ci/test-gitleaks-config.py",
+      "command": "python3 deploy/ci/test-security-lane.py && bash tools/security-lane.sh",
       "lane": "security",
-      "purpose": "validate dependency policy"
+      "purpose": "test scanner failure propagation and run cargo-deny across all features"
     },
     "LICENSE": {
       "command": "python3 deploy/ci/test-runner.py",
@@ -82,29 +82,29 @@
       "purpose": "run Rust unit, integration, parity, and GP evolution tests"
     },
     "crates/battle-gpu/Cargo.toml": {
-      "command": "just test-pr",
-      "lane": "test-pr",
-      "purpose": "build and test the GPU boundary crate"
+      "command": "cargo test -p battle-gpu --locked",
+      "lane": "gpu-boundary",
+      "purpose": "compile the embedded PTX and run CPU-safe GPU boundary tests; hardware qualification stays separately gated"
     },
     "crates/battle-gpu/kernels/ridge_screen.cu": {
-      "command": "cargo test -p feat-math --locked",
-      "lane": "emitters",
-      "purpose": "compile and parity-check the GPU kernel source"
+      "command": "cargo test -p battle-gpu --locked",
+      "lane": "gpu-boundary",
+      "purpose": "compile the embedded PTX and run CPU-safe GPU boundary tests; hardware qualification stays separately gated"
     },
     "crates/battle-gpu/kernels/ridge_screen.ptx": {
-      "command": "cargo test -p feat-math --locked",
-      "lane": "emitters",
-      "purpose": "verify the checked-in PTX kernel artifact"
+      "command": "cargo test -p battle-gpu --locked",
+      "lane": "gpu-boundary",
+      "purpose": "compile the embedded PTX and run CPU-safe GPU boundary tests; hardware qualification stays separately gated"
     },
     "crates/battle-gpu/src/driver.rs": {
-      "command": "just test-pr",
-      "lane": "test-pr",
-      "purpose": "test the checked unsafe CUDA driver boundary"
+      "command": "cargo test -p battle-gpu --locked",
+      "lane": "gpu-boundary",
+      "purpose": "compile the embedded PTX and run CPU-safe GPU boundary tests; hardware qualification stays separately gated"
     },
     "crates/battle-gpu/src/lib.rs": {
-      "command": "just test-pr",
-      "lane": "test-pr",
-      "purpose": "test serialized GPU backend ownership"
+      "command": "cargo test -p battle-gpu --locked",
+      "lane": "gpu-boundary",
+      "purpose": "compile the embedded PTX and run CPU-safe GPU boundary tests; hardware qualification stays separately gated"
     },
     "crates/feat-math/Cargo.toml": {
       "command": "cargo test -p feat-math --locked",
@@ -227,14 +227,14 @@
       "purpose": "verify local CI wrappers"
     },
     "tools/": {
-      "command": "python3 deploy/ci/test-gitleaks-config.py",
+      "command": "python3 deploy/ci/test-security-lane.py && bash tools/security-lane.sh",
       "lane": "security",
-      "purpose": "verify security tooling wrappers"
+      "purpose": "test security-lane refusal behavior and run configured operational scans"
     },
     "tools/**": {
-      "command": "python3 deploy/ci/test-gitleaks-config.py",
+      "command": "python3 deploy/ci/test-security-lane.py && bash tools/security-lane.sh",
       "lane": "security",
-      "purpose": "verify security tooling wrappers"
+      "purpose": "test security-lane refusal behavior and run configured operational scans"
     },
     "docs/": {
       "command": "python3 deploy/ci/test-runner.py",
@@ -272,54 +272,54 @@
       "purpose": "verify the current finding ledger and handoff evidence"
     },
     "crates/jope-cli/tests/offline_cli.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/main.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/storage.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/schema.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/lib.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/tests.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/admission.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/generator/tabular.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/generator/mod.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "crates/jope-cli/src/generator/temporal.rs": {
-      "command": "cargo test -p jope-datasets --locked",
+      "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
     "datasets/synthetic/**": {
       "command": "cargo test -p jope-datasets --locked",
@@ -636,15 +636,35 @@
       "lane": "hygiene",
       "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
     },
-    "test-support/": {
-      "command": "cargo test -p jope-datasets --locked",
-      "lane": "data",
-      "purpose": "verify committed sample dataset contracts and loader behavior"
+    "test-support/datasets/v1/": {
+      "command": "cargo test -p jope-service -p jope-appliance --locked",
+      "lane": "service-fixtures",
+      "purpose": "exercise service and appliance contracts that load the committed dataset fixtures"
     },
-    "test-support/**": {
-      "command": "cargo test -p jope-datasets --locked",
-      "lane": "data",
-      "purpose": "verify committed sample dataset contracts and loader behavior"
+    "test-support/datasets/v1/**": {
+      "command": "cargo test -p jope-service -p jope-appliance --locked",
+      "lane": "service-fixtures",
+      "purpose": "exercise service and appliance contracts that load the committed dataset fixtures"
+    },
+    "test-support/dope_components.rs": {
+      "command": "cargo test -p jope-cli --locked",
+      "lane": "inputs",
+      "purpose": "exercise the CLI landmark product fixture consumer"
+    },
+    "test-support/qlt01/test_production_backend_acceptance.py": {
+      "command": "python3 -m unittest discover -s test-support/qlt01 -p 'test_*.py'",
+      "lane": "qualification",
+      "purpose": "run the production backend receipt acceptance controls"
+    },
+    "deploy/ci/check.sh": {
+      "command": "python3 deploy/ci/test-runner.py && python3 deploy/ci/test-security-lane.py",
+      "lane": "ops",
+      "purpose": "verify hygiene wiring and security-lane failure propagation"
+    },
+    "deploy/ci/fast-lane.sh": {
+      "command": "python3 deploy/ci/test-runner.py && python3 deploy/ci/test-security-lane.py",
+      "lane": "ops",
+      "purpose": "verify receipt-backed hygiene wiring and security-lane failure propagation"
     }
   }
 }
