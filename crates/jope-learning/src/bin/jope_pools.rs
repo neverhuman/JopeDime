@@ -351,6 +351,7 @@ struct EvaluationOutput<'a> {
     receipt: &'a jope_learning::pools::evaluate::Receipt,
 }
 
+#[path = "jope_pools/commands.rs"]
 mod jope_pools_commands;
 
 fn main() -> Result<()> {

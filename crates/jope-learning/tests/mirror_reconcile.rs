@@ -41,6 +41,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 // --------------------------------------------------------------------------------------
+#[path = "mirror_reconcile/mirror_blob_reconcile.rs"]
 mod mirror_blob_reconcile;
+#[path = "mirror_reconcile/mirror_cli.rs"]
 mod mirror_cli;
+#[path = "mirror_reconcile/mirror_head_reconcile.rs"]
 mod mirror_head_reconcile;
