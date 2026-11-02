@@ -364,6 +364,102 @@ def selection_changes():
     print(f"{len(rows)} selection-change records; {len(gains) + len(ties)} admissions")
 
 
+def retained_utility_lift():
+    """Replay post-decision retained utility relative to one recorded incumbent."""
+    data = FIGURES / "data/retained_utility_lift.csv"
+    source_path = FIGURES / "data/retained_utility_lift.source.json"
+    output = FIGURES / "fig_fw_retained_utility_lift.pdf"
+    provenance = FIGURES / "data/retained_utility_lift.provenance.json"
+    source = json.loads(source_path.read_text())
+    capture = source["capture"]
+    assert sha(data) == source["csv_sha256"]
+    assert data.with_suffix(".csv.sha256").read_text().split() == [
+        source["csv_sha256"], data.name
+    ]
+    with data.open() as stream:
+        rows = list(csv.DictReader(stream))
+    rounds = [int(r["round"]) for r in rows]
+    assert len(rows) == capture["rows"] and len(rows) > 2000
+    assert rounds == list(range(883, rounds[-1] + 1))
+    assert [rounds[0], rounds[-1]] == capture["round_window"]
+    assert capture["baseline_round"] == 882 and capture["development_contexts"] == 91
+    assert capture["all_selected_per_round_scalars_match"]
+    assert capture["all_retained_summaries_match"]
+    baseline = Decimal(capture["baseline_retained_utility"])
+    assert baseline.is_finite()
+    previous, previous_round = baseline, 882
+    lifts, gains, ties = [], [], []
+    for row in rows:
+        candidate, before, retained, lift = [
+            Decimal(row[k]) for k in [
+                "candidate_validation_utility", "previous_best_validation_utility",
+                "retained_best_validation_utility", "retained_utility_lift",
+            ]
+        ]
+        assert all(v.is_finite() for v in [candidate, before, retained, lift])
+        take = int(row["adapter_accepted"])
+        identity = int(row["reported_best_round"])
+        assert take in (0, 1) and before == previous
+        assert retained == (candidate if take else before) and retained >= before
+        assert int(row["baseline_round"]) == 882
+        assert Decimal(row["baseline_retained_utility"]) == baseline
+        assert row["evaluation_identity_sha256"] == capture["evaluation_identity_sha256"]
+        assert lift == retained - baseline and lift >= 0
+        if take:
+            assert candidate >= before and identity == int(row["round"])
+            (gains if candidate > before else ties).append((int(row["round"]), lift))
+        else:
+            assert identity == previous_round
+        lifts.append(lift)
+        previous, previous_round = retained, identity
+    assert [r for r, _ in gains] == capture["strict_gain_rounds"]
+    assert [r for r, _ in ties] == capture["accepted_tie_rounds"]
+    assert len(rows) - len(gains) - len(ties) == capture["rejections"]
+    plt.rcParams.update({
+        "font.family": "serif", "font.size": 8, "pdf.fonttype": 42,
+        "axes.spines.top": False, "axes.spines.right": False,
+    })
+    fig, ax = plt.subplots(figsize=(3.25, 2.20))
+    scale = Decimal(1000)
+    ax.step(rounds, [float(v * scale) for v in lifts], where="post",
+            color="#0b5394", lw=1.1, label="recorded retained lift")
+    for events, marker, color, label, hollow in [
+        (gains, "*", "#b2182b", "strict admission", False),
+        (ties, "D", "#b7791f", "tie (no lift)", True),
+    ]:
+        ax.scatter([r for r, _ in events], [float(v * scale) for _, v in events],
+                   marker=marker, s=25 if marker == "*" else 16,
+                   edgecolors=color, facecolors="white" if hollow else color,
+                   linewidths=0.8, zorder=4, label=label)
+    ax.axhline(0, color="#777777", lw=0.6, ls="--", zorder=0)
+    ax.set(xlabel="completed round", ylabel=r"retained utility lift ($\times 10^{-3}$)",
+           ylim=(-0.04, max(1.3, float(max(lifts) * scale) * 1.18)))
+    ax.set_xticks([rounds[0], rounds[len(rounds)//3],
+                   rounds[2*len(rounds)//3], rounds[-1]])
+    ax.grid(axis="y", alpha=0.2, linewidth=0.4)
+    ax.set_axisbelow(True)
+    ax.legend(loc="upper left", frameon=False, fontsize=6.6, handlelength=1.4)
+    ax.tick_params(labelsize=7)
+    fig.tight_layout(pad=0.5)
+    fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    facts = dict(
+        schema="whitepaper.retained-utility-lift-figure/v1",
+        input_csv_sha256=sha(data), source_receipt_sha256=sha(source_path),
+        generator_sha256=sha(Path(__file__)), figure_sha256=sha(output),
+        round_window=[rounds[0], rounds[-1]], rows=len(rows), baseline_round=882,
+        baseline_retained_utility=str(baseline), final_retained_utility=str(previous),
+        final_retained_lift=str(lifts[-1]), displayed_scale=1000,
+        strict_gain_rounds=[r for r, _ in gains],
+        accepted_tie_rounds=[r for r, _ in ties],
+        rejections=len(rows)-len(gains)-len(ties),
+        definition=source["definition"], scope=source["scope"],
+        matplotlib_version=matplotlib.__version__, reproduce=source["reproduce"],
+    )
+    provenance.write_text(json.dumps(facts, indent=2) + "\n")
+    print(f"{len(rows)} records; retained lift {lifts[-1]}; {len(gains)} strict admissions")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -371,10 +467,13 @@ if __name__ == "__main__":
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--rolling-admissions", action="store_true")
     mode.add_argument("--selection-changes", action="store_true")
+    mode.add_argument("--retained-utility-lift", action="store_true")
     args = parser.parse_args()
     if args.rolling_admissions:
         rolling_admissions()
     elif args.selection_changes:
         selection_changes()
+    elif args.retained_utility_lift:
+        retained_utility_lift()
     else:
         main()
