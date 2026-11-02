@@ -138,7 +138,7 @@ impl JoinIds {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Stage {
+pub enum ResourceLedgerStage {
     Prepare,
     Encode,
     Compile,
@@ -148,6 +148,9 @@ pub enum Stage {
     Publication,
     Custody,
 }
+
+/// Compatibility name retained for callers of the resource-ledger API.
+pub type Stage = ResourceLedgerStage;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "state", rename_all = "snake_case", deny_unknown_fields)]
