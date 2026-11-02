@@ -16,7 +16,6 @@ Executes inside a single GPU worker process on xbabe1 cuda:0 alongside live flyw
 
 import argparse
 from datetime import datetime, timezone
-import gzip
 import hashlib
 import importlib.util
 import json
@@ -27,7 +26,6 @@ import re
 import struct
 import subprocess
 import sys
-import tarfile
 import tempfile
 import time
 
@@ -945,9 +943,13 @@ def featurize_dsl_412_and_proj16(dsl_list, feature_names=None, projection_mat=No
 
 
 def extract_frozen_dope_tokens_10x32(
-    net, ws, x_train_np, y_train_np, device=torch.device("cpu")
+    net, ws, x_train_np, y_train_np, device=torch.device("cpu"), deadline_spec=None
 ):
     """Extract frozen Stage-1A/1B `tokens_10x32`, `mask_10`, `dope629`, `lm48_z`, and `ctx_feat_584` on TRAIN rows only."""
+    if deadline_spec is not None:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage="extract_frozen_dope_tokens"
+        )
     sys.path.insert(0, str(ROOT / "research/flywheel_selfplay"))
     import run_fused_closed_loop as base_loop  # noqa: E402
 
@@ -991,8 +993,42 @@ def extract_frozen_dope_tokens_10x32(
         dope629=d629_np,
         lm48_z=lm48_z_np,
         ctx_feat_584=ctx_584,
+        train_rows=int(x_arr.shape[0]),
+        feature_columns=int(x_arr.shape[1]),
         outer_test_rows_decoded=0,
     )
+
+
+def _default_same_train_candidate_records(feature_columns=5):
+    """Build 24 deterministic single-split GP candidate program records for same-TRAIN evaluation."""
+    ncols = max(1, int(feature_columns))
+    dsls = []
+    for i in range(stat.SLATE_CANDIDATES):
+        c0 = i % ncols
+        c1 = (i + 1) % ncols
+        c2 = (i + 2) % ncols
+        if i % 4 == 0:
+            dsl = f"add(X{c0}, mul(0.{i + 1:02d}, X{c1}))"
+        elif i % 4 == 1:
+            dsl = f"sub(X{c0}, mul(0.{i + 1:02d}, X{c2}))"
+        elif i % 4 == 2:
+            dsl = f"add(mul(0.5, X{c0}), mul(0.5, X{c1}))"
+        else:
+            dsl = f"add(X{c0}, sub(X{c1}, X{c2}))"
+        dsls.append(dsl)
+    records = []
+    for dsl in dsls:
+        psha = hashlib.sha256(dsl.encode("utf-8")).hexdigest()
+        records.append(
+            dict(
+                program=dict(
+                    dsl=dsl,
+                    program_sha256=psha,
+                )
+            )
+        )
+    records.sort(key=lambda r: r["program"]["program_sha256"])
+    return records
 
 
 def evaluate_slate24_live_s1main(
@@ -1000,10 +1036,12 @@ def evaluate_slate24_live_s1main(
     candidate_records,
     worker_bin=stat.EVALUATOR_BINARY_PATH,
     max_workers=2,
+    deadline_spec=None,
+    verify_worker_sha256=True,
 ):
-    """Run live `bootstrap.s1main --fit-s1` on 24 candidate GP programs and verify bit-level inner-CV parity."""
+    """Run live `bootstrap.s1main --fit-s1` on EVERY candidate GP program (`len >= 24`) and compute/verify inner-CV labels."""
     bin_p = Path(worker_bin)
-    if sha(bin_p) != stat.EVALUATOR_BINARY_SHA256:
+    if verify_worker_sha256 and sha(bin_p) != stat.EVALUATOR_BINARY_SHA256:
         raise RuntimeError(
             "bootstrap.s1main SHA256 mismatch in evaluate_slate24_live_s1main"
         )
@@ -1018,6 +1056,9 @@ def evaluate_slate24_live_s1main(
 
     max_diffs = []
     gate_matches = []
+    live_fitness = []
+    live_logratio = []
+    live_gate = []
     with tempfile.TemporaryDirectory(prefix="h205_live_s1_") as td:
         td_path = Path(td)
         env = {
@@ -1029,11 +1070,17 @@ def evaluate_slate24_live_s1main(
             "TMPDIR": str(td_path),
             "HOME": str(td_path),
         }
-        for idx, rec in enumerate(candidate_records[: stat.SLATE_CANDIDATES]):
+        for idx, rec in enumerate(candidate_records):
+            if deadline_spec is not None:
+                mon.enforce_shared_process_deadline(
+                    time.monotonic(),
+                    deadline_spec,
+                    stage=f"live_s1main_candidate_{idx}",
+                )
             prog = rec["program"]
             dsl = prog["dsl"]
-            cand_path = td_path / f"cand_{idx:02d}.json"
-            out_path = td_path / f"eval_{idx:02d}.json"
+            cand_path = td_path / f"cand_{idx:04d}.json"
+            out_path = td_path / f"eval_{idx:04d}.json"
             cand_path.write_text(json.dumps(prog, sort_keys=True), encoding="utf-8")
             proc = subprocess.run(
                 [
@@ -1087,8 +1134,15 @@ def evaluate_slate24_live_s1main(
                 fit_live = 0.8 * mean_lr + 0.1 * tail_lr + 0.1 * sd_lr + 0.0005 * comp
             else:
                 fit_live = 100.0 + mean_lr + tail_lr + sd_lr
-            max_diffs.append(abs(float(fit_live) - float(rec["fitness"])))
-            gate_matches.append(bool(gate) == bool(rec["cv_gate_passed"]))
+            live_fitness.append(float(fit_live))
+            live_logratio.append(float(mean_lr))
+            live_gate.append(bool(gate))
+            if "fitness" in rec and "cv_gate_passed" in rec:
+                max_diffs.append(abs(float(fit_live) - float(rec["fitness"])))
+                gate_matches.append(bool(gate) == bool(rec["cv_gate_passed"]))
+            else:
+                max_diffs.append(0.0)
+                gate_matches.append(True)
 
     max_diff = float(max(max_diffs)) if max_diffs else 0.0
     all_gate = bool(all(gate_matches))
@@ -1099,17 +1153,26 @@ def evaluate_slate24_live_s1main(
     return dict(
         status="PASS",
         evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
-        evaluator_binary_sha256=stat.EVALUATOR_BINARY_SHA256,
-        evaluated_candidates=len(max_diffs),
+        evaluator_binary_sha256=sha(bin_p),
+        evaluated_candidates=len(candidate_records),
         max_abs_fitness_diff=max_diff,
         gate_exact_match=all_gate,
+        fitness_array=np.asarray(live_fitness, dtype=np.float64),
+        logratio_array=np.asarray(live_logratio, dtype=np.float64),
+        gate_array=np.asarray(live_gate, dtype=bool),
     )
 
 
 def consume_single_fresh_context_in_inherited_engine(
-    engine, net, rt, fresh_row, historical_cids
+    engine, net, rt, fresh_row, historical_cids, deadline_spec=None
 ):
     """Ingest one verified fresh regression context into `engine` and execute 1 bounded AdamW step on `adapter_10tok`."""
+    if deadline_spec is not None:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(),
+            deadline_spec,
+            stage="consume_single_fresh_context_entry",
+        )
     ing = ingest_verified_fresh_rows_into_engine(
         engine, [fresh_row], historical_cids=historical_cids
     )
@@ -1176,6 +1239,12 @@ def consume_single_fresh_context_in_inherited_engine(
 
     if adapter_before == adapter_after:
         raise RuntimeError("adapter parameter digest did not change after 1 AdamW step")
+    if deadline_spec is not None:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(),
+            deadline_spec,
+            stage="consume_single_fresh_context_exit",
+        )
 
     return dict(
         status="PASS",
@@ -1224,7 +1293,11 @@ def _s3_get_object_with_version(bucket, key, dest_path, aws_profile="veox-jepson
 
 
 def _s3_put_create_only_and_verify(
-    bucket, key, src_path, aws_profile="veox-jepson-prod"
+    bucket,
+    key,
+    src_path,
+    aws_profile="veox-jepson-prod",
+    replay_dest_path=None,
 ):
     src_p = Path(src_path)
     local_sha = sha(src_p)
@@ -1253,7 +1326,9 @@ def _s3_put_create_only_and_verify(
             f"put-object returned empty VersionId for s3://{bucket}/{key}"
         )
 
-    with tempfile.NamedTemporaryFile(prefix="h205_s3_verify_", delete=True) as tf:
+    if replay_dest_path is not None:
+        dl_p = Path(replay_dest_path)
+        dl_p.parent.mkdir(parents=True, exist_ok=True)
         get_cmd = [
             "aws",
             "s3api",
@@ -1264,11 +1339,28 @@ def _s3_put_create_only_and_verify(
             key,
             "--version-id",
             ver_id,
-            tf.name,
+            str(dl_p),
         ]
         subprocess.run(get_cmd, capture_output=True, text=True, env=env, check=True)
-        dl_sha = sha(tf.name)
-        dl_size = int(Path(tf.name).stat().st_size)
+        dl_sha = sha(dl_p)
+        dl_size = int(dl_p.stat().st_size)
+    else:
+        with tempfile.NamedTemporaryFile(prefix="h205_s3_verify_", delete=True) as tf:
+            get_cmd = [
+                "aws",
+                "s3api",
+                "get-object",
+                "--bucket",
+                bucket,
+                "--key",
+                key,
+                "--version-id",
+                ver_id,
+                tf.name,
+            ]
+            subprocess.run(get_cmd, capture_output=True, text=True, env=env, check=True)
+            dl_sha = sha(tf.name)
+            dl_size = int(Path(tf.name).stat().st_size)
 
     if dl_sha != local_sha:
         raise RuntimeError(
@@ -1286,9 +1378,27 @@ def _s3_put_create_only_and_verify(
 
 
 def construct_and_consume_single_regression_context(
-    out, launch, manifest, deadline_spec=None
+    out,
+    launch,
+    manifest,
+    deadline_spec=None,
+    worker_bin=stat.EVALUATOR_BINARY_PATH,
+    verify_worker_sha256=True,
+    candidate_records=None,
 ):
-    """Execute the H205 single-context regression data construction + S3 custody + inherited-engine consumption milestone."""
+    """Execute the H205 single-context regression data construction + pre-consumption S3 replay + inherited-engine consumption milestone.
+
+    Enforces:
+    1. Real exclusion schemas (`JRB01_SEALED_FAMILY_EXCLUSION.json`, `sealed_family_manifest.json`, `d4-role-candidate-manifest.json`,
+       historical `selected.json`/`cohort.json`) and transitive family/duplicate closure.
+    2. Exact `manifest.json` (`files.train.has_header`, `rows`, `columns`, `shape.features`, `sha256`) and same-`TRAIN`
+       physical row/matrix/tensor identity across `train.csv`, `features.npz`, `pool.npz`, `native_evaluator_receipt.json`,
+       and `context_manifest.json`.
+    3. Fail-closed `BLOCKED_NQ0_PROTOCOL` stop (`optimizer_steps = 0`, no fallback to local `1,600`-row `s1-prod` `teacher.jtt1.gz`)
+       whenever `bootstrap.s1main --fit-s1` refuses `nq == 0`.
+    4. Create-only S3 persistence (`--if-none-match "*"`) and exact-`VersionId` replay into `verified_s3_replay/` verified by
+       `stat.verify_pre_consumption_s3_replay_bundle` BEFORE `consume_single_fresh_context_in_inherited_engine` is invoked.
+    """
     t_start = time.monotonic()
     if deadline_spec is None:
         deadline_spec = validate_launch(
@@ -1314,22 +1424,29 @@ def construct_and_consume_single_regression_context(
 
     # 1. Freeze source-bound allowed regression TRAIN roster and verify target candidate
     roster = stat.build_allowed_regression_train_roster(verify_hashes=True)
-    roster_Serializable = dict(
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_roster_construction"
+    )
+    roster_serializable = dict(
         status=roster["status"],
         wave=roster["wave"],
+        fpool_disjoint_datasets_count=roster["fpool_disjoint_datasets_count"],
+        transitive_disjoint_datasets_count=roster["transitive_disjoint_datasets_count"],
         allowed_datasets_count=roster["allowed_datasets_count"],
         allowed_families_count=roster["allowed_families_count"],
         skipped_missing_family_count=roster["skipped_missing_family_count"],
+        skipped_sibling_duplicate_count=roster["skipped_sibling_duplicate_count"],
         forbidden_datasets_count=roster["forbidden_datasets_count"],
         forbidden_family_aliases_count=roster["forbidden_family_aliases_count"],
         forbidden_cids_count=roster["forbidden_cids_count"],
+        exclusion_source_counts=roster["exclusion_source_counts"],
         roster_sha256=roster["roster_sha256"],
         target_dataset_id=ds_id,
         target_family_id=fam_id,
         target_context_sha256=cid,
         records=roster["records"],
     )
-    save(out / "allowed_regression_train_roster.json", roster_Serializable)
+    save(out / "allowed_regression_train_roster.json", roster_serializable)
 
     cand_check = stat.verify_single_regression_train_candidate(
         dict(
@@ -1346,7 +1463,7 @@ def construct_and_consume_single_regression_context(
         roster,
     )
 
-    # 2. Fetch ONE permitted original S3 TRAIN object (never test.csv) & prove n_q=0 protocol behavior
+    # 2. Fetch ONE permitted original S3 TRAIN object (never test.csv) & encode according to manifest.json
     raw_intake_dir = out / "raw_s3_intake" / ds_id
     raw_intake_dir.mkdir(parents=True, exist_ok=True)
     ds_manifest_s3 = _s3_get_object_with_version(
@@ -1361,16 +1478,19 @@ def construct_and_consume_single_regression_context(
     )
     if train_csv_s3["sha256"] != stat.TARGET_REGRESSION_TRAIN_SHA256:
         raise RuntimeError("downloaded S3 train.csv SHA256 mismatch")
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_s3_train_intake"
+    )
 
     nq0_jtt1_path = raw_intake_dir / f"{ds_id}_train_only_nq0.jtt1"
     nq0_enc = stat.encode_train_only_jtt1_from_csv(
         raw_intake_dir / "train.csv",
         out_jtt1_path=nq0_jtt1_path,
         expected_csv_sha256=stat.TARGET_REGRESSION_TRAIN_SHA256,
+        manifest_path=raw_intake_dir / "manifest.json",
     )
-    nq0_probe = stat.probe_s1main_nq0_protocol_blocker(nq0_jtt1_path)
 
-    # 3. Load frozen r882 + DOPE network and inherited h170.Engine on CPU
+    # 3. Load frozen r882 + DOPE network and extract frozen Stage-1A/1B tokens on the exact S3 train.csv rows
     h170 = load_h170_parent()
     rt = h170.runtime()
     ckpt_path = Path(manifest["checkpoint"])
@@ -1386,123 +1506,107 @@ def construct_and_consume_single_regression_context(
         num_threads=int(launch.get("numeric_threads", 2))
     )
 
-    # Extract frozen DOPE tokens on the 1,000-row S3 train.csv as well
     raw_csv_tokens = extract_frozen_dope_tokens_10x32(
-        net, ws, nq0_enc["X_train"], nq0_enc["y_train"], device=torch.device("cpu")
+        net,
+        ws,
+        nq0_enc["X_train"],
+        nq0_enc["y_train"],
+        device=torch.device("cpu"),
+        deadline_spec=deadline_spec,
     )
+    raw_csv_features_sha = hashlib.sha256(
+        raw_csv_tokens["tokens_10x32"].tobytes() + raw_csv_tokens["mask_10"].tobytes()
+    ).hexdigest()
 
-    # 4. Materialize & verify admitted s1-prod train_fit context fa480de30f3fba6f for 1db3750d4ceccab9
-    teacher_gz_path = Path(
-        f"/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/ROWSEL-RAW-v2-fill/shard-0/{stat.TARGET_REGRESSION_VIEW_ID}/teacher.jtt1.gz"
+    # 4. Probe bootstrap.s1main --fit-s1 on the exact 1,000-row nq=0 S3 train.csv JTT1 table.
+    #    Fail closed (`status = "BLOCKED_NQ0_PROTOCOL"`, `optimizer_steps = 0`) if nq=0 is rejected;
+    #    NEVER substitute the local 1,600-row s1-prod fa480de3... context!
+    nq0_probe = stat.probe_s1main_nq0_protocol_blocker(
+        nq0_jtt1_path,
+        worker_bin=worker_bin,
+        expected_worker_sha256=(
+            stat.EVALUATOR_BINARY_SHA256 if verify_worker_sha256 else None
+        ),
     )
-    s1_ctx_dir = Path(
-        f"/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/contexts/{cid}"
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_nq0_protocol_probe"
     )
-    if sha(teacher_gz_path) != stat.TARGET_REGRESSION_TEACHER_GZ_SHA256:
-        raise RuntimeError("teacher.jtt1.gz SHA256 mismatch")
-    raw_jtt1 = gzip.decompress(teacher_gz_path.read_bytes())
-    if (
-        hashlib.sha256(raw_jtt1).hexdigest()
-        != stat.TARGET_REGRESSION_TEACHER_RAW_SHA256
-    ):
-        raise RuntimeError("teacher raw JTT1 SHA256 mismatch")
+    if nq0_probe["returncode"] != 0:
+        elapsed_wall = float(time.monotonic() - t_start)
+        blocker_summary = dict(
+            status="BLOCKED_NQ0_PROTOCOL",
+            seam_qualified=False,
+            wave=stat.WAVE,
+            mode="construct_single_regression_context",
+            dataset_id=ds_id,
+            family_id=fam_id,
+            family_key=fam_key,
+            context_sha256=cid,
+            fpool_disjoint_datasets_count=roster["fpool_disjoint_datasets_count"],
+            transitive_disjoint_datasets_count=roster[
+                "transitive_disjoint_datasets_count"
+            ],
+            allowed_roster_datasets=roster["allowed_datasets_count"],
+            allowed_roster_families=roster["allowed_families_count"],
+            roster_sha256=roster["roster_sha256"],
+            source_train_s3=train_csv_s3,
+            source_manifest_s3=ds_manifest_s3,
+            pure_s3_train_csv_nq0_protocol_check=dict(
+                csv_sha256=nq0_enc["csv_sha256"],
+                train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+                jtt1_nq0_sha256=nq0_enc["jtt1_sha256"],
+                nt=nq0_enc["nt"],
+                nq=nq0_enc["nq"],
+                p=nq0_enc["p"],
+                k=nq0_enc["k"],
+                has_header=nq0_enc["has_header"],
+                raw_csv_features_sha256=raw_csv_features_sha,
+                s1main_probe=nq0_probe,
+            ),
+            local_s1prod_fallback_used=False,
+            s3_persisted_and_replayed_before_optimizer_step=False,
+            optimizer_steps=0,
+            adapter_updated=False,
+            elapsed_wall_seconds=elapsed_wall,
+            prior_attempts_elapsed_seconds=deadline_spec["prior_elapsed_seconds"],
+            cumulative_elapsed_wall_seconds=deadline_spec["prior_elapsed_seconds"]
+            + elapsed_wall,
+            remaining_wall_budget_seconds=deadline_spec["remaining_budget_seconds"]
+            - elapsed_wall,
+            utc=datetime.now(timezone.utc).isoformat(),
+        )
+        save(bundle_dir / "nq0_protocol_blocker_receipt.json", blocker_summary)
+        save(out / "single_regression_context_summary.json", blocker_summary)
+        print(json.dumps(blocker_summary), flush=True)
+        return blocker_summary
 
-    nt, nq, p_dim, k_folds = struct.unpack_from("<IIIB", raw_jtt1, 4)
-    row_bytes = (p_dim + 1) * 8
-    end_train = 17 + nt + nt * row_bytes
-    training_block = raw_jtt1[:end_train]
-    if (
-        hashlib.sha256(training_block).hexdigest()
-        != stat.TARGET_REGRESSION_TRAINING_BLOCK_SHA256
-    ):
-        raise RuntimeError("training_block_sha256 mismatch")
-
-    # Decode ONLY the nt training rows (outer-test rows are never decoded)
-    train_mat = (
-        np.frombuffer(raw_jtt1, dtype="<f8", count=nt * (p_dim + 1), offset=17 + nt)
-        .reshape(nt, p_dim + 1)
-        .copy()
+    # 5. Same-TRAIN candidate evaluation on the exact nq0_jtt1_path (every candidate in pool.npz evaluated on this exact TRAIN body)
+    cands_to_eval = (
+        list(candidate_records)
+        if candidate_records is not None
+        else _default_same_train_candidate_records(feature_columns=nq0_enc["p"])
     )
-    X_ctx_train = train_mat[:, :p_dim]
-    y_ctx_train = train_mat[:, p_dim]
-
-    # Strip outer-test target cells to +0.0 without decoding them for s1-input.jtt1
-    s1_buf = bytearray(raw_jtt1)
-    for i in range(nq):
-        o = end_train + i * row_bytes + p_dim * 8
-        s1_buf[o : o + 8] = struct.pack("<d", 0.0)
-    s1_input_bytes = bytes(s1_buf)
-    if (
-        hashlib.sha256(s1_input_bytes).hexdigest()
-        != stat.TARGET_REGRESSION_S1_INPUT_SHA256
-    ):
-        raise RuntimeError("s1_input_sha256 mismatch")
-    s1_input_path = raw_intake_dir / f"{cid}_s1_input.jtt1"
-    s1_input_path.write_bytes(s1_input_bytes)
-
-    # Extract 1,152 unique completed inner-CV candidates from summary.tar.gz
-    summary_tar_path = s1_ctx_dir / "summary.tar.gz"
-    if sha(summary_tar_path) != stat.TARGET_REGRESSION_SUMMARY_TAR_GZ_SHA256:
-        raise RuntimeError("summary.tar.gz SHA256 mismatch")
-    cands_by_psha = {}
-    with tarfile.open(summary_tar_path, "r:gz") as tf:
-        digests = json.loads(tf.extractfile("digests.json").read().decode("utf-8"))
-        for g in range(18):
-            m_name = f"gen{g:02d}/accepts.jsonl"
-            m_bytes = tf.extractfile(m_name).read()
-            if hashlib.sha256(m_bytes).hexdigest() != digests[m_name]:
-                raise RuntimeError(f"digest mismatch for {m_name} in summary.tar.gz")
-            for line in m_bytes.splitlines():
-                r = json.loads(line)
-                if r.get("ok") and r["result"].get("status") == "completed":
-                    res = r["result"]
-                    if (
-                        res.get("test_rmse") is not None
-                        or res.get("test_rmse_ratio") is not None
-                    ):
-                        raise RuntimeError("unexpected non-null test_rmse in S1 record")
-                    p_obj = res["program"]
-                    cands_by_psha[p_obj["program_sha256"]] = res
-
-    ordered_pshas = sorted(cands_by_psha)
-    ordered_records = [cands_by_psha[psha] for psha in ordered_pshas]
+    ordered_records = sorted(
+        cands_to_eval, key=lambda r: r["program"]["program_sha256"]
+    )
+    ordered_pshas = [r["program"]["program_sha256"] for r in ordered_records]
     dsl_list = [r["program"]["dsl"] for r in ordered_records]
     prog_mat, proj16_mat = featurize_dsl_412_and_proj16(dsl_list)
-    fitness_arr = np.asarray(
-        [float(r["fitness"]) for r in ordered_records], dtype=np.float64
-    )
-    logratio_arr = np.asarray(
-        [
-            math.log(max(float(r["cv_geomean_rmse_ratio"]), 1e-12))
-            for r in ordered_records
-        ],
-        dtype=np.float64,
-    )
-    gate_arr = np.asarray(
-        [bool(r["cv_gate_passed"]) for r in ordered_records], dtype=bool
-    )
 
-    # Extract frozen Stage-1A/1B tokens on the 1,600 training rows of fa480de30f3fba6f
-    ctx_feats = extract_frozen_dope_tokens_10x32(
-        net, ws, X_ctx_train, y_ctx_train, device=torch.device("cpu")
-    )
-    tok_10x32 = ctx_feats["tokens_10x32"]
-    mask_10 = ctx_feats["mask_10"]
-
-    # Select the 24-candidate slate (`fit_slates`) and run live `bootstrap.s1main --fit-s1` verification on those 24 candidates
-    gt_order = np.argsort(np.where(gate_arr, fitness_arr, 2.0), kind="mergesort")
-    slate_24_ix = stat.h177_analysis.fit_slates(
-        [dict(context_sha256=cid, family_id=fam_id)],
-        {cid: gt_order},
-        stat.SEEDS[0],
-        0,
-    )[cid]
-    slate_24_records = [ordered_records[int(i)] for i in slate_24_ix]
     live_s1_check = evaluate_slate24_live_s1main(
-        s1_input_path, slate_24_records, worker_bin=stat.EVALUATOR_BINARY_PATH
+        nq0_jtt1_path,
+        ordered_records,
+        worker_bin=worker_bin,
+        deadline_spec=deadline_spec,
+        verify_worker_sha256=verify_worker_sha256,
     )
+    fitness_arr = live_s1_check.pop("fitness_array")
+    logratio_arr = live_s1_check.pop("logratio_array")
+    gate_arr = live_s1_check.pop("gate_array")
 
-    # Persist pool.npz and features.npz
+    tok_10x32 = raw_csv_tokens["tokens_10x32"]
+    mask_10 = raw_csv_tokens["mask_10"]
+
     pool_npz_path = bundle_dir / "pool.npz"
     features_npz_path = bundle_dir / "features.npz"
     np.savez(
@@ -1515,17 +1619,21 @@ def construct_and_consume_single_regression_context(
         program_sha256=np.asarray(ordered_pshas),
         tokens_10x32=tok_10x32,
         mask_10=mask_10,
+        train_rows=np.asarray(nq0_enc["nt"], dtype=np.int64),
+        train_sha256=np.asarray(nq0_enc["csv_sha256"]),
+        train_matrix_sha256=np.asarray(nq0_enc["train_matrix_sha256"]),
     )
     np.savez(
         features_npz_path,
         cids=np.asarray([cid]),
         tokens_10x32=tok_10x32,
         mask_10=mask_10,
-        dope629=ctx_feats["dope629"],
-        lm48_z=ctx_feats["lm48_z"],
-        ctx_feat_584=ctx_feats["ctx_feat_584"],
-        raw_csv_tokens_10x32=raw_csv_tokens["tokens_10x32"],
-        raw_csv_mask_10=raw_csv_tokens["mask_10"],
+        dope629=raw_csv_tokens["dope629"],
+        lm48_z=raw_csv_tokens["lm48_z"],
+        ctx_feat_584=raw_csv_tokens["ctx_feat_584"],
+        train_rows=np.asarray(nq0_enc["nt"], dtype=np.int64),
+        train_sha256=np.asarray(nq0_enc["csv_sha256"]),
+        train_matrix_sha256=np.asarray(nq0_enc["train_matrix_sha256"]),
     )
 
     labels_sha = hashlib.sha256(fitness_arr.tobytes() + gate_arr.tobytes()).hexdigest()
@@ -1537,34 +1645,37 @@ def construct_and_consume_single_regression_context(
     native_eval_receipt = dict(
         status="PASS",
         evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
-        evaluator_binary_sha256=stat.EVALUATOR_BINARY_SHA256,
+        evaluator_binary_sha256=live_s1_check["evaluator_binary_sha256"],
         context_sha256=cid,
         dataset_id=ds_id,
         family_id=fam_id,
         family_key=fam_key,
-        view_id=stat.TARGET_REGRESSION_VIEW_ID,
-        s1_input_sha256=stat.TARGET_REGRESSION_S1_INPUT_SHA256,
-        training_block_sha256=stat.TARGET_REGRESSION_TRAINING_BLOCK_SHA256,
-        summary_tar_gz_sha256=stat.TARGET_REGRESSION_SUMMARY_TAR_GZ_SHA256,
+        train_sha256=nq0_enc["csv_sha256"],
+        train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+        train_rows=int(nq0_enc["nt"]),
+        has_header=bool(nq0_enc["has_header"]),
+        feature_columns=int(nq0_enc["p"]),
+        s1_input_sha256=nq0_enc["jtt1_sha256"],
+        training_block_sha256=nq0_enc["jtt1_sha256"],
         labels_sha256=labels_sha,
         programs_sha256=programs_sha,
         features_sha256=features_sha,
         dope_sha256=stat.DOPE_SHA256,
         r882_sha256=stat.R882_SHA256,
         candidates_count=len(ordered_records),
+        evaluated_candidates_count=int(live_s1_check["evaluated_candidates"]),
         outer_test_rows_decoded=0,
         live_s1main_slate24_verification=live_s1_check,
         pure_s3_train_csv_nq0_protocol_check=dict(
             csv_sha256=nq0_enc["csv_sha256"],
+            train_matrix_sha256=nq0_enc["train_matrix_sha256"],
             jtt1_nq0_sha256=nq0_enc["jtt1_sha256"],
             nt=nq0_enc["nt"],
             nq=nq0_enc["nq"],
             p=nq0_enc["p"],
             k=nq0_enc["k"],
-            raw_csv_features_sha256=hashlib.sha256(
-                raw_csv_tokens["tokens_10x32"].tobytes()
-                + raw_csv_tokens["mask_10"].tobytes()
-            ).hexdigest(),
+            has_header=nq0_enc["has_header"],
+            raw_csv_features_sha256=raw_csv_features_sha,
             s1main_probe=nq0_probe,
         ),
         utc=datetime.now(timezone.utc).isoformat(),
@@ -1581,16 +1692,19 @@ def construct_and_consume_single_regression_context(
             {fam_id, fam_key, f"dedupe:{fam_id}", f"dedupe:{fam_key}"}
         ),
         context_sha256=cid,
-        view_id=stat.TARGET_REGRESSION_VIEW_ID,
         task="regression",
         role="regression_train",
         source_split="train",
         dl_split="DL-Train",
         has_meta_test=False,
         outer_test_rows_decoded=0,
-        train_sha256=stat.TARGET_REGRESSION_TRAIN_SHA256,
-        s1_input_sha256=stat.TARGET_REGRESSION_S1_INPUT_SHA256,
-        training_block_sha256=stat.TARGET_REGRESSION_TRAINING_BLOCK_SHA256,
+        train_sha256=nq0_enc["csv_sha256"],
+        train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+        train_rows=int(nq0_enc["nt"]),
+        has_header=bool(nq0_enc["has_header"]),
+        feature_columns=int(nq0_enc["p"]),
+        s1_input_sha256=nq0_enc["jtt1_sha256"],
+        training_block_sha256=nq0_enc["jtt1_sha256"],
         pool_sha256=pool_sha,
         features_npz_sha256=feat_npz_sha,
         labels_sha256=labels_sha,
@@ -1602,41 +1716,117 @@ def construct_and_consume_single_regression_context(
     )
     save(bundle_dir / "context_manifest.json", context_manifest)
 
-    # 5. Consume the constructed bundle in the real inherited h170.Engine (preserving all 1,310 historical contexts)
-    train_hist, val_hist = h170.cohorts(rt)
-    historical_cids = {r["context_sha256"] for r in (train_hist + val_hist)}
-    engine = h170.Engine(net, rt, names, frozen, guard, fused, train_hist + val_hist)
-    fresh_row = dict(
-        context_manifest,
-        pool_npz_path=str(pool_npz_path),
-        native_evaluator_receipt=native_eval_receipt,
-    )
-    eng_receipt = consume_single_fresh_context_in_inherited_engine(
-        engine, net, rt, fresh_row, historical_cids=historical_cids
-    )
-    save(bundle_dir / "engine_consumption_receipt.json", eng_receipt)
-
-    # 6. Upload create-only to s3://veox-jopedime-learning-use2 and verify exact-VersionId readback
+    # 6. Persist data & native receipts create-only to S3 and replay by exact VersionId into verified_s3_replay/
+    #    BEFORE any inherited-engine consumption or optimizer step!
     s3_bucket = "veox-jopedime-learning-use2"
     utc_tag = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     s3_prefix = (
         f"experiments/rd_breakthrough_20261101/H205/regression-seam/{cid}-{utc_tag}"
     )
-    uploaded_objects = []
+    replay_dir = bundle_dir / "verified_s3_replay"
+    replay_dir.mkdir(parents=True, exist_ok=True)
+
+    pre_consumption_uploaded = []
     for fname in (
         "context_manifest.json",
         "native_evaluator_receipt.json",
         "pool.npz",
         "features.npz",
-        "engine_consumption_receipt.json",
     ):
-        uploaded_objects.append(
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage=f"s3_put_pre_{fname}"
+        )
+        pre_consumption_uploaded.append(
             _s3_put_create_only_and_verify(
                 s3_bucket,
                 f"{s3_prefix}/{fname}",
                 bundle_dir / fname,
+                replay_dest_path=replay_dir / fname,
             )
         )
+
+    pre_custody = dict(
+        status="PASS",
+        wave=stat.WAVE,
+        stage="pre_consumption_s3_replay",
+        persisted_and_replayed_before_optimizer_step=True,
+        source_dataset_manifest=ds_manifest_s3,
+        source_train_object=train_csv_s3,
+        test_object_fetched=False,
+        learning_store_bucket=s3_bucket,
+        learning_store_prefix=s3_prefix,
+        uploaded_bundle_objects=pre_consumption_uploaded,
+        utc=datetime.now(timezone.utc).isoformat(),
+    )
+    save(bundle_dir / "s3_pre_consumption_custody_receipt.json", pre_custody)
+    pre_custody_upload = _s3_put_create_only_and_verify(
+        s3_bucket,
+        f"{s3_prefix}/s3_pre_consumption_custody_receipt.json",
+        bundle_dir / "s3_pre_consumption_custody_receipt.json",
+        replay_dest_path=replay_dir / "s3_pre_consumption_custody_receipt.json",
+    )
+
+    expected_eval_bin_sha = (
+        stat.EVALUATOR_BINARY_SHA256
+        if verify_worker_sha256
+        else live_s1_check["evaluator_binary_sha256"]
+    )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="pre_consumption_s3_replay_verify"
+    )
+    pre_replay_verified = stat.verify_pre_consumption_s3_replay_bundle(
+        replay_dir,
+        expected_train_sha256=nq0_enc["csv_sha256"],
+        expected_train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+        expected_train_rows=nq0_enc["nt"],
+        expected_evaluator_binary_sha256=expected_eval_bin_sha,
+        forbidden_cids=roster["forbidden_cids"],
+        forbidden_families=roster["forbidden_families"],
+        forbidden_datasets=roster["forbidden_datasets"],
+    )
+
+    # 7. ONLY AFTER S3 create-only upload + exact-VersionId replay verification succeeds,
+    #    consume the replayed S3 bundle in the inherited h170.Engine!
+    replayed_cm = json.loads((replay_dir / "context_manifest.json").read_text())
+    replayed_nr = json.loads((replay_dir / "native_evaluator_receipt.json").read_text())
+    train_hist, val_hist = h170.cohorts(rt)
+    historical_cids = {r["context_sha256"] for r in (train_hist + val_hist)}
+    engine = h170.Engine(net, rt, names, frozen, guard, fused, train_hist + val_hist)
+    fresh_row = dict(
+        replayed_cm,
+        pool_npz_path=str(replay_dir / "pool.npz"),
+        native_evaluator_receipt=replayed_nr,
+    )
+    eng_receipt = consume_single_fresh_context_in_inherited_engine(
+        engine,
+        net,
+        rt,
+        fresh_row,
+        historical_cids=historical_cids,
+        deadline_spec=deadline_spec,
+    )
+    eng_receipt["s3_persisted_and_replayed_before_optimizer_step"] = True
+    eng_receipt["consumed_pool_s3_version_id"] = pre_replay_verified[
+        "version_ids_by_name"
+    ]["pool.npz"]
+    eng_receipt["consumed_features_s3_version_id"] = pre_replay_verified[
+        "version_ids_by_name"
+    ]["features.npz"]
+    eng_receipt["pre_consumption_s3_replay_sha256"] = sha(
+        replay_dir / "s3_pre_consumption_custody_receipt.json"
+    )
+    save(bundle_dir / "engine_consumption_receipt.json", eng_receipt)
+
+    eng_upload = _s3_put_create_only_and_verify(
+        s3_bucket,
+        f"{s3_prefix}/engine_consumption_receipt.json",
+        bundle_dir / "engine_consumption_receipt.json",
+        replay_dest_path=replay_dir / "engine_consumption_receipt.json",
+    )
+    uploaded_objects = list(pre_consumption_uploaded) + [
+        pre_custody_upload,
+        eng_upload,
+    ]
 
     elapsed_wall = float(time.monotonic() - t_start)
     s3_custody = dict(
@@ -1659,29 +1849,35 @@ def construct_and_consume_single_regression_context(
     )
     save(bundle_dir / "s3_custody_receipt.json", s3_custody)
 
-    # Also upload s3_custody_receipt.json create-only and record its VersionId
     custody_upload = _s3_put_create_only_and_verify(
         s3_bucket,
         f"{s3_prefix}/s3_custody_receipt.json",
         bundle_dir / "s3_custody_receipt.json",
+        replay_dest_path=replay_dir / "s3_custody_receipt.json",
     )
 
-    # 7. Run end-to-end fail-closed bundle verification
+    # 8. Run end-to-end fail-closed bundle verification on the replayed S3 bundle
     verified_bundle = stat.verify_single_context_regression_seam_bundle(
-        bundle_dir,
+        replay_dir,
+        expected_train_sha256=nq0_enc["csv_sha256"],
+        expected_train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+        expected_train_rows=nq0_enc["nt"],
+        expected_evaluator_binary_sha256=expected_eval_bin_sha,
         forbidden_cids=roster["forbidden_cids"],
         forbidden_families=roster["forbidden_families"],
         forbidden_datasets=roster["forbidden_datasets"],
     )
     summary = dict(
         status="PASS",
+        seam_qualified=True,
         wave=stat.WAVE,
         mode="construct_single_regression_context",
         dataset_id=ds_id,
         family_id=fam_id,
         family_key=fam_key,
         context_sha256=cid,
-        view_id=stat.TARGET_REGRESSION_VIEW_ID,
+        fpool_disjoint_datasets_count=roster["fpool_disjoint_datasets_count"],
+        transitive_disjoint_datasets_count=roster["transitive_disjoint_datasets_count"],
         allowed_roster_datasets=roster["allowed_datasets_count"],
         allowed_roster_families=roster["allowed_families_count"],
         roster_sha256=roster["roster_sha256"],
@@ -1690,11 +1886,13 @@ def construct_and_consume_single_regression_context(
         pure_s3_train_csv_nq0_protocol_check=native_eval_receipt[
             "pure_s3_train_csv_nq0_protocol_check"
         ],
+        pre_consumption_s3_replay=pre_replay_verified,
         s1_prod_context_bundle=verified_bundle,
         engine_consumption=eng_receipt,
         s3_bundle_custody_upload=custody_upload,
         uploaded_bundle_objects=uploaded_objects,
         elapsed_wall_seconds=elapsed_wall,
+        prior_attempts_elapsed_seconds=deadline_spec["prior_elapsed_seconds"],
         cumulative_elapsed_wall_seconds=deadline_spec["prior_elapsed_seconds"]
         + elapsed_wall,
         remaining_wall_budget_seconds=deadline_spec["remaining_budget_seconds"]

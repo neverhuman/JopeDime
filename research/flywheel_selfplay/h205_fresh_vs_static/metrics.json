@@ -60,20 +60,33 @@
       "static_teacher_updates": 750,
       "fresh_updates": 0,
       "scored_contexts": 1310
+    },
+    {
+      "attempt_id": "regression-seam-20261102T0752Z",
+      "source_commit": "93d909f8cef929cb18f11b94cf37bd9f7fdaf45c",
+      "status": "HISTORICAL_LOCAL_S1PROD_REPLAY_CONTROL",
+      "elapsed_wall_seconds": 50.10207135695964,
+      "local_s1prod_optimizer_steps": 1,
+      "same_s3_train_optimizer_steps": 0,
+      "reason": "Local s1-prod context fa480de3... (1,600 rows from unscaled 80/20 rowselraw1 split across all 1,999 rows; 0 row overlap with 1,000-row min-max scaled S3 train.csv) replay and posthoc S3 custody control; pure S3 train.csv JTT1 (nq=0) blocked by bootstrap.s1main header guard at main.rs:567"
     }
   ],
   "cumulative_budget_ledger": {
-    "total_elapsed_wall_seconds": 1970.9372255061753,
+    "gpu_attempts_1_2_elapsed_seconds": 1970.9372255061753,
     "regression_seam_cpu_elapsed_seconds": 50.10207135695964,
+    "total_elapsed_wall_seconds": 2021.039296863135,
     "total_elapsed_including_regression_seam_seconds": 2021.039296863135,
     "campaign_wall_budget_cap_seconds": 25200.0,
-    "remaining_wall_budget_seconds": 23229.062774493825,
+    "remaining_wall_budget_seconds": 23178.960703136865,
     "remaining_wall_budget_after_regression_seam_seconds": 23178.960703136865,
     "budget_reset": false
   },
   "single_regression_context_milestone": {
-    "status": "PASS",
+    "status": "HISTORICAL_LOCAL_S1PROD_REPLAY_CONTROL",
+    "seam_qualified": false,
+    "same_s3_train_seam_status": "BLOCKED_NQ0_PROTOCOL",
     "causal_h205_claim_status": "NOT_QUALIFIED_NO_ADVANCE",
+    "classification": "HISTORICAL_LOCAL_S1PROD_REPLAY_AND_POSTHOC_S3_CUSTODY_CONTROL_NOT_SAME_S3_TRAIN_MILESTONE",
     "run_id": "regression-seam-20261102T0752Z",
     "local_dir": "/home/ubuntu/jope-data/h205/regression-seam-20261102T0752Z",
     "dataset_id": "1db3750d4ceccab9",
@@ -81,9 +94,17 @@
     "family_key": "e70bef3cf802dadb1f22458c1e1c6bb553a5d9f3",
     "context_sha256": "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45",
     "view_id": "1db3750d4ceccab9__r0__f0__rowselraw1_84a908fcde0e",
-    "allowed_roster_datasets": 1928,
-    "allowed_roster_families": 1928,
-    "roster_sha256": "2e9dcee92e5c4b807b6e1fb23ed88ec0e1aba48ac00cc9921a2e45d509868845",
+    "fpool_disjoint_datasets_count": 1772,
+    "transitive_disjoint_datasets_count": 1550,
+    "allowed_roster_datasets": 1336,
+    "allowed_roster_families": 1336,
+    "roster_sha256": "c7ea7148129937d516f19a87c05c771b34d250f10ce9a2e53931e8f13760a504",
+    "historical_pre_review1758_roster": {
+      "allowed_roster_datasets": 1928,
+      "allowed_roster_families": 1928,
+      "roster_sha256": "2e9dcee92e5c4b807b6e1fb23ed88ec0e1aba48ac00cc9921a2e45d509868845",
+      "defect": "Stale exclusion schema keys read 0 entries from JRB-01/H150/D4 and leaked 156 D4 panel datasets; corrected to 1,772 (fpool closure), 1,550 (full catalog transitive closure), and 1,336 deduplicated independent families."
+    },
     "source_train_s3": {
       "bucket": "veox-jopedime-datasets-use2",
       "key": "blobs/sha256/6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d",
@@ -99,15 +120,26 @@
       "sha256": "28253e606e580b6566e93ceefa49fedb7216799595ee6228939dcf66e7c072de"
     },
     "pure_s3_train_csv_nq0_protocol_check": {
-      "jtt1_nq0_sha256": "92e097d578e382862e1be8c5e2fe95d2a2e4c030f5615a9249d6591bfe2fa055",
-      "raw_csv_features_sha256": "4c32fbdf2c58fd49c315dd978647079bc97be066a834e949f156648894cee231",
+      "csv_sha256": "6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d",
+      "train_matrix_sha256": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7",
+      "jtt1_nq0_sha256": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+      "jtt1_bytes_len": 49017,
+      "nt": 1000,
+      "nq": 0,
+      "p": 5,
+      "k": 2,
+      "has_header": false,
+      "raw_csv_features_sha256": "a84271417a25b285aed0b5612ebfc0bb953c9cb863e32f24a484ab6127fff33a",
       "returncode": 1,
-      "stderr": "Error: \"S1 requires exactly two inner folds and an admitted shape\"",
+      "stderr": "Error: \"S1 requires exactly two inner folds and an admitted shape\"\n\nCaused by:\n    invalid table counts nt=1000 nq=0 p=5",
       "nq0_refused_by_header_guard": true,
-      "rust_source_pin": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567"
+      "rust_source_pin": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567",
+      "historical_999row_header_swallowed_jtt1_sha256": "92e097d578e382862e1be8c5e2fe95d2a2e4c030f5615a9249d6591bfe2fa055"
     },
     "s1_prod_context_bundle": {
+      "provenance_note": "Local s1-prod context fa480de3... (1,600 rows from unscaled 80/20 rowselraw1 split across all 1,999 rows; 0 row overlap with 1,000-row min-max scaled S3 train.csv); 24 live evaluations against 1,152 cached summary.tar.gz rows; uploaded to S3 posthoc after the local optimizer step.",
       "candidates_count": 1152,
+      "live_evaluated_candidates_count": 24,
       "labels_sha256": "fc0925e83187741d7f56ec7a1083d2ddd477e7bf8d7a722963754b4654990ec8",
       "programs_sha256": "843a4f4a69af9478bb9971f3c05aa6224665c9e520f1b9c3af869e23d2650c57",
       "features_sha256": "d59c2d162ff09b265fe9d2eb883795a39b49323726c2e263e44796782c469dc8",
@@ -115,6 +147,7 @@
     },
     "engine_consumption": {
       "used_old_1310_fallback": false,
+      "s3_persisted_and_replayed_before_optimizer_step": false,
       "historical_contexts_preserved": 1310,
       "slate_candidates": 24,
       "loss_value": 50.041358947753906,

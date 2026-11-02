@@ -23,8 +23,10 @@
     "attempt_2_elapsed_seconds": 1959.3849376700819,
     "budget_reset": false,
     "campaign_wall_budget_cap_seconds": 25200.0,
-    "remaining_wall_budget_seconds": 23229.062774493825,
-    "total_elapsed_wall_seconds": 1970.9372255061753
+    "gpu_attempts_1_2_elapsed_seconds": 1970.9372255061753,
+    "regression_seam_0752z_elapsed_seconds": 50.10207135695964,
+    "remaining_wall_budget_seconds": 23178.960703136865,
+    "total_elapsed_wall_seconds": 2021.039296863135
   },
   "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/",
   "device": "cuda:0",
@@ -78,12 +80,12 @@
   ],
   "selector": "H178_calibrated_pooled_205_family",
   "source_sha256": {
-    "PREREG.md": "4fa18ab7fb6721d7131c958d0c09448b6b489ea7996fa3c69694a2f5ff12eaf1",
-    "README.md": "3970423d8c9d13cb9626d52dc6cf7b7c40f21c793a2f75569e46c9e7c9cab1a5",
-    "analysis.py": "5b3b2f1140d610ac35cd84f01512a315d95e0b703687923235b7f26511c47bb0",
-    "monitor.py": "12ba2c6bfc7e3527264766e469f734c73ff3cb92d83379d5a646cf28f13b91c3",
-    "runner.py": "cdfb4679a28ae67c6b54b0b9068278824df3780cc64bdf948cbc9ce1472c947e",
-    "test_h205.py": "c788f1bd1f3fb8c1210a07d544c1cb5bac8564090b5e84547a94f88bfaac20f1"
+    "PREREG.md": "6282a82624ff497d1b1538ab02030afe15c2cc0c5dbb9710ddbfa5065b2b823d",
+    "README.md": "42cdd80322daa386487815dab44c4207cf0dd4c6f336f270fc67701c27632231",
+    "analysis.py": "0ed415fa95a497f327c8aa05621d10e8258f8453c8be679a498d8b167a978e38",
+    "monitor.py": "e4d111929b3dc317fc420b4be6fd10840e93d4f0d544d1d3da486210bb605b9b",
+    "runner.py": "842d2e09fd9ca2d3e755f39df3d760ad48b815e5028992b59ea1de9844a5d3f4",
+    "test_h205.py": "8a2d5b179dfa01da6241009f21c42c43e480a8eda3cf4d3c15d4fcf51df33b63"
   },
   "wave": "H205"
 }
