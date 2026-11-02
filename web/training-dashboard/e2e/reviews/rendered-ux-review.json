@@ -28,15 +28,15 @@
         "sha256": "9a914efb7074bc676b77ac232cdc1438881427c65ce60d46af5a806498754ed8"
       },
       "visualBaseline": {
-        "mode": "review",
+        "mode": "pass",
         "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-section-desktop-linux.png",
+        "baselineSha256": "9a914efb7074bc676b77ac232cdc1438881427c65ce60d46af5a806498754ed8",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
-        "approvalNote": "Overview presents the observer state, campaign selector, summary metrics, learning chart and research-memory callout. Cards align cleanly; the desktop layout has no collisions, and mobile reflows into readable two-column summaries followed by stacked details. Synthetic fixture values are clearly bounded by the page copy.",
-        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-desktop-linux.png",
-        "baselineSha256": "9a914efb7074bc676b77ac232cdc1438881427c65ce60d46af5a806498754ed8"
+        "approvedAt": "2026-11-02T03:54:43Z",
+        "approvalNote": "Overview presents the observer state, campaign selector, summary metrics, learning chart and research-memory callout. Cards align cleanly; the desktop layout has no collisions, and mobile reflows into readable two-column summaries followed by stacked details. Synthetic fixture values are clearly bounded by the page copy."
       },
       "reviewerNotes": "Overview presents the observer state, campaign selector, summary metrics, learning chart and research-memory callout. Cards align cleanly; the desktop layout has no collisions, and mobile reflows into readable two-column summaries followed by stacked details. Synthetic fixture values are clearly bounded by the page copy.",
       "verdict": "pass",
@@ -61,12 +61,14 @@
         "sha256": "f1b80af2f63cec95edcaf52b1b1afb545eeb9571d2491961f993e84bf6004674"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/training-desktop-linux.png",
+        "baselineSha256": "f1b80af2f63cec95edcaf52b1b1afb545eeb9571d2491961f993e84bf6004674",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Training view keeps the loss chart and bounded-pass summary prominent. The desktop checkpoint and provenance panels remain aligned. At mobile width, the table and long synthetic hashes wrap within the content region; page-level geometry assertions report no document overflow."
       },
       "reviewerNotes": "Training view keeps the loss chart and bounded-pass summary prominent. The desktop checkpoint and provenance panels remain aligned. At mobile width, the table and long synthetic hashes wrap within the content region; page-level geometry assertions report no document overflow.",
@@ -92,12 +94,14 @@
         "sha256": "563a456ce6f21fbacecc8ba0be0f07f6ee8d7b4af9ab78fce5690245cd3f3a7b"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/fleet-desktop-linux.png",
+        "baselineSha256": "563a456ce6f21fbacecc8ba0be0f07f6ee8d7b4af9ab78fce5690245cd3f3a7b",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Fleet view communicates unavailable telemetry with a distinct \u201cNo live feed\u201d empty state for each node and preserves the resource-observation caveat. Cards remain aligned on desktop and stack with consistent spacing on mobile."
       },
       "reviewerNotes": "Fleet view communicates unavailable telemetry with a distinct \u201cNo live feed\u201d empty state for each node and preserves the resource-observation caveat. Cards remain aligned on desktop and stack with consistent spacing on mobile.",
@@ -123,12 +127,14 @@
         "sha256": "9676ae02ea1a0259de324853fe4a46332360cf868f001d6536bb8880eea3f137"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/storage-datasets-desktop-linux.png",
+        "baselineSha256": "9676ae02ea1a0259de324853fe4a46332360cf868f001d6536bb8880eea3f137",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Storage view labels the inventory as synthetic partial coverage. The bucket and catalog sections remain distinct; the narrow viewport clips wide table columns inside the table region while preserving page width and readable headings. No document-level horizontal overflow was observed."
       },
       "reviewerNotes": "Storage view labels the inventory as synthetic partial coverage. The bucket and catalog sections remain distinct; the narrow viewport clips wide table columns inside the table region while preserving page width and readable headings. No document-level horizontal overflow was observed.",
@@ -154,12 +160,14 @@
         "sha256": "7b35ebbc4f7de62635410c90511cc7f366863ef70ff5394d8d6816c16bdb1306"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/gp-library-desktop-linux.png",
+        "baselineSha256": "7b35ebbc4f7de62635410c90511cc7f366863ef70ff5394d8d6816c16bdb1306",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "GP library labels the program as a synthetic UI fixture and keeps search, family filter and result identity visible. The narrow table remains within the page layout; longer values wrap without covering the controls."
       },
       "reviewerNotes": "GP library labels the program as a synthetic UI fixture and keeps search, family filter and result identity visible. The narrow table remains within the page layout; longer values wrap without covering the controls.",
@@ -185,12 +193,14 @@
         "sha256": "256a0ba7c204b976a13e1226856a1364a96d062ce2a8f437c7ba0331b16965f8"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/results-lineage-desktop-linux.png",
+        "baselineSha256": "256a0ba7c204b976a13e1226856a1364a96d062ce2a8f437c7ba0331b16965f8",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Results view distinguishes recorded assertions, fixture capture and archive claim. The code/model identity block wraps long hashes in the mobile view without obscuring labels or creating page-level overflow."
       },
       "reviewerNotes": "Results view distinguishes recorded assertions, fixture capture and archive claim. The code/model identity block wraps long hashes in the mobile view without obscuring labels or creating page-level overflow.",
@@ -216,12 +226,14 @@
         "sha256": "3f621beb5552a10779e9e48c3d08928417ef121bb60612b2f47df0dd783b44ab"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/checkpoint-dialog-desktop-linux.png",
+        "baselineSha256": "3f621beb5552a10779e9e48c3d08928417ef121bb60612b2f47df0dd783b44ab",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Checkpoint details appear in a centered modal with a visible close control and a dimmed background. The desktop dialog has ample margin; the mobile dialog fits the viewport and keeps fields readable. Keyboard focus, Escape dismissal and focus restoration are separately asserted by the test."
       },
       "reviewerNotes": "Checkpoint details appear in a centered modal with a visible close control and a dimmed background. The desktop dialog has ample margin; the mobile dialog fits the viewport and keeps fields readable. Keyboard focus, Escape dismissal and focus restoration are separately asserted by the test.",
@@ -247,12 +259,14 @@
         "sha256": "5b7cb2d72cf8bbb52981d13f4cd7122a1b262d48cba4605b3acd4d11dd23bdb6"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/interrupted-feed-desktop-linux.png",
+        "baselineSha256": "5b7cb2d72cf8bbb52981d13f4cd7122a1b262d48cba4605b3acd4d11dd23bdb6",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "The interrupted-feed state presents a prominent warning that retained values may be stale, while keeping the last observation visible. The warning is legible above the summary on both viewports; it does not imply that stale values are current."
       },
       "reviewerNotes": "The interrupted-feed state presents a prominent warning that retained values may be stale, while keeping the last observation visible. The warning is legible above the summary on both viewports; it does not imply that stale values are current.",
@@ -278,15 +292,15 @@
         "sha256": "7526c7f1d502f7b334d6a96771f670ceb281ea83ea609e87728f7cbf407738b5"
       },
       "visualBaseline": {
-        "mode": "review",
+        "mode": "pass",
         "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-section-mobile-linux.png",
+        "baselineSha256": "7526c7f1d502f7b334d6a96771f670ceb281ea83ea609e87728f7cbf407738b5",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
-        "approvalNote": "Overview presents the observer state, campaign selector, summary metrics, learning chart and research-memory callout. Cards align cleanly; the desktop layout has no collisions, and mobile reflows into readable two-column summaries followed by stacked details. Synthetic fixture values are clearly bounded by the page copy.",
-        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-mobile-linux.png",
-        "baselineSha256": "7526c7f1d502f7b334d6a96771f670ceb281ea83ea609e87728f7cbf407738b5"
+        "approvedAt": "2026-11-02T03:54:43Z",
+        "approvalNote": "Overview presents the observer state, campaign selector, summary metrics, learning chart and research-memory callout. Cards align cleanly; the desktop layout has no collisions, and mobile reflows into readable two-column summaries followed by stacked details. Synthetic fixture values are clearly bounded by the page copy."
       },
       "reviewerNotes": "Overview presents the observer state, campaign selector, summary metrics, learning chart and research-memory callout. Cards align cleanly; the desktop layout has no collisions, and mobile reflows into readable two-column summaries followed by stacked details. Synthetic fixture values are clearly bounded by the page copy.",
       "verdict": "pass",
@@ -311,12 +325,14 @@
         "sha256": "e9cde38ed10469975b60f6e0458b991118d6cd59effbfb10443d4fe88f5e0976"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/training-mobile-linux.png",
+        "baselineSha256": "e9cde38ed10469975b60f6e0458b991118d6cd59effbfb10443d4fe88f5e0976",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Training view keeps the loss chart and bounded-pass summary prominent. The desktop checkpoint and provenance panels remain aligned. At mobile width, the table and long synthetic hashes wrap within the content region; page-level geometry assertions report no document overflow."
       },
       "reviewerNotes": "Training view keeps the loss chart and bounded-pass summary prominent. The desktop checkpoint and provenance panels remain aligned. At mobile width, the table and long synthetic hashes wrap within the content region; page-level geometry assertions report no document overflow.",
@@ -342,12 +358,14 @@
         "sha256": "ec7fec32402da186f52191370b3687916fdc2ae27987efc6b041adc9c08b654c"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/fleet-mobile-linux.png",
+        "baselineSha256": "ec7fec32402da186f52191370b3687916fdc2ae27987efc6b041adc9c08b654c",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Fleet view communicates unavailable telemetry with a distinct \u201cNo live feed\u201d empty state for each node and preserves the resource-observation caveat. Cards remain aligned on desktop and stack with consistent spacing on mobile."
       },
       "reviewerNotes": "Fleet view communicates unavailable telemetry with a distinct \u201cNo live feed\u201d empty state for each node and preserves the resource-observation caveat. Cards remain aligned on desktop and stack with consistent spacing on mobile.",
@@ -373,12 +391,14 @@
         "sha256": "2496bd0eb5b2abb0b524df2baff04b90072e50d66a096d5d94e1070a1988ee1e"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/storage-datasets-mobile-linux.png",
+        "baselineSha256": "8ef404cace8f0422c4f6b24ae1f039e957353d981d282466cb0dee883595f892",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Storage view labels the inventory as synthetic partial coverage. The bucket and catalog sections remain distinct; the narrow viewport clips wide table columns inside the table region while preserving page width and readable headings. No document-level horizontal overflow was observed."
       },
       "reviewerNotes": "Storage view labels the inventory as synthetic partial coverage. The bucket and catalog sections remain distinct; the narrow viewport clips wide table columns inside the table region while preserving page width and readable headings. No document-level horizontal overflow was observed.",
@@ -404,12 +424,14 @@
         "sha256": "6fa795dd863c9b0aed7351e42837030fecfd6e9953c6ee784cf0d9a88d4e3a88"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/gp-library-mobile-linux.png",
+        "baselineSha256": "722d7af25a515d3127dbb5b7c4db385569940c4693c33f0ceed31cf55c154760",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "GP library labels the program as a synthetic UI fixture and keeps search, family filter and result identity visible. The narrow table remains within the page layout; longer values wrap without covering the controls."
       },
       "reviewerNotes": "GP library labels the program as a synthetic UI fixture and keeps search, family filter and result identity visible. The narrow table remains within the page layout; longer values wrap without covering the controls.",
@@ -435,12 +457,14 @@
         "sha256": "7e3d78dd0ba06ed938194228e75b623c61a52142b072ef91034714950bc1f44c"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/results-lineage-mobile-linux.png",
+        "baselineSha256": "7e3d78dd0ba06ed938194228e75b623c61a52142b072ef91034714950bc1f44c",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Results view distinguishes recorded assertions, fixture capture and archive claim. The code/model identity block wraps long hashes in the mobile view without obscuring labels or creating page-level overflow."
       },
       "reviewerNotes": "Results view distinguishes recorded assertions, fixture capture and archive claim. The code/model identity block wraps long hashes in the mobile view without obscuring labels or creating page-level overflow.",
@@ -466,12 +490,14 @@
         "sha256": "07e60730fa1361eb0db1f3643e4f3d365246fee7dc64d07fca852165921a7dd5"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/checkpoint-dialog-mobile-linux.png",
+        "baselineSha256": "07e60730fa1361eb0db1f3643e4f3d365246fee7dc64d07fca852165921a7dd5",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "Checkpoint details appear in a centered modal with a visible close control and a dimmed background. The desktop dialog has ample margin; the mobile dialog fits the viewport and keeps fields readable. Keyboard focus, Escape dismissal and focus restoration are separately asserted by the test."
       },
       "reviewerNotes": "Checkpoint details appear in a centered modal with a visible close control and a dimmed background. The desktop dialog has ample margin; the mobile dialog fits the viewport and keeps fields readable. Keyboard focus, Escape dismissal and focus restoration are separately asserted by the test.",
@@ -497,12 +523,14 @@
         "sha256": "df84ff452393663c455e0bc3f0d19c1ea601ce1a303b549e6ab487a46326bb4b"
       },
       "visualBaseline": {
-        "mode": "review",
-        "status": "not-configured",
+        "mode": "pass",
+        "status": "matched",
         "decision": "pass",
+        "baselinePath": "web/training-dashboard/e2e/observatory.spec.ts-snapshots/interrupted-feed-mobile-linux.png",
+        "baselineSha256": "df84ff452393663c455e0bc3f0d19c1ea601ce1a303b549e6ab487a46326bb4b",
         "owner": "web/training-dashboard",
         "approvedBy": "Codex implementing-agent self-review",
-        "approvedAt": "2026-11-02",
+        "approvedAt": "2026-11-02T03:54:43Z",
         "approvalNote": "The interrupted-feed state presents a prominent warning that retained values may be stale, while keeping the last observation visible. The warning is legible above the summary on both viewports; it does not imply that stale values are current."
       },
       "reviewerNotes": "The interrupted-feed state presents a prominent warning that retained values may be stale, while keeping the last observation visible. The warning is legible above the summary on both viewports; it does not imply that stale values are current.",

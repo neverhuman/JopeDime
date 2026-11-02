@@ -42,3 +42,8 @@ The rebased browser run is bound to source `1f21561ea326c13858e9f5caf4797c0c6e7e
 (run 9, attempt 1). All 16 screenshot hashes match the previously reviewed captures byte for
 byte; the refreshed receipt is at `target/ci-evidence/rendered-ux/unstick-run-1/` and verifies
 with the repository receipt helper.
+
+Each of the 16 captured states also has a committed Playwright screenshot baseline. The E2E
+suite compares them at desktop and mobile widths with a 0.2% pixel-difference tolerance;
+the overview's initial state retains its separate existing baseline. Reviewer notes, baseline
+paths, SHA-256 values and verdicts are recorded per screenshot in the JSON review record.
