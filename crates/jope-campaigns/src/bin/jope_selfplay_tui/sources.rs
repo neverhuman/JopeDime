@@ -244,7 +244,23 @@ pub(super) fn load_scq_snapshot(scq: &Path) -> Result<Value> {
             })?;
             let jobs = run_scq_json(scq, &["ls"])
                 .with_context(|| format!("SCQ snapshot failed ({primary_error}); jobs fallback"))?;
-            let priorities = run_scq_json(scq, &["priority", "ls"]).unwrap_or_else(|_| json!({}));
+            let (families, priority_alert) = match run_scq_json(scq, &["priority", "ls"]) {
+                Ok(priorities) => (
+                    priorities
+                        .pointer("/FamilyPriorities/families")
+                        .cloned()
+                        .unwrap_or_else(|| json!([])),
+                    None,
+                ),
+                Err(error) => (
+                    json!([]),
+                    Some(format!("priority listing unavailable: {error:#}")),
+                ),
+            };
+            let mut alerts = vec![format!("snapshot fallback: {primary_error}")];
+            if let Some(alert) = priority_alert {
+                alerts.push(alert);
+            }
             Ok(json!({
                 "Snapshot": {
                     "epoch": null,
@@ -252,10 +268,9 @@ pub(super) fn load_scq_snapshot(scq: &Path) -> Result<Value> {
                     "nodes": nodes.pointer("/Nodes/nodes").cloned().unwrap_or_else(|| json!([])),
                     "gpus": nodes.pointer("/Nodes/gpus").cloned().unwrap_or_else(|| json!([])),
                     "jobs": jobs.pointer("/Jobs/jobs").cloned().unwrap_or_else(|| json!([])),
-                    "families": priorities.pointer("/FamilyPriorities/families")
-                        .cloned().unwrap_or_else(|| json!([])),
+                    "families": families,
                     "events": [],
-                    "alerts": [format!("snapshot fallback: {primary_error}")],
+                    "alerts": alerts,
                     "counters": {},
                 }
             }))
