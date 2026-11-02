@@ -9,7 +9,20 @@ use crate::hash::sha256_hex;
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+use sha2::Digest;
 use std::collections::{BTreeMap, BTreeSet};
+
+/// Assign a source family to the stable campaign train/validation partition.
+/// This preserves the historical SHA-256 prefix threshold used by self-play
+/// expansion so every consumer makes the same label-independent decision.
+pub fn source_family_campaign_split(family: &str) -> &'static str {
+    let digest = sha2::Sha256::digest(family.as_bytes());
+    if u16::from_be_bytes([digest[0], digest[1]]) < (u16::MAX / 10) {
+        "validation"
+    } else {
+        "train"
+    }
+}
 
 /// Assign source families to train/development while covering every requested
 /// task on both sides. Selection is seeded by family identity only; labels,
@@ -601,6 +614,12 @@ mod tests {
 
     #[test]
     fn family_split_matches_the_deterministic_python_contract() {
+        assert_eq!(source_family_campaign_split("synthetic:15"), "validation");
+        assert_eq!(source_family_campaign_split("synthetic:abc"), "train");
+        assert_eq!(
+            source_family_campaign_split("synthetic:15"),
+            source_family_campaign_split("synthetic:15")
+        );
         let families = BTreeMap::from([
             ("d0".to_owned(), "f0".to_owned()),
             ("d1".to_owned(), "f1".to_owned()),

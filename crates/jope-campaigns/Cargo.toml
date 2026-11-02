@@ -12,6 +12,7 @@ clap = { workspace = true }
 crossterm = "=0.28.1"
 feat-math = { path = "../feat-math" }
 hex = "0.4"
+jope-datasets = { path = "../jope-datasets" }
 jope-paths = { path = "../jope-paths" }
 libc = "0.2"
 memmap2 = "0.9"

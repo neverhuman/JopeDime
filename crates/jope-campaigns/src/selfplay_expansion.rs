@@ -1591,15 +1591,6 @@ fn existing_activation(catalog_root: &Path, tranche_id: &str) -> Result<Option<V
     Ok(None)
 }
 
-fn family_split(family: &str) -> &'static str {
-    let digest = Sha256::digest(family.as_bytes());
-    if u16::from_be_bytes([digest[0], digest[1]]) < (u16::MAX / 10) {
-        "validation"
-    } else {
-        "train"
-    }
-}
-
 fn atomic_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
     fs::create_dir_all(path.parent().context("output path has no parent")?)?;
     let temporary = path.with_file_name(format!(
@@ -1677,7 +1668,10 @@ pub fn activate_tranche(
             context_sha256,
             encoding_hashes,
             catalog_index: index,
-            split: family_split(&row.source_family).to_owned(),
+            split: jope_datasets::family_contracts::source_family_campaign_split(
+                &row.source_family,
+            )
+            .to_owned(),
         });
         contexts.push(context);
     }
@@ -2867,8 +2861,11 @@ mod tests {
     #[test]
     fn family_split_is_deterministic_and_disjoint() {
         let family = "synthetic:abc";
-        assert_eq!(family_split(family), family_split(family));
-        let split = family_split(family);
+        assert_eq!(
+            jope_datasets::family_contracts::source_family_campaign_split(family),
+            jope_datasets::family_contracts::source_family_campaign_split(family)
+        );
+        let split = jope_datasets::family_contracts::source_family_campaign_split(family);
         assert!(matches!(split, "train" | "validation"));
     }
 
