@@ -15,6 +15,7 @@ hex = "0.4"
 jope-paths = { path = "../jope-paths" }
 libc = "0.2"
 memmap2 = "0.9"
+nix = { workspace = true, features = ["sched"] }
 ratatui = "=0.29.0"
 rayon = "1"
 rusqlite = "0.32"
