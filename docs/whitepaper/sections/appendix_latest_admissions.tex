@@ -3,7 +3,7 @@
 \begin{table}[!htbp]
   \caption{\textbf{Canonical retained admission ledger.}
   Every complete row in the captured prefix, without outcome selection.
-  Strict gains and exact ties use unrounded candidate minus prior-best
+  Strict gains and ties use unrounded candidate minus prior-best
   utility. Scope: \cref{sec:method-status}.}
   \label{tab:admission-ledger}
   \centering\footnotesize\renewcommand{\arraystretch}{0.92}\sisetup{group-digits=integer}% full-precision logged values: roman digits and a true minus
@@ -32,4 +32,4 @@
 windows and cumulative near-tie rejections from the same record, using
 $\Delta_r=u_{\mathrm{cand},r}-u_{\mathrm{prev},r}$.
 The default rule accepts $\Delta_r\geq0$; \cref{tab:admission-ledger}
-keeps its chronology, exact counts and margin summaries in one place.
+records its chronology, exact counts and margin summaries together.
