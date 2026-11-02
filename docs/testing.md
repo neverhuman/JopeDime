@@ -67,6 +67,19 @@ that task's CPU, build-job, memory and disk limits; this repository's bounded la
 than eight Cargo build jobs. External paid services require the task's recorded spend cap. An
 already authorized command keeps its existing authorization and limits; this guide adds no
 approval step or new cloud/API allowance.
+Every job that can spend money, consume shared compute, read external corpora, or retry work must
+record its owner, exact command, maximum wall time, concurrency, input scope, and stop condition before
+launch. The stop condition must be enforced by the command or supervising lane; reaching a bound,
+losing an input pin, or receiving an unknown result stops the run without an automatic retry. Record
+actual duration, attempts, resources and any external charges with the run receipt. A command that has
+no declared cap is not an approved paid or shared-resource lane. The default permitted external spend
+for an invocation is **$0**. A paid invocation requires a run-specific, owner-approved maximum cost in
+its preflight record; unknown pricing, missing quota, or unavailable kill switch evidence means no
+launch. The supervising lane must stop before the approved cost or resource ceiling, and the receipt
+records the estimate, ceiling, actual charge when available, stop reason, and kill-switch result. This
+policy does not invent a dollar ceiling for an unapproved operation. Keep one reused `target/` per lane,
+`CARGO_TARGET_DIR` unset, `CARGO_BUILD_JOBS` at or below 16, and the BLAS/Rayon limits from the owning
+proof lane. Do not infer a compute or cloud budget from a test pass.
 
 Reaching a quota, spend cap, input-pin failure or unknown required result is a stop condition,
 not permission for an automatic retry. The kill switch is the owning operator's documented
@@ -99,6 +112,14 @@ review time, scope, findings and disposition. Retain the complete diff, raw CI l
 and replayable commands with their results; link to those records instead of treating a summary as
 proof. A native review uses the full `commit_id`; a same-agent review is labeled as such. This guide
 defines the record required for a review claim and does not assert that a specific change was reviewed.
+The release gate blocks promotion until the candidate-bound evidence below is current and reviewable.
+A passing unit, integration, smoke, audit or main-guard job is evidence only for its stated scope. A
+release-readiness claim also needs current, reviewable evidence for security controls, recoverable
+backups, monitoring and alert ownership, a tested rollback path, and abuse/rate controls. Link each
+artifact to the release candidate and record its owner and timestamp. Missing, stale, untested, or
+unknown evidence remains open. This page makes no release-readiness claim; no gate is considered passed
+without a candidate-bound artifact and an owner/time record. Release promotion must stop while any of
+those artifacts is missing or unknown.
 
 ## Canonical path aliases
 

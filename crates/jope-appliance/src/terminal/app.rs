@@ -16,6 +16,11 @@ use super::line_mode::{self, LineMode};
 use super::restore::{ExitSignal, TerminalGuard};
 use super::{cards, sanitize_user_string, symbols_from_env, ColorLevel, Theme, ThemeMode};
 
+#[cfg(target_os = "linux")]
+use std::io::Read;
+#[cfg(target_os = "linux")]
+use std::os::unix::fs::OpenOptionsExt;
+
 const INPUT_LATENCY: Duration = Duration::from_millis(20);
 
 #[cfg(all(test, target_os = "linux"))]
@@ -214,6 +219,199 @@ struct State {
     active: bool,
 }
 
+/// Canonical input must be drained from the tty itself after the inline backend is left.
+/// Crossterm's poller can consume a queued resize notification while leaving a following
+/// newline readable in the kernel, then miss that byte when its readiness state is stale.
+#[cfg(target_os = "linux")]
+struct CanonicalInput {
+    input: std::fs::File,
+    pending: Vec<u8>,
+}
+
+#[cfg(target_os = "linux")]
+impl CanonicalInput {
+    fn new() -> io::Result<Self> {
+        let input = std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(0o4000) // O_NONBLOCK
+            .open("/dev/stdin")?;
+        Ok(Self {
+            input,
+            pending: Vec::new(),
+        })
+    }
+
+    fn lines(&mut self) -> io::Result<Vec<String>> {
+        let mut bytes = [0; 1024];
+        loop {
+            match self.input.read(&mut bytes) {
+                Ok(0) => break,
+                Ok(count) => self.pending.extend_from_slice(&bytes[..count]),
+                Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+                Err(error) => return Err(error),
+            }
+        }
+        let mut lines = Vec::new();
+        while let Some(end) = self
+            .pending
+            .iter()
+            .position(|byte| matches!(byte, b'\r' | b'\n'))
+        {
+            let mut line: Vec<_> = self.pending.drain(..=end).collect();
+            let delimiter = line.pop();
+            if delimiter == Some(b'\r') && self.pending.first() == Some(&b'\n') {
+                self.pending.remove(0);
+            }
+            lines.push(String::from_utf8_lossy(&line).into_owned());
+        }
+        Ok(lines)
+    }
+}
+
+fn submit_draft(
+    state: &mut State,
+    command: &mut impl FnMut(&str) -> io::Result<()>,
+) -> io::Result<Option<Exit>> {
+    let draft = std::mem::take(&mut state.draft);
+    if matches!(draft.trim(), "\\quit" | "/quit") {
+        return Ok(Some(Exit::Quit));
+    }
+    command(&draft)?;
+    Ok(None)
+}
+
+fn handle_input_event(
+    event: Event,
+    screen: &mut Screen,
+    guard: &TerminalGuard,
+    width: &mut u16,
+    state: &mut State,
+    command: &mut impl FnMut(&str) -> io::Result<()>,
+) -> io::Result<Option<Exit>> {
+    #[cfg(all(test, target_os = "linux"))]
+    trace_first_event_for_test(&event);
+    match event {
+        Event::Resize(columns, _) => {
+            *width = columns;
+            if columns < 40 {
+                screen.downgrade(guard)?;
+            }
+        }
+        Event::Paste(text) => state.draft.push_str(&sanitize_user_string(&text)),
+        Event::Key(key) if key.kind != KeyEventKind::Release => match key.code {
+            KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                if state.draft.is_empty() {
+                    return Ok(Some(Exit::Quit));
+                }
+                state.draft.pop();
+            }
+            KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                state.draft.clear();
+                screen.transcript(&["Use \\quit or Ctrl-D to exit.".into()], *width)?;
+            }
+            KeyCode::Enter => return submit_draft(state, command),
+            KeyCode::Backspace => {
+                state.draft.pop();
+            }
+            KeyCode::Char(character) if !key.modifiers.contains(KeyModifiers::CONTROL) => {
+                state.draft.push(character);
+            }
+            _ => {}
+        },
+        _ => {}
+    }
+    Ok(None)
+}
+
+fn drain_queued_input(
+    screen: &mut Screen,
+    guard: &TerminalGuard,
+    width: &mut u16,
+    state: &mut State,
+    command: &mut impl FnMut(&str) -> io::Result<()>,
+) -> io::Result<Option<Exit>> {
+    drain_event_queue(
+        || {
+            if event::poll(Duration::ZERO)? {
+                event::read().map(Some)
+            } else {
+                Ok(None)
+            }
+        },
+        |event| handle_input_event(event, screen, guard, width, state, command),
+    )
+}
+
+fn reconcile_width_and_drain(
+    screen: &mut Screen,
+    guard: &TerminalGuard,
+    width: &mut u16,
+    state: &mut State,
+    command: &mut impl FnMut(&str) -> io::Result<()>,
+) -> io::Result<Option<Exit>> {
+    let was_inline = matches!(screen, Screen::Inline(_));
+    screen.reconcile_width(guard, width)?;
+    if was_inline && matches!(screen, Screen::Plain(_)) {
+        drain_queued_input(screen, guard, width, state, command)
+    } else {
+        Ok(None)
+    }
+}
+
+fn drain_event_queue(
+    mut next: impl FnMut() -> io::Result<Option<Event>>,
+    mut handle: impl FnMut(Event) -> io::Result<Option<Exit>>,
+) -> io::Result<Option<Exit>> {
+    while let Some(event) = next()? {
+        if let Some(exit) = handle(event)? {
+            return Ok(Some(exit));
+        }
+    }
+    Ok(None)
+}
+
+#[cfg(all(test, target_os = "linux"))]
+static STOP_BEFORE_EVENT_POLL: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+#[cfg(all(test, target_os = "linux"))]
+static TRACE_FIRST_EVENT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(all(test, target_os = "linux"))]
+fn stop_before_event_poll_for_test() -> io::Result<()> {
+    use std::sync::atomic::Ordering;
+    if !STOP_BEFORE_EVENT_POLL.swap(false, Ordering::SeqCst) {
+        return Ok(());
+    }
+    let pid = std::process::id().to_string();
+    std::process::Command::new("/bin/kill")
+        .args(["-WINCH", &pid])
+        .status()?;
+    TRACE_FIRST_EVENT.store(true, Ordering::SeqCst);
+    println!("\nPROBE_BEFORE_POLL {pid}");
+    io::Write::flush(&mut io::stdout())?;
+    std::process::Command::new("/bin/kill")
+        .args(["-STOP", &pid])
+        .status()?;
+    Ok(())
+}
+
+#[cfg(all(test, target_os = "linux"))]
+fn trace_first_event_for_test(event: &Event) {
+    use std::sync::atomic::Ordering;
+    if !TRACE_FIRST_EVENT.swap(false, Ordering::SeqCst) {
+        return;
+    }
+    let kind = match event {
+        Event::Resize(..) => "resize",
+        Event::Key(key) if key.code == KeyCode::Enter => "enter",
+        Event::Key(_) => "key",
+        _ => "other",
+    };
+    println!("\nPROBE_FIRST_EVENT={kind}");
+    let _ = io::Write::flush(&mut io::stdout());
+}
+
 impl Default for State {
     fn default() -> Self {
         Self {
@@ -285,6 +483,8 @@ pub fn run(
     let mut clock = RedrawClock::new();
     let mut connected = true;
     let mut recent_activity = None;
+    #[cfg(target_os = "linux")]
+    let mut canonical_input = None;
     if matches!(screen, Screen::Plain(_)) {
         screen.transcript(&[state.status.clone(), state.activity.clone()], width)?;
     }
@@ -292,44 +492,49 @@ pub fn run(
         if let Some(signal) = guard.signal() {
             return Ok(Exit::Signal(signal));
         }
-        screen.reconcile_width(&guard, &mut width)?;
-        if input && event::poll(Duration::ZERO)? {
-            recent_activity = Some(Instant::now());
-            match event::read()? {
-                Event::Resize(columns, _) => {
-                    width = columns;
-                    if columns < 40 {
-                        screen.downgrade(&guard)?;
-                    }
+        if let Some(exit) =
+            reconcile_width_and_drain(&mut screen, &guard, &mut width, &mut state, &mut command)?
+        {
+            return Ok(exit);
+        }
+        #[cfg(all(test, target_os = "linux"))]
+        stop_before_event_poll_for_test()?;
+        #[cfg(target_os = "linux")]
+        if input && matches!(screen, Screen::Plain(_)) {
+            if canonical_input.is_none() {
+                canonical_input = Some(CanonicalInput::new()?);
+            }
+            for line in canonical_input.as_mut().unwrap().lines()? {
+                recent_activity = Some(Instant::now());
+                state.draft.push_str(&sanitize_user_string(&line));
+                if let Some(exit) = submit_draft(&mut state, &mut command)? {
+                    return Ok(exit);
                 }
-                Event::Paste(text) => state.draft.push_str(&sanitize_user_string(&text)),
-                Event::Key(key) if key.kind != KeyEventKind::Release => match key.code {
-                    KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        if state.draft.is_empty() {
-                            return Ok(Exit::Quit);
-                        }
-                        state.draft.pop();
-                    }
-                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        state.draft.clear();
-                        screen.transcript(&["Use \\quit or Ctrl-D to exit.".into()], width)?;
-                    }
-                    KeyCode::Enter => {
-                        let draft = std::mem::take(&mut state.draft);
-                        if matches!(draft.trim(), "\\quit" | "/quit") {
-                            return Ok(Exit::Quit);
-                        }
-                        command(&draft)?;
-                    }
-                    KeyCode::Backspace => {
-                        state.draft.pop();
-                    }
-                    KeyCode::Char(character) if !key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        state.draft.push(character);
-                    }
-                    _ => {}
-                },
-                _ => {}
+            }
+        }
+        #[cfg(target_os = "linux")]
+        let use_crossterm_input = matches!(screen, Screen::Inline(_));
+        #[cfg(not(target_os = "linux"))]
+        let use_crossterm_input = true;
+        if input && use_crossterm_input && event::poll(Duration::ZERO)? {
+            recent_activity = Some(Instant::now());
+            let was_inline = matches!(screen, Screen::Inline(_));
+            if let Some(exit) = handle_input_event(
+                event::read()?,
+                &mut screen,
+                &guard,
+                &mut width,
+                &mut state,
+                &mut command,
+            )? {
+                return Ok(exit);
+            }
+            if was_inline && matches!(screen, Screen::Plain(_)) {
+                if let Some(exit) =
+                    drain_queued_input(&mut screen, &guard, &mut width, &mut state, &mut command)?
+                {
+                    return Ok(exit);
+                }
             }
         }
         let now = Instant::now();
@@ -337,7 +542,15 @@ pub fn run(
             || recent_activity
                 .is_some_and(|last| now.duration_since(last) < Duration::from_secs(1));
         if clock.remaining(now, active).is_zero() {
-            screen.reconcile_width(&guard, &mut width)?;
+            if let Some(exit) = reconcile_width_and_drain(
+                &mut screen,
+                &guard,
+                &mut width,
+                &mut state,
+                &mut command,
+            )? {
+                return Ok(exit);
+            }
             screen.draw(&state)?;
             clock.drawn(Instant::now());
         }
@@ -539,6 +752,9 @@ mod tests {
                 receiver,
                 |command| {
                     match command {
+                        "arm" => {
+                            STOP_BEFORE_EVENT_POLL.store(true, std::sync::atomic::Ordering::SeqCst);
+                        }
                         "check" => {
                             let raw = ratatui::crossterm::terminal::is_raw_mode_enabled()?;
                             let changed = termios() != before;
@@ -559,6 +775,9 @@ mod tests {
                         "int" => signal_hook::low_level::raise(signal_hook::consts::SIGINT)?,
                         "term" => signal_hook::low_level::raise(signal_hook::consts::SIGTERM)?,
                         "hup" => signal_hook::low_level::raise(signal_hook::consts::SIGHUP)?,
+                        "" => sender
+                            .try_send(AppEvent::Transcript(vec!["COMMAND_EMPTY".into()]))
+                            .unwrap(),
                         other => sender
                             .try_send(AppEvent::Transcript(vec![format!("COMMAND {other}")]))
                             .unwrap(),
@@ -719,11 +938,7 @@ mod tests {
             .wait_for_text("draft", Duration::from_secs(10))
             .unwrap();
         session.resize(39, 24).unwrap();
-        // Resize delivery is asynchronous. Wait for raw-mode restoration before sending Enter,
-        // so this checks draft submission after fallback instead of racing the PTY resize signal.
-        session
-            .wait_for_output_bytes(b"\x1b[?2004l", Duration::from_secs(10))
-            .unwrap();
+        // Send Enter immediately after resize so the newline can be queued behind SIGWINCH.
         session.press_key(pty::Key::Enter).unwrap();
         session
             .wait_for_text("COMMAND draft", Duration::from_secs(10))
@@ -736,6 +951,170 @@ mod tests {
             )
             .unwrap();
         retain_screen("resize", &screen);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_queued_resize_and_enter_before_next_poll_submits() {
+        let mut session = spawn_probe("resize", true);
+        session.type_text("arm\r").unwrap();
+        let output = session
+            .wait_for_text("PROBE_BEFORE_POLL", Duration::from_secs(10))
+            .unwrap();
+        let pid = output
+            .split_whitespace()
+            .skip_while(|part| *part != "PROBE_BEFORE_POLL")
+            .nth(1)
+            .unwrap_or_else(|| panic!("stopped-child marker has no PID: {output:?}"))
+            .parse::<u32>()
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            let status = std::fs::read_to_string(format!("/proc/{pid}/status")).unwrap();
+            if status
+                .lines()
+                .any(|line| line.starts_with("State:") && line.contains("T (stopped)"))
+            {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "PTY app did not stop before poll"
+            );
+            std::thread::yield_now();
+        }
+
+        // The child queued SIGWINCH before stopping. Queue the matching size change and CR while
+        // it cannot poll either source, then resume into one simultaneous readiness batch.
+        session.resize(39, 24).unwrap();
+        session.press_key(pty::Key::Enter).unwrap();
+        assert!(std::process::Command::new("/bin/kill")
+            .args(["-CONT", &pid.to_string()])
+            .status()
+            .unwrap()
+            .success());
+
+        session
+            .wait_for_text("PROBE_FIRST_EVENT=resize", Duration::from_secs(10))
+            .unwrap();
+        session
+            .wait_for_text("COMMAND_EMPTY", Duration::from_secs(10))
+            .unwrap();
+        session.type_text("\\quit\r").unwrap();
+        session
+            .wait_for_text(
+                "PROBE_RESTORED raw=false termios=true",
+                Duration::from_secs(10),
+            )
+            .unwrap();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_redraw_downgrade_drains_buffered_key_burst_and_enter() {
+        let payload = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let mut session = spawn_probe("resize", true);
+        session.type_text(&format!("arm\r{payload}")).unwrap();
+        let output = session
+            .wait_for_text("PROBE_BEFORE_POLL", Duration::from_secs(10))
+            .unwrap();
+        let pid = output
+            .split_whitespace()
+            .skip_while(|part| *part != "PROBE_BEFORE_POLL")
+            .nth(1)
+            .unwrap_or_else(|| panic!("stopped-child marker has no PID: {output:?}"))
+            .parse::<u32>()
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            let status = std::fs::read_to_string(format!("/proc/{pid}/status")).unwrap();
+            if status
+                .lines()
+                .any(|line| line.starts_with("State:") && line.contains("T (stopped)"))
+            {
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "PTY app did not stop before poll"
+            );
+            std::thread::yield_now();
+        }
+
+        // Resize and Enter while the same child is stopped. Let its redraw deadline expire so
+        // reconcile_width downgrades from the redraw path while parsed characters remain queued.
+        session.resize(39, 24).unwrap();
+        session.press_key(pty::Key::Enter).unwrap();
+        std::thread::sleep(Duration::from_millis(250));
+        assert!(std::process::Command::new("/bin/kill")
+            .args(["-CONT", &pid.to_string()])
+            .status()
+            .unwrap()
+            .success());
+
+        session
+            .wait_for_text("PROBE_FIRST_EVENT=key", Duration::from_secs(10))
+            .unwrap();
+        session
+            .wait_for_text(&format!("COMMAND {payload}"), Duration::from_secs(10))
+            .unwrap();
+        session.type_text("\\quit\r").unwrap();
+        session
+            .wait_for_text(
+                "PROBE_RESTORED raw=false termios=true",
+                Duration::from_secs(10),
+            )
+            .unwrap();
+    }
+
+    #[test]
+    fn injected_resize_then_enter_queue_drains_after_plain_downgrade() {
+        use std::collections::VecDeque;
+
+        // The old Plain transition stopped reading the Crossterm queue here. Model that
+        // one-event turn as the red control: Resize downgrades, leaving Enter stranded.
+        let mut legacy_queue = VecDeque::from([
+            Event::Resize(39, 24),
+            Event::Key(event::KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE)),
+        ]);
+        let mut legacy_plain = false;
+        let legacy_commands: Vec<&str> = Vec::new();
+        if let Some(Event::Resize(columns, _)) = legacy_queue.pop_front() {
+            legacy_plain = columns < 40;
+        }
+        assert!(legacy_plain);
+        assert!(
+            legacy_commands.is_empty(),
+            "legacy Plain turn loses queued Enter"
+        );
+        assert_eq!(legacy_queue.len(), 1, "the queued Enter remains unhandled");
+
+        let mut queue = VecDeque::from([
+            Event::Resize(39, 24),
+            Event::Key(event::KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE)),
+        ]);
+        let mut plain = false;
+        let mut commands = Vec::new();
+
+        let exit = drain_event_queue(
+            || Ok(queue.pop_front()),
+            |event| {
+                match event {
+                    Event::Resize(columns, _) if columns < 40 => plain = true,
+                    Event::Key(key) if plain && key.code == KeyCode::Enter => {
+                        commands.push("submit");
+                    }
+                    _ => {}
+                }
+                Ok(None)
+            },
+        )
+        .unwrap();
+
+        assert!(plain, "Resize must trigger the Plain downgrade");
+        assert_eq!(commands, ["submit"], "queued Enter must survive downgrade");
+        assert!(queue.is_empty(), "the event queue must be fully drained");
+        assert!(exit.is_none());
     }
 
     #[cfg(target_os = "linux")]

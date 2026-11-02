@@ -221,6 +221,8 @@ class Audit:
 
 def load_fused():
     p = INPUT / "cpu_exact_fused.py"
+    if sha(p) != "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab":
+        raise RuntimeError("fused source hash mismatch")
     m = types.ModuleType("h147_fused")
     m.__file__ = str(p)
     sys.modules[m.__name__] = m

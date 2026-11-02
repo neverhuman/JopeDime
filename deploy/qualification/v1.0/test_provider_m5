@@ -132,6 +132,7 @@ class M5Tests(unittest.TestCase):
                         "fitness_changed_admission": 8,
                         "disconnected_heuristic_mismatches": 45,
                         "landmark_slots": [0, 1, 7, 9],
+                        "intervention_kind": "zero_mean_additive_landmark_delta",
                         "interventions": [-6.0, 0.0, 6.0],
                         "masks_and_dope_only_slots_preserved": True,
                     },
@@ -312,6 +313,7 @@ class M5Tests(unittest.TestCase):
             ("landmark_only_changed_admission", True),
             ("fitness_changed_admission", 51),
             ("landmark_slots", [0, 2]),
+            ("intervention_kind", "constant_token_overwrite"),
             ("masks_and_dope_only_slots_preserved", False),
         ]:
             self.edit_report = lambda r, field=field, value=value: r["details"][
