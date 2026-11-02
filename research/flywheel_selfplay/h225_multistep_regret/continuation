@@ -1,0 +1,609 @@
+#!/usr/bin/env python3
+"""One operational continuation; numerical functions are loaded unchanged from bd028747."""
+
+import argparse
+import datetime as dt
+import hashlib
+import json
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+import types
+
+import psutil
+
+REPO = Path("/home/ubuntu/JopeDime")
+PREFIX = "research/flywheel_selfplay/h225_multistep_regret/"
+SOURCE = "bd028747af73f0e72f66c9ddb64b1c486a382b13"
+DATA = Path("/home/ubuntu/jope-data/h225")
+ORIGINAL = DATA / "attempt-001"
+CONTROL = DATA / "continuation-001"
+EVIDENCE = Path("/home/ubuntu/jope_plan/evidence/H225/dsc01-t1800-continuation")
+OLD_EVIDENCE = Path("/home/ubuntu/jope_plan/evidence/H225/dsc01-t1405")
+DECIDE = dt.datetime.fromisoformat("2026-11-02T18:30:00+00:00").timestamp()
+START = dt.datetime.fromisoformat("2026-11-02T19:00:00+00:00").timestamp()
+END = dt.datetime.fromisoformat("2026-11-02T22:30:00+00:00").timestamp()
+DOPE = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+
+
+def sha(path):
+    with Path(path).open("rb") as f:
+        return hashlib.file_digest(f, "sha256").hexdigest()
+
+
+def load(path, name, source=SOURCE):
+    raw = subprocess.check_output(["git", "show", source + ":" + path], cwd=REPO)
+    module = types.ModuleType(name)
+    module.__file__ = str(REPO / path)
+    sys.modules[name] = module
+    exec(compile(raw, str(REPO / path), "exec"), module.__dict__)
+    return module
+
+
+def save(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x") as f:
+        json.dump(value, f, indent=2, allow_nan=False)
+        f.write("\n")
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def ledger(path):
+    counts = dict(
+        completed_lower_bound=0, unacknowledged_intents=0, truncated_tail=False
+    )
+    intents = 0
+    if path.exists():
+        for line in path.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                counts["truncated_tail"] = True
+                continue
+            intents += row.get("event") == "intent"
+            counts["completed_lower_bound"] += row.get("event") == "completed"
+    counts["unacknowledged_intents"] = max(0, intents - counts["completed_lower_bound"])
+    return counts
+
+
+def verify_fit(proof, rows, config, seed, label, original=ORIGINAL):
+    ids = sorted(r["context_sha256"] for r in rows)
+    expected = hashlib.sha256("\n".join(ids).encode()).hexdigest()
+    state = Path(proof["state_path"])
+    if (
+        proof["label"] != label
+        or proof["config"] != config
+        or proof["stream_seed"] != seed
+        or proof["steps"] != config["steps"]
+        or proof["fit_context_ids_sha256"] != expected
+        or proof["fit_families"] != sorted({r["family_id"] for r in rows})
+        or proof["dope_sha256_before"] != DOPE
+        or proof["dope_sha256_after"] != DOPE
+        or not proof["nonadapter_unchanged"]
+        or not proof["forward_changed"]
+        or proof["adapter_before_sha256"] == proof["adapter_after_sha256"]
+        or (original / "states").is_symlink()
+        or not state.resolve().is_relative_to(original.resolve() / "states")
+        or state.is_symlink()
+        or sha(state) != proof["state_sha256"]
+    ):
+        raise RuntimeError("completed fit proof/state/closure differs: " + label)
+    return dict(
+        label=label,
+        path=str(state),
+        sha256=proof["state_sha256"],
+        config=config,
+        fit_families=proof["fit_families"],
+    )
+
+
+def projection(now):
+    files = sorted(
+        (ORIGINAL / "progress").glob("*.json"), key=lambda p: p.stat().st_mtime
+    )
+    if not files:
+        return dict(completed_fits=0, projected_finish_utc=None, trigger=True)
+    last = json.loads(files[-1].read_text())
+    first = json.loads(files[-min(32, len(files))].read_text())
+    seconds = max(1, now - files[-min(32, len(files))].stat().st_mtime)
+    rate = (last["fits"] - first["fits"]) / seconds
+    finish = now + (360 - last["fits"]) / rate if rate > 0 else None
+    return dict(
+        completed_fits=last["fits"],
+        acknowledged_updates_at_last_fit=last["updates"],
+        projected_finish_utc=dt.datetime.fromtimestamp(
+            finish, dt.timezone.utc
+        ).isoformat()
+        if finish
+        else None,
+        trigger=last["fits"] < 360 and (finish is None or finish > START),
+        method="last32 completed-fit metadata including elapsed pause time; no outcomes",
+    )
+
+
+def worker(amendment):
+    handoff = EVIDENCE / "FINISHER-HANDOFF.json"
+    if (
+        time.time() < START
+        or not handoff.exists()
+        or json.loads(handoff.read_text())["amendment_source"] != amendment
+    ):
+        raise RuntimeError(
+            "continuation worker requires the post-19:00 stopped-owner handoff"
+        )
+    runner = load(PREFIX + "runner.py", "h225_cont_original_runner")
+    runner.END = END  # Only the operational wall deadline changes.
+    runner.check()
+    root = CONTROL / "attempt-001"
+    root.mkdir(exist_ok=False)
+    progress = dict(updates=0, fits=0)
+    reused = dict(fits=0, updates=0)
+    actual_new = 0
+    result = dict(
+        wave="H225",
+        source_commit=SOURCE,
+        amendment_source=amendment,
+        status="INCOMPLETE",
+        started_utc=dt.datetime.now(dt.timezone.utc).isoformat(),
+    )
+    try:
+        import numpy as np
+
+        pins = json.loads(runner.blob(SOURCE, PREFIX + "manifest.json"))
+        sci, engine, train, val, audit, checkpoint = runner.setup(
+            SOURCE, pins, root, progress
+        )
+        engine.max_updates = 8280
+        baseline = engine.baseline(val)
+        values = np.array(
+            [baseline[r["context_sha256"]]["utility"] for r in val], np.float64
+        )
+        expected = np.array(
+            json.loads(Path(pins["reference"]).read_text())["utility"]["per_context"],
+            np.float64,
+        )
+        if (
+            not np.array_equal(values.view(np.uint64), expected.view(np.uint64))
+            or float(values.mean()) != sci.BASELINE
+        ):
+            raise RuntimeError("continuation baseline parity failed")
+        smoke = json.loads((DATA / "smoke/metrics.json").read_text())
+        if (
+            smoke["status"] != "SMOKE_PASS"
+            or smoke["source_commit"] != SOURCE
+            or smoke["updates"] != 2
+        ):
+            raise RuntimeError("original exact-source smoke absent")
+        original_cost = ledger(ORIGINAL / "optimizer-events.jsonl")
+        fit = engine.fit_proposal
+
+        def cached_fit(rows, config, seed, label, **kwargs):
+            nonlocal actual_new
+            path = ORIGINAL / "proofs" / (label + ".json")
+            proof = None
+            if path.is_symlink():
+                raise RuntimeError("fit proof cannot be a symlink")
+            if path.exists():
+                try:
+                    proof = json.loads(path.read_text())
+                except json.JSONDecodeError:
+                    pass  # Interrupted proof is preserved, never trusted or reused.
+            if proof is not None:
+                state = verify_fit(proof, rows, config, seed, label)
+                save(
+                    root / "reused-proofs" / (label + ".json"),
+                    dict(
+                        original_proof=str(path),
+                        proof_sha256=sha(path),
+                        state=state,
+                        steps=proof["steps"],
+                    ),
+                )
+                progress["fits"] += 1
+                progress["updates"] += proof["steps"]
+                reused["fits"] += 1
+                reused["updates"] += proof["steps"]
+                print("REUSE", label, "logical fits", progress["fits"], flush=True)
+                return state
+            upper = (
+                2
+                + original_cost["completed_lower_bound"]
+                + original_cost["unacknowledged_intents"]
+                + actual_new
+                + config["steps"]
+            )
+            if upper > 8314:
+                raise RuntimeError(
+                    "physical optimizer cap including discarded original work"
+                )
+            state = fit(rows, config, seed, label, **kwargs)
+            actual_new += config["steps"]
+            return state
+
+        engine.fit_proposal = cached_fit
+        statistics = runner.run_experiment(
+            SOURCE, pins, root, engine, sci, train, val, values
+        )
+        result.update(
+            statistics,
+            reused=reused,
+            actual_new_completed_updates=actual_new,
+            original_optimizer_ledger=original_cost,
+            input_audit=audit.receipt(),
+            checkpoint_sha256_after=sha(checkpoint),
+            dope_sha256_expected=DOPE,
+        )
+    except BaseException as error:
+        result = dict(
+            wave="H225",
+            source_commit=SOURCE,
+            amendment_source=amendment,
+            status="INCOMPLETE",
+            error=str(error),
+            logical_progress=progress,
+            reused=reused,
+            actual_new_completed_updates_lower_bound=actual_new,
+            statistics=None,
+        )
+    result["finished_utc"] = dt.datetime.now(dt.timezone.utc).isoformat()
+    save(root / "metrics.json", result)
+    return 0 if result["status"] == "COMPLETE" else 1
+
+
+def process_alive(record):
+    try:
+        p = psutil.Process(record["pid"])
+        return (
+            p.create_time() == record["create_time"]
+            and p.status() != psutil.STATUS_ZOMBIE
+        )
+    except psutil.NoSuchProcess:
+        return False
+
+
+def handoff_ready(now, worker_alive, supervisor_alive):
+    return now >= START and not worker_alive and not supervisor_alive
+
+
+def finish(amendment, terminal):
+    """Reuse the reviewed metadata publisher with continuation-aware reconciliation."""
+    path = OLD_EVIDENCE / "finish_h225.py"
+    if sha(path) != "70a67dc2d00296fa7e27b111a0f9bab88d0c9f1274e235285b4fc18e1adc8b58":
+        raise RuntimeError("reviewed original finisher bytes changed")
+    raw = path.read_text().replace(
+        "research/h225-closeout-dsc01", "research/h225-closeout-continuation-dsc01"
+    )
+    raw = raw.replace("15 data-free tests", "data-free tests").replace(
+        "Fifteen data-free tests", "Data-free tests"
+    )
+    raw = raw.replace(
+        "19:00Z; actual terminal timestamps", "22:30Z; actual terminal timestamps"
+    )
+    raw = raw.replace("cap of8280 updates", "logical budget of8280 updates")
+    f = types.ModuleType("h225_cont_finisher")
+    f.__file__ = str(path)
+    exec(compile(raw, str(path), "exec"), f.__dict__)
+    f.EVIDENCE, f.END, f.CLOSE = EVIDENCE, END, END + 1800
+    metrics_path = CONTROL / "attempt-001/metrics.json"
+    try:
+        actual = json.loads(metrics_path.read_text()) if metrics_path.exists() else {}
+    except json.JSONDecodeError:
+        actual = dict(error="terminal metrics file incomplete; no statistics admitted")
+    complete = terminal["status"] == "COMPLETE" and actual.get("status") == "COMPLETE"
+    counts = dict(
+        original=ledger(ORIGINAL / "optimizer-events.jsonl"),
+        continuation=ledger(CONTROL / "attempt-001/optimizer-events.jsonl"),
+        smoke=ledger(DATA / "smoke/optimizer-events.jsonl"),
+    )
+    result = dict(
+        wave="H225",
+        source_commit=SOURCE,
+        amendment_source=amendment,
+        prereg_pr=1878,
+        status="COMPLETE" if complete else "INCOMPLETE",
+        verdict=actual.get("verdict") if complete else "INCOMPLETE",
+        plateau_verdict=actual.get("plateau_verdict") if complete else None,
+        optimizer_ledger=counts,
+        primary=None,
+        co_primary=None,
+        elo=None,
+        MSCR_minus_MSTOP1=None,
+        distinct_DL_Val_values=None,
+        protected_payload_reads=None,
+        finished_utc=dt.datetime.now(dt.timezone.utc).isoformat(),
+    )
+    if complete:
+        if (
+            actual["source_commit"] != SOURCE
+            or actual["fits"] != 360
+            or actual["updates"] != 8280
+        ):
+            raise RuntimeError("continuation complete inventory differs")
+        if (
+            sha(CONTROL / "attempt-001/selection-lock.json")
+            != actual["selection_lock_sha256"]
+        ):
+            raise RuntimeError("continuation selection lock changed")
+        proof_map = {}
+        for receipt in (CONTROL / "attempt-001/reused-proofs").glob("*.json"):
+            item = json.loads(receipt.read_text())
+            if sha(item["original_proof"]) != item["proof_sha256"]:
+                raise RuntimeError("reused proof changed")
+            proof_map[receipt.stem] = json.loads(
+                Path(item["original_proof"]).read_text()
+            )
+        for path2 in (CONTROL / "attempt-001/proofs").glob("*.json"):
+            if path2.stem in proof_map:
+                raise RuntimeError("fit counted twice")
+            proof_map[path2.stem] = json.loads(path2.read_text())
+        if len(proof_map) != 360 or sum(p["steps"] for p in proof_map.values()) != 8280:
+            raise RuntimeError("combined fit proofs incomplete")
+        for proof in proof_map.values():
+            if (
+                not Path(proof["state_path"]).resolve().is_relative_to(DATA)
+                or proof["dope_sha256_before"] != DOPE
+                or proof["dope_sha256_after"] != DOPE
+                or not proof["nonadapter_unchanged"]
+                or sha(proof["state_path"]) != proof["state_sha256"]
+            ):
+                raise RuntimeError("combined state/freeze identity differs")
+        physical_upper = sum(
+            c["completed_lower_bound"] + c["unacknowledged_intents"]
+            for c in counts.values()
+        )
+        if (
+            physical_upper > 8314
+            or counts["continuation"]["unacknowledged_intents"]
+            or counts["continuation"]["truncated_tail"]
+        ):
+            raise RuntimeError("physical update accounting differs")
+        if (
+            counts["continuation"]["completed_lower_bound"]
+            != actual["actual_new_completed_updates"]
+            or actual["reused"]["updates"] + actual["actual_new_completed_updates"]
+            != 8280
+            or actual["input_audit"]["refused"]
+        ):
+            raise RuntimeError("reuse/new-update or input audit mismatch")
+        result.update(
+            {
+                k: actual[k]
+                for k in (
+                    "primary",
+                    "co_primary",
+                    "elo",
+                    "MSCR_minus_MSTOP1",
+                    "distinct_DL_Val_values",
+                    "selection_lock_sha256",
+                    "reused",
+                    "actual_new_completed_updates",
+                )
+            }
+        )
+        result.update(
+            physical_updates_upper_bound_including_smoke=physical_upper,
+            protected_payload_reads=0,
+        )
+    else:
+        result.update(
+            reason=actual.get(
+                "error", terminal.get("error", "continuation incomplete")
+            ),
+            missing_statistics="No partial-cohort inference; missing observations remain null",
+        )
+    save(EVIDENCE / "TERMINAL-RECONCILIATION.json", result)
+    save(DATA / "continuation-terminal-summary.json", result)
+    operator = DATA / "operator"
+    operator.mkdir(exist_ok=True)
+    (operator / "continuation-amendment-source").write_bytes(
+        subprocess.check_output(
+            ["git", "show", amendment + ":" + PREFIX + "continuation"], cwd=REPO
+        )
+    )
+    custody = load(PREFIX + "custody.py", "h225_cont_custody")
+    custody.EVIDENCE = EVIDENCE
+    custody.REMOTE = "experiments/rd_breakthrough_20261102/H225/dsc01-t1800/"
+    receipt = custody.publish(SOURCE, "terminal")
+    f.publish_closeout(result, receipt)
+
+
+def controller(amendment):
+    import fcntl
+
+    subprocess.run(
+        ["git", "merge-base", "--is-ancestor", amendment, "origin/main"],
+        cwd=REPO,
+        check=True,
+    )
+    monitor = load(PREFIX + "monitor.py", "h225_cont_original_monitor")
+    original_supervisor = json.loads(
+        (OLD_EVIDENCE / "SUPERVISOR-LAUNCH.json").read_text()
+    )
+    original_worker = json.loads((DATA / "run-launch.json").read_text())
+    old_finisher = json.loads((OLD_EVIDENCE / "FINISHER-LAUNCH.json").read_text())
+    while time.time() < DECIDE:
+        time.sleep(min(1, DECIDE - time.time()))
+    decision = projection(time.time())
+    save(
+        EVIDENCE / "PROJECTION-1830.json",
+        dict(
+            at=dt.datetime.now(dt.timezone.utc).isoformat(),
+            amendment_source=amendment,
+            **decision,
+        ),
+    )
+    claim = Path("/home/ubuntu/jope_plan/ns/receipts/H225_claim.txt")
+    with open(str(claim) + ".lock", "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        with claim.open("a") as f:
+            f.write(
+                "["
+                + dt.datetime.now(dt.timezone.utc).isoformat()
+                + "] 18:30Z projection "
+                + json.dumps(decision, sort_keys=True)
+                + "; amendment="
+                + amendment
+                + "; one continuation armed only after original19:00Z stop; original worker/finisher untouched before then.\n"
+            )
+            f.flush()
+            os.fsync(f.fileno())
+    if not decision["trigger"]:
+        save(EVIDENCE / "CONTINUATION-NOT-NEEDED.json", decision)
+        return 0
+    while not handoff_ready(
+        time.time(), process_alive(original_worker), process_alive(original_supervisor)
+    ):
+        time.sleep(0.1 if time.time() >= START else min(1, START - time.time()))
+    original_terminal_path = DATA / "terminal-supervisor.json"
+    terminal_original = (
+        json.loads(original_terminal_path.read_text())
+        if original_terminal_path.exists()
+        else dict(status="INCOMPLETE", reason="original terminal receipt missing")
+    )
+    if terminal_original["status"] == "COMPLETE":
+        save(
+            EVIDENCE / "CONTINUATION-NOT-NEEDED.json",
+            dict(reason="original completed", decision=decision),
+        )
+        return 0
+    finished = terminal_original.get("finished_utc")
+    if finished and dt.datetime.fromisoformat(finished).timestamp() < START - 5:
+        save(
+            EVIDENCE / "CONTINUATION-NOT-ARMED.json",
+            dict(
+                reason="original failed before scheduled stop; not an authorized arbitrary retry",
+                terminal=terminal_original,
+            ),
+        )
+        return 0
+    # No signal to either original worker or supervisor; only the old metadata helper.
+    if process_alive(old_finisher):
+        if (
+            os.getsid(old_finisher["pid"]) != old_finisher["pid"]
+            or os.getpgid(old_finisher["pid"]) != old_finisher["pid"]
+        ):
+            raise RuntimeError("old finisher session identity differs")
+        os.killpg(old_finisher["pid"], signal.SIGSTOP)
+        os.killpg(old_finisher["pid"], signal.SIGKILL)
+    save(
+        EVIDENCE / "FINISHER-HANDOFF.json",
+        dict(
+            at=dt.datetime.now(dt.timezone.utc).isoformat(),
+            amendment_source=amendment,
+            original_worker_stopped=True,
+            original_supervisor_stopped=True,
+            previous_finisher=old_finisher,
+            new_controller_pid=os.getpid(),
+        ),
+    )
+    CONTROL.mkdir(exist_ok=False)
+    (CONTROL / "tmp").mkdir()
+    save(
+        CONTROL / "activation.json",
+        dict(
+            at=dt.datetime.now(dt.timezone.utc).isoformat(),
+            source_commit=SOURCE,
+            amendment_source=amendment,
+            compute_stop="2026-11-02T22:30:00Z",
+            closeout="2026-11-02T23:00:00Z",
+        ),
+    )
+    monitor.DATA, monitor.DEADLINE = CONTROL, END
+    old_save = monitor.save
+
+    def save_control(path, value, **kwargs):
+        value = dict(value, amendment_source=amendment)
+        for key, replacement in (
+            ("deadline", "2026-11-02T22:30:00Z"),
+            ("compute_stop", "2026-11-02T22:30:00Z"),
+            ("hard_closeout", "2026-11-02T23:00:00Z"),
+        ):
+            if key in value:
+                value[key] = replacement
+        return old_save(path, value, **kwargs)
+
+    monitor.save = save_control
+    bootstrap = (
+        "import subprocess,sys;src=sys.argv.pop(1);raw=subprocess.check_output(['git','show',src+':"
+        + PREFIX
+        + "continuation'],cwd='/home/ubuntu/JopeDime');exec(compile(raw,'H225-continuation','exec'),{'__name__':'__main__'})"
+    )
+    worker_command = [
+        sys.executable,
+        "-B",
+        "-c",
+        bootstrap,
+        amendment,
+        "--mode",
+        "worker",
+        "--amendment",
+        amendment,
+    ]
+    popen = subprocess.Popen
+
+    def launch(command, **kwargs):
+        command[:] = worker_command
+        return popen(command, **kwargs)
+
+    monitor.subprocess = types.SimpleNamespace(
+        Popen=launch, STDOUT=subprocess.STDOUT, TimeoutExpired=subprocess.TimeoutExpired
+    )
+    terminal = dict(
+        status="INCOMPLETE",
+        numerical_source=SOURCE,
+        amendment_source=amendment,
+        compute_stop="2026-11-02T22:30:00Z",
+        closeout="2026-11-02T23:00:00Z",
+    )
+    try:
+        while monitor.pause_reasons(monitor.observation(), time.time()):
+            time.sleep(1)
+        stage = monitor.run_phase(SOURCE, "run")
+        terminal.update(
+            status="COMPLETE" if stage["exit_code"] == 0 else "INCOMPLETE", stage=stage
+        )
+    except BaseException as error:
+        terminal["error"] = str(error).replace("19:00Z", "22:30Z")
+    terminal["finished_utc"] = dt.datetime.now(dt.timezone.utc).isoformat()
+    save(CONTROL / "terminal-supervisor.json", terminal)
+    finish(amendment, terminal)
+    return 0
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", choices=("controller", "worker"), required=True)
+    ap.add_argument("--amendment", required=True)
+    args = ap.parse_args()
+    if os.uname().nodename.split(".")[0] != "xbabe2":
+        raise RuntimeError("xbabe2 only")
+    os.nice(max(0, 19 - os.getpriority(os.PRIO_PROCESS, 0)))
+    os.sched_setaffinity(0, sorted(os.sched_getaffinity(0))[:4])
+    if args.mode == "worker":
+        return worker(args.amendment)
+    try:
+        return controller(args.amendment)
+    except BaseException as error:
+        save(
+            EVIDENCE / "CONTROLLER-BLOCKER.json",
+            dict(
+                at=dt.datetime.now(dt.timezone.utc).isoformat(),
+                error=str(error),
+                amendment_source=args.amendment,
+                scientific_retry=False,
+            ),
+        )
+        if (EVIDENCE / "FINISHER-HANDOFF.json").exists() and not (
+            EVIDENCE / "TERMINAL-RECONCILIATION.json"
+        ).exists():
+            finish(args.amendment, dict(status="INCOMPLETE", error=str(error)))
+        raise
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

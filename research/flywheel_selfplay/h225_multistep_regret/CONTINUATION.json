@@ -1,0 +1,40 @@
+{
+  "schema": "jope.h225.continuation/v1",
+  "authority": "/home/ubuntu/nudges/hw_t1800_dsc01_h225_trigger.md",
+  "numerical_source": "bd028747af73f0e72f66c9ddb64b1c486a382b13",
+  "continuations_max": 1,
+  "decision_utc": "2026-11-02T18:30:00Z",
+  "not_before_utc": "2026-11-02T19:00:00Z",
+  "compute_stop": "2026-11-02T22:30:00Z",
+  "closeout": "2026-11-02T23:00:00Z",
+  "original_attempt_unchanged": true,
+  "reuse": "Only complete fit proofs with matching configuration, stream, FIT identities, frozen DOPE and state SHA-256. Preserve original files; restart an unfinished unverified fit from r882 with its identical stream, charging all discarded work.",
+  "logical_fits": 360,
+  "logical_updates": 8280,
+  "physical_updates_upper_cap_including_smoke_and_one_interrupted_fit": 8314,
+  "candidate_outcomes_read_before_completion": false,
+  "unchanged": [
+    "numerical code",
+    "seeds",
+    "folds",
+    "eight-proposal grid",
+    "temperature",
+    "selection",
+    "readout",
+    "four-core affinity",
+    "nice19",
+    "RSS<4GiB",
+    "RAM>=20GiB",
+    "disk>=300GB",
+    "load5>60 pauses"
+  ],
+  "finisher_handoff": "After the original worker and supervisor stop, terminate only the identity-verified old metadata finisher and transfer closeout ownership. No earlier signal or edit to either original process.",
+  "numerical_source_sha256": {
+    "science.py": "15fde3b2ce18118f12e4f9813dc565f0000c03c0cfb839682a197b8f715a0f8d",
+    "backend.py": "7c751e2057a443a9b531ebd27771f26c35e227cac1d21f3805eb5830ce20dadd",
+    "runner.py": "a5642759d04fb476524bbfc9d44afbd6defadcd85964ea495cc7b1a03eaa2735",
+    "monitor.py": "11e13723847533ef7d5ab7824e112d9654a9fea63fe090e1e71e47bc91fcbf34",
+    "manifest.json": "401946b2238dcb75e43cd92a52dad1cc49a1380e53cd376a6a92efe6182bb1ef",
+    "fold_manifest.json": "54dbdf0f07e91e54854671a87463148f91831c33abc8bd9e06f2b3e2752204a6"
+  }
+}
