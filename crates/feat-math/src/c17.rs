@@ -31,7 +31,7 @@ pub fn emit(genome: &GenomeIr, options: &EmitOptions) -> Result<Emitted> {
     let mut files: BTreeMap<String, String> = BTreeMap::from([
         (
             "c17/model.h".into(),
-            include_str!("../../contracts/c17_model.h.template").into(),
+            include_str!("../contracts/c17_model.h.template").into(),
         ),
         (
             "c17/model_ffi.rs".into(),
