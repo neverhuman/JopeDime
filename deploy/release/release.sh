@@ -1609,14 +1609,16 @@ EOF
       cat <<EOF
 The annotated tag $tag exists LOCALLY ONLY and was NOT pushed. Nothing was published.
   Inspect:  git show --no-patch $tag
-  Retry:    git tag -d $tag      (safe, because it was never pushed), then re-run with --publish.
+  Preserve the local-only tag; do not delete or move it. Use the next unused patch
+  version for a fresh release run, then re-run with --publish.
 EOF
       ;;
     tag-push)
       cat <<EOF
 The push of $tag failed. It may or may not have reached origin. Check before doing anything else:
   git ls-remote $REPO_URL refs/tags/$tag 'refs/tags/$tag^{}'
-If it is ABSENT on origin, run: git tag -d $tag. Then re-run with --publish.
+If it is ABSENT on origin, preserve the local-only tag; do not delete or move it.
+Use the next unused patch version for a fresh release run, then re-run with --publish.
 If it is PRESENT (object $tag_object, commit $sha), create the release from this run's dist:
 $next_steps
 EOF
