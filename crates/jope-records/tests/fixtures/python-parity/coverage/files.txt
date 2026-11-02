@@ -1021,6 +1021,7 @@ crates/jope-engine/src/campaign.rs
 crates/jope-engine/src/champions.rs
 crates/jope-engine/src/champions/tests.rs
 crates/jope-engine/src/checkpoint_recovery.rs
+crates/jope-engine/src/checkpoint_recovery/tests.rs
 crates/jope-engine/src/components.rs
 crates/jope-engine/src/contexts.rs
 crates/jope-engine/src/continuation_corpus.rs
