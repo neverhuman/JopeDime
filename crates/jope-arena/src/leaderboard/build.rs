@@ -1,4 +1,4 @@
-use anyhow::{bail, ensure, Result};
+use anyhow::{bail, ensure, Context, Result};
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::elo::{fit_elo, matches_from_scores_directed, Direction, TIE_RELATIVE_TOLERANCE};
