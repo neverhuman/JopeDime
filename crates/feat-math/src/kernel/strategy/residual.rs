@@ -50,15 +50,18 @@ pub struct ResidualContext {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum EditKind {
+pub enum ResidualEditKind {
     AddResidualFeature,
     ScaleFeatureByResidual,
 }
 
+/// Backwards-compatible name for residual proposal edit kinds.
+pub type EditKind = ResidualEditKind;
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ResidualEdit {
     pub feature_index: usize,
-    pub kind: EditKind,
+    pub kind: ResidualEditKind,
     pub correlation: f64,
     pub heteroscedasticity: f64,
 }
@@ -156,9 +159,9 @@ pub fn propose(
         let residual_correlation = correlation(&values, &residuals)?;
         let heteroscedasticity = correlation(&values, &squared)?.abs();
         let kind = if heteroscedasticity > residual_correlation.abs() {
-            EditKind::ScaleFeatureByResidual
+            ResidualEditKind::ScaleFeatureByResidual
         } else {
-            EditKind::AddResidualFeature
+            ResidualEditKind::AddResidualFeature
         };
         edits.push(ResidualEdit {
             feature_index,
