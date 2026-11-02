@@ -1272,6 +1272,8 @@
   "crates/jope-campaigns/src/bin/jope_selfplay_mcp.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_promotion.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_propose_driver.rs": true,
+  "crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/cycle.rs": true,
+  "crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/tests.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_queue.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_shadow.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_status.rs": true,
