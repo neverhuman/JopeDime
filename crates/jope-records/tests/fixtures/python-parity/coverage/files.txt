@@ -1158,6 +1158,14 @@ crates/jope-engine/src/components.rs
 crates/jope-engine/src/contexts.rs
 crates/jope-engine/src/continuation_corpus.rs
 crates/jope-engine/src/controller.rs
+crates/jope-engine/src/controller/campaign_deadline_tests.rs
+crates/jope-engine/src/controller/lifetime_tests.rs
+crates/jope-engine/src/controller/probe.rs
+crates/jope-engine/src/controller/proposal.rs
+crates/jope-engine/src/controller/proposal_protocol_tests.rs
+crates/jope-engine/src/controller/training.rs
+crates/jope-engine/src/controller/training_rank.rs
+crates/jope-engine/src/controller/training_window_tests.rs
 crates/jope-engine/src/corpus.rs
 crates/jope-engine/src/corpus_projection.rs
 crates/jope-engine/src/corpus_publication.rs
