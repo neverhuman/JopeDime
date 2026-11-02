@@ -883,15 +883,11 @@ fn cgroup_allowed_cpus(
     }
 }
 
-fn native_unsigned_to_u64<T: Into<u64>>(value: T) -> u64 {
-    value.into()
-}
-
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 mod platform {
-    use super::native_unsigned_to_u64;
-    use std::{ffi::CString, fs, os::unix::ffi::OsStrExt, path::Path};
+    use nix::{sched::sched_getaffinity, sys::statvfs::statvfs, unistd::Pid};
+    use std::{fs, path::Path};
 
     pub(super) fn logical_cpus() -> Result<f64, String> {
         // SAFETY: sysconf has no pointer arguments or memory-safety preconditions.
@@ -904,16 +900,8 @@ mod platform {
     }
 
     pub(super) fn allowed_cpus() -> Result<f64, String> {
-        let mut set = std::mem::MaybeUninit::<libc::cpu_set_t>::uninit();
-        let size = std::mem::size_of::<libc::cpu_set_t>();
-        // SAFETY: the pointer addresses `size` writable bytes and pid 0 means this thread.
-        if unsafe { libc::sched_getaffinity(0, size, set.as_mut_ptr()) } != 0 {
-            return Err("affinity_unavailable".to_owned());
-        }
-        // SAFETY: success means sched_getaffinity filled the requested cpu_set_t buffer.
-        let set = unsafe { set.assume_init() };
-        // SAFETY: `set` is now fully initialized by sched_getaffinity.
-        let affinity = unsafe { libc::CPU_COUNT(&set) } as f64;
+        let set = sched_getaffinity(Pid::from_raw(0)).map_err(|_| "affinity_unavailable")?;
+        let affinity = set.count() as f64;
         let membership = fs::read_to_string("/proc/self/cgroup").unwrap_or_default();
         super::cgroup_allowed_cpus(&membership, affinity, |path| {
             fs::read_to_string(Path::new("/sys/fs/cgroup").join(path).join("cpu.max")).ok()
@@ -931,24 +919,16 @@ mod platform {
     }
 
     pub(super) fn disk_free(path: &Path) -> Result<u64, String> {
-        let path = CString::new(path.as_os_str().as_bytes()).map_err(|_| "invalid_store_path")?;
-        let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
-        // SAFETY: `path` is NUL-terminated and `stats` points to writable output storage.
-        if unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } != 0 {
-            return Err("statvfs_failed".to_owned());
-        }
-        // SAFETY: POSIX statvfs initializes the full output structure on success.
-        let stats = unsafe { stats.assume_init() };
-        Ok(native_unsigned_to_u64(stats.f_bavail)
-            .saturating_mul(native_unsigned_to_u64(stats.f_frsize)))
+        let stats = statvfs(path).map_err(|_| "statvfs_failed")?;
+        Ok((stats.blocks_available() as u64).saturating_mul(stats.fragment_size() as u64))
     }
 }
 
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 mod platform {
-    use super::native_unsigned_to_u64;
-    use std::{ffi::CString, os::unix::ffi::OsStrExt, path::Path};
+    use nix::sys::statvfs::statvfs;
+    use std::path::Path;
 
     // libc exposes host_statistics64 and mach_host_self, but not the matching
     // mach_port_deallocate declaration. Keep this narrow FFI next to the Mach sensor.
@@ -978,16 +958,15 @@ mod platform {
         if host == 0 {
             return Err("mach_host_unavailable".to_owned());
         }
-        let mut stats = std::mem::MaybeUninit::<libc::vm_statistics64>::uninit();
+        // `host_statistics64` writes a counted array of integer_t words. Keep
+        // that ABI buffer as a fully initialized typed array; never construct a
+        // partially written `vm_statistics64` value.
+        let mut stats = [0 as libc::integer_t; libc::HOST_VM_INFO64_COUNT as usize];
         let mut count = libc::HOST_VM_INFO64_COUNT;
-        // SAFETY: stats has room for HOST_VM_INFO64_COUNT integer words; count is writable.
+        // SAFETY: `stats` is aligned writable storage for HOST_VM_INFO64_COUNT
+        // integer_t words as required by the Mach API; `count` is writable.
         let status = unsafe {
-            libc::host_statistics64(
-                host,
-                libc::HOST_VM_INFO64,
-                stats.as_mut_ptr().cast(),
-                &mut count,
-            )
+            libc::host_statistics64(host, libc::HOST_VM_INFO64, stats.as_mut_ptr(), &mut count)
         };
         // SAFETY: release the send right obtained by mach_host_self, in our own task.
         let released = unsafe { mach_port_deallocate(mach_task_self(), host) };
@@ -1004,11 +983,20 @@ mod platform {
         if count < required_count {
             return Err("host_statistics_truncated".to_owned());
         }
-        // SAFETY: a successful call returned at least the word count covering both fields;
-        // read only those initialized integer fields instead of assuming the whole struct.
-        let free_count = unsafe { std::ptr::addr_of!((*stats.as_ptr()).free_count).read() };
-        // SAFETY: same count check above covers inactive_count and the preceding fields.
-        let inactive_count = unsafe { std::ptr::addr_of!((*stats.as_ptr()).inactive_count).read() };
+        let word_at = |field_offset: usize| -> Result<libc::natural_t, String> {
+            if std::mem::size_of::<libc::natural_t>() != std::mem::size_of::<libc::integer_t>()
+                || field_offset % std::mem::size_of::<libc::integer_t>() != 0
+            {
+                return Err("host_statistics_layout_unavailable".to_owned());
+            }
+            let index = field_offset / std::mem::size_of::<libc::integer_t>();
+            let word = stats
+                .get(index)
+                .ok_or_else(|| "host_statistics_truncated".to_owned())?;
+            Ok(libc::natural_t::from_ne_bytes(word.to_ne_bytes()))
+        };
+        let free_count = word_at(std::mem::offset_of!(libc::vm_statistics64, free_count))?;
+        let inactive_count = word_at(std::mem::offset_of!(libc::vm_statistics64, inactive_count))?;
         // XNU mach/vm_statistics.h documents speculative_count as already included
         // in free_count. Adding it again would overstate admission headroom.
         let pages = u64::from(free_count)
@@ -1025,16 +1013,8 @@ mod platform {
     }
 
     pub(super) fn disk_free(path: &Path) -> Result<u64, String> {
-        let path = CString::new(path.as_os_str().as_bytes()).map_err(|_| "invalid_store_path")?;
-        let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
-        // SAFETY: path is NUL-terminated; stats points to writable output storage.
-        if unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } != 0 {
-            return Err("statvfs_failed".to_owned());
-        }
-        // SAFETY: POSIX statvfs initializes the full output structure on success.
-        let stats = unsafe { stats.assume_init() };
-        Ok(native_unsigned_to_u64(stats.f_bavail)
-            .saturating_mul(native_unsigned_to_u64(stats.f_frsize)))
+        let stats = statvfs(path).map_err(|_| "statvfs_failed")?;
+        Ok((stats.blocks_available() as u64).saturating_mul(stats.fragment_size() as u64))
     }
 }
 
