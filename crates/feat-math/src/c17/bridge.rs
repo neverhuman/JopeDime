@@ -50,9 +50,11 @@ unsafe fn rows_from(ptr: *const f64, rows: usize, cols: usize) -> Vec<Vec<f64>> 
 
 /// Copy a checked C-owned float buffer without taking ownership of its allocation.
 unsafe fn values_from(ptr: *const f64, len: usize) -> Vec<f64> {
-    // SAFETY: callers validate `len`, non-nullness, alignment and checked
-    // dimensions; the C contract guarantees one live allocation readable for
-    // `len` initialized f64 values. This shared borrow is copied, not owned.
+    // SAFETY: The C ABI requires a live, readable input of `len` initialized
+    // doubles; callers' `buffer` check verifies non-nullness, alignment, and
+    // the slice-size bound. This is a borrow, not an ownership conversion:
+    // `to_vec` allocates a Rust copy; the caller keeps the original provenance
+    // and allocator responsibility, and this code never frees that allocation.
     unsafe { std::slice::from_raw_parts(ptr, len) }.to_vec()
 }
 #[no_mangle]
@@ -132,10 +134,11 @@ pub unsafe extern "C" fn jope_model_predict(
         if rows == 0 {
             return Ok(());
         }
-        // SAFETY: `shape` checked the product, `buffer` checked alignment and
-        // non-nullness, and the caller's C contract guarantees that `x` retains
-        // provenance from one live, contiguous, readable C allocation. The
-        // helper only borrows/copies it; allocation ownership stays with C.
+        // SAFETY: The zero-row case returned above; `shape` proves nonzero
+        // columns and checked `rows * cols == x_len`, while `buffer` validates
+        // the slice-size bound, non-nullness, and alignment. The C caller keeps
+        // `x` initialized and live for this call. `rows_from` only borrows and
+        // copies; the caller retains the original pointer and allocator ownership.
         let x = unsafe { rows_from(x, rows, cols) };
         let predictions = model.predict(&x);
         if predictions.len() != rows {
