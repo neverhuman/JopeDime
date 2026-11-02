@@ -933,3 +933,119 @@ def test_ns20_empty_history_accepts_present_zero_baselines():
             "overall_elo_trajectory",
         ]
     )
+
+
+@pytest.mark.parametrize(
+    ("binary", "labels"),
+    [
+        (False, [-1e308, 1e308]),
+        (False, [1e308, 1e308]),
+        (False, [-1e155, 1e155]),
+        (True, [-1e308, 1e308]),
+    ],
+)
+def test_ns23_target_stat_overflow_is_rejected_before_compile(monkeypatch, binary, labels):
+    from types import SimpleNamespace
+
+    def refuse_compile():
+        pytest.fail("nonfinite target statistics reached compilation")
+
+    monkeypatch.setitem(
+        compile_and_eval_rust_fitness.__globals__,
+        "time",
+        SimpleNamespace(perf_counter=refuse_compile),
+    )
+    with np.errstate(over="ignore", invalid="ignore"):
+        with pytest.raises(ValueError, match="finite"):
+            compile_and_eval_rust_fitness(
+                "not compiled", np.zeros((2, 1)), np.array(labels), is_binary=binary
+            )
+
+
+def _ns23_mock_fitness(monkeypatch, tmp_path, labels, predictions, binary):
+    import ctypes
+    import tempfile
+    from types import SimpleNamespace
+
+    calls = []
+
+    class Batch:
+        def __call__(self, _x, rows, _cols, output):
+            assert rows == len(predictions)
+            calls.append("mock-evaluate")
+            for index, value in enumerate(predictions):
+                output[index] = value
+
+    def compile_mock(*_args, **_kwargs):
+        calls.append("mock-compile")
+
+    def library_mock(_path):
+        calls.append("mock-load")
+        return SimpleNamespace(predict_batch_f64=Batch())
+
+    namespace = compile_and_eval_rust_fitness.__globals__
+    monkeypatch.setitem(namespace, "subprocess", SimpleNamespace(run=compile_mock))
+    monkeypatch.setitem(
+        namespace,
+        "ctypes",
+        SimpleNamespace(
+            CDLL=library_mock,
+            POINTER=ctypes.POINTER,
+            c_double=ctypes.c_double,
+            c_size_t=ctypes.c_size_t,
+        ),
+    )
+    monkeypatch.setitem(
+        namespace,
+        "tempfile",
+        SimpleNamespace(
+            TemporaryDirectory=lambda **kwargs: tempfile.TemporaryDirectory(dir=tmp_path, **kwargs)
+        ),
+    )
+    try:
+        with np.errstate(over="ignore", invalid="ignore"):
+            return compile_and_eval_rust_fitness(
+                "mock only; never compile or load",
+                np.zeros((len(labels), 1)),
+                np.array(labels),
+                is_binary=binary,
+            )
+    finally:
+        assert calls == ["mock-compile", "mock-load", "mock-evaluate"]
+
+
+@pytest.mark.parametrize(
+    ("binary", "labels", "predictions"),
+    [
+        (False, [0.0, 1.0], [-1e308, 1e308]),
+        (False, [0.0, 1e-5], [-5e153, 5e153]),
+        (True, [0.0, 1.0], [-1e308, 1e308]),
+    ],
+)
+def test_ns23_finite_predictions_cannot_admit_nonfinite_fitness(
+    monkeypatch, tmp_path, binary, labels, predictions
+):
+    with pytest.raises(ValueError, match="finite"):
+        _ns23_mock_fitness(monkeypatch, tmp_path, labels, predictions, binary)
+
+
+@pytest.mark.parametrize(
+    ("binary", "labels", "predictions", "fitness", "auc"),
+    [
+        (False, [0.0, 1.0], [0.0, 1.0], 1.0, None),
+        (False, [0.0, 2.0, 4.0], [1.0, 2.0, 3.0], 0.75, None),
+        (False, [-1e150, 1e150], [-5e149, 5e149], 0.75, None),
+        (True, [0.0, 0.0, 1.0, 1.0], [0.5, 0.5, 0.5, 0.5], 0.0, 0.5),
+        (True, [0.0, 1.0], [0.0, 1.0], 1.0, 1.0),
+        (True, [1.0, 0.0], [1.0, 0.0], 1.0, 1.0),
+        (True, [-2.0, 3.0], [0.0, 1.0], 1.0, 1.0),
+    ],
+)
+def test_ns23_finite_fitness_and_tied_auc_are_preserved(
+    monkeypatch, tmp_path, binary, labels, predictions, fitness, auc
+):
+    result = _ns23_mock_fitness(monkeypatch, tmp_path, labels, predictions, binary)
+    assert result["fitness_r2"] == fitness
+    if binary:
+        assert result["brier_r2"] == fitness
+        assert result["roc_auc"] == auc

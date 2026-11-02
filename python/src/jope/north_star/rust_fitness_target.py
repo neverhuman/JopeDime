@@ -197,10 +197,12 @@ def compile_and_eval_rust_fitness(
 
     if not is_binary:
         sst_raw = float(np.sum((y_c - np.mean(y_c)) ** 2))
+        _require_finite_scalar("regression holdout SST", sst_raw)
         if sst_raw <= 1e-12:
             raise ValueError("Degenerate constant regression holdout target: SST <= 1e-12")
     else:
         y_min, y_max = float(np.min(y_c)), float(np.max(y_c))
+        _require_finite_scalar("binary holdout label range", y_max - y_min)
         if (y_max - y_min) <= 1e-5:
             raise ValueError("Degenerate single-class binary holdout target")
         near_endpoints = (np.abs(y_c - y_min) <= 1e-5) | (np.abs(y_c - y_max) <= 1e-5)
@@ -261,7 +263,7 @@ def compile_and_eval_rust_fitness(
     if not is_binary:
         sse = float(np.sum((y_c - preds) ** 2))
         sst = float(max(sst_raw, 1e-12))
-        r2 = 1.0 - sse / sst
+        r2 = _require_finite_scalar("Rust regression fitness", 1.0 - sse / sst)
         return {
             "task_type": "regression",
             "fitness_r2": r2,
@@ -274,7 +276,7 @@ def compile_and_eval_rust_fitness(
         y_bin = (y_c - y_min) / max(y_max - y_min, 1e-6)
         p1 = float(np.clip(np.mean(y_bin), 1e-4, 1.0 - 1e-4))
         brier = float(np.mean((y_bin - preds) ** 2))
-        brier_r2 = 1.0 - brier / (p1 * (1.0 - p1))
+        brier_r2 = _require_finite_scalar("Rust binary fitness", 1.0 - brier / (p1 * (1.0 - p1)))
         order = np.argsort(preds, kind="mergesort")
         p_s = preds[order]
         y_s = y_bin[order]
