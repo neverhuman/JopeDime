@@ -6,13 +6,13 @@
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "316c26afb04bb94b53147b7b2bf309f2148a09b465dc55d501ef0008e49dd7a2",
-      "after": "6b436ce9d14e93de4bd1001c5bec0477456953b0512fa5e563b63608be7a1778"
+      "before": "c0e9775a3538e93c069a9041cd71c77cdfb47c182396c803f26f8f12795b9bac",
+      "after": "ecc7c34fe8209f20c7cfbaf2e6de017b550d5fbdc39a2c401781432d6b13d717"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "9de2dce45cc7852aa86d5e1eb0b1e313a6aed340942e17b503b22780add11e5c",
-      "after": "75365794b99d40f3fb62ba152a0c62709b5bbd827029a1ebe09e78d9f8ae575e"
+      "before": "7bdd2c734a36fb9f184fb292cdbaf42285f959fc8cdc6cfddbab6f149f410b2d",
+      "after": "6484a39bff8d69b6747800ecba9b8c2c9978a0583523e643f503917253ebca36"
     }
   ]
 }
