@@ -159,6 +159,12 @@ class PinnedR882Factory:
         self.assets = {k: ObjectRef(**v) for k, v in self.binding["parameter_assets"].items()}
         self.receipt = None
 
+    @contextlib.contextmanager
+    def runtime(self):
+        """Keep original lazy imports pinned throughout model execution."""
+        with _FACTORY_LOCK, pinned_original_modules(self.repo, self.source_pins):
+            yield
+
     def construct(self):
         if os.environ.get("CUDA_VISIBLE_DEVICES") != "":
             raise RuntimeError("CPU model qualification requires CUDA hidden")
@@ -454,7 +460,7 @@ def qualify_historical_native91(factory, manifest, *, manifest_sha256, persist):
             "mm_tokens_10x32": torch.as_tensor(token, dtype=torch.float32)[None],
             "mm_mask_10": torch.as_tensor(mask, dtype=torch.bool)[None],
         }
-        with torch.no_grad():
+        with factory.runtime(), torch.no_grad():
             actual = fused.adapter_10tok.predict_costs(**kwargs)["total_cost"][0].float().numpy().copy()
         choice = int(np.argmin(actual))
         pid = pool["program_sha256"][choice]

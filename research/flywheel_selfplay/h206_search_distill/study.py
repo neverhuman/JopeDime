@@ -860,48 +860,51 @@ def worker(task_path, expected_sha):
             store=store,
             cache=ModelCache(task["admission"]["model_cache"], repo),
         )
-        with budget.measure("actual_model_setup_and_device_copy"):
-            learner = factory.learner_for_phase(permit, seed=task["seed"], run_id=task["admission"]["run_id"])
-        store.put(prefix + "/model-setup.json", canonical(factory.receipt))
-        previous = None
-        if phase == "train":
-            previous = json.loads(ObjectRef(**task["teachers"]).read(store))["state"]
-        elif task["round"] > 1 or phase == "score":
-            previous = json.loads(ObjectRef(**task["prior_round"]).read(store))
-        if previous is not None:
-            with budget.measure("checkpoint_resume"):
-                restore_verified_state(
-                    learner,
-                    ObjectRef(**previous["checkpoint"]),
-                    store,
-                    expected_state_sha256=previous["state_sha256"],
+        with factory.runtime():
+            with budget.measure("actual_model_setup_and_device_copy"):
+                learner = factory.learner_for_phase(
+                    permit, seed=task["seed"], run_id=task["admission"]["run_id"]
                 )
-        if phase == "propose":
-            ref = runtime.propose(learner, inputs.acquire("FIT", learner.state_hash()), prefix)
-        elif phase == "train":
-            teacher_doc = json.loads(ObjectRef(**task["teachers"]).read(store))
-            if teacher_doc["actor"] != learner.state_hash() or teacher_doc["k"] != task["k"]:
-                raise ValueError("training teacher/actor/arm mismatch")
-            rows = [
-                load_context(Context.from_dict(r["context"]), inputs.scope, store, role="FIT")
-                for r in teacher_doc["rows"]
-            ]
-            ref = runtime.train(
-                learner,
-                rows,
-                [ObjectRef(**r["teacher"]) for r in teacher_doc["rows"]],
-                prefix,
-                round_index=task["round"],
-            )
-        else:
-            b_lock = ObjectRef(**task["b_lock"]) if task.get("b_lock") else None
-            ref = runtime.score(
-                learner,
-                inputs.acquire(task["role"], learner.state_hash()),
-                prefix,
-                role=task["role"],
-                b_lock=b_lock,
-            )
+            store.put(prefix + "/model-setup.json", canonical(factory.receipt))
+            previous = None
+            if phase == "train":
+                previous = json.loads(ObjectRef(**task["teachers"]).read(store))["state"]
+            elif task["round"] > 1 or phase == "score":
+                previous = json.loads(ObjectRef(**task["prior_round"]).read(store))
+            if previous is not None:
+                with budget.measure("checkpoint_resume"):
+                    restore_verified_state(
+                        learner,
+                        ObjectRef(**previous["checkpoint"]),
+                        store,
+                        expected_state_sha256=previous["state_sha256"],
+                    )
+            if phase == "propose":
+                ref = runtime.propose(learner, inputs.acquire("FIT", learner.state_hash()), prefix)
+            elif phase == "train":
+                teacher_doc = json.loads(ObjectRef(**task["teachers"]).read(store))
+                if teacher_doc["actor"] != learner.state_hash() or teacher_doc["k"] != task["k"]:
+                    raise ValueError("training teacher/actor/arm mismatch")
+                rows = [
+                    load_context(Context.from_dict(r["context"]), inputs.scope, store, role="FIT")
+                    for r in teacher_doc["rows"]
+                ]
+                ref = runtime.train(
+                    learner,
+                    rows,
+                    [ObjectRef(**r["teacher"]) for r in teacher_doc["rows"]],
+                    prefix,
+                    round_index=task["round"],
+                )
+            else:
+                b_lock = ObjectRef(**task["b_lock"]) if task.get("b_lock") else None
+                ref = runtime.score(
+                    learner,
+                    inputs.acquire(task["role"], learner.state_hash()),
+                    prefix,
+                    role=task["role"],
+                    b_lock=b_lock,
+                )
     atomic_record(Path(task_path).parent / "result.json", {"result": dataclasses.asdict(ref)})
 
 

@@ -1414,3 +1414,38 @@ def test_factory_private_source_closure_replaces_ambient_optional_import(monkeyp
             sha(path.read_bytes()) == manifest["assets"]["/home/ubuntu/JopeDimeMicro/python/rank_prepare.py"]
         )
     assert sys.modules["rank_prepare"] is ambient and sys.path == before_path
+
+
+def test_factory_runtime_keeps_original_lazy_import_alive_and_restores_ambient(monkeypatch):
+    import sys
+    import types
+
+    from research.flywheel_selfplay.h206_search_distill.model import PinnedR882Factory
+
+    repo = HERE.parents[2]
+    manifest = json.loads((repo / "research/flywheel_selfplay/h170_onecycle/manifest.json").read_text())
+    pins = {
+        "research/flywheel_selfplay/custody/files" + p: value
+        for p, value in manifest["assets"].items()
+        if p.endswith(".py")
+    }
+    pins[str(FUSED_SOURCE.relative_to(repo))] = sha(FUSED_SOURCE.read_bytes())
+    factory = object.__new__(PinnedR882Factory)
+    factory.repo, factory.source_pins = repo, pins
+    ambient = types.ModuleType("phase12_multimodal_model")
+    monkeypatch.setitem(sys.modules, "phase12_multimodal_model", ambient)
+
+    def lazy_import():
+        from phase12_multimodal_model import transform_program_features_torch
+
+        return transform_program_features_torch
+
+    with pytest.raises(ImportError):
+        lazy_import()
+    with factory.runtime():
+        transform = lazy_import()
+        assert transform.__module__ == "phase12_multimodal_model"
+        assert sys.modules["phase12_multimodal_model"] is not ambient
+    assert sys.modules["phase12_multimodal_model"] is ambient
+    with pytest.raises(ImportError):
+        lazy_import()
