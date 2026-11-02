@@ -9,6 +9,7 @@ output=$(realpath -m -- "$1")
 [[ ! -e "$output" && ! -L "$output" ]] || { echo 'audit report directory must be fresh' >&2; exit 2; }
 mkdir -p -- "$output"
 export GIT_OPTIONAL_LOCKS=0
+python3 tools/check_evidence_exclusions.py
 python3 deploy/ci/audit-source.py --repo "$PWD" --output "$output/input"
 read -r manifest_sha256 _ < <(sha256sum -- "$output/input/SOURCE_MANIFEST.json")
 status=0

@@ -133,30 +133,6 @@ receipt = "crates/jope-campaigns/manifests/advanced-v3/state-freeze-20260806T155
 sha256 = "0dd37e9084c058c86b3387082a5d60fb6ae2d40d47cd54e3933e3711896df05d"
 
 [[evidence_exclusion]]
-path = "crates/jope-engine/manifests/champion-import-v44.sha256"
-reason = "The current versioned-manifest exception receipt records this service-consumed checksum sidecar digest; edits would invalidate the frozen manifest identity."
-receipt = "docs/release/jankurai-reporot-manifest-exceptions-20261102.md"
-sha256 = "4977c3d84c5d86baefe89acac30d1df094d71932e59ead3fc1f2d133066bffd9"
-
-[[evidence_exclusion]]
-path = "crates/jope-engine/manifests/hyperion-concurrent-v30.sha256"
-reason = "The current versioned-manifest exception receipt records this service-consumed checksum sidecar digest; edits would invalidate the frozen manifest identity."
-receipt = "docs/release/jankurai-reporot-manifest-exceptions-20261102.md"
-sha256 = "98a2dfff5b5a5a4bd684c213780df590ac8ec2cae76d64ef517608e714604ee1"
-
-[[evidence_exclusion]]
-path = "crates/jope-engine/manifests/opportunistic-proposals-v53.json"
-reason = "The paired SHA-256 manifest binds the immutable v53 proposal manifest bytes; migration is defined by adding a new manifest version."
-receipt = "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256"
-sha256 = "ccca20be93f74471c55e2f67eb60d011aff7bb8710af2b057ffacff533131c90"
-
-[[evidence_exclusion]]
-path = "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256"
-reason = "The current versioned-manifest exception receipt records this sidecar digest and the live consumers require the versioned checksum unchanged."
-receipt = "docs/release/jankurai-reporot-manifest-exceptions-20261102.md"
-sha256 = "75bc8045972ca9204a0cafaa8213bfcc6a036752aee0629ef47cfcbf456fb78b"
-
-[[evidence_exclusion]]
 path = "crates/jope-engine/src/gp/selection_replay.rs"
 reason = "docs/internal/clover/gp-config.main944.json records the source hash for crates/jope-engine/src/gp/selection_replay.rs in replay configuration snapshots; changing bytes changes the recorded replay identity."
 receipt = "docs/internal/clover/gp-config.main944.json"
@@ -713,6 +689,48 @@ path = "deploy/qualification/q1/harness/q1.py"
 reason = "deploy/qualification/q1/receipts/q1-attempt09-final.json records SHA-256 3b1b23739de2014f10bc9741baf7db98ba960fedb932507ad6087ae0ac880011 for deploy/qualification/q1/harness/q1.py as qualification provenance; changing the file invalidates the captured evidence."
 receipt = "deploy/qualification/q1/receipts/q1-attempt09-final.json"
 sha256 = "3b1b23739de2014f10bc9741baf7db98ba960fedb932507ad6087ae0ac880011"
+
+[[evidence_exclusion]]
+path = "python/legacy/fable_god/provenance/regressor_source/starlight_core_regressor_train.py"
+reason = "crates/jope-encoders/tests/fixtures/novel_input_oracle.v1.lock.json records SHA-256 71dbbce7c0c498917f4bfb57e674177c8240ce7b428decceea20dad0e3c259e9 for python/legacy/fable_god/provenance/regressor_source/starlight_core_regressor_train.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "crates/jope-encoders/tests/fixtures/novel_input_oracle.v1.lock.json"
+sha256 = "71dbbce7c0c498917f4bfb57e674177c8240ce7b428decceea20dad0e3c259e9"
+
+[[evidence_exclusion]]
+path = "python/src/jope/cli.py"
+reason = "docs/internal/asm-manual/data/extension-guide/source-pins.json records SHA-256 43f1783fe8fbb4e328a8103fea2792a67f37fdebdb125aa1372dab25de0d1d55 for python/src/jope/cli.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/internal/asm-manual/data/extension-guide/source-pins.json"
+sha256 = "43f1783fe8fbb4e328a8103fea2792a67f37fdebdb125aa1372dab25de0d1d55"
+
+[[evidence_exclusion]]
+path = "python/src/jope/policy/train_v3.py"
+reason = "docs/internal/asm-manual/figures/ip-diagram-receipt.json records SHA-256 0e326f9d204d9ac57c81c731e6cd3bd7c04c82ba4c81a8add1d40092d7812525 for python/src/jope/policy/train_v3.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/internal/asm-manual/figures/ip-diagram-receipt.json"
+sha256 = "0e326f9d204d9ac57c81c731e6cd3bd7c04c82ba4c81a8add1d40092d7812525"
+
+[[evidence_exclusion]]
+path = "python/src/jope/propose.py"
+reason = "research/flywheel_selfplay/custody/MANIFEST.json records SHA-256 803a4a41fd8b58dc0a9ff0f06a4cac17b9e192f28c9f24b65019a0c3b965ae4c for python/src/jope/propose.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/custody/MANIFEST.json"
+sha256 = "803a4a41fd8b58dc0a9ff0f06a4cac17b9e192f28c9f24b65019a0c3b965ae4c"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py"
+reason = "The H234 source manifest records the parent H165 analysis hash; its exact bytes are retained as the source of the copied analysis."
+receipt = "research/flywheel_selfplay/h234_lambdaloss/manifest.json"
+sha256 = "59352b84a3ef7f9764a6489ad3865e86925de6e2f3c80d23a5c2f9e5453ad1fd"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h165_gradient_noise_dropout/runner.py"
+reason = "The H165 source manifest records the runner hash in its experiment source closure; bytes stay frozen to preserve the preregistered result lineage."
+receipt = "research/flywheel_selfplay/h165_gradient_noise_dropout/manifest.json"
+sha256 = "6430691737b88abbd4923976bf25f95bd4acdc3af1b14eff4653f91646b52d0a"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py"
+reason = "The H195 metrics receipt binds the runner source hash used for the recorded calibration; bytes stay frozen to retain that evidence identity."
+receipt = "research/flywheel_selfplay/h195_blend025_kernel_confirm/metrics.json"
+sha256 = "cd23328e73fef9a343ccd1a46b79d0568692411175f54c4a30fb0086a96491a5"
 
 [[evidence_exclusion]]
 path = "vendor/security/candle-core-0.11.0/src/backprop.rs"
