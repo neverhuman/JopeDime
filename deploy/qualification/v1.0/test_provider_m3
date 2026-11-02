@@ -514,7 +514,9 @@ class M3FullTests(unittest.TestCase):
 
     def test_frozen_rc4_native_clock_preserves_raw_failure(self):
         report = mode_failure(full_report(source=self.rc4_source))
-        report["clauses"]["r0_proposer"]["native_witness_sha256"] = dict(self.rc4_witnesses)
+        report["clauses"]["r0_proposer"]["native_witness_sha256"] = dict(
+            self.rc4_witnesses
+        )
         payload = full.gate_payload(self.rc4_context(), report, self.pin)
         self.assertEqual(payload["status"], "FAIL")
         self.assertEqual(payload["counts"]["passed"], 3)
@@ -528,8 +530,17 @@ class M3FullTests(unittest.TestCase):
         ]:
             report = full_report(source=source)
             report["clauses"]["r0_proposer"]["native_witness_sha256"] = dict(witnesses)
-            ctx = Context("M3", self.ctx.artifact, self.ctx.artifact_sha256, source, self.ctx.result)
-            with self.subTest(source=source), self.assertRaisesRegex(ProviderError, "correct source-clock"):
+            ctx = Context(
+                "M3",
+                self.ctx.artifact,
+                self.ctx.artifact_sha256,
+                source,
+                self.ctx.result,
+            )
+            with (
+                self.subTest(source=source),
+                self.assertRaisesRegex(ProviderError, "correct source-clock"),
+            ):
                 full.gate_payload(ctx, report, self.pin)
 
     def test_frozen_rc4_paired_diagnostic_keeps_its_native_witnesses(self):
@@ -539,7 +550,9 @@ class M3FullTests(unittest.TestCase):
         proposer["native_witness_sha256"] = dict(self.rc4_witnesses)
         diagnostic = proposer["paired_diagnostic"]
         diagnostic["witness_sha256"] = {**full.PAIRED_PINS, **self.rc4_witnesses}
-        self.assertEqual(full.gate_payload(self.rc4_context(), report, self.pin)["status"], "FAIL")
+        self.assertEqual(
+            full.gate_payload(self.rc4_context(), report, self.pin)["status"], "FAIL"
+        )
         diagnostic["witness_sha256"] = dict(full.PAIRED_PINS)
         with self.assertRaisesRegex(ProviderError, "paired result is diagnostic"):
             full.gate_payload(self.rc4_context(), report, self.pin)
