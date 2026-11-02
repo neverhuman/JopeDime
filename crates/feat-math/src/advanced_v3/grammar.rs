@@ -14,6 +14,7 @@ use super::interfaces::CompiledV3Genome;
 use super::schema::{ColumnKind, DataSchema, RowSemantics};
 use super::types::{TaskKind, TaskSpec};
 use crate::dsl::{DslExpr, ParamValue, Stage};
+use crate::kernel::capabilities::WidthEffect;
 use crate::GenomeIr;
 use anyhow::{bail, Context, Result};
 use sha2::{Digest, Sha256};
@@ -190,18 +191,6 @@ pub(crate) struct ParamDescriptor {
     pub prototype_domain: Option<ParamDomain>,
     pub production_domain: Option<ParamDomain>,
     pub active_when: ActiveWhen,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum WidthEffect {
-    None,
-    Input,
-    OneToOne,
-    GeneratedPerFeature,
-    ExpansionPerFeature { parameter: &'static str },
-    Select { parameter: &'static str },
-    Projection { parameter: &'static str },
-    Impute,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -2326,6 +2315,9 @@ fn count_role(layout: &CompileInputLayout, role: FeatureRole) -> usize {
 fn apply_width_effect(effect: WidthEffect, stage: &Stage, shape: &mut FeatureShape) -> Result<()> {
     let append = bool_value(stage, "append").unwrap_or(false);
     match effect {
+        WidthEffect::Registry(_) => {
+            bail!("registry width rule is not valid in advanced-v3 grammar")
+        }
         WidthEffect::None | WidthEffect::Input => {}
         WidthEffect::OneToOne => {
             if append {
