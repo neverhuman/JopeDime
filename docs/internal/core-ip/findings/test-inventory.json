@@ -5599,6 +5599,10 @@
     "python:research/flywheel_selfplay/h211_gpu_delta_calibration/test_h211.py": {
       "role": "research",
       "reason": "H211 CPU-only data-free controls for optimizer/forward proof, roles/folds, exact native vector, B gates, resource guards, S3 custody, real SIGALRM reentry during buffered write, flag reset after refusal and exact-open-PR admission; no scientific outcome or GPU fixture."
+    },
+    "python:research/flywheel_selfplay/h212_pool_width/test_h212.py": {
+      "role": "research",
+      "reason": "H212 synthetic, outcome-free controls for the preregistered pool-width protocol: stable distinct seed streams, complete disjoint balanced family folds, native first-argmin tie and gate-failure cost, family-bootstrap strict ties as non-wins."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
