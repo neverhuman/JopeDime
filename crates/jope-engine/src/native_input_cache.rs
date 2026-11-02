@@ -200,15 +200,8 @@ const EXT4_SUPER_MAGIC: u64 = 0xef53;
 /// 32-bit target) sign-extends here. Only equality with the ext4 and tmpfs magics,
 /// both below 2^31, is ever tested, and those compare correctly on every target.
 fn filesystem_magic(file: &File) -> Result<u64> {
-    let mut status = std::mem::MaybeUninit::<libc::statfs>::uninit();
-    // SAFETY: status provides aligned writable statfs storage and file owns a
-    // live descriptor. fstatfs initializes the output only on its checked success.
-    if unsafe { libc::fstatfs(file.as_raw_fd(), status.as_mut_ptr()) } != 0 {
-        return Err(std::io::Error::last_os_error().into());
-    }
-    // SAFETY: the preceding fstatfs succeeded; every statfs field is initialized.
-    let status = unsafe { status.assume_init() };
-    Ok(status.f_type as u64)
+    let status = nix::sys::statfs::fstatfs(file)?;
+    Ok(status.filesystem_type().0 as u64)
 }
 // ext4's metadata clock can repeat within a scheduler tick. Never seed reuse
 // from a recent timestamp: a same-tick write followed by mtime restoration can
