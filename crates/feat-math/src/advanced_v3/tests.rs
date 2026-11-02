@@ -781,7 +781,7 @@ fn synthesis_width_overflow_is_explicit_not_a_mask_dimension_failure() {
 
 #[test]
 fn v3_admission_matches_manifest() {
-    use crate::kernel::capabilities::{Manifest, OpKind, V3Admission, WidthEffect};
+    use crate::kernel::capabilities::{Manifest, OpKind, V3Admission};
     use grammar::{ProductionAdmission, RowRequirement, StageClass};
     let manifest = Manifest::current();
     let mut found = std::collections::BTreeSet::new();
@@ -803,9 +803,18 @@ fn v3_admission_matches_manifest() {
                 StageClass::Target => OpKind::Target,
                 StageClass::Input => OpKind::Input,
                 StageClass::Transform => OpKind::Transform,
-                StageClass::Head => OpKind::Head,
+                StageClass::Learner => OpKind::Head,
             };
             assert_eq!(row.kind, kind, "{name}");
+            let role = match descriptor.stage_class {
+                StageClass::Target => "target",
+                StageClass::Input => "input",
+                StageClass::Transform => "transform",
+                StageClass::Learner => "head",
+            };
+            let entry = crate::kernel::registry_v2::operator("advanced_v3", name)
+                .unwrap_or_else(|| panic!("missing advanced-v3 registry entry for {name}"));
+            assert_eq!(entry.facts().role, role, "{name}");
             assert_eq!(row.requires_labels, descriptor.target_aware, "{name}");
             assert_eq!(
                 row.requires_row_order,
@@ -813,21 +822,7 @@ fn v3_admission_matches_manifest() {
                 "{name}"
             );
             if crate::registry::operator(name).is_none() {
-                let expected = match descriptor.width_effect {
-                    grammar::WidthEffect::None => WidthEffect::None,
-                    grammar::WidthEffect::Input => WidthEffect::Input,
-                    grammar::WidthEffect::OneToOne => WidthEffect::OneToOne,
-                    grammar::WidthEffect::GeneratedPerFeature => WidthEffect::GeneratedPerFeature,
-                    grammar::WidthEffect::ExpansionPerFeature { parameter } => {
-                        WidthEffect::ExpansionPerFeature { parameter }
-                    }
-                    grammar::WidthEffect::Select { parameter } => WidthEffect::Select { parameter },
-                    grammar::WidthEffect::Projection { parameter } => {
-                        WidthEffect::Projection { parameter }
-                    }
-                    grammar::WidthEffect::Impute => WidthEffect::Impute,
-                };
-                assert_eq!(row.width_effect, expected, "{name}");
+                assert_eq!(row.width_effect, descriptor.width_effect, "{name}");
             }
         }
     }

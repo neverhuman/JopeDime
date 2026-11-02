@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use super::Stage;
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EvidenceLocator {
     pub uri: String,
@@ -20,25 +22,6 @@ pub struct EvidenceValue {
     pub estimator: String,
     pub protocol: String,
     pub disclosed: bool,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Stage {
-    Synthetic,
-    Shadow,
-    Adaptive,
-    Confirmatory,
-}
-
-impl Stage {
-    pub(crate) fn as_str(self) -> &'static str {
-        match self {
-            Self::Synthetic => "synthetic",
-            Self::Shadow => "shadow",
-            Self::Adaptive => "adaptive",
-            Self::Confirmatory => "confirmatory",
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
