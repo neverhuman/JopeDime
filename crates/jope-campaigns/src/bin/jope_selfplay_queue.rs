@@ -4152,7 +4152,15 @@ mod tests {
                 "SELECT task,dataset_hash,semantic_sha256,protocol_sha256,attempt_number \
                  FROM keeper_attempts WHERE job_id=?",
                 ["new-job"],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
+                |row| {
+                    Ok((
+                        row.get(0)?,
+                        row.get(1)?,
+                        row.get(2)?,
+                        row.get(3)?,
+                        row.get(4)?,
+                    ))
+                },
             )
             .unwrap();
         assert_eq!(
