@@ -385,14 +385,14 @@ def _package_imports(tree, package_dir) -> set:
 @functools.cache
 def _closure(root: str) -> tuple:
     package_dir = Path(__file__).resolve().parent
-    digests, todo = {}, [root]
-    while todo:
-        name = todo.pop()
+    digests, pending_modules = {}, [root]
+    while pending_modules:
+        name = pending_modules.pop()
         if f"{name}.py" in digests:
             continue
         raw = (package_dir / f"{name}.py").read_bytes()
         digests[f"{name}.py"] = common.sha256_bytes(raw)
-        todo.extend(sorted(_package_imports(ast.parse(raw, filename=f"{name}.py"), package_dir)))
+        pending_modules.extend(sorted(_package_imports(ast.parse(raw, filename=f"{name}.py"), package_dir)))
     digests["__init__.py"] = common.sha256_file(package_dir / "__init__.py")
     return tuple((f"{_PACKAGE}/{name}", digest) for name, digest in sorted(digests.items()))
 
@@ -990,8 +990,8 @@ def fetch_memberships(contexts, cache_path, threads=8):
         for line in cp.read_text().splitlines():
             rec = json.loads(line)
             cache[rec["context_sha256"]] = rec
-    todo = [c for c in contexts if c["context_sha256"] not in cache]
-    client = s3io.make_client() if todo else None
+    pending_contexts = [c for c in contexts if c["context_sha256"] not in cache]
+    client = s3io.make_client() if pending_contexts else None
 
     def one(c):
         m = c["membership_ref"]
@@ -1005,12 +1005,12 @@ def fetch_memberships(contexts, cache_path, threads=8):
                 "outer_test_indices_sha256": d.get("outer_test_indices_sha256"), "outer_test_rows": d.get("outer_test_rows"),
                 "membership_sha256": m["sha256"]}
 
-    if todo:
+    if pending_contexts:
         with cf.ThreadPoolExecutor(threads) as ex, open(cp, "a") as f:
-            for rec in ex.map(one, todo):
+            for rec in ex.map(one, pending_contexts):
                 cache[rec["context_sha256"]] = rec
                 f.write(json.dumps(rec, sort_keys=True) + "\n")
-    return cache, len(todo)
+    return cache, len(pending_contexts)
 
 
 def map_audit(epoch_path, index_path, index_sha256, cache_path):
