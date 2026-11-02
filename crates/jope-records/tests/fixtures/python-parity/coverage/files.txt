@@ -1317,6 +1317,7 @@ crates/jope-engine/src/neural/runtime.rs
 crates/jope-engine/src/operations.rs
 crates/jope-engine/src/pipeline.rs
 crates/jope-engine/src/policy_export.rs
+crates/jope-engine/src/policy_export/publication.rs
 crates/jope-engine/src/preparation_overlay.rs
 crates/jope-engine/src/prepare.rs
 crates/jope-engine/src/proposal_population.rs
