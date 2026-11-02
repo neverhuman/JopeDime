@@ -63,72 +63,6 @@ jope_paths::once_str!(
 /// directory is collected (GC only touches `jte-`/`jcv-`), so the filesystem —
 /// not the scheduler inventory — is the authority on completed trainers.
 const LINEAGE_RUN_PREFIX: &str = "jope-selfplay-train-";
-/// Parameter groups that must be present in a policy_v3.3 warm-start checkpoint.
-/// These are exactly the 22 tensors the original 130-tensor anchor lacks.
-const REQUIRED_CHECKPOINT_GROUPS: &[&str] = &[
-    "binary_reward_heads.",
-    "binary_routing_head.",
-    "binary_stability_head.",
-];
-/// policy_v3.4 adds the reward branch's own context encoder (8 tensors: two Linear
-/// weight/bias pairs and two LayerNorm weight/bias pairs), taking the full model to
-/// 160 tensors / 32,240,687 parameters.
-const REQUIRED_CHECKPOINT_GROUPS_V34: &[&str] = &[
-    "binary_reward_heads.",
-    "binary_routing_head.",
-    "binary_stability_head.",
-    "reward_encoder.",
-];
-
-/// One complete-model shape. A checkpoint may only be pinned into a successor spec
-/// when it satisfies exactly one of these, because a short checkpoint warm-starts a
-/// lobotomised network with no error from PyTorch.
-///
-/// `marker` makes the choice unambiguous rather than "whichever bar it clears":
-/// a checkpoint that CONTAINS `reward_encoder.` is judged against the v3.4 bar
-/// (160 tensors), so a truncated v3.4 archive can never squeak through on the v3.3
-/// count. Schemas are ordered most-specific first; the last entry is the fallback.
-struct CheckpointSchema {
-    name: &'static str,
-    marker: Option<&'static str>,
-    tensors: usize,
-    groups: &'static [&'static str],
-}
-
-const CHECKPOINT_SCHEMAS: &[CheckpointSchema] = &[
-    CheckpointSchema {
-        name: "policy_v3.4-split-context",
-        marker: Some("reward_encoder."),
-        tensors: 160,
-        groups: REQUIRED_CHECKPOINT_GROUPS_V34,
-    },
-    CheckpointSchema {
-        name: "policy_v3.3-fused-heads",
-        marker: None,
-        tensors: 152,
-        groups: REQUIRED_CHECKPOINT_GROUPS,
-    },
-];
-
-/// Fallback schema for archives that carry no schema marker (every checkpoint
-/// written before the v3.4 un-sharing).
-fn legacy_checkpoint_schema() -> &'static CheckpointSchema {
-    CHECKPOINT_SCHEMAS
-        .last()
-        .expect("checkpoint schema table is never empty")
-}
-
-/// Pick the schema a checkpoint is claiming by the marker groups it carries.
-fn resolve_checkpoint_schema(present: &[String]) -> &'static CheckpointSchema {
-    CHECKPOINT_SCHEMAS
-        .iter()
-        .find(|schema| {
-            schema
-                .marker
-                .is_some_and(|marker| present.iter().any(|group| group == marker))
-        })
-        .unwrap_or_else(|| legacy_checkpoint_schema())
-}
 /// Cheap-path lineage rescan throttle. The spec-rendering path always forces a
 /// fresh scan, so a successor can never be pinned against a stale lineage.
 const LINEAGE_RESCAN_MS: u128 = 60_000;
@@ -548,6 +482,8 @@ mod state;
 pub(super) use state::*;
 mod submission;
 pub(super) use submission::*;
+mod schema;
+pub(super) use schema::*;
 
 #[cfg(test)]
 mod tests;
