@@ -233,7 +233,7 @@ fn process_fixture() {
         fs::read_to_string(entry.unwrap().path().join("comm"))
             .map_or(true, |name| !name.starts_with("jope-batch-sign"))
     }));
-    std::process::exit(i32::from(code));
+    super::exit_process_for_test(code);
 }
 
 struct OwnChild(Child);

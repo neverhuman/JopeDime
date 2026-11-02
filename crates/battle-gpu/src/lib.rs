@@ -125,9 +125,8 @@ fn backend_worker(receiver: mpsc::Receiver<BackendRequest>) {
                 let _ = reply.send(result);
             }
             BackendRequest::Score(batch, reply) => {
-                let result = finish_batch_with_backend_initializer(batch, || {
-                    ready_backend(&mut state)
-                });
+                let result =
+                    finish_batch_with_backend_initializer(batch, || ready_backend(&mut state));
                 let _ = reply.send(result);
             }
         }
@@ -247,24 +246,22 @@ fn init_backend() -> Result<Gpu, String> {
         Ok((module, functions, stream))
     })();
     match built {
-        Ok((_module, [f_col_stats, f_gram_atb, f_chol_solve, f_predict_r2], stream)) => {
-            Ok(Gpu {
-                _lib: lib,
-                api,
-                ctx,
-                stream,
-                f_col_stats,
-                f_gram_atb,
-                f_chol_solve,
-                f_predict_r2,
-                info: GpuInfo {
-                    name,
-                    driver_version,
-                    total_mem_bytes: total_mem,
-                    multiprocessors,
-                },
-            })
-        }
+        Ok((_module, [f_col_stats, f_gram_atb, f_chol_solve, f_predict_r2], stream)) => Ok(Gpu {
+            _lib: lib,
+            api,
+            ctx,
+            stream,
+            f_col_stats,
+            f_gram_atb,
+            f_chol_solve,
+            f_predict_r2,
+            info: GpuInfo {
+                name,
+                driver_version,
+                total_mem_bytes: total_mem,
+                multiprocessors,
+            },
+        }),
         Err(error) => {
             // SAFETY: initialization still owns ctx; no Gpu was published.
             // Context destruction also releases any module loaded before failure.
@@ -560,17 +557,11 @@ fn finish_batch_with_backend_initializer<'a>(
     finish_batch(batch, gpu)
 }
 
-fn finish_batch(
-    mut batch: PreparedBatch,
-    gpu: &mut Gpu,
-) -> Result<GpuRidgeScoreBatch, String> {
+fn finish_batch(mut batch: PreparedBatch, gpu: &mut Gpu) -> Result<GpuRidgeScoreBatch, String> {
     let api = &gpu.api;
     // The worker owns this context and serializes every request. Re-establish
     // its thread-local current-context state before each CUDA operation.
-    // SAFETY: `gpu` is borrowed from the owner worker's backend state, so no
-    // other thread can use or destroy this context concurrently. Its owning
-    // `Library` remains live in `gpu` for this call; CUDA makes `gpu.ctx`
-    // current only on this worker thread, and the returned status is checked.
+    // SAFETY: the owner worker serializes access, and `gpu` keeps the driver library alive.
     api.check(unsafe { (api.cuCtxSetCurrent)(gpu.ctx) }, "cuCtxSetCurrent")?;
 
     // Wave budget from free memory (fallback: fixed 2 GiB).
@@ -1024,10 +1015,11 @@ mod shape_bounds_tests {
         wide.valid_y = vec![1.0, 3.0];
 
         let expected = cpu_reference_score(&wide);
-        let batch = finish_batch_with_backend_initializer(prepare_batch(vec![wide]).unwrap(), || {
-            panic!("CPU-only batch must not initialize CUDA")
-        })
-        .expect("CPU-only batch");
+        let batch =
+            finish_batch_with_backend_initializer(prepare_batch(vec![wide]).unwrap(), || {
+                panic!("CPU-only batch must not initialize CUDA")
+            })
+            .expect("CPU-only batch");
 
         assert_eq!(batch.scores, vec![expected]);
         assert_eq!(batch.fold_bytes, vec![GpuRidgeScoreFoldBytes::default()]);

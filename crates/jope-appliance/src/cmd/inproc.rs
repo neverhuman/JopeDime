@@ -174,6 +174,11 @@ impl Drop for Interrupts {
     }
 }
 
+#[cfg(test)]
+pub(super) fn exit_process_for_test(code: u8) -> ! {
+    std::process::exit(i32::from(code));
+}
+
 #[cfg(all(test, feature = "engine"))]
 #[path = "inproc/tests.rs"]
 mod tests;
