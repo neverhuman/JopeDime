@@ -37,6 +37,7 @@ pub mod selfplay_expansion;
 pub mod selfplay_ingest;
 pub mod selfplay_registry;
 pub mod selfplay_runtime;
+pub mod self_play_evaluation;
 pub mod selfplay_shadow;
 /// WS-2: the single source of truth for scq job specs, and the drift test that
 /// fails when two renderers disagree.
