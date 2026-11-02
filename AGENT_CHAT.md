@@ -2507,3 +2507,4 @@ checkout=/mnt/jope-build-native/jk_wide/shape_5_x1_t2040/JopeDime
 branch=fast/luna_jk_shape_5_x1_t2250; stopped_HEAD=c4528399354f118f6c208be1c0ad0ac85468e237
 exclusive_path=crates/jope-engine/src/gpu_worker.rs; no source edits made; current ownership ended by direct t2315 reassignment
 remaining=none; disposition=release unedited claim; current checkout now refreshed on fast/luna_jk_shape_5_x1_t2315
+[2026-11-02T23:15:00Z] CLAIM Codex/luna_jk_variety SPARE t2315 | checkout=/home/ubuntu/jk_wide/lanes/variety_t2040/JopeDime branch=fast/luna_jk_variety_t2315 HEAD=f44b9ce3af3a4a678dc00379129112af4e39155; coordinator preclaim COORD 9874 for deploy/dl-flywheel/pipelines/rlfw/ablations/tests/test_ablations.py. Fresh origin/v1/fastlane; scan byte pins and callers; mechanical test-group split preserving names; py_compile + diff-check only; no pytest/build/audits; jk_fastpush.
