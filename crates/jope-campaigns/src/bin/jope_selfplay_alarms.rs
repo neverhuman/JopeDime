@@ -1199,7 +1199,7 @@ fn check_training_history(root: &Path, runs_root: &Path, alarms: &mut Alarms) {
                 "training_history_segment_state_unreadable",
                 "critical",
                 format!("{error:#}"),
-                "all archived segment state files are readable and valid",
+                "all archived segment state files are readable and valid".into(),
             );
             return;
         }
