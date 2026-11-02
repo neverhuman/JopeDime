@@ -10,8 +10,8 @@
       "sha256": "865ad21acae020fd6b9966a98315420f16b814af6b0b9860ada76988f5c65965"
     },
     {
-      "label": "src/commands/exact_cv_v2.rs",
-      "path": "crates/jope-campaigns/src/commands/exact_cv_v2.rs",
+      "label": "src/commands/single_fold_proof.rs",
+      "path": "crates/jope-campaigns/src/commands/single_fold_proof.rs",
       "sha256": "b3b7fa89f6f4584edc66abab8fedc26989b1b021317950ebe53566a8dfd326c0"
     },
     {
