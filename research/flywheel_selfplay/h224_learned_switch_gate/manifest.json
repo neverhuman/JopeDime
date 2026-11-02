@@ -1,6 +1,6 @@
 {
   "wave": "H224",
-  "status": "PREREGISTERED",
+  "status": "COMPLETE",
   "authority": "hw_t1325_astra_h224.md",
   "parent_commit": "973298e282eadfbefb159d13bfaf4d788a24c1b9",
   "parent_sources": {
@@ -83,7 +83,7 @@
   "best_match_jaccard": 0.1927922014576975,
   "source_sha256": {
     "PREREG.md": "a3bea119f192211a9f276b0965984ebda859ecf588f58bcf8c848941ebd89b52",
-    "README.md": "1c8db0868764cf926415ad7cc5e28b5cb6c97c47da9331d9ad49294e61bb09ab",
+    "README.md": "deda2b126ec34b1a4e86cb3c6ab856b2bf00203555657045edb96480d9318683",
     "analysis.py": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434",
     "fold_manifest.json": "eee7551b3bc87140ece979b93fab865be71e383fc63d93e4a303b9e5bc6d2e9e",
     "gate.py": "b6da8ad57f940aeef3a504439f4848df2e06344d14652e768adf32858637ebc3",
@@ -153,5 +153,59 @@
     },
     "final_failure": "INCOMPLETE, no further attempts",
     "legacy_runtime_paths": "continuation1/attempt1-claim.json and continuation1/attempt1/ retain original runner filename contract; claim attempt=2 and separate continuation1 S3 prefix."
+  },
+  "verdict": "NO_ADVANCE + NO_PLATEAU_WIN",
+  "execution_source_commit": "e3c978d5d36f50a190b82543e592834b549e0844",
+  "execution_source_sha256": {
+    "PREREG.md": "a3bea119f192211a9f276b0965984ebda859ecf588f58bcf8c848941ebd89b52",
+    "README.md": "43a26ab83916450c7e2b70b19300b5b7928f908652dee71691397a80482a3845",
+    "analysis.py": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434",
+    "fold_manifest.json": "eee7551b3bc87140ece979b93fab865be71e383fc63d93e4a303b9e5bc6d2e9e",
+    "gate.py": "b6da8ad57f940aeef3a504439f4848df2e06344d14652e768adf32858637ebc3",
+    "monitor.py": "3d5062e39aae1c00b619f8096c12fc3b98bbe30a492683f728de01a08811df4a",
+    "provenance.json": "2a9a583133f7fe119563586f8ee7263c55f9f088451ec6a16642859439046ed9",
+    "runner.py": "ca3a8aee72a6158e600671a07e9870ac4db1b219c9a915cec95b5ecc2d11e64d",
+    "test_h224.py": "8ca1a1db857abdbde05dff4fee31113e5dc14f0d75bf84d992d69d4159c23b76"
+  },
+  "archive_manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H224/astra-t1325/closeout/manifest.json",
+    "version_id": "_vLe1MDpaguwWBjwkM3cmchWM0mhTymd",
+    "sha256": "8d9523995fe1d28ba48c32ffdf877829b7d800e18eb77d4339814e914e8f0d02",
+    "bytes": 94800
+  },
+  "metrics_sha256": "0cbd8edfecd9a48e2d09899130a78b4e5324649ae7b327262b8a75ad70af3563",
+  "warning_audit": {
+    "source_commit": "e3c978d5d36f50a190b82543e592834b549e0844",
+    "stage1_lock_sha256": "00e44dc6381c47ba48b9e53a89161c10a67c7c8b65357a23c57b9aa133e47dcb",
+    "baseline_costs_sha256": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "scaler_fits": 390,
+    "warning_fits": 60,
+    "negative_variance_fits": 60,
+    "negative_columns": [
+      4
+    ],
+    "nan_input_values": 0,
+    "nan_variance_fits": 0,
+    "negative_variance_range": [
+      -1.393178489863451e-38,
+      -4.8529583290828435e-40
+    ],
+    "constant_column_values": [
+      1151.9999999999993,
+      1152.0000000000007,
+      1152.0000000000014,
+      1152.000000000002,
+      1152.0000000000023
+    ],
+    "all_scales_finite": true,
+    "clamp_then_constant_mask_scale_identical": true,
+    "locked_cells_reproduced_exactly": 15,
+    "gate_decision_changes": 0,
+    "new_histgbm_fits": 0,
+    "new_adapter_updates": 0,
+    "diagnostic_gate_refits_only": true,
+    "original_results_unchanged": true,
+    "interpretation": "Weighted variance roundoff in constant feature; sqrt emits a warning before StandardScaler overwrites constant scales with1. Clamping only negative variances before sqrt produces identical scales/transforms, thus no gate choice change. All15 cells including models/C/CV/threshold/grid exactly match frozen stage1 lock.",
+    "epoch": 1793648850.7649565
   }
 }
