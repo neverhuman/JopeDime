@@ -44,7 +44,6 @@ extra_excluded_paths = [
   # Historical entrants archived verbatim in the paper; not generated product code.
   # The artifact manifest pins them to the original submissions, and the paper check
   # verifies the bytes. A source header would invalidate that evidence.
-  "docs/paper/innovationzero/artifacts/sources/GPT6_Astra_Max.rs",
   "docs/paper/innovationzero/artifacts/sources/GPT6p1_Sol_Max.rs",
   "docs/paper/innovationzero/artifacts/sources/Gemini4_argon_high.rs",
   "docs/paper/innovationzero/artifacts/sources/Opus5p5_Extra.rs",
@@ -107,14 +106,11 @@ extra_excluded_paths = [
   # P37: H155 runs only SHA-256-verified H153 Git blobs and pins this executor in its manifest.
   "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
   # P37: H158 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
-  "research/flywheel_selfplay/h158_distillation/runtime.py",
-  # P37: H159 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+    # P37: H159 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
   "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
   # P37: H161 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
-  "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
-  # P37: H164 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
-  "research/flywheel_selfplay/h164_sam_retry/runtime.py",
-  # P37: H168 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+    # P37: H164 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+    # P37: H168 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
   "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
   # P37: H173 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
   "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
@@ -126,6 +122,8 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
   "research/flywheel_selfplay/h164_sam_retry/runtime.py",
   # Exact copies retained as part of immutable experiment manifests/results.
+  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
+  "research/flywheel_selfplay/h192_margin_gate/runner.py",
   "research/flywheel_selfplay/h192_margin_gate/treatment.py",
   "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/run_acceptance.py",
 
