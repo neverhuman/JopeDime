@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jope:rel07-qualification-receipt-draft:v2",
+  "title": "REL-07 release evidence draft; not signer-compatible",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "state",
+    "release_version",
+    "candidate",
+    "qualification",
+    "controller_snapshot",
+    "current_evidence",
+    "blockers",
+    "owner_decisions",
+    "replacement_condition"
+  ],
+  "properties": {
+    "$schema": {"const": "./qualification_receipt.draft.schema.json"},
+    "schema": {"const": "jope.rel07.qualification-receipt-draft/v2"},
+    "state": {"const": "DRAFT_NOT_QUALIFIED_NOT_SIGNER_COMPATIBLE"},
+    "generated_at_utc": {"type": "string", "format": "date-time"},
+    "release_version": {"const": "v1.0.0"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generation", "scope", "runtime_source_sha", "runtime_tree_sha", "candidate_manifest", "artifacts"],
+      "properties": {
+        "generation": {"const": "RC4"},
+        "scope": {"const": "internal-restricted"},
+        "runtime_source_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "runtime_tree_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "candidate_manifest": {"$ref": "#/$defs/evidence"},
+        "artifacts": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"$ref": "#/$defs/artifact"}
+        }
+      }
+    },
+    "qualification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "release_qualified", "final_controller_status", "required_gate_count", "owner_release_approval", "aggregate_signature"],
+      "properties": {
+        "status": {"const": "NOT_QUALIFIED"},
+        "release_qualified": {"const": false},
+        "final_controller_status": {"const": "INCOMPLETE_PENDING_A5_AND_FINAL_REPLAY"},
+        "required_gate_count": {"const": 28},
+        "owner_release_approval": {"type": "null"},
+        "aggregate_signature": {"type": "null"}
+      }
+    },
+    "controller_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt_path", "status_table", "execution", "source_sha", "artifact_sha256", "outcomes", "qualification_use"],
+      "properties": {
+        "attempt_path": {"type": "string", "minLength": 1},
+        "status_table": {"$ref": "#/$defs/evidence"},
+        "execution": {"$ref": "#/$defs/evidence"},
+        "source_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "outcomes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "properties": {
+            "PASS": {"const": 25},
+            "FAIL": {"const": 2},
+            "BLOCKED": {"const": 1},
+            "NOT_RUN": {"const": 0}
+          }
+        },
+        "qualification_use": {"const": "HISTORICAL_SNAPSHOT_ONLY_NOT_PROMOTED_OR_COMBINED"}
+      }
+    },
+    "current_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observations", "final_controller_rows_promoted"],
+      "properties": {
+        "observations": {
+          "type": "array",
+          "minItems": 3,
+          "items": {"$ref": "#/$defs/observation"}
+        },
+        "final_controller_rows_promoted": {"const": 0}
+      }
+    },
+    "blockers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["A5", "final_controller", "Q1"],
+      "properties": {
+        "A5": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "manifest", "manifest_sha256", "reason", "latest_attempt"],
+          "properties": {
+            "status": {"const": "PENDING"},
+            "manifest": {"type": "null"},
+            "manifest_sha256": {"type": "null"},
+            "reason": {"type": "string", "minLength": 1},
+            "latest_attempt": {"$ref": "#/$defs/evidence"}
+          }
+        },
+        "final_controller": {"type": "string", "minLength": 1},
+        "Q1": {"type": "string", "minLength": 1}
+      }
+    },
+    "owner_decisions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["M3", "Q1"],
+      "properties": {
+        "M3": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["raw_status", "disposition", "ruling_id", "expires_at", "raw_result", "waiver_guard", "disposition_record", "ruling", "measured_delta_pp", "future_tolerance_pp", "future_tolerance_changed"],
+          "properties": {
+            "raw_status": {"const": "FAIL"},
+            "disposition": {"const": "WAIVED_V1_0_0"},
+            "ruling_id": {"const": "M3-WAIVER-V1.0.0-T1955"},
+            "expires_at": {"const": "v1.0.1"},
+            "raw_result": {"$ref": "#/$defs/evidence"},
+            "waiver_guard": {"$ref": "#/$defs/evidence"},
+            "disposition_record": {"$ref": "#/$defs/evidence"},
+            "ruling": {"$ref": "#/$defs/evidence"},
+            "measured_delta_pp": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["overall", "non_exploring", "exploring"],
+              "properties": {
+                "overall": {"const": 2.30015625},
+                "non_exploring": {"const": 0.052083333333333336},
+                "exploring": {"const": 2.7908415841584153}
+              }
+            },
+            "future_tolerance_pp": {"const": 2.0},
+            "future_tolerance_changed": {"const": false}
+          }
+        },
+        "Q1": {"type": "string", "minLength": 1}
+      }
+    },
+    "replacement_condition": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sha256", "bytes", "source_sha", "signature_status", "seal_status"],
+      "properties": {
+        "id": {"enum": ["full-linux-x86_64", "full-darwin-arm64", "fused-cpu-linux-x86_64"]},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "source_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "signature_status": {"const": "PASS"},
+        "seal_status": {"const": "PASS"}
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gate", "observed_status", "final_controller_status", "disposition", "evidence", "qualification_use"],
+      "properties": {
+        "gate": {"enum": ["M1", "M2", "M3", "M4", "M5", "S1", "S2", "S3", "S4", "R1", "R2", "R3", "R4", "A1", "A2", "A3", "A4", "A5", "E1", "E2", "E3", "U1", "U2", "T1", "T2", "T3", "D1", "D2"]},
+        "observed_status": {"enum": ["PASS", "FAIL", "PENDING"]},
+        "final_controller_status": {"const": "NOT_RUN"},
+        "disposition": {"type": "string", "minLength": 1},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "qualification_use": {"const": "EVIDENCE_ONLY_NOT_FINAL_CONTROLLER_RESULT"}
+      }
+    }
+  }
+}
