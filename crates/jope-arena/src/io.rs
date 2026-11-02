@@ -1,8 +1,9 @@
-//! Small file helpers: transparent `.gz` / `.zst` inputs, streaming SHA-256, JSON.
+//! Small file helpers for plain, gzip, and zstd inputs, streaming SHA-256, and JSON.
 //!
 //! Every input file may be committed as `<name>`, `<name>.gz` or `<name>.zst` (the regression
 //! fixture keeps the 3.4 MB `scores.csv` under the 500 KiB cap as `scores.csv.zst`); readers here
-//! accept all three and callers never see the difference.
+//! expose the same decompressed content. `tests::compressed_inputs_are_transparent` exercises the
+//! plain, gzip, and zstd spellings.
 
 use std::fs::File;
 use std::io::Read;
@@ -101,7 +102,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn gz_inputs_are_transparent() {
+    fn compressed_inputs_are_transparent() {
         let dir = tempfile::tempdir().unwrap();
         let plain = dir.path().join("a.csv");
         let gz = dir.path().join("b.csv.gz");
