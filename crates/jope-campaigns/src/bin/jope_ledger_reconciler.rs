@@ -396,10 +396,9 @@ fn flush_fill(
 
     let tx = registry.transaction_with_behavior(TransactionBehavior::Immediate)?;
     {
-        let mut next_attempt = tx.prepare_cached(
-            "SELECT COALESCE(MAX(attempt_no),0)+1 FROM attempts WHERE task=? AND dataset_hash=? \
-             AND semantic_sha256=? AND protocol_sha256=?",
-        )?;
+        let mut next_attempt = tx.prepare_cached(include_str!(
+            "../../sql/ledger_reconciler_next_attempt.sql"
+        ))?;
         // Re-check inside the write transaction: another writer may have raced
         // us between the read scan and here. This keeps the lane idempotent.
         let mut recheck = tx.prepare_cached(
