@@ -118,7 +118,9 @@ def compute_remaining_wall_budget_seconds(
     if requested_remaining_seconds is not None:
         req = float(requested_remaining_seconds)
         if not math.isfinite(req) or req <= 0.0:
-            raise RuntimeError("requested remaining budget must be finite and positive")
+            raise RuntimeError(
+                "prelaunch cumulative budget refusal: requested remaining budget must be finite and positive"
+            )
         if req > remaining + 1e-9:
             raise RuntimeError(
                 f"requested_remaining_seconds ({req}) exceeds remaining campaign budget ({remaining})"
