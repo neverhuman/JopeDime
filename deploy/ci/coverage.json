@@ -4328,6 +4328,26 @@
       "lanes": [],
       "scope": "REL-07 PR1436 provider controls: candidate/source binding, exact test execution, drift/failure/overwrite refusals. Synthetic fixtures validate orchestration only; actual candidate release execution remains separate."
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_identity.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 synthetic capture-client recorder identity, cleanup, and frozen-candidate provenance controls."
+    },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_process.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "REL-07 synthetic capture-client process-group, timeout, interrupt, and recorder drain controls."
+    },
     "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
       "discovery": {
         "kind": "python-family"
