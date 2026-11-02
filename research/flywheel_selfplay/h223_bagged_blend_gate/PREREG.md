@@ -118,16 +118,18 @@ are reported: no AUC.
 ## Host, guards and budget (hw_t1325)
 
 - **Host: xbabe2 CPU only**, nice 19. No GPU, no GPU claim. OMP 7, every other pool 1, torch 1 thread.
-- **Admission** (monitor, before the claim; a refusal creates no claim): load1 and load5 ≤ 51 (50% of the 102
-  effective cores), host CPU ≤ 50%, MemAvailable ≥ 24 GiB and disk free ≥ 320 GB.
+- **Admission** (monitor, before the claim; a refusal creates no claim): load1 ≤ 60 and load5 ≤ 55 (amendment A1),
+  host CPU ≤ 50%, MemAvailable ≥ 24 GiB and disk free ≥ 320 GB.
 - **Source binding before the claim** (`runner.py --check-launch`), as H217.
-- **Runtime stops** (monitor every 0.5 s; the runner repeats load5, memory, disk and deadline before every unit):
-  - **load5 > 60**;
+- **Runtime stops** (hard aborts; monitor every 0.5 s; the runner repeats memory, disk and deadline before every unit):
   - **MemAvailable < 20 GiB** (xbabe2 swap is full);
   - **disk free < 300 GB**;
   - **process-tree RSS ≥ 4 GiB** (H217's peak was 3.47 GiB, with the same single-fit memory shape);
-  - **worker tree > 8.0 cores** over a 30 s window;
-  - load1 or host CPU > 85% of the effective cores continuously for 300 s (host rule, as H217).
+  - **worker tree > 8.0 cores** over a 30 s window.
+- **Host load pauses, never stops (amendment A1).** The monitor sends SIGSTOP to the worker's own process group when
+  load5 > 60, or when load1 or host CPU has been > 85% of the effective cores for 300 s. It sends SIGCONT once load5
+  ≤ 55 and both are back under 85%. Between units the runner also waits while load5 > 60, rechecking every 60 s, until
+  load5 ≤ 55. Pauses are logged with their UTC time and load, and count against the absolute deadline.
 - **One absolute deadline**: the earlier of claim + 4 h and **2026-11-02T17:25:00Z**, recorded in the claim, inherited
   by a resume and passed to the worker. This leaves the closeout before hw_t1325's hard 18:00Z.
 - **Budget.** 135 HistGBM fits. H217's single fits took 2.2 min at 4 threads; at 7 threads the expected wall time is
@@ -146,3 +148,20 @@ are reported: no AUC.
 - **Closeout.** It commits `metrics.json` (< 100 KB), a README (hypothesis, setup, outcome, key metrics, Elo, verdict
   and next step), `custody.json`, and index rows in `overnight-hwave-index.md` and `docs/research/waves/INDEX.jsonl`.
   The hard closeout deadline is 18:00Z; if the run cannot finish, H223 closes INCOMPLETE with evidence.
+
+## Amendment A1 (pre-outcome): host load pauses instead of stopping
+
+- **When and who.** Recorded 2026-11-02T14:00:27Z by the H-wave owner (rd_opus) under `~/nudges/hw_t1400_loadguard.md`
+  (ENG:watcher, 14:00Z). This was after the prereg merged (PR #1865, `530eef65`, 13:52Z) and before any H223
+  claim, root, read, fit or outcome; no H223 attempt had started.
+- **Why.** H218 closed INCOMPLETE at 41/45 fits when its load5 abort fired on xbabe2 at 13:35Z. xbabe2's load5 was
+  about 50 and climbing, and H223's preregistered rule aborted at load5 > 60.
+- **Change.** Host load is a pause, not a stop.
+  - The monitor sends SIGSTOP to the worker's own process group when load5 > 60, or when load1 or host CPU has been
+    > 85% for 300 s. It sends SIGCONT when load5 ≤ 55 and both are back under 85%.
+  - The runner waits before a unit while load5 > 60, rechecking every 60 s until load5 ≤ 55.
+  - Admission is load1 ≤ 60 and load5 ≤ 55 (was ≤ 51 for both), so a launch does not pause at once.
+  - No other process is ever signalled.
+- **Unchanged.** RSS ≥ 4 GiB, MemAvailable < 20 GiB, free disk < 300 GB, the 8-core tree cap and the absolute
+  deadline stay hard aborts. A paused attempt that reaches the deadline closes INCOMPLETE. Science, seeds, folds, arms,
+  members and decision rules are unchanged.
