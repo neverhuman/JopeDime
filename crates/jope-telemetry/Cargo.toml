@@ -17,13 +17,14 @@ path = "src/bin/jtel.rs"
 [features]
 default = ["parquet"]
 parquet = ["dep:arrow-array", "dep:arrow-schema", "dep:parquet"]
-python = ["dep:pyo3"]
+python = ["dep:jope-datasets", "dep:pyo3"]
 
 [dependencies]
 anyhow.workspace = true
 arrow-array = { workspace = true, optional = true }
 arrow-schema = { workspace = true, optional = true }
 clap.workspace = true
+jope-datasets = { path = "../jope-datasets", optional = true }
 nvml-wrapper.workspace = true
 parquet = { workspace = true, optional = true }
 pyo3 = { workspace = true, optional = true }

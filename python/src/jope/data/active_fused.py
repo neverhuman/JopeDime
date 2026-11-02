@@ -24,12 +24,7 @@ from typing import Any
 
 import numpy as np
 
-from ..contracts import (
-    TaskType,
-    build_binary_target_summaries,
-    build_split_view_manifest,
-    freeze_source_family_split,
-)
+from .._telemetry import build_binary_dataset_contracts, freeze_source_family_split_py
 from ..engines import EngineRouter
 from ..eval_ledger import iter_eval_regression_with_ledger
 from ..grammars import grammar_for
@@ -107,19 +102,14 @@ def build_fused_corpus(
             test_sha256 = _sha256_file(d / "test.csv") if (d / "test.csv").is_file() else None
             # The outer split does not affect view membership. Validate all five class
             # summaries before admitting the dataset to the family-disjoint split.
-            admission_manifest = build_split_view_manifest(
+            build_binary_dataset_contracts(
                 dataset=d.name,
                 source_family=source_family,
-                task=TaskType.BINARY,
                 outer_split="train",
                 row_ids=row_ids,
                 train_sha256=train_sha256,
                 test_sha256=test_sha256,
-            )
-            build_binary_target_summaries(
-                targets,
-                row_ids=row_ids,
-                split_view_manifest=admission_manifest,
+                training_targets=targets,
             )
         except (OSError, ValueError, csv.Error, json.JSONDecodeError):
             continue
@@ -137,7 +127,7 @@ def build_fused_corpus(
         dataset_hash: str(record["source_family"]) for dataset_hash, record in admitted.items()
     }
     validation_count = 248 if len(admitted) == 1_244 else round(len(admitted) * binary_val_fraction)
-    train_hashes, validation_hashes = freeze_source_family_split(
+    train_hashes, validation_hashes = freeze_source_family_split_py(
         source_families,
         train_count=len(admitted) - validation_count,
         holdout_count=validation_count,
@@ -157,21 +147,20 @@ def build_fused_corpus(
         d = record["path"]
         sig_cache[dataset_hash] = record["signature"]
         split = "validation" if dataset_hash in val_hashes else "train"
-        split_view = build_split_view_manifest(
+        contracts = build_binary_dataset_contracts(
             dataset=dataset_hash,
             source_family=source_families[dataset_hash],
-            task=TaskType.BINARY,
             outer_split="holdout" if split == "validation" else "train",
             row_ids=record["row_ids"],
             train_sha256=record["train_sha256"],
             test_sha256=record["test_sha256"],
+            training_targets=record["targets"],
         )
-        split_views[dataset_hash] = split_view
-        target_summaries[dataset_hash] = build_binary_target_summaries(
-            record["targets"],
-            row_ids=record["row_ids"],
-            split_view_manifest=split_view,
-        )
+        split_views[dataset_hash] = {
+            "manifest": contracts["manifest"],
+            "sha256": contracts["manifest_sha256"],
+        }
+        target_summaries[dataset_hash] = contracts["target_summaries"]
         for engine in engines:
             spec = grammar_for(engine)
             seen: set[str] = set()
@@ -255,7 +244,7 @@ def build_fused_corpus(
         row.embedding = sig_cache.get(row.dataset_id) or [0.0] * DATASET_SIGNATURE_DIM
         view_index = int(row.metadata["split_view_index"])
         target_summary = target_summaries[row.dataset_id][view_index]
-        row.target_embedding = list(target_summary.values)
+        row.target_embedding = list(target_summary["values"])
         actions = parse_pipeline_actions(row.canonical_genome or row.genome, grammar_for(row.engine))
         actions["task"] = "binary"
         d = binary_root / row.dataset_id
@@ -266,10 +255,10 @@ def build_fused_corpus(
                 "task_type": "binary",
                 "split": "validation" if row.dataset_id in val_hashes else "train",
                 "source_family": source_families[row.dataset_id],
-                "split_view_manifest_sha256": split_views[row.dataset_id].sha256,
+                "split_view_manifest_sha256": split_views[row.dataset_id]["sha256"],
                 "binary_target_summary_schema": "BinaryTargetSummary.v1",
-                "binary_target_summary_view_index": view_index,
-                "binary_target_summary_training_rows_hash": target_summary.training_rows_hash,
+                "binary_target_summary_view_index": target_summary["view_index"],
+                "binary_target_summary_training_rows_hash": target_summary["training_rows_hash"],
                 "vs_path": str(d / ROW_SIDECAR),
                 "train_csv": str(d / "train.csv"),
                 "test_csv": str(d / "test.csv") if (d / "test.csv").exists() else None,
@@ -290,11 +279,11 @@ def build_fused_corpus(
     views_dir.mkdir(exist_ok=True)
     for dataset_hash, summaries in target_summaries.items():
         for target_summary in summaries:
-            (summaries_dir / f"{dataset_hash}.view-{target_summary.view_index}.json").write_text(
-                json.dumps(target_summary.to_json(), sort_keys=True), encoding="utf-8"
+            (summaries_dir / f"{dataset_hash}.view-{target_summary['view_index']}.json").write_text(
+                json.dumps(target_summary, sort_keys=True), encoding="utf-8"
             )
         (views_dir / f"{dataset_hash}.json").write_text(
-            json.dumps(split_views[dataset_hash].to_json(), sort_keys=True),
+            json.dumps(split_views[dataset_hash]["manifest"], sort_keys=True),
             encoding="utf-8",
         )
 
@@ -307,7 +296,7 @@ def build_fused_corpus(
             "task": "binary",
             "source_family": source_families[dataset_hash],
             "split_view_manifest": str(views_dir / f"{dataset_hash}.json"),
-            "split_view_manifest_sha256": split_views[dataset_hash].sha256,
+            "split_view_manifest_sha256": split_views[dataset_hash]["sha256"],
             "binary_target_summaries": [
                 str(summaries_dir / f"{dataset_hash}.view-{view_index}.json") for view_index in range(5)
             ],
