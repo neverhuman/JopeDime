@@ -130,7 +130,7 @@ impl OperatorRef {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
-pub enum Expression {
+pub enum GraphExpression {
     Constant {
         value: canon::ExactF64,
     },
@@ -139,19 +139,22 @@ pub enum Expression {
     },
     Unary {
         op: UnOp,
-        argument: Box<Expression>,
+        argument: Box<GraphExpression>,
     },
     Binary {
         op: BinOp,
-        left: Box<Expression>,
-        right: Box<Expression>,
+        left: Box<GraphExpression>,
+        right: Box<GraphExpression>,
     },
     Call {
         function: Func,
-        arguments: Vec<Expression>,
+        arguments: Vec<GraphExpression>,
     },
 }
-impl Expression {
+/// Compatibility name retained for callers using the original graph IR API.
+pub type Expression = GraphExpression;
+
+impl GraphExpression {
     pub fn to_ast(&self, schema: &InputSchema, limits: &Constraints) -> Result<Expr> {
         let mut pending = vec![(self, 1)];
         let mut count = 0;
@@ -178,15 +181,15 @@ impl Expression {
                 }
             }
         }
-        fn lower(e: &Expression) -> Result<Expr> {
+        fn lower(e: &GraphExpression) -> Result<Expr> {
             Ok(match e {
-                Expression::Constant { value } => Expr::Const(value.value()?),
-                Expression::Column { column } => Expr::Var(Var::Col(column.index)),
-                Expression::Unary { op, argument } => Expr::Unary(*op, Box::new(lower(argument)?)),
-                Expression::Binary { op, left, right } => {
+                GraphExpression::Constant { value } => Expr::Const(value.value()?),
+                GraphExpression::Column { column } => Expr::Var(Var::Col(column.index)),
+                GraphExpression::Unary { op, argument } => Expr::Unary(*op, Box::new(lower(argument)?)),
+                GraphExpression::Binary { op, left, right } => {
                     Expr::Binary(*op, Box::new(lower(left)?), Box::new(lower(right)?))
                 }
-                Expression::Call {
+                GraphExpression::Call {
                     function,
                     arguments,
                 } => Expr::Call(
@@ -245,7 +248,7 @@ pub enum Node {
     },
     Scalar {
         input: usize,
-        expression: Expression,
+        expression: GraphExpression,
         affine: bool,
     },
     Stack {
@@ -768,7 +771,7 @@ impl ProgramGraph {
                             "pure feature DAG: Scalar node {index} must read the raw input"
                         ));
                     }
-                    let crate::kernel::ir::graph::Expression::Column { column } = expression else {
+                    let crate::kernel::ir::graph::GraphExpression::Column { column } = expression else {
                         return Err(format!(
                             "pure feature DAG refuses Scalar node {index}: only a bare column expression is lowered"
                         ));

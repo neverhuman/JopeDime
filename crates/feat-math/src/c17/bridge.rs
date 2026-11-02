@@ -37,22 +37,27 @@ fn shape(rows: usize, cols: usize, len: usize) -> bool {
     cols != 0 && rows.checked_mul(cols) == Some(len)
 }
 unsafe fn rows_from(ptr: *const f64, rows: usize, cols: usize) -> Vec<Vec<f64>> {
-    // SAFETY: The pointer's provenance is the caller-owned C allocation. The
-    // caller must keep one contiguous, aligned allocation of `rows * cols`
-    // initialized `f64` values live for this borrow. This helper only creates
-    // a shared slice and copies it into Rust-owned vectors; it never transfers,
-    // frees, or reallocates the C allocation, whose allocator ownership stays
-    // with the caller. Callers establish the checked product and buffer bounds.
     if rows == 0 {
         return Vec::new();
     }
-    // SAFETY: `rows > 0`, `cols > 0`, and the checked shape plus C pointer
-    // contract guarantee the caller-owned allocation's provenance, lifetime,
-    // alignment, and initialized contents for this shared borrow.
-    unsafe { std::slice::from_raw_parts(ptr, rows * cols) }
+    // SAFETY: callers validate the multiplication and pointer bounds before
+    // calling. The C allocation remains owned by its caller for this borrow.
+    unsafe { values_from(ptr, rows * cols) }
         .chunks_exact(cols)
         .map(|row| row.to_vec())
         .collect()
+}
+
+/// Copy a checked C-owned float buffer without taking ownership of its allocation.
+unsafe fn values_from(ptr: *const f64, len: usize) -> Vec<f64> {
+    // SAFETY: each caller validates `len` against its checked ABI dimensions,
+    // non-nullness and alignment. The exported functions' C contract requires
+    // `ptr` to originate from one live, contiguous allocation containing `len`
+    // initialized f64 values, readable for this call. `from_raw_parts` creates
+    // only a temporary shared borrow; `to_vec` copies into Rust's allocator.
+    // The C allocation is neither freed, reallocated, nor transferred, so its
+    // original allocator and ownership remain entirely with the C caller.
+    unsafe { std::slice::from_raw_parts(ptr, len) }.to_vec()
 }
 #[no_mangle]
 pub extern "C" fn jope_model_abi_version() -> u32 {
@@ -82,14 +87,13 @@ pub unsafe extern "C" fn jope_model_fit(
         }
         // Copy foreign memory before constructing state or touching caller output.
         // SAFETY: `shape` checked the product, `buffer` checked alignment and
-        // non-nullness, and the caller's C contract guarantees that `x` retains
-        // provenance from one live, contiguous, readable C allocation. The
-        // helper only borrows/copies it; allocation ownership stays with C.
+        // non-nullness, and the C caller supplies the live initialized array.
+        // `rows_from` copies values; allocation ownership remains with C.
         let x = unsafe { rows_from(x, rows, cols) };
-        // SAFETY: `rows > 0`, `y_len == rows`, and `buffer` checked alignment;
-        // the caller keeps `y`'s contiguous C allocation live/readable. This
-        // shared borrow is copied and never transfers or frees that allocation.
-        let y = unsafe { std::slice::from_raw_parts(y, y_len) }.to_vec();
+        // SAFETY: `y_len == rows > 0`; `buffer` checked alignment and
+        // non-nullness. The C caller keeps this initialized allocation live;
+        // `values_from` copies it without taking ownership.
+        let y = unsafe { values_from(y, y_len) };
         let model = Arc::new(model_core::C17Model::fit(&x, &y, cols));
         let mut table = handles().lock().map_err(|_| INTERNAL_ERROR)?;
         let id = table.next;
@@ -184,14 +188,13 @@ pub unsafe extern "C" fn jope_model_score(
             return Err(INVALID_ARGUMENT);
         }
         // SAFETY: `shape` checked the product, `buffer` checked alignment and
-        // non-nullness, and the caller's C contract guarantees that `x` retains
-        // provenance from one live, contiguous, readable C allocation. The
-        // helper only borrows/copies it; allocation ownership stays with C.
+        // non-nullness, and the C caller supplies the live initialized array.
+        // `rows_from` copies values; allocation ownership remains with C.
         let x = unsafe { rows_from(x, rows, cols) };
-        // SAFETY: `rows > 0`, `y_len == rows`, and `buffer` checked alignment;
-        // the caller keeps `y`'s contiguous C allocation live/readable. This
-        // shared borrow is copied and never transfers or frees that allocation.
-        let y = unsafe { std::slice::from_raw_parts(y, y_len) }.to_vec();
+        // SAFETY: `y_len == rows > 0`; `buffer` checked alignment and
+        // non-nullness. The C caller keeps this initialized allocation live;
+        // `values_from` copies it without taking ownership.
+        let y = unsafe { values_from(y, y_len) };
         let score = model.score(&x, &y);
         // SAFETY: `buffer(out_score, 1)` checked alignment/non-nullness; the
         // C caller guarantees one writable `f64` at this address.

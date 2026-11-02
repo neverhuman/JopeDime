@@ -503,7 +503,7 @@ fn publish_no_replace(partial: &Path, target: &Path) -> Result<()> {
             if let Err(err) = fs::remove_file(partial) {
                 return Err(unpublish(
                     err,
-                    format!("remove {}; that temporary remains", partial.display()),
+                    format!("remove {}; that partial file remains", partial.display()),
                     target,
                 ));
             }

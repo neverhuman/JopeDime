@@ -217,3 +217,21 @@ identity-only regeneration is bound to source commit
 the already merged Rust enum naming change in `crates/feat-math/src/full_rust.rs`;
 the recorded identity reflects the complete rebased source tree. No known-identity row is added
 because this change has no shipped receipt proving that the new identity existed.
+
+## Current identity transition: semantic campaign source names (2026-11-02)
+
+P50 renames the active one-fold evaluator adapter from `commands/exact_cv_v2.rs` to
+`commands/single_fold_proof.rs` and the evaluator implementation from `evaluation_v2.rs` to
+`campaign_evaluator.rs`. These files remain in the evaluator's hashed closure. The semantic
+renames therefore mint a new implementation identity; the identity fixture was regenerated
+against the source commit with the established `JOPE_COMPAT_FREEZE_REGENERATE=identity` proof.
+
+The implementation hash advances from
+`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` to
+`b1e0f654f710747379ecf7e852798b71150d5eec477cba16abdf7b4641874f6b`. The Cargo.lock hash
+remains `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`; the identity
+digest advances from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` to
+`41befe853ef6d31972f3126a29d501b7d97c84c6025a4b9497bf1ca628651709`. The rebaseline commit
+is `0a734502661a5e653960bb7623f4ee0bf3a14206`. No evaluator behavior is intentionally changed.
+The known-identity table remains unchanged; this lane had no qualifying shipped-receipt path to
+append for the prior current identity.

@@ -2388,7 +2388,7 @@ fn source_tree_hash() -> Result<String> {
     let mut paths = vec![
         workspace.join("Cargo.toml"),
         workspace.join("Cargo.lock"),
-        workspace.join("scripts/run_golden42_v3_max_xbabe2.sh"),
+        workspace.join("scripts/run_golden42_panel_max_xbabe2.sh"),
     ];
     for root in [workspace.join("src"), workspace.join("vendor")] {
         collect_source_files(&root, &mut paths)?;

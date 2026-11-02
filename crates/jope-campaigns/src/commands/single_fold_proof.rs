@@ -1,10 +1,10 @@
 //! Hidden command adapter for the additive one-fold V2 proof evaluator.
 
-use crate::data::read_regression_csv_bytes;
-use crate::evaluation_v2::{
+use crate::campaign_evaluator::{
     evaluate_regression_fold_v2, validate_sha256, EvaluationOutcomeV2, EvaluatorIdentityV1,
     ExplicitFoldV1, ObjectiveIdentityV1, RunContractV2, TrainOnlyRegressionView,
 };
+use crate::data::read_regression_csv_bytes;
 use anyhow::{bail, Context, Result};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};

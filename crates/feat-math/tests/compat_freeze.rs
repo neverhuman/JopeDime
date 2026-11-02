@@ -3017,7 +3017,7 @@ fn vocabulary_registry_and_lineage_pins_match() {
 // WP-0.2 (e): ADR-0004 evaluator identity inputs (rebaselined on purpose by identity changes)
 // ---------------------------------------------------------------------------------------------
 
-const EVALUATOR_SOURCE: &str = "crates/jope-campaigns/src/evaluation_v2.rs";
+const EVALUATOR_SOURCE: &str = "crates/jope-campaigns/src/campaign_evaluator.rs";
 const KNOWN_IDENTITIES: &str = "crates/jope-campaigns/known-evaluator-identities.json";
 /// How an announced surface is rebaselined: in the change that moves it, after committing it.
 fn announced_rebaseline() -> String {
@@ -3064,7 +3064,7 @@ struct IdentityInput {
     sha256: String,
 }
 
-/// `evaluation_v2.rs` `SemanticHasher`: every label and value is framed by its u64 LE length.
+/// `campaign_evaluator.rs` `SemanticHasher`: every label and value is framed by its u64 LE length.
 struct SemanticHasher(Sha256);
 
 impl SemanticHasher {
@@ -3225,7 +3225,7 @@ fn evaluator_identity_inputs_match_the_recorded_identity() {
     let fixture = EvaluatorIdentity {
         schema: "feat-math.compat-freeze.evaluator-identity.v1".to_string(),
         generated_at_sha: header_sha(Surface::Announced),
-        note: "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.".to_string(),
+        note: "A replica of campaign_evaluator.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.".to_string(),
         domain,
         inputs,
         implementation_sha256,

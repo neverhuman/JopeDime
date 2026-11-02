@@ -45,7 +45,7 @@ pub mod goertzel;
 pub use program::Program;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Error {
+pub enum KernelError {
     Syntax(String),
     Domain(String),
     Bounds(String),
@@ -57,12 +57,12 @@ pub enum Error {
     TimeLimit,
 }
 
-impl std::fmt::Display for Error {
+impl std::fmt::Display for KernelError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
     }
 }
-impl std::error::Error for Error {}
+impl std::error::Error for KernelError {}
 pub type Result<T> = std::result::Result<T, Error>;
 
 // B14: causal cumulative integration (v2 wire 60).
@@ -72,3 +72,6 @@ pub mod cumulative_integration;
 pub mod timescale_nabla;
 
 pub mod realized_path_stats;
+
+/// Compatibility alias for the domain-specific `KernelError` type.
+pub type Error = KernelError;

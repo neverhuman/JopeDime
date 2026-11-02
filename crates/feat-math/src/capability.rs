@@ -15,14 +15,14 @@ pub const LANGUAGE_INTERSECTION_EMPTY: &str = "LANGUAGE_INTERSECTION_EMPTY";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Language {
+pub enum EmitterLanguage {
     Rust,
     Python,
     Javascript,
     Typescript,
 }
 
-impl Language {
+impl EmitterLanguage {
     pub const ALL: [Self; 4] = [Self::Rust, Self::Python, Self::Javascript, Self::Typescript];
 }
 
@@ -211,6 +211,9 @@ impl fmt::Display for LanguageIntersectionEmpty {
 }
 
 impl std::error::Error for LanguageIntersectionEmpty {}
+
+/// Compatibility alias for the domain-specific `EmitterLanguage` type.
+pub type Language = EmitterLanguage;
 
 #[cfg(test)]
 mod tests {

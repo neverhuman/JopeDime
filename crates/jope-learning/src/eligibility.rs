@@ -9,13 +9,13 @@ use crate::{
 };
 use anyhow::{bail, ensure, Context, Result};
 use jope_datasets::catalog::Task;
+use jope_pipeline::evaluation_result::EvaluationResult;
 use jope_pipeline::evaluation_score::{score_predictions, Predictions, NUMERICAL_POLICY};
 use jope_pipeline::execution::{Artifact, WorkerJob, WorkerOutcome, EXECUTION_SCHEMA};
 use jope_pipeline::experiment::{
     EvaluationRequest, EvaluationStage, EvaluationStatus, ExecutionWindow, Experiment, Panel,
     PanelDataset,
 };
-use jope_pipeline::experiment_v2::EvaluationResult;
 use jope_pipeline::prepared_data::{parse_development, DevelopmentData};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -1637,11 +1637,11 @@ mod tests {
         hwm::{self, Candidate},
         record::{ComparisonContext, Cost, Evaluator, Genome, Provenance, Score, HWM_SCHEMA},
     };
+    use jope_pipeline::evaluation_result::{Consumption, RESULT_SCHEMA};
     use jope_pipeline::execution::{
         Artifact, ObservedConsumption, WorkerCommand, EXECUTION_SCHEMA,
     };
     use jope_pipeline::experiment::REQUEST_SCHEMA;
-    use jope_pipeline::experiment_v2::{Consumption, RESULT_SCHEMA};
     use serde_json::json;
     use std::path::PathBuf;
 

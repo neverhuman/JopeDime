@@ -30,14 +30,14 @@ pub enum Grammar {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Tier {
+pub enum CapabilityTier {
     Baseline,
     Experimental,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Class {
+pub enum CapabilityClass {
     Searchable { since: Grammar, tier: Tier },
     RuntimeOnlyIntentional { reason: &'static str },
     Compatibility,
@@ -45,7 +45,7 @@ pub enum Class {
     Unsupported,
 }
 
-impl Class {
+impl CapabilityClass {
     pub fn admits(self, tier: Tier) -> bool {
         matches!(
             self,
@@ -1290,6 +1290,12 @@ pub fn row_vector_v2_capability(wire: u16) -> Option<ElementCap> {
     }
     Some(ElementCap { class: Class::Searchable { since: Grammar::RowVectorV2, tier: Tier::Experimental }, fault_classes: READ.union(FaultSet::MAGNITUDE_CLAMPED).union(FaultSet::NONFINITE_SANITIZED), emitters: EmitterSupport { rust_recipe: YES, python_recipe: YES, cpp17_recipe: YES, cpp17_fitted: YES, javascript: NO_JS }, portable_twin: true, notes: "wire58, FeatureWithinRow only, prior<=0.25, deterministic preserve width, shrink boundary, stage-local BOUNDARY_DEGREE bit18; Baseline requires equal-budget promotion" })
 }
+
+/// Compatibility alias for the domain-specific `CapabilityTier` type.
+pub type Tier = CapabilityTier;
+
+/// Compatibility alias for the domain-specific `CapabilityClass` type.
+pub type Class = CapabilityClass;
 
 #[cfg(test)]
 mod tests {

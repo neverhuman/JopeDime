@@ -50,7 +50,7 @@ pub const MAX_ACTIVE_MEMBERS: usize = 12;
 /// Dataset-stat gate: a pure function of the training array (n rows, p kept
 /// columns, duplicate-row fraction). No dataset-identity dispatch.
 #[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub enum Gate {
+pub enum FeatureGate {
     Always,
     /// Active iff n >= threshold.
     NAtLeast(usize),
@@ -62,7 +62,7 @@ pub enum Gate {
     DupFracAbove(f64),
 }
 
-impl Gate {
+impl FeatureGate {
     pub fn passes(&self, n: usize, p: usize, dup_frac: f64) -> bool {
         match self {
             Gate::Always => true,
@@ -86,7 +86,7 @@ pub enum View {
 /// How a member computes: a DSL pipeline executed through `model::fit`, or
 /// the built-in duplicate-key shrunk group mean (not expressible as a pipe).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MemberKind {
+pub enum FeatureMemberKind {
     Pipe,
     GroupMean,
 }
@@ -369,6 +369,12 @@ pub fn resolve_compact(stage: &Stage) -> Result<Vec<ResolvedMember>> {
     }
     Ok(roster)
 }
+
+/// Compatibility alias for the domain-specific `FeatureGate` type.
+pub type Gate = FeatureGate;
+
+/// Compatibility alias for the domain-specific `FeatureMemberKind` type.
+pub type MemberKind = FeatureMemberKind;
 
 #[cfg(test)]
 mod tests {

@@ -21,10 +21,10 @@ mod core;
 mod data;
 // frozen, hash-pinned module; bytes immutable until unfrozen
 #[allow(dead_code, clippy::too_many_arguments, clippy::let_and_return)]
-mod evaluation_v2;
+mod campaign_evaluator;
 mod followup;
 mod genome_boost;
-mod golden42_v3;
+mod golden42_panel;
 mod ratchet;
 mod runtime;
 mod score_corpus;
@@ -1105,7 +1105,11 @@ fn main() -> Result<()> {
             if cli.kernel_version != KernelVersion::LegacyV2 {
                 bail!("verify-evaluation-v2 is pinned to the legacy-v2 evaluator");
             }
-            commands::exact_cv_v2::verify_manifest(&manifest, &cli.registry, cli.dataset.as_deref())
+            commands::single_fold_proof::verify_manifest(
+                &manifest,
+                &cli.registry,
+                cli.dataset.as_deref(),
+            )
         }
         Command::VerifyInputsBinary => verify_inputs_binary(&cli.registry),
         Command::SelectPanelBinary => {
@@ -1300,7 +1304,7 @@ fn main() -> Result<()> {
         Command::AdmitFittedBackendV1 { output } => {
             aggressive::write_fitted_backend_admission(&output)
         }
-        Command::AdmitFittedCppV3 { output } => golden42_v3::admit(&output),
+        Command::AdmitFittedCppV3 { output } => golden42_panel::admit(&output),
         Command::RunGolden42V3Max {
             run_id,
             dataset,
@@ -1312,7 +1316,7 @@ fn main() -> Result<()> {
             if cli.kernel_version != KernelVersion::AdvancedV3 {
                 bail!("run-golden42-v3-max requires --kernel-version advanced-v3");
             }
-            golden42_v3::run(
+            golden42_panel::run(
                 &cli.registry,
                 &run_id,
                 &dataset,
@@ -1322,11 +1326,11 @@ fn main() -> Result<()> {
                 resume,
             )
         }
-        Command::ValidateGolden42V3Max { run_id } => golden42_v3::validate(&run_id),
+        Command::ValidateGolden42V3Max { run_id } => golden42_panel::validate(&run_id),
         Command::Golden42V3PersistentWorker { bootstrap } => {
-            golden42_v3::persistent_worker(&bootstrap)
+            golden42_panel::persistent_worker(&bootstrap)
         }
-        Command::Golden42V3Confirm { request } => golden42_v3::confirm(&request),
+        Command::Golden42V3Confirm { request } => golden42_panel::confirm(&request),
         Command::PlanGolden42Aggressive { output } => aggressive::preflight_contract(&output),
         Command::RunGolden42Aggressive {
             run_id,

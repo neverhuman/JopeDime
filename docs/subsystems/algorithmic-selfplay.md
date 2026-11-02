@@ -26,7 +26,7 @@ This is a map of source boundaries and proposed adapters, not a claim that the 6
 
 ## Current caller facts versus future shape
 
-At C campaigns main.rs declares evaluation_v2; feat-math lib.rs exports model, kernel and evolve; bench methods imports and calls evolve_lite_race. CLI Doctor delegates to jope_bench::panel::demo::doctor, while Train dispatch is Linux-gated. The existing train source still includes a Python compatibility argument/worker; ADR-0006's direction is not proof its consumers have disappeared.
+At C campaigns main.rs declares campaign_evaluator; feat-math lib.rs exports model, kernel and evolve; bench methods imports and calls evolve_lite_race. CLI Doctor delegates to jope_bench::panel::demo::doctor, while Train dispatch is Linux-gated. The existing train source still includes a Python compatibility argument/worker; ADR-0006's direction is not proof its consumers have disappeared.
 
 The future shared-kernel, lineage-aware update, verified assessment and compact-state interfaces are governed by their individual packets and accepted dependencies. Keep old entry points available until named callers migrate under parity/identity/custody proof. Do not perform campaign/evolve/Python refactors on the first closure path.
 
@@ -38,7 +38,7 @@ The committed C listing is 5,013 Rust names with 72 ignored, not fresh execution
 
 ## Identity, archival and failure boundary
 
-Source-byte changes to evaluator inputs such as evaluation_v2.rs, evolve.rs or feat-math lib.rs require an agy-owned task-named transition even if a refactor appears behavior-preserving. Model/task-contract sources may also move lineage/HWM comparison; runtime executable and witness signed-policy identities are separate gates. Preserve frozen bytes and the committed 12-file Clover audit.
+Source-byte changes to evaluator inputs such as campaign_evaluator.rs, evolve.rs or feat-math lib.rs require an agy-owned task-named transition even if a refactor appears behavior-preserving. Model/task-contract sources may also move lineage/HWM comparison; runtime executable and witness signed-policy identities are separate gates. Preserve frozen bytes and the committed 12-file Clover audit.
 
 ARCHIVE_CANDIDATES.md contains the full seven-surface checklist and candidate register. Unknown consumers block archive. Module/feature inventories must compare before/after the proposed transition. Hash-moving changes require explicit migration and independent old replay. I53 additionally holds protected/symlink trees and filesystem obligations. This document changes none of those permissions.
 
@@ -71,7 +71,7 @@ The case table is a review/implementation contract, not a manufactured runtime r
 | `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:crates/jope-learning/src/qualify/gate.rs:32` | Existing fail-closed gate |
 | `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:crates/jope-learning/src/retention/plan.rs:1` | Dry-run outputs |
 | `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:crates/jope-learning/src/sync.rs:109` | Existing publication entry point |
-| `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:crates/jope-campaigns/src/evaluation_v2.rs:1` | Authoritative read-first file |
+| `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:crates/jope-campaigns/src/campaign_evaluator.rs:1` | Authoritative read-first file |
 | `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:AGENTS.md:1` | Authoritative read-first file |
 | `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:CLAUDE.md:1` | Authoritative read-first file |
 | `1a8a66c502ca2cede77c197b4f5b5bbc24ff398e:docs/plans/algorithmic-selfplay-20261017/tasks.json:2997` | Exact task dependencies, completion and acceptance cases |

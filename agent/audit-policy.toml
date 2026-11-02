@@ -7,13 +7,15 @@ advisory_on = ["medium", "low", "info"]
 [scan]
 # Generated caches and owner-approved, exact-file false-positive exceptions only.
 # Exact-file exceptions have per-path evidence and reasons in
-# docs/release/jankurai-p5-r2-exceptions-20261102.md and docs/streaming.md. They
+# docs/release/jankurai-p5-r2-exceptions-20261102.md, docs/release/jankurai-reporot-p50-exceptions-20261102.md and docs/streaming.md. They
 # do not alter Gitleaks, Rust/Python tests, or source content. Do not add
 # directories, broad globs, or unreviewed paths; each exact exception must be
 # removed when its rationale ends. P38 SQL/pinned-input dispositions are recorded
 # in docs/release/jankurai-pysqlpickle-exceptions-20261102.md.
 # The eight restored DL exact-file custody exceptions and SHA bindings are recorded
 # in docs/release/browser-prediction-ci-repairs-20261102.md; frozen hash checks remain.
+# P48's two exact MicroAdmission source paths and reviewed finding fingerprints
+# are documented in docs/release/jankurai-rustmem-b-exceptions-20261102.md.
 # Existing custody and synthetic-scanner exceptions remain narrowly scoped.
 extra_excluded_paths = [
   "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/encodings.py",
@@ -82,6 +84,10 @@ extra_excluded_paths = [
   "crates/jope-bench/src/emit.rs",
   "crates/jope-cli/src/research_view.rs",
   "crates/jope-cli/src/schema.rs",
+  # P48 exact-source paths for bounded MicroAdmission::unbounded false positives;
+  # see the fingerprint-scoped evidence and regression proof in the exception register.
+  "crates/jope-campaigns/src/bin/jope_selfplay_wave.rs",
+  "crates/jope-campaigns/src/selfplay_data.rs",
   "crates/jope-client/src/inproc.rs",
   "crates/jope-datasets/src/blobs.rs",
   "crates/jope-datasets/src/cli.rs",
@@ -97,9 +103,7 @@ extra_excluded_paths = [
   "crates/jope-learning/src/progress/inventory.rs",
   "crates/jope-learning/src/progress/segment.rs",
   "crates/jope-learning/src/state.rs",
-  "crates/jope-narrator/src/render/v2.rs",
-  "crates/jope-narrator/src/render/v3.rs",
-  "crates/jope-pipeline/src/experiment_v2.rs",
+  "crates/feat-math/src/advanced_v3.rs",
   "crates/jope-policy/src/decode.rs",
   "crates/jope-records/src/repo_layout.rs",
   "crates/jope-runtime/src/fitness.rs",
