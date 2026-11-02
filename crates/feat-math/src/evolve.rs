@@ -6577,7 +6577,7 @@ mod tests {
         assert_eq!(out.rung_evals[1], 0, "tiny budget must stop before rung 1");
         assert_eq!(out.rung_evals[2], 0, "tiny budget must stop before rung 2");
         if assert_wall_bound {
-            // 30s is over 5x the slowest of four valid unloaded-main samples (5.51s).
+            // 30s is 5.45x the slowest valid unloaded-main sample so far (5.51s).
             assert!(elapsed < 30.0, "race exceeded 30s on a load-guarded host");
         } else {
             eprintln!(
