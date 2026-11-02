@@ -2841,6 +2841,7 @@ dependencies = [
  "jope-paths",
  "jope-telemetry",
  "libc",
+ "memmap2",
  "nix 0.29.0",
  "postcard",
  "ratatui",
