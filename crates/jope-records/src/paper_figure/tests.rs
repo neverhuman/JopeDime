@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 const DAT: &str = "epoch loss ce\n2 1.25 0\n3 0.95 0\n4 0.9001 0\n5 0.9005 0\n6 0.9002 0\n";
 
 /// A ledger whose C26, C27 and C76 agree with `DAT` when the plateau starts at epoch 4.

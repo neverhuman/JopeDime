@@ -1,7 +1,6 @@
 use super::*;
 
 /// A snapshot and the CSV it hashes, cross-checked. Fails closed on any disagreement.
-
 pub(crate) fn load_ladder(
     p: &Paths,
     snapshot: &str,

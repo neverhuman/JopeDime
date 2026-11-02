@@ -1,13 +1,13 @@
 use super::*;
 
 pub(crate) struct SameCut {
-    deep: Value,
-    deep_rows: Vec<Dict>,
-    reports: Vec<Value>,
-    ours: Dict,
-    engines: BTreeMap<String, Dict>,
-    versions: BTreeMap<String, String>,
-    specs: Vec<Value>,
+    pub(super) deep: Value,
+    pub(super) deep_rows: Vec<Dict>,
+    pub(super) reports: Vec<Value>,
+    pub(super) ours: Dict,
+    pub(super) engines: BTreeMap<String, Dict>,
+    pub(super) versions: BTreeMap<String, String>,
+    pub(super) specs: Vec<Value>,
 }
 
 pub(crate) fn kind_of(m: &Value) -> Result<String> {

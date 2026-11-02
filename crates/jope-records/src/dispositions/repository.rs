@@ -1,3 +1,4 @@
+use super::evidence::is_one_of;
 use super::*;
 
 /// `git -C <dir> cat-file -e <commit>^{commit}`, failing as `subprocess.run(check=True)` did.

@@ -1,3 +1,4 @@
+use super::source_validation::has_unsafe_path_component;
 use super::*;
 
 /// Verify the `## Committed SVG figures` table in `docs/paper/NUMBERS_TRACE.md`:

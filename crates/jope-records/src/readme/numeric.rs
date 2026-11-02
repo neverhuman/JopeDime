@@ -15,7 +15,7 @@ pub(crate) enum Num {
 }
 
 impl Num {
-    fn of(value: &Value) -> Option<Num> {
+    pub(super) fn of(value: &Value) -> Option<Num> {
         match value {
             Value::Bool(b) => Some(Num::Int(i128::from(*b))),
             Value::Int(i) => Some(Num::Int(i128::from(*i))),
@@ -34,14 +34,14 @@ impl Num {
     /// `float(self)`: an `int` rounded to the nearest double, ties to even (what `i128 as f64`
     /// does, and CPython's `PyLong_AsDouble`), as Python converts one for `+` with a float, for a
     /// float format and for `int / int` of small operands.
-    fn as_f64(self) -> f64 {
+    pub(super) fn as_f64(self) -> f64 {
         match self {
             Num::Int(i) => i as f64,
             Num::Float(f) => f,
         }
     }
 
-    fn is_nan(self) -> bool {
+    pub(super) fn is_nan(self) -> bool {
         matches!(self, Num::Float(f) if f.is_nan())
     }
 
@@ -58,7 +58,7 @@ impl Num {
     }
 
     /// `self + value`, or the `TypeError` Python raised for a value that is not a number.
-    fn add(self, value: &Value) -> std::result::Result<Num, String> {
+    pub(super) fn add(self, value: &Value) -> std::result::Result<Num, String> {
         let other = Num::of(value).ok_or_else(|| {
             format!(
                 "TypeError: unsupported operand type(s) for +: '{}' and '{}'",
@@ -70,7 +70,7 @@ impl Num {
     }
 
     /// `str(self)`: an int's decimal digits at any size, a float's `repr`.
-    fn py_str(self) -> String {
+    pub(super) fn py_str(self) -> String {
         match self {
             Num::Int(i) => i.to_string(),
             Num::Float(f) => Value::Float(f).repr(),

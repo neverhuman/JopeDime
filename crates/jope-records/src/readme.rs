@@ -78,7 +78,7 @@ fn samecut_path(name: &str) -> String {
     format!("{SAMECUT}/{name}")
 }
 
-struct Paths {
+pub(crate) struct Paths {
     root: PathBuf,
 }
 

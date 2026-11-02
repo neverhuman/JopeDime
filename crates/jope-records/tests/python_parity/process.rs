@@ -1,3 +1,4 @@
+use super::negative::{discovered_items, negative, record};
 use super::*;
 
 fn unhex(text: &str) -> Vec<u8> {
@@ -97,7 +98,7 @@ fn materialise(case: &Value, root: &Path, dir: &Path) {
 
 /// A case's `dirs` (created), `symlinks` (`path` -> `target`, `@ROOT@` in the target replaced) and
 /// `copies` (`from` -> `to`, or `to_hex` for a name that is not UTF-8), all relative to `root`.
-fn tree_extras(case: &Value, root: &Path) {
+pub(super) fn tree_extras(case: &Value, root: &Path) {
     use std::os::unix::ffi::OsStrExt;
     let list = |key: &str| {
         case.get(key)
@@ -127,7 +128,7 @@ fn tree_extras(case: &Value, root: &Path) {
 /// A case's `modes` (`path` -> octal mode) applied under `root`, or with `restore` set back to 755.
 /// Returns whether each mode took effect for this user: a privileged user may search and list a
 /// directory whatever its mode, so a case that relies on a refused search cannot be reproduced.
-fn apply_modes(case: &Value, root: &Path, restore: bool) -> bool {
+pub(super) fn apply_modes(case: &Value, root: &Path, restore: bool) -> bool {
     use std::os::unix::fs::PermissionsExt;
     let mut effective = true;
     for entry in case

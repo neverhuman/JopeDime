@@ -46,5 +46,5 @@ pub use matrix::{
 };
 pub use scan::{check, checked_heads, evaluate, scan_tree, target_heads, Tree};
 
-use bins::{abspath, exists, rel, relpath};
+use bins::exists;
 use matrix::{committed_counts, head_of, pending_int};

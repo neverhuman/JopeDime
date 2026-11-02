@@ -2,7 +2,6 @@ use super::*;
 
 /// The `--adapter` argument that recorded this engine, rendered so a shell reads it back
 /// exactly; a token that would need quoting refuses rather than print a wrong command.
-
 pub(crate) fn adapter_flag(spec: &Value) -> Result<String> {
     // `re.compile(r"^[A-Za-z0-9_./=:+-]+$").match`: Python's `$` also matches before a final
     // newline, so a token ending in one newline passed there, and passes here.

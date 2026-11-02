@@ -1,3 +1,4 @@
+use super::discovery::relative;
 use super::*;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
@@ -54,7 +55,10 @@ fn each_unassigned_kind_fails() {
         "benchmark-source",
     ] {
         let mut discovered = recorded(&m);
-        discovered.insert(format!("new:{kind}"), Value::Dict(super::kind(kind)));
+        discovered.insert(
+            format!("new:{kind}"),
+            Value::Dict(super::discovery::kind(kind)),
+        );
         assert!(validate(&m, &discovered)
             .unwrap()
             .contains(&format!("unassigned addition: new:{kind}")));
