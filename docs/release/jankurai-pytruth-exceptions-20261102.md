@@ -15,3 +15,17 @@ outside the allowed runtime roots. It does not claim that the aggregate
 `python/` product-truth finding or the Python runtime-share evidence is fixed.
 Keep HLT-005 open until a fresh audit no longer reports the remaining
 fingerprints or an owned source boundary is implemented.
+
+## Dead Python contract duplicate removed
+
+On the t2015 source, `python/src/jope/contracts.py` had no tracked imports or
+callers outside its own definitions. Its family split, split-view and binary
+target contract implementations are now owned by `crates/jope-datasets`; the
+live fused-data path already calls that implementation through
+`jope._telemetry`. The unused 385-line Python duplicate was removed instead of
+maintaining a second implementation. The t2015 change does not alter
+`python/src/jope/data/active_fused.py` or its Rust-backed behavior.
+
+This cleanup reduces one dead Python product-tree module. It does not establish
+that either aggregate HLT-005 fingerprint has cleared; keep the cap open until
+the next applicable audit confirms the result.
