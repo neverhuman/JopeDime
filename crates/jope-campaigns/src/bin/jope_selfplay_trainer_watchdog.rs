@@ -178,15 +178,17 @@ struct Args {
 
 impl Args {
     fn label_pointer(&self) -> PathBuf {
-        self.label_pointer
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/last-ingest.json"))
+        match &self.label_pointer {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/last-ingest.json"),
+        }
     }
 
     fn corpus_pointer(&self) -> PathBuf {
-        self.corpus_pointer
-            .clone()
-            .unwrap_or_else(|| self.root.join("training/current-corpus.json"))
+        match &self.corpus_pointer {
+            Some(path) => path.clone(),
+            None => self.root.join("training/current-corpus.json"),
+        }
     }
 }
 
