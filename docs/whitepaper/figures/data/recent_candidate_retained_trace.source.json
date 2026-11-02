@@ -1,0 +1,47 @@
+{
+  "schema": "whitepaper.recent-candidate-retained-source/v1",
+  "csv_sha256": "3494e66db541d4f9713d65bbe9abfd5d18be94aa2ffadb9dd0d6aea0a3adc092",
+  "capture": {
+    "at": "2026-11-02T10:25:07.949851+00:00",
+    "rows": 500,
+    "round_window": [
+      3112,
+      3611
+    ],
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "selection": "Latest500 consecutive complete admission records also present in the live per-round audit; fixed recency rule, no outcome filtering",
+    "sources": [
+      {
+        "name": "admissions.jsonl",
+        "sha256": "e8541c4646819cd0de7e9586ca393233b4bdfb546de93dc65ea4765379ebc1e7",
+        "source_prefix": {
+          "name": "adapter_admissions.jsonl",
+          "at": "2026-11-02T10:25:07.904664+00:00",
+          "complete_prefix_bytes": 1498447,
+          "complete_prefix_sha256": "4ff51a39f409b8ac62b8fcd3bd8474a0498fdfbab7d9ea4ae4cb230176f746d3",
+          "stable_prefix_reread_verified": true,
+          "rows": 2838,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      },
+      {
+        "name": "per-round.jsonl",
+        "sha256": "ff259a7bbded366f4e2b33e8744aa8d96b0dc270e77035099dd728c612806888",
+        "source_prefix": {
+          "name": "per-round.jsonl",
+          "at": "2026-11-02T10:25:07.936397+00:00",
+          "complete_prefix_bytes": 2123434,
+          "complete_prefix_sha256": "1e506c49c70c66a11c59657694f7269e4e00885e7475a89468b8468f7dd236a9",
+          "stable_prefix_reread_verified": true,
+          "rows": 2729,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      }
+    ]
+  },
+  "source_binding": "Logged candidate/previous-best/post-decision-best scalars and decision identities; source/adapter/population/normalization closure remains unqualified",
+  "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
+  "reproduce": "python3 figures/scripts/make_candidate_retained_trace.py --recent"
+}
