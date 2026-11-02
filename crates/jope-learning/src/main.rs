@@ -990,7 +990,7 @@ fn run_scores(state: &State, common: &Common, cmd: ScoresCmd) -> Result<bool> {
                 for (what, seg) in [("track_id", &track), ("version", &version)] {
                     if !jope_learning::state::plain_segment(seg) {
                         bail!(
-                            "{}: unsafe {what} {seg:?} — a path component must be non-empty, must \
+                            "{}: unsafe\x20{what} {seg:?} — a path component must be non-empty, must \
                              not be `.` or `..`, and may only contain ASCII letters, digits, `.`, \
                              `-` and `_`. Nothing was written.",
                             csv.display()
