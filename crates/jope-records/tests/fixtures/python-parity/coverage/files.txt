@@ -537,6 +537,9 @@ crates/jope-campaigns/src/bin/jope_gpu_lane_admission.rs
 crates/jope-campaigns/src/bin/jope_hyperion_cache.rs
 crates/jope-campaigns/src/bin/jope_hyperion_gate.rs
 crates/jope-campaigns/src/bin/jope_ledger_reconciler.rs
+crates/jope-campaigns/src/bin/jope_ledger_reconciler/fill.rs
+crates/jope-campaigns/src/bin/jope_ledger_reconciler/reap.rs
+crates/jope-campaigns/src/bin/jope_ledger_reconciler/revert.rs
 crates/jope-campaigns/src/bin/jope_ops_health_check.rs
 crates/jope-campaigns/src/bin/jope_queue_control.rs
 crates/jope-campaigns/src/bin/jope_reporting.rs
