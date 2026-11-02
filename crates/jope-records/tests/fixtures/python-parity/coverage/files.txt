@@ -620,6 +620,13 @@ crates/jope-campaigns/src/paths.rs
 crates/jope-campaigns/src/ratchet/mod.rs
 crates/jope-campaigns/src/recovery_contracts.rs
 crates/jope-campaigns/src/regression_panel.rs
+crates/jope-campaigns/src/recovery_contracts/continuity.rs
+crates/jope-campaigns/src/recovery_contracts/quarantine.rs
+crates/jope-campaigns/src/recovery_contracts/rollback_v1.rs
+crates/jope-campaigns/src/recovery_contracts/rollback_v2.rs
+crates/jope-campaigns/src/recovery_contracts/rollback_v2/capsule.rs
+crates/jope-campaigns/src/recovery_contracts/rollback_v2/evidence.rs
+crates/jope-campaigns/src/recovery_contracts/rollback_v2_tests.rs
 crates/jope-campaigns/src/router_contracts_v2.rs
 crates/jope-campaigns/src/runtime.rs
 crates/jope-campaigns/src/score_corpus.rs
