@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
+        "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
+        "role": "research"
+      },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [

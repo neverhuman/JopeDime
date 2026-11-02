@@ -1,0 +1,122 @@
+{
+  "wave": "H231",
+  "status": "PREREGISTERED",
+  "authority": "gbw_2040_rd_astra.md",
+  "parent_commit": "973298e282eadfbefb159d13bfaf4d788a24c1b9",
+  "parent_sources": {
+    "research/flywheel_selfplay/h217_gated025_confirm/runner.py": "0d8bbbd39460fe5bb729e5c1f0beadff52b9dcb63224bb62b4b18d52daffe136",
+    "research/flywheel_selfplay/h217_gated025_confirm/analysis.py": "a509ff6d6f0531a6ce6a051e03aee1e3170534d939ddaa277dc983222d6f1431",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "scientific_statistics_commit": "e3c978d5d36f50a190b82543e592834b549e0844",
+  "scientific_statistics_sha256": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434",
+  "h136_recipe_path": "/home/ubuntu/jope-rescue-20260921/h231-astra/h136-recipe.py",
+  "h136_recipe_sha256": "b0eda24a960f31c52fc308f5b667f1b76c9a6a55dd0ce031898beeda4fc21072",
+  "seeds": [
+    230101,
+    230102,
+    230103
+  ],
+  "fold_seeds": {
+    "230101": 230141,
+    "230102": 230142,
+    "230103": 230143
+  },
+  "sample_seed": 230140,
+  "staging": "/home/ubuntu/jope-data/h195/inputs",
+  "arms": [
+    "R882",
+    "COSWR",
+    "G025",
+    "STACK"
+  ],
+  "primary": "STACK",
+  "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "s3_prefix": "experiments/rd_breakthrough_20261102/H231/astra-t2040/",
+  "packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.16.3",
+    "scikit-learn": "1.7.2",
+    "torch": "2.7.0",
+    "psutil": "7.1.0",
+    "boto3": "1.35.49"
+  },
+  "resources": {
+    "host": "xbabe2",
+    "cpu_only": true,
+    "affinity": [
+      2,
+      22,
+      67,
+      104
+    ],
+    "nice": 19,
+    "process_tree_rss_less_than": 4294967296,
+    "min_available_ram": 21474836480,
+    "min_free_bytes": 300000000000,
+    "output_less_than": 2000000000,
+    "load_pause_above": 60,
+    "load_resume_at_or_below": 55,
+    "load_check_seconds": 60,
+    "prereg_deadline": "2026-11-02T22:30:00Z",
+    "compute_stop": "2026-11-03T03:30:00Z",
+    "closeout_deadline": "2026-11-03T04:00:00Z",
+    "retry_allowed": false,
+    "reboot_status": "INTERRUPTED",
+    "max_disk_used_percent": 93.8,
+    "max_concurrent_waves": 4,
+    "launch_deadline": "2026-11-02T22:30:00Z"
+  },
+  "inventory": {
+    "unique_histgbm_fits": 45,
+    "logical_histgbm_fit_uses": 60,
+    "adapter_cells": 15,
+    "updates_per_adapter": 40,
+    "total_adapter_updates": 600,
+    "smoke": "First4HistGBMs+first40-updateCOSWRcell; FIT-only, reused in fixed primary inventory; no extra fit/update"
+  },
+  "best_match_jaccard": 0.18890537919018224,
+  "decision": {
+    "primary": "median_gain>.002+1e-12,LCB95>1e-12,harm<=.1,atleast2positive_seeds>1e-12",
+    "co_primary": "DLVal contextmean gain>.002+1e-12 andfamilyclusterLCB95>1e-12",
+    "advance": "both endpoints pass",
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 230150,
+    "elo_draws": 1000,
+    "elo_seed": 230151,
+    "plateau_seed": 230152
+  },
+  "source_sha256": {
+    "provenance.json": "02be59a496ed6b5b2619bb961ec2d000756b5d5104afd8e4c0e7e9ef825d69f4",
+    "gate.py": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e",
+    "analysis.py": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
+    "PREREG.md": "b3c632dcd90dff71e8e8f2111e0c503539d6a9c3dd2b2efaf0de39850593fbb1",
+    "monitor.py": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
+    "fold_manifest.json": "8cb3f1e2488d235155b1c7fd6f93e236e3f9596d398bb81500645804073bd446",
+    "test_h231.py": "fad020a5bcb243b2d374a27cc9348b612840370cfc2e0309ac85fa6b39f83f5c",
+    "README.md": "5073fe3971f6137eec7d34aee67fe19c479a7ea40e1b41dffe92bf52316ebe30",
+    "runner.py": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e"
+  },
+  "predecessor_commit": "0d7388b1aaf30629c673a40ab551a382cf939b22",
+  "predecessor_closeout": "1d42b99e1359006a209425094201a44301d040d2",
+  "predecessor_outcomes": false,
+  "changes": [
+    "raw program_sha256 normalization to internal pids",
+    "raw NPZ regression test",
+    "disk-used threshold 93.8% and four-wave admission"
+  ],
+  "same_folds_as_H230": true,
+  "amendments": [
+    {
+      "id": "A1",
+      "utc": "2026-11-02T20:59:58.474906+00:00",
+      "authority": "hw_t2100_astra_h231_merge.md",
+      "authority_sha256": "444faac325d6c0e992bfed5d373e2f2a044529ed53c81280a22adc5670c01bdc",
+      "scope": "Local-check admin squash admission; merge/launch22:30Z; no scientific change",
+      "before_any_fit": true
+    }
+  ]
+}
