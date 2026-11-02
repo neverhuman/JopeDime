@@ -9,12 +9,15 @@ pub const ARTIFACT_SCHEMA: &str = "battle-artifact-v2";
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum TaskKind {
+pub enum AdvancedV3TaskKind {
     Regression,
     Binary,
     Timeseries,
     Multiclass,
 }
+
+/// Backward-compatible name for the advanced-v3 task classification.
+pub type TaskKind = AdvancedV3TaskKind;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -36,13 +39,13 @@ pub enum Objective {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TaskSpec {
-    pub kind: TaskKind,
+    pub kind: AdvancedV3TaskKind,
     pub objective: Objective,
 }
 
 impl TaskSpec {
     pub(crate) fn ordered_axis_mode(&self, schema: &DataSchema) -> TaskMode {
-        if self.kind == TaskKind::Timeseries {
+        if self.kind == AdvancedV3TaskKind::Timeseries {
             TaskMode::Forecasting
         } else if matches!(schema.row_semantics, RowSemantics::Iid) {
             TaskMode::IID
@@ -71,7 +74,7 @@ impl TaskSpec {
 
     pub fn regression(objective: Objective) -> Result<Self> {
         let task = Self {
-            kind: TaskKind::Regression,
+            kind: AdvancedV3TaskKind::Regression,
             objective,
         };
         task.validate()?;
@@ -80,7 +83,7 @@ impl TaskSpec {
 
     pub fn binary(objective: Objective) -> Result<Self> {
         let task = Self {
-            kind: TaskKind::Binary,
+            kind: AdvancedV3TaskKind::Binary,
             objective,
         };
         task.validate()?;
@@ -89,7 +92,7 @@ impl TaskSpec {
 
     pub fn timeseries(objective: Objective) -> Result<Self> {
         let task = Self {
-            kind: TaskKind::Timeseries,
+            kind: AdvancedV3TaskKind::Timeseries,
             objective,
         };
         task.validate()?;
@@ -98,7 +101,7 @@ impl TaskSpec {
 
     pub fn multiclass(objective: Objective) -> Result<Self> {
         let task = Self {
-            kind: TaskKind::Multiclass,
+            kind: AdvancedV3TaskKind::Multiclass,
             objective,
         };
         task.validate()?;
@@ -107,7 +110,7 @@ impl TaskSpec {
 
     pub fn validate(&self) -> Result<()> {
         let valid = match self.kind {
-            TaskKind::Regression | TaskKind::Timeseries => matches!(
+            AdvancedV3TaskKind::Regression | AdvancedV3TaskKind::Timeseries => matches!(
                 self.objective,
                 Objective::SquaredError
                     | Objective::Huber
@@ -115,7 +118,7 @@ impl TaskSpec {
                     | Objective::Rmse
                     | Objective::Mae
             ),
-            TaskKind::Binary => matches!(
+            AdvancedV3TaskKind::Binary => matches!(
                 self.objective,
                 Objective::LogLoss
                     | Objective::RocAuc
@@ -125,7 +128,7 @@ impl TaskSpec {
                     | Objective::BalancedAccuracy
                     | Objective::F1
             ),
-            TaskKind::Multiclass => {
+            AdvancedV3TaskKind::Multiclass => {
                 matches!(self.objective, Objective::MacroF1 | Objective::Accuracy)
             }
         };
@@ -150,7 +153,7 @@ impl TaskSpec {
             Objective::RocAuc => auc(y, predictions),
             Objective::PrAuc => average_precision(y, predictions),
             Objective::BrierScore => -brier(y, predictions),
-            Objective::Accuracy if self.kind == TaskKind::Multiclass => {
+            Objective::Accuracy if self.kind == AdvancedV3TaskKind::Multiclass => {
                 multiclass_accuracy(y, predictions)
             }
             Objective::Accuracy => accuracy_at(y, predictions, threshold),

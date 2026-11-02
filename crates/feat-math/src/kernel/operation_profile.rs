@@ -1,6 +1,6 @@
 //! Successor operation profile (MR07, MR12, MR14). A read-only join from `registry_v2`
 //! entries to the capability descriptors, native/challenger policy masks, evaluators,
-//! and emitters that govern them, plus successor-only parameter bounds (`ParamDomain::UnitInterval`).
+//! and emitters that govern them, plus successor-only parameter bounds (`OperationBoundDomain::UnitInterval`).
 //! Nothing here writes into `registry_v2`, so its source and canonical hashes are unchanged.
 
 use super::capabilities::{op_capability, Kernel2Use, Support, FITTED_HEAD_ROWS, FITTED_OP_ROWS};
@@ -10,12 +10,14 @@ use serde::{Deserialize, Serialize};
 /// Successor parameter domain classification (MR14).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum ParamDomain {
+pub enum OperationBoundDomain {
     UnitInterval,
     BoundedFloat,
 }
 
-impl ParamDomain {
+pub type ParamDomain = OperationBoundDomain;
+
+impl OperationBoundDomain {
     pub fn contains(self, value: f64, lo: f64, hi: f64) -> bool {
         value.is_finite()
             && match self {
@@ -30,7 +32,7 @@ impl ParamDomain {
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ParamBound {
     pub name: &'static str,
-    pub domain: ParamDomain,
+    pub domain: OperationBoundDomain,
     pub lo: f64,
     pub hi: f64,
 }
@@ -39,7 +41,7 @@ const SUCCESSOR_BOUNDS: &[(&str, ParamBound)] = &[(
     "elasticnet",
     ParamBound {
         name: "l1_ratio",
-        domain: ParamDomain::UnitInterval,
+        domain: OperationBoundDomain::UnitInterval,
         lo: 0.0,
         hi: 1.0,
     },

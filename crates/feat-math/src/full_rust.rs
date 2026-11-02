@@ -87,17 +87,19 @@ pub enum OperationKind {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum ParamDomain {
+pub enum FullRustParamDomain {
     Numeric(Vec<ParamValue>),
     Categorical(Vec<&'static str>),
     Boolean,
     Expression,
 }
 
+pub type ParamDomain = FullRustParamDomain;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct ParamSchema {
     pub name: &'static str,
-    pub domain: ParamDomain,
+    pub domain: FullRustParamDomain,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -123,29 +125,29 @@ pub struct EvolvedGenome {
     pub rust_source_len: usize,
 }
 
-fn ints(values: &[i64]) -> ParamDomain {
-    ParamDomain::Numeric(values.iter().copied().map(ParamValue::Int).collect())
+fn ints(values: &[i64]) -> FullRustParamDomain {
+    FullRustParamDomain::Numeric(values.iter().copied().map(ParamValue::Int).collect())
 }
 
-fn floats(values: &[f64]) -> ParamDomain {
-    ParamDomain::Numeric(values.iter().copied().map(ParamValue::Float).collect())
+fn floats(values: &[f64]) -> FullRustParamDomain {
+    FullRustParamDomain::Numeric(values.iter().copied().map(ParamValue::Float).collect())
 }
 
-fn numeric(name: &'static str, domain: ParamDomain) -> ParamSchema {
+fn numeric(name: &'static str, domain: FullRustParamDomain) -> ParamSchema {
     ParamSchema { name, domain }
 }
 
 fn boolean(name: &'static str) -> ParamSchema {
     ParamSchema {
         name,
-        domain: ParamDomain::Boolean,
+        domain: FullRustParamDomain::Boolean,
     }
 }
 
 fn categorical(name: &'static str, values: Vec<&'static str>) -> ParamSchema {
     ParamSchema {
         name,
-        domain: ParamDomain::Categorical(values),
+        domain: FullRustParamDomain::Categorical(values),
     }
 }
 
@@ -194,7 +196,7 @@ pub fn operation_schemas() -> Vec<OperationSchema> {
             ],
             "map" | "derive" => vec![ParamSchema {
                 name: "expr",
-                domain: ParamDomain::Expression,
+                domain: FullRustParamDomain::Expression,
             }],
             _ => Vec::new(),
         };
@@ -760,18 +762,20 @@ fn schema_for(op: &str) -> OperationSchema {
         .expect("canonical operation has a schema")
 }
 
-fn random_param(rng: &mut Pcg32, domain: &ParamDomain, feature_count: usize) -> ParamValue {
+fn random_param(rng: &mut Pcg32, domain: &FullRustParamDomain, feature_count: usize) -> ParamValue {
     match domain {
-        ParamDomain::Numeric(values) => choice(rng, values).clone(),
-        ParamDomain::Categorical(values) => ParamValue::Str((*choice(rng, values)).to_string()),
-        ParamDomain::Boolean => ParamValue::Bool(rng.next_u32() & 1 == 1),
-        ParamDomain::Expression => ParamValue::Str(random_expression(rng, feature_count)),
+        FullRustParamDomain::Numeric(values) => choice(rng, values).clone(),
+        FullRustParamDomain::Categorical(values) => {
+            ParamValue::Str((*choice(rng, values)).to_string())
+        }
+        FullRustParamDomain::Boolean => ParamValue::Bool(rng.next_u32() & 1 == 1),
+        FullRustParamDomain::Expression => ParamValue::Str(random_expression(rng, feature_count)),
     }
 }
 
 fn random_param_expanded(
     rng: &mut Pcg32,
-    domain: &ParamDomain,
+    domain: &FullRustParamDomain,
     feature_count: usize,
     op: &str,
     param: &str,
@@ -780,7 +784,7 @@ fn random_param_expanded(
         return ParamValue::Str((*choice(rng, &VALID_TARGET_KINDS)).to_string());
     }
     match domain {
-        ParamDomain::Expression => {
+        FullRustParamDomain::Expression => {
             ParamValue::Str(random_expression_expanded(rng, feature_count, op == "map"))
         }
         _ => random_param(rng, domain, feature_count),

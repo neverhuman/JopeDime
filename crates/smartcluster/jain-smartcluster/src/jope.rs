@@ -20,7 +20,7 @@ pub const MAX_MANIFEST_BYTES: u64 = 1024 * 1024;
 /// No executable, shell, environment override, or free-form argv is accepted.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum TaskKind {
+pub enum SmartclusterTaskKind {
     GpSearch,
     Continuation,
     Packing,
@@ -29,7 +29,9 @@ pub enum TaskKind {
     ResidentGpu,
 }
 
-impl TaskKind {
+pub type TaskKind = SmartclusterTaskKind;
+
+impl SmartclusterTaskKind {
     pub const fn service(self) -> &'static str {
         match self {
             Self::GpSearch => "jope-gp-search",
@@ -49,7 +51,7 @@ pub struct TaskManifest {
     pub run: String,
     pub generation: u64,
     pub task_id: String,
-    pub kind: TaskKind,
+    pub kind: SmartclusterTaskKind,
     pub input_manifest_sha256: String,
     pub dependencies: BTreeMap<String, String>,
     pub parent_checkpoint_sha256: Option<String>,
@@ -189,11 +191,11 @@ impl TaskManifest {
         };
         retry.validate()?;
         match (self.kind, self.resources.gpu, self.checkpoint_allowance_ms) {
-            (TaskKind::ResidentGpu, Some(gpu), Some(allowance))
+            (SmartclusterTaskKind::ResidentGpu, Some(gpu), Some(allowance))
                 if gpu.count == 1 && gpu.mode == GpuMode::Exclusive
                     && allowance > 0 && allowance <= self.deadline.as_unix_millis() - now.as_unix_millis()
                     && self.parent_checkpoint_sha256.is_some() && self.corpus_sha256.is_some() => (),
-            (TaskKind::ResidentGpu, _, _) => return Err(invalid("resident", "requires one exclusive GPU, parent/corpus bindings and an explicit checkpoint allowance within the deadline")),
+            (SmartclusterTaskKind::ResidentGpu, _, _) => return Err(invalid("resident", "requires one exclusive GPU, parent/corpus bindings and an explicit checkpoint allowance within the deadline")),
             (_, None, None) => (),
             _ => return Err(invalid("resources", "only the resident service may allocate a GPU or checkpoint channel")),
         }
@@ -318,7 +320,7 @@ mod tests {
             run: "xbabe2-60000".into(),
             generation: 1,
             task_id: "generation-1/gp-1".into(),
-            kind: TaskKind::GpSearch,
+            kind: SmartclusterTaskKind::GpSearch,
             input_manifest_sha256: "a".repeat(64),
             dependencies: BTreeMap::from([("input".into(), "b".repeat(64))]),
             parent_checkpoint_sha256: None,
@@ -369,7 +371,7 @@ mod tests {
     #[test]
     fn resident_requires_exclusive_gpu_and_explicit_checkpoint_budget() {
         let mut task = fixture();
-        task.kind = TaskKind::ResidentGpu;
+        task.kind = SmartclusterTaskKind::ResidentGpu;
         assert!(task.validate_at(Timestamp::from(1)).is_err());
         task.resources.gpu = Some(GpuRequest {
             count: 1,

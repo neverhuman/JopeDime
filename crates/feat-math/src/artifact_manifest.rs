@@ -555,7 +555,7 @@ impl ArtifactManifestV3 {
                 .iter()
                 .all(|t| matches!(t.state, TargetState::Supported { .. }))
     }
-    pub fn envelope_bytes(&self, domain: Domain) -> Result<Vec<u8>> {
+    pub fn envelope_bytes(&self, domain: ArtifactDomain) -> Result<Vec<u8>> {
         self.validate()?;
         let payload = canonical(self)?;
         canonical(&ArtifactEnvelope {
@@ -574,11 +574,13 @@ impl ArtifactManifestV3 {
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Domain {
+pub enum ArtifactDomain {
     Native,
     Inference,
     Storage,
 }
+
+pub type Domain = ArtifactDomain;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct OwnId {
@@ -591,7 +593,7 @@ struct OwnId {
 #[serde(deny_unknown_fields)]
 struct ArtifactEnvelope {
     envelope_schema: String,
-    domain: Domain,
+    domain: ArtifactDomain,
     schema_id: String,
     own_id: OwnId,
     payload: ArtifactManifestV3,
