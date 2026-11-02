@@ -3132,16 +3132,32 @@ pub fn build_status(root: &Path) -> Result<Value> {
         }
         services.insert(service.to_owned(), state);
     }
-    let queue_result = services
-        .get("queue")
-        .and_then(|value| value.get("result"))
-        .cloned()
-        .unwrap_or_else(|| json!({}));
-    let reserve = services
+    let (queue_result, queue_result_available) =
+        match services.get("queue").and_then(|value| value.get("result")) {
+            Some(Value::Object(result)) => (Value::Object(result.clone()), true),
+            Some(_) => bail!("queue service result must be a JSON object"),
+            None => {
+                alerts.insert("queue:result_unavailable".to_owned());
+                (Value::Object(Map::new()), false)
+            }
+        };
+    let (mut reserve, reserve_result_available) = match services
         .get("reserve")
         .and_then(|value| value.get("result"))
-        .cloned()
-        .unwrap_or_else(|| json!({}));
+    {
+        Some(Value::Object(result)) => (Value::Object(result.clone()), true),
+        Some(_) => bail!("reserve service result must be a JSON object"),
+        None => {
+            alerts.insert("reserve:result_unavailable".to_owned());
+            (Value::Object(Map::new()), false)
+        }
+    };
+    if let Some(reserve) = reserve.as_object_mut() {
+        reserve.insert(
+            "result_available".to_owned(),
+            json!(reserve_result_available),
+        );
+    }
     let useful_depth = queue_result
         .get("useful_depth_after")
         .or_else(|| queue_result.get("useful_depth"))
@@ -3155,25 +3171,27 @@ pub fn build_status(root: &Path) -> Result<Value> {
         .get("queued_hard_cap")
         .and_then(Value::as_i64)
         .unwrap_or(512);
-    if useful_depth < target {
+    if queue_result_available && useful_depth < target {
         alerts.insert("queue:below_fresh_horizon".to_owned());
     }
-    if useful_depth > hard_cap {
+    if queue_result_available && useful_depth > hard_cap {
         alerts.insert("queue:above_hard_cap".to_owned());
     }
-    if queue_result
-        .get("maximum_queue_age_seconds")
-        .and_then(Value::as_f64)
-        .unwrap_or(0.0)
-        > 1_800.0
+    if queue_result_available
+        && queue_result
+            .get("maximum_queue_age_seconds")
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0)
+            > 1_800.0
     {
         alerts.insert("queue:older_than_30_minutes".to_owned());
     }
-    if reserve
-        .get("ready_after")
-        .and_then(Value::as_i64)
-        .unwrap_or(0)
-        > target
+    if reserve_result_available
+        && reserve
+            .get("ready_after")
+            .and_then(Value::as_i64)
+            .unwrap_or(0)
+            > target
     {
         alerts.insert("reserve:above_one_launch_ready_horizon".to_owned());
     }
@@ -3218,6 +3236,7 @@ pub fn build_status(root: &Path) -> Result<Value> {
     let queue_object = queue
         .as_object_mut()
         .context("queue service result is not an object")?;
+    queue_object.insert("result_available".to_owned(), json!(queue_result_available));
     queue_object.insert("queued_target".to_owned(), json!(target));
     queue_object.insert("queued_hard_cap".to_owned(), json!(hard_cap));
     queue_object.insert("useful_depth".to_owned(), json!(useful_depth));
