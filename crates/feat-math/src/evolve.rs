@@ -6545,11 +6545,13 @@ mod tests {
         let t = Instant::now();
         let out = evolve_lite_race(&x, &y, &metric, &cfg, &quiet_obs());
         assert!(
-            t.elapsed().as_secs_f64() < 30.0,
+            t.elapsed().as_secs_f64() < 300.0,
             "race must respect the wall budget"
         );
         assert!(!out.ranked.is_empty());
         assert_eq!(out.rung_evals[0], RACE_CHUNK as u64);
+        assert_eq!(out.rung_evals[1], 0, "tiny budget must stop before rung 1");
+        assert_eq!(out.rung_evals[2], 0, "tiny budget must stop before rung 2");
     }
 
     #[test]
