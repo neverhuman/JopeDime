@@ -3,9 +3,9 @@ use std::io;
 use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 use std::process::Stdio;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc as std_mpsc;
-use std::sync::Arc;
 use std::time::Duration;
 
 use nvml_wrapper::bitmasks::event::EventTypes;
@@ -24,18 +24,14 @@ const VRAM_HEADROOM_PERCENT: u64 = 10;
 const MEBIBYTE: u64 = 1024 * 1024;
 
 mod idle;
-pub(crate) use idle::qualified_idle_usage;
 pub use idle::QualifiedIdleBaseline;
+pub(crate) use idle::qualified_idle_usage;
 
 mod inventory;
 pub use inventory::{GpuDevice, GpuInventory, GpuProcess};
-#[cfg(test)]
-pub(super) use inventory::{is_visible, parse_visible_devices};
 
 mod mps;
-pub use mps::{mps_client_matches_pids, MpsCapability, MpsClient, MpsClientLimits, MpsController};
-#[cfg(test)]
-pub(super) use mps::{compute_percent, format_vram_limits, parse_ps, parse_termination_response};
+pub use mps::{MpsCapability, MpsClient, MpsClientLimits, MpsController, mps_client_matches_pids};
 
 mod events;
 pub use events::{GpuEvent, GpuEventKind, GpuEventMonitor};

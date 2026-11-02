@@ -26,8 +26,6 @@ use tokio::time::sleep;
 const SERVICE: &str = "jope-resident-gpu";
 const WAIT: Duration = Duration::from_secs(30);
 
-use lease_tests::populated;
-
 // Safe raw-FD socket APIs keep the fixture compatible with workspace unsafe_code=deny.
 struct Control(i32);
 impl Read for Control {
