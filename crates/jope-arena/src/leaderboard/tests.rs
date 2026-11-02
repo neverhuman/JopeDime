@@ -1,9 +1,6 @@
 use super::*;
 use crate::scores::parse_scores;
 
-use super::*;
-use crate::scores::parse_scores;
-
 fn row(dataset: &str, method: &str, value: &str, status: &str) -> String {
     valid_row(dataset, method, value, status, "True")
 }
