@@ -5,7 +5,8 @@ entry, never a network/authentication error. A result wrapper is accepted only
 after every required object is fetched at its recorded S3 VersionId and checked.
 This module does not claim to be wired into a trainer merely by being imported.
 """
-from dataclasses import asdict,dataclass
+import dataclasses
+from dataclasses import dataclass
 import hashlib,json,math,struct,time
 import numpy as np
 from .augmentation import array_sha256
@@ -26,7 +27,7 @@ def request_identity(context,program):
     need(type(context)is Context,'exact typed context required')
     need(context.task=='regression' and context.metric=='rmse' and context.direction=='minimize','S1 gate only supports regression/RMSE/minimize')
     need(type(program)is str and 0<len(program.encode())<=65536,'bounded canonical DSL required')
-    return digest({'schema':'jope.program-evaluation-key/v1','context':asdict(context),'program_sha256':bytes_sha(program.encode())})
+    return digest({'schema':'jope.program-evaluation-key/v1','context':dataclasses.asdict(context),'program_sha256':bytes_sha(program.encode())})
 
 def object_bytes(store,ref):
     need(type(ref)is dict and set(ref)=={'bucket','key','version_id','sha256','bytes'},'exact versioned object reference required')
@@ -41,7 +42,7 @@ def object_bytes(store,ref):
     return body
 
 def verified_measurement(store,context,program,entry):
-    need(entry['schema']==SCHEMA and entry['context']==asdict(context),'score context/evaluator/target/split mismatch')
+    need(entry['schema']==SCHEMA and entry['context']==dataclasses.asdict(context),'score context/evaluator/target/split mismatch')
     key=request_identity(context,program);ph=bytes_sha(program.encode())
     need(entry['evaluation_key']==key and entry['program_sha256']==ph,'program identity mismatch')
     need(entry['status']=='completed' and entry['measurement']=='executed','completed measured result required')
@@ -116,7 +117,7 @@ class ProgramGate:
         # Lookup errors propagate: failure to read S3 is not evidence of novelty.
         entry=self.store.lookup(key)
         if entry is not None:return GateResult('ready',key,verified_measurement(self.store,context,program,entry))
-        payload={'schema':'jope.flywheel-evaluate-request/v1','evaluation_key':key,'context':asdict(context),
+        payload={'schema':'jope.flywheel-evaluate-request/v1','evaluation_key':key,'context':dataclasses.asdict(context),
                  'program':program,'program_sha256':bytes_sha(program.encode()),'backend':'local_lambda',
                  'require_rust_execution_parity':True,'require_versioned_s3_publication':True}
         self.queue.enqueue_many([
