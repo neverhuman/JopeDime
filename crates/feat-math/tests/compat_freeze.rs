@@ -2722,7 +2722,7 @@ const FROZEN_FILES: &[(&str, &str)] = &[
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.py.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.rs.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256", EMITTED_PIN_WHY),
-    ("crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp", "the frozen C++ parity oracle identity recorded in fitted containers (runtime_source_sha256)"),
+    ("crates/feat-math/cpp/fitted_runtime.cpp", "the fitted C++ runtime source identity retained as a test-only parity oracle (runtime_source_sha256)"),
 ];
 
 #[derive(Debug, Serialize, Deserialize)]
