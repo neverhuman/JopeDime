@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "P66 changes unsupported blend-kind failures to expose a typed error. This changes the hashed feat-math implementation and jope-engine manifest source pins, while leaving evaluator ABI, DSL ABI, Cargo.lock, known-identity table and behavior fixtures unchanged. Identity fixtures are regenerated from the committed source tree; no shipped receipt or known-identity row is claimed.",
+  "plan_reference": "P66 unsupported blend-kind error typing; ADR-0004 identity-only procedure",
+  "source_commit": "ccbd0cfaf3edaee109f648883a0e2c37f57675a6",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "834ea40b7f111911cf1375813e28339bd6c8fc202c9326b8a496036457a5616e",
+      "after": "946e9098242f337b043e7dbfe2372659e21cd0fa296292574452e14fd6ad8b8b"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "a5f06e9dce6cd26228d4864ec35cc98584d2dd85ed168281222d60cdf03f2ce1",
+      "after": "83bc856eb18df6985a656aa4394fec6e107b6eb5de416fc884e5573003cba5fb"
+    }
+  ]
+}

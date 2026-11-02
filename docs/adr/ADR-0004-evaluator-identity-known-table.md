@@ -235,3 +235,23 @@ digest advances from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e
 is `0a734502661a5e653960bb7623f4ee0bf3a14206`. No evaluator behavior is intentionally changed.
 The known-identity table remains unchanged; this lane had no qualifying shipped-receipt path to
 append for the prior current identity.
+
+## Current identity transition: P42 evaluator source paths and P66 typed error (2026-11-02)
+
+The merged P42 (#1998) evaluator rename changed the labels and paths in the implementation
+hash closure, but its compatibility fixture was not regenerated. The new
+`reporot_evaluator_fixture_paths_identity_chain.v1.json` records the identity-only bridge from
+the P21 fixture to a regeneration bound to P42 source commit
+`d10a4a32dc324f6dd44d36c3aa9d07bba4fb2ad7`. Its implementation hash is
+`42922a8abb695246512b1719a2edd6a52b29b8f3089fac988f90cc9869967e11`, with identity digest
+`7e1d14fdbe2be226c56be91f3ed0cbc43f6b7b77cf4e6171c48e5b274fe864a1`.
+
+P66 makes unsupported blend-kind failures expose a typed error. The source change advances the
+implementation hash to `fc09526e5a60ea80968355957d43da364285c250aa21dc71dcb47087c0977163`
+and identity digest to `647e126ba7a1f26b18ffe7c4b7a2116b478938a88d096b4fe65bbe65207fc052`.
+The P66 rebaseline also updates the two recorded `jope-engine/src/manifest.rs` lineage pins to
+`e9df1f454b5f2e303edf653f2b0d2b4cd600235c31fb800de976a96576c3510c`. Evaluator ABI, DSL ABI,
+Cargo.lock, the known-identity table and behavioral compatibility fixtures are unchanged. Both
+identity transitions are recorded in
+`deadlang_unsupported_blend_identity_rebaseline.v1.json`; no shipped receipt or known-identity
+row is claimed.

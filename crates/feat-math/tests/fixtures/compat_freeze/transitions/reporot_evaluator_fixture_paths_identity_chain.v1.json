@@ -1,0 +1,13 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "P42 (#1998) renamed hashed evaluator source labels and paths. The earlier P21 identity fixture consequently no longer matched the source closure; this bridge records the accurately regenerated identity for the #1998 source tree. No evaluator behavior or known identity row changes.",
+  "plan_reference": "P42 semantic evaluator source rename; ADR-0004 identity-only procedure",
+  "source_commit": "d10a4a32dc324f6dd44d36c3aa9d07bba4fb2ad7",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "e6c388f6be76a490b90cae9fbc9cd47a9a1502962ace42ef3ecdd8f0d6233869",
+      "after": "834ea40b7f111911cf1375813e28339bd6c8fc202c9326b8a496036457a5616e"
+    }
+  ]
+}
