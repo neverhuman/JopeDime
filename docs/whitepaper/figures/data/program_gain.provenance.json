@@ -2,7 +2,7 @@
   "schema": "whitepaper.program-gain-figure/v1",
   "input_csv_sha256": "3754dc2b22a5e1ee08a3881705504cc7afea0a4aea9795de54417a44ff19d6ef",
   "source_receipt_sha256": "59d33d96806ee92ade3fc3b4342505d37f8d6c7fb1a948736517d18702e7d1ab",
-  "generator_sha256": "90c508fc9881c11371e8559fb5ede3457ddcf009d54d56b9e07d0eecef2a5d5c",
+  "generator_sha256": "495d88bcd2530d3557317f0b5ca4d3163b23d87de4e4320e70932193ab8e45e2",
   "figure_sha256": "006b12227c048994d9f5108f626c6cab6941e028d4177fd89403960e7a1c0639",
   "round_window": [
     3656,

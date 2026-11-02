@@ -117,5 +117,131 @@ def main():
     print(json.dumps(facts))
 
 
+def rolling_admissions():
+    """Plot full trailing windows from a separately captured admission prefix."""
+    data = FIGURES / "data/rolling_admissions.csv"
+    receipt = FIGURES / "data/rolling_admissions.source.json"
+    checksum = data.with_suffix(".csv.sha256")
+    output = FIGURES / "fig_fw_rolling_admissions.pdf"
+    provenance = FIGURES / "data/rolling_admissions.provenance.json"
+    source = json.loads(receipt.read_text())
+    capture = source["capture"]
+    capture_hash = source["csv_sha256"]
+    assert sha(data) == capture_hash
+    assert checksum.read_text().split() == [capture_hash, data.name]
+    with data.open() as stream:
+        rows = list(csv.DictReader(stream))
+    assert len(rows) == capture["rows"] == 1000
+    rounds = [int(r["round"]) for r in rows]
+    assert rounds == list(range(rounds[0], rounds[-1] + 1))
+    assert [rounds[0], rounds[-1]] == capture["round_window"]
+    assert capture["rolling_window"] == 100
+    assert capture["all_selected_per_round_scalars_match"]
+    assert capture["all_retained_summaries_match"]
+    assert {r["evaluation_identity_sha256"] for r in rows} == {
+        capture["evaluation_identity_sha256"]
+    }
+    accepted, gains, ties = [], [], []
+    last_best = last_identity = None
+    for row in rows:
+        candidate, previous, best = [
+            Decimal(row[k])
+            for k in [
+                "candidate_validation_utility",
+                "previous_best_validation_utility",
+                "retained_best_validation_utility",
+            ]
+        ]
+        assert all(v.is_finite() for v in [candidate, previous, best])
+        take = int(row["adapter_accepted"])
+        identity = int(row["reported_best_round"])
+        assert take in (0, 1) and take == int(candidate >= previous)
+        assert best == (candidate if take else previous)
+        if last_best is not None:
+            assert previous == last_best
+            assert take or identity == last_identity
+        if take:
+            assert identity == int(row["round"])
+            (gains if candidate > previous else ties).append(int(row["round"]))
+        accepted.append(take)
+        last_best, last_identity = best, identity
+    windows = []
+    for end in range(99, len(rows)):
+        count = sum(accepted[end - 99 : end + 1])
+        windows.append(
+            dict(
+                first_round=rounds[end - 99],
+                last_round=rounds[end],
+                observed_rounds=100,
+                accepted=count,
+                rejected=100 - count,
+            )
+        )
+    ends = [w["last_round"] for w in windows]
+    admissions = [w["accepted"] for w in windows]
+    rejections = [w["rejected"] for w in windows]
+    plt.rcParams.update(
+        {
+            "font.family": "serif",
+            "font.size": 8,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "pdf.fonttype": 42,
+        }
+    )
+    fig, axes = plt.subplots(2, 1, figsize=(3.25, 3.25), sharex=True)
+    for ax, values, title, color in zip(
+        axes,
+        [admissions, rejections],
+        ["(a) Accepted", "(b) Rejected"],
+        ["#0b5394", "#626b75"],
+    ):
+        ax.step(ends, values, where="post", lw=1, color=color)
+        ax.set_title(title, fontsize=8)
+        ax.set_ylabel("decisions / 100 rounds")
+        ax.set_xticks([ends[0], ends[300], ends[600], ends[-1]])
+        ax.grid(axis="y", alpha=0.2, linewidth=0.4)
+        ax.set_axisbelow(True)
+    axes[0].set(ylim=(-0.1, max(admissions) + 0.3), yticks=[0, 1, 2])
+    axes[1].set(ylim=(min(rejections) - 0.3, 100.1), yticks=[98, 99, 100])
+    axes[-1].set_xlabel("completed window-end round")
+    fig.tight_layout(pad=0.5, h_pad=0.8)
+    fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    facts = dict(
+        schema="whitepaper.rolling-admissions-figure/v1",
+        input_csv_sha256=sha(data),
+        source_receipt_sha256=sha(receipt),
+        generator_sha256=sha(Path(__file__)),
+        figure_sha256=sha(output),
+        rows=len(rows),
+        round_window=capture["round_window"],
+        rolling_window=100,
+        full_windows=len(windows),
+        plotted_end_rounds=[ends[0], ends[-1]],
+        accepted=sum(accepted),
+        rejected=len(rows) - sum(accepted),
+        strict_gain_rounds=gains,
+        accepted_tie_rounds=ties,
+        windows=windows,
+        warmup_rows_not_plotted=99,
+        definition="Each plotted endpoint uses exactly 100 consecutive observed decisions; accepted plus rejected equals 100. Overlapping descriptive windows, without padding or independent-trial interpretation.",
+        scope=source["scope"],
+        matplotlib_version=matplotlib.__version__,
+        reproduce=source["reproduce"],
+    )
+    provenance.write_text(json.dumps(facts, indent=2) + "\n")
+    print(f"{len(rows)} observed decisions; {len(windows)} full rolling windows")
+
+
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Replay program gains or rolling adapter decisions."
+    )
+    parser.add_argument("--rolling-admissions", action="store_true")
+    if parser.parse_args().rolling_admissions:
+        rolling_admissions()
+    else:
+        main()
