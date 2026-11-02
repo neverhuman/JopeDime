@@ -65,6 +65,7 @@ from dev_incumbent import (  # noqa: E402
     gp_selection_indices,
     project_score_margins,
     proposal_plan,
+    prune_local_archive_copies,
     publish_checkpoint_archive,
     restart_proposal_optimizer,
     add_restart_optimizer_argument,
@@ -187,6 +188,16 @@ def main():
         default=Path.home() / "jope-data/archive/flywheel-retention",
     )
     ap.add_argument(
+        "--checkpoint-archive-local-keep",
+        type=int,
+        default=None,
+        help=(
+            "after S3 version/sha256/size proof, keep only the newest N local "
+            "retention .tar.zst copies (manifests/receipts always kept); "
+            "default keeps every local copy"
+        ),
+    )
+    ap.add_argument(
         "--retain-checkpoint",
         type=Path,
         action="append",
@@ -201,6 +212,11 @@ def main():
     add_restart_optimizer_argument(ap)
     args = ap.parse_args()
     validate_restart_optimizer_argument(ap, args)
+    if (
+        args.checkpoint_archive_local_keep is not None
+        and args.checkpoint_archive_local_keep < 0
+    ):
+        ap.error("--checkpoint-archive-local-keep must be >= 0")
     try:
         args.adapter_min_gain = validate_admission_options(
             args.strict_adapter_admission, args.adapter_min_gain
@@ -1507,6 +1523,10 @@ def main():
                 scored_round=rnd,
             )
             cleanup["trees"] = shard
+            if args.checkpoint_archive_local_keep is not None:
+                cleanup["local_archive"] = prune_local_archive_copies(
+                    args.checkpoint_archive_dir, args.checkpoint_archive_local_keep
+                )
         except (
             OSError,
             ValueError,
