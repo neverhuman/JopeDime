@@ -2135,6 +2135,10 @@
       "reason": "H170 owner-directed one-cycle AdamW continuation (CTRL,OC3,OC15,mean-LR-matched control): data-free schedule application, inactive-gradient handling, drift, family selection/median inference, pseudoreplication and guarded launch controls. Research only; no product or sealed qualification.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h206_search_distill/test_h206.py": {
+      "role": "research",
+      "reason": "H206 queued search-distillation preregistration and disabled executor skeleton: authority/unknown-result integrity, queue and reserved-cache admission, numeric versus driver limits, and research anchor optimizer refusal. Data-free CPU controls only; no GPU, corpus, scientific or sealed qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
