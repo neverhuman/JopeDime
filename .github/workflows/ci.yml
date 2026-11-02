@@ -35,7 +35,9 @@ concurrency:
 
 jobs:
   changes:
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # This job only classifies the source diff. Run PR-controlled workflow code on a
+    # disposable hosted worker; manual dispatch retains the admitted native runner.
+    runs-on: ${{ github.event_name == 'pull_request' && 'ubuntu-24.04' || fromJSON('["self-hosted","linux","x64","jope-ci"]') }}
     # Action setup and a full-history checkout alone can exceed 3 minutes when GitHub endpoints
     # stall from the self-hosted network; the lane itself still finishes in seconds.
     timeout-minutes: 10
@@ -56,6 +58,7 @@ jobs:
           fetch-depth: 0
       - name: Runner provenance
         id: provenance
+        if: github.event_name != 'pull_request'
         uses: ./.github/actions/runner-provenance
       - name: Run declared lane and retain receipt
         id: lane
@@ -356,19 +359,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export JOPE_UI_EVIDENCE="$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
-          mkdir -p "$JOPE_UI_EVIDENCE"
+          export JOPE_UI_EVIDENCE="$RUNNER_TEMP/jope-observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/raw"
+          bundle="$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$JOPE_UI_EVIDENCE" "$bundle"
           test "$(git rev-parse HEAD)" = "$JOPE_UI_SOURCE_SHA"
           node --version
           npm --version
           npm ci --no-audit --no-fund
           npm run typecheck
           npm test -- --reporter=json --outputFile="$JOPE_UI_EVIDENCE/tests.json"
-          node --input-type=module <<'JS'
+          node --input-type=module > "$bundle/receipt.json" <<'JS'
           import fs from 'node:fs';
           const r = JSON.parse(fs.readFileSync(`${process.env.JOPE_UI_EVIDENCE}/tests.json`, 'utf8'));
           if (!(r.numTotalTests > 0) || r.numFailedTests !== 0 || !r.success) throw new Error('Nonzero passing frontend tests required');
-          fs.writeFileSync(`${process.env.JOPE_UI_EVIDENCE}/receipt.json`, JSON.stringify({schema:'jope.observatory-ui-ci/v1', source_sha:process.env.JOPE_UI_SOURCE_SHA, run_id:process.env.GITHUB_RUN_ID, attempt:process.env.GITHUB_RUN_ATTEMPT, node:process.version, executed:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, scope:'frontend fixtures; not live training qualification'}, null, 2));
+          process.stdout.write(JSON.stringify({schema:'jope.observatory-ui-ci/v1', source_sha:process.env.JOPE_UI_SOURCE_SHA, run_id:process.env.GITHUB_RUN_ID, attempt:process.env.GITHUB_RUN_ATTEMPT, node:process.version, executed:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, scope:'frontend fixtures; not live training qualification'}, null, 2));
           JS
           npm run build
           sha256sum package-lock.json dist/index.html dist/assets/* > "$JOPE_UI_EVIDENCE/build-sha256.txt"
