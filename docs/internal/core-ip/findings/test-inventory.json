@@ -2351,6 +2351,10 @@
       "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h223_bagged_blend_gate/test_h223.py": {
+      "reason": "Owner-requested H223 data-free controls for the bagged blend component inside the frozen GATED_025 recipe (frozen H217 gate/statistics bodies, member 0 = H217 fit bit for bit, family-bootstrap member weights, per-prior gating, fresh fold manifest with Jaccard <= 0.20, CANDIDATE/plateau verdict rules, xbabe2 hw_t1325 guards and absolute deadline).",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h224_learned_switch_gate/test_h224.py": {
       "reason": "H224 data-free OOF FIT label/C/threshold boundaries, unchanged H217 reference gate AST, family folds, strict plateau tie correction, CPU affinity/RSS/load/disk/RAM stops and exact-version S3 recovery; no study qualification.",
       "role": "research"

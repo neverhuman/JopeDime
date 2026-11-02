@@ -6142,6 +6142,16 @@
       "lanes": [],
       "scope": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence."
     },
+    "python:research/flywheel_selfplay/h223_bagged_blend_gate/test_h223.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H223 (bagged blend component inside the frozen GATED_025 recipe) data-free controls: frozen H210/H217 gate, statistics and fold bodies identical to H217, SINGLE-prior arms equal to H217 arm_costs, member 0 of each 3-member fit unit equal to H217 fit_gbm bit for bit, family-bootstrap member weights (whole families, as many draws as families), per-prior gating and fallback, cyclic A/B/FIT cells, 45-unit/135-fit plan, fresh fold manifest with best-match Jaccard <= 0.20 vs H203/H210/H217/H218 and reused-partition refusal, plateau co-primary and CANDIDATE verdict rules, xbabe2 guards (load5 60, 300 GB disk, 4 GiB RSS, 8-core tree, MemAvailable 20 GiB, absolute deadline capped at 17:25Z, source check before claim)"
+    },
     "python:research/flywheel_selfplay/h224_learned_switch_gate/test_h224.py": {
       "discovery": {
         "kind": "python-family"
