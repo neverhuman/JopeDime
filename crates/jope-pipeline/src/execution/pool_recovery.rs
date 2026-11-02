@@ -10,7 +10,7 @@ impl ExecutionPool {
         let prior: WorkerOutcome = read_json(&path)?;
         ensure!(
             prior.job_sha256 == id && prior.request_sha256 == job.request.identity()?,
-            "stale terminal identity"
+            "outdated terminal identity"
         );
         if prior.command_status == EvaluationStatus::Completed {
             job.verify_inputs()?;
@@ -23,7 +23,7 @@ impl ExecutionPool {
         let original: Started = read_json(&self.started_path(&id))?;
         ensure!(
             original.job_sha256 == id && original.job.identity()? == id,
-            "stale started identity"
+            "outdated started identity"
         );
         let recovery = self.recover_group(&original, drain)?;
         let mut outcome = WorkerOutcome::unstarted(
@@ -79,7 +79,7 @@ impl ExecutionPool {
     }
     pub(super) fn recover_group(&self, original: &Started, drain: bool) -> Result<String> {
         let id = original.job.identity()?;
-        ensure!(original.job_sha256 == id, "stale cleanup job identity");
+        ensure!(original.job_sha256 == id, "outdated cleanup job identity");
         let mut recovery = String::new();
         if original.cgroup.exists() {
             let expected_name = format!("fit-{id}");
