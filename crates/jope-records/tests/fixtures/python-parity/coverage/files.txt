@@ -359,6 +359,9 @@ crates/jope-bench/src/panel/inference_report/tests/tests_02.rs
 crates/jope-bench/src/panel/methods.rs
 crates/jope-bench/src/panel/mod.rs
 crates/jope-bench/src/panel/optimize.rs
+crates/jope-bench/src/panel/optimize/execution.rs
+crates/jope-bench/src/panel/optimize/pair.rs
+crates/jope-bench/src/panel/optimize/prepare.rs
 crates/jope-bench/src/panel/optimize_cli.rs
 crates/jope-bench/src/panel/optimize_fit.rs
 crates/jope-bench/src/panel/optimize_schedule.rs
