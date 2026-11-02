@@ -1092,8 +1092,12 @@ impl SupervisedCustody {
 pub(super) fn authenticated_peer(
     stream: &std::os::unix::net::UnixStream,
 ) -> Result<ProcessIdentity> {
+    // SAFETY: `ucred` is a Linux C record of integer fields; zero is a valid
+    // initial value, and getsockopt below writes only within this record.
     let mut credential: libc::ucred = unsafe { std::mem::zeroed() };
     let mut length = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
+    // SAFETY: both pointers refer to live writable locals; `length` advertises
+    // exactly the capacity of `credential` and is checked after the call.
     ensure!(
         unsafe {
             libc::getsockopt(
@@ -1137,6 +1141,8 @@ impl ObservedCompletion {
                 && ProcessIdentity::read(child.id())? == start.executor,
             "original group observation custody changed"
         );
+        // SAFETY: child.id() was matched to the captured ProcessIdentity above;
+        // getpgid accepts this positive pid and returns a scalar result.
         ensure!(
             unsafe { libc::getpgid(child.id() as i32) } == child.id() as i32,
             "original child is not its owned process group leader"
@@ -1150,7 +1156,11 @@ impl ObservedCompletion {
             .min(monotonic_ns()?.saturating_add(deadline.as_nanos().try_into()?));
         let mut timed_out;
         let status = loop {
+            // SAFETY: siginfo_t is a C output record with integer/pointer fields;
+            // the all-zero initial state is valid and waitid initializes it.
             let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
+            // SAFETY: `info` is writable and live for the call; P_PID and the
+            // child id select the already-owned child, and WNOWAIT preserves it.
             let result = unsafe {
                 libc::waitid(
                     libc::P_PID,
@@ -1166,11 +1176,14 @@ impl ObservedCompletion {
                 }
                 return Err(error.into());
             }
+            // SAFETY: successful waitid initialized the siginfo_t output.
             let exited = unsafe { info.si_pid() } == child.id() as i32;
             if exited || monotonic_ns()? >= effective {
                 timed_out = !exited;
                 // Keep the original child unreaped until its group is killed.
                 // Its PID/group cannot yet belong to an unrelated process.
+                // SAFETY: the still-unreaped child is the verified group leader;
+                // its negative pid targets only that captured process group.
                 let killed = unsafe { libc::kill(-(child.id() as i32), libc::SIGKILL) };
                 ensure!(
                     killed == 0

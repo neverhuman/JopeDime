@@ -962,6 +962,8 @@ pub fn guard_evaluator_group() -> Result<()> {
             libc::getpgrp() == libc::getpid(),
             "guarded evaluator does not lead its own process group"
         );
+        // SAFETY: on Linux sigaction is an integer/pointer C record; zero is a
+        // valid default action with a null restorer and empty mask.
         let mut action: libc::sigaction = std::mem::zeroed();
         action.sa_sigaction = kill_group as *const () as libc::sighandler_t;
         libc::sigemptyset(&mut action.sa_mask);
