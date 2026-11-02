@@ -28,6 +28,33 @@ OUTPUT_ROOT = REPO / "target" / "auto-fuse"
 QUALIFICATION_LOCK = HOME / "jope_plan" / "qualification.lock"
 RELEASED_DOPE_SHA256 = "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952"
 COHORT_SHA256 = "95b3f54042e5f8bb405080b8e169bf0af33008a0f86ce66477479635ce7e4139"
+MICRO_ASSETS = HOME / "JopeDimeMicro" / "assets"
+# Read-only inputs that decide the fused selection (the gpu_bench submission pins plus both harnesses).
+# The receipt records their bytes so it can be joined to a signed runtime identity: the 2026-10-29 run
+# scored 893/912 on the Phase 1 tree and its receipt could not say so.
+RUNTIME_INPUTS = {
+    "fused/fused_jope_net.py": FUSED / "fused_jope_net.py",
+    "fused/gpu_stage1a_and_slate.py": FUSED / "gpu_stage1a_and_slate.py",
+    "fused/fused_gpu_kernels.cu": FUSED / "fused_gpu_kernels.cu",
+    "fused/libfused_gpu_kernels.so": FUSED / "libfused_gpu_kernels.so",
+    "fused/distilled_stage1a_bridge_real_s3.pt": FUSED / "distilled_stage1a_bridge_real_s3.pt",
+    "fused/gpu_slate_tables.pt": FUSED / "gpu_slate_tables.pt",
+    "fused/expanded_gpu_bank_1766.pt": FUSED / "expanded_gpu_bank_1766.pt",
+    "fused/run_parity_and_quick10_benchmark.py": FUSED / "run_parity_and_quick10_benchmark.py",
+    "fused/run_batch_vram_and_cohort915_benchmark.py": FUSED / "run_batch_vram_and_cohort915_benchmark.py",
+    "micro/frozen_stage1_stage2_inference_params_v3.pt": MICRO_ASSETS
+    / "projections"
+    / "frozen_stage1_stage2_inference_params_v3.pt",
+    "micro/flywheel_winner_pool_v3a_q25_train_only_430.pt": MICRO_ASSETS
+    / "models"
+    / "flywheel_winner_pool_v3a_q25_train_only_430.pt",
+    "micro/h45_full_s3_15151_gate_disjoint_all_dl_train_1100_10tok.pt": MICRO_ASSETS
+    / "models"
+    / "h45_full_s3_15151_gate_disjoint_all_dl_train_1100_10tok.pt",
+    "micro/h40b_round2_dope_self_contained_10tok.pt": MICRO_ASSETS
+    / "models"
+    / "h40b_round2_dope_self_contained_10tok.pt",
+}
 
 # Keep compiler, Triton, and temporary outputs inside this lane's reusable target.
 TORCH_TMP = REPO / "target" / "auto-fuse-tmp"
@@ -46,6 +73,14 @@ def file_sha(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             h.update(block)
     return h.hexdigest()
+
+
+def runtime_identity() -> dict[str, str]:
+    # A missing slate table would also be rebuilt into gpu_bench, so refuse before any work.
+    missing = sorted(name for name, path in RUNTIME_INPUTS.items() if not path.is_file())
+    if missing:
+        raise FileNotFoundError(f"required read-only runtime inputs missing: {', '.join(missing)}")
+    return {name: file_sha(path) for name, path in RUNTIME_INPUTS.items()}
 
 
 def tensor_state_sha(state: dict[str, torch.Tensor]) -> str:
@@ -170,6 +205,7 @@ def main() -> int:
     run_dir.mkdir(parents=True, exist_ok=False)
     source_state, source_sha = load_released_dope(checkpoint)
     source_file_sha_before = file_sha(checkpoint)
+    runtime_before = runtime_identity()
     fused, parity, cohort = import_runtime()
 
     # Keep dynamic bank-registration writes inside this run's output directory.
@@ -206,6 +242,7 @@ def main() -> int:
     class PinnedFusedNetwork(fused.FusedJopeNetwork):
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, **kwargs)
+            self.constructed_adapter_variant = getattr(self, "adapter_variant", None)
             self.load_state_dict(saved["model_state_dict"], strict=True)
             freeze_dope(self)
             if dope_sha(self) != freeze["state_sha256"]:
@@ -245,6 +282,13 @@ def main() -> int:
         eval_reason = eval_reason or "DOPE state changed in the assembled model"
     if source_file_sha_after != source_file_sha_before or source_file_sha_after != source_sha:
         eval_reason = eval_reason or "released DOPE checkpoint file changed during evaluation"
+    try:
+        runtime_after: dict[str, str] | None = runtime_identity()
+    except FileNotFoundError as exc:
+        runtime_after = None
+        eval_reason = eval_reason or f"{type(exc).__name__}: {exc}"
+    if runtime_after is not None and runtime_after != runtime_before:
+        eval_reason = eval_reason or "gpu_bench runtime inputs changed during evaluation"
 
     quick_path = eval_dir / "quick10_and_parity_report.json"
     cohort_path = eval_dir / "batch_sweep_and_cohort915_report.json"
@@ -266,6 +310,12 @@ def main() -> int:
         "source_file_sha256_before": source_file_sha_before,
         "source_file_sha256_after": source_file_sha_after,
         "source_file_unchanged": source_file_sha_after == source_file_sha_before == source_sha,
+        "runtime_identity_sha256": runtime_before,
+        "runtime_identity_unchanged": runtime_after == runtime_before,
+        # Every evaluator instance carries this run's fused h45 artifact, including the ones the harnesses
+        # build as h40b (quick10's default path among them).
+        "p2_evaluator_constructed_adapter_variants": [m.constructed_adapter_variant for m in instances],
+        "p2_evaluator_state": "fused_h45 artifact",
         "trainable_parameter_counts": counts,
         "paired_holdout_r2_no_regression": "UNVERIFIED: no paired CPU-chain R2 receipt in this harness",
         "all10_language_selected_program_correctness": "UNVERIFIED: codegen timing is not correctness evidence",
@@ -299,6 +349,7 @@ def main() -> int:
         "schema": "jope.auto-fuse-manifest/v1",
         "dope_checkpoint_sha256": source_sha,
         "dope_state_sha256": freeze["state_sha256"],
+        "runtime_identity_sha256": runtime_before,
         "fused_checkpoint": str(artifact),
         "fused_checkpoint_sha256": artifact_sha,
         "trainable_parameter_counts": counts,
