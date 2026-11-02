@@ -271,11 +271,19 @@
     },
     {
       "ref": {
-        "bytes": 7575,
-        "path": "/home/ubuntu/JopeDime/.agent/proposals/dl-flywheel-native-successor-20261009-v5/source-r2/native_inputs.py",
-        "sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77"
+        "path": "/home/ubuntu/JopeDime/deploy/dl-flywheel/pipelines/hpc/native_inputs.py",
+        "sha256": "0a1932057231c93e912f195323af7e8f9fd31f2182d26b68519e413b2123badb",
+        "bytes": 776
       },
       "relative_path": "native_inputs.py"
+    },
+    {
+      "relative_path": "native_inputs_core.py",
+      "ref": {
+        "path": "/home/ubuntu/JopeDime/deploy/dl-flywheel/pipelines/hpc/native_inputs_core.py",
+        "sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+        "bytes": 7575
+      }
     },
     {
       "ref": {
