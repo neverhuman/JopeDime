@@ -290,7 +290,19 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
       "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
       "path": "deploy/dl-flywheel/jope_flywheel/evidence.py",
-      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
+      "sha256": "82c6e9a88bcc74ef937d36be6d158937ce36acd56a514bbb80edb4a5f7fc26c9"
+    },
+    {
+      "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/evidence.py",
+      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
+      "path": "deploy/dl-flywheel/jope_flywheel/evidence_core.py",
+      "sha256": "e5ca4edccd49533715000cbec48364a6dcee5fe2f4fac05207fa0e01390d13d0"
+    },
+    {
+      "origin": "deploy/dl-flywheel/jope_flywheel/evidence.py validation primitives",
+      "origin_sha256": "b5170464228e85f340773f26a6222911d0e0ee1a941007b4cc8fcb5625faf920",
+      "path": "deploy/dl-flywheel/jope_flywheel/evidence_validation.py",
+      "sha256": "b5170464228e85f340773f26a6222911d0e0ee1a941007b4cc8fcb5625faf920"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/native_variant_snapshot.py",
