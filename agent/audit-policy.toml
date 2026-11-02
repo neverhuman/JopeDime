@@ -119,8 +119,6 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/readonly_snapshot.py",
   # P38: joblib models are emitted with producer-generated identity pins and consumed only by trusted pipeline code.
   "python/src/jope/target_maker/artifact_pins.py",
-  # P26: cudaSetDevice failure returns null and retains the thread-local ABI error for Rust to reject.
-  "crates/jope-engine/native/runtime.cpp",
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
 
