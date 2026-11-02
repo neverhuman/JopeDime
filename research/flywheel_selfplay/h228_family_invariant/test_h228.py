@@ -214,11 +214,11 @@ def test_guard_301_seconds_and_recovery(name):
 
 def test_launch_load5_self_pause_hysteresis():
     launch = load("launch")
-    assert not launch.should_pause_worker(59.9, paused=False)
-    assert launch.should_pause_worker(60.1, paused=False)
+    assert not launch.should_pause_worker(84.9, paused=False)
+    assert launch.should_pause_worker(85.1, paused=False)
     assert launch.should_pause_worker(86.0, paused=False)
-    assert launch.should_pause_worker(56.0, paused=True)
-    assert not launch.should_pause_worker(55.0, paused=True)
+    assert launch.should_pause_worker(81.0, paused=True)
+    assert not launch.should_pause_worker(80.0, paused=True)
 
 
 def test_source_calls_native_once_with_no_duplicate_token_kwargs():
@@ -375,25 +375,26 @@ def test_exact_merged_pr_gate_refuses_open_pr_and_wrong_source():
     assert launch.admitted_pr(pr, "y") and not launch.admitted_pr(pr, "x")
 
 
-def test_actual_resource_guard_uses_20gib_300gb_6gib_and_4cores():
+def test_actual_resource_guard_uses_8gib_150gb_6gib_4cores_and_6gib_vram():
     sample = dict(
         load=1,
         load5=1,
         cores=4,
-        host_cores=76,
+        host_cores=102,
         cpu=1,
-        available=20 * 2**30,
+        available=8 * 2**30,
         swap_free=0,
         disk_used_fraction=0.70,
-        free=300_000_000_000,
+        free=150_000_000_000,
         rss=1_000_000,
     )
     runner.guard(sample, state=runner.SustainedLoad(), now=0, admission=True)
     for key, value in [
-        ("available", 20 * 2**30 - 1),
-        ("free", 299_999_999_999),
+        ("available", 8 * 2**30 - 1),
+        ("free", 149_999_999_999),
         ("rss", 6_000_000_000),
         ("cores", 5),
+        ("load5", 85.1),
     ]:
         with pytest.raises(RuntimeError):
             runner.guard(
@@ -402,7 +403,7 @@ def test_actual_resource_guard_uses_20gib_300gb_6gib_and_4cores():
 
     # Verify pause_on_trip=True pauses/waits and persists exact violating_field + violating_value
     log_buf = io.StringIO()
-    seq = [dict(sample, available=18 * 2**30), dict(sample, available=22 * 2**30)]
+    seq = [dict(sample, available=7 * 2**30), dict(sample, available=10 * 2**30)]
     it = iter(seq)
     original_snap = runner.snapshot
     original_sleep = runner.time.sleep
@@ -410,7 +411,7 @@ def test_actual_resource_guard_uses_20gib_300gb_6gib_and_4cores():
         runner.snapshot = lambda: next(it)
         runner.time.sleep = lambda s: None
         recovered = runner.guard(
-            dict(sample, available=15 * 2**30),
+            dict(sample, available=6 * 2**30),
             state=runner.SustainedLoad(),
             now=1,
             pause_on_trip=True,
@@ -426,30 +427,38 @@ def test_actual_resource_guard_uses_20gib_300gb_6gib_and_4cores():
     assert len(logged) == 2
     assert logged[0]["paused_on_guard_trip"] is True
     assert logged[0]["violating_field"] == "available"
-    assert logged[0]["violating_value"] == 15 * 2**30
+    assert logged[0]["violating_value"] == 6 * 2**30
     assert logged[1]["violating_field"] == "available"
-    assert logged[1]["violating_value"] == 18 * 2**30
+    assert logged[1]["violating_value"] == 7 * 2**30
 
-    # Also verify launch.guard_violations reports violating_field + violating_value
+    # Also verify launch.guard_violations reports violating_field + violating_value and enforces gpu_free_mib >= 6144 without preempting flywheel
     launch = load("launch")
     ls = dict(
         load1=1.0,
-        load5=62.5,
+        load5=86.5,
         effective_cores=4,
-        host_cores=76,
+        host_cores=102,
         cpu_percent=10.0,
-        available=25 * 2**30,
+        available=12 * 2**30,
         swap_free=0,
-        free=350_000_000_000,
+        free=200_000_000_000,
         used_fraction=0.70,
         child_rss=1_000_000_000,
+        effective_gpu_free_mib=6797,
         overloaded=False,
     )
-    v = launch.guard_violations(ls, paused=False)
+    v = launch.guard_violations(ls, paused=False, other_gpu_pids={2847658})
     assert ls["guard_trip"] is True
     assert ls["violating_field"] == "load5"
-    assert ls["violating_value"] == pytest.approx(62.5)
+    assert ls["violating_value"] == pytest.approx(86.5)
     assert len(v) == 1
+
+    ls_vram = dict(ls, load5=10.0, effective_gpu_free_mib=6143)
+    v_vram = launch.guard_violations(ls_vram, paused=False, other_gpu_pids={2847658})
+    assert ls_vram["guard_trip"] is True
+    assert ls_vram["violating_field"] == "gpu_free_mib"
+    assert ls_vram["violating_value"] == 6143
+    assert len(v_vram) == 1
 
 
 def test_readout_strict_margin_002_exact_tie_rejection_holm2_and_breakthrough():
@@ -747,8 +756,11 @@ def test_manifest_and_prereg_artifacts_integrity():
     assert manifest["max_total_updates"] == 2404
     assert manifest["member_fits"] == 60
     assert manifest["strict_margin"] == pytest.approx(0.002)
-    assert manifest["resource_limits"]["min_free_bytes"] == 300_000_000_000
-    assert manifest["resource_limits"]["min_available_ram_bytes"] == 20 * 2**30
+    assert manifest["gpu_uuid"] == "GPU-784030c4-b1f9-d5a3-f0eb-9337f133f503"
+    assert manifest["resource_limits"]["host"] == "xbabe1"
+    assert manifest["resource_limits"]["min_gpu_free_vram_mib"] == 6144
+    assert manifest["resource_limits"]["min_free_bytes"] == 150_000_000_000
+    assert manifest["resource_limits"]["min_available_ram_bytes"] == 8 * 2**30
     assert manifest["resource_limits"]["max_process_tree_rss_bytes"] == 6_000_000_000
     assert manifest["resource_limits"]["max_affinity_cores"] == 4
     for rel, expected in manifest["source_sha256"].items():
