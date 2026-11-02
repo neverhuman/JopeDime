@@ -84,6 +84,9 @@ fn check_oracle(actual: f64, expected: f64, context: &str) {
     }
 }
 
+#[path = "numerical_policy_v2/emitted_matrix.rs"]
 mod emitted_matrix;
+#[path = "numerical_policy_v2/oracle_cases.rs"]
 mod oracle_cases;
+#[path = "numerical_policy_v2/reduction_cases.rs"]
 mod reduction_cases;

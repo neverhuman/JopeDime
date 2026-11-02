@@ -259,7 +259,7 @@ fn impute_fitted_on_four_columns_refuses_five() {
 }
 
 #[derive(Clone, Copy, Debug)]
-enum Side {
+pub(super) enum Side {
     /// One column fewer than the stage requires.
     Narrower,
     /// One column more than an `Exactly` stage requires.
@@ -267,7 +267,7 @@ enum Side {
 }
 
 /// (program, fitted width, the side of the refused width, whether `predict` panics there)
-const REFUSALS: &[(&str, usize, Side, bool)] = &[
+pub(super) const REFUSALS: &[(&str, usize, Side, bool)] = &[
     (
         "(pipe X (pair_ratio topk=4) (ridge))",
         6,

@@ -1,7 +1,4 @@
 use super::*;
-
-use super::*;
-
 fn toy() -> (Rows, Vec<f64>) {
     // y = 2*x0 - x1 + 0.5*sin-ish nonlinearity, deterministic.
     let mut x = Vec::new();

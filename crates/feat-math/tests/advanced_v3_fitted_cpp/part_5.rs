@@ -1,3 +1,4 @@
+use super::part_3::FITTED_WIDTH_STATUS;
 use super::*;
 
 #[test]

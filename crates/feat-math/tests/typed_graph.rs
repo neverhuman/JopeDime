@@ -99,7 +99,11 @@ fn scalar(s: &InputSchema, e: Expression) -> ProgramGraph {
     .unwrap()
 }
 
+#[path = "typed_graph/actions.rs"]
 mod actions;
+#[path = "typed_graph/bridge.rs"]
 mod bridge;
+#[path = "typed_graph/codec.rs"]
 mod codec;
+#[path = "typed_graph/fit.rs"]
 mod fit;

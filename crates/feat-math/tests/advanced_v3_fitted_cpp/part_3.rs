@@ -203,4 +203,4 @@ fn frozen_legacy_pipeline_can_cross_the_bound_cpp_bridge() {
 
 /// The status `jope_fitted_predict` returns when a stage's fitted state does not fit the row it
 /// reads (emitter revision 3).
-const FITTED_WIDTH_STATUS: i32 = 8;
+pub(super) const FITTED_WIDTH_STATUS: i32 = 8;

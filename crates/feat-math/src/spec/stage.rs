@@ -3,7 +3,6 @@ use super::*;
 /// Plan the leading target pseudo-stage; defaults and clamps mirror
 /// `target_transform.rs::fit_target` so the emitted literals equal what the
 /// runtime would compute from the same stage.
-
 pub(crate) fn plan_target(stage: &Stage, problems: &mut Vec<String>) -> Option<PlannedTarget> {
     let kind = match stage.params.get("kind") {
         Some(ParamValue::Str(s)) => match s.as_str() {

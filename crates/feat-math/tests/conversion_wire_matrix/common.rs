@@ -1,12 +1,12 @@
 use super::*;
 
-fn rows_by_name(rows: &[Value]) -> BTreeMap<&str, &Value> {
+pub(super) fn rows_by_name(rows: &[Value]) -> BTreeMap<&str, &Value> {
     rows.iter()
         .map(|row| (row["name"].as_str().unwrap(), row))
         .collect()
 }
 
-fn witness_sources() -> BTreeMap<String, String> {
+pub(super) fn witness_sources() -> BTreeMap<String, String> {
     let historical: Value = serde_json::from_str(HISTORICAL).unwrap();
     let emitted: Value = serde_json::from_str(EMITTED).unwrap();
     let programs = rows_by_name(emitted["programs"].as_array().unwrap());
@@ -25,11 +25,11 @@ fn witness_sources() -> BTreeMap<String, String> {
         .collect()
 }
 
-fn toy_data() -> (Vec<Vec<f64>>, Vec<f64>) {
+pub(super) fn toy_data() -> (Vec<Vec<f64>>, Vec<f64>) {
     toy_data_seed(42)
 }
 
-fn toy_data_seed(seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
+pub(super) fn toy_data_seed(seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
     let mut rng = Pcg32::new(seed, 17);
     let mut x = Vec::new();
     let mut y = Vec::new();
@@ -45,7 +45,7 @@ fn toy_data_seed(seed: u64) -> (Vec<Vec<f64>>, Vec<f64>) {
     (x, y)
 }
 
-fn write_recipe_csvs(dir: &Path, x: &[Vec<f64>], y: &[f64]) {
+pub(super) fn write_recipe_csvs(dir: &Path, x: &[Vec<f64>], y: &[f64]) {
     let mut train = String::new();
     for (row, target) in x[..TRAINING_ROWS].iter().zip(&y[..TRAINING_ROWS]) {
         for value in row {
@@ -81,7 +81,7 @@ fn write_recipe_csvs(dir: &Path, x: &[Vec<f64>], y: &[f64]) {
     );
 }
 
-fn require_success(what: &str, command: &mut Command) {
+pub(super) fn require_success(what: &str, command: &mut Command) {
     let output = command
         .output()
         .unwrap_or_else(|error| panic!("{what}: {error}"));
@@ -94,7 +94,7 @@ fn require_success(what: &str, command: &mut Command) {
     );
 }
 
-fn recipe_bits(path: &Path) -> Vec<u64> {
+pub(super) fn recipe_bits(path: &Path) -> Vec<u64> {
     fs::read_to_string(path)
         .unwrap()
         .lines()
@@ -102,7 +102,7 @@ fn recipe_bits(path: &Path) -> Vec<u64> {
         .collect()
 }
 
-fn run_emitted_pair(
+pub(super) fn run_emitted_pair(
     name: &str,
     genome: &GenomeIr,
     dir: &Path,
@@ -147,7 +147,7 @@ fn run_emitted_pair(
     (recipe_bits(&python_out), recipe_bits(&rust_out))
 }
 
-fn run_cpp_recipe(
+pub(super) fn run_cpp_recipe(
     name: &str,
     mut source: String,
     dir: &Path,
@@ -226,7 +226,7 @@ fn run_cpp_recipe(
     bits
 }
 
-fn round_trip(source: &str) -> GenomeIr {
+pub(super) fn round_trip(source: &str) -> GenomeIr {
     let original = GenomeIr::parse(source).unwrap();
     let canonical = original.canonical();
     let genome = GenomeIr::parse(&canonical).unwrap();

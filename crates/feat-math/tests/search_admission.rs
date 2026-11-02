@@ -484,6 +484,9 @@ fn race_config(pop: usize, gens: usize, seed: u64, policy: FaultPolicy) -> Evolv
     }
 }
 
+#[path = "search_admission/datasets.rs"]
 mod datasets;
+#[path = "search_admission/policy.rs"]
 mod policy;
+#[path = "search_admission/routing.rs"]
 mod routing;

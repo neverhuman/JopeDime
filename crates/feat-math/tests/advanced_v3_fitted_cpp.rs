@@ -342,14 +342,20 @@ fn legacy_stage(source: &str, rows: &[Vec<f64>], y: &[f64]) -> serde_json::Value
 }
 
 #[cfg(test)]
+#[path = "advanced_v3_fitted_cpp/part_1.rs"]
 mod part_1;
 #[cfg(test)]
+#[path = "advanced_v3_fitted_cpp/part_2.rs"]
 mod part_2;
 #[cfg(test)]
+#[path = "advanced_v3_fitted_cpp/part_3.rs"]
 mod part_3;
 #[cfg(test)]
+#[path = "advanced_v3_fitted_cpp/part_4.rs"]
 mod part_4;
 #[cfg(test)]
+#[path = "advanced_v3_fitted_cpp/part_5.rs"]
 mod part_5;
 #[cfg(test)]
+#[path = "advanced_v3_fitted_cpp/part_6.rs"]
 mod part_6;

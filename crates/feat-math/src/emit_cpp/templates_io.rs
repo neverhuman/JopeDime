@@ -1,5 +1,3 @@
-use super::*;
-
 pub(crate) const IO_BLOCK: &str = r#"// ---- caller-owned C ABI ----------------------------------------------------
 
 extern "C" {

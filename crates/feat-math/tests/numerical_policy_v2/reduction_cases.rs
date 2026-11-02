@@ -87,13 +87,13 @@ fn overflowing_mean_preserves_exact_cancellation_and_small_residuals() {
     }
 }
 
-struct MeanProbe {
-    row: Vec<f64>,
-    expected: f64,
-    faults: FaultSet,
+pub(super) struct MeanProbe {
+    pub(super) row: Vec<f64>,
+    pub(super) expected: f64,
+    pub(super) faults: FaultSet,
 }
 
-fn mean_properties() -> Vec<MeanProbe> {
+pub(super) fn mean_properties() -> Vec<MeanProbe> {
     let mut probes = Vec::new();
     let mut seed = 0xb0703_u64;
     for width in 1..=128 {

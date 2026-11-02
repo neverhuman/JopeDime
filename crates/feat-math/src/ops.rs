@@ -342,11 +342,11 @@ pub(crate) fn is_append_noop_at_max_width(
 use crate::{dsl::parse_dsl, model::cv_r2, GenomeIr};
 
 #[cfg(test)]
-
 fn stage(src: &str) -> Stage {
     parse_dsl(&format!("(pipe X {src})")).unwrap().stages[0].clone()
 }
 
+#[cfg(test)]
 fn toy(rows: usize, cols: usize) -> (Rows, Vec<f64>) {
     let mut rng = Pcg32::new(11, 3);
     let mut x = Vec::with_capacity(rows);
@@ -359,6 +359,7 @@ fn toy(rows: usize, cols: usize) -> (Rows, Vec<f64>) {
     (x, y)
 }
 
+#[cfg(test)]
 fn tiny() -> (Rows, Vec<f64>) {
     (
         vec![vec![3.0, 4.0, 0.5], vec![1.0, 0.0, 2.0]],

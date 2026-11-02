@@ -12,10 +12,10 @@ pub type Domain = ArtifactDomain;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct OwnId {
-    formula: String,
+    pub(crate) formula: String,
     pub(crate) schema_id: String,
-    payload_byte_len: u64,
-    sha256: String,
+    pub(crate) payload_byte_len: u64,
+    pub(crate) sha256: String,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

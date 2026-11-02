@@ -279,8 +279,13 @@ const WIDTH_STAGES: [&str; 40] = [
     "(pls_project)",
 ];
 
+#[path = "scope_validation/agreement.rs"]
 mod agreement;
+#[path = "scope_validation/cases.rs"]
 mod cases;
+#[path = "scope_validation/determinism.rs"]
 mod determinism;
+#[path = "scope_validation/portfolio.rs"]
 mod portfolio;
+#[path = "scope_validation/search_profile.rs"]
 mod search_profile;

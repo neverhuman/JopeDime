@@ -1,5 +1,3 @@
-use super::*;
-
 use crate::dsl::{ParamValue, Stage};
 use crate::evolve::{
     evolve, random_canonical_pipeline, EvolveConfig, GenStats, Observer, RidgeScoring, Scored,

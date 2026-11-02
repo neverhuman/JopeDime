@@ -1,3 +1,4 @@
+use super::reduction_cases::mean_properties;
 use super::*;
 
 fn run(command: &mut Command) -> Vec<u8> {
