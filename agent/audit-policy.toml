@@ -12,7 +12,8 @@ advisory_on = ["medium", "low", "info"]
 # directories, broad globs, or unreviewed paths; each exact exception must be
 # removed when its rationale ends. P38 SQL/pinned-input dispositions are recorded
 # in docs/release/jankurai-pysqlpickle-exceptions-20261102.md and
-# docs/release/jankurai-ciaudit-frozen-exceptions-20261102.md.
+# docs/release/jankurai-ciaudit-frozen-exceptions-20261102.md and
+# docs/release/jankurai-reporot-manifest-exceptions-20261102.md.
 # The eight restored DL exact-file custody exceptions and SHA bindings are recorded
 # in docs/release/browser-prediction-ci-repairs-20261102.md; frozen hash checks remain.
 # P48's two exact MicroAdmission source paths and reviewed finding fingerprints
@@ -48,6 +49,12 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
   # Ciaudit HLT-043 sha256:09d1f247...: this exact copy is byte-pinned by the
   # hpc_verified_v5 provenance; its path-scoped Jankurai disposition is documented.
+  # Repo-rot dispositions for immutable, path-versioned engine manifest records; see the exact fingerprints and custody rationale in jankurai-reporot-manifest-exceptions-20261102.md.
+  "crates/jope-engine/manifests/hyperion-concurrent-v30.sha256",
+  "crates/jope-engine/manifests/opportunistic-proposals-v44.json",
+  "crates/jope-engine/manifests/opportunistic-proposals-v44.sha256",
+  "crates/jope-engine/manifests/opportunistic-proposals-v53.json",
+  "crates/jope-engine/manifests/opportunistic-proposals-v53.sha256",
   "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
   # Ciaudit HLT-043 sha256:fac8174f...: exact hash-pinned package copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/evidence.py",
