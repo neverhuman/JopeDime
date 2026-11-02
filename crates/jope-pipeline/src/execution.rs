@@ -407,23 +407,22 @@ fn immutable<T: Serialize>(path: &Path, value: &T) -> Result<()> {
     atomic_json(path, value)
 }
 
-
-mod types;
-mod supervisor;
 mod pool_admission;
-mod pool_run;
 mod pool_recovery;
-mod queue;
+mod pool_run;
 mod processes;
+mod queue;
+mod supervisor;
+mod types;
 
-pub use types::*;
+pub(super) use processes::{ProcessFit, Running};
+pub(super) use queue::{ActiveFits, FairQueue};
 pub use supervisor::Supervisor;
 pub(crate) use types::after_verification;
 #[cfg(all(test, feature = "neural-search"))]
 pub(crate) use types::verification_hook;
+pub use types::*;
 pub(super) use types::{DRAIN_MS, LOG_LIMIT, POLL_MS, THREAD_VARS};
-pub(super) use queue::{ActiveFits, FairQueue};
-pub(super) use processes::{ProcessFit, Running};
 
 #[cfg(test)]
 mod tests;

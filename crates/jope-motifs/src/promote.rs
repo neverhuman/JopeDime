@@ -32,15 +32,19 @@ impl std::error::Error for AdmissionError {}
 
 type Result<T> = std::result::Result<T, AdmissionError>;
 
+#[path = "promote/candidate.rs"]
 mod candidate;
 pub use candidate::{ExpansionLimits, ExpansionWitness, MotifCandidate, ProbeSimilarity};
+#[path = "promote/contrast.rs"]
 mod contrast;
 pub use contrast::{
     ContrastObservation, EvidenceBoundary, EvidenceRole, MetricDirection, PreregisteredContrast,
     ValidatedContrast,
 };
+#[path = "promote/migration.rs"]
 mod migration;
 pub use migration::VocabularyMigration;
+#[path = "promote/admission.rs"]
 mod admission;
 pub use admission::MotifAdmission;
 

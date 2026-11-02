@@ -173,9 +173,13 @@ impl Session {
     }
 }
 
+#[path = "session/activity.rs"]
 mod activity;
+#[path = "session/commands.rs"]
 mod commands;
+#[path = "session/events.rs"]
 mod events;
+#[path = "session/ui.rs"]
 mod ui;
 
 fn pending_composer_lines(

@@ -9,9 +9,12 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
+#[path = "edit_policy/context.rs"]
 mod context;
+#[path = "edit_policy/policy.rs"]
 mod policy;
 #[cfg(test)]
+#[path = "edit_policy/tests.rs"]
 mod tests;
 
 pub use context::*;
