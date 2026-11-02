@@ -4,6 +4,10 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_support_dir = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "benchmarks", "jope-bench", "adapters"
+))
+sys.path.insert(0, _support_dir)
 if not (len(sys.argv) > 1 and sys.argv[1] == "--panel-v2"):
     import _common  # noqa: E402
 
