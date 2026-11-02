@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "P45 follow-up after watcher disposition: the test-side elapsed backstop now mirrors remote_test.sh load admission and remains 30 seconds; rung-count assertions always run and the elapsed check logs when it is skipped. The evolve.rs test source is hashed into evaluator identity, so identity fixtures were re-generated after the source commit. Evaluator calculations, DSL ABI, Cargo.lock and runtime behavior are unchanged. No known-identity row is added without a shipped receipt proving the new identity existed.",
+  "plan_reference": "P45 watcher disposition 2026-11-02T13:58:02Z and gk_t1445_p45; ADR-0004 identity-only procedure",
+  "source_commit": "6641b6b34249e5bf7eb5a92847e8a3e33f2ff782",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "9297f9cdcc04252a56c5caa72f1039e3c262e92c88df352eafca7703e527396c",
+      "after": "592cc24142fc3187833b26309fbf5e74956cd098831ea4662183cb25017e1ce6"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "b199478d3bf41e023843a966b513b954d0580eb0a6dba645bd7e12fd36f934aa",
+      "after": "4ec649f47526f55b44876fabec9d6266b3ff8615e62707a1d6915fd5927c1876"
+    }
+  ]
+}
