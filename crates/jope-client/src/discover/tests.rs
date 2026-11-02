@@ -234,10 +234,31 @@ fn lite_process_exits_nine_with_documented_message() {
 }
 
 #[test]
+fn invalid_child_exit_code_reports_configuration_error() {
+    let home = Home::new();
+    let mut command = probe(&home, &home.options().executable, true);
+    command.env("JOPE_CLT02_EXIT", "not-an-integer");
+    let output = command.output().unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(
+        !output.status.success(),
+        "invalid JOPE_CLT02_EXIT unexpectedly succeeded"
+    );
+    assert!(
+        stderr.contains("JOPE_CLT02_EXIT must be a valid i32 exit code"),
+        "expected the invalid exit-code diagnostic, got: {stderr}"
+    );
+}
+
+#[test]
 #[ignore = "subprocess fixture, invoked by supervised tests"]
 fn native_client_probe() {
     if let Ok(code) = std::env::var("JOPE_CLT02_EXIT") {
-        std::process::exit(code.parse().unwrap());
+        let exit_code = code
+            .parse::<i32>()
+            .expect("JOPE_CLT02_EXIT must be a valid i32 exit code");
+        std::process::exit(exit_code);
     }
     let home = PathBuf::from(std::env::var_os("JOPE_CLT02_HOME").expect("supervised fixture home"));
     if let Some(gate) = std::env::var_os("JOPE_CLT02_GATE") {
