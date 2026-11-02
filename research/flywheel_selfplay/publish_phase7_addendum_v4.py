@@ -30,7 +30,10 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from functools import partial
 from typing import Any, Dict
+
+from phase7_s3_upload import s3_upload_and_verify as _s3_upload_and_verify
 
 ARCHIVE_ROOT = Path("/mnt/jope-archive/flywheel-20261023")
 RESULTS_DIR = ARCHIVE_ROOT / "results"
@@ -108,6 +111,15 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+s3_upload_and_verify = partial(
+    _s3_upload_and_verify,
+    bucket=S3_BUCKET,
+    aws_profile=AWS_PROFILE,
+    results_dir=RESULTS_DIR,
+    sha256_file=sha256_file,
+)
+
+
 def verify_s3_prior_versions_unchanged() -> list[Dict[str, Any]]:
     env = os.environ.copy()
     env["AWS_PROFILE"] = AWS_PROFILE
@@ -146,80 +158,6 @@ def verify_s3_prior_versions_unchanged() -> list[Dict[str, Any]]:
             }
         )
     return rows
-
-
-def s3_upload_and_verify(local_path: Path, s3_key: str) -> Dict[str, Any]:
-    env = os.environ.copy()
-    env["AWS_PROFILE"] = AWS_PROFILE
-    local_sha = sha256_file(local_path)
-    local_size = local_path.stat().st_size
-
-    subprocess.run(
-        [
-            "aws",
-            "s3",
-            "cp",
-            str(local_path),
-            f"s3://{S3_BUCKET}/{s3_key}",
-            "--only-show-errors",
-        ],
-        env=env,
-        check=True,
-        timeout=30,
-    )
-    head_out = subprocess.check_output(
-        [
-            "aws",
-            "s3api",
-            "head-object",
-            "--bucket",
-            S3_BUCKET,
-            "--key",
-            s3_key,
-            "--output",
-            "json",
-        ],
-        env=env,
-        text=True,
-        timeout=20,
-    )
-    head_data = json.loads(head_out)
-
-    verify_tmp = RESULTS_DIR / f".verify_{local_path.name}"
-    subprocess.run(
-        [
-            "aws",
-            "s3api",
-            "get-object",
-            "--bucket",
-            S3_BUCKET,
-            "--key",
-            s3_key,
-            str(verify_tmp),
-        ],
-        env=env,
-        check=True,
-        stdout=subprocess.DEVNULL,
-        timeout=30,
-    )
-    remote_sha = sha256_file(verify_tmp)
-    verify_tmp.unlink(missing_ok=True)
-    if remote_sha != local_sha:
-        raise RuntimeError(f"S3 SHA256 mismatch for {s3_key}: {remote_sha} != {local_sha}")
-
-    return {
-        "local_path": str(local_path),
-        "s3_uri": f"s3://{S3_BUCKET}/{s3_key}",
-        "s3_key": s3_key,
-        "local_sha256": local_sha,
-        "remote_get_sha256": remote_sha,
-        "sha256_verified": bool(remote_sha == local_sha),
-        "size_bytes": int(local_size),
-        "content_length": int(head_data.get("ContentLength", 0)),
-        "version_id": str(head_data.get("VersionId", "")),
-        "etag": str(head_data.get("ETag", "")).strip('"'),
-        "last_modified": str(head_data.get("LastModified", "")),
-    }
 
 
 def main() -> None:
