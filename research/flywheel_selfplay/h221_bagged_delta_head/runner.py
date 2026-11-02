@@ -6,6 +6,7 @@ import gc
 import shutil
 import hashlib
 import importlib.metadata
+import importlib.util
 import io
 import json
 import os
@@ -14,7 +15,6 @@ import signal
 import subprocess
 import sys
 import time
-import types
 import zipfile
 
 import boto3
@@ -52,13 +52,22 @@ def source(repo, commit, path):
 
 
 def load_module(repo, commit, path, name, expected):
-    data = source(repo, commit, path)
-    if digest(data) != expected:
+    """Import a hash-pinned module from the exact checked-out Git revision."""
+    repo = Path(repo).resolve()
+    head = subprocess.check_output(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
+    ).strip()
+    if head != commit:
+        raise RuntimeError("checkout does not match pinned commit")
+    module_path = (repo / path).resolve()
+    if not module_path.is_relative_to(repo) or digest(module_path.read_bytes()) != expected:
         raise RuntimeError("source hash mismatch: " + path)
-    mod = types.ModuleType(name)
-    mod.__file__ = str(Path(repo) / path)
+    spec = importlib.util.spec_from_file_location(name, module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot import pinned module: " + path)
+    mod = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod
-    exec(compile(data, mod.__file__, "exec"), mod.__dict__)
+    spec.loader.exec_module(mod)
     return mod
 
 
@@ -221,6 +230,32 @@ def guard(s, *, state=None, now=None, admission=False):
         raise RuntimeError("resource refusal: " + repr(s))
 
 
+def make_resource_check(resources, guard, snapshot, output, started, clock=time.monotonic):
+    """Production resource sampler shared by timer and synchronous checks."""
+    checking = False
+    last_check = 0.0
+
+    def check(*unused):
+        nonlocal checking, last_check
+        if checking or clock() - last_check < 1.0:
+            return
+        checking = True
+        last_check = clock()
+        try:
+            sample = snapshot()
+            resources.write(json.dumps(dict(sample, elapsed=clock() - started)) + "\n")
+            resources.flush()
+            guard(sample)
+            if clock() - started > 5400 or sum(
+                p.stat().st_size for p in output.rglob("*") if p.is_file()
+            ) >= 1000000000:
+                raise RuntimeError("fixed wall/output budget exceeded")
+        finally:
+            checking = False
+
+    return check
+
+
 def run(args):
     os.nice(19)
     if os.uname().nodename != "xbabe2" or os.environ.get("CUDA_VISIBLE_DEVICES") != "0":
@@ -238,7 +273,9 @@ def run(args):
     for name, version in pins["packages"].items():
         if importlib.metadata.version(name) != version:
             raise RuntimeError("package mismatch: " + name)
-    for path, expected in pins["source_sha256"].items():
+    current_pins = dict(pins["source_sha256"])
+    current_pins.update(pins.get("current_source_sha256", {}))
+    for path, expected in current_pins.items():
         if digest(source(args.repo, args.commit, PREFIX + path)) != expected:
             raise RuntimeError("own source mismatch")
     args.output.mkdir(parents=True)
@@ -279,34 +316,7 @@ def run(args):
         args.repo
     )  # Used only as Git cwd by the immutable historical guard loader.
 
-    checking = False
-    last_check = 0.0
-
-    def check(*unused):
-        nonlocal checking, last_check
-        if time.time() >= absolute_deadline:
-            raise RuntimeError("absolute supervisor deadline exceeded")
-        # SIGALRM can arrive during a synchronous buffered write. The active
-        # check already samples/enforces all limits; do not enter its I/O twice.
-        if checking or time.monotonic() - last_check < 1.0:
-            return
-        checking = True
-        last_check = time.monotonic()
-        try:
-            sample = snapshot()
-            resources.write(
-                json.dumps(dict(sample, elapsed=time.monotonic() - started)) + "\n"
-            )
-            resources.flush()
-            guard(sample)
-            if (
-                time.monotonic() - started > 5400
-                or sum(p.stat().st_size for p in args.output.rglob("*") if p.is_file())
-                >= 1_000_000_000
-            ):
-                raise RuntimeError("fixed wall/output budget exceeded")
-        finally:
-            checking = False
+    check = make_resource_check(resources, guard, snapshot, args.output, started)
 
     def numeric_check():
         report = numeric.capture_numeric_threads(torch)

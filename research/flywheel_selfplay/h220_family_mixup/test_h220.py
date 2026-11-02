@@ -166,36 +166,10 @@ def test_fifo_holds_required_lock_and_retains_ticket_after_release(
 
 
 def actual_check(resources, guard, now, tmp_path):
-    tree = ast.parse((HERE / "runner.py").read_text())
-    run = next(
-        n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "run"
+    """Use the production check factory with a deterministic clock."""
+    return runner.make_resource_check(
+        resources, guard, lambda: {}, tmp_path, 0.0, clock=lambda: now[0]
     )
-    check = next(
-        n for n in run.body if isinstance(n, ast.FunctionDef) and n.name == "check"
-    )
-    factory = ast.parse(
-        "def factory():\n    checking=False\n    last_check=0.0\n    return check\n"
-    ).body[0]
-    factory.body.insert(2, check)
-    ns = dict(
-        resources=resources,
-        guard=guard,
-        snapshot=lambda: {},
-        json=json,
-        time=types.SimpleNamespace(monotonic=lambda: now[0], time=lambda: now[0]),
-        absolute_deadline=5400,
-        started=0.0,
-        args=types.SimpleNamespace(output=tmp_path),
-    )
-    exec(
-        compile(
-            ast.fix_missing_locations(ast.Module(body=[factory], type_ignores=[])),
-            "actual-H220-check",
-            "exec",
-        ),
-        ns,
-    )
-    return ns["factory"]()
 
 
 def test_real_signal_reentry_remains_safe_with_poll_throttle(tmp_path):

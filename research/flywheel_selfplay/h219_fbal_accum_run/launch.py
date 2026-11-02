@@ -206,7 +206,9 @@ def main(args):
         raise RuntimeError("requires exact merged H219 preregistration")
     pins_raw = blob(args.commit, PREFIX + "manifest.json")
     pins = json.loads(pins_raw)
-    for name, expected in pins["source_sha256"].items():
+    current_pins = dict(pins["source_sha256"])
+    current_pins.update(pins.get("current_source_sha256", {}))
+    for name, expected in current_pins.items():
         raw = blob(args.commit, PREFIX + name)
         if hashlib.sha256(raw).hexdigest() != expected:
             raise RuntimeError("merged source pin mismatch")
@@ -254,11 +256,10 @@ def main(args):
             PYTHONDONTWRITEBYTECODE="1",
             CUBLAS_WORKSPACE_CONFIG=":4096:8",
         )
-        bootstrap = "import subprocess,sys; p='research/flywheel_selfplay/h219_fbal_accum_run/runner.py'; s=subprocess.check_output(['git','-C',sys.argv[2],'show',sys.argv[4]+':'+p]); exec(compile(s,p,'exec'),{'__name__':'__main__','__file__':p})"
+        runner_path = REPO / "research/flywheel_selfplay/h219_fbal_accum_run/runner.py"
         command = [
             sys.executable,
-            "-c",
-            bootstrap,
+            str(runner_path),
             "--repo",
             str(REPO),
             "--commit",

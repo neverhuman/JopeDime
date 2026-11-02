@@ -213,41 +213,10 @@ def test_unregistered_open_launch_refused_before_gpu_or_claim(monkeypatch):
 
 
 def make_actual_resource_check(resources, guard):
-    """Compile the production closure, without starting a model or worker."""
-    import ast
-    import json
+    """Use the production resource-check factory without starting a worker."""
     import time
-    import types
 
-    tree = ast.parse((HERE / "runner.py").read_text())
-    run = next(
-        n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "run"
-    )
-    check = next(
-        n for n in run.body if isinstance(n, ast.FunctionDef) and n.name == "check"
-    )
-    factory = ast.parse(
-        "def factory():\n    checking = False\n    return check\n"
-    ).body[0]
-    factory.body.insert(1, check)
-    ns = dict(
-        resources=resources,
-        guard=guard,
-        snapshot=lambda: {},
-        json=json,
-        time=time,
-        started=time.monotonic(),
-        args=types.SimpleNamespace(output=HERE),
-    )
-    exec(
-        compile(
-            ast.fix_missing_locations(ast.Module(body=[factory], type_ignores=[])),
-            str(HERE / "runner.py"),
-            "exec",
-        ),
-        ns,
-    )
-    return ns["factory"]()
+    return runner.make_resource_check(resources, guard, lambda: {}, HERE, time.monotonic())
 
 
 def test_alarm_during_buffered_write_does_not_reenter_resource_check():
