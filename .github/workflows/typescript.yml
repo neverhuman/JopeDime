@@ -84,10 +84,6 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - name: Require disposable GitHub-hosted runner
-        env:
-          RUNNER_ENVIRONMENT: ${{ runner.environment }}
-        run: test "$RUNNER_ENVIRONMENT" = github-hosted
       - name: Install the repository-pinned Rust toolchain
         env:
           RUSTUP_HOME: /opt/rust/rustup

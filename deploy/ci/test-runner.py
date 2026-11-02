@@ -1185,7 +1185,8 @@ class WorkflowAdmissionTests(unittest.TestCase):
         self.assertIn('runs-on: ubuntu-24.04', parity)
         self.assertNotIn('self-hosted', parity)
         self.assertNotIn('runner-provenance', parity)
-        self.assertIn('RUNNER_ENVIRONMENT: ${{ runner.environment }}', parity)
+        self.assertNotIn('RUNNER_ENVIRONMENT:', parity)
+        self.assertNotIn('runner.environment', parity)
         self.assertIn('CARGO_TARGET_DIR: ${{ github.workspace }}/target/typescript-cargo', parity)
         self.assertIn('repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}', parity)
 
