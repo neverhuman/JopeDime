@@ -667,6 +667,8 @@ crates/jope-campaigns/src/commands/train_only_redteam_execution/validation_and_t
 crates/jope-campaigns/src/commands/train_only_redteam_execution/validation_and_tests/tests.rs
 crates/jope-campaigns/src/commands/train_only_redteam_results.rs
 crates/jope-campaigns/src/commands/train_only_study.rs
+crates/jope-campaigns/src/commands/train_only_study/results.rs
+crates/jope-campaigns/src/commands/train_only_study/study.rs
 crates/jope-campaigns/src/commands/train_only_study/tests/generation.rs
 crates/jope-campaigns/src/commands/train_only_study/tests/lifecycle.rs
 crates/jope-campaigns/src/commands/train_only_study/tests/receipts.rs
