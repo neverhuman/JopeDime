@@ -14905,6 +14905,16 @@
       ],
       "lanes": [],
       "scope": "H212 synthetic, outcome-free controls for the preregistered pool-width protocol: stable distinct seed streams, complete disjoint balanced family folds, native first-argmin tie and gate-failure cost, and family-bootstrap strict ties as non-wins."
+    },
+    "python:research/flywheel_selfplay/h213_gpu_delta_sustained/test_h213.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H213 CPU-only data-free controls: unchanged H211 science, gradient/forward and role controls, exact native vector, S3 custody, SIGALRM reentry, exact PR admission; separate monotonic300s load1/CPU clocks, one-sample spike/recovery/301s refusal in worker and supervisor and instantaneous load5/memory. No scientific outcome or GPU fixture."
     }
   },
   "lanes": {
