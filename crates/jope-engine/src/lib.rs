@@ -53,6 +53,7 @@ pub mod gpu_worker;
 // The original grammar.rs remains byte-frozen for historical conformance.
 #[path = "grammar/automaton.rs"]
 pub mod grammar;
+pub mod grammar_vocab;
 pub mod jain_vocabulary;
 pub mod label_admission;
 #[cfg(feature = "neural")]
