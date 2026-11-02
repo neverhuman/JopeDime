@@ -598,6 +598,31 @@ def main():
                 scientific_retry=False,
             ),
         )
+        import fcntl
+
+        chat = Path("/home/ubuntu/jope_plan/master/AGENT_CHAT.md")
+        with open(str(chat) + ".lock", "a") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            with chat.open("a") as f:
+                f.write(
+                    "\n["
+                    + dt.datetime.now(dt.timezone.utc).isoformat()
+                    + "] H225 continuation CONTROL/CLOSEOUT BLOCKED: "
+                    + str(error)
+                    + "; preserve all source/raw evidence; no scientific retry. Receipt "
+                    + str(EVIDENCE / "CONTROLLER-BLOCKER.json")
+                    + "\n"
+                )
+        with Path(
+            "/home/ubuntu/jope_plan/master/status/H225-sol_v1_dsc01-t1405.md"
+        ).open("a") as f:
+            f.write(
+                "\nContinuation control/closeout blocked: "
+                + str(error)
+                + ". See "
+                + str(EVIDENCE / "CONTROLLER-BLOCKER.json")
+                + ".\n"
+            )
         if (EVIDENCE / "FINISHER-HANDOFF.json").exists() and not (
             EVIDENCE / "TERMINAL-RECONCILIATION.json"
         ).exists():
