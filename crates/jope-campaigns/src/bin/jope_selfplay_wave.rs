@@ -2639,10 +2639,10 @@ fn cache_filter_proposal_reservoir(
 }
 
 fn extend_candidate_evidence(candidate: &mut Candidate, fields: &[(&str, Value)]) -> Result<()> {
-    let mut evidence = candidate
-        .evidence
-        .take()
-        .unwrap_or_else(|| Value::Object(serde_json::Map::new()));
+    let mut evidence = match candidate.evidence.take() {
+        Some(evidence) => evidence,
+        None => Value::Object(serde_json::Map::new()),
+    };
     let object = evidence
         .as_object_mut()
         .context("candidate evidence must be a JSON object")?;
