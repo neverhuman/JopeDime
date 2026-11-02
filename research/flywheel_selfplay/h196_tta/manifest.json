@@ -113,5 +113,36 @@
     "test_h196.py": "2ecc5402122e037b4f07c0e676297460dcb3f72b6f80fc101582c2435ed19add",
     "test_protocol.py": "961fc70f567cf540b559019146ff9d98e97ff239ad82653b4efca79367756b5c",
     "treatment.py": "ddc6c912d900e77c6a07e270770be3630d6e82e681f6a903bfdd3c02e0288e2b"
+  },
+  "attempt": 4,
+  "status": "INCOMPLETE",
+  "verdict": null,
+  "source_commit": "37126b5587712f443f2e02c09cba572da850da0b",
+  "host": "xbabe1",
+  "device": "cuda:0",
+  "metrics_file": "metrics.json",
+  "custody_file": "custody.json",
+  "diagnosis_file": "diagnosis.json",
+  "execution_manifest_file": "execution-manifest-attempt4.json",
+  "execution_manifest_sha256": "4d0c9d432047acea6b5e4b4519cd7bbc90ee8f02fcd634c82e5e52f5e394fa93",
+  "summary_note": "Postrun attempt4 summary; exact manifest bytes consumed by the run are preserved separately.",
+  "run_summary": {
+    "completed_B_cells": 0,
+    "completed_A_cells": 0,
+    "optimizer_updates": 0,
+    "elapsed_seconds": 32.55145422928035,
+    "failure": "RuntimeError('native batching/cached cost identity failure')",
+    "native91_bitexact": true,
+    "thread_amendment": {
+      "authority": "Jepson via user message / Grok Bot relay, card answer 7:35 PM MT",
+      "approval": "Yes, Jepson approves raising only the aggregate thread limit to 5 for H196 attempt 4; keep one numeric thread and all other guards; record this amendment in launch.json; launch now on xbabe1 on the 4090.",
+      "recorded_utc": "2026-11-02T02:37:32.368567+00:00",
+      "attempt": 4,
+      "aggregate_threads_before": 4,
+      "aggregate_threads_after": 5,
+      "numeric_threads": 1,
+      "other_guards_unchanged": true
+    },
+    "scientific_verdict": null
   }
 }
