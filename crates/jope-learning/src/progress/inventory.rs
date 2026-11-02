@@ -60,7 +60,7 @@ pub const HEAD_SCHEMA: &str = "jope.progress.head/v1";
 /// an event may name an earlier event and a manifest/checkpoint/commit its own predecessor).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum Kind {
+pub enum ProgressObjectKind {
     /// The `RunManifest` case of `Kind`.
     RunManifest,
     /// The `Event` case of `Kind`.
@@ -95,7 +95,10 @@ pub enum Class {
     Derived,
 }
 
-impl Kind {
+/// Compatibility name for callers that used the original inventory API.
+pub type Kind = ProgressObjectKind;
+
+impl ProgressObjectKind {
     /// Constant identifying the all.
     pub const ALL: [Kind; 9] = [
         Kind::RunManifest,
