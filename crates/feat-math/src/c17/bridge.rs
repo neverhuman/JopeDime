@@ -131,11 +131,8 @@ pub unsafe extern "C" fn jope_model_predict(
         if rows == 0 {
             return Ok(());
         }
-        // SAFETY: The zero-row case returned above; `shape` proves nonzero
-        // columns and checked `rows * cols == x_len`, while `buffer` validates
-        // the slice-size bound, non-nullness, and alignment. The C caller keeps
-        // `x` initialized and live for this call. `rows_from` only borrows and
-        // copies; the caller retains the original pointer and allocator ownership.
+        // SAFETY: C keeps `x` live, readable, and initialized; prior `shape`/`buffer`
+        // checks prove nonzero dimensions, exact product, alignment, and slice bounds; `rows_from` borrows/copies.
         let x = unsafe { rows_from(x, rows, cols) };
         let predictions = model.predict(&x);
         if predictions.len() != rows {
