@@ -7,8 +7,8 @@ GET/body-SHA verification. Model/reference bytes match the retained H183 custody
 members and merged H170 pins. No weights or dataset payloads are in Git.
 
 The actual r882 checkpoint has338 tensors. Its full/anchor/DOPE tensor-map hashes
-are recorded using the H206 state-hash algorithm. This is a weights-only CPU
-decode, not a constructed-Fused state check or native91 scorer replay. The DOPE
+are recorded using the H206 state-hash algorithm. The initial binding was a weights-only CPU
+decode; the actual constructor and full native91 scorer now pass as recorded below. The DOPE
 map hash uses a different algorithm from the historical c51a56d0 composite; the
 historical identity is not replaced. Native91 binds91 contexts/19 families,
 ordered utility/pick hashes and mean1.1377941898164525. It is the existing,
@@ -25,8 +25,6 @@ remain closed and no scientific optimizer or GPU worker has started.
 | Original allowed S3 TRAIN key/VersionId/bodySHA; matching two-fold cut, derived nq0 JTT1 and row/cut/dtype witness | rd_argon: corrected same-original-TRAIN packet; merged H2051758 is held and its historical local replay is not this proof |
 | Versioned vec256(1,256), col_lm(1,64,17), tokens(1,10,32), mask(1,10), program(256,412), projection(256,16), ctx_feat(1,584), scale/prior/reveal arrays derived from those same permitted rows | rd_argon + H206 acquisition: tokens alone do not provide the live DOPE ABI; persist and exact-GET verify before any update |
 | Approved parent/champion bank and TRAIN-derived landmark48/feature/W1 identities | H206 acquisition: inherited proposal generation is tested; no production bank/closure has been admitted |
-| Constructed Fused model/anchor state equality and approved transitive package/asset/bank closure | H206 model factory: actual CPU constructor/state equality is now proved in the source-bound receipt; do not instantiate an unfiltered bank as an admission shortcut |
-| Genuine r882 native91 full-vector/pick replay and source-bound scorer/batch/input identities | H206 native qualification: reference ObjectRef, context/pool/table hash list and vector/pick identities are recovered; actual target-host full scorer replay remains NOT_RUN |
 | Complete CUDA supervisor, three-seed/five-fold/four-arm k1/16/64/256 study and fixed calibrated pooled selector | H206 study/controller: phased implementation exists, original CPU round still rejects CUDA; actual CUDA execution and genuine admission are not qualified |
 | Authoritative cumulative source/setup/helper/wait/publication CPU costs | H206 canonical coordinator: ledger now REGISTERED at xbabe3:/home/ubuntu/jope_plan/evidence/H206/campaign-ledger.json, accounting UNRECONCILED. Known measured lower bound is preserved; CPU used/remaining stay null and all unmeasured allowance is conservatively held. Reconcile without resetting400CPUh/18GPUh |
 | Receiving source merge and fresh resource admission | Assigned merger super_merger_codex reviews/merges the pin follow-up. H206 launches only from merged qualified source, exclusive3090, <=88% before40GB cache reserve, >=50GB headroom and <93.8% after reserve; no guard relaxation |
@@ -52,10 +50,16 @@ evidence/H206/runtime-20261102T0925Z/ACTUAL-MODEL-QUALIFICATION-*.json. It did
 not run a scored forward or optimizer. The original full-cost native91
 reference a5109aff was recovered from the exact-version H183 archive with
 archive/member SHA verification. Approved historical91 pools/tokens/reference
-descriptors are pinned in native91_inputs.json. Actual source-bound native91
-scorer qualification must run only after this prospective source is committed
-and its PR is open; a mismatch remains a full-vector HOLD, never a tolerance,
-mean-only comparison or replacement reference.
+descriptors are pinned in native91_inputs.json. Actual CPU singleton replay
+PASS at source15f365007f7c978af262184e108edc05cc09779d: all91 full float32
+vectors, ordered picks, utilities and mean1.1377941898164525 match exactly.
+Every vector was locally fsynced and create-only S3/exact-VersionId read back
+before the next forward. Receipt ACTUAL-NATIVE91-QUALIFICATION-repaired.json
+records42.322899 CPU seconds and90.274130 wall seconds. The preceding lazy-import
+failure is retained and charged; the pinned runtime-context repair preceded
+this successful actual replay. There was no tolerance or reference replacement.
+The final metadata publication changes no executable, binding, input or preregistration.
+This CPU compatibility PASS does not qualify CUDA or scientific study inputs.
 
 The full phased study/supervisor and incremental proof implementation now
 exists. It is not CUDA-qualified. Actual normalized H206 per-cell role/alias

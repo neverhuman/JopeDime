@@ -114,3 +114,12 @@ A missing genuine qualification, wrong merged source, unknown canonical budget,
 different population, occupied GPU or resource breach refuses/terminates the
 entire attempt. The existing CPU run_round CUDA refusal remains unchanged.
 Actual CUDA execution and scientific study qualification remain NOT_RUN.
+
+Actual CPU qualification at code15f365007f7c978af262184e108edc05cc09779d
+passed original constructor/state/trainability and all91 exact full baseline
+vectors/picks/utilities (mean1.1377941898164525). Vector records have independent
+exact-version S3 readback. The original scorer makes lazy imports during forward;
+factory.runtime preserves the verified private source environment through each
+qualification/model phase and restores ambient modules afterward. No scientific
+optimizer update or GPU was used. Receipt details are in MISSING_PINS.md;
+actual CUDA qualification, H205 input admission and accounting remain held.

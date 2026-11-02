@@ -4,12 +4,12 @@
   "status": "QUEUED_NOT_RUN",
   "scope": "Actual original r882 factory/state, conditional phased study/supervisor, ordered native91 and per-update durable proofs; no scientific or CUDA qualification claimed.",
   "source_sha256": {
-    "MISSING_PINS.md": "6d406ca5585e0409e3a83a922aea613c541cb741c4b8da5b7210a08c948a7bb6",
+    "MISSING_PINS.md": "545f589dbb41cbb3189f068fe6b26fc079391be8ad0cdeca1cb15e37a1121cdd",
     "PREREG.md": "2d174427e734a7609f756b3d5025474a4242b77d9796511e4bf6b918e777d242",
-    "README.md": "3c2f1cfe997354f70212b8971625157dc4d99cd17e3b5136bcde6b02dfa243d4",
+    "README.md": "3fe7051e92dd5ce684c1f4e824640d36c99efb00c4fc42b431379ccf7778d38e",
     "contracts.py": "8f314afe7ab57a240ecae19924d6f0562beefc5a5c726d6c6080bf007abbe0cd",
     "executor.py": "e9a376364a4d1c23dcb51674fc632db252351658f3d3e7446abc784c9d69d14f",
-    "launch.json": "60968e5c7579a324e715a3a8d74412f964e80e812fc5ead5a60aefbbaf15d06f",
+    "launch.json": "5a4fb14dc559393e2b3f512ed0ace9069d77bae9e8f63ef92285f0e37c2b2d69",
     "launch.sh": "10f3f0daaae300c16683eedf4c0ad7222de2f2303067f6bc488254ca435d6658",
     "metrics.json": "9b4aae68af0139aa71df5fe9d883b0d7c889881234f3670f080c7528facf8cd9",
     "native.py": "cda0a71a922dcd1d70d80bbeee6cbc44a606872bb0bde57219af65258948a2a2",
@@ -25,7 +25,6 @@
   "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
   "evidence": [],
   "pending": [
-    "actual source-bound native91 exact-vector gate",
     "approved H206 original TRAIN/role/closure and complete live-encoder/slate template qualification",
     "reconciled original canonical CPU accounting; all unknown prior costs remain held",
     "real merged-source CUDA qualification, queue and fresh resources before scientific launch"
@@ -50,5 +49,12 @@
     "research/flywheel_selfplay/custody/files/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
     "research/flywheel_selfplay/custody/files/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
   },
-  "local_source_evidence": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102"
+  "local_source_evidence": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102",
+  "actual_cpu_qualification": {
+    "source_head": "15f365007f7c978af262184e108edc05cc09779d",
+    "native91_receipt_sha256": "37725a6ef19c165687ebd70f95c3c45b8c4e1f01ce13d6a7ee9410f5456e2a73",
+    "factory_receipt_sha256": "018dd5448ef27633c9b2ac1c9a7cc6f1c216b4da5314fcf55d3f8fd49afb7eee",
+    "optimizer_updates": 0,
+    "gpu": false
+  }
 }
