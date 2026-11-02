@@ -366,6 +366,14 @@ owner = "dl-flywheel"
 expires = "2027-02-01"
 reason = "HLT-001 sha256:9dac31749c4d4a0bb0f1201e55b3fbb050ed128259f8f8ed0196a51f19e22843 flags `old` in a frozen legacy archive-unit shutdown check. The file is immutable reviewed evidence at SHA256 c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69, pinned by deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/README.md and provenance/validation.json. Preserve those bytes; this exact term-and-path allowance affects no other rule, term, or file."
 
+[[dead_language_allow]]
+name = "vibe-frozen-trace-recovery-v3-legacy-unit-check"
+term = "old"
+paths = ["deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py"]
+owner = "dl-flywheel"
+expires = "2027-02-01"
+reason = "HLT-001 sha256:3740a6e00ade6e4fe9e0be004362168ebfb4ab21276cfcce8332337f3c0f29ee flags `old` in a frozen legacy archive-unit shutdown check. The file is immutable reviewed evidence at SHA256 c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69, pinned by deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/provenance/README.md and provenance/validation.json. Preserve those bytes; this exact term-and-path allowance affects no other rule, term, or file."
+
 # Hash-pinned evidence snapshots. Each entry lists exact copies inside a frozen
 # evidence package whose sha256 is recorded by that package's own receipt or
 # manifest (pinned_by). Deduplicating or moving them would break the receipt,

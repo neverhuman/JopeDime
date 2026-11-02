@@ -112,3 +112,11 @@ reassessed against fresh source and test evidence.
 - **Reason:** the term labels the prior archive unit in a shutdown preflight. The archived implementation is immutable evidence and remains byte-identical to its reviewed source.
 - **Pin:** SHA256 `c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69`, recorded in `deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/provenance/README.md` and `provenance/validation.json`.
 - **Disposition:** exact `old` plus exact path allowance only. The frozen source bytes and all other detector coverage remain unchanged.
+
+
+## Frozen trace recovery v3 legacy-unit check
+
+- **Scope:** term `old` in `deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py` (HLT-001 fingerprint `sha256:3740a6e00ade6e4fe9e0be004362168ebfb4ab21276cfcce8332337f3c0f29ee`).
+- **Reason:** the term labels the prior archive unit in a shutdown preflight. The archived implementation is immutable evidence and remains byte-identical to its reviewed source.
+- **Pin:** SHA256 `c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69`, recorded in `deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/provenance/README.md` and `provenance/validation.json`.
+- **Disposition:** exact `old` plus exact path allowance only. The frozen source bytes and all other detector coverage remain unchanged.
