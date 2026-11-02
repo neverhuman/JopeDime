@@ -213,5 +213,5 @@ hash `7d90c1d3f86960fcfbbf66e848d22e665c446debec38e386f512ef09c8a28042` to
 identity digest `8fe007189bca9fe7e0d92b85b509ac79c116616e41a16bb5a0c4bf93d1dda9d6`
 to `4cd44107343b99360a15811bbc6ca0fed80af3d359040efbdeaa3cecdbb6b18c`. The
 identity-only regeneration is bound to source commit
-`0749059b647e93691285bfb27e0f164331f291ad`. No known-identity row is added
+`3a6d253edebd0f7068597979cb91e1a040638f54`. No known-identity row is added
 because this change has no shipped receipt proving that the new identity existed.

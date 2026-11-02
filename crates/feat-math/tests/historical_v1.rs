@@ -761,7 +761,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     let p21_family_split = old_fixture("transitions/p21_family_split_identity_rebaseline.v1.json");
     assert_eq!(
         p21_family_split["source_commit"],
-        "0749059b647e93691285bfb27e0f164331f291ad"
+        "3a6d253edebd0f7068597979cb91e1a040638f54"
     );
     assert_eq!(p21_family_split["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(p21_family_split["fixtures"][0]["path"], changed_fixtures[0]);
