@@ -436,19 +436,8 @@
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/__init__.py",
       "origin_sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c",
       "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/__init__.py",
-      "sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/automaton.py",
-      "origin_sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a",
-      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/automaton.py",
-      "sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/common.py",
-      "origin_sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe",
-      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/common.py",
-      "sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe"
+      "sha256": "834818386c8ce091258b8f6baae783d5e0d9f84abd28b8b27ed2ca74610cd827",
+      "normalization": "P28: extend continuous dltrain namespace to the frozen byte-identical dl-trainonly canonical package; automaton/common/oracle resolve there and custody bytes remain unchanged."
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/dsl_tokenizer.py",
@@ -473,12 +462,6 @@
       "origin_sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
       "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/objective.py",
       "sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/oracle.py",
-      "origin_sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a",
-      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/oracle.py",
-      "sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/sampler.py",
@@ -4151,7 +4134,8 @@
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/__init__.py",
       "origin_sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c",
       "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/__init__.py",
-      "sha256": "dced0dcee3a3c58861a08bd6f9d3b9a8ab92dd93d1740a80adade26f90bbecfc"
+      "sha256": "e92a6e0cebb819571f980bf05840f7e9c719d20702d74616f19ec68c4a34dfa6",
+      "normalization": "Append canonical frozen dltrain source after continuous shared modules for removed byte-identical duplicates; native modules retain precedence."
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/native_corpus_authority.py",
@@ -5132,7 +5116,8 @@
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_decode.py",
       "origin_sha256": "f059ba3f4355295debf29515989c41d9ff89cd8553dae45dba81a268dcb8d2d3",
       "path": "deploy/dl-flywheel/tests_native/test_neural_decode.py",
-      "sha256": "4a858d377333bedbbaf901dc41dd3c5dac1fa8b9bcaee231de82d04755f5be24"
+      "sha256": "4a2ed1286972944622a63c9ad318ec4671b72bf99389a4c4d5059e23adc70248",
+      "normalization": "P28: update source-owner assertion for shared automaton/common/oracle while preserving every behavior assertion."
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_native_batch.py",
