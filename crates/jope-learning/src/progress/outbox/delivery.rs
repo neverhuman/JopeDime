@@ -27,11 +27,11 @@ impl Outbox {
     /// which stays pending, as does everything after it. A local integrity failure is an error.
     pub fn deliver(&mut self, remote: &dyn Remote, limit: Option<u64>) -> Result<Delivery> {
         let mut report = Delivery::default();
-        let todo: Vec<usize> = (0..self.entries.len())
+        let pending_indices: Vec<usize> = (0..self.entries.len())
             .filter(|&i| self.entries[i].ack.is_none())
             .take(limit.map_or(usize::MAX, |l| usize::try_from(l).unwrap_or(usize::MAX)))
             .collect();
-        for i in todo {
+        for i in pending_indices {
             let entry = self.entries[i].clone();
             let seq = entry.record.seq;
             let unacknowledged: Vec<String> = entry
