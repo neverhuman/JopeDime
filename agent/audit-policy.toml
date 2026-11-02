@@ -179,6 +179,11 @@ extra_excluded_paths = [
   # Exact HLT-019 false positive: the pinned KL reference fixture says “nats”
   # as a logarithmic unit, not as a NATS streaming client; see docs/streaming.md.
   "deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v4.py",
+  # HLT-000 finding in pinned recovery evidence; preserve the inventoried bytes.
+  "crates/jope-campaigns/manifests/advanced-v3/recovery-evidence/portable-xlang/ref.cpp",
+  # HLT-019 marker in the immutable DL snapshot; SOURCE_MANIFEST.json pins the
+  # exact file at SHA-256 4522d95b1597adf1e5de2d1e8ea9eb1ce782416010a4ffc690c98bf0a0ec3728.
+  "deploy/dl-flywheel/pipelines/rlfw/analytics/tests/test_scratch.py",
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
   # P38: pinned research artifacts load only inputs whose complete identity is checked.
   # P38: in-memory SQLite fixtures bind row values; only fixed table/placeholder syntax is composed.
@@ -877,6 +882,25 @@ paths = [
 pinned_by = ["deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/SOURCE_PACKET.json"]
 owner = "dl-flywheel"
 reason = "Receipt-pinned immutable copies reported by j_1d42b99e1_ev.json; deploy/dl-flywheel/SOURCE_MANIFEST.json records each exact path and SHA-256, so deduplicating or moving them would break the frozen source record."
+
+[[evidence_snapshot]]
+name = "research-h165-gradient-noise-dropout-preregistered-sources"
+paths = [
+  "research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py",
+  "research/flywheel_selfplay/h165_gradient_noise_dropout/runner.py",
+]
+pinned_by = ["research/flywheel_selfplay/h234_lambdaloss/manifest.json"]
+owner = "research"
+reason = "Exact HLT-043 duplicate occurrences (analysis fingerprint 2c57abf1e9c1; runner fingerprint 0f0f5ced3a46) are immutable preregistered source bytes: the H234 manifest records each H165 path and SHA-256. Preserve the source package and scan the H234 copies; exclude only these pinned paths from copy-code scoring."
+
+[[evidence_snapshot]]
+name = "research-h195-blend025-kernel-confirm-preregistered-runner"
+paths = [
+  "research/flywheel_selfplay/h195_blend025_kernel_confirm/runner.py",
+]
+pinned_by = ["research/flywheel_selfplay/h195_blend025_kernel_confirm/metrics.json"]
+owner = "research"
+reason = "The exact HLT-043 duplicate occurrence (fingerprint 3ed9b9efe1cc) is immutable preregistered source: metrics.json bound_sha256 records this path and SHA-256. Preserve the source package and scan the H233 copy; exclude only this pinned path from copy-code scoring."
 
 [[evidence_snapshot]]
 name = "generated-target-callbacks-revision1"
