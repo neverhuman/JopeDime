@@ -7,6 +7,7 @@ use crate::{
 use axum::{body::Body, Router};
 use http_body_util::BodyExt;
 use std::{
+    collections::VecDeque,
     io::{self, Read},
     sync::mpsc,
     thread,
@@ -14,6 +15,11 @@ use std::{
 };
 use tokio::{runtime::Builder, sync::oneshot};
 use tower::ServiceExt;
+
+// Bound both retained requests and active router/body work. The body bridge has
+// its own one-chunk bound, so this also caps aggregate buffered response data.
+const BRIDGE_QUEUE_CAPACITY: usize = 16;
+const BRIDGE_IN_FLIGHT_LIMIT: usize = 16;
 
 /// Supplies a router bound to an embedding's store and local authentication.
 ///
@@ -38,13 +44,17 @@ impl InProcessApiProvider for jope_service::engine::InProcessEngine {
 
 struct Command {
     request: ureq::http::Request<Vec<u8>>,
-    reply: mpsc::Sender<Result<Response>>,
-    keepalive: mpsc::Sender<Command>,
+    reply: mpsc::SyncSender<Result<Response>>,
+    keepalive: mpsc::SyncSender<Command>,
 }
+/// Synchronous in-process API transport.
+///
+/// Async callers should run request execution and response-body reads with
+/// `tokio::task::spawn_blocking` so they do not block an executor thread.
 #[derive(Clone)]
 pub struct InProcess {
     credentials: Credentials,
-    sender: mpsc::Sender<Command>,
+    sender: mpsc::SyncSender<Command>,
 }
 impl std::fmt::Debug for InProcess {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -66,7 +76,7 @@ impl InProcess {
         owner: Option<std::sync::Arc<dyn InProcessApiProvider>>,
     ) -> Result<Self> {
         let credentials = Credentials::new(endpoint, token)?;
-        let (sender, receiver) = mpsc::channel::<Command>();
+        let (sender, receiver) = mpsc::sync_channel::<Command>(BRIDGE_QUEUE_CAPACITY);
         let (ready, started) = mpsc::sync_channel(1);
         thread::Builder::new()
             .name("jope-client-bridge".into())
@@ -87,10 +97,29 @@ impl InProcess {
                 if ready.send(Ok(())).is_err() {
                     return;
                 }
+                let mut completions: VecDeque<oneshot::Receiver<()>> = VecDeque::new();
                 // Runtime construction/destruction happens on this ordinary thread,
                 // including when a caller uses the synchronous adapter from async code.
                 while let Ok(command) = receiver.recv() {
-                    runtime.spawn(dispatch(router.clone(), command));
+                    // Completed tasks no longer count against the fixed in-flight
+                    // limit. The queue of pending completions stays bounded too.
+                    completions.retain_mut(|done| {
+                        matches!(done.try_recv(), Err(oneshot::error::TryRecvError::Empty))
+                    });
+                    if completions.len() >= BRIDGE_IN_FLIGHT_LIMIT {
+                        if let Some(done) = completions.pop_front() {
+                            // This bridge thread is outside every Tokio runtime.
+                            // Wait here so no more than the limit can be spawned.
+                            let _ = done.blocking_recv();
+                        }
+                    }
+                    let (finished, done) = oneshot::channel();
+                    let request_router = router.clone();
+                    runtime.spawn(async move {
+                        dispatch(request_router, command).await;
+                        let _ = finished.send(());
+                    });
+                    completions.push_back(done);
                 }
             })?;
         started
@@ -145,7 +174,7 @@ impl InProcess {
 impl Transport for InProcess {
     fn execute(&self, request: Request) -> Result<Response> {
         let request = self.credentials.request(request)?;
-        let (reply, receiver) = mpsc::channel();
+        let (reply, receiver) = mpsc::sync_channel(1);
         self.sender
             .send(Command {
                 request,
@@ -233,7 +262,7 @@ struct BodyReader {
     receiver: mpsc::Receiver<io::Result<Vec<u8>>>,
     current: io::Cursor<Vec<u8>>,
     cancel: Option<oneshot::Sender<()>>,
-    _keepalive: mpsc::Sender<Command>,
+    _keepalive: mpsc::SyncSender<Command>,
 }
 impl Read for BodyReader {
     fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
@@ -437,15 +466,20 @@ mod tests {
             );
         }
     }
-    #[test]
-    fn body_lifetime_survives_adapter_drop_and_async_callers_do_not_nest_runtimes() {
-        let runtime = Builder::new_current_thread().enable_all().build().unwrap();
-        runtime.block_on(async {
-            let client = InProcess::new(app(), "http://127.0.0.1:12345", &"ab".repeat(32)).unwrap();
+    #[tokio::test(flavor = "current_thread")]
+    async fn body_lifetime_survives_adapter_drop_and_async_callers_do_not_nest_runtimes() {
+        let client = InProcess::new(app(), "http://127.0.0.1:12345", &"ab".repeat(32)).unwrap();
+        let response = tokio::task::spawn_blocking(move || {
             let response = client.execute(Request::new(1, 0, &[]).unwrap()).unwrap();
             drop(client);
-            assert_eq!(response.json::<SystemInfo>().unwrap(), fixture());
-        });
+            response
+        })
+        .await
+        .unwrap();
+        let body = tokio::task::spawn_blocking(move || response.json::<SystemInfo>().unwrap())
+            .await
+            .unwrap();
+        assert_eq!(body, fixture());
     }
     #[test]
     fn response_headers_arrive_before_an_unfinished_stream_and_drop_cancels_it() {
