@@ -56,6 +56,12 @@ React, with live tools ported under differential tests and unused code archived.
      `fitted_portable_template_bytes_are_pinned_for_version_three`, and moving the source file
      must preserve emitted artifact bytes. This is a generated contract, not a JavaScript runtime
      or service in the product stack.
+   - the C17 ABI header template at
+     `crates/feat-math/contracts/c17_model.h.template`: Rust embeds it in the exported `c17/model.h`
+     bundle; JopeDime does not compile or execute the C header as runtime source. The C17 export
+     and ABI tests verify the generated header and consumer behavior, and its emitted bytes and
+     output path remain unchanged. This is a generated contract, not a C runtime in the product
+     stack.
 3. **Remove the rest in three phases**, each keeping every guard
    honest (coverage map, test inventory and its static-Python floor, capability matrix,
    `spec_drift` registry, ruff/pytest configuration, asset provenance) and never weakens one:
