@@ -123,7 +123,8 @@ impl EloSnapshot {
 
 /// Row F4: the Phase D gate, with the same predicate as `check_phase_d_elo_gate`: at least 3
 /// rounds, strictly rising on regression **and** binary, and the final round at or above the H
-/// baseline on overall, regression and binary.
+/// baseline on overall, regression and binary. Nonfinite requested ratings are unavailable
+/// and cannot pass the gate.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GateStatus {
     pub fit_digest: String,
@@ -146,10 +147,20 @@ pub fn phase_d_gate(
         let m = snap.ratings.get(&t)?;
         round_names
             .iter()
-            .map(|r| m.get(*r).map(|x| x.elo))
+            .map(|r| m.get(*r).filter(|x| x.elo.is_finite()).map(|x| x.elo))
             .collect()
     };
-    let base = |t: TaskType| -> Option<f64> { Some(snap.ratings.get(&t)?.get(h_baseline?)?.elo) };
+    let base = |t: TaskType| -> Option<f64> {
+        let rating = snap.ratings.get(&t)?.get(h_baseline?)?;
+        rating.elo.is_finite().then_some(rating.elo)
+    };
+    let nonfinite = snap.ratings.values().any(|ratings| {
+        round_names.iter().copied().chain(h_baseline).any(|name| {
+            ratings
+                .get(name)
+                .is_some_and(|rating| !rating.elo.is_finite())
+        })
+    });
     let rising = |v: &Option<Vec<f64>>| {
         v.as_ref()
             .is_some_and(|v| v.len() >= 3 && v.windows(2).all(|w| w[1] > w[0]))
@@ -165,6 +176,8 @@ pub fn phase_d_gate(
     );
     let availability = if h_baseline.is_none() {
         Some(NO_VALIDATED_BEST_H_BASELINE.to_owned())
+    } else if nonfinite {
+        Some("nonfinite_ratings".to_owned())
     } else if reg.is_none() || bin.is_none() || ovr.is_none() {
         Some("missing_round_ratings".to_owned())
     } else {
@@ -321,5 +334,80 @@ mod tests {
             1,
         );
         assert_eq!(s.availability.as_deref(), Some("no_frozen_family_roster"));
+    }
+
+    fn ns16_snapshot() -> EloSnapshot {
+        let mut snap = EloSnapshot::new(2, fit(), 10, 5);
+        for task in [
+            TaskType::Overall,
+            TaskType::Regression,
+            TaskType::BinaryClassification,
+        ] {
+            let ratings = snap.ratings.entry(task).or_default();
+            for (name, value) in [
+                ("ROUND_0", 1490.0),
+                ("ROUND_1", 1500.0),
+                ("ROUND_2", 1510.0),
+                ("H", 1500.0),
+            ] {
+                ratings.insert(name.into(), rating(value));
+            }
+        }
+        snap
+    }
+
+    #[test]
+    fn ns16_nonfinite_requested_ratings_never_pass() {
+        for task in [
+            TaskType::Overall,
+            TaskType::Regression,
+            TaskType::BinaryClassification,
+        ] {
+            for name in ["ROUND_0", "ROUND_1", "ROUND_2", "H"] {
+                for invalid in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+                    let mut snap = ns16_snapshot();
+                    snap.ratings
+                        .get_mut(&task)
+                        .unwrap()
+                        .insert(name.into(), rating(invalid));
+                    let gate = phase_d_gate(&snap, &["ROUND_0", "ROUND_1", "ROUND_2"], Some("H"));
+                    assert!(!gate.gate_pass, "{task:?} {name} {invalid}");
+                    assert_eq!(gate.availability.as_deref(), Some("nonfinite_ratings"));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn ns16_finite_policy_and_unrequested_ratings_are_preserved() {
+        let mut snap = ns16_snapshot();
+        let rounds = ["ROUND_0", "ROUND_1", "ROUND_2"];
+        snap.ratings
+            .get_mut(&TaskType::Overall)
+            .unwrap()
+            .insert("ROUND_0".into(), rating(1600.0));
+        for ratings in snap.ratings.values_mut() {
+            ratings.insert("UNREQUESTED".into(), rating(f64::NAN));
+        }
+        let gate = phase_d_gate(&snap, &rounds, Some("H"));
+        assert!(gate.gate_pass, "{gate:?}");
+        assert!(gate.availability.is_none());
+        for len in [1, 2] {
+            assert!(!phase_d_gate(&snap, &rounds[..len], Some("H")).gate_pass);
+        }
+        for task in [TaskType::Regression, TaskType::BinaryClassification] {
+            let mut plateau = snap.clone();
+            plateau
+                .ratings
+                .get_mut(&task)
+                .unwrap()
+                .insert("ROUND_2".into(), rating(1500.0));
+            assert!(!phase_d_gate(&plateau, &rounds, Some("H")).gate_pass);
+        }
+        snap.ratings
+            .get_mut(&TaskType::Overall)
+            .unwrap()
+            .insert("H".into(), rating(1520.0));
+        assert!(!phase_d_gate(&snap, &rounds, Some("H")).gate_pass);
     }
 }

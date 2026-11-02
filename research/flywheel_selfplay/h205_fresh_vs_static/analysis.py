@@ -2430,6 +2430,7 @@ def probe_s1main_nq0_protocol_blocker(
     jtt1_path,
     worker_bin=EVALUATOR_BINARY_PATH,
     expected_worker_sha256=EVALUATOR_BINARY_SHA256,
+    timeout_seconds=30.0,
 ):
     """Probe `bootstrap.s1main --fit-s1` on an `nq == 0` train-only JTT1 table and record the exact binary response.
 
@@ -2438,6 +2439,8 @@ def probe_s1main_nq0_protocol_blocker(
     even though `parse_s1_data` at `main.rs:587-606` only loops `0..nt` and never reads a single byte
     of the `nq` query block.
     """
+    if not np.isfinite(timeout_seconds) or timeout_seconds <= 0.0:
+        raise RuntimeError("nq0 probe timeout must be finite and positive")
     jtt1_p = Path(jtt1_path)
     bin_p = Path(worker_bin)
     if not jtt1_p.is_file():
@@ -2481,7 +2484,7 @@ def probe_s1main_nq0_protocol_blocker(
             [str(bin_p), "--fit-s1", str(jtt1_p), str(cand_path), str(out_path)],
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=min(30.0, float(timeout_seconds)),
             env=env,
             check=False,
         )

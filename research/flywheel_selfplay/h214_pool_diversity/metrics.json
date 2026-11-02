@@ -1,0 +1,92 @@
+{
+  "schema": "jope.h214.pool-diversity-metrics/v1",
+  "status": "CLOSED_INCOMPLETE",
+  "verdict": "INCOMPLETE",
+  "execution_closed": true,
+  "source_commit": "4cbb66807a08124e89c5350361f68e8cc71fb699",
+  "prereg_pr": 1808,
+  "startup_pin_repair_pr": 1832,
+  "host": "xbabe1",
+  "phase": "smoke_setup_failed",
+  "attempts_consumed": 0,
+  "smoke_worker_launches": 1,
+  "preworker_refusals": 1,
+  "utility_readouts": 0,
+  "optimizer_updates": 0,
+  "primary_coverage": {
+    "seeds_executed": 0,
+    "seeds_registered": 3,
+    "contexts_executed": 0,
+    "contexts_registered": 91,
+    "families_executed": 0,
+    "families_registered": 19
+  },
+  "median_gain": null,
+  "ci95": null,
+  "holm_adjusted_p": null,
+  "elo_vs_r882": null,
+  "elo_vs_NATIVE16": null,
+  "pool_diversity": null,
+  "oracle_best_in_pool": null,
+  "reason": "TRAIN smoke setup failed before model instantiation/inference or candidate proposal/evaluation. H214 did not rebind H139 ARM_DIR to pinned H195 reference directory, so roster() sought absent h139/inputs/best_dev_checkpoint.json. No efficacy verdict; missing outcomes are not zero gains.",
+  "TEMP16": "NOT_RUN: no native temperature hook; final coordinator ruling",
+  "holm_m": 1,
+  "scored_width_per_arm": 16,
+  "arms": [
+    "NATIVE16",
+    "FPS16"
+  ],
+  "seeds": [
+    214101,
+    214102,
+    214103
+  ],
+  "campaign_started_utc": "2026-11-02T11:08:24.326111+00:00",
+  "deadline_utc": "2026-11-02T13:08:24.326111+00:00",
+  "smoke_launched_utc": "2026-11-02T11:34:22.444379+00:00",
+  "failure_receipt_mtime_utc": "2026-11-02T11:34:22.362685+00:00",
+  "post_failure_observed_utc": "2026-11-02T11:36:45.410670+00:00",
+  "primary_attempt_root_exists": false,
+  "supervisor_alive": false,
+  "worker_alive": false,
+  "process_exit_status": null,
+  "process_exit_status_note": "not retained by original detached launcher; INCOMPLETE raw worker receipt retained",
+  "evidence": {
+    "raw_root": "/home/ubuntu/jope-data/h214/preflight-4cbb66807a08",
+    "raw_metrics_sha256": "a5d19ca652d6d38db708e2d28c7d323aa5be814c1f417a2223ba4eeb6b7b0b0c",
+    "launch_control": "/home/ubuntu/jope-data/h214/launch-smoke-4cbb66807a08.json",
+    "launch_control_sha256": "d289b977eca1e68a7af2159777dc75de113b09cd7ed436c1a4dde45506795ef9",
+    "controller_receipt": "/home/ubuntu/jope_plan/evidence/H214/res08-t0200/SMOKE-CLOSEOUT.json",
+    "controller_raw_copy": "/home/ubuntu/jope_plan/evidence/H214/res08-t0200/smoke-failure-4cbb6680"
+  },
+  "freeze": {
+    "r882_sha256_after": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dope_checkpoint_file_sha256_after": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "dope_checkpoint_file_matches_registered": true,
+    "dope_composite_sha256_expected": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_tensor_composite_after": null,
+    "dope_tensor_composite_after_status": "NOT_RUN: no model instantiated",
+    "optimizer_updates": 0
+  },
+  "input_diagnosis": {
+    "missing_path": "/home/ubuntu/jope-data/h139/inputs/best_dev_checkpoint.json",
+    "approved_existing_reference": "/home/ubuntu/jope-data/h195/inputs/best_dev_checkpoint.json",
+    "reference_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "excluded_payloads_opened": 0,
+    "outer_rows_delivered": 0
+  },
+  "verification": {
+    "source_sha": "4cbb66807a08124e89c5350361f68e8cc71fb699",
+    "targeted_tests_passed": 30,
+    "records_gates_passed": [
+      "paper-trace",
+      "coverage validate",
+      "verify-test-inventory",
+      "verify-source-inventory",
+      "repo-layout"
+    ],
+    "hosted_ci": "WAIVED_NOT_PASS",
+    "full_hygiene": "Known two failures reproduced on unchanged main4d9; explicit H214 nonblocking ruling"
+  },
+  "next_step": "Separately authorize a prospective source fix for H139 reference-path relocation, add a source/input-only startup preflight, and register any new execution explicitly. No retry or primary launch in this execution; original deadline never reset."
+}

@@ -1,6 +1,6 @@
 # H205 — Fresh D4 families vs static 205-family pool and static teacher, 50 rounds from r882, H178 pooled selector
 
-**Status: Attempt 2 (`run-20261102T0358Z` at `812ec1ee78cc32a70bb275c109b0c2138d0fb3b8`) closed out as `INCOMPLETE` / `EXPLORATORY_NONCONFORMING_HELD_AT_FRESH_BOUNDARY` (`NO_ADVANCE`, `1,500` exploratory static updates, `0` `FRESH` updates; `2,021.04s / 25,200s` cumulative wall time used across GPU attempts 1+2 + helper run `0752Z`, `23,178.96s` remaining); prospective P1/P2 + `review1758` (#1785) + `H205-TRAIN-BRIDGE-HANDOFF.md` source & counterexample tests implemented (`build_allowed_regression_train_roster` with real exclusion schemas & transitive closure yielding `1,772` `fpool`-disjoint / `1,550` catalog-transitive-disjoint / `1,336` deduplicated independent regression `TRAIN` families; headerless/manifest CSV semantics + prospective `h206-native-S1-TRAIN-v1` `TRAIN`-only `nq=0 -> nq=10` padding compatibility bridge storing both `original_jtt1_nq0_sha256` and `padded_jtt1_nq10_sha256` while extracting learner tensors strictly from the unpadded `nt`-row `TRAIN` matrix and retaining `BLOCKED_NQ0_PROTOCOL` as a negative control; create-only S3 persistence & exact-`VersionId` replay before inherited-engine consumption), awaiting release of `@super_merger_codex` `SOURCE / DATA / OPTIMIZER HOLD` before any live scored/native acquisition.** See [PREREG.md](PREREG.md) and [metrics.json](metrics.json).
+**Status: Attempt 2 (`run-20261102T0358Z` at `812ec1ee78cc32a70bb275c109b0c2138d0fb3b8`) closed out as `INCOMPLETE` / `EXPLORATORY_NONCONFORMING_HELD_AT_FRESH_BOUNDARY` (`NO_ADVANCE`, `1,500` exploratory static updates, `0` `FRESH` updates; at least `2,021.04s / 25,200s` known historical wall cost across GPU attempts 1+2 + helper run `0752Z`; remaining time is at most `23,178.96s` until all later costs are reconciled); prospective P1/P2 + `review1758` (#1785) + `H205-TRAIN-BRIDGE-HANDOFF.md` source & counterexample tests implemented (`build_allowed_regression_train_roster` with real exclusion schemas & transitive closure yielding `1,772` `fpool`-disjoint / `1,550` catalog-transitive-disjoint / `1,336` deduplicated independent regression `TRAIN` families; headerless/manifest CSV semantics + prospective `h206-native-S1-TRAIN-v1` `TRAIN`-only `nq=0 -> nq=10` padding compatibility bridge storing both `original_jtt1_nq0_sha256` and `padded_jtt1_nq10_sha256` while extracting learner tensors strictly from the unpadded `nt`-row `TRAIN` matrix and retaining `BLOCKED_NQ0_PROTOCOL` as a negative control; create-only S3 persistence & exact-`VersionId` replay before inherited-engine consumption), awaiting release of `@super_merger_codex` `SOURCE / DATA / OPTIMIZER HOLD` before any live scored/native acquisition.** See [PREREG.md](PREREG.md) and [metrics.json](metrics.json).
 
 - **Authority.** `"Jepson via Grok Bot, card answer 8:22 PM MT" (2026-11-01, t11s3): "Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared."`
 - **Terminal Record of Prior Attempts (`run-20261102T0355Z` & `run-20261102T0358Z`).**
@@ -22,3 +22,69 @@
     - Pure S3 `train.csv` `n_q = 0` `JTT1` negative control (`use_train_padding_bridge=False`): `jtt1_nq0_sha256: a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c` (`49,017` B, `train_matrix_sha256: cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7`, `nt = 1000, nq = 0, p = 5, k = 2`, `1000-row raw_csv_features_sha256: a84271417a25b285aed0b5612ebfc0bb953c9cb863e32f24a484ab6127fff33a`); `bootstrap.s1main --fit-s1` (`e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8`) exits `returncode = 1` with `Error: "S1 requires exactly two inner folds and an admitted shape" / invalid table counts nt=1000 nq=0 p=5` (`deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567`).
     - Historical `regression-seam-20261102T0752Z` local `s1-prod` replay control (`fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45`, `1,600` rows from an unscaled `80/20` `rowselraw1` split across all `1,999` rows, `0` row overlap with min-max scaled `1,000`-row S3 `train.csv`; `24` live evaluations vs `1,152` cached rows): `1` local AdamW step (`adapter_sha256_before = b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454` $\neq$ `adapter_sha256_after = 54de3483d939402f04d980f86e2050e33da6e288333ddb7887686bbc5d3df1ce`, `dope_sha256` immutable) and posthoc S3 custody (`s3_custody_receipt.json` `VersionId: 5C85hyOLoj7kdc_z7lCA5lvjROZVemyZ`, `50.10207135695964s` wall time) are preserved as narrow factual receipts, classified as `NOT_SAME_S3_TRAIN_MILESTONE`, and barred by `FORBIDDEN_HISTORICAL_LOCAL_REPLAY_HASHES`.
 - **Code.** [runner.py](runner.py), [analysis.py](analysis.py), [monitor.py](monitor.py), [manifest.json](manifest.json), [metrics.json](metrics.json), and [test_h205.py](test_h205.py).
+
+
+## Operational finding 5: bounded source correction (2026-11-02)
+
+The prospective helper now checks the shared deadline immediately before backward
+and optimizer step, bounds each native/AWS subprocess by the positive remaining
+window (retaining the smaller existing 30/90-second cap), and checks after transport,
+verification and before result publication. Native identity, TRAIN-only padding,
+role exclusions, frozen weights, pre-consumption versioned custody and scientific
+selection rules are unchanged.
+
+The existing `monitor.py` is the sole invocation accountant for this helper. It captures its clock
+before imports/preflight, writes a durable PENDING journal record before validation,
+and passes an exclusive launch snapshot with the ledger-derived prior and the same
+start/deadline to its worker. It observes worker exit, closes owned logs, checks the
+deadline again and charges the entire observed interval once, including startup,
+failure, final custody and summary output. A worker-only result is
+`PENDING_FINAL_ACCOUNTING`, `seam_qualified=false`; an exit code of zero or a HOLD
+summary does not qualify the real TRAIN/native/S3/engine milestone.
+
+Malformed CLI/launch metadata or an unreadable ledger can fail before a ledger can
+be identified. Where the output path is known, the supervisor writes an exclusive
+admission-refusal record with a measured elapsed lower bound and an UNKNOWN tail;
+it does not pretend that an unidentified history was charged. Original ARGON must
+reconcile those refusals as well, avoiding any double charge of an existing journal
+entry. No automatic retry is admitted. Heavy `psutil` preflight and all worker
+imports occur inside the durable admitted invocation. The default GPU study's
+optimizer loop and direct non-construction worker API remain outside this bounded
+construction-helper correction; no new qualification of those paths is claimed.
+
+No code creates or resets a production campaign ledger. An original-owner reconciled
+`h205-campaign-accounting/v1` JSON ledger is required, with `history_complete=true`,
+`baseline_elapsed_seconds >= 2021.039296863135`, `campaign_cap_seconds <= 25200`,
+nonempty `source_evidence`, a `completed` map and `pending=null`. The launch pins
+`campaign_ledger_path`, its current `campaign_ledger_sha256`, and a fresh
+`accounting_invocation_id`. Missing, stale, malformed, nonfinite or pending history
+refuses admission. A duplicate terminal commit does not charge twice or change the
+record. A crashed/incomplete commit leaves PENDING and blocks another invocation.
+
+The terminal ledger commit and supervisor publication/exit occur after the sampled
+cutoff. Their duration is explicitly UNKNOWN, not zero: completion seals
+`history_complete=false` with `unreconciled_tail`. Original ARGON must retain the
+sampled charge, observe the complete supervisor exit and reconcile all remaining
+costs/evidence before publishing a qualified receipt or restoring history completeness
+for another invocation. The new digest and cumulative charge then shorten the next
+window; the old constant is only a floor. Interpreter time before the captured Python
+entry is outside this sample and must not be called measured full-process cost.
+
+Data-free acceptance (supply an owned persistent scratch directory):
+
+```sh
+python3 -B research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py --deadline-controls "$CONTROL_SCRATCH"
+```
+
+This entry executes the committed source AST and in-memory fake clocks/native/AWS/
+parameter/optimizer stubs before NumPy, Torch or research imports. It checks forward
+and backward expiry, final upload/verification, late child exit, startup/failure/tail
+charges, invalid history, failed terminal commits and once-only carry. It performs
+no model, native, S3 or scientific operation. The legacy full tests that require real
+tables/models/native binaries were not executed in this helper lane.
+
+**Next owner: original ARGON.** Source/fixture validation grants no runtime release.
+Reconcile historical and later unknown costs in a versioned owner receipt, obtain
+the existing source/data/optimizer/resource admission, and use the existing monitor's
+`--construct-single-regression-context` path only under that authority. Preserve the
+old attempts and #1799; no new attempt or rerun was made by this correction.

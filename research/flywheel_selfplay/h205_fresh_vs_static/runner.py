@@ -14,23 +14,26 @@ Executes inside a single GPU worker process on xbabe1 cuda:0 alongside live flyw
   BEFORE any held-out A-fold evaluation (`evaluate_heldout_a_panel` enforces `verify_b_lock_persisted_before_a_eval`).
 """
 
-import argparse
-from datetime import datetime, timezone
-import hashlib
-import importlib.util
-import json
-import math
-import os
-from pathlib import Path
-import re
-import struct
-import subprocess
-import sys
-import tempfile
 import time
 
-import numpy as np
-import torch
+PROCESS_START_MONOTONIC = time.monotonic()
+
+import argparse  # noqa: E402 -- capture startup before imports
+from datetime import datetime, timezone  # noqa: E402 -- capture startup before imports
+import hashlib  # noqa: E402 -- capture startup before imports
+import importlib.util  # noqa: E402 -- capture startup before imports
+import json  # noqa: E402 -- capture startup before imports
+import math  # noqa: E402 -- capture startup before imports
+import os  # noqa: E402 -- capture startup before imports
+from pathlib import Path  # noqa: E402 -- capture startup before imports
+import re  # noqa: E402 -- capture startup before imports
+import struct  # noqa: E402 -- capture startup before imports
+import subprocess  # noqa: E402 -- capture startup before imports
+import sys  # noqa: E402 -- capture startup before imports
+import tempfile  # noqa: E402 -- capture startup before imports
+
+import numpy as np  # noqa: E402 -- capture startup before imports
+import torch  # noqa: E402 -- capture startup before imports
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
@@ -245,7 +248,9 @@ def validate_launch(launch, manifest_sha, process_start_monotonic=None):
     start_mono = (
         float(process_start_monotonic)
         if process_start_monotonic is not None
-        else float(os.environ.get("H205_PROCESS_START_MONOTONIC", time.monotonic()))
+        else float(
+            os.environ.get("H205_PROCESS_START_MONOTONIC", PROCESS_START_MONOTONIC)
+        )
     )
     prior_elapsed = float(
         launch.get(
@@ -1082,7 +1087,7 @@ def evaluate_slate24_live_s1main(
             cand_path = td_path / f"cand_{idx:04d}.json"
             out_path = td_path / f"eval_{idx:04d}.json"
             cand_path.write_text(json.dumps(prog, sort_keys=True), encoding="utf-8")
-            proc = subprocess.run(
+            proc = _run_bounded_subprocess(
                 [
                     "nice",
                     "-n",
@@ -1099,6 +1104,7 @@ def evaluate_slate24_live_s1main(
                 timeout=90,
                 env=env,
                 check=False,
+                deadline_spec=deadline_spec,
             )
             if proc.returncode != 0 or not out_path.is_file():
                 raise RuntimeError(
@@ -1150,6 +1156,9 @@ def evaluate_slate24_live_s1main(
         raise RuntimeError(
             f"live s1main parity check failed: max_diff={max_diff}, all_gate={all_gate}"
         )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_native_or_s3_verification"
+    )
     return dict(
         status="PASS",
         evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
@@ -1219,7 +1228,15 @@ def consume_single_fresh_context_in_inherited_engine(
     loss_val = rt.loss(pred, fitness, gate)
     if not torch.isfinite(loss_val).all():
         raise RuntimeError(f"non-finite loss on fresh context {cid}: {loss_val}")
+    if deadline_spec is not None:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage="before_fresh_context_backward"
+        )
     loss_val.backward()
+    if deadline_spec is not None:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage="before_fresh_context_optimizer_step"
+        )
     opt.step()
 
     after_trainable = {
@@ -1266,7 +1283,20 @@ def consume_single_fresh_context_in_inherited_engine(
     )
 
 
-def _s3_get_object_with_version(bucket, key, dest_path, aws_profile="veox-jepson-prod"):
+def _run_bounded_subprocess(command, *, deadline_spec, timeout=90.0, **kwargs):
+    """Bound one native/AWS operation by the existing shared deadline, never a fresh window."""
+    limit = mon.remaining_subprocess_timeout(time.monotonic(), deadline_spec, timeout)
+    try:
+        return subprocess.run(command, timeout=limit, **kwargs)
+    finally:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage="after_native_or_aws_subprocess"
+        )
+
+
+def _s3_get_object_with_version(
+    bucket, key, dest_path, aws_profile="veox-jepson-prod", *, deadline_spec=None
+):
     dest_p = Path(dest_path)
     dest_p.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
@@ -1281,8 +1311,18 @@ def _s3_get_object_with_version(bucket, key, dest_path, aws_profile="veox-jepson
         key,
         str(dest_p),
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, env=env, check=True)
+    proc = _run_bounded_subprocess(
+        cmd,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=True,
+        deadline_spec=deadline_spec,
+    )
     meta = json.loads(proc.stdout)
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_native_or_s3_verification"
+    )
     return dict(
         bucket=bucket,
         key=key,
@@ -1298,6 +1338,7 @@ def _s3_put_create_only_and_verify(
     src_path,
     aws_profile="veox-jepson-prod",
     replay_dest_path=None,
+    deadline_spec=None,
 ):
     src_p = Path(src_path)
     local_sha = sha(src_p)
@@ -1316,8 +1357,13 @@ def _s3_put_create_only_and_verify(
         "--if-none-match",
         "*",
     ]
-    put_proc = subprocess.run(
-        put_cmd, capture_output=True, text=True, env=env, check=True
+    put_proc = _run_bounded_subprocess(
+        put_cmd,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=True,
+        deadline_spec=deadline_spec,
     )
     put_meta = json.loads(put_proc.stdout)
     ver_id = str(put_meta.get("VersionId", "")).strip()
@@ -1341,7 +1387,14 @@ def _s3_put_create_only_and_verify(
             ver_id,
             str(dl_p),
         ]
-        subprocess.run(get_cmd, capture_output=True, text=True, env=env, check=True)
+        _run_bounded_subprocess(
+            get_cmd,
+            capture_output=True,
+            text=True,
+            env=env,
+            check=True,
+            deadline_spec=deadline_spec,
+        )
         dl_sha = sha(dl_p)
         dl_size = int(dl_p.stat().st_size)
     else:
@@ -1358,7 +1411,14 @@ def _s3_put_create_only_and_verify(
                 ver_id,
                 tf.name,
             ]
-            subprocess.run(get_cmd, capture_output=True, text=True, env=env, check=True)
+            _run_bounded_subprocess(
+                get_cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=True,
+                deadline_spec=deadline_spec,
+            )
             dl_sha = sha(tf.name)
             dl_size = int(Path(tf.name).stat().st_size)
 
@@ -1366,6 +1426,9 @@ def _s3_put_create_only_and_verify(
         raise RuntimeError(
             f"S3 exact-VersionId readback SHA256 mismatch for {key}: {dl_sha} != {local_sha}"
         )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_native_or_s3_verification"
+    )
     return dict(
         name=src_p.name,
         bucket=bucket,
@@ -1404,7 +1467,11 @@ def construct_and_consume_single_regression_context(
     4. Create-only S3 persistence (`--if-none-match "*"`) and exact-`VersionId` replay into `verified_s3_replay/` verified by
        `stat.verify_pre_consumption_s3_replay_bundle` BEFORE `consume_single_fresh_context_in_inherited_engine` is invoked.
     """
-    t_start = time.monotonic()
+    t_start = (
+        float(deadline_spec["process_start_monotonic"])
+        if deadline_spec is not None
+        else time.monotonic()
+    )
     if deadline_spec is None:
         deadline_spec = validate_launch(
             launch, sha(HERE / "manifest.json"), process_start_monotonic=t_start
@@ -1523,11 +1590,13 @@ def construct_and_consume_single_regression_context(
         "veox-jopedime-datasets-use2",
         f"datasets/{ds_id}/manifest.json",
         raw_intake_dir / "manifest.json",
+        deadline_spec=deadline_spec,
     )
     train_csv_s3 = _s3_get_object_with_version(
         "veox-jopedime-datasets-use2",
         f"blobs/sha256/{stat.TARGET_REGRESSION_TRAIN_SHA256}",
         raw_intake_dir / "train.csv",
+        deadline_spec=deadline_spec,
     )
     if train_csv_s3["sha256"] != stat.TARGET_REGRESSION_TRAIN_SHA256:
         raise RuntimeError("downloaded S3 train.csv SHA256 mismatch")
@@ -1575,8 +1644,12 @@ def construct_and_consume_single_regression_context(
     #    When `use_train_padding_bridge=False`, fail closed (`status = "BLOCKED_NQ0_PROTOCOL"`, `optimizer_steps = 0`)
     #    if nq=0 is rejected; NEVER substitute the local 1,600-row s1-prod fa480de3... context!
     if not use_train_padding_bridge:
+        probe_timeout = mon.remaining_subprocess_timeout(
+            time.monotonic(), deadline_spec, 30.0
+        )
         nq0_probe = stat.probe_s1main_nq0_protocol_blocker(
             nq0_jtt1_path,
+            timeout_seconds=probe_timeout,
             worker_bin=worker_bin,
             expected_worker_sha256=(
                 stat.EVALUATOR_BINARY_SHA256 if verify_worker_sha256 else None
@@ -1892,6 +1965,7 @@ def construct_and_consume_single_regression_context(
                 f"{s3_prefix}/{fname}",
                 bundle_dir / fname,
                 replay_dest_path=replay_dir / fname,
+                deadline_spec=deadline_spec,
             )
         )
 
@@ -1914,6 +1988,7 @@ def construct_and_consume_single_regression_context(
         f"{s3_prefix}/s3_pre_consumption_custody_receipt.json",
         bundle_dir / "s3_pre_consumption_custody_receipt.json",
         replay_dest_path=replay_dir / "s3_pre_consumption_custody_receipt.json",
+        deadline_spec=deadline_spec,
     )
 
     expected_eval_bin_sha = (
@@ -1972,6 +2047,7 @@ def construct_and_consume_single_regression_context(
         f"{s3_prefix}/engine_consumption_receipt.json",
         bundle_dir / "engine_consumption_receipt.json",
         replay_dest_path=replay_dir / "engine_consumption_receipt.json",
+        deadline_spec=deadline_spec,
     )
     uploaded_objects = list(pre_consumption_uploaded) + [
         pre_custody_upload,
@@ -2004,6 +2080,7 @@ def construct_and_consume_single_regression_context(
         f"{s3_prefix}/s3_custody_receipt.json",
         bundle_dir / "s3_custody_receipt.json",
         replay_dest_path=replay_dir / "s3_custody_receipt.json",
+        deadline_spec=deadline_spec,
     )
 
     # 8. Run end-to-end fail-closed bundle verification on the replayed S3 bundle
@@ -2017,9 +2094,18 @@ def construct_and_consume_single_regression_context(
         forbidden_families=roster["forbidden_families"],
         forbidden_datasets=roster["forbidden_datasets"],
     )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_final_bundle_verification"
+    )
+    # Final invocation accounting and a successful worker exit are also required;
+    # this earlier scientific/custody summary cannot certify its own transport tail.
+    elapsed_wall = float(time.monotonic() - t_start)
     summary = dict(
-        status="PASS",
-        seam_qualified=True,
+        status="PENDING_FINAL_ACCOUNTING",
+        operation_succeeded=True,
+        seam_qualified=False,
+        qualification_requires_final_accounting=True,
+        accounting_invocation_id=deadline_spec.get("accounting_invocation_id"),
         wave=stat.WAVE,
         mode="construct_single_regression_context",
         dataset_id=ds_id,
@@ -2055,8 +2141,17 @@ def construct_and_consume_single_regression_context(
         - elapsed_wall,
         utc=datetime.now(timezone.utc).isoformat(),
     )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="before_qualified_summary_publication"
+    )
     save(out / "single_regression_context_summary.json", summary)
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_summary_write"
+    )
     print(json.dumps(summary), flush=True)
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="after_summary_publication"
+    )
     return summary
 
 
@@ -2072,7 +2167,20 @@ def main():
     manifest = json.loads(manifest_path.read_text())
     manifest_sha = sha(manifest_path)
     launch = json.loads(args.launch.read_text())
+    if args.construct_single_regression_context:
+        if (
+            not os.environ.get("H205_ACCOUNTING_INVOCATION_ID")
+            or os.environ.get("H205_ACCOUNTING_PARENT_PID") != str(os.getppid())
+            or os.environ.get("H205_ACCOUNTING_BOOT_ID")
+            != Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+        ):
+            raise RuntimeError(
+                "construction requires the existing accounted monitor; standalone worker is unqualified"
+            )
     deadline_spec = validate_launch(launch, manifest_sha)
+    deadline_spec["accounting_invocation_id"] = os.environ.get(
+        "H205_ACCOUNTING_INVOCATION_ID"
+    )
     configure_threads(launch.get("numeric_threads", 2))
 
     args.output.mkdir(parents=True, exist_ok=True)

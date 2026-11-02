@@ -78,9 +78,7 @@ def emit_rust_only_flywheel_source(
     if mu_arr.shape != sd_arr.shape:
         raise ValueError(f"mu_tr and sd_tr must have identical shape, got {mu_arr.shape} vs {sd_arr.shape}")
     if w_arr.shape[0] > mu_arr.shape[0]:
-        raise ValueError(
-            f"weights length ({w_arr.shape[0]}) cannot exceed feature count ({mu_arr.shape[0]})"
-        )
+        raise ValueError(f"weights length ({w_arr.shape[0]}) cannot exceed feature count ({mu_arr.shape[0]})")
 
     intercept_f = _require_finite_scalar("intercept", intercept)
     platt_a_f = _require_finite_scalar("platt_a", platt_a)

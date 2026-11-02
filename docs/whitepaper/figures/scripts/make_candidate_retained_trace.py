@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Plot the committed, source-bound adapter admission trace."""
+
+import argparse
 import csv
 import hashlib
 import json
@@ -74,7 +76,25 @@ def load():
 
 
 def main():
+    global DATA, SOURCE, CHECKSUM, OUTPUT, PROVENANCE
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--recent",
+        action="store_true",
+        help="Replay the separate latest500-round live admission capture",
+    )
+    args = parser.parse_args()
+    if args.recent:
+        DATA = FIGURES / "data" / "recent_candidate_retained_trace.csv"
+        SOURCE = DATA.with_name("recent_candidate_retained_trace.source.json")
+        CHECKSUM = DATA.with_suffix(".csv.sha256")
+        OUTPUT = FIGURES / "fig_fw_recent_candidate_retained_trace.pdf"
+        PROVENANCE = DATA.with_name("recent_candidate_retained_trace.provenance.json")
     _, rows = load()
+    if args.recent:
+        for row in rows:
+            if bool(row["accepted"]) != (row["candidate"] >= row["previous"]):
+                raise ValueError("logged default-admission comparison mismatch")
     rounds = [r["round"] for r in rows]
     candidate = [float(r["candidate"]) for r in rows]
     best = [float(r["best"]) for r in rows]
@@ -91,24 +111,69 @@ def main():
     if start is not None:
         spans.append([start, rounds[-1]])
     plt.rcParams.update({"font.family": "serif", "font.size": 8, "pdf.fonttype": 42})
-    fig, ax = plt.subplots(figsize=(6.8, 2.35))
-    ax.plot(rounds, candidate, ".-", color="#737b85", ms=2.2, lw=0.55,
-            label="candidate adapter")
-    ax.step(rounds, best, where="post", color="#0b5394", lw=1.35,
-            label="retained best (post-decision)")
+    fig, ax = plt.subplots(figsize=(3.25, 2.15) if args.recent else (6.8, 2.35))
+    if args.recent:
+        ax.scatter(
+            rounds,
+            candidate,
+            s=3,
+            color="#737b85",
+            alpha=0.5,
+            linewidths=0,
+            label="candidate",
+        )
+    else:
+        ax.plot(
+            rounds,
+            candidate,
+            ".-",
+            color="#737b85",
+            ms=2.2,
+            lw=0.55,
+            label="candidate adapter",
+        )
+    ax.step(
+        rounds,
+        best,
+        where="post",
+        color="#0b5394",
+        lw=1.35,
+        label="retained best" if args.recent else "retained best (post-decision)",
+    )
     if ties:
-        ax.scatter([r["round"] for r in ties], [float(r["best"]) for r in ties],
-                   marker="D", s=29, facecolors="white", edgecolors="#c66b00",
-                   linewidths=1.0, zorder=5, label="accepted exact tie")
+        ax.scatter(
+            [r["round"] for r in ties],
+            [float(r["best"]) for r in ties],
+            marker="D",
+            s=29,
+            facecolors="white",
+            edgecolors="#c66b00",
+            linewidths=1.0,
+            zorder=5,
+            label="accepted exact tie",
+        )
     if gains:
-        ax.scatter([r["round"] for r in gains], [float(r["best"]) for r in gains],
-                   marker="*", s=48, c="#b62828", zorder=5,
-                   label="accepted strict gain")
+        ax.scatter(
+            [r["round"] for r in gains],
+            [float(r["best"]) for r in gains],
+            marker="*",
+            s=48,
+            c="#b62828",
+            zorder=5,
+            label="strict gain" if args.recent else "accepted strict gain",
+        )
     for first, last in spans:
-        if last - first + 1 >= 50:
+        if not args.recent and last - first + 1 >= 50:
             ax.axvspan(first - 0.5, last + 0.5, color="#adb5bd", alpha=0.12, zorder=0)
-            ax.text((first + last) / 2, 0.96, f"{last - first + 1} rejected rounds",
-                    transform=ax.get_xaxis_transform(), ha="center", va="top", fontsize=7.5)
+            ax.text(
+                (first + last) / 2,
+                0.96,
+                f"{last - first + 1} rejected rounds",
+                transform=ax.get_xaxis_transform(),
+                ha="center",
+                va="top",
+                fontsize=7.5,
+            )
     low, high = min(candidate + best), max(candidate + best)
     padding = max((high - low) * 0.18, 0.0004)
     ax.set_ylim(low - padding, high + padding)
@@ -118,8 +183,31 @@ def main():
     ax.ticklabel_format(axis="y", style="plain", useOffset=False)
     ax.grid(axis="y", alpha=0.2, linewidth=0.5)
     ax.spines[["top", "right"]].set_visible(False)
-    ax.legend(loc="lower left", ncol=3, frameon=True, fontsize=6.8,
-              facecolor="white", framealpha=0.95, edgecolor="none")
+    if args.recent:
+        ax.set_xticks(
+            [rounds[0], rounds[len(rows) // 3], rounds[2 * len(rows) // 3], rounds[-1]]
+        )
+        ax.tick_params(axis="both", labelsize=7)
+        ax.legend(
+            loc="lower center",
+            bbox_to_anchor=(0.5, 1.01),
+            ncol=3,
+            fontsize=6.0,
+            handlelength=1.0,
+            handletextpad=0.3,
+            columnspacing=0.7,
+            frameon=False,
+        )
+    else:
+        ax.legend(
+            loc="lower left",
+            ncol=1 if args.recent else 3,
+            frameon=True,
+            fontsize=6.1 if args.recent else 6.8,
+            facecolor="white",
+            framealpha=0.95,
+            edgecolor="none",
+        )
     fig.tight_layout(pad=0.45)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
@@ -137,10 +225,15 @@ def main():
         "final_retained_utility": str(rows[-1]["best"]),
         "matplotlib_version": matplotlib.__version__,
         "scope": "Adaptive adapter admission telemetry, not independent first-proposal or deployment performance",
-        "reproduce": "python3 figures/scripts/make_candidate_retained_trace.py",
+        "reproduce": (
+            "python3 figures/scripts/make_candidate_retained_trace.py"
+            + (" --recent" if args.recent else "")
+        ),
     }
     PROVENANCE.write_text(json.dumps(provenance, indent=2) + chr(10))
-    print(f"{len(rows)} complete rows; {len(ties)} accepted ties; {len(gains)} strict gains")
+    print(
+        f"{len(rows)} complete rows; {len(ties)} accepted ties; {len(gains)} strict gains"
+    )
 
 
 if __name__ == "__main__":

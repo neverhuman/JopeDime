@@ -317,5 +317,20 @@
         "downloaded_version_sha256": "8c1962081bc6a179ace241b6e22adbbcbdb93c2100040a8dbe90fc43378c9393"
       }
     ]
+  },
+  "operational_finding5_source": {
+    "status": "SOURCE_FIX_NOT_RUNTIME_QUALIFIED",
+    "new_scientific_attempts": 0,
+    "new_model_native_s3_optimizer_calls": 0,
+    "budget_reset": false,
+    "known_prior_floor_seconds": 2021.039296863135,
+    "campaign_cap_seconds": 25200.0,
+    "later_costs": "OWNER_RECONCILIATION_REQUIRED_UNKNOWN_IS_NOT_ZERO",
+    "worker_status": "PENDING_FINAL_ACCOUNTING",
+    "seam_qualified": false,
+    "existing_supervisor_only": true,
+    "next_owner": "rd_argon",
+    "acceptance": "test_h205.py --deadline-controls OWNED_SCRATCH",
+    "legacy_real_table_model_native_tests": "NOT_RUN_IN_HELPER_LANE"
   }
 }
