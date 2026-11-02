@@ -5605,6 +5605,30 @@
         "role": "research",
         "reason": "H214 owner-authorized offline frozen-r882 candidate-pool diversity study; exact16 NATIVE16/FPS16, TEMP16 NOT_RUN, Holm1, bounded xbabe1 CPU. Data-free tests and runner source are not scientific outcome evidence."
       }
+    },
+    "python:research/flywheel_selfplay/h217_gated025_confirm/analysis.py": {
+      "bytes": 15875,
+      "sha256": "a509ff6d6f0531a6ce6a051e03aee1e3170534d939ddaa277dc983222d6f1431",
+      "classification": {
+        "role": "research",
+        "reason": "H217 preregistered CPU-only diagnostic: fresh-fold confirmation of H210 GATED_025 with the frozen recipe (BLEND_025 = r882 + 0.25*(calibrated HistGBM - r882), gated per context by the outcome-free zgap cost signal with a FIT-only threshold, max FIT native gain s.t. FIT harm <= 5%, else r882; no retuning; H129 disagreement placebo), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit with fresh seeds/folds; stage-1 lock before A; primary CONFIRMED iff LCB95>0, 3/3 seeds positive, harm<=10%; co-primary DL-Val plateau gain>+0.002 with family-bootstrap LCB95>0; xbabe2 CPU with effective-affinity limits, absolute deadline and pre-claim source binding; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h217_gated025_confirm/monitor.py": {
+      "bytes": 11239,
+      "sha256": "2f2d1b9a78b2787e928ee7ffcf29f16f9fd61c7dc5e1133a3e391d84bfe588a9",
+      "classification": {
+        "role": "research",
+        "reason": "H217 preregistered CPU-only diagnostic: fresh-fold confirmation of H210 GATED_025 with the frozen recipe (BLEND_025 = r882 + 0.25*(calibrated HistGBM - r882), gated per context by the outcome-free zgap cost signal with a FIT-only threshold, max FIT native gain s.t. FIT harm <= 5%, else r882; no retuning; H129 disagreement placebo), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit with fresh seeds/folds; stage-1 lock before A; primary CONFIRMED iff LCB95>0, 3/3 seeds positive, harm<=10%; co-primary DL-Val plateau gain>+0.002 with family-bootstrap LCB95>0; xbabe2 CPU with effective-affinity limits, absolute deadline and pre-claim source binding; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h217_gated025_confirm/runner.py": {
+      "bytes": 33210,
+      "sha256": "494d01b939d681d35f066eb1bb53addc7cc9474906a67065946fe086bd67eac3",
+      "classification": {
+        "role": "research",
+        "reason": "H217 preregistered CPU-only diagnostic: fresh-fold confirmation of H210 GATED_025 with the frozen recipe (BLEND_025 = r882 + 0.25*(calibrated HistGBM - r882), gated per context by the outcome-free zgap cost signal with a FIT-only threshold, max FIT native gain s.t. FIT harm <= 5%, else r882; no retuning; H129 disagreement placebo), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit with fresh seeds/folds; stage-1 lock before A; primary CONFIRMED iff LCB95>0, 3/3 seeds positive, harm<=10%; co-primary DL-Val plateau gain>+0.002 with family-bootstrap LCB95>0; xbabe2 CPU with effective-affinity limits, absolute deadline and pre-claim source binding; 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
