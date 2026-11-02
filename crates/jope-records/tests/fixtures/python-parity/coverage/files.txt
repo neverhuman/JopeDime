@@ -523,6 +523,7 @@ crates/jope-campaigns/src/bin/jope_utilization_supervisor.rs
 crates/jope-campaigns/src/bin/jope_v3_control.rs
 crates/jope-campaigns/src/bin/scq_runs_gc.rs
 crates/jope-campaigns/src/bin/search-v3.rs
+crates/jope-campaigns/src/binary_panel.rs
 crates/jope-campaigns/src/campaign.rs
 crates/jope-campaigns/src/campaign/artifacts.rs
 crates/jope-campaigns/src/campaign/file_io.rs
@@ -530,6 +531,7 @@ crates/jope-campaigns/src/campaign/population.rs
 crates/jope-campaigns/src/campaign/run.rs
 crates/jope-campaigns/src/campaign/tests.rs
 crates/jope-campaigns/src/campaign_evaluator.rs
+crates/jope-campaigns/src/cli.rs
 crates/jope-campaigns/src/commands/binary_cv.rs
 crates/jope-campaigns/src/commands/exact_cv.rs
 crates/jope-campaigns/src/commands/jain_regressor.rs
@@ -617,6 +619,7 @@ crates/jope-campaigns/src/main.rs
 crates/jope-campaigns/src/paths.rs
 crates/jope-campaigns/src/ratchet/mod.rs
 crates/jope-campaigns/src/recovery_contracts.rs
+crates/jope-campaigns/src/regression_panel.rs
 crates/jope-campaigns/src/router_contracts_v2.rs
 crates/jope-campaigns/src/runtime.rs
 crates/jope-campaigns/src/score_corpus.rs
