@@ -9,12 +9,16 @@ The matching exact file paths are excluded from authored-source scoring in
 `agent/audit-policy.toml`. The auditor skips excluded files before scanning, so
 that policy also skips other Jankurai categories for those files. The exact
 source digests and all 57 observed per-file rule/fingerprint findings (including
-the 23 packet findings and other categories) are recorded in
+the 23 packet findings and other categories), plus the HLT-043 cross-file copy
+finding, are recorded in
 [`jankurai-pyexec-p37-dispositions-20261102.json`](jankurai-pyexec-p37-dispositions-20261102.json).
 `ops/ci/verify-pyexec-exceptions.sh` runs `audit-file` on every registered file
 and fails on byte drift, a changed/missing fingerprint, a new finding, a missing
-policy path, or expiry. This makes the coarse score exclusion conditional on the
-exact reviewed contents and complete current finding inventory. No emitted,
+policy path, or expiry. It also runs a changed-scope repository audit with the
+P37 path skips temporarily removed, verifies the cross-file duplicate finding,
+and checks SHA-256 digests for all eight participating files. The helper restores
+the policy byte-for-byte before returning. This makes the coarse score exclusion
+conditional on the exact reviewed contents and complete current finding inventory. No emitted,
 vendored, or historical source bytes are changed by this disposition.
 
 | Packet finding | Exact-path disposition and evidence |

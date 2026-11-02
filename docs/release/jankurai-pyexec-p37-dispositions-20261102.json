@@ -1,5 +1,26 @@
 {
   "auditor": "jankurai 1.7.6",
+  "cross_file_findings": [
+    {
+      "check_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR:copy-code",
+      "class_id": "copy-code-unit-python-28fe6215583fcaec",
+      "disposition": "This exact duplicate is preserved in pinned historical experiment runtimes. It is not claimed fixed; the changed-scope repository audit requires this class fingerprint to remain unchanged.",
+      "fingerprint": "sha256:f19b9afde2f6d8a61b0d4c70e2ad77533c4bc3b8a2fd170c44317a2fa1f2939d",
+      "line": 50,
+      "participants": {
+        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc",
+        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6",
+        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b",
+        "research/flywheel_selfplay/h153_sam/runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a",
+        "research/flywheel_selfplay/h158_distillation/runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4",
+        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b",
+        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+      },
+      "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+      "rule_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR"
+    }
+  ],
   "expires_on": "2026-12-02",
   "generated_unix": 1793590976,
   "owner": "P37 / jankurai python-bad-behavior cap",
@@ -494,5 +515,5 @@
     "HLT-033-PYTHON-BAD-BEHAVIOR:sql": "The table identifier is a fixed internal constant and value data remains parameter-bound; the finding remains enumerated pending detector-specific adjudication."
   },
   "schema": "jopedime.jankurai-pyexec-dispositions/v1",
-  "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 23 packet HLT-033 sites and detector-context findings recorded below. Their bytes are pinned by source manifests or experiment identity. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; any byte drift, missing finding, or new finding fails closed."
+  "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 23 packet HLT-033 sites and file-level findings recorded below. Their bytes are pinned by source manifests or experiment identity. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; a changed-scope repository audit also checks the cross-file duplicate finding. Any byte drift, missing finding, or new finding fails closed."
 }

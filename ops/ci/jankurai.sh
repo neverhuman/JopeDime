@@ -24,7 +24,7 @@ python3 -B deploy/ci/verify-audit-report.py "$output" --audit-exit "$status" \
 # and refuse source, rule, fingerprint, or expiry drift before reporting status.
 exception_status=0
 bash ops/ci/verify-pyexec-exceptions.sh "$output/input/source" "$auditor" \
-  "$output/pyexec-exceptions.json" || exception_status=$?
+  "$output/pyexec-exceptions.json" "$PWD" "$output/input/SOURCE_MANIFEST.json" || exception_status=$?
 if [[ -f "$output/summary.md" && -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   cat "$output/summary.md" >> "$GITHUB_STEP_SUMMARY"
 fi
