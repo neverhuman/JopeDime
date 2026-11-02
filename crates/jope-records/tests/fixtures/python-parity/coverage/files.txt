@@ -141,7 +141,13 @@ crates/feat-math/src/advanced_v3/pipeline.rs
 crates/feat-math/src/advanced_v3/profile.rs
 crates/feat-math/src/advanced_v3/schema.rs
 crates/feat-math/src/advanced_v3/tests.rs
+crates/feat-math/src/advanced_v3/transforms/generated.rs
+crates/feat-math/src/advanced_v3/transforms/legacy.rs
 crates/feat-math/src/advanced_v3/transforms/mod.rs
+crates/feat-math/src/advanced_v3/transforms/operations.rs
+crates/feat-math/src/advanced_v3/transforms/row_ops.rs
+crates/feat-math/src/advanced_v3/transforms/scalar.rs
+crates/feat-math/src/advanced_v3/transforms/tests.rs
 crates/feat-math/src/advanced_v3/types.rs
 crates/feat-math/src/boost2.rs
 crates/feat-math/src/credit.rs
