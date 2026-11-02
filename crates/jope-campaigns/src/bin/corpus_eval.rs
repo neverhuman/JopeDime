@@ -424,12 +424,14 @@ struct ResolvedAuthority {
     hall_of_fame_sha256: Option<String>,
 }
 
+mod args;
 mod data;
 mod evaluate;
 mod multiclass;
 mod process;
 mod runner;
 
+use args::flag_value;
 use data::*;
 use evaluate::*;
 use multiclass::*;
@@ -439,12 +441,6 @@ use runner::*;
 // ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
-
-fn flag_value(args: &[String], flag: &str) -> Option<String> {
-    args.iter()
-        .position(|a| a == flag)
-        .and_then(|i| args.get(i + 1).cloned())
-}
 
 fn main() -> Result<()> {
     let args = env::args().skip(1).collect::<Vec<_>>();
