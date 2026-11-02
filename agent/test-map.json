@@ -2,17 +2,17 @@
   "schema": "jope-dime.test-map/v1",
   "tests": {
     "AGENTS.md": {
-      "command": "just score",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "score",
       "purpose": "validate agent contract and quality gates"
     },
     "README.md": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate documented commands and product boundaries"
     },
     "CHANGELOG.md": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate release history navigation"
     },
@@ -27,54 +27,49 @@
       "purpose": "resolve the locked dependency graph"
     },
     "rust-toolchain.toml": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "pin the supported Rust toolchain"
     },
     "justfile": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate canonical local command wrappers"
     },
     ".config/": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate test profiles and workspace metadata"
     },
     ".config/**": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate test profiles and workspace metadata"
     },
     ".gitignore": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate generated and secret exclusions"
     },
     ".gitleaks.toml": {
-      "command": "just security",
+      "command": "python3 deploy/ci/test-gitleaks-config.py",
       "lane": "security",
       "purpose": "validate secret scanning policy"
     },
     "deny.toml": {
-      "command": "just security",
+      "command": "python3 deploy/ci/test-gitleaks-config.py",
       "lane": "security",
       "purpose": "validate dependency policy"
     },
     "LICENSE": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate repository licensing"
     },
     "NOTICE": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate third-party notices"
-    },
-    "CURSOR_GITHUB_PORT_PLAN.md": {
-      "command": "just check",
-      "lane": "check",
-      "purpose": "validate port requirements remain navigable"
     },
     "crates/": {
       "command": "just test-pr",
@@ -92,12 +87,12 @@
       "purpose": "build and test the GPU boundary crate"
     },
     "crates/battle-gpu/kernels/ridge_screen.cu": {
-      "command": "just emitters-check",
+      "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
       "purpose": "compile and parity-check the GPU kernel source"
     },
     "crates/battle-gpu/kernels/ridge_screen.ptx": {
-      "command": "just emitters-check",
+      "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
       "purpose": "verify the checked-in PTX kernel artifact"
     },
@@ -112,27 +107,27 @@
       "purpose": "test serialized GPU backend ownership"
     },
     "crates/feat-math/Cargo.toml": {
-      "command": "just emitters-check",
+      "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
       "purpose": "build the feature math emitter crate"
     },
     "crates/feat-math/assets/champions/8944cbdf.dsl": {
-      "command": "just emitters-check",
+      "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
       "purpose": "run the champion DSL emission parity lane"
     },
     "crates/feat-math/build.rs": {
-      "command": "just emitters-check",
+      "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
       "purpose": "exercise the feature math build generator"
     },
     "crates/feat-math/cpp/fitted_runtime.cpp": {
-      "command": "just emitters-check",
+      "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
       "purpose": "compile and parity-check the generated C++ runtime"
     },
     "crates/feat-math/examples/emit.rs": {
-      "command": "just emitters-check",
+      "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
       "purpose": "exercise standalone emitter example output"
     },
@@ -147,117 +142,107 @@
       "purpose": "check the explicit compatibility/training boundary"
     },
     "datasets/": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "data",
       "purpose": "validate bounded committed fixtures and manifests"
     },
     "datasets/**": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "data",
       "purpose": "validate fixture manifests, checksums, and task-family counts"
     },
-    "qualification/**": {
-      "command": "just qualify",
-      "lane": "qualification",
-      "purpose": "reproduce model and emitter qualification evidence"
-    },
-    "qualification/run.sh": {
-      "command": "just qualify",
-      "lane": "qualification",
-      "purpose": "reproduce model and emitter qualification evidence"
-    },
     "xtools/": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate review and registry support tooling"
     },
     "xtools/**": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate review and registry support tooling"
     },
     "xtools/ops-sh/review/build-review-prompt.sh": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate review support tooling"
     },
     "xtools/ops-sh/review/collect-review-epoch.sh": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate review support tooling"
     },
     "xtools/ops-sh/review/jope-review.sh": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate review support tooling"
     },
     "xtools/ops-sh/review/pack-review-payload.sh": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate review support tooling"
     },
     "xtools/ops-sh/review/run-review-epoch.sh": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate review support tooling"
     },
     "xtools/registry-dump-legacy/": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate the isolated legacy registry utility"
     },
     "xtools/registry-dump-legacy/**": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "validate the isolated legacy registry utility"
     },
     "ops/": {
-      "command": "just security && just check",
+      "command": "python3 deploy/ci/test-gitleaks-config.py && python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "verify shell, workflow, dependency, and secret-scan policy"
     },
     "ops/**": {
-      "command": "just security && just check",
+      "command": "python3 deploy/ci/test-gitleaks-config.py && python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "verify shell, workflow, dependency, and secret-scan policy"
     },
     "deploy/": {
-      "command": "just hygiene",
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "verify deployment and CI hygiene"
     },
     "deploy/**": {
-      "command": "just hygiene",
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "verify deployment and CI hygiene"
     },
     "scripts/": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "verify local CI wrappers"
     },
     "scripts/**": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "ops",
       "purpose": "verify local CI wrappers"
     },
     "tools/": {
-      "command": "just security",
+      "command": "python3 deploy/ci/test-gitleaks-config.py",
       "lane": "security",
       "purpose": "verify security tooling wrappers"
     },
     "tools/**": {
-      "command": "just security",
+      "command": "python3 deploy/ci/test-gitleaks-config.py",
       "lane": "security",
       "purpose": "verify security tooling wrappers"
     },
     "docs/": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate architecture, boundary, testing, and release documentation"
     },
     "docs/**": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate architecture, boundary, testing, and release documentation"
     },
@@ -272,222 +257,77 @@
       "purpose": "exercise the hosted merge gate"
     },
     "agent/": {
-      "command": "~/.jeryu/bin/jankurai agent verify .",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "agent-policy",
-      "purpose": "validate ownership, proof routing and policy metadata"
+      "purpose": "validate owner and proof routes, audit policy, and generated-zone ownership"
     },
     "agent/**": {
-      "command": "~/.jeryu/bin/jankurai agent verify .",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "agent-policy",
-      "purpose": "validate ownership, proof routing and policy metadata"
+      "purpose": "validate owner and proof routes, audit policy, and generated-zone ownership"
     },
     "MASTER_PLAN.md": {
-      "command": "just score",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "score",
       "purpose": "verify the current finding ledger and handoff evidence"
     },
     "crates/jope-cli/tests/offline_cli.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/main.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/storage.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/schema.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/lib.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/tests.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/admission.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/generator/tabular.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/generator/mod.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "crates/jope-cli/src/generator/temporal.rs": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
     },
     "datasets/synthetic/**": {
-      "command": "just dataset-check",
+      "command": "cargo test -p jope-datasets --locked",
       "lane": "inputs",
       "purpose": "deterministic fixtures, adversarial admission, portable installation"
-    },
-    "docs/health/fixtures*": {
-      "command": "just dataset-check",
-      "lane": "inputs",
-      "purpose": "deterministic fixtures, adversarial admission, portable installation"
-    },
-    "ops/ci/aggregate.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/audit_gate.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/audit_inputs.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/benchmark_smoke.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/check_junit.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/ci_local.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/evidence.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/export_emitter_fixture.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/install_tools.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/matrix.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/qualify_artifacts.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/render_workflow.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/run_audit.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/run_lane.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/security_lane.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/snapshot.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/test_execution.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/test_gates.py": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/emitters.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/hygiene.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/inputs.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/jankurai-score.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
     },
     "ops/ci/lib.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/path-audit.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/python.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/required.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/rust.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/sanitizer.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
-      "lane": "hygiene",
-      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
-    },
-    "ops/ci/security.sh": {
-      "command": "python3 -m unittest discover -s ops/ci -p 'test_*.py' && just hygiene",
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
       "lane": "hygiene",
       "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
     },
@@ -502,24 +342,24 @@
       "purpose": "exercise training dashboard component and interaction tests"
     },
     "web/training-dashboard/": {
-      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test",
-      "lane": "web-unit",
-      "purpose": "exercise training dashboard component and interaction tests"
+      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test && npm --prefix web/training-dashboard run test:rendered",
+      "lane": "rendered-ux",
+      "purpose": "run component tests and synthetic Playwright screenshots, layout geometry, and axe accessibility checks"
     },
     "web/training-dashboard/**": {
-      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test",
-      "lane": "web-unit",
-      "purpose": "exercise training dashboard component and interaction tests"
+      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test && npm --prefix web/training-dashboard run test:rendered",
+      "lane": "rendered-ux",
+      "purpose": "run component tests and synthetic Playwright screenshots, layout geometry, and axe accessibility checks"
     },
     "apps/web/": {
-      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test",
-      "lane": "web-unit",
-      "purpose": "canonical web alias; tests remain in web/training-dashboard"
+      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test && npm --prefix web/training-dashboard run test:rendered",
+      "lane": "rendered-ux",
+      "purpose": "run component tests and synthetic Playwright screenshots, layout geometry, and axe accessibility checks"
     },
     "apps/web/**": {
-      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test",
-      "lane": "web-unit",
-      "purpose": "canonical web alias; tests remain in web/training-dashboard"
+      "command": "npm ci --prefix web/training-dashboard --no-audit --no-fund && npm --prefix web/training-dashboard test && npm --prefix web/training-dashboard run test:rendered",
+      "lane": "rendered-ux",
+      "purpose": "run component tests and synthetic Playwright screenshots, layout geometry, and axe accessibility checks"
     },
     "db/": {
       "command": "cargo test -p jope-datasets --locked",
@@ -542,17 +382,17 @@
       "purpose": "verify Python AI/data boundaries and training contracts"
     },
     "research/flywheel_selfplay/custody/files/": {
-      "command": "python3 research/flywheel_selfplay/custody/verify_custody.py",
+      "command": "python3 research/flywheel_selfplay/custody/verify_custody.py && python3 deploy/ci/test-runner.py",
       "lane": "custody-integrity",
       "purpose": "verify immutable custody file inventory and hashes"
     },
     "research/flywheel_selfplay/custody/files/**": {
-      "command": "python3 research/flywheel_selfplay/custody/verify_custody.py",
+      "command": "python3 research/flywheel_selfplay/custody/verify_custody.py && python3 deploy/ci/test-runner.py",
       "lane": "custody-integrity",
       "purpose": "verify immutable custody file inventory and hashes"
     },
     ".githooks/pre-commit": {
-      "command": "bash deploy/ci/check.sh",
+      "command": "bash deploy/ci/check.sh && python3 deploy/ci/test-runner.py",
       "lane": "security",
       "purpose": "validate the installed commit gate and repository security checks"
     },
@@ -562,47 +402,47 @@
       "purpose": "prove exact inherited fixture allowlists do not suppress new credentials"
     },
     ".jope-home": {
-      "command": "git rev-parse --show-toplevel",
+      "command": "git rev-parse --show-toplevel && python3 deploy/ci/test-runner.py",
       "lane": "workspace",
       "purpose": "verify repository-root discovery"
     },
     "AGENT_CHAT.md": {
-      "command": "git diff --check -- AGENT_CHAT.md",
+      "command": "git diff --check -- AGENT_CHAT.md && python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate append-only coordination record formatting"
     },
     "CLAUDE.md": {
-      "command": "git diff --check -- CLAUDE.md",
+      "command": "git diff --check -- CLAUDE.md && python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate agent adapter documentation formatting"
     },
     "CODE_OF_CONDUCT.md": {
-      "command": "git diff --check -- CODE_OF_CONDUCT.md",
+      "command": "git diff --check -- CODE_OF_CONDUCT.md && python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate community policy documentation formatting"
     },
     "CONTRIBUTING.md": {
-      "command": "git diff --check -- CONTRIBUTING.md",
+      "command": "git diff --check -- CONTRIBUTING.md && python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate contributor guide formatting"
     },
     "MASTER_CLEAN_UP.md": {
-      "command": "git diff --check -- MASTER_CLEAN_UP.md",
+      "command": "git diff --check -- MASTER_CLEAN_UP.md && python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate synchronized cleanup policy formatting"
     },
     "PYTHON_EXCEPTIONS.md": {
-      "command": "git diff --check -- PYTHON_EXCEPTIONS.md",
+      "command": "git diff --check -- PYTHON_EXCEPTIONS.md && python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate dated Python exception register changes"
     },
     "PY_TO_RUST_PLAN.md": {
-      "command": "git diff --check -- PY_TO_RUST_PLAN.md",
+      "command": "git diff --check -- PY_TO_RUST_PLAN.md && python3 deploy/ci/test-runner.py",
       "lane": "docs",
       "purpose": "validate Python migration plan formatting"
     },
     "SECURITY.md": {
-      "command": "bash deploy/ci/check.sh",
+      "command": "bash deploy/ci/check.sh && python3 deploy/ci/test-runner.py",
       "lane": "security",
       "purpose": "exercise repository security controls and secret-scanner tests"
     },
@@ -717,69 +557,94 @@
       "purpose": "validate the historical ELO qualification and evidence bundle"
     },
     "catalogs/": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "catalogs/s3.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "catalogs/training-artifacts.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "cliff.toml": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/**": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/jope.api.v1.openapi.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/jope.appliance-fitted.v1.schema.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/jope.appliance-manifest.v1.schema.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/jope.appliance-model-lock.v1.schema.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/jope.appliance-run.v1.schema.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/jope.benchmark-panel.v1.schema.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
     },
     "schemas/jope.canonical-json.v1.schema.json": {
-      "command": "just check",
+      "command": "python3 deploy/ci/test-runner.py",
       "lane": "check",
       "purpose": "validate checked-in catalog, release configuration and public schema contracts"
+    },
+    "deploy/ci/aggregate.py": {
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
+      "lane": "hygiene",
+      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
+    },
+    "deploy/ci/cuda/evidence.py": {
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
+      "lane": "hygiene",
+      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
+    },
+    "deploy/ci/emitters.sh": {
+      "command": "just hygiene && python3 deploy/ci/test-runner.py",
+      "lane": "hygiene",
+      "purpose": "fail-closed audit provenance, execution receipts, workflow and security policy"
+    },
+    "test-support/": {
+      "command": "cargo test -p jope-datasets --locked",
+      "lane": "data",
+      "purpose": "verify committed sample dataset contracts and loader behavior"
+    },
+    "test-support/**": {
+      "command": "cargo test -p jope-datasets --locked",
+      "lane": "data",
+      "purpose": "verify committed sample dataset contracts and loader behavior"
     }
   }
 }
