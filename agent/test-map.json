@@ -126,11 +126,6 @@
       "lane": "emitters",
       "purpose": "sanitizer-check the frozen fitted-runtime ABI parity oracle"
     },
-    "crates/feat-math/cpp/fitted_runtime.cpp": {
-      "command": "just emitters-check",
-      "lane": "emitters",
-      "purpose": "compatibility symlink to the test-only frozen fitted-runtime parity oracle"
-    },
     "crates/feat-math/examples/emit.rs": {
       "command": "cargo test -p feat-math --locked",
       "lane": "emitters",

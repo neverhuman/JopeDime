@@ -220,6 +220,13 @@ fn fixture_path(relative: &str) -> PathBuf {
 }
 
 fn read_repo_file(relative: &str) -> Vec<u8> {
+    // frozen_pins.v1.json preserves the historical source key. The bytes now
+    // live only under tests/fixtures, outside the product runtime surface.
+    let relative = if relative == "crates/feat-math/cpp/fitted_runtime.cpp" {
+        "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp"
+    } else {
+        relative
+    };
     std::fs::read(repo_root().join(relative)).unwrap_or_else(|error| panic!("{relative}: {error}"))
 }
 
@@ -2722,7 +2729,7 @@ const FROZEN_FILES: &[(&str, &str)] = &[
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.py.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.rs.sha256", EMITTED_PIN_WHY),
     ("crates/feat-math/tests/fixtures/emitted/portable-4lang.targets.sha256", EMITTED_PIN_WHY),
-    ("crates/feat-math/cpp/fitted_runtime.cpp", "the fitted C++ runtime source identity retained as a test-only parity oracle (runtime_source_sha256)"),
+    ("crates/feat-math/cpp/fitted_runtime.cpp", "the immutable legacy pin key is read from tests/fixtures/fitted_runtime_oracle.cpp (runtime_source_sha256)"),
 ];
 
 #[derive(Debug, Serialize, Deserialize)]
