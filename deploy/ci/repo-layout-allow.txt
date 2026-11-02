@@ -65,7 +65,7 @@ temp-dir crates/jope-campaigns/src/bin/jope_selfplay_expansion_driver.rs 4 -- te
 temp-dir crates/jope-campaigns/src/campaign.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/commands/binary_cv.rs 2 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/commands/exact_cv.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
-temp-dir crates/jope-campaigns/src/commands/exact_cv_v2.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
+temp-dir crates/jope-campaigns/src/commands/single_fold_proof.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/followup.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/golden42_panel.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)
 temp-dir crates/jope-campaigns/src/main.rs 1 -- test scratch in the process temp dir; moves to tempfile in the follow-up (clean-base O6)

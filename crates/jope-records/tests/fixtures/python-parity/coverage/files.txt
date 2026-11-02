@@ -502,7 +502,7 @@ crates/jope-campaigns/src/bin/search-v3.rs
 crates/jope-campaigns/src/campaign.rs
 crates/jope-campaigns/src/commands/binary_cv.rs
 crates/jope-campaigns/src/commands/exact_cv.rs
-crates/jope-campaigns/src/commands/exact_cv_v2.rs
+crates/jope-campaigns/src/commands/single_fold_proof.rs
 crates/jope-campaigns/src/commands/jain_regressor.rs
 crates/jope-campaigns/src/commands/mod.rs
 crates/jope-campaigns/src/commands/train_only_redteam.rs
@@ -521,7 +521,7 @@ crates/jope-campaigns/src/encoder_v2_store.rs
 crates/jope-campaigns/src/encoder_v2_worker.rs
 crates/jope-campaigns/src/epoch6.rs
 crates/jope-campaigns/src/epoch6_wave.rs
-crates/jope-campaigns/src/evaluation_v2.rs
+crates/jope-campaigns/src/campaign_evaluator.rs
 crates/jope-campaigns/src/followup.rs
 crates/jope-campaigns/src/four_task.rs
 crates/jope-campaigns/src/freshness_protocol.rs

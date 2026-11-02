@@ -1,12 +1,12 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
   "generated_at_sha": "e240a9f27e3bba296acf77d29dae10fd2529a0c1",
-  "note": "A replica of evaluation_v2.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
+  "note": "A replica of campaign_evaluator.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
     {
-      "label": "src/evaluation_v2.rs",
-      "path": "crates/jope-campaigns/src/evaluation_v2.rs",
+      "label": "src/campaign_evaluator.rs",
+      "path": "crates/jope-campaigns/src/campaign_evaluator.rs",
       "sha256": "865ad21acae020fd6b9966a98315420f16b814af6b0b9860ada76988f5c65965"
     },
     {

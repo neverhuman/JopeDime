@@ -217,3 +217,13 @@ identity-only regeneration is bound to source commit
 the already merged Rust enum naming change in `crates/feat-math/src/full_rust.rs`;
 the recorded identity reflects the complete rebased source tree. No known-identity row is added
 because this change has no shipped receipt proving that the new identity existed.
+
+## Current identity transition: semantic campaign source names (2026-11-02)
+
+P50 renames the active one-fold evaluator adapter from `commands/exact_cv_v2.rs` to
+`commands/single_fold_proof.rs` and the evaluator implementation from `evaluation_v2.rs` to
+`campaign_evaluator.rs`. These files remain in the evaluator's hashed closure. The semantic
+renames therefore mint a new implementation identity; the identity fixture is regenerated in
+the follow-up commit with the established `JOPE_COMPAT_FREEZE_REGENERATE=identity` proof.
+The prior identity remains accepted only when an existing receipt proves it through the
+append-only known identity table. No evaluator behavior is intentionally changed.

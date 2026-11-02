@@ -21,7 +21,7 @@ mod core;
 mod data;
 // frozen, hash-pinned module; bytes immutable until unfrozen
 #[allow(dead_code, clippy::too_many_arguments, clippy::let_and_return)]
-mod evaluation_v2;
+mod campaign_evaluator;
 mod followup;
 mod genome_boost;
 mod golden42_panel;
@@ -1105,7 +1105,11 @@ fn main() -> Result<()> {
             if cli.kernel_version != KernelVersion::LegacyV2 {
                 bail!("verify-evaluation-v2 is pinned to the legacy-v2 evaluator");
             }
-            commands::exact_cv_v2::verify_manifest(&manifest, &cli.registry, cli.dataset.as_deref())
+            commands::single_fold_proof::verify_manifest(
+                &manifest,
+                &cli.registry,
+                cli.dataset.as_deref(),
+            )
         }
         Command::VerifyInputsBinary => verify_inputs_binary(&cli.registry),
         Command::SelectPanelBinary => {

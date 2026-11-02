@@ -9,7 +9,7 @@ pub(crate) mod binary_cv;
     clippy::useless_vec
 )]
 pub(crate) mod exact_cv;
-pub(crate) mod exact_cv_v2;
 pub(crate) mod jain_regressor;
+pub(crate) mod single_fold_proof;
 pub(crate) mod train_only_redteam;
 pub(crate) mod train_only_study;
