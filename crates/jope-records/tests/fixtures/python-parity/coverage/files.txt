@@ -511,6 +511,16 @@ crates/jope-campaigns/src/bin/jope_spec_drift.rs
 crates/jope-campaigns/src/bin/jope_strategy_screen.rs
 crates/jope-campaigns/src/bin/jope_task_elo.rs
 crates/jope-campaigns/src/bin/jope_task_learning_controller.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/execution.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/recipe.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/scheduler.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/state.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/tests/mod.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/tests/promotion.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/tests/recipe.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/tests/recovery.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/tests/state.rs
+crates/jope-campaigns/src/bin/jope_task_learning_controller/trainer.rs
 crates/jope-campaigns/src/bin/jope_task_rating.rs
 crates/jope-campaigns/src/bin/jope_timeseries_export.rs
 crates/jope-campaigns/src/bin/jope_training_archive.rs
