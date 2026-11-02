@@ -27,7 +27,7 @@ def test_cells_partition_folds_cyclically():
         assert sorted((a, b, *fit)) == list(range(5)) and len(fit) == 3
 
 
-def test_fit_plan_is_minimal_and_covers_every_cell():
+def _assert_fit_plan_is_minimal_and_covers_every_cell(stat):
     outers, inners = stat.fit_plan()
     assert (
         len(outers) == 5 and len(inners) == 10
@@ -49,6 +49,10 @@ def test_fit_plan_is_minimal_and_covers_every_cell():
         and stat.FIT_SEEDS["BLEND"] == stat.SEEDS
         and stat.FIT_SEEDS["SHUF"] == ()
     )
+
+
+def test_fit_plan_is_minimal_and_covers_every_cell():
+    _assert_fit_plan_is_minimal_and_covers_every_cell(stat)
 
 
 def test_seed_folds_reproduce_h124_algorithm_and_differ_by_seed():
@@ -222,7 +226,7 @@ def test_runner_admits_xbabe1_at_nice_19_only(monkeypatch):
         runner.admit_host()
 
 
-def test_runner_guards_pass_on_xbabe1_with_healthy_resources(tmp_path, monkeypatch):
+def _assert_runner_guards_pass_on_xbabe1_with_healthy_resources(tmp_path, monkeypatch):
     import collections
 
     import runner
@@ -242,6 +246,10 @@ def test_runner_guards_pass_on_xbabe1_with_healthy_resources(tmp_path, monkeypat
     )
     with pytest.raises(RuntimeError, match="disk guard"):
         runner.guards(tmp_path / "absent-root")
+
+
+def test_runner_guards_pass_on_xbabe1_with_healthy_resources(tmp_path, monkeypatch):
+    _assert_runner_guards_pass_on_xbabe1_with_healthy_resources(tmp_path, monkeypatch)
 
 
 def test_blend_is_h129_cost_interpolation_with_fixed_lambda():
@@ -319,7 +327,7 @@ def test_choose_tau_falls_back_to_r882_when_nothing_is_safe_and_ties_go_conserva
     assert same["tau"] == -math.inf
 
 
-def test_arm_costs_gate_falls_back_to_r882_and_is_outcome_free():
+def _assert_arm_costs_gate_falls_back_to_r882_and_is_outcome_free(stat):
     import runner
 
     base = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
@@ -338,6 +346,10 @@ def test_arm_costs_gate_falls_back_to_r882_and_is_outcome_free():
         np.array_equal(costs[a], costs["BLEND_025"]) for a in stat.GATES
     )
     assert set(costs) == set(stat.ARMS) and stat.PRIMARY == "GATED_025"
+
+
+def test_arm_costs_gate_falls_back_to_r882_and_is_outcome_free():
+    _assert_arm_costs_gate_falls_back_to_r882_and_is_outcome_free(stat)
 
 
 def test_jsonable_encodes_infinite_thresholds_only():

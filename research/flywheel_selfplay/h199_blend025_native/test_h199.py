@@ -15,6 +15,22 @@ monitor = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(monitor)
 
 
+def _shared_h195_test_helpers():
+    path = HERE.parent / "h195_blend025_kernel_confirm" / "test_h195.py"
+    spec = importlib.util.spec_from_file_location("h195_shared_test_helpers", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _shared_h203_test_helpers():
+    path = HERE.parent / "h203_blend025_gated" / "test_h203.py"
+    spec = importlib.util.spec_from_file_location("h203_shared_test_helpers", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def families(n=205):
     return [f"f{f:03}" for f in range(n)]
 
@@ -27,23 +43,7 @@ def test_cells_partition_folds_cyclically():
 
 
 def test_fit_plan_is_minimal_and_covers_every_cell():
-    outers, inners = stat.fit_plan()
-    assert (
-        len(outers) == 5 and len(inners) == 10
-    )  # all adjacent pairs, all C(5,3) triples
-    for k in range(5):
-        a, b, fit = stat.cell(k)
-        assert tuple(sorted((a, b))) in outers
-        used = [stat.inner_model_for(k, j) for j in fit]
-        assert len(set(used)) == 3 and all(m in inners for m in used)
-        for j, m in zip(fit, used):
-            assert {a, b, j} == set(
-                m
-            )  # inner model never saw A, B or its own calibration fold
-    with pytest.raises(ValueError):
-        stat.inner_model_for(0, 1)
-    budget = sum(len(stat.FIT_SEEDS[t]) * 15 for t in stat.FIT_SEEDS)
-    assert budget == 60 and stat.FIT_SEEDS["BLEND"] == stat.SEEDS
+    _shared_h195_test_helpers()._assert_fit_plan_is_minimal_and_covers_every_cell(stat)
 
 
 def test_seed_folds_reproduce_h124_algorithm_and_differ_by_seed():
@@ -263,22 +263,6 @@ def test_runner_admits_xbabe1_at_nice_19_only(monkeypatch):
 
 
 def test_runner_guards_pass_on_xbabe1_with_healthy_resources(tmp_path, monkeypatch):
-    import collections
-
-    import runner
-
-    monkeypatch.setattr(runner.socket, "gethostname", lambda: "xbabe1")
-    monkeypatch.setattr(runner.os, "getpriority", lambda *a: 19)
-    monkeypatch.setattr(runner.os, "getloadavg", lambda: (1.0, 1.0, 1.0))
-    usage = collections.namedtuple("usage", "total used free")
-    monkeypatch.setattr(
-        runner.shutil, "disk_usage", lambda p: usage(10**12, 9 * 10**11, 10**11)
+    _shared_h203_test_helpers()._assert_runner_guards_pass_on_xbabe1_with_healthy_resources(
+        tmp_path, monkeypatch
     )
-    monkeypatch.setattr(runner, "MEM_MIN", 0)
-    g = runner.guards(tmp_path / "absent-root")
-    assert g["host"] == "xbabe1" and g["free"] == 10**11 and g["scratch"] == 0
-    monkeypatch.setattr(
-        runner.shutil, "disk_usage", lambda p: usage(10**12, 9.7 * 10**11, 3 * 10**10)
-    )
-    with pytest.raises(RuntimeError, match="disk guard"):
-        runner.guards(tmp_path / "absent-root")
