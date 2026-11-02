@@ -67,6 +67,8 @@ from dev_incumbent import (  # noqa: E402
     proposal_plan,
     publish_checkpoint_archive,
     restart_proposal_optimizer,
+    add_restart_optimizer_argument,
+    validate_restart_optimizer_argument,
     retain_checkpoint_payloads,
     validate_admission_options,
     warm_restart_adapter,
@@ -196,15 +198,9 @@ def main():
         type=Path,
         help="directory containing round-NN.json keyed-S3 qualification bundles",
     )
-    ap.add_argument(
-        "--restart-optimizer-after-rejections",
-        type=int,
-        default=0,
-        help="full-cohort proposals: clear Adam moments after this rejection streak; 0 disables",
-    )
+    add_restart_optimizer_argument(ap)
     args = ap.parse_args()
-    if args.restart_optimizer_after_rejections < 0:
-        ap.error("--restart-optimizer-after-rejections must be nonnegative")
+    validate_restart_optimizer_argument(ap, args)
     try:
         args.adapter_min_gain = validate_admission_options(
             args.strict_adapter_admission, args.adapter_min_gain
