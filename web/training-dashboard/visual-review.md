@@ -37,3 +37,8 @@ hash and limitations are recorded in
 [`e2e/reviews/rendered-ux-review.json`](e2e/reviews/rendered-ux-review.json). The review is an
 implementing-agent self-review. Only the overview screenshots are compared with committed
 Playwright baselines; the other captures have reviewer notes but no configured baseline.
+
+The rebased browser run is bound to source `1f21561ea326c13858e9f5caf4797c0c6e7e53d3`
+(run 9, attempt 1). All 16 screenshot hashes match the previously reviewed captures byte for
+byte; the refreshed receipt is at `target/ci-evidence/rendered-ux/unstick-run-1/` and verifies
+with the repository receipt helper.
