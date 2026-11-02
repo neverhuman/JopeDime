@@ -1665,6 +1665,9 @@ crates/smartcluster/jainnode/src/storage_control.rs
 crates/smartcluster/jainnode/src/storage_facts.rs
 crates/smartcluster/jainnode/src/storage_topology.rs
 crates/smartcluster/jainnode/src/tests.rs
+crates/smartcluster/jainnode/src/tests/execution.rs
+crates/smartcluster/jainnode/src/tests/support_helpers.rs
+crates/smartcluster/jainnode/src/tests/support_mocks.rs
 crates/smartcluster/jainnode/tests/rustls_provider.rs
 crates/smartcluster/schemas/jain.appliance-role-v2.schema.json
 crates/smartcluster/schemas/jain.node.storage-config-v1.schema.json
