@@ -171,7 +171,7 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     // Codex-owned (do not edit; propose changes in FLYWHEEL_CHAT.md). Scanned
     // read-only so its drift is still visible here.
     (
-        "crates/jope-campaigns/src/bin/jope_selfplay_queue.rs",
+        "crates/jope-campaigns/src/bin/jope_selfplay_queue/screening.rs",
         "render_spec",
         Some(Family::Eval),
     ),
