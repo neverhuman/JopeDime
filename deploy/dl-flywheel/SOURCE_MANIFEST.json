@@ -476,12 +476,6 @@
       "sha256": "bcbb141d9441b8063914cec02a6a4cbd70abeb5256b2e1ce245e8f1df4f367eb"
     },
     {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/model.py",
-      "origin_sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712",
-      "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py",
-      "sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
-    },
-    {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/consumer/dltrain/objective.py",
       "origin_sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
       "path": "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/objective.py",
