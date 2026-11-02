@@ -1313,6 +1313,8 @@
   "crates/jope-campaigns/src/bin/jope_selfplay_wave.rs": true,
   "crates/jope-campaigns/src/bin/jope_spec_drift.rs": true,
   "crates/jope-campaigns/src/bin/jope_strategy_screen.rs": true,
+  "crates/jope-campaigns/src/bin/jope_strategy_screen/final_cv.rs": true,
+  "crates/jope-campaigns/src/bin/jope_strategy_screen/screen.rs": true,
   "crates/jope-campaigns/src/bin/jope_task_elo.rs": true,
   "crates/jope-campaigns/src/bin/jope_task_learning_controller.rs": true,
   "crates/jope-campaigns/src/bin/jope_task_learning_controller/execution.rs": true,
