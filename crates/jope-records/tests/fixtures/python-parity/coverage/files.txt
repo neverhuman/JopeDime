@@ -1457,6 +1457,8 @@ crates/smartcluster/jain-smartcluster-core/src/workload.rs
 crates/smartcluster/jain-smartcluster-daemon/Cargo.toml
 crates/smartcluster/jain-smartcluster-daemon/examples/fit_child_fixture.rs
 crates/smartcluster/jain-smartcluster-daemon/src/actor.rs
+crates/smartcluster/jain-smartcluster-daemon/src/actor/api.rs
+crates/smartcluster/jain-smartcluster-daemon/src/actor/command.rs
 crates/smartcluster/jain-smartcluster-daemon/src/actor/fit_child.rs
 crates/smartcluster/jain-smartcluster-daemon/src/actor/mps.rs
 crates/smartcluster/jain-smartcluster-daemon/src/actor/pressure.rs
