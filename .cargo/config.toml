@@ -1,0 +1,12 @@
+[env]
+JOPE_COMPAT_FREEZE_REGENERATE = "identity"
+JOPE_COMPAT_FREEZE_SHA = "a191656341dc8100246d2f720e9c020c3bff0f55"
+
+[build]
+incremental = false
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.build-override]
+debug = 0
