@@ -1424,6 +1424,7 @@ crates/jope-engine/src/native_genome/verification.rs
 crates/jope-engine/src/native_graph.rs
 crates/jope-engine/src/native_graph/transport.rs
 crates/jope-engine/src/native_input_cache.rs
+crates/jope-engine/src/native_input_cache/tests.rs
 crates/jope-engine/src/native_loop.rs
 crates/jope-engine/src/native_loop/bounded.rs
 crates/jope-engine/src/native_loop/bounded/assignment.rs
