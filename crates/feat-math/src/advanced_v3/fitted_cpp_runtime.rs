@@ -231,11 +231,15 @@ fn load_model_library(bytes: &[u8]) -> Result<FittedCppModel> {
     if library.is_null() {
         bail!("load fitted model image: {}", dl_error());
     }
+    // SAFETY: `library` is a live handle for the sealed image and both fixed
+    // names are NUL-terminated; their returned addresses remain live until close.
     let columns = unsafe { load_symbol(library, b"jope_fitted_columns\0") };
+    // SAFETY: same live sealed image and fixed NUL-terminated export contract.
     let predict = unsafe { load_symbol(library, b"jope_fitted_predict\0") };
     let (columns, predict) = match (columns, predict) {
         (Ok(columns), Ok(predict)) => (columns, predict),
         (Err(error), _) | (_, Err(error)) => {
+            // SAFETY: this is the unique open reference and no function pointer escaped.
             unsafe { dlclose(library) };
             return Err(error);
         }
@@ -260,7 +264,10 @@ impl FittedCppModel {
         if table.values.len() != cells || table.missing.len() != cells {
             bail!("encoded table buffers do not match its declared shape");
         }
-        if table.columns != unsafe { (self.columns)() } {
+        // SAFETY: this symbol was resolved from the retained sealed model image
+        // and has the `jope_fitted_columns` ABI defined by the emitter.
+        let model_columns = unsafe { (self.columns)() };
+        if table.columns != model_columns {
             bail!("fitted model column count mismatch");
         }
         let mut output = vec![0.0; table.rows];
