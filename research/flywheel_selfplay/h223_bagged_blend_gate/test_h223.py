@@ -148,7 +148,7 @@ def test_monitor_limits_use_the_effective_cpu_affinity():
     # H210 E1: 102 CPUs allowed of 128 online; every limit is sized from the allowed set.
     assert monitor.HOST_CORES == len(monitor.os.sched_getaffinity(0))
     assert monitor.LOAD_LIMIT == 0.85 * monitor.HOST_CORES  # sustained load1 host rule
-    assert monitor.ADMIT_LOAD == 0.50 * monitor.HOST_CORES
+    assert monitor.ADMIT_LOAD == 60.0 and monitor.ADMIT_LOAD5 == 55.0  # amendment A1
     import runner
 
     assert runner.CORES == monitor.HOST_CORES
@@ -163,16 +163,17 @@ def test_monitor_guards():
         dict(available=19 * 2**30),
         dict(free=299_000_000_000),
         dict(rss=4 * 2**30),
-        dict(cpu_over_s=300.0),
-        dict(load_over_s=300.0),
-        dict(load5=60.5),
     ]:
         assert len(monitor.violations(ok_sample(**kw))) == 1
+    # amendment A1 (hw_t1400): host load is a pause, never an abort
+    for kw in [dict(cpu_over_s=300.0), dict(load_over_s=300.0), dict(load5=120.0)]:
+        assert monitor.violations(ok_sample(**kw)) == []
     # hw_t1325: only free space stops the run on xbabe2; 94% used with 440 GB free passes; load5 60 is allowed
     assert monitor.violations(ok_sample(disk_used_fraction=0.94)) == []
     assert monitor.violations(ok_sample(free=300_000_000_000, load5=60.0)) == []
     assert monitor.MIN_FREE == 300_000_000_000 and monitor.ADMIT_FREE == 320_000_000_000
-    assert monitor.LOAD5_MAX == 60.0 and monitor.RSS_MAX == 4 * 2**30
+    assert monitor.LOAD5_MAX == 60.0 and monitor.LOAD5_RESUME == 55.0
+    assert monitor.RSS_MAX == 4 * 2**30
     assert (
         monitor.DEADLINE == 4 * 3600
         and monitor.CORE_LIMIT == 8.0
@@ -181,34 +182,84 @@ def test_monitor_guards():
     assert monitor.WINDOW == 30.0 and monitor.MEM_MIN == 20 * 2**30
 
 
-def test_monitor_ignores_short_load_spikes_and_trips_on_sustained_overload():
-    # H203 lost both attempts to one-minute spikes on xbabe2; load1 needs 300 s (load5 has its own 60 limit).
+def test_monitor_pauses_on_load_with_hysteresis_and_never_aborts():
+    # Amendment A1 (hw_t1400): H218 died at 41/45 fits on a load5 abort; H223 pauses its own worker instead.
+    assert not monitor.overloaded(ok_sample(load5=60.0), paused=False)
+    assert monitor.overloaded(ok_sample(load5=60.1), paused=False)
+    # paused: stays paused between 55 and 60, resumes at load5 <= 55
+    assert monitor.overloaded(ok_sample(load5=58.0), paused=True)
+    assert not monitor.overloaded(ok_sample(load5=55.0), paused=True)
+    # one-minute spikes alone neither pause nor abort; 300 s sustained load1 / CPU pauses
     spike = dict(load=monitor.LOAD_LIMIT + 50, cpu=99.0)  # load5 stays 1.0
     since = {}
     s = monitor.track_overload(ok_sample(**spike), since, 1000.0)
-    assert s["load_over_s"] == 0.0 and monitor.violations(s) == []
+    assert not monitor.overloaded(s, paused=False)
     s = monitor.track_overload(ok_sample(**spike), since, 1299.0)
-    assert s["load_over_s"] == 299.0 and monitor.violations(s) == []
+    assert s["load_over_s"] == 299.0 and not monitor.overloaded(s, paused=False)
     s = monitor.track_overload(ok_sample(**spike), since, 1300.0)
-    assert monitor.violations(s) == [
-        "load1>85% of effective cores for 300 s",
-        "host CPU>85% for 300 s",
+    assert monitor.overloaded(s, paused=False) and monitor.violations(s) == []
+    # still paused while load1 / CPU stay high even with a quiet load5
+    assert monitor.overloaded(s, paused=True)
+    s = monitor.track_overload(ok_sample(), since, 1301.0)
+    assert s["load_over_s"] == 0.0 and not monitor.overloaded(s, paused=True)
+
+
+def test_monitor_signals_only_its_own_worker_group_and_aborts_a_paused_worker(
+    tmp_path, monkeypatch
+):
+    claims = tmp_path / "claims"
+    monkeypatch.setattr(monitor, "CLAIMS", claims)
+    monkeypatch.setattr(monitor.socket, "gethostname", lambda: "xbabe2")
+    monkeypatch.setattr(monitor.os, "getpriority", lambda *a: 19)
+    monkeypatch.setattr(monitor, "check_source", lambda launch: None)
+    monkeypatch.setattr(monitor.time, "sleep", lambda s: None)
+    loads = iter([1.0, 61.0, 58.0, 54.0, 61.0, 61.0])
+    disk = iter([500e9] * 5 + [100e9])
+    monkeypatch.setattr(
+        monitor,
+        "snapshot",
+        lambda child=None, history=None: ok_sample(load5=next(loads), free=next(disk)),
+    )
+    signals = []
+    monkeypatch.setattr(
+        monitor.os, "killpg", lambda pid, sig: signals.append((pid, sig))
+    )
+
+    class Child:
+        pid = 4242
+
+        def poll(self):
+            return None
+
+        def wait(self, timeout=None):
+            return -15
+
+    monkeypatch.setattr(monitor.subprocess, "Popen", lambda *a, **k: Child())
+    monkeypatch.setattr(monitor.sys, "argv", monitor_argv(tmp_path))
+    with pytest.raises(SystemExit):
+        monitor.main()
+    sig = monitor.signal
+    assert signals == [
+        (4242, sig.SIGSTOP),  # load5 61: pause
+        (4242, sig.SIGCONT),  # load5 54: resume (58 keeps it paused)
+        (4242, sig.SIGSTOP),  # load5 61 again
+        (4242, sig.SIGTERM),  # free disk < 300 GB: hard abort ...
+        (4242, sig.SIGCONT),  # ... delivered to the stopped worker
     ]
-    # a dip below the limit restarts the clock
-    monitor.track_overload(ok_sample(), since, 1301.0)
-    s = monitor.track_overload(ok_sample(**spike), since, 1302.0)
-    assert s["load_over_s"] == 0.0 and s["cpu_over_s"] == 0.0
+    summary = json.loads(
+        (tmp_path / "logs" / "run-x.resource_summary.json").read_text()
+    )
+    assert summary["status"] == "INCOMPLETE" and summary["reasons"] == [
+        "disk free<300GB"
+    ]
+    assert [p["action"] for p in summary["load_pauses"]] == ["pause", "resume", "pause"]
 
 
 def test_monitor_admission_needs_a_quiet_host_and_margins():
     assert monitor.admission_refusals(ok_sample()) == []
-    half = monitor.ADMIT_LOAD
-    assert monitor.admission_refusals(ok_sample(load=half + 1)) == [
-        "admission: load1>50% of cores"
-    ]
-    assert monitor.admission_refusals(ok_sample(load5=half + 1)) == [
-        "admission: load5>50% of cores"
-    ]
+    assert monitor.admission_refusals(ok_sample(load=60.0, load5=55.0)) == []
+    assert monitor.admission_refusals(ok_sample(load=61.0)) == ["admission: load1>60"]
+    assert monitor.admission_refusals(ok_sample(load5=56.0)) == ["admission: load5>55"]
     assert monitor.admission_refusals(ok_sample(cpu=51.0)) == [
         "admission: host CPU>50%"
     ]
@@ -344,9 +395,7 @@ def guarded_runner(
     return runner
 
 
-def test_runner_guard_uses_load5_60_the_300gb_disk_rule_and_the_deadline(
-    tmp_path, monkeypatch
-):
+def test_runner_guard_aborts_on_disk_and_deadline_but_not_load(tmp_path, monkeypatch):
     runner = guarded_runner(monkeypatch, load=(10_000.0, 1.0, 1.0))
     monkeypatch.delenv(runner.DEADLINE_ENV, raising=False)
     g = runner.guards(tmp_path / "absent")
@@ -356,9 +405,10 @@ def test_runner_guard_uses_load5_60_the_300gb_disk_rule_and_the_deadline(
     assert runner.LOAD5_MAX == 60.0 and runner.RSS_LIMIT == 4 * 2**30
     runner = guarded_runner(monkeypatch, load=(1.0, 60.0, 1.0))
     assert runner.guards(tmp_path / "absent")["load5"] == 60.0
-    runner = guarded_runner(monkeypatch, load=(1.0, 60.1, 1.0))
-    with pytest.raises(RuntimeError, match="load5"):
-        runner.guards(tmp_path / "absent")
+    runner = guarded_runner(monkeypatch, load=(1.0, 120.0, 1.0))
+    assert (
+        runner.guards(tmp_path / "absent")["load5"] == 120.0
+    )  # A1: load is a pause, not an abort
     runner = guarded_runner(monkeypatch, disk=(7856 * 10**9, 7391 * 10**9, 465 * 10**9))
     assert (
         runner.guards(tmp_path / "absent")["used"] > 0.94
@@ -799,3 +849,24 @@ def test_fold_manifest_is_fresh_against_every_earlier_gated_wave():
     near = [g[:-1] for g in near[:4]] + [near[4] + [g[-1] for g in near[:4]]]
     with pytest.raises(ValueError, match="Jaccard"):
         stat.fold_manifest(rows, {"X": {"1": near}})
+
+
+def test_runner_waits_for_load_between_units_with_hysteresis(monkeypatch):
+    import runner
+
+    assert runner.LOAD5_MAX == 60.0 and runner.LOAD5_RESUME == 55.0
+    assert runner.LOAD_POLL == 60.0
+    monkeypatch.setattr(runner.os, "getloadavg", lambda: (1.0, 60.0, 1.0))
+    assert runner.wait_for_load() == 0.0  # at the limit: no pause
+    seq = iter([61.0, 61.0, 58.0, 56.0, 55.0])
+    monkeypatch.setattr(runner.os, "getloadavg", lambda: (1.0, next(seq), 1.0))
+    slept = []
+    monkeypatch.setattr(runner.time, "sleep", slept.append)
+    monkeypatch.delenv(runner.DEADLINE_ENV, raising=False)
+    runner.wait_for_load()
+    assert slept == [60.0, 60.0, 60.0]  # 61 / 58 / 56 wait; 55 resumes
+    seq = iter([61.0, 61.0, 61.0])
+    monkeypatch.setattr(runner.os, "getloadavg", lambda: (1.0, next(seq), 1.0))
+    monkeypatch.setenv(runner.DEADLINE_ENV, "1.0")
+    with pytest.raises(RuntimeError, match="deadline"):
+        runner.wait_for_load()
