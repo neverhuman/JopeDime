@@ -211,7 +211,17 @@ impl PlanArgs {
                 "1" | "true" | "TRUE" | "yes"
             );
         if unbounded {
-            return MicroAdmission::unbounded();
+            // Disable per-dataset cutoffs; select_micro_cohort still limits each
+            // wave to MICRO_WAVE_SIZE datasets.
+            return MicroAdmission {
+                eval_cap: u64::MAX,
+                retire_min_observations: u64::MAX,
+                retire_stale_waves: u32::MAX,
+                retire_spread_floor: -1.0,
+                parole_period: 1,
+                parole_slots: 0,
+                least_observed_band: 1,
+            };
         }
         let base = MicroAdmission::default();
         MicroAdmission {
