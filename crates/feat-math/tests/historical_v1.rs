@@ -752,6 +752,21 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
     assert_eq!(tui10_identity["fixtures"].as_array().unwrap().len(), 2);
     assert_eq!(tui10_identity["fixtures"][0]["path"], changed_fixtures[0]);
     assert_eq!(tui10_identity["fixtures"][1]["path"], changed_fixtures[1]);
+    let gov04_portable_pty =
+        old_fixture("transitions/gov04_pub06_portable_pty_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        gov04_portable_pty["source_commit"],
+        "4b51c5528129c3fc4c170f2c4074a1a176c25eb3"
+    );
+    assert_eq!(gov04_portable_pty["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(
+        gov04_portable_pty["fixtures"][0]["path"],
+        changed_fixtures[0]
+    );
+    assert_eq!(
+        gov04_portable_pty["fixtures"][1]["path"],
+        changed_fixtures[1]
+    );
     let api03_id_newtypes =
         old_fixture("transitions/api03_id_newtypes_lockfile_identity_rebaseline.v1.json");
     assert_eq!(
