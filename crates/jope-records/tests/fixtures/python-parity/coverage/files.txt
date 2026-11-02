@@ -770,6 +770,13 @@ crates/jope-campaigns/src/selfplay_shadow/causal_evidence/ledger.rs
 crates/jope-campaigns/src/selfplay_shadow/causal_evidence/tests.rs
 crates/jope-campaigns/src/selfplay_shadow/causal_evidence/trainer.rs
 crates/jope-campaigns/src/selfplay_shadow/contracts.rs
+crates/jope-campaigns/src/selfplay_shadow/contracts/candidate.rs
+crates/jope-campaigns/src/selfplay_shadow/contracts/cohort.rs
+crates/jope-campaigns/src/selfplay_shadow/contracts/digest.rs
+crates/jope-campaigns/src/selfplay_shadow/contracts/encoding.rs
+crates/jope-campaigns/src/selfplay_shadow/contracts/evaluation.rs
+crates/jope-campaigns/src/selfplay_shadow/contracts/summary.rs
+crates/jope-campaigns/src/selfplay_shadow/contracts/tests.rs
 crates/jope-campaigns/src/selfplay_shadow/flywheel.rs
 crates/jope-campaigns/src/selfplay_shadow/flywheel/admission.rs
 crates/jope-campaigns/src/selfplay_shadow/flywheel/alternation.rs
