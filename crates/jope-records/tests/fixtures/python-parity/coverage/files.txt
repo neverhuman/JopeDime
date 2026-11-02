@@ -1784,6 +1784,8 @@ crates/jope-records/tests/records/main.rs
 crates/jope-records/tests/records/progress_view.rs
 crates/jope-records/tests/records/task_status.rs
 crates/jope-records/tests/records/test_inventory.rs
+crates/jope-service/src/ranker/cuda/comparison_tests.rs
+crates/jope-service/src/ranker/cuda/context_axis_regression.rs
 crates/numpy-pcg64/Cargo.toml
 crates/numpy-pcg64/src/blake2b.rs
 crates/numpy-pcg64/src/document.rs
