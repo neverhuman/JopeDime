@@ -607,3 +607,69 @@ def test_ns4_valid_auc_matches_pairwise_definition_with_masks_and_ties() -> None
     permutation = torch.randperm(scores.shape[1], generator=rng)
     reordered = batched_roc_auc_gpu(scores[:, permutation], labels[:, permutation], mask[:, permutation])
     torch.testing.assert_close(reordered, result, rtol=0, atol=0)
+
+
+@pytest.fixture
+def ns16_gate_inputs():
+    from jope.north_star import check_phase_d_elo_gate
+
+    ratings = {"ROUND_0": 1490.0, "ROUND_1": 1500.0, "ROUND_2": 1510.0, "H": 1500.0}
+    return check_phase_d_elo_gate, {
+        "round_names": ["ROUND_0", "ROUND_1", "ROUND_2"],
+        "overall_ratings": dict(ratings),
+        "regression_ratings": dict(ratings),
+        "binary_ratings": dict(ratings),
+        "h_baseline_name": "H",
+    }
+
+
+@pytest.mark.parametrize("axis", ["overall", "regression", "binary"])
+@pytest.mark.parametrize("contender", ["ROUND_0", "ROUND_1", "ROUND_2", "H"])
+@pytest.mark.parametrize("invalid", [math.nan, math.inf, -math.inf, True, None])
+def test_ns16_gate_rejects_invalid_requested_ratings(ns16_gate_inputs, axis, contender, invalid):
+    gate, inputs = ns16_gate_inputs
+    inputs[f"{axis}_ratings"][contender] = invalid
+    with pytest.raises(ValueError):
+        gate(**inputs)
+
+
+@pytest.mark.parametrize("numeric_strings", [False, True])
+def test_ns16_gate_preserves_finite_policy(ns16_gate_inputs, numeric_strings):
+    gate, inputs = ns16_gate_inputs
+    # Overall is compared at the final round; only regression and binary must rise.
+    inputs["overall_ratings"]["ROUND_0"] = 1600.0
+    for axis in ["overall", "regression", "binary"]:
+        inputs[f"{axis}_ratings"]["UNREQUESTED"] = math.nan
+        if numeric_strings:
+            inputs[f"{axis}_ratings"] = {key: str(value) for key, value in inputs[f"{axis}_ratings"].items()}
+    result = gate(**inputs)
+    assert result["gate_pass"] is True
+    assert result["num_rounds"] == 3
+    assert result["overall_elo_trajectory"] == {"ROUND_0": 1600.0, "ROUND_1": 1500.0, "ROUND_2": 1510.0}
+    assert all(
+        result[key] is True
+        for key in [
+            "regression_trending_up",
+            "binary_clf_trending_up",
+            "beats_h_baseline_regression",
+            "beats_h_baseline_binary_clf",
+            "beats_h_baseline_overall",
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    "reason", ["one_round", "two_rounds", "regression_plateau", "binary_plateau", "overall_below_baseline"]
+)
+def test_ns16_gate_preserves_finite_rejections(ns16_gate_inputs, reason):
+    gate, inputs = ns16_gate_inputs
+    if reason == "one_round":
+        inputs["round_names"] = ["ROUND_2"]
+    elif reason == "two_rounds":
+        inputs["round_names"] = ["ROUND_1", "ROUND_2"]
+    elif reason.endswith("_plateau"):
+        axis = reason.removesuffix("_plateau")
+        inputs[f"{axis}_ratings"]["ROUND_2"] = 1500.0
+    else:
+        inputs["overall_ratings"]["H"] = 1520.0
+    assert gate(**inputs)["gate_pass"] is False
