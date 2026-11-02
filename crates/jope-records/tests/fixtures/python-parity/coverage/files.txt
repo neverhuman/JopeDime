@@ -225,6 +225,8 @@ crates/hyperion/src/diagnostics.rs
 crates/hyperion/src/hashing.rs
 crates/hyperion/src/hyperion.rs
 crates/hyperion/src/hyperion/config.rs
+crates/hyperion/src/hyperion/config/transform.rs
+crates/hyperion/src/hyperion/config/types.rs
 crates/hyperion/src/hyperion/encoder.rs
 crates/hyperion/src/hyperion/hvc2.rs
 crates/hyperion/src/hyperion/hvc2/format.rs
