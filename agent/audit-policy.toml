@@ -225,9 +225,6 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/readonly_snapshot.py",
   # P38: joblib models are emitted with producer-generated identity pins and consumed only by trusted pipeline code.
   "python/src/jope/target_maker/artifact_pins.py",
-  # HLT-027 false positive: an internal ledger refusal comment is not a human
-  # review or proof attestation; see the fingerprint-specific rationale.
-  "crates/jope-learning/src/hwm.rs",
   # P38 HLT-033 sha256:7e8d63e1b202 + 5027af590b9f: these exact loaders
   # reject non-regular/symlink inputs and verify source against H144 pins before one-read exec.
   "research/joint_regbin/runtime.py",
