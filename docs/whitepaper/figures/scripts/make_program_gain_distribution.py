@@ -234,14 +234,147 @@ def rolling_admissions():
     print(f"{len(rows)} observed decisions; {len(windows)} full rolling windows")
 
 
+def selection_changes():
+    """Replay logged selection-identity differences from a fixed reference."""
+    data = FIGURES / "data/selection_changes.csv"
+    receipt = FIGURES / "data/selection_changes.source.json"
+    output = FIGURES / "fig_fw_selection_changes.pdf"
+    provenance = FIGURES / "data/selection_changes.provenance.json"
+    source = json.loads(receipt.read_text())
+    capture = source["capture"]
+    assert sha(data) == source["csv_sha256"]
+    assert data.with_suffix(".csv.sha256").read_text().split() == [
+        source["csv_sha256"],
+        data.name,
+    ]
+    with data.open() as stream:
+        rows = list(csv.DictReader(stream))
+    rounds = [int(r["round"]) for r in rows]
+    assert len(rows) == capture["rows"] == 1000
+    assert rounds == list(range(rounds[0], rounds[-1] + 1))
+    assert [rounds[0], rounds[-1]] == capture["round_window"]
+    assert capture["reference_round"] == 882 and capture["development_contexts"] == 91
+    assert capture["all_selected_per_round_scalars_match"]
+    assert capture["all_retained_summaries_match"]
+    assert {r["evaluation_identity_sha256"] for r in rows} == {
+        capture["evaluation_identity_sha256"]
+    }
+    candidates, retained, gains, ties = [], [], [], []
+    previous_best = previous_identity = None
+    for row in rows:
+        candidate, before, best = [
+            Decimal(row[k])
+            for k in [
+                "candidate_validation_utility",
+                "previous_best_validation_utility",
+                "retained_best_validation_utility",
+            ]
+        ]
+        assert all(x.is_finite() for x in [candidate, before, best])
+        take = int(row["adapter_accepted"])
+        assert take in (0, 1) and take == int(candidate >= before)
+        assert best == (candidate if take else before)
+        identity = int(row["reported_best_round"])
+        if previous_best is not None:
+            assert before == previous_best
+            assert take or identity == previous_identity
+        count, incumbent = [
+            int(row[k])
+            for k in ["candidate_selection_changes", "retained_selection_changes"]
+        ]
+        assert int(row["reference_round"]) == 882
+        assert int(row["development_contexts"]) == 91
+        assert 0 <= count <= 91 and 0 <= incumbent <= 91
+        if take:
+            assert identity == int(row["round"]) and count == incumbent
+            (gains if candidate > before else ties).append(
+                (int(row["round"]), incumbent)
+            )
+        candidates.append(count)
+        retained.append(incumbent)
+        previous_best, previous_identity = best, identity
+    plt.rcParams.update(
+        {
+            "font.family": "serif",
+            "font.size": 8,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "pdf.fonttype": 42,
+        }
+    )
+    fig, ax = plt.subplots(figsize=(3.25, 2.45))
+    ax.plot(rounds, candidates, color="#adb5bd", lw=0.6, label="candidate")
+    ax.step(rounds, retained, where="post", color="#0b5394", lw=1, label="retained")
+    for events, marker, color, label, hollow in [
+        (gains, "*", "#b2182b", "strict-gain admission", False),
+        (ties, "D", "#b7791f", "tie admission", True),
+    ]:
+        ax.scatter(
+            [r for r, _ in events],
+            [v for _, v in events],
+            marker=marker,
+            s=24 if marker == "*" else 16,
+            edgecolors=color,
+            facecolors="white" if hollow else color,
+            linewidths=0.8,
+            zorder=4,
+            label=label,
+        )
+    ax.set(
+        xlabel="completed round",
+        ylabel="changed selections / 91 contexts",
+        ylim=(0, max(candidates) + 5),
+        yticks=[0, 5, 10, 15],
+    )
+    ax.set_xticks([rounds[0], rounds[333], rounds[666], rounds[-1]])
+    ax.grid(axis="y", alpha=0.2, linewidth=0.4)
+    ax.set_axisbelow(True)
+    ax.legend(
+        loc="upper center",
+        ncol=2,
+        fontsize=6.3,
+        frameon=False,
+        handlelength=1.6,
+        columnspacing=0.65,
+    )
+    fig.tight_layout(pad=0.5)
+    fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    facts = dict(
+        schema="whitepaper.selection-changes-figure/v1",
+        input_csv_sha256=sha(data),
+        source_receipt_sha256=sha(receipt),
+        generator_sha256=sha(Path(__file__)),
+        figure_sha256=sha(output),
+        rows=len(rows),
+        round_window=capture["round_window"],
+        reference_round=882,
+        development_contexts=91,
+        candidate_change_range=[min(candidates), max(candidates)],
+        retained_change_range=[min(retained), max(retained)],
+        strict_gain_rounds=[r for r, _ in gains],
+        accepted_tie_rounds=[r for r, _ in ties],
+        rejected=len(rows) - len(gains) - len(ties),
+        field_definition=source["field_definition"],
+        scope=source["scope"],
+        matplotlib_version=matplotlib.__version__,
+        reproduce=source["reproduce"],
+    )
+    provenance.write_text(json.dumps(facts, indent=2) + "\n")
+    print(f"{len(rows)} selection-change records; {len(gains) + len(ties)} admissions")
+
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Replay program gains or rolling adapter decisions."
-    )
-    parser.add_argument("--rolling-admissions", action="store_true")
-    if parser.parse_args().rolling_admissions:
+    parser = argparse.ArgumentParser(description="Replay retained flywheel telemetry.")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--rolling-admissions", action="store_true")
+    mode.add_argument("--selection-changes", action="store_true")
+    args = parser.parse_args()
+    if args.rolling_admissions:
         rolling_admissions()
+    elif args.selection_changes:
+        selection_changes()
     else:
         main()

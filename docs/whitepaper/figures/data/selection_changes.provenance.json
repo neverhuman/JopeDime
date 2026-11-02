@@ -1,0 +1,35 @@
+{
+  "schema": "whitepaper.selection-changes-figure/v1",
+  "input_csv_sha256": "a0ea4013fa38bb3bbb8211b8a4399515b342f60f9dc4e966a1754259430d7e9e",
+  "source_receipt_sha256": "5723003106d9cefc02e62b2b211ee890cc8541d858df2b642b5c1aac2839e7a1",
+  "generator_sha256": "966bebe7d9b033849d6eb9e14396f8b474285193f08107cbf0ae41402b697339",
+  "figure_sha256": "3f95b1dbcfc128de76d7559262d6529dff78cc804257598c2aa7842c1c22a532",
+  "rows": 1000,
+  "round_window": [
+    2744,
+    3743
+  ],
+  "reference_round": 882,
+  "development_contexts": 91,
+  "candidate_change_range": [
+    2,
+    13
+  ],
+  "retained_change_range": [
+    0,
+    4
+  ],
+  "strict_gain_rounds": [
+    2750,
+    3175
+  ],
+  "accepted_tie_rounds": [
+    2795,
+    3100
+  ],
+  "rejected": 996,
+  "field_definition": "Observer compares selected program identities against the recorded round882reference; candidate is pre-decision, retained is post-decision; counts use91ordereddevelopmentcontexts. Changes may reflect both adapter and candidate-pool variation.",
+  "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --selection-changes"
+}
