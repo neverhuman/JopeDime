@@ -550,49 +550,7 @@
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/__init__.py",
       "origin_sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/__init__.py",
-      "sha256": "3df742df89e7794e6f6414d7e82698827df29c9bb666e64612f7706781f69d0c"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/augmentation.py",
-      "origin_sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/augmentation.py",
-      "sha256": "cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/batch_stream.py",
-      "origin_sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/batch_stream.py",
-      "sha256": "2c4be42aa2054d8a6041886af815c86537989abef923a5f0b4ce7cfa9908d0bb"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/evergreen.py",
-      "origin_sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/evergreen.py",
-      "sha256": "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/evidence.py",
-      "origin_sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/evidence.py",
-      "sha256": "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/native_variant_snapshot.py",
-      "origin_sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/native_variant_snapshot.py",
-      "sha256": "68c20ee69226e7be9bf92ad40e3889c91fddd4af337c65c9d838d8f51d875258"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/paper_archive.py",
-      "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/paper_archive.py",
-      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_gate.py",
-      "origin_sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_gate.py",
-      "sha256": "db0eceb054b584f829bfaae4c111a787148d814f90af6ac0def6a302638b0f81"
+      "sha256": "a88d89bc94d2d58943625b9abf751740580d98643ca93179e042fbb493c044b3"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_inputs.py",
@@ -607,12 +565,6 @@
       "sha256": "0220763d2fc6f0fffdcfefc8d63aba6157b8c166654b077c81b5fa0d1e1ec5f2"
     },
     {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_observer.py",
-      "origin_sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_observer.py",
-      "sha256": "490a8f2b46d0732ddfd3ac3cb613a3b1401f1114401d48d9d0aa9759d1c9c211"
-    },
-    {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/program_worker.py",
       "origin_sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/program_worker.py",
@@ -625,46 +577,10 @@
       "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
     },
     {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/queue.py",
-      "origin_sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/queue.py",
-      "sha256": "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/s3_library.py",
-      "origin_sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/s3_library.py",
-      "sha256": "28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/score_join.py",
-      "origin_sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/score_join.py",
-      "sha256": "712ac8cdcf96ad33f11cc7a6051e4f5d079049f5e52b5da444223ff251dd1a06"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/target_noise.py",
-      "origin_sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/target_noise.py",
-      "sha256": "20864cfe1c0d7b639332964905f027575ad7b33e0b57e5ec7aac1fe0099be2b1"
-    },
-    {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/timing.py",
       "origin_sha256": "ca8ea1ddb3412476e5f93e5058f2c1c491748b0dc15d71f86c06a6b2d5f7bd1d",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/timing.py",
       "sha256": "ca8ea1ddb3412476e5f93e5058f2c1c491748b0dc15d71f86c06a6b2d5f7bd1d"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_admission.py",
-      "origin_sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_admission.py",
-      "sha256": "b8f2bca9e786a732063f6d2ce8d1ff179502edb7a3fd306be1e52590c48701f3"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_snapshot.py",
-      "origin_sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
-      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot.py",
-      "sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/training_snapshot_kumos.py",
@@ -4235,55 +4151,7 @@
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/__init__.py",
       "origin_sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c",
       "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/__init__.py",
-      "sha256": "e617a8ebcb23b7a271aadbeeabd9eb6811c6bf457487a7b80b6486fff69f235c"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/automaton.py",
-      "origin_sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/automaton.py",
-      "sha256": "798ef613b840e35ae7184637726e6bdc7379c66569f323e1ab5c4b6d77d50e3a"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/common.py",
-      "origin_sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/common.py",
-      "sha256": "c419b6d721a32879db830ab7f312e95fec8501c2b47f40581a5054b2317cfbbe"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/dsl_tokenizer.py",
-      "origin_sha256": "0912e7216320a82dc34d9af13554de91656aba558977bd213905a541fbaf9807",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/dsl_tokenizer.py",
-      "sha256": "0912e7216320a82dc34d9af13554de91656aba558977bd213905a541fbaf9807"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/labels.py",
-      "origin_sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/labels.py",
-      "sha256": "c2554a33554e69ee36f7c9eeab094989609c212b9e5c954ccf6f712c35b0befd"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/model.py",
-      "origin_sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/model.py",
-      "sha256": "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/objective.py",
-      "origin_sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/objective.py",
-      "sha256": "b518a8ecd9fb5f302670b118baae19e7ae66fe51c247297af0d0117f46971b36"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/oracle.py",
-      "origin_sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/oracle.py",
-      "sha256": "4f64d36bfba8f53d30869f834b410e757df198bc2e256b80c32046ae9fe68e0a"
-    },
-    {
-      "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/consumer/dltrain/sampler.py",
-      "origin_sha256": "03f56065564d953a67fe873428a2171dea5bc93ee113ea88d5c7a3a8d168265f",
-      "path": "deploy/dl-flywheel/pipelines/native/consumer/dltrain/sampler.py",
-      "sha256": "03f56065564d953a67fe873428a2171dea5bc93ee113ea88d5c7a3a8d168265f"
+      "sha256": "dced0dcee3a3c58861a08bd6f9d3b9a8ab92dd93d1740a80adade26f90bbecfc"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/native_corpus_authority.py",
@@ -5010,7 +4878,7 @@
       "origin": "continuous follow-up authored packaging",
       "origin_sha256": "ba99764686c261b653463838b605efb24d342a21c2f14b761078bffd54a7d032",
       "path": "deploy/dl-flywheel/run_continuous_offline.py",
-      "sha256": "ba99764686c261b653463838b605efb24d342a21c2f14b761078bffd54a7d032"
+      "sha256": "9355e4b2101c71d4c9a0f6ff3669a937c76dbbd444fe7ff48425a7647a808a89"
     },
     {
       "normalization": "Additive37 research CPU family and source custody; preserve prior455 identities and old CI items/lanes/dispositions. No live execution claim. PR283 review B2: fixture-only wall clock shifted to 2026-10-09T23:00:00Z (recorded in the receipt) so fixtures no longer depend on real time vs the frozen 00:29:06Z deadline.",
@@ -5222,7 +5090,7 @@
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/test_continuous_state_review.py",
       "origin_sha256": "b25da38bd7e4c3a51b3a7260307034cfa3e8b20ed195667448cc292f574922ae",
       "path": "deploy/dl-flywheel/tests_continuous/test_continuous_state_review.py",
-      "sha256": "b25da38bd7e4c3a51b3a7260307034cfa3e8b20ed195667448cc292f574922ae"
+      "sha256": "b7852e9f20db4a344732b53200110c721f6cd9805c05672093d54d492fbbe51e"
     },
     {
       "origin": "work/flywheel-hpc-20261009/test_archive_trace.py",
@@ -5264,7 +5132,7 @@
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_decode.py",
       "origin_sha256": "f059ba3f4355295debf29515989c41d9ff89cd8553dae45dba81a268dcb8d2d3",
       "path": "deploy/dl-flywheel/tests_native/test_neural_decode.py",
-      "sha256": "33c7f614b8894b03ff4728bd4c33618eda79fbd105402f3518212a34dabf0ff7"
+      "sha256": "4a858d377333bedbbaf901dc41dd3c5dac1fa8b9bcaee231de82d04755f5be24"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-fullcorpus-v2/test_neural_native_batch.py",

@@ -18,8 +18,8 @@ def main():
    if isinstance(item,unittest.TestSuite):yield from ids(item)
    else:yield item.id()
  identities=sorted(ids(suite))
- if count!=17 or len(set(identities))!=count:
-  raise ValueError('Expected exact17 test identities; review any suite change')
+ if count!=18 or len(set(identities))!=count:
+  raise ValueError('Expected exact18 test identities; review any suite change')
  with(a.output/'tests.log').open('x')as log:
   result=unittest.TextTestRunner(stream=log,verbosity=2).run(suite)
  success=result.wasSuccessful()and result.testsRun==count and not result.skipped and not result.expectedFailures
