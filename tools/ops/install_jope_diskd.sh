@@ -85,6 +85,11 @@ backup_existing() {
 }
 backup_existing "$BIN"
 backup_existing "$CONFIG"
+for module in constants worktrees sources cache; do
+  module_path="$BIN_DIR/jope_diskd_${module}.py"
+  backup_existing "$module_path"
+  install -m 0644 "$ROOT/jope_diskd_${module}.py" "$module_path"
+done
 install -m 0755 "$ROOT/jope_diskd.py" "$BIN"
 install -m 0600 "$ROOT/disk-policy.yaml" "$CONFIG"
 
