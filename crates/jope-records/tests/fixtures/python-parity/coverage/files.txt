@@ -925,6 +925,7 @@ crates/jope-campaigns/src/spec_drift/scan.rs
 crates/jope-campaigns/src/spec_drift/tests.rs
 crates/jope-campaigns/src/spec_policy.rs
 crates/jope-campaigns/src/task.rs
+crates/jope-campaigns/src/task/tests.rs
 crates/jope-campaigns/src/task_preflight.rs
 crates/jope-campaigns/src/task_rating.rs
 crates/jope-campaigns/src/task_rating/algorithm.rs
