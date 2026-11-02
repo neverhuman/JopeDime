@@ -122,8 +122,18 @@ def scientific_source_files(repo):
     folder = Path("research/flywheel_selfplay/h206_search_distill")
     manifest_path = repo / folder / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
-    required = {"contracts.py", "native.py", "student.py", "executor.py", "model.py", "study.py",
-                "supervisor.py", "PREREG.md", "bindings.json", "native91_inputs.json"}
+    required = {
+        "contracts.py",
+        "native.py",
+        "student.py",
+        "executor.py",
+        "model.py",
+        "study.py",
+        "supervisor.py",
+        "PREREG.md",
+        "bindings.json",
+        "native91_inputs.json",
+    }
     if not required <= set(manifest["source_sha256"]) or not manifest.get("dependency_source_sha256"):
         raise ValueError("complete scientific source manifest required")
     files = {str(folder / name): value for name, value in manifest["source_sha256"].items()}

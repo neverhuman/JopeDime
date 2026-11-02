@@ -1981,7 +1981,9 @@ def test_admission_original_train_derived_native_and_encoder_linkage(integrated,
         b"synthetic original TRAIN byte identity; upstream semantic derivation remains separately qualified",
     )
     body = gzip.decompress(row.train_bytes)
-    native_ref = row.context.train if encoding == "jtt1-gzip" else store.put("provenance/train-nq0.jtt1", body)
+    native_ref = (
+        row.context.train if encoding == "jtt1-gzip" else store.put("provenance/train-nq0.jtt1", body)
+    )
     witness = {
         "schema": "h206-original-train-derivation-v1",
         "context_id": row.context.context_id,
@@ -2011,7 +2013,13 @@ def test_admission_original_train_derived_native_and_encoder_linkage(integrated,
     elif fault == "source_pin":
         witness["tensor_derivation_source_sha256"] = "f" * 64
     derivation = store.put("provenance/approved-witness", canonical(witness))
-    context = replace(row.context, train=native_ref, native_encoding=encoding, original_train=original, derivation=derivation)
+    context = replace(
+        row.context,
+        train=native_ref,
+        native_encoding=encoding,
+        original_train=original,
+        derivation=derivation,
+    )
     roles = json.loads(canonical(acquire.scope.roles))
     roles["sources"].update(train_derivation_source_sha256="a" * 64, tensor_derivation_source_sha256="b" * 64)
     roles["contexts"][context.context_id].update(
@@ -2051,10 +2059,14 @@ def test_admission_scientific_source_closure_covers_manifest_and_strict_guard(mo
 
     repo = HERE.parents[2]
     files = supervisor.scientific_source_files(repo)
-    assert files["python/src/jope/north_star/dope_freeze_guard.py"] == sha((repo / "python/src/jope/north_star/dope_freeze_guard.py").read_bytes())
+    assert files["python/src/jope/north_star/dope_freeze_guard.py"] == sha(
+        (repo / "python/src/jope/north_star/dope_freeze_guard.py").read_bytes()
+    )
     assert "research/flywheel_selfplay/h206_search_distill/manifest.json" in files
     source = {"merged_head": "1" * 40, "files": {next(iter(files)): next(iter(files.values()))}}
-    monkeypatch.setattr(supervisor.subprocess, "check_output", lambda args, **kwargs: "" if "status" in args else "1" * 40)
+    monkeypatch.setattr(
+        supervisor.subprocess, "check_output", lambda args, **kwargs: "" if "status" in args else "1" * 40
+    )
     monkeypatch.setattr(supervisor.subprocess, "run", lambda *args, **kwargs: None)
     with pytest.raises(ValueError, match="complete merged scientific source closure"):
         supervisor.verify_merged_source(repo, source)
