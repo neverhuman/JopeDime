@@ -63,10 +63,9 @@ cargo run -q --locked -p jope-records -- task-status
 cargo run -q --locked -p jope-records -- progress-view
 cargo run -q --locked -p jope-records -- elo-history --require-all
     # Hygiene
-    # Keep secret, dependency, and workflow scans visible as a first-class part of
-    # the receipt-backed CI lane. check.sh keeps its standalone scan as a fallback.
-bash tools/security-lane.sh
-JOPE_SECURITY_LANE_PRECHECKED=1 bash deploy/ci/check.sh
+    # check.sh runs the secret, dependency, and workflow scans unconditionally;
+    # its receipt therefore records the real scan result and scanner failures.
+bash deploy/ci/check.sh
     # Lambda workspaces (deploy/lambda: standalone Cargo workspaces, not part of the jope build)
 bash deploy/ci/lambda.sh
 python3 deploy/lambda/training/teacher-v2/test_materialize_g0.py
