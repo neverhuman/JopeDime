@@ -1382,6 +1382,9 @@ crates/jope-learning/src/encoder_receipt.rs
 crates/jope-learning/src/encoder_receipt/tests.rs
 crates/jope-learning/src/hwm.rs
 crates/jope-learning/src/ledger.rs
+crates/jope-learning/src/ledger/chain.rs
+crates/jope-learning/src/ledger/tests.rs
+crates/jope-learning/src/ledger/verification.rs
 crates/jope-learning/src/lib.rs
 crates/jope-learning/src/main.rs
 crates/jope-learning/src/metric.rs
