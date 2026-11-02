@@ -1,0 +1,23 @@
+\FloatBarrier
+\section{A Current Program-Incumbent Event Clock}\label{app:current-program-clock}
+
+\Cref{fig:fw-current-program-clock} uses a separate capture of the latest
+20 consecutive completed summaries, with every program-event count checked
+against the promotion journal. The full-round clock includes all work and
+waits, including rounds with no event. These records retain the adaptive
+training-side scope and unresolved source-binding requirements of
+\cref{sec:method-status}; independent first-proposal outcomes remain pending.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_current_program_clock.pdf}
+  \caption{\textbf{Strict training-program incumbent events per logged hour.}
+  Rounds 3609--3628, captured at 10:56 UTC on 2 November 2026.
+  Bars divide each round's event count by its full wall time (events per hour);
+  the dashed line divides the seven events by the total
+  \num{1914.91}\,s (13.16 events per hour). All 20 rounds are retained,
+  including 13 with no event. The window records zero adapter admissions;
+  these program events do not measure independent first-proposal or serving
+  performance. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-current-program-clock}
+\end{figure}
