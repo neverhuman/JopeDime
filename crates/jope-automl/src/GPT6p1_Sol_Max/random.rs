@@ -1,5 +1,3 @@
-use super::*;
-
 pub(crate) struct Random {
     state: u64,
 }
