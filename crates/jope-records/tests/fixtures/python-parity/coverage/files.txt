@@ -1240,6 +1240,8 @@ crates/jope-engine/tests/bounded_run/training_partition.rs
 crates/jope-engine/tests/bounded_run/window.rs
 crates/jope-engine/tests/bounded_run_recovery.rs
 crates/jope-engine/tests/checkpoint_commit.rs
+crates/jope-engine/tests/checkpoint_commit/loading.rs
+crates/jope-engine/tests/checkpoint_commit/publication.rs
 crates/jope-engine/tests/committed_updates.rs
 crates/jope-engine/tests/continuation_modes.rs
 crates/jope-engine/tests/corpus.rs
