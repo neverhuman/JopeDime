@@ -24,7 +24,7 @@ pub struct LicenseAdmission {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Admission {
+pub enum FeatureModelAdmission {
     ResearchEnabled,
     ResearchDisabled(Vec<AdmissionFailure>),
 }
@@ -198,3 +198,6 @@ impl DistillationReceipt {
             && self.quality_verified
     }
 }
+
+/// Compatibility alias for the domain-specific `FeatureModelAdmission` type.
+pub type Admission = FeatureModelAdmission;

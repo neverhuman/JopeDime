@@ -52,7 +52,7 @@ impl FuelBound {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Instruction {
+pub enum CandidateInstruction {
     LoadFeature(usize),
     Constant(f64),
     Add,
@@ -412,3 +412,6 @@ fn binary(
     stack.push(operation(left, right));
     Ok(())
 }
+
+/// Compatibility alias for the domain-specific `CandidateInstruction` type.
+pub type Instruction = CandidateInstruction;

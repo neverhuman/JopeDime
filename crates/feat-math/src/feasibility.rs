@@ -51,7 +51,7 @@ impl Default for Limits {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Verdict {
+pub enum FeasibilityVerdict {
     ProvenFeasible,
     ProvenOutsideLimits,
     Unknown,
@@ -423,6 +423,9 @@ pub fn classify(genome: &GenomeIr, shape: Shape, limits: &Limits) -> Classificat
     outcome.reasons = evidence.reasons;
     outcome
 }
+
+/// Compatibility alias for the domain-specific `FeasibilityVerdict` type.
+pub type Verdict = FeasibilityVerdict;
 
 #[cfg(test)]
 mod tests {

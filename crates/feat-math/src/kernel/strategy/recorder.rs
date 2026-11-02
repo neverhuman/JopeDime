@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 /// Stable event names emitted by the deterministic strategy kernel.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum EventKind {
+pub enum StrategyEventKind {
     Proposed,
     Duplicate,
     Reserved,
@@ -45,3 +45,6 @@ impl Recorder for Trace {
         self.events.push(event);
     }
 }
+
+/// Compatibility alias for the domain-specific `StrategyEventKind` type.
+pub type EventKind = StrategyEventKind;

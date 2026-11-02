@@ -24,7 +24,7 @@ pub use recipe::{IntegrationFittedCpp, IntegrationRecipe, FITTED_PROFILE, RECIPE
 const MAX_ABS: f64 = 1e12;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Mode {
+pub enum CumulativeIntegrationMode {
     /// Left rectangle: the previous sample applies over the next time interval.
     Rect,
     Trap,
@@ -175,3 +175,6 @@ fn finite(value: f64, faults: &mut u32) -> f64 {
         0.0
     }
 }
+
+/// Compatibility alias for the domain-specific `CumulativeIntegrationMode` type.
+pub type Mode = CumulativeIntegrationMode;
