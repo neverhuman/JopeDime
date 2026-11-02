@@ -748,6 +748,9 @@ crates/jope-campaigns/src/test_adaptive/multiclass60.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60/evolution.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60/ledger.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60/plan.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/plan/build.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/plan/coverage.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/plan/finalize.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60/replay.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60/runtime.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60/tests.rs
