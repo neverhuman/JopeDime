@@ -302,7 +302,7 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/paper_archive.py",
       "origin_sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d",
       "path": "deploy/dl-flywheel/jope_flywheel/paper_archive.py",
-      "sha256": "addfba0176a77720f0156f65f61777617e6f7741434491926215a8ca769eec0d"
+      "sha256": "ff0a9ec20ab154eb3c8019fe561d238ecb802540fcb4a83205831dffd014c1a3"
     },
     {
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/program_gate.py",
