@@ -1195,6 +1195,18 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         gov03_axum["base_commit"],
         "1e1229abcdc50f360721c5c3cc6912b58734e30e"
     );
+    // GOV04 already records the approved metadata-only successor on main. Every historical
+    // chain must reach it; otherwise the frozen current fixture is incorrectly called unledgered.
+    let gov04_portable_pty =
+        old_fixture("transitions/gov04_pub06_portable_pty_lockfile_identity_rebaseline.v1.json");
+    assert_eq!(
+        gov04_portable_pty["source_commit"],
+        "4b51c5528129c3fc4c170f2c4074a1a176c25eb3"
+    );
+    assert_eq!(
+        gov04_portable_pty["base_commit"],
+        "3df2979abf861502f69f3fa70e7871952bbf0c06"
+    );
     for record in [
         &optional_landmarks_dependency,
         &optional_landmarks_pin,
@@ -1245,6 +1257,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         &rnk09_ruzstd,
         &res09_candle,
         &gov03_axum,
+        &gov04_portable_pty,
     ] {
         let fixtures = record["fixtures"].as_array().unwrap();
         assert_eq!(fixtures.len(), 2);
@@ -1331,6 +1344,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
                 gov03_axum.clone(),
+                gov04_portable_pty.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1403,6 +1417,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
                 gov03_axum.clone(),
+                gov04_portable_pty.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1468,6 +1483,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
                 gov03_axum.clone(),
+                gov04_portable_pty.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1564,6 +1580,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
                 gov03_axum.clone(),
+                gov04_portable_pty.clone(),
             ],
         ),
         (
@@ -1620,6 +1637,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rnk09_ruzstd.clone(),
                 res09_candle.clone(),
                 gov03_axum.clone(),
+                gov04_portable_pty.clone(),
             ],
         ),
     ] {
@@ -1724,6 +1742,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         rnk09_ruzstd,
         res09_candle,
         gov03_axum,
+        gov04_portable_pty,
     ];
     assert_eq!(rows.len(), 49);
     assert_eq!(index["source_count"], 49);
