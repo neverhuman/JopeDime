@@ -65,6 +65,9 @@ def load():
         setattr(package, name, module)
         spec.loader.exec_module(module)
     learner = package.learner
+    # runtime was imported before these source inputs; replace its cached module
+    # reference used by both the actual packer and the worker-source digest.
+    runtime.candidate_builder = package.candidate_builder
 
     def verify_sources():
         runtime.verify_file_pin(Path(learner.__file__), SOURCES["learner"])
@@ -74,6 +77,15 @@ def load():
             if getattr(package, name) is not active:
                 raise ValueError("ambiguous qualified dependency module")
             runtime.verify_file_pin(Path(active.__file__), expected)
+        for consumer in (
+            runtime.SourcePinnedWorker.make_candidate_packer,
+            runtime._worker_source_sha256,
+        ):
+            if (
+                consumer.__globals__.get("candidate_builder")
+                is not package.candidate_builder
+            ):
+                raise ValueError("qualified candidate builder consumer differs")
 
     # Source-location verification is explicitly adapted to the actual imported
     # module files. Their byte hashes and all numerical functions are unchanged.
