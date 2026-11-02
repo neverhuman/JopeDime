@@ -89,23 +89,26 @@ pub struct PairedInterval {
     pub context: ContextInterval,
     /// Cluster bootstrap recorded for this paired interval.
     pub cluster_bootstrap: ClusterBootstrap,
-    /// Verdict recorded for this paired interval.
-    pub verdict: Verdict,
+    /// Interval comparison recorded for this paired interval.
+    pub verdict: IntervalVerdict,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-/// `Verdict` is an enum for the verdict contract in this module: Parent-cluster paired intervals, following the merged GB-07 judge/cluster.py contract: cuts that share a parent are one cluster, the percentile interval resamples parents with replacement and a drawn parent.
-pub enum Verdict {
-    /// The `Greater` case of `Verdict`.
+/// `IntervalVerdict` is an enum for the verdict contract in this module: Parent-cluster paired intervals, following the merged GB-07 judge/cluster.py contract: cuts that share a parent are one cluster, the percentile interval resamples parents with replacement and a drawn parent.
+pub enum IntervalVerdict {
+    /// The `Greater` case of `IntervalVerdict`.
     Greater,
-    /// The `Less` case of `Verdict`.
+    /// The `Less` case of `IntervalVerdict`.
     Less,
-    /// The `Inconclusive` case of `Verdict`.
+    /// The `Inconclusive` case of `IntervalVerdict`.
     Inconclusive,
 }
 
-impl Verdict {
+/// Backward-compatible name for the interval-comparison result.
+pub type Verdict = IntervalVerdict;
+
+impl IntervalVerdict {
     /// Strict: a bound that touches zero is INCONCLUSIVE.
     pub fn from_interval(low: f64, high: f64) -> Self {
         if low > 0.0 {
@@ -193,7 +196,7 @@ pub fn cluster_bootstrap_ci(
             low,
             high,
         },
-        verdict: Verdict::from_interval(low, high),
+        verdict: IntervalVerdict::from_interval(low, high),
     })
 }
 
@@ -217,14 +220,20 @@ mod tests {
         assert_eq!(ci.n_clusters, 3);
         assert!((ci.cluster_bootstrap.low - 0.25).abs() < 1e-15);
         assert!((ci.cluster_bootstrap.high - 0.25).abs() < 1e-15);
-        assert_eq!(ci.verdict, Verdict::Greater);
+        assert_eq!(ci.verdict, IntervalVerdict::Greater);
     }
 
     #[test]
     fn a_touching_bound_is_inconclusive() {
-        assert_eq!(Verdict::from_interval(0.0, 1.0), Verdict::Inconclusive);
-        assert_eq!(Verdict::from_interval(-1.0, 0.0), Verdict::Inconclusive);
-        assert_eq!(Verdict::from_interval(-2.0, -1.0), Verdict::Less);
+        assert_eq!(
+            IntervalVerdict::from_interval(0.0, 1.0),
+            IntervalVerdict::Inconclusive
+        );
+        assert_eq!(
+            IntervalVerdict::from_interval(-1.0, 0.0),
+            IntervalVerdict::Inconclusive
+        );
+        assert_eq!(IntervalVerdict::from_interval(-2.0, -1.0), IntervalVerdict::Less);
     }
 
     #[test]
@@ -239,7 +248,7 @@ mod tests {
             cluster_width > context_width,
             "{cluster_width} <= {context_width}"
         );
-        assert_eq!(ci.verdict, Verdict::Inconclusive);
+        assert_eq!(ci.verdict, IntervalVerdict::Inconclusive);
     }
 
     #[test]
