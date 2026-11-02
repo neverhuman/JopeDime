@@ -39,7 +39,7 @@
   "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
   "schema": "jope.h228-family-invariant/v1",
   "wave": "H228",
-  "status": "PREREGISTERED",
+  "status": "INCOMPLETE",
   "owner": "rd_argon",
   "source_base": "e543aca9f24cfff5d9a9000ad1e28231fae8bf90",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
@@ -133,7 +133,7 @@
   },
   "source_sha256": {
     "PREREG.md": "3f9f508920fe836231be24dcc8172308ec867de8d1096def7152a9328d8ed4b5",
-    "README.md": "01f56b0e809dcfd9d28a15565519b0e564116311181192c9cae5fd7d1bc1758c",
+    "README.md": "39bcfc19aa17eb3879850fb3377d40f7cab58b131c3fb04b6a0779eae00ca9c7",
     "backend.py": "1f7567d789b9d3a3c2b7db2d1ceeb0a97b3c77ad552ffee8aa063739e03b6379",
     "fold_jaccard.json": "65122351b9ae9484e168b67c5b960aa580099e6c59a4141e8d43b0d22bd491fc",
     "fold_manifest.json": "8ee909c4ba703da6608aaed8cddec69753325396aeecc878da851a7abe9afa68",
@@ -161,5 +161,43 @@
     "contexts": 91,
     "families": 19,
     "mean": 1.1377941898164525
-  }
+  },
+  "execution_source_commit": "cf49650dff567ae9396e5f11a0353018ca64c274",
+  "execution_source_sha256": {
+    "PREREG.md": "3f9f508920fe836231be24dcc8172308ec867de8d1096def7152a9328d8ed4b5",
+    "README.md": "01f56b0e809dcfd9d28a15565519b0e564116311181192c9cae5fd7d1bc1758c",
+    "backend.py": "1f7567d789b9d3a3c2b7db2d1ceeb0a97b3c77ad552ffee8aa063739e03b6379",
+    "fold_jaccard.json": "65122351b9ae9484e168b67c5b960aa580099e6c59a4141e8d43b0d22bd491fc",
+    "fold_manifest.json": "8ee909c4ba703da6608aaed8cddec69753325396aeecc878da851a7abe9afa68",
+    "invariant.py": "071a6512cf9bde7d94ddc6c7f90dd61c5f01f78d9d72cb6812472fc0dff4e07e",
+    "launch.py": "144969713280354d6ac2dc95912159a5721e32fc43d66f62c8ea7cbc9b64b306",
+    "provenance.json": "b9d8caccadd2d289cf0d6a7c72477a88c00d7364808d9e9c4cac0a349410b302",
+    "runner.py": "3e69b263cf0e32cfac6753190afa2ce4c73287289280456fc5d2b6b3bcd034e4",
+    "science.py": "f867746b289a348b8fdcbef8a90cf92f4bdfd363de3bcda9029c4da549ca7c21",
+    "study.py": "f95370083326ce7671cc1862d6d879b898770ebd3d47a21cca0e24b8190eaba8",
+    "test_h228.py": "a6799232b56dfbc27ff0c4f8213284f152e8aa8dcfb9e71676a02828f98699d3"
+  },
+  "metrics_sha256": "0f25f7b8c279a586db67a1038a3794c48bdb0c418273e6bda9b101551a75ff35",
+  "archive_manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H228/argon-xbabe1/attempt1/incomplete-58of60-closeout.json",
+    "version_id": "ZLcTt5tUswgx0XfLUIcvzJ6zxUa.ww4R",
+    "sha256": "316eb46c80f972195f1bca57ada700a7204596305a574c0f2dade6a17186fbbe",
+    "bytes": 52490
+  },
+  "actual_inventory": {
+    "planned_member_fits": 60,
+    "completed_member_fits": 58,
+    "missing_member_fits": 2,
+    "missing_units": [
+      "GDRO-228103-4",
+      "ANDMASK_SHUF-228103-4"
+    ],
+    "smoke_optimizer_updates": 4,
+    "member_optimizer_updates": 2320,
+    "total_optimizer_updates": 2324,
+    "xbabe1_rtx4090_fits": 47,
+    "xbabe2_rtx3090_fits": 11,
+    "elapsed_seconds": 1697.04
+  },
+  "terminal_reason": "LOCK_UNAVAILABLE_QLT04"
 }

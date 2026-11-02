@@ -1,7 +1,9 @@
 {
   "wave": "H228",
-  "status": "PREREGISTERED",
+  "status": "INCOMPLETE",
+  "terminal_reason": "LOCK_UNAVAILABLE_QLT04",
   "verdict": null,
+  "verdict_note": "INCOMPLETE 58/60 (LOCK_UNAVAILABLE_QLT04 after JRB-01 release): no verdict on GDRO (14/15) or ANDMASK_SHUF (14/15) with seed 228103-4 missing; CTRL (15/15) and ANDMASK (15/15) reported strictly as DESCRIPTIVE / NOT A DECISION (ties = no advance).",
   "primary": "ANDMASK",
   "co_primary_holm_family": [
     "ANDMASK",
@@ -13,21 +15,1202 @@
     "R882",
     "CTRL"
   ],
-  "optimizer_updates": 0,
-  "smoke_optimizer_updates": 0,
-  "total_optimizer_updates": 0,
-  "member_fits": 0,
+  "source_commit": "cf49650dff567ae9396e5f11a0353018ca64c274",
+  "source_base": "e543aca9f24cfff5d9a9000ad1e28231fae8bf90",
+  "optimizer_updates": 2320,
+  "smoke_optimizer_updates": 4,
+  "total_optimizer_updates": 2324,
+  "member_fits": 58,
   "planned_member_fits": 60,
+  "missing_member_fits": 2,
+  "missing_units": [
+    "GDRO-228103-4",
+    "ANDMASK_SHUF-228103-4"
+  ],
   "planned_full_updates": 2400,
   "planned_smoke_updates": 4,
   "planned_total_updates": 2404,
-  "native91": null,
-  "native91_bit_exact": null,
-  "arms": null,
-  "contrasts": null,
-  "dl_val91": null,
-  "elo_vs_r882": null,
-  "dl_val91_elo_vs_r882": null,
-  "invariant_exposure": null,
+  "elapsed_seconds": 1697.04,
+  "active_budget_accounting": {
+    "accounting_scope": "active_worker_wall_seconds_only",
+    "active_budget_cap_seconds": 5400.0,
+    "xbabe1_4090_active_seconds": 1370.0387721285224,
+    "xbabe2_3090_prior_preflights_and_segment1_seconds": 327.0,
+    "cumulative_gpu_active_exact_seconds": 1697.0387721285224,
+    "cumulative_gpu_active_charged_seconds": 1697.04,
+    "unused_active_remainder_seconds": 3702.96,
+    "cpu_only_closeout_readout_seconds": 501.7671841909996,
+    "elapsed_seconds": 1697.04
+  },
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_equal_before_after": true,
+  "full_state_dict_sha256_before": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+  "full_state_dict_sha256_after": "6eb0e998896bd87553bbea815be06b534d5f3f1ae2a63cbf7ff4ec22e89c4f8a",
+  "adapter_trainable_tensors": 47,
+  "adapter_trainable_parameters": 29211,
+  "active_gradient_tensors_per_step": 41,
+  "inactive_gradient_tensors_per_step": 6,
+  "read_boundary": {
+    "sealed": 0,
+    "holdout": 0,
+    "meta_test": 0
+  },
+  "native91": 1.1377941898164525,
+  "native91_bit_exact": true,
+  "native91_by_device": {
+    "xbabe1_rtx4090_bit_exact": true,
+    "xbabe1_rtx4090_mean": 1.1377941898164525,
+    "xbabe2_rtx3090_bit_exact": true,
+    "xbabe2_rtx3090_mean": 1.1377941898164525,
+    "xbabe2_cpu_bit_exact": true,
+    "xbabe2_cpu_mean": 1.1377941898164525
+  },
+  "static_1219_train_parity_bit_exact": true,
+  "attempt_history": {
+    "xbabe2_preflight_xid79_refusal": {
+      "utc": "2026-11-02T18:58:23Z",
+      "host": "xbabe2",
+      "gpu_uuid": "GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b",
+      "reason": "GPU_LOST_XID79_xbabe2 during preceding holder JRB-01; zero scientific/GPU work executed (0/60 fits, 0 updates)",
+      "receipt": "/home/ubuntu/jope-rescue-20260921/h228-argon/preflight-gpu0-xid79-refusal.json",
+      "receipt_sha256": "ee4816d1730d6abf85bdf3c09a8a5df949d4416d73ea0ba608e5c853b066671f"
+    },
+    "xbabe1_attempt1_segment": {
+      "start_utc": "2026-11-02T19:27:08Z",
+      "stop_utc": "2026-11-02T19:49:59Z",
+      "host": "xbabe1",
+      "gpu_name": "NVIDIA GeForce RTX 4090",
+      "gpu_uuid": "GPU-784030c4-b1f9-d5a3-f0eb-9337f133f503",
+      "completed_fits": 47,
+      "smoke_updates": 4,
+      "member_updates": 1880,
+      "total_updates": 1884,
+      "elapsed_seconds": 1370.0387721285224,
+      "terminal_status": "INCOMPLETE",
+      "terminal_error": "RuntimeError('interrupted; no retry') at unit boundary after GDRO-228103-1 per hw_t1950_argon_h228_blocks_flywheel.md so xbabe1 flywheel PID 2847658 had >=20 GiB free VRAM (flywheel resumed round 3852 at 19:50:21Z)",
+      "failure_receipt_s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H228/argon-xbabe1/attempt1/failure.json",
+      "failure_receipt_sha256": "8490fb49de97045d52354033159b3ca570dc2759ce9bcbaeb96b6d3c16e03165"
+    },
+    "xbabe2_continuation_segment1": {
+      "start_utc": "2026-11-02T19:58:28Z",
+      "stop_utc": "2026-11-02T20:03:04Z",
+      "host": "xbabe2",
+      "gpu_name": "NVIDIA GeForce RTX 3090",
+      "gpu_uuid": "GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b",
+      "reused_s3_verified_fits": 47,
+      "trained_fits": 11,
+      "cumulative_completed_fits": 58,
+      "segment_updates": 440,
+      "cumulative_updates": 2324,
+      "prior_preflights_seconds": 30.0,
+      "segment1_active_seconds": 297.0,
+      "xbabe2_total_gpu_active_seconds": 327.0,
+      "stop_reason": "Stopped cleanly at unit boundary after ANDMASK-228103-4 per watcher gpu_ruling_t2002.md to yield xbabe2 GPU0 to JRB-01 (PID 1155864)"
+    },
+    "post_jrb01_lock_unavailable_qlt04": {
+      "jrb01_gpu_done_utc": "2026-11-02T21:06:58Z",
+      "jrb01_report_complete_utc": "2026-11-02T21:13:53Z",
+      "blocking_holder_pid": 2989918,
+      "blocking_holder_ticket": "1793653623083398632-2989918-Q1",
+      "blocking_holder_lock": "/home/ubuntu/jope_plan/qualification.lock",
+      "ruling": "Closed at 58/60 as INCOMPLETE (LOCK_UNAVAILABLE_QLT04) per watcher hw_t2120_argon_h228_close.md"
+    }
+  },
+  "hardware_split_summary": {
+    "xbabe1_rtx4090_gpu_uuid": "GPU-784030c4-b1f9-d5a3-f0eb-9337f133f503",
+    "xbabe1_rtx4090_fit_count": 47,
+    "xbabe1_rtx4090_unit_ranges": "seed 228101 folds 0-4 (all 4 arms, 20 fits), seed 228102 folds 0-4 (all 4 arms, 20 fits), seed 228103 fold 0 (all 4 arms, 4 fits), seed 228103 fold 1 (CTRL, ANDMASK, GDRO, 3 fits)",
+    "xbabe2_rtx3090_gpu_uuid": "GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b",
+    "xbabe2_rtx3090_fit_count": 11,
+    "xbabe2_rtx3090_units": [
+      "ANDMASK_SHUF-228103-1",
+      "CTRL-228103-2",
+      "ANDMASK-228103-2",
+      "GDRO-228103-2",
+      "ANDMASK_SHUF-228103-2",
+      "CTRL-228103-3",
+      "ANDMASK-228103-3",
+      "GDRO-228103-3",
+      "ANDMASK_SHUF-228103-3",
+      "CTRL-228103-4",
+      "ANDMASK-228103-4"
+    ],
+    "missing_fit_count": 2,
+    "missing_units": [
+      "GDRO-228103-4",
+      "ANDMASK_SHUF-228103-4"
+    ],
+    "cross_gpu_fold_note": "ANDMASK_SHUF-228103-1 ran on xbabe2 RTX 3090 while fold-1 mates CTRL-228103-1, ANDMASK-228103-1, GDRO-228103-1 ran on xbabe1 RTX 4090."
+  },
+  "invariant_exposure": {
+    "andmask_completed_fits": 15,
+    "andmask_shuf_completed_fits": 14,
+    "gdro_completed_fits": 14,
+    "ctrl_completed_fits": 15,
+    "andmask_mean_kept_fraction": 0.156069006766896,
+    "andmask_shuf_mean_kept_fraction": 0.1559178424300154,
+    "exact_per_step_density_match_14_completed_pairs": true,
+    "min_families_per_microbatch": 11,
+    "gdro_max_final_weight": 0.9996311661990385,
+    "gdro_min_final_weight": 1.0632924198640951e-06
+  },
+  "arms": {
+    "CTRL": "COMPLETE_15_OF_15_DESCRIPTIVE_ONLY_NOT_A_DECISION",
+    "ANDMASK": "COMPLETE_15_OF_15_DESCRIPTIVE_ONLY_NOT_A_DECISION",
+    "GDRO": "INCOMPLETE_14_OF_15_NO_VERDICT_MISSING_228103_4",
+    "ANDMASK_SHUF": "INCOMPLETE_14_OF_15_NO_VERDICT_MISSING_228103_4"
+  },
+  "descriptive_complete_arms_3seed": {
+    "CTRL": {
+      "status": "COMPLETE_15_OF_15_DESCRIPTIVE_ONLY_NOT_A_DECISION",
+      "oof_205fam": {
+        "n_seeds": 3,
+        "n_families": 205,
+        "per_seed_gain": [
+          -0.04074181,
+          -0.04024484,
+          -0.0401578
+        ],
+        "median_gain": -0.04024484,
+        "ci95": [
+          -0.07050166,
+          -0.01064797
+        ],
+        "lcb95": -0.06515398,
+        "harm": 0.39512195,
+        "harmed_families": 81,
+        "positive_seeds": 0,
+        "elo_median": 1483.37040222,
+        "elo_ci95": [
+          1471.15112824,
+          1494.44533631
+        ],
+        "elo_per_seed": [
+          1483.37040222,
+          1480.32890914,
+          1483.82414747
+        ]
+      },
+      "dl_val91_equal_family_19fam": {
+        "n_seeds": 3,
+        "n_families": 19,
+        "per_seed_gain": [
+          -0.0422836,
+          -0.04266685,
+          -0.0481153
+        ],
+        "median_gain": -0.04266685,
+        "ci95": [
+          -0.0995083,
+          -0.00368382
+        ],
+        "lcb95": -0.0882977,
+        "harm": 0.31578947,
+        "harmed_families": 6,
+        "positive_seeds": 0,
+        "elo_median": 1489.03624913,
+        "elo_ci95": [
+          1448.47844145,
+          1547.79301473
+        ],
+        "elo_per_seed": [
+          1489.03624913,
+          1496.3464943,
+          1485.377889
+        ]
+      },
+      "dl_val91_context_weighted_91ctx": {
+        "per_seed_gain": [
+          -0.04423287,
+          -0.04465564,
+          -0.05034357
+        ],
+        "median_gain": -0.04465564,
+        "ci95": [
+          -0.10337372,
+          -0.00397226
+        ],
+        "lcb95": -0.09217499,
+        "harm": 0.31578947,
+        "harmed_families": 6,
+        "positive_seeds": 0
+      }
+    },
+    "ANDMASK": {
+      "status": "COMPLETE_15_OF_15_DESCRIPTIVE_ONLY_NOT_A_DECISION",
+      "oof_205fam": {
+        "n_seeds": 3,
+        "n_families": 205,
+        "per_seed_gain": [
+          -0.02985186,
+          -0.02490377,
+          -0.02468572
+        ],
+        "median_gain": -0.02490377,
+        "ci95": [
+          -0.05348291,
+          -0.00172354
+        ],
+        "lcb95": -0.04874501,
+        "harm": 0.33170732,
+        "harmed_families": 68,
+        "positive_seeds": 0,
+        "elo_median": 1487.52018446,
+        "elo_ci95": [
+          1477.71223278,
+          1497.31040755
+        ],
+        "elo_per_seed": [
+          1487.52018446,
+          1488.99997976,
+          1486.068226
+        ]
+      },
+      "dl_val91_equal_family_19fam": {
+        "n_seeds": 3,
+        "n_families": 19,
+        "per_seed_gain": [
+          -0.02678507,
+          -0.02604827,
+          -0.02068193
+        ],
+        "median_gain": -0.02604827,
+        "ci95": [
+          -0.05884111,
+          -0.00208284
+        ],
+        "lcb95": -0.05274058,
+        "harm": 0.26315789,
+        "harmed_families": 5,
+        "positive_seeds": 0,
+        "elo_median": 1489.03624913,
+        "elo_ci95": [
+          1448.47844145,
+          1544.07537882
+        ],
+        "elo_per_seed": [
+          1489.03624913,
+          1485.377889,
+          1489.03624913
+        ]
+      },
+      "dl_val91_context_weighted_91ctx": {
+        "per_seed_gain": [
+          -0.02807575,
+          -0.02730656,
+          -0.02170434
+        ],
+        "median_gain": -0.02730656,
+        "ci95": [
+          -0.06149679,
+          -0.00230961
+        ],
+        "lcb95": -0.05531245,
+        "harm": 0.26315789,
+        "harmed_families": 5,
+        "positive_seeds": 0
+      }
+    },
+    "ANDMASK_vs_CTRL": {
+      "status": "COMPLETE_15_OF_15_DESCRIPTIVE_ONLY_NOT_A_DECISION",
+      "oof_205fam": {
+        "n_seeds": 3,
+        "n_families": 205,
+        "per_seed_gain": [
+          0.01088995,
+          0.01534107,
+          0.01547209
+        ],
+        "median_gain": 0.01534107,
+        "ci95": [
+          0.00256791,
+          0.02707668
+        ],
+        "lcb95": 0.00417224,
+        "harm": 0.14146341,
+        "harmed_families": 29,
+        "positive_seeds": 3,
+        "elo_median": 1503.93467374,
+        "elo_ci95": [
+          1497.03961375,
+          1511.2547477
+        ],
+        "elo_per_seed": [
+          1502.09008418,
+          1505.92406918,
+          1503.93467374
+        ]
+      },
+      "dl_val91_equal_family_19fam": {
+        "n_seeds": 3,
+        "n_families": 19,
+        "per_seed_gain": [
+          0.01549853,
+          0.01661858,
+          0.02743337
+        ],
+        "median_gain": 0.01661858,
+        "ci95": [
+          -0.00109853,
+          0.04832138
+        ],
+        "lcb95": -0.00044523,
+        "harm": 0.0,
+        "harmed_families": 0,
+        "positive_seeds": 3,
+        "elo_median": 1518.2837146,
+        "elo_ci95": [
+          1492.69218043,
+          1536.66926238
+        ],
+        "elo_per_seed": [
+          1525.61993347,
+          1496.3464943,
+          1518.2837146
+        ]
+      },
+      "dl_val91_context_weighted_91ctx": {
+        "per_seed_gain": [
+          0.01615712,
+          0.01734907,
+          0.02863923
+        ],
+        "median_gain": 0.01734907,
+        "ci95": [
+          -0.00116851,
+          0.05095252
+        ],
+        "lcb95": -0.00047792,
+        "harm": 0.0,
+        "harmed_families": 0,
+        "positive_seeds": 3
+      }
+    }
+  },
+  "redteam_hardware_split_diagnostics": {
+    "per_seed_4090_complete": {
+      "228101": {
+        "CTRL": {
+          "gain": -0.04074181,
+          "ci95": [
+            -0.06965007,
+            -0.01300913
+          ],
+          "lcb95": -0.06460997,
+          "harm": 0.37560976,
+          "harmed_families": 77
+        },
+        "ANDMASK": {
+          "gain": -0.02985186,
+          "ci95": [
+            -0.05821781,
+            -0.00459317
+          ],
+          "lcb95": -0.05257664,
+          "harm": 0.31707317,
+          "harmed_families": 65
+        },
+        "GDRO": {
+          "gain": -0.02442303,
+          "ci95": [
+            -0.04974621,
+            0.00062926
+          ],
+          "lcb95": -0.04552621,
+          "harm": 0.32682927,
+          "harmed_families": 67
+        },
+        "ANDMASK_SHUF": {
+          "gain": -0.02281,
+          "ci95": [
+            -0.049184,
+            0.00112051
+          ],
+          "lcb95": -0.04455068,
+          "harm": 0.26829268,
+          "harmed_families": 55
+        },
+        "ANDMASK_vs_CTRL": {
+          "gain": 0.01088995,
+          "ci95": [
+            -0.00023126,
+            0.02297243
+          ],
+          "lcb95": 0.00144129,
+          "harm": 0.14146341,
+          "harmed_families": 29
+        },
+        "GDRO_vs_CTRL": {
+          "gain": 0.01631878,
+          "ci95": [
+            -0.00081461,
+            0.03460383
+          ],
+          "lcb95": 0.0017711,
+          "harm": 0.13170732,
+          "harmed_families": 27
+        },
+        "ANDMASK_SHUF_vs_CTRL": {
+          "gain": 0.01793182,
+          "ci95": [
+            0.00301782,
+            0.03391549
+          ],
+          "lcb95": 0.00547715,
+          "harm": 0.13658537,
+          "harmed_families": 28
+        },
+        "ANDMASK_vs_ANDMASK_SHUF": {
+          "gain": -0.00704187,
+          "ci95": [
+            -0.0194824,
+            0.0038458
+          ],
+          "lcb95": -0.01730597,
+          "harm": 0.11219512,
+          "harmed_families": 23
+        }
+      },
+      "228102": {
+        "CTRL": {
+          "gain": -0.04024484,
+          "ci95": [
+            -0.07284881,
+            -0.00963529
+          ],
+          "lcb95": -0.06713331,
+          "harm": 0.37560976,
+          "harmed_families": 77
+        },
+        "ANDMASK": {
+          "gain": -0.02490377,
+          "ci95": [
+            -0.05408027,
+            0.00249279
+          ],
+          "lcb95": -0.04879493,
+          "harm": 0.31219512,
+          "harmed_families": 64
+        },
+        "GDRO": {
+          "gain": -0.02691536,
+          "ci95": [
+            -0.05667341,
+            0.00191881
+          ],
+          "lcb95": -0.05150481,
+          "harm": 0.34146341,
+          "harmed_families": 70
+        },
+        "ANDMASK_SHUF": {
+          "gain": -0.02578887,
+          "ci95": [
+            -0.05306787,
+            -0.00058885
+          ],
+          "lcb95": -0.04827121,
+          "harm": 0.25365854,
+          "harmed_families": 52
+        },
+        "ANDMASK_vs_CTRL": {
+          "gain": 0.01534107,
+          "ci95": [
+            0.00430098,
+            0.02849663
+          ],
+          "lcb95": 0.00583218,
+          "harm": 0.14146341,
+          "harmed_families": 29
+        },
+        "GDRO_vs_CTRL": {
+          "gain": 0.01332948,
+          "ci95": [
+            -0.00030327,
+            0.02742782
+          ],
+          "lcb95": 0.00218383,
+          "harm": 0.13170732,
+          "harmed_families": 27
+        },
+        "ANDMASK_SHUF_vs_CTRL": {
+          "gain": 0.01445597,
+          "ci95": [
+            -0.00038053,
+            0.02909229
+          ],
+          "lcb95": 0.00218615,
+          "harm": 0.13170732,
+          "harmed_families": 27
+        },
+        "ANDMASK_vs_ANDMASK_SHUF": {
+          "gain": 0.0008851,
+          "ci95": [
+            -0.0100584,
+            0.0137756
+          ],
+          "lcb95": -0.00862043,
+          "harm": 0.08780488,
+          "harmed_families": 18
+        }
+      }
+    },
+    "seed_228103_hardware_split": {
+      "note": "In seed 228103 fold 1, CTRL-228103-1, ANDMASK-228103-1, and GDRO-228103-1 ran on xbabe1 RTX 4090 before the 19:50Z unit-boundary stop, whereas ANDMASK_SHUF-228103-1 was the first continuation unit on xbabe2 RTX 3090. In fold 4, CTRL-228103-4 and ANDMASK-228103-4 ran on xbabe2 RTX 3090 before the 20:02Z JRB-01 stop, while GDRO-228103-4 and ANDMASK_SHUF-228103-4 were not run (LOCK_UNAVAILABLE_QLT04).",
+      "folds_0_1_4090_plus_shuf_fold1_3090": {
+        "CTRL": {
+          "gain": -0.03227605,
+          "ci95": [
+            -0.08788694,
+            0.02499624
+          ],
+          "lcb95": -0.07856352,
+          "harm": 0.37804878,
+          "harmed_families": 31
+        },
+        "ANDMASK": {
+          "gain": -0.007673,
+          "ci95": [
+            -0.04200405,
+            0.03214263
+          ],
+          "lcb95": -0.03666644,
+          "harm": 0.31707317,
+          "harmed_families": 26
+        },
+        "GDRO": {
+          "gain": -0.00905859,
+          "ci95": [
+            -0.05491735,
+            0.03972061
+          ],
+          "lcb95": -0.0472304,
+          "harm": 0.31707317,
+          "harmed_families": 26
+        },
+        "ANDMASK_SHUF_mixed_gpu": {
+          "gain": -0.00987172,
+          "ci95": [
+            -0.04784773,
+            0.03202538
+          ],
+          "lcb95": -0.04171904,
+          "harm": 0.25609756,
+          "harmed_families": 21
+        },
+        "ANDMASK_vs_CTRL": {
+          "gain": 0.02460305,
+          "ci95": [
+            -0.01557093,
+            0.06855178
+          ],
+          "lcb95": -0.00945585,
+          "harm": 0.12195122,
+          "harmed_families": 10
+        },
+        "GDRO_vs_CTRL": {
+          "gain": 0.02321745,
+          "ci95": [
+            0.00304857,
+            0.04587179
+          ],
+          "lcb95": 0.00592568,
+          "harm": 0.09756098,
+          "harmed_families": 8
+        },
+        "ANDMASK_vs_ANDMASK_SHUF_mixed_gpu": {
+          "gain": 0.00219873,
+          "ci95": [
+            -0.01930677,
+            0.02791461
+          ],
+          "lcb95": -0.0163611,
+          "harm": 0.12195122,
+          "harmed_families": 10
+        }
+      },
+      "fold_0_pure_4090": {
+        "CTRL": {
+          "gain": -0.04605385,
+          "ci95": [
+            -0.14411799,
+            0.04477332
+          ],
+          "lcb95": -0.12633005,
+          "harm": 0.31707317,
+          "harmed_families": 13
+        },
+        "ANDMASK": {
+          "gain": -0.02711093,
+          "ci95": [
+            -0.07903797,
+            0.01854257
+          ],
+          "lcb95": -0.06906089,
+          "harm": 0.26829268,
+          "harmed_families": 11
+        },
+        "GDRO": {
+          "gain": -0.03302504,
+          "ci95": [
+            -0.10953768,
+            0.04684679
+          ],
+          "lcb95": -0.09840502,
+          "harm": 0.34146341,
+          "harmed_families": 14
+        },
+        "ANDMASK_SHUF": {
+          "gain": -0.04004412,
+          "ci95": [
+            -0.10202985,
+            0.01301955
+          ],
+          "lcb95": -0.09058531,
+          "harm": 0.26829268,
+          "harmed_families": 11
+        },
+        "ANDMASK_vs_ANDMASK_SHUF": {
+          "gain": 0.01293319,
+          "ci95": [
+            -0.02718233,
+            0.06311384
+          ],
+          "lcb95": -0.02234942,
+          "harm": 0.12195122,
+          "harmed_families": 5
+        }
+      },
+      "fold_1_cross_gpu_shuf_on_3090_mates_on_4090": {
+        "CTRL_4090": {
+          "gain": -0.01849824,
+          "ci95": [
+            -0.06913067,
+            0.04927276
+          ],
+          "lcb95": -0.06285966,
+          "harm": 0.43902439,
+          "harmed_families": 18
+        },
+        "ANDMASK_4090": {
+          "gain": 0.01176494,
+          "ci95": [
+            -0.02657761,
+            0.07285567
+          ],
+          "lcb95": -0.02336266,
+          "harm": 0.36585366,
+          "harmed_families": 15
+        },
+        "GDRO_4090": {
+          "gain": 0.01490786,
+          "ci95": [
+            -0.02090818,
+            0.07430237
+          ],
+          "lcb95": -0.01847602,
+          "harm": 0.29268293,
+          "harmed_families": 12
+        },
+        "ANDMASK_SHUF_3090": {
+          "gain": 0.02030068,
+          "ci95": [
+            -0.01337454,
+            0.07864695
+          ],
+          "lcb95": -0.01165609,
+          "harm": 0.24390244,
+          "harmed_families": 10
+        },
+        "ANDMASK_4090_vs_ANDMASK_SHUF_3090": {
+          "gain": -0.00853574,
+          "ci95": [
+            -0.02150965,
+            -0.00045825
+          ],
+          "lcb95": -0.01929198,
+          "harm": 0.12195122,
+          "harmed_families": 5
+        }
+      },
+      "folds_2_3_pure_3090_all_4_arms": {
+        "CTRL": {
+          "gain": -0.04639611,
+          "ci95": [
+            -0.10012373,
+            -0.00480979
+          ],
+          "lcb95": -0.09047511,
+          "harm": 0.34146341,
+          "harmed_families": 28
+        },
+        "ANDMASK": {
+          "gain": -0.03940795,
+          "ci95": [
+            -0.09283314,
+            -0.00032569
+          ],
+          "lcb95": -0.08322012,
+          "harm": 0.26829268,
+          "harmed_families": 22
+        },
+        "GDRO": {
+          "gain": -0.04645634,
+          "ci95": [
+            -0.10140606,
+            -0.00505778
+          ],
+          "lcb95": -0.09168712,
+          "harm": 0.31707317,
+          "harmed_families": 26
+        },
+        "ANDMASK_SHUF": {
+          "gain": -0.03173912,
+          "ci95": [
+            -0.07037884,
+            0.00096393
+          ],
+          "lcb95": -0.06386298,
+          "harm": 0.23170732,
+          "harmed_families": 19
+        },
+        "ANDMASK_vs_CTRL": {
+          "gain": 0.00698816,
+          "ci95": [
+            -0.00361993,
+            0.02169476
+          ],
+          "lcb95": -0.00234883,
+          "harm": 0.1097561,
+          "harmed_families": 9
+        },
+        "GDRO_vs_CTRL": {
+          "gain": -6.023e-05,
+          "ci95": [
+            -0.00867315,
+            0.00848742
+          ],
+          "lcb95": -0.00721252,
+          "harm": 0.13414634,
+          "harmed_families": 11
+        },
+        "ANDMASK_vs_ANDMASK_SHUF": {
+          "gain": -0.00766883,
+          "ci95": [
+            -0.03212428,
+            0.01298974
+          ],
+          "lcb95": -0.02699011,
+          "harm": 0.09756098,
+          "harmed_families": 8
+        }
+      },
+      "folds_2_4_pure_3090_ctrl_andmask": {
+        "CTRL": {
+          "gain": -0.04541231,
+          "ci95": [
+            -0.08632827,
+            -0.01178682
+          ],
+          "lcb95": -0.07881194,
+          "harm": 0.35772358,
+          "harmed_families": 44
+        },
+        "ANDMASK": {
+          "gain": -0.03602753,
+          "ci95": [
+            -0.07464812,
+            -0.00572314
+          ],
+          "lcb95": -0.06725634,
+          "harm": 0.30081301,
+          "harmed_families": 37
+        },
+        "ANDMASK_vs_CTRL": {
+          "gain": 0.00938478,
+          "ci95": [
+            -0.00242302,
+            0.02530175
+          ],
+          "lcb95": -0.00112907,
+          "harm": 0.10569106,
+          "harmed_families": 13
+        }
+      },
+      "all_5_folds_seed_228103_ctrl_andmask": {
+        "CTRL": {
+          "gain": -0.0401578,
+          "ci95": [
+            -0.07255033,
+            -0.00947613
+          ],
+          "lcb95": -0.06675722,
+          "harm": 0.36585366,
+          "harmed_families": 75
+        },
+        "ANDMASK": {
+          "gain": -0.02468572,
+          "ci95": [
+            -0.05102383,
+            -0.00023023
+          ],
+          "lcb95": -0.04625241,
+          "harm": 0.30731707,
+          "harmed_families": 63
+        },
+        "ANDMASK_vs_CTRL": {
+          "gain": 0.01547209,
+          "ci95": [
+            -0.00253332,
+            0.03594313
+          ],
+          "lcb95": 0.00015349,
+          "harm": 0.11219512,
+          "harmed_families": 23
+        }
+      }
+    },
+    "sensitivity_4090_only_two_complete_seeds_oof": {
+      "CTRL": {
+        "gain": -0.04049333,
+        "ci95": [
+          -0.07031713,
+          -0.01172176
+        ],
+        "lcb95": -0.0648034,
+        "harm": 0.3804878,
+        "harmed_families": 78,
+        "per_seed_gain": [
+          -0.04074181,
+          -0.04024484
+        ],
+        "elo_median": 1481.84965568,
+        "elo_ci95": [
+          1470.37510287,
+          1493.46374655
+        ]
+      },
+      "ANDMASK": {
+        "gain": -0.02737782,
+        "ci95": [
+          -0.05483341,
+          -0.00175417
+        ],
+        "lcb95": -0.04980595,
+        "harm": 0.33658537,
+        "harmed_families": 69,
+        "per_seed_gain": [
+          -0.02985186,
+          -0.02490377
+        ],
+        "elo_median": 1488.26008211,
+        "elo_ci95": [
+          1478.66291913,
+          1497.86966292
+        ]
+      },
+      "GDRO": {
+        "gain": -0.02566919,
+        "ci95": [
+          -0.0520897,
+          0.00037239
+        ],
+        "lcb95": -0.0478891,
+        "harm": 0.34634146,
+        "harmed_families": 71,
+        "per_seed_gain": [
+          -0.02442303,
+          -0.02691536
+        ],
+        "elo_median": 1484.74142167,
+        "elo_ci95": [
+          1474.20492449,
+          1494.7149988
+        ]
+      },
+      "ANDMASK_SHUF": {
+        "gain": -0.02429944,
+        "ci95": [
+          -0.05039571,
+          -0.00019871
+        ],
+        "lcb95": -0.04582004,
+        "harm": 0.27317073,
+        "harmed_families": 56,
+        "per_seed_gain": [
+          -0.02281,
+          -0.02578887
+        ],
+        "elo_median": 1491.31393087,
+        "elo_ci95": [
+          1481.9401221,
+          1500.69938123
+        ]
+      },
+      "ANDMASK_vs_CTRL": {
+        "gain": 0.01311551,
+        "ci95": [
+          0.00374575,
+          0.02380485
+        ],
+        "lcb95": 0.0052232,
+        "harm": 0.14634146,
+        "harmed_families": 30,
+        "per_seed_gain": [
+          0.01088995,
+          0.01534107
+        ],
+        "elo_median": 1504.00707668,
+        "elo_ci95": [
+          1496.94154331,
+          1511.53965355
+        ]
+      },
+      "GDRO_vs_CTRL": {
+        "gain": 0.01482413,
+        "ci95": [
+          0.00246261,
+          0.02749059
+        ],
+        "lcb95": 0.00451653,
+        "harm": 0.14634146,
+        "harmed_families": 30,
+        "per_seed_gain": [
+          0.01631878,
+          0.01332948
+        ],
+        "elo_median": 1499.86279418,
+        "elo_ci95": [
+          1492.8457216,
+          1506.33314348
+        ]
+      },
+      "ANDMASK_SHUF_vs_CTRL": {
+        "gain": 0.01619389,
+        "ci95": [
+          0.00429077,
+          0.02908226
+        ],
+        "lcb95": 0.00600711,
+        "harm": 0.13658537,
+        "harmed_families": 28,
+        "per_seed_gain": [
+          0.01793182,
+          0.01445597
+        ],
+        "elo_median": 1506.69642519,
+        "elo_ci95": [
+          1499.942688,
+          1513.68947629
+        ]
+      },
+      "ANDMASK_vs_ANDMASK_SHUF": {
+        "gain": -0.00307838,
+        "ci95": [
+          -0.01186635,
+          0.00593952
+        ],
+        "lcb95": -0.01072623,
+        "harm": 0.12195122,
+        "harmed_families": 25,
+        "per_seed_gain": [
+          -0.00704187,
+          0.0008851
+        ],
+        "elo_median": 1498.08325974,
+        "elo_ci95": [
+          1493.59025409,
+          1502.57908221
+        ]
+      }
+    },
+    "sensitivity_4090_only_two_complete_seeds_dl_val91": {
+      "CTRL": {
+        "gain": -0.04247523,
+        "ci95": [
+          -0.09905757,
+          -0.00319044
+        ],
+        "lcb95": -0.08784632,
+        "harm": 0.31578947,
+        "harmed_families": 6,
+        "per_seed_gain": [
+          -0.0422836,
+          -0.04266685
+        ],
+        "elo_median": 1492.69137172,
+        "elo_ci95": [
+          1452.13910059,
+          1545.9446569
+        ]
+      },
+      "ANDMASK": {
+        "gain": -0.02641667,
+        "ci95": [
+          -0.05922812,
+          -0.00198444
+        ],
+        "lcb95": -0.05314449,
+        "harm": 0.26315789,
+        "harmed_families": 5,
+        "per_seed_gain": [
+          -0.02678507,
+          -0.02604827
+        ],
+        "elo_median": 1487.20706906,
+        "elo_ci95": [
+          1448.47829371,
+          1542.22156703
+        ]
+      },
+      "GDRO": {
+        "gain": -0.02592763,
+        "ci95": [
+          -0.06820066,
+          0.00186278
+        ],
+        "lcb95": -0.06003233,
+        "harm": 0.26315789,
+        "harmed_families": 5,
+        "per_seed_gain": [
+          -0.01724923,
+          -0.03460602
+        ],
+        "elo_median": 1498.17324715,
+        "elo_ci95": [
+          1459.6276794,
+          1551.52155855
+        ]
+      },
+      "ANDMASK_SHUF": {
+        "gain": -0.01399053,
+        "ci95": [
+          -0.03247956,
+          0.00085783
+        ],
+        "lcb95": -0.02965156,
+        "harm": 0.15789474,
+        "harmed_families": 3,
+        "per_seed_gain": [
+          -0.0162632,
+          -0.01171786
+        ],
+        "elo_median": 1483.5470872,
+        "elo_ci95": [
+          1457.77843297,
+          1510.96375087
+        ]
+      },
+      "ANDMASK_vs_CTRL": {
+        "gain": 0.01605856,
+        "ci95": [
+          -0.00212079,
+          0.04772475
+        ],
+        "lcb95": -0.00131402,
+        "harm": 0.05263158,
+        "harmed_families": 1,
+        "per_seed_gain": [
+          0.01549853,
+          0.01661858
+        ],
+        "elo_median": 1510.98321389,
+        "elo_ci95": [
+          1489.0250966,
+          1538.83410731
+        ]
+      },
+      "GDRO_vs_CTRL": {
+        "gain": 0.0165476,
+        "ci95": [
+          0.00387272,
+          0.03235798
+        ],
+        "lcb95": 0.00528463,
+        "harm": 0.0,
+        "harmed_families": 0,
+        "per_seed_gain": [
+          0.02503436,
+          0.00806084
+        ],
+        "elo_median": 1512.87282212,
+        "elo_ci95": [
+          1490.83346754,
+          1531.2861053
+        ]
+      },
+      "ANDMASK_vs_ANDMASK_SHUF": {
+        "gain": -0.01242614,
+        "ci95": [
+          -0.02840779,
+          -0.00091528
+        ],
+        "lcb95": -0.02540381,
+        "harm": 0.21052632,
+        "harmed_families": 4,
+        "per_seed_gain": [
+          -0.01052187,
+          -0.01433041
+        ],
+        "elo_median": 1498.17324715,
+        "elo_ci95": [
+          1461.48149119,
+          1549.65728664
+        ]
+      }
+    }
+  },
+  "changed_choices_vs_r882": {
+    "oof_changed_choices_per_seed": {
+      "CTRL": [
+        372,
+        379,
+        368
+      ],
+      "ANDMASK": [
+        258,
+        258,
+        267
+      ],
+      "GDRO": [
+        302,
+        308,
+        256
+      ],
+      "ANDMASK_SHUF": [
+        237,
+        233,
+        188
+      ]
+    },
+    "dl_val91_fold0_changed_choices_per_seed": {
+      "CTRL": [
+        22,
+        23,
+        24
+      ],
+      "ANDMASK": [
+        18,
+        17,
+        17
+      ],
+      "GDRO": [
+        21,
+        19,
+        19
+      ],
+      "ANDMASK_SHUF": [
+        14,
+        16,
+        16
+      ]
+    }
+  },
+  "custody": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H228/argon-xbabe1/attempt1/incomplete-58of60-closeout.json",
+    "version_id": "ZLcTt5tUswgx0XfLUIcvzJ6zxUa.ww4R",
+    "sha256": "316eb46c80f972195f1bca57ada700a7204596305a574c0f2dade6a17186fbbe",
+    "bytes": 52490
+  },
   "serving_promotion": false
 }
