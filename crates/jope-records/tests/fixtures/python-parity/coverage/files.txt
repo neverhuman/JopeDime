@@ -603,6 +603,10 @@ crates/jope-campaigns/src/bin/jope_selfplay_supply/lock.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/proposer_context.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/proposer_input.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime/checkpoint.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime/config.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime/queue.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime/supervisor.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/supply.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/tests.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/tests_tail.rs
