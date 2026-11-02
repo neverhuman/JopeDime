@@ -1,6 +1,7 @@
 //! Genebank (a 20-row SQLite built here), a lineage-A snapshot (manifest + streamed rows) and
 //! SOTArena results (two track versions) through the binary.
 
+#[path = "common/mod.rs"]
 mod common;
 
 use common::jl;
@@ -224,7 +225,6 @@ fn genebank_rows_become_unbound_records() {
     .json();
     assert_eq!(f["included"], 20);
 }
-
 
 mod snapshot;
 mod sotarena;
