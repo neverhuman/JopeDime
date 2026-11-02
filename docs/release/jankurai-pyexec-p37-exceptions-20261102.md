@@ -6,10 +6,16 @@ Date: 2026-11-02. Packet: `CAP_pyexec_findings.md` (P37). Auditor rule:
 This register records narrowly bounded false positives whose source bytes are
 already pinned or whose execution occurs only in a source-pinned test fixture.
 The matching exact file paths are excluded from authored-source scoring in
-`agent/audit-policy.toml`; this also excludes other Jankurai categories for those
-files. No directory or keyword exclusion was added. Gitleaks and the normal tests
-continue to cover the paths. No emitted, vendored, or historical source bytes are
-changed by this disposition.
+`agent/audit-policy.toml`. The auditor skips excluded files before scanning, so
+that policy also skips other Jankurai categories for those files. The exact
+source digests and all 57 observed per-file rule/fingerprint findings (including
+the 23 packet findings and other categories) are recorded in
+[`jankurai-pyexec-p37-dispositions-20261102.json`](jankurai-pyexec-p37-dispositions-20261102.json).
+`ops/ci/verify-pyexec-exceptions.sh` runs `audit-file` on every registered file
+and fails on byte drift, a changed/missing fingerprint, a new finding, a missing
+policy path, or expiry. This makes the coarse score exclusion conditional on the
+exact reviewed contents and complete current finding inventory. No emitted,
+vendored, or historical source bytes are changed by this disposition.
 
 | Packet finding | Exact-path disposition and evidence |
 | --- | --- |
