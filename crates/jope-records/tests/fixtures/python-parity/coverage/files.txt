@@ -566,6 +566,7 @@ crates/jope-campaigns/src/campaign.rs
 crates/jope-campaigns/src/campaign/artifacts.rs
 crates/jope-campaigns/src/campaign/file_io.rs
 crates/jope-campaigns/src/campaign/population.rs
+crates/jope-campaigns/src/campaign/population/selection.rs
 crates/jope-campaigns/src/campaign/run.rs
 crates/jope-campaigns/src/campaign/tests.rs
 crates/jope-campaigns/src/campaign_evaluator.rs
@@ -676,6 +677,7 @@ crates/jope-campaigns/src/search_v3/checkpoint.rs
 crates/jope-campaigns/src/search_v3/contracts.rs
 crates/jope-campaigns/src/search_v3/evidence.rs
 crates/jope-campaigns/src/search_v3/folds.rs
+crates/jope-campaigns/src/search_v3/folds/types.rs
 crates/jope-campaigns/src/search_v3/hybrid.rs
 crates/jope-campaigns/src/search_v3/identity.rs
 crates/jope-campaigns/src/search_v3/mod.rs
@@ -1590,6 +1592,7 @@ crates/smartcluster/jainnode/src/protocol.rs
 crates/smartcluster/jainnode/src/protocol_session.rs
 crates/smartcluster/jainnode/src/replay.rs
 crates/smartcluster/jainnode/src/role.rs
+crates/smartcluster/jainnode/src/role/validation.rs
 crates/smartcluster/jainnode/src/role_tests.rs
 crates/smartcluster/jainnode/src/session_state.rs
 crates/smartcluster/jainnode/src/storage_config.rs
