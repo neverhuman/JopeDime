@@ -119,6 +119,9 @@ extra_excluded_paths = [
   # P37: H173 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
   "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
   "deploy/release/test-release.sh",
+  # HLT-005: frozen portable-math parity oracle, not Python runtime product code.
+  # Exact bytes are pinned by the P-1B campaign receipts; see the pytruth register.
+  "crates/feat-math/tests/portable/full_ref.py",
 "research/flywheel_selfplay/h158_distillation/runtime.py",
   "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
   "research/flywheel_selfplay/h164_sam_retry/runtime.py",
