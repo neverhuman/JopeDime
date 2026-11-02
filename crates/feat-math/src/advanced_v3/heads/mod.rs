@@ -6,14 +6,16 @@ mod portfolio;
 mod tab_boost;
 
 pub(crate) use extra_trees::{ExtraNode, ExtraTreesModel};
-pub(crate) use gam::{GamBoostModel, GamTerm};
+pub(crate) use gam::GamBoostModel;
 pub(crate) use logistic::{sigmoid, LogitRidgeModel};
 pub(crate) use multiclass::{
     MulticlassDiagonalLdaModel, MulticlassNearestCentroidModel, MulticlassOvrLogisticModel,
     MulticlassRidgeModel,
 };
 pub(crate) use portfolio::{ClassificationPortfolioModel, PlsHeadModel};
-pub(crate) use tab_boost::{BoostStump, TabBoostModel};
+pub(crate) use tab_boost::TabBoostModel;
+#[cfg(test)]
+pub(crate) use tab_boost::BoostStump;
 
 use super::input::str_param;
 use super::transforms::{fit_pls_weights, V3Op};

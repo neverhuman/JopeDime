@@ -285,7 +285,7 @@ mod legacy;
 
 pub use emission::check_direct_bound_emission_support;
 pub use fit::{fit_table, validate_v3_genome};
-use fit::{restore_missing_values, split_v3_pipeline, ParsedPipeline};
+use fit::{restore_missing_values, split_v3_pipeline};
 pub use legacy::{
     bound_from_retained_legacy_model, fit_legacy_numeric_bound,
     try_bound_pipeline_from_retained_legacy_model,

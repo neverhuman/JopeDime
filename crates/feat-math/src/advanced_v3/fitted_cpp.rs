@@ -62,10 +62,6 @@ enum CodecColumn<'a> {
     Categorical { vocabulary: &'a [String] },
 }
 
-/// Exhaustive admission check.  Every fitted enum is matched explicitly so a
-/// newly-added registry variant fails compilation until its C++ semantics are
-/// deliberately classified.
-
 include!("fitted_cpp/admission.rs");
 
 include!("fitted_cpp/emit_model.rs");
