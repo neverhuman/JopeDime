@@ -1,5 +1,5 @@
 """Independent portable state/ancestry regression probes; no live files or CUDA."""
-import copy,json,tempfile,unittest
+import copy,importlib,json,tempfile,unittest
 from pathlib import Path
 import torch
 from safetensors.torch import load,save
@@ -13,6 +13,16 @@ from continuous_state import restore,parent_ancestry
 class StateReviewTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):torch.set_num_threads(1)
+ def test_shared_runtime_modules_resolve_to_canonical_package(self):
+  shared=Path(__file__).resolve().parents[1]/'jope_flywheel'
+  names=('augmentation','batch_stream','evergreen','evidence','native_variant_snapshot','paper_archive','program_gate','program_observer','queue','s3_library','score_join','target_noise','training_admission','training_snapshot')
+  for name in names:
+   module=importlib.import_module('jope_flywheel.'+name)
+   self.assertEqual(Path(module.__file__).resolve(),shared/(name+'.py'))
+  pinned=Path(__file__).resolve().parents[1]/'pipelines/continuous/runtime/jope_flywheel'
+  for name in ('program_io','protocol','training_snapshot_native'):
+   module=importlib.import_module('jope_flywheel.'+name)
+   self.assertEqual(Path(module.__file__).resolve(),pinned/(name+'.py'))
  def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name).resolve()
  def tearDown(self):self.tmp.cleanup()
  def step(self,net,opt):
