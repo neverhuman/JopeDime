@@ -38,7 +38,7 @@
   "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
   "schema": "jope.h219-fbal-accum/v1",
   "wave": "H219",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "owner": "rd_astra",
   "source_base": "22a3f1a37445509e776593a5a864f70fe4207e40",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
@@ -127,5 +127,17 @@
   "native91": "NOT_RUN: H109 forbids DL-Val payload/outcome access",
   "strict_margin": 0.001,
   "margin_rejection_tolerance": 1e-12,
-  "training_initialization": "fresh independent tensor copies of exact r882 adapter; no random initialization"
+  "training_initialization": "fresh independent tensor copies of exact r882 adapter; no random initialization",
+  "execution_source_commit": "ec93c316918fd8098c44769ab2f1a299660921d0",
+  "source_sha256_scope": "Immutable execution commit; README has a later closeout. Runtime/science/tests/folds unchanged.",
+  "closeout": {
+    "verdict": "NO_ADVANCE",
+    "s3": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H219/astra-t0400/closeout/manifest.json",
+      "version_id": "_QLxtXZJZ.jEyi5W2mpOOa2Qbg8gva6b",
+      "sha256": "e38bc9a26c8bf749c4ca2e86a31effd099437e1de825e442fc43af705c39ad40",
+      "bytes": 86294
+    },
+    "retry_allowed": false
+  }
 }
