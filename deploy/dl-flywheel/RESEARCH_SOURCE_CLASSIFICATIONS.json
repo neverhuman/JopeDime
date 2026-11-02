@@ -5653,6 +5653,46 @@
         "role": "research",
         "reason": "H216 CPU inference-only random-init lottery with B-locked strict-margin selection (q10>0.005), family-shuffled B placebo, diagnostic ORACLE_A ceiling, frozen DOPE/r882 and zero updates; no serving promotion."
       }
+    },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/science.py": {
+      "bytes": 5089,
+      "sha256": "f3a07a381235b015338fba77d037665b22c7686d720dbc6a8a1ddcfe92080f7f",
+      "classification": {
+        "role": "research",
+        "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/backend.py": {
+      "bytes": 10529,
+      "sha256": "04f91411a70eda95044a100f7c0986fbe2f5c87978a70908ee5ed70387e138d5",
+      "classification": {
+        "role": "research",
+        "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/study.py": {
+      "bytes": 5382,
+      "sha256": "1801c36cb16bfd04feeda4f7a1b9f479073474efd8d7ea6159419ab6838fa531",
+      "classification": {
+        "role": "research",
+        "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/runner.py": {
+      "bytes": 22932,
+      "sha256": "bc81674b6e523ec341984d8647b259a607c941c1112f81465eab7a3c0ba1f537",
+      "classification": {
+        "role": "research",
+        "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/launch.py": {
+      "bytes": 11640,
+      "sha256": "6a350c958ee6e9c5a10c1d9b808bb5195a5998ca980dafa256fdc0a44cffb99f",
+      "classification": {
+        "role": "research",
+        "reason": "H219 owner-authorized, preregistered family-balanced four-microbatch accumulation with pinned H109 helpers,45matched r882-initialized fits, TRAIN-only global lock, strict Holm2/median utility gate; no serving promotion."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

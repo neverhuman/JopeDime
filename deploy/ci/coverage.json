@@ -14993,6 +14993,16 @@
       ],
       "lanes": [],
       "scope": "H216 data-free CPU controls for K=16 untrained adapter lottery selection on reserved B with strict q10>0.005 bootstrap margin, family-shuffled B placebo, diagnostic-only ORACLE_A ceiling, Holm m=2, harm<=10% gate, resource guards and manifest pin verification."
+    },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/test_h219.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H219 TRAIN-only fresh-family folds, H109 sampler/schedule/actual accumulation and paired r882 reset, strict-margin tie rejection/Holm2/harm/3seeds, full45-fit lock order, feature-row exclusion, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification."
     }
   },
   "lanes": {
