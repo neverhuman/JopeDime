@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import ctypes
 from datetime import datetime, timezone
 import fcntl
 import importlib.util
@@ -12,7 +11,6 @@ import json
 import math
 import os
 from pathlib import Path
-import signal
 import subprocess
 import sys
 import time
@@ -23,6 +21,12 @@ r = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = r
 spec.loader.exec_module(r)
 fair = r.load("h100_fifo", HERE.parent / "h61/run_wave.py")
+h82_spec = importlib.util.spec_from_file_location(
+    "h82_pinned_wave", HERE.parent / "h82_sam_steps" / "run_wave.py"
+)
+h82_wave = importlib.util.module_from_spec(h82_spec)
+sys.modules[h82_spec.name] = h82_wave
+h82_spec.loader.exec_module(h82_wave)
 CAP = 2700.0
 MAX_RETRIES = 0
 
@@ -163,6 +167,13 @@ def preflight():
     return dict(status, load1=load)
 
 
+# H82 is the sole canonical implementation; its template-pinned bytes remain unchanged.
+h82_wave.preflight = preflight
+h82_wave.fair = fair
+h82_wave.r.ROOT = r.ROOT
+run_child = h82_wave.run_child
+
+
 def cpu_gate(
     status,
     *,
@@ -197,63 +208,6 @@ def remaining(ledger):
         raise RuntimeError("cumulative GPU wall exhausted (10s shutdown reserve)")
     return value
 
-
-def child_setup(parent_pid):
-    os.nice(19)
-    ctypes.CDLL(None).prctl(1, signal.SIGTERM)
-    if os.getppid() != parent_pid:
-        os._exit(125)
-
-
-def run_child(command, log_path, timeout, lease, record):
-    env = os.environ.copy()
-    env.update(
-        OMP_NUM_THREADS="4",
-        MKL_NUM_THREADS="4",
-        OPENBLAS_NUM_THREADS="1",
-        NUMEXPR_NUM_THREADS="1",
-    )
-    started = time.monotonic()
-    parent_pid = os.getpid()
-    with log_path.open("x") as log:
-        proc = subprocess.Popen(
-            command,
-            cwd=r.ROOT,
-            env=env,
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            pass_fds=(lease.fileno(),),
-            preexec_fn=lambda: child_setup(parent_pid),
-        )
-        record["child_pid"] = proc.pid
-        try:
-            while proc.poll() is None:
-                rss = fair.process_rss_kib(proc.pid) or 0
-                record["max_rss_kib"] = max(record.get("max_rss_kib", 0), rss)
-                if rss >= fair.RSS_LIMIT_KIB:
-                    raise RuntimeError("child RSS reached 6 GiB")
-                if time.monotonic() - started >= timeout:
-                    raise RuntimeError("remaining GPU wall expired")
-                snapshot = preflight()
-                record["max_load1"] = max(record.get("max_load1", 0), snapshot["load1"])
-                record["max_host_cpu_percent"] = max(
-                    record.get("max_host_cpu_percent", 0), snapshot["host_cpu_percent"]
-                )
-                record["min_mem_available_kib"] = min(
-                    record.get("min_mem_available_kib", snapshot["mem_available_kib"]),
-                    snapshot["mem_available_kib"],
-                )
-                time.sleep(1)
-            if proc.returncode:
-                raise RuntimeError(f"cell exit {proc.returncode}; inspect {log_path}")
-        finally:
-            if proc.poll() is None:
-                proc.terminate()
-                try:
-                    proc.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
-                    proc.wait()
 
 
 def run_attempt(root, ledger, arm, seed, timing, attempt):
