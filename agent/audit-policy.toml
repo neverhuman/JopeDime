@@ -41,8 +41,6 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
   "research/flywheel_selfplay/h153_sam/runtime.py",
   "deploy/release/test-release.sh",
-  # P33: test guide only; no per-run spend or release-candidate attestation is made.
-  "docs/testing.md",
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",
   "crates/jope-api/src/bin/jope-api-openapi.rs",
