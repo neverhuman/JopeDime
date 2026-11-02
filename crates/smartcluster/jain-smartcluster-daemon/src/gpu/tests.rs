@@ -136,3 +136,4 @@ fn ten_percent_vram_headroom_is_reserved() {
 }
 use super::inventory::{is_visible, parse_visible_devices};
 use super::mps::{compute_percent, format_vram_limits, parse_ps, parse_termination_response};
+use super::*;
