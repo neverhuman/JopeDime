@@ -40,13 +40,16 @@ impl ColumnSpec {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum RowSemantics {
+pub enum AdvancedV3RowSemantics {
     Iid,
     Ordered {
         group_by: Vec<String>,
         order_by: Vec<String>,
     },
 }
+
+/// V3 table semantics carry explicit key columns, unlike the graph and residual contracts.
+pub type RowSemantics = AdvancedV3RowSemantics;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DataSchema {
