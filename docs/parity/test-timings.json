@@ -1559,7 +1559,7 @@
 },
 {
 "binary": "jope-parallel::gp_admission",
-"name": "unreachable_authority_closes_the_search_with_original_failed_exit",
+"name": "unreachable_authority_closes_the_search_and_records_nonzero_status",
 "seconds": 7.431,
 "status": "pass",
 "message": ""

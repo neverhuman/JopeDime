@@ -185,7 +185,7 @@ fn invalid_artifact_roots_are_rejected_before_search_acceptance() {
 }
 
 #[test]
-fn unreachable_authority_closes_the_search_with_original_failed_exit() {
+fn unreachable_authority_closes_the_search_and_records_nonzero_status() {
     let temporary = tempfile::tempdir().unwrap();
     let root = temporary.path();
     let prepared = make_prepared(root);

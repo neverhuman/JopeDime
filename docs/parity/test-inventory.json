@@ -7322,7 +7322,7 @@
        "interrupted_denial_recovers_original_completion_without_redelivery",
        "invalid_artifact_roots_are_rejected_before_search_acceptance",
        "search_without_authority_cannot_publish_an_admissible_quality_label",
-       "unreachable_authority_closes_the_search_with_original_failed_exit"
+       "unreachable_authority_closes_the_search_and_records_nonzero_status"
       ]
      },
      "jope-parallel::gp_contracts": {
