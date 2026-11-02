@@ -1692,12 +1692,38 @@ impl Authority {
             _ => anyhow::bail!("unknown authority state table"),
         }
     }
+    fn state_row_sql(table: &str) -> Result<&'static str> {
+        match table {
+            "entries" => Ok("SELECT * FROM entries WHERE key=?"),
+            "queries" => Ok("SELECT * FROM queries WHERE key=?"),
+            "authorization_witness" => {
+                Ok("SELECT * FROM authorization_witness WHERE fit_key=?")
+            }
+            "funding_authorizations" => {
+                Ok("SELECT * FROM funding_authorizations WHERE id=?")
+            }
+            "funding_reservations" => Ok("SELECT * FROM funding_reservations WHERE id=?"),
+            "funding_participants" => Ok("SELECT * FROM funding_participants WHERE id=?"),
+            "funding_witness" => Ok("SELECT * FROM funding_witness WHERE event_key=?"),
+            "native_tasks" => Ok("SELECT * FROM native_tasks WHERE id=?"),
+            "native_slots" => Ok("SELECT * FROM native_slots WHERE id=?"),
+            "exclusions" => Ok("SELECT * FROM exclusions WHERE id=?"),
+            "coverage" => Ok("SELECT * FROM coverage WHERE scope=?"),
+            "native_scopes" => Ok("SELECT * FROM native_scopes WHERE scope=?"),
+            "numerical_guards" => Ok("SELECT * FROM numerical_guards WHERE work_key=?"),
+            "history_stages" => Ok("SELECT * FROM history_stages WHERE id=?"),
+            "history_batches" => Ok("SELECT * FROM history_batches WHERE id=?"),
+            "recovery_epochs" => Ok("SELECT * FROM recovery_epochs WHERE id=?"),
+            "activations" => Ok("SELECT * FROM activations WHERE scope=?"),
+            _ => anyhow::bail!("unknown authority state table"),
+        }
+    }
     fn state_row(db: &Connection, table: &str, key: &str) -> Result<Value> {
-        let column = Self::table_key(table)?;
+        Self::table_key(table)?;
         if table == "scope_training" {
             return Self::scope_training_postimage(db, key);
         }
-        let mut stmt = db.prepare(&format!("SELECT * FROM {table} WHERE {column}=?"))?;
+        let mut stmt = db.prepare(Self::state_row_sql(table)?)?;
         let names: Vec<String> = stmt.column_names().iter().map(|s| s.to_string()).collect();
         let row = stmt.query_row([key], |r| {
             let mut value = serde_json::Map::new();

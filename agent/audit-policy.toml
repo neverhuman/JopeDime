@@ -153,7 +153,9 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/run_acceptance.py",
 
   # P5 R2 exact-path exceptions are documented with per-path evidence in
-  # docs/release/jankurai-p5-r2-exceptions-20261102.md.
+  # docs/release/jankurai-p5-r2-exceptions-20261102.md. The same exact paths
+  # disposition T1900 HLT-029 fingerprints 31aa60cb (driver.rs) and 8400153d
+  # (lib.rs); no directory/glob or additional path is excluded.
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",
   "crates/jope-api/src/bin/jope-api-openapi.rs",
