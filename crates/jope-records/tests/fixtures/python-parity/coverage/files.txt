@@ -1014,11 +1014,15 @@ crates/jope-engine/src/eval_registry/native_scq/policy.rs
 crates/jope-engine/src/eval_registry/query.rs
 crates/jope-engine/src/eval_registry/query/tests.rs
 crates/jope-engine/src/eval_registry/service.rs
+crates/jope-engine/src/eval_registry/service/client.rs
 crates/jope-engine/src/eval_registry/service/funding_ipc.rs
 crates/jope-engine/src/eval_registry/service/funding_tests.rs
 crates/jope-engine/src/eval_registry/service/native_scq.rs
 crates/jope-engine/src/eval_registry/service/query_worker.rs
+crates/jope-engine/src/eval_registry/service/runtime.rs
 crates/jope-engine/src/eval_registry/service/tests.rs
+crates/jope-engine/src/eval_registry/service/transport.rs
+crates/jope-engine/src/eval_registry/service/worker.rs
 crates/jope-engine/src/eval_registry/witness.rs
 crates/jope-engine/src/eval_registry/witness/epochs.rs
 crates/jope-engine/src/eval_registry/witness/epochs/tests.rs
