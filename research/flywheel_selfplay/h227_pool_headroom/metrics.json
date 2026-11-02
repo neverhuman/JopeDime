@@ -1,9 +1,133 @@
 {
+  "schema": "jope.h227.closeout/v1",
   "wave": "H227",
-  "status": "NOT_RUN",
-  "verdict": null,
+  "owner": "luna_v1_res08",
+  "status": "CLOSED_INCOMPLETE",
+  "verdict": "INCOMPLETE",
+  "execution_source_commit": "1b463762b90c2f5f4db8143483026802e2947d03",
+  "prereg_pr": 1902,
+  "job1_index_backfill_pr": 1892,
+  "full_completed_context_seed_units": 76,
+  "planned_context_seed_units": 273,
+  "completed_by_seed": {
+    "227101": 76,
+    "227102": 0,
+    "227103": 0
+  },
+  "pool_locks": 77,
+  "unfinished_units": 1,
+  "known_native_records_from_complete_primary_units": 4869,
+  "native_status_counts_complete_units": {
+    "completed": 4869,
+    "failed": 0
+  },
+  "smoke_native_records": 64,
+  "known_returned_native_records_including_smoke": 4933,
+  "total_actual_native_calls": null,
+  "interrupted_native_json_files_preserved": 10,
+  "interrupted_native_outcomes": null,
   "optimizer_updates": 0,
-  "median_gain": null,
-  "ci95": null,
-  "elo": null
+  "actual_worker_exit": -15,
+  "supervisor_error": "hard RSS/MemAvailable/disk/output/deadline guard",
+  "terminal_utc": "2026-11-02T16:45:06.548445+00:00",
+  "guard_trigger_field": null,
+  "guard_trigger_observation": null,
+  "last_recorded_resource_observation": {
+    "at": "2026-11-02T16:45:04.979956+00:00",
+    "host": "xbabe1",
+    "nice": 19,
+    "affinity": 4,
+    "rss": 416927744,
+    "ram": 11105603584,
+    "free": 192175931392,
+    "output": 28081140,
+    "load5": 56.79150390625
+  },
+  "guard_observation_limit": "Supervisor retains a generic hard-guard error; exact violating field/value was not persisted. Last sampled RAM was near10GiB floor, but it does not establish the triggering field.",
+  "resource_summary": {
+    "samples": 143,
+    "max_sampled_tree_rss_bytes": 599068672,
+    "minimum_sampled_available_ram_bytes": 11105603584,
+    "minimum_sampled_free_disk_bytes": 192175931392,
+    "maximum_sampled_load5": 56.798828125
+  },
+  "baseline": {
+    "bit_exact_contexts": 91,
+    "mean": 1.1377941898164525,
+    "checked_before_proposals": true
+  },
+  "statistics": null,
+  "primary_median_gain": null,
+  "primary_ci95": null,
+  "elo": null,
+  "oracle_summary": null,
+  "final_in_memory_DOPE_observation": null,
+  "freeze_before": {
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "optimizer_updates": 0,
+    "CUDA_initialized": false
+  },
+  "terminal_input_file_audit": {
+    "pins": 30,
+    "all_match": true,
+    "qualification": "Physical input files; does not replace missing final in-memory DOPE observation."
+  },
+  "independent_partial_replay": {
+    "complete_units": 76,
+    "unique_units": 76,
+    "unparsed_tail_bytes": 0,
+    "first_argmin_oracle_FPS_all_replayed": true,
+    "sha256": "9a477cece6846d2187c558c3fdf80c4cfa5f626c8a03874b4a4e8edbb7019067",
+    "model_or_native_reexecution": false
+  },
+  "smoke": {
+    "status": "INDEPENDENT_FULL_PATH_TRAIN_SMOKE_REPLAY_PASS",
+    "attempts": 1,
+    "completed_contexts": 1,
+    "native_records": 64,
+    "native_failed": 0,
+    "actual_exit": 0,
+    "optimizer_updates": 0,
+    "source_commit": "1b463762b90c2f5f4db8143483026802e2947d03",
+    "scratch_deleted": true
+  },
+  "source_tests": "22 data-free tests/Ruff/format/compile/exact imports/registries/folds PASS; source main-guard41478325284 success. Full/hosted CI NOT_RUN.",
+  "scientific_retry": false,
+  "serving_promotion": false,
+  "raw_roots": [
+    "/home/ubuntu/jope-data/h227/attempt-001",
+    "/home/ubuntu/jope-data/h227/smoke-001"
+  ],
+  "raw_roots_retained": true,
+  "compute_deadline_utc": "2026-11-02T21:30:00+00:00",
+  "closeout_deadline_utc": "2026-11-02T22:00:00+00:00",
+  "deadlines_reset": false,
+  "terminal_custody": {
+    "schema": "jope.h227.custody-receipt/v1",
+    "verified_utc": "2026-11-02T16:52:31.438627+00:00",
+    "source_commit": "1b463762b90c2f5f4db8143483026802e2947d03",
+    "status": "EXACT_VERSION_OBJECT_AND_MEMBER_REPLAY_PASS",
+    "scientific_status": "INCOMPLETE",
+    "scientific_verdict": "INCOMPLETE",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H227/res08-t1530/terminal-1b463762b90c-c4fde112a6889695/H227-execution-output.zip",
+      "version_id": "tUawTBgHrNjbqveS5JHC85ln95duAB6N",
+      "sha256": "c4fde112a688969537901fde601d07c95bc137d0d2011d889334315aa6ce620a",
+      "bytes": 4410203
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H227/res08-t1530/terminal-1b463762b90c-c4fde112a6889695/H227-terminal-manifest.json",
+      "version_id": "4jjn4yf3dDrH1_pbwlr025U5OpRA23tz",
+      "sha256": "c6d2c8ccb64d7d992a421a1b33a0632f72a44d891253f2fd0afcc9f60bb070df",
+      "bytes": 26251
+    },
+    "verified_members": 81,
+    "create_only_if_none_match": "*",
+    "exact_version_archive_and_manifest_bytes_verified": true,
+    "archive_member_sha256s_verified": true,
+    "raw_roots_retained": true,
+    "scientific_retry": false
+  },
+  "next_step": "Retain partial evidence. A future complete measurement needs a prospective resource-admission window and an exact violating-observation receipt. No H227 retry occurred. The complete candidate-generation headroom diagnostic remains unresolved."
 }
