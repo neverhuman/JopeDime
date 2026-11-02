@@ -1,0 +1,129 @@
+{
+  "actual_total_physical_charges": null,
+  "aggregate_partial_statistics_computed": false,
+  "analyzer": {
+    "analysis_json_created": false,
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "/home/ubuntu/jope_plan/evidence/QLT-04/gov03-t0415/source/deploy/qualification/q1/harness/q1.py",
+      "analyze",
+      "--plan",
+      "/home/ubuntu/jope_plan/evidence/QLT-04/api01-t0710/frozen/ccaf14b210b3b55a350218e60f6b49ef76524cf3/metadata/fa07e1336c8fc7c04994faadf8f6efabded0a195/plan.json",
+      "--receipts",
+      "/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-final-t2141/terminal-logical-panel.private.jsonl",
+      "--signature",
+      "/home/ubuntu/jope_plan/ns/qualification/q1_approval/d71ebeda6fe7c5575025a063807662b66c93c5f743689dc96bc5bae0fe26d19a.sig",
+      "--allowed-signers",
+      "/home/ubuntu/jope_plan/evidence/QLT-04/gov03-t0415/source/deploy/qualification/q1/owner/allowed_signers",
+      "--out",
+      "/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-final-t2141/analysis.json"
+    ],
+    "elapsed_seconds": 0.3148983720002434,
+    "exit_status": 1,
+    "path": "/home/ubuntu/jope_plan/evidence/QLT-04/gov03-t0415/source/deploy/qualification/q1/harness/q1.py",
+    "sha256": "3b1b23739de2014f10bc9741baf7db98ba960fedb932507ad6087ae0ac880011",
+    "started_utc": "2026-11-02T21:44:48.569310+00:00",
+    "stderr_path": "/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-final-t2141/analyze.stderr",
+    "stderr_sha256": "1452612decc35c4fee3450e3b0ca389395c6430db0305100ed71b8d3200aee1d"
+  },
+  "assembler_phase": "WAITING_FOR_ALL_582_VALID_COMPLETE_RESPONSES",
+  "attempt09_elapsed_seconds": 1823.2015729260002,
+  "attempt09_terminal_units": 551,
+  "budget_reset": false,
+  "compute_scope": "Attempt09 controller elapsed and analyzer elapsed only; physical evaluator CPU/wall and prior unknown work are not established.",
+  "confidence_interval": null,
+  "controller_review_sha256": "b961b10c63573649077e68a9904684bb530df5100b398c929eb845a02486b631",
+  "controller_sha256": "c85af2889b97bebf1fc4b02299600c23cf7aec24fb96bd52f491c0d26e39a8f4",
+  "decision": "INCOMPLETE",
+  "elo": null,
+  "execution_status": "all_resume_units_terminal",
+  "execution_status_path": "/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-t0240/attempt-09/RESUME-EXECUTION-STATUS.json",
+  "execution_status_sha256": "2246dc77635401198191b07f85efd6326f7c49f18a64ad96a999c28921247192",
+  "guidance_default": "OFF_OWNER_R21",
+  "guidance_default_changed": false,
+  "independent_review_owners": [
+    "sol_v1_gov03",
+    "sol_v1_api01"
+  ],
+  "independent_review_status": "PENDING",
+  "invalid_logical_units": 522,
+  "invalid_units_path": "/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-final-t2141/INVALID-UNITS.json",
+  "invalid_units_sha256": "ea9fb91c9e42ebdd6ad16c5b3f5c74201de0879b3b32938d862c7f30e017b10c",
+  "known_charged_valid_logical_units": 1440,
+  "known_completed_valid_logical_units": 1440,
+  "logical_panel_sha256": "f874cae1087d716f3031a8a0dfa1cca1071b8f0cf6c7d97c13e4fa283cc1a9df",
+  "metadata_source_commit": "fa07e1336c8fc7c04994faadf8f6efabded0a195",
+  "new_evaluations_or_retries": 0,
+  "percentiles": null,
+  "pins": {
+    "bundle_sha256": "94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "evaluator_sha256": "4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177",
+    "protocol_sha256": "dcf833e6e88fcb7942da1015e5e8ca0ff378fc18b23bab97d8b14d74fe7d3881",
+    "training_family_manifest_sha256": "8e786b2dcb153a5c1c4f43dbcb773b53df6f0dd7d325c94f8d7ec2f73352d3e8",
+    "vocabulary_sha256": "8d55fee4366acd2c175cf55bfd769cebc904770f5227a6fd50a613723dc85787"
+  },
+  "plan_sha256": "d71ebeda6fe7c5575025a063807662b66c93c5f743689dc96bc5bae0fe26d19a",
+  "preregistration_sha256": "e5d322d4f7cf2f9750789f08ec58d5698d9470f38458a6c73a30ac56d06dff37",
+  "primary_effect": null,
+  "prior_started_only_work_remains_unknown": true,
+  "provenance_sha256": "4155a638fc2b0757a14459fc7f2a1b6dd4d9138b73e1112f4edc8b9de564cba4",
+  "raw_finish_status_counts": {
+    "complete": 60,
+    "failed": 523
+  },
+  "raw_snapshots": [
+    {
+      "bytes": 51675,
+      "path": "/home/ubuntu/jope_plan/evidence/QLT-04/gov03-t0115/run/receipts.jsonl",
+      "sha256": "8e1250610419bec534e88a118a1450414d112de79dd6b7f4fa0edfa72887966d"
+    },
+    {
+      "bytes": 2041160,
+      "path": "/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-t0240/attempt-03/resume-receipts.jsonl",
+      "sha256": "ca7025cc262c3134768f9daea5e31dcc2d22c8afa9ffa7429e5a94f51ac101f5"
+    },
+    {
+      "bytes": 2235,
+      "path": "/home/ubuntu/jope_plan/evidence/QLT-04/gov03-durable-review-20261102-t1950/recovered-finish.private.jsonl",
+      "sha256": "d061de29bb067afa8e5faf6d5f4b770b6f5436980970c68d297940e2b7c97f82"
+    }
+  ],
+  "reason": "522 backend-process failures leave the signed panel incomplete; unchanged analyzer refuses invalid responses.",
+  "recovery_adds_charges": 0,
+  "recovery_adds_logical_units": 0,
+  "recovery_mapping_sha256": "43686b2bc7839853cb74f2a0bbce36e5c40ad3e9e239382a5af1e16c7a30db30",
+  "report_owner": "luna_v1_qlt02",
+  "report_path": "deploy/qualification/q1/REPORT.md",
+  "schema": "jope.qlt04.post-execution-final-receipt/v1",
+  "scientific_source_commit": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+  "serving_promotion": false,
+  "signature_created": false,
+  "signature_sha256": "fbc607c639913a7e6f2db97282d860a96b847d3062eed1014fa2a97214791114",
+  "signed_logical_units": 582,
+  "subgroup_effects": null,
+  "subgroup_metadata_counts": {
+    "large": {
+      "families": 27,
+      "required_families": 5
+    },
+    "narrow": {
+      "families": 94,
+      "required_families": 5
+    },
+    "small": {
+      "families": 70,
+      "required_families": 5
+    },
+    "wide": {
+      "families": 3,
+      "required_families": 3
+    }
+  },
+  "task": "QLT-04",
+  "terminal_logical_units": 582,
+  "unknown_charge_units": 522,
+  "utc": "2026-11-02T21:44:48.885003+00:00",
+  "valid_complete_logical_units": 60
+}
