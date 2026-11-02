@@ -1,4 +1,6 @@
-# Only keys consumed by the pinned auditor are permitted. Tool identity and
+# Only keys consumed by the pinned auditor are permitted ([[evidence_snapshot]]
+# is consumed by the jankurai-core evidence-snapshot auditor build; older
+# auditors ignore it and keep reporting those copies). Tool identity and
 # receipt requirements live in audit-tool.json and the executable gate.
 minimum_score = 85
 fail_on = ["critical", "high"]
@@ -322,3 +324,562 @@ paths = ["crates/jope-datasets/src/blobs.rs"]
 owner = "datasets"
 expires = "2027-02-01"
 reason = "HLT-001 sha256:fa13a2d8103eeda06d5c85bd49ecc8869b16a7c6175e6917bbae92365d35eead flags the truthful cache-state term in BlobDir::ensure. The method verifies both size and SHA-256, removes a mismatched cache entry, refuses to serve a substitute offline, and otherwise refetches verified bytes. Preserve that integrity behavior; this term-and-path exception does not suppress other rules or files."
+
+# Hash-pinned evidence snapshots. Each entry lists exact copies inside a frozen
+# evidence package whose sha256 is recorded by that package's own receipt or
+# manifest (pinned_by). Deduplicating or moving them would break the receipt,
+# so the auditor withholds ONLY these files from the copy-code scan (HLT-043)
+# and the generated-zone hand-edit guard (HLT-045); every other rule still
+# audits them. The auditor re-proves every pin on each full audit: an edited,
+# missing, or no-longer-recorded file rejects the entry and fails the audit. Live copies
+# (jope_flywheel/, pipelines/continuous|native|prepared|hpc|programs|publication,
+# the dl-trainonly lane handoff, and hpc_verified_v4, which has no in-package
+# pin) are deliberately NOT listed. Rule: docs/exceptions.md in
+# root/jankurai-core.
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-encoding-fresh32"
+paths = [
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/pilot_publish_core.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/config.template.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/fresh32; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-encoding-next128-packet0"
+paths = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/pilot_publish_core.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/config.template.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet0; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-encoding-next128-packet1"
+paths = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/pilot_publish_core.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/config.template.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet1; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-encoding-next128-packet2"
+paths = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/pilot_publish_core.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/config.template.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet2; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-encoding-next128-packet3"
+paths = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/evergreen_kumos_packet_authority.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/generic_worker_dfba7d52.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_intake.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_io.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_publish.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/pilot_publish_core.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/config.template.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/encoding/next128/packet3; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-fresh_gp_v2-revision2"
+paths = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/borrowed/program_worker_original.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/receipt_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/runtime/jope_flywheel/target_noise.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2/SOURCE_PACKET.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/fresh_gp_v2/revision2; SOURCE_PACKET.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-fresh_gp_v2-revision3"
+paths = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/borrowed/program_worker_original.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/receipt_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/runtime/jope_flywheel/target_noise.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3/INDEPENDENT_REVIEW.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/fresh_gp_v2/revision3; INDEPENDENT_REVIEW.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-fresh_gp_v2-v1"
+paths = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/campaign_custody.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/label_campaign.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/receipt_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/runtime/jope_flywheel/target_noise.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/provenance/packaged-offline-receipt.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/fresh_gp_v2/v1; provenance/packaged-offline-receipt.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision1-package"
+paths = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/tests_io.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/SOURCE_PINS.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package; SOURCE_PINS.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision2-package"
+paths = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/tests_io.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/SOURCE_PINS.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package; SOURCE_PINS.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-generated_target_callbacks_v1-revision3-package"
+paths = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/bindings.py",
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/tests_io.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/SOURCE_PINS.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package; SOURCE_PINS.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-hpc_verified_v5"
+paths = [
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/augmentation.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/batch_stream.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evergreen.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/evidence.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/paper_archive.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_gate.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_inputs.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_io.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_observer.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/program_worker.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/protocol.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/queue.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/s3_library.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/score_join.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/target_noise.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/timing.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_admission.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_kumos.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot_native.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/native_global_guard.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/neural_outbox.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/verified_cache.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/operations.launch.template.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/hpc_verified_v5; operations.launch.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-telemetry-trace_recovery_v2"
+paths = [
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/config.template.json",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2; config.template.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "dl-flywheel-pipelines-telemetry-trace_recovery_v3"
+paths = [
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py",
+]
+pinned_by = [
+  "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/README.md",
+]
+owner = "dl-flywheel"
+reason = "frozen evidence package deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3; README.md records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h144_reg_sweep"
+paths = [
+  "research/flywheel_selfplay/h144_reg_sweep/runner.py",
+  "research/flywheel_selfplay/h144_reg_sweep/science.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h144_reg_sweep/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h144_reg_sweep; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h146_lookahead_exec"
+paths = [
+  "research/flywheel_selfplay/h146_lookahead_exec/runner.py",
+  "research/flywheel_selfplay/h146_lookahead_exec/science.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h146_lookahead_exec/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h146_lookahead_exec; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h149_wd_dose"
+paths = [
+  "research/flywheel_selfplay/h149_wd_dose/runner.py",
+  "research/flywheel_selfplay/h149_wd_dose/science.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h149_wd_dose/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h149_wd_dose; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h151_lookahead_drift_control"
+paths = [
+  "research/flywheel_selfplay/h151_lookahead_drift_control/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h151_lookahead_drift_control/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h151_lookahead_drift_control; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h153_sam"
+paths = [
+  "research/flywheel_selfplay/h153_sam/runner.py",
+  "research/flywheel_selfplay/h153_sam/science.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h153_sam/attempt.json",
+  "research/flywheel_selfplay/h153_sam/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h153_sam; attempt.json, manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h158_distillation"
+paths = [
+  "research/flywheel_selfplay/h158_distillation/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h158_distillation/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h158_distillation; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h160_trajectory_subspace"
+paths = [
+  "research/flywheel_selfplay/h160_trajectory_subspace/analysis.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h160_trajectory_subspace/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h160_trajectory_subspace; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h164_sam_retry"
+paths = [
+  "research/flywheel_selfplay/h164_sam_retry/runner.py",
+  "research/flywheel_selfplay/h164_sam_retry/science.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h164_sam_retry/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h164_sam_retry; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h176_data_scaling"
+paths = [
+  "research/flywheel_selfplay/h176_data_scaling/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h176_data_scaling/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h176_data_scaling; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h179_deep_ensemble"
+paths = [
+  "research/flywheel_selfplay/h179_deep_ensemble/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h179_deep_ensemble/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h179_deep_ensemble; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h180_adapter_ablation"
+paths = [
+  "research/flywheel_selfplay/h180_adapter_ablation/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h180_adapter_ablation/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h180_adapter_ablation; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h182_ensemble_size_dose"
+paths = [
+  "research/flywheel_selfplay/h182_ensemble_size_dose/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h182_ensemble_size_dose/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h182_ensemble_size_dose; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h184_adapter_components"
+paths = [
+  "research/flywheel_selfplay/h184_adapter_components/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h184_adapter_components/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h184_adapter_components; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h188_kernel_inputs"
+paths = [
+  "research/flywheel_selfplay/h188_kernel_inputs/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h188_kernel_inputs/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h188_kernel_inputs; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h189_swa_ema"
+paths = [
+  "research/flywheel_selfplay/h189_swa_ema/h182_base.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h189_swa_ema/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h189_swa_ema; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h192_margin_gate"
+paths = [
+  "research/flywheel_selfplay/h192_margin_gate/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h192_margin_gate/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h192_margin_gate; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h198_ttt"
+paths = [
+  "research/flywheel_selfplay/h198_ttt/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h198_ttt/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h198_ttt; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h209_gpu_delta_calibration"
+paths = [
+  "research/flywheel_selfplay/h209_gpu_delta_calibration/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h209_gpu_delta_calibration/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h209_gpu_delta_calibration; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h211_gpu_delta_calibration"
+paths = [
+  "research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h211_gpu_delta_calibration/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h211_gpu_delta_calibration; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h213_gpu_delta_sustained"
+paths = [
+  "research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h213_gpu_delta_sustained/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h213_gpu_delta_sustained; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h215_pess_disagreement"
+paths = [
+  "research/flywheel_selfplay/h215_pess_disagreement/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h215_pess_disagreement/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h215_pess_disagreement; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h219_fbal_accum_run"
+paths = [
+  "research/flywheel_selfplay/h219_fbal_accum_run/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h219_fbal_accum_run/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h219_fbal_accum_run; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h220_family_mixup"
+paths = [
+  "research/flywheel_selfplay/h220_family_mixup/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h220_family_mixup/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h220_family_mixup; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h221_bagged_delta_head"
+paths = [
+  "research/flywheel_selfplay/h221_bagged_delta_head/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h221_bagged_delta_head/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h221_bagged_delta_head; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
+
+[[evidence_snapshot]]
+name = "research-flywheel_selfplay-h228_family_invariant"
+paths = [
+  "research/flywheel_selfplay/h228_family_invariant/runner.py",
+]
+pinned_by = [
+  "research/flywheel_selfplay/h228_family_invariant/manifest.json",
+]
+owner = "research"
+reason = "frozen evidence package research/flywheel_selfplay/h228_family_invariant; manifest.json records each listed file's sha256, so deduplicating or moving these copies would break the receipt"
