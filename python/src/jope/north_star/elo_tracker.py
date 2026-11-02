@@ -302,6 +302,7 @@ def check_phase_d_elo_gate(
 ) -> dict[str, object]:
     """
     Verifies NORTH_STAR Phase D gate:
+      - All requested round and baseline ratings are finite, non-boolean observations.
       - `len(round_names) >= 3`
       - Final flywheel Elo >= `h_baseline_name` Elo on overall, regression, and binary classification
       - Monotonically trending up over `>= 3` rounds on both task types.
@@ -312,15 +313,15 @@ def check_phase_d_elo_gate(
         or h_baseline_name not in binary_ratings
     ):
         raise KeyError(f"Baseline {h_baseline_name!r} missing from ratings dictionaries.")
-    reg_seq = [float(regression_ratings[r]) for r in round_names]
-    bin_seq = [float(binary_ratings[r]) for r in round_names]
-    ovr_seq = [float(overall_ratings[r]) for r in round_names]
+    reg_seq = [require_finite_score(regression_ratings, r) for r in round_names]
+    bin_seq = [require_finite_score(binary_ratings, r) for r in round_names]
+    ovr_seq = [require_finite_score(overall_ratings, r) for r in round_names]
 
     reg_rising = len(reg_seq) >= 3 and all(reg_seq[i] > reg_seq[i - 1] for i in range(1, len(reg_seq)))
     bin_rising = len(bin_seq) >= 3 and all(bin_seq[i] > bin_seq[i - 1] for i in range(1, len(bin_seq)))
-    beats_h_reg = reg_seq[-1] >= float(regression_ratings[h_baseline_name])
-    beats_h_bin = bin_seq[-1] >= float(binary_ratings[h_baseline_name])
-    beats_h_ovr = ovr_seq[-1] >= float(overall_ratings[h_baseline_name])
+    beats_h_reg = reg_seq[-1] >= require_finite_score(regression_ratings, h_baseline_name)
+    beats_h_bin = bin_seq[-1] >= require_finite_score(binary_ratings, h_baseline_name)
+    beats_h_ovr = ovr_seq[-1] >= require_finite_score(overall_ratings, h_baseline_name)
 
     gate_pass = bool(reg_rising and bin_rising and beats_h_reg and beats_h_bin and beats_h_ovr)
     return {

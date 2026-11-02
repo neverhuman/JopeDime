@@ -69,6 +69,19 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def publish_private_json(path, value):
+    """Publish a complete regular receipt once; never replace existing evidence."""
+    pending = path.with_name(path.name + ".pending")
+    descriptor = os.open(pending, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w") as stream:
+        json.dump(value, stream, indent=2)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.link(pending, path)
+    pending.unlink()
+
+
 def record(command, directory, seconds, max_bytes, env_allow=()):
     require(
         hasattr(os, "WNOWAIT")
@@ -158,12 +171,36 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
             executable_pin = digest(executable)
         for sig in (signal.SIGINT, signal.SIGTERM):
             old_handlers[sig] = signal.signal(sig, interrupt)
+        # Publish ownership before detaching, so timeout cleanup covers startup too.
+        own_pid = os.getpid()
+        start_ticks = int(
+            Path("/proc/self/stat")
+            .read_text(encoding="ascii")
+            .rsplit(")", 1)[1]
+            .split()[19]
+        )
+        publish_private_json(
+            directory / "recorder.json",
+            dict(
+                schema="jopedime.mcp-recorder-session/v1",
+                pid=own_pid,
+                owner_pgid=os.getpgid(os.getppid()),
+                start_ticks=start_ticks,
+                producer_sha256=source_pins["producer_sha256"],
+                argv=command,
+            ),
+        )
+        if os.getsid(0) != own_pid:
+            os.setsid()
+        require(
+            os.getsid(0) == os.getpgrp() == own_pid, "recorder session isolation failed"
+        )
         child = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            start_new_session=True,
+            process_group=0,  # Independent server group inside the owned recorder session.
             bufsize=0,
             env=environment,
         )
@@ -305,12 +342,7 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
             for name, path in paths.items()
         },
     )
-    fd = os.open(
-        directory / "capture.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600
-    )
-    with os.fdopen(fd, "w") as out:
-        json.dump(receipt, out, indent=2)
-        out.write("\n")
+    publish_private_json(directory / "capture.json", receipt)
     if error:
         print(f"MCP capture refused: {error}", file=sys.stderr)
     return code
