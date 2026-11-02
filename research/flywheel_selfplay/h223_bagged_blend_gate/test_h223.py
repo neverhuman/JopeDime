@@ -213,6 +213,7 @@ def test_monitor_signals_only_its_own_worker_group_and_aborts_a_paused_worker(
     monkeypatch.setattr(monitor.os, "getpriority", lambda *a: 19)
     monkeypatch.setattr(monitor, "check_source", lambda launch: None)
     monkeypatch.setattr(monitor.time, "sleep", lambda s: None)
+    monkeypatch.setattr(monitor.time, "time", lambda: monitor.RUN_END - 3600)
     loads = iter([1.0, 61.0, 58.0, 54.0, 61.0, 61.0])
     disk = iter([500e9] * 5 + [100e9])
     monkeypatch.setattr(
