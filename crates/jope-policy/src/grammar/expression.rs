@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn render_expr(tokens: &[usize], table: &Expr, pos: &mut usize) -> Result<String> {
+pub(crate) fn render_expr(tokens: &[usize], table: &Expr, pos: &mut usize) -> Result<String> {
     let id = *tokens.get(*pos).context("expression token absent")?;
     *pos += 1;
     let symbol = table.symbol.get(&id).context("unknown expression symbol")?;
@@ -172,7 +172,7 @@ impl ExprParser<'_> {
     }
 }
 
-pub(super) fn parse_expr_tokens(text: &str, table: &Expr) -> Result<Vec<usize>> {
+pub(crate) fn parse_expr_tokens(text: &str, table: &Expr) -> Result<Vec<usize>> {
     let lexical = lex_expr(text)?;
     let mut parser = ExprParser {
         tokens: &lexical,

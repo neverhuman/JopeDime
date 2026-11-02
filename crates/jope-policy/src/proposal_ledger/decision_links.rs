@@ -74,7 +74,7 @@ mod decision_link_tests {
             crate::CHECKPOINT_VOCABULARY_SHA256,
         );
         let vocabulary = crate::grammar::bind_vocabulary(
-            include_bytes!("../../jope-engine/assets/grammar/featmath.json"),
+            include_bytes!("../../../jope-engine/assets/grammar/featmath.json"),
             crate::CHECKPOINT_VOCABULARY_SHA256,
         )?;
         let context = crate::context::PolicyContext::from_frozen_values(vec![0.; 2048])?;

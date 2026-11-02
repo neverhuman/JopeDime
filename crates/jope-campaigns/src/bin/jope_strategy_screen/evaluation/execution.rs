@@ -5,7 +5,7 @@ use super::*;
 /// dropout (rows zero-weighted by exclusion from train_ids). Validation rows
 /// are always untouched. Returns the CSV path children should load and the
 /// possibly-thinned train ids.
-pub(super) fn perturbed_generation_csv(
+pub(crate) fn perturbed_generation_csv(
     x: &Rows,
     y: &[f64],
     train_ids: &[usize],
@@ -56,7 +56,7 @@ pub(super) fn perturbed_generation_csv(
     Ok((path, kept))
 }
 
-pub(super) fn subset(x: &Rows, y: &[f64], ids: &[usize]) -> (Rows, Vec<f64>) {
+pub(crate) fn subset(x: &Rows, y: &[f64], ids: &[usize]) -> (Rows, Vec<f64>) {
     (
         ids.iter().map(|&i| x[i].clone()).collect(),
         ids.iter().map(|&i| y[i]).collect(),
@@ -66,7 +66,7 @@ pub(super) fn subset(x: &Rows, y: &[f64], ids: &[usize]) -> (Rows, Vec<f64>) {
 /// Fit on the train subset, score R^2 on the validation subset. Any failure
 /// (parse, fit, nonfinite, degenerate target) scores the clip floor -1.0 so a
 /// broken gene ranks last instead of aborting the run.
-pub(super) fn eval_on(
+pub(crate) fn eval_on(
     member: &Member,
     x: &Rows,
     y: &[f64],
@@ -88,7 +88,7 @@ pub(super) fn eval_on(
 /// parent can pool them across folds. Pooled out-of-fold R^2 is a single ratio
 /// over every row; the per-fold mean this replaces normalises each fold by its
 /// own ss_tot, which on small folds rewards a gene that drew a lucky slice.
-pub(super) fn predict_on(
+pub(crate) fn predict_on(
     member: &Member,
     x: &Rows,
     y: &[f64],
@@ -104,7 +104,7 @@ pub(super) fn predict_on(
 /// Child mode: read {genome, train_ids, valid_ids} from stdin, print r2.
 /// With "want":"pred" the child prints a JSON array of validation predictions
 /// instead, which is what the pooled-OOF finale consumes.
-pub(super) fn eval_one(train_path: &str) -> Result<(), String> {
+pub(crate) fn eval_one(train_path: &str) -> Result<(), String> {
     use std::io::Read;
     let mut buf = String::new();
     std::io::stdin()
@@ -151,7 +151,7 @@ pub(super) fn eval_one(train_path: &str) -> Result<(), String> {
 /// conflating them with a bad score systematically punishes whatever is
 /// slowest (wide feature sets, heavy heads) for infrastructure reasons.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(super) fn strict_generation_completion(
+pub(crate) fn strict_generation_completion(
     generation: usize,
     invalid_members: usize,
     failures: EvalFailureCounts,
@@ -169,7 +169,7 @@ pub(super) fn strict_generation_completion(
     ))
 }
 
-pub(super) fn eval_timeout_seconds() -> u64 {
+pub(crate) fn eval_timeout_seconds() -> u64 {
     std::env::var("JSS_EVAL_TIMEOUT_SECS")
         .ok()
         .and_then(|value| value.parse::<u64>().ok())
@@ -179,7 +179,7 @@ pub(super) fn eval_timeout_seconds() -> u64 {
 /// Parent mode: run one evaluation in a killable child with a hard deadline
 /// (campaign parity: golden42 enforced a 30 s per-candidate timeout at the
 /// worker level). Returns the child's raw stdout.
-pub(super) fn run_eval_child(
+pub(crate) fn run_eval_child(
     train_path: &str,
     genome: &str,
     train_ids: &[usize],
@@ -239,7 +239,7 @@ pub(super) fn run_eval_child(
 }
 
 /// Score, distinguishing "did not run" (None) from "ran and was bad" (Some).
-pub(super) fn eval_checked(
+pub(crate) fn eval_checked(
     train_path: &str,
     genome: &str,
     train_ids: &[usize],
@@ -253,7 +253,7 @@ pub(super) fn eval_checked(
 }
 
 /// Validation predictions for one fold, for the pooled-OOF finale.
-pub(super) fn eval_predictions(
+pub(crate) fn eval_predictions(
     train_path: &str,
     genome: &str,
     train_ids: &[usize],
@@ -265,7 +265,7 @@ pub(super) fn eval_predictions(
 
 /// Legacy scoring surface: every failure becomes the clip floor. Retained so
 /// the search loop's recorded behaviour is unchanged.
-pub(super) fn eval_with_timeout(
+pub(crate) fn eval_with_timeout(
     train_path: &str,
     genome: &str,
     train_ids: &[usize],

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn verify_training_closure(root: &Path, input: &InputManifest) -> Result<()> {
+pub(crate) fn verify_training_closure(root: &Path, input: &InputManifest) -> Result<()> {
     if let Operation::Train { corpus, .. } = &input.operation {
         // Historical Train manifests over unprojected corpora fail closed here by
         // design: re-verifying them would open every excluded context they bind.
@@ -20,7 +20,7 @@ pub(super) fn verify_training_closure(root: &Path, input: &InputManifest) -> Res
     Ok(())
 }
 
-pub(super) fn validate_operation(task: &TaskManifest, input: &InputManifest) -> Result<()> {
+pub(crate) fn validate_operation(task: &TaskManifest, input: &InputManifest) -> Result<()> {
     ensure!(
         input.operation.dataset_logical_attempt() != Some(0),
         "dataset logical attempt must be positive"
@@ -82,7 +82,7 @@ pub(super) fn validate_operation(task: &TaskManifest, input: &InputManifest) -> 
     Ok(())
 }
 
-pub(super) fn verify_required_inputs(input: &InputManifest) -> Result<()> {
+pub(crate) fn verify_required_inputs(input: &InputManifest) -> Result<()> {
     let mut required = BTreeMap::new();
     match &input.operation {
         Operation::DirectEvaluation { manifest, sha256 }
@@ -242,20 +242,20 @@ fn operation_outputs(op: &Operation) -> Vec<&Path> {
     }
 }
 
-pub(super) fn available_storage_bytes(path: &Path) -> Result<u64> {
+pub(crate) fn available_storage_bytes(path: &Path) -> Result<u64> {
     let stats = nix::sys::statvfs::statvfs(path).context("storage measurement unavailable")?;
     Ok(storage_bytes_from_stats(stats))
 }
 
-pub(super) fn storage_bytes(blocks_available: u64, fragment_size: u64) -> u64 {
+pub(crate) fn storage_bytes(blocks_available: u64, fragment_size: u64) -> u64 {
     blocks_available.saturating_mul(fragment_size)
 }
 
-pub(super) fn storage_bytes_from_stats(stats: nix::sys::statvfs::Statvfs) -> u64 {
+pub(crate) fn storage_bytes_from_stats(stats: nix::sys::statvfs::Statvfs) -> u64 {
     storage_bytes(stats.blocks_available(), stats.fragment_size())
 }
 
-pub(super) fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
+pub(crate) fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
     for (mountpoint, device) in &policy.storage_devices {
         let mounts = fs::read_to_string("/proc/self/mountinfo")?;
         let source = mounts

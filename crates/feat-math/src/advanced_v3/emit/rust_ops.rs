@@ -1,7 +1,7 @@
 use super::rust_input::*;
 use super::*;
 
-pub(super) fn rust_numeric_ops_body(ops: &[V3Op]) -> Result<String> {
+pub(crate) fn rust_numeric_ops_body(ops: &[V3Op]) -> Result<String> {
     let mut source = String::new();
     for (index, op) in ops.iter().enumerate() {
         let append = match op {
@@ -148,7 +148,7 @@ pub(super) fn rust_numeric_ops_body(ops: &[V3Op]) -> Result<String> {
     Ok(source)
 }
 
-pub(super) fn rust_bool_slice(values: &[bool]) -> String {
+pub(crate) fn rust_bool_slice(values: &[bool]) -> String {
     format!(
         "[{}]",
         values
@@ -159,7 +159,7 @@ pub(super) fn rust_bool_slice(values: &[bool]) -> String {
     )
 }
 
-pub(super) fn v3_append(op: &V3Op) -> Result<bool> {
+pub(crate) fn v3_append(op: &V3Op) -> Result<bool> {
     Ok(match op {
         V3Op::Legacy(op) => match op {
             FittedOp::Standardize { append, .. }
@@ -186,7 +186,7 @@ pub(super) fn v3_append(op: &V3Op) -> Result<bool> {
     })
 }
 
-pub(super) fn rust_generated_mask_expr(op: &V3Op) -> Result<String> {
+pub(crate) fn rust_generated_mask_expr(op: &V3Op) -> Result<String> {
     let expression = match op {
         V3Op::MaxAbs { .. } | V3Op::YeoJohnson { .. } => "missing.clone()".to_string(),
         V3Op::CorrScreen { indices, .. } => format!(
@@ -231,7 +231,7 @@ pub(super) fn rust_generated_mask_expr(op: &V3Op) -> Result<String> {
     Ok(expression)
 }
 
-pub(super) fn rust_semantic_key(key: &SemanticKey) -> String {
+pub(crate) fn rust_semantic_key(key: &SemanticKey) -> String {
     match key {
         SemanticKey::Missing => "SemanticKey::Missing".to_string(),
         SemanticKey::Numeric(value) => format!("SemanticKey::Numeric(FiniteKey({}))", value.0),
@@ -244,7 +244,7 @@ pub(super) fn rust_semantic_key(key: &SemanticKey) -> String {
     }
 }
 
-pub(super) fn rust_group_tail(tail: &GroupTail) -> String {
+pub(crate) fn rust_group_tail(tail: &GroupTail) -> String {
     let key = tail
         .key
         .iter()
@@ -272,7 +272,7 @@ pub(super) fn rust_group_tail(tail: &GroupTail) -> String {
     format!("histories.insert(vec![{key}], vec![{rows}]);\n    fitted_cutoffs.insert(vec![{key}], vec![{last_order}]);\n")
 }
 
-pub(super) fn rust_key_vector(columns: &[(usize, super::schema::ColumnKind)]) -> String {
+pub(crate) fn rust_key_vector(columns: &[(usize, super::schema::ColumnKind)]) -> String {
     columns
         .iter()
         .map(|(index, kind)| {
@@ -285,7 +285,7 @@ pub(super) fn rust_key_vector(columns: &[(usize, super::schema::ColumnKind)]) ->
         .join(",")
 }
 
-pub(super) fn rust_row_operation_body(index: usize, op: &V3Op) -> Result<String> {
+pub(crate) fn rust_row_operation_body(index: usize, op: &V3Op) -> Result<String> {
     let (name, k, append, order, tails) = match op {
         V3Op::Lag {
             k,
@@ -349,7 +349,7 @@ pub(super) fn rust_row_operation_body(index: usize, op: &V3Op) -> Result<String>
     Ok(source)
 }
 
-pub(super) fn rust_batch_ops_source(ops: &[V3Op]) -> Result<(String, String)> {
+pub(crate) fn rust_batch_ops_source(ops: &[V3Op]) -> Result<(String, String)> {
     let mut helpers = String::new();
     let mut body = String::new();
     for (index, op) in ops.iter().enumerate() {

@@ -16,7 +16,7 @@ use jope_learning::pools::bootstrap::Verdict;
 use jope_pipeline::test_score::{ScoredDataset, TEST_SCORE_SCHEMA_ID};
 use serde_json::{json, Value};
 
-pub(super) fn fixture_identity() -> ExperimentIdentity {
+pub(crate) fn fixture_identity() -> ExperimentIdentity {
     let hex64 = |b: u8| std::iter::repeat_n(b as char, 64).collect::<String>();
     let mut guards = BTreeMap::new();
     guards.insert("quantile".to_owned(), hex64(b'1'));
@@ -52,7 +52,7 @@ pub(super) fn fixture_identity() -> ExperimentIdentity {
     }
 }
 
-pub(super) fn fixture_plan(identity: &ExperimentIdentity) -> RoundQualPlan {
+pub(crate) fn fixture_plan(identity: &ExperimentIdentity) -> RoundQualPlan {
     RoundQualPlan {
         experiment_identity_sha256: identity.sha256().expect("valid identity"),
         prereg_sha256: "8".repeat(64),
@@ -71,7 +71,7 @@ pub(super) fn fixture_plan(identity: &ExperimentIdentity) -> RoundQualPlan {
     }
 }
 
-pub(super) fn fixture_decomposed_kl(admissible: bool) -> Value {
+pub(crate) fn fixture_decomposed_kl(admissible: bool) -> Value {
     let conditional_base_kl = if admissible { 0.04 } else { 0.35 };
     let conditional_new_kl = 0.01;
     let base_support_mass = 0.90;
@@ -94,7 +94,7 @@ pub(super) fn fixture_decomposed_kl(admissible: bool) -> Value {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn make_ratchet(
+pub(crate) fn make_ratchet(
     identity: &ExperimentIdentity,
     ctx: &str,
     g_round0: &str,
@@ -156,7 +156,7 @@ pub(super) fn make_ratchet(
     })
 }
 
-pub(super) fn make_score(
+pub(crate) fn make_score(
     ctx: &str,
     genome: &str,
     test_rmse: f64,
@@ -188,7 +188,7 @@ pub(super) fn make_score(
     }
 }
 
-pub(super) type FixtureBundle = (
+pub(crate) type FixtureBundle = (
     ExperimentIdentity,
     RoundQualPlan,
     Vec<Value>,
@@ -197,7 +197,7 @@ pub(super) type FixtureBundle = (
     BTreeMap<String, String>,
 );
 
-pub(super) fn fixture_bundle() -> FixtureBundle {
+pub(crate) fn fixture_bundle() -> FixtureBundle {
     let identity = fixture_identity();
     let plan = fixture_plan(&identity);
     let mut parent_map = BTreeMap::new();
@@ -243,4 +243,4 @@ pub(super) fn fixture_bundle() -> FixtureBundle {
 
 #[path = "test_support/prereg.rs"]
 mod prereg;
-pub(super) use prereg::{prereg_fixture, write_cli_inputs, CliInputs, PreregFixture};
+pub(crate) use prereg::{prereg_fixture, write_cli_inputs, CliInputs, PreregFixture};

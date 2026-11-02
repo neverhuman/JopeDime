@@ -1,7 +1,7 @@
 use super::*;
 
 impl Renderer {
-    pub(super) fn render_with_variant(
+    pub(crate) fn render_with_variant(
         &mut self,
         fact: &LineageFact,
         links: &Links,

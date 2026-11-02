@@ -1,7 +1,7 @@
 use super::*;
 
 /// Exhaustive, so a new function fails to compile here until a program executes it.
-pub(super) fn func_name(func: Func) -> &'static str {
+pub(crate) fn func_name(func: Func) -> &'static str {
     match func {
         Func::Abs => "abs",
         Func::Sqrt => "sqrt",
@@ -47,7 +47,7 @@ const FUNCS: [Func; 19] = [
     Func::Round,
 ];
 
-pub(super) fn var_name(var: Var) -> &'static str {
+pub(crate) fn var_name(var: Var) -> &'static str {
     match var {
         Var::X => "x",
         Var::Col(_) => "col",
@@ -73,7 +73,7 @@ const VARS: [Var; 9] = [
     Var::RowStd,
 ];
 
-pub(super) fn binop_name(op: BinOp) -> &'static str {
+pub(crate) fn binop_name(op: BinOp) -> &'static str {
     match op {
         BinOp::Add => "+",
         BinOp::Sub => "-",
@@ -85,13 +85,13 @@ pub(super) fn binop_name(op: BinOp) -> &'static str {
 
 const BINOPS: [BinOp; 5] = [BinOp::Add, BinOp::Sub, BinOp::Mul, BinOp::Div, BinOp::Pow];
 
-pub(super) fn unop_name(op: UnOp) -> &'static str {
+pub(crate) fn unop_name(op: UnOp) -> &'static str {
     match op {
         UnOp::Neg => "neg",
     }
 }
 
-pub(super) fn walk(expr: &Expr, seen: &mut BTreeSet<&'static str>) {
+pub(crate) fn walk(expr: &Expr, seen: &mut BTreeSet<&'static str>) {
     match expr {
         Expr::Const(_) => {}
         Expr::Var(var) => {
@@ -116,7 +116,7 @@ pub(super) fn walk(expr: &Expr, seen: &mut BTreeSet<&'static str>) {
 }
 
 /// Every expression a program evaluates: its closed form, or each `map`/`derive` stage.
-pub(super) fn expressions(program: &Program) -> Vec<MathExpr> {
+pub(crate) fn expressions(program: &Program) -> Vec<MathExpr> {
     match GenomeIr::parse(program.source).unwrap() {
         GenomeIr::Symbolic { expr, .. } => vec![expr],
         GenomeIr::Pipeline(dsl) => dsl

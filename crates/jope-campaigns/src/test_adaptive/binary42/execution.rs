@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn scq_spec(manifest: &ShardManifest) -> Result<String> {
+pub(crate) fn scq_spec(manifest: &ShardManifest) -> Result<String> {
     let bundle_root = remote_bundle_root(&manifest.node, &manifest.release_binary_sha256)?;
     let binary = format!("{bundle_root}/jope-dime-regressor");
     let manifest_sha256 = sha256_bytes(&canonical_json(manifest)?);
@@ -30,7 +30,7 @@ pub(super) fn scq_spec(manifest: &ShardManifest) -> Result<String> {
     ))
 }
 
-pub(super) fn copy_remote_output(node: &str, remote: &str, local: &Path) -> Result<()> {
+pub(crate) fn copy_remote_output(node: &str, remote: &str, local: &Path) -> Result<()> {
     if local.exists() {
         fs::remove_dir_all(local)?;
     }
@@ -54,7 +54,7 @@ pub(super) fn copy_remote_output(node: &str, remote: &str, local: &Path) -> Resu
     Ok(())
 }
 
-pub(super) fn copy_directory_contents(source: &Path, destination: &Path) -> Result<()> {
+pub(crate) fn copy_directory_contents(source: &Path, destination: &Path) -> Result<()> {
     for entry in fs::read_dir(source)
         .with_context(|| format!("read local SCQ output {}", source.display()))?
     {
@@ -83,7 +83,7 @@ pub(super) fn copy_directory_contents(source: &Path, destination: &Path) -> Resu
     Ok(())
 }
 
-pub(super) fn scq_json_at(binary: &str, args: &[&str]) -> Result<Value> {
+pub(crate) fn scq_json_at(binary: &str, args: &[&str]) -> Result<Value> {
     let output = scq_batch::command_output(
         {
             let mut command = Command::new(binary);
@@ -95,7 +95,7 @@ pub(super) fn scq_json_at(binary: &str, args: &[&str]) -> Result<Value> {
     serde_json::from_slice(&output.stdout).context("parse Binary42 SCQ JSON output")
 }
 
-pub(super) fn wait_for_job_at(binary: &str, id: &str) -> Result<Value> {
+pub(crate) fn wait_for_job_at(binary: &str, id: &str) -> Result<Value> {
     loop {
         let show = scq_json_at(binary, &["show", id])?;
         let state = scq_batch::scq_job(&show, id)?
@@ -109,7 +109,7 @@ pub(super) fn wait_for_job_at(binary: &str, id: &str) -> Result<Value> {
     }
 }
 
-pub(super) fn submit_or_recover_job(manifest: &ShardManifest, spec_path: &Path) -> Result<Value> {
+pub(crate) fn submit_or_recover_job(manifest: &ShardManifest, spec_path: &Path) -> Result<Value> {
     let scq_binary = manifest
         .scq_binary_path
         .as_deref()
@@ -131,7 +131,7 @@ pub(super) fn submit_or_recover_job(manifest: &ShardManifest, spec_path: &Path) 
     wait_for_job_at(scq_binary, &manifest.job_id)
 }
 
-pub(super) fn completed_shard_outputs(
+pub(crate) fn completed_shard_outputs(
     root: &Path,
     manifest: &ShardManifest,
     manifest_sha256: &str,
@@ -207,7 +207,7 @@ pub(super) fn completed_shard_outputs(
     Ok(Some(outputs))
 }
 
-pub(super) fn execute_shard(root: &Path, manifest: &ShardManifest) -> Result<Vec<FreshOutput>> {
+pub(crate) fn execute_shard(root: &Path, manifest: &ShardManifest) -> Result<Vec<FreshOutput>> {
     let manifest_bytes = canonical_json(manifest)?;
     let manifest_sha256 = sha256_bytes(&manifest_bytes);
     let local_manifest = root

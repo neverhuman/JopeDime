@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) const MINIMUM_CANARY_VALIDITY: f64 = 0.99;
-pub(super) const MAXIMUM_CANARY_LATENCY_RATIO: f64 = 1.25;
-pub(super) const SHADOW_COMPARISON_LOWER_BOUND_METHOD: &str = "context_cluster_normal_95_v1";
+pub(crate) const MINIMUM_CANARY_VALIDITY: f64 = 0.99;
+pub(crate) const MAXIMUM_CANARY_LATENCY_RATIO: f64 = 1.25;
+pub(crate) const SHADOW_COMPARISON_LOWER_BOUND_METHOD: &str = "context_cluster_normal_95_v1";
 
-pub(super) fn shadow_summary_eligible(summary: &Value) -> bool {
+pub(crate) fn shadow_summary_eligible(summary: &Value) -> bool {
     let metric = summary.get("candidate_vs_accepted").unwrap_or(&Value::Null);
     summary
         .get("contexts")
@@ -58,7 +58,7 @@ pub(super) fn shadow_summary_eligible(summary: &Value) -> bool {
 /// trainer actually DOES (corpus counters, evidence tallies, the parent the
 /// plateau already keys on). Stripped before hashing so a recipe identity
 /// names the training procedure, not the moment it ran.
-pub(super) const RECIPE_VOLATILE_KEYS: &[&str] = &[
+pub(crate) const RECIPE_VOLATILE_KEYS: &[&str] = &[
     "complete_parent_pairs",
     "completed_descendant_rows",
     "completed_descendant_receipts",
@@ -68,7 +68,7 @@ pub(super) const RECIPE_VOLATILE_KEYS: &[&str] = &[
     "accepted_parent_checkpoint_sha256",
 ];
 
-pub(super) fn recipe_identity_sha256(recipe: &Value) -> Result<String> {
+pub(crate) fn recipe_identity_sha256(recipe: &Value) -> Result<String> {
     let object = recipe
         .as_object()
         .context("trainer recipe is not an object")?;
@@ -83,7 +83,7 @@ pub(super) fn recipe_identity_sha256(recipe: &Value) -> Result<String> {
 /// candidate checkpoint -> ShadowCheckpoint.v1 (trainer_intent_sha256) ->
 /// content-addressed TrainerIntent receipt -> its recipe. None when any
 /// link is missing (legacy receipts predating recipe stamping).
-pub(super) fn resolve_candidate_recipe_identity(
+pub(crate) fn resolve_candidate_recipe_identity(
     root: &Path,
     task: Task,
     candidate: &Sha256Digest,
@@ -125,7 +125,7 @@ pub(super) fn resolve_candidate_recipe_identity(
 /// A valid operator directive for (task, parent) at ops/recipe-changes/.
 /// Malformed documents are treated as absent (the pause stays), never as
 /// a bridge.
-pub(super) fn recipe_change_directive(
+pub(crate) fn recipe_change_directive(
     root: &Path,
     task: Task,
     parent: &Sha256Digest,
@@ -196,7 +196,7 @@ pub(super) fn recipe_change_directive(
         })
 }
 
-pub(super) fn publish_plateau_diagnoses(
+pub(crate) fn publish_plateau_diagnoses(
     root: &Path,
     accepted: &BTreeMap<Task, AcceptedPointer>,
     current_recipe_identities: &BTreeMap<Task, String>,

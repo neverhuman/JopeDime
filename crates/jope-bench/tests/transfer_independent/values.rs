@@ -1,8 +1,8 @@
 use super::*;
 
-pub(super) const GAIN_FIELDS: [&str; 3] = ["audit", "outer", "contribution"];
+pub(crate) const GAIN_FIELDS: [&str; 3] = ["audit", "outer", "contribution"];
 /// The planner's search identity: SHA-256 of its compact, field-ordered JSON encoding.
-pub(super) const SEARCH_FIELDS: [&str; 7] = [
+pub(crate) const SEARCH_FIELDS: [&str; 7] = [
     "dataset",
     "seed",
     "outer",
@@ -12,9 +12,9 @@ pub(super) const SEARCH_FIELDS: [&str; 7] = [
     "inner_score",
 ];
 
-pub(super) type Oracle<T> = Result<T, String>;
+pub(crate) type Oracle<T> = Result<T, String>;
 
-pub(super) fn require(condition: bool, message: impl Into<String>) -> Oracle<()> {
+pub(crate) fn require(condition: bool, message: impl Into<String>) -> Oracle<()> {
     if condition {
         Ok(())
     } else {
@@ -22,32 +22,32 @@ pub(super) fn require(condition: bool, message: impl Into<String>) -> Oracle<()>
     }
 }
 
-pub(super) fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
 /// A JSON member that must exist, as a subscript would demand.
-pub(super) fn field<'a>(value: &'a Value, key: &str) -> Oracle<&'a Value> {
+pub(crate) fn field<'a>(value: &'a Value, key: &str) -> Oracle<&'a Value> {
     value
         .as_object()
         .and_then(|object| object.get(key))
         .ok_or_else(|| format!("missing field {key}"))
 }
 
-pub(super) fn array<'a>(value: &'a Value, key: &str) -> Oracle<&'a Vec<Value>> {
+pub(crate) fn array<'a>(value: &'a Value, key: &str) -> Oracle<&'a Vec<Value>> {
     field(value, key)?
         .as_array()
         .ok_or_else(|| format!("{key} is not an array"))
 }
 
-pub(super) fn string<'a>(value: &'a Value, key: &str) -> Oracle<&'a str> {
+pub(crate) fn string<'a>(value: &'a Value, key: &str) -> Oracle<&'a str> {
     field(value, key)?
         .as_str()
         .ok_or_else(|| format!("{key} is not a string"))
 }
 
 /// Values as an f-string renders them.
-pub(super) fn text(value: &Value) -> String {
+pub(crate) fn text(value: &Value) -> String {
     match value {
         Value::String(text) => text.clone(),
         Value::Null => "None".into(),
@@ -58,14 +58,14 @@ pub(super) fn text(value: &Value) -> String {
 }
 
 /// Equality of identity members; numbers compare by value, as the planner's integers do.
-pub(super) fn same(left: &Value, right: &Value) -> bool {
+pub(crate) fn same(left: &Value, right: &Value) -> bool {
     match (left.as_f64(), right.as_f64()) {
         (Some(left), Some(right)) => left == right,
         _ => left == right,
     }
 }
 
-pub(super) fn truthy(value: Option<&Value>) -> bool {
+pub(crate) fn truthy(value: Option<&Value>) -> bool {
     match value {
         None | Some(Value::Null) => false,
         Some(Value::Bool(flag)) => *flag,
@@ -76,7 +76,7 @@ pub(super) fn truthy(value: Option<&Value>) -> bool {
     }
 }
 
-pub(super) fn load(asset: &Value) -> Oracle<Value> {
+pub(crate) fn load(asset: &Value) -> Oracle<Value> {
     let path = string(asset, "path")?;
     let data = std::fs::read(path).map_err(|error| format!("read {path}: {error}"))?;
     require(
@@ -86,7 +86,7 @@ pub(super) fn load(asset: &Value) -> Oracle<Value> {
     serde_json::from_slice(&data).map_err(|error| format!("parse {path}: {error}"))
 }
 
-pub(super) fn search_digest(search: &Value) -> Oracle<String> {
+pub(crate) fn search_digest(search: &Value) -> Oracle<String> {
     let mut encoded = String::from("{");
     for (position, name) in SEARCH_FIELDS.iter().enumerate() {
         if position > 0 {
@@ -101,7 +101,7 @@ pub(super) fn search_digest(search: &Value) -> Oracle<String> {
 }
 
 /// Correctly rounded sum of the values (Shewchuk partials with half-even correction).
-pub(super) fn exact_sum(values: &[f64]) -> Oracle<f64> {
+pub(crate) fn exact_sum(values: &[f64]) -> Oracle<f64> {
     let mut partials: Vec<f64> = Vec::new();
     let (mut special, mut infinite) = (0.0_f64, 0.0_f64);
     for &value in values {
@@ -168,13 +168,13 @@ pub(super) fn exact_sum(values: &[f64]) -> Oracle<f64> {
     Ok(hi)
 }
 
-pub(super) fn mean(values: &[f64]) -> Oracle<f64> {
+pub(crate) fn mean(values: &[f64]) -> Oracle<f64> {
     require(!values.is_empty(), "mean of no values")?;
     Ok(exact_sum(values)? / values.len() as f64)
 }
 
 /// Compensated (Neumaier) running sum of squared errors.
-pub(super) fn compensated_sum(values: impl Iterator<Item = f64>) -> f64 {
+pub(crate) fn compensated_sum(values: impl Iterator<Item = f64>) -> f64 {
     let (mut total, mut compensation) = (0.0_f64, 0.0_f64);
     for value in values {
         let next = total + value;
@@ -191,7 +191,7 @@ pub(super) fn compensated_sum(values: impl Iterator<Item = f64>) -> f64 {
     total
 }
 
-pub(super) fn rmse(actual: &[f64], predicted: &Value) -> Oracle<f64> {
+pub(crate) fn rmse(actual: &[f64], predicted: &Value) -> Oracle<f64> {
     let predicted = predicted
         .as_array()
         .ok_or("prediction count differs from scoring rows")?;

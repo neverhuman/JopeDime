@@ -28,13 +28,13 @@ pub trait InjectedBackend: Send + Sync {
 }
 
 pub struct Store {
-    pub(super) inner: Box<dyn ObjectStore>,
-    pub(super) prefix: ObjPath,
+    pub(crate) inner: Box<dyn ObjectStore>,
+    pub(crate) prefix: ObjPath,
     pub url: String,
-    pub(super) local_root: Option<std::path::PathBuf>,
+    pub(crate) local_root: Option<std::path::PathBuf>,
 }
 
-pub(super) type InjectedRegistry =
+pub(crate) type InjectedRegistry =
     std::collections::BTreeMap<usize, (ObjectStoreScheme, std::sync::Arc<dyn InjectedBackend>)>;
 
 fn injected_registry() -> &'static std::sync::Mutex<InjectedRegistry> {
@@ -43,7 +43,7 @@ fn injected_registry() -> &'static std::sync::Mutex<InjectedRegistry> {
     REGISTRY.get_or_init(|| std::sync::Mutex::new(std::collections::BTreeMap::new()))
 }
 
-pub(super) fn injected_registry_guard() -> std::sync::MutexGuard<'static, InjectedRegistry> {
+pub(crate) fn injected_registry_guard() -> std::sync::MutexGuard<'static, InjectedRegistry> {
     injected_registry()
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)

@@ -299,7 +299,7 @@ fn parse_func(name: &str) -> Result<Func> {
     }
 }
 
-pub(super) fn validate_arity(func: Func, len: usize) -> Result<()> {
+pub(crate) fn validate_arity(func: Func, len: usize) -> Result<()> {
     let ok = match func {
         Func::Abs
         | Func::Sqrt

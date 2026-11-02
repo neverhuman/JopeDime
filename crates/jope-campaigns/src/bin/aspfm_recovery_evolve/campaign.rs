@@ -4,7 +4,7 @@ fn campaign_receipt_path(output: &Path, dataset: &str) -> PathBuf {
     output.join("receipts").join(format!("{dataset}.json"))
 }
 
-pub(super) fn run_campaign(campaign: Campaign, args: &Args) -> Result<Value> {
+pub(crate) fn run_campaign(campaign: Campaign, args: &Args) -> Result<Value> {
     let receipt_path = campaign_receipt_path(&args.output, &campaign.dataset);
     if receipt_path.is_file() {
         return Ok(serde_json::from_slice(&fs::read(receipt_path)?)?);
@@ -86,7 +86,7 @@ pub(super) fn run_campaign(campaign: Campaign, args: &Args) -> Result<Value> {
     Ok(receipt)
 }
 
-pub(super) fn build_campaigns(replay: &Value, args: &Args) -> Result<Vec<Campaign>> {
+pub(crate) fn build_campaigns(replay: &Value, args: &Args) -> Result<Vec<Campaign>> {
     let task = args.task.as_str();
     let mut targets = BTreeMap::<String, f64>::new();
     let mut accepted = BTreeMap::<String, Vec<Member>>::new();
@@ -209,7 +209,7 @@ pub(super) fn build_campaigns(replay: &Value, args: &Args) -> Result<Vec<Campaig
     Ok(campaigns)
 }
 
-pub(super) fn integrate(replay: &mut Value, receipts: &[Value]) -> Result<()> {
+pub(crate) fn integrate(replay: &mut Value, receipts: &[Value]) -> Result<()> {
     let mut exhaustions = replay["recovery_exhaustions"]
         .as_array()
         .cloned()

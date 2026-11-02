@@ -13,6 +13,6 @@ mod log_tables;
 mod trig;
 mod trig_tables;
 
-pub(super) use self::exp::exp;
-pub(super) use self::log::ln;
-pub(super) use self::trig::{cos, sin};
+pub(crate) use self::exp::exp;
+pub(crate) use self::log::ln;
+pub(crate) use self::trig::{cos, sin};

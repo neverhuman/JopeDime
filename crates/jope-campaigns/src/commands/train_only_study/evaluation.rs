@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn slice_data(
+pub(crate) fn slice_data(
     data: &RegressionData,
     indices: &[usize],
 ) -> Result<(Vec<Vec<f64>>, Vec<f64>)> {
@@ -105,7 +105,7 @@ impl StudyEvalContext {
     }
 }
 
-pub(super) fn evaluate_member_split(
+pub(crate) fn evaluate_member_split(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
@@ -219,7 +219,7 @@ pub(super) fn evaluate_member_split(
 
 // Keep population identity, folds and search budget explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn score_population(
+pub(crate) fn score_population(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
@@ -304,7 +304,7 @@ impl DeterministicRng {
     }
 }
 
-pub(super) fn offspring_seed(
+pub(crate) fn offspring_seed(
     run_id: &str,
     dataset_hash: &str,
     generation: usize,
@@ -317,7 +317,7 @@ pub(super) fn offspring_seed(
     u64::from_le_bytes(digest[..8].try_into().unwrap())
 }
 
-pub(super) fn tournament<'a>(
+pub(crate) fn tournament<'a>(
     rng: &mut DeterministicRng,
     ranked: &'a [ScoredMember],
 ) -> &'a ScoredMember {
@@ -328,7 +328,7 @@ pub(super) fn tournament<'a>(
     &ranked[winner]
 }
 
-pub(super) fn refill_population(
+pub(crate) fn refill_population(
     run_id: &str,
     dataset_hash: &str,
     features: usize,

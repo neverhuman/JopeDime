@@ -1,17 +1,17 @@
 use super::*;
 
-pub(super) fn is_sha256(value: &str) -> bool {
+pub(crate) fn is_sha256(value: &str) -> bool {
     value.len() == 64 && value.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
-pub(super) fn get_str<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
+pub(crate) fn get_str<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
     value
         .get(key)
         .and_then(Value::as_str)
         .with_context(|| format!("missing string field {key}"))
 }
 
-pub(super) fn rglob(directory: &Path, name: &str, found: &mut Vec<PathBuf>) {
+pub(crate) fn rglob(directory: &Path, name: &str, found: &mut Vec<PathBuf>) {
     let Ok(entries) = fs::read_dir(directory) else {
         return;
     };
@@ -30,15 +30,15 @@ pub(super) fn rglob(directory: &Path, name: &str, found: &mut Vec<PathBuf>) {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone)]
-pub(super) struct LiveCatalog {
-    pub(super) pointer_path: PathBuf,
-    pub(super) catalog: PathBuf,
-    pub(super) catalog_sha256: String,
-    pub(super) data: PathBuf,
-    pub(super) data_sha256: String,
+pub(crate) struct LiveCatalog {
+    pub(crate) pointer_path: PathBuf,
+    pub(crate) catalog: PathBuf,
+    pub(crate) catalog_sha256: String,
+    pub(crate) data: PathBuf,
+    pub(crate) data_sha256: String,
 }
 
-pub(super) fn read_live_catalog(root: &Path) -> Result<LiveCatalog> {
+pub(crate) fn read_live_catalog(root: &Path) -> Result<LiveCatalog> {
     let pointer_path = root.join("catalog/current.json");
     let pointer = read_json(&pointer_path)?;
     let catalog_sha256 = get_str(&pointer, "catalog_sha256")?.to_owned();
@@ -56,17 +56,17 @@ pub(super) fn read_live_catalog(root: &Path) -> Result<LiveCatalog> {
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct ProposalBinding {
-    pub(super) pointer_path: PathBuf,
-    pub(super) pointer: Value,
-    pub(super) checkpoint_sha256: String,
+pub(crate) struct ProposalBinding {
+    pub(crate) pointer_path: PathBuf,
+    pub(crate) pointer: Value,
+    pub(crate) checkpoint_sha256: String,
     /// The catalog the *current* proposal file was generated against. Read
     /// from the pointer when present (this driver writes it) and otherwise
     /// recovered from the summary artifact the generator emitted.
-    pub(super) bound_catalog_sha256: Option<String>,
+    pub(crate) bound_catalog_sha256: Option<String>,
 }
 
-pub(super) fn read_proposal_binding(root: &Path) -> Result<ProposalBinding> {
+pub(crate) fn read_proposal_binding(root: &Path) -> Result<ProposalBinding> {
     let pointer_path = root.join("proposals/current.json");
     let pointer = read_json(&pointer_path)?;
     let checkpoint_sha256 = get_str(&pointer, "checkpoint_sha256")?.to_owned();
@@ -101,20 +101,20 @@ pub(super) fn read_proposal_binding(root: &Path) -> Result<ProposalBinding> {
 /// One generation lane: which branch (None = both), which checkpoint, and which
 /// catalog the currently-published set for that lane was built against.
 #[derive(Debug, Clone)]
-pub(super) struct Lane {
-    pub(super) task: Option<String>,
-    pub(super) checkpoint_sha256: String,
-    pub(super) checkpoint: PathBuf,
-    pub(super) bound_catalog_sha256: Option<String>,
+pub(crate) struct Lane {
+    pub(crate) task: Option<String>,
+    pub(crate) checkpoint_sha256: String,
+    pub(crate) checkpoint: PathBuf,
+    pub(crate) bound_catalog_sha256: Option<String>,
 }
 
 impl Lane {
-    pub(super) fn label(&self) -> String {
+    pub(crate) fn label(&self) -> String {
         self.task.clone().unwrap_or_else(|| "combined".to_owned())
     }
     /// Family prefix that blocks a resubmission: any job for this lane's
     /// (task, checkpoint), whatever catalog it was aimed at.
-    pub(super) fn family(&self) -> String {
+    pub(crate) fn family(&self) -> String {
         match &self.task {
             Some(task) => format!(
                 "jope-selfplay-propose-{}-{}-c",
@@ -124,7 +124,7 @@ impl Lane {
             None => format!("jope-selfplay-propose-{}-c", &self.checkpoint_sha256[..12]),
         }
     }
-    pub(super) fn prefix(&self, catalog_sha256: &str) -> String {
+    pub(crate) fn prefix(&self, catalog_sha256: &str) -> String {
         format!("{}{}", self.family(), &catalog_sha256[..12])
     }
 }
@@ -134,7 +134,11 @@ impl Lane {
 /// lineage lives in `checkpoints_str()`. Either is acceptable, both are hash-verified,
 /// because a propose job that stages the wrong bytes produces a whole
 /// generation of silently mislabelled proposals.
-pub(super) fn resolve_checkpoint(root: &Path, sha256: &str, declared: Option<&str>) -> Result<PathBuf> {
+pub(crate) fn resolve_checkpoint(
+    root: &Path,
+    sha256: &str,
+    declared: Option<&str>,
+) -> Result<PathBuf> {
     let mut candidates: Vec<PathBuf> = Vec::new();
     if let Some(path) = declared {
         candidates.push(PathBuf::from(path));
@@ -155,7 +159,7 @@ pub(super) fn resolve_checkpoint(root: &Path, sha256: &str, declared: Option<&st
 /// Per-task accepted checkpoints, or `None` when the branches agree (or the
 /// pointer does not exist yet, which is the state before the first per-task
 /// promotion lands). `None` means "run the historical combined lane".
-pub(super) fn read_task_lanes(root: &Path, binding: &ProposalBinding) -> Result<Option<Vec<Lane>>> {
+pub(crate) fn read_task_lanes(root: &Path, binding: &ProposalBinding) -> Result<Option<Vec<Lane>>> {
     let pointer_path = root.join(TASK_ACCEPTED_POINTER);
     if !pointer_path.is_file() {
         return Ok(None);
@@ -207,7 +211,7 @@ pub(super) fn read_task_lanes(root: &Path, binding: &ProposalBinding) -> Result<
     Ok(Some(lanes))
 }
 
-pub(super) fn read_task_proposal_pointer(root: &Path) -> Result<Value> {
+pub(crate) fn read_task_proposal_pointer(root: &Path) -> Result<Value> {
     let path = root.join("proposals/current-by-task.json");
     match fs::symlink_metadata(&path) {
         Ok(_) => read_json(&path),
@@ -218,7 +222,7 @@ pub(super) fn read_task_proposal_pointer(root: &Path) -> Result<Value> {
     }
 }
 
-pub(super) fn resolve(pointer: &Path, target: &Path) -> PathBuf {
+pub(crate) fn resolve(pointer: &Path, target: &Path) -> PathBuf {
     if target.is_absolute() {
         target.to_path_buf()
     } else {

@@ -8,7 +8,7 @@ fn close(a: Option<f64>, b: Option<f64>) -> bool {
 }
 
 /// Every disagreement between the independent score and the reporter, or none.
-pub(super) fn compare(result: &Score, report: &Value) -> Vec<String> {
+pub(crate) fn compare(result: &Score, report: &Value) -> Vec<String> {
     let mut problems = Vec::new();
     let ok = report.get("ok");
     if truthy(ok) != result.complete {

@@ -1,15 +1,15 @@
 use super::*;
 
-pub(super) fn campaign_root(run_id: &str, dataset: &str) -> PathBuf {
+pub(crate) fn campaign_root(run_id: &str, dataset: &str) -> PathBuf {
     run_root(run_id).join(dataset)
 }
 
-pub(super) fn generation_root(root: &Path, generation: usize) -> PathBuf {
+pub(crate) fn generation_root(root: &Path, generation: usize) -> PathBuf {
     root.join("generations")
         .join(format!("generation-{generation:06}"))
 }
 
-pub(super) fn immutable_or_equal(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn immutable_or_equal(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.exists() {
         if fs::read(path)? != bytes {
             bail!("immutable artifact collision at {}", path.display());
@@ -19,17 +19,17 @@ pub(super) fn immutable_or_equal(path: &Path, bytes: &[u8]) -> Result<()> {
     immutable_write(path, bytes)
 }
 
-pub(super) fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<String> {
+pub(crate) fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<String> {
     let bytes = canonical_json(value)?;
     immutable_or_equal(path, &bytes)?;
     Ok(sha256_bytes(&bytes))
 }
 
-pub(super) fn load_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<T> {
+pub(crate) fn load_json<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<T> {
     serde_json::from_slice(&fs::read(path)?).with_context(|| format!("parse {}", path.display()))
 }
 
-pub(super) fn read_cohort() -> Result<(FrozenCohort, String)> {
+pub(crate) fn read_cohort() -> Result<(FrozenCohort, String)> {
     let manifest: FrozenCohort =
         serde_json::from_slice(COHORT_BYTES).context("parse frozen Binary42 cohort")?;
     if manifest.schema != "JopeBinary42FrozenCohort.v1"
@@ -86,7 +86,7 @@ pub(super) fn read_cohort() -> Result<(FrozenCohort, String)> {
     Ok((manifest, sha256_bytes(COHORT_BYTES)))
 }
 
-pub(super) fn selected_dataset(dataset: &str) -> Result<(FrozenDataset, String)> {
+pub(crate) fn selected_dataset(dataset: &str) -> Result<(FrozenDataset, String)> {
     if dataset != ILPD {
         bail!("the Binary42 pilot is frozen to ILPD ({ILPD}); no other dataset may launch");
     }
@@ -101,7 +101,7 @@ pub(super) fn selected_dataset(dataset: &str) -> Result<(FrozenDataset, String)>
     ))
 }
 
-pub(super) fn cohort_dataset(dataset: &str) -> Result<(FrozenDataset, String)> {
+pub(crate) fn cohort_dataset(dataset: &str) -> Result<(FrozenDataset, String)> {
     let (cohort, sha256) = read_cohort()?;
     Ok((
         cohort
@@ -113,7 +113,7 @@ pub(super) fn cohort_dataset(dataset: &str) -> Result<(FrozenDataset, String)> {
     ))
 }
 
-pub(super) fn admission_order(cohort: &FrozenCohort) -> Vec<FrozenDataset> {
+pub(crate) fn admission_order(cohort: &FrozenCohort) -> Vec<FrozenDataset> {
     let mut datasets = cohort.datasets.clone();
     datasets.sort_by(|left, right| {
         let left_cost = (left.train_rows as u128) * (left.features as u128);
@@ -125,7 +125,7 @@ pub(super) fn admission_order(cohort: &FrozenCohort) -> Vec<FrozenDataset> {
     datasets
 }
 
-pub(super) fn verify_dataset_binding(spec: &FrozenDataset) -> Result<()> {
+pub(crate) fn verify_dataset_binding(spec: &FrozenDataset) -> Result<()> {
     let train_path = Path::new(&spec.train_path);
     let test_path = Path::new(&spec.test_path);
     let report_path = Path::new(&spec.leader_report_path);

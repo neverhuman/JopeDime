@@ -394,7 +394,7 @@ impl Loop {
             authorization_issued: false,
         })
     }
-    pub(super) fn original_request(&self, generation: u64, id: &str) -> Result<Request> {
+    pub(crate) fn original_request(&self, generation: u64, id: &str) -> Result<Request> {
         let path = self.state.join("requests").join(format!(
             "{}.json",
             identity(&self.config.run, generation, id)?

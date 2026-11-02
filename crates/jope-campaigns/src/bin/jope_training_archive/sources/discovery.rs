@@ -1,33 +1,33 @@
 use super::*;
 
-pub(super) fn now_ms() -> i64 {
+pub(crate) fn now_ms() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_millis() as i64
 }
 
-pub(super) fn mtime_ms(p: &Path) -> Result<i64> {
+pub(crate) fn mtime_ms(p: &Path) -> Result<i64> {
     let md = fs::metadata(p).with_context(|| format!("stat {}", p.display()))?;
     Ok(md.modified()?.duration_since(UNIX_EPOCH)?.as_millis() as i64)
 }
 
-pub(super) fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     let mut h = Sha256::new();
     h.update(bytes);
     hex::encode(h.finalize())
 }
 
-pub(super) fn f(v: Option<&Value>) -> Option<f64> {
+pub(crate) fn f(v: Option<&Value>) -> Option<f64> {
     v.and_then(|x| x.as_f64())
 }
-pub(super) fn i(v: Option<&Value>) -> Option<i64> {
+pub(crate) fn i(v: Option<&Value>) -> Option<i64> {
     v.and_then(|x| x.as_i64().or_else(|| x.as_f64().map(|y| y as i64)))
 }
-pub(super) fn s(v: Option<&Value>) -> Option<String> {
+pub(crate) fn s(v: Option<&Value>) -> Option<String> {
     v.and_then(|x| x.as_str().map(|y| y.to_string()))
 }
-pub(super) fn b(v: Option<&Value>) -> Option<i64> {
+pub(crate) fn b(v: Option<&Value>) -> Option<i64> {
     match v {
         Some(Value::Bool(x)) => Some(*x as i64),
         Some(Value::Object(_)) => Some(1), // anti_overfit_experiment is an object when enabled
@@ -40,29 +40,29 @@ pub(super) fn b(v: Option<&Value>) -> Option<i64> {
 // ---------------------------------------------------------------- discovery
 
 #[derive(Debug, Clone)]
-pub(super) struct SourceSpec {
-    pub(super) lane: String,
-    pub(super) lane_kind: String,
-    pub(super) in_policy_curve: bool,
-    pub(super) run_id: String,
-    pub(super) attempt: i64,
-    pub(super) watermark: String,
-    pub(super) node: Option<String>,
-    pub(super) generation: Option<i64>,
-    pub(super) model_version_hint: Option<String>,
+pub(crate) struct SourceSpec {
+    pub(crate) lane: String,
+    pub(crate) lane_kind: String,
+    pub(crate) in_policy_curve: bool,
+    pub(crate) run_id: String,
+    pub(crate) attempt: i64,
+    pub(crate) watermark: String,
+    pub(crate) node: Option<String>,
+    pub(crate) generation: Option<i64>,
+    pub(crate) model_version_hint: Option<String>,
     /// File actually read.
-    pub(super) path: PathBuf,
+    pub(crate) path: PathBuf,
     /// Where the bytes originally lived (may be a remote node).
-    pub(super) origin: String,
-    pub(super) sidecar_result: Option<PathBuf>,
-    pub(super) sidecar_kind: Option<String>,
-    pub(super) notes: Option<String>,
+    pub(crate) origin: String,
+    pub(crate) sidecar_result: Option<PathBuf>,
+    pub(crate) sidecar_kind: Option<String>,
+    pub(crate) notes: Option<String>,
     /// Extra physical copies with identical content.
-    pub(super) aliases: Vec<(String, String)>,
+    pub(crate) aliases: Vec<(String, String)>,
 }
 
 impl SourceSpec {
-    pub(super) fn run_key(&self) -> String {
+    pub(crate) fn run_key(&self) -> String {
         format!(
             "{}/{}/{}/{}",
             self.lane, self.run_id, self.attempt, self.watermark
@@ -71,7 +71,7 @@ impl SourceSpec {
 }
 
 /// scq run dirs, preferring WS-B's durable copy when it has at least as many rows.
-pub(super) fn discover_scq(root: &Path) -> Result<Vec<SourceSpec>> {
+pub(crate) fn discover_scq(root: &Path) -> Result<Vec<SourceSpec>> {
     let mut by_key: BTreeMap<(String, i64, String), (PathBuf, String, usize)> = BTreeMap::new();
 
     let mut consider = |p: PathBuf, origin: String, run_id: String, attempt: i64, wm: String| {
@@ -186,7 +186,7 @@ pub(super) fn discover_scq(root: &Path) -> Result<Vec<SourceSpec>> {
 }
 
 /// Glob with a single '*' wildcard: "gen*_train_metrics.jsonl".
-pub(super) fn glob1(pattern: &str, name: &str) -> bool {
+pub(crate) fn glob1(pattern: &str, name: &str) -> bool {
     match pattern.split_once('*') {
         Some((a, b2)) => {
             name.len() >= a.len() + b2.len() && name.starts_with(a) && name.ends_with(b2)
@@ -197,7 +197,7 @@ pub(super) fn glob1(pattern: &str, name: &str) -> bool {
 
 /// Mirror `src` into the archive (preserving mtime) unless an identical copy is
 /// already there. The archive must never depend on a directory it does not own.
-pub(super) fn mirror(src: &Path, dst: &Path) -> Result<()> {
+pub(crate) fn mirror(src: &Path, dst: &Path) -> Result<()> {
     if let Some(p) = dst.parent() {
         fs::create_dir_all(p)?;
     }
@@ -218,7 +218,7 @@ pub(super) fn mirror(src: &Path, dst: &Path) -> Result<()> {
 /// Walk each `lane_roots` directory, mirror what it finds into the archive and
 /// return one SourceSpec per file. run_id is derived from the file name so that
 /// re-running is stable.
-pub(super) fn discover_lane_roots(root: &Path, doc: &Value) -> Result<Vec<SourceSpec>> {
+pub(crate) fn discover_lane_roots(root: &Path, doc: &Value) -> Result<Vec<SourceSpec>> {
     let mut out = vec![];
     for lr in doc["lane_roots"].as_array().cloned().unwrap_or_default() {
         let dir = PathBuf::from(lr["dir"].as_str().unwrap_or_default());
@@ -299,7 +299,7 @@ pub(super) fn discover_lane_roots(root: &Path, doc: &Value) -> Result<Vec<Source
     Ok(out)
 }
 
-pub(super) fn discover_imported(root: &Path) -> Result<(Vec<SourceSpec>, Value)> {
+pub(crate) fn discover_imported(root: &Path) -> Result<(Vec<SourceSpec>, Value)> {
     let manifest_path = root.join("db/imported/sources.v1.json");
     if !manifest_path.is_file() {
         return Ok((vec![], Value::Null));

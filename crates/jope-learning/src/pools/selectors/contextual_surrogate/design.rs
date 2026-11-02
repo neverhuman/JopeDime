@@ -1,7 +1,7 @@
 use super::*;
 
 impl<'a> ContextualSurrogateQHat<'a> {
-    pub(super) fn select_top_variance_coords(
+    pub(crate) fn select_top_variance_coords(
         vectors: &[&[f64]],
         dim: usize,
         max_coords: usize,
@@ -29,14 +29,14 @@ impl<'a> ContextualSurrogateQHat<'a> {
             .collect()
     }
 
-    pub(super) fn project(v: &[f64], proj: &[(usize, f64, f64)]) -> Vec<f64> {
+    pub(crate) fn project(v: &[f64], proj: &[(usize, f64, f64)]) -> Vec<f64> {
         proj.iter()
             .map(|&(j, mean, scale)| (v[j] - mean) / scale)
             .collect()
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub(super) fn design_row(
+    pub(crate) fn design_row(
         zt: &[f64],
         pt: &[f64],
         r_s: f64,
@@ -76,7 +76,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         x
     }
 
-    pub(super) fn view_design_rows_with_ridge(
+    pub(crate) fn view_design_rows_with_ridge(
         &self,
         view: &PoolView<'_>,
         ridge_scores: &[f64],
@@ -200,7 +200,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         Ok(rows)
     }
 
-    pub(super) fn view_design_rows(&self, view: &PoolView<'_>) -> Result<Vec<Vec<f64>>> {
+    pub(crate) fn view_design_rows(&self, view: &PoolView<'_>) -> Result<Vec<Vec<f64>>> {
         let ridge_scores = self.ridge.scores(view)?;
         self.view_design_rows_with_ridge(view, &ridge_scores)
     }

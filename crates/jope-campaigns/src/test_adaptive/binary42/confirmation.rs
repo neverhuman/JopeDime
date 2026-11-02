@@ -1,17 +1,17 @@
 use super::*;
 
-pub(super) fn winner_seed_path(path: &Path) -> Result<String> {
+pub(crate) fn winner_seed_path(path: &Path) -> Result<String> {
     Ok(path
         .strip_prefix(campaign_state_root())?
         .to_string_lossy()
         .into_owned())
 }
 
-pub(super) fn winner_seed_file(path: &str) -> PathBuf {
+pub(crate) fn winner_seed_file(path: &str) -> PathBuf {
     campaign_state_root().join(path)
 }
 
-pub(super) fn matching_confirmation_file(
+pub(crate) fn matching_confirmation_file(
     dataset_root: &Path,
     expected_sha256: &str,
 ) -> Result<PathBuf> {
@@ -44,7 +44,7 @@ pub(super) fn matching_confirmation_file(
         })
 }
 
-pub(super) fn validate_winner_seed_source(
+pub(crate) fn validate_winner_seed_source(
     source: &WinnerSeedSource,
     cohort: &FrozenCohort,
 ) -> Result<()> {
@@ -140,7 +140,7 @@ pub(super) fn validate_winner_seed_source(
     Ok(())
 }
 
-pub(super) fn confirmed_winner_seed_sources(
+pub(crate) fn confirmed_winner_seed_sources(
     current_run_id: &str,
     cohort: &FrozenCohort,
 ) -> Result<Vec<WinnerSeedSource>> {
@@ -230,7 +230,7 @@ pub(super) fn confirmed_winner_seed_sources(
     Ok(sources)
 }
 
-pub(super) fn validate_winner_seed_snapshot(
+pub(crate) fn validate_winner_seed_snapshot(
     sources: &[WinnerSeedSource],
     cohort: &FrozenCohort,
 ) -> Result<()> {
@@ -263,7 +263,7 @@ pub(super) fn validate_winner_seed_snapshot(
     Ok(())
 }
 
-pub(super) fn confirmation_attempt(root: &Path) -> Result<usize> {
+pub(crate) fn confirmation_attempt(root: &Path) -> Result<usize> {
     let confirmation_root = root.join("winner").join("confirmations");
     if !confirmation_root.exists() {
         return Ok(0);
@@ -271,7 +271,7 @@ pub(super) fn confirmation_attempt(root: &Path) -> Result<usize> {
     Ok(fs::read_dir(confirmation_root)?.count())
 }
 
-pub(super) fn store_confirmation_output(
+pub(crate) fn store_confirmation_output(
     root: &Path,
     output: FreshOutput,
     test: &RegressionData,
@@ -305,7 +305,7 @@ pub(super) fn store_confirmation_output(
     })
 }
 
-pub(super) fn confirm_winner(
+pub(crate) fn confirm_winner(
     root: &Path,
     campaign: &CampaignManifest,
     staging: &StagingReceipt,

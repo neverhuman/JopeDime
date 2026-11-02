@@ -3,7 +3,7 @@ use anyhow::Result;
 
 /// A Python literal.
 #[derive(Clone, Debug)]
-pub(super) enum Py {
+pub(crate) enum Py {
     None,
     B(bool),
     I(usize),
@@ -17,19 +17,19 @@ pub(super) enum Py {
 }
 
 impl Py {
-    pub(super) fn floats(values: &[f64]) -> Self {
+    pub(crate) fn floats(values: &[f64]) -> Self {
         Self::List(values.iter().copied().map(Self::F).collect())
     }
 
-    pub(super) fn rows(rows: &[Vec<f64>]) -> Self {
+    pub(crate) fn rows(rows: &[Vec<f64>]) -> Self {
         Self::List(rows.iter().map(|row| Self::floats(row)).collect())
     }
 
-    pub(super) fn ints(values: &[usize]) -> Self {
+    pub(crate) fn ints(values: &[usize]) -> Self {
         Self::List(values.iter().copied().map(Self::I).collect())
     }
 
-    pub(super) fn pairs(pairs: &[(usize, usize)]) -> Self {
+    pub(crate) fn pairs(pairs: &[(usize, usize)]) -> Self {
         Self::List(
             pairs
                 .iter()
@@ -39,7 +39,7 @@ impl Py {
     }
 }
 
-pub(super) fn render(value: &Py) -> Result<String> {
+pub(crate) fn render(value: &Py) -> Result<String> {
     let mut out = String::new();
     write_py(value, &mut out)?;
     Ok(out)

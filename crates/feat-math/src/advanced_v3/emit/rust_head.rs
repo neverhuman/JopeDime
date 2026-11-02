@@ -1,7 +1,7 @@
 use super::rust_input::*;
 use super::*;
 
-pub(super) fn rust_linear_predictor(
+pub(crate) fn rust_linear_predictor(
     means: &[f64],
     scales: &[f64],
     weights: &[f64],
@@ -19,7 +19,7 @@ pub(super) fn rust_linear_predictor(
     )
 }
 
-pub(super) fn rust_tree_expr(node: &ExtraNode, input: &str) -> String {
+pub(crate) fn rust_tree_expr(node: &ExtraNode, input: &str) -> String {
     match node {
         ExtraNode::Leaf(value) => rust_f64(*value),
         ExtraNode::Split {
@@ -37,7 +37,7 @@ pub(super) fn rust_tree_expr(node: &ExtraNode, input: &str) -> String {
     }
 }
 
-pub(super) fn rust_head_body(head: &V3Head) -> Result<String> {
+pub(crate) fn rust_head_body(head: &V3Head) -> Result<String> {
     let source = match head {
         V3Head::LogitRidge(model) => {
             rust_linear_predictor(&model.means, &model.scales, &model.weights, true, "x")
@@ -154,7 +154,7 @@ pub(super) fn rust_head_body(head: &V3Head) -> Result<String> {
     Ok(source)
 }
 
-pub(super) fn rust_calibration_body(calibration: &CalibrationModel, binary: bool) -> String {
+pub(crate) fn rust_calibration_body(calibration: &CalibrationModel, binary: bool) -> String {
     let calibrated = match calibration {
         CalibrationModel::None => "value".to_string(),
         CalibrationModel::Platt { slope, intercept } => format!(
@@ -175,7 +175,7 @@ pub(super) fn rust_calibration_body(calibration: &CalibrationModel, binary: bool
     }
 }
 
-pub(super) fn rust_target_body(target: &Option<FittedTarget>, input: &str) -> String {
+pub(crate) fn rust_target_body(target: &Option<FittedTarget>, input: &str) -> String {
     match target {
         None => input.to_string(),
         Some(FittedTarget::Log1p) => {

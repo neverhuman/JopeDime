@@ -1,7 +1,7 @@
 use super::*;
 
 impl<'a> ContextualSurrogateQHat<'a> {
-    pub(super) fn fit_state(
+    pub(crate) fn fit_state(
         train: &[&'a Pool],
         context_features: &'a Features,
         program_features: &'a Features,
@@ -134,7 +134,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
 
     /// Refit target-derived state in each training-row complement, while sharing the enclosing
     /// training closure's target-free projection basis. No validation labels enter this matrix.
-    pub(super) fn training_equations(
+    pub(crate) fn training_equations(
         &self,
         train: &[&'a Pool],
         external: Option<&ExternalProgramPrior>,
@@ -188,7 +188,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         Ok((xtx, xty))
     }
 
-    pub(super) fn solve_weights(
+    pub(crate) fn solve_weights(
         &self,
         mut xtx: Vec<f64>,
         xty: Vec<f64>,
@@ -219,7 +219,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
         Ok(weights)
     }
 
-    pub(super) fn state_sha256(&self) -> Result<String> {
+    pub(crate) fn state_sha256(&self) -> Result<String> {
         // Include every learned component, descriptor projection and filtered external prior.
         canonical_sha256(&(
             self.ridge.weights.clone(),

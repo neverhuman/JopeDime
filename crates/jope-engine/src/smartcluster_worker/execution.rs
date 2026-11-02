@@ -116,11 +116,11 @@ fn create_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
 mod control;
 mod runner;
 
-pub(super) use control::{
+pub(crate) use control::{
     record_control_stop, stop_control_with, ControlStopDeadline, ControlStopReason, DeadlineWatch,
     ScratchGuard,
 };
-pub(super) use runner::execute;
+pub(crate) use runner::execute;
 
 pub fn serve(path: &Path, sha: &str) -> Result<()> {
     let policy = load_policy()?;

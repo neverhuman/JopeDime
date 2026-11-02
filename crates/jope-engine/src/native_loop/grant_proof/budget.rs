@@ -1,7 +1,7 @@
 use super::*;
 
 impl Loop {
-    pub(super) fn verify_direct_budget(
+    pub(crate) fn verify_direct_budget(
         &self,
         request: &Request,
         task: &GenomeTask,
@@ -40,7 +40,7 @@ impl Loop {
         );
         Ok(())
     }
-    pub(super) async fn prove_comparison(
+    pub(crate) async fn prove_comparison(
         &self,
         graph: &Graph,
         client: &Client,

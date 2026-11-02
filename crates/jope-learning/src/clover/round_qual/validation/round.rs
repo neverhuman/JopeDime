@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn ensure_prereg_round_provenance(
+pub(crate) fn ensure_prereg_round_provenance(
     context_id: &str,
     raw_ratchet: &Value,
     rounds: &[Value],
@@ -114,7 +114,7 @@ pub(super) fn ensure_prereg_round_provenance(
     Ok(())
 }
 
-pub(super) fn find_unique_test_score<'a>(
+pub(crate) fn find_unique_test_score<'a>(
     scores: &'a [QualTestScore],
     context_id: &str,
     genome: &str,
@@ -141,7 +141,7 @@ pub(super) fn find_unique_test_score<'a>(
     }
 }
 
-pub(super) fn find_unique_parity<'a>(
+pub(crate) fn find_unique_parity<'a>(
     parity: &'a [ParityRecord],
     context_id: &str,
     genome: &str,
@@ -166,7 +166,7 @@ pub(super) fn find_unique_parity<'a>(
     }
 }
 
-pub(super) fn ensure_valid_round_structure(
+pub(crate) fn ensure_valid_round_structure(
     context_id: &str,
     round_idx: usize,
     round: &Value,
@@ -225,7 +225,7 @@ pub(super) fn ensure_valid_round_structure(
 
 /// Validate a single round's KL guard fields fail-closed.
 /// Returns `(kl_measured_and_valid, frozen_by_kl_guard)`.
-pub(super) fn evaluate_round_kl_guard(
+pub(crate) fn evaluate_round_kl_guard(
     round: &Value,
     max_conditional_base_kl: f64,
     max_new_support_mass: f64,

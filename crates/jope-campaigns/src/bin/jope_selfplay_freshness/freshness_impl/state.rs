@@ -1,7 +1,7 @@
 use super::*;
 
 impl Supervisor {
-    pub(super) fn open(root: PathBuf, scq: PathBuf) -> Result<Self> {
+    pub(crate) fn open(root: PathBuf, scq: PathBuf) -> Result<Self> {
         let ops = root.join("ops");
         fs::create_dir_all(&ops)?;
         let state_path = ops.join("freshness-state.v1.json");
@@ -31,11 +31,11 @@ impl Supervisor {
         })
     }
 
-    pub(super) fn save_state(&self) -> Result<()> {
+    pub(crate) fn save_state(&self) -> Result<()> {
         atomic_json(&self.state_path, &serde_json::to_value(&self.state)?)
     }
 
-    pub(super) fn event(
+    pub(crate) fn event(
         &self,
         kind: &str,
         epoch: Option<&str>,
@@ -64,7 +64,7 @@ impl Supervisor {
         Ok(())
     }
 
-    pub(super) fn pointer_checkpoint(&mut self) -> Result<Option<String>> {
+    pub(crate) fn pointer_checkpoint(&mut self) -> Result<Option<String>> {
         for relative in ["training/learning.json", "training/accepted.json"] {
             let path = self.root.join(relative);
             if !path.is_file() {
@@ -118,7 +118,7 @@ impl Supervisor {
         Ok(None)
     }
 
-    pub(super) fn sync_checkpoint(&mut self) -> Result<Value> {
+    pub(crate) fn sync_checkpoint(&mut self) -> Result<Value> {
         let Some(checkpoint) = self.pointer_checkpoint()? else {
             return Ok(self.active_checkpoint());
         };
@@ -150,7 +150,7 @@ impl Supervisor {
         Ok(self.active_checkpoint())
     }
 
-    pub(super) fn claims(&self) -> Result<BTreeMap<String, BacklogClaim>> {
+    pub(crate) fn claims(&self) -> Result<BTreeMap<String, BacklogClaim>> {
         if !self.backlog.is_file() {
             return Ok(BTreeMap::new());
         }
@@ -181,11 +181,11 @@ impl Supervisor {
         Ok(rows.collect::<rusqlite::Result<BTreeMap<_, _>>>()?)
     }
 
-    pub(super) fn inventory(&self) -> Result<Vec<InventoryJob>> {
+    pub(crate) fn inventory(&self) -> Result<Vec<InventoryJob>> {
         self.inventory_with_manifest_policy(false)
     }
 
-    pub(super) fn inventory_with_manifest_policy(
+    pub(crate) fn inventory_with_manifest_policy(
         &self,
         force_manifest_audit: bool,
     ) -> Result<Vec<InventoryJob>> {
@@ -222,7 +222,7 @@ impl Supervisor {
         Ok(result)
     }
 
-    pub(super) fn inventory_job(
+    pub(crate) fn inventory_job(
         &self,
         scheduler: SchedulerJob,
         claim: &BacklogClaim,
@@ -259,7 +259,7 @@ impl Supervisor {
         }))
     }
 
-    pub(super) fn audit_manifest(
+    pub(crate) fn audit_manifest(
         &self,
         job_id: &str,
         manifest: &Path,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn generated_plan(
+pub(crate) fn generated_plan(
     row_ids: &[u64],
     fold_count: usize,
     seed: u64,
@@ -19,7 +19,7 @@ pub(super) fn generated_plan(
     OOFFitPlan::new(assignments, fold_count, seed)
 }
 
-pub(super) fn full_context(candidate_id: &str, seed: u64, row_ids: &[u64]) -> FitContext {
+pub(crate) fn full_context(candidate_id: &str, seed: u64, row_ids: &[u64]) -> FitContext {
     FitContext {
         abi: COMBINATOR_ABI,
         candidate_id: candidate_id.into(),
@@ -29,7 +29,7 @@ pub(super) fn full_context(candidate_id: &str, seed: u64, row_ids: &[u64]) -> Fi
     }
 }
 
-pub(super) fn checked_prediction<M: FittedCandidate>(
+pub(crate) fn checked_prediction<M: FittedCandidate>(
     model: &M,
     rows: &[Vec<f64>],
 ) -> Result<Vec<f64>, FitError> {
@@ -47,7 +47,7 @@ pub(super) fn checked_prediction<M: FittedCandidate>(
     Ok(values)
 }
 
-pub(super) fn emitted_prediction<M: FittedCandidate>(
+pub(crate) fn emitted_prediction<M: FittedCandidate>(
     model: &M,
     rows: &[Vec<f64>],
 ) -> Result<Vec<f64>, FitError> {
@@ -67,7 +67,7 @@ pub(super) fn emitted_prediction<M: FittedCandidate>(
     Ok(values)
 }
 
-pub(super) fn combine_predictions<M: FittedCandidate>(
+pub(crate) fn combine_predictions<M: FittedCandidate>(
     members: &[M],
     weights: &[f64],
     rows: &[Vec<f64>],
@@ -105,7 +105,7 @@ pub(super) fn combine_predictions<M: FittedCandidate>(
     Ok(output)
 }
 
-pub(super) fn fit_simplex_weights(
+pub(crate) fn fit_simplex_weights(
     predictions: &[Vec<f64>],
     target: &[f64],
     iterations: usize,
@@ -144,7 +144,7 @@ pub(super) fn fit_simplex_weights(
     weights
 }
 
-pub(super) fn project_simplex(mut values: Vec<f64>) -> Vec<f64> {
+pub(crate) fn project_simplex(mut values: Vec<f64>) -> Vec<f64> {
     let mut sorted = values.clone();
     sorted.sort_by(|a, b| b.total_cmp(a));
     let mut cumulative = 0.0;
@@ -163,19 +163,19 @@ pub(super) fn project_simplex(mut values: Vec<f64>) -> Vec<f64> {
     values
 }
 
-pub(super) fn valid_shrinkage(value: f64) -> bool {
+pub(crate) fn valid_shrinkage(value: f64) -> bool {
     value.is_finite() && (0.0..=1.0).contains(&value)
 }
-pub(super) fn select_rows(rows: &[Vec<f64>], indices: &[usize]) -> Rows {
+pub(crate) fn select_rows(rows: &[Vec<f64>], indices: &[usize]) -> Rows {
     indices.iter().map(|&i| rows[i].clone()).collect()
 }
-pub(super) fn select_values<T: Copy>(values: &[T], indices: &[usize]) -> Vec<T> {
+pub(crate) fn select_values<T: Copy>(values: &[T], indices: &[usize]) -> Vec<T> {
     indices.iter().map(|&i| values[i]).collect()
 }
-pub(super) fn fold_seed(seed: u64, part: u64) -> u64 {
+pub(crate) fn fold_seed(seed: u64, part: u64) -> u64 {
     mix64(seed ^ part.wrapping_mul(0x9e3779b97f4a7c15))
 }
-pub(super) fn mix64(mut value: u64) -> u64 {
+pub(crate) fn mix64(mut value: u64) -> u64 {
     value = (value ^ (value >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
     value = (value ^ (value >> 27)).wrapping_mul(0x94d049bb133111eb);
     value ^ (value >> 31)

@@ -3,7 +3,7 @@ use feat_math::heads::FittedHead;
 use feat_math::spec::PlannedHead;
 
 /// The state the recipe's head `*_predict` reads, after checking it against the planned head.
-pub(super) fn head_state(
+pub(crate) fn head_state(
     planned: &PlannedHead,
     head: &FittedHead,
     problems: &mut Vec<String>,
@@ -357,7 +357,7 @@ fn planned_head_kind(head: &PlannedHead) -> &'static str {
 }
 
 /// The target transform's `self.target` state, after checking its kind against the plan.
-pub(super) fn target_state(
+pub(crate) fn target_state(
     planned: &feat_math::spec::PlannedTarget,
     fitted: &feat_math::target_transform::FittedTarget,
     problems: &mut Vec<String>,

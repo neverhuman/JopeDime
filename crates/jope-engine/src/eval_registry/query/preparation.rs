@@ -64,9 +64,9 @@ pub(crate) fn execution_query_key(
     Ok(hash(&serde_json::to_vec(
         &json!({"schema":"parallel.query_execution_identity.v1",
         "inputs_sha256":input_key,"executable_sha256":executable,"runtime_sha256":runtime,
-        "scorer_source_sha256":hash(include_bytes!("query.rs")),
-        "predictor_source_sha256":hash(include_bytes!("../../../feat-math/src/model.rs")),
-        "preprocessing_source_sha256":hash(include_bytes!("../prepare.rs"))}),
+        "scorer_source_sha256":hash(include_bytes!("../query.rs")),
+        "predictor_source_sha256":hash(include_bytes!("../../../../feat-math/src/model.rs")),
+        "preprocessing_source_sha256":hash(include_bytes!("../../prepare.rs"))}),
     )?))
 }
 

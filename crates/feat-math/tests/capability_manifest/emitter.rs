@@ -73,8 +73,10 @@ fn emitter_support_matches_manifest() {
             js_accepted.insert(name.as_str());
         }
     }
-    let fixture: Value =
-        serde_json::from_str(include_str!("fixtures/compat_freeze/emitted_bytes.v1.json")).unwrap();
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../fixtures/compat_freeze/emitted_bytes.v1.json"
+    ))
+    .unwrap();
     for name in fixture["cpp17_recipe_ops"].as_array().unwrap() {
         assert!(
             cpp_accepted.contains(name.as_str().unwrap()),

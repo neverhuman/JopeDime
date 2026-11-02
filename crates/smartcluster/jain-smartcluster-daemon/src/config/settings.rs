@@ -73,7 +73,7 @@ impl AuthConfig {
     /// The reserved fabric UIDs must never alias a broader role, so a later
     /// build that grants them authority cannot widen an existing identity.
     /// Only UIDs that are set are checked.
-    pub(super) fn validate_reserved_roles(&self) -> Result<(), ConfigError> {
+    pub(crate) fn validate_reserved_roles(&self) -> Result<(), ConfigError> {
         if let Some(edge) = self.edge_uid {
             if edge == self.web_uid
                 || self.system_uids.contains(&edge)
@@ -121,7 +121,7 @@ impl Default for WorkerConfig {
 }
 
 impl WorkerConfig {
-    pub(super) fn validate_product_worker(&self) -> Result<(), ConfigError> {
+    pub(crate) fn validate_product_worker(&self) -> Result<(), ConfigError> {
         if let Some(path) = &self.product_worker {
             if !path.is_absolute() {
                 return Err(ConfigError::RelativePath {
@@ -191,7 +191,7 @@ impl Default for ExecutionConfig {
 }
 
 impl ExecutionConfig {
-    pub(super) fn validate(&self) -> Result<(), ConfigError> {
+    pub(crate) fn validate(&self) -> Result<(), ConfigError> {
         if self.worker_uid.is_some() != self.worker_gid.is_some() {
             return Err(ConfigError::IncompleteWorkerIdentity);
         }
@@ -256,7 +256,7 @@ impl Default for MpsConfig {
 }
 
 impl MpsConfig {
-    pub(super) fn validate(&self) -> Result<(), ConfigError> {
+    pub(crate) fn validate(&self) -> Result<(), ConfigError> {
         match (&self.control_executable, &self.pipe_directory) {
             (None, None) => {}
             (Some(executable), Some(directory)) => {
@@ -307,7 +307,7 @@ impl Default for PsiConfig {
 }
 
 impl PsiConfig {
-    pub(super) fn validate(self) -> Result<(), ConfigError> {
+    pub(crate) fn validate(self) -> Result<(), ConfigError> {
         if self.window_us == 0
             || self.warning_stall_us == 0
             || self.warning_stall_us >= self.critical_stall_us

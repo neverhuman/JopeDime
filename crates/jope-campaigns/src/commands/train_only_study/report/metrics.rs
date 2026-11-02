@@ -2,7 +2,7 @@ use super::*;
 
 use super::*;
 
-pub(super) fn median(values: &[f64]) -> Result<f64> {
+pub(crate) fn median(values: &[f64]) -> Result<f64> {
     if values.is_empty() || values.iter().any(|value| !value.is_finite()) {
         bail!("median requires finite values");
     }
@@ -16,7 +16,7 @@ pub(super) fn median(values: &[f64]) -> Result<f64> {
     })
 }
 
-pub(super) fn bootstrap_interval(values: &[f64]) -> Result<[f64; 2]> {
+pub(crate) fn bootstrap_interval(values: &[f64]) -> Result<[f64; 2]> {
     if values.len() != 10 {
         bail!("study bootstrap is pinned to ten datasets");
     }
@@ -32,7 +32,7 @@ pub(super) fn bootstrap_interval(values: &[f64]) -> Result<[f64; 2]> {
     Ok([estimates[249], estimates[9749]])
 }
 
-pub(super) fn paired_sign_test(values: &[f64]) -> f64 {
+pub(crate) fn paired_sign_test(values: &[f64]) -> f64 {
     let positive = values.iter().filter(|value| **value > 0.0).count();
     let negative = values.iter().filter(|value| **value < 0.0).count();
     let n = positive + negative;
@@ -49,7 +49,7 @@ pub(super) fn paired_sign_test(values: &[f64]) -> f64 {
     (2.0 * probability / 2_f64.powi(n as i32)).min(1.0)
 }
 
-pub(super) fn cohort_elo(datasets: &[DatasetReport]) -> Result<Vec<EloRating>> {
+pub(crate) fn cohort_elo(datasets: &[DatasetReport]) -> Result<Vec<EloRating>> {
     if datasets.is_empty() {
         bail!("Elo requires at least one dataset");
     }
@@ -128,11 +128,11 @@ pub(super) fn cohort_elo(datasets: &[DatasetReport]) -> Result<Vec<EloRating>> {
     Ok(result)
 }
 
-pub(super) fn panel_points(values: &[f64], left: f64, top: f64, width: f64, height: f64) -> String {
+pub(crate) fn panel_points(values: &[f64], left: f64, top: f64, width: f64, height: f64) -> String {
     panel_points_scaled(values, values, left, top, width, height)
 }
 
-pub(super) fn panel_points_scaled(
+pub(crate) fn panel_points_scaled(
     values: &[f64],
     scale: &[f64],
     left: f64,
@@ -157,7 +157,7 @@ pub(super) fn panel_points_scaled(
         .join(" ")
 }
 
-pub(super) fn evolution_svg(
+pub(crate) fn evolution_svg(
     title: &str,
     validation: &[f64],
     test: &[f64],

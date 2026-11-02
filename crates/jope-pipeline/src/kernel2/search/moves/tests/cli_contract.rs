@@ -289,7 +289,7 @@ fn the_selection_record_round_trips_and_the_flag_is_checked_and_lint_clean() {
         lint(text);
     }
     lint(include_str!(
-        "../../../../../../docs/internal/kernel2/b20-rewrite-simplify.md"
+        "../../../../../../../docs/internal/kernel2/b20-rewrite-simplify.md"
     ));
     use clap::CommandFactory;
     let mut command = Cli::command();

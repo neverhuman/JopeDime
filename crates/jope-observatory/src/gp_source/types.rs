@@ -11,12 +11,12 @@ pub const LANGUAGES: [&str; 4] = feat_math::source_stream::LANGUAGES;
 pub fn hash(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
-pub(super) fn valid_hash(s: &str) -> bool {
+pub(crate) fn valid_hash(s: &str) -> bool {
     s.len() == 64
         && s.bytes()
             .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
 }
-pub(super) fn extension(language: &str) -> Result<&'static str> {
+pub(crate) fn extension(language: &str) -> Result<&'static str> {
     Ok(match language {
         "rust" => "rs",
         "python" => "py",
@@ -126,7 +126,7 @@ pub struct LanguageMetrics {
     pub passed_artifacts: u64,
 }
 impl LanguageMetrics {
-    pub(super) fn add(&mut self, other: &Self) {
+    pub(crate) fn add(&mut self, other: &Self) {
         self.artifacts += other.artifacts;
         self.emitted_tokens += other.emitted_tokens;
         self.code_tokens += other.code_tokens;

@@ -126,7 +126,7 @@ fn fault_names_pass_the_shipped_text_lint() {
 // The fault tables (WP-1.2, WP-1.8)
 // ---------------------------------------------------------------------------------------------
 
-pub(super) const POS_ZERO: u64 = 0x0000_0000_0000_0000;
+pub(crate) const POS_ZERO: u64 = 0x0000_0000_0000_0000;
 const NEG_ZERO: u64 = 0x8000_0000_0000_0000;
 const MAX_ABS: u64 = 0x426d_1a94_a200_0000; // 1e12, the output filter's clamp
 
@@ -136,19 +136,19 @@ fn union_of(sets: &[FaultSet]) -> FaultSet {
 }
 
 /// One evaluation and what it must report.
-pub(super) struct Case {
-    pub(super) source: &'static str,
-    pub(super) row: Vec<f64>,
+pub(crate) struct Case {
+    pub(crate) source: &'static str,
+    pub(crate) row: Vec<f64>,
     /// `None` is row context (`eval_row`); `Some(x)` is element context (`eval_element`).
-    pub(super) x: Option<f64>,
+    pub(crate) x: Option<f64>,
     /// The value's bits where they are free of libm; `None` compares with the legacy value only.
-    pub(super) bits: Option<u64>,
-    pub(super) faults: FaultSet,
+    pub(crate) bits: Option<u64>,
+    pub(crate) faults: FaultSet,
 }
 
 impl Case {
     /// The row, and the element in element context, for failure messages.
-    pub(super) fn row_text(&self) -> String {
+    pub(crate) fn row_text(&self) -> String {
         match self.x {
             None => format!("{:?}", self.row),
             Some(x) => format!("{:?} at x = {x:?}", self.row),
@@ -457,7 +457,7 @@ fn class_cases() -> Vec<Case> {
     ]
 }
 
-pub(super) fn all_cases() -> Vec<Case> {
+pub(crate) fn all_cases() -> Vec<Case> {
     let mut cases = wp_1_2_table();
     cases.extend(wp_1_8_table());
     cases.extend(class_cases());

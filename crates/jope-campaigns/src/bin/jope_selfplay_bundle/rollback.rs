@@ -3,16 +3,16 @@ use super::*;
 mod derivation;
 mod systemd;
 
-pub(super) use derivation::{
+pub(crate) use derivation::{
     derive_rollback_baseline, verify_rollback_candidate, verify_rollback_capsule,
     verify_rollback_derivation,
 };
-pub(super) use systemd::{
+pub(crate) use systemd::{
     git_blob, parse_systemd_artifact, rollback_bundle_files, rollback_derivation_path,
     systemd_closure, transform_rollback_unit, unchanged_inventory_root, verify_intrinsic_existing,
 };
 
-pub(super) fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {
+pub(crate) fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {
     ensure!(manifest["runtime"] == "rust", "bundle runtime is not Rust");
     ensure!(
         manifest["operational_python_allowed"] == false,
@@ -194,7 +194,7 @@ pub(super) fn verify_existing(root: &Path, manifest: &Value) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_manifest_python_target(target: &str, role: &str) -> Result<()> {
+pub(crate) fn validate_manifest_python_target(target: &str, role: &str) -> Result<()> {
     if role == "pytorch_dependency_package"
         && target.starts_with("pytorch/jope/")
         && target.ends_with(".py")
@@ -212,7 +212,7 @@ pub(super) fn validate_manifest_python_target(target: &str, role: &str) -> Resul
     Ok(())
 }
 
-pub(super) fn validate_service_manifest(manifest: &ServiceManifest) -> Result<()> {
+pub(crate) fn validate_service_manifest(manifest: &ServiceManifest) -> Result<()> {
     ensure!(
         manifest.schema == "JopeSelfplayServiceManifest.v3",
         "unsupported service manifest schema"
@@ -245,7 +245,7 @@ pub(super) fn validate_service_manifest(manifest: &ServiceManifest) -> Result<()
     Ok(())
 }
 
-pub(super) fn validate_recovery_service_manifest(manifest: &ServiceManifest) -> Result<()> {
+pub(crate) fn validate_recovery_service_manifest(manifest: &ServiceManifest) -> Result<()> {
     validate_service_manifest(manifest)?;
     ensure!(
         manifest.services.iter().any(|row| {
@@ -264,7 +264,7 @@ pub(super) fn validate_recovery_service_manifest(manifest: &ServiceManifest) -> 
     Ok(())
 }
 
-pub(super) fn ensure_bundle_target(root: &Path, target: &Path) -> Result<()> {
+pub(crate) fn ensure_bundle_target(root: &Path, target: &Path) -> Result<()> {
     ensure!(
         target.starts_with(root),
         "bundle target escaped temporary directory"

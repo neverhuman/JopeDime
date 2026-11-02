@@ -2,7 +2,7 @@ use super::*;
 
 /// What the port did with one input.
 #[derive(Debug)]
-pub(super) enum Rust {
+pub(crate) enum Rust {
     /// A report on stdout and whether the command succeeded (exit status 0 or 1).
     Report(String, bool),
     /// A refusal: the error the binary prints after `jope-records: `, exit status 1.
@@ -10,7 +10,7 @@ pub(super) enum Rust {
 }
 
 impl Rust {
-    pub(super) fn of(result: jope_records::Result<(String, bool)>) -> Self {
+    pub(crate) fn of(result: jope_records::Result<(String, bool)>) -> Self {
         match result {
             Ok((stdout, ok)) => Rust::Report(stdout, ok),
             Err(error) => Rust::Refused(error.to_string()),
@@ -43,7 +43,7 @@ fn negative(rel: &str) -> Vec<(String, Value)> {
 
 /// A case's input: its `ed` script applied to `base`, checked against the recorded SHA-256 of the
 /// file the Python read (the base itself when the case has no script).
-pub(super) fn variant(case: &Value, base: &str) -> String {
+pub(crate) fn variant(case: &Value, base: &str) -> String {
     let Some(ed) = case.get("ed") else {
         return base.to_owned();
     };
@@ -58,7 +58,7 @@ pub(super) fn variant(case: &Value, base: &str) -> String {
 }
 
 /// Hold one case to the contract; `Err` names the first disagreement.
-pub(super) fn compare(case: &Value, rust: &Rust, stricter: bool) -> Result<(), String> {
+pub(crate) fn compare(case: &Value, rust: &Rust, stricter: bool) -> Result<(), String> {
     let exit = case.get("exit").and_then(Value::as_int).unwrap();
     if stricter {
         return match (exit, rust) {

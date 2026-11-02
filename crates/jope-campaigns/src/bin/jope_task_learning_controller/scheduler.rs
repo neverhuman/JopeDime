@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn write_production_canary_intents(
+pub(crate) fn write_production_canary_intents(
     args: &Args,
     intent: &ActiveIntent,
     candidate: &Sha256Digest,
@@ -15,7 +15,7 @@ pub(super) fn write_production_canary_intents(
     )
 }
 
-pub(super) fn schedule_promotion_run(
+pub(crate) fn schedule_promotion_run(
     args: &Args,
     task: Task,
     accepted_parent: &Sha256Digest,
@@ -157,7 +157,7 @@ pub(super) fn schedule_promotion_run(
     Ok(())
 }
 
-pub(super) fn write_shadow_canary_intent(
+pub(crate) fn write_shadow_canary_intent(
     args: &Args,
     checkpoint: &ShadowCheckpointV1,
 ) -> Result<()> {
@@ -204,7 +204,7 @@ pub(super) fn write_shadow_canary_intent(
     )
 }
 
-pub(super) fn select_canary_contexts(
+pub(crate) fn select_canary_contexts(
     root: &Path,
     task: Task,
     accepted_parent: &Sha256Digest,
@@ -272,7 +272,7 @@ pub(super) fn select_canary_contexts(
     bail!("no accepted-parent cohort can supply a 12/2/2 task canary")
 }
 
-pub(super) fn find_train_result(
+pub(crate) fn find_train_result(
     runs_root: &Path,
     job_id: &str,
     output_name: &str,
@@ -296,7 +296,7 @@ pub(super) fn find_train_result(
     Ok(paths.pop())
 }
 
-pub(super) fn admission_request_pending(root: &Path, job_id: &str) -> Result<bool> {
+pub(crate) fn admission_request_pending(root: &Path, job_id: &str) -> Result<bool> {
     let path = root.join("ops/gpu-lane-admission/requests/alternating_trainer.json");
     if !path.is_file() {
         return Ok(false);
@@ -307,7 +307,7 @@ pub(super) fn admission_request_pending(root: &Path, job_id: &str) -> Result<boo
         == Some(job_id))
 }
 
-pub(super) fn scheduler_jobs(value: &Value) -> Result<Vec<SchedulerJob>> {
+pub(crate) fn scheduler_jobs(value: &Value) -> Result<Vec<SchedulerJob>> {
     Ok(serde_json::from_value(
         value
             .get("Jobs")
@@ -317,7 +317,7 @@ pub(super) fn scheduler_jobs(value: &Value) -> Result<Vec<SchedulerJob>> {
     )?)
 }
 
-pub(super) fn command_message(output: &std::process::Output) -> String {
+pub(crate) fn command_message(output: &std::process::Output) -> String {
     String::from_utf8_lossy(if output.stderr.is_empty() {
         &output.stdout
     } else {
@@ -327,14 +327,14 @@ pub(super) fn command_message(output: &std::process::Output) -> String {
     .to_owned()
 }
 
-pub(super) fn capacity_backoff(message: &str) -> bool {
+pub(crate) fn capacity_backoff(message: &str) -> bool {
     message.contains("dependency-unsatisfied")
         && (message.contains("no eligible launch-ready node currently")
             || message.contains("eligible_node launch-ready-capacity")
             || (message.contains("trainer GPU capability") && message.contains("exit 1")))
 }
 
-pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.is_file() {
         ensure!(
             sha256_file(path)? == sha256_bytes(bytes),
@@ -361,7 +361,7 @@ pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn copy_immutable(source: &Path, target: &Path, digest: &str) -> Result<()> {
+pub(crate) fn copy_immutable(source: &Path, target: &Path, digest: &str) -> Result<()> {
     if target.is_file() {
         ensure!(
             sha256_file(target)? == digest,
@@ -379,7 +379,7 @@ pub(super) fn copy_immutable(source: &Path, target: &Path, digest: &str) -> Resu
     Ok(())
 }
 
-pub(super) fn append_event<T: Serialize>(root: &Path, kind: &str, detail: &T) -> Result<()> {
+pub(crate) fn append_event<T: Serialize>(root: &Path, kind: &str, detail: &T) -> Result<()> {
     let path = root.join("ops/task-learning-events.v2.jsonl");
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -399,7 +399,7 @@ pub(super) fn append_event<T: Serialize>(root: &Path, kind: &str, detail: &T) ->
     Ok(())
 }
 
-pub(super) fn status(
+pub(crate) fn status(
     args: &Args,
     state: &ControllerState,
     accepted: &BTreeMap<Task, AcceptedPointer>,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn op_label(op: &PlannedOp) -> String {
+pub(crate) fn op_label(op: &PlannedOp) -> String {
     match op {
         PlannedOp::Standardize => "standardize".into(),
         PlannedOp::RobustScale => "robust_scale".into(),
@@ -28,7 +28,7 @@ pub(super) fn op_label(op: &PlannedOp) -> String {
     }
 }
 
-pub(super) fn head_label(head: &PlannedHead) -> String {
+pub(crate) fn head_label(head: &PlannedHead) -> String {
     match head {
         PlannedHead::Ridge { .. } => "ridge".into(),
         PlannedHead::ElasticNet { .. } => "elasticnet".into(),
@@ -36,7 +36,7 @@ pub(super) fn head_label(head: &PlannedHead) -> String {
     }
 }
 
-pub(super) fn head_supported(head: &PlannedHead) -> bool {
+pub(crate) fn head_supported(head: &PlannedHead) -> bool {
     matches!(
         head,
         PlannedHead::Ridge { .. } | PlannedHead::ElasticNet { .. }
@@ -44,7 +44,7 @@ pub(super) fn head_supported(head: &PlannedHead) -> bool {
 }
 
 /// The emitted struct + fit + predict definition for a supported head.
-pub(super) fn head_src_cpp(head: &PlannedHead) -> &'static str {
+pub(crate) fn head_src_cpp(head: &PlannedHead) -> &'static str {
     match head {
         PlannedHead::Ridge { .. } => HEAD_RIDGE,
         PlannedHead::ElasticNet { .. } => HEAD_ELASTICNET,
@@ -53,7 +53,7 @@ pub(super) fn head_src_cpp(head: &PlannedHead) -> &'static str {
 }
 
 /// `(fit-call over x/y, predict-call over the `head` member, C++ type name)`.
-pub(super) fn head_calls_cpp(head: &PlannedHead) -> (String, String, &'static str) {
+pub(crate) fn head_calls_cpp(head: &PlannedHead) -> (String, String, &'static str) {
     match head {
         PlannedHead::Ridge { lambda_frac } => (
             format!("ridge_regression_fit(x, y, {})", fmt_f64(*lambda_frac)),
@@ -82,7 +82,7 @@ pub(super) fn head_calls_cpp(head: &PlannedHead) -> (String, String, &'static st
 /// `RngUniform`/`RngRange`/`RngGaussian` return "" because C++ cannot reopen a
 /// struct across definitions the way Rust's `impl` blocks do, so those draw
 /// methods are bundled into the single `Pcg32` definition.
-pub(super) fn helper_cpp(helper: Helper, partition_point_bounds: bool) -> &'static str {
+pub(crate) fn helper_cpp(helper: Helper, partition_point_bounds: bool) -> &'static str {
     match helper {
         Helper::Sanitize => H_SANITIZE,
         Helper::FinishStage => H_FINISH_STAGE,
@@ -120,7 +120,7 @@ pub(super) fn helper_cpp(helper: Helper, partition_point_bounds: bool) -> &'stat
 
 /// `(fn-name, definition)` for a supported op, or `None` if unsupported. The
 /// name deduplicates repeated ops (the definition is emitted once).
-pub(super) fn op_cpp(op: &PlannedOp) -> Option<(&'static str, &'static str)> {
+pub(crate) fn op_cpp(op: &PlannedOp) -> Option<(&'static str, &'static str)> {
     match op {
         // B13: the goertzel_bank helper, only for a bank-bearing program.
         PlannedOp::RowVectorV2 {
@@ -162,7 +162,7 @@ pub(super) fn op_cpp(op: &PlannedOp) -> Option<(&'static str, &'static str)> {
 }
 
 /// C++ struct type holding a stage's fitted state, or `None` if stateless.
-pub(super) fn op_struct_cpp(op: &PlannedOp) -> Option<&'static str> {
+pub(crate) fn op_struct_cpp(op: &PlannedOp) -> Option<&'static str> {
     match op {
         PlannedOp::Standardize => Some("StandardScaler"),
         PlannedOp::RobustScale => Some("RobustScaler"),
@@ -186,7 +186,7 @@ pub(super) fn op_struct_cpp(op: &PlannedOp) -> Option<&'static str> {
 
 /// `(fit-call, apply-template)` for a stage. `fit-call` is `None` for stateless
 /// ops. The apply template uses `{state}`/`{append}` placeholders.
-pub(super) fn op_calls_cpp(op: &PlannedOp) -> (Option<String>, String) {
+pub(crate) fn op_calls_cpp(op: &PlannedOp) -> (Option<String>, String) {
     match op {
         // B12: explicit v2 row-vector recipe.
         PlannedOp::RowVectorInputV2 { width } => {

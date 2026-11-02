@@ -1,7 +1,7 @@
 use super::*;
 
 impl PolicyModel {
-    pub(super) fn check_context(&self, context: &[f32]) -> Result<()> {
+    pub(crate) fn check_context(&self, context: &[f32]) -> Result<()> {
         let c = &self.config;
         ensure!(
             context.len() == c.context_len(),
@@ -22,7 +22,7 @@ impl PolicyModel {
     }
 
     /// `Policy::input` then one context encoder: returns `[1, width]`.
-    pub(super) fn encode_context(&self, prefix: &str, context: &[f32]) -> Result<Tensor> {
+    pub(crate) fn encode_context(&self, prefix: &str, context: &[f32]) -> Result<Tensor> {
         self.check_context(context)?;
         let c = &self.config;
         let mut input = Vec::with_capacity(c.dataset_dim + c.target_keep_dim);
@@ -61,7 +61,7 @@ impl PolicyModel {
         )
     }
 
-    pub(super) fn token_tensor(&self, tokens: &[Vec<usize>]) -> Result<(usize, usize, Tensor)> {
+    pub(crate) fn token_tensor(&self, tokens: &[Vec<usize>]) -> Result<(usize, usize, Tensor)> {
         let batch = tokens.len();
         ensure!(batch > 0, "empty token batch");
         let length = tokens[0].len();
@@ -83,7 +83,7 @@ impl PolicyModel {
         ))
     }
 
-    pub(super) fn embed(
+    pub(crate) fn embed(
         &self,
         table: &str,
         ids: &Tensor,
@@ -97,7 +97,7 @@ impl PolicyModel {
     }
 
     /// Decoder hidden states `[batch, length + 1, width]` before `out_norm`.
-    pub(super) fn decoder_states(&self, context: &[f32], tokens: &[Vec<usize>]) -> Result<Tensor> {
+    pub(crate) fn decoder_states(&self, context: &[f32], tokens: &[Vec<usize>]) -> Result<Tensor> {
         let c = &self.config;
         let (batch, length, ids) = self.token_tensor(tokens)?;
         let z = self.encode_context("encoder", context)?;
@@ -130,7 +130,7 @@ impl PolicyModel {
         Ok(h)
     }
 
-    pub(super) fn decoder_layer(&self, x: &Tensor, layer: usize, mask: &Tensor) -> Result<Tensor> {
+    pub(crate) fn decoder_layer(&self, x: &Tensor, layer: usize, mask: &Tensor) -> Result<Tensor> {
         let p = format!("decoder.layers.{layer}");
         let g = |s: &str| self.g(&format!("{p}.{s}"));
         let a = layer_norm(x, g("norm1.weight")?, g("norm1.bias")?)?;
@@ -147,7 +147,7 @@ impl PolicyModel {
         Ok((h + f)?)
     }
 
-    pub(super) fn self_attention(&self, x: &Tensor, p: &str, mask: &Tensor) -> Result<Tensor> {
+    pub(crate) fn self_attention(&self, x: &Tensor, p: &str, mask: &Tensor) -> Result<Tensor> {
         let (b, seq, d) = x.dims3()?;
         let heads = self.config.heads;
         let hd = d / heads;
@@ -181,7 +181,7 @@ impl PolicyModel {
         self.project(&h)
     }
 
-    pub(super) fn project(&self, h: &Tensor) -> Result<Tensor> {
+    pub(crate) fn project(&self, h: &Tensor) -> Result<Tensor> {
         let h = layer_norm(h, self.g("out_norm.weight")?, self.g("out_norm.bias")?)?;
         let logits = h.broadcast_matmul(&self.g("token_emb.weight")?.t()?)?;
         Ok(logits.narrow(D::Minus1, 0, self.config.vocab_size)?)

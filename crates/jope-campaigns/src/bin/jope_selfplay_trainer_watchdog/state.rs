@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_state(path: &Path) -> Result<DurableState> {
+pub(crate) fn load_state(path: &Path) -> Result<DurableState> {
     if !path.is_file() {
         return Ok(DurableState::new());
     }
@@ -13,11 +13,11 @@ pub(super) fn load_state(path: &Path) -> Result<DurableState> {
     Ok(state)
 }
 
-pub(super) fn save_state(path: &Path, state: &DurableState) -> Result<()> {
+pub(crate) fn save_state(path: &Path, state: &DurableState) -> Result<()> {
     atomic_json(path, &serde_json::to_value(state)?)
 }
 
-pub(super) fn load_label_watermark(path: &Path) -> Result<u64> {
+pub(crate) fn load_label_watermark(path: &Path) -> Result<u64> {
     let value = read_json(path)?;
     let labels = value
         .get("exact_rows_total")
@@ -28,7 +28,7 @@ pub(super) fn load_label_watermark(path: &Path) -> Result<u64> {
     Ok(labels)
 }
 
-pub(super) fn parse_jobs(value: &Value) -> Result<Vec<Value>> {
+pub(crate) fn parse_jobs(value: &Value) -> Result<Vec<Value>> {
     value
         .get("Jobs")
         .and_then(|value| value.get("jobs"))
@@ -37,7 +37,7 @@ pub(super) fn parse_jobs(value: &Value) -> Result<Vec<Value>> {
         .context("SCQ ls JSON lacks Jobs.jobs")
 }
 
-pub(super) fn parse_priority(value: &Value) -> Result<f64> {
+pub(crate) fn parse_priority(value: &Value) -> Result<f64> {
     value
         .get("FamilyPriorities")
         .and_then(|value| value.get("families"))
@@ -51,11 +51,11 @@ pub(super) fn parse_priority(value: &Value) -> Result<f64> {
         .context("SCQ priority inventory lacks jope-selfplay-train")
 }
 
-pub(super) fn priority_is_ready(value: f64) -> bool {
+pub(crate) fn priority_is_ready(value: f64) -> bool {
     value.is_finite() && (value - REQUIRED_PRIORITY).abs() < 1e-9
 }
 
-pub(super) fn parse_trainer_job(value: &Value) -> Option<Result<TrainerJob>> {
+pub(crate) fn parse_trainer_job(value: &Value) -> Option<Result<TrainerJob>> {
     let id = value.get("id").and_then(Value::as_str)?;
     if !id.starts_with("jope-selfplay-train-") && !id.starts_with("jope-testonly-train-") {
         return None;
@@ -89,7 +89,7 @@ pub(super) fn parse_trainer_job(value: &Value) -> Option<Result<TrainerJob>> {
     })())
 }
 
-pub(super) fn active_trainers(trainers: &[TrainerJob]) -> Result<Vec<&TrainerJob>> {
+pub(crate) fn active_trainers(trainers: &[TrainerJob]) -> Result<Vec<&TrainerJob>> {
     let active = trainers
         .iter()
         .filter(|job| LIVE_STATES.contains(&job.state.as_str()))
@@ -109,7 +109,7 @@ pub(super) fn active_trainers(trainers: &[TrainerJob]) -> Result<Vec<&TrainerJob
     Ok(active)
 }
 
-pub(super) fn parse_trainer_id(id: &str) -> Option<(u64, u64)> {
+pub(crate) fn parse_trainer_id(id: &str) -> Option<(u64, u64)> {
     let suffix = id
         .strip_prefix("jope-selfplay-train-")
         .or_else(|| id.strip_prefix("jope-testonly-train-"))?;
@@ -121,7 +121,7 @@ pub(super) fn parse_trainer_id(id: &str) -> Option<(u64, u64)> {
     Some((watermark, sequence))
 }
 
-pub(super) fn validate_active_trainer(job: &TrainerJob) -> Result<()> {
+pub(crate) fn validate_active_trainer(job: &TrainerJob) -> Result<()> {
     ensure!(
         matches!(job.project.as_str(), PROJECT | "jope-testonly"),
         "active trainer {} has unexpected project {}",

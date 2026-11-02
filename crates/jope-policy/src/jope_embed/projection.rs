@@ -162,7 +162,7 @@ pub fn jope_embedding_from_parts(
 
 // ---- pooling / projection ---------------------------------------------------
 
-pub(super) fn signature_512(rows: &[Vec<f32>]) -> Vec<f32> {
+pub(crate) fn signature_512(rows: &[Vec<f32>]) -> Vec<f32> {
     let n = rows.len();
     let d = 128;
     let mut mean = vec![0f64; d];

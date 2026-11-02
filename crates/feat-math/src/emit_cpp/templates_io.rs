@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) const IO_BLOCK: &str = r#"// ---- caller-owned C ABI ----------------------------------------------------
+pub(crate) const IO_BLOCK: &str = r#"// ---- caller-owned C ABI ----------------------------------------------------
 
 extern "C" {
 

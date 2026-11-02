@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn inventory(candidates: &[Candidate]) -> Result<Vec<InventoryRow>> {
+pub(crate) fn inventory(candidates: &[Candidate]) -> Result<Vec<InventoryRow>> {
     candidates
         .iter()
         .map(|candidate| {
@@ -15,7 +15,7 @@ pub(super) fn inventory(candidates: &[Candidate]) -> Result<Vec<InventoryRow>> {
         .collect()
 }
 
-pub(super) fn prime_support_provenance(
+pub(crate) fn prime_support_provenance(
     args: &Args,
     candidates: &[Candidate],
     inventory: &[InventoryRow],
@@ -83,7 +83,7 @@ pub(super) fn prime_support_provenance(
     })
 }
 
-pub(super) fn prime_support_identity(files: &[PrimeSupportFile]) -> Result<String> {
+pub(crate) fn prime_support_identity(files: &[PrimeSupportFile]) -> Result<String> {
     let rows = files
         .iter()
         .map(|row| {
@@ -98,7 +98,7 @@ pub(super) fn prime_support_identity(files: &[PrimeSupportFile]) -> Result<Strin
     Ok(sha256_bytes(&serde_json::to_vec(&rows)?))
 }
 
-pub(super) fn inventory_identity(inventory: &[InventoryRow]) -> Result<String> {
+pub(crate) fn inventory_identity(inventory: &[InventoryRow]) -> Result<String> {
     let rows: Vec<Value> = inventory
         .iter()
         .map(|row| {
@@ -113,7 +113,7 @@ pub(super) fn inventory_identity(inventory: &[InventoryRow]) -> Result<String> {
     Ok(sha256_bytes(&serde_json::to_vec(&rows)?))
 }
 
-pub(super) fn require_bundle_sha256(value: &str) -> Result<()> {
+pub(crate) fn require_bundle_sha256(value: &str) -> Result<()> {
     ensure!(
         value.len() == 64
             && value
@@ -124,7 +124,7 @@ pub(super) fn require_bundle_sha256(value: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn manifest_inventory_identity(rows: &[Value]) -> Result<String> {
+pub(crate) fn manifest_inventory_identity(rows: &[Value]) -> Result<String> {
     let identity_rows = rows
         .iter()
         .map(|row| {

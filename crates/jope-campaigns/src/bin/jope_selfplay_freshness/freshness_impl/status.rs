@@ -1,7 +1,7 @@
 use super::*;
 
 impl Supervisor {
-    pub(super) fn active_checkpoint(&self) -> Value {
+    pub(crate) fn active_checkpoint(&self) -> Value {
         let epoch = null_if_empty(&self.state.active_epoch);
         let checkpoint = null_if_empty(&self.state.active_checkpoint);
         let activated = self
@@ -17,12 +17,12 @@ impl Supervisor {
         })
     }
 
-    pub(super) fn queue_epochs(&self) -> Result<Value> {
+    pub(crate) fn queue_epochs(&self) -> Result<Value> {
         let inventory = self.inventory()?;
         Ok(self.queue_epochs_from_inventory(&inventory))
     }
 
-    pub(super) fn queue_epochs_from_inventory(&self, inventory: &[InventoryJob]) -> Value {
+    pub(crate) fn queue_epochs_from_inventory(&self, inventory: &[InventoryJob]) -> Value {
         let mut counts: BTreeMap<String, BTreeMap<String, u64>> = BTreeMap::new();
         for job in inventory {
             *counts
@@ -55,12 +55,12 @@ impl Supervisor {
         })
     }
 
-    pub(super) fn freshness_status(&self) -> Result<Value> {
+    pub(crate) fn freshness_status(&self) -> Result<Value> {
         let inventory = self.inventory()?;
         Ok(self.freshness_status_from_inventory(&inventory))
     }
 
-    pub(super) fn freshness_status_from_inventory(&self, inventory: &[InventoryJob]) -> Value {
+    pub(crate) fn freshness_status_from_inventory(&self, inventory: &[InventoryJob]) -> Value {
         let queue = self.queue_epochs_from_inventory(inventory);
         let epochs = queue["epochs"].as_array().cloned().unwrap_or_default();
         let stale = epochs
@@ -119,7 +119,7 @@ impl Supervisor {
         status
     }
 
-    pub(super) fn explain_job(&self, wanted: &str) -> Result<Value> {
+    pub(crate) fn explain_job(&self, wanted: &str) -> Result<Value> {
         let job = self
             .inventory()?
             .into_iter()
@@ -145,7 +145,7 @@ impl Supervisor {
         }))
     }
 
-    pub(super) fn write_preview(&mut self, kind: &str, payload: Value) -> Result<Value> {
+    pub(crate) fn write_preview(&mut self, kind: &str, payload: Value) -> Result<Value> {
         self.prune_state();
         let timestamp = now_ms();
         if let Some((digest, preview)) = self
@@ -184,12 +184,12 @@ impl Supervisor {
         Ok(result)
     }
 
-    pub(super) fn preview_stale_retirement(&mut self) -> Result<Value> {
+    pub(crate) fn preview_stale_retirement(&mut self) -> Result<Value> {
         let inventory = self.inventory()?;
         self.preview_stale_retirement_from_inventory(&inventory)
     }
 
-    pub(super) fn preview_stale_retirement_from_inventory(
+    pub(crate) fn preview_stale_retirement_from_inventory(
         &mut self,
         inventory: &[InventoryJob],
     ) -> Result<Value> {
@@ -261,7 +261,7 @@ impl Supervisor {
         )
     }
 
-    pub(super) fn load_preview(
+    pub(crate) fn load_preview(
         &self,
         digest: &str,
         expected_kind: Option<&str>,

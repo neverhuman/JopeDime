@@ -2,7 +2,7 @@ use super::super::mps::allocation_uses_mps;
 use super::*;
 
 impl DaemonActor {
-    pub(super) async fn refresh_gpu_availability(&mut self) {
+    pub(crate) async fn refresh_gpu_availability(&mut self) {
         let mut managed = BTreeSet::new();
         let mut mps_managed = BTreeSet::new();
         let mut membership_complete = true;
@@ -85,7 +85,7 @@ impl DaemonActor {
         self.health.update_gpu_inventory(&self.gpu);
     }
 
-    pub(super) async fn preempt(&mut self, job_id: JobId, reason: &str) -> Result<(), ActorError> {
+    pub(crate) async fn preempt(&mut self, job_id: JobId, reason: &str) -> Result<(), ActorError> {
         let Some(job) = self.store.get_job(job_id)? else {
             return Ok(());
         };
@@ -128,7 +128,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn scheduling_candidate(
+    pub(crate) fn scheduling_candidate(
         &self,
         job: &JobRecord,
         history_cache: &mut HashMap<String, Option<GpuLearningSnapshot>>,
@@ -173,7 +173,7 @@ impl DaemonActor {
         })
     }
 
-    pub(super) async fn launch_job(
+    pub(crate) async fn launch_job(
         &mut self,
         job: JobRecord,
         allocation: Allocation,

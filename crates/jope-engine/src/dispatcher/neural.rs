@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
+pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
         EngineCmd::PolicyParity { directory } => jope_parallel::neural::parity(&directory)?,
         #[cfg(feature = "neural")]

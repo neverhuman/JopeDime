@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn render(f: &mut Frame, body: Rect, run: &Value, gp: &Value, history: &History) {
+pub(crate) fn render(f: &mut Frame, body: Rect, run: &Value, gp: &Value, history: &History) {
     let parts = Layout::vertical([
         Constraint::Length(5),
         Constraint::Min(8),

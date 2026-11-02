@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn fit_test_adaptive_binary(
+pub(crate) fn fit_test_adaptive_binary(
     canonical_genome: &str,
     train: &RegressionData,
     test: &RegressionData,
@@ -32,7 +32,7 @@ pub(super) fn fit_test_adaptive_binary(
     Ok((genome, model, fit_seconds))
 }
 
-pub(super) fn finish_test_adaptive_binary(
+pub(crate) fn finish_test_adaptive_binary(
     complexity: usize,
     predictions: Vec<f64>,
     test: &RegressionData,
@@ -60,13 +60,13 @@ pub(super) fn finish_test_adaptive_binary(
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug)]
-pub(super) struct BinaryEvaluation {
+pub(crate) struct BinaryEvaluation {
     complexity: usize,
     result: Option<BinaryCvResult>,
     rejection_reason: Option<String>,
 }
 
-pub(super) fn evaluate_binary_unique(
+pub(crate) fn evaluate_binary_unique(
     member: &BinaryMember,
     fold_cache: &BinaryFoldCache<'_>,
     task: &TaskSpec,

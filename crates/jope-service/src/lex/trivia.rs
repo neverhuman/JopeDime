@@ -1,7 +1,7 @@
 use super::*;
 
 impl Lexer {
-    pub(super) fn trivia(&mut self) -> Result<(), LexError> {
+    pub(crate) fn trivia(&mut self) -> Result<(), LexError> {
         loop {
             while let Some(c) = self
                 .rest()
@@ -35,7 +35,7 @@ impl Lexer {
         }
     }
 
-    pub(super) fn block_comment(&mut self) -> Result<(), LexError> {
+    pub(crate) fn block_comment(&mut self) -> Result<(), LexError> {
         let start = self.pos;
         self.pos += 2;
         let mut depth = 1;
@@ -56,7 +56,7 @@ impl Lexer {
         Err(self.error(start, "unterminated block comment"))
     }
 
-    pub(super) fn identifier(&mut self) {
+    pub(crate) fn identifier(&mut self) {
         while let Some(c) = self.rest().chars().next().filter(|&c| {
             identifier_start(c, self.language)
                 || c.is_numeric()
@@ -67,6 +67,6 @@ impl Lexer {
     }
 }
 
-pub(super) fn identifier_start(c: char, language: SourceLanguage) -> bool {
+pub(crate) fn identifier_start(c: char, language: SourceLanguage) -> bool {
     c == '_' || c.is_alphabetic() || (language == SourceLanguage::JavaScript && c == '$')
 }

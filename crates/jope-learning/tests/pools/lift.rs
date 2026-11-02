@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn high_dim_surrogate_and_distilled_flywheel_establish_multi_round_lift_body() {
+pub(crate) fn high_dim_surrogate_and_distilled_flywheel_establish_multi_round_lift_body() {
     use jope_learning::clover::expansion::MeasuredTiltPolicyConfig;
     use jope_learning::pools::flywheel::{
         run_distilled_flywheel, FlywheelConfig, FLYWHEEL_RECEIPT_SCHEMA,

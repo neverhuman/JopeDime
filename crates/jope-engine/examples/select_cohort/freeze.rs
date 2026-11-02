@@ -8,7 +8,7 @@ fn binding(root: &Path, path: &Path) -> Result<Binding> {
     })
 }
 
-pub(super) fn freeze(
+pub(crate) fn freeze(
     root: &Path,
     registry_path: &Path,
     paths: &[PathBuf],

@@ -410,21 +410,21 @@ impl CycleReport {
 }
 
 mod daemon;
-pub(super) use daemon::run;
+pub(crate) use daemon::run;
 
 /// Read-only dry run of the warm-start decision. Takes no process lock and
 /// writes nothing, so it can be exercised against the live root while the daemon
 /// is running.
 mod cycle;
-pub(super) use cycle::*;
+pub(crate) use cycle::*;
 mod lineage;
-pub(super) use lineage::*;
+pub(crate) use lineage::*;
 mod state;
-pub(super) use state::*;
+pub(crate) use state::*;
 mod submission;
-pub(super) use submission::*;
+pub(crate) use submission::*;
 mod schema;
-pub(super) use schema::*;
+pub(crate) use schema::*;
 
 #[cfg(test)]
 mod tests;

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn small_training_rows() -> (Vec<Vec<f64>>, Vec<f64>) {
+pub(crate) fn small_training_rows() -> (Vec<Vec<f64>>, Vec<f64>) {
     let mut rng = Pcg32::new(42, 17);
     let mut rows = Vec::new();
     let mut targets = Vec::new();
@@ -12,7 +12,7 @@ pub(super) fn small_training_rows() -> (Vec<Vec<f64>>, Vec<f64>) {
     (rows, targets)
 }
 
-pub(super) fn representative_program(kind: &str, name: &str) -> GenomeIr {
+pub(crate) fn representative_program(kind: &str, name: &str) -> GenomeIr {
     match kind {
         "stage" => stage_program(name, BTreeMap::new(), false),
         "head" => stage_program(name, BTreeMap::new(), true),
@@ -34,7 +34,7 @@ pub(super) fn representative_program(kind: &str, name: &str) -> GenomeIr {
     }
 }
 
-pub(super) fn clause_e(
+pub(crate) fn clause_e(
     manifest: &Manifest,
     profile: &SearchProfile,
     report: &mut ClosureReport,
@@ -137,7 +137,7 @@ pub(super) fn clause_e(
     checked
 }
 
-pub(super) fn clause_b(profile: &SearchProfile, report: &mut ClosureReport) -> usize {
+pub(crate) fn clause_b(profile: &SearchProfile, report: &mut ClosureReport) -> usize {
     if profile.pipeline_operators.is_none() {
         return 0;
     }
@@ -156,7 +156,7 @@ pub(super) fn clause_b(profile: &SearchProfile, report: &mut ClosureReport) -> u
     evidence.count()
 }
 
-pub(super) fn closure(manifest: &Manifest, profiles: &[SearchProfile]) -> ClosureReport {
+pub(crate) fn closure(manifest: &Manifest, profiles: &[SearchProfile]) -> ClosureReport {
     let mut report = ClosureReport::default();
     for profile in profiles {
         let counts = Counts {

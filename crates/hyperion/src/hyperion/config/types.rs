@@ -59,11 +59,11 @@ impl HyperionEngine {
     }
 }
 
-pub(super) fn classic_engine_wire() -> &'static str {
+pub(crate) fn classic_engine_wire() -> &'static str {
     concat!("leg", "acy")
 }
 
-pub(super) fn projection_alias_wire() -> &'static str {
+pub(crate) fn projection_alias_wire() -> &'static str {
     concat!("com", "pat")
 }
 
@@ -218,7 +218,7 @@ pub struct HyperionModelIdentity {
     pub tensor_count: usize,
 }
 
-pub(super) fn state_engine_projection() -> String {
+pub(crate) fn state_engine_projection() -> String {
     // Serde default: artifacts saved before the v7 engine existed were encoded by the projection
     // path, and must replay it bit-for-bit at scoring time.
     "projection".to_string()
@@ -277,7 +277,7 @@ pub struct HyperionAugment {
 }
 
 #[derive(Debug, Deserialize)]
-pub(super) struct ManifestFile {
+pub(crate) struct ManifestFile {
     version: String,
     #[serde(default)]
     step: u64,
@@ -303,16 +303,16 @@ pub(super) struct ManifestFile {
     ws_list: Vec<usize>,
 }
 
-pub(super) fn default_quant_scale() -> f32 {
+pub(crate) fn default_quant_scale() -> f32 {
     3.0
 }
 
-pub(super) fn default_pad_u8() -> u8 {
+pub(crate) fn default_pad_u8() -> u8 {
     128
 }
 
 #[derive(Clone)]
-pub(super) struct WeightProjection {
+pub(crate) struct WeightProjection {
     n_bands: usize,
     output_dim: usize,
     value_scale: Vec<f32>,

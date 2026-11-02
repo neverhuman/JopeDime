@@ -2,7 +2,7 @@ use super::*;
 use sha2::{Digest, Sha256};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub(super) fn numeric_raw_table(rows: &[Vec<f64>]) -> Result<feat_math::RawTable> {
+pub(crate) fn numeric_raw_table(rows: &[Vec<f64>]) -> Result<feat_math::RawTable> {
     let width = rows.first().map_or(0, Vec::len);
     feat_math::RawTable::new(
         (0..width).map(|index| format!("c{index}")).collect(),
@@ -15,7 +15,7 @@ pub(super) fn numeric_raw_table(rows: &[Vec<f64>]) -> Result<feat_math::RawTable
 /// Column-major predictions to row-major CSV bytes using Rust `{:?}`
 /// shortest-round-trip formatting. Downstream Python must never rewrite these
 /// numeric bytes.
-pub(super) fn feature_csv_bytes(columns: &[Vec<f64>], rows: usize) -> Result<Vec<u8>> {
+pub(crate) fn feature_csv_bytes(columns: &[Vec<f64>], rows: usize) -> Result<Vec<u8>> {
     for column in columns {
         if column.len() != rows {
             bail!("feature column length {} != row count {rows}", column.len());
@@ -36,7 +36,7 @@ pub(super) fn feature_csv_bytes(columns: &[Vec<f64>], rows: usize) -> Result<Vec
     Ok(bytes)
 }
 
-pub(super) fn validate_dataset_hash(hash: &str) -> Result<()> {
+pub(crate) fn validate_dataset_hash(hash: &str) -> Result<()> {
     if hash.is_empty()
         || hash.len() > 64
         || !hash.chars().all(|c| c.is_ascii_hexdigit() || c == '_')
@@ -48,7 +48,7 @@ pub(super) fn validate_dataset_hash(hash: &str) -> Result<()> {
 }
 
 /// Immutable write: refuse to change existing bytes, accept identical reruns.
-pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.exists() {
         let existing = fs::read(path)?;
         if existing == bytes {
@@ -65,12 +65,12 @@ pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
+pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
 /// Streamed (bounded memory); the same digest as hashing the whole file.
-pub(super) fn unix_ms() -> u128 {
+pub(crate) fn unix_ms() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_millis())
@@ -189,7 +189,7 @@ pub(crate) fn validate_features(output_dir: &Path) -> Result<()> {
 /// Shape, finiteness, and shortest-round-trip formatting check for a feature
 /// block: every field must parse as a finite f64 and reformat via `{:?}` to
 /// exactly the stored bytes.
-pub(super) fn check_feature_block(bytes: &[u8], rows: usize, columns: usize) -> Result<()> {
+pub(crate) fn check_feature_block(bytes: &[u8], rows: usize, columns: usize) -> Result<()> {
     let text = std::str::from_utf8(bytes).context("feature block is not UTF-8")?;
     let mut row_count = 0usize;
     for (line_no, line) in text.lines().enumerate() {

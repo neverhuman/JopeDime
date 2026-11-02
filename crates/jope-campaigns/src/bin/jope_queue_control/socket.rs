@@ -1,12 +1,12 @@
 use super::*;
 
-pub(super) struct ScqHoldClient {
+pub(crate) struct ScqHoldClient {
     writer: UnixStream,
     reader: BufReader<UnixStream>,
 }
 
 impl ScqHoldClient {
-    pub(super) fn connect(socket: &Path) -> Result<Self> {
+    pub(crate) fn connect(socket: &Path) -> Result<Self> {
         let writer = UnixStream::connect(socket)
             .with_context(|| format!("connect SCQ socket {}", socket.display()))?;
         writer.set_read_timeout(Some(Duration::from_secs(30)))?;
@@ -15,15 +15,15 @@ impl ScqHoldClient {
         Ok(Self { writer, reader })
     }
 
-    pub(super) fn hold(&mut self, job_id: &str) -> Result<()> {
+    pub(crate) fn hold(&mut self, job_id: &str) -> Result<()> {
         self.request("Hold", job_id)
     }
 
-    pub(super) fn cancel(&mut self, job_id: &str) -> Result<()> {
+    pub(crate) fn cancel(&mut self, job_id: &str) -> Result<()> {
         self.request("Cancel", job_id)
     }
 
-    pub(super) fn release(&mut self, job_id: &str) -> Result<()> {
+    pub(crate) fn release(&mut self, job_id: &str) -> Result<()> {
         self.request("Release", job_id)
     }
 
@@ -58,13 +58,13 @@ impl ScqHoldClient {
     }
 }
 
-pub(super) fn claim_matches_candidate(claim: &Claim, candidate: &HoldCandidate) -> bool {
+pub(crate) fn claim_matches_candidate(claim: &Claim, candidate: &HoldCandidate) -> bool {
     claim.state == "submitted"
         && claim.manifest_sha256 == candidate.manifest_sha256
         && claim.manifest.to_string_lossy() == candidate.manifest
 }
 
-pub(super) fn hold_over_socket(
+pub(crate) fn hold_over_socket(
     candidates: &[HoldCandidate],
     before: &HashMap<String, (String, String)>,
     before_claims: &HashMap<String, Claim>,
@@ -114,7 +114,7 @@ pub(super) fn hold_over_socket(
     }))
 }
 
-pub(super) fn release_over_socket(
+pub(crate) fn release_over_socket(
     candidates: &[HoldCandidate],
     before: &HashMap<String, (String, String)>,
     before_claims: &HashMap<String, Claim>,
@@ -170,7 +170,7 @@ pub(super) fn release_over_socket(
     }))
 }
 
-pub(super) fn cancel_over_socket(
+pub(crate) fn cancel_over_socket(
     candidates: &[HoldCandidate],
     before: &HashMap<String, (String, String)>,
     before_claims: &HashMap<String, Claim>,
@@ -231,7 +231,7 @@ pub(super) fn cancel_over_socket(
     }))
 }
 
-pub(super) fn socket_mutation_with_reconnect(
+pub(crate) fn socket_mutation_with_reconnect(
     client: &mut Result<ScqHoldClient>,
     socket: &Path,
     operation: &str,

@@ -36,7 +36,7 @@ pub(crate) struct Cli {
 }
 
 #[derive(Subcommand)]
-pub(crate) enum Command {
+pub(crate) enum BenchCommand {
     /// List original Rust learners available through run --automl.
     Automl,
     /// Frozen-panel inputs, recipes and planning through the product benchmark contract.
@@ -154,6 +154,8 @@ pub(crate) enum Command {
     /// seeds, and write one jope.bench-ablation/v1 document.
     Ablation(jope_bench::ablation::AblationArgs),
 }
+
+pub(crate) use self::BenchCommand as Command;
 
 pub(crate) fn run() -> Result<()> {
     match Cli::parse().command {

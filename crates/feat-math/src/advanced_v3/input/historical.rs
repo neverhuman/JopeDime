@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
+pub(crate) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
     let text = raw.trim();
     if text.is_empty()
         || text.eq_ignore_ascii_case("na")
@@ -15,12 +15,12 @@ pub(super) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
     Ok(value.is_finite().then_some(value))
 }
 
-pub(super) fn category_is_missing(raw: &str) -> bool {
+pub(crate) fn category_is_missing(raw: &str) -> bool {
     let text = raw.trim();
     text.is_empty() || text.eq_ignore_ascii_case("null") || text.eq_ignore_ascii_case("na")
 }
 
-pub(super) fn category_value(raw: &str) -> String {
+pub(crate) fn category_value(raw: &str) -> String {
     if category_is_missing(raw) {
         "\0MISSING".to_string()
     } else {
@@ -28,7 +28,7 @@ pub(super) fn category_value(raw: &str) -> String {
     }
 }
 
-pub(super) fn honest_ordered_values(
+pub(crate) fn honest_ordered_values(
     indices: &[Option<usize>],
     y: &[f64],
     prior: f64,
@@ -93,7 +93,7 @@ struct WorkingHistoricalGroup {
     categories: BTreeMap<usize, RunningTarget>,
 }
 
-pub(super) fn smoothed_statistic(sum: f64, count: usize, prior: f64, fallback: f64) -> f64 {
+pub(crate) fn smoothed_statistic(sum: f64, count: usize, prior: f64, fallback: f64) -> f64 {
     if count == 0 && prior == 0.0 {
         fallback
     } else {
@@ -145,7 +145,7 @@ fn keys_for_rows(
     Ok((groups, orders))
 }
 
-pub(super) fn honest_historical_values(
+pub(crate) fn honest_historical_values(
     indices: &[Option<usize>],
     y: &[f64],
     table: &RawTable,
@@ -221,7 +221,7 @@ pub(super) fn honest_historical_values(
     ))
 }
 
-pub(super) fn historical_prediction_values(
+pub(crate) fn historical_prediction_values(
     indices: &[Option<usize>],
     table: &RawTable,
     row_order: &FittedRowOrder,

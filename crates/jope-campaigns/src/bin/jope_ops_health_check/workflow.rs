@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run() {
+pub(crate) fn run() {
     let args = Args::parse();
     let receipt_path = args.root.join("ops/ops-health-check.v1.json");
     let (receipt, failing) = match evaluate(&args) {

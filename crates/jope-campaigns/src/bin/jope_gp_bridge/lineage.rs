@@ -29,7 +29,7 @@ fn read_json_or_jsonl(path: &Path) -> Result<Vec<Value>> {
     Ok(rows)
 }
 
-pub(super) fn lineage_value(
+pub(crate) fn lineage_value(
     path: &Path,
     champion: &str,
     task: Task,

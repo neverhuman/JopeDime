@@ -5,27 +5,27 @@ use super::*;
 // --------------------------------------------------------------------------
 
 #[derive(Clone, Deserialize)]
-pub(super) struct SealedEntry {
-    pub(super) task: String,
-    pub(super) dataset_id: String,
-    pub(super) dataset_hash: String,
-    pub(super) source: PathBuf,
-    pub(super) mirror: PathBuf,
-    pub(super) source_family: String,
-    pub(super) train_sha256: String,
-    pub(super) test_sha256: String,
+pub(crate) struct SealedEntry {
+    pub(crate) task: String,
+    pub(crate) dataset_id: String,
+    pub(crate) dataset_hash: String,
+    pub(crate) source: PathBuf,
+    pub(crate) mirror: PathBuf,
+    pub(crate) source_family: String,
+    pub(crate) train_sha256: String,
+    pub(crate) test_sha256: String,
 }
 
 #[derive(Deserialize)]
-pub(super) struct SealedCohort {
-    pub(super) schema: String,
-    pub(super) classification: String,
-    pub(super) immutable: bool,
-    pub(super) cohort_sha256: String,
-    pub(super) entries: Vec<SealedEntry>,
+pub(crate) struct SealedCohort {
+    pub(crate) schema: String,
+    pub(crate) classification: String,
+    pub(crate) immutable: bool,
+    pub(crate) cohort_sha256: String,
+    pub(crate) entries: Vec<SealedEntry>,
 }
 
-pub(super) fn load_sealed(root: &Path) -> Result<SealedCohort> {
+pub(crate) fn load_sealed(root: &Path) -> Result<SealedCohort> {
     let path = root.join("catalog/private/sealed-expanded-v1.json");
     let text = fs::read_to_string(&path)
         .with_context(|| format!("read sealed cohort {} (READ ONLY)", path.display()))?;
@@ -48,7 +48,7 @@ pub(super) fn load_sealed(root: &Path) -> Result<SealedCohort> {
 
 /// Index-led probe: `(task,dataset_hash)` is the covering prefix of
 /// `observations_best_v1`, so this is 512 index seeks, never a scan.
-pub(super) fn contaminated(
+pub(crate) fn contaminated(
     root: &Path,
     cohort: &SealedCohort,
 ) -> Result<BTreeMap<String, (u64, f64)>> {

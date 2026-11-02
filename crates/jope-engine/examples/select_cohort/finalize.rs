@@ -40,7 +40,7 @@ fn assembly_path(root: &Path, index: &Value) -> Result<PathBuf> {
     found.context("context assembly path absent")
 }
 
-pub(super) fn finalize(
+pub(crate) fn finalize(
     root: &Path,
     selection_path: &Path,
     contexts_path: &Path,

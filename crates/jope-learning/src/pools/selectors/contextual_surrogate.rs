@@ -96,7 +96,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
     /// pairwise target differences `bt_i - bt_j` are identically preserved. Single-member pools
     /// (`bt = 0.5`) evaluate to `0.5 + ctx_offset = mu_p` (`0.5` when unseen outside the parent
     /// cluster).
-    pub(super) fn compute_sos_targets(
+    pub(crate) fn compute_sos_targets(
         raw_targets: &[(&'a Pool, Vec<f64>)],
         prior_weight: f64,
     ) -> Vec<Vec<f64>> {

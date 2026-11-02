@@ -1,9 +1,9 @@
 use super::*;
 
 mod recipe;
-pub(super) use recipe::trainer_recipe;
+pub(crate) use recipe::trainer_recipe;
 
-pub(super) fn production_task_v3(
+pub(crate) fn production_task_v3(
     ledger: &CausalEvidenceLedgerV3,
     accepted: &BTreeMap<Task, AcceptedPointer>,
 ) -> Option<Task> {
@@ -18,9 +18,9 @@ pub(super) fn production_task_v3(
 }
 
 mod render;
-pub(super) use render::render_spec;
+pub(crate) use render::render_spec;
 
-pub(super) fn submit_or_register(args: &Args, spec: &Path, job_id: &str) -> Result<&'static str> {
+pub(crate) fn submit_or_register(args: &Args, spec: &Path, job_id: &str) -> Result<&'static str> {
     let check = Command::new(&args.scq).arg("check").arg(spec).output()?;
     let check_message = command_message(&check);
     if !check.status.success() {
@@ -42,7 +42,7 @@ pub(super) fn submit_or_register(args: &Args, spec: &Path, job_id: &str) -> Resu
     bail!("task trainer submission failed: {message}")
 }
 
-pub(super) fn register_admission(args: &Args, spec: &Path, job_id: &str) -> Result<()> {
+pub(crate) fn register_admission(args: &Args, spec: &Path, job_id: &str) -> Result<()> {
     let executable = fs::canonicalize(std::env::current_exe()?)?;
     let controller = executable
         .parent()
@@ -69,7 +69,7 @@ pub(super) fn register_admission(args: &Args, spec: &Path, job_id: &str) -> Resu
     Ok(())
 }
 
-pub(super) fn harvest_result(
+pub(crate) fn harvest_result(
     args: &Args,
     state: &mut ControllerState,
     intent: &ActiveIntent,

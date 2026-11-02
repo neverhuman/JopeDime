@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn prune_snapshots(args: &Args) -> Value {
+pub(crate) fn prune_snapshots(args: &Args) -> Value {
     let root = &args.root;
     if args.keep_snapshots == 0 {
         return json!({"pruned": 0, "reason": "retention disabled"});
@@ -153,7 +153,7 @@ fn directory_bytes(path: &Path) -> u64 {
         .unwrap_or(0)
 }
 
-pub(super) fn prune_packed(args: &Args) -> Value {
+pub(crate) fn prune_packed(args: &Args) -> Value {
     let root = &args.root;
     if args.keep_snapshots == 0 {
         return json!({"pruned": 0, "reason": "retention disabled"});

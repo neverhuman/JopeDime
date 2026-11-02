@@ -18,7 +18,7 @@ pub struct SourceRef {
 }
 
 impl SourceRef {
-    pub(super) fn of(path: &Path, bytes: &[u8]) -> Self {
+    pub(crate) fn of(path: &Path, bytes: &[u8]) -> Self {
         Self {
             source: "import".into(),
             file_name: path
@@ -33,7 +33,7 @@ impl SourceRef {
     }
 }
 
-pub(super) fn read_bounded(path: &Path) -> Result<Vec<u8>> {
+pub(crate) fn read_bounded(path: &Path) -> Result<Vec<u8>> {
     let len = std::fs::metadata(path)
         .with_context(|| format!("stat {}", path.display()))?
         .len();
@@ -94,7 +94,7 @@ fn metric_id(name: &str) -> Option<u16> {
     train::METRICS.iter().find(|m| m.name == name).map(|m| m.id)
 }
 
-pub(super) fn num(v: &Value) -> Option<f64> {
+pub(crate) fn num(v: &Value) -> Option<f64> {
     match v {
         Value::Number(n) => n.as_f64(),
         Value::Bool(b) => Some(*b as u8 as f64),

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn legacy_metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64)> {
+pub(crate) fn legacy_metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64)> {
     let error = squared_error(truth, predictions)?;
     let mean = truth.iter().sum::<f64>() / truth.len() as f64;
     let total = truth
@@ -13,7 +13,7 @@ pub(super) fn legacy_metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64,
     Ok(((error / truth.len() as f64).sqrt(), 1.0 - error / total))
 }
 
-pub(super) fn legacy_robust_fitness(scores: &[f64]) -> Result<f64> {
+pub(crate) fn legacy_robust_fitness(scores: &[f64]) -> Result<f64> {
     if scores.is_empty() || scores.iter().any(|value| !value.is_finite()) {
         bail!("legacy robust fitness needs finite scores");
     }
@@ -31,7 +31,7 @@ pub(super) fn legacy_robust_fitness(scores: &[f64]) -> Result<f64> {
     Ok(mean - 0.25 * sd.min(1.0))
 }
 
-pub(super) fn legacy_split(
+pub(crate) fn legacy_split(
     dataset_hash: &str,
     generation: usize,
     targets: &[f64],
@@ -99,7 +99,7 @@ pub(super) fn legacy_split(
     Ok(validation)
 }
 
-pub(super) fn score_legacy_population(
+pub(crate) fn score_legacy_population(
     data: &RegressionData,
     dataset_hash: &str,
     generation: usize,

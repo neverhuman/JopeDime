@@ -31,8 +31,8 @@ pub const ORIGIN_RANDOM: &str = "random_exploration";
 /// generators in this module tree.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SeedCandidate {
-    pub(super) genome: String,
-    pub(super) origin: String,
+    pub(crate) genome: String,
+    pub(crate) origin: String,
     /// Normalized critic rank weight. Historical files called it `policy_logprob`; it is never a
     /// behavior/selection propensity.
     #[serde(
@@ -41,13 +41,13 @@ pub struct SeedCandidate {
         alias = "policy_logprob",
         skip_serializing_if = "Option::is_none"
     )]
-    pub(super) rank_log_weight: Option<f64>,
+    pub(crate) rank_log_weight: Option<f64>,
     /// W4-T07: identity of this slot's record in the proposal ledger
     /// ([`ProposalLedger::slot_record_sha256`]): the draw it came from, its original tokens,
     /// scores, parser result and adaptations. Absent in files written before the join; a
     /// population names it for every slot or for none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub(super) proposal_record_sha256: Option<String>,
+    pub(crate) proposal_record_sha256: Option<String>,
 }
 
 impl SeedCandidate {
@@ -84,14 +84,14 @@ impl SeedCandidate {
 
 /// Field order matches jope-dime's struct, so pretty JSON output has the same key order.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub(super) struct PopulationFields {
+pub(crate) struct PopulationFields {
     schema: String,
     prepared_sha256: String,
     cut: usize,
     training_sha256: String,
-    pub(super) context_sha256: String,
+    pub(crate) context_sha256: String,
     checkpoint_sha256: String,
-    pub(super) candidates: Vec<SeedCandidate>,
+    pub(crate) candidates: Vec<SeedCandidate>,
 }
 
 /// Read accessors shared by [`SeedPopulation`] and [`SeedFile`].
@@ -145,7 +145,7 @@ macro_rules! population_accessors {
 /// public constructor and no `Deserialize` implementation.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(transparent)]
-pub struct SeedPopulation(pub(super) PopulationFields);
+pub struct SeedPopulation(pub(crate) PopulationFields);
 
 impl SeedPopulation {
     population_accessors!();
@@ -244,7 +244,7 @@ fn attach_rank_log_weights(candidates: &mut [SeedCandidate], scores: &[f64]) -> 
 /// programs, refusing any mismatch between the ranking, the pool and the binding. Private: the
 /// caller must already have proven that `checkpoint_sha256` is the state of the policy that
 /// produced `pool` and `ranking`.
-pub(super) fn assemble_population(
+pub(crate) fn assemble_population(
     binding: &SeedBinding,
     checkpoint_sha256: &str,
     ranking: &Ranking,
@@ -338,7 +338,7 @@ pub fn assemble_for_testing(
 }
 
 /// Structural checks shared by the writer and the reader.
-pub(super) fn check_population(population: &PopulationFields) -> Result<()> {
+pub(crate) fn check_population(population: &PopulationFields) -> Result<()> {
     ensure!(
         population.schema == SEED_SCHEMA,
         "seed population schema is not {SEED_SCHEMA}"

@@ -14,7 +14,7 @@ pub struct ValueWeights {
 }
 
 impl ValueWeights {
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         ensure!(
             self.influence.is_finite() && self.influence >= 0.0,
             "influence weight must be finite and nonnegative"
@@ -119,7 +119,7 @@ pub struct PhysicalObject {
 }
 
 impl PhysicalObject {
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         ensure!(
             !self.bucket.is_empty() && !self.key.is_empty() && !self.version_id.is_empty(),
             "physical object requires bucket, key, and version"
@@ -158,7 +158,7 @@ pub struct LearningSignals {
 }
 
 impl LearningSignals {
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         ensure!(self.influence.is_finite(), "influence must be finite");
         for (name, value) in [
             ("novelty", self.novelty),

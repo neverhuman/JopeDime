@@ -1,4 +1,4 @@
-pub(super) const ST: [f64; 440] = [
+pub(crate) const ST: [f64; 440] = [
     f64::from_bits(0x0000000000000000),
     f64::from_bits(0x0000000000000000),
     f64::from_bits(0x3ff0000000000000),
@@ -440,20 +440,20 @@ pub(super) const ST: [f64; 440] = [
     f64::from_bits(0x3fe514f57d7bf3da),
     f64::from_bits(0x3c747a108073c259),
 ];
-pub(super) const S1: f64 = f64::from_bits(0xbfc5555555555555);
-pub(super) const S2: f64 = f64::from_bits(0x3f81111111110ece);
-pub(super) const S3: f64 = f64::from_bits(0xbf2a01a019db08b8);
-pub(super) const S4: f64 = f64::from_bits(0x3ec71de27b9a7ed9);
-pub(super) const S5: f64 = f64::from_bits(0xbe5addffc2fcdf59);
-pub(super) const AA: f64 = f64::from_bits(0xbfc5558000000000);
-pub(super) const BB: f64 = f64::from_bits(0x3ed5555555556e24);
-pub(super) const BIG: f64 = f64::from_bits(0x42c8000000000000);
-pub(super) const HP0: f64 = f64::from_bits(0x3ff921fb54442d18);
-pub(super) const HP1: f64 = f64::from_bits(0x3c91a62633145c07);
-pub(super) const MP1: f64 = f64::from_bits(0x3ff921fb58000000);
-pub(super) const MP2: f64 = f64::from_bits(0xbe4dde973c000000);
-pub(super) const MP3: f64 = f64::from_bits(0xbc8cb3b399d747f2);
-pub(super) const PP3: f64 = f64::from_bits(0xbc8cb3b398000000);
-pub(super) const PP4: f64 = f64::from_bits(0xbacd747f23e32ed7);
-pub(super) const HPINV: f64 = f64::from_bits(0x3fe45f306dc9c883);
-pub(super) const TOINT: f64 = f64::from_bits(0x4338000000000000);
+pub(crate) const S1: f64 = f64::from_bits(0xbfc5555555555555);
+pub(crate) const S2: f64 = f64::from_bits(0x3f81111111110ece);
+pub(crate) const S3: f64 = f64::from_bits(0xbf2a01a019db08b8);
+pub(crate) const S4: f64 = f64::from_bits(0x3ec71de27b9a7ed9);
+pub(crate) const S5: f64 = f64::from_bits(0xbe5addffc2fcdf59);
+pub(crate) const AA: f64 = f64::from_bits(0xbfc5558000000000);
+pub(crate) const BB: f64 = f64::from_bits(0x3ed5555555556e24);
+pub(crate) const BIG: f64 = f64::from_bits(0x42c8000000000000);
+pub(crate) const HP0: f64 = f64::from_bits(0x3ff921fb54442d18);
+pub(crate) const HP1: f64 = f64::from_bits(0x3c91a62633145c07);
+pub(crate) const MP1: f64 = f64::from_bits(0x3ff921fb58000000);
+pub(crate) const MP2: f64 = f64::from_bits(0xbe4dde973c000000);
+pub(crate) const MP3: f64 = f64::from_bits(0xbc8cb3b399d747f2);
+pub(crate) const PP3: f64 = f64::from_bits(0xbc8cb3b398000000);
+pub(crate) const PP4: f64 = f64::from_bits(0xbacd747f23e32ed7);
+pub(crate) const HPINV: f64 = f64::from_bits(0x3fe45f306dc9c883);
+pub(crate) const TOINT: f64 = f64::from_bits(0x4338000000000000);

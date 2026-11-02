@@ -39,7 +39,7 @@ fn f64_matrix(values: &[Vec<f64>]) -> String {
 /// anything differently needs the next revision: the fitted-model container compares a stored
 /// source of the current revision with this emitter's, and regenerates older revisions before
 /// loading them (`fitted_cpp_runtime`). The PRELUDE's first line carries the same number.
-pub(super) const FITTED_CPP_REVISION: u32 = 3;
+pub(crate) const FITTED_CPP_REVISION: u32 = 3;
 
 macro_rules! expression_common {
     () => {

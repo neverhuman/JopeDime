@@ -86,13 +86,13 @@ fn typed_statistics_use_numeric_and_unsigned_byte_order_and_exclude_nonfinite_bo
 
 #[test]
 fn fixed_fixture_manifest_and_source_root_are_authenticated_as_fixture_only() {
-    let bytes = include_bytes!("fixtures/observation-import-v2/producer-manifest.json");
-    let pin = include_str!("fixtures/observation-import-v2/producer-manifest.sha256").trim();
+    let bytes = include_bytes!("../fixtures/observation-import-v2/producer-manifest.json");
+    let pin = include_str!("../fixtures/observation-import-v2/producer-manifest.sha256").trim();
     assert_eq!(sha256_hex(bytes), pin);
     assert_eq!(
         spec().input_roots[0].sha256,
         sha256_hex(include_bytes!(
-            "fixtures/observation-import-v2/producer-source.txt"
+            "../fixtures/observation-import-v2/producer-source.txt"
         ))
     );
     let archive = bound(INDEX, bytes, pin);
@@ -102,7 +102,7 @@ fn fixed_fixture_manifest_and_source_root_are_authenticated_as_fixture_only() {
     ));
     assert!(matches!(archive.historical, HistoricalStatus::Held { .. }));
     let historical: Value = serde_json::from_str(include_str!(
-        "fixtures/observation-import-v2/historical-status.json"
+        "../fixtures/observation-import-v2/historical-status.json"
     ))
     .unwrap();
     assert_eq!(historical["historical_input"], "UNKNOWN");

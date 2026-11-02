@@ -2,7 +2,7 @@ use super::*;
 
 impl Fitness {
     /// Whether rows may carry weights here.
-    pub(super) fn supports_weights(&self) -> bool {
+    pub(crate) fn supports_weights(&self) -> bool {
         match self {
             Self::MaxError {}
             | Self::Spearman {}

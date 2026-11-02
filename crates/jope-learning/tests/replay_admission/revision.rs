@@ -82,8 +82,10 @@ fn prospective_revision_never_relabels_old_observations_or_erasures_of_exposure(
 fn versioned_coverage_ingress_binds_actual_document_before_global_use() {
     let dir = scratch();
     let state = State::at(&dir);
-    let doc: Value =
-        serde_json::from_str(include_str!("fixtures/replay-admission-v2/coverage.json")).unwrap();
+    let doc: Value = serde_json::from_str(include_str!(
+        "../fixtures/replay-admission-v2/coverage.json"
+    ))
+    .unwrap();
     let subject = state.put_blob(&canonical_json(&doc).unwrap()).unwrap();
     let mut r = receipt(&state, &subject);
     r.observation = Observation::Proposed;
@@ -125,8 +127,10 @@ fn versioned_coverage_ingress_binds_actual_document_before_global_use() {
 fn global_bank_export_requires_subject_bound_admission_and_filters_before_ranking() {
     let dir = scratch();
     let state = State::at(&dir);
-    let entry: bank::BankEntry =
-        serde_json::from_str(include_str!("fixtures/replay-admission-v2/bank-entry.json")).unwrap();
+    let entry: bank::BankEntry = serde_json::from_str(include_str!(
+        "../fixtures/replay-admission-v2/bank-entry.json"
+    ))
+    .unwrap();
     let event = bank::BankEvent {
         schema: bank::EVENT_SCHEMA.into(),
         entry: entry.clone(),

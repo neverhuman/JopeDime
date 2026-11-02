@@ -1,4 +1,4 @@
-pub(super) const B: [f64; 11] = [
+pub(crate) const B: [f64; 11] = [
     f64::from_bits(0xbfe0000000000000),
     f64::from_bits(0x3fd5555555555577),
     f64::from_bits(0xbfcffffffffffdcb),
@@ -11,14 +11,14 @@ pub(super) const B: [f64; 11] = [
     f64::from_bits(0x3fb78182f7afd085),
     f64::from_bits(0xbfb5521375d145cd),
 ];
-pub(super) const A: [f64; 5] = [
+pub(crate) const A: [f64; 5] = [
     f64::from_bits(0xbfe0000000000001),
     f64::from_bits(0x3fd555555551305b),
     f64::from_bits(0xbfcfffffffeb4590),
     f64::from_bits(0x3fc999b324f10111),
     f64::from_bits(0xbfc55575e506c89f),
 ];
-pub(super) const INVC: [f64; 128] = [
+pub(crate) const INVC: [f64; 128] = [
     f64::from_bits(0x3ff734f0c3e0de9f),
     f64::from_bits(0x3ff713786a2ce91f),
     f64::from_bits(0x3ff6f26008fab5a0),
@@ -148,7 +148,7 @@ pub(super) const INVC: [f64; 128] = [
     f64::from_bits(0x3fe77907f2170657),
     f64::from_bits(0x3fe756cadbd6130c),
 ];
-pub(super) const LOGC: [f64; 128] = [
+pub(crate) const LOGC: [f64; 128] = [
     f64::from_bits(0xbfd7cc7f79e69000),
     f64::from_bits(0xbfd76feec20d0000),
     f64::from_bits(0xbfd713e31351e000),

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn sanitize_with_masks(values: &mut Rows, masks: &[Vec<bool>]) -> Result<()> {
+pub(crate) fn sanitize_with_masks(values: &mut Rows, masks: &[Vec<bool>]) -> Result<()> {
     if values.len() != masks.len() {
         bail!("transformed feature row/mask count mismatch");
     }
@@ -17,13 +17,13 @@ pub(super) fn sanitize_with_masks(values: &mut Rows, masks: &[Vec<bool>]) -> Res
     Ok(())
 }
 
-pub(super) fn lineage_with_operation(lineage: &FeatureLineage, operation: &str) -> FeatureLineage {
+pub(crate) fn lineage_with_operation(lineage: &FeatureLineage, operation: &str) -> FeatureLineage {
     let mut lineage = lineage.clone();
     lineage.operations.push(operation.to_string());
     lineage
 }
 
-pub(super) fn source_lineage(
+pub(crate) fn source_lineage(
     block: &FeatureBlock,
     feature_indices: &[usize],
     role: FeatureRole,
@@ -59,7 +59,7 @@ pub(super) fn source_lineage(
     })
 }
 
-pub(super) fn finish_generated_from_sets(
+pub(crate) fn finish_generated_from_sets(
     block: &FeatureBlock,
     mut generated: Rows,
     feature_sources: Vec<Vec<usize>>,
@@ -135,7 +135,7 @@ pub(super) fn finish_generated_from_sets(
     )
 }
 
-pub(super) fn finish_one_to_one(
+pub(crate) fn finish_one_to_one(
     block: &FeatureBlock,
     mut generated: Rows,
     append: bool,
@@ -168,7 +168,7 @@ pub(super) fn finish_one_to_one(
     )
 }
 
-pub(super) fn finish_selected(
+pub(crate) fn finish_selected(
     block: &FeatureBlock,
     mut generated: Rows,
     indices: &[usize],
@@ -214,7 +214,7 @@ pub(super) fn finish_selected(
     )
 }
 
-pub(super) fn finish_generated_dense(
+pub(crate) fn finish_generated_dense(
     block: &FeatureBlock,
     generated: Rows,
     source_indices: Vec<usize>,
@@ -241,7 +241,7 @@ pub(super) fn finish_generated_dense(
     )
 }
 
-pub(super) fn finish_impute(
+pub(crate) fn finish_impute(
     block: &FeatureBlock,
     mut generated: Rows,
     indicator_cols: &[usize],

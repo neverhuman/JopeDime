@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn recover_retirement_candidates(
+pub(crate) fn recover_retirement_candidates(
     receipt_dir: &Path,
     action: &str,
     claims: &HashMap<String, Claim>,
@@ -68,7 +68,7 @@ pub(super) fn recover_retirement_candidates(
     Ok(recovered.into_values().collect())
 }
 
-pub(super) fn build_retired_binding_repair_plan(
+pub(crate) fn build_retired_binding_repair_plan(
     wave_dir: &Path,
     pair_registry: &Path,
     backlog: &Path,
@@ -264,7 +264,7 @@ pub(super) fn build_retired_binding_repair_plan(
     })
 }
 
-pub(super) fn apply_retired_binding_repair(
+pub(crate) fn apply_retired_binding_repair(
     pair_registry: &Path,
     backlog: &Path,
     plan: &RetiredBindingRepairPlan,

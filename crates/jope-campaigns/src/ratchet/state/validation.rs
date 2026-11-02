@@ -1,16 +1,16 @@
 use super::*;
 
-pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
+pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
-pub(super) fn canonical_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
+pub(crate) fn canonical_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
     let mut bytes = serde_json::to_vec(value)?;
     bytes.push(b'\n');
     Ok(bytes)
 }
 
-pub(super) fn validate_sha256(label: &str, value: &str) -> Result<()> {
+pub(crate) fn validate_sha256(label: &str, value: &str) -> Result<()> {
     if value.len() != 64
         || !value
             .as_bytes()
@@ -22,7 +22,7 @@ pub(super) fn validate_sha256(label: &str, value: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_hashes<'a>(
+pub(crate) fn validate_hashes<'a>(
     values: impl IntoIterator<Item = (&'a str, &'a str)>,
 ) -> Result<()> {
     for (label, value) in values {
@@ -31,7 +31,7 @@ pub(super) fn validate_hashes<'a>(
     Ok(())
 }
 
-pub(super) fn require_unique<T: Ord>(
+pub(crate) fn require_unique<T: Ord>(
     label: &str,
     values: impl IntoIterator<Item = T>,
 ) -> Result<()> {
@@ -44,7 +44,7 @@ pub(super) fn require_unique<T: Ord>(
     Ok(())
 }
 
-pub(super) fn validate_track_history(
+pub(crate) fn validate_track_history(
     label: &str,
     entries: &[TrackHistoryEntryV2],
     required_authority: SelectionAuthorityV2,

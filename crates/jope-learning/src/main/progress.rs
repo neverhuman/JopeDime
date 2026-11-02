@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 use std::path::PathBuf;
 
 #[derive(Subcommand)]
-pub(super) enum ProgressCmd {
+pub(crate) enum ProgressCmd {
     /// Print the outbox limits and cadence in effect, and their approval state.
     Config {
         #[arg(long)]
@@ -206,7 +206,7 @@ fn open_driver<'r>(state: &State, run: &RunArgs, remote: &'r Mirror) -> Result<D
     )
 }
 
-pub(super) fn run_progress(state: &State, common: &Common, cmd: ProgressCmd) -> Result<bool> {
+pub(crate) fn run_progress(state: &State, common: &Common, cmd: ProgressCmd) -> Result<bool> {
     let clock = SystemClock;
     match cmd {
         ProgressCmd::Config { config } => {

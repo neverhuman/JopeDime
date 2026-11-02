@@ -11,7 +11,7 @@ use super::{
     sealed::{load_sealed_exclusions, validate_sealed_cohort},
 };
 
-pub(super) fn activated_identities(catalog_root: &Path) -> Result<HashSet<(String, String)>> {
+pub(crate) fn activated_identities(catalog_root: &Path) -> Result<HashSet<(String, String)>> {
     let ledger = catalog_root.join("activations.jsonl");
     if !ledger.is_file() {
         return Ok(HashSet::new());
@@ -46,7 +46,7 @@ pub(super) fn activated_identities(catalog_root: &Path) -> Result<HashSet<(Strin
     Ok(identities)
 }
 
-pub(super) fn existing_activation(catalog_root: &Path, tranche_id: &str) -> Result<Option<Value>> {
+pub(crate) fn existing_activation(catalog_root: &Path, tranche_id: &str) -> Result<Option<Value>> {
     let ledger = catalog_root.join("activations.jsonl");
     if !ledger.is_file() {
         return Ok(None);
@@ -82,7 +82,7 @@ pub(super) fn existing_activation(catalog_root: &Path, tranche_id: &str) -> Resu
     Ok(None)
 }
 
-pub(super) fn atomic_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn atomic_bytes(path: &Path, bytes: &[u8]) -> Result<()> {
     fs::create_dir_all(path.parent().context("output path has no parent")?)?;
     let temporary = path.with_file_name(format!(
         ".{}.tmp-{}-{}",

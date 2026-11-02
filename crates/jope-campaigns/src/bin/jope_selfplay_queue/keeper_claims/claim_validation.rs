@@ -1,7 +1,7 @@
 use super::*;
 
 impl Keeper {
-    pub(super) fn validate_claim_manifest(
+    pub(crate) fn validate_claim_manifest(
         &mut self,
         claim: &Claim,
         checkpoint_sha256: &str,
@@ -24,7 +24,7 @@ impl Keeper {
         Ok(manifest)
     }
 
-    pub(super) fn ready_claims(
+    pub(crate) fn ready_claims(
         &mut self,
         claims: &HashMap<String, Claim>,
         scheduler: &HashMap<&str, &SchedulerJob>,
@@ -58,7 +58,7 @@ impl Keeper {
         Ok(ready)
     }
 
-    pub(super) fn rebalance_launch_ready(
+    pub(crate) fn rebalance_launch_ready(
         &mut self,
         claims: &HashMap<String, Claim>,
         scheduler: &HashMap<&str, &SchedulerJob>,
@@ -124,7 +124,7 @@ impl Keeper {
         Ok(())
     }
 
-    pub(super) fn count_deferred_current(
+    pub(crate) fn count_deferred_current(
         &mut self,
         claims: &HashMap<String, Claim>,
         scheduler: &HashMap<&str, &SchedulerJob>,
@@ -147,7 +147,7 @@ impl Keeper {
         Ok(count)
     }
 
-    pub(super) fn validate_pair_reservations(
+    pub(crate) fn validate_pair_reservations(
         &mut self,
         manifest: &ValidManifest,
         claimed_owner: Option<&str>,

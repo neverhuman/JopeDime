@@ -40,7 +40,7 @@ pub const TARGET_DIM: usize = 512;
 pub const CONTEXT_FLOATS: usize = DATASET_DIM + TARGET_DIM;
 pub const CONTEXT_STRIDE: usize = CONTEXT_FLOATS * 4;
 
-pub(super) fn load_v1_quarantine(paths: &ExpansionPaths) -> Result<Option<V1EncodingQuarantineV1>> {
+pub(crate) fn load_v1_quarantine(paths: &ExpansionPaths) -> Result<Option<V1EncodingQuarantineV1>> {
     let root = paths.cache_root.join("incident-quarantine");
     let index = root.join("index.v1.json");
     if !root.exists() {
@@ -55,7 +55,7 @@ pub(super) fn load_v1_quarantine(paths: &ExpansionPaths) -> Result<Option<V1Enco
     Ok(Some(quarantine))
 }
 
-pub(super) fn v1_identity_denied(
+pub(crate) fn v1_identity_denied(
     quarantine: Option<&V1EncodingQuarantineV1>,
     identity: &str,
 ) -> bool {
@@ -194,7 +194,7 @@ impl CacheManifest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub(super) struct SealedCohort {
+pub(crate) struct SealedCohort {
     schema: String,
     immutable: bool,
     classification: String,
@@ -206,7 +206,7 @@ pub(super) struct SealedCohort {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(super) struct Standardization {
+pub(crate) struct Standardization {
     dim: usize,
     mean: Vec<f32>,
     scale: Vec<f32>,
@@ -214,14 +214,14 @@ pub(super) struct Standardization {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(super) struct FoundationSpec {
+pub(crate) struct FoundationSpec {
     cache_dir: PathBuf,
     projection_file: PathBuf,
     raw_dim: usize,
     proj_dim: usize,
 }
 
-pub(super) struct FileLock(File);
+pub(crate) struct FileLock(File);
 
 impl FileLock {
     fn exclusive(path: &Path) -> Result<Self> {

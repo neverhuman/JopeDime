@@ -1,4 +1,4 @@
-pub(super) fn validate_dataset_selection(
+pub(crate) fn validate_dataset_selection(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,

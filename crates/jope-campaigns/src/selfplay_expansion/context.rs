@@ -1,7 +1,7 @@
 use super::model::{Standardization, CONTEXT_STRIDE, DATASET_DIM, TARGET_DIM};
 use super::prelude::*;
 
-pub(super) fn read_vs_matrix(path: &Path, expected_width: Option<usize>) -> Result<Vec<Vec<f32>>> {
+pub(crate) fn read_vs_matrix(path: &Path, expected_width: Option<usize>) -> Result<Vec<Vec<f32>>> {
     let input = BufReader::new(File::open(path)?);
     let mut rows = Vec::new();
     let mut width = expected_width;
@@ -34,14 +34,14 @@ pub(super) fn read_vs_matrix(path: &Path, expected_width: Option<usize>) -> Resu
     Ok(rows)
 }
 
-pub(super) fn quantile(sorted: &[f64], q: f64) -> f64 {
+pub(crate) fn quantile(sorted: &[f64], q: f64) -> f64 {
     let position = q * (sorted.len().saturating_sub(1) as f64);
     let lower = position.floor() as usize;
     let upper = position.ceil() as usize;
     sorted[lower] + (sorted[upper] - sorted[lower]) * (position - lower as f64)
 }
 
-pub(super) fn hyperion_signature(path: &Path) -> Result<Vec<f32>> {
+pub(crate) fn hyperion_signature(path: &Path) -> Result<Vec<f32>> {
     let rows = read_vs_matrix(path, Some(128))?;
     let count = rows.len() as f64;
     let mut result = Vec::with_capacity(512);
@@ -76,7 +76,7 @@ pub(super) fn hyperion_signature(path: &Path) -> Result<Vec<f32>> {
     Ok(result)
 }
 
-pub(super) fn target_summary(path: &Path) -> Result<Vec<f32>> {
+pub(crate) fn target_summary(path: &Path) -> Result<Vec<f32>> {
     let rows = read_vs_matrix(path, None)?;
     let width = rows[0].len();
     let mut output = vec![0.0_f32; TARGET_DIM];
@@ -88,12 +88,12 @@ pub(super) fn target_summary(path: &Path) -> Result<Vec<f32>> {
 }
 
 #[derive(Debug)]
-pub(super) struct NpyArray {
+pub(crate) struct NpyArray {
     shape: Vec<usize>,
     values: Vec<f32>,
 }
 
-pub(super) fn parse_npy(mut reader: impl Read) -> Result<NpyArray> {
+pub(crate) fn parse_npy(mut reader: impl Read) -> Result<NpyArray> {
     let mut magic = [0_u8; 8];
     reader.read_exact(&mut magic)?;
     ensure!(&magic[..6] == b"\x93NUMPY", "invalid NPY magic");
@@ -174,11 +174,11 @@ pub(super) fn parse_npy(mut reader: impl Read) -> Result<NpyArray> {
     Ok(NpyArray { shape, values })
 }
 
-pub(super) fn read_npy(path: &Path) -> Result<NpyArray> {
+pub(crate) fn read_npy(path: &Path) -> Result<NpyArray> {
     parse_npy(File::open(path).with_context(|| format!("open NPY {}", path.display()))?)
 }
 
-pub(super) fn read_npz_arrays(path: &Path) -> Result<BTreeMap<String, NpyArray>> {
+pub(crate) fn read_npz_arrays(path: &Path) -> Result<BTreeMap<String, NpyArray>> {
     let mut archive = ZipArchive::new(File::open(path)?)?;
     let mut arrays = BTreeMap::new();
     for index in 0..archive.len() {
@@ -200,7 +200,7 @@ pub(super) fn read_npz_arrays(path: &Path) -> Result<BTreeMap<String, NpyArray>>
     Ok(arrays)
 }
 
-pub(super) fn required_array<'a>(
+pub(crate) fn required_array<'a>(
     arrays: &'a BTreeMap<String, NpyArray>,
     name: &str,
 ) -> Result<&'a NpyArray> {
@@ -209,7 +209,7 @@ pub(super) fn required_array<'a>(
         .with_context(|| format!("projection NPZ lacks {name}"))
 }
 
-pub(super) fn encode_context(
+pub(crate) fn encode_context(
     cache: &Path,
     dataset_hash: &str,
     standardization_path: &Path,

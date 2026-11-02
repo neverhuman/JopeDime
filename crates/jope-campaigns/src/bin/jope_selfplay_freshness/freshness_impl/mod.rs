@@ -9,7 +9,7 @@ mod status;
 #[path = "../tests.rs"]
 mod tests;
 
-pub(super) fn run() -> Result<()> {
+pub(crate) fn run() -> Result<()> {
     let args = Args::parse();
     let audit_only =
         args.audit_only || std::env::var("JOPE_FRESHNESS_AUDIT_ONLY").as_deref() == Ok("1");

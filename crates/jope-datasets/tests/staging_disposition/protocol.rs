@@ -10,9 +10,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 const DISPOSITION: &[u8] =
-    include_bytes!("../releases/staging-disposition/historical-gpu-staging-20260925.json");
+    include_bytes!("../../releases/staging-disposition/historical-gpu-staging-20260925.json");
 const PROTOCOL: &[u8] =
-    include_bytes!("../releases/staging-disposition/fitting-only-staging-protocol-v1.json");
+    include_bytes!("../../releases/staging-disposition/fitting-only-staging-protocol-v1.json");
 const HISTORICAL_SOURCE: &str = "802fb464c8a30eb7aeb05296313300e737a96044";
 
 fn repository_root() -> PathBuf {

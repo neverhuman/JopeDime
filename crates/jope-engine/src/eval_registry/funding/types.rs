@@ -6,8 +6,8 @@ CREATE TABLE funding_reservations(id TEXT PRIMARY KEY,authorization_id TEXT NOT 
 CREATE TABLE funding_participants(id TEXT PRIMARY KEY,reservation_id TEXT NOT NULL,slot TEXT NOT NULL,json TEXT NOT NULL,UNIQUE(reservation_id,slot)) WITHOUT ROWID;
 CREATE TABLE funding_witness(event_key TEXT PRIMARY KEY,event_sha TEXT NOT NULL,request_sha TEXT NOT NULL,ack_sha TEXT NOT NULL,policy_sha TEXT NOT NULL) WITHOUT ROWID;";
 
-pub(super) const AUTH_TAG: &str = "parallel.funding-authorization.signature.v1";
-pub(super) const RESERVATION_TAG: &str = "parallel.funding-reservation.signature.v1";
+pub(crate) const AUTH_TAG: &str = "parallel.funding-authorization.signature.v1";
+pub(crate) const RESERVATION_TAG: &str = "parallel.funding-reservation.signature.v1";
 // Funding witness proofs retain both the original event and signed request.
 // Bound the signed source before hashing/signature work or any ledger mutation.
 pub const MAX_AUTHORIZATION_BYTES: usize = 128 * 1024;
@@ -17,7 +17,7 @@ pub fn digest(value: &impl Serialize) -> Result<String> {
     Ok(hex::encode(Sha256::digest(serde_json::to_vec(value)?)))
 }
 
-pub(super) fn hash_valid(value: &str) -> bool {
+pub(crate) fn hash_valid(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
@@ -25,18 +25,18 @@ pub(super) fn hash_valid(value: &str) -> bool {
         && value.bytes().any(|c| c != b'0')
 }
 
-pub(super) fn text_valid(value: &str) -> bool {
+pub(crate) fn text_valid(value: &str) -> bool {
     !value.is_empty() && value.len() <= 256 && !value.chars().any(char::is_control)
 }
 
-pub(super) fn signed_bytes(tag: &str, body: &impl Serialize) -> Result<Vec<u8>> {
+pub(crate) fn signed_bytes(tag: &str, body: &impl Serialize) -> Result<Vec<u8>> {
     let mut bytes = tag.as_bytes().to_vec();
     bytes.push(0);
     bytes.extend(serde_json::to_vec(body)?);
     Ok(bytes)
 }
 
-pub(super) fn verify_signature(
+pub(crate) fn verify_signature(
     public: &str,
     tag: &str,
     body: &impl Serialize,

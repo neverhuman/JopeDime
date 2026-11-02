@@ -2,12 +2,12 @@ use super::*;
 
 /// Cooperative scratch accounting supplements the daemon's reservation. A quota
 /// is not claimed: immutable numerical outputs remain on the guarded data root.
-pub(super) struct ScratchGuard {
+pub(crate) struct ScratchGuard {
     done: Arc<AtomicBool>,
     thread: Option<std::thread::JoinHandle<()>>,
 }
 impl ScratchGuard {
-    pub(super) fn start(
+    pub(crate) fn start(
         allocation: &Allocation,
         task: &TaskManifest,
         state: &Path,
@@ -148,12 +148,12 @@ fn scratch_usage(root: &Path, allocation: &Path, task: &Path) -> Result<ScratchU
     Ok(usage)
 }
 
-pub(super) struct DeadlineWatch {
+pub(crate) struct DeadlineWatch {
     done: Arc<AtomicBool>,
     thread: Option<std::thread::JoinHandle<()>>,
 }
 impl DeadlineWatch {
-    pub(super) fn start(stop: Arc<AtomicBool>, deadline: u64, allowance: u64) -> Self {
+    pub(crate) fn start(stop: Arc<AtomicBool>, deadline: u64, allowance: u64) -> Self {
         let done = Arc::new(AtomicBool::new(false));
         let observed = Arc::clone(&done);
         let remaining =
@@ -195,7 +195,7 @@ impl Drop for DeadlineWatch {
 
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub(super) enum ControlStopReason {
+pub(crate) enum ControlStopReason {
     EndOfFile,
     FrameReadError,
     Checkpoint,
@@ -206,12 +206,12 @@ pub(super) enum ControlStopReason {
 }
 
 #[derive(Clone, Copy)]
-pub(super) struct ControlStopDeadline {
+pub(crate) struct ControlStopDeadline {
     instant: std::time::Instant,
     monotonic_ns: Option<u64>,
 }
 
-pub(super) fn stop_control_with(
+pub(crate) fn stop_control_with(
     stop: &AtomicBool,
     allowance: Duration,
     watchdog: impl FnOnce(std::time::Instant),
@@ -237,7 +237,7 @@ pub(super) fn stop_control_with(
     })
 }
 
-pub(super) fn record_control_stop(
+pub(crate) fn record_control_stop(
     state_root: &Path,
     attempt: FencedAttempt,
     sequence: u64,

@@ -1,12 +1,12 @@
 use super::*;
 
-pub(super) fn offspring_seed(base: u64, generation: usize, slot: usize, retry: usize) -> u64 {
+pub(crate) fn offspring_seed(base: u64, generation: usize, slot: usize, retry: usize) -> u64 {
     base ^ (generation as u64).wrapping_mul(0xd6e8_feb8_6659_fd93)
         ^ (slot as u64).wrapping_mul(0xa076_1d64_78bd_642f)
         ^ (retry as u64).wrapping_mul(0xe703_7ed1_a0b4_28db)
 }
 
-pub(super) fn rank_slots(left: &SlotLedger, right: &SlotLedger) -> Ordering {
+pub(crate) fn rank_slots(left: &SlotLedger, right: &SlotLedger) -> Ordering {
     right
         .robust_fitness
         .unwrap()
@@ -15,7 +15,7 @@ pub(super) fn rank_slots(left: &SlotLedger, right: &SlotLedger) -> Ordering {
         .then_with(|| left.semantic_sha256.cmp(&right.semantic_sha256))
 }
 
-pub(super) fn rank_finalists(left: &&FinalistCv7, right: &&FinalistCv7) -> Ordering {
+pub(crate) fn rank_finalists(left: &&FinalistCv7, right: &&FinalistCv7) -> Ordering {
     let left_score = left.cv7.as_ref().unwrap().robust_fitness;
     let right_score = right.cv7.as_ref().unwrap().robust_fitness;
     right_score
@@ -24,7 +24,7 @@ pub(super) fn rank_finalists(left: &&FinalistCv7, right: &&FinalistCv7) -> Order
         .then_with(|| left.semantic_sha256.cmp(&right.semantic_sha256))
 }
 
-pub(super) fn selection_evidence_from_slot(
+pub(crate) fn selection_evidence_from_slot(
     slot: &SlotLedger,
     fold_plan_folds: usize,
     evaluated_fold_ids: Vec<usize>,
@@ -46,7 +46,7 @@ pub(super) fn selection_evidence_from_slot(
     })
 }
 
-pub(super) fn selection_evidence_from_result(
+pub(crate) fn selection_evidence_from_result(
     result: ExactCvResult,
     fold_plan_folds: usize,
     evaluated_fold_ids: Vec<usize>,
@@ -65,7 +65,7 @@ pub(super) fn selection_evidence_from_result(
     }
 }
 
-pub(super) fn generation_summary<'a>(
+pub(crate) fn generation_summary<'a>(
     generation: usize,
     slots: &[SlotLedger],
     generation_zero_best: f64,

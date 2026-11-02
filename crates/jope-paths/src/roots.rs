@@ -5,17 +5,17 @@ use std::path::{Path, PathBuf};
 
 use super::{var, HOME_MARKER};
 
-pub(super) fn env_path(name: &str) -> Option<PathBuf> {
+pub(crate) fn env_path(name: &str) -> Option<PathBuf> {
     env::var_os(name)
         .filter(|value| !value.is_empty())
         .map(PathBuf::from)
 }
 
-pub(super) fn absolute_env_path(name: &str) -> Option<PathBuf> {
+pub(crate) fn absolute_env_path(name: &str) -> Option<PathBuf> {
     env_path(name).filter(|path| path.is_absolute())
 }
 
-pub(super) fn find_marker(start: &Path) -> Option<PathBuf> {
+pub(crate) fn find_marker(start: &Path) -> Option<PathBuf> {
     start
         .ancestors()
         .find(|dir| dir.join(HOME_MARKER).is_file())
@@ -56,7 +56,7 @@ pub fn jopedime_home() -> PathBuf {
     )
 }
 
-pub(super) fn default_jopedime_home(
+pub(crate) fn default_jopedime_home(
     os: &str,
     override_path: Option<&std::ffi::OsStr>,
     xdg_data_home: Option<&std::ffi::OsStr>,
@@ -84,7 +84,7 @@ pub(super) fn default_jopedime_home(
     }
 }
 
-pub(super) fn select_home(
+pub(crate) fn select_home(
     home: Option<&Path>,
     cwd: Option<&Path>,
     executable: Option<&Path>,

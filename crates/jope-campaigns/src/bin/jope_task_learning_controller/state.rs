@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_state(path: &Path) -> Result<ControllerState> {
+pub(crate) fn load_state(path: &Path) -> Result<ControllerState> {
     if !path.is_file() {
         return Ok(ControllerState::default());
     }
@@ -20,7 +20,7 @@ pub(super) fn load_state(path: &Path) -> Result<ControllerState> {
     Ok(state)
 }
 
-pub(super) fn save_state(path: &Path, state: &ControllerState) -> Result<()> {
+pub(crate) fn save_state(path: &Path, state: &ControllerState) -> Result<()> {
     ensure!(
         state.schema == STATE_SCHEMA,
         "task learning state schema drift"
@@ -28,7 +28,7 @@ pub(super) fn save_state(path: &Path, state: &ControllerState) -> Result<()> {
     atomic_json(path, &serde_json::to_value(state)?)
 }
 
-pub(super) fn accepted_pointers(root: &Path) -> Result<BTreeMap<Task, AcceptedPointer>> {
+pub(crate) fn accepted_pointers(root: &Path) -> Result<BTreeMap<Task, AcceptedPointer>> {
     let value = read_json(&root.join("training/accepted-by-task.json"))?;
     ensure!(
         value.get("schema").and_then(Value::as_str) == Some("JopeSelfplayAcceptedByTask.v1"),
@@ -68,7 +68,7 @@ pub(super) fn accepted_pointers(root: &Path) -> Result<BTreeMap<Task, AcceptedPo
     Ok(output)
 }
 
-pub(super) fn bootstrap_evaluation_anchor(
+pub(crate) fn bootstrap_evaluation_anchor(
     root: &Path,
     task: Task,
 ) -> Result<Option<AcceptedPointer>> {
@@ -108,7 +108,7 @@ pub(super) fn bootstrap_evaluation_anchor(
     Ok(Some(AcceptedPointer { digest, path }))
 }
 
-pub(super) fn reset_changed_shadow_epochs(
+pub(crate) fn reset_changed_shadow_epochs(
     state: &mut ControllerState,
     accepted: &BTreeMap<Task, AcceptedPointer>,
 ) {
@@ -127,9 +127,9 @@ pub(super) fn reset_changed_shadow_epochs(
 }
 
 mod acceptance;
-pub(super) use acceptance::*;
+pub(crate) use acceptance::*;
 
-pub(super) fn promote_task_pointer(
+pub(crate) fn promote_task_pointer(
     args: &Args,
     task: Task,
     parent: &AcceptedPointer,
@@ -261,4 +261,4 @@ pub(super) fn promote_task_pointer(
 }
 
 mod promotion;
-pub(super) use promotion::*;
+pub(crate) use promotion::*;

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn quantile(sorted: &[f64], q: f64) -> f64 {
+pub(crate) fn quantile(sorted: &[f64], q: f64) -> f64 {
     if sorted.len() == 1 {
         return sorted[0];
     }
@@ -10,7 +10,7 @@ pub(super) fn quantile(sorted: &[f64], q: f64) -> f64 {
     sorted[low] + (sorted[high] - sorted[low]) * (index - low as f64)
 }
 
-pub(super) fn parse_initial_population(
+pub(crate) fn parse_initial_population(
     bytes: &[u8],
     expected: usize,
 ) -> Result<Vec<PopulationMember>> {
@@ -44,7 +44,7 @@ pub(super) fn parse_initial_population(
     Ok(population)
 }
 
-pub(super) fn validate_unique_population(
+pub(crate) fn validate_unique_population(
     population: &[PopulationMember],
     expected: usize,
 ) -> Result<()> {
@@ -64,7 +64,7 @@ pub(super) fn validate_unique_population(
     Ok(())
 }
 
-pub(super) fn validate_campaign_config(
+pub(crate) fn validate_campaign_config(
     config: &CampaignConfig,
     train: &RegressionData,
     population: &[PopulationMember],
@@ -90,7 +90,7 @@ pub(super) fn validate_campaign_config(
     validate_unique_population(population, config.population)
 }
 
-pub(super) fn validate_generation_zero_provenance(
+pub(crate) fn validate_generation_zero_provenance(
     bytes: &[u8],
     population_sha256: &str,
     population: usize,
@@ -126,7 +126,7 @@ pub(super) fn validate_generation_zero_provenance(
     Ok(value)
 }
 
-pub(super) fn publish_initial_population(
+pub(crate) fn publish_initial_population(
     artifact_root: &Path,
     population: &[PopulationMember],
     population_sha256: &str,
@@ -146,7 +146,7 @@ pub(super) fn publish_initial_population(
     )
 }
 
-pub(super) fn build_fold_manifest(
+pub(crate) fn build_fold_manifest(
     dataset: &str,
     train_sha256: &str,
     rows: usize,
@@ -185,7 +185,7 @@ pub(super) fn build_fold_manifest(
     })
 }
 
-pub(super) fn publish_emitted(
+pub(crate) fn publish_emitted(
     root: &Path,
     semantic: &str,
     emitted: &Emitted,
@@ -213,7 +213,7 @@ pub(super) fn publish_emitted(
     })
 }
 
-pub(super) fn publish_selection_freeze(root: &Path, selection: &SelectionFreeze) -> Result<()> {
+pub(crate) fn publish_selection_freeze(root: &Path, selection: &SelectionFreeze) -> Result<()> {
     let selection_file = "selection-freeze.v1.json";
     let bytes = canonical_json(selection)?;
     let selection_sha256 = sha256_bytes(&bytes);
@@ -231,7 +231,7 @@ pub(super) fn publish_selection_freeze(root: &Path, selection: &SelectionFreeze)
     sync_directory(root)
 }
 
-pub(super) fn validate_selection_freeze(root: &Path) -> Result<(SelectionFreeze, String)> {
+pub(crate) fn validate_selection_freeze(root: &Path) -> Result<(SelectionFreeze, String)> {
     let marker_path = root.join("SELECTION_COMPLETE");
     let marker: SelectionComplete =
         serde_json::from_slice(&fs::read(&marker_path).with_context(|| {

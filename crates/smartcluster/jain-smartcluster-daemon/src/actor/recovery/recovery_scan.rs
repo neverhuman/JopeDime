@@ -1,7 +1,7 @@
 use super::*;
 
 impl DaemonActor {
-    pub(super) async fn recover(&mut self) -> Result<(), ActorError> {
+    pub(crate) async fn recover(&mut self) -> Result<(), ActorError> {
         self.gpu_quarantine = self.store.get_meta("gpu-quarantine")?.unwrap_or_default();
         self.gpu_global_quarantine = self
             .store

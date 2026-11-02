@@ -1,7 +1,7 @@
 use super::*;
 
 impl DaemonActor {
-    pub(super) fn inspect_attempt(
+    pub(crate) fn inspect_attempt(
         &self,
         peer: &AuthenticatedPeer,
         attempt: FencedAttempt,
@@ -58,7 +58,7 @@ impl DaemonActor {
             },
         )))
     }
-    pub(super) fn attach_trusted_fit_child(
+    pub(crate) fn attach_trusted_fit_child(
         &mut self,
         peer: &AuthenticatedPeer,
         request: AttachTrustedFitChildRequest,

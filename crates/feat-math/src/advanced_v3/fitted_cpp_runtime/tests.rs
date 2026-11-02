@@ -229,7 +229,7 @@ int main() {
 /// `emit_fitted_cpp17` at `8676953c1`, the base of kernel2 PR 07. It is kept so that a stored
 /// revision-2 container can still be built, and loaded, once the emitter moves on.
 const REVISION_TWO_SOURCE: &str =
-    include_str!("../../tests/fixtures/fitted_cpp/revision2-ridge.cpp");
+    include_str!("../../../tests/fixtures/fitted_cpp/revision2-ridge.cpp");
 
 /// `REVISION_TWO_SOURCE` and the current source of the same model differ only in the lines
 /// that revision 3 changed: the marker, the width error and its index check, `piece`,

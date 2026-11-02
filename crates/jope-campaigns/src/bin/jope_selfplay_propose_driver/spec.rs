@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn toml_string(value: &str) -> Result<String> {
+pub(crate) fn toml_string(value: &str) -> Result<String> {
     ensure_plain(value)?;
     Ok(format!("\"{value}\""))
 }
@@ -8,7 +8,7 @@ pub(super) fn toml_string(value: &str) -> Result<String> {
 /// Job ids, hashes and paths in this driver are all machine-generated; refusing
 /// anything with a quote or backslash keeps the rendered TOML unambiguous
 /// without pulling in a serializer.
-pub(super) fn ensure_plain(value: &str) -> Result<()> {
+pub(crate) fn ensure_plain(value: &str) -> Result<()> {
     if value.contains('"') || value.contains('\\') || value.contains('\n') {
         bail!("value is not representable in a bare TOML string: {value}");
     }
@@ -19,7 +19,7 @@ pub(super) fn ensure_plain(value: &str) -> Result<()> {
 // spec rendering
 // ---------------------------------------------------------------------------
 
-pub(super) fn input_block(name: &str, source: &Path, target: &str) -> Result<Vec<String>> {
+pub(crate) fn input_block(name: &str, source: &Path, target: &str) -> Result<Vec<String>> {
     let digest =
         sha256_file(source).with_context(|| format!("hash spec input {}", source.display()))?;
     let source_text = source.to_string_lossy().into_owned();
@@ -37,7 +37,7 @@ pub(super) fn input_block(name: &str, source: &Path, target: &str) -> Result<Vec
 /// hourly. Staging it directly would let a flip between submit and dispatch
 /// invalidate the job's input hash, so the spec consumes an immutable snapshot
 /// keyed by the catalog it describes.
-pub(super) fn freeze_pointer(root: &Path, live: &LiveCatalog) -> Result<PathBuf> {
+pub(crate) fn freeze_pointer(root: &Path, live: &LiveCatalog) -> Result<PathBuf> {
     let directory = root.join("proposals/_pointers");
     fs::create_dir_all(&directory)?;
     let path = directory.join(format!("{}.pointer.json", &live.catalog_sha256[..16]));
@@ -48,12 +48,12 @@ pub(super) fn freeze_pointer(root: &Path, live: &LiveCatalog) -> Result<PathBuf>
     Ok(path)
 }
 
-pub(super) struct RenderedSpec {
-    pub(super) job_id: String,
-    pub(super) path: PathBuf,
+pub(crate) struct RenderedSpec {
+    pub(crate) job_id: String,
+    pub(crate) path: PathBuf,
 }
 
-pub(super) fn render_spec(
+pub(crate) fn render_spec(
     root: &Path,
     checkpoint: &Path,
     checkpoint_sha256: &str,
@@ -176,7 +176,7 @@ pub(super) fn render_spec(
     Ok(RenderedSpec { job_id, path })
 }
 
-pub(super) fn file_name(path: &Path) -> String {
+pub(crate) fn file_name(path: &Path) -> String {
     path.file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default()

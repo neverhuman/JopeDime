@@ -1,5 +1,5 @@
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub(super) struct Candidate {
+pub(crate) struct Candidate {
     pub canonical_genome: String,
     pub semantic_sha256: String,
     pub complexity: usize,
@@ -11,7 +11,7 @@ pub(super) struct Candidate {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct CandidateEvaluation {
+pub(crate) struct CandidateEvaluation {
     pub schema: String,
     pub run_id: String,
     pub dataset_hash: String,
@@ -38,7 +38,7 @@ struct LegacyScoredCandidate {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct G20GenerationReceipt {
+pub(crate) struct G20GenerationReceipt {
     schema: String,
     run_id: String,
     dataset_hash: String,
@@ -54,7 +54,7 @@ pub(super) struct G20GenerationReceipt {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct G20Complete {
+pub(crate) struct G20Complete {
     pub schema: String,
     pub run_id: String,
     pub dataset_hash: String,
@@ -68,7 +68,7 @@ pub(super) struct G20Complete {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct RankedCandidate {
+pub(crate) struct RankedCandidate {
     pub candidate: Candidate,
     pub evaluation_path: PathBuf,
     pub evaluation_sha256: String,
@@ -77,7 +77,7 @@ pub(super) struct RankedCandidate {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct IslandArchiveReceipt {
+pub(crate) struct IslandArchiveReceipt {
     schema: String,
     run_id: String,
     dataset_hash: String,
@@ -89,7 +89,7 @@ pub(super) struct IslandArchiveReceipt {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct SmartGenerationReceipt {
+pub(crate) struct SmartGenerationReceipt {
     schema: String,
     run_id: String,
     dataset_hash: String,
@@ -108,7 +108,7 @@ pub(super) struct SmartGenerationReceipt {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct SmartComplete {
+pub(crate) struct SmartComplete {
     pub schema: String,
     pub run_id: String,
     pub dataset_hash: String,
@@ -123,7 +123,7 @@ pub(super) struct SmartComplete {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ScreeningReceipt {
+pub(crate) struct ScreeningReceipt {
     schema: String,
     run_id: String,
     dataset_hash: String,
@@ -139,14 +139,14 @@ pub(super) struct ScreeningReceipt {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub(super) struct FrozenVariant {
+pub(crate) struct FrozenVariant {
     pub name: String,
     pub candidates: Vec<Candidate>,
     pub weights: Vec<f64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct SelectorComplete {
+pub(crate) struct SelectorComplete {
     pub schema: String,
     pub run_id: String,
     pub dataset_hash: String,
@@ -171,7 +171,7 @@ pub(super) struct SelectorComplete {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct SmartV3SelectorComplete {
+pub(crate) struct SmartV3SelectorComplete {
     pub schema: String,
     pub run_id: String,
     pub dataset_hash: String,
@@ -192,7 +192,7 @@ pub(super) struct SmartV3SelectorComplete {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ArmComplete {
+pub(crate) struct ArmComplete {
     schema: String,
     run_id: String,
     arm: String,
@@ -260,7 +260,7 @@ fn candidate_from_parts(
     })
 }
 
-pub(super) fn candidate_from_parent(value: &Value) -> Result<Candidate> {
+pub(crate) fn candidate_from_parent(value: &Value) -> Result<Candidate> {
     let member = value.get("member").unwrap_or(value);
     let genome = value_string(member, "/canonical_genome")?;
     let roots = member
@@ -287,7 +287,7 @@ pub(super) fn candidate_from_parent(value: &Value) -> Result<Candidate> {
     )
 }
 
-pub(super) fn relocated_input_path(path: &Path) -> PathBuf {
+pub(crate) fn relocated_input_path(path: &Path) -> PathBuf {
     let Some(root) = std::env::var_os("REDTEAM_PATH_ROOT").map(PathBuf::from) else {
         return path.to_path_buf();
     };
@@ -297,7 +297,7 @@ pub(super) fn relocated_input_path(path: &Path) -> PathBuf {
     }
 }
 
-pub(super) fn validate_manifest(path: &Path) -> Result<(TrainOnlyRedteamManifest, String)> {
+pub(crate) fn validate_manifest(path: &Path) -> Result<(TrainOnlyRedteamManifest, String)> {
     let (mut manifest, digest): (TrainOnlyRedteamManifest, _) = read_receipt(path)?;
     if manifest.schema != "TrainOnlyRedteamManifest.v1"
         || manifest.run_id != manifest.config.run_id

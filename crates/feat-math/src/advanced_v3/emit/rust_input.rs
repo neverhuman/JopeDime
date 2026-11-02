@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) fn rust_f64(value: f64) -> String {
+pub(crate) fn rust_f64(value: f64) -> String {
     format!("{value:.17e}")
 }
 
-pub(super) fn rust_f64_slice(values: &[f64]) -> String {
+pub(crate) fn rust_f64_slice(values: &[f64]) -> String {
     format!(
         "[{}]",
         values
@@ -15,7 +15,7 @@ pub(super) fn rust_f64_slice(values: &[f64]) -> String {
     )
 }
 
-pub(super) fn rust_usize_slice(values: &[usize]) -> String {
+pub(crate) fn rust_usize_slice(values: &[usize]) -> String {
     format!(
         "[{}]",
         values
@@ -26,11 +26,11 @@ pub(super) fn rust_usize_slice(values: &[usize]) -> String {
     )
 }
 
-pub(super) fn rust_string(value: &str) -> String {
+pub(crate) fn rust_string(value: &str) -> String {
     format!("{value:?}")
 }
 
-pub(super) fn rust_input_body(input: &FittedInput, missing_aware: bool) -> String {
+pub(crate) fn rust_input_body(input: &FittedInput, missing_aware: bool) -> String {
     let mut source = String::from(
         "    let mut x: Vec<f64> = Vec::new();\n    let mut missing_mask: Vec<bool> = Vec::new();\n",
     );

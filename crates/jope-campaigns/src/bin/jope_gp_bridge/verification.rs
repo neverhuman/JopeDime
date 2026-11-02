@@ -41,7 +41,7 @@ fn task_valid(source: &str, task: &str) -> bool {
     }
 }
 
-pub(super) fn verify_proposals(input: &ProposalInputs) -> Result<VerifiedProposals> {
+pub(crate) fn verify_proposals(input: &ProposalInputs) -> Result<VerifiedProposals> {
     ensure!(
         !input.dataset.trim().is_empty(),
         "dataset identity must not be empty"
@@ -140,7 +140,7 @@ pub(super) fn verify_proposals(input: &ProposalInputs) -> Result<VerifiedProposa
     })
 }
 
-pub(super) fn read_population(path: &Path) -> Result<Vec<GpPopulationMember>> {
+pub(crate) fn read_population(path: &Path) -> Result<Vec<GpPopulationMember>> {
     let value = read_json(path)?;
     let values = match &value {
         Value::Array(rows) => rows.clone(),
@@ -177,7 +177,7 @@ pub(super) fn read_population(path: &Path) -> Result<Vec<GpPopulationMember>> {
     Ok(members)
 }
 
-pub(super) fn read_dynamic_robust_bank(
+pub(crate) fn read_dynamic_robust_bank(
     corpus: &Path,
     task: Task,
     protocol_sha256: &str,

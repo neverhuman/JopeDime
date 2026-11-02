@@ -1,7 +1,7 @@
 use super::*;
 
 /// Counts the expression cells of one stage as they are generated.
-pub(super) struct Tally {
+pub(crate) struct Tally {
     counts: StageFaultCounts,
     hard: FaultSet,
     first: Option<u64>,
@@ -9,7 +9,7 @@ pub(super) struct Tally {
 }
 
 impl Tally {
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             counts: StageFaultCounts::default(),
             hard: FaultSeverity::Hard.classes(),
@@ -20,7 +20,7 @@ impl Tally {
 
     /// One generated cell, with the faults of its evaluation. Returns whether they include a Hard
     /// class.
-    pub(super) fn cell(&mut self, value: f64, faults: FaultSet) -> bool {
+    pub(crate) fn cell(&mut self, value: f64, faults: FaultSet) -> bool {
         self.counts.evaluated_cells += 1;
         let mut bits = faults.bits();
         while bits != 0 {
@@ -41,13 +41,13 @@ impl Tally {
     }
 
     /// The end of one generated row; `hard` when one of its cells had a Hard class.
-    pub(super) fn row(&mut self, hard: bool) {
+    pub(crate) fn row(&mut self, hard: bool) {
         if hard {
             self.counts.hard_rows += 1;
         }
     }
 
-    pub(super) fn finish(self) -> StageFaultCounts {
+    pub(crate) fn finish(self) -> StageFaultCounts {
         let mut counts = self.counts;
         counts.constant_output = self.first.is_some() && !self.varied;
         counts
@@ -57,7 +57,7 @@ impl Tally {
 /// `apply_op_generated`'s `MapExpr` arm with the traced evaluators: out[i][j] = expr(x = r[j],
 /// row = r). The compiled `map_row_traced` returns `map_row`'s values, and the interpreter's
 /// `eval_element_traced` returns `eval_element(..).unwrap_or(0.0)`.
-pub(super) fn generate_map(expr: &MathExpr, x: &Rows, tally: &mut Tally) -> Rows {
+pub(crate) fn generate_map(expr: &MathExpr, x: &Rows, tally: &mut Tally) -> Rows {
     match expr.compile() {
         Ok(compiled) if compiled.uses_row_summaries() => x
             .iter()
@@ -104,7 +104,7 @@ pub(super) fn generate_map(expr: &MathExpr, x: &Rows, tally: &mut Tally) -> Rows
 
 /// `apply_op_generated`'s `DeriveExpr` arm with the traced evaluators: out[i] = [expr(row = r)].
 /// Both `eval_row_traced` forms return `eval_row(..).unwrap_or(0.0)`.
-pub(super) fn generate_derive(expr: &MathExpr, x: &Rows, tally: &mut Tally) -> Rows {
+pub(crate) fn generate_derive(expr: &MathExpr, x: &Rows, tally: &mut Tally) -> Rows {
     let mut derived = |(value, faults): (f64, FaultSet)| {
         let hard = tally.cell(value, faults);
         tally.row(hard);

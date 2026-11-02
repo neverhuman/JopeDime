@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn prepare_parent(parent: &Path) -> Result<(), ServerStartupError> {
+pub(crate) fn prepare_parent(parent: &Path) -> Result<(), ServerStartupError> {
     if !parent.exists() {
         fs::create_dir_all(parent).map_err(|source| ServerStartupError::Parent {
             path: parent.to_path_buf(),
@@ -23,7 +23,7 @@ pub(super) fn prepare_parent(parent: &Path) -> Result<(), ServerStartupError> {
     Ok(())
 }
 
-pub(super) fn remove_abandoned_socket(path: &Path) -> Result<(), ServerStartupError> {
+pub(crate) fn remove_abandoned_socket(path: &Path) -> Result<(), ServerStartupError> {
     let metadata = match fs::symlink_metadata(path) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),

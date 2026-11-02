@@ -110,7 +110,7 @@ async fn bounded_real_run_http_status_and_sse_do_not_leak_internal_sentinels() {
         "build jope-appliance --bin jopedime before the run-surface test"
     );
     let engine = InProcessEngine::open_with_worker(home.path(), worker).unwrap();
-    let raw = include_bytes!("../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
     let mut headers: Vec<_> = (0..21).map(|index| format!("x{index}")).collect();
     headers.push("target".into());
     let mut csv = headers.join(",");

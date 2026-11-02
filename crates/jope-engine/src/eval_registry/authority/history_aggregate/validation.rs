@@ -1,7 +1,7 @@
 use super::artifact::{digest_file, metadata, open};
 use super::*;
 
-pub(super) fn original_source(source: &OriginalHistorySource) -> Result<()> {
+pub(crate) fn original_source(source: &OriginalHistorySource) -> Result<()> {
     ensure!(
         !source.original_identity.is_empty()
             && source.original_identity.len() <= 4096
@@ -30,7 +30,7 @@ pub(super) fn original_source(source: &OriginalHistorySource) -> Result<()> {
     );
     Ok(())
 }
-pub(super) fn review_with_key(
+pub(crate) fn review_with_key(
     aggregate: &HistoryAggregate,
     signed: &SignedHistoryNamespaceReview,
     when: u64,
@@ -66,13 +66,13 @@ pub(super) fn review_with_key(
     )?;
     Ok(())
 }
-pub(super) fn verify_review(aggregate: &HistoryAggregate, when: u64) -> Result<()> {
+pub(crate) fn verify_review(aggregate: &HistoryAggregate, when: u64) -> Result<()> {
     let signed: SignedHistoryNamespaceReview =
         serde_json::from_slice(&metadata(&aggregate.namespace_review)?)?;
     crate::native_review::require_signer(&signed.authorization_public_key)?;
     review_with_key(aggregate, &signed, when, &signed.authorization_public_key)
 }
-pub(super) fn batch_ranges(db: &Connection, stage: &str, expected: usize) -> Result<()> {
+pub(crate) fn batch_ranges(db: &Connection, stage: &str, expected: usize) -> Result<()> {
     let mut q=db.prepare("SELECT start_offset,end_offset FROM history_batches WHERE stage_sha=? ORDER BY CAST(start_offset AS INTEGER)")?;
     let mut rows = q.query([stage])?;
     let mut next = 0usize;
@@ -92,7 +92,7 @@ struct ExpectedChunk {
     payload: HistoryArtifact,
     source_sha: String,
 }
-pub(super) fn checked_chunk(
+pub(crate) fn checked_chunk(
     chunk: &HistoryArtifact,
     source_sha: &str,
     exclusions: Option<&[HistoricalExclusion]>,
@@ -176,7 +176,7 @@ pub(super) fn checked_chunk(
     Ok((count as u64, total))
 }
 impl Authority {
-    pub(super) fn bounded_history_inventory(&self, stage: &str) -> Result<HistoryInventory> {
+    pub(crate) fn bounded_history_inventory(&self, stage: &str) -> Result<HistoryInventory> {
         ensure!(valid_sha(stage), "invalid historical stage identity");
         let path = self.root.join("objects").join(stage);
         let m = fs::symlink_metadata(&path)?;
@@ -205,7 +205,7 @@ impl Authority {
         );
         Ok(inventory)
     }
-    pub(super) fn verify_history_aggregate(
+    pub(crate) fn verify_history_aggregate(
         &self,
         aggregate: &HistoryAggregate,
         when: u64,
@@ -420,7 +420,7 @@ impl Authority {
             db.execute("INSERT INTO coverage VALUES(?,?) ON CONFLICT(scope) DO UPDATE SET inventory_sha=excluded.inventory_sha",params![scope,sha])?;
             db.execute("UPDATE activations SET state='inactive' WHERE scope=?",[scope])?;Ok((sha.clone(),true))})
     }
-    pub(super) fn verify_history_aggregate_receipt(&self, sha: &str) -> Result<()> {
+    pub(crate) fn verify_history_aggregate_receipt(&self, sha: &str) -> Result<()> {
         let path = self.root.join("objects").join(sha);
         ensure!(fs::metadata(path)?.len() <= META, "aggregate receipt bound");
         let receipt: AggregateReceipt = serde_json::from_slice(&self.read_blob(sha)?)?;

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_envelope_file(path: &Path, file: &File) -> Result<(), RoleError> {
+pub(crate) fn validate_envelope_file(path: &Path, file: &File) -> Result<(), RoleError> {
     let opened = file.metadata().map_err(RoleError::Io)?;
     let named = fs::symlink_metadata(path).map_err(RoleError::Io)?;
     if !opened.is_file()
@@ -19,7 +19,7 @@ pub(super) fn validate_envelope_file(path: &Path, file: &File) -> Result<(), Rol
     validate_physical_components(path)
 }
 
-pub(super) fn read_signing_key(path: &Path) -> Result<SigningKey, RoleError> {
+pub(crate) fn read_signing_key(path: &Path) -> Result<SigningKey, RoleError> {
     validate_absolute_path(path)?;
     let mut file = OpenOptions::new()
         .read(true)
@@ -48,7 +48,7 @@ pub(super) fn read_signing_key(path: &Path) -> Result<SigningKey, RoleError> {
     Ok(signing_key)
 }
 
-pub(super) fn validate_state_root(path: &Path) -> Result<(), RoleError> {
+pub(crate) fn validate_state_root(path: &Path) -> Result<(), RoleError> {
     validate_absolute_path(path)?;
     let metadata = fs::symlink_metadata(path).map_err(RoleError::Io)?;
     if !metadata.is_dir()
@@ -62,7 +62,7 @@ pub(super) fn validate_state_root(path: &Path) -> Result<(), RoleError> {
     validate_physical_components(path)
 }
 
-pub(super) fn validate_bound_socket(path: &Path) -> Result<(), RoleError> {
+pub(crate) fn validate_bound_socket(path: &Path) -> Result<(), RoleError> {
     validate_absolute_path(path)?;
     let metadata = fs::symlink_metadata(path).map_err(RoleError::Io)?;
     let owner = metadata.uid();
@@ -76,7 +76,7 @@ pub(super) fn validate_bound_socket(path: &Path) -> Result<(), RoleError> {
     validate_physical_components(path)
 }
 
-pub(super) fn validate_physical_components(path: &Path) -> Result<(), RoleError> {
+pub(crate) fn validate_physical_components(path: &Path) -> Result<(), RoleError> {
     let mut current = PathBuf::from("/");
     for component in path.components().skip(1) {
         current.push(component.as_os_str());
@@ -91,21 +91,21 @@ pub(super) fn validate_physical_components(path: &Path) -> Result<(), RoleError>
     Ok(())
 }
 
-pub(super) fn validate_absolute_path(path: &Path) -> Result<(), RoleError> {
+pub(crate) fn validate_absolute_path(path: &Path) -> Result<(), RoleError> {
     if !valid_config_path(path) {
         return Err(RoleError::InvalidEnvelope);
     }
     Ok(())
 }
 
-pub(super) fn valid_config_path(path: &Path) -> bool {
+pub(crate) fn valid_config_path(path: &Path) -> bool {
     path.is_absolute()
         && path
             .components()
             .all(|part| !matches!(part, Component::CurDir | Component::ParentDir))
 }
 
-pub(super) fn valid_image_digest(value: &str) -> bool {
+pub(crate) fn valid_image_digest(value: &str) -> bool {
     value.len() == 71
         && value.starts_with("sha256:")
         && value[7..].bytes().any(|byte| byte != b'0')
@@ -114,11 +114,11 @@ pub(super) fn valid_image_digest(value: &str) -> bool {
             .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
 }
 
-pub(super) fn parse_digest(value: &str) -> Result<Digest32, RoleError> {
+pub(crate) fn parse_digest(value: &str) -> Result<Digest32, RoleError> {
     parse_hex(value)
 }
 
-pub(super) fn parse_hex<const N: usize>(value: &str) -> Result<[u8; N], RoleError> {
+pub(crate) fn parse_hex<const N: usize>(value: &str) -> Result<[u8; N], RoleError> {
     if value.len() != N * 2
         || !value
             .bytes()

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn context_proposal_request(
+pub(crate) fn context_proposal_request(
     args: &Args,
     state: &PersistedSupplyState,
     pointer_snapshot: &Path,
@@ -248,7 +248,7 @@ pub(super) fn context_proposal_request(
     Ok(path)
 }
 
-pub(super) fn frozen_catalog_pointer(
+pub(crate) fn frozen_catalog_pointer(
     live_pointer: &Path,
     pointer_snapshot: &Path,
     expected_catalog_sha256: &str,
@@ -275,7 +275,7 @@ pub(super) fn frozen_catalog_pointer(
     Ok(pointer)
 }
 
-pub(super) fn render_cohort_proposer_spec(
+pub(crate) fn render_cohort_proposer_spec(
     args: &Args,
     inputs: &CheckpointInputs,
     state: &PersistedSupplyState,
@@ -504,11 +504,11 @@ pub(super) fn render_cohort_proposer_spec(
 /// job -- e.g. xbabe0, which has a free GPU but no runtime bundle -- on real
 /// capability rather than on an accident of file placement.
 #[cfg(test)]
-pub(super) fn proposer_placement_pin_lines(_args: &Args) -> Result<Vec<String>> {
+pub(crate) fn proposer_placement_pin_lines(_args: &Args) -> Result<Vec<String>> {
     Ok(Vec::new())
 }
 
-pub(super) fn resolve_pinned_proposer_spec(
+pub(crate) fn resolve_pinned_proposer_spec(
     args: &Args,
     inputs: &CheckpointInputs,
     state: &mut PersistedSupplyState,
@@ -545,7 +545,7 @@ pub(super) fn resolve_pinned_proposer_spec(
     Ok(spec)
 }
 
-pub(super) fn run_scq(args: &Args, arguments: &[&str]) -> Result<String> {
+pub(crate) fn run_scq(args: &Args, arguments: &[&str]) -> Result<String> {
     let output = Command::new(&args.scq)
         .args(arguments)
         .output()
@@ -585,14 +585,14 @@ pub(super) fn run_scq(args: &Args, arguments: &[&str]) -> Result<String> {
 /// A genuinely mis-provisioned node (e.g. xbabe0, which has a free GPU but no
 /// runtime bundle) lands here too -- correctly, because the right response is to
 /// keep queueing for a node that can run the job, not to fail the supply loop.
-pub(super) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
+pub(crate) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
     message.contains("dependency-unsatisfied")
         && (message.contains("no eligible launch-ready node currently")
             || message.contains("eligible_node launch-ready-capacity")
             || (message.contains("smoke ") && message.contains(": smoke test exited")))
 }
 
-pub(super) fn register_proposer_admission(args: &Args, spec: &Path) -> Result<()> {
+pub(crate) fn register_proposer_admission(args: &Args, spec: &Path) -> Result<()> {
     let job_id = fs::read_to_string(spec)?
         .lines()
         .find_map(|line| {
@@ -636,7 +636,7 @@ pub(super) fn register_proposer_admission(args: &Args, spec: &Path) -> Result<()
 /// Capacity-only failures are handed to the crash-safe GPU admission owner.
 /// The supply state remains at the submit stage until that owner has placed
 /// the immutable spec.
-pub(super) fn scq_check_submit(args: &Args, spec: &Path) -> Result<bool> {
+pub(crate) fn scq_check_submit(args: &Args, spec: &Path) -> Result<bool> {
     let spec_text = spec.to_string_lossy();
     let check = Command::new(&args.scq)
         .args(["check", spec_text.as_ref()])
@@ -684,7 +684,7 @@ pub(super) fn scq_check_submit(args: &Args, spec: &Path) -> Result<bool> {
     )
 }
 
-pub(super) fn proposer_job_state(args: &Args, job_id: &str) -> Result<Option<String>> {
+pub(crate) fn proposer_job_state(args: &Args, job_id: &str) -> Result<Option<String>> {
     let value: Value = serde_json::from_str(&run_scq(args, &["--json", "ls"])?)?;
     Ok(value
         .pointer("/Jobs/jobs")
@@ -701,7 +701,7 @@ pub(super) fn proposer_job_state(args: &Args, job_id: &str) -> Result<Option<Str
         }))
 }
 
-pub(super) fn recursive_find(directory: &Path, name: &str, found: &mut Vec<PathBuf>) {
+pub(crate) fn recursive_find(directory: &Path, name: &str, found: &mut Vec<PathBuf>) {
     let Ok(entries) = fs::read_dir(directory) else {
         return;
     };
@@ -715,7 +715,7 @@ pub(super) fn recursive_find(directory: &Path, name: &str, found: &mut Vec<PathB
     }
 }
 
-pub(super) fn fetch_cohort_proposals(
+pub(crate) fn fetch_cohort_proposals(
     args: &Args,
     state: &PersistedSupplyState,
 ) -> Result<(PathBuf, String)> {

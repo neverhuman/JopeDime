@@ -4,7 +4,7 @@ use super::*;
 /// deciles, each decile shuffled with its own stream, the leading `hold_frac`
 /// of each shuffled decile becoming the validation fold. Fresh `seed` per
 /// generation gives a distinct split every time (train_only_study discipline).
-pub(super) fn split_8020(y: &[f64], seed: u64) -> (Vec<usize>, Vec<usize>) {
+pub(crate) fn split_8020(y: &[f64], seed: u64) -> (Vec<usize>, Vec<usize>) {
     let mut order: Vec<usize> = (0..y.len()).collect();
     order.sort_by(|&a, &b| y[a].total_cmp(&y[b]).then(a.cmp(&b)));
     let deciles = 10usize.min(y.len().max(1));
@@ -37,7 +37,7 @@ pub(super) fn split_8020(y: &[f64], seed: u64) -> (Vec<usize>, Vec<usize>) {
 /// Legacy V1 fold-count adaptation. Strict V2 never changes the declared fold
 /// count: an infeasible plan is a structural failure rather than a reason to
 /// substitute leave-one-out CV.
-pub(super) fn usable_folds(n: usize, configured_k: usize) -> usize {
+pub(crate) fn usable_folds(n: usize, configured_k: usize) -> usize {
     if n < 2 {
         return 0;
     }
@@ -50,7 +50,7 @@ pub(super) fn usable_folds(n: usize, configured_k: usize) -> usize {
 }
 
 /// Deterministic stratified k-fold: per-decile shuffle, then deal round-robin.
-pub(super) fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
+pub(crate) fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
     let mut order: Vec<usize> = (0..y.len()).collect();
     order.sort_by(|&a, &b| y[a].total_cmp(&y[b]).then(a.cmp(&b)));
     let deciles = 10usize.min(y.len().max(1));
@@ -72,7 +72,7 @@ pub(super) fn kfold(y: &[f64], k: usize, seed: u64) -> Vec<Vec<usize>> {
     folds
 }
 
-pub(super) fn validate_strict_fold_plan(
+pub(crate) fn validate_strict_fold_plan(
     row_count: usize,
     folds: &[Vec<usize>],
 ) -> Result<(), String> {
@@ -111,7 +111,7 @@ pub(super) fn validate_strict_fold_plan(
 /// Complete pooled OOF R^2 in original row order. For a fixed truth vector,
 /// ranking by this value is exactly equivalent to ranking by pooled OOF RMSE.
 /// Any absent, malformed, duplicated, or nonfinite fold fails closed.
-pub(super) fn complete_pooled_oof_r2(
+pub(crate) fn complete_pooled_oof_r2(
     y: &[f64],
     folds: &[Vec<usize>],
     fold_predictions: &[Option<&[f64]>],
@@ -140,7 +140,7 @@ pub(super) fn complete_pooled_oof_r2(
     r2(y, &predictions).map(|value| value.max(-1.0))
 }
 
-pub(super) fn replace_generation_outcomes(
+pub(crate) fn replace_generation_outcomes(
     population: &mut [Member],
     outcomes: Vec<Option<f64>>,
 ) -> usize {
@@ -157,6 +157,6 @@ pub(super) fn replace_generation_outcomes(
     invalid
 }
 
-pub(super) fn expected_search_evaluations(schedule: &[(usize, usize)], folds: usize) -> usize {
+pub(crate) fn expected_search_evaluations(schedule: &[(usize, usize)], folds: usize) -> usize {
     schedule.iter().map(|(width, _)| width * folds).sum()
 }

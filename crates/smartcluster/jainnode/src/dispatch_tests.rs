@@ -242,7 +242,6 @@ async fn repoll_wait_or_kill(harness: &RuntimeHarness, container: &str) {
 }
 
 mod concurrent;
-mod concurrent_runtime;
 mod deadlines;
 mod recovery;
 mod recovery_failures;

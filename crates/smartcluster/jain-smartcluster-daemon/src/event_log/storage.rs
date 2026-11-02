@@ -1,17 +1,17 @@
 use super::*;
 
-pub(super) fn segment_path(directory: &Path, start: u64) -> PathBuf {
+pub(crate) fn segment_path(directory: &Path, start: u64) -> PathBuf {
     directory.join(format!("{start:020}.{SEGMENT_EXTENSION}"))
 }
 
-pub(super) fn segment_start_from_path(path: &Path) -> Option<u64> {
+pub(crate) fn segment_start_from_path(path: &Path) -> Option<u64> {
     if path.extension()?.to_str()? != SEGMENT_EXTENSION {
         return None;
     }
     path.file_stem()?.to_str()?.parse().ok()
 }
 
-pub(super) fn segment_paths(directory: &Path) -> Result<Vec<PathBuf>, EventLogError> {
+pub(crate) fn segment_paths(directory: &Path) -> Result<Vec<PathBuf>, EventLogError> {
     let entries = fs::read_dir(directory).map_err(|error| EventLogError::io(directory, error))?;
     let mut paths = Vec::new();
     for entry in entries {
@@ -25,7 +25,7 @@ pub(super) fn segment_paths(directory: &Path) -> Result<Vec<PathBuf>, EventLogEr
     Ok(paths)
 }
 
-pub(super) fn create_segment(directory: &Path, start: u64) -> Result<PathBuf, EventLogError> {
+pub(crate) fn create_segment(directory: &Path, start: u64) -> Result<PathBuf, EventLogError> {
     let path = segment_path(directory, start);
     let mut file = OpenOptions::new()
         .write(true)
@@ -40,7 +40,7 @@ pub(super) fn create_segment(directory: &Path, start: u64) -> Result<PathBuf, Ev
     Ok(path)
 }
 
-pub(super) fn segment_header(start: u64) -> [u8; HEADER_LEN as usize] {
+pub(crate) fn segment_header(start: u64) -> [u8; HEADER_LEN as usize] {
     let mut header = [0_u8; HEADER_LEN as usize];
     header[..8].copy_from_slice(MAGIC);
     header[8..10].copy_from_slice(&FORMAT_VERSION.to_le_bytes());
@@ -50,7 +50,7 @@ pub(super) fn segment_header(start: u64) -> [u8; HEADER_LEN as usize] {
     header
 }
 
-pub(super) fn valid_header(header: &[u8; HEADER_LEN as usize], expected_start: u64) -> bool {
+pub(crate) fn valid_header(header: &[u8; HEADER_LEN as usize], expected_start: u64) -> bool {
     header[..8] == MAGIC[..]
         && u16::from_le_bytes([header[8], header[9]]) == FORMAT_VERSION
         && header[10..12] == [0, 0]
@@ -59,7 +59,7 @@ pub(super) fn valid_header(header: &[u8; HEADER_LEN as usize], expected_start: u
             == crc32fast::hash(&header[..20])
 }
 
-pub(super) enum RecoveredSegment {
+pub(crate) enum RecoveredSegment {
     Usable {
         end: u64,
         bytes: u64,
@@ -70,7 +70,7 @@ pub(super) enum RecoveredSegment {
     },
 }
 
-pub(super) fn recover_segment(
+pub(crate) fn recover_segment(
     path: &Path,
     start: u64,
     max_event_bytes: usize,
@@ -134,13 +134,13 @@ pub(super) fn recover_segment(
     })
 }
 
-pub(super) enum PrefixRead {
+pub(crate) enum PrefixRead {
     End,
     Partial,
     Full,
 }
 
-pub(super) fn read_prefix(file: &mut File, prefix: &mut [u8]) -> std::io::Result<PrefixRead> {
+pub(crate) fn read_prefix(file: &mut File, prefix: &mut [u8]) -> std::io::Result<PrefixRead> {
     let mut read = 0;
     while read < prefix.len() {
         match file.read(&mut prefix[read..])? {
@@ -152,14 +152,14 @@ pub(super) fn read_prefix(file: &mut File, prefix: &mut [u8]) -> std::io::Result
     Ok(PrefixRead::Full)
 }
 
-pub(super) fn record_checksum(offset: u64, payload: &[u8]) -> u32 {
+pub(crate) fn record_checksum(offset: u64, payload: &[u8]) -> u32 {
     let mut hasher = Hasher::new();
     hasher.update(&offset.to_le_bytes());
     hasher.update(payload);
     hasher.finalize()
 }
 
-pub(super) fn read_segment<T: DeserializeOwned>(
+pub(crate) fn read_segment<T: DeserializeOwned>(
     segment: &Segment,
     cursor: &mut u64,
     limit: usize,
@@ -212,7 +212,7 @@ pub(super) fn read_segment<T: DeserializeOwned>(
     Ok(())
 }
 
-pub(super) fn remove_oldest_segment(
+pub(crate) fn remove_oldest_segment(
     directory: &Path,
     segments: &mut Vec<Segment>,
 ) -> Result<(), EventLogError> {
@@ -221,7 +221,7 @@ pub(super) fn remove_oldest_segment(
     sync_directory(directory)
 }
 
-pub(super) fn sync_directory(directory: &Path) -> Result<(), EventLogError> {
+pub(crate) fn sync_directory(directory: &Path) -> Result<(), EventLogError> {
     let file = File::open(directory).map_err(|error| EventLogError::io(directory, error))?;
     file.sync_all()
         .map_err(|error| EventLogError::io(directory, error))

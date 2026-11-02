@@ -1,7 +1,7 @@
 use super::*;
 
 impl FittedInput {
-    pub(super) fn transform_impl(
+    pub(crate) fn transform_impl(
         &self,
         table: &RawTable,
         train_y: Option<&[f64]>,

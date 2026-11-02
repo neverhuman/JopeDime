@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn expected_job_id(manifest: &ShardManifest) -> Result<String> {
+pub(crate) fn expected_job_id(manifest: &ShardManifest) -> Result<String> {
     let mut binding = manifest.clone();
     binding.job_id.clear();
     Ok(format!(
@@ -9,7 +9,7 @@ pub(super) fn expected_job_id(manifest: &ShardManifest) -> Result<String> {
     ))
 }
 
-pub(super) fn validate_shard_manifest(manifest: &ShardManifest) -> Result<()> {
+pub(crate) fn validate_shard_manifest(manifest: &ShardManifest) -> Result<()> {
     let expected_slots = if manifest.kind == "generation" {
         if manifest.cohort_mode.as_deref() == Some("all") {
             *ALL_SHARD_SIZES
@@ -83,7 +83,7 @@ pub(super) fn validate_shard_manifest(manifest: &ShardManifest) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn failed_candidate_receipt(
+pub(crate) fn failed_candidate_receipt(
     manifest: &ShardManifest,
     slot: &ShardSlot,
     hostname: &str,
@@ -127,7 +127,7 @@ pub(super) fn failed_candidate_receipt(
     }
 }
 
-pub(super) fn cpp17_toolchain() -> Result<CandidateBackendReceipt> {
+pub(crate) fn cpp17_toolchain() -> Result<CandidateBackendReceipt> {
     let output = scq_batch::command_output(
         {
             let mut command = Command::new("g++");
@@ -155,14 +155,14 @@ pub(super) fn cpp17_toolchain() -> Result<CandidateBackendReceipt> {
     })
 }
 
-pub(super) fn is_sha256_hex(value: &str) -> bool {
+pub(crate) fn is_sha256_hex(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
-pub(super) fn validate_candidate_backend(
+pub(crate) fn validate_candidate_backend(
     receipt: &CandidateReceipt,
     all_dataset_cohort: bool,
 ) -> Result<()> {
@@ -204,7 +204,7 @@ pub(super) fn validate_candidate_backend(
     }
 }
 
-pub(super) fn evaluate_worker_candidate(
+pub(crate) fn evaluate_worker_candidate(
     manifest: &ShardManifest,
     slot: &ShardSlot,
     train: &RegressionData,

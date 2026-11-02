@@ -399,7 +399,8 @@ fn the_selection_record_round_trips_and_the_flag_is_checked_and_lint_clean() {
         assert!(!text.to_lowercase().contains("compress"), "{text}");
         assert!(!text.to_lowercase().contains("remez"), "{text}");
     }
-    let note = include_str!("../../../../../../docs/internal/kernel2/b19-minimax-linearization.md");
+    let note =
+        include_str!("../../../../../../../docs/internal/kernel2/b19-minimax-linearization.md");
     lint(note);
     assert!(note.contains("bounded minimax linearization"));
     use clap::CommandFactory;

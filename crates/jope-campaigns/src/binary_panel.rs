@@ -1,17 +1,17 @@
 use super::*;
 
-pub(super) fn binary_dataset_seed(hash: &str) -> Result<u64> {
+pub(crate) fn binary_dataset_seed(hash: &str) -> Result<u64> {
     Ok(BASE_SEED
         ^ BINARY_LANE_TAG
         ^ u64::from_str_radix(hash, 16).context("dataset hash is not hexadecimal")?)
 }
 
-pub(super) fn binary_seed_bytes() -> &'static [u8] {
+pub(crate) fn binary_seed_bytes() -> &'static [u8] {
     include_bytes!("../seeds/generation-zero-binary.txt")
 }
 
 /// Pinned binary panel: manifest sha + seed sha verified before any campaign.
-pub(super) fn binary_panel() -> Result<Vec<String>> {
+pub(crate) fn binary_panel() -> Result<Vec<String>> {
     if sha256_bytes(binary_seed_bytes()) != commands::binary_cv::SEED_BINARY_SHA256 {
         bail!("binary seed population hash mismatch");
     }
@@ -33,7 +33,7 @@ pub(super) fn binary_panel() -> Result<Vec<String>> {
 }
 
 /// Baseline AUC table from the pinned binary panel analysis.
-pub(super) fn binary_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64>>> {
+pub(crate) fn binary_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64>>> {
     let path = manifest_dir().join("panel-analysis-binary.v1.json");
     if hash_file(&path)? != PANEL_ANALYSIS_BINARY_SHA256 {
         bail!("panel-analysis-binary.v1.json SHA-256 mismatch");
@@ -54,7 +54,7 @@ pub(super) fn binary_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64
     Ok(table)
 }
 
-pub(super) fn verify_inputs_binary(registry: &Path) -> Result<()> {
+pub(crate) fn verify_inputs_binary(registry: &Path) -> Result<()> {
     for hash in binary_panel()? {
         // Training-only firewall: test.csv is never opened here.
         let train_path = registry.join(&hash).join("train.csv");
@@ -73,7 +73,7 @@ pub(super) fn verify_inputs_binary(registry: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn select_panel_binary(
+pub(crate) fn select_panel_binary(
     registry: &Path,
     panel_id: &str,
     only: Option<&str>,
@@ -139,7 +139,7 @@ pub(super) fn select_panel_binary(
     Ok(())
 }
 
-pub(super) fn validate_panel_binary(registry: &Path, panel_id: &str) -> Result<()> {
+pub(crate) fn validate_panel_binary(registry: &Path, panel_id: &str) -> Result<()> {
     let root = run_root(panel_id);
     for hash in binary_panel()? {
         // Training-only firewall: no test path or baseline metric is named.
@@ -163,7 +163,7 @@ pub(super) fn validate_panel_binary(registry: &Path, panel_id: &str) -> Result<(
 /// Round-robin Elo over per-dataset AUC tables: strictly greater AUC wins,
 /// exact ties draw; K=16, initial 1500, datasets in pinned order and pairs in
 /// lexicographic model order (fully deterministic).
-pub(super) fn binary_elo(per_dataset: &[BTreeMap<String, f64>]) -> BTreeMap<String, f64> {
+pub(crate) fn binary_elo(per_dataset: &[BTreeMap<String, f64>]) -> BTreeMap<String, f64> {
     let mut ratings = BTreeMap::<String, f64>::new();
     for table in per_dataset {
         for model in table.keys() {
@@ -194,7 +194,7 @@ pub(super) fn binary_elo(per_dataset: &[BTreeMap<String, f64>]) -> BTreeMap<Stri
     ratings
 }
 
-pub(super) fn score_panel_binary(registry: &Path, panel_id: &str) -> Result<()> {
+pub(crate) fn score_panel_binary(registry: &Path, panel_id: &str) -> Result<()> {
     let panel = binary_panel()?;
     let baselines = binary_baselines()?;
     let root = run_root(panel_id);

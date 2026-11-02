@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn freeze_is_deterministic_and_verifiable_body() {
+pub(crate) fn freeze_is_deterministic_and_verifiable_body() {
     let rows = synthetic_rows(6, 30, 12);
     let (pools, manifest) = freeze(&rows, &rule(), &h("input")).unwrap();
     assert_eq!(pools.len(), 30);
@@ -17,14 +17,14 @@ pub(super) fn freeze_is_deterministic_and_verifiable_body() {
     assert!(manifest.shadow_only && !manifest.qualified_claim);
 }
 
-pub(super) fn tampered_pool_fails_verification_body() {
+pub(crate) fn tampered_pool_fails_verification_body() {
     let (mut pools, manifest) = freeze(&synthetic_rows(3, 6, 10), &rule(), &h("input")).unwrap();
     pools[2].members[0].q = Some(99.0);
     pools[2].members[0].status = Status::Complete;
     assert!(verify(&pools, &manifest).is_err());
 }
 
-pub(super) fn held_out_roles_are_refused_body() {
+pub(crate) fn held_out_roles_are_refused_body() {
     for role in [
         "val",
         "validation",
@@ -43,7 +43,7 @@ pub(super) fn held_out_roles_are_refused_body() {
     }
 }
 
-pub(super) fn unknown_and_conflicting_contexts_are_excluded_not_imputed_body() {
+pub(crate) fn unknown_and_conflicting_contexts_are_excluded_not_imputed_body() {
     let mut rows = synthetic_rows(2, 4, 10);
     rows[1].status = Status::Unknown;
     rows[1].q = None;
@@ -79,7 +79,7 @@ pub(super) fn unknown_and_conflicting_contexts_are_excluded_not_imputed_body() {
         .any(|e| e.reason.contains("conflicting")));
 }
 
-pub(super) fn cap_is_salted_and_selector_independent_body() {
+pub(crate) fn cap_is_salted_and_selector_independent_body() {
     let rows = synthetic_rows(2, 4, 30);
     let mut capped = rule();
     capped.max_pool = Some(12);
@@ -93,7 +93,7 @@ pub(super) fn cap_is_salted_and_selector_independent_body() {
     );
 }
 
-pub(super) fn oracle_candidate_is_established_and_constant_candidate_is_not_body() {
+pub(crate) fn oracle_candidate_is_established_and_constant_candidate_is_not_body() {
     // Budget 2 of 24 members: the prior must actually choose, so the oracle's margin is visible.
     let (pools, manifest) = freeze(&synthetic_rows(24, 120, 24), &rule(), &h("input")).unwrap();
     let cfg = Config { budget: 2, ..cfg() };
@@ -139,7 +139,7 @@ pub(super) fn oracle_candidate_is_established_and_constant_candidate_is_not_body
     assert_eq!(receipt.ranking_learnability, "NOT_ESTABLISHED");
 }
 
-pub(super) fn beating_uniform_alone_does_not_establish_body() {
+pub(crate) fn beating_uniform_alone_does_not_establish_body() {
     // A candidate equal to the program prior's own information beats uniform but not the prior.
     let (pools, manifest) = freeze(&synthetic_rows(12, 96, 16), &rule(), &h("input")).unwrap();
     let effect = external("effect_only", Class::Candidate, &pools, |p, i| {

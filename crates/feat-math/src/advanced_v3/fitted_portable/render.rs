@@ -1,7 +1,7 @@
 use super::*;
 
 // Substitute only the template itself; user strings resembling markers remain literal.
-pub(super) fn render(mut template: &str, values: &[(&str, String)]) -> String {
+pub(crate) fn render(mut template: &str, values: &[(&str, String)]) -> String {
     for (key, _) in values {
         assert!(template.contains(key), "missing template marker {key}");
     }
@@ -31,7 +31,7 @@ pub(super) fn render(mut template: &str, values: &[(&str, String)]) -> String {
     output
 }
 
-pub(super) fn floats(values: &[f64]) -> String {
+pub(crate) fn floats(values: &[f64]) -> String {
     format!(
         "&[{}]",
         values
@@ -41,7 +41,7 @@ pub(super) fn floats(values: &[f64]) -> String {
             .join(",")
     )
 }
-pub(super) fn linear_call(value: &Linear) -> String {
+pub(crate) fn linear_call(value: &Linear) -> String {
     format!(
         "linear(x,{},{},{},{:.17e},{})",
         floats(&value.means),
@@ -51,7 +51,7 @@ pub(super) fn linear_call(value: &Linear) -> String {
         value.finite_input
     )
 }
-pub(super) fn rust_source(state: &State) -> String {
+pub(crate) fn rust_source(state: &State) -> String {
     let mut encode = String::from("let mut x = Vec::new();\n");
     for (index, input) in state.input.iter().enumerate() {
         match input {

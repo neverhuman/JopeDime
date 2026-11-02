@@ -6,9 +6,9 @@ use super::*;
 /// fresh look between batches. Release only fills the gap left under the
 /// queue target — a full queue releases nothing.
 
-pub(super) const HELD_RELEASE_BATCH_MAX: usize = 64;
+pub(crate) const HELD_RELEASE_BATCH_MAX: usize = 64;
 
-pub(super) fn held_release_budget(
+pub(crate) fn held_release_budget(
     queued_starting: usize,
     queued_target: i64,
     held: usize,
@@ -20,7 +20,7 @@ pub(super) fn held_release_budget(
         .min(HELD_RELEASE_BATCH_MAX)
 }
 
-pub(super) fn scq_release(scq: &Path, job_id: &str) -> Result<()> {
+pub(crate) fn scq_release(scq: &Path, job_id: &str) -> Result<()> {
     let output = Command::new(scq)
         .arg("release")
         .arg(job_id)
@@ -40,7 +40,7 @@ pub(super) fn scq_release(scq: &Path, job_id: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn scq_check(scq: &Path, spec: &Path) -> Result<()> {
+pub(crate) fn scq_check(scq: &Path, spec: &Path) -> Result<()> {
     let output = Command::new(scq)
         .arg("check")
         .arg(spec)
@@ -61,7 +61,7 @@ pub(super) fn scq_check(scq: &Path, spec: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn rewrite_spec_job_id(
+pub(crate) fn rewrite_spec_job_id(
     old: &Path,
     new: &Path,
     old_id: &str,
@@ -76,7 +76,7 @@ pub(super) fn rewrite_spec_job_id(
     atomic_write(new, text.replacen(&old_line, &new_line, 1).as_bytes())
 }
 
-pub(super) fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -92,14 +92,14 @@ pub(super) fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn authoritative_receipt_exists(root: &Path, job_id: &str) -> bool {
+pub(crate) fn authoritative_receipt_exists(root: &Path, job_id: &str) -> bool {
     root.join("receipts")
         .join(job_id)
         .join("SHARD_OK")
         .is_file()
 }
 
-pub(super) fn reject_python_runtime(runner: &Path) -> Result<()> {
+pub(crate) fn reject_python_runtime(runner: &Path) -> Result<()> {
     let content = fs::read_to_string(runner)
         .with_context(|| format!("read evaluator runner {}", runner.display()))?;
     let lowered = content.to_ascii_lowercase();
@@ -112,26 +112,26 @@ pub(super) fn reject_python_runtime(runner: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn path_field(value: &Value, key: &str) -> Result<PathBuf> {
+pub(crate) fn path_field(value: &Value, key: &str) -> Result<PathBuf> {
     Ok(PathBuf::from(string_field(value, key)?))
 }
 
-pub(super) fn string_field<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
+pub(crate) fn string_field<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
     value
         .get(key)
         .and_then(Value::as_str)
         .with_context(|| format!("manifest lacks {key}"))
 }
 
-pub(super) fn is_sha256(value: &str) -> bool {
+pub(crate) fn is_sha256(value: &str) -> bool {
     value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
-pub(super) fn is_infrastructure_failure_class(value: &str) -> bool {
+pub(crate) fn is_infrastructure_failure_class(value: &str) -> bool {
     INFRA_FAILURES.contains(&value.to_ascii_lowercase().as_str())
 }
 
-pub(super) fn is_transient_cli_error(detail: &str) -> bool {
+pub(crate) fn is_transient_cli_error(detail: &str) -> bool {
     let detail = detail.to_ascii_lowercase();
     [
         "controller dropped request",
@@ -145,7 +145,7 @@ pub(super) fn is_transient_cli_error(detail: &str) -> bool {
     .any(|marker| detail.contains(marker))
 }
 
-pub(super) fn submit_batch(scq: &Path, claims: &[ReadyClaim]) -> Result<Vec<(bool, bool, String)>> {
+pub(crate) fn submit_batch(scq: &Path, claims: &[ReadyClaim]) -> Result<Vec<(bool, bool, String)>> {
     ensure!(
         !claims.is_empty() && claims.len() <= 1_024,
         "SCQ bulk submission requires 1..=1024 claims"
@@ -217,7 +217,7 @@ pub(super) fn submit_batch(scq: &Path, claims: &[ReadyClaim]) -> Result<Vec<(boo
     Ok(outcomes)
 }
 
-pub(super) fn parse_rfc3339_seconds(value: &str) -> Option<i64> {
+pub(crate) fn parse_rfc3339_seconds(value: &str) -> Option<i64> {
     // SCQ emits UTC RFC3339 timestamps.  Parsing them locally avoids pulling
     // a high-level time runtime into the always-on keeper.
     let year = value.get(0..4)?.parse::<i64>().ok()?;
@@ -249,7 +249,7 @@ pub(super) fn parse_rfc3339_seconds(value: &str) -> Option<i64> {
     Some(days * 86_400 + hour * 3_600 + minute * 60 + second - timezone)
 }
 
-pub(super) fn days_from_civil(year: i64, month: i64, day: i64) -> Option<i64> {
+pub(crate) fn days_from_civil(year: i64, month: i64, day: i64) -> Option<i64> {
     let year = year - i64::from(month <= 2);
     let era = if year >= 0 { year } else { year - 399 } / 400;
     let year_of_era = year - era * 400;

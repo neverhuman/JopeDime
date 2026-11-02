@@ -1,5 +1,5 @@
 // Frozen position-coordinate namespace, in canonical feature order.
-pub(super) const POSITION_FEATURE_NAMES: [&str; 302] = [
+pub(crate) const POSITION_FEATURE_NAMES: [&str; 302] = [
     "position0.append",
     "position0.bin_onehot",
     "position0.bins",

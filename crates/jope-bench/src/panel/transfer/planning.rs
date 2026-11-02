@@ -126,7 +126,8 @@ pub(crate) fn build(specification: Specification) -> Result<Plan> {
     }
     let mut searches = Vec::new();
     let mut dataset_hashes = BTreeSet::new();
-    let adaptive: Value = serde_json::from_str(include_str!("../../../../benchmarks/panel.json"))?;
+    let adaptive: Value =
+        serde_json::from_str(include_str!("../../../../../benchmarks/panel.json"))?;
     for d in &s.datasets {
         if adaptive["datasets"]
             .as_array()

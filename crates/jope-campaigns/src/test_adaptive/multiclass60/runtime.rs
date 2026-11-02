@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run_all(run_id: &str, campaign_root: &Path, resume: bool) -> Result<()> {
+pub(crate) fn run_all(run_id: &str, campaign_root: &Path, resume: bool) -> Result<()> {
     let plan = read_plan(campaign_root, run_id)?;
     let root = run_root(campaign_root, run_id);
     let ready = ready_dataset_bindings(&plan, &root)?;

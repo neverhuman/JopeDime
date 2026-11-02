@@ -1,5 +1,5 @@
 use super::*;
-pub(super) fn request() -> Request {
+pub(crate) fn request() -> Request {
     Request {
         worker_source_sha256: sha256_hex(b"synthetic producer source"),
         prepared_sha256: sha256_hex(b"synthetic prepared"),
@@ -71,16 +71,16 @@ fn producer_transport_rejects_seed_request_recipe_and_context_tampering() -> Res
 
 /// A real (untrained, unbound) proposal and a challenger-shaped request naming its test
 /// state, so the producer transport can be exercised end to end in a unit test.
-pub(super) fn unbound_proposal() -> (Request, crate::seeds::Proposal) {
+pub(crate) fn unbound_proposal() -> (Request, crate::seeds::Proposal) {
     unbound_proposal_with(1, 8, 1.0)
 }
 /// A second fixture whose pool fills during sampling: surplus and duplicate neural draws,
 /// no fallback draws (the first fixture has only completed neural draws, many fallback
 /// draws and at least one refused fallback draw).
-pub(super) fn filled_proposal() -> (Request, crate::seeds::Proposal) {
+pub(crate) fn filled_proposal() -> (Request, crate::seeds::Proposal) {
     unbound_proposal_with(2, 64, 25.0)
 }
-pub(super) fn unbound_proposal_with(
+pub(crate) fn unbound_proposal_with(
     rounds: usize,
     batch: usize,
     temperature: f32,

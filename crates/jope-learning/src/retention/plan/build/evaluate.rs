@@ -1,7 +1,7 @@
 use super::state::{Evaluated, Loaded};
 use super::*;
 
-pub(super) fn evaluate(cfg: &Config, loaded: Loaded) -> Result<Evaluated> {
+pub(crate) fn evaluate(cfg: &Config, loaded: Loaded) -> Result<Evaluated> {
     let as_of_unix = loaded.as_of_unix;
     let policy = &loaded.policy;
     let ledger = &loaded.ledger;

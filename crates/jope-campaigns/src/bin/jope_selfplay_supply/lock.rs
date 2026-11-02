@@ -1,11 +1,11 @@
 use super::*;
 
-pub(super) struct SingleInstanceLock {
+pub(crate) struct SingleInstanceLock {
     _file: File,
 }
 
 impl SingleInstanceLock {
-    pub(super) fn acquire(path: &Path) -> Result<Self> {
+    pub(crate) fn acquire(path: &Path) -> Result<Self> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }

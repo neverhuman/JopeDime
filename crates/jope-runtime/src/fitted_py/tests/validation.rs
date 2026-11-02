@@ -166,8 +166,8 @@ fn fitted_python_refuses_non_finite_state_symbolic_models_and_f32_contracts() {
         "{error:#}"
     );
 
-    let input = include_bytes!("../tests/fixtures/math-pipeline/input.json");
-    let state = include_bytes!("../tests/fixtures/math-pipeline/pipeline.json");
+    let input = include_bytes!("../../../tests/fixtures/math-pipeline/input.json");
+    let state = include_bytes!("../../../tests/fixtures/math-pipeline/pipeline.json");
     let parts = std::collections::BTreeMap::from([
         (crate::math_pipeline::INPUT_PART.into(), input.to_vec()),
         (crate::math_pipeline::PIPELINE_PART.into(), state.to_vec()),

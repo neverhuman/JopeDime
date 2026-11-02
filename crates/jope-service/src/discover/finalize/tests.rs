@@ -10,7 +10,7 @@ mod tests {
         Mutex,
     };
     const TRAIN: &[u8] =
-        include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+        include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
     const TRAIN_SHA: &str = "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931";
 
     struct Ridge;

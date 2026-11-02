@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) async fn record_and_emit_chunk<E: EventSink>(
+pub(crate) async fn record_and_emit_chunk<E: EventSink>(
     events: &E,
     emitter: &mut Emitter,
     chunk: DockerLogChunk,
@@ -41,7 +41,7 @@ pub(super) async fn record_and_emit_chunk<E: EventSink>(
         .await
 }
 
-pub(super) fn ensure_success(status: ExitStatus) -> Result<(), ExecutionError> {
+pub(crate) fn ensure_success(status: ExitStatus) -> Result<(), ExecutionError> {
     if status.oom_killed {
         Err(ExecutionError::MemoryLimitExceeded)
     } else if status.code != 0 {
@@ -51,7 +51,7 @@ pub(super) fn ensure_success(status: ExitStatus) -> Result<(), ExecutionError> {
     }
 }
 
-pub(super) fn platform_environment(
+pub(crate) fn platform_environment(
     work: &VerifiedWorkUnit,
     placement: &Placement,
     phase: ExecutionPhase,
@@ -73,14 +73,14 @@ pub(super) fn platform_environment(
     ])
 }
 
-pub(super) fn phase_name(phase: ExecutionPhase) -> &'static str {
+pub(crate) fn phase_name(phase: ExecutionPhase) -> &'static str {
     match phase {
         ExecutionPhase::Smoke => "smoke",
         ExecutionPhase::Run => "run",
     }
 }
 
-pub(super) struct Emitter {
+pub(crate) struct Emitter {
     run_id: String,
     attempt: u32,
     fence: u64,
@@ -91,7 +91,7 @@ pub(super) struct Emitter {
 }
 
 impl Emitter {
-    pub(super) fn new(work: &VerifiedWorkUnit, phase: ExecutionPhase) -> Self {
+    pub(crate) fn new(work: &VerifiedWorkUnit, phase: ExecutionPhase) -> Self {
         Self {
             run_id: work.run_id.to_string(),
             attempt: work.attempt,
@@ -103,7 +103,7 @@ impl Emitter {
         }
     }
 
-    pub(super) fn next(&mut self, stream_bytes: u64) -> EventIdentity {
+    pub(crate) fn next(&mut self, stream_bytes: u64) -> EventIdentity {
         self.cursor = self.cursor.saturating_add(1);
         let identity = EventIdentity {
             run_id: self.run_id.clone(),

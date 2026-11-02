@@ -1,7 +1,7 @@
 use super::*;
 
 impl Supervisor {
-    pub(super) fn apply_stale_retirement(
+    pub(crate) fn apply_stale_retirement(
         &mut self,
         preview_sha256: &str,
         idempotency_key: &str,
@@ -155,7 +155,7 @@ impl Supervisor {
         )
     }
 
-    pub(super) fn manifest_state_counts(
+    pub(crate) fn manifest_state_counts(
         &self,
         manifest_sha256: &str,
     ) -> Result<BTreeMap<String, u64>> {
@@ -180,7 +180,7 @@ impl Supervisor {
         .collect())
     }
 
-    pub(super) fn supersede_pairs(
+    pub(crate) fn supersede_pairs(
         &self,
         manifest_sha256: &str,
         job_id: &str,
@@ -297,7 +297,7 @@ impl Supervisor {
         Ok(retiring.len() as u64)
     }
 
-    pub(super) fn mark_claim_superseded(&self, job_id: &str, manifest_sha256: &str) -> Result<()> {
+    pub(crate) fn mark_claim_superseded(&self, job_id: &str, manifest_sha256: &str) -> Result<()> {
         if !self.backlog.is_file() {
             return Ok(());
         }

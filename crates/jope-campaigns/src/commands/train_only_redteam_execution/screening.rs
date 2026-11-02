@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_screening(
+pub(crate) fn build_screening(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn replay_manifest(
+pub(crate) fn replay_manifest(
     plan: &Plan,
     dataset: &DatasetBinding,
     generation: usize,
@@ -47,7 +47,7 @@ pub(super) fn replay_manifest(
     }))
 }
 
-pub(super) fn replay_job_id(
+pub(crate) fn replay_job_id(
     dataset_hash: &str,
     semantic_sha256: &str,
     node: &str,
@@ -61,14 +61,14 @@ pub(super) fn replay_job_id(
     )
 }
 
-pub(super) fn replay_role_capability(node: &str) -> Result<&'static str> {
+pub(crate) fn replay_role_capability(node: &str) -> Result<&'static str> {
     REPLAY_ROLE_CAPABILITIES
         .iter()
         .find_map(|(candidate, marker)| (*candidate == node).then_some(*marker))
         .with_context(|| format!("no multiclass replay capability role is assigned to {node}"))
 }
 
-pub(super) fn render_replay_spec(
+pub(crate) fn render_replay_spec(
     dataset: &DatasetBinding,
     champion: &SeedMember,
     node: &str,
@@ -114,7 +114,7 @@ pub(super) fn render_replay_spec(
     ))
 }
 
-pub(super) fn validate_replay_receipt(
+pub(crate) fn validate_replay_receipt(
     path: &Path,
     manifest: &Path,
     dataset: &DatasetBinding,
@@ -163,7 +163,7 @@ pub(super) fn validate_replay_receipt(
     Ok(value)
 }
 
-pub(super) fn manage_winner_replay(
+pub(crate) fn manage_winner_replay(
     plan: &Plan,
     root: &Path,
     dataset: &DatasetBinding,
@@ -384,7 +384,7 @@ pub(super) fn manage_winner_replay(
     Ok(true)
 }
 
-pub(super) fn write_exhausted_ledger(
+pub(crate) fn write_exhausted_ledger(
     root: &Path,
     dataset: &DatasetBinding,
     checkpoint: &GenerationCheckpoint,

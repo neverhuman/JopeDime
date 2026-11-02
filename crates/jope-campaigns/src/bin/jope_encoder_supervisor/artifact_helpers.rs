@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn verify_declared_inputs(root: &Path, input: &FoundationDatasetInputV2) -> Result<()> {
+pub(crate) fn verify_declared_inputs(root: &Path, input: &FoundationDatasetInputV2) -> Result<()> {
     let actual = collect_files(root)?;
     let expected = input
         .files_read
@@ -17,7 +17,7 @@ pub(super) fn verify_declared_inputs(root: &Path, input: &FoundationDatasetInput
     Ok(())
 }
 
-pub(super) fn collect_files(root: &Path) -> Result<BTreeSet<String>> {
+pub(crate) fn collect_files(root: &Path) -> Result<BTreeSet<String>> {
     fn visit(root: &Path, directory: &Path, output: &mut BTreeSet<String>) -> Result<()> {
         for entry in fs::read_dir(directory)? {
             let entry = entry?;
@@ -46,7 +46,7 @@ pub(super) fn collect_files(root: &Path) -> Result<BTreeSet<String>> {
     Ok(output)
 }
 
-pub(super) fn encoder_artifacts(encoder: &FoundationEncoderIdentityV2) -> Vec<ArtifactIdentity> {
+pub(crate) fn encoder_artifacts(encoder: &FoundationEncoderIdentityV2) -> Vec<ArtifactIdentity> {
     let mut artifacts = vec![
         encoder.protocol.clone(),
         encoder.python_encoder.clone(),
@@ -64,7 +64,7 @@ pub(super) fn encoder_artifacts(encoder: &FoundationEncoderIdentityV2) -> Vec<Ar
     artifacts
 }
 
-pub(super) fn verify_runtime_artifacts(root: &Path, artifacts: &[ArtifactIdentity]) -> Result<()> {
+pub(crate) fn verify_runtime_artifacts(root: &Path, artifacts: &[ArtifactIdentity]) -> Result<()> {
     let mut paths = BTreeSet::new();
     for artifact in artifacts {
         ensure!(
@@ -76,7 +76,7 @@ pub(super) fn verify_runtime_artifacts(root: &Path, artifacts: &[ArtifactIdentit
     Ok(())
 }
 
-pub(super) fn verify_artifact(root: &Path, artifact: &ArtifactIdentity) -> Result<()> {
+pub(crate) fn verify_artifact(root: &Path, artifact: &ArtifactIdentity) -> Result<()> {
     artifact.validate()?;
     let path = root.join(&artifact.path);
     let metadata = fs::symlink_metadata(&path)?;
@@ -97,7 +97,7 @@ pub(super) fn verify_artifact(root: &Path, artifact: &ArtifactIdentity) -> Resul
     Ok(())
 }
 
-pub(super) fn sha256_file(path: &Path) -> Result<String> {
+pub(crate) fn sha256_file(path: &Path) -> Result<String> {
     let mut file = File::open(path)?;
     let mut hash = Sha256::new();
     let mut buffer = [0u8; 64 * 1024];
@@ -111,6 +111,6 @@ pub(super) fn sha256_file(path: &Path) -> Result<String> {
     Ok(hex::encode(hash.finalize()))
 }
 
-pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
+pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }

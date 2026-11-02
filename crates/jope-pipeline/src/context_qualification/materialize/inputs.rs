@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) struct NativePreprocessing {
+pub(crate) struct NativePreprocessing {
     schema: String,
     columns: Vec<NativeColumn>,
     labels: Vec<String>,
@@ -8,14 +8,14 @@ pub(super) struct NativePreprocessing {
     target_scale: f64,
 }
 #[derive(Deserialize)]
-pub(super) struct NativeColumn {
+pub(crate) struct NativeColumn {
     kind: String,
     impute: f64,
     mean: f64,
     scale: f64,
     categories: Vec<String>,
 }
-pub(super) fn load_training_rows(
+pub(crate) fn load_training_rows(
     sources: &ReferenceSources,
     meta: &Value,
     train_indices: &[usize],
@@ -148,7 +148,7 @@ pub(super) fn load_training_rows(
         })
         .collect()
 }
-pub(super) fn numeric_csv(rows: &[Vec<f64>]) -> Vec<u8> {
+pub(crate) fn numeric_csv(rows: &[Vec<f64>]) -> Vec<u8> {
     rows.iter()
         .map(|r| {
             let mut s = r
@@ -162,7 +162,7 @@ pub(super) fn numeric_csv(rows: &[Vec<f64>]) -> Vec<u8> {
         .collect::<String>()
         .into_bytes()
 }
-pub(super) fn indices(v: &Value) -> Result<Vec<usize>> {
+pub(crate) fn indices(v: &Value) -> Result<Vec<usize>> {
     v.as_array()
         .context("row index list missing")?
         .iter()
@@ -171,12 +171,12 @@ pub(super) fn indices(v: &Value) -> Result<Vec<usize>> {
         })
         .collect()
 }
-pub(super) fn string<'a>(v: &'a Value, key: &str) -> Result<&'a str> {
+pub(crate) fn string<'a>(v: &'a Value, key: &str) -> Result<&'a str> {
     v[key]
         .as_str()
         .with_context(|| format!("missing metadata string {key}"))
 }
-pub(super) fn resolve(root: &Path, relative: &str) -> Result<PathBuf> {
+pub(crate) fn resolve(root: &Path, relative: &str) -> Result<PathBuf> {
     let p = Path::new(relative);
     ensure!(
         !relative.is_empty() && p.components().all(|c| matches!(c, Component::Normal(_))),

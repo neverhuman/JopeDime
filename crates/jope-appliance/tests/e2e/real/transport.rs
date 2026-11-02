@@ -1,7 +1,7 @@
 use super::setup::*;
 use super::*;
 
-pub(super) fn capture<T: Transport>(
+pub(crate) fn capture<T: Transport>(
     client: &T,
     surface: Surface,
     run: &jope_api::ids::RunId,
@@ -21,7 +21,7 @@ pub(super) fn capture<T: Transport>(
     }
     SurfaceCapture::from_observation(surface, snapshot, events).map_err(anyhow::Error::msg)
 }
-pub(super) fn replay<T: Transport>(
+pub(crate) fn replay<T: Transport>(
     client: &T,
     spec: &RunSpec,
     id: &jope_api::ids::RunId,
@@ -33,15 +33,15 @@ pub(super) fn replay<T: Transport>(
     Ok(())
 }
 
-pub(super) struct Server {
-    pub(super) client: Http,
-    pub(super) engine: Arc<InProcessEngine>,
-    pub(super) stop: Option<tokio::sync::oneshot::Sender<()>>,
-    pub(super) thread: Option<thread::JoinHandle<()>>,
-    pub(super) home: tempfile::TempDir,
+pub(crate) struct Server {
+    pub(crate) client: Http,
+    pub(crate) engine: Arc<InProcessEngine>,
+    pub(crate) stop: Option<tokio::sync::oneshot::Sender<()>>,
+    pub(crate) thread: Option<thread::JoinHandle<()>>,
+    pub(crate) home: tempfile::TempDir,
 }
 impl Server {
-    pub(super) fn start(bytes: &[u8]) -> Result<(Self, RunSpec)> {
+    pub(crate) fn start(bytes: &[u8]) -> Result<(Self, RunSpec)> {
         let home = directory()?;
         let (engine, mut spec) = initialize(home.path(), bytes)?;
         let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
@@ -91,7 +91,7 @@ impl Server {
             spec,
         ))
     }
-    pub(super) fn inprocess(&self) -> Result<InProcess> {
+    pub(crate) fn inprocess(&self) -> Result<InProcess> {
         let daemon: Value =
             serde_json::from_slice(&fs::read(self.home.path().join("daemon.json"))?)?;
         let endpoint = daemon["url"].as_str().context("daemon URL missing")?;
@@ -114,14 +114,14 @@ impl Drop for Server {
     }
 }
 
-pub(super) struct Rpc {
+pub(crate) struct Rpc {
     child: Child,
     input: Option<ChildStdin>,
     lines: mpsc::Receiver<String>,
     next: u64,
 }
 impl Rpc {
-    pub(super) fn open(home: &Path) -> Result<Self> {
+    pub(crate) fn open(home: &Path) -> Result<Self> {
         let mut child = Command::new(home.join("jopedime"))
             .arg("mcp")
             .env("JOPEDIME_HOME", home)
@@ -181,7 +181,7 @@ impl Rpc {
             }
         }
     }
-    pub(super) fn tool(&mut self, name: &str, args: Value) -> Result<Value> {
+    pub(crate) fn tool(&mut self, name: &str, args: Value) -> Result<Value> {
         let result = self.call("tools/call", json!({"name":name,"arguments":args}))?;
         ensure!(result["isError"] != true, "MCP tool failed: {result}");
         Ok(result["structuredContent"].clone())

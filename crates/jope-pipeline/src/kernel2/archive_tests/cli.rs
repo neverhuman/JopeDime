@@ -112,7 +112,7 @@ fn the_flag_selects_the_archive_on_kernel2_only_and_its_text_passes_the_lint() {
     lint(&String::from_utf8(read(&flagged, archive::PATH)).unwrap());
     // The internal note that documents the flag, the ids and the record.
     lint(include_str!(
-        "../../../../docs/internal/kernel2/b18-pareto-archive.md"
+        "../../../../../docs/internal/kernel2/b18-pareto-archive.md"
     ));
     use clap::CommandFactory;
     let mut command = Cli::command();

@@ -1,14 +1,14 @@
 use super::*;
 
-pub(super) fn seed_population(features: usize) -> Result<Vec<MemberRecord>> {
+pub(crate) fn seed_population(features: usize) -> Result<Vec<MemberRecord>> {
     seed_population_with_winners(features, &[])
 }
 
-pub(super) fn winner_seed_snapshot_sha256(sources: &[WinnerSeedSource]) -> Result<String> {
+pub(crate) fn winner_seed_snapshot_sha256(sources: &[WinnerSeedSource]) -> Result<String> {
     Ok(sha256_bytes(&canonical_json(&sources)?))
 }
 
-pub(super) fn seed_population_with_winners(
+pub(crate) fn seed_population_with_winners(
     features: usize,
     winner_sources: &[WinnerSeedSource],
 ) -> Result<Vec<MemberRecord>> {

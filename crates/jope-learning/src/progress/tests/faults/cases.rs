@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn cases() -> Vec<Case> {
+pub(crate) fn cases() -> Vec<Case> {
     vec![
         Case {
             name: "disconnect-before-upload",

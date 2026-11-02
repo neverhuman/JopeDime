@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn campaign_root(run_id: &str) -> PathBuf {
+pub(crate) fn campaign_root(run_id: &str) -> PathBuf {
     run_root(run_id)
 }
 
@@ -122,7 +122,7 @@ fn encode_source_dataset(source: &Path, destination: &Path) -> Result<(usize, us
     ))
 }
 
-pub(super) fn collect_canonical_leaders(
+pub(crate) fn collect_canonical_leaders(
     canonical: &str,
     leaders: &mut HashMap<String, (f64, BTreeSet<String>)>,
 ) -> Result<()> {
@@ -250,7 +250,7 @@ fn collect_local_leaders() -> Result<LocalLeaders> {
     Ok((leaders, artifacts))
 }
 
-pub(super) fn update_leader(
+pub(crate) fn update_leader(
     leaders: &mut HashMap<String, (f64, BTreeSet<String>)>,
     dataset: &str,
     model: &str,
@@ -272,7 +272,7 @@ pub(super) fn update_leader(
     }
 }
 
-pub(super) fn prepare_datasets(run_id: &str) -> Result<(Vec<EncodedDataset>, Vec<ArtifactHash>)> {
+pub(crate) fn prepare_datasets(run_id: &str) -> Result<(Vec<EncodedDataset>, Vec<ArtifactHash>)> {
     let (leaders, artifacts) = collect_local_leaders()?;
     let source_root = Path::new(source_root_str());
     let mut sources = fs::read_dir(source_root)?
@@ -339,7 +339,7 @@ pub(super) fn prepare_datasets(run_id: &str) -> Result<(Vec<EncodedDataset>, Vec
     Ok((datasets, artifacts))
 }
 
-pub(super) fn select_datasets(
+pub(crate) fn select_datasets(
     datasets: Vec<EncodedDataset>,
     selector: Option<&str>,
 ) -> Result<Vec<EncodedDataset>> {
@@ -381,7 +381,7 @@ pub(super) fn select_datasets(
     Ok(selected)
 }
 
-pub(super) fn identity(run_id: &str, binary_sha256: &str, spec: &DatasetSpec) -> CampaignIdentity {
+pub(crate) fn identity(run_id: &str, binary_sha256: &str, spec: &DatasetSpec) -> CampaignIdentity {
     CampaignIdentity {
         schema: CAMPAIGN_SCHEMA.to_string(),
         benchmark_valid: false,

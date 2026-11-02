@@ -2,39 +2,39 @@ use super::*;
 
 use super::super::index::IndexAgg;
 
-pub(super) struct Loaded {
-    pub(super) as_of_unix: u64,
-    pub(super) policy: Policy,
-    pub(super) policy_rec: InputRecord,
-    pub(super) ledger: Ledger,
-    pub(super) lookup: GroupLookup,
-    pub(super) agg: IndexAgg,
-    pub(super) inputs: Vec<InputRecord>,
-    pub(super) refs: RefSet,
-    pub(super) ref_counts: BTreeMap<String, u64>,
-    pub(super) unmatched_in_scope: u64,
-    pub(super) unmatched_sample: Vec<String>,
-    pub(super) other_buckets: u64,
-    pub(super) bucketless_resolved: u64,
-    pub(super) bucketless_unresolved: u64,
-    pub(super) refs_by_group: BTreeMap<usize, BTreeMap<Role, u64>>,
-    pub(super) sources_by_group: BTreeMap<usize, BTreeSet<String>>,
-    pub(super) pins: BTreeSet<(Role, String, String, usize)>,
-    pub(super) pin_sources: BTreeMap<(Role, String, String), String>,
+pub(crate) struct Loaded {
+    pub(crate) as_of_unix: u64,
+    pub(crate) policy: Policy,
+    pub(crate) policy_rec: InputRecord,
+    pub(crate) ledger: Ledger,
+    pub(crate) lookup: GroupLookup,
+    pub(crate) agg: IndexAgg,
+    pub(crate) inputs: Vec<InputRecord>,
+    pub(crate) refs: RefSet,
+    pub(crate) ref_counts: BTreeMap<String, u64>,
+    pub(crate) unmatched_in_scope: u64,
+    pub(crate) unmatched_sample: Vec<String>,
+    pub(crate) other_buckets: u64,
+    pub(crate) bucketless_resolved: u64,
+    pub(crate) bucketless_unresolved: u64,
+    pub(crate) refs_by_group: BTreeMap<usize, BTreeMap<Role, u64>>,
+    pub(crate) sources_by_group: BTreeMap<usize, BTreeSet<String>>,
+    pub(crate) pins: BTreeSet<(Role, String, String, usize)>,
+    pub(crate) pin_sources: BTreeMap<(Role, String, String), String>,
 }
 
-pub(super) struct Evaluated {
-    pub(super) loaded: Loaded,
-    pub(super) lifecycles: Lifecycles,
-    pub(super) inv: Option<Inventory>,
-    pub(super) rows: Vec<super::PlanRow>,
+pub(crate) struct Evaluated {
+    pub(crate) loaded: Loaded,
+    pub(crate) lifecycles: Lifecycles,
+    pub(crate) inv: Option<Inventory>,
+    pub(crate) rows: Vec<super::PlanRow>,
 }
 
-pub(super) struct Analysis {
-    pub(super) hazards: BTreeMap<(String, String), (u64, f64)>,
-    pub(super) notes: BTreeMap<(String, String), (u64, f64)>,
-    pub(super) inventory_summary: Option<InventorySummary>,
-    pub(super) findings: Vec<String>,
-    pub(super) plan_jsonl: Vec<u8>,
-    pub(super) plan_sha: String,
+pub(crate) struct Analysis {
+    pub(crate) hazards: BTreeMap<(String, String), (u64, f64)>,
+    pub(crate) notes: BTreeMap<(String, String), (u64, f64)>,
+    pub(crate) inventory_summary: Option<InventorySummary>,
+    pub(crate) findings: Vec<String>,
+    pub(crate) plan_jsonl: Vec<u8>,
+    pub(crate) plan_sha: String,
 }

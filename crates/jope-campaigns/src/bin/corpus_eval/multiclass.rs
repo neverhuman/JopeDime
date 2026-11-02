@@ -2,7 +2,7 @@ use super::*;
 
 /// Bitwise 0.0/1.0 targets with both classes present; any violation is a
 /// dataset-level failure shared by every candidate in the shard.
-pub(super) fn validate_binary_targets(y: &[f64], split: &str) -> Option<String> {
+pub(crate) fn validate_binary_targets(y: &[f64], split: &str) -> Option<String> {
     if let Some(value) = y.iter().find(|v| **v != 0.0 && **v != 1.0) {
         return Some(format!(
             "{split} target {value} is not a bitwise 0/1 class label"
@@ -15,7 +15,7 @@ pub(super) fn validate_binary_targets(y: &[f64], split: &str) -> Option<String> 
     None
 }
 
-pub(super) fn declared_multiclass_codes(meta: &serde_json::Value) -> Result<Vec<f64>, String> {
+pub(crate) fn declared_multiclass_codes(meta: &serde_json::Value) -> Result<Vec<f64>, String> {
     if let Some(mapping) = meta.get("class_mapping").and_then(|value| value.as_array()) {
         let mut entries: Vec<&serde_json::Value> =
             mapping.iter().filter(|entry| entry.is_object()).collect();
@@ -83,7 +83,7 @@ pub(super) fn declared_multiclass_codes(meta: &serde_json::Value) -> Result<Vec<
     Err("meta.json must declare at least three ordered multiclass classes".to_string())
 }
 
-pub(super) fn decode_declared_targets(
+pub(crate) fn decode_declared_targets(
     values: &[f64],
     declared_codes: &[f64],
     split: &str,
@@ -110,7 +110,7 @@ pub(super) fn decode_declared_targets(
         .collect()
 }
 
-pub(super) fn decode_multiclass_splits(
+pub(crate) fn decode_multiclass_splits(
     train: &[f64],
     test: &[f64],
     meta: &serde_json::Value,
@@ -158,7 +158,7 @@ pub(super) fn decode_multiclass_splits(
     })
 }
 
-pub(super) fn declared_macro_f1(y_true: &[f64], y_pred: &[f64], declared_classes: usize) -> f64 {
+pub(crate) fn declared_macro_f1(y_true: &[f64], y_pred: &[f64], declared_classes: usize) -> f64 {
     let mut total = 0.0;
     for class in 0..declared_classes {
         let label = class as f64;
@@ -189,7 +189,7 @@ pub(super) fn declared_macro_f1(y_true: &[f64], y_pred: &[f64], declared_classes
 // rewrite-binary-heads mode
 // ---------------------------------------------------------------------------
 
-pub(super) fn rewrite_head(
+pub(crate) fn rewrite_head(
     canonical: &str,
     head: &str,
 ) -> std::result::Result<(String, String), String> {
@@ -216,7 +216,7 @@ pub(super) fn rewrite_head(
     Ok((rewritten, source_head))
 }
 
-pub(super) fn run_rewrite(winners_dir: &Path, heads: &[String], output: &Path) -> Result<()> {
+pub(crate) fn run_rewrite(winners_dir: &Path, heads: &[String], output: &Path) -> Result<()> {
     let mut dataset_dirs = fs::read_dir(winners_dir)
         .with_context(|| format!("read winners dir {}", winners_dir.display()))?
         .filter_map(|entry| entry.ok().map(|e| e.path()))

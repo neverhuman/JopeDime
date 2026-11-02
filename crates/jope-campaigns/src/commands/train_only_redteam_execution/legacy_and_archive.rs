@@ -10,4 +10,4 @@ use smart_candidates::{
 };
 
 mod g20_dataset;
-pub(super) use g20_dataset::run_g20_dataset;
+pub(crate) use g20_dataset::run_g20_dataset;

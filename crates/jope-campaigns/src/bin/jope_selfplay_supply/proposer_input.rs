@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn proposer_inputs_from_spec(body: &str) -> Result<Vec<PinnedProposerInput>> {
+pub(crate) fn proposer_inputs_from_spec(body: &str) -> Result<Vec<PinnedProposerInput>> {
     let mut inputs = Vec::new();
     let mut current: Option<PinnedProposerInput> = None;
     let flush = |current: &mut Option<PinnedProposerInput>,
@@ -43,7 +43,7 @@ pub(super) fn proposer_inputs_from_spec(body: &str) -> Result<Vec<PinnedProposer
     Ok(inputs)
 }
 
-pub(super) fn runtime_pinned_intent_from_spec(
+pub(crate) fn runtime_pinned_intent_from_spec(
     spec: &Path,
     attempt: u32,
 ) -> Result<RuntimePinnedIntentV1> {
@@ -89,7 +89,7 @@ pub(super) fn runtime_pinned_intent_from_spec(
     Ok(value)
 }
 
-pub(super) fn adaptive_proposal_reservoir(root: &Path) -> usize {
+pub(crate) fn adaptive_proposal_reservoir(root: &Path) -> usize {
     let waves = root.join("waves");
     let Ok(entries) = fs::read_dir(waves) else {
         return 64;
@@ -132,7 +132,7 @@ pub(super) fn adaptive_proposal_reservoir(root: &Path) -> usize {
     }
 }
 
-pub(super) fn proposal_decoder_configuration_sha256(
+pub(crate) fn proposal_decoder_configuration_sha256(
     args: &Args,
     reservoir: usize,
 ) -> Result<String> {
@@ -150,7 +150,7 @@ pub(super) fn proposal_decoder_configuration_sha256(
     }))?))
 }
 
-pub(super) fn append_spec_input(
+pub(crate) fn append_spec_input(
     lines: &mut Vec<String>,
     name: &str,
     source: &Path,
@@ -169,7 +169,7 @@ pub(super) fn append_spec_input(
 }
 
 #[cfg(test)]
-pub(super) fn normalized_proposer_spec(body: &str) -> String {
+pub(crate) fn normalized_proposer_spec(body: &str) -> String {
     body.lines()
         .map(|line| {
             if line.starts_with("PYTHONPATH = ") {
@@ -191,7 +191,7 @@ pub(super) fn normalized_proposer_spec(body: &str) -> String {
         .join("\n")
 }
 
-pub(super) fn proposer_env_path(body: &str, key: &str) -> Result<PathBuf> {
+pub(crate) fn proposer_env_path(body: &str, key: &str) -> Result<PathBuf> {
     let prefix = format!("{key} = \"");
     let line = body
         .lines()
@@ -208,7 +208,7 @@ pub(super) fn proposer_env_path(body: &str, key: &str) -> Result<PathBuf> {
 }
 
 #[cfg(test)]
-pub(super) fn validate_proposer_runtime(
+pub(crate) fn validate_proposer_runtime(
     existing_body: &str,
     expected_body: &str,
     args: &Args,
@@ -245,7 +245,7 @@ pub(super) fn validate_proposer_runtime(
     Ok(())
 }
 
-pub(super) fn immutable_json(path: &Path, value: &Value) -> Result<()> {
+pub(crate) fn immutable_json(path: &Path, value: &Value) -> Result<()> {
     if path.is_file() {
         let existing: Value = serde_json::from_slice(&fs::read(path)?)?;
         if existing != *value {
@@ -256,7 +256,7 @@ pub(super) fn immutable_json(path: &Path, value: &Value) -> Result<()> {
     atomic_json(path, value)
 }
 
-pub(super) fn pointer_target(pointer_path: &Path, target: &str) -> PathBuf {
+pub(crate) fn pointer_target(pointer_path: &Path, target: &str) -> PathBuf {
     let path = PathBuf::from(target);
     if path.is_absolute() {
         path

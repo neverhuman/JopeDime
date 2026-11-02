@@ -1,7 +1,7 @@
 use super::*;
 
 impl Keeper {
-    pub(super) fn open(args: Args) -> Result<Self> {
+    pub(crate) fn open(args: Args) -> Result<Self> {
         fs::create_dir_all(args.root.join("ops"))?;
         let backlog = Connection::open(args.root.join("ops/backlog.sqlite"))?;
         backlog.busy_timeout(Duration::from_secs(60))?;
@@ -39,7 +39,7 @@ impl Keeper {
         })
     }
 
-    pub(super) fn cycle(&mut self) -> Result<CycleReport> {
+    pub(crate) fn cycle(&mut self) -> Result<CycleReport> {
         self.manifest_cache.clear();
         self.reservation_cache.clear();
         let scheduler_value = scq_json(&self.args.scq, &["ls"])?;

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn export_value(verified: &VerifiedProposals, task: Task, dataset: &str) -> Value {
+pub(crate) fn export_value(verified: &VerifiedProposals, task: Task, dataset: &str) -> Value {
     json!({
         "schema": EXPORT_SCHEMA,
         "task": task.as_str(),
@@ -34,7 +34,7 @@ fn proposal_member(proposal: &GpProposal, checkpoint: &str, operation: &str) -> 
     }
 }
 
-pub(super) fn merge_generation_zero(
+pub(crate) fn merge_generation_zero(
     existing: &[GpPopulationMember],
     proposals: &[GpProposal],
     checkpoint: &str,
@@ -129,7 +129,7 @@ pub(super) fn merge_generation_zero(
     }))
 }
 
-pub(super) fn injection_value(
+pub(crate) fn injection_value(
     existing: &[GpPopulationMember],
     proposals: &[GpProposal],
     checkpoint: &str,

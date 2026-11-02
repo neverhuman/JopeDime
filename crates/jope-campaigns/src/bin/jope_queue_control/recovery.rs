@@ -1,12 +1,12 @@
 use super::*;
 
 mod retirement;
-pub(super) use retirement::{
+pub(crate) use retirement::{
     apply_retired_binding_repair, build_retired_binding_repair_plan, recover_retirement_candidates,
 };
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn build_missing_receipt_recovery_plan(
+pub(crate) fn build_missing_receipt_recovery_plan(
     root: &Path,
     wave_dir: &Path,
     pair_registry: &Path,
@@ -324,7 +324,7 @@ pub(super) fn build_missing_receipt_recovery_plan(
     })
 }
 
-pub(super) fn validate_missing_receipt_manifest_bindings(
+pub(crate) fn validate_missing_receipt_manifest_bindings(
     rows: Vec<ManifestPairBinding>,
     manifest_path: &str,
     job_id: &str,
@@ -343,7 +343,7 @@ pub(super) fn validate_missing_receipt_manifest_bindings(
     Some(rows.into_iter().map(|row| row.identity).collect())
 }
 
-pub(super) fn load_wave_desired_pairs(
+pub(crate) fn load_wave_desired_pairs(
     wave_dir: &Path,
 ) -> Result<(String, BTreeSet<RegistryPairIdentity>, BTreeSet<String>)> {
     let wave_dir = fs::canonicalize(wave_dir)?;
@@ -392,14 +392,14 @@ pub(super) fn load_wave_desired_pairs(
     Ok((wave, desired, hashes))
 }
 
-pub(super) enum OutputProbe {
+pub(crate) enum OutputProbe {
     AuthoritativeReceipt,
     SemanticFailure,
     Unavailable(String),
     Unverified(String),
 }
 
-pub(super) fn probe_scq_output(scq: &Path, socket: &Path, job_id: &str) -> Result<OutputProbe> {
+pub(crate) fn probe_scq_output(scq: &Path, socket: &Path, job_id: &str) -> Result<OutputProbe> {
     let temporary = ProbeDirectory::create()?;
     let output = Command::new(scq)
         .arg("fetch")
@@ -438,7 +438,7 @@ pub(super) fn probe_scq_output(scq: &Path, socket: &Path, job_id: &str) -> Resul
     }
 }
 
-pub(super) struct ProbeDirectory {
+pub(crate) struct ProbeDirectory {
     path: PathBuf,
 }
 
@@ -462,7 +462,7 @@ impl Drop for ProbeDirectory {
     }
 }
 
-pub(super) fn tree_contains_named_file(root: &Path, name: &str) -> Result<bool> {
+pub(crate) fn tree_contains_named_file(root: &Path, name: &str) -> Result<bool> {
     if !root.exists() {
         return Ok(false);
     }

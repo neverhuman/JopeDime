@@ -1,33 +1,33 @@
 use super::*;
 
-pub(super) const LANDLOCK_CREATE_RULESET_VERSION: u32 = 1;
-pub(super) const LANDLOCK_RULE_PATH_BENEATH: u32 = 1;
-pub(super) const ACCESS_EXECUTE: u64 = 1 << 0;
-pub(super) const ACCESS_WRITE_FILE: u64 = 1 << 1;
-pub(super) const ACCESS_READ_FILE: u64 = 1 << 2;
-pub(super) const ACCESS_READ_DIR: u64 = 1 << 3;
-pub(super) const ACCESS_REMOVE_DIR: u64 = 1 << 4;
-pub(super) const ACCESS_REMOVE_FILE: u64 = 1 << 5;
-pub(super) const ACCESS_MAKE_CHAR: u64 = 1 << 6;
-pub(super) const ACCESS_MAKE_DIR: u64 = 1 << 7;
-pub(super) const ACCESS_MAKE_REG: u64 = 1 << 8;
-pub(super) const ACCESS_MAKE_SOCK: u64 = 1 << 9;
-pub(super) const ACCESS_MAKE_FIFO: u64 = 1 << 10;
-pub(super) const ACCESS_MAKE_BLOCK: u64 = 1 << 11;
-pub(super) const ACCESS_MAKE_SYM: u64 = 1 << 12;
-pub(super) const ACCESS_REFER: u64 = 1 << 13;
-pub(super) const ACCESS_TRUNCATE: u64 = 1 << 14;
+pub(crate) const LANDLOCK_CREATE_RULESET_VERSION: u32 = 1;
+pub(crate) const LANDLOCK_RULE_PATH_BENEATH: u32 = 1;
+pub(crate) const ACCESS_EXECUTE: u64 = 1 << 0;
+pub(crate) const ACCESS_WRITE_FILE: u64 = 1 << 1;
+pub(crate) const ACCESS_READ_FILE: u64 = 1 << 2;
+pub(crate) const ACCESS_READ_DIR: u64 = 1 << 3;
+pub(crate) const ACCESS_REMOVE_DIR: u64 = 1 << 4;
+pub(crate) const ACCESS_REMOVE_FILE: u64 = 1 << 5;
+pub(crate) const ACCESS_MAKE_CHAR: u64 = 1 << 6;
+pub(crate) const ACCESS_MAKE_DIR: u64 = 1 << 7;
+pub(crate) const ACCESS_MAKE_REG: u64 = 1 << 8;
+pub(crate) const ACCESS_MAKE_SOCK: u64 = 1 << 9;
+pub(crate) const ACCESS_MAKE_FIFO: u64 = 1 << 10;
+pub(crate) const ACCESS_MAKE_BLOCK: u64 = 1 << 11;
+pub(crate) const ACCESS_MAKE_SYM: u64 = 1 << 12;
+pub(crate) const ACCESS_REFER: u64 = 1 << 13;
+pub(crate) const ACCESS_TRUNCATE: u64 = 1 << 14;
 
 #[derive(Serialize)]
-pub(super) struct SandboxPolicy<'a> {
-    pub(super) schema: &'static str,
-    pub(super) landlock_abi: i32,
-    pub(super) runtime_read_execute_root: &'a Path,
-    pub(super) input_read_root: &'a Path,
-    pub(super) output_write_root: &'a Path,
-    pub(super) system_read_execute_roots: &'a [PathBuf],
-    pub(super) device_read_write_paths: &'a [PathBuf],
-    pub(super) denied_classes: [&'static str; 5],
+pub(crate) struct SandboxPolicy<'a> {
+    pub(crate) schema: &'static str,
+    pub(crate) landlock_abi: i32,
+    pub(crate) runtime_read_execute_root: &'a Path,
+    pub(crate) input_read_root: &'a Path,
+    pub(crate) output_write_root: &'a Path,
+    pub(crate) system_read_execute_roots: &'a [PathBuf],
+    pub(crate) device_read_write_paths: &'a [PathBuf],
+    pub(crate) denied_classes: [&'static str; 5],
 }
 
 #[repr(C)]
@@ -42,13 +42,13 @@ struct LandlockPathBeneathAttr {
     _reserved: u32,
 }
 
-pub(super) struct LandlockRuleset {
-    pub(super) fd: OwnedFd,
-    pub(super) abi: i32,
+pub(crate) struct LandlockRuleset {
+    pub(crate) fd: OwnedFd,
+    pub(crate) abi: i32,
 }
 
 impl LandlockRuleset {
-    pub(super) fn new() -> Result<Self> {
+    pub(crate) fn new() -> Result<Self> {
         // SAFETY: LANDLOCK_CREATE_RULESET_VERSION requires a null attr and size 0, which are
         // passed; the kernel then only returns the ABI version and dereferences no memory.
         let abi = unsafe {
@@ -97,7 +97,7 @@ impl LandlockRuleset {
         })
     }
 
-    pub(super) fn allow_path(&self, path: &Path, requested_access: u64) -> Result<()> {
+    pub(crate) fn allow_path(&self, path: &Path, requested_access: u64) -> Result<()> {
         let metadata = fs::symlink_metadata(path)
             .with_context(|| format!("stat Landlock path {}", path.display()))?;
         ensure!(

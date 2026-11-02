@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run() -> Result<()> {
+pub(crate) fn run() -> Result<()> {
     match Cli::parse().command {
         Command::IngestCoverage {
             coverage,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_shard_accounting(
+pub(crate) fn validate_shard_accounting(
     root: &Path,
     campaign: &CampaignManifest,
     checkpoints: &[GenerationCheckpoint],
@@ -78,7 +78,7 @@ pub(super) fn validate_shard_accounting(
     Ok(())
 }
 
-pub(super) fn validate_artifact_manifest(root: &Path, campaign: &CampaignManifest) -> Result<()> {
+pub(crate) fn validate_artifact_manifest(root: &Path, campaign: &CampaignManifest) -> Result<()> {
     let path = root.join("winner").join("artifact-manifest.v1.json");
     let recorded: WinnerArtifactManifest = load_json(&path)?;
     if recorded.schema != "JopeBinary42TestAdaptiveArtifactManifest.v1"
@@ -111,9 +111,9 @@ pub(super) fn validate_artifact_manifest(root: &Path, campaign: &CampaignManifes
 }
 
 mod dataset;
-pub(super) use dataset::validate_dataset_campaign;
+pub(crate) use dataset::validate_dataset_campaign;
 
-pub(super) fn checkpoint_next_populations_terminate_at_cap(
+pub(crate) fn checkpoint_next_populations_terminate_at_cap(
     checkpoints: &[GenerationCheckpoint],
 ) -> bool {
     checkpoints
@@ -121,7 +121,7 @@ pub(super) fn checkpoint_next_populations_terminate_at_cap(
         .is_some_and(|checkpoint| checkpoint.next_population.is_empty())
 }
 
-pub(super) fn validate_all_impl(run_id: &str) -> Result<()> {
+pub(crate) fn validate_all_impl(run_id: &str) -> Result<()> {
     validate_run_id(run_id)?;
     let (cohort, cohort_sha256) = read_cohort()?;
     let run = run_root(run_id);
@@ -253,7 +253,7 @@ pub(super) fn validate_all_impl(run_id: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_impl(run_id: &str, dataset: &str) -> Result<()> {
+pub(crate) fn validate_impl(run_id: &str, dataset: &str) -> Result<()> {
     let summary = validate_dataset_campaign(run_id, dataset, false)?;
     println!(
         "{}",

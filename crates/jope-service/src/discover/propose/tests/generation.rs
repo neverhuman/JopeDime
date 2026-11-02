@@ -171,7 +171,7 @@ fn typed_cycle_is_not_a_random_twenty_percent_sampler() {
         [5, 5, 5, 5, 4]
     );
     let source: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
+        "../../../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
     ))
     .unwrap();
     assert_eq!(

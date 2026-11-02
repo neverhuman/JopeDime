@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn reserve_manifest_pairs_in_tx(
+pub(crate) fn reserve_manifest_pairs_in_tx(
     tx: &Transaction<'_>,
     owner_column: &str,
     manifest: &ValidManifest,
@@ -156,7 +156,7 @@ pub(super) fn reserve_manifest_pairs_in_tx(
     Ok(Some(owner))
 }
 
-pub(super) fn empty_report(
+pub(crate) fn empty_report(
     submit: bool,
     targets: QueueTargets,
     nodes: Vec<NodeSlots>,
@@ -227,7 +227,7 @@ pub(super) fn empty_report(
     }
 }
 
-pub(super) fn failure_report(submit: bool, error: &str) -> CycleReport {
+pub(crate) fn failure_report(submit: bool, error: &str) -> CycleReport {
     let mut report = empty_report(
         submit,
         QueueTargets {
@@ -243,7 +243,7 @@ pub(super) fn failure_report(submit: bool, error: &str) -> CycleReport {
     report
 }
 
-pub(super) fn initialize_backlog(connection: &Connection) -> Result<()> {
+pub(crate) fn initialize_backlog(connection: &Connection) -> Result<()> {
     connection.execute_batch(
         r#"
         PRAGMA journal_mode=WAL;
@@ -335,7 +335,7 @@ pub(super) fn initialize_backlog(connection: &Connection) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn inspect_pair_schema(connection: &Connection) -> Result<PairSchema> {
+pub(crate) fn inspect_pair_schema(connection: &Connection) -> Result<PairSchema> {
     let columns = table_columns(connection, "pairs")?;
     if columns.is_empty() {
         bail!("pair registry lacks the pairs table");
@@ -377,13 +377,13 @@ pub(super) fn inspect_pair_schema(connection: &Connection) -> Result<PairSchema>
     })
 }
 
-pub(super) fn table_columns(connection: &Connection, table: &str) -> Result<BTreeSet<String>> {
+pub(crate) fn table_columns(connection: &Connection, table: &str) -> Result<BTreeSet<String>> {
     let mut statement = connection.prepare(&format!("PRAGMA table_info({table})"))?;
     let rows = statement.query_map([], |row| row.get::<_, String>(1))?;
     Ok(rows.collect::<rusqlite::Result<_>>()?)
 }
 
-pub(super) fn load_claims(connection: &Connection) -> Result<HashMap<String, Claim>> {
+pub(crate) fn load_claims(connection: &Connection) -> Result<HashMap<String, Claim>> {
     let mut statement = connection.prepare(
         "SELECT manifest_sha256,manifest,job_id,spec,state,attempts,reservation_owner \
          FROM claims",
@@ -409,7 +409,7 @@ pub(super) fn load_claims(connection: &Connection) -> Result<HashMap<String, Cla
     Ok(result)
 }
 
-pub(super) fn load_rejected_manifests(connection: &Connection) -> Result<BTreeSet<PathBuf>> {
+pub(crate) fn load_rejected_manifests(connection: &Connection) -> Result<BTreeSet<PathBuf>> {
     let mut statement = connection.prepare("SELECT manifest FROM rejected_manifests")?;
     let rows = statement.query_map([], |row| Ok(PathBuf::from(row.get::<_, String>(0)?)))?;
     let mut rejected = BTreeSet::new();
@@ -419,7 +419,7 @@ pub(super) fn load_rejected_manifests(connection: &Connection) -> Result<BTreeSe
     Ok(rejected)
 }
 
-pub(super) fn reject_manifest(
+pub(crate) fn reject_manifest(
     connection: &Connection,
     path: &Path,
     digest: Option<&str>,
@@ -440,7 +440,7 @@ pub(super) fn reject_manifest(
     Ok(())
 }
 
-pub(super) fn record_preflight_receipt(
+pub(crate) fn record_preflight_receipt(
     connection: &Connection,
     path: &Path,
     outcome: &TaskPreflightOutcomeV1,

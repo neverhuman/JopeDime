@@ -1,30 +1,30 @@
 use super::*;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(super) struct Counts {
-    pub(super) a: usize,
-    pub(super) c: usize,
-    pub(super) d: usize,
-    pub(super) e: usize,
+pub(crate) struct Counts {
+    pub(crate) a: usize,
+    pub(crate) c: usize,
+    pub(crate) d: usize,
+    pub(crate) e: usize,
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct ClosureViolation {
-    pub(super) profile: String,
-    pub(super) element: String,
-    pub(super) clause: &'static str,
-    pub(super) reason: String,
+pub(crate) struct ClosureViolation {
+    pub(crate) profile: String,
+    pub(crate) element: String,
+    pub(crate) clause: &'static str,
+    pub(crate) reason: String,
 }
 
 #[derive(Clone, Debug, Default)]
-pub(super) struct ClosureReport {
-    pub(super) per_profile: BTreeMap<(String, u32), Counts>,
-    pub(super) violations: Vec<ClosureViolation>,
-    pub(super) manifest_c: usize,
+pub(crate) struct ClosureReport {
+    pub(crate) per_profile: BTreeMap<(String, u32), Counts>,
+    pub(crate) violations: Vec<ClosureViolation>,
+    pub(crate) manifest_c: usize,
 }
 
 impl ClosureReport {
-    pub(super) fn fail(
+    pub(crate) fn fail(
         &mut self,
         profile: &SearchProfile,
         element: &str,
@@ -39,14 +39,14 @@ impl ClosureReport {
         });
     }
 
-    pub(super) fn has(&self, element: &str, clause: &str) -> bool {
+    pub(crate) fn has(&self, element: &str, clause: &str) -> bool {
         self.violations
             .iter()
             .any(|v| v.element == element && v.clause == clause)
     }
 }
 
-pub(super) fn tier(profile: &SearchProfile) -> Tier {
+pub(crate) fn tier(profile: &SearchProfile) -> Tier {
     match profile.id {
         "kernel2-baseline" => Tier::Baseline,
         "kernel2-experimental" => Tier::Experimental,
@@ -54,7 +54,7 @@ pub(super) fn tier(profile: &SearchProfile) -> Tier {
     }
 }
 
-pub(super) fn kernel_use_admits(value: Kernel2Use, tier: Tier) -> bool {
+pub(crate) fn kernel_use_admits(value: Kernel2Use, tier: Tier) -> bool {
     matches!(value, Kernel2Use::Baseline)
         || matches!(
             (value, tier),
@@ -62,7 +62,7 @@ pub(super) fn kernel_use_admits(value: Kernel2Use, tier: Tier) -> bool {
         )
 }
 
-pub(super) fn clause_a(
+pub(crate) fn clause_a(
     manifest: &Manifest,
     profile: &SearchProfile,
     report: &mut ClosureReport,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn ready_waves(
+pub(crate) fn ready_waves(
     waves_root: &Path,
     checkpoint_sha256: &str,
     checkpoint_epoch: &str,
@@ -41,7 +41,7 @@ pub(super) fn ready_waves(
     Ok(waves)
 }
 
-pub(super) fn validate_ready_wave(
+pub(crate) fn validate_ready_wave(
     wave: &str,
     directory: &Path,
     checkpoint_sha256: &str,
@@ -117,12 +117,12 @@ pub(super) fn validate_ready_wave(
     }))
 }
 
-pub(super) fn manifests_per_wave(max_candidates_per_manifest: usize) -> usize {
+pub(crate) fn manifests_per_wave(max_candidates_per_manifest: usize) -> usize {
     DATASETS_PER_WAVE * CANDIDATES_PER_DATASET.div_ceil(max_candidates_per_manifest)
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn supply_decision(
+pub(crate) fn supply_decision(
     queue_depth: usize,
     candidate_evaluation_work: usize,
     protected_candidate_evaluations: usize,
@@ -166,7 +166,7 @@ pub(super) fn supply_decision(
     }
 }
 
-pub(super) fn next_wave_id(waves_root: &Path) -> Result<String> {
+pub(crate) fn next_wave_id(waves_root: &Path) -> Result<String> {
     let mut maximum = 0_u64;
     if waves_root.is_dir() {
         for entry in fs::read_dir(waves_root)? {
@@ -197,7 +197,7 @@ pub(super) fn next_wave_id(waves_root: &Path) -> Result<String> {
     Ok(format!("strict-wave-{:06}", maximum + 1))
 }
 
-pub(super) fn wave_to_build(waves_root: &Path) -> Result<String> {
+pub(crate) fn wave_to_build(waves_root: &Path) -> Result<String> {
     let pending = waves_root.join("pending");
     let mut unresolved = Vec::new();
     if pending.is_dir() {
@@ -226,7 +226,7 @@ pub(super) fn wave_to_build(waves_root: &Path) -> Result<String> {
     }
 }
 
-pub(super) fn pending_wave_quarantined(
+pub(crate) fn pending_wave_quarantined(
     waves_root: &Path,
     wave: &str,
     cohort: &Path,
@@ -272,11 +272,11 @@ pub(super) fn pending_wave_quarantined(
     Ok(true)
 }
 
-pub(super) fn valid_wave_id(value: &str) -> bool {
+pub(crate) fn valid_wave_id(value: &str) -> bool {
     parse_wave_id(value).is_some()
 }
 
-pub(super) fn parse_wave_id(value: &str) -> Option<u64> {
+pub(crate) fn parse_wave_id(value: &str) -> Option<u64> {
     let digits = value.strip_prefix("strict-wave-")?;
     if digits.len() != 6 || !digits.bytes().all(|byte| byte.is_ascii_digit()) {
         return None;
@@ -284,17 +284,17 @@ pub(super) fn parse_wave_id(value: &str) -> Option<u64> {
     digits.parse().ok()
 }
 
-pub(super) fn supply_state_v1_path(root: &Path, wave: &str) -> PathBuf {
+pub(crate) fn supply_state_v1_path(root: &Path, wave: &str) -> PathBuf {
     root.join("ops/cohort-supply-state-v1")
         .join(format!("{wave}.json"))
 }
 
-pub(super) fn supply_state_path(root: &Path, wave: &str) -> PathBuf {
+pub(crate) fn supply_state_path(root: &Path, wave: &str) -> PathBuf {
     root.join("ops/cohort-supply-state-v2")
         .join(format!("{wave}.json"))
 }
 
-pub(super) fn persist_supply_state(root: &Path, state: &PersistedSupplyState) -> Result<()> {
+pub(crate) fn persist_supply_state(root: &Path, state: &PersistedSupplyState) -> Result<()> {
     if state.schema != SUPPLY_STATE_V2_SCHEMA {
         bail!("only CohortSupplyState.v2 may be persisted by the active supply lane");
     }
@@ -305,7 +305,7 @@ pub(super) fn persist_supply_state(root: &Path, state: &PersistedSupplyState) ->
     )
 }
 
-pub(super) fn load_supply_state(
+pub(crate) fn load_supply_state(
     root: &Path,
     wave: &str,
     checkpoint: &str,
@@ -351,7 +351,7 @@ pub(super) fn load_supply_state(
     Ok(Some(state))
 }
 
-pub(super) fn mark_keeper_acknowledged(root: &Path, wave: &str, checkpoint: &str) -> Result<()> {
+pub(crate) fn mark_keeper_acknowledged(root: &Path, wave: &str, checkpoint: &str) -> Result<()> {
     let Some(mut state) = load_supply_state(root, wave, checkpoint)? else {
         return Ok(());
     };
@@ -365,14 +365,14 @@ pub(super) fn mark_keeper_acknowledged(root: &Path, wave: &str, checkpoint: &str
     persist_supply_state(root, &state)
 }
 
-pub(super) fn toml_quote(value: &str) -> Result<String> {
+pub(crate) fn toml_quote(value: &str) -> Result<String> {
     if value.contains(['"', '\\', '\n', '\r']) {
         bail!("value is not safe for generated TOML");
     }
     Ok(format!("\"{value}\""))
 }
 
-pub(super) fn toml_string_assignment(line: &str, name: &str) -> Option<String> {
+pub(crate) fn toml_string_assignment(line: &str, name: &str) -> Option<String> {
     let value = line.trim().strip_prefix(&format!("{name} = "))?;
     serde_json::from_str::<String>(value).ok()
 }

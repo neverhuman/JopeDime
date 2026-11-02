@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) const H_QUANTILE_EDGES: &str = r#"// Interior quantile cut points (1/bins .. (bins-1)/bins) for every column.
+pub(crate) const H_QUANTILE_EDGES: &str = r#"// Interior quantile cut points (1/bins .. (bins-1)/bins) for every column.
 static std::vector<std::vector<double>> quantile_edges(const std::vector<std::vector<double>>& x, std::size_t bins) {
     std::vector<std::vector<double>> edges;
     for (std::size_t j = 0; j < x[0].size(); ++j) {
@@ -14,7 +14,7 @@ static std::vector<std::vector<double>> quantile_edges(const std::vector<std::ve
     return edges;
 }"#;
 
-pub(super) const H_PEARSON: &str = r#"// Pearson correlation, 0.0 for degenerate inputs.
+pub(crate) const H_PEARSON: &str = r#"// Pearson correlation, 0.0 for degenerate inputs.
 static double pearson(const std::vector<double>& a, const std::vector<double>& b) {
     std::size_t n = std::min(a.size(), b.size());
     if (n < 2) return 0.0;
@@ -38,7 +38,7 @@ static double pearson(const std::vector<double>& a, const std::vector<double>& b
     return sab / std::sqrt(saa * sbb);
 }"#;
 
-pub(super) const OP_CHEB: &str = r#"// Chebyshev polynomial basis (T_1..T_degree) of each column, mapped to [-1, 1].
+pub(crate) const OP_CHEB: &str = r#"// Chebyshev polynomial basis (T_1..T_degree) of each column, mapped to [-1, 1].
 static std::vector<std::vector<double>> chebyshev_basis_apply(const std::vector<std::vector<double>>& x, std::size_t degree, bool append) {
     std::vector<std::vector<double>> out;
     out.reserve(x.size());
@@ -60,7 +60,7 @@ static std::vector<std::vector<double>> chebyshev_basis_apply(const std::vector<
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_HINGE: &str = r#"struct HingeBasis {
+pub(crate) const OP_HINGE: &str = r#"struct HingeBasis {
     std::vector<std::vector<double>> knots;
 };
 
@@ -93,7 +93,7 @@ static std::vector<std::vector<double>> hinge_basis_apply(const HingeBasis& stat
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_POLY_INTERACT: &str = r#"struct PairwiseProducts {
+pub(crate) const OP_POLY_INTERACT: &str = r#"struct PairwiseProducts {
     std::vector<std::pair<std::size_t, std::size_t>> pairs;
 };
 
@@ -128,7 +128,7 @@ static std::vector<std::vector<double>> pairwise_products_apply(const PairwisePr
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_QUANTILE_BINS: &str = r#"struct QuantileBinIndexer {
+pub(crate) const OP_QUANTILE_BINS: &str = r#"struct QuantileBinIndexer {
     std::vector<std::vector<double>> edges;
 };
 
@@ -153,7 +153,7 @@ static std::vector<std::vector<double>> quantile_bin_indexer_apply(const Quantil
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_BIN_ONEHOT: &str = r#"struct QuantileOnehotEncoder {
+pub(crate) const OP_BIN_ONEHOT: &str = r#"struct QuantileOnehotEncoder {
     std::vector<std::vector<double>> edges;
 };
 
@@ -178,7 +178,7 @@ static std::vector<std::vector<double>> quantile_onehot_encoder_apply(const Quan
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_PAIR_PROD: &str = r#"struct CorrelationScreenedProducts {
+pub(crate) const OP_PAIR_PROD: &str = r#"struct CorrelationScreenedProducts {
     std::vector<std::pair<std::size_t, std::size_t>> pairs;
 };
 
@@ -225,7 +225,7 @@ static std::vector<std::vector<double>> correlation_screened_products_apply(cons
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const H_RBF_ROW: &str = r#"// Gaussian kernel similarities exp(-gamma * ||row - l||^2) to each landmark.
+pub(crate) const H_RBF_ROW: &str = r#"// Gaussian kernel similarities exp(-gamma * ||row - l||^2) to each landmark.
 static std::vector<double> rbf_row(const std::vector<std::vector<double>>& landmarks, const std::vector<double>& row, double gamma) {
     std::vector<double> values;
     values.reserve(landmarks.size());
@@ -241,7 +241,7 @@ static std::vector<double> rbf_row(const std::vector<std::vector<double>>& landm
     return values;
 }"#;
 
-pub(super) const OP_RAND_PROJ: &str = r#"struct GaussianRandomProjection {
+pub(crate) const OP_RAND_PROJ: &str = r#"struct GaussianRandomProjection {
     std::vector<std::vector<double>> w;
 };
 
@@ -277,7 +277,7 @@ static std::vector<std::vector<double>> gaussian_random_projection_apply(const G
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_ROW_STATS: &str = r#"// Per-row summary [mean, std, min, max, median, q25, q75, skewness, excess kurtosis, mean energy].
+pub(crate) const OP_ROW_STATS: &str = r#"// Per-row summary [mean, std, min, max, median, q25, q75, skewness, excess kurtosis, mean energy].
 static std::vector<std::vector<double>> row_summary_statistics_apply(const std::vector<std::vector<double>>& x, bool append) {
     std::vector<std::vector<double>> out;
     out.reserve(x.size());
@@ -315,7 +315,7 @@ static std::vector<std::vector<double>> row_summary_statistics_apply(const std::
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_ROW_DIFF_STATS: &str = r#"// Per-row first-difference summary [mean, std, min, max, mean |diff|, sign-change rate, lag-1 autocorrelation, mean energy].
+pub(crate) const OP_ROW_DIFF_STATS: &str = r#"// Per-row first-difference summary [mean, std, min, max, mean |diff|, sign-change rate, lag-1 autocorrelation, mean energy].
 static std::vector<std::vector<double>> row_difference_statistics_apply(const std::vector<std::vector<double>>& x, bool append) {
     std::vector<std::vector<double>> out;
     out.reserve(x.size());
@@ -358,7 +358,7 @@ static std::vector<std::vector<double>> row_difference_statistics_apply(const st
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_OBLIQUE_HINGE: &str = r#"struct ObliqueHingeFeatures {
+pub(crate) const OP_OBLIQUE_HINGE: &str = r#"struct ObliqueHingeFeatures {
     std::vector<std::vector<double>> w;
     std::vector<double> t;
 };
@@ -402,7 +402,7 @@ static std::vector<std::vector<double>> oblique_hinge_features_apply(const Obliq
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_LANDMARK_DIST: &str = r#"struct GaussianLandmarkFeatures {
+pub(crate) const OP_LANDMARK_DIST: &str = r#"struct GaussianLandmarkFeatures {
     std::vector<std::vector<double>> landmarks;
 };
 
@@ -430,7 +430,7 @@ static std::vector<std::vector<double>> gaussian_landmark_features_apply(const G
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_TARGET_BIN_ENCODE: &str = r#"struct SmoothedTargetBinEncoder {
+pub(crate) const OP_TARGET_BIN_ENCODE: &str = r#"struct SmoothedTargetBinEncoder {
     std::vector<std::vector<double>> edges;
     std::vector<std::vector<double>> enc;
 };

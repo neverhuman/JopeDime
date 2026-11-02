@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior_body() {
+pub(crate) fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_prior_body() {
     use jope_learning::clover::expansion::MeasuredTiltPolicyConfig;
     use jope_learning::pools::evaluate::fold_of;
     use jope_learning::pools::flywheel::{

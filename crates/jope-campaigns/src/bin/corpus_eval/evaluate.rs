@@ -6,7 +6,7 @@ use super::*;
 
 // Preserve the structured parse refusal returned to existing receipt callers.
 #[allow(clippy::result_large_err)]
-pub(super) fn parse_canonical(
+pub(crate) fn parse_canonical(
     candidate: &ShardCandidate,
 ) -> std::result::Result<GenomeIr, Outcome> {
     let genome = match GenomeIr::parse(&candidate.canonical_genome) {
@@ -27,7 +27,7 @@ pub(super) fn parse_canonical(
     Ok(genome)
 }
 
-pub(super) fn evaluate_regression(
+pub(crate) fn evaluate_regression(
     candidate: &ShardCandidate,
     train: &Data,
     test: &Data,
@@ -68,7 +68,7 @@ pub(super) fn evaluate_regression(
     }
 }
 
-pub(super) fn evaluate_binary(
+pub(crate) fn evaluate_binary(
     candidate: &ShardCandidate,
     train_table: &RawTable,
     train_y: &[f64],
@@ -127,7 +127,7 @@ pub(super) fn evaluate_binary(
     }
 }
 
-pub(super) fn evaluate_multiclass(
+pub(crate) fn evaluate_multiclass(
     candidate: &ShardCandidate,
     train_table: &RawTable,
     train_y: &[f64],
@@ -253,7 +253,7 @@ pub(super) fn evaluate_multiclass(
     }
 }
 
-pub(super) fn terminal_head(genome: &GenomeIr) -> Option<&str> {
+pub(crate) fn terminal_head(genome: &GenomeIr) -> Option<&str> {
     match genome {
         GenomeIr::Pipeline(dsl) => dsl
             .stages
@@ -264,7 +264,7 @@ pub(super) fn terminal_head(genome: &GenomeIr) -> Option<&str> {
     }
 }
 
-pub(super) fn evaluate_timeseries(candidate: &ShardCandidate, data: &TimeSeriesData) -> Outcome {
+pub(crate) fn evaluate_timeseries(candidate: &ShardCandidate, data: &TimeSeriesData) -> Outcome {
     let genome = match parse_canonical(candidate) {
         Ok(genome) => genome,
         Err(outcome) => return outcome,
@@ -378,7 +378,7 @@ pub(super) fn evaluate_timeseries(candidate: &ShardCandidate, data: &TimeSeriesD
 /// v2 evaluation: direct multi-horizon reduction fit in MASE units, one
 /// batched predict call over all H forecast rows (no prediction feedback),
 /// inverse-scaled before scoring. Same fitness authority as v1 (-MASE).
-pub(super) fn evaluate_timeseries_v2(candidate: &ShardCandidate, data: &TimeSeriesData) -> Outcome {
+pub(crate) fn evaluate_timeseries_v2(candidate: &ShardCandidate, data: &TimeSeriesData) -> Outcome {
     let genome = match parse_canonical(candidate) {
         Ok(genome) => genome,
         Err(outcome) => return outcome,

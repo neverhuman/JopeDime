@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_digest(value: &str, field: &str) -> Result<()> {
+pub(crate) fn validate_digest(value: &str, field: &str) -> Result<()> {
     ensure!(
         value.len() == 64
             && value
@@ -11,14 +11,14 @@ pub(super) fn validate_digest(value: &str, field: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn sum_bytes(objects: &[PhysicalObject]) -> Result<u64> {
+pub(crate) fn sum_bytes(objects: &[PhysicalObject]) -> Result<u64> {
     objects.iter().try_fold(0u64, |sum, object| {
         sum.checked_add(object.bytes)
             .ok_or_else(|| anyhow::anyhow!("byte total overflow"))
     })
 }
 
-pub(super) fn replacement_for(
+pub(crate) fn replacement_for(
     candidate: &Candidate,
     policy: &RetentionPolicyV2,
     current_objects: &BTreeSet<PhysicalObject>,
@@ -107,7 +107,7 @@ pub(super) fn replacement_for(
     }
 }
 
-pub(super) fn replacement_gap(
+pub(crate) fn replacement_gap(
     candidate: &Candidate,
     policy: &RetentionPolicyV2,
     current_objects: &BTreeSet<PhysicalObject>,

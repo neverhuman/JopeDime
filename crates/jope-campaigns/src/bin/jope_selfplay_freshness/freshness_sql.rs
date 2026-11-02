@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn sqlite_rows(database: &Path, sql: &str) -> Result<Vec<Value>> {
+pub(crate) fn sqlite_rows(database: &Path, sql: &str) -> Result<Vec<Value>> {
     let connection = open_sqlite(database)?;
     let mut statement = connection
         .prepare(sql)
@@ -29,20 +29,20 @@ pub(super) fn sqlite_rows(database: &Path, sql: &str) -> Result<Vec<Value>> {
     Ok(result)
 }
 
-pub(super) fn sqlite_exec(database: &Path, sql: &str) -> Result<()> {
+pub(crate) fn sqlite_exec(database: &Path, sql: &str) -> Result<()> {
     open_sqlite(database)?
         .execute_batch(sql)
         .with_context(|| format!("update {}", database.display()))
 }
 
-pub(super) fn open_sqlite(database: &Path) -> Result<Connection> {
+pub(crate) fn open_sqlite(database: &Path) -> Result<Connection> {
     let connection =
         Connection::open(database).with_context(|| format!("open {}", database.display()))?;
     connection.busy_timeout(Duration::from_secs(60))?;
     Ok(connection)
 }
 
-pub(super) fn sqlite_column_exists(
+pub(crate) fn sqlite_column_exists(
     connection: &Connection,
     table: &str,
     column: &str,
@@ -54,7 +54,7 @@ pub(super) fn sqlite_column_exists(
     Ok(columns.iter().any(|candidate| candidate == column))
 }
 
-pub(super) fn import_legacy_state(path: &Path) -> Result<DurableState> {
+pub(crate) fn import_legacy_state(path: &Path) -> Result<DurableState> {
     if !path.is_file() {
         return Ok(DurableState::new());
     }

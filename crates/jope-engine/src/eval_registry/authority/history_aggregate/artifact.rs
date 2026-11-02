@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn open(a: &HistoryArtifact) -> Result<File> {
+pub(crate) fn open(a: &HistoryArtifact) -> Result<File> {
     ensure!(
         a.path.is_absolute() && valid_sha(&a.sha256) && fs::canonicalize(&a.path)? == a.path,
         "history artifact requires physical hash-bound path"
@@ -15,7 +15,7 @@ pub(super) fn open(a: &HistoryArtifact) -> Result<File> {
     );
     Ok(f)
 }
-pub(super) fn digest_file(a: &HistoryArtifact, whole: Option<&mut Sha256>) -> Result<()> {
+pub(crate) fn digest_file(a: &HistoryArtifact, whole: Option<&mut Sha256>) -> Result<()> {
     let mut f = open(a)?;
     let mut h = Sha256::new();
     let mut whole = whole;
@@ -41,7 +41,7 @@ pub(super) fn digest_file(a: &HistoryArtifact, whole: Option<&mut Sha256>) -> Re
     );
     Ok(())
 }
-pub(super) fn metadata(a: &HistoryArtifact) -> Result<Vec<u8>> {
+pub(crate) fn metadata(a: &HistoryArtifact) -> Result<Vec<u8>> {
     ensure!(a.bytes <= META, "history metadata requires streamed index");
     let mut f = open(a)?;
     let mut b = Vec::new();

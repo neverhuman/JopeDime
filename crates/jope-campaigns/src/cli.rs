@@ -2,41 +2,41 @@ use super::*;
 
 #[derive(Parser)]
 #[command(name = "jope-dime-regressor")]
-pub(super) struct Cli {
+pub(crate) struct Cli {
     #[command(subcommand)]
-    pub(super) command: Command,
+    pub(crate) command: Command,
     #[arg(long, global = true, env = "JOPE_REGISTRY", default_value = registry_str())]
-    pub(super) registry: PathBuf,
+    pub(crate) registry: PathBuf,
     #[arg(long, global = true, default_value = "grok4p5-42")]
-    pub(super) panel_id: String,
+    pub(crate) panel_id: String,
     #[arg(long, global = true)]
-    pub(super) dataset: Option<String>,
+    pub(crate) dataset: Option<String>,
     /// Kernel contract for newly launched work. Existing manifests are
     /// permanently legacy-v2 and cannot be resumed under advanced-v3.
     #[arg(long, global = true, value_enum, default_value = "legacy-v2")]
-    pub(super) kernel_version: KernelVersion,
+    pub(crate) kernel_version: KernelVersion,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
-pub(super) enum KernelVersion {
+pub(crate) enum KernelVersion {
     LegacyV2,
     AdvancedV3,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
-pub(super) enum CliTrainOnlyRedteamArm {
+pub(crate) enum CliTrainOnlyRedteamArm {
     G20Extension,
     SmartV3,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
-pub(super) enum CliTrainOnlyRedteamSelectionMode {
+pub(crate) enum CliTrainOnlyRedteamSelectionMode {
     Combined,
     SmartOnly,
 }
 
 #[derive(Subcommand)]
-pub(super) enum Command {
+pub(crate) enum Command {
     VerifyInputs,
     SelectPanel,
     ValidatePanel,

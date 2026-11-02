@@ -32,7 +32,7 @@ impl InternalFixture {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Surface {
+pub(crate) enum Surface {
     Http,
     Sse,
     Mcp,
@@ -45,12 +45,12 @@ pub(super) enum Surface {
 }
 
 #[derive(Debug)]
-pub(super) struct Leak {
+pub(crate) struct Leak {
     surface: Surface,
     sentinel: &'static str,
 }
 
-pub(super) fn scan_surfaces(outputs: &[(Surface, String)]) -> Result<(), Leak> {
+pub(crate) fn scan_surfaces(outputs: &[(Surface, String)]) -> Result<(), Leak> {
     for (surface, output) in outputs {
         for sentinel in SENTINELS {
             if output.contains(sentinel) {

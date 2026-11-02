@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
+pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
         EngineCmd::VerifyFitCompletion {
             authority,

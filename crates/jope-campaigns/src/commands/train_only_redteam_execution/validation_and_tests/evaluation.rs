@@ -1,5 +1,5 @@
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct DatasetValidationReplay {
+pub(crate) struct DatasetValidationReplay {
     pub dataset_hash: String,
     pub g20_complete_sha256: String,
     pub smart_complete_sha256: String,

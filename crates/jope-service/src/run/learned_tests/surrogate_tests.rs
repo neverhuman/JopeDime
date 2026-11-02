@@ -152,7 +152,7 @@ fn trained_surrogate_stays_frozen_while_actual_custom_loss_drives_selection() {
         dataset::jmat,
         worker::{Attempt, Request},
     };
-    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
     assert_eq!(
         jope_runtime::sha256_hex(raw),
         "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"
@@ -212,7 +212,7 @@ async fn signed_r882_in_loop_ab_and_replay() {
     use jope_api::{decimal::DecimalU64, Guidance};
     use std::fs;
     let protocol: Value = serde_json::from_str(include_str!(
-        "../../../../research/flywheel_selfplay/rnk10_r882_release/PREREG.json"
+        "../../../../../research/flywheel_selfplay/rnk10_r882_release/PREREG.json"
     ))
     .unwrap();
     let root = PathBuf::from(env::var_os("JOPE_RNK10_SIGNED_BUNDLE_DIR").unwrap());
@@ -227,7 +227,7 @@ async fn signed_r882_in_loop_ab_and_replay() {
         jope_runtime::sha256_hex(&fs::read(&worker).unwrap()),
         env::var("JOPE_RNK10_WORKER_SHA256").unwrap()
     );
-    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
     assert_eq!(
         jope_runtime::sha256_hex(raw),
         protocol["train_sha256"].as_str().unwrap()

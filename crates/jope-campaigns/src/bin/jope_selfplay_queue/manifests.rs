@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn valid_micro_waves(
+pub(crate) fn valid_micro_waves(
     root: &Path,
     checkpoint_sha256: &str,
     epoch: &str,
@@ -75,7 +75,7 @@ pub(super) fn valid_micro_waves(
     Ok(waves)
 }
 
-pub(super) fn current_admission_waves(
+pub(crate) fn current_admission_waves(
     root: &Path,
     waves: &[MicroWave],
     claims: &HashMap<String, Claim>,
@@ -120,7 +120,7 @@ pub(super) fn current_admission_waves(
     Ok(admission)
 }
 
-pub(super) fn manifest_candidate_count(path: &Path) -> Result<u64> {
+pub(crate) fn manifest_candidate_count(path: &Path) -> Result<u64> {
     let value = read_json(path)?;
     let count = value
         .get("candidates")
@@ -134,7 +134,7 @@ pub(super) fn manifest_candidate_count(path: &Path) -> Result<u64> {
 /// Keep the newest two byte-complete waves outside scheduler admission. Older
 /// work remains oldest-first, so reserve capacity cannot be consumed before a
 /// newer keeper acknowledgment replenishes it.
-pub(super) fn partition_protected_reserve(
+pub(crate) fn partition_protected_reserve(
     waves: Vec<AdmissionWave>,
 ) -> (Vec<AdmissionWave>, Vec<AdmissionWave>) {
     let protected = waves
@@ -150,7 +150,7 @@ pub(super) fn partition_protected_reserve(
     (admission, reserve)
 }
 
-pub(super) fn wave_manifest_directory(root: &Path, wave: &str) -> PathBuf {
+pub(crate) fn wave_manifest_directory(root: &Path, wave: &str) -> PathBuf {
     let canonical = root.join("waves").join(wave).join("manifests");
     if canonical.is_dir() {
         canonical
@@ -161,13 +161,13 @@ pub(super) fn wave_manifest_directory(root: &Path, wave: &str) -> PathBuf {
     }
 }
 
-pub(super) fn valid_wave_id(value: &str) -> bool {
+pub(crate) fn valid_wave_id(value: &str) -> bool {
     value
         .strip_prefix("strict-wave-")
         .is_some_and(|suffix| suffix.len() == 6 && suffix.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
-pub(super) fn manifest_wave(path: &Path) -> Result<String> {
+pub(crate) fn manifest_wave(path: &Path) -> Result<String> {
     let value = read_json(path)?;
     let wave = value
         .get("strict_wave")
@@ -181,11 +181,11 @@ pub(super) fn manifest_wave(path: &Path) -> Result<String> {
 
 /// Per-task authority metric (R1/D2); must agree with
 /// `jope_dime_regressor::task::TaskKind::primary_metric`.
-pub(super) fn expected_manifest_metric(task: &str) -> Option<&'static str> {
+pub(crate) fn expected_manifest_metric(task: &str) -> Option<&'static str> {
     Task::parse(task).map(Task::primary_metric)
 }
 
-pub(super) fn validate_manifest(
+pub(crate) fn validate_manifest(
     path: &Path,
     checkpoint_sha256: &str,
     epoch: &str,
@@ -328,7 +328,7 @@ pub(super) fn validate_manifest(
     })
 }
 
-pub(super) fn preflight_manifest(
+pub(crate) fn preflight_manifest(
     registry: &GeneratedOperatorRegistry,
     manifest: &ValidManifest,
     bounded_screening_budget_seconds: Option<u64>,

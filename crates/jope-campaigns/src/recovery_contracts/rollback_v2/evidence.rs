@@ -224,16 +224,16 @@ pub struct RollbackNodeProbeV2 {
     pub raw_output: RawEvidenceRefV2,
 }
 
-pub(super) struct RollbackBundleEvidence<'a> {
-    pub(super) bundle_sha256: &'a str,
-    pub(super) manifest_file_sha256: &'a str,
-    pub(super) manifest_canonical_sha256: &'a str,
-    pub(super) files: &'a [RollbackBundleFileV2],
-    pub(super) artifacts: &'a [RollbackSystemdArtifactV2],
+pub(crate) struct RollbackBundleEvidence<'a> {
+    pub(crate) bundle_sha256: &'a str,
+    pub(crate) manifest_file_sha256: &'a str,
+    pub(crate) manifest_canonical_sha256: &'a str,
+    pub(crate) files: &'a [RollbackBundleFileV2],
+    pub(crate) artifacts: &'a [RollbackSystemdArtifactV2],
 }
 
 impl RollbackNodeProbeV2 {
-    pub(super) fn validate(
+    pub(crate) fn validate(
         &self,
         root: &Path,
         challenge: &RollbackChallengeV1,

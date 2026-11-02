@@ -1,7 +1,7 @@
 use super::*;
 
 impl RunService {
-    pub(super) fn reserve_q1_request(
+    pub(crate) fn reserve_q1_request(
         &self,
         request: &Q1Request,
         run_id: &jope_api::ids::RunId,
@@ -46,7 +46,7 @@ impl RunService {
         }
     }
 
-    pub(super) fn commit_q1_receipt(
+    pub(crate) fn commit_q1_receipt(
         &self,
         request: &Q1Request,
         run_id: &jope_api::ids::RunId,

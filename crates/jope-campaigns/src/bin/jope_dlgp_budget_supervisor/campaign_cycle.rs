@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn cycle(args: &Args) -> Result<JopeDlgpBudgetCampaignStatusV1> {
+pub(crate) fn cycle(args: &Args) -> Result<JopeDlgpBudgetCampaignStatusV1> {
     let now = now_ms();
     let protocol: Value = read_json(&args.protocol)?;
     ensure!(

@@ -8,6 +8,6 @@ mod charts;
 mod comparison;
 mod teachers;
 
-pub(super) use charts::*;
-pub(super) use comparison::*;
-pub(super) use teachers::*;
+pub(crate) use charts::*;
+pub(crate) use comparison::*;
+pub(crate) use teachers::*;

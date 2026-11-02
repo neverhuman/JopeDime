@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_wave_blocker_plan(
+pub(crate) fn build_wave_blocker_plan(
     root: &Path,
     requested_wave_dir: &Path,
     pair_registry: &Path,
@@ -353,7 +353,7 @@ pub(super) fn build_wave_blocker_plan(
     })
 }
 
-pub(super) fn load_held_retirement_proofs(
+pub(crate) fn load_held_retirement_proofs(
     receipt_dir: &Path,
 ) -> Result<BTreeSet<(String, String, String)>> {
     let mut proofs = BTreeSet::new();
@@ -395,7 +395,7 @@ pub(super) fn load_held_retirement_proofs(
     Ok(proofs)
 }
 
-pub(super) fn load_scq_start_evidence(
+pub(crate) fn load_scq_start_evidence(
     event_log: &Path,
     blocker_jobs: &BTreeSet<String>,
 ) -> Result<BTreeMap<String, String>> {
@@ -445,7 +445,7 @@ pub(super) fn load_scq_start_evidence(
     Ok(evidence)
 }
 
-pub(super) fn revalidate_wave_blocker_plan(
+pub(crate) fn revalidate_wave_blocker_plan(
     plan: &WaveBlockerPlan,
     scheduler: &HashMap<String, (String, String)>,
     claims: &HashMap<String, Claim>,
@@ -494,7 +494,7 @@ pub(super) fn revalidate_wave_blocker_plan(
     Ok(())
 }
 
-pub(super) fn required_json_str<'a>(value: &'a Value, field: &str) -> Result<&'a str> {
+pub(crate) fn required_json_str<'a>(value: &'a Value, field: &str) -> Result<&'a str> {
     value
         .get(field)
         .and_then(Value::as_str)

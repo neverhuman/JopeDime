@@ -1,7 +1,7 @@
 use super::*;
 
 impl Keeper {
-    pub(super) fn prepare_current_manifests(
+    pub(crate) fn prepare_current_manifests(
         &mut self,
         limit: usize,
         checkpoint_sha256: &str,

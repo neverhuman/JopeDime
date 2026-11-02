@@ -3,7 +3,7 @@ use anyhow::{bail, Context, Result};
 use serde_json::Value;
 use std::collections::BTreeSet;
 
-pub(super) fn validate_manifest_spec(spec: &TimeSeriesManifestSpec) -> Result<()> {
+pub(crate) fn validate_manifest_spec(spec: &TimeSeriesManifestSpec) -> Result<()> {
     if spec.horizon == 0 {
         bail!("time-series horizon must be positive");
     }
@@ -31,7 +31,7 @@ pub(super) fn validate_manifest_spec(spec: &TimeSeriesManifestSpec) -> Result<()
     Ok(())
 }
 
-pub(super) fn validate_meta(
+pub(crate) fn validate_meta(
     meta: &Value,
     train: &TimeSeriesTable,
     test: &TimeSeriesTable,
@@ -142,7 +142,7 @@ fn check_nested_optional_usize(meta: &Value, path: &[&str], expected: usize) -> 
     Ok(())
 }
 
-pub(super) fn number_at(meta: &Value, path: &[&str]) -> Option<f64> {
+pub(crate) fn number_at(meta: &Value, path: &[&str]) -> Option<f64> {
     let mut cursor = meta;
     for key in path {
         cursor = cursor.get(*key)?;

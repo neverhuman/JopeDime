@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_reports(
+pub(crate) fn build_reports(
     nodes: &[NodeTelemetry],
     policy: &StaticPolicy,
     runtime: &BTreeMap<String, f64>,
@@ -37,12 +37,12 @@ pub(super) fn build_reports(
         .collect()
 }
 
-pub(super) fn scheduler_matches_runtime(report: &NodeReport) -> bool {
+pub(crate) fn scheduler_matches_runtime(report: &NodeReport) -> bool {
     report.scheduler_multiplier == Some(report.runtime_multiplier)
         && report.scheduler_slot_target == Some(report.slot_target)
 }
 
-pub(super) fn compile_cache_status(root: &Path) -> Option<Value> {
+pub(crate) fn compile_cache_status(root: &Path) -> Option<Value> {
     for path in [
         root.join("ops/status-v3.json"),
         root.join("ops/status.json"),
@@ -56,12 +56,12 @@ pub(super) fn compile_cache_status(root: &Path) -> Option<Value> {
     None
 }
 
-pub(super) fn receipt_dirs(root: &Path) -> (PathBuf, PathBuf) {
+pub(crate) fn receipt_dirs(root: &Path) -> (PathBuf, PathBuf) {
     let base = root.join("ops/capacity");
     (base.join("receipts"), base.join("idempotency"))
 }
 
-pub(super) fn replay_receipt(root: &Path, key: &str) -> Result<Option<Value>> {
+pub(crate) fn replay_receipt(root: &Path, key: &str) -> Result<Option<Value>> {
     let (receipts, idempotency) = receipt_dirs(root);
     let key_sha256 = sha256_bytes(key.as_bytes());
     let index_path = idempotency.join(format!("{key_sha256}.json"));

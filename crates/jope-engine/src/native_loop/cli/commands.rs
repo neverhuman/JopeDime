@@ -160,7 +160,7 @@ fn read_contract(path: &PathBuf) -> Result<Vec<u8>> {
     ensure!(b.len() as u64 <= limit, "contract size");
     Ok(b)
 }
-pub(super) fn bounded_command(command: Command, sources: &HostSources) -> Result<()> {
+pub(crate) fn bounded_command(command: Command, sources: &HostSources) -> Result<()> {
     let now = crate::resident_protocol::now_ms()?;
     let out = match command {
         Command::Plan {

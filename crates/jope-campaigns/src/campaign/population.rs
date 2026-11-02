@@ -1,17 +1,17 @@
 use super::*;
 
 mod selection;
-pub(super) use selection::{
+pub(crate) use selection::{
     generation_summary, offspring_seed, rank_finalists, rank_slots, selection_evidence_from_result,
     selection_evidence_from_slot,
 };
 
-pub(super) struct PopulationEvaluation {
-    pub(super) cache_miss: bool,
-    pub(super) cached: CachedEvaluation,
+pub(crate) struct PopulationEvaluation {
+    pub(crate) cache_miss: bool,
+    pub(crate) cached: CachedEvaluation,
 }
 
-pub(super) fn evaluate_population(
+pub(crate) fn evaluate_population(
     generation: usize,
     population: &[PopulationMember],
     train: &RegressionData,
@@ -98,7 +98,7 @@ pub(super) fn evaluate_population(
     })
 }
 
-pub(super) fn evaluate_unique(
+pub(crate) fn evaluate_unique(
     generation: usize,
     slot: usize,
     member: &PopulationMember,
@@ -187,7 +187,7 @@ pub(super) fn evaluate_unique(
     }
 }
 
-pub(super) fn exact_cv(
+pub(crate) fn exact_cv(
     genome: &GenomeIr,
     train: &RegressionData,
     folds: usize,
@@ -197,7 +197,7 @@ pub(super) fn exact_cv(
     exact_cv_on_folds(genome, train, folds, &evaluated_folds, dataset)
 }
 
-pub(super) fn exact_cv_on_folds(
+pub(crate) fn exact_cv_on_folds(
     genome: &GenomeIr,
     train: &RegressionData,
     fold_plan_folds: usize,
@@ -278,7 +278,7 @@ pub(super) fn exact_cv_on_folds(
     })
 }
 
-pub(super) fn refill_population(
+pub(crate) fn refill_population(
     config: &CampaignConfig,
     generation: usize,
     ranked: &[SlotLedger],
@@ -369,7 +369,7 @@ pub(super) fn refill_population(
     Ok(next)
 }
 
-pub(super) fn tournament_winner<'a>(
+pub(crate) fn tournament_winner<'a>(
     rng: &mut DeterministicRng,
     ranked: &'a [SlotLedger],
     parent_pool: usize,

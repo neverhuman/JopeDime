@@ -1,16 +1,16 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct MulticlassRidgeModel {
-    pub(super) classes: Vec<i64>,
-    pub(super) feature_count: usize,
-    pub(super) means: Vec<f64>,
-    pub(super) scales: Vec<f64>,
-    pub(super) weights: Vec<Vec<f64>>,
+pub(crate) struct MulticlassRidgeModel {
+    pub(crate) classes: Vec<i64>,
+    pub(crate) feature_count: usize,
+    pub(crate) means: Vec<f64>,
+    pub(crate) scales: Vec<f64>,
+    pub(crate) weights: Vec<Vec<f64>>,
 }
 
 impl MulticlassRidgeModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
         let classes = validate_multiclass_target(y, x.len())?;
         if x.first().is_none_or(Vec::is_empty) || x.iter().any(|row| row.len() != x[0].len()) {
             bail!("multiclass fits require a nonempty rectangular feature matrix");
@@ -100,7 +100,7 @@ impl MulticlassRidgeModel {
         })
     }
 
-    pub(super) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+    pub(crate) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
         x.iter()
             .map(|row| {
                 let mut scores = Vec::with_capacity(self.classes.len());
@@ -128,7 +128,7 @@ impl MulticlassRidgeModel {
             .collect()
     }
 
-    pub(super) fn labels(&self, x: &Rows) -> Vec<i64> {
+    pub(crate) fn labels(&self, x: &Rows) -> Vec<i64> {
         self.probabilities(x)
             .iter()
             .map(|row| {
@@ -152,13 +152,13 @@ fn multiclass_feature_budget(stage: &Stage) -> Result<usize> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct MulticlassOvrLogisticModel {
-    pub(super) classes: Vec<i64>,
-    pub(super) models: Vec<LogitRidgeModel>,
+pub(crate) struct MulticlassOvrLogisticModel {
+    pub(crate) classes: Vec<i64>,
+    pub(crate) models: Vec<LogitRidgeModel>,
 }
 
 impl MulticlassOvrLogisticModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
         let classes = validate_multiclass_target(y, x.len())?;
         let feature_count = x[0].len().min(multiclass_feature_budget(stage)?);
         let bounded = x
@@ -179,7 +179,7 @@ impl MulticlassOvrLogisticModel {
         Ok(Self { classes, models })
     }
 
-    pub(super) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+    pub(crate) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
         let columns = self
             .models
             .iter()
@@ -207,16 +207,16 @@ impl MulticlassOvrLogisticModel {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct MulticlassDiagonalLdaModel {
-    pub(super) classes: Vec<i64>,
-    pub(super) feature_count: usize,
-    pub(super) means: Vec<Vec<f64>>,
-    pub(super) variances: Vec<f64>,
-    pub(super) log_priors: Vec<f64>,
+pub(crate) struct MulticlassDiagonalLdaModel {
+    pub(crate) classes: Vec<i64>,
+    pub(crate) feature_count: usize,
+    pub(crate) means: Vec<Vec<f64>>,
+    pub(crate) variances: Vec<f64>,
+    pub(crate) log_priors: Vec<f64>,
 }
 
 impl MulticlassDiagonalLdaModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
         let classes = validate_multiclass_target(y, x.len())?;
         let feature_count = x[0].len().min(multiclass_feature_budget(stage)?);
         let mut means = vec![vec![0.0; feature_count]; classes.len()];
@@ -266,7 +266,7 @@ impl MulticlassDiagonalLdaModel {
         })
     }
 
-    pub(super) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+    pub(crate) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
         x.iter()
             .map(|row| {
                 let scores = self
@@ -291,15 +291,15 @@ impl MulticlassDiagonalLdaModel {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct MulticlassNearestCentroidModel {
-    pub(super) classes: Vec<i64>,
-    pub(super) feature_count: usize,
-    pub(super) centroids: Vec<Vec<f64>>,
-    pub(super) scales: Vec<f64>,
+pub(crate) struct MulticlassNearestCentroidModel {
+    pub(crate) classes: Vec<i64>,
+    pub(crate) feature_count: usize,
+    pub(crate) centroids: Vec<Vec<f64>>,
+    pub(crate) scales: Vec<f64>,
 }
 
 impl MulticlassNearestCentroidModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], stage: &Stage) -> Result<Self> {
         let classes = validate_multiclass_target(y, x.len())?;
         let feature_count = x[0].len().min(multiclass_feature_budget(stage)?);
         let mut centroids = vec![vec![0.0; feature_count]; classes.len()];
@@ -342,7 +342,7 @@ impl MulticlassNearestCentroidModel {
         })
     }
 
-    pub(super) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
+    pub(crate) fn probabilities(&self, x: &Rows) -> Vec<Vec<f64>> {
         x.iter()
             .map(|row| {
                 let scores = self

@@ -1,11 +1,11 @@
 use super::*;
 
 /// A deterministic numerical failure that parses but has no fitted operator.
-pub(super) const UNFITTABLE: &str = "(pipe X (unknown))";
+pub(crate) const UNFITTABLE: &str = "(pipe X (unknown))";
 
 /// An 80-slot seed population for the view fixture's cut 0. The first slots are
 /// `leading`; every slot carries the given critic rank weight (never a score).
-pub(super) fn seed_population(
+pub(crate) fn seed_population(
     prepared: &Path,
     path: &Path,
     leading: &[&str],
@@ -47,7 +47,7 @@ pub(super) fn seed_population(
 }
 
 /// A configured CLI search of cut 0 under `root`.
-pub(super) fn search_client(
+pub(crate) fn search_client(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
@@ -58,7 +58,7 @@ pub(super) fn search_client(
 }
 
 /// A configured CLI search of cut 0 with an explicit search deadline.
-pub(super) fn timed_search_client(
+pub(crate) fn timed_search_client(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
@@ -82,7 +82,7 @@ pub(super) fn timed_search_client(
 
 /// Rewrite a completed search's journal, snapshot and snapshot digest together,
 /// so that only the deliberately tampered rows differ from the publication.
-pub(super) fn republish_ledger(output: &Path, rows: &[Value]) {
+pub(crate) fn republish_ledger(output: &Path, rows: &[Value]) {
     let mut journal = Vec::new();
     for row in rows {
         journal.extend(serde_json::to_vec(row).unwrap());
@@ -100,7 +100,7 @@ pub(super) fn republish_ledger(output: &Path, rows: &[Value]) {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledgers() {
+pub(crate) fn independent_replay_reproduces_real_search_winners_and_refuses_tampered_ledgers() {
     use selection_replay::{verify_search, Eligibility, StopReason};
     let (temp, prepared) = view_fixture();
     let root = temp.path();
@@ -248,7 +248,7 @@ pub(super) fn independent_replay_reproduces_real_search_winners_and_refuses_tamp
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn resumed_search_refuses_journaled_measurements_its_original_completion_does_not_support(
+pub(crate) fn resumed_search_refuses_journaled_measurements_its_original_completion_does_not_support(
 ) {
     for forged in [json!(0.0), json!(-1.0)] {
         let (temp, prepared) = view_fixture();

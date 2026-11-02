@@ -3,11 +3,11 @@ mod probes;
 mod stats;
 
 use super::*;
-pub(super) use descriptors::{
+pub(crate) use descriptors::{
     building_blocks, inter_descriptors, report_descriptors, table_descriptors,
 };
-pub(super) use probes::extract_probes;
-pub(super) use stats::{
+pub(crate) use probes::extract_probes;
+pub(crate) use stats::{
     abs_corr_with_y, corr, gini, mean, quantile, recipe_argsort, scale_numeric_regression, squash,
     stddev,
 };
@@ -26,7 +26,7 @@ pub fn fit_transform_and_extract_bundle_high(
     build_high_full_table(x, rows, features, y)
 }
 
-pub(super) fn build_high_full_table(
+pub(crate) fn build_high_full_table(
     x: &[f32],
     rows: usize,
     features: usize,
@@ -78,35 +78,35 @@ impl std::fmt::Display for RecipeError {
 impl std::error::Error for RecipeError {}
 
 #[derive(Clone)]
-pub(super) struct ProbeStage {
-    pub(super) y_scaled: Vec<f64>,
-    pub(super) z: Vec<f64>,
-    pub(super) z_unc: Vec<f64>,
-    pub(super) y_z: Vec<f64>,
-    pub(super) probes: Vec<[f64; 14]>,
-    pub(super) table_cols: Vec<[f64; 6]>,
-    pub(super) row_corr: [f64; 8],
+pub(crate) struct ProbeStage {
+    pub(crate) y_scaled: Vec<f64>,
+    pub(crate) z: Vec<f64>,
+    pub(crate) z_unc: Vec<f64>,
+    pub(crate) y_z: Vec<f64>,
+    pub(crate) probes: Vec<[f64; 14]>,
+    pub(crate) table_cols: Vec<[f64; 6]>,
+    pub(crate) row_corr: [f64; 8],
 }
 
 #[derive(Clone)]
-pub(super) struct BlockStage {
-    pub(super) raw_gain: [f64; 16],
-    pub(super) vector: [f32; BUILDING_BLOCK_WIDTH],
-    pub(super) column: Vec<[f32; 7]>,
+pub(crate) struct BlockStage {
+    pub(crate) raw_gain: [f64; 16],
+    pub(crate) vector: [f32; BUILDING_BLOCK_WIDTH],
+    pub(crate) column: Vec<[f32; 7]>,
 }
 
 #[derive(Clone)]
-pub(super) struct ReportStage {
-    pub(super) vector: [f32; REPORT_WIDTH],
-    pub(super) gains: [f64; 23],
-    pub(super) ses: [f64; 23],
-    pub(super) lambdas: [f64; 23],
-    pub(super) present: [bool; 23],
-    pub(super) column_spectrum: Vec<[f32; 9]>,
+pub(crate) struct ReportStage {
+    pub(crate) vector: [f32; REPORT_WIDTH],
+    pub(crate) gains: [f64; 23],
+    pub(crate) ses: [f64; 23],
+    pub(crate) lambdas: [f64; 23],
+    pub(crate) present: [bool; 23],
+    pub(crate) column_spectrum: Vec<[f32; 9]>,
 }
 
 #[derive(Clone)]
-pub(super) struct TableStage {
-    pub(super) vector: [f32; TABLE_WIDTH],
-    pub(super) column: Vec<[f32; 8]>,
+pub(crate) struct TableStage {
+    pub(crate) vector: [f32; TABLE_WIDTH],
+    pub(crate) column: Vec<[f32; 8]>,
 }

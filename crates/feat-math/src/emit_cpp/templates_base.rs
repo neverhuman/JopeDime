@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) const EXPRESSION_SHAPE: &str = r#"static std::size_t expression_width(const std::vector<std::vector<double>>& rows) {
+pub(crate) const EXPRESSION_SHAPE: &str = r#"static std::size_t expression_width(const std::vector<std::vector<double>>& rows) {
     if(rows.empty() || rows.front().empty()) throw std::invalid_argument("empty numeric table");
     const std::size_t width=rows.front().size();
     for(const auto& row:rows) if(row.size()!=width) throw std::invalid_argument("ragged numeric table");
     return width;
 }"#;
 
-pub(super) const PREAMBLE: &str = r#"// Standalone regression model — self-contained, depends only on the C++
+pub(crate) const PREAMBLE: &str = r#"// Standalone regression model — self-contained, depends only on the C++
 // standard library, and accepts all data through its C ABI.
 //   Build: g++ -O2 -std=c++17 -ffp-contract=off -fno-fast-math -c model.cpp
 //
@@ -54,7 +54,7 @@ static double max_num(double a, double b) {
     return la < lb;
 }"#;
 
-pub(super) const H_SANITIZE: &str = r#"// Replace non-finite values with 0.0 in every row.
+pub(crate) const H_SANITIZE: &str = r#"// Replace non-finite values with 0.0 in every row.
 static std::vector<std::vector<double>> sanitize(const std::vector<std::vector<double>>& x) {
     std::vector<std::vector<double>> out;
     out.reserve(x.size());
@@ -67,7 +67,7 @@ static std::vector<std::vector<double>> sanitize(const std::vector<std::vector<d
     return out;
 }"#;
 
-pub(super) const H_FINISH_STAGE: &str = r#"// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.
+pub(crate) const H_FINISH_STAGE: &str = r#"// Stage epilogue: optionally keep the inputs, cap width at 512, zero non-finite cells.
 static std::vector<std::vector<double>> finish_stage(const std::vector<std::vector<double>>& x, std::vector<std::vector<double>> out, bool append) {
     if (append) {
         for (std::size_t i = 0; i < out.size(); ++i) {
@@ -86,7 +86,7 @@ static std::vector<std::vector<double>> finish_stage(const std::vector<std::vect
     return out;
 }"#;
 
-pub(super) const H_STD_FIT: &str = r#"// Per-column mean and standard deviation (1/n convention), floored at 1e-9.
+pub(crate) const H_STD_FIT: &str = r#"// Per-column mean and standard deviation (1/n convention), floored at 1e-9.
 static void std_fit(const std::vector<std::vector<double>>& x, std::vector<double>& means, std::vector<double>& scales) {
     double n = static_cast<double>(std::max<std::size_t>(x.size(), 1));
     std::size_t p = x[0].size();
@@ -105,7 +105,7 @@ static void std_fit(const std::vector<std::vector<double>>& x, std::vector<doubl
     }
 }"#;
 
-pub(super) const H_CHOLESKY: &str = r#"// Solve the symmetric positive-definite system A w = b (A row-major, overwritten
+pub(crate) const H_CHOLESKY: &str = r#"// Solve the symmetric positive-definite system A w = b (A row-major, overwritten
 // in place as L L^T, then forward and backward triangular solves).
 static std::vector<double> cholesky_solve(std::vector<double>& a, const std::vector<double>& b, std::size_t p) {
     for (std::size_t i = 0; i < p; ++i) {
@@ -135,7 +135,7 @@ static std::vector<double> cholesky_solve(std::vector<double>& a, const std::vec
     return w;
 }"#;
 
-pub(super) const H_SORTED_COLUMN: &str = r#"// Column j of x in ascending order (IEEE total order via total_less).
+pub(crate) const H_SORTED_COLUMN: &str = r#"// Column j of x in ascending order (IEEE total order via total_less).
 static std::vector<double> sorted_column(const std::vector<std::vector<double>>& x, std::size_t j) {
     std::vector<double> v;
     v.reserve(x.size());
@@ -144,7 +144,7 @@ static std::vector<double> sorted_column(const std::vector<std::vector<double>>&
     return v;
 }"#;
 
-pub(super) const H_QUANTILE: &str = r#"// Linearly interpolated quantile of an ascending slice (the numpy 'linear' rule).
+pub(crate) const H_QUANTILE: &str = r#"// Linearly interpolated quantile of an ascending slice (the numpy 'linear' rule).
 static double quantile(const std::vector<double>& sorted_values, double q) {
     if (sorted_values.empty()) return 0.0;
     double pos = q * static_cast<double>(sorted_values.size() - 1);
@@ -154,7 +154,7 @@ static double quantile(const std::vector<double>& sorted_values, double q) {
     return sorted_values[lo] * (1.0 - frac) + sorted_values[hi] * frac;
 }"#;
 
-pub(super) const H_LOWER_BOUND: &str = r#"// Count of elements strictly less than v (hand-rolled binary search).
+pub(crate) const H_LOWER_BOUND: &str = r#"// Count of elements strictly less than v (hand-rolled binary search).
 static std::size_t lower_bound(const std::vector<double>& sorted_values, double v) {
     std::size_t lo = 0;
     std::size_t hi = sorted_values.size();
@@ -169,7 +169,7 @@ static std::size_t lower_bound(const std::vector<double>& sorted_values, double 
     return lo;
 }"#;
 
-pub(super) const H_UPPER_BOUND: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
+pub(crate) const H_UPPER_BOUND: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
 static std::size_t upper_bound(const std::vector<double>& sorted_values, double v) {
     std::size_t lo = 0;
     std::size_t hi = sorted_values.size();
@@ -184,7 +184,7 @@ static std::size_t upper_bound(const std::vector<double>& sorted_values, double 
     return lo;
 }"#;
 
-pub(super) const H_LOWER_BOUND_PARTITION_POINT: &str = r#"// Count of elements strictly less than v (hand-rolled binary search).
+pub(crate) const H_LOWER_BOUND_PARTITION_POINT: &str = r#"// Count of elements strictly less than v (hand-rolled binary search).
 static std::size_t lower_bound(const std::vector<double>& sorted_values, double v) {
     std::size_t size = sorted_values.size();
     if (size == 0) {
@@ -202,7 +202,7 @@ static std::size_t lower_bound(const std::vector<double>& sorted_values, double 
     return base + static_cast<std::size_t>(sorted_values[base] < v);
 }"#;
 
-pub(super) const H_UPPER_BOUND_PARTITION_POINT: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
+pub(crate) const H_UPPER_BOUND_PARTITION_POINT: &str = r#"// Count of elements less than or equal to v (hand-rolled binary search).
 static std::size_t upper_bound(const std::vector<double>& sorted_values, double v) {
     std::size_t size = sorted_values.size();
     if (size == 0) {
@@ -220,14 +220,14 @@ static std::size_t upper_bound(const std::vector<double>& sorted_values, double 
     return base + static_cast<std::size_t>(sorted_values[base] <= v);
 }"#;
 
-pub(super) const H_MID_RANK: &str = r#"// Average of the strict and non-strict ranks of v, scaled to [0, 1].
+pub(crate) const H_MID_RANK: &str = r#"// Average of the strict and non-strict ranks of v, scaled to [0, 1].
 static double mid_rank(const std::vector<double>& sorted_values, double v) {
     std::size_t lb = lower_bound(sorted_values, v);
     std::size_t ub = upper_bound(sorted_values, v);
     return static_cast<double>(lb + ub) / (2.0 * static_cast<double>(sorted_values.size()));
 }"#;
 
-pub(super) const H_PROBIT: &str = r#"// Standard normal quantile function via Acklam's rational approximation.
+pub(crate) const H_PROBIT: &str = r#"// Standard normal quantile function via Acklam's rational approximation.
 static double probit(double p) {
     const double a[6] = {-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
         1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00};
@@ -254,12 +254,12 @@ static double probit(double p) {
     }
 }"#;
 
-pub(super) const H_MATH_SIGMOID: &str = r#"// Logistic function 1/(1+exp(-v)) with the argument clipped to [-30, 30].
+pub(crate) const H_MATH_SIGMOID: &str = r#"// Logistic function 1/(1+exp(-v)) with the argument clipped to [-30, 30].
 static double m_sigmoid(double value) {
     return 1.0 / (1.0 + std::exp(-clamp_range(value, -30.0, 30.0)));
 }"#;
 
-pub(super) const H_PCG32: &str = r#"// 32-bit rotate right (rotate by 0 is identity).
+pub(crate) const H_PCG32: &str = r#"// 32-bit rotate right (rotate by 0 is identity).
 static std::uint32_t rotr32(std::uint32_t x, std::uint32_t r) {
     return (x >> r) | (x << ((32 - r) & 31));
 }
@@ -307,12 +307,12 @@ static Pcg32 pcg32_new(std::uint64_t seed, std::uint64_t stream) {
     return rng;
 }"#;
 
-pub(super) const H_STAGE_RNG: &str = r#"// Independent random stream keyed by a stage's input and output widths.
+pub(crate) const H_STAGE_RNG: &str = r#"// Independent random stream keyed by a stage's input and output widths.
 static Pcg32 stage_rng(std::uint64_t seed, std::size_t in_cols, std::size_t n_out) {
     return pcg32_new(seed, (static_cast<std::uint64_t>(in_cols) << 32) ^ static_cast<std::uint64_t>(n_out));
 }"#;
 
-pub(super) const H_DOT: &str = r#"// Inner product over the shorter of the two vectors.
+pub(crate) const H_DOT: &str = r#"// Inner product over the shorter of the two vectors.
 static double dot(const std::vector<double>& a, const std::vector<double>& b) {
     double total = 0.0;
     std::size_t m = std::min(a.size(), b.size());

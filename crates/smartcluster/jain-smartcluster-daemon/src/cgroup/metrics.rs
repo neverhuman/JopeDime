@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn cpu_max(millicores: u64) -> String {
+pub(crate) fn cpu_max(millicores: u64) -> String {
     if millicores == u64::MAX {
         format!("max {CPU_PERIOD_US}")
     } else {
@@ -9,7 +9,7 @@ pub(super) fn cpu_max(millicores: u64) -> String {
     }
 }
 
-pub(super) fn memory_limit(bytes: u64) -> String {
+pub(crate) fn memory_limit(bytes: u64) -> String {
     if bytes == u64::MAX {
         "max".to_owned()
     } else {
@@ -17,7 +17,7 @@ pub(super) fn memory_limit(bytes: u64) -> String {
     }
 }
 
-pub(super) fn read_pids(path: &Path) -> Result<Vec<i32>, CgroupError> {
+pub(crate) fn read_pids(path: &Path) -> Result<Vec<i32>, CgroupError> {
     let mut pids = std::collections::BTreeSet::new();
     let mut pending = vec![path.to_path_buf()];
     while let Some(directory) = pending.pop() {
@@ -52,14 +52,14 @@ struct CgroupEvents {
     frozen: bool,
 }
 
-pub(super) fn read_cgroup_events(path: &Path) -> Result<CgroupEvents, CgroupError> {
+pub(crate) fn read_cgroup_events(path: &Path) -> Result<CgroupEvents, CgroupError> {
     let source = fs::read_to_string(path.join("cgroup.events"))?;
     let populated = parse_named(&source, "populated")? != 0;
     let frozen = parse_named(&source, "frozen")? != 0;
     Ok(CgroupEvents { populated, frozen })
 }
 
-pub(super) fn parse_named(source: &str, name: &str) -> Result<u64, CgroupError> {
+pub(crate) fn parse_named(source: &str, name: &str) -> Result<u64, CgroupError> {
     source
         .lines()
         .find_map(|line| {
@@ -72,7 +72,7 @@ pub(super) fn parse_named(source: &str, name: &str) -> Result<u64, CgroupError> 
         .map_err(|_| CgroupError::InvalidMetric(name.to_owned()))
 }
 
-pub(super) fn read_u64(path: &Path) -> Result<Option<u64>, CgroupError> {
+pub(crate) fn read_u64(path: &Path) -> Result<Option<u64>, CgroupError> {
     match fs::read_to_string(path) {
         Ok(source) => source
             .trim()
@@ -84,7 +84,7 @@ pub(super) fn read_u64(path: &Path) -> Result<Option<u64>, CgroupError> {
     }
 }
 
-pub(super) fn read_named_u64(path: &Path, name: &str) -> Result<Option<u64>, CgroupError> {
+pub(crate) fn read_named_u64(path: &Path, name: &str) -> Result<Option<u64>, CgroupError> {
     match fs::read_to_string(path) {
         Ok(source) => Ok(Some(parse_named(&source, name)?)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),

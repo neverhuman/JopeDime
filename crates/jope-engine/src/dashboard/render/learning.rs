@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn render_history(f: &mut Frame, body: Rect, history: &History, run: &Value) {
+pub(crate) fn render_history(f: &mut Frame, body: Rect, history: &History, run: &Value) {
     crate::learning_history::render(
         f,
         body,
@@ -10,7 +10,7 @@ pub(super) fn render_history(f: &mut Frame, body: Rect, history: &History, run: 
     );
 }
 
-pub(super) fn render_policy(f: &mut Frame, body: Rect, run: &Value, neural: &Value) {
+pub(crate) fn render_policy(f: &mut Frame, body: Rect, run: &Value, neural: &Value) {
     let policy = if run["policy"].is_object() {
         &run["policy"]
     } else {

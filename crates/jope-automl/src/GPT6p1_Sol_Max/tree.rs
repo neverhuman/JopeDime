@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) struct Tree {
+pub(crate) struct Tree {
     nodes: Vec<Node>,
 }
 
@@ -13,7 +13,7 @@ struct Node {
     value: f64,
 }
 
-pub(super) struct Growth {
+pub(crate) struct Growth {
     depth: usize,
     min_leaf: usize,
     penalty: f64,
@@ -21,7 +21,7 @@ pub(super) struct Growth {
 }
 
 impl Tree {
-    pub(super) fn predict_prepared(&self, data: &Prepared, row: usize) -> f64 {
+    pub(crate) fn predict_prepared(&self, data: &Prepared, row: usize) -> f64 {
         let mut index = 0;
         loop {
             let node = &self.nodes[index];
@@ -38,7 +38,7 @@ impl Tree {
         }
     }
 
-    pub(super) fn predict_bins(&self, bins: &[u8]) -> f64 {
+    pub(crate) fn predict_bins(&self, bins: &[u8]) -> f64 {
         let mut index = 0;
         loop {
             let node = &self.nodes[index];
@@ -55,7 +55,7 @@ impl Tree {
         }
     }
 
-    pub(super) fn learn(
+    pub(crate) fn learn(
         data: &Prepared,
         residual: &[f64],
         rng: &mut Random,
@@ -169,7 +169,7 @@ fn tree_width(p: usize) -> usize {
     p.min(32 + p / 4)
 }
 
-pub(super) fn growth(n: usize) -> Growth {
+pub(crate) fn growth(n: usize) -> Growth {
     Growth {
         depth: if n >= 2048 { 6 } else { 4 },
         min_leaf: 3usize.max(n / 2048),
@@ -178,7 +178,7 @@ pub(super) fn growth(n: usize) -> Growth {
     }
 }
 
-pub(super) fn tree_limit(data: &Prepared) -> usize {
+pub(crate) fn tree_limit(data: &Prepared) -> usize {
     if data.features.is_empty() || data.scale.sd <= 1e-150 {
         return 0;
     }

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn ensure_native_reserved_attempts(
+pub(crate) fn ensure_native_reserved_attempts(
     tx: &Transaction<'_>,
     schema: &PairSchema,
     manifest: &ValidManifest,
@@ -15,7 +15,7 @@ pub(super) fn ensure_native_reserved_attempts(
             "SELECT attempt_no,state,owner,manifest_sha256,job_id FROM attempts \
                  WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
                    AND state IN ('reserved','submitted') ORDER BY attempt_no DESC",
-            include_str!("../../sql/native_attempts_next_no.sql"),
+            include_str!("../../../../sql/native_attempts_next_no.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_no,state,owner,manifest_path,manifest_sha256,job_id,created_at_ms) \
                  VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -25,7 +25,7 @@ pub(super) fn ensure_native_reserved_attempts(
                  FROM attempts WHERE task=? AND dataset_hash=? AND semantic_sha256=? \
                    AND protocol_sha256=? AND state IN ('reserved','submitted') \
                  ORDER BY attempt_no DESC",
-            include_str!("../../sql/native_attempts_next_no.sql"),
+            include_str!("../../../../sql/native_attempts_next_no.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_no,state,reservation_owner,manifest_path,manifest_sha256,job_id,\
                  created_at_ms) VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -34,7 +34,7 @@ pub(super) fn ensure_native_reserved_attempts(
             "SELECT attempt_number,state,owner,manifest_sha256,job_id FROM attempts \
                  WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
                    AND state IN ('reserved','submitted') ORDER BY attempt_number DESC",
-            include_str!("../../sql/native_attempts_next_number.sql"),
+            include_str!("../../../../sql/native_attempts_next_number.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_number,state,owner,manifest_path,manifest_sha256,job_id,created_at_ms) \
                  VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -44,7 +44,7 @@ pub(super) fn ensure_native_reserved_attempts(
                  FROM attempts WHERE task=? AND dataset_hash=? AND semantic_sha256=? \
                    AND protocol_sha256=? AND state IN ('reserved','submitted') \
                  ORDER BY attempt_number DESC",
-            include_str!("../../sql/native_attempts_next_number.sql"),
+            include_str!("../../../../sql/native_attempts_next_number.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_number,state,reservation_owner,manifest_path,manifest_sha256,job_id,\
                  created_at_ms) VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -123,7 +123,7 @@ pub(super) fn ensure_native_reserved_attempts(
     Ok(())
 }
 
-pub(super) fn update_pairs_submitted(
+pub(crate) fn update_pairs_submitted(
     tx: &Transaction<'_>,
     schema: &PairSchema,
     manifest: &ValidManifest,
@@ -132,12 +132,12 @@ pub(super) fn update_pairs_submitted(
 ) -> Result<()> {
     let (select, update) = match schema.owner_column {
         "owner" => (
-            include_str!("../../sql/pairs_submitted_select_owner.sql"),
-            include_str!("../../sql/pairs_submitted_update_owner.sql"),
+            include_str!("../../../../sql/pairs_submitted_select_owner.sql"),
+            include_str!("../../../../sql/pairs_submitted_update_owner.sql"),
         ),
         "reservation_owner" => (
-            include_str!("../../sql/pairs_submitted_select_reservation_owner.sql"),
-            include_str!("../../sql/pairs_submitted_update_reservation_owner.sql"),
+            include_str!("../../../../sql/pairs_submitted_select_reservation_owner.sql"),
+            include_str!("../../../../sql/pairs_submitted_update_reservation_owner.sql"),
         ),
         _ => bail!("pair registry schema is not supported"),
     };
@@ -212,7 +212,7 @@ pub(super) fn update_pairs_submitted(
     Ok(())
 }
 
-pub(super) fn finalize_native_attempts_for_retry(
+pub(crate) fn finalize_native_attempts_for_retry(
     tx: &Transaction<'_>,
     schema: &PairSchema,
     manifest: &ValidManifest,
@@ -250,7 +250,7 @@ pub(super) fn finalize_native_attempts_for_retry(
     Ok(())
 }
 
-pub(super) fn append_native_retry_attempts(
+pub(crate) fn append_native_retry_attempts(
     tx: &Transaction<'_>,
     schema: &PairSchema,
     manifest: &ValidManifest,
@@ -281,8 +281,8 @@ pub(super) fn append_native_retry_attempts(
             continue;
         }
         let next_attempt_query = match attempts.number_column {
-            "attempt_no" => include_str!("../../sql/native_attempts_next_no.sql"),
-            "attempt_number" => include_str!("../../sql/native_attempts_next_number.sql"),
+            "attempt_no" => include_str!("../../../../sql/native_attempts_next_no.sql"),
+            "attempt_number" => include_str!("../../../../sql/native_attempts_next_number.sql"),
             _ => bail!("attempt ledger schema is not supported"),
         };
         let attempt_number: i64 = tx.query_row(
@@ -297,16 +297,18 @@ pub(super) fn append_native_retry_attempts(
         )?;
         let insert_query = match (attempts.number_column, attempts.owner_column) {
             ("attempt_no", "owner") => {
-                include_str!("../../sql/native_attempt_no_owner_retry_insert.sql")
+                include_str!("../../../../sql/native_attempt_no_owner_retry_insert.sql")
             }
             ("attempt_no", "reservation_owner") => {
-                include_str!("../../sql/native_attempt_no_reservation_owner_retry_insert.sql")
+                include_str!("../../../../sql/native_attempt_no_reservation_owner_retry_insert.sql")
             }
             ("attempt_number", "owner") => {
-                include_str!("../../sql/native_attempt_number_owner_retry_insert.sql")
+                include_str!("../../../../sql/native_attempt_number_owner_retry_insert.sql")
             }
             ("attempt_number", "reservation_owner") => {
-                include_str!("../../sql/native_attempt_number_reservation_owner_retry_insert.sql")
+                include_str!(
+                    "../../../../sql/native_attempt_number_reservation_owner_retry_insert.sql"
+                )
             }
             _ => bail!("attempt ledger schema is not supported"),
         };

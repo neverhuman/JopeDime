@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn shared_ordered_boundary_fixture_replays_every_order_after_each_snapshot() {
     let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../fixtures/math_boundary/v2/finite_difference.json"
+        "../../fixtures/math_boundary/v2/finite_difference.json"
     ))
     .unwrap();
     let decode = |v: &serde_json::Value| {

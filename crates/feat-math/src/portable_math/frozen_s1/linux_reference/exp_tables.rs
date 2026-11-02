@@ -1,4 +1,4 @@
-pub(super) const ET: [u64; 256] = [
+pub(crate) const ET: [u64; 256] = [
     0x0,
     0x3ff0000000000000,
     0x3c9b3b4f1a88bf6e,
@@ -256,7 +256,7 @@ pub(super) const ET: [u64; 256] = [
     0x3c5305c14160cc89,
     0x3feff3c22b8f71f1,
 ];
-pub(super) const C: [f64; 4] = [
+pub(crate) const C: [f64; 4] = [
     f64::from_bits(0x3fdffffffffffdbd),
     f64::from_bits(0x3fc555555555543c),
     f64::from_bits(0x3fa55555cf172b91),
