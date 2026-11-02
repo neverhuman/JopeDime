@@ -382,7 +382,9 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
     assert not (args.out_dir / "clients/claude_code/transport/capture.json").exists()
 
 
-def test_normal_exit_drain_deadline_is_not_replaced_with_grace(monkeypatch, a5_tmp_path):
+def test_normal_exit_drain_deadline_is_not_replaced_with_grace(
+    monkeypatch, a5_tmp_path
+):
     args, plan, _candidate, client = _runner_fixture(
         a5_tmp_path, drain_key="claude_code"
     )
