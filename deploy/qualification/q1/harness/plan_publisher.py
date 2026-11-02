@@ -158,6 +158,7 @@ def validate_runtime_receipt(receipt, plan, pin, metadata_source):
     evaluator = plan["pins"]["evaluator_sha256"]
     require(
         receipt["source_commit"] == source
+        and receipt.get("metadata_source_commit") == metadata_source
         and receipt["evaluator_sha256"] == evaluator
         and receipt["backend_sha256"] == plan["backend_sha256"]
         and receipt["pins"] == plan["pins"],
