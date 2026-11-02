@@ -528,13 +528,13 @@ impl Default for MicroAdmission {
 }
 
 impl MicroAdmission {
-    /// The pre-breadth policy: no cap, no retirement, no spread ordering.
+    /// The pre-breadth policy: no per-dataset cap, retirement, or spread ordering.
     /// Kept so the change is reversible in one flag without a redeploy.
     ///
-    /// "Unbounded" lifts only the per-dataset caps; it creates no channel or task.
+    /// This affects dataset eligibility only; it creates no channel or task.
     /// [`select_micro_cohort`] still returns exactly [`MICRO_WAVE_SIZE`] datasets per
-    /// wave, so the work a wave admits stays fixed (`unbounded_policy_admits_everything`).
-    pub fn unbounded() -> Self {
+    /// wave, as verified by `per_dataset_caps_can_be_disabled_with_fixed_wave_size`.
+    pub fn without_per_dataset_caps() -> Self {
         Self {
             eval_cap: u64::MAX,
             retire_min_observations: u64::MAX,
@@ -1722,11 +1722,11 @@ mod tests {
         }
     }
 
-    /// `MicroAdmission::unbounded` must reproduce the pre-breadth behaviour so
+    /// Disabled per-dataset caps must reproduce the pre-breadth behaviour so
     /// the change can be reverted with a flag instead of a redeploy.
     #[test]
-    fn unbounded_policy_admits_everything() {
-        let policy = MicroAdmission::unbounded();
+    fn per_dataset_caps_can_be_disabled_with_fixed_wave_size() {
+        let policy = MicroAdmission::without_per_dataset_caps();
         let mut entries = Vec::new();
         for task in ["regression", "binary"] {
             for index in 0..70 {
