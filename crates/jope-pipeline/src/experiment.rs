@@ -20,12 +20,16 @@ pub fn sha256(value: &str) -> bool {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Metric {
+#[schemars(rename = "Metric")]
+pub enum ExperimentMetric {
     Rmse,
     Auroc,
     LogLoss,
 }
-impl Metric {
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Metric = ExperimentMetric;
+
+impl ExperimentMetric {
     pub fn for_task(task: Task) -> Result<Self> {
         Ok(match task {
             Task::Regression => Self::Rmse,

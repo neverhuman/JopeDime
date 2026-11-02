@@ -8,11 +8,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "Metric")]
 #[cfg_attr(
     doc,
     doc = "`Metric` is an enum for the metric contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."
 )]
-pub enum Metric {
+pub enum LearningMetric {
     #[cfg_attr(doc, doc = "The `R2` case of `Metric`.")]
     R2,
     #[cfg_attr(doc, doc = "The `OofR2` case of `Metric`.")]
@@ -31,6 +32,9 @@ pub enum Metric {
     Mase,
 }
 
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Metric = LearningMetric;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 #[cfg_attr(
@@ -47,7 +51,7 @@ pub enum MetricDirection {
 /// Compatibility path; the concrete enum has a domain-specific name.
 pub type Direction = MetricDirection;
 
-impl Metric {
+impl LearningMetric {
     #[cfg_attr(doc, doc = "Constant identifying the all.")]
     pub const ALL: [Metric; 8] = [
         Metric::R2,
