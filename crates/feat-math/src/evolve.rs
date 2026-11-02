@@ -6549,16 +6549,25 @@ mod tests {
         cfg.pop = RACE_CHUNK;
         cfg.gens = 10_000;
         cfg.time_budget_secs = f64::MIN_POSITIVE;
+        // Run on a dedicated pool so the wall bound measures this race, not queueing behind
+        // sibling tests that saturate the shared global rayon pool during a full suite run.
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .expect("dedicated race test pool");
         let t = Instant::now();
-        let out = evolve_lite_race_with_exact_initial_population(
-            &x,
-            &y,
-            &metric,
-            &cfg,
-            &quiet_obs(),
-            &initial_population,
-        )
-        .expect("small exact initial race population is valid");
+        let out = pool
+            .install(|| {
+                evolve_lite_race_with_exact_initial_population(
+                    &x,
+                    &y,
+                    &metric,
+                    &cfg,
+                    &quiet_obs(),
+                    &initial_population,
+                )
+            })
+            .expect("small exact initial race population is valid");
         let elapsed = t.elapsed().as_secs_f64();
         assert!(!out.ranked.is_empty());
         assert_eq!(out.rung_evals[0], RACE_CHUNK as u64);
