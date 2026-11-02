@@ -586,6 +586,7 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/pipelines/telemetry/trace_archive.py",
   "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
   "deploy/dl-flywheel/tests_hpc/test_verified_cache.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
 
