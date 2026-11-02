@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Security entry point must execute every gate and propagate scanner failures."""
+import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -17,6 +19,7 @@ class SecurityLane(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory(prefix="security-controls-", dir=scratch)
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name).resolve()
+        self.real_gitleaks = shutil.which("gitleaks")
         for name in ("tools/security-lane.sh", "deploy/ci/secret-scan.sh", "deploy/ci/actionlint-workflows.sh", "deploy/ci/verify-vendor-security.py", ".gitleaks.toml"):
             destination = self.root / name
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -52,6 +55,45 @@ class SecurityLane(unittest.TestCase):
 
     def test_provenance_failure_propagates(self):
         self.assertEqual(self.run_lane(FAIL_PROVENANCE="21").returncode, 21)
+
+    def test_h205_content_identity_allowlist_does_not_hide_api_keys(self):
+        self.assertIsNotNone(self.real_gitleaks, "gitleaks is required for the real config control")
+        source = self.root / "h205-content-identities"
+        family = source / "research" / "flywheel_selfplay" / "h205_fresh_vs_static"
+        family.mkdir(parents=True)
+        identifier = hashlib.sha256(b"H205 synthetic content identity control").hexdigest()[:40]
+        (family / "README.md").write_text(f"family_key: {identifier}`\n")
+        (family / "PREREG.md").write_text(f"family_key = {identifier}`\n")
+        (family / "metrics.json").write_text(f'{{"family_key": "{identifier}"}}\n')
+        (family / "unreviewed.json").write_text(f'{{"api_key": "{identifier}"}}\n')
+        report = self.root / "h205-content-identities-report.json"
+        result = subprocess.run(
+            [
+                self.real_gitleaks,
+                "detect",
+                "--no-git",
+                "--redact=100",
+                "--no-banner",
+                "--config",
+                str(ROOT / ".gitleaks.toml"),
+                "--source",
+                ".",
+                "--report-format",
+                "json",
+                "--report-path",
+                str(report),
+            ],
+            cwd=source,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        findings = json.loads(report.read_text()) if report.exists() else []
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertEqual(
+            [(finding["RuleID"], finding["File"]) for finding in findings],
+            [("generic-api-key", "research/flywheel_selfplay/h205_fresh_vs_static/unreviewed.json")],
+        )
 
     def test_sbom_failure_propagates(self):
         self.assertEqual(self.run_lane(FAIL_SBOM="22").returncode, 22)
