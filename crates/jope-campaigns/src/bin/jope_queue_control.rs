@@ -3160,8 +3160,12 @@ fn sqlite_table_exists(connection: &Connection, table: &str) -> Result<bool> {
 }
 
 fn sqlite_column_exists(connection: &Connection, table: &str, column: &str) -> Result<bool> {
-    let query = format!("SELECT COUNT(*) FROM pragma_table_info('{table}') WHERE name=?1");
-    Ok(connection.query_row(&query, [column], |row| row.get::<_, i64>(0))? != 0)
+    let count: i64 = connection.query_row(
+        "SELECT COUNT(*) FROM pragma_table_info(?1) WHERE name=?2",
+        params![table, column],
+        |row| row.get(0),
+    )?;
+    Ok(count != 0)
 }
 
 fn write_content_addressed(
@@ -3435,6 +3439,21 @@ mod tests {
             manifest_valid: true,
             invalid_reason: None,
         }
+    }
+
+    #[test]
+    fn sqlite_column_exists_binds_table_and_column_names() {
+        let connection = Connection::open_in_memory().unwrap();
+        connection
+            .execute_batch("CREATE TABLE pairs (reservation_owner TEXT);")
+            .unwrap();
+
+        assert!(sqlite_column_exists(&connection, "pairs", "reservation_owner").unwrap());
+        assert!(!sqlite_column_exists(&connection, "pairs", "missing").unwrap());
+
+        let hostile_table = "pairs') WHERE name=?1 OR 1=1 --";
+        assert!(!sqlite_column_exists(&connection, hostile_table, "missing").unwrap());
+        assert!(sqlite_table_exists(&connection, "pairs").unwrap());
     }
 
     #[test]
