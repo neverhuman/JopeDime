@@ -442,7 +442,7 @@ jobs:
           name: paper-${{ github.run_id }}-${{ github.run_attempt }}
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/paper/
           into: target/ci-paper-download/${{ github.run_id }}/${{ github.run_attempt }}
-      - name: Require exact-head complete publication evidence
+      - name: Require exact-head publication source-check evidence
         if: always()
         env:
           PAPER_RESULT: ${{ needs.paper.result }}
@@ -462,10 +462,8 @@ jobs:
           assert r['event'] == os.environ['GITHUB_EVENT_NAME']
           assert r['status'] == 'passed' and r['exit_status'] == 0 and not r.get('diagnostic')
           assert r['dirty_source'] == r['dirty_source_after'] == []
-          assert r['command'] == ['make', '-C', 'docs/paper/innovationzero', 'check', 'self-test', 'pdf']
-          names = ['InnovationZero', 'InnovationZero-Supplement', 'InnovationZero-Archive']
-          required = {'command.log', 'evidence/build-environment.txt', 'evidence/source-identity.json', 'evidence/dependencies.json', 'evidence/format.log'}
-          required.update('evidence/' + n + ext for n in names for ext in ('.pdf', '.log'))
+          assert r['command'] == ['make', '-C', 'docs/paper/innovationzero', 'check', 'self-test']
+          required = {'command.log', 'evidence/source-identity.json'}
           assert required <= set(r['evidence'])
           actual = {str(p.relative_to(path.parent)) for p in path.parent.rglob('*') if p.is_file() and p != path}
           assert actual == set(r['evidence'])
@@ -482,9 +480,7 @@ jobs:
           import subprocess
           current_tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
           assert identity['source_tree'] == identity['checkout_tree'] == current_tree
-          native = json.loads((path.parent / 'evidence/dependencies.json').read_text())
-          assert native['lock_sha256'] == hashlib.sha256(pathlib.Path('deploy/ci/publication-deps.lock.json').read_bytes()).hexdigest()
-          print('Exact-head publication, three PDFs, TeX logs, refusal checks and verified toolchain retained')
+          print('Exact-head publication source checks and refusal checks retained; PDF rendering is separate')
           PY
       - name: Collect frontend evidence
         uses: ./.github/actions/download-ci-evidence

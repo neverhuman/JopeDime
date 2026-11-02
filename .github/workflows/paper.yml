@@ -1,4 +1,4 @@
-name: InnovationZero publication
+name: InnovationZero source checks
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ permissions:
 jobs:
   build:
     # The caller is ci.yml or trusted-main full-main.yml, using existing admission.
-    runs-on: [self-hosted, linux, x64, "${{ inputs.runner-label }}"]
+    runs-on: [self-hosted, linux, x64, "${{ inputs.runner-label || 'jope-ci' }}"]
     timeout-minutes: 30
     env:
       JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -29,12 +29,12 @@ jobs:
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
 
-      # Fonts are fetched by scripts/build.sh from the release archives pinned in fonts.lock and
-      # verified by SHA-256 before use; nothing else in the build reads the network.
-      - name: Check sources, exercise refusals, and build the three PDFs
+      # Retain the existing job ID for callers/status checks. Typesetting is an explicit
+      # publication operation (`just paper`), never part of PR or full-main CI.
+      - name: Check sources and exercise refusals without TeX
         run: bash ops/ci/paper.sh
 
-      - name: Retain publication PDFs, logs, and source-bound receipt
+      - name: Retain check output and source-bound receipt
         if: always()
         uses: ./.github/actions/upload-ci-evidence
         env:

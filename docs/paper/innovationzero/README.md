@@ -68,14 +68,21 @@ plotted frontier inputs or the three original author commits.
 
 
 CI runs the reusable `paper.yml` from the existing admitted `ci.yml` and trusted-main
-`full-main.yml` callers. Every PR/manual CI run builds all three volumes; the aggregate requires
-its source-bound receipt and verifies every retained payload hash. The paper job uses the native
-event checkout (synthetic merge on PRs), refuses unless its tree exactly matches the reviewed
-source head, and retains both commit identities and their equal trees. Full manual CI checks out
-the actual source commit. Main-push CPU qualification
-also requires the publication job. Queueing or a missing receipt fails qualification.
-`deploy/ci/publication-tools.sh COMMAND...` extracts the SHA-256/size-pinned official Ubuntu
-packages in `deploy/ci/publication-deps.lock.json` into the lane target cache and generates an
-English XeLaTeX format in separate writable state. It needs no sudo, host package installation,
-maintainer scripts, runner-image changes, corpus access or credentials. Existing Chromium lock
-callers keep their original default. The package cache and extracted runtime are verified on reuse.
+`full-main.yml` callers. Every PR/manual CI run executes `make check self-test` without
+TeX, font downloads or PDF typesetting. The aggregate requires its source-bound receipt,
+check output and verified payload hashes. The paper job uses the native event checkout
+(synthetic merge on PRs), refuses unless its tree exactly matches the reviewed source
+head, and retains both commit identities and their equal trees. Full manual CI checks
+out the actual source commit. Main-push CPU qualification also requires these source
+checks. Queueing or a missing receipt fails qualification.
+
+Generate all three volumes explicitly with `just paper` when preparing a publication.
+This runs the source/refusal checks and PDF rendering, including layout, embedded-font
+and reference checks; rendering is not a product merge or CPU qualification requirement.
+For a reproducible toolchain without installing host packages, use
+`bash deploy/ci/publication-tools.sh just paper`. That wrapper extracts the SHA-256/size-pinned
+official Ubuntu packages in `deploy/ci/publication-deps.lock.json` into the lane target cache
+and generates an English XeLaTeX format in separate writable state. It needs no sudo,
+host package installation, maintainer scripts, runner-image changes, corpus access or
+credentials. Existing Chromium lock callers keep their original default. The package
+cache and extracted runtime are verified on reuse.
