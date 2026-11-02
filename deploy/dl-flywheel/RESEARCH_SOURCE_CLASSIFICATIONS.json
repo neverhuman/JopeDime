@@ -3840,6 +3840,14 @@
       },
       "sha256": "5aa07f6b8a5e2b5502afa1d5680fe1bd6a29f3b5994bd8d0bb5305f03727918c"
     },
+    "python:research/flywheel_selfplay/h146_lookahead_exec/runtime.py": {
+      "bytes": 5868,
+      "classification": {
+        "reason": "h146_lookahead_exec historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d"
+    },
     "python:research/flywheel_selfplay/h147_reveal_alignment/monitor.py": {
       "bytes": 5539,
       "classification": {
@@ -3936,6 +3944,14 @@
       },
       "sha256": "3e38deb3a719403ac1a5c4fdf8ffe6a73d586697e57dd31db2f5a27d26eb6905"
     },
+    "python:research/flywheel_selfplay/h153_sam/runtime.py": {
+      "bytes": 4942,
+      "classification": {
+        "reason": "h153_sam historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "334b8e4968b42da9a054656ca17bc960db6e476239b5dcaf74a2658e4ecd43ae"
+    },
     "python:research/flywheel_selfplay/h154_trajectory_ema_swa/monitor.py": {
       "bytes": 5959,
       "classification": {
@@ -3999,6 +4015,14 @@
         "role": "research"
       },
       "sha256": "fb26f152ff7cf735835be887ee3bde0365007045f6d3a7c312781b39ae81ff19"
+    },
+    "python:research/flywheel_selfplay/h161_robust_fambal/runtime.py": {
+      "bytes": 5767,
+      "classification": {
+        "reason": "h161_robust_fambal historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification.",
+        "role": "research"
+      },
+      "sha256": "dc34737eb6ebe47cfe617f7893cf45566d52f8c7b755cf27b41032304a3245fa"
     },
     "python:research/flywheel_selfplay/h163_prediction_ensemble/analysis.py": {
       "bytes": 7623,
@@ -5680,6 +5704,118 @@
       },
       "sha256": "15fde3b2ce18118f12e4f9813dc565f0000c03c0cfb839682a197b8f715a0f8d"
     },
+    "python:research/flywheel_selfplay/h227_pool_headroom/analysis.py": {
+      "bytes": 5162,
+      "classification": {
+        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "8c10863b352d3ddf5b8fedec59c07eb557ccbef4a6d08d8e48dacb89af578517"
+    },
+    "python:research/flywheel_selfplay/h227_pool_headroom/backend.py": {
+      "bytes": 8102,
+      "classification": {
+        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "5a38bf19195effe5a471c9dc209c26eefd8fe72762298105e1d35b55a9643eaf"
+    },
+    "python:research/flywheel_selfplay/h227_pool_headroom/launcher.py": {
+      "bytes": 8248,
+      "classification": {
+        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "c5f68dfbc4069ba6399de759471bdbeeb54acac5eda84ee4d610ad0c2370ec4b"
+    },
+    "python:research/flywheel_selfplay/h227_pool_headroom/protocol.py": {
+      "bytes": 2096,
+      "classification": {
+        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "ba72d5f06ebf9cec17daa190a6bac50f646de816421cfd4f8837ae7ae087c5c9"
+    },
+    "python:research/flywheel_selfplay/h227_pool_headroom/runner.py": {
+      "bytes": 12521,
+      "classification": {
+        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "4f23b6432db419311e7e42eccb3663f56db5a5f2f569674d767a1b35b2a7ef6e"
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/analysis.py": {
+      "bytes": 5162,
+      "classification": {
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "f071a481944eb62fdea52ba83662a3ac29822466b155e7c787f68ca3bdcae9a6"
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/backend.py": {
+      "bytes": 8922,
+      "classification": {
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "0e1ff0504ff142796c7575245cf20e6627f2e54bf705ede4edfdecc9bcfa023e"
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/launcher.py": {
+      "bytes": 9519,
+      "classification": {
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "4139c513efa321138ad3d9364b9754488137c20e7260455fb73f7e864e51dc79"
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/protocol.py": {
+      "bytes": 4622,
+      "classification": {
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "fcc1903e97e0d56685040432ef1e30d4d699cb7e04d152f346960b4b1fa11522"
+    },
+    "python:research/flywheel_selfplay/h229_pool_headroom_replication/runner.py": {
+      "bytes": 12521,
+      "classification": {
+        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification.",
+        "role": "research"
+      },
+      "sha256": "b95c447958fdeaf1c50a18317211cb44971c4f9a3be2bf3819f5de3f5c6bceca"
+    },
+    "python:research/flywheel_selfplay/h230_coswr_gated025_stack/analysis.py": {
+      "bytes": 2167,
+      "classification": {
+        "reason": "H230 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "0c648fde0a59d43ec70c781076753c086563adb71fa657a2882a941c1111fbc9"
+    },
+    "python:research/flywheel_selfplay/h230_coswr_gated025_stack/gate.py": {
+      "bytes": 11649,
+      "classification": {
+        "reason": "H230 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "75d084a5c89d126db50f28763c7551b305aedd8ee4074630ec65a6dbfab811d7"
+    },
+    "python:research/flywheel_selfplay/h230_coswr_gated025_stack/monitor.py": {
+      "bytes": 9019,
+      "classification": {
+        "reason": "H230 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "b6f98cb5e54f460cdac0ba6c23db0b9ca55d5d4428a4d60e2073dc80c98d79e3"
+    },
+    "python:research/flywheel_selfplay/h230_coswr_gated025_stack/runner.py": {
+      "bytes": 21389,
+      "classification": {
+        "reason": "H230 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "c293080c8332b0a507e95545506f3f5e1dccb24903f8c8307bd71030c9b99acc"
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
@@ -5712,6 +5848,14 @@
       },
       "sha256": "a02c8f469259274d04ca784bd41c7e660c20facda1b4dbd1fac4fb6c2e657ce2"
     },
+    "python:research/flywheel_selfplay/phase7_s3_upload.py": {
+      "bytes": 2196,
+      "classification": {
+        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
+        "role": "research"
+      },
+      "sha256": "1bf9d138aa966e7892f9646c349f27832ee9881e58c0be58b110fcba4e62dab7"
+    },
     "python:research/flywheel_selfplay/post_audit_phase7_cap_and_interpretation.py": {
       "bytes": 21948,
       "classification": {
@@ -5743,14 +5887,6 @@
         "role": "research"
       },
       "sha256": "4d54facb7fdc56925be591cd43bd11479afda7e0d1cfb3ed3bfc3af70efb4688"
-    },
-    "python:research/flywheel_selfplay/phase7_s3_upload.py": {
-      "bytes": 2196,
-      "classification": {
-        "reason": "Research self-play RL + evolutionary GP flywheel study source and Phase 7 custody/audit scripts outside the reviewed product baseline.",
-        "role": "research"
-      },
-      "sha256": "1bf9d138aa966e7892f9646c349f27832ee9881e58c0be58b110fcba4e62dab7"
     },
     "python:research/flywheel_selfplay/reconcile_provenance_audit.py": {
       "bytes": 14512,
@@ -5813,6 +5949,14 @@
       },
       "migration": "New RNK-10 research-only source classification; no product runtime claim.",
       "sha256": "b2e16c5b82d11ceed5eef9fdd95f14becce88a287bc9efa33e1fa3243edbdde3"
+    },
+    "python:research/flywheel_selfplay/runtime_audit.py": {
+      "bytes": 1647,
+      "classification": {
+        "reason": "Shared input/output boundary audit support used by historical CPU runners; not a test-bearing regression family. Refusal behavior is exercised by the CI test-runner.",
+        "role": "research"
+      },
+      "sha256": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4"
     },
     "python:research/flywheel_selfplay/rust_evaluator.py": {
       "bytes": 53182,
@@ -5949,118 +6093,6 @@
         "role": "research"
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
-    },
-    "python:research/flywheel_selfplay/h227_pool_headroom/protocol.py": {
-      "bytes": 2096,
-      "sha256": "ba72d5f06ebf9cec17daa190a6bac50f646de816421cfd4f8837ae7ae087c5c9",
-      "classification": {
-        "role": "research",
-        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h227_pool_headroom/backend.py": {
-      "bytes": 8102,
-      "sha256": "5a38bf19195effe5a471c9dc209c26eefd8fe72762298105e1d35b55a9643eaf",
-      "classification": {
-        "role": "research",
-        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h227_pool_headroom/analysis.py": {
-      "bytes": 5162,
-      "sha256": "8c10863b352d3ddf5b8fedec59c07eb557ccbef4a6d08d8e48dacb89af578517",
-      "classification": {
-        "role": "research",
-        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h227_pool_headroom/launcher.py": {
-      "bytes": 8248,
-      "sha256": "c5f68dfbc4069ba6399de759471bdbeeb54acac5eda84ee4d610ad0c2370ec4b",
-      "classification": {
-        "role": "research",
-        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h227_pool_headroom/runner.py": {
-      "bytes": 12521,
-      "sha256": "4f23b6432db419311e7e42eccb3663f56db5a5f2f569674d767a1b35b2a7ef6e",
-      "classification": {
-        "role": "research",
-        "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h146_lookahead_exec/runtime.py": {
-      "bytes": 5868,
-      "sha256": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
-      "classification": {
-        "role": "research",
-        "reason": "h146_lookahead_exec historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h153_sam/runtime.py": {
-      "bytes": 4942,
-      "sha256": "334b8e4968b42da9a054656ca17bc960db6e476239b5dcaf74a2658e4ecd43ae",
-      "classification": {
-        "role": "research",
-        "reason": "h153_sam historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h161_robust_fambal/runtime.py": {
-      "bytes": 5767,
-      "sha256": "dc34737eb6ebe47cfe617f7893cf45566d52f8c7b755cf27b41032304a3245fa",
-      "classification": {
-        "role": "research",
-        "reason": "h161_robust_fambal historical CPU research runner, including centralized boundary audit and SHA-256 checks for immutable fused source; no product or sealed-test qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/runtime_audit.py": {
-      "bytes": 1647,
-      "sha256": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4",
-      "classification": {
-        "role": "research",
-        "reason": "Shared input/output boundary audit support used by historical CPU runners; not a test-bearing regression family. Refusal behavior is exercised by the CI test-runner."
-      }
-    },
-    "python:research/flywheel_selfplay/h229_pool_headroom_replication/protocol.py": {
-      "bytes": 4622,
-      "sha256": "fcc1903e97e0d56685040432ef1e30d4d699cb7e04d152f346960b4b1fa11522",
-      "classification": {
-        "role": "research",
-        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h229_pool_headroom_replication/backend.py": {
-      "bytes": 8922,
-      "sha256": "0e1ff0504ff142796c7575245cf20e6627f2e54bf705ede4edfdecc9bcfa023e",
-      "classification": {
-        "role": "research",
-        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h229_pool_headroom_replication/analysis.py": {
-      "bytes": 5162,
-      "sha256": "f071a481944eb62fdea52ba83662a3ac29822466b155e7c787f68ca3bdcae9a6",
-      "classification": {
-        "role": "research",
-        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h229_pool_headroom_replication/launcher.py": {
-      "bytes": 9519,
-      "sha256": "4139c513efa321138ad3d9364b9754488137c20e7260455fb73f7e864e51dc79",
-      "classification": {
-        "role": "research",
-        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
-    },
-    "python:research/flywheel_selfplay/h229_pool_headroom_replication/runner.py": {
-      "bytes": 12521,
-      "sha256": "b95c447958fdeaf1c50a18317211cb44971c4f9a3be2bf3819f5de3f5c6bceca",
-      "classification": {
-        "role": "research",
-        "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
-      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

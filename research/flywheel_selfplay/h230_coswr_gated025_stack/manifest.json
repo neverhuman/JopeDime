@@ -1,0 +1,100 @@
+{
+  "wave": "H230",
+  "status": "PREREGISTERED",
+  "authority": "hw_t1945_astra_h224close_h230.md",
+  "parent_commit": "973298e282eadfbefb159d13bfaf4d788a24c1b9",
+  "parent_sources": {
+    "research/flywheel_selfplay/h217_gated025_confirm/runner.py": "0d8bbbd39460fe5bb729e5c1f0beadff52b9dcb63224bb62b4b18d52daffe136",
+    "research/flywheel_selfplay/h217_gated025_confirm/analysis.py": "a509ff6d6f0531a6ce6a051e03aee1e3170534d939ddaa277dc983222d6f1431",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "scientific_statistics_commit": "e3c978d5d36f50a190b82543e592834b549e0844",
+  "scientific_statistics_sha256": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434",
+  "h136_recipe_path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/run_h136_cpu.py",
+  "h136_recipe_sha256": "b0eda24a960f31c52fc308f5b667f1b76c9a6a55dd0ce031898beeda4fc21072",
+  "seeds": [
+    230101,
+    230102,
+    230103
+  ],
+  "fold_seeds": {
+    "230101": 230141,
+    "230102": 230142,
+    "230103": 230143
+  },
+  "sample_seed": 230140,
+  "staging": "/home/ubuntu/jope-data/h195/inputs",
+  "arms": [
+    "R882",
+    "COSWR",
+    "G025",
+    "STACK"
+  ],
+  "primary": "STACK",
+  "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+  "s3_prefix": "experiments/rd_breakthrough_20261102/H230/astra-t1945/",
+  "packages": {
+    "numpy": "1.26.4",
+    "scipy": "1.16.3",
+    "scikit-learn": "1.7.2",
+    "torch": "2.7.0",
+    "psutil": "7.1.0",
+    "boto3": "1.35.49"
+  },
+  "resources": {
+    "host": "xbabe2",
+    "cpu_only": true,
+    "affinity": [
+      2,
+      22,
+      67,
+      104
+    ],
+    "nice": 19,
+    "process_tree_rss_less_than": 4294967296,
+    "min_available_ram": 21474836480,
+    "min_free_bytes": 300000000000,
+    "output_less_than": 2000000000,
+    "load_pause_above": 60,
+    "load_resume_at_or_below": 55,
+    "load_check_seconds": 60,
+    "prereg_deadline": "2026-11-02T22:00:00Z",
+    "compute_stop": "2026-11-03T03:30:00Z",
+    "closeout_deadline": "2026-11-03T04:00:00Z",
+    "retry_allowed": false,
+    "reboot_status": "INTERRUPTED"
+  },
+  "inventory": {
+    "unique_histgbm_fits": 45,
+    "logical_histgbm_fit_uses": 60,
+    "adapter_cells": 15,
+    "updates_per_adapter": 40,
+    "total_adapter_updates": 600,
+    "smoke": "First4HistGBMs+first40-updateCOSWRcell; FIT-only, reused in fixed primary inventory; no extra fit/update"
+  },
+  "best_match_jaccard": 0.18890537919018224,
+  "decision": {
+    "primary": "median_gain>.002+1e-12,LCB95>1e-12,harm<=.1,atleast2positive_seeds>1e-12",
+    "co_primary": "DLVal contextmean gain>.002+1e-12 andfamilyclusterLCB95>1e-12",
+    "advance": "both endpoints pass",
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 230150,
+    "elo_draws": 1000,
+    "elo_seed": 230151,
+    "plateau_seed": 230152
+  },
+  "source_sha256": {
+    "PREREG.md": "5b82858e312bfe9639b84fec0ca523d96dae44cfdb588edbe76ea522cae15e52",
+    "README.md": "297ee279700f4a9ffc5a8a00d6c20701288b0730fa1f6b046b04bddea1e34ff3",
+    "analysis.py": "0c648fde0a59d43ec70c781076753c086563adb71fa657a2882a941c1111fbc9",
+    "fold_manifest.json": "bcf20a4a10db4551dabf3fd75a998c5c881e795cffdd09063ce165fb1cdc969a",
+    "gate.py": "75d084a5c89d126db50f28763c7551b305aedd8ee4074630ec65a6dbfab811d7",
+    "monitor.py": "b6f98cb5e54f460cdac0ba6c23db0b9ca55d5d4428a4d60e2073dc80c98d79e3",
+    "provenance.json": "aaab3096757b1d3e4859af22fcd0451d8f5c380e23599330b34513b04ee60b6c",
+    "runner.py": "c293080c8332b0a507e95545506f3f5e1dccb24903f8c8307bd71030c9b99acc",
+    "test_h230.py": "efb69f2b78fbd9ebf7c779ad39f268fa83ce907747d027c88fbec1af254b941b"
+  }
+}
