@@ -758,6 +758,21 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/rustmem_cpu_affinity_identity_rebaseline.v1.json");
     let rustunsafe_authority =
         old_fixture("transitions/rustunsafe_authority_lineage_rebaseline.v1.json");
+    let p21_family_split =
+        old_fixture("transitions/p21_family_split_identity_rebaseline.v1.json");
+    assert_eq!(
+        p21_family_split["source_commit"],
+        "ea285b2da1f95d9bfa84090f729b85a48730545e"
+    );
+    assert_eq!(p21_family_split["fixtures"].as_array().unwrap().len(), 2);
+    assert_eq!(
+        p21_family_split["fixtures"][0]["path"],
+        changed_fixtures[0]
+    );
+    assert_eq!(
+        p21_family_split["fixtures"][1]["path"],
+        changed_fixtures[1]
+    );
     assert_eq!(
         gov04_portable_pty["source_commit"],
         "4b51c5528129c3fc4c170f2c4074a1a176c25eb3"
@@ -1381,6 +1396,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
+                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
             ],
@@ -1460,6 +1476,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
+                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
             ],
@@ -1532,6 +1549,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
+                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
             ],
@@ -1635,6 +1653,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
+                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
             ],
@@ -1698,6 +1717,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 rustunsafe_authority.clone(),
                 browser_wasm.clone(),
                 p35_corpus_identity.clone(),
+                p21_family_split.clone(),
                 p45_race_pool_identity.clone(),
                 prodlang_rust_runtime.clone(),
             ],
@@ -1809,6 +1829,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         rustunsafe_authority,
         browser_wasm,
         p35_corpus_identity,
+        p21_family_split,
         p45_race_pool_identity,
         prodlang_rust_runtime,
     ];
