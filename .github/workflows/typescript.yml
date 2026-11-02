@@ -10,7 +10,59 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  trust-admission:
+    runs-on: ubuntu-24.04
+    permissions: {}
+    outputs:
+      admitted: ${{ steps.verify.outputs.admitted }}
+    steps:
+      - name: Verify TypeScript workflow caller identity
+        id: verify
+        env:
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_ID: ${{ github.repository_id }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_HEAD_REPOSITORY_ID: ${{ github.event.pull_request.head.repo.id }}
+          PR_BASE_REPOSITORY: ${{ github.event.pull_request.base.repo.full_name }}
+          PR_BASE_REPOSITORY_ID: ${{ github.event.pull_request.base.repo.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          refuse() {
+            echo '::error::TypeScript parity admission refused; invoke through the admitted ci.yml workflow context.'
+            exit 1
+          }
+
+          expected_repository='neverhuman/JopeDime'
+          expected_repository_id='1376159324'
+          workflow_prefix='neverhuman/JopeDime/.github/workflows/ci.yml@'
+
+          [[ "${REPOSITORY:-}" == "$expected_repository" ]] || refuse
+          [[ "${REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
+          [[ "${WORKFLOW_REF:-}" == "$workflow_prefix"* ]] || refuse
+
+          case "${EVENT_NAME:-}" in
+            pull_request)
+              [[ "${PR_HEAD_REPOSITORY:-}" == "$expected_repository" ]] || refuse
+              [[ "${PR_HEAD_REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
+              [[ "${PR_BASE_REPOSITORY:-}" == "$expected_repository" ]] || refuse
+              [[ "${PR_BASE_REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
+              ;;
+            workflow_dispatch)
+              ;;
+            *)
+              refuse
+              ;;
+          esac
+
+          [[ -n "${GITHUB_OUTPUT:-}" ]] || refuse
+          printf 'admitted=true\n' >> "$GITHUB_OUTPUT"
+
   typescript-parity:
+    needs: trust-admission
+    if: needs.trust-admission.outputs.admitted == 'true'
     # Reusable under ci.yml, the existing PR/manual admission context.
     runs-on: [self-hosted, linux, x64, jope-ci]
     timeout-minutes: 90
