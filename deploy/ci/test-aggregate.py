@@ -341,6 +341,11 @@ class AggregateTests(unittest.TestCase):
     def test_campaign_policy_and_renderer_changes_require_inputs(self):
         for path in (
             'crates/jope-campaigns/src/spec_drift.rs',
+            'crates/jope-campaigns/src/spec_drift/audit.rs',
+            'crates/jope-campaigns/src/spec_drift/parser.rs',
+            'crates/jope-campaigns/src/spec_drift/registry.rs',
+            'crates/jope-campaigns/src/spec_drift/scan.rs',
+            'crates/jope-campaigns/src/spec_drift/tests.rs',
             'crates/jope-campaigns/src/spec_policy.rs',
             'crates/jope-campaigns/src/commands/train_only_redteam.rs',
             'crates/jope-arena/src/elo.rs',

@@ -859,6 +859,11 @@ crates/jope-campaigns/src/selfplay_shadow/state/supply.rs
 crates/jope-campaigns/src/selfplay_shadow/state/tests.rs
 crates/jope-campaigns/src/selfplay_shadow/store.rs
 crates/jope-campaigns/src/spec_drift.rs
+crates/jope-campaigns/src/spec_drift/audit.rs
+crates/jope-campaigns/src/spec_drift/parser.rs
+crates/jope-campaigns/src/spec_drift/registry.rs
+crates/jope-campaigns/src/spec_drift/scan.rs
+crates/jope-campaigns/src/spec_drift/tests.rs
 crates/jope-campaigns/src/spec_policy.rs
 crates/jope-campaigns/src/task.rs
 crates/jope-campaigns/src/task_preflight.rs
