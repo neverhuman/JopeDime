@@ -1106,6 +1106,7 @@ crates/jope-engine/src/native_loop/bounded/controller.rs
 crates/jope-engine/src/native_loop/bounded/rendezvous.rs
 crates/jope-engine/src/native_loop/grant_proof.rs
 crates/jope-engine/src/native_loop/materialize.rs
+crates/jope-engine/src/native_loop/materialize/tests.rs
 crates/jope-engine/src/native_loop/run_approval.rs
 crates/jope-engine/src/native_observer.rs
 crates/jope-engine/src/native_observer/science.rs
