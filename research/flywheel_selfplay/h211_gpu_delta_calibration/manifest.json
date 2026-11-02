@@ -46,7 +46,7 @@
   },
   "schema": "jope.h211-gpu-delta/v1",
   "wave": "H211",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "CLOSED_INCOMPLETE",
   "owner": "rd_astra",
   "source_base": "abf062b3cf1ecc24bb40f999b0a534bdfa04aad5",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
@@ -130,5 +130,18 @@
     "status": "INCOMPLETE",
     "updates": 0,
     "closeout_pr": 1752
+  },
+  "execution_source_commit": "ddfca6624f0a1977116ec39edc7fa40c65b7dca1",
+  "source_sha256_scope": "Historical executed source at execution_source_commit, including original README; closeout does not relabel executed bytes.",
+  "closeout": {
+    "metrics": "metrics.json",
+    "s3": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H211/astra-t0040/closeout-t0125/manifest.json",
+      "version_id": "YCYXKEun40dkPlWnxeC.8lG6nqWnx3hq",
+      "sha256": "0d36f6b637eb37caf528ffc758c8f60bf2eff159575b2a513946cb51b576afb6",
+      "bytes": 26019
+    },
+    "attempt_consumed": true,
+    "retry_allowed": false
   }
 }
