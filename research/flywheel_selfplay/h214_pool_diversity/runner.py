@@ -27,7 +27,8 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 DATA = Path.home() / "jope-data"
 H212 = REPO / "research/flywheel_selfplay/h212_pool_width"
-H212_SHA = "8c27d619d3bbc4b8c3772e6acf91fa0ae0e1b51d4d35a029ca52fe57853ce7c1"
+H212_COMMIT = "c39a96589f340e3d8faa833840e8ddf224aed2a5"
+H212_SHA = "cf42b33391aee91d6650b72ad46da10ae85ce9ab9b5e1d2758ba44556d91cce6"
 R882 = DATA / "h214/input/round-882.pt"
 
 
@@ -42,10 +43,35 @@ def write(path, value):
     temp.replace(path)
 
 
+def upstream_blob(name):
+    return subprocess.check_output(
+        [
+            "git",
+            "show",
+            f"{H212_COMMIT}:research/flywheel_selfplay/h212_pool_width/{name}",
+        ],
+        cwd=REPO,
+    )
+
+
+def load_input_manifest():
+    manifest = json.loads((HERE / "manifest.json").read_text())
+    original = upstream_blob("manifest.json")
+    if (
+        hashlib.sha256(original).hexdigest()
+        != manifest["upstream"]["h212_manifest_sha256"]
+    ):
+        raise ValueError("H212 input manifest drift")
+    return json.loads(original)
+
+
 def load_h212():
-    if sha(H212 / "runner.py") != H212_SHA:
+    if (
+        hashlib.sha256(upstream_blob("runner.py")).hexdigest() != H212_SHA
+        or sha(H212 / "runner.py") != H212_SHA
+    ):
         raise ValueError("merged H212 runner pin differs")
-    from research.flywheel_selfplay.h212_pool_width import analysis
+    analysis = stat.load_upstream_analysis()
 
     previous = sys.modules.get("analysis")
     sys.modules["analysis"] = analysis
@@ -124,10 +150,7 @@ def score_panels(pools, union, results, costs):
 
 def setup(root):
     h212 = load_h212()
-    manifest = json.loads((HERE / "manifest.json").read_text())
-    original = json.loads((H212 / "manifest.json").read_text())
-    if sha(H212 / "manifest.json") != manifest["upstream"]["h212_manifest_sha256"]:
-        raise ValueError("H212 input manifest drift")
+    original = load_input_manifest()
     # Relocate only the already pinned checkpoint COPY; other identities are untouched.
     original["inputs"]["r882_owned_copy_path"] = str(R882)
     relocated = root / "h212-inputs-relocated.json"

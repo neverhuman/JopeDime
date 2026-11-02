@@ -162,8 +162,7 @@ def test_ns4_binary_clf_metrics_and_valid_mask_nan_counterexample() -> None:
     assert bool(ev_nan["valid_eval_mask"][0].item())
     assert abs(float(ev_fin["roc_auc"][0].item()) - float(ev_nan["roc_auc"][0].item())) < 1e-6
     assert (
-        abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item()))
-        < 1e-6
+        abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item())) < 1e-6
     )
 
     # Codex 13:41:58Z counterexample: 2 valid holdout rows with BOTH predictions NaN
@@ -507,9 +506,7 @@ def test_ns14_rust_fitness_tie_averaged_roc_auc_and_validation() -> None:
 
     # 4. Holdout target validation rejects non-finite labels, constant regression targets, and invalid binary targets
     with pytest.raises(ValueError, match="y_val must contain only finite"):
-        compile_and_eval_rust_fitness(
-            rs_unit, X_pt_fwd, np.array([0.0, math.nan, 1.0, 1.0]), is_binary=False
-        )
+        compile_and_eval_rust_fitness(rs_unit, X_pt_fwd, np.array([0.0, math.nan, 1.0, 1.0]), is_binary=False)
     with pytest.raises(ValueError, match="Degenerate constant regression holdout target"):
         compile_and_eval_rust_fitness(rs_unit, X_pt_fwd, np.ones(4, dtype=np.float64), is_binary=False)
     with pytest.raises(ValueError, match="Degenerate single-class binary holdout target"):
@@ -673,3 +670,76 @@ def test_ns16_gate_preserves_finite_rejections(ns16_gate_inputs, reason):
     else:
         inputs["overall_ratings"]["H"] = 1520.0
     assert gate(**inputs)["gate_pass"] is False
+
+
+def test_ns19_dope_freeze_storage_aliases_normalizers_and_anchor_guards(monkeypatch) -> None:
+    monkeypatch.delenv("JOPE_RESEARCH_DOPE_UNFREEZE", raising=False)
+    model = _ToyFusedNet()
+    model.gamenet_anchor = nn.Linear(4, 4, bias=False)
+    # Simulate a pre-existing requires_grad=True buffer before locking
+    model.step2_lm_mean_1x256.requires_grad_(True)
+    lock_dope_weights_and_eval_mode(model)
+    assert not model.step2_lm_mean_1x256.requires_grad
+
+    snap = snapshot_dope_weights(model)
+    counts = get_trainable_param_counts_by_submodule(model)
+    assert counts["gamenet_anchor"]["trainable_params"] == 0
+    assert counts["gamenet_anchor"]["training_mode"] is False
+
+    # 1. Storage-aliased view / wrapped Parameter of a DOPE parameter must be rejected by assert_optimizer_excludes_dope
+    dope_param = next(model.dope_model.parameters())
+    dope_view_alias = nn.Parameter(dope_param.data.view(-1))
+    assert id(dope_view_alias) != id(dope_param)
+    opt_dope_alias = torch.optim.SGD([dope_view_alias], lr=1e-2)
+    with pytest.raises(DopeFreezeViolationError, match="storage alias"):
+        assert_optimizer_excludes_dope(opt_dope_alias, model)
+
+    # 2. Storage-aliased view of gamenet_anchor or DOPE normalizer buffer must also be rejected
+    anchor_param = next(model.gamenet_anchor.parameters())
+    anchor_view_alias = nn.Parameter(anchor_param.data.view(-1))
+    opt_anchor_alias = torch.optim.SGD([anchor_view_alias], lr=1e-2)
+    with pytest.raises(DopeFreezeViolationError, match="storage alias"):
+        assert_optimizer_excludes_dope(opt_anchor_alias, model)
+
+    buf_alias = nn.Parameter(model.step2_lm_mean_1x256.data.view(-1))
+    opt_buf_alias = torch.optim.SGD([buf_alias], lr=1e-2)
+    with pytest.raises(DopeFreezeViolationError, match="storage alias"):
+        assert_optimizer_excludes_dope(opt_buf_alias, model)
+
+    # 3. Normalizer buffer requires_grad=True or non-finite NaN/Inf must be rejected by snapshot_dope_weights
+    model.step2_lm_mean_1x256.requires_grad_(True)
+    with pytest.raises(DopeFreezeViolationError, match="normalizer.step2_lm_mean_1x256.*requires_grad=True"):
+        snapshot_dope_weights(model)
+    model.step2_lm_mean_1x256.requires_grad_(False)
+
+    orig_buf = model.step2_lm_mean_1x256.clone()
+    with torch.no_grad():
+        model.step2_lm_mean_1x256.fill_(float("nan"))
+    with pytest.raises(DopeFreezeViolationError, match="non-finite"):
+        snapshot_dope_weights(model)
+    with torch.no_grad():
+        model.step2_lm_mean_1x256.copy_(orig_buf)
+
+    # 4. Frozen anchor requires_grad=True or training=True must be rejected by snapshot_dope_weights and counts
+    anchor_param.requires_grad_(True)
+    with pytest.raises(DopeFreezeViolationError, match="gamenet_anchor.*requires_grad=True"):
+        snapshot_dope_weights(model)
+    with pytest.raises(DopeFreezeViolationError, match="gamenet_anchor has non-zero trainable_params"):
+        get_trainable_param_counts_by_submodule(model)
+    anchor_param.requires_grad_(False)
+
+    model.gamenet_anchor.training = True
+    with pytest.raises(DopeFreezeViolationError, match="gamenet_anchor.*training"):
+        snapshot_dope_weights(model)
+    with pytest.raises(DopeFreezeViolationError, match="gamenet_anchor.*training"):
+        get_trainable_param_counts_by_submodule(model)
+    model.gamenet_anchor.training = False
+
+    verify_dope_frozen_unchanged(model, snap)
+
+    # 5. Research policy also rejects storage-aliased anchor or normalizer buffer in optimizer
+    configure_research_dope(model, launch_metadata={}, unfreeze=True, research_run_id="H206-ns19")
+    with pytest.raises(DopeFreezeViolationError, match="frozen anchor"):
+        assert_research_optimizer_policy(opt_anchor_alias, model, research_run_id="H206-ns19")
+    with pytest.raises(DopeFreezeViolationError, match="normalizer buffer"):
+        assert_research_optimizer_policy(opt_buf_alias, model, research_run_id="H206-ns19")
