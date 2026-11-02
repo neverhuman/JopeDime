@@ -1,0 +1,16 @@
+{
+  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
+  "decision": "PENDING_STAGE1_EXECUTION",
+  "evaluator_contract_id": "fixed-dev-cost-argmin-negative-fitness/v1",
+  "host": "xbabe2",
+  "owner": "gpu_tokbench_agy",
+  "r882_baseline_dl_val_mean_cost": 1.1377941898164525,
+  "stage": "PREREGISTERED",
+  "stage1_arms": [
+    "R882_CONT",
+    "H180_RAND",
+    "PROPOSER_W128"
+  ],
+  "status": "PREREGISTERED",
+  "wave": "H204"
+}
