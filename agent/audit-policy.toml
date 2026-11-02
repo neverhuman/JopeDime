@@ -397,6 +397,7 @@ paths = [
   "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_io.py",
   "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_publish.py",
   "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/fresh32/kumo_transport.py",
   "deploy/dl-flywheel/pipelines/encoding/fresh32/pilot_publish_core.py",
 ]
 pinned_by = [
@@ -415,6 +416,7 @@ paths = [
   "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_io.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_publish.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet0/kumo_transport.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet0/pilot_publish_core.py",
 ]
 pinned_by = [
@@ -433,6 +435,7 @@ paths = [
   "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_io.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_publish.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet1/kumo_transport.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet1/pilot_publish_core.py",
 ]
 pinned_by = [
@@ -451,6 +454,7 @@ paths = [
   "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_io.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_publish.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet2/kumo_transport.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet2/pilot_publish_core.py",
 ]
 pinned_by = [
@@ -469,6 +473,7 @@ paths = [
   "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_io.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_publish.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_timing.py",
+  "deploy/dl-flywheel/pipelines/encoding/next128/packet3/kumo_transport.py",
   "deploy/dl-flywheel/pipelines/encoding/next128/packet3/pilot_publish_core.py",
 ]
 pinned_by = [
