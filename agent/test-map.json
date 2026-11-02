@@ -121,10 +121,10 @@
       "lane": "emitters",
       "purpose": "exercise the feature math build generator"
     },
-    "crates/feat-math/tests/fixtures/fitted_runtime_oracle.cpp": {
+    "crates/feat-math/cpp/fitted_runtime.cpp": {
       "command": "cargo test -p feat-math --locked",
       "lane": "emitters",
-      "purpose": "exercise the pinned fitted-runtime C ABI oracle and sanitizer checks"
+      "purpose": "compile and parity-check the generated C++ runtime"
     },
     "crates/feat-math/examples/emit.rs": {
       "command": "cargo test -p feat-math --locked",
@@ -235,11 +235,6 @@
       "command": "python3 deploy/ci/test-security-lane.py && bash tools/security-lane.sh",
       "lane": "security",
       "purpose": "test security-lane refusal behavior and run configured operational scans"
-    },
-    "docs/testing.md": {
-      "command": "python3 deploy/ci/test-runner.py",
-      "lane": "docs",
-      "purpose": "validate the test guide command inventory, declared coverage, and evidence handling"
     },
     "docs/": {
       "command": "python3 deploy/ci/test-runner.py",
@@ -382,16 +377,6 @@
       "purpose": "verify Python AI/data boundaries and training contracts"
     },
     "python/ai-service/**": {
-      "command": "cd python && python3 -m pytest -q tests/test_training_input_closure.py tests/test_policy_training_contract.py",
-      "lane": "python-contract",
-      "purpose": "verify Python AI/data boundaries and training contracts"
-    },
-    "python/src/jope/": {
-      "command": "cd python && python3 -m pytest -q tests/test_training_input_closure.py tests/test_policy_training_contract.py",
-      "lane": "python-contract",
-      "purpose": "verify Python AI/data boundaries and training contracts"
-    },
-    "python/src/jope/**": {
       "command": "cd python && python3 -m pytest -q tests/test_training_input_closure.py tests/test_policy_training_contract.py",
       "lane": "python-contract",
       "purpose": "verify Python AI/data boundaries and training contracts"
@@ -690,11 +675,6 @@
       "command": "cargo test -p jope-datasets --locked",
       "lane": "data",
       "purpose": "verify committed sample dataset contracts and loader behavior"
-    },
-    ".jankurai/repo-score.md": {
-      "command": "python3 deploy/ci/test-runner.py && bash deploy/ci/install-jankurai.sh && report_dir=\"target/full-audit/local-$(date +%s)-$$\" && JANKURAI_BIN=\"$PWD/target/jankurai/jankurai-1.7.6-x86_64-unknown-linux-gnu/jankurai\" JOPE_AUDIT_REPORT_ONLY=1 bash ops/ci/jankurai.sh \"$report_dir\" && mkdir -p .jankurai && cp \"$report_dir/repo-score.md\" .jankurai/repo-score.md",
-      "lane": "audit",
-      "purpose": "generate the verified full-audit report and publish the canonical repair-routing summary"
     }
   }
 }
