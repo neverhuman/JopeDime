@@ -14,6 +14,8 @@ advisory_on = ["medium", "low", "info"]
 # in docs/release/jankurai-pysqlpickle-exceptions-20261102.md.
 # The eight restored DL exact-file custody exceptions and SHA bindings are recorded
 # in docs/release/browser-prediction-ci-repairs-20261102.md; frozen hash checks remain.
+# P48's two exact MicroAdmission source paths and reviewed finding fingerprints
+# are documented in docs/release/jankurai-rustmem-b-exceptions-20261102.md.
 # Existing custody and synthetic-scanner exceptions remain narrowly scoped.
 extra_excluded_paths = [
   "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/encodings.py",
@@ -82,6 +84,10 @@ extra_excluded_paths = [
   "crates/jope-bench/src/emit.rs",
   "crates/jope-cli/src/research_view.rs",
   "crates/jope-cli/src/schema.rs",
+  # P48 exact-source paths for bounded MicroAdmission::unbounded false positives;
+  # see the fingerprint-scoped evidence and regression proof in the exception register.
+  "crates/jope-campaigns/src/bin/jope_selfplay_wave.rs",
+  "crates/jope-campaigns/src/selfplay_data.rs",
   "crates/jope-client/src/inproc.rs",
   "crates/jope-datasets/src/blobs.rs",
   "crates/jope-datasets/src/cli.rs",

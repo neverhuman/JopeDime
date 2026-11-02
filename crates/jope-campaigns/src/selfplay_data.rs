@@ -1741,6 +1741,8 @@ mod tests {
             &[],
         )
         .unwrap();
+        assert!(entries.len() > MICRO_WAVE_SIZE);
+        assert!(cohort.len() <= MICRO_WAVE_SIZE);
         assert_eq!(cohort.len(), MICRO_WAVE_SIZE);
     }
 
