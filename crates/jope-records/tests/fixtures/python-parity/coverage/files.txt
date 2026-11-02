@@ -742,6 +742,7 @@ crates/jope-campaigns/src/test_adaptive/scq_batch.rs
 crates/jope-campaigns/src/test_adaptive/tabarena_islands.rs
 crates/jope-campaigns/src/test_adaptive/timeseries42.rs
 crates/jope-campaigns/src/timeseries.rs
+crates/jope-campaigns/src/timeseries/metadata.rs
 crates/jope-campaigns/src/training_history.rs
 crates/jope-campaigns/src/training_history/index.rs
 crates/jope-campaigns/src/training_history/ingest.rs
