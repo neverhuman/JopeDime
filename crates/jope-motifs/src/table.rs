@@ -227,16 +227,23 @@ pub struct Promotion {
     pub replay: Gate,
 }
 
+/// Backward-compatible name for a promotion check state.
+///
+/// `Gate` in `jope-learning` represents an environment switch; this type represents whether a
+/// promotion requirement has been run. Keep the public alias while giving the canonical enum a
+/// domain-specific name.
+pub type Gate = PromotionCheck;
+
 impl Promotion {
     /// Every requirement recorded as not run.
     pub fn required_not_run() -> Self {
         Self {
-            ablation: Gate::RequiredNotRun,
-            semantic_backend_coverage: Gate::RequiredNotRun,
-            versioned_vocabulary_compatibility: Gate::RequiredNotRun,
-            expanded_runtime: Gate::RequiredNotRun,
-            cross_family_usefulness: Gate::RequiredNotRun,
-            replay: Gate::RequiredNotRun,
+            ablation: PromotionCheck::RequiredNotRun,
+            semantic_backend_coverage: PromotionCheck::RequiredNotRun,
+            versioned_vocabulary_compatibility: PromotionCheck::RequiredNotRun,
+            expanded_runtime: PromotionCheck::RequiredNotRun,
+            cross_family_usefulness: PromotionCheck::RequiredNotRun,
+            replay: PromotionCheck::RequiredNotRun,
         }
     }
 }
@@ -244,7 +251,7 @@ impl Promotion {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 /// State of one required promotion check.
-pub enum Gate {
+pub enum PromotionCheck {
     /// The check has not been run; this is the only state emitted here.
     RequiredNotRun,
 }
