@@ -1,4 +1,7 @@
 use super::*;
+use crate::math_expr::evaluator::{
+    compute_binary_with, compute_func_with, eval_var_with, safe_with,
+};
 use crate::math_expr::fault::Collect;
 
 #[derive(Clone, Copy, Debug)]

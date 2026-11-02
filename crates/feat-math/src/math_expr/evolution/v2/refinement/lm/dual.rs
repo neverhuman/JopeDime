@@ -50,11 +50,6 @@
 // B17 core.
 
 use super::*;
-use crate::math_expr::evaluator::{
-    compute_binary_with, compute_func_with, eval_var_with, safe_with,
-};
-use crate::math_expr::fault::Collect;
-
 mod program;
 mod range;
 mod tangent;
@@ -62,9 +57,9 @@ mod tangent;
 #[cfg(test)]
 mod tests;
 
-pub(super) use program::{Program, RowDual};
+pub(super) use program::Program;
 pub(super) use range::{Lanes, MAX_PARAMS};
 
-use program::{Dual, Op, DUAL_ZERO};
-use range::{join, log_lane, product, split, SCALE_DOWN, SCALE_UP, ZERO};
+use program::Dual;
+use range::{join, log_lane, product, split, ZERO};
 use tangent::*;
