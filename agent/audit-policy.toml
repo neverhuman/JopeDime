@@ -15,6 +15,13 @@ advisory_on = ["medium", "low", "info"]
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
+  # The preregistered H72 controller uses this queue for jobs absent from its
+  # results ledger; see the exact scope and review date in the vibe register.
+  "research/flywheel_selfplay/h72_w8_control_prereg/w8_control.py",
+  # These source-specific HLT-001 terms are validated diagnostics/work queues,
+  # not unfinished behavior; their reasons are in the vibe exception register.
+  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py",
   "deploy/ci/test-gitleaks-config.py",
   "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
