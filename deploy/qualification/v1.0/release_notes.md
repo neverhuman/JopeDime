@@ -1,67 +1,66 @@
-# JopeDime v1.0.0 — release notes draft
+# JopeDime v1.0.0 — completed RC4 gate evidence
 
-**DRAFT / NOT RELEASED / NOT QUALIFIED.** The current evidence packet is not a
-final qualification receipt, signer input, owner release approval, or aggregate
-release signature. It retains separate evidence observations and does not
-combine them into a final gate run. Candidate runtime source is RC4
-`ccaf14b210b3b55a350218e60f6b49ef76524cf3` (tree
-`2e4324f0bb387ece970664eac193a7ef6a8eb05c`), package scope
-`internal-restricted`.
+**OWNER RELEASE APPROVAL PENDING / NOT RELEASED.** The final gate evidence is
+recorded in `qualification_receipt.json`; OWNER release approval and the
+aggregate release signature remain unset. Candidate runtime source is RC4
+`ccaf14b210b3b55a350218e60f6b49ef76524cf3`, tree
+`2e4324f0bb387ece970664eac193a7ef6a8eb05c`, scope `internal-restricted`.
 
-## Current evidence and remaining gates
+## Completed candidate-bound run
 
-The prior RC4 controller snapshot recorded **25 PASS, 2 FAIL, and 1 BLOCKED**.
-It is preserved as a historical, exact-candidate attempt only; its passing rows
-are not promoted or combined with later receipts. A fresh standalone M2 provider
-receipt is PASS for the exact RC4 Linux artifact, but the final controller must
-execute M2 again using its own fresh parity-report path. The current draft keeps
-that standalone result separate from the earlier controller snapshot.
+The fresh v3 controller records **27 PASS** rows and M3 raw **FAIL**. Every
+non-M3 gate has complete positive execution counts with zero failed, skipped or
+excluded cases. No passing subset from an earlier attempt was promoted. The
+reboot-interrupted v1 and unqualified v2 remain separate external evidence.
 
-M3's raw operator-mix verdict remains **FAIL**. For v1.0.0 only, the separate
-owner ruling `M3-WAIVER-V1.0.0-T1955` permits disposition
-**WAIVED_V1_0_0**, subject to its recorded guard. The measured
-native-minus-reference `edit_replace_head` deltas are **+2.30015625 pp overall**,
-**+0.05208333 pp non-exploring**, and **+2.79084158 pp exploring**. The raw
-verdict is not changed to PASS. Every other operator must remain within ±2.0 pp
-in all three views, and the head-replacement residual must remain at or below
-3.0 pp in all views. The ±2.0 pp tolerance is unchanged for future releases;
-the waiver expires at v1.0.1. REL-07-F01 blocks v1.0.1 until the exploring
-stratum gap is fixed.
+M2 passed in this controller's fresh `PUB-final-controller-report-v8` directory.
+A5 **PASS** verifies all three named clients against the accepted v17 package;
+the package records 48 successful tool calls. D1 completed its actual Linux
+network-isolated clean-host path and checked the source-bound macOS receipt.
+D2 retains its separate fused CPU artifact and same-candidate manifest/seal
+binding. Full commands, times, counts, machine and input/output hashes are in
+the receipt's provenance.
 
-A5 is **PENDING**. Candidate-inputs-v5 is now published and binds D1/M2/M3/M5,
-but it correctly omits A5 until BAT02 supplies a complete candidate-bound
-three-client provider manifest, semantic receipts, and verified sidecars. The
-last formal capture (v9) was incomplete and excluded. BAT02's v12 no-client
-preflight stopped because Gemini's effective configuration was stale. The t1425
-ruling authorizes RNK11 v13 to use an isolated per-run HOME/XDG configuration
-with the existing supported auth reference, then BAT02 must rerun preflight and
-perform the three-client capture. No v13 capture or accepted A5 manifest exists
-yet. The final same-controller run has not completed: M2's standalone PASS must
-be rerun at its reserved fresh report path, and M3 must produce its own raw
-result under the waiver guard. The separate QLT-04 Q1 outcome and
-owner-recorded guidance default decision also remain pending. No owner release
-approval or aggregate signature is recorded; `release_qualified` remains false.
+## M3 raw verdict and version-limited disposition
 
-## Candidate artifacts
+M3's raw **FAIL** is retained. Its feature/projection, training-landmark and
+full TRAIN CV clauses pass; the failing clause is proposer operator mix. The
+fresh `edit_replace_head` deltas are **+2.30015625 pp overall**,
+**+0.05208333 pp non-exploring**, and **+2.79084158 pp exploring**.
+The maintained assembler admits the separate disposition **WAIVED_V1_0_0**
+under `M3-WAIVER-V1.0.0-T1955`: every other operator remains within ±2.0 pp,
+and head replacement remains within 3.0 pp in all three views. The ±2.0 pp
+criterion remains unchanged for future releases; the waiver expires at v1.0.1.
+REL-07-F01 records the separate future-release correction and qualification.
 
-The RC4 full Linux x86-64, full Darwin arm64, and fused-cpu Linux x86-64
-artifacts have matching source-bound signature and seal verification receipts.
-Those package receipts establish artifact custody and identity; by themselves
-they do not establish release qualification. Full artifact SHA-256 values and
-byte counts are recorded in `qualification_receipt.json`.
+The receipt preserves `all_pass=false` semantics. The legacy signing watcher
+requires 28 literal PASS rows and needs ENG adjudication of this owner waiver.
+No verdict was relabelled to satisfy that instrument.
 
-## Release boundaries
+## Guidance and Q1
+
+The guidance default is **OFF** under **OWNER-R21**. The earlier preregistered
+one-shot A/B recorded no lift and the landmark-only M5 result was negative;
+this release does not claim a learned-quality or Elo improvement. The fresh
+M5 gate binds the reviewed default-off requirement. A Q1 outcome is not recorded
+in this receipt; the default decision is an owner scope decision, not a new Q1
+result. No successful Q1 outcome is claimed.
+
+## Candidate artifacts and limits
+
+The source-bound RC4 full Linux x86-64, full Darwin arm64 and fused CPU Linux
+x86-64 envelopes have retained seal/signature receipts. Their identities and
+byte counts are recorded in `qualification_receipt.json`. Candidate envelope
+signatures establish custody; final release approval and aggregate signing
+remain separate.
 
 - Windows native-host qualification is waived for v1.0.0 and is not described
-  as a qualified shipped platform. Linux x86-64 and macOS arm64 require
-  candidate-bound D1 results in the completed final run.
-- CUDA/GPU and Metal qualification are not established by this CPU candidate.
-  This draft task used no GPU or training job.
+  as a qualified shipped platform.
+- CUDA/GPU and Metal qualification are not established by this CPU run. This
+  task used no GPU or neural training.
 - D2's size verdict and latency measurements remain separate; no startup or
-  first-model speed guarantee is inferred from a size PASS.
-- The package scope is `internal-restricted`; envelope signatures do not grant
-  unrestricted redistribution of embedded assets.
-- A prior Darwin worker-CV report recorded 58/1,024 parity failures. This draft
-  does not supersede or relabel that report; its disposition must remain
-  explicit in the final candidate-bound evidence.
-- No learned-quality, Elo improvement, or successful Q1 outcome is claimed.
+  first-model speed guarantee is inferred from the size PASS.
+- Package scope remains `internal-restricted`; envelope signatures do not
+  grant unrestricted redistribution of embedded assets.
+- A prior Darwin worker-CV report recorded 58/1,024 parity failures. This Linux
+  controller does not supersede or relabel that native-worker report.

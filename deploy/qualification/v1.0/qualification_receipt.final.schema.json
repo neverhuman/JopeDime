@@ -1,0 +1,1058 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:jope:rel07-qualification-receipt:v1",
+  "title": "Completed RC4 gate evidence; owner release approval pending",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema",
+    "generated_at_utc",
+    "artifact_sha256",
+    "gates",
+    "gate_artifacts",
+    "release_version",
+    "waivers",
+    "candidate",
+    "qualification",
+    "q1",
+    "provenance"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./qualification_receipt.final.schema.json"
+    },
+    "schema": {
+      "const": "jope.rel07.qualification-receipt/v1"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "artifact_sha256": {
+      "const": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 28,
+      "maxItems": 28,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "status",
+          "artifact_sha256",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "M1",
+              "M2",
+              "M3",
+              "M4",
+              "M5",
+              "S1",
+              "S2",
+              "S3",
+              "S4",
+              "R1",
+              "R2",
+              "R3",
+              "R4",
+              "A1",
+              "A2",
+              "A3",
+              "A4",
+              "A5",
+              "E1",
+              "E2",
+              "E3",
+              "U1",
+              "U2",
+              "T1",
+              "T2",
+              "T3",
+              "D1",
+              "D2"
+            ]
+          },
+          "status": {
+            "enum": [
+              "PASS",
+              "FAIL"
+            ]
+          },
+          "artifact_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "disposition": {
+            "const": "WAIVED_V1_0_0"
+          },
+          "counts": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "collected",
+              "executed",
+              "passed",
+              "failed",
+              "skipped",
+              "excluded"
+            ],
+            "properties": {
+              "collected": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "executed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "passed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "skipped": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "excluded": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "id": {
+                  "const": "M3"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "disposition",
+                "counts"
+              ],
+              "properties": {
+                "status": {
+                  "const": "FAIL"
+                },
+                "counts": {
+                  "const": {
+                    "collected": 4,
+                    "executed": 4,
+                    "passed": 3,
+                    "failed": 1,
+                    "skipped": 0,
+                    "excluded": 0
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "status": {
+                  "const": "PASS"
+                }
+              },
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "disposition"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "counts"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "id": {
+                  "const": "D2"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "artifact_sha256": {
+                  "const": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a"
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "artifact_sha256": {
+                  "const": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "gate_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "D2"
+      ],
+      "properties": {
+        "D2": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "sha256",
+            "source_sha",
+            "candidate_manifest_sha256",
+            "seal_receipt_sha256"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "const": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a"
+            },
+            "source_sha": {
+              "const": "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+            },
+            "candidate_manifest_sha256": {
+              "const": "24cf732aff5bd18bdaf6363bc531ad728aac8ad9334289805f85470dc53d65ff"
+            },
+            "seal_receipt_sha256": {
+              "const": "097cbf56819d4fa001314eaf0c97b3bb271b5c0750e486de2ea3f99d8406bc7a"
+            }
+          }
+        }
+      }
+    },
+    "release_version": {
+      "const": "v1.0.0"
+    },
+    "waivers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "gate",
+          "disposition",
+          "expires_at",
+          "ruling",
+          "ruling_sha256",
+          "source_sha",
+          "artifact_sha256",
+          "raw_status",
+          "guard_views"
+        ],
+        "properties": {
+          "id": {
+            "const": "M3-WAIVER-V1.0.0-T1955"
+          },
+          "gate": {
+            "const": "M3"
+          },
+          "disposition": {
+            "const": "WAIVED_V1_0_0"
+          },
+          "expires_at": {
+            "const": "v1.0.1"
+          },
+          "ruling": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ruling_sha256": {
+            "const": "5c45cf3b6fea741d753de5be0eaec3ce9443602da9bf2258a96393705f9b8ddf"
+          },
+          "source_sha": {
+            "const": "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+          },
+          "artifact_sha256": {
+            "const": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20"
+          },
+          "raw_status": {
+            "const": "FAIL"
+          },
+          "guard_views": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "mode",
+                "deltas_pp"
+              ],
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "all",
+                    false,
+                    true
+                  ]
+                },
+                "deltas_pp": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "champion_retrieval",
+                    "edit_crossover",
+                    "edit_delete_stage",
+                    "edit_insert_stage",
+                    "edit_parameter",
+                    "edit_replace_head",
+                    "landmark_synthesis"
+                  ],
+                  "properties": {
+                    "champion_retrieval": {
+                      "type": "number",
+                      "minimum": -2,
+                      "maximum": 2
+                    },
+                    "edit_crossover": {
+                      "type": "number",
+                      "minimum": -2,
+                      "maximum": 2
+                    },
+                    "edit_delete_stage": {
+                      "type": "number",
+                      "minimum": -2,
+                      "maximum": 2
+                    },
+                    "edit_insert_stage": {
+                      "type": "number",
+                      "minimum": -2,
+                      "maximum": 2
+                    },
+                    "edit_parameter": {
+                      "type": "number",
+                      "minimum": -2,
+                      "maximum": 2
+                    },
+                    "edit_replace_head": {
+                      "type": "number",
+                      "minimum": -3,
+                      "maximum": 3
+                    },
+                    "landmark_synthesis": {
+                      "type": "number",
+                      "minimum": -2,
+                      "maximum": 2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generation",
+        "scope",
+        "runtime_source_sha",
+        "runtime_tree_sha",
+        "manifest",
+        "artifacts"
+      ],
+      "properties": {
+        "generation": {
+          "const": "RC4"
+        },
+        "scope": {
+          "const": "internal-restricted"
+        },
+        "runtime_source_sha": {
+          "const": "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+        },
+        "runtime_tree_sha": {
+          "const": "2e4324f0bb387ece970664eac193a7ef6a8eb05c"
+        },
+        "manifest": {
+          "$ref": "#/$defs/evidence"
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "path",
+              "sha256",
+              "bytes",
+              "source_sha",
+              "seal_receipt",
+              "signature_receipts"
+            ],
+            "properties": {
+              "id": {
+                "enum": [
+                  "full-linux-x86_64",
+                  "full-darwin-arm64",
+                  "fused-cpu-linux-x86_64"
+                ]
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "bytes": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "source_sha": {
+                "const": "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+              },
+              "seal_receipt": {
+                "$ref": "#/$defs/evidence"
+              },
+              "signature_receipts": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/$defs/evidence"
+                }
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "id": {
+                      "const": "full-linux-x86_64"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "sha256": {
+                      "const": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20"
+                    },
+                    "bytes": {
+                      "const": 293673722
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "id": {
+                      "const": "full-darwin-arm64"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "sha256": {
+                      "const": "e78bef5a71952df03f705fc18f2704b668ab4bd05f7e5ebde8ef996c8c317097"
+                    },
+                    "bytes": {
+                      "const": 290728940
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "id": {
+                      "const": "fused-cpu-linux-x86_64"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "sha256": {
+                      "const": "001be4b1e7b805e0676c6e64494d524f046cf9e43ac336398ddd00e3d855145a"
+                    },
+                    "bytes": {
+                      "const": 25791221
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "qualification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "gates_admitted",
+        "raw_all_pass",
+        "release_qualified",
+        "owner_release_approval",
+        "aggregate_signature"
+      ],
+      "properties": {
+        "status": {
+          "const": "GATES_ADMITTED_PENDING_OWNER_RELEASE_APPROVAL"
+        },
+        "gates_admitted": {
+          "const": true
+        },
+        "raw_all_pass": {
+          "const": false
+        },
+        "release_qualified": {
+          "const": false
+        },
+        "owner_release_approval": {
+          "type": "null"
+        },
+        "aggregate_signature": {
+          "type": "null"
+        }
+      }
+    },
+    "q1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "guidance_default",
+        "owner_decision",
+        "record"
+      ],
+      "properties": {
+        "outcome": {
+          "const": "NOT_RECORDED_IN_THIS_RECEIPT"
+        },
+        "guidance_default": {
+          "const": "OFF"
+        },
+        "owner_decision": {
+          "const": "OWNER-R21"
+        },
+        "record": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "controller_output",
+        "core_files",
+        "controller_execution",
+        "provider_inputs",
+        "gate_results",
+        "assembly",
+        "environment",
+        "input_hashes_rechecked",
+        "previous_attempts_promoted",
+        "controller_launch"
+      ],
+      "properties": {
+        "controller_output": {
+          "type": "string",
+          "minLength": 1
+        },
+        "core_files": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "execution",
+            "status_table",
+            "command_manifest",
+            "candidate_manifest",
+            "inputs",
+            "scaffold",
+            "assembler",
+            "generator",
+            "m3_ruling",
+            "namespace_preflight",
+            "controller_process",
+            "inputs_derivation",
+            "launch_wrapper",
+            "wrapper_log",
+            "inputs_review",
+            "owner_namespace_change"
+          ],
+          "properties": {
+            "execution": {
+              "$ref": "#/$defs/evidence"
+            },
+            "status_table": {
+              "$ref": "#/$defs/evidence"
+            },
+            "command_manifest": {
+              "$ref": "#/$defs/evidence"
+            },
+            "candidate_manifest": {
+              "$ref": "#/$defs/evidence"
+            },
+            "inputs": {
+              "$ref": "#/$defs/evidence"
+            },
+            "scaffold": {
+              "$ref": "#/$defs/evidence"
+            },
+            "assembler": {
+              "$ref": "#/$defs/evidence"
+            },
+            "generator": {
+              "$ref": "#/$defs/evidence"
+            },
+            "m3_ruling": {
+              "$ref": "#/$defs/evidence"
+            },
+            "namespace_preflight": {
+              "$ref": "#/$defs/evidence"
+            },
+            "controller_process": {
+              "$ref": "#/$defs/evidence"
+            },
+            "inputs_derivation": {
+              "$ref": "#/$defs/evidence"
+            },
+            "launch_wrapper": {
+              "$ref": "#/$defs/evidence"
+            },
+            "wrapper_log": {
+              "$ref": "#/$defs/evidence"
+            },
+            "inputs_review": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/evidence"
+                },
+                {
+                  "properties": {
+                    "sha256": {
+                      "const": "c9ee841fb5fceee1b3d293a25d1b3fbee16400bb303af1dae3b2f833deebfd09"
+                    }
+                  }
+                }
+              ]
+            },
+            "owner_namespace_change": {
+              "$ref": "#/$defs/evidence"
+            }
+          }
+        },
+        "controller_execution": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "schema",
+            "mode",
+            "source_sha",
+            "artifact_sha256",
+            "candidate_inputs_sha256",
+            "machine",
+            "started_utc",
+            "finished_utc",
+            "interrupted",
+            "release_qualified",
+            "checks"
+          ],
+          "properties": {
+            "schema": {
+              "const": "jope.rel07.gate-run/v1"
+            },
+            "mode": {
+              "const": "execute"
+            },
+            "source_sha": {
+              "const": "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+            },
+            "artifact_sha256": {
+              "const": "30767897219dcfba678bab550326e36fedb34f1bc202cc94001a1a01163d5b20"
+            },
+            "candidate_inputs_sha256": {
+              "const": "f777472ddd60c927326fc91c4ee256be64ad3f71d5a21031bffcad6f85ca9f93"
+            },
+            "machine": {
+              "type": "string",
+              "minLength": 1
+            },
+            "started_utc": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "finished_utc": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "interrupted": {
+              "const": false
+            },
+            "release_qualified": {
+              "const": false
+            },
+            "checks": {
+              "type": "array",
+              "minItems": 28,
+              "maxItems": 28,
+              "items": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": [
+                  "id",
+                  "argv",
+                  "started_utc",
+                  "finished_utc",
+                  "exit_code",
+                  "timed_out",
+                  "log_sha256"
+                ],
+                "properties": {
+                  "id": {
+                    "enum": [
+                      "M1",
+                      "M2",
+                      "M3",
+                      "M4",
+                      "M5",
+                      "S1",
+                      "S2",
+                      "S3",
+                      "S4",
+                      "R1",
+                      "R2",
+                      "R3",
+                      "R4",
+                      "A1",
+                      "A2",
+                      "A3",
+                      "A4",
+                      "A5",
+                      "E1",
+                      "E2",
+                      "E3",
+                      "U1",
+                      "U2",
+                      "T1",
+                      "T2",
+                      "T3",
+                      "D1",
+                      "D2"
+                    ]
+                  },
+                  "argv": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "started_utc": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "finished_utc": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "exit_code": {
+                    "enum": [
+                      0,
+                      1
+                    ]
+                  },
+                  "timed_out": {
+                    "const": false
+                  },
+                  "log_sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "provider_inputs": {
+          "type": "object"
+        },
+        "gate_results": {
+          "type": "array",
+          "minItems": 28,
+          "maxItems": 28,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "status",
+              "counts",
+              "result",
+              "command_log"
+            ],
+            "properties": {
+              "id": {
+                "enum": [
+                  "M1",
+                  "M2",
+                  "M3",
+                  "M4",
+                  "M5",
+                  "S1",
+                  "S2",
+                  "S3",
+                  "S4",
+                  "R1",
+                  "R2",
+                  "R3",
+                  "R4",
+                  "A1",
+                  "A2",
+                  "A3",
+                  "A4",
+                  "A5",
+                  "E1",
+                  "E2",
+                  "E3",
+                  "U1",
+                  "U2",
+                  "T1",
+                  "T2",
+                  "T3",
+                  "D1",
+                  "D2"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "PASS",
+                  "FAIL"
+                ]
+              },
+              "counts": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "collected",
+                  "executed",
+                  "passed",
+                  "failed",
+                  "skipped",
+                  "excluded"
+                ],
+                "properties": {
+                  "collected": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "executed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "passed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "failed": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "skipped": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "excluded": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              "result": {
+                "$ref": "#/$defs/evidence"
+              },
+              "command_log": {
+                "$ref": "#/$defs/evidence"
+              }
+            }
+          }
+        },
+        "assembly": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tooling_commit",
+            "argv",
+            "started_utc",
+            "finished_utc",
+            "exit_code",
+            "stdout",
+            "output",
+            "log"
+          ],
+          "properties": {
+            "tooling_commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "argv": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "started_utc": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "finished_utc": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "exit_code": {
+              "const": 0
+            },
+            "stdout": {
+              "type": "string",
+              "minLength": 1
+            },
+            "output": {
+              "$ref": "#/$defs/evidence"
+            },
+            "log": {
+              "$ref": "#/$defs/evidence"
+            }
+          }
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "nice",
+            "cargo_build_jobs",
+            "cargo_incremental",
+            "cargo_profile_dev_debug",
+            "cuda_visible_devices",
+            "math_threads",
+            "uid",
+            "apparmor_profile",
+            "host_policy_mutated_by_this_lane",
+            "userns_restriction_at_start",
+            "userns_restriction_at_assembly"
+          ],
+          "properties": {
+            "nice": {
+              "const": 19
+            },
+            "cargo_build_jobs": {
+              "const": 4
+            },
+            "cargo_incremental": {
+              "const": "0"
+            },
+            "cargo_profile_dev_debug": {
+              "const": "line-tables-only"
+            },
+            "cuda_visible_devices": {
+              "const": ""
+            },
+            "math_threads": {
+              "const": 1
+            },
+            "uid": {
+              "const": 1000
+            },
+            "apparmor_profile": {
+              "const": "lxc-unshare (unconfined)"
+            },
+            "host_policy_mutated_by_this_lane": {
+              "const": false
+            },
+            "userns_restriction_at_start": {
+              "const": "1"
+            },
+            "userns_restriction_at_assembly": {
+              "enum": [
+                "0",
+                "1"
+              ]
+            }
+          }
+        },
+        "input_hashes_rechecked": {
+          "const": true
+        },
+        "previous_attempts_promoted": {
+          "const": 0
+        },
+        "controller_launch": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "bytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
