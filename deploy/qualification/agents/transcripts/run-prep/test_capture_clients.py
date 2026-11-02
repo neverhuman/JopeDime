@@ -50,7 +50,7 @@ def _runner_fixture(
     capture_script.parent.mkdir(parents=True)
     if transport_key is None:
         capture_script.write_text(
-            "# committed synthetic fixture stub\n", encoding="utf-8"
+            "# recorder identity fixture for packaging controls\n", encoding="utf-8"
         )
     else:
         capture_script.write_bytes(
@@ -1168,3 +1168,31 @@ def test_capture_tool_source_is_separate_from_frozen_candidate(pin_plan, a5_tmp_
         ):
             THREE_CLIENTS_MODULE.run_capture(args)
     assert not args.out_dir.exists() and not args.engine_home.exists()
+
+
+def test_recorder_can_finish_during_process_identity_observation(
+    monkeypatch, a5_tmp_path
+):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path, transport_key="claude_code"
+    )
+    original = Path.read_bytes
+    observed = []
+
+    def finish_before_command_read(path):
+        if not observed and path.name == "cmdline" and path.parent.name.isdecimal():
+            pid = int(path.parent.name)
+            observed.append(pid)
+            deadline = time.monotonic() + 3
+            while _pid_is_live(pid) and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert not _pid_is_live(pid), "recorder did not finish its delayed EOF"
+            return b""  # Linux exposes empty cmdline for the now-zombie recorder.
+        return original(path)
+
+    monkeypatch.setattr(Path, "read_bytes", finish_before_command_read)
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    assert observed, "ownership transition was not exercised"
+    assert result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+    assert (args.out_dir / "clients/claude_code/transport/capture.json").is_file()
+    assert _processes_with_paths_under(a5_tmp_path) == []

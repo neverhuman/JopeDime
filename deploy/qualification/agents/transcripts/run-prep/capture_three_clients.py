@@ -471,6 +471,17 @@ class RecorderSession:
                     "recorder disappeared with live session members",
                 )
                 return set()
+            latest = _process_info(pid)
+            if latest is None or latest["state"] in {"Z", "X"}:
+                require(
+                    not any(p["session"] == pid for p in _live_processes()),
+                    "recorder exited with live session members",
+                )
+                return set()
+            require(
+                latest["start_ticks"] == lease["start_ticks"],
+                "recorder PID identity changed",
+            )
             expected = [b"--out-dir", os.fsencode(self.directory)]
             require(
                 os.fsencode(self.producer) in command
