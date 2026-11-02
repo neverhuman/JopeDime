@@ -556,7 +556,7 @@ pub fn prepare(args: ExportArgs) -> Result<Value> {
                 && output["fitted"]["reload_verified"] == false,
             "external native fitted receipt changed"
         );
-        ORDER.into_iter().map(|backend|Entry::Unsupported{backend,reason:json!({"kind":"external_library_state","detail":"complete fitted pickle is retained but reload is not verified; standalone lowering is not implemented"})}).collect()
+        ORDER.into_iter().map(|backend|Entry::Unsupported{backend,reason:json!({"kind":"external_library_state","detail":"external fitted pickle is retained; reload is not verified, so standalone lowering is unavailable"})}).collect()
     };
     let mut prepared = PreparedExport {
         schema: "jope.fitted-winner-export/v1".into(),
@@ -619,7 +619,7 @@ pub fn report(
             prepared.verify()?;
             super::fitted_export_run::recover(&directory, &prepared)?
         } else {
-            json!({"backends":ORDER.iter().map(|b|json!({"backend":b,"status":if winner.method.starts_with("external."){"unsupported"}else{"unattempted"},"reason":if winner.method.starts_with("external."){Some("external native pickle retained; standalone lowering not implemented")}else{None}})).collect::<Vec<_>>(),"execution_cost":null})
+            json!({"backends":ORDER.iter().map(|b|json!({"backend":b,"status":if winner.method.starts_with("external."){"unsupported"}else{"unattempted"},"reason":if winner.method.starts_with("external."){Some("external fitted pickle retained; reload is not verified, so standalone lowering is unavailable")}else{None}})).collect::<Vec<_>>(),"execution_cost":null})
         };
         folds.push(json!({"fold":fold,"request_sha256":observation.request.identity()?,"fitted_sha256":observation.result.fitted_state_sha256,"native_fitted_result_retained":true,"inference":backends}));
     }
