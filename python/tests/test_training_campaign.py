@@ -21,7 +21,8 @@ def state(monkeypatch):
     monkeypatch.setattr(campaign, "_runtime_identity_for_test", campaign.runtime_identity, raising=False)
     monkeypatch.setattr(campaign, "runtime_identity", lambda: {"fixture": "explicit-test-runtime"})
     with tempfile.TemporaryDirectory(prefix="campaign-", dir=root) as directory:
-        yield Path(directory)
+        # Native requests identify state canonically, including a symlinked target.
+        yield Path(directory).resolve()
 
 
 def plan(state, **options):
