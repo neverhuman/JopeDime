@@ -162,7 +162,7 @@ for all parameters: Kimi~K2 has 32B active of 1T, while DeepSeek-V3 has 37B
 active of 671B \citep{kimiteam2025k2,deepseekv3}. Resident one-byte weights
 for 1T parameters alone require at least 13 H100 SXM GPUs with 80\,GB each
 \citep{nvidia2026h100}; runtime state needs additional memory. This memory
-floor is separate from the cost estimates omitted below.
+floor is separate from the full cost projection discussed next.
 
 A reproducible projection therefore needs a pinned model and hardware
 configuration, dated prices, measured or justified utilization and an
@@ -177,7 +177,3 @@ cost projection remains a measurement task.
 Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves
 expected cost per win only if mean attempt cost stays fixed. Measuring that
 tradeoff requires a common task mix, incumbent and verification rule.
-
-\Cref{sec:method} separates the reference writer and ranking map from
-the later adapter record. Those routes need separate generation, training
-and validation accounts.
