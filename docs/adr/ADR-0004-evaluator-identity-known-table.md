@@ -139,20 +139,20 @@ fixture changes only its generation SHA. The transition is registered in
 `rustunsafe_authority_lineage_rebaseline.v1.json`. No known-identity row is added because this
 work has no shipped receipt proving a new identity existed.
 
-## Current identity transition: P45 load-guarded tiny-budget backstop (2026-11-02)
+## Current identity transition: P45 bounded tiny-budget regression (2026-11-02)
 
-P45 hardens `race_respects_tiny_time_budget` with unconditional rung admission counts and a
-30-second elapsed backstop gated by the documented `remote_test.sh` host-load admission (including
-queued-job reservations). A skipped elapsed check is logged. The test-only `evolve.rs` edit changes
-a hashed evaluator source input, although evaluator calculations, DSL ABI, Cargo.lock and runtime
-behavior are unchanged. The implementation hash advances from
-`034d6836456f2e7cb96a88b393bb435979dbfe443342196f6eff3eab9da439c9` to
-`135d14006ae46aa22801b8c1a8bacf432c18156e95e8a921dbda16dce7a72884`; the identity digest advances
-from `f09606a184af4e783ebaf750c6d3e21d0ec442f01f578436cac873c3186388e4` to
-`f98fd62d588375253f46904c63641349164b78b92df1318810b04f47d0b7ab1c`. The DSL ABI remains
+P45 asserts that `race_respects_tiny_time_budget` admits exactly one rung-0 chunk and stops
+before rungs 1 and 2, with an unconditional 30-second elapsed backstop. It now evaluates one
+`RACE_CHUNK` of simple ridge candidates on a 32-row fixture, reducing work while preserving the
+budget admission proof. The test-only `evolve.rs` edit changes a hashed evaluator source input,
+although evaluator calculations, DSL ABI, Cargo.lock and runtime behavior are unchanged. The
+implementation hash advances from `135d14006ae46aa22801b8c1a8bacf432c18156e95e8a921dbda16dce7a72884`
+to `043b75675535cec30addf8495c8e5391ee13ac54f7469a15a44f3113e8ab6281`; the identity digest
+advances from `f98fd62d588375253f46904c63641349164b78b92df1318810b04f47d0b7ab1c` to
+`c827fe4c9c302f6bc25a6a882589be25eda9a736759a7e425cdb64677f8b39d0`. The DSL ABI remains
 `c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389`, and the Cargo.lock hash
 remains `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`. The compatibility
 identity fixtures were regenerated at source commit
-`6641b6b34249e5bf7eb5a92847e8a3e33f2ff782` using the announced identity-only procedure; the follow-up
-transition is recorded in `p45_feat_math_race_load_guard_identity_rebaseline.v1.json`. No known-identity
+`74167bd507c4bcfe7b43608ceffea73b12e73749` using the announced identity-only procedure; the
+transition is recorded in `p45_feat_math_race_30s_test_identity_rebaseline.v1.json`. No known-identity
 row is added because this work has no shipped receipt proving the new identity existed.
