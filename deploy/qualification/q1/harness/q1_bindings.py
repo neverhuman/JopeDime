@@ -111,8 +111,8 @@ def validate_pins(pins):
             raise ValueError(f"Q1 {name} does not match the reviewed source binding")
 
 
-def validate_evaluator_pin(evaluator_sha256):
-    """D5 binds full executable bytes; reproduction does not qualify runtime."""
+def validate_evaluator_pin(evaluator_sha256, source_commit=None):
+    """Bind full executable bytes and optional compiled source; no runtime promotion."""
     pin = json.loads(EVALUATOR_PIN.read_text())
     if (
         pin.get("schema") != "jope.q1-evaluator-pin/v1"
@@ -123,4 +123,8 @@ def validate_evaluator_pin(evaluator_sha256):
         if sha_file(EVALUATOR_PIN.parent / reference["path"]) != reference["sha256"]:
             raise ValueError("Q1 evaluator reproduction/recipe hash mismatch")
     if evaluator_sha256 != pin["sha256"]:
-        raise ValueError("Q1 evaluator_sha256 does not match the D5 full-binary pin")
+        raise ValueError(
+            "Q1 evaluator_sha256 does not match the reviewed full-binary pin"
+        )
+    if source_commit is not None and pin.get("source_commit") != source_commit:
+        raise ValueError("Q1 compiled evaluator source differs from the reviewed pin")

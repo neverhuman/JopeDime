@@ -127,7 +127,9 @@ def subgroup_minimum(plan, group):
 
 def validate_plan(plan, preregistration=PREREGISTRATION):
     require(
-        set(plan) in (PLAN_KEYS, PLAN_KEYS | {"wide_census_sha256"}),
+        PLAN_KEYS
+        <= set(plan)
+        <= PLAN_KEYS | {"wide_census_sha256", "metadata_source_commit"},
         "unsupported/missing plan field",
     )
     require(plan["schema"] == "jope.q1-plan/v1", "unsupported plan schema")
@@ -140,6 +142,13 @@ def validate_plan(plan, preregistration=PREREGISTRATION):
         re.fullmatch(r"[0-9a-f]{40}", plan["source_commit"]) is not None,
         "source commit required",
     )
+    if "metadata_source_commit" in plan:
+        require(
+            isinstance(plan["metadata_source_commit"], str)
+            and re.fullmatch(r"[0-9a-f]{40}", plan["metadata_source_commit"])
+            is not None,
+            "metadata source commit required",
+        )
     require(plan["mode"] in ("heuristic_smoke", "qualification"), "invalid mode")
     require(
         plan["mode"] == "qualification" or "wide_census_sha256" not in plan,
@@ -220,7 +229,10 @@ def validate_plan(plan, preregistration=PREREGISTRATION):
             "all qualification identities must be pinned",
         )
         q1_bindings.validate_pins(plan["pins"])
-        q1_bindings.validate_evaluator_pin(plan["pins"]["evaluator_sha256"])
+        q1_bindings.validate_evaluator_pin(
+            plan["pins"]["evaluator_sha256"],
+            source_commit=plan["source_commit"],
+        )
         require(
             isinstance(plan["training_families"], list)
             and plan["training_families"]
