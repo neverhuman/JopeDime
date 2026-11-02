@@ -1,0 +1,30 @@
+{
+  "schema": "whitepaper.candidate-retained-figure/v1",
+  "input_csv_sha256": "3494e66db541d4f9713d65bbe9abfd5d18be94aa2ffadb9dd0d6aea0a3adc092",
+  "source_receipt_sha256": "f644de31926798b65d4f6ffe50c58a1320aa47ea08efbdb2ff06023f04d26224",
+  "generator_sha256": "5428be33f8c0feac38c15291034f9e405c2c5a60a2344e5bfd965d0866cbb63c",
+  "figure_sha256": "b95e0ff255e281492a1c90e99cc5281fc6ae0ea99e4c6472ab3dbfe90696f1df",
+  "rows": 500,
+  "round_window": [
+    3112,
+    3611
+  ],
+  "accepted_exact_ties": [],
+  "accepted_strict_gains": [
+    3175
+  ],
+  "rejected_round_spans": [
+    [
+      3112,
+      3174
+    ],
+    [
+      3176,
+      3611
+    ]
+  ],
+  "final_retained_utility": "1.1389572403748425",
+  "matplotlib_version": "3.10.8",
+  "scope": "Adaptive adapter admission telemetry, not independent first-proposal or deployment performance",
+  "reproduce": "python3 figures/scripts/make_candidate_retained_trace.py --recent"
+}
