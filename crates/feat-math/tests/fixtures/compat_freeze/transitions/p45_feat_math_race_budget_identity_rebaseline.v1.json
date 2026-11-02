@@ -2,17 +2,17 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "Announced identity-only successor for P45 tiny-budget race test hardening. The test-only evolve.rs edit changes a hashed evaluator input; evaluator calculations, DSL ABI, Cargo.lock and runtime behavior are unchanged. The identity fixtures were regenerated at the source commit. No known-identity row is added without a shipped receipt proving the new identity existed.",
   "plan_reference": "P45 feat-math tiny-budget race load fix; ADR-0004 and compat_freeze identity-only procedure",
-  "source_commit": "a60d765014d6efaba9836030823ceac43d280d2c",
+  "source_commit": "c6c46d5783a83276c6b8f953dbff770191b4ce19",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
-      "before": "58e1ac3f3907a3b7c5239447a8e89c2df5f619220c667e06044fe4fcf7b55d30",
-      "after": "3d455ab9939e2244e298b5197e3f67aa58518025ef5c71a693261e3725e78952"
+      "before": "3d455ab9939e2244e298b5197e3f67aa58518025ef5c71a693261e3725e78952",
+      "after": "9297f9cdcc04252a56c5caa72f1039e3c262e92c88df352eafca7703e527396c"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
-      "before": "cddee93e84223fa23bbb744b560f965034d8fbc320ace50c04335ca37dc74e0d",
-      "after": "416a6d09263b6e51b65497fd3e91e59cfb474c3fc46a8586ed6f319bdce97904"
+      "before": "416a6d09263b6e51b65497fd3e91e59cfb474c3fc46a8586ed6f319bdce97904",
+      "after": "b199478d3bf41e023843a966b513b954d0580eb0a6dba645bd7e12fd36f934aa"
     }
   ]
 }
