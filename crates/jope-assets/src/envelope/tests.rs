@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 fn sample() -> Footer {
     Footer {
         base_executable_len: 10_000,
