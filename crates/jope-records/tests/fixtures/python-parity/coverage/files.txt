@@ -1091,6 +1091,14 @@ crates/jope-engine/tests/binary_preparation.rs
 crates/jope-engine/tests/bounded_assignment.rs
 crates/jope-engine/tests/bounded_preflight_cli.rs
 crates/jope-engine/tests/bounded_run.rs
+crates/jope-engine/tests/bounded_run/cli.rs
+crates/jope-engine/tests/bounded_run/plan.rs
+crates/jope-engine/tests/bounded_run/preflight.rs
+crates/jope-engine/tests/bounded_run/rendezvous.rs
+crates/jope-engine/tests/bounded_run/socket_rendezvous.rs
+crates/jope-engine/tests/bounded_run/status.rs
+crates/jope-engine/tests/bounded_run/training_partition.rs
+crates/jope-engine/tests/bounded_run/window.rs
 crates/jope-engine/tests/bounded_run_recovery.rs
 crates/jope-engine/tests/checkpoint_commit.rs
 crates/jope-engine/tests/committed_updates.rs
