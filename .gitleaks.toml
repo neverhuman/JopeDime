@@ -132,3 +132,24 @@ condition = "AND"
 regexTarget = "match"
 paths = ['''^deploy/dl-flywheel/docs/native-dispatch-qualification-20261009\.json$''', '''^docs/internal/kernel2/receipts/evaluator-identity-3ec654cb/receipt\.json$''', '''^docs/internal/kernel2/receipts/evaluator-identity-v0\.2\.0/receipt\.json$''']
 regexes = ['''^valuation_key":"[0-9a-f]{64}"$''']
+
+[[rules.allowlists]]
+description = "H205 README family_key is a public content identity, not an authentication secret"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^research/flywheel_selfplay/h205_fresh_vs_static/README\.md$''']
+regexes = ['''^family_key: [0-9a-f]{40}`$''']
+
+[[rules.allowlists]]
+description = "H205 preregistration family_key is a public content identity, not an authentication secret"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^research/flywheel_selfplay/h205_fresh_vs_static/PREREG\.md$''']
+regexes = ['''^family_key = [0-9a-f]{40}`$''']
+
+[[rules.allowlists]]
+description = "H205 metrics family_key is a public content identity, not an authentication secret"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^research/flywheel_selfplay/h205_fresh_vs_static/metrics\.json$''']
+regexes = ['''^family_key": "[0-9a-f]{40}"$''']
