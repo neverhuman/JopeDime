@@ -18,7 +18,7 @@ pub struct ControlPair {
 }
 
 impl ControlPair {
-    pub fn create() -> Result<Self, ControlError> {
+    pub fn create() -> Result<Self, DaemonControlFrameError> {
         let (daemon, worker) = StdUnixStream::pair()?;
         let fd = worker.as_raw_fd();
         let flags = FdFlag::from_bits_truncate(fcntl(fd, FcntlArg::F_GETFD)?);
@@ -38,7 +38,7 @@ impl ControlPair {
     pub fn close_worker_and_open_daemon(
         self,
         max_frame: usize,
-    ) -> Result<ControlChannel, ControlError> {
+    ) -> Result<ControlChannel, DaemonControlFrameError> {
         drop(self.worker);
         self.daemon.set_nonblocking(true)?;
         Ok(ControlChannel {
@@ -54,31 +54,31 @@ pub struct ControlChannel {
 }
 
 impl ControlChannel {
-    pub async fn send<T: Serialize>(&mut self, frame: &T) -> Result<(), ControlError> {
-        let payload = postcard::to_stdvec(frame).map_err(ControlError::Encode)?;
+    pub async fn send<T: Serialize>(&mut self, frame: &T) -> Result<(), DaemonControlFrameError> {
+        let payload = postcard::to_stdvec(frame).map_err(DaemonControlFrameError::Encode)?;
         if payload.len() > self.max_frame {
-            return Err(ControlError::FrameTooLarge(payload.len()));
+            return Err(DaemonControlFrameError::FrameTooLarge(payload.len()));
         }
-        let length =
-            u32::try_from(payload.len()).map_err(|_| ControlError::FrameTooLarge(payload.len()))?;
+        let length = u32::try_from(payload.len())
+            .map_err(|_| DaemonControlFrameError::FrameTooLarge(payload.len()))?;
         self.stream.write_all(&length.to_be_bytes()).await?;
         self.stream.write_all(&payload).await?;
         Ok(())
     }
 
-    pub async fn receive<T: DeserializeOwned>(&mut self) -> Result<T, ControlError> {
+    pub async fn receive<T: DeserializeOwned>(&mut self) -> Result<T, DaemonControlFrameError> {
         let mut length = [0_u8; 4];
         self.stream.read_exact(&mut length).await?;
         let length = u32::from_be_bytes(length) as usize;
         if length > self.max_frame {
-            return Err(ControlError::FrameTooLarge(length));
+            return Err(DaemonControlFrameError::FrameTooLarge(length));
         }
         let mut payload = vec![0; length];
         self.stream.read_exact(&mut payload).await?;
         let (frame, remaining): (T, &[u8]) =
-            postcard::take_from_bytes(&payload).map_err(ControlError::Decode)?;
+            postcard::take_from_bytes(&payload).map_err(DaemonControlFrameError::Decode)?;
         if !remaining.is_empty() {
-            return Err(ControlError::TrailingBytes);
+            return Err(DaemonControlFrameError::TrailingBytes);
         }
         Ok(frame)
     }
@@ -86,10 +86,10 @@ impl ControlChannel {
     pub async fn receive_until<T: DeserializeOwned>(
         &mut self,
         timeout: Duration,
-    ) -> Result<T, ControlError> {
+    ) -> Result<T, DaemonControlFrameError> {
         tokio::time::timeout(timeout, self.receive())
             .await
-            .map_err(|_| ControlError::Timeout)?
+            .map_err(|_| DaemonControlFrameError::Timeout)?
     }
 
     pub fn split(self) -> (ControlSender, ControlReceiver) {
@@ -113,13 +113,13 @@ pub struct ControlSender {
 }
 
 impl ControlSender {
-    pub async fn send<T: Serialize>(&mut self, frame: &T) -> Result<(), ControlError> {
-        let payload = postcard::to_stdvec(frame).map_err(ControlError::Encode)?;
+    pub async fn send<T: Serialize>(&mut self, frame: &T) -> Result<(), DaemonControlFrameError> {
+        let payload = postcard::to_stdvec(frame).map_err(DaemonControlFrameError::Encode)?;
         if payload.len() > self.max_frame {
-            return Err(ControlError::FrameTooLarge(payload.len()));
+            return Err(DaemonControlFrameError::FrameTooLarge(payload.len()));
         }
-        let length =
-            u32::try_from(payload.len()).map_err(|_| ControlError::FrameTooLarge(payload.len()))?;
+        let length = u32::try_from(payload.len())
+            .map_err(|_| DaemonControlFrameError::FrameTooLarge(payload.len()))?;
         self.writer.write_all(&length.to_be_bytes()).await?;
         self.writer.write_all(&payload).await?;
         Ok(())
@@ -132,19 +132,19 @@ pub struct ControlReceiver {
 }
 
 impl ControlReceiver {
-    pub async fn receive<T: DeserializeOwned>(&mut self) -> Result<T, ControlError> {
+    pub async fn receive<T: DeserializeOwned>(&mut self) -> Result<T, DaemonControlFrameError> {
         let mut length = [0_u8; 4];
         self.reader.read_exact(&mut length).await?;
         let length = u32::from_be_bytes(length) as usize;
         if length > self.max_frame {
-            return Err(ControlError::FrameTooLarge(length));
+            return Err(DaemonControlFrameError::FrameTooLarge(length));
         }
         let mut payload = vec![0; length];
         self.reader.read_exact(&mut payload).await?;
         let (frame, remaining): (T, &[u8]) =
-            postcard::take_from_bytes(&payload).map_err(ControlError::Decode)?;
+            postcard::take_from_bytes(&payload).map_err(DaemonControlFrameError::Decode)?;
         if !remaining.is_empty() {
-            return Err(ControlError::TrailingBytes);
+            return Err(DaemonControlFrameError::TrailingBytes);
         }
         Ok(frame)
     }
@@ -152,15 +152,15 @@ impl ControlReceiver {
     pub async fn receive_until<T: DeserializeOwned>(
         &mut self,
         timeout: Duration,
-    ) -> Result<T, ControlError> {
+    ) -> Result<T, DaemonControlFrameError> {
         tokio::time::timeout(timeout, self.receive())
             .await
-            .map_err(|_| ControlError::Timeout)?
+            .map_err(|_| DaemonControlFrameError::Timeout)?
     }
 }
 
 #[derive(Debug, Error)]
-pub enum ControlError {
+pub enum DaemonControlFrameError {
     #[error(transparent)]
     Io(#[from] io::Error),
     #[error("control frame encode failed: {0}")]

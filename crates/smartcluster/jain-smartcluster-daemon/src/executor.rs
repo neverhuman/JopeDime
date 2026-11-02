@@ -28,7 +28,7 @@ use crate::cgroup::{
     AttemptKey, CgroupError, CgroupLimits, CgroupManager, IsolationMode, JobCgroup,
 };
 use crate::config::{ExecutionConfig, WorkerConfig};
-use crate::control::{ControlChannel, ControlError, ControlPair, CONTROL_FD_ENV};
+use crate::control::{ControlChannel, ControlPair, DaemonControlFrameError, CONTROL_FD_ENV};
 
 pub const EXEC_HELPER_MARKER: &str = "__scqd_exec_helper";
 
@@ -724,7 +724,7 @@ impl RunningWorkload {
                         break;
                     }
                     Ok(_) => continue,
-                    Err(ControlError::Timeout) => break,
+                    Err(DaemonControlFrameError::Timeout) => break,
                     Err(error) => return Err(error.into()),
                 }
             }
@@ -969,7 +969,7 @@ pub enum ExecutorError {
     #[error(transparent)]
     Cgroup(#[from] CgroupError),
     #[error(transparent)]
-    Control(#[from] ControlError),
+    Control(#[from] DaemonControlFrameError),
     #[error(transparent)]
     Nix(#[from] nix::Error),
     #[error("terminal operation failed: {0}")]

@@ -22,7 +22,7 @@ use crate::auth::{AuthenticatedPeer, Authorizer, PeerIdentity};
 use crate::capacity::EffectiveCapacity;
 use crate::cgroup::{CgroupManager, JobCgroup};
 use crate::config::ExecutionConfig;
-use crate::control::{ControlError, ControlReceiver, ControlSender};
+use crate::control::{ControlReceiver, ControlSender, DaemonControlFrameError};
 use crate::event_log::{EventLog, EventLogError, LogItem};
 use crate::executor::{
     ExecutionAllocation, Executor, ExecutorError, ProcessWaiter, RunningParts, WorkloadIo,
