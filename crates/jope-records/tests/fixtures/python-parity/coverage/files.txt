@@ -308,6 +308,9 @@ crates/jope-bench/src/panel/inference_inputs.rs
 crates/jope-bench/src/panel/inference_package.rs
 crates/jope-bench/src/panel/inference_prediction.rs
 crates/jope-bench/src/panel/inference_report.rs
+crates/jope-bench/src/panel/inference_report/format.rs
+crates/jope-bench/src/panel/inference_report/json.rs
+crates/jope-bench/src/panel/inference_report/tests.rs
 crates/jope-bench/src/panel/methods.rs
 crates/jope-bench/src/panel/mod.rs
 crates/jope-bench/src/panel/optimize.rs
