@@ -1176,7 +1176,7 @@ impl Supervisor {
                 |row| row.get(0),
             )?;
             if prior == 0 {
-                bail!("stale retirement selected no protocol pairs");
+                bail!("retirement selected no protocol pairs");
             }
             transaction.commit()?;
             return Ok(prior as u64);
