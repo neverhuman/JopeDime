@@ -3047,26 +3047,32 @@ fn task_status(
         Some(_) => bail!("accepted-by-task tasks must be a JSON object"),
         None => None,
     };
-    let shadows = controller
-        .get("shadow_models")
-        .cloned()
-        .unwrap_or_else(|| json!({}));
-    let learning = promotion
-        .get("internal_learning")
-        .cloned()
-        .unwrap_or_else(|| json!({}));
+    let shadows = match controller.get("shadow_models") {
+        Some(Value::Object(shadows)) => Some(shadows),
+        Some(_) => bail!("task-learning-controller shadow_models must be a JSON object"),
+        None => None,
+    };
+    let learning = match promotion.get("internal_learning") {
+        Some(Value::Object(learning)) => Some(learning),
+        Some(_) => bail!("promotion internal_learning must be a JSON object"),
+        None => None,
+    };
+    let learning_tasks = match learning.and_then(|learning| learning.get("tasks")) {
+        Some(Value::Object(tasks)) => Some(tasks),
+        Some(_) => bail!("promotion internal_learning.tasks must be a JSON object"),
+        None => None,
+    };
     let mut tasks = Map::new();
     for task in crate::selfplay_expansion::TASKS {
         let accepted_row = accepted_tasks
             .and_then(|tasks| tasks.get(task))
             .cloned()
             .unwrap_or(Value::Null);
-        let shadow_row = shadows.get(task).cloned().unwrap_or(Value::Null);
-        let task_learning = learning
-            .get("tasks")
-            .and_then(|value| value.get(task))
+        let shadow_row = shadows
+            .and_then(|shadows| shadows.get(task))
             .cloned()
-            .unwrap_or_else(|| json!({}));
+            .unwrap_or(Value::Null);
+        let task_learning = learning_tasks.and_then(|tasks| tasks.get(task));
         tasks.insert(
             task.to_owned(),
             json!({
@@ -3074,11 +3080,15 @@ fn task_status(
                 "latest_shadow": shadow_row.get("checkpoint_sha256").cloned().unwrap_or(Value::Null),
                 "corpus_watermark": corpus_watermark,
                 "queue_fresh": queue_fresh,
-                "promotion_eligibility": task_learning.get("promotion_eligible").cloned().unwrap_or(Value::Null),
-                "blocking_gate": task_learning.get("blocking_gate")
-                    .or_else(|| task_learning.get("gate_reason"))
-                    .cloned().unwrap_or(Value::Null),
-                "last_verified_learning_delta": task_learning.get("last_verified_learning_delta").cloned().unwrap_or(Value::Null),
+                "promotion_eligibility": task_learning.and_then(|row| row.get("promotion_eligible")).cloned().unwrap_or(Value::Null),
+                "blocking_gate": match task_learning.and_then(|row| row.get("blocking_gate")) {
+                    Some(gate) => gate.clone(),
+                    None => match task_learning.and_then(|row| row.get("gate_reason")) {
+                        Some(gate) => gate.clone(),
+                        None => Value::Null,
+                    },
+                },
+                "last_verified_learning_delta": task_learning.and_then(|row| row.get("last_verified_learning_delta")).cloned().unwrap_or(Value::Null),
             }),
         );
     }
