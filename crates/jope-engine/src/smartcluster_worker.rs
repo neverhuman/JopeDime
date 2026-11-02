@@ -883,6 +883,17 @@ fn operation_outputs(op: &Operation) -> Vec<&Path> {
     }
 }
 
+fn available_storage_bytes(path: &Path) -> Result<u64> {
+    let stats = nix::sys::statvfs::statvfs(path).context("storage measurement unavailable")?;
+    Ok(storage_bytes_from_stats(stats))
+}
+
+fn storage_bytes_from_stats(stats: nix::sys::statvfs::Statvfs) -> u64 {
+    stats
+        .blocks_available()
+        .saturating_mul(stats.fragment_size())
+}
+
 fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
     for (mountpoint, device) in &policy.storage_devices {
         let mounts = fs::read_to_string("/proc/self/mountinfo")?;
@@ -920,22 +931,40 @@ fn admission_guards(policy: &WorkerPolicy) -> Result<()> {
         "RAM reserve blocks subtask"
     );
     for (path, reserve) in &policy.storage_reserves {
-        let path = std::ffi::CString::new(path.as_os_str().as_encoded_bytes())?;
-        let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
         ensure!(
-            // SAFETY: `path` is a CString that outlives the call (NUL-terminated) and `stats`
-            // has room for the one statvfs that statvfs writes.
-            unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } == 0,
-            "storage measurement unavailable"
-        );
-        // SAFETY: statvfs returned 0 (checked above), so it filled every field of `stats`.
-        let stats = unsafe { stats.assume_init() };
-        ensure!(
-            stats.f_bavail.saturating_mul(stats.f_frsize) >= *reserve,
+            available_storage_bytes(path)? >= *reserve,
             "storage reserve blocks subtask"
         );
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod storage_measurement_tests {
+    use super::{available_storage_bytes, storage_bytes_from_stats};
+
+    #[test]
+    fn available_storage_uses_available_blocks_and_fragment_size() {
+        let directory = tempfile::tempdir().expect("temporary directory");
+        let stats = nix::sys::statvfs::statvfs(directory.path()).expect("filesystem stats");
+
+        assert_eq!(
+            storage_bytes_from_stats(stats),
+            stats
+                .blocks_available()
+                .saturating_mul(stats.fragment_size())
+        );
+    }
+
+    #[test]
+    fn unavailable_storage_keeps_admission_error_context() {
+        let directory = tempfile::tempdir().expect("temporary directory");
+        let missing = directory.path().join("missing");
+
+        let error = available_storage_bytes(&missing).expect_err("missing path is unavailable");
+
+        assert!(format!("{error:#}").contains("storage measurement unavailable"));
+    }
 }
 
 fn read_frame(stream: &mut UnixStream) -> Result<WorkerControlFrame> {
