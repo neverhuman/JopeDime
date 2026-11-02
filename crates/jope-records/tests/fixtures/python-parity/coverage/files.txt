@@ -590,6 +590,8 @@ crates/jope-campaigns/src/bin/jope_training_archive/sources.rs
 crates/jope-campaigns/src/bin/jope_training_history.rs
 crates/jope-campaigns/src/bin/jope_training_replica.rs
 crates/jope-campaigns/src/bin/jope_training_replica/commands.rs
+crates/jope-campaigns/src/bin/jope_training_replica/commands/status.rs
+crates/jope-campaigns/src/bin/jope_training_replica/commands/tests.rs
 crates/jope-campaigns/src/bin/jope_utilization_supervisor.rs
 crates/jope-campaigns/src/bin/jope_v3_control.rs
 crates/jope-campaigns/src/bin/scq_runs_gc.rs
