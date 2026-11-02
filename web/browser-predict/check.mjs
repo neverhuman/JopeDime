@@ -15,18 +15,21 @@ function call(name, value) {
   return JSON.parse(new TextDecoder().decode(new Uint8Array(k.memory.buffer, k.browser_output(), k.browser_output_len())));
 }
 let rows = 0;
-for (const name of ['ridge', 'gpr']) {
+for (const name of ['ridge', 'gpr', 'binary']) {
   const fixture = JSON.parse(fs.readFileSync(path.join(fixtureRoot, name + '.json')));
   const loaded = call('browser_load', fixture.envelope);
   assert(loaded.ok, JSON.stringify(loaded));
   for (const probe of fixture.probes) {
     const result = call('browser_predict', { values: probe.values });
     assert(result.ok, JSON.stringify(result));
-    assert(Math.abs(result.result.value - probe.expected) <= 1e-9 * Math.max(1, Math.abs(probe.expected)), `${name}: native/WASM prediction differs`);
+    if (name === 'binary') {
+      assert.deepEqual(result.result.classes, probe.classes);
+      result.result.probabilities.forEach((p, index) => assert(Math.abs(p - probe.probabilities[index]) <= 1e-10));
+    } else { assert(Math.abs(result.result.value - probe.expected) <= 1e-9 * Math.max(1, Math.abs(probe.expected)), `${name}: native/WASM prediction differs`); }
     rows++;
   }
   const changed = structuredClone(fixture.envelope);
-  changed.parts['pipeline.json'] = Buffer.from('{}').toString('base64');
+  changed.parts[JSON.parse(changed.manifest).primary] = Buffer.from('{}').toString('base64');
   assert.equal(call('browser_load', changed).ok, false);
   assert.equal(call('browser_predict', { values: ['0', '4'] }).ok, false);
 }

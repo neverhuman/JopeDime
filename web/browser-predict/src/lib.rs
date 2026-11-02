@@ -370,6 +370,99 @@ mod tests {
         }
     }
     #[test]
+    fn native_appliance_binary_keeps_categorical_inputs_and_class_labels() {
+        use feat_math::advanced_v3::{ColumnSpec, DataSchema, RowSemantics};
+        use jope_runtime::{
+            budget::BudgetRecord,
+            fitted::{CreatedBy, FitRecord, FittedModel},
+            methods::{native::fit_native, registry::rust_methods},
+            task::TaskKind as NativeTask,
+        };
+        feat_math::set_parallel_enabled(false);
+        let method = rust_methods(NativeTask::Binary)
+            .unwrap()
+            .into_iter()
+            .find(|m| m.family == "logit_ridge")
+            .unwrap();
+        let schema = DataSchema {
+            columns: vec![ColumnSpec::numeric("x"), ColumnSpec::categorical("region")],
+            row_semantics: RowSemantics::Iid,
+        };
+        let rows = (0..24)
+            .map(|i| {
+                vec![
+                    i.to_string(),
+                    if i % 2 == 0 {
+                        "north".into()
+                    } else {
+                        "south".into()
+                    },
+                ]
+            })
+            .collect();
+        let train = RawTable::new(vec!["x".into(), "region".into()], rows).unwrap();
+        let labels = vec!["No".to_owned(), "Yes".to_owned()];
+        let y = (0..24).map(|i| f64::from(i >= 12)).collect::<Vec<_>>();
+        let bound = fit_native(&method, NativeTask::Binary, &schema, &labels, &train, &y).unwrap();
+        let budget = BudgetRecord {
+            time_limit_seconds: None,
+            consumed_seconds: 0.0,
+            threads: 1,
+            enforcement: "test",
+        };
+        let fitted = FittedModel::new(FitRecord {
+            method: &method,
+            kind: NativeTask::Binary,
+            classes: &labels,
+            target: "class",
+            schema: &schema,
+            model: bound,
+            rows: 24,
+            fitting_input_sha256: "a".repeat(64),
+            training_file_sha256: "b".repeat(64),
+            selection: None,
+            budget: &budget,
+            created_by: CreatedBy {
+                source_sha40: "a".repeat(40),
+                ..Default::default()
+            },
+        })
+        .unwrap();
+        let object = ModelObject::from_fitted(&fitted).unwrap();
+        let loaded = Loaded::load(&envelope(&object)).unwrap();
+        let values = vec![Some("18"), Some("north")];
+        let expected = fitted
+            .predict(
+                &RawTable::new(
+                    vec!["x".into(), "region".into()],
+                    vec![vec!["18".into(), "north".into()]],
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        let Predictions::Probabilities {
+            classes,
+            values: probabilities,
+        } = expected
+        else {
+            panic!("binary model did not return probabilities")
+        };
+        let actual = loaded
+            .predict(&serde_json::to_vec(&json!({"values":values})).unwrap())
+            .unwrap();
+        assert_eq!(actual["classes"], json!(classes));
+        assert_eq!(actual["probabilities"], json!(probabilities[0]));
+        if let Ok(directory) = std::env::var("JOPE_BROWSER_FIXTURES") {
+            let fixture = json!({"envelope":serde_json::from_slice::<Value>(&envelope(&object)).unwrap(),"probes":[{"values":values,"classes":classes,"probabilities":probabilities[0]}]});
+            std::fs::write(
+                std::path::Path::new(&directory).join("binary.json"),
+                serde_json::to_vec_pretty(&fixture).unwrap(),
+            )
+            .unwrap();
+        }
+    }
+
+    #[test]
     fn invalid_parts_are_refused_and_a_failed_load_clears_the_previous_model() {
         let (object, _) = fixture("ridge");
         let bytes = envelope(&object);
