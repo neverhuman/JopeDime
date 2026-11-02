@@ -258,6 +258,126 @@ def test_normal_exit_waits_for_isolated_recorder_receipt(a5_tmp_path):
     assert result["clients"]["claude_code"]["capture_error"] is None
 
 
+def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
+    args, plan, _candidate, client = _runner_fixture(
+        a5_tmp_path, drain_key="claude_code"
+    )
+    plan["clients"]["claude_code"]["timeout_seconds"] = 1
+    args.client_plan.write_text(json.dumps(plan), encoding="utf-8")
+
+    class ShiftedTime:
+        offset = 0.0
+
+        @staticmethod
+        def monotonic():
+            return time.monotonic() + ShiftedTime.offset
+
+        @staticmethod
+        def sleep(seconds):
+            return time.sleep(seconds)
+
+    original_popen = THREE_CLIENTS_MODULE.subprocess.Popen
+
+    def client_exits_during_deadline_poll(command, *positional, **kwargs):
+        process = original_popen(command, *positional, **kwargs)
+        if command[0] == str(client):
+            original_wait = process.wait
+            first_wait = True
+
+            def wait_then_report_timeout(timeout=None):
+                nonlocal first_wait
+                if first_wait:
+                    first_wait = False
+                    exit_code = original_wait(timeout=5)
+                    assert exit_code == 0
+                    # The client exits as wait reports its deadline; the next
+                    # loop iteration must not create a recorder grace window.
+                    ShiftedTime.offset = 1.1
+                    raise subprocess.TimeoutExpired(command, timeout)
+                return original_wait(timeout=timeout)
+
+            process.wait = wait_then_report_timeout
+        return process
+
+    drain_calls = []
+
+    def drain_must_not_run(*_args, **_kwargs):
+        drain_calls.append(True)
+        raise AssertionError("no recorder drain budget remains at the client deadline")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
+        patch.setattr(
+            THREE_CLIENTS_MODULE.subprocess,
+            "Popen",
+            client_exits_during_deadline_poll,
+        )
+        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", drain_must_not_run)
+        result = THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert result["status"] == "INCOMPLETE"
+    assert result["clients"]["claude_code"]["client_exit"] == 0
+    assert not result["clients"]["claude_code"]["timed_out"]
+    assert drain_calls == []
+    assert not (args.out_dir / "clients/claude_code/transport/capture.json").exists()
+
+
+def test_normal_exit_drain_deadline_is_not_replaced_with_grace(monkeypatch, a5_tmp_path):
+    args, plan, _candidate, client = _runner_fixture(
+        a5_tmp_path, drain_key="claude_code"
+    )
+    plan["clients"]["claude_code"]["timeout_seconds"] = 1
+    args.client_plan.write_text(json.dumps(plan), encoding="utf-8")
+
+    class ShiftedTime:
+        offset = 0.0
+
+        @staticmethod
+        def monotonic():
+            return time.monotonic() + ShiftedTime.offset
+
+        @staticmethod
+        def sleep(seconds):
+            return time.sleep(seconds)
+
+    original_popen = THREE_CLIENTS_MODULE.subprocess.Popen
+
+    def client_exits_after_deadline(command, *positional, **kwargs):
+        process = original_popen(command, *positional, **kwargs)
+        if command[0] == str(client):
+            original_wait = process.wait
+
+            def wait_then_cross_deadline(timeout=None):
+                exit_code = original_wait(timeout=5)
+                assert exit_code == 0
+                # Model a normal exit observed only after the original deadline.
+                ShiftedTime.offset = 2.0
+                return exit_code
+
+            process.wait = wait_then_cross_deadline
+        return process
+
+    drain_deadlines = []
+
+    def record_drain_deadline(_process, deadline, *_args, **_kwargs):
+        drain_deadlines.append(deadline)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
+        patch.setattr(
+            THREE_CLIENTS_MODULE.subprocess,
+            "Popen",
+            client_exits_after_deadline,
+        )
+        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", record_drain_deadline)
+        THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert drain_deadlines, "normal exit did not exercise recorder drain"
+    assert drain_deadlines[0] <= ShiftedTime.monotonic(), (
+        "recorder drain deadline must remain the original client_deadline"
+    )
+
+
 def test_normal_exit_drain_is_bounded_before_forced_cleanup(monkeypatch, a5_tmp_path):
     args, _plan, _candidate, _client = _runner_fixture(
         a5_tmp_path, drain_key="claude_code"

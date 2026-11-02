@@ -706,8 +706,8 @@ def run_capture(args: argparse.Namespace) -> dict:
                             raise_if_sigint_pending()
                             remaining = client_deadline - time.monotonic()
                             if remaining <= 0:
-                                timed_out = active_client.poll() is None
                                 client_exit = active_client.poll()
+                                timed_out = client_exit is None
                                 break
                             try:
                                 client_exit = active_client.wait(
