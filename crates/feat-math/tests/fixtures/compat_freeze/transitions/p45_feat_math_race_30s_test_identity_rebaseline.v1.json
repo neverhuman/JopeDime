@@ -1,0 +1,18 @@
+{
+  "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
+  "decision": "Watcher disposition 2026-11-02T15:25Z restores the unconditional 30-second wall assertion. To remove avoidable test work without weakening the race-budget proof, the test now evaluates exactly one RACE_CHUNK of simple ridge candidates on a 32-row fixture; rung-0 count and rung-1/rung-2 zero assertions remain unconditional. The evolve.rs test source is hashed into evaluator identity, so identity fixtures were regenerated after the source commit. Evaluator calculations, DSL ABI, Cargo.lock and runtime behavior are unchanged. No known-identity row is added without a shipped receipt proving the new identity existed.",
+  "plan_reference": "P45 watcher ruling 2026-11-02T15:25Z; ADR-0004 identity-only procedure",
+  "source_commit": "74167bd507c4bcfe7b43608ceffea73b12e73749",
+  "fixtures": [
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
+      "before": "592cc24142fc3187833b26309fbf5e74956cd098831ea4662183cb25017e1ce6",
+      "after": "9fd80fd21e5b1c150ce17a5339154c321a7f5082addf1c950686776078eb4de0"
+    },
+    {
+      "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
+      "before": "4ec649f47526f55b44876fabec9d6266b3ff8615e62707a1d6915fd5927c1876",
+      "after": "7b0cd76e57713ed9fa159c62cb6f23dd8cdec5b0cca47a836a1001a9e55866ce"
+    }
+  ]
+}
