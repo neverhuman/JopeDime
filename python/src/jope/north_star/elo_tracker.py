@@ -151,6 +151,8 @@ def compute_family_grouped_bradley_terry_elo(
       - When `allow_incomplete_panel=True`, normalizes each pair `(a, b)` by the number of
         eligible records in family `f` where BOTH `a` and `b` have finite scores, so unavailable
         rows on one contender never dilute or shift pairwise family weights for other contenders.
+      - Every contender must have an observed comparison path to the anchor, even with a prior.
+        Disconnected partial panels are rejected instead of receiving arbitrary relative ratings.
     """
     if not records:
         raise ValueError("Cannot compute Bradley-Terry Elo on empty records sequence.")
@@ -234,9 +236,26 @@ def compute_family_grouped_bradley_terry_elo(
                 N_games[ia, ib] += w_pair_fam
                 N_games[ib, ia] += w_pair_fam
 
+    # Relative strengths are identifiable only within the observed comparison component.
+    # A prior must not manufacture evidence connecting an otherwise unmeasured contender.
+    anchor_idx = c_to_idx[anchor_contender]
+    reachable = {anchor_idx}
+    pending = [anchor_idx]
+    while pending:
+        current = pending.pop()
+        for neighbor in np.flatnonzero(N_games[current] > 0.0):
+            if neighbor not in reachable:
+                reachable.add(neighbor)
+                pending.append(neighbor)
+    disconnected = [c for c in contenders if c_to_idx[c] not in reachable]
+    if disconnected:
+        raise ValueError(
+            f"Comparison panel is disconnected from anchor {anchor_contender!r}: {disconnected}. "
+            "Each contender needs an observed comparison path to the anchor."
+        )
+
     # Zermelo Minorization-Maximization (MM) fixed-point solver for Bradley-Terry strengths
     gamma = np.ones(M, dtype=np.float64)
-    anchor_idx = c_to_idx[anchor_contender]
     for _ in range(n_iters):
         new_gamma = np.ones(M, dtype=np.float64)
         for a in range(M):

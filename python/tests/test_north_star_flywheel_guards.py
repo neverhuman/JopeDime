@@ -357,3 +357,58 @@ def test_ns3_research_flag_cannot_hide_environment_or_unfreeze_anchor(monkeypatc
     model.gamenet_anchor = model.dope_model
     with pytest.raises(DopeFreezeViolationError, match="share parameters"):
         configure_research_dope(model, launch_metadata={}, research_run_id="H206-unit")
+
+
+@pytest.mark.parametrize("prior", [0.0, 0.01])
+@pytest.mark.parametrize(
+    "case",
+    ["disconnected_group", "singleton", "nan_bridge", "inf_bridge", "unmeasured_anchor"],
+)
+def test_ns7_disconnected_partial_panels_are_rejected(case: str, prior: float) -> None:
+    records = [DatasetEvalRecord("d1", "fam1", "regression", {"anchor": 0.5, "bridge": 0.5})]
+    if case == "disconnected_group":
+        scores = {"ghost": 0.8, "peer": 0.5}
+    elif case == "singleton":
+        scores = {"ghost": 0.5}
+    elif case == "unmeasured_anchor":
+        records = []
+        scores = {"anchor": math.nan, "ghost": 0.5}
+    else:
+        scores = {"bridge": math.nan if case == "nan_bridge" else math.inf, "ghost": 0.5}
+    records.append(DatasetEvalRecord("d2", "fam2", "binary_classification", scores))
+
+    with pytest.raises(ValueError, match="disconnected from anchor.*ghost"):
+        compute_family_grouped_bradley_terry_elo(
+            records, anchor_contender="anchor", prior=prior, allow_incomplete_panel=True
+        )
+
+
+@pytest.mark.parametrize("prior", [0.0, 0.01])
+def test_ns7_connected_indirect_comparisons_remain_admitted(prior: float) -> None:
+    records = [
+        DatasetEvalRecord("d1", "fam1", "regression", {"anchor": 0.5, "bridge": 0.5}),
+        DatasetEvalRecord("d2", "fam2", "binary_classification", {"bridge": 0.7, "challenger": 0.7}),
+        DatasetEvalRecord("d3", "fam3", "regression", {"anchor": math.nan, "challenger": 0.9}),
+    ]
+    result = compute_family_grouped_bradley_terry_elo(
+        records, anchor_contender="anchor", prior=prior, allow_incomplete_panel=True
+    )
+    assert result["ratings"] == {"anchor": 1500.0, "bridge": 1500.0, "challenger": 1500.0}
+    assert result["pairwise_win_tie_loss_vs_anchor"]["challenger"] == {
+        "wins": 0,
+        "ties": 0,
+        "losses": 0,
+        "elo_delta_vs_anchor": 0.0,
+    }
+
+
+@pytest.mark.parametrize("prior", [0.0, 0.01])
+def test_ns7_single_anchor_needs_no_comparison(prior: float) -> None:
+    result = compute_family_grouped_bradley_terry_elo(
+        [DatasetEvalRecord("d1", "fam1", "regression", {"anchor": 0.5})],
+        anchor_contender="anchor",
+        anchor_elo=1600.0,
+        prior=prior,
+    )
+    assert result["ratings"] == {"anchor": 1600.0}
+    assert result["pairwise_win_tie_loss_vs_anchor"] == {}
