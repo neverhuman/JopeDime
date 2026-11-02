@@ -1418,6 +1418,7 @@ crates/jope-engine/src/gp/selection_replay.rs
 crates/jope-engine/src/gpu_worker.rs
 crates/jope-engine/src/grammar.rs
 crates/jope-engine/src/hyperion.rs
+crates/jope-engine/src/hyperion/scheduling_tests.rs
 crates/jope-engine/src/jain_vocabulary.rs
 crates/jope-engine/src/label_admission.rs
 crates/jope-engine/src/learning_history.rs
