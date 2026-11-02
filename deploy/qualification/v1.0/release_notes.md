@@ -61,4 +61,7 @@ byte counts are recorded in `qualification_receipt.json`.
   first-model speed guarantee is inferred from a size PASS.
 - The package scope is `internal-restricted`; envelope signatures do not grant
   unrestricted redistribution of embedded assets.
+- A prior Darwin worker-CV report recorded 58/1,024 parity failures. This draft
+  does not supersede or relabel that report; its disposition must remain
+  explicit in the final candidate-bound evidence.
 - No learned-quality, Elo improvement, or successful Q1 outcome is claimed.

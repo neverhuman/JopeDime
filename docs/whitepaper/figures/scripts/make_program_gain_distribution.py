@@ -460,6 +460,96 @@ def retained_utility_lift():
     print(f"{len(rows)} records; retained lift {lifts[-1]}; {len(gains)} strict admissions")
 
 
+def admission_outcomes():
+    """Replay cumulative observed admission frequencies with every rejection retained."""
+    data = FIGURES / "data/admission_outcomes.csv"
+    source_path = FIGURES / "data/admission_outcomes.source.json"
+    output = FIGURES / "fig_fw_admission_outcomes.pdf"
+    source = json.loads(source_path.read_text())
+    capture = source["capture"]
+    assert sha(data) == source["csv_sha256"]
+    assert data.with_suffix(".csv.sha256").read_text().split() == [sha(data), data.name]
+    with data.open() as stream:
+        rows = list(csv.DictReader(stream))
+    rounds = [int(row["round"]) for row in rows]
+    assert len(rows) == capture["rows"] and len(rows) > 2000
+    assert rounds == list(range(883, rounds[-1] + 1))
+    assert [rounds[0], rounds[-1]] == capture["round_window"]
+    assert capture["baseline_round"] == 882 and capture["development_contexts"] == 91
+    assert capture["all_selected_per_round_scalars_match"]
+    assert capture["all_retained_summaries_match"]
+    baseline = Decimal(capture["baseline_retained_utility"])
+    assert baseline.is_finite()
+    prior, prior_round = baseline, 882
+    gains, ties, rejected = [], [], 0
+    all_rates, strict_rates = [], []
+    for count, row in enumerate(rows, 1):
+        candidate, before, best, lift = [Decimal(row[k]) for k in [
+            "candidate_validation_utility", "previous_best_validation_utility",
+            "retained_best_validation_utility", "retained_utility_lift",
+        ]]
+        assert all(v.is_finite() for v in [candidate, before, best, lift])
+        accepted, identity = int(row["adapter_accepted"]), int(row["reported_best_round"])
+        assert accepted in (0, 1) and before == prior
+        assert best == (candidate if accepted else before) and best >= before
+        assert int(row["baseline_round"]) == 882
+        assert Decimal(row["baseline_retained_utility"]) == baseline
+        assert lift == best - baseline and lift >= 0
+        assert row["evaluation_identity_sha256"] == capture["evaluation_identity_sha256"]
+        if accepted:
+            assert candidate >= before and identity == int(row["round"])
+            (gains if candidate > before else ties).append(int(row["round"]))
+        else:
+            assert identity == prior_round
+            rejected += 1
+        assert int(row["observed_rounds"]) == count
+        assert int(row["cumulative_strict_gains"]) == len(gains)
+        assert int(row["cumulative_accepted_ties"]) == len(ties)
+        assert int(row["cumulative_rejections"]) == rejected
+        assert len(gains) + len(ties) + rejected == count
+        all_rates.append(Decimal(100) * (len(gains) + len(ties)) / count)
+        strict_rates.append(Decimal(100) * len(gains) / count)
+        prior, prior_round = best, identity
+    assert gains == capture["strict_gain_rounds"] and ties == capture["accepted_tie_rounds"]
+    assert rejected == capture["rejections"]
+    plt.rcParams.update({
+        "font.family": "serif", "font.size": 8, "pdf.fonttype": 42,
+        "axes.spines.top": False, "axes.spines.right": False,
+    })
+    fig, ax = plt.subplots(figsize=(3.25, 1.85))
+    total, strict = [float(v) for v in all_rates], [float(v) for v in strict_rates]
+    ax.fill_between(rounds, strict, total, step="post", color="#d8a649", alpha=0.38,
+                    linewidth=0, label="accepted ties")
+    ax.step(rounds, total, where="post", color="#0b5394", lw=1.1,
+            label="all admissions")
+    ax.step(rounds, strict, where="post", color="#b2182b", lw=0.9, ls="--",
+            label="strict gains only")
+    ax.set(xlabel="completed round", ylabel="admissions (%)",
+           ylim=(-0.004, max(total) * 1.16))
+    ax.set_xticks([rounds[0], rounds[len(rounds)//3],
+                   rounds[2*len(rounds)//3], rounds[-1]])
+    ax.grid(axis="y", alpha=0.2, linewidth=0.4)
+    ax.set_axisbelow(True)
+    ax.legend(loc="upper left", frameon=False, fontsize=6.3, handlelength=1.4)
+    ax.tick_params(labelsize=7)
+    fig.tight_layout(pad=0.5)
+    fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    facts = dict(
+        schema="whitepaper.admission-outcomes-figure/v1", input_csv_sha256=sha(data),
+        source_receipt_sha256=sha(source_path), generator_sha256=sha(Path(__file__)),
+        figure_sha256=sha(output), round_window=[rounds[0], rounds[-1]], rows=len(rows),
+        strict_gain_rounds=gains, accepted_tie_rounds=ties, rejections=rejected,
+        final_accepted_numerator=len(gains)+len(ties), final_denominator=len(rows),
+        final_cumulative_percent=str(all_rates[-1]),
+        definition=source["definition"], scope=source["scope"],
+        matplotlib_version=matplotlib.__version__, reproduce=source["reproduce"],
+    )
+    (FIGURES / "data/admission_outcomes.provenance.json").write_text(
+        json.dumps(facts, indent=2) + "\n")
+    print(f"{len(rows)} decisions; {len(gains)+len(ties)} admissions; {rejected} rejections")
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -468,6 +558,7 @@ if __name__ == "__main__":
     mode.add_argument("--rolling-admissions", action="store_true")
     mode.add_argument("--selection-changes", action="store_true")
     mode.add_argument("--retained-utility-lift", action="store_true")
+    mode.add_argument("--admission-outcomes", action="store_true")
     args = parser.parse_args()
     if args.rolling_admissions:
         rolling_admissions()
@@ -475,5 +566,7 @@ if __name__ == "__main__":
         selection_changes()
     elif args.retained_utility_lift:
         retained_utility_lift()
+    elif args.admission_outcomes:
+        admission_outcomes()
     else:
         main()

@@ -4908,9 +4908,10 @@
       },
       "dispositions": [],
       "lanes": [
-        "python"
+        "python",
+        "full-python"
       ],
-      "scope": "Maintained pytest family (#1702): the PR python lane runs `pytest -q tests -m \"not xbabe2\"`, which includes this file; it pins that each DataLoader worker reopens the tokenized corpus with verify=True. Not in the full-main explicit file list."
+      "scope": "Synthetic worker reopen control: the mmap collator repeats corpus integrity verification in a spawned worker; no live corpus or model evaluation."
     },
     "python:python/tests/test_durable_selfplay.py": {
       "discovery": {

@@ -2,7 +2,7 @@
   "schema": "whitepaper.selection-changes-figure/v1",
   "input_csv_sha256": "a0ea4013fa38bb3bbb8211b8a4399515b342f60f9dc4e966a1754259430d7e9e",
   "source_receipt_sha256": "7e99ca1ff5aaab722d661e1b85d8828b81294b0ef510c202d17e36d83bbeb07f",
-  "generator_sha256": "dea8a6ca573fbfa7b3087713be087c3b27d84ee3da531e2a663f4d105ef0cbfe",
+  "generator_sha256": "a61c33d1fb43452c5220da736628092945da8a78085d3073bacb369c7516bd8b",
   "figure_sha256": "e3d22d8c0b291fe9e8b1c7fcd7bdff654e0b01da0f00118a5b388ea7707a2204",
   "rows": 1000,
   "round_window": [
