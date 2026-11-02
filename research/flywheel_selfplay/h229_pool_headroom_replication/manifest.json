@@ -2,7 +2,7 @@
   "schema": "jope.h229.pool-headroom-replication/v1",
   "wave": "H229",
   "owner": "luna_v1_res08",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "CLOSED_COMPLETE",
   "authority": "/home/ubuntu/nudges/hw_t1830_res08_h229.md",
   "recorded_utc": "2026-11-02T18:35:00.136910+00:00",
   "source_parent": "31207ade1cb12da1df2036d1adbbfcc50c3d8dce",
@@ -182,13 +182,245 @@
   "execution": "Immutable Git objects at exact merged source, own process tree/roots; no checkout/HEAD/index mutation on xbabe1 object cache",
   "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H229/res08-t1830/",
   "outcome": {
-    "status": "NOT_RUN",
-    "primary_units": 0,
+    "verdict": "NO_ADVANCE",
+    "full_completed_context_seed_units": 273,
+    "planned_context_seed_units": 273,
+    "known_native_records_from_complete_primary_units": 17483,
+    "smoke_native_records": 64,
     "optimizer_updates": 0,
-    "median_gain": null,
-    "ci95": null,
-    "elo": null
+    "primary_median_gain": -0.06806166009837719,
+    "primary_ci95": [
+      -0.17044949092945047,
+      -0.00019279094999959053
+    ],
+    "holm_p": {
+      "FPS16of64": 1.0,
+      "NATIVE64": 1.0
+    },
+    "authoritative_h229_gate": {
+      "primary_median_positive": false,
+      "primary_ci_lower_positive": false,
+      "holm_m2_adjusted_p_below_005": false,
+      "absolute_r882_plateau_lift_strictly_above_0002": false
+    },
+    "arm_lifts_vs_r882": {
+      "NATIVE16": {
+        "seed_context_mean_utility": [
+          0.5618835136349276,
+          0.5796006363573434,
+          0.5557254562763961
+        ],
+        "seed_context_mean_lift": [
+          -0.5759106761815247,
+          -0.558193553459109,
+          -0.5820687335400563
+        ],
+        "context_median_lift": -0.5759106761815247,
+        "seed_equal_family_lift": [
+          -0.5520483086568863,
+          -0.5350771700490986,
+          -0.5579470793897956
+        ],
+        "equal_family_median_lift": -0.5520483086568863,
+        "ci95_equal_family_lift": [
+          -1.0196665808057126,
+          -0.183295422314758
+        ]
+      },
+      "NATIVE64": {
+        "seed_context_mean_utility": [
+          0.49806586349923465,
+          0.4750659933960761,
+          0.48467207485501335
+        ],
+        "seed_context_mean_lift": [
+          -0.6397283263172175,
+          -0.6627281964203761,
+          -0.653122114961439
+        ],
+        "context_median_lift": -0.653122114961439,
+        "seed_equal_family_lift": [
+          -0.6131788998394975,
+          -0.635210354359365,
+          -0.6260087394881727
+        ],
+        "equal_family_median_lift": -0.6260087394881727,
+        "ci95_equal_family_lift": [
+          -1.0876086918084202,
+          -0.25322793800175103
+        ]
+      },
+      "FPS16of64": {
+        "seed_context_mean_utility": [
+          0.514516332332006,
+          0.5218078144920419,
+          0.5838300684347425
+        ],
+        "seed_context_mean_lift": [
+          -0.6232778574844464,
+          -0.6159863753244101,
+          -0.5539641213817098
+        ],
+        "context_median_lift": -0.6159863753244101,
+        "seed_equal_family_lift": [
+          -0.5974210823260009,
+          -0.590436609941124,
+          -0.5310258193223267
+        ],
+        "equal_family_median_lift": -0.590436609941124,
+        "ci95_equal_family_lift": [
+          -1.0353413897867985,
+          -0.2283515586701002
+        ]
+      }
+    },
+    "elo": {
+      "by_seed": {
+        "229101": {
+          "FPS16of64": 1320.76,
+          "NATIVE16": 1322.7,
+          "NATIVE64": 1311.06,
+          "R882": 1500.0
+        },
+        "229102": {
+          "FPS16of64": 1343.16,
+          "NATIVE16": 1353.7,
+          "NATIVE64": 1302.36,
+          "R882": 1500.0
+        },
+        "229103": {
+          "FPS16of64": 1324.97,
+          "NATIVE16": 1313.34,
+          "NATIVE64": 1306.52,
+          "R882": 1500.0
+        }
+      },
+      "median_seed": {
+        "R882": 1500.0,
+        "NATIVE16": 1322.7,
+        "NATIVE64": 1306.52,
+        "FPS16of64": 1324.97
+      },
+      "diagnostic": true
+    },
+    "oracle_summary": {
+      "NATIVE16": {
+        "oracle_context_mean_by_seed": [
+          0.9995880550263112,
+          0.9850859349927276,
+          0.9911340926467879
+        ],
+        "oracle_equal_family_mean_by_seed": [
+          1.0208628974566312,
+          1.00695034037183,
+          1.0127438387562455
+        ],
+        "oracle_context_median_over_seeds": 0.9911340926467879,
+        "selected_gap_context_mean_by_seed": [
+          0.4377045413913836,
+          0.40548529863538424,
+          0.4354086363703916
+        ],
+        "selected_gap_context_median": 0.4354086363703916
+      },
+      "NATIVE64": {
+        "oracle_context_mean_by_seed": [
+          1.0720104236878147,
+          1.0779065860482273,
+          1.07014259159464
+        ],
+        "oracle_equal_family_mean_by_seed": [
+          1.0902359032271243,
+          1.095992188726451,
+          1.0892994219163634
+        ],
+        "oracle_context_median_over_seeds": 1.0720104236878147,
+        "selected_gap_context_mean_by_seed": [
+          0.57394456018858,
+          0.6028405926521512,
+          0.5854705167396267
+        ],
+        "selected_gap_context_median": 0.5854705167396267
+      },
+      "FPS16of64": {
+        "oracle_context_mean_by_seed": [
+          1.0493307468903554,
+          1.05192213827787,
+          1.047305230491452
+        ],
+        "oracle_equal_family_mean_by_seed": [
+          1.068490107557979,
+          1.0709723877291772,
+          1.0666627113678684
+        ],
+        "oracle_context_median_over_seeds": 1.0493307468903554,
+        "selected_gap_context_mean_by_seed": [
+          0.5348144145583497,
+          0.5301143237858279,
+          0.4634751620567097
+        ],
+        "selected_gap_context_median": 0.5301143237858279
+      }
+    },
+    "final_in_memory_DOPE_observation": {
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+      "optimizer_updates": 0,
+      "CUDA_initialized": false
+    },
+    "scientific_retry": false,
+    "status": "CLOSED_COMPLETE"
   },
   "replication_source_commit": "1b463762b90c2f5f4db8143483026802e2947d03",
-  "replication_source_path": "research/flywheel_selfplay/h227_pool_headroom"
+  "replication_source_path": "research/flywheel_selfplay/h227_pool_headroom",
+  "execution_source_commit": "d1e8dcbea161d4204156b6c67fe7af29791e8dea",
+  "preregistration_manifest": {
+    "source_commit": "d1e8dcbea161d4204156b6c67fe7af29791e8dea",
+    "path": "research/flywheel_selfplay/h229_pool_headroom_replication/manifest.json",
+    "sha256": "8bdc1abb9a217c14b5fa899c020adf56a897f3ea2b8df50f06650a981a6927a9"
+  },
+  "terminal_custody": {
+    "schema": "jope.h229.custody-receipt/v1",
+    "verified_utc": "2026-11-02T20:07:26.949662+00:00",
+    "source_commit": "d1e8dcbea161d4204156b6c67fe7af29791e8dea",
+    "status": "EXACT_VERSION_OBJECT_AND_MEMBER_REPLAY_PASS",
+    "scientific_status": "COMPLETE",
+    "scientific_verdict": "NO_ADVANCE",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H229/res08-t1830/terminal-d1e8dcbea161-94808e7012891f78/H229-execution-output.zip",
+      "version_id": "DkNTdKm7brsKfzwsTCZjG68HNHkgslyz",
+      "sha256": "94808e7012891f781118b9ca4dc9bf0ff1e81cf1702ec7a25d9a58394f24d0a6",
+      "bytes": 12398040
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H229/res08-t1830/terminal-d1e8dcbea161-94808e7012891f78/H229-terminal-manifest.json",
+      "version_id": "Yt8jsq4D_qITsxEzjQSvatsildKoSLji",
+      "sha256": "f38ef39f99f6c716921ca67e9d8461a0e230a41e536562d54bf88bc00dc5512f",
+      "bytes": 23916
+    },
+    "verified_members": 80,
+    "create_only_if_none_match": "*",
+    "exact_version_archive_and_manifest_bytes_verified": true,
+    "archive_member_sha256s_verified": true,
+    "raw_roots_retained": true,
+    "scientific_retry": false
+  },
+  "resource_termination": {
+    "terminal_utc": "2026-11-02T20:06:12.078308+00:00",
+    "actual_worker_exit": 0,
+    "error": null,
+    "violating_fields": null,
+    "violating_observation": null,
+    "last_recorded_observation": {
+      "at": "2026-11-02T20:06:02.905568+00:00",
+      "host": "xbabe1",
+      "nice": 19,
+      "affinity": 4,
+      "rss": 388313088,
+      "ram": 26642567168,
+      "free": 323999133696,
+      "output": 79939231,
+      "load5": 16.201171875
+    }
+  }
 }
