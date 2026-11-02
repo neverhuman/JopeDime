@@ -102,6 +102,15 @@ root escapes, and concurrent status changes. These fixtures are not gate reruns.
 
 ## Signer-compatible 28-gate receipt
 
+For final scaffold assembly, [RECEIPT-ASSEMBLY.md](RECEIPT-ASSEMBLY.md) gives the
+candidate-bound invocation and [release_notes.md](release_notes.md) retains the
+draft disclosures. Add both `--controller-run DIR` and `--controller-inputs FILE`
+to attach that run's machine, commands, input bindings and output pins. This
+mode requires all five external provider bindings and 28 completed commands;
+it refuses receipts from another run and rechecks metadata/log hashes before
+writing. Existing invocations without these optional arguments keep their
+minimal output shape. Provenance does not sign bytes or select the Q1 default.
+
 `gates_receipt.py` writes the minimal `{"gates":[{"id","status","evidence"}]}`
 shape read by `signer_watch.sh`. It emits exactly M1–D2 (28 release gates); Q1 is
 tracked separately. Projecting a `cpu_gates.py` CPU-prestage receipt always emits
