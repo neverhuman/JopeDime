@@ -863,6 +863,7 @@ crates/jope-encoders/src/lib.rs
 crates/jope-encoders/src/main.rs
 crates/jope-encoders/src/metrics.rs
 crates/jope-encoders/src/model.rs
+crates/jope-encoders/src/model/classification.rs
 crates/jope-encoders/src/model/attention.rs
 crates/jope-encoders/src/model/chimera.rs
 crates/jope-encoders/src/model/chimera/attention_fusion.rs
