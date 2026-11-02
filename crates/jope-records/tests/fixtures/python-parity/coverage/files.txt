@@ -872,6 +872,9 @@ crates/jope-datasets/tests/ingest_dry_run.rs
 crates/jope-datasets/tests/input_closure.rs
 crates/jope-datasets/tests/pinned_catalog.rs
 crates/jope-datasets/tests/regression_release.rs
+crates/jope-datasets/tests/regression_release/committed_fixtures.rs
+crates/jope-datasets/tests/regression_release/mutations.rs
+crates/jope-datasets/tests/regression_release/receivers.rs
 crates/jope-datasets/tests/repo_verify.rs
 crates/jope-datasets/tests/roundtrip.rs
 crates/jope-datasets/tests/schema_agreement.rs
