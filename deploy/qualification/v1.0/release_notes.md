@@ -33,8 +33,8 @@ D5 edge-case disposition is separately tracked by QLT-04-F04.
 Known limits and qualification boundaries:
 
 - Windows native-host qualification is waived for v1.0; do not describe it as a
-  qualified shipped platform. Linux x86-64 and macOS arm64 still need their
-  actual source-bound D1 receipts.
+  qualified shipped platform. Linux x86-64 and macOS arm64 require their actual
+  source-bound D1 receipts in the completed final run.
 - CUDA/GPU and Metal qualification are not established by this CPU candidate.
   No GPU or training work is part of this release-receipt task.
 - D2's owner-scoped size verdict and recorded latency measurements must remain

@@ -43,8 +43,8 @@ nice -n 10 python3 -B "$repo/deploy/qualification/v1.0/gates_receipt.py" "${args
 
 For final assembly, use the publisher's **completed v2-or-later input run** in
 `run_dir` and a new external `out` path. Do not populate absent result files or
-reuse another run's passing subsets. The condition to open the deliverable PR
-is all 27 non-M3 gates PASS plus a raw M3 FAIL accepted as WAIVED_V1_0_0 under
+reuse another run's passing subsets. Final receipt admission requires
+all 27 non-M3 gates PASS plus a raw M3 FAIL accepted as WAIVED_V1_0_0 under
 the ruling. The assembler checks source/artifact/counts, the unwaived clauses,
 integer guards and expiry; failure is not a partial success. `all_pass` remains
 false when raw M3 is FAIL, even after its separate disposition is admitted.
@@ -58,7 +58,12 @@ Preserve the assembled gate rows and raw counts verbatim. Capture and recheck
 all input hashes around generation; refuse a controller run that changes.
 Never claim OWNER release approval or aggregate signing from assembly alone.
 
+The later t0115/t0145 instruction permits a draft preparation PR while the
+final gate run remains incomplete. Preserve the maintained assembler's source
+identity: Q1's publisher explicitly pins its reviewed bytes. Provenance and the
+Q1/default record belong in the generated delivery, without changing that module.
+
 Only after complete admission and provenance verification should the final
 generated receipt enter this directory. Keep failed attempts, partial snapshots
-and raw private inputs outside Git. Run the required local checks, then open the
-single deliverable PR and hand ENG the concrete receipt, checks and source head.
+and raw private inputs outside Git. Run the required local checks and hand ENG
+the concrete receipt, checks and source head before the gated release lifecycle.

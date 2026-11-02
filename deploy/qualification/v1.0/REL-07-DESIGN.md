@@ -31,7 +31,7 @@ Rejected alternatives: projecting a status table into PASS, combining historical
 successful subsets, turning M3 into PASS, omitting D2's fused binding, or committing
 a partial receipt. Those approaches lose execution, source or artifact identity.
 
-Main risks are a live partial controller run, missing A5/D1 inputs, unavailable
+Main risks are a live partial controller run, missing A5 inputs, unavailable
 machine evidence, and an unresolved Q1/default decision. Keep drafts explicit;
 do not invent a decision, promote a source-only proof or count zero/skipped work
 as acceptance. Disclose the M3 waiver and known limits in
@@ -41,6 +41,8 @@ credential or frozen application contract changes are proposed.
 Validation: first preserve the partial-run assembler refusal as NOT_QUALIFIED in
 external custody. After final gate admission, verify all receipt/provenance pins
 and run `just hygiene`, `just lint-paths` and `just audit`, comparing any failure
-with unchanged main. Open one focused Owns-only PR only after the authorized
-gate condition holds; ENG owns the gated merge and signer request. No GPU or
+with unchanged main. The later t0115/t0145 directions authorize a draft
+preparation PR now; the final generated receipt still requires the completed
+gate condition. Keep the maintained assembler intact because Q1 pins its
+reviewed source bytes. ENG owns the gated merge and signer request. No GPU or
 training is required for this delivery work.
