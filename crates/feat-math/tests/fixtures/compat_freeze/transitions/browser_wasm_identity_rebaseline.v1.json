@@ -1,19 +1,19 @@
 {
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
-  "decision": "Announced ADR-0004 identity-only successor for wasm32-safe cache constant (native64-bit default remains6GiB) and inherited main lockfile changes. All numerical/model/emitter/generator/search fixtures compare unchanged. No historical identity row is added without a shipped receipt.",
+  "decision": "Announced ADR-0004 identity-only successor for wasm32-safe cache source and inherited main lock changes, plus upstream P2 source-lineage documentation. All behavior/model/emitter/generator/search fixtures compare unchanged. Historical transitions and known-identity table remain unchanged.",
   "plan_reference": "Owner-requested browser JS/WASM prediction; ADR-0004 announced-identity procedure",
   "pr_reference": "https://github.com/neverhuman/JopeDime/pull/1716",
-  "source_commit": "d1537a7eef1552d50225cda965fae03da720481c",
+  "source_commit": "e3348a443b665caf00a618da47b8f4b20721b4f5",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "bd867599a0b725157338c016bb75f7fe59ed7ccf2c141f9b35fa181edcbcd9cd",
-      "after": "1bdbd567e769fe942ff8981f2ed82d84abc06a280e0562ae124a237527c72891"
+      "after": "1a4a1b8b393797fb6b9d50ede98a206e4b7d27c30e89d527ead7b70eccbf5f46"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "f5a625df74792b2480d47f65617c0240f04a605c15c408ecf5f5fdf1f3884341",
-      "after": "6edba414b879be067cb65301f468d5f92441f13304c590bb85a1d033f7eb95d9"
+      "after": "5b1370bd912124eea9017d9721b5121ea5094298a65bdca6b71028d58a70e848"
     }
   ],
   "identity": {
