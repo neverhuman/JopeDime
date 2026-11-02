@@ -1139,14 +1139,11 @@ class WorkflowAdmissionTests(unittest.TestCase):
         self.assertIn('runs-on: ubuntu-24.04', dispatch)
         self.assertNotIn('uses: ./.github/actions/runner-provenance', dispatch)
 
-        refusal = self.job(workflow, 'reject-untrusted-dispatch')
-        self.assertIn("if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'", refusal)
-        self.assertIn('runs-on: ubuntu-24.04', refusal)
-        self.assertIn('exit 1', refusal)
-
         classifier = self.job(workflow, 'changes')
-        self.assertIn('needs: [changes-pr, changes-dispatch, reject-untrusted-dispatch]', classifier)
-        self.assertIn('test "$DISPATCH_REFUSAL_RESULT" = failure', classifier)
+        self.assertIn('needs: [changes-pr, changes-dispatch]', classifier)
+        self.assertIn('runs-on: ubuntu-24.04', classifier)
+        self.assertIn('non-main manual dispatch was refused before privileged runner admission', classifier)
+        self.assertIn('exit 1', classifier)
 
         for name in ('hygiene', 'jankurai-audit', 'paper', 'aggregate'):
             block = self.job(workflow, name)

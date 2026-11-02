@@ -91,18 +91,8 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-changes
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/changes/
 
-  reject-untrusted-dispatch:
-    if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 2
-    steps:
-      - name: Refuse non-main manual source
-        run: |
-          echo "workflow_dispatch may use the privileged CI runners only from refs/heads/main; use the ready_for_review PR event for candidate source" >&2
-          exit 1
-
   changes:
-    needs: [changes-pr, changes-dispatch, reject-untrusted-dispatch]
+    needs: [changes-pr, changes-dispatch]
     if: always()
     runs-on: ubuntu-24.04
     outputs:
@@ -118,7 +108,6 @@ jobs:
           EVENT: ${{ github.event_name }}
           PR_RESULT: ${{ needs['changes-pr'].result }}
           DISPATCH_RESULT: ${{ needs['changes-dispatch'].result }}
-          DISPATCH_REFUSAL_RESULT: ${{ needs['reject-untrusted-dispatch'].result }}
           REF: ${{ github.ref }}
         run: |
           set -euo pipefail
@@ -127,10 +116,8 @@ jobs:
             workflow_dispatch)
               if [ "$REF" = refs/heads/main ]; then
                 test "$DISPATCH_RESULT" = success
-                test "$DISPATCH_REFUSAL_RESULT" = skipped
               else
                 test "$DISPATCH_RESULT" = skipped
-                test "$DISPATCH_REFUSAL_RESULT" = failure
                 echo "non-main manual dispatch was refused before privileged runner admission" >&2
                 exit 1
               fi
