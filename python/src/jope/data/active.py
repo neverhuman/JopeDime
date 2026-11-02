@@ -360,4 +360,60 @@ from .active_grammar import (
     _tokenize_stage, _freeze_vocab, _param_token,
     format_pipeline_actions, format_param_token, parse_pipeline_actions, parse_param_token,
 )
-from .active_builders import build_active_corpus, build_active_v2_corpus
+
+def build_active_corpus(
+    *,
+    quant_root: str | Path = DEFAULT_QUANT_ROOT,
+    split_json: str | Path | None = None,
+    out_dir: str | Path | None = None,
+    out_jsonl: str | Path | None = None,
+    limit_datasets: int | None = None,
+    validation_fraction: float = 0.1,
+    seed: int = 0,
+    validate: bool = True,
+    target_encoder: str = "none",
+    target_model: str | Path | None = None,
+) -> ActiveBuild:
+    from .active_builders import build_active_corpus as build
+
+    return build(
+        quant_root=quant_root,
+        split_json=split_json,
+        out_dir=out_dir,
+        out_jsonl=out_jsonl,
+        limit_datasets=limit_datasets,
+        validation_fraction=validation_fraction,
+        seed=seed,
+        validate=validate,
+        target_encoder=target_encoder,
+        target_model=target_model,
+    )
+
+
+def build_active_v2_corpus(
+    *,
+    quant_root: str | Path = DEFAULT_QUANT_ROOT,
+    split_json: str | Path | None = None,
+    out_dir: str | Path | None = None,
+    out_jsonl: str | Path | None = None,
+    limit_datasets: int | None = None,
+    validation_fraction: float = 0.1,
+    seed: int = 0,
+    validate: bool = True,
+    target_encoder: str = "train_target_vs",
+    target_model: str | Path | None = None,
+) -> ActiveBuild:
+    from .active_builders import build_active_v2_corpus as build
+
+    return build(
+        quant_root=quant_root,
+        split_json=split_json,
+        out_dir=out_dir,
+        out_jsonl=out_jsonl,
+        limit_datasets=limit_datasets,
+        validation_fraction=validation_fraction,
+        seed=seed,
+        validate=validate,
+        target_encoder=target_encoder,
+        target_model=target_model,
+    )
