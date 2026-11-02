@@ -567,6 +567,10 @@ fn finish_batch(
     let api = &gpu.api;
     // The worker owns this context and serializes every request. Re-establish
     // its thread-local current-context state before each CUDA operation.
+    // SAFETY: `gpu` is borrowed from the owner worker's backend state, so no
+    // other thread can use or destroy this context concurrently. Its owning
+    // `Library` remains live in `gpu` for this call; CUDA makes `gpu.ctx`
+    // current only on this worker thread, and the returned status is checked.
     api.check(unsafe { (api.cuCtxSetCurrent)(gpu.ctx) }, "cuCtxSetCurrent")?;
 
     // Wave budget from free memory (fallback: fixed 2 GiB).
