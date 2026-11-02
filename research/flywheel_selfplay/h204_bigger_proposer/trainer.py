@@ -390,21 +390,24 @@ def compute_r882_base_scores_batch(
     net: nn.Module,
     tokens_10x32: np.ndarray,
     mask_10: np.ndarray,
-    full_prog_412: np.ndarray,
-    full_proj_16: np.ndarray,
+    full_cand_features: np.ndarray,
     full_fitness: np.ndarray,
     full_gates: np.ndarray,
     device: torch.device,
 ) -> np.ndarray:
-    """Compute exact `r882` candidate cost predictions `(N, 96)` via `net.adapter_10tok.predict_costs`."""
+    """Compute exact `r882` candidate cost predictions `(N, 1152)` via `net.adapter_10tok.predict_costs`."""
     net.eval()
-    n_ctx, n_cand, _ = full_prog_412.shape
+    n_ctx, n_cand, _ = full_cand_features.shape
     out = np.zeros((n_ctx, n_cand), dtype=np.float64)
     for i in range(n_ctx):
         res = net.adapter_10tok.predict_costs(
             ctx_feat=torch.zeros((1, 584), device=device, dtype=torch.float32),
-            prog_412=torch.as_tensor(full_prog_412[i : i + 1], device=device, dtype=torch.float32),
-            proj_16=torch.as_tensor(full_proj_16[i : i + 1], device=device, dtype=torch.float32),
+            prog_412=torch.as_tensor(
+                full_cand_features[i : i + 1, :, :412], device=device, dtype=torch.float32
+            ),
+            proj_16=torch.as_tensor(
+                full_cand_features[i : i + 1, :, 412:], device=device, dtype=torch.float32
+            ),
             base_prior_cost=torch.zeros((1, n_cand), device=device, dtype=torch.float32),
             scale=torch.tensor([0.4208], device=device, dtype=torch.float32),
             sos_prior=torch.zeros((1, n_cand, 2), device=device, dtype=torch.float32),
@@ -430,15 +433,13 @@ def verify_stage0_r882_parity_on_eval_batch(
     device: torch.device,
 ) -> tuple[dict[str, Any], np.ndarray]:
     """Run Stage 0 `91/91` native `r882` DL-Val parity check (`1.1377941898164525`) before any candidate forward."""
-    # Run Stage-0 parity on CPU to guarantee bit-exact IEEE-754 parity with the CPU reference
     cpu_net = copy.deepcopy(net).to("cpu")
     cpu_net.eval()
     r882_val_scores = compute_r882_base_scores_batch(
         net=cpu_net,
         tokens_10x32=val_batch.tokens_10x32,
         mask_10=val_batch.mask_10,
-        full_prog_412=val_batch.full_prog_412,
-        full_proj_16=val_batch.full_proj_16,
+        full_cand_features=val_batch.full_cand_features,
         full_fitness=val_batch.full_fitness,
         full_gates=val_batch.full_gates,
         device=torch.device("cpu"),
@@ -914,8 +915,7 @@ def run_h204_stage1(
         net=base_net,
         tokens_10x32=train_batch.tokens_10x32,
         mask_10=train_batch.mask_10,
-        full_prog_412=train_batch.full_prog_412,
-        full_proj_16=train_batch.full_proj_16,
+        full_cand_features=train_batch.full_cand_features,
         full_fitness=train_batch.full_fitness,
         full_gates=train_batch.full_gates,
         device=device,

@@ -174,16 +174,14 @@ class LabeledContextBatch:
     tokens_10x32: np.ndarray      # (N, 10, 32) float32
     mask_10: np.ndarray           # (N, 10) float32
     lm48_z: np.ndarray            # (N, 48) float32
-    cand_indices: np.ndarray      # (N, K) int64 in [0, 96)
+    cand_indices: np.ndarray      # (N, K) int64 in [0, 1152)
     cand_features: np.ndarray     # (N, K, 428) float32 (program 412 + proj16 16)
     cand_utilities: np.ndarray    # (N, K) float32 (np.where(gate, -fitness, -2.0))
     cand_gates: np.ndarray        # (N, K) float32
-    full_prog_412: np.ndarray     # (N, 96, 412) float32
-    full_proj_16: np.ndarray      # (N, 96, 16) float32
-    full_cand_features: np.ndarray  # (N, 96, 428) float32
-    full_fitness: np.ndarray      # (N, 96) float64
-    full_utilities: np.ndarray    # (N, 96) float64 (higher is better: -fitness when gate else -2.0)
-    full_gates: np.ndarray        # (N, 96) float32
+    full_cand_features: np.ndarray  # (N, 1152, 428) float32
+    full_fitness: np.ndarray      # (N, 1152) float64
+    full_utilities: np.ndarray    # (N, 1152) float64 (higher is better: -fitness when gate else -2.0)
+    full_gates: np.ndarray        # (N, 1152) float32
 
 
 @dataclass(frozen=True)
@@ -196,16 +194,14 @@ class EvalContextBatch:
     tokens_10x32: np.ndarray      # (N, 10, 32) float32
     mask_10: np.ndarray           # (N, 10) float32
     lm48_z: np.ndarray            # (N, 48) float32
-    full_prog_412: np.ndarray     # (N, 96, 412) float32
-    full_proj_16: np.ndarray      # (N, 96, 16) float32
-    full_cand_features: np.ndarray  # (N, 96, 428) float32
-    full_fitness: np.ndarray      # (N, 96) float64
-    full_utilities: np.ndarray    # (N, 96) float64
-    full_gates: np.ndarray        # (N, 96) float32
+    full_cand_features: np.ndarray  # (N, 1152, 428) float32
+    full_fitness: np.ndarray      # (N, 1152) float64
+    full_utilities: np.ndarray    # (N, 1152) float64
+    full_gates: np.ndarray        # (N, 1152) float32
 
 
 def select_candidate_subset_indices(
-    n_total: int = 96,
+    n_total: int = 1152,
     k_candidates: int = 16,
     seed: int = 204101,
     context_idx: int = 0,
@@ -368,12 +364,10 @@ def load_h204_stage1_datasets(
     tr_cand_utilities = np.zeros((n_tr, k_candidates), dtype=np.float32)
     tr_cand_gates = np.zeros((n_tr, k_candidates), dtype=np.float32)
 
-    tr_full_prog = np.zeros((n_tr, 96, 412), dtype=np.float32)
-    tr_full_proj = np.zeros((n_tr, 96, 16), dtype=np.float32)
-    tr_full_features = np.zeros((n_tr, 96, 428), dtype=np.float32)
-    tr_full_fitness = np.zeros((n_tr, 96), dtype=np.float64)
-    tr_full_utilities = np.zeros((n_tr, 96), dtype=np.float64)
-    tr_full_gates = np.zeros((n_tr, 96), dtype=np.float32)
+    tr_full_features = np.zeros((n_tr, 1152, 428), dtype=np.float32)
+    tr_full_fitness = np.zeros((n_tr, 1152), dtype=np.float64)
+    tr_full_utilities = np.zeros((n_tr, 1152), dtype=np.float64)
+    tr_full_gates = np.zeros((n_tr, 1152), dtype=np.float32)
 
     for local_i, (cid, cf_idx) in enumerate(zip(tr_cids, tr_cf_indices, strict=True)):
         p_npz = np.load(pools_dir / f"{cid}.npz", allow_pickle=False)
@@ -398,12 +392,16 @@ def load_h204_stage1_datasets(
         tr_cand_utilities[local_i] = utilities[sub_idx].astype(np.float32)
         tr_cand_gates[local_i] = gates[sub_idx]
 
-        tr_full_prog[local_i] = prog
-        tr_full_proj[local_i] = proj
-        tr_full_features[local_i] = feats_428
-        tr_full_fitness[local_i] = fitness
-        tr_full_utilities[local_i] = utilities
-        tr_full_gates[local_i] = gates
+        m = int(feats_428.shape[0])
+        tr_full_features[local_i, :m] = feats_428
+        tr_full_fitness[local_i, :m] = fitness
+        tr_full_utilities[local_i, :m] = utilities
+        tr_full_gates[local_i, :m] = gates
+        if m < 1152:
+            tr_full_features[local_i, m:] = feats_428[-1:]
+            tr_full_fitness[local_i, m:] = 2.0
+            tr_full_utilities[local_i, m:] = -2.0
+            tr_full_gates[local_i, m:] = 0.0
 
     label_digest = sha256_bytes(tr_cand_indices.tobytes() + tr_cand_utilities.tobytes())
     cache_receipt = {
@@ -429,12 +427,10 @@ def load_h204_stage1_datasets(
     val_mask10 = all_mask10[val_cf_indices]
     val_lm48z = all_lm48z[val_cf_indices]
 
-    val_full_prog = np.zeros((n_val, 96, 412), dtype=np.float32)
-    val_full_proj = np.zeros((n_val, 96, 16), dtype=np.float32)
-    val_full_features = np.zeros((n_val, 96, 428), dtype=np.float32)
-    val_full_fitness = np.zeros((n_val, 96), dtype=np.float64)
-    val_full_utilities = np.zeros((n_val, 96), dtype=np.float64)
-    val_full_gates = np.zeros((n_val, 96), dtype=np.float32)
+    val_full_features = np.zeros((n_val, 1152, 428), dtype=np.float32)
+    val_full_fitness = np.zeros((n_val, 1152), dtype=np.float64)
+    val_full_utilities = np.zeros((n_val, 1152), dtype=np.float64)
+    val_full_gates = np.zeros((n_val, 1152), dtype=np.float32)
 
     for local_i, (cid, cf_idx) in enumerate(zip(val_cids, val_cf_indices, strict=True)):
         p_npz = np.load(pools_dir / f"{cid}.npz", allow_pickle=False)
@@ -448,12 +444,16 @@ def load_h204_stage1_datasets(
         proj = proj16_all[lo:hi]
         feats_428 = np.concatenate([prog, proj], axis=1).astype(np.float32)
 
-        val_full_prog[local_i] = prog
-        val_full_proj[local_i] = proj
-        val_full_features[local_i] = feats_428
-        val_full_fitness[local_i] = fitness
-        val_full_utilities[local_i] = utilities
-        val_full_gates[local_i] = gates
+        m = int(feats_428.shape[0])
+        val_full_features[local_i, :m] = feats_428
+        val_full_fitness[local_i, :m] = fitness
+        val_full_utilities[local_i, :m] = utilities
+        val_full_gates[local_i, :m] = gates
+        if m < 1152:
+            val_full_features[local_i, m:] = feats_428[-1:]
+            val_full_fitness[local_i, m:] = 2.0
+            val_full_utilities[local_i, m:] = -2.0
+            val_full_gates[local_i, m:] = 0.0
 
     jrb_status = check_jrb01_admission_status()
     labeler_meta = {
@@ -481,8 +481,6 @@ def load_h204_stage1_datasets(
             cand_features=tr_cand_features,
             cand_utilities=tr_cand_utilities,
             cand_gates=tr_cand_gates,
-            full_prog_412=tr_full_prog,
-            full_proj_16=tr_full_proj,
             full_cand_features=tr_full_features,
             full_fitness=tr_full_fitness,
             full_utilities=tr_full_utilities,
@@ -495,8 +493,6 @@ def load_h204_stage1_datasets(
             tokens_10x32=val_tokens,
             mask_10=val_mask10,
             lm48_z=val_lm48z,
-            full_prog_412=val_full_prog,
-            full_proj_16=val_full_proj,
             full_cand_features=val_full_features,
             full_fitness=val_full_fitness,
             full_utilities=val_full_utilities,
