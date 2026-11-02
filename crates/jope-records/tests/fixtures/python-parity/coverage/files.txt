@@ -125,8 +125,8 @@ crates/feat-math/src/advanced_v3/fitted_portable.rs
 crates/feat-math/src/advanced_v3/fitted_portable.rs.txt
 crates/feat-math/src/advanced_v3/fitted_portable/admission.rs
 crates/feat-math/src/advanced_v3/fitted_portable/render.rs
-crates/feat-math/src/advanced_v3/fitted_portable/tests.rs
 crates/feat-math/src/advanced_v3/fitted_portable/scalar.rs
+crates/feat-math/src/advanced_v3/fitted_portable/tests.rs
 crates/feat-math/src/advanced_v3/grammar.rs
 crates/feat-math/src/advanced_v3/heads/extra_trees.rs
 crates/feat-math/src/advanced_v3/heads/gam.rs
@@ -730,6 +730,10 @@ crates/jope-campaigns/src/selfplay_expansion/model.rs
 crates/jope-campaigns/src/selfplay_expansion/sealed.rs
 crates/jope-campaigns/src/selfplay_expansion/sidecars.rs
 crates/jope-campaigns/src/selfplay_expansion/tests.rs
+crates/jope-campaigns/src/selfplay_expansion/tests/activation_tests.rs
+crates/jope-campaigns/src/selfplay_expansion/tests/cache_tests.rs
+crates/jope-campaigns/src/selfplay_expansion/tests/identity_tests.rs
+crates/jope-campaigns/src/selfplay_expansion/tests/live_tests.rs
 crates/jope-campaigns/src/selfplay_ingest.rs
 crates/jope-campaigns/src/selfplay_registry.rs
 crates/jope-campaigns/src/selfplay_runtime.rs
