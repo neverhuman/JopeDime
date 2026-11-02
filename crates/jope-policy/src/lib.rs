@@ -131,6 +131,7 @@ pub mod ranking;
 pub mod seeds;
 pub mod semantic;
 pub mod support_transition;
+pub mod tokens_expr;
 pub mod training_input_closure;
 
 /// Test support (`testing`, never enabled by a product build): untrained weights and
