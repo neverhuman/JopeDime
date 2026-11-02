@@ -1,245 +1,43 @@
-# Q1 CPU preparation — not a qualification report
+# Q1 final attempted qualification — INCOMPLETE
 
-**Status: CPU_PREPARED / Q1 NOT RUN.** This file records only driver readiness and a synthetic CPU protocol dry-run. It contains no empirical Q1 effect estimate and makes no guidance-default decision.
+**Q1 disposition: INCOMPLETE. Regression guidance default: OFF under OWNER-R21.**
+The signed study reached all 582 logical terminal identities, but only 60 have a valid complete response. The other 522 identities have driver records with `ValueError: backend process failed`, missing the required response fields and known charge counts. The unchanged preregistered analyzer exited 1 with `ValueError: invalid response fields/schema`. It produced no analysis JSON, effect estimate, confidence interval or subgroup effect. This is not a superiority FAIL or a Q1 PASS.
 
-## One-page preparation design note
+## Frozen study and acceptance
 
-**Approach.** Reuse the merged QLT-01 Q1 driver at `deploy/qualification/q1/harness/q1.py`; do not fork the plan, request/response contract, or append-only JSONL receipt writer. Validate the existing closed schemas using its synthetic unit suite, then execute its `heuristic_smoke` orchestration with synthetic rows and a fake backend. Keep the full `qualification` command gated on the exact owner signature, frozen plan/backend/cohort identities, and its persistent single-use ledger.
+The owner-signed plan is `d71ebeda6fe7c5575025a063807662b66c93c5f743689dc96bc5bae0fe26d19a`: 97 authoritative regression families, one dataset per family, seeds 0/1/2, heuristic and learned guidance, and 24 charged rung-0 admissions per policy/seed. Scientific source is `ccaf14b210b3b55a350218e60f6b49ef76524cf3`; metadata/runtime source is `fa07e1336c8fc7c04994faadf8f6efabded0a195`. Candidate bundle, DOPE, evaluator, vocabulary, protocol and training-family closure remain pinned in the final receipt. Execution used the authenticated CPU evaluator; no GPU, model update, cohort replacement, tuning, new evaluation or retry was introduced during final analysis.
 
-**Alternatives rejected.** The catalog smoke command was not run because it reads real FIT payloads and its source catalog records unknown license status. No qualification command was run because the preregistration is unsigned and no owner authorization or qualified production backend is present. Synthetic receipt-analysis fixtures are not substituted for Q1 results.
+A Q1 PASS requires every signed unit to have a valid complete response before the preregistered primary and subgroup calculations. The 10,000-resample superiority and non-inferiority calculations were not run on this incomplete panel. The R20 census amendment preserves the three-family wide subgroup; its threshold was not changed after outcomes.
 
-**Risks and limits.** The synthetic backend cannot establish real evaluation counts, backend isolation, parity, quality, or subgroup behavior. QLT-01 still records the owner allowed-signers digest as `PENDING`; its status also says the owner signature and independent COMPLEX reviews remain outstanding. T122 requires the actual COMPLEX study to be run by the stronger-model screen; this Luna preparation does not close QLT-04.
-
-**Spec clauses.** Spec §13 keeps DOPE frozen and requires the later authorized engine boundary; §14 defines Q1 as the default-selection gate and OD7 subgroup margin. This prep changes neither protocol nor default.
-
-## Existing driver and receipt schema
-
-The committed QLT-01 driver supports `smoke`, `run`, `approval-payload`, and `analyze`. It writes `started` and `finished` JSONL events with plan, source, pin, dataset, seed, policy, budget, and request-digest identities. The `jope.q1-request/v1` request carries the frozen identity and (smoke only) payload/cut digest. The `jope.q1-response/v1` response carries status, charged/completed counts, RMSE, completed fold-score count, failure inventory, champion program, and adapter identity. `analyze` accepts only a complete, unique, identity-matched qualification panel and requires verified authorization; smoke receipts cannot produce a Q1 decision.
-
-## CPU synthetic dry-run
-
-`python3 deploy/qualification/q1/harness/q1.py --help` — PASS; no execution started.
-
-`PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy/qualification/q1/harness -p 'test_*.py' -v` — PASS, 12/12. Tests use synthetic plans/receipts, a temporary signing fixture, and mocked backend calls; they do not execute a trained or sealed model.
-
-An end-to-end `heuristic_smoke` driver exercise used three pinned **metadata entries only**, 16 synthetic rows, and a temporary fake backend marked `synthetic-no-model`. The driver emitted 12 append-only receipt events for six synthetic requests; all six responses passed schema and request-identity checks. Receipt SHA-256: `843c79eb9e4abf8c1e43d6e9e5197eda690fa02fb093af9637e157ba862073e1`. No dataset payload was opened. The run's synthetic loss values are plumbing fixtures and are not Q1 measurements. External reproducibility files: `/home/ubuntu/jope_plan/evidence/QLT-04-cpu-prep/` (`synthetic-smoke.py`, plan, JSONL receipts, summary, test log, and help output).
-
-## Required before Q1 can be reported
-
-A stronger-model owner must first obtain and verify the OWNER authorization and exact frozen qualification plan/backend/cohort, then execute the signed qualification protocol under `qualification.lock` within its CPU-only run limits. Preserve all start/finish receipts and hashes, failures, compute, effect estimate, interval, subgroup counts/results, and the separately approved guidance-default decision. Until those gates are satisfied, Q1 remains **NOT RUN / UNKNOWN** and no default change is supported.
-
-## Current CPU admission audit — 2026-10-31, owner t0210
-
-The `overnight23_t0210` CPU-only assignment refreshed execution readiness at
-source `d0bfa72a6c8270653b277ebd87025089ee3ddeeb`. It did not execute Q1.
-The historical smoke receipt above remains a separate observation.
-
-| Requirement | Observed state at this source |
-|---|---|
-| OWNER authorization | Preregistration still says `UNSIGNED / NOT AUTHORIZED FOR QUALIFICATION`; allowed-signers digest is `PENDING`. No study signature was supplied or created. |
-| Product backend | `harness/production_backend.py` is absent. The reference native adapter remains smoke-only; no production backend was executed or qualified. |
-| Actual plan, cohort and candidate proofs | Not assessed by this audit. No real cohort metadata, payloads, model, M2/M3 receipts or persistent study ledger were opened. |
-| Q1 results and default decision | Not run: effect, interval, subgroup results, study failures and study compute remain unknown. No guidance-default decision is recorded here. |
-
-On local xbabe2, nice 10 and serial execution, the existing harness suite passed
-**12 tests, 0 failures, 0 skips**. Its temporary signing key is a software fixture,
-not an OWNER key or study authorization. Three additional CLI controls used only
-invented metadata from the existing unit fixture and a trapped, never-executed
-backend:
-
-- `run` refused with exit 1 and `OWNER_SIGNATURE_REQUIRED: preregistration is unsigned`.
-- `analyze` refused with the same exit and reason before reading a nonexistent
-  receipts file.
-- `approval-payload` returned exit 0 and the expected document/plan/backend digest
-  binding. Those bytes are an unsigned approval message, not a signature.
-
-The controls produced **0 backend calls**, no execution receipts, no analysis
-report and no ledger directory or consumption marker. They opened no actual
-cohort or dataset payload and performed no native fit, optimizer update or GPU
-work. Fixture result arithmetic is not an empirical effect estimate; these
-checks establish only the current software admission boundary.
-
-Command, exit, timing, fixture and input identities are retained in
-`/home/ubuntu/jope_plan/evidence/QLT-04/obj02-t0210/admission-verification.json`.
-The source-file SHA-256 pins are:
-
-- Preregistration: `067c123307ed6ad5ab5a699fbf31334ecb453af052290f25378f53609087c964`.
-- Driver: `40d4b153de279bb66cb689e4d61c610164598c4bf533705173f055c91372eecf`.
-- Harness tests: `07c06c01091b160ad6e2697c0cad050b51916b7f799d5a7489abb9cc3ff31628`.
-
-QLT-04 remains open. A later qualification must supply its real admitted plan,
-backend and cohort evidence plus OWNER authorization; this CPU audit consumes
-no study budget and grants no restart, qualification or default change.
-
-## Owner-granted CPU wrapper dry run — 2026-10-31
-
-The CPU-only wrapper now pins `deploy/qualification/q1/inputs-manifest.json` to
-the published QLT-02 candidate metadata. The manifest contains only 2,606 dataset
-IDs, canonical dataset SHA-256 values and S3 manifest SHA-256 values, plus source
-cohort/catalog hashes; it includes no rows, object keys, family/shape metadata or
-payload bytes. It is explicitly
-`qualification_eligible=false`: the candidate cohort is not an owner-approved Q1
-roster. No sealed or holdout payload was opened.
-
-`fifo_launch.py dry-run` checked the candidate-manifest and frozen-DOPE hashes, then
-created `/home/ubuntu/jope_plan/evidence/QLT-04/luna-qlt02-t0955/decision-record-source-52379.json`
-against source commit `52379e482af435c198464c5696baa93c401a1ee5`. The manifest SHA-256 is
-`32e0abeba07e19c71e7e1b32c6959df14791e47dabbaf381e5983a0236c62e32`; the record SHA-256 is
-`1e68153d685d3d19c1ca18c21db149199a926b84a076a7399cd5cc3fd47f64e4`.
-The record says `q1_status=NOT_RUN`, `decision=UNKNOWN_NOT_RUN`; effects, intervals,
-subgroups, failure inventory and Q1 compute remain unknown. It records no lock,
-FIFO ticket, backend, payload or default change. This validates CPU plumbing only;
-QLT-04 remains NOT_RUN/UNKNOWN and the existing report tables remain unfilled.
-
-## Owner-delegated key and remaining blocker — 2026-10-31, Jepson GO 10:32 MDT
-
-Jepson approved, for Q1 only, at 10:32 MDT on 2026-10-31: (1) Q1 may use the sealed
-meta-test holdout only through its pinned evaluator; (2) a bot-held ed25519 key may
-sign as principal `jepson`; (3) an `--admin` merge of the Q1 PR(s). This section
-records item (2) as required.
-
-The earlier sections of this report are dated observations. Where they describe
-the allowed-signers digest as `PENDING`, or pin preregistration SHA-256
-`067c1233…`, they describe the state before this change.
-
-**The Q1 signing key is an owner-delegated agent key, not a key Jepson holds
-personally.**
-
-- It was generated on xbabe2 by the `qlt04_sign_claude` session at 16:37Z.
-- The private key stays outside Git, but any agent process running as the shared
-  `ubuntu` user can read it, and so can sign Q1 as `jepson`. The owner accepted this
-  risk.
-- The public half is committed as `owner/allowed_signers`, restricted to namespace
-  `jopedime-q1`, with fingerprint
-  `SHA256:2KNNiZS7c+YbwsAMt2x0Q9gIdRCd2Yi6CR3k/d1N6LY` and no expiry. Its file
-  SHA-256 is `6bc05cef59ee45376fe77fcaf27074edac2f7bd390faac3f193c466175313235`,
-  which replaces `PENDING`.
-- The amended preregistration's SHA-256 is
-  `f2a234dda18171623053e233a1e6a486df5215ea977097ea3f9d6b81a6f219b5`.
-- The canonical ledger root, `/home/ubuntu/jope_plan/ns/qualification/q1_ledger`,
-  exists and is empty. Signatures will go in
-  `/home/ubuntu/jope_plan/ns/qualification/q1_approval/<q1.digest(plan)>.sig`.
-
-**No qualification plan is signed and Q1 is still NOT RUN.** A signature has to bind
-`q1.py approval-payload` for a final plan, and that plan needs the SHA-256 of a
-qualified `production_backend.py`. That backend cannot be built honestly on current
-main:
-
-- The discovery loop's learned-guidance seam is the `Admission` trait in
-  `crates/jope-service/src/discover/loop.rs`. Its `admit` receives only the proposal
-  strings, the explore flag and the RNG.
-- The learned path needs more than that: `ServingAdmissionSlate::prepare` takes
-  measured reveals, program features (prog-412 and proj-16) and landmark/token
-  conditioning, and none of these reach `admit`.
-- No caller outside `crates/jope-service/src/ranker/` uses the slate, `select_costs`
-  or adapter costs. `resolve_unqualified`, which refuses `Guidance::Learned`, is
-  referenced only by its own tests.
-- The RNK-10 CPU policy primitives are merged (#755, #800). The composition card,
-  RNK-10-F01, is blocked: it needs an owner grant for the per-round context hand-off,
-  qualified RNK-07/08 evidence and OD13. RNK-12 M2 parity and the M3 quality
-  receipts are not admitted.
-- QLT-01-F01, the card that owns this backend, forbids service edits and says to
-  stop and ask for a COMPLEX or OWNER ruling when no suitable engine interface
-  exists.
-
-Running Q1 on an improvised learned path would consume the sealed cohort for that
-bundle permanently, because the ledger is single-use, and would produce an
-unqualified default decision.
-
-A materialized roster is also still needed. Owner ruling t2300 defines the sealed
-group by reference as all P3 `sealed_excluded` families (293 production + 470
-catalog). The plan also needs a cut identity per dataset, and that identity depends
-on the evaluator protocol the backend freezes. The published `cohort.json` and
-`inputs-manifest.json` are the non-sealed candidate set
-(`qualification_eligible=false`), not the Q1 cohort.
-
-## R19 pre-run subgroup disposition — 2026-11-01
-
-Owner ruling [R19](PREREG-AMENDMENT-R19.md) permits the existing roster's four
-distinct wide families for this run. Q1 remains **NOT RUN / UNKNOWN**. No empirical
-effect, interval or subgroup verdict is supplied by this amendment.
-
-| Subgroup | Frozen family count and reporting status | Effect / interval |
-|---|---|---|
-| wide | 4/5 families, below preregistered minimum, descriptive only, no subgroup verdict | UNKNOWN — Q1 NOT RUN |
-
-Small, large and narrow retain their original inferential requirements. Any later
-overall decision must identify R19; it cannot claim a wide subgroup verdict.
-
-## Current T1115 deduplicated plan — 2026-11-01
-
-**Q1 NOT RUN / INCOMPLETE / signable:false.** The latest owner direction requires
-five distinct wide families and supersedes the historical R19 exception for this
-new plan. [T1115](PREREG-AMENDMENT-T1115.md) selects 97 frozen owner families from
-the unchanged153-record source packet by the existing minimum-SHA rule, excluding
-56 same-family variants. The four old wide records contain two RECS members of
-one owner family; the selected97 therefore contain only three wide families.
-
-| Subgroup | Selected distinct families | Required | Q1 result |
+| Frozen subgroup | Families | Required by signed plan | Effect / bound |
 |---|---:|---:|---|
-| small | 70 | 5 | UNKNOWN — Q1 NOT RUN |
-| large | 27 | 5 | UNKNOWN — Q1 NOT RUN |
-| narrow | 94 | 5 | UNKNOWN — Q1 NOT RUN |
-| wide | 3 | 5 | INCOMPLETE — two families short; no result |
+| large | 27 | 5 | Not computed |
+| narrow | 94 | 5 | Not computed |
+| small | 70 | 5 | Not computed |
+| wide | 3 | 3 | Not computed |
 
-The full pinned4750-row catalog census supplies no additional wide member bound
-to these97 owner families. No row is duplicated or family reclassified to fill
-the gap. Primary estimates/intervals/subgroup verdicts, failures and study compute
-remain unknown. Actual evaluator/runtime/closure/signature gates still apply.
+## Execution and response accounting
 
-## R20 pre-outcome census update (2026-11-01 19:35 UTC)
+| Evidence | Terminal identities | Valid complete responses | Unresolved invalid responses |
+|---|---:|---:|---:|
+| Original ledger, after approved durable-response mapping | 17 | 17 | 0 |
+| Previously completed resume prefix | 14 | 14 | 0 |
+| Attempt-09 execution | 551 | 29 | 522 |
+| Full signed logical panel | 582 | 60 | 522 |
 
-Q1 remains **NOT_RUN** while the exact source-bound evaluator/runtime and exposure
-qualification are prepared. R20 admits all **3 eligible distinct wide families**,
-bound to the exhaustive [QLT02 audit](WIDE-GAP-R20.md) and
-[pre-outcome amendment](PREREG-AMENDMENT-R20.md). Full selection: 97 unique owner
-families (small70/large27/narrow94/wide3), 56 same-family variants excluded before
-outcomes. No new dataset/family/cut or training reassignment. All four subgroup
-checks retain the -0.02 margin and 0.05/4 lower quantile. Wide has only three
-families, limiting precision and coverage; this is not the original five-family
-design. No scientific PASS/FAIL, signed approval or execution is claimed here.
+Attempt-09 ended at `2026-11-02T21:37:26.284744+00:00` with `all_resume_units_terminal`, 551/551 terminal units and no resource stop reason. It stopped its remote engine successfully, removed the local/remote daemon records and closed its tunnel. The final resume ledger SHA-256 is `ca7025cc262c3134768f9daea5e31dcc2d22c8afa9ffa7429e5a94f51ac101f5`.
 
-## Post-#1754 Q1 admission recheck — 2026-11-02 08:23 UTC (T0115)
+The original infrastructure-interruption FINISHED row is preserved. GOV03 approved recovery of its already-durable 24/24 response (`afd7424379a950a678bdbfd667c665b4067b6a849e9e0be5b21d586d7a66048b`) through append-only mapping `43686b2bc7839853cb74f2a0bbce36e5c40ad3e9e239382a5af1e16c7a30db30`. This resolves an existing original identity and adds zero identities or charges. The original started-only identity overlaps an already-finished resume identity; it must not be counted twice.
 
-Owner direction is to use the pinned Linux evaluator only and to route any Q1 plan signature through the delegated signer. PR #1754 is merged at `fa07e1336c8fc7c04994faadf8f6efabded0a195`. A non-consuming preview of the merged publisher used compiled evaluator source `ccaf14b210b3b55a350218e60f6b49ef76524cf3` and metadata source `b5519c31df3601858ccd9b7ba83fba3a929fa7c3`. It regenerated the R20 plan from metadata only: 97 selected owner families, 153 verified cut checks, zero unknown authoritative families, all minima met (including exactly the three eligible wide families), and waiver validator `PASS`. Preview plan SHA-256: `bcd9ee1626d3eb7a4afb7ec52b19e45a299a7551f7d5dd2cab3722dc67993293`; canonical plan digest: `463b423ec65f20691c4ab0bcf10b2f807f2438d689254de8088cf753d5ebcd0c`. Full preview receipt: `/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-t0115/PREVIEW-POSTMERGE-LATEST.json`.
+There are **1,440 known returned charges across the 60 valid logical responses**, with 1440 completed candidate attempts reported by those responses. The 522 invalid logical responses have unknown charges/completion counts, and prior interrupted or started-only infrastructure work remains unknown. **Total physical charges and evaluator CPU/wall time are not established.** Failures retain their reserved/recorded budget position; they are not zero-cost observations or permission for a reset or free retry.
 
-This preview is not a frozen or signable plan. It reports `signable=false`, `Q1=NOT_RUN`, and `Actual source-bound runtime QUALIFIED-INPUTS.json absent`. The retained `api01-t0545/RUNTIME-RECEIPT-CANDIDATE.json` is explicitly `qualified=false` and `signable=false`; it is premerge admission evidence, not the required runtime-qualified input. The required ready handoff `/home/ubuntu/jope_plan/evidence/QLT-04/api01-t0250/handoff.ready.json` and `QUALIFIED-INPUTS.json` are absent. No `kind=q1` signing request, Q1 FIFO ticket, or started/finished ledger marker exists. The canonical `/home/ubuntu/jope_plan/qualification.lock` exists and was left unchanged.
+Attempt-09 controller elapsed time was `1823.201573` seconds. The unchanged post-execution analyzer took `0.314898` seconds and refused the panel. These are controller/analysis elapsed observations, not total evaluator compute. Elo and percentile measurements are unavailable and were not inferred from loss receipts.
 
-Therefore Q1 was not launched and no delegated signature was requested. No sealed/holdout payload was opened. Effect, interval, subgroup outcomes, failures, study compute, and the guidance default remain **UNKNOWN / NOT RUN**. The prior candidate and this metadata-only preview cannot be used to record a default. QLT-04 remains open until API01's exact-source runtime qualification and identity closure are admitted, the maintained publisher produces a signable frozen plan and ready handoff, and the pinned evaluator completes the signed single-use study.
+## Final evidence and review handoff
 
-## Signed-plan and owner-default update — 2026-11-02 08:30 UTC (T0115)
+- Final receipt: [receipts/q1-attempt09-final.json](receipts/q1-attempt09-final.json), SHA-256 `49fe1da4d8fab088b7d5b3d80f335df2b2cbb6e8b084dec447044292455b8855`.
+- Exact command, exit status, source pins, raw ledger hashes and provenance: the final receipt and `/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-final-t2141/`.
+- Full invalid-identity/reason inventory: `INVALID-UNITS.json`, SHA-256 `ea9fb91c9e42ebdd6ad16c5b3f5c74201de0879b3b32938d862c7f30e017b10c`. Original raw events and every selection origin remain in `PROVENANCE.json`; no failed row was overwritten or hidden.
+- GOV03's unchanged assembly barrier remains `WAITING_FOR_ALL_582_VALID_COMPLETE_RESPONSES`. Its independent review and API01's delegated guidance-default receipt are pending at publication.
 
-The preceding subsection is the 08:23 snapshot and is superseded for admission status by
-the completed GOV03 handoff. The maintained publisher now reports `signable=true` for
-the frozen R20 plan over 97 owner-family representatives (small 70, large 27, narrow
-94, wide 3), with the required subgroup minima met and no unmerged prerequisite PRs.
-The canonical plan digest is
-`d71ebeda6fe7c5575025a063807662b66c93c5f743689dc96bc5bae0fe26d19a`; frozen
-`plan.json` SHA-256 is
-`bee63b8e50c7f70d8a8927a808bb5b11d090c708cf77dfba9d9ed7b228f05cdf`.
-
-The exact source-bound runtime input is admitted for evaluator source
-`ccaf14b210b3b55a350218e60f6b49ef76524cf3`, evaluator artifact SHA-256
-`4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177`, and merged
-metadata source `fa07e1336c8fc7c04994faadf8f6efabded0a195`. Its 10 qualification checks
-contain nine raw passes and one raw numerical M3 failure explicitly dispositioned
-`WAIVED_V1_0_0`, with zero unwaived failures. This is a version-limited disposition;
-the raw M3 verdict remains `NUMERICAL_FAIL` and the ±2.0 pp criterion remains in force
-for future releases. `QUALIFIED-INPUTS.json` SHA-256 is
-`a6cc92ca4c69aa8b44db1e8f9e5cb8d98fc34c49070a4b071b8afe65c6a4edc3`.
-
-The one delegated signing request is complete. The independently verified watcher
-receipt is `/home/ubuntu/jope_plan/signing/receipts/q1-20261102T082653Z.json`
-(SHA-256 `da21afbb1974cfad3ae28e72e0acba722616ffc35f025e8eefe4a91b29250c79`);
-the exact plan signature verification exited 0. Evidence summary:
-`/home/ubuntu/jope_plan/evidence/QLT-04/gov03-t0115/SIGNED-PLAN-VERIFIED.json`
-(SHA-256 `018d81c10f592eab24530a10c7f9620dc9578971f6ea13db2048d38679f6f728`).
-
-OWNER-R21 already records the v1.0.0 guidance default as **OFF**: learned guidance
-does not ship as the v1.0.0 default. This is the previously ratified product default,
-not a Q1 outcome or a post-study decision. Q1 itself remains **NOT RUN / UNKNOWN**:
-no effect estimate, interval, subgroup verdicts, failures, study compute, or run-receipt
-hashes exist. GOV03 owns the original FIFO dispatcher and has directed this lane not
-to start a duplicate Q1. The signed single-use plan must be run only through the pinned
-Linux evaluator under that original dispatch path. No sealed or holdout contents were
-opened by this report update.
+Guidance stays **OFF**. No new signature, acceptance waiver, serving promotion or successful qualification is claimed. Any further evaluation or recovery requires its own original-protocol disposition; this report authorizes none. QLT-04 post-execution evaluation/reporting is delivered with an INCOMPLETE scientific result; REL-07 must preserve that disposition rather than treating terminal counts as a Q1 pass.
