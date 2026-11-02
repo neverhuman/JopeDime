@@ -566,6 +566,12 @@ crates/jope-campaigns/src/jope_dlgp_best5/portfolio.rs
 crates/jope-campaigns/src/jope_dlgp_best5/scq.rs
 crates/jope-campaigns/src/jope_dlgp_best5/splits.rs
 crates/jope-campaigns/src/jope_dlgp_best5/strategies.rs
+crates/jope-campaigns/src/jope_dlgp_best5/strategies/anchors.rs
+crates/jope-campaigns/src/jope_dlgp_best5/strategies/control.rs
+crates/jope-campaigns/src/jope_dlgp_best5/strategies/lineage.rs
+crates/jope-campaigns/src/jope_dlgp_best5/strategies/map_elites.rs
+crates/jope-campaigns/src/jope_dlgp_best5/strategies/residual.rs
+crates/jope-campaigns/src/jope_dlgp_best5/strategies/surrogate.rs
 crates/jope-campaigns/src/jope_dlgp_best5/worker.rs
 crates/jope-campaigns/src/jope_generalized_gp/catalog.rs
 crates/jope-campaigns/src/jope_generalized_gp/contracts.rs
