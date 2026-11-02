@@ -1,5 +1,110 @@
 use super::*;
 
+#[derive(Parser, Debug)]
+#[command(
+    name = "jope-task-learning-controller",
+    about = "Alternate quarantined task trainers and preempt with strictly gated production"
+)]
+pub(super) struct Args {
+    #[arg(long, default_value = default_root_str())]
+    pub(super) root: PathBuf,
+    #[arg(long, default_value = default_scq_str())]
+    pub(super) scq: PathBuf,
+    #[arg(long, default_value = default_runs_root_str())]
+    pub(super) runs_root: PathBuf,
+    #[arg(long, default_value = default_trainer_str())]
+    pub(super) trainer_script: PathBuf,
+    #[arg(long, default_value = default_common_str())]
+    pub(super) common_script: PathBuf,
+    #[arg(long, default_value = default_packer_str())]
+    pub(super) packed_script: PathBuf,
+    #[arg(long, default_value = default_prime_str())]
+    pub(super) prime_source: PathBuf,
+    #[arg(long)]
+    pub(super) submit: bool,
+    #[arg(long)]
+    pub(super) once: bool,
+    #[arg(long, default_value_t = 30, value_parser = clap::value_parser!(u64).range(1..))]
+    pub(super) interval_seconds: u64,
+    #[arg(long, default_value_t = 20_260_729)]
+    pub(super) seed_base: u64,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub(super) struct SchedulerJob {
+    pub(super) id: String,
+    pub(super) project: String,
+    pub(super) state: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ModelRef {
+    pub(super) accepted_parent_checkpoint_sha256: Sha256Digest,
+    pub(super) checkpoint_sha256: Sha256Digest,
+    pub(super) checkpoint_path: PathBuf,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ActiveIntent {
+    pub(super) trainer: TrainerIntentV2,
+    pub(super) spec_path: PathBuf,
+    pub(super) output_name: String,
+    pub(super) warm_start_path: PathBuf,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(default)]
+pub(super) struct ControllerState {
+    pub(super) schema: String,
+    pub(super) sequence: u64,
+    pub(super) alternation: ShadowAlternationState,
+    pub(super) shadow_models: BTreeMap<Task, ModelRef>,
+    pub(super) last_shadow_corpus_watermark: BTreeMap<Task, u64>,
+    pub(super) last_recipe_e_corpus_watermark: BTreeMap<Task, u64>,
+    pub(super) last_recipe_e_descendant_receipts: BTreeMap<Task, u64>,
+    pub(super) production_candidates: BTreeMap<Task, ModelRef>,
+    pub(super) canary_streaks: TaskCanaryStreaks,
+    pub(super) processed_canary_receipts: BTreeSet<String>,
+    pub(super) intent: Option<ActiveIntent>,
+    pub(super) updated_at_ms: u128,
+}
+
+impl Default for ControllerState {
+    fn default() -> Self {
+        Self {
+            schema: STATE_SCHEMA.to_owned(),
+            sequence: 1,
+            alternation: ShadowAlternationState::default(),
+            shadow_models: BTreeMap::new(),
+            last_shadow_corpus_watermark: BTreeMap::new(),
+            last_recipe_e_corpus_watermark: BTreeMap::new(),
+            last_recipe_e_descendant_receipts: BTreeMap::new(),
+            production_candidates: BTreeMap::new(),
+            canary_streaks: TaskCanaryStreaks::default(),
+            processed_canary_receipts: BTreeSet::new(),
+            intent: None,
+            updated_at_ms: now_ms(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct AcceptedPointer {
+    pub(super) digest: Sha256Digest,
+    pub(super) path: PathBuf,
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct CorpusPointer {
+    pub(super) watermark: u64,
+    pub(super) manifest: PathBuf,
+    pub(super) manifest_sha256: String,
+    pub(super) packed_manifest: PathBuf,
+    pub(super) packed_manifest_sha256: String,
+}
+
 pub(crate) fn load_state(path: &Path) -> Result<ControllerState> {
     if !path.is_file() {
         return Ok(ControllerState::default());
