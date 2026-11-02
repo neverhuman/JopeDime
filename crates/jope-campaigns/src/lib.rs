@@ -22,7 +22,7 @@ pub mod jope_generalized_gp;
 /// ADR-0003 locations: every former home-directory path, by root.
 pub mod paths;
 pub mod recovery_contracts;
-pub mod router_contracts_v2;
+pub mod router_contracts;
 pub mod search_v3;
 pub mod selfplay_core;
 pub mod selfplay_data;

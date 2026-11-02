@@ -26,9 +26,9 @@ use jope_learning::{
 };
 use jope_pipeline::{
     cpu_context_bridge::CpuContextFiles,
+    evaluation_result::{Consumption, EvaluationResult, RESULT_SCHEMA},
     execution::{Artifact, WorkerOutcome},
     experiment::EvaluationStatus,
-    experiment_v2::{Consumption, EvaluationResult, RESULT_SCHEMA},
     neural_search::{FrozenRecipe, SearchReceipt},
 };
 use jope_policy::context_producer;

@@ -5,21 +5,21 @@
 //! their own schemas and namespace.  The module owns policy and validation;
 //! callers own model inference, the authoritative bridge, and evaluator work.
 
+mod causal_evidence;
 mod contracts;
 mod flywheel;
 mod policy;
+mod promotion_evidence;
 mod state;
 mod store;
-mod v2;
-mod v3;
 
+pub use causal_evidence::*;
 pub use contracts::*;
 pub use flywheel::*;
 pub use policy::*;
+pub use promotion_evidence::*;
 pub use state::*;
 pub use store::*;
-pub use v2::*;
-pub use v3::*;
 
 pub const EVALUATIONS_PER_CONTEXT: usize = 256;
 pub const DATASETS_PER_COHORT: usize = 64;

@@ -2,8 +2,8 @@
 //! Scores must already have been computed by the controller from checked predictions.
 
 use anyhow::{ensure, Context, Result};
+use jope_pipeline::evaluation_result::EvaluationResult;
 use jope_pipeline::experiment::{EvaluationRequest, EvaluationStage, EvaluationStatus};
-use jope_pipeline::experiment_v2::EvaluationResult;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -281,8 +281,8 @@ pub fn confirm(
 mod tests {
     use super::*;
     use jope_datasets::catalog::Task;
+    use jope_pipeline::evaluation_result::{Consumption, RESULT_SCHEMA};
     use jope_pipeline::experiment::{Metric, REQUEST_SCHEMA};
-    use jope_pipeline::experiment_v2::{Consumption, RESULT_SCHEMA};
 
     fn observation(method: usize, score: Option<f64>) -> Observation {
         let request = EvaluationRequest {

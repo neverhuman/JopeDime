@@ -34,12 +34,12 @@ pub mod context_qualification;
 pub mod cpu_context_bridge;
 pub mod dataset;
 pub mod emit;
+pub mod evaluation_result;
 pub mod evaluation_score;
 pub mod evidence;
 #[cfg(target_os = "linux")]
 pub mod execution;
 pub mod experiment;
-pub mod experiment_v2;
 #[cfg(feature = "qualified-context")]
 pub mod experimental_producer;
 pub mod front_door;

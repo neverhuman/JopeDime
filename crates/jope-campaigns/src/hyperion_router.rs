@@ -14,7 +14,7 @@ use crate::search_v3::{canonical_sha256, validate_sha256};
 // Public V2 contracts live in a task-neutral module.  Re-export them here so
 // existing Hyperion callers can adopt the per-family API without changing
 // their module import path.
-pub use crate::router_contracts_v2::{
+pub use crate::router_contracts::{
     build_validation_folds_v2, mase_v2, predictor_columns_without_time,
     validate_family_ensemble_v2, FamilyRouteDecisionV2, FeatureViewV2, MemberInputPlanV2,
     ModelArtifactV4, PredictionBatchV2, PredictorRouteV2, RunManifestV6, SeedRouteMetricV2,
