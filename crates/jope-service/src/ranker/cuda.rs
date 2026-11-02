@@ -124,8 +124,11 @@ pub fn cpu_projection_reference(
     Ok(CpuProjectionReference { lm48, stage1b })
 }
 
+/// Tensor boundaries used by the CUDA projection comparison path.
+///
+/// This is a different domain from the research evidence lifecycle stages.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Stage {
+pub enum TensorStage {
     V256,
     Col,
     Dope629,
@@ -135,6 +138,9 @@ pub enum Stage {
     Costs,
 }
 
+/// Compatibility alias for callers of the original CUDA comparison API.
+pub type Stage = TensorStage;
+
 /// Row-major values, including all batch/slate axes in `shape`.
 #[derive(Clone, Copy, Debug)]
 pub struct TensorView<'a> {
@@ -143,7 +149,7 @@ pub struct TensorView<'a> {
 }
 
 impl TensorView<'_> {
-    fn validate(self, stage: Stage) -> Result<()> {
+    fn validate(self, stage: TensorStage) -> Result<()> {
         ensure!(
             !self.shape.is_empty() && self.shape.iter().all(|&dim| dim > 0),
             "{stage:?} has empty dimensions"
@@ -154,19 +160,19 @@ impl TensorView<'_> {
             "{stage:?} shape/data mismatch"
         );
         let suffix: &[usize] = match stage {
-            Stage::V256 => &[256],
-            Stage::Col => &[64, 17],
-            Stage::Dope629 => &[629],
-            Stage::Lm48 => &[48],
-            Stage::Tokens => &[10, 32],
-            Stage::Mask => &[10],
-            Stage::Costs => &[],
+            TensorStage::V256 => &[256],
+            TensorStage::Col => &[64, 17],
+            TensorStage::Dope629 => &[629],
+            TensorStage::Lm48 => &[48],
+            TensorStage::Tokens => &[10, 32],
+            TensorStage::Mask => &[10],
+            TensorStage::Costs => &[],
         };
         ensure!(
             self.shape.ends_with(suffix),
             "{stage:?} stage dimensions differ"
         );
-        if stage == Stage::Costs {
+        if stage == TensorStage::Costs {
             ensure!(
                 matches!(self.shape.last().copied(), Some(12 | 20)),
                 "costs require a serving-shaped 4+8 or 4+16 slate"
@@ -176,7 +182,7 @@ impl TensorView<'_> {
             self.values.iter().all(|v| v.is_finite()),
             "{stage:?} contains NaN/Inf"
         );
-        if stage == Stage::Mask {
+        if stage == TensorStage::Mask {
             ensure!(
                 self.values.iter().all(|&v| v == 0.0 || v == 1.0),
                 "token mask must contain only zero or one"
@@ -188,14 +194,14 @@ impl TensorView<'_> {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct StageComparison {
-    pub stage: Stage,
+    pub stage: TensorStage,
     pub values: usize,
     pub max_absolute_error: f64,
 }
 
 /// Tolerance is asymmetric: the CPU/golden reference defines the relative term.
 pub fn compare_stage(
-    stage: Stage,
+    stage: TensorStage,
     reference: TensorView<'_>,
     actual: TensorView<'_>,
 ) -> Result<StageComparison> {
@@ -248,13 +254,13 @@ pub fn compare_trace(reference: Trace<'_>, actual: Trace<'_>) -> Result<Vec<Stag
         "reference and actual trace context identities differ"
     );
     let stages = [
-        (Stage::V256, reference.v256, actual.v256),
-        (Stage::Col, reference.col, actual.col),
-        (Stage::Dope629, reference.dope629, actual.dope629),
-        (Stage::Lm48, reference.lm48, actual.lm48),
-        (Stage::Tokens, reference.tokens, actual.tokens),
-        (Stage::Mask, reference.mask, actual.mask),
-        (Stage::Costs, reference.costs, actual.costs),
+        (TensorStage::V256, reference.v256, actual.v256),
+        (TensorStage::Col, reference.col, actual.col),
+        (TensorStage::Dope629, reference.dope629, actual.dope629),
+        (TensorStage::Lm48, reference.lm48, actual.lm48),
+        (TensorStage::Tokens, reference.tokens, actual.tokens),
+        (TensorStage::Mask, reference.mask, actual.mask),
+        (TensorStage::Costs, reference.costs, actual.costs),
     ];
     // Validate pairs first, including rank/suffix checks, before slicing shapes.
     let comparisons = stages
@@ -268,7 +274,7 @@ pub fn compare_trace(reference: Trace<'_>, actual: Trace<'_>) -> Result<Vec<Stag
     );
     for (stage, reference, _) in stages {
         let trailing_axes = match stage {
-            Stage::Col | Stage::Tokens => 2,
+            TensorStage::Col | TensorStage::Tokens => 2,
             _ => 1,
         };
         ensure!(
@@ -506,21 +512,30 @@ mod tests {
         let mut actual = expected;
         actual[0] = 1e-6;
         actual[1] += 0.05;
-        let report =
-            compare_stage(Stage::Lm48, view(&[48], &expected), view(&[48], &actual)).unwrap();
+        let report = compare_stage(
+            TensorStage::Lm48,
+            view(&[48], &expected),
+            view(&[48], &actual),
+        )
+        .unwrap();
         assert_eq!(report.values, 48);
         assert!(report.max_absolute_error > 0.04);
         actual[0] = 0.001;
-        assert!(compare_stage(Stage::Lm48, view(&[48], &expected), view(&[48], &actual)).is_err());
+        assert!(compare_stage(
+            TensorStage::Lm48,
+            view(&[48], &expected),
+            view(&[48], &actual)
+        )
+        .is_err());
     }
 
     #[test]
     fn rejects_empty_overflowing_and_axis_mismatched_shapes() {
         for shape in [&[][..], &[0, 48][..], &[usize::MAX, 48][..], &[47][..]] {
-            assert!(compare_stage(Stage::Lm48, view(shape, &[]), view(shape, &[])).is_err());
+            assert!(compare_stage(TensorStage::Lm48, view(shape, &[]), view(shape, &[])).is_err());
         }
         assert!(compare_stage(
-            Stage::Lm48,
+            TensorStage::Lm48,
             view(&[1, 48], &[0.0; 48]),
             view(&[48], &[0.0; 48])
         )
@@ -533,11 +548,21 @@ mod tests {
         for invalid in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
             let mut bad = good;
             bad[0] = invalid;
-            assert!(compare_stage(Stage::Lm48, view(&[48], &good), view(&[48], &bad)).is_err());
-            assert!(compare_stage(Stage::Lm48, view(&[48], &bad), view(&[48], &good)).is_err());
+            assert!(compare_stage(
+                TensorStage::Lm48,
+                view(&[48], &good),
+                view(&[48], &bad)
+            )
+            .is_err());
+            assert!(compare_stage(
+                TensorStage::Lm48,
+                view(&[48], &bad),
+                view(&[48], &good)
+            )
+            .is_err());
         }
         assert!(compare_stage(
-            Stage::Lm48,
+            TensorStage::Lm48,
             view(&[48], &[f32::MAX; 48]),
             view(&[48], &[-f32::MAX; 48])
         )
@@ -547,16 +572,26 @@ mod tests {
     #[test]
     fn binary_mask_and_serving_slate_dimensions_are_enforced() {
         assert!(compare_stage(
-            Stage::Mask,
+            TensorStage::Mask,
             view(&[10], &[0.0; 10]),
             view(&[10], &[1e-6; 10])
         )
         .is_err());
         for n in [12, 20] {
             let costs = vec![0.0; n];
-            assert!(compare_stage(Stage::Costs, view(&[n], &costs), view(&[n], &costs)).is_ok());
+            assert!(compare_stage(
+                TensorStage::Costs,
+                view(&[n], &costs),
+                view(&[n], &costs)
+            )
+            .is_ok());
         }
-        assert!(compare_stage(Stage::Costs, view(&[8], &[0.0; 8]), view(&[8], &[0.0; 8])).is_err());
+        assert!(compare_stage(
+            TensorStage::Costs,
+            view(&[8], &[0.0; 8]),
+            view(&[8], &[0.0; 8])
+        )
+        .is_err());
     }
 
     struct TraceFixture {
