@@ -1492,6 +1492,7 @@ crates/smartcluster/jain-smartcluster-daemon/src/actor/tests.rs
 crates/smartcluster/jain-smartcluster-daemon/src/auth.rs
 crates/smartcluster/jain-smartcluster-daemon/src/bin/scqd.rs
 crates/smartcluster/jain-smartcluster-daemon/src/capacity.rs
+crates/smartcluster/jain-smartcluster-daemon/src/capacity/tests.rs
 crates/smartcluster/jain-smartcluster-daemon/src/cgroup.rs
 crates/smartcluster/jain-smartcluster-daemon/src/config.rs
 crates/smartcluster/jain-smartcluster-daemon/src/config/deployed_tests.rs
