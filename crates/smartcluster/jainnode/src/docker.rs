@@ -20,8 +20,8 @@ pub use engine::*;
 pub(crate) use protocol::percent_encode;
 pub(super) use protocol::{
     decode_http_body, drain_chunked, drain_content_length, find_subsequence,
-    parse_http_body_framing, read_stream_header, take_multiplexed_logs, CreateResponse,
-    HttpBodyFraming, InspectResponse, WaitResponse,
+    parse_http_body_framing, take_multiplexed_logs, CreateResponse, HttpBodyFraming,
+    InspectResponse, WaitResponse,
 };
 
 #[cfg(test)]
