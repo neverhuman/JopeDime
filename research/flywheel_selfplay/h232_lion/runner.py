@@ -61,6 +61,13 @@ def runtime():
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
+    # Amendment A2: #2006 made the H146 runtime import `research.flywheel_selfplay.runtime_audit` with the JopeDime
+    # root first on sys.path, binding `research` to that namespace early. The pinned H50 cpu_exact_fused.py then
+    # cannot import JopeDimeMicro's `research.levels`. Drop the early binding; `module.Audit` keeps its class.
+    for name in [
+        n for n in sys.modules if n == "research" or n.startswith("research.")
+    ]:
+        del sys.modules[name]
     return module
 
 
