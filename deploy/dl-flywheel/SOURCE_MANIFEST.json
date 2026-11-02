@@ -566,10 +566,16 @@
       "sha256": "a919be63b93b8b6ea1881530ce226be8311b0c7be1d6cf97922383e098739b33"
     },
     {
-      "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/protocol.py",
-      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "origin": "Compatibility facade for the canonical continuous-runtime protocol implementation",
+      "origin_sha256": "c4ead6a91176178671c6949fc7915a03f867ff1710e091ae85437224ebc073db",
       "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py",
-      "sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c"
+      "sha256": "c3a6aa41d5e478a881be72e4dfb589dd93d3be85b0ba1e08fab7ffc0069d0d04"
+    },
+    {
+      "origin": "Refactored from deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol.py; internal API names separated from frozen copies",
+      "origin_sha256": "4f35c7962682bbd0256d98a43c1bdf444d810ba1edb86ac8191ca71bb34a3f4c",
+      "path": "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/protocol_core.py",
+      "sha256": "c4ead6a91176178671c6949fc7915a03f867ff1710e091ae85437224ebc073db"
     },
     {
       "origin": "work/flywheel-20261008/proposals/neural-continuous-v1/runtime/jope_flywheel/timing.py",
