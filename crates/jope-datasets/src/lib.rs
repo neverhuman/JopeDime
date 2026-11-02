@@ -13,6 +13,7 @@ pub mod family_contracts;
 pub mod hash;
 pub mod ingest;
 pub mod meta;
+pub mod migrate_vocab_v4;
 pub mod paths;
 pub mod prep_v31_labels;
 pub mod prime_label_to_corpus;
