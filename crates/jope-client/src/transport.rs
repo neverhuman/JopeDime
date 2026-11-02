@@ -21,7 +21,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub const MAX_JSON_BYTES: usize = 8 * 1024 * 1024;
 
 #[derive(Debug)]
-pub enum Error {
+pub enum TransportError {
     InvalidRequest(&'static str),
     Protocol(&'static str),
     Io(io::Error),
@@ -30,7 +30,10 @@ pub enum Error {
     Problem(Box<Problem>),
     Status(u16),
 }
-impl fmt::Display for Error {
+/// Backward-compatible name for the client transport error.
+pub type Error = TransportError;
+
+impl fmt::Display for TransportError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidRequest(s) | Self::Protocol(s) => f.write_str(s),
@@ -42,13 +45,13 @@ impl fmt::Display for Error {
         }
     }
 }
-impl std::error::Error for Error {}
-impl From<io::Error> for Error {
+impl std::error::Error for TransportError {}
+impl From<io::Error> for TransportError {
     fn from(e: io::Error) -> Self {
         Self::Io(e)
     }
 }
-impl From<serde_json::Error> for Error {
+impl From<serde_json::Error> for TransportError {
     fn from(e: serde_json::Error) -> Self {
         Self::Json(e)
     }
