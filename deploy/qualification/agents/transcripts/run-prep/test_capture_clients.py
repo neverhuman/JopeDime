@@ -41,6 +41,7 @@ def _runner_fixture(
     drain_key=None,
     transport_key=None,
     flush_seconds=0.2,
+    async_recorder_key=None,
 ):
     repo = tmp_path / "source"
     repo.mkdir()
@@ -130,6 +131,13 @@ def _runner_fixture(
                     time.sleep(0.01)
                 if not Path('drain-child.ready').exists():
                     raise SystemExit('drain descendant did not start')
+                raise SystemExit(0)
+            if key == {async_recorder_key!r}:
+                child_code = "import hashlib, json, os, sys, time; from pathlib import Path; Path('async-recorder.pid').write_text(str(os.getpid())); time.sleep(0.4); output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,producer_sha256=hashlib.sha256(Path(sys.argv[3]).read_bytes()).hexdigest(),argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
+                subprocess.Popen(
+                    [sys.executable, '-c', child_code, capture_dir, candidate, capture_stdio],
+                    start_new_session=True,
+                )
                 raise SystemExit(0)
             if key == {descendant_key!r}:
                 child_code = "import os, signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); open('descendant.pid', 'w').write(str(os.getpid())); time.sleep(120)"
@@ -250,17 +258,93 @@ def test_normal_exit_drains_owned_recorder_descendant(monkeypatch, a5_tmp_path):
     )
     real_drain = THREE_CLIENTS_MODULE.drain_group
 
-    def release_then_drain(process, deadline, check_interrupted):
+    def release_then_drain(process, deadline, check_interrupted, receipt_path=None):
         (green_args.out_dir / "clients/claude_code/drain-child.release").write_text(
             "go", encoding="utf-8"
         )
-        return real_drain(process, deadline, check_interrupted)
+        return real_drain(process, deadline, check_interrupted, receipt_path)
 
     with monkeypatch.context() as patch:
         patch.setattr(THREE_CLIENTS_MODULE, "drain_group", release_then_drain)
         green_result = THREE_CLIENTS_MODULE.run_capture(green_args)
     assert green_result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
     assert green_result["clients"]["claude_code"]["client_exit"] == 0
+
+
+def test_normal_exit_waits_for_isolated_recorder_receipt(a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path, async_recorder_key="claude_code"
+    )
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    receipt = args.out_dir / "clients/claude_code/transport/capture.json"
+    deadline = time.monotonic() + 3
+    while not receipt.is_file() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert receipt.is_file(), "isolated MCP recorder did not finish its receipt"
+    assert result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+    assert result["clients"]["claude_code"]["client_exit"] == 0
+    assert result["clients"]["claude_code"]["capture_error"] is None
+
+
+def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
+    args, plan, _candidate, client = _runner_fixture(
+        a5_tmp_path, drain_key="claude_code"
+    )
+    plan["clients"]["claude_code"]["timeout_seconds"] = 1
+    args.client_plan.write_text(json.dumps(plan), encoding="utf-8")
+
+    class ShiftedTime:
+        client_finished = False
+        phase = 0
+
+        @staticmethod
+        def monotonic():
+            now = time.monotonic()
+            if not ShiftedTime.client_finished:
+                return now
+            if ShiftedTime.phase == 0:
+                ShiftedTime.phase = 1
+                return now - 2
+            ShiftedTime.phase = 2
+            return now + 2
+
+        @staticmethod
+        def sleep(seconds):
+            return time.sleep(seconds)
+
+    original_popen = THREE_CLIENTS_MODULE.subprocess.Popen
+
+    def exit_client_before_deadline_poll(command, *positional, **kwargs):
+        process = original_popen(command, *positional, **kwargs)
+        if command[0] == str(client):
+            assert process.wait(timeout=5) == 0
+            ShiftedTime.client_finished = True
+        return process
+
+    drain_calls = []
+    real_drain = THREE_CLIENTS_MODULE.drain_group
+
+    def drain_must_not_run(process, deadline, check_interrupted, *extra):
+        if process.args[-1] == "claude_code":
+            drain_calls.append(True)
+            raise AssertionError("no recorder drain budget remains at the client deadline")
+        return real_drain(process, deadline, check_interrupted, *extra)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
+        patch.setattr(
+            THREE_CLIENTS_MODULE.subprocess,
+            "Popen",
+            exit_client_before_deadline_poll,
+        )
+        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", drain_must_not_run)
+        result = THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert result["status"] == "INCOMPLETE"
+    assert result["clients"]["claude_code"]["client_exit"] == 0
+    assert not result["clients"]["claude_code"]["timed_out"]
+    assert drain_calls == []
+    assert not (args.out_dir / "clients/claude_code/transport/capture.json").exists()
 
 
 def test_normal_exit_drain_is_bounded_before_forced_cleanup(monkeypatch, a5_tmp_path):
@@ -272,7 +356,10 @@ def test_normal_exit_drain_is_bounded_before_forced_cleanup(monkeypatch, a5_tmp_
     def short_forced_cleanup(process, grace_seconds=5):
         return original_terminate(process, grace_seconds=0.1)
 
-    monkeypatch.setattr(THREE_CLIENTS_MODULE, "NORMAL_EXIT_DRAIN_MAX_SECONDS", 0.1)
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "NORMAL_EXIT_DRAIN_MAX_SECONDS", 0.05)
+    monkeypatch.setattr(
+        THREE_CLIENTS_MODULE, "NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS", 0.1
+    )
     monkeypatch.setattr(THREE_CLIENTS_MODULE, "terminate_group", short_forced_cleanup)
     original_drain = THREE_CLIENTS_MODULE.drain_group
     drain_elapsed = []
@@ -289,7 +376,7 @@ def test_normal_exit_drain_is_bounded_before_forced_cleanup(monkeypatch, a5_tmp_
     result = THREE_CLIENTS_MODULE.run_capture(args)
     elapsed = time.monotonic() - started
     assert elapsed < 8
-    assert drain_elapsed and drain_elapsed[0] <= 0.2
+    assert drain_elapsed and drain_elapsed[0] <= 0.3
     assert result["status"] == "INCOMPLETE"
     assert result["clients"]["claude_code"]["client_exit"] == 0
 

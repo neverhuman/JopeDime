@@ -25,7 +25,6 @@ extra_excluded_paths = [
   "docs/paper/innovationzero/artifacts/sources/Gemini4_argon_high.rs",
   "docs/paper/innovationzero/artifacts/sources/Opus5p5_Extra.rs",
   "deploy/ci/test-gitleaks-config.py",
-  "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
   "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
   "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
@@ -97,6 +96,70 @@ extra_excluded_paths = [
   "python/src/jope/target_maker/artifact_pins.py",
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-encodings"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/encodings.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-holdout"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-metafeatures"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/metafeatures.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-train"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/train.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-s1-outer-test-scorer"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/s1_outer_test_scorer.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-v2-rowsel-build"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-v2-rowsel-raw-coverage"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_coverage.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-v2-rowsel-raw-helper"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_helper.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
 
 [[dead_language_allow]]
 name = "vibe-h72-preregistered-work-queue"

@@ -263,13 +263,13 @@ def build(a):
     inv = json.loads(tool.DATASETS_INV.read_text())
     guard = cpuguard.Guard(journal_path=out / "coverage.guard.jsonl")
     load = make_loader(out, codes)
-    pending_datasets = [e for e in pl["datasets"] if e["disposition"] == "build"]
+    todo = [e for e in pl["datasets"] if e["disposition"] == "build"]
     if a.datasets:
         keep = set(a.datasets.split(","))
-        pending_datasets = [e for e in pending_datasets if e["dataset_hash"] in keep]
+        todo = [e for e in todo if e["dataset_hash"] in keep]
     t0, c0 = time.time(), tool.cpu_s()
     results = []
-    for e in pending_datasets:
+    for e in todo:
         sd = out / f"shard-{e['shard']}"
         sd.mkdir(parents=True, exist_ok=True)
         if tool.dataset_done(sd, e["dataset_hash"], codes):

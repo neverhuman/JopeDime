@@ -26,7 +26,9 @@ LOAD_LIMIT = 0.85 * HOST_CORES
 MAX_NUMERIC_THREADS = 4
 LIVE_FLYWHEEL_PID = 2297929
 CAMPAIGN_WALL_BUDGET_CAP_SECONDS = 25200.0
-PRIOR_ATTEMPTS_ELAPSED_SECONDS = 1970.9372255061753
+GPU_ATTEMPTS_1_2_ELAPSED_SECONDS = 1970.9372255061753
+SEAM_HELPER_0752Z_ELAPSED_SECONDS = 50.10207135695964
+PRIOR_ATTEMPTS_ELAPSED_SECONDS = 2021.039296863135
 REMAINING_WALL_BUDGET_SECONDS = (
     CAMPAIGN_WALL_BUDGET_CAP_SECONDS - PRIOR_ATTEMPTS_ELAPSED_SECONDS
 )
@@ -159,7 +161,7 @@ def is_cumulative_wall_deadline_exceeded(
     """Return True iff elapsed_seconds exceeds remaining_budget_seconds or prior + elapsed > cap."""
     el = float(elapsed_seconds)
     return (
-        el > 23229.062774493825
+        el > 23178.960703136865
         or el > float(remaining_budget_seconds)
         or (float(prior_elapsed_seconds) + el) > float(campaign_cap_seconds)
     )
@@ -403,9 +405,9 @@ def main():
                 reasons.append("sustained load>85%: three readings five seconds apart")
             if sample["output_bytes"] >= 500_000_000:
                 reasons.append("owned output root >=500MB")
-            if sample["elapsed"] > 23229.062774493825:
+            if sample["elapsed"] > 23178.960703136865:
                 reasons.append(
-                    "7h cumulative hard wall deadline (23229.062774493825s remaining)"
+                    "7h cumulative hard wall deadline (23178.960703136865s remaining)"
                 )
             elif (
                 sample["elapsed"] > remaining_budget or time.monotonic() > hard_deadline

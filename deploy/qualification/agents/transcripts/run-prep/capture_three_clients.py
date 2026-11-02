@@ -263,6 +263,7 @@ def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
 
 
 NORMAL_EXIT_DRAIN_MAX_SECONDS = 2.0
+NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS = 10.0
 
 
 def _group_has_live_members(pgid: int) -> bool:
@@ -288,13 +289,34 @@ def _group_has_live_members(pgid: int) -> bool:
 
 
 def drain_group(
-    process: subprocess.Popen, deadline: float, check_interrupted=lambda: None
+    process: subprocess.Popen,
+    deadline: float,
+    check_interrupted=lambda: None,
+    receipt_path: Path | None = None,
 ) -> None:
-    """Let normal-exit descendants finish, bounded by the client deadline."""
+    """Let normal-exit recorders finish before bounded process-group cleanup."""
     drain_deadline = min(deadline, time.monotonic() + NORMAL_EXIT_DRAIN_MAX_SECONDS)
     while _group_has_live_members(process.pid) and time.monotonic() < drain_deadline:
         check_interrupted()
         time.sleep(min(0.05, max(0, drain_deadline - time.monotonic())))
+    if receipt_path is None:
+        return
+
+    receipt_deadline = min(
+        deadline, time.monotonic() + NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS
+    )
+    while time.monotonic() < receipt_deadline:
+        check_interrupted()
+        if receipt_path.is_symlink() or (
+            receipt_path.exists() and not receipt_path.is_file()
+        ):
+            return
+        try:
+            read_object(receipt_path, "normal-exit transport receipt")
+        except (OSError, CaptureError):
+            time.sleep(min(0.05, max(0, receipt_deadline - time.monotonic())))
+            continue
+        return
 
 
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
@@ -535,7 +557,12 @@ class RecorderSession:
 
 def observe_client_exit(process) -> int | None:
     """Observe without reaping: reserve the client PID/PGID through drain/cleanup."""
-    status = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+    if process.returncode is not None:
+        return process.returncode
+    try:
+        status = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+    except ChildProcessError:
+        return process.poll()
     if status is None:
         return None
     return status.si_status if status.si_code == os.CLD_EXITED else -status.si_status
@@ -870,22 +897,29 @@ def run_capture(args: argparse.Namespace) -> dict:
 
                 if active_client is not None:
                     client_deadline = time.monotonic() + row["timeout_seconds"]
+                    deadline_reached = False
                     while True:
                         raise_if_sigint_pending()
                         recorder.groups()
+                        remaining = client_deadline - time.monotonic()
+                        if remaining <= 0:
+                            deadline_reached = True
+                            client_exit = observe_client_exit(active_client)
+                            timed_out = client_exit is None
+                            break
                         client_exit = observe_client_exit(active_client)
                         if client_exit is not None:
                             break
-                        remaining = client_deadline - time.monotonic()
-                        if remaining <= 0:
-                            timed_out = True
-                            break
                         time.sleep(min(0.05, remaining))
-                    if client_exit == 0 and not timed_out:
+                    if client_exit == 0 and not timed_out and not deadline_reached:
                         try:
                             flush_deadline = min(
                                 client_deadline,
-                                time.monotonic() + RECORDER_DRAIN_SECONDS,
+                                time.monotonic()
+                                + min(
+                                    RECORDER_DRAIN_SECONDS,
+                                    NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS,
+                                ),
                             )
                             drain_group(
                                 active_client, flush_deadline, raise_if_sigint_pending
@@ -904,6 +938,8 @@ def run_capture(args: argparse.Namespace) -> dict:
                         capture_error = (
                             "client timed out"
                             if timed_out
+                            else "client deadline reached before recorder drain"
+                            if deadline_reached
                             else "client exited unsuccessfully"
                         )
 
