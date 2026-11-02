@@ -1229,6 +1229,9 @@ crates/jope-engine/src/service.rs
 crates/jope-engine/src/service/allowed_cpu_tests.rs
 crates/jope-engine/src/service/coverage.rs
 crates/jope-engine/src/service/coverage/tests.rs
+crates/jope-engine/src/service/coverage/tests/balancing.rs
+crates/jope-engine/src/service/coverage/tests/population.rs
+crates/jope-engine/src/service/coverage/tests/reservations.rs
 crates/jope-engine/src/service/process.rs
 crates/jope-engine/src/service/recovery.rs
 crates/jope-engine/src/service/runner.rs
