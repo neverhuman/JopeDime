@@ -1,0 +1,83 @@
+{
+  "wave": "H203",
+  "authority": "/home/ubuntu/nudges/n1615_rd_opus.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H203_claim.txt",
+  "parent_waves": {
+    "H199": "NO_ADVANCE (harm 24.9%) on native",
+    "H195": "CANDIDATE on U4",
+    "H129": "BLEND_025 recipe; disagreement statistic"
+  },
+  "arms": [
+    "R882",
+    "GATED_025",
+    "BLEND_025",
+    "GATED_025_DIS"
+  ],
+  "primary": "GATED_025",
+  "holm_m": 1,
+  "lambda": 0.25,
+  "gate": {
+    "primary_signal": "zgap = (r882[b]-r882[a])/std(r882), a/b = first argmin of r882/blend; 0 if same pick; costs only",
+    "report_only_signal": "H129 disagreement = 1 - Spearman(GBM, r882) over unrevealed slots",
+    "tau_grid": "[-inf (closed), FIT q10,q25,q50,q75,q90 among switching contexts, +inf (open)]",
+    "selection": "per cell, FIT only (inner OOF calibrated GBM): max FIT equal-family native gain s.t. FIT harm <= 0.05; ties -> smaller tau; closed always feasible"
+  },
+  "endpoint": "flywheel native fixed-dev-cost-argmin-negative-fitness/v1",
+  "seeds": [
+    203101,
+    203102,
+    203103
+  ],
+  "fold_seeds": {
+    "203101": 203141,
+    "203102": 203142,
+    "203103": 203143
+  },
+  "sample_seed": 203140,
+  "boot_seed": 203150,
+  "elo_boot_seed": 203151,
+  "bootstrap_draws": 10000,
+  "elo_draws": 1000,
+  "fits": {
+    "BLEND": 45,
+    "SHUF": 0,
+    "total": 45
+  },
+  "decision": "CANDIDATE iff LCB95>0 AND p(H129 one-sided vs +0.001)<0.05 AND harm<=10%; else NO_ADVANCE",
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525
+  },
+  "inputs": {
+    "staging": "xbabe1 ~/jope-data/h203/inputs -> ~/jope-data/h195/inputs",
+    "hash_list_sha256": "2f7a364221e809d86abca30d14c3b80f5be1e2ba36db5b45ca1fe09ba82792e8",
+    "files": 2628,
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "host": "xbabe1 CPU only (admission before any side effect); no GPU",
+  "budget": {
+    "fits": 45,
+    "expected_wall": "~1h30m",
+    "deadline_hours": 4,
+    "root_expected_mb": 130,
+    "root_max_bytes": 500000000,
+    "disk_guard": "xbabe1 free>=40GB"
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H203/<run_id>/ (create-only)",
+  "never": [
+    "sealed",
+    "holdout",
+    "meta-test",
+    "live flywheel",
+    "xbabe0",
+    "xbabe2",
+    "xbabe3",
+    "GPU"
+  ]
+}
