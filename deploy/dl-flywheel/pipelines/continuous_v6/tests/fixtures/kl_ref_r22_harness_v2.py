@@ -139,7 +139,7 @@ def all_nodes(net, z, ti, torch, device):
 
 
 def kl_entropy(lp, la, ti, torch):
-    """Exact trie KL(policy || anchor) and policy entropy by the chain rule (natural-log units per program)."""
+    """Exact trie KL(policy || anchor) and policy entropy by the chain rule (nats per program)."""
     flat = lp.reshape(-1)
     safe = flat.masked_fill(~ti.mask.reshape(-1), 0.0)
     gathered = safe.index_select(0, ti.anc.reshape(-1)).reshape(ti.anc.shape)
