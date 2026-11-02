@@ -13,9 +13,9 @@ pub(crate) use multiclass::{
     MulticlassRidgeModel,
 };
 pub(crate) use portfolio::{ClassificationPortfolioModel, PlsHeadModel};
-pub(crate) use tab_boost::TabBoostModel;
 #[cfg(test)]
 pub(crate) use tab_boost::BoostStump;
+pub(crate) use tab_boost::TabBoostModel;
 
 use super::input::str_param;
 use super::transforms::{fit_pls_weights, V3Op};
