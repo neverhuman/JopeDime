@@ -40,6 +40,7 @@ PROGRAM_FEATURE_NAMES_SHA256 = (
 )
 POOL_SCHEMA = "jope.joint-regbin.candidate-tensor/v1"
 PROPOSALS_PER_CONTEXT = 16
+NATIVE_MIN_QUERY_ROWS = 10
 
 
 def sha256_bytes(data: bytes) -> str:
@@ -424,14 +425,23 @@ def encode_two_fold_jtt1(
         min(np.bincount(folds, minlength=2)) >= 25, "inner fold has fewer than 25 rows"
     )
     table = np.column_stack((x, y)).astype("<f8", copy=False)
+    # Native S1 requires at least ten query rows, even though this candidate
+    # evaluation is train-only. Derive their features from TRAIN and zero their
+    # targets; the evaluator also zeroes query targets before fitting. Keep the
+    # fold assignment and learner's train matrix limited to the original rows.
+    query_x = np.ascontiguousarray(x[:NATIVE_MIN_QUERY_ROWS], dtype="<f8")
+    query_y = np.zeros(NATIVE_MIN_QUERY_ROWS, dtype="<f8")
+    query_table = np.column_stack((query_x, query_y)).astype("<f8", copy=False)
     raw = (
         b"JTT1"
-        + struct.pack("<IIIB", len(y), 0, x.shape[1], 2)
+        + struct.pack("<IIIB", len(y), NATIVE_MIN_QUERY_ROWS, x.shape[1], 2)
         + folds.tobytes()
         + table.tobytes()
+        + query_table.tobytes()
     )
     _require(
-        len(raw) == 17 + len(y) + 8 * len(y) * (x.shape[1] + 1),
+        len(raw)
+        == 17 + len(y) + 8 * (len(y) + NATIVE_MIN_QUERY_ROWS) * (x.shape[1] + 1),
         "JTT1 encoding size mismatch",
     )
     return gzip.compress(raw, mtime=0)

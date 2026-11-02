@@ -229,6 +229,7 @@ class RustS1Evaluator:
             metrics = {"status": "failed", "fitness": None, "cv_gate_passed": False, "error": str(exc)}
         return {
             "index": index,
+            "scratch_job": str(job),
             "program_sha256": sha(dsl.encode()),
             "metrics": metrics,
             "returncode": returncode,

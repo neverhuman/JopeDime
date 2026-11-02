@@ -3,14 +3,27 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
+from pathlib import Path
 import re
 
 import numpy as np
 
-from research.flywheel_selfplay.h212_pool_width.analysis import (
-    first_argmin_utility as first_argmin_utility,
-    holm,
-)
+H212_ANALYSIS_SHA = "e09189fabe68d8933fadd6302243bb70313c7c046ec8c0b3c202777a96138e04"
+
+
+def load_upstream_analysis():
+    path = Path(__file__).resolve().parent.parent / "h212_pool_width/analysis.py"
+    if hashlib.sha256(path.read_bytes()).hexdigest() != H212_ANALYSIS_SHA:
+        raise ValueError("H212 analysis pin differs")
+    return importlib.import_module(
+        "research.flywheel_selfplay.h212_pool_width.analysis"
+    )
+
+
+_upstream = load_upstream_analysis()
+first_argmin_utility = _upstream.first_argmin_utility
+holm = _upstream.holm
 
 SEEDS = (214101, 214102, 214103)
 ARMS = ("NATIVE16", "FPS16")

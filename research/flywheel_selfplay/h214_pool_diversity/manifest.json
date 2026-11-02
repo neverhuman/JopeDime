@@ -54,7 +54,10 @@
     "smoke_pass_at_launch_head_required": true,
     "h212_manifest_sha256": "2c957d9a10d9971c1308a7ebdab9d14849b4ce08c5688b1b3101dd43b9fa1ca2",
     "h212_smoke_fix_pr": 1784,
-    "h212_runner_sha256": "8c27d619d3bbc4b8c3772e6acf91fa0ae0e1b51d4d35a029ca52fe57853ce7c1"
+    "h212_runner_sha256": "cf42b33391aee91d6650b72ad46da10ae85ce9ab9b5e1d2758ba44556d91cce6",
+    "h212_source_commit": "c39a96589f340e3d8faa833840e8ddf224aed2a5",
+    "h212_analysis_sha256": "e09189fabe68d8933fadd6302243bb70313c7c046ec8c0b3c202777a96138e04",
+    "h212_helper_cleanup_pr": 1788
   },
   "prelaunch_resolutions": [
     "real merged-H212 TRAIN smoke PASS at exact merged H214 head"

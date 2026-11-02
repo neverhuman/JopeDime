@@ -1,0 +1,350 @@
+{
+  "contrasts": {
+    "CONTROL": {
+      "reference": "R882",
+      "per_seed_gain": [
+        -0.04064762435092651,
+        -0.03330371008290197,
+        -0.03625477373678629
+      ],
+      "median_gain": -0.03625477373678629,
+      "ci95": [
+        -0.06728387355489139,
+        -0.007971645182694363
+      ],
+      "lcb95": -0.06192004769164612,
+      "p_margin": 0.996000399960004,
+      "harm": 0.3951219512195122,
+      "harmed_families": 81,
+      "positive_seeds": 0
+    },
+    "FBAL": {
+      "reference": "R882",
+      "per_seed_gain": [
+        -0.03787179591446613,
+        -0.0368787564227642,
+        -0.04076985079529514
+      ],
+      "median_gain": -0.03787179591446613,
+      "ci95": [
+        -0.07082207794616532,
+        -0.008462343928698768
+      ],
+      "lcb95": -0.06516374295710148,
+      "p_margin": 0.9957004299570043,
+      "harm": 0.3902439024390244,
+      "harmed_families": 80,
+      "positive_seeds": 0
+    },
+    "FBAL_WCR": {
+      "reference": "R882",
+      "per_seed_gain": [
+        -0.026751578150265336,
+        -0.025729098391338395,
+        -0.028934209153854314
+      ],
+      "median_gain": -0.026751578150265336,
+      "ci95": [
+        -0.053910287339429326,
+        -0.0044763745571607585
+      ],
+      "lcb95": -0.049297102150819616,
+      "p_margin": 0.9928007199280072,
+      "harm": 0.2731707317073171,
+      "harmed_families": 56,
+      "positive_seeds": 0
+    },
+    "FBAL_vs_CONTROL": {
+      "reference": "CONTROL",
+      "per_seed_gain": [
+        0.0027758284364603836,
+        -0.0035750463398622296,
+        -0.004515077058508851
+      ],
+      "median_gain": -0.0035750463398622296,
+      "ci95": [
+        -0.01036040062673135,
+        0.006231872452024155
+      ],
+      "lcb95": -0.008771183233565136,
+      "p_margin": 0.7324267573242675,
+      "harm": 0.09268292682926829,
+      "harmed_families": 19,
+      "positive_seeds": 1
+    },
+    "FBAL_WCR_vs_CONTROL": {
+      "reference": "CONTROL",
+      "per_seed_gain": [
+        0.01389604620066118,
+        0.007574611691563565,
+        0.007320564582931973
+      ],
+      "median_gain": 0.007574611691563565,
+      "ci95": [
+        -0.006831138000720162,
+        0.02647731389612041
+      ],
+      "lcb95": -0.003917992297031103,
+      "p_margin": 0.14078592140785923,
+      "harm": 0.16097560975609757,
+      "harmed_families": 33,
+      "positive_seeds": 3
+    }
+  },
+  "holm": {
+    "FBAL_WCR": {
+      "p": 1.0,
+      "alpha": 0.025,
+      "lcb95": -0.053910287339429326,
+      "passes": false
+    },
+    "FBAL": {
+      "p": 1.0,
+      "alpha": 0.05,
+      "lcb95": -0.06516374295710148,
+      "passes": false
+    }
+  },
+  "holm_multiplicity": 2,
+  "admitted": {
+    "FBAL": false,
+    "FBAL_WCR": false
+  },
+  "primary": "FBAL",
+  "verdict": "NO_ADVANCE",
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 219150,
+  "status": "COMPLETE",
+  "optimizer_updates": 1800,
+  "smoke_optimizer_updates": 4,
+  "total_optimizer_updates": 1804,
+  "member_fits": 45,
+  "selection_lock_sha256": "074a4b2ddbb0d0f27259aabb1f2e72ad84e2d55d7b15480a6728db21e5f77cd7",
+  "adoption_counts": {
+    "CONTROL": [
+      367,
+      365,
+      376
+    ],
+    "FBAL": [
+      363,
+      369,
+      371
+    ],
+    "FBAL_WCR": [
+      231,
+      234,
+      240
+    ]
+  },
+  "adoption_rates": {
+    "CONTROL": [
+      0.3010664479081214,
+      0.29942575881870387,
+      0.3084495488105004
+    ],
+    "FBAL": [
+      0.2977850697292863,
+      0.302707136997539,
+      0.30434782608695654
+    ],
+    "FBAL_WCR": [
+      0.18949958982772763,
+      0.19196062346185397,
+      0.19688269073010664
+    ]
+  },
+  "val_reg_inner_oof": {
+    "R882": {
+      "context_mean_per_seed": [
+        1.423073434552299,
+        1.423073434552299,
+        1.423073434552299
+      ],
+      "equal_family_mean_per_seed": [
+        1.3853554329931828,
+        1.3853554329931828,
+        1.3853554329931828
+      ]
+    },
+    "CONTROL": {
+      "context_mean_per_seed": [
+        1.382514017843531,
+        1.3881959598544045,
+        1.3850157935380267
+      ],
+      "equal_family_mean_per_seed": [
+        1.3447078086422564,
+        1.3520517229102806,
+        1.3491006592563966
+      ]
+    },
+    "FBAL": {
+      "context_mean_per_seed": [
+        1.386136566768427,
+        1.38703212049556,
+        1.3833746164529686
+      ],
+      "equal_family_mean_per_seed": [
+        1.3474836370787167,
+        1.3484766765704186,
+        1.3445855821978876
+      ]
+    },
+    "FBAL_WCR": {
+      "context_mean_per_seed": [
+        1.3978542602863906,
+        1.3988777376686863,
+        1.3959457949702794
+      ],
+      "equal_family_mean_per_seed": [
+        1.3586038548429176,
+        1.3596263346018445,
+        1.3564212238393285
+      ]
+    }
+  },
+  "elo_vs_r882": {
+    "CONTROL": {
+      "per_seed": [
+        1483.4034290003515,
+        1484.2525877529208,
+        1483.194161805969
+      ],
+      "median": 1483.4034290003515,
+      "ci95": [
+        1472.0393470251722,
+        1494.8520847037908
+      ]
+    },
+    "FBAL": {
+      "per_seed": [
+        1484.935662858233,
+        1482.237036993491,
+        1482.76171150777
+      ],
+      "median": 1482.76171150777,
+      "ci95": [
+        1472.3550067463584,
+        1493.9503390411737
+      ]
+    },
+    "FBAL_WCR": {
+      "per_seed": [
+        1493.527489528427,
+        1492.7175093779933,
+        1487.940492227109
+      ],
+      "median": 1492.7175093779933,
+      "ci95": [
+        1483.4796114752476,
+        1500.9860796192957
+      ]
+    }
+  },
+  "U4": null,
+  "U4_reason": "No verified multi-proposal budget in this protocol.",
+  "serving_promotion": false,
+  "source_commit": "ec93c316918fd8098c44769ab2f1a299660921d0",
+  "elapsed_seconds": 403.4901279041078,
+  "native91": null,
+  "native91_reason": "H109 TRAIN-only boundary: DL-Val payload/outcome excluded",
+  "static_train_parity": true,
+  "dl_val_payload_reads": 0,
+  "frozen_hash_before_after": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "numeric": {
+    "policy": "<=4 numeric threads (OMP/MKL/OpenBLAS/torch intra-op); CUDA runtime/driver threads exempt",
+    "numeric_threads_upper_bound": 1,
+    "os_threads_diagnostic": 6,
+    "workers": [
+      {
+        "pid": 1436647,
+        "environment": {
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1"
+        },
+        "torch_intraop": 1,
+        "native_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1
+          },
+          {
+            "user_api": "openmp",
+            "internal_api": "openmp",
+            "num_threads": 1
+          }
+        ]
+      }
+    ]
+  },
+  "wave": "H219",
+  "attempt": 1,
+  "retry_allowed": false,
+  "start_utc": "2026-11-02T11:31:53Z",
+  "finish_utc": "2026-11-02T11:38:43.395835+00:00",
+  "elapsed_supervisor_seconds": 410.213308095932,
+  "scientific_hypothesis_tested": true,
+  "planned_full_updates": 1800,
+  "planned_smoke_updates": 4,
+  "planned_member_fits": 45,
+  "selection_lock": true,
+  "A_scored": true,
+  "audit": {
+    "protected_reads": 0,
+    "list_fields": {
+      "opened": {
+        "count": 1250,
+        "sha256": "b02a12faf8b5dfbda6a6c6ae910105d80bf36b99a0e602b3e0839d3371987c14"
+      },
+      "refused": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    }
+  },
+  "resource_summary": {
+    "samples": 194,
+    "max_load1": 54.1298828125,
+    "max_load5": 45.64599609375,
+    "max_cpu_percent": 40.6,
+    "min_free_bytes": 445931343872,
+    "min_available_ram_bytes": 76637831168,
+    "max_child_rss_bytes": 2129567744,
+    "max_load_over_seconds": 0.0,
+    "max_cpu_over_seconds": 0.0
+  },
+  "postrun_pinned_files_unchanged": true,
+  "training_proofs": {
+    "durable_full_fits": 45,
+    "durable_full_updates": 1800,
+    "durable_smoke_updates": 4,
+    "all_nonzero_gradients": true,
+    "all_changed_parameters": true,
+    "all_changed_future_forward": true,
+    "devices": [
+      "cuda:0"
+    ],
+    "scope": "Completed durable fits; partial final fit may have additional updates. Empty inventory does not establish training."
+  },
+  "timing_smoke": {
+    "scored": false,
+    "optimizer_updates": 4,
+    "elapsed_seconds": 5.212463296018541,
+    "projected_full_fit_seconds": 146.5568066574633,
+    "scope": "TRAIN FIT-only timing; no held-out labels, selection or promotion; included in one90min budget"
+  },
+  "static_train_parity_receipt": {
+    "contexts": 1219,
+    "bit_exact": true
+  },
+  "custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H219/astra-t0400/closeout/manifest.json",
+    "version_id": "_QLxtXZJZ.jEyi5W2mpOOa2Qbg8gva6b",
+    "sha256": "e38bc9a26c8bf749c4ca2e86a31effd099437e1de825e442fc43af705c39ad40",
+    "bytes": 86294
+  }
+}
