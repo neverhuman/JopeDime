@@ -233,6 +233,7 @@ crates/hyperion/src/hyperion/orig_v2.rs
 crates/hyperion/src/hyperion/runtime.rs
 crates/hyperion/src/hyperion/tests.rs
 crates/hyperion/src/hyperion_router.rs
+crates/hyperion/src/hyperion_router/tests.rs
 crates/hyperion/src/hyperion_v7/backend.rs
 crates/hyperion/src/hyperion_v7/config.rs
 crates/hyperion/src/hyperion_v7/frames.rs
