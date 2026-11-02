@@ -222,8 +222,8 @@ pub fn observed_param_tokens(rows: &[TrainingRow], spec: &Value, cap: usize) -> 
             let op = stage.op;
             let op_spec = spec
                 .get("transforms")
-                .and_then(|v| v.get(&op))
-                .or_else(|| spec.get("heads").and_then(|v| v.get(&op)));
+                .and_then(|v| v.get(op.as_str()))
+                .or_else(|| spec.get("heads").and_then(|v| v.get(op.as_str())));
             let Some(op_spec) = op_spec else { continue };
             for (key, value) in stage.params {
                 if key == "append" {
@@ -233,9 +233,9 @@ pub fn observed_param_tokens(rows: &[TrainingRow], spec: &Value, cap: usize) -> 
                     .get("params")
                     .and_then(Value::as_array)
                     .and_then(|params| {
-                        params
-                            .iter()
-                            .find(|param| param.get("name").and_then(Value::as_str) == Some(&key))
+                        params.iter().find(|param| {
+                            param.get("name").and_then(Value::as_str) == Some(key.as_str())
+                        })
                     });
                 let Some(param) = param else { continue };
                 if param.get("kind").and_then(Value::as_str) == Some("expr") {
