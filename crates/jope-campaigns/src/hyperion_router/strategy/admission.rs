@@ -1,5 +1,7 @@
 use super::*;
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FixedBankSeedResultV2 {
     pub seed: u64,
     pub raw_result_sha256: String,
@@ -254,6 +256,3 @@ impl NestedTwoStreamSearchV2 {
         canonical_sha256(self)
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]

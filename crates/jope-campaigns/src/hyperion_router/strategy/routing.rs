@@ -1,5 +1,7 @@
 use super::*;
 
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct BlendFitV2 {
     pub alpha: f64,
     pub denominator: f64,

@@ -326,6 +326,3 @@ impl FoldLocalCellCoverageV2 {
         self.validate(fold_bank).is_ok() && self.structurally_eligible
     }
 }
-
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
