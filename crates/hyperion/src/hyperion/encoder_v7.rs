@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=canonical-hyperion-encoder-v7-surface-owned-by-jain-core-proof-required owner=hyperion expires=2027-04-01
 use super::*;
 
 /// v7 encode result: feature blocks (column-major) + the confidence surface + dataset vector.

@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-v3-search-archive-schedule-module-is-coverage-inventoried owner=jope-campaigns expires=2027-04-01
 use super::*;
 
 fn aggregate(candidate: &CandidateEvidenceV1, folds: &[u32]) -> Result<FitnessVectorV1, String> {

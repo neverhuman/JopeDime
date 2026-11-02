@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-v2-rollback-recovery-contract-module-is-coverage-inventoried owner=jope-campaigns expires=2027-04-01
 use super::*;
 
 mod capsule;
