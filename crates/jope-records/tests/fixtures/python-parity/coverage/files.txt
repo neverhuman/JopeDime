@@ -652,12 +652,12 @@ crates/jope-campaigns/src/hyperion_router/policy.rs
 crates/jope-campaigns/src/hyperion_router/strategy.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/budget.rs
-crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy./policy/confirmation.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy./policy/evidence.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy./policy/freeze.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy./policy/policy.rs
 crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy./policy/stage.rs
+crates/jope-campaigns/src/jope_dlgp_best5/budget_campaign/policy.rs
 crates/jope-campaigns/src/jope_dlgp_best5/compare.rs
 crates/jope-campaigns/src/jope_dlgp_best5/contracts.rs
 crates/jope-campaigns/src/jope_dlgp_best5/contracts/evidence.rs
@@ -861,6 +861,10 @@ crates/jope-cli/src/tests.rs
 crates/jope-cli/src/train.rs
 crates/jope-cli/src/train/corpus.rs
 crates/jope-cli/tests/offline_cli.rs
+crates/jope-cli/tests/offline_cli/champion_commands.rs
+crates/jope-cli/tests/offline_cli/emission_search.rs
+crates/jope-cli/tests/offline_cli/fixture_commands.rs
+crates/jope-cli/tests/offline_cli/routing_contracts.rs
 crates/jope-datasets/Cargo.toml
 crates/jope-datasets/releases/regression-10-v1/family-registry.json
 crates/jope-datasets/releases/regression-10-v1/release.json
