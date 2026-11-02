@@ -1710,6 +1710,10 @@ crates/smartcluster/jainnode/src/control.rs
 crates/smartcluster/jainnode/src/decimal_bytes.rs
 crates/smartcluster/jainnode/src/dispatch.rs
 crates/smartcluster/jainnode/src/dispatch_tests.rs
+crates/smartcluster/jainnode/src/dispatch_tests/concurrent.rs
+crates/smartcluster/jainnode/src/dispatch_tests/deadlines.rs
+crates/smartcluster/jainnode/src/dispatch_tests/recovery.rs
+crates/smartcluster/jainnode/src/dispatch_tests/recovery_failures.rs
 crates/smartcluster/jainnode/src/docker.rs
 crates/smartcluster/jainnode/src/executor.rs
 crates/smartcluster/jainnode/src/guidance.rs

@@ -207,5 +207,42 @@ fn drain_frames(outbox: &DurableControlOutbox) -> Vec<NodeControlFrame> {
     frames
 }
 
+async fn observe_wait_or_kill(harness: &RuntimeHarness, container: &str, previous: usize) {
+    tokio::time::timeout(Duration::from_secs(2), async {
+        loop {
+            let polls = harness
+                .docker
+                .waiting
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|id| id.as_str() == container)
+                .count();
+            if polls > previous || *harness.docker.killed.lock().unwrap() > 0 {
+                break;
+            }
+            harness.docker.wait_observed.notified().await;
+        }
+    })
+    .await
+    .unwrap();
+}
+
+async fn repoll_wait_or_kill(harness: &RuntimeHarness, container: &str) {
+    let previous = harness
+        .docker
+        .waiting
+        .lock()
+        .unwrap()
+        .iter()
+        .filter(|id| id.as_str() == container)
+        .count();
+    harness.docker.poll_wait.notify_one();
+    observe_wait_or_kill(harness, container, previous).await;
+}
+
+mod concurrent;
 mod concurrent_runtime;
+mod deadlines;
 mod recovery;
+mod recovery_failures;
