@@ -1482,6 +1482,14 @@ crates/jope-records/tests/records/claims.rs
 crates/jope-records/tests/records/cli.rs
 crates/jope-records/tests/records/dispositions.rs
 crates/jope-records/tests/records/elo_history.rs
+crates/jope-records/tests/records/elo_history/committed_record.rs
+crates/jope-records/tests/records/elo_history/decoding.rs
+crates/jope-records/tests/records/elo_history/derived.rs
+crates/jope-records/tests/records/elo_history/disposition.rs
+crates/jope-records/tests/records/elo_history/independent_fit.rs
+crates/jope-records/tests/records/elo_history/lineage.rs
+crates/jope-records/tests/records/elo_history/sensitivity.rs
+crates/jope-records/tests/records/elo_history/substitution.rs
 crates/jope-records/tests/records/findings.rs
 crates/jope-records/tests/records/inventory.rs
 crates/jope-records/tests/records/main.rs
