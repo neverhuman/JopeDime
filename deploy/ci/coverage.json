@@ -4876,7 +4876,7 @@
         "python",
         "full-python"
       ],
-      "scope": "NS24 auto-fuse harness (tools/auto_fuse.py) CPU unit tests: tensor-state digest byte identity (pre-fix known answer), 0-D non-byte tensors, name/dtype/value binding, DOPE freeze summary with BatchNorm buffers, and released-checkpoint pin/finiteness/envelope refusals on synthetic checkpoints; no GPU P2 evaluation or real-checkpoint qualification."
+      "scope": "NS24 auto-fuse harness (tools/auto_fuse.py) CPU unit tests: tensor-state digest byte identity (pre-fix known answer), 0-D non-byte tensors, name/dtype/value binding, DOPE freeze summary with BatchNorm buffers, released-checkpoint pin/finiteness/envelope refusals on synthetic checkpoints, the gpu_bench runtime identity, and main() through fake gpu_bench modules (identity binding, mid-run change and missing-input refusals, evaluator variant labels); no GPU P2 evaluation or real-checkpoint qualification."
     },
     "python:python/tests/test_context_proposals.py": {
       "discovery": {
