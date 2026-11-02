@@ -8,7 +8,17 @@ version = "1.0.0"
 # Exact non-product Python reference path for the Rust portable-math parity oracle.
 # P-1B receipts pin the bytes; see docs/release/jankurai-pytruth-exceptions-20261102.md.
 [python]
-allowed_non_product_paths = ["crates/feat-math/tests/portable/full_ref.py"]
+allowed_non_product_paths = [
+  "crates/feat-math/tests/portable/full_ref.py",
+  "crates/jope-bench/adapters/_panel.py",
+  "crates/jope-bench/adapters/catboost_adapter.py",
+  "crates/jope-bench/adapters/lightgbm_adapter.py",
+  "crates/jope-bench/adapters/sklearn_rf_adapter.py",
+  "crates/jope-bench/adapters/test_panel.py",
+  "crates/jope-bench/adapters/xgboost_adapter.py",
+  "crates/jope-bench/src/panel/inference_boundary.py",
+  "crates/jope-bench/src/panel/inference_cpp_boundary.py",
+]
 
 [queues]
 adapter_paths = ["crates/jope-client/src/transport.rs", "crates/jope-client/src/http.rs"]

@@ -210,7 +210,7 @@ fn timeout_supplies_only_censored_cost_and_valid_failure_without_quality_or_poli
 }
 
 #[test]
-fn proposal_has_no_fabricated_labels_and_failure_is_not_quality() {
+fn proposal_has_no_invented_labels_and_failure_is_not_quality() {
     let dir = scratch();
     let state = State::at(&dir);
     let subject = state.put_blob(b"unmeasured proposal").unwrap();
