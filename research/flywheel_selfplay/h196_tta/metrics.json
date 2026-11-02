@@ -236,10 +236,10 @@
     "batch_shape_reproduction": true,
     "weight_drift_observed": false,
     "custody_manifest": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/astra-t0305/diagnosis/manifest.json",
-      "version_id": "ABVDCUsSrqS1auWGjdEGjrSToKFZ9vAX",
-      "sha256": "811a5040ae3471d10bee509edfc565d41fb056c74ced864c2d94ef2be1911380",
-      "bytes": 39738
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H207/astra-t0305/diagnosis/manifest.json",
+      "version_id": "jPMx.2NuKYVl.wsZHQ9Ke.HdZghZKtAr",
+      "sha256": "20fbdd8faeb837cd5984d91f3f3aa4530c5ab582b282ee210c8c185dc8d877c1",
+      "bytes": 40881
     }
   }
 }

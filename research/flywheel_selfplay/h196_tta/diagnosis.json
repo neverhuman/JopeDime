@@ -1,6 +1,6 @@
 {
   "status": "COMPLETE",
-  "scope": "native-only postrun diagnosis, not H196/H204 efficacy",
+  "scope": "native-only postrun diagnosis, not H196/H207 efficacy",
   "finding": "Batch-shape-dependent cached-score identity mismatch reproduced on RTX3090 without weight drift.",
   "original_failure_hardware": "RTX4090; exact failing values not retained",
   "replication": {
@@ -784,19 +784,36 @@
   },
   "custody": {
     "status": "PASS",
+    "wave": "H207",
     "manifest": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/astra-t0305/diagnosis/manifest.json",
-      "version_id": "ABVDCUsSrqS1auWGjdEGjrSToKFZ9vAX",
-      "sha256": "811a5040ae3471d10bee509edfc565d41fb056c74ced864c2d94ef2be1911380",
-      "bytes": 39738
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H207/astra-t0305/diagnosis/manifest.json",
+      "version_id": "jPMx.2NuKYVl.wsZHQ9Ke.HdZghZKtAr",
+      "sha256": "20fbdd8faeb837cd5984d91f3f3aa4530c5ab582b282ee210c8c185dc8d877c1",
+      "bytes": 40881
     },
     "outputs": {
-      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/astra-t0305/diagnosis/evidence.zip",
-      "version_id": "2LKU26ycfoVC13WK9Q8ST_V3jILxq8ac",
+      "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H207/astra-t0305/diagnosis/evidence.zip",
+      "version_id": "n3FsiKDNupOX0GnGsHVBhJoR6N_9_cAM",
       "sha256": "e983bc741b695ac3c74a056ce0a1e189e163d7771dd0d7c02769b29a5103cacc",
       "bytes": 2411741
     },
-    "verified_members": 31
+    "verified_members": 31,
+    "historical_custody": {
+      "status": "PASS",
+      "manifest": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/astra-t0305/diagnosis/manifest.json",
+        "version_id": "ABVDCUsSrqS1auWGjdEGjrSToKFZ9vAX",
+        "sha256": "811a5040ae3471d10bee509edfc565d41fb056c74ced864c2d94ef2be1911380",
+        "bytes": 39738
+      },
+      "outputs": {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/astra-t0305/diagnosis/evidence.zip",
+        "version_id": "2LKU26ycfoVC13WK9Q8ST_V3jILxq8ac",
+        "sha256": "e983bc741b695ac3c74a056ce0a1e189e163d7771dd0d7c02769b29a5103cacc",
+        "bytes": 2411741
+      },
+      "verified_members": 31
+    }
   },
-  "what_to_try_next": "H204: canonical singleton GPU scoring for native caches and every treatment stage; retain exact equality and frozen-state checks, no tolerance or TTA tuning."
+  "what_to_try_next": "H207: canonical singleton GPU scoring for native caches and every treatment stage; retain exact equality and frozen-state checks, no tolerance or TTA tuning."
 }
