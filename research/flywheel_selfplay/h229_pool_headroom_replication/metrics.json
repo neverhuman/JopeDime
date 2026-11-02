@@ -455,6 +455,52 @@
     "compute_deadline_utc": "2026-11-02T22:30:00+00:00",
     "closeout_deadline_utc": "2026-11-02T23:00:00+00:00"
   },
+  "receiving_source_drift": {
+    "at": "2026-11-02T20:09:55.979207+00:00",
+    "execution_source": "d1e8dcbea161d4204156b6c67fe7af29791e8dea",
+    "observed_main": "7e9a4df642cedae437c40222a00f3dcc943f0b06",
+    "later_loader_commit": "6dc949d5cffa8f90351b5562db616c4cb2c48257",
+    "later_loader_pr": 2026,
+    "files": {
+      "research/flywheel_selfplay/h229_pool_headroom_replication/analysis.py": {
+        "executed_source_sha256": "f071a481944eb62fdea52ba83662a3ac29822466b155e7c787f68ca3bdcae9a6",
+        "receiving_sha256": "f071a481944eb62fdea52ba83662a3ac29822466b155e7c787f68ca3bdcae9a6",
+        "equal": true
+      },
+      "research/flywheel_selfplay/h229_pool_headroom_replication/backend.py": {
+        "executed_source_sha256": "88e3de0e9b36c5084c7572a890c5634c104fa426e08adf2e33c584d2144760d2",
+        "receiving_sha256": "0e1ff0504ff142796c7575245cf20e6627f2e54bf705ede4edfdecc9bcfa023e",
+        "equal": false
+      },
+      "research/flywheel_selfplay/h229_pool_headroom_replication/launcher.py": {
+        "executed_source_sha256": "f84b5c6b298e758d7574bb420f84df921a7dc2d0a160b972f56dcaf3d360802a",
+        "receiving_sha256": "4139c513efa321138ad3d9364b9754488137c20e7260455fb73f7e864e51dc79",
+        "equal": false
+      },
+      "research/flywheel_selfplay/h229_pool_headroom_replication/protocol.py": {
+        "executed_source_sha256": "fcc1903e97e0d56685040432ef1e30d4d699cb7e04d152f346960b4b1fa11522",
+        "receiving_sha256": "fcc1903e97e0d56685040432ef1e30d4d699cb7e04d152f346960b4b1fa11522",
+        "equal": true
+      },
+      "research/flywheel_selfplay/h229_pool_headroom_replication/runner.py": {
+        "executed_source_sha256": "b95c447958fdeaf1c50a18317211cb44971c4f9a3be2bf3819f5de3f5c6bceca",
+        "receiving_sha256": "b95c447958fdeaf1c50a18317211cb44971c4f9a3be2bf3819f5de3f5c6bceca",
+        "equal": true
+      },
+      "research/flywheel_selfplay/h229_pool_headroom_replication/test_h229.py": {
+        "executed_source_sha256": "17ebe9ce3855a2a29899377fcb5a0027bd36372ffb98e0137426d30761f5afcb",
+        "receiving_sha256": "933b0978efe97f6196665eeefdaeec3a09f566a8aaa56f20168faceceaa14a4c",
+        "equal": false
+      }
+    },
+    "changed_files": [
+      "research/flywheel_selfplay/h229_pool_headroom_replication/backend.py",
+      "research/flywheel_selfplay/h229_pool_headroom_replication/launcher.py",
+      "research/flywheel_selfplay/h229_pool_headroom_replication/test_h229.py"
+    ],
+    "scope": "Complete H229 scientific and25-test evidence applies to immutable executed source only. Later receiving loader/test edits preserved; not executed or qualified by this study. No source repair/retry/takeover.",
+    "diff_sha256": "6905a73136e9b6e780db1436ad724879992b8972ac047cdfc9bc4e91df65c6b1"
+  },
   "resource_guard_trigger_disposition": "NOT_APPLICABLE_COMPLETE_NO_HARD_STOP",
   "source_tests": {
     "test_count": 25,

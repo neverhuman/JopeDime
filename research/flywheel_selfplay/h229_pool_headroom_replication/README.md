@@ -32,6 +32,14 @@ source `d1e8dcbea161d4204156b6c67fe7af29791e8dea`. All11 study blobs match the r
 25 data-free tests, Ruff/format/compile/import/fold/registry checks PASS.
 Full/hosted CI NOT_RUN under assigned targeted-local workflow.
 
+A later main commit6dc949d5cffa8f90351b5562db616c4cb2c48257
+([#2026](https://github.com/neverhuman/JopeDime/pull/2026)) changed backend.py,
+launcher.py and test_h229.py loaders after preregistration. The original
+xbabe1 process executed immutable d1e8dcbe bytes throughout. This closeout
+preserves those receiving edits. The25 tests, smoke and scientific verdict
+qualify the pinned executed source only; the later loaders were not run or
+qualified here. Exact executed/receiving hashes are in metrics.json.
+
 The one full-path TRAIN smoke passed: all3 treatments, 64
 returned native records, actual exit0, scratch removed after durable results.
 Before proposals baseline91/91 bit-exact, mean1.1377941898164525; smoke DOPE/r882
