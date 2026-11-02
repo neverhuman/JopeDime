@@ -2335,6 +2335,10 @@
       "reason": "Owner-requested H218 data-free controls for nested blend-weight lambda in {0.125,0.25,0.5} + outcome-free zgap gate on FIT (frozen gate/blend function bodies identical to H210/H217, nested choose_lambda_tau and context-permuted zgap placebo, cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest with cross-wave overlap vs H203/H210/H217 and reused-partition refusal, LCB/3-of-3/harm primary verdict, DL-Val plateau co-primary, Elo orientation, xbabe2-only host admission, source binding before claim, absolute deadline, 20 GiB memory and 200 GB disk rules); no checkpoint/corpus reads or model passes in the fixtures",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h219_fbal_accum_run/test_h219.py": {
+      "reason": "H219 TRAIN-only fresh-family folds, H109 sampler/schedule/actual accumulation and paired r882 reset, strict-margin tie rejection/Holm2/harm/3seeds, full45-fit lock order, feature-row exclusion, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",
       "role": "research"
