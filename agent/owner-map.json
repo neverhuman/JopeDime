@@ -21,8 +21,6 @@
     "crates/**": "rust",
     "python/": "compatibility",
     "datasets/": "data",
-    "crates/feat-math/cpp/": "generated-emitter",
-    "crates/feat-math/cpp/**": "generated-emitter",
     "docs/": "docs",
     "ops/": "ops",
     "ops/**": "ops",
