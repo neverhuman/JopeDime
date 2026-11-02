@@ -3168,3 +3168,54 @@ def test_h205_f5_actual_consumer_pre_step_checks_without_model_or_optimizer(expi
                 *args, deadline_spec=deadline
             )
         assert steps == [] and parameter.value == 1.0
+
+
+def test_default_same_train_candidate_records_native_s1main_schema(tmp_path):
+    records = run_mod._default_same_train_candidate_records(feature_columns=5)
+    assert len(records) == stat.SLATE_CANDIDATES
+    for rec in records:
+        prog = rec["program"]
+        assert set(prog.keys()) == {
+            "dsl",
+            "program_sha256",
+            "birth_seq",
+            "parents",
+            "operator",
+        }
+        assert prog["dsl"].startswith("(pipe X ")
+        assert (
+            hashlib.sha256(prog["dsl"].encode("utf-8")).hexdigest()
+            == prog["program_sha256"]
+        )
+        assert isinstance(prog["birth_seq"], int) and prog["birth_seq"] >= 0
+        assert prog["parents"] == []
+        assert prog["operator"] == "init_slate24"
+    if stat.EVALUATOR_BINARY_PATH.is_file():
+        rng = np.random.default_rng(205)
+        x = rng.normal(size=(60, 5))
+        y = 0.8 * x[:, 0] - 0.4 * x[:, 1] + 0.1 * rng.normal(size=60)
+        csv_p = tmp_path / "syn.csv"
+        rows = [",".join(f"{v:.6f}" for v in list(r) + [yt]) for r, yt in zip(x, y)]
+        csv_p.write_text("\n".join(rows) + "\n")
+        nq0_p = tmp_path / "syn_nq0.jtt1"
+        enc = stat.encode_train_only_jtt1_from_csv(csv_p, nq0_p, has_header=False)
+        nq10_p = tmp_path / "syn_nq10.jtt1"
+        stat.build_train_only_padded_native_jtt1(
+            nq0_p,
+            out_padded_jtt1_path=nq10_p,
+            expected_nq0_sha256=enc["jtt1_sha256"],
+            expected_cut_sha256=enc["cut_sha256"],
+            expected_train_matrix_sha256=enc["train_matrix_sha256"],
+            expected_nt=60,
+            expected_p=5,
+        )
+        deadline = mon.compute_shared_process_deadline(
+            process_start_monotonic=run_mod.time.monotonic()
+        )
+        res = run_mod.evaluate_slate24_live_s1main(
+            nq10_p, records, deadline_spec=deadline
+        )
+        assert res["status"] == "PASS"
+        assert res["evaluated_candidates"] == 24
+        assert res["fitness_array"].shape == (24,)
+        assert res["gate_array"].shape == (24,)

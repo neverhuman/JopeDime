@@ -1005,30 +1005,45 @@ def extract_frozen_dope_tokens_10x32(
 
 
 def _default_same_train_candidate_records(feature_columns=5):
-    """Build 24 deterministic single-split GP candidate program records for same-TRAIN evaluation."""
+    """Build 24 deterministic canonical `(pipe X ...)` GP candidate program records for same-TRAIN evaluation."""
     ncols = max(1, int(feature_columns))
-    dsls = []
-    for i in range(stat.SLATE_CANDIDATES):
-        c0 = i % ncols
-        c1 = (i + 1) % ncols
-        c2 = (i + 2) % ncols
-        if i % 4 == 0:
-            dsl = f"add(X{c0}, mul(0.{i + 1:02d}, X{c1}))"
-        elif i % 4 == 1:
-            dsl = f"sub(X{c0}, mul(0.{i + 1:02d}, X{c2}))"
-        elif i % 4 == 2:
-            dsl = f"add(mul(0.5, X{c0}), mul(0.5, X{c1}))"
-        else:
-            dsl = f"add(X{c0}, sub(X{c1}, X{c2}))"
-        dsls.append(dsl)
+    dsls = [
+        "(pipe X (ridge))",
+        "(pipe X (ridge_gcv))",
+        "(pipe X (standardize) (ridge))",
+        "(pipe X (standardize) (ridge_gcv))",
+        "(pipe X (robust_scale) (ridge))",
+        "(pipe X (robust_scale) (ridge_gcv))",
+        "(pipe X (rank) (ridge))",
+        "(pipe X (blom) (ridge))",
+        "(pipe X (winsor_clip q=0.05) (standardize) (ridge))",
+        "(pipe X (winsor_clip q=0.1) (robust_scale) (ridge_gcv))",
+        "(pipe X (standardize) (poly_interact) (ridge))",
+        "(pipe X (standardize) (poly_interact) (ridge_gcv))",
+        f"(pipe X (standardize) (pair_prod topk={min(4, ncols)}) (ridge))",
+        "(pipe X (standardize) (row_stats) (ridge))",
+        "(pipe X (standardize) (cheb degree=2) (ridge))",
+        "(pipe X (standardize) (cheb degree=3) (ridge_gcv))",
+        "(pipe X (standardize) (hinge knots=3) (ridge))",
+        "(pipe X (standardize) (quantile_bins bins=4) (ridge))",
+        "(pipe X (standardize) (rff_cos gamma=0.5 n=16 seed=1) (ridge))",
+        "(pipe X (standardize) (rff_sin gamma=0.5 n=16 seed=2) (ridge))",
+        f"(pipe X (standardize) (rand_proj k={min(4, ncols)} seed=3) (ridge))",
+        "(pipe X (standardize) (elasticnet alpha=0.01 l1_ratio=0.5))",
+        "(pipe X (standardize) (ksmooth gamma=1.0 k=5))",
+        "(pipe X (standardize) (histgbm depth=3 lr=0.1 rounds=20))",
+    ]
     records = []
-    for dsl in dsls:
+    for birth_seq, dsl in enumerate(dsls):
         psha = hashlib.sha256(dsl.encode("utf-8")).hexdigest()
         records.append(
             dict(
                 program=dict(
                     dsl=dsl,
                     program_sha256=psha,
+                    birth_seq=int(birth_seq),
+                    parents=[],
+                    operator="init_slate24",
                 )
             )
         )
@@ -1082,7 +1097,10 @@ def evaluate_slate24_live_s1main(
                     deadline_spec,
                     stage=f"live_s1main_candidate_{idx}",
                 )
-            prog = rec["program"]
+            prog = dict(rec["program"])
+            prog.setdefault("birth_seq", int(idx))
+            prog.setdefault("parents", [])
+            prog.setdefault("operator", "init_slate24")
             dsl = prog["dsl"]
             cand_path = td_path / f"cand_{idx:04d}.json"
             out_path = td_path / f"eval_{idx:04d}.json"

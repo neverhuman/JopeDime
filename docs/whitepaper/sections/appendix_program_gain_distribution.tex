@@ -1,0 +1,25 @@
+\FloatBarrier
+\section{Sizes of Strict Program-Incumbent Gains}\label{app:program-gain-distribution}
+
+\Cref{fig:fw-program-gain-distribution} adds event magnitudes to the counts
+and clocks above. Each observation is a journaled strict training-program
+incumbent change, not an adapter admission. The distribution conditions on
+an event; rounds without one are counted separately. Logged scalar
+increments are not Elo changes or independent performance estimates.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_program_gain_distribution.pdf}
+  \caption{\textbf{Distribution of logged strict training-program utility increments.}
+  Rounds 3656--3675, captured at 12:25 UTC on 2 November 2026.
+  The empirical cumulative distribution gives each of the nine strict events
+  equal weight; the horizontal axis is logarithmic. An increment is the
+  journaled new utility minus its previous incumbent utility, computed
+  from unrounded values. All 20 completed rounds were checked against the
+  journal; 13 had no event and contribute no zero-gain observation.
+  The window records zero adapter admissions. Event-level confidence
+  intervals are unavailable; the curve is descriptive, without uncertainty
+  bands. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-program-gain-distribution}
+\end{figure}
+\input{sections/appendix_rolling_admissions}

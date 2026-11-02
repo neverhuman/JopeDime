@@ -5504,6 +5504,142 @@
       },
       "sha256": "7f4fbaa5c43a2104b72b5e12948c1cb1cf069c31bffafe1031a98df51e87412d"
     },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/backend.py": {
+      "bytes": 6595,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "94543734011f7c552e5c57da35f82152da0aa39288ee7829c40f472b6b6cb2ae"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/launch.py": {
+      "bytes": 11790,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "2ff4df29339c6038c8d1bf012c0b8a0f2a9d14e1c0bf4294cc3f85e3d848890d"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/runner.py": {
+      "bytes": 22939,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a658d9117764472bb16e25cdc98f8621c441b7d0d3d6f4e91c36d9fbb866ce54"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/science.py": {
+      "bytes": 7783,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a5ee68a2edbf43bc580ec413540dd2f1b7601a332fa77bb707fffccf2e3b268f"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/study.py": {
+      "bytes": 5639,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "6b68dcedd1edee25d4dfd13dd807f6a1d5c14f887bcf048d4438811d945aae50"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/backend.py": {
+      "bytes": 14110,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "cd50c64809d21bef1ff658aa65afd77bc172e9b023b7d19c7d4187f1e04898e2"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/launcher.py": {
+      "bytes": 8105,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "6d403b2bb9c9e28000ed56f9a4330e04930519a1801dc460df8ea26d09170995"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/regularize.py": {
+      "bytes": 2612,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "30f49bbb45183f47de1defdca6b49d32c486c8fcec2b51d1dde5870d87d9621b"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/runner.py": {
+      "bytes": 13814,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "008159b546643094d0ef9d784f7059c6266cb6fde81f5ec8c64cd322082f629c"
+    },
+    "python:research/flywheel_selfplay/h222_lipschitz_adapter/science.py": {
+      "bytes": 5057,
+      "classification": {
+        "reason": "H222 owner-authorized offline frozen-DOPE CPU adapter Lipschitz study; TRAIN-only tuning, strict preregistered DL-Val91 paired readout. Research implementation and data-free tests, not qualification evidence.",
+        "role": "research"
+      },
+      "sha256": "4c2369bc1e0022bbff758bf724ae0d07c759be9525b74c77e82a05e9fab165a2"
+    },
+    "python:research/flywheel_selfplay/h223_bagged_blend_gate/analysis.py": {
+      "bytes": 17865,
+      "classification": {
+        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "0638c6ff0caabf1b6a62df3f8c39697f2921456f80e41cf3b5e672ba2709c938"
+    },
+    "python:research/flywheel_selfplay/h223_bagged_blend_gate/monitor.py": {
+      "bytes": 13388,
+      "classification": {
+        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "84554e789abba09d8103b02391fc7894b9fc9f425ca59464a5eb612b8f5c62a9"
+    },
+    "python:research/flywheel_selfplay/h223_bagged_blend_gate/runner.py": {
+      "bytes": 38153,
+      "classification": {
+        "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
+        "role": "research"
+      },
+      "sha256": "a3d14404978a9da0373cbfd567d23a2143f5eb1f6a43a5d044633fd1c078d07e"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/analysis.py": {
+      "bytes": 14695,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/gate.py": {
+      "bytes": 5894,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "b6da8ad57f940aeef3a504439f4848df2e06344d14652e768adf32858637ebc3"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/monitor.py": {
+      "bytes": 8717,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "3d5062e39aae1c00b619f8096c12fc3b98bbe30a492683f728de01a08811df4a"
+    },
+    "python:research/flywheel_selfplay/h224_learned_switch_gate/runner.py": {
+      "bytes": 20750,
+      "classification": {
+        "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "ca3a8aee72a6158e600671a07e9870ac4db1b219c9a915cec95b5ecc2d11e64d"
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {

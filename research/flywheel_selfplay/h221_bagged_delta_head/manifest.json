@@ -1,0 +1,168 @@
+{
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "/home/ubuntu/jope-data/h196/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "psutil": "7.1.0",
+    "torch": "2.7.0",
+    "boto3": "1.35.49",
+    "botocore": "1.35.99",
+    "threadpoolctl": "3.6.0"
+  },
+  "checkpoint": "/home/ubuntu/jope-data/h196/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "required_baseline": {
+    "bit_exact": true,
+    "contexts": 91,
+    "families": 19,
+    "mean": 1.1377941898164525
+  },
+  "schema": "jope.h221-bagged-delta/v1",
+  "wave": "H221",
+  "status": "COMPLETE",
+  "owner": "rd_astra",
+  "source_base": "71ea06190270e1677dc499be5976d9417296e739",
+  "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
+  "catalog": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
+  "source_manifest": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
+  "gpu_uuid": "GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b",
+  "s3_prefix": "experiments/rd_breakthrough_20261102/H221/astra-t0530/",
+  "seeds": [
+    221101,
+    221102,
+    221103
+  ],
+  "fold_seeds": [
+    221141,
+    221142,
+    221143
+  ],
+  "bootstrap_seed": 221150,
+  "elo_seed": 221151,
+  "arms": [
+    "R882",
+    "DELTA_SAFE",
+    "BAG5_SAFE",
+    "BAG5_SHUF_SAFE"
+  ],
+  "primary": "BAG5_SAFE",
+  "holm_multiplicity": 1,
+  "max_total_updates": 21120,
+  "updates_per_fit": 128,
+  "batch_contexts": 4,
+  "head_parameters": 47744,
+  "thresholds": [
+    0,
+    0.001,
+    0.01,
+    0.05,
+    0.1,
+    0.2,
+    0.5,
+    null
+  ],
+  "null_threshold_means": "positive infinity, always r882",
+  "resource_limits": {
+    "host": "xbabe2",
+    "gpu_index": 0,
+    "wall_seconds": 5400,
+    "attempts": 1,
+    "min_free_bytes": 200000000000,
+    "min_available_ram_bytes": 21474836480,
+    "max_process_tree_rss_bytes": 21474836480,
+    "max_local_output_bytes": 1000000000,
+    "max_cpu_percent": 85,
+    "max_load_fraction_of_affinity": 0.85,
+    "numeric_threads": 1,
+    "numeric_policy_max": 4,
+    "os_threads": "diagnostic only; CUDA driver threads exempt",
+    "sustained_overload_seconds": 300,
+    "max_load5_fraction_of_affinity": 0.85,
+    "load1_cpu_admission": "instantaneous <=85%; separate runtime clocks",
+    "max_feature_cache_bytes": 5368709120
+  },
+  "data_scope": "Historical real-S3 TRAIN pools; not fresh native-CV labels; no DL-Val head evaluation",
+  "serving_promotion": false,
+  "parent_sources": {
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "research/flywheel_selfplay/h200_nested_blend/analysis.py": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2",
+    "research/flywheel_selfplay/hwave_numeric_threads.py": "9cb334d61a95f9d648dd52100f7010d7f6c7b7d00e5bed5c2dc58507121c668d",
+    "research/flywheel_selfplay/h213_gpu_delta_sustained/science.py": "3ddfc9233742a763ba9627acd687bd14d9346f74effaf97d9029b7f54961b312",
+    "research/flywheel_selfplay/h213_gpu_delta_sustained/runner.py": "7a49350b8c8368550ef187c346e2753d3b8665c96c77ab8d2e1f1d4c12a0eb70",
+    "research/flywheel_selfplay/h210_blend025_gated_retry/analysis.py": "a1d99f211bfd0158e9b906dc0d42631d68e2f53cc10a9012d92aaeaf3446aa1b",
+    "research/flywheel_selfplay/h217_gated025_confirm/analysis.py": "a509ff6d6f0531a6ce6a051e03aee1e3170534d939ddaa277dc983222d6f1431",
+    "research/flywheel_selfplay/h218_gated_lambda_nest/analysis.py": "67e5cc7d518495fad72bde9843ffe5f367a992538c59dca2c0b42dda634c97da",
+    "research/flywheel_selfplay/h220_family_mixup/science.py": "dc4e803d273888603376811761d67fb8fce0bd1f9aed0ca0c51eb6fc929fc4ae"
+  },
+  "source_sha256": {
+    "PREREG.md": "f75ba5780fa7a4c540f813e3e9827834dbcd5d3ed6dcc048feffc2a45b85e148",
+    "README.md": "4722501fc440830e08b9ad2abac136ee329441532dd70ff6c4adfb76e1fcba04",
+    "backend.py": "94543734011f7c552e5c57da35f82152da0aa39288ee7829c40f472b6b6cb2ae",
+    "fold_jaccard.json": "6c03864887496eeec1a69d64c124442de855320bd227780349ee193f1273be08",
+    "fold_manifest.json": "d3dda0ddaaac7ff55c91eda639195f10e94c371d6ec6cae09d0266b2851c6508",
+    "launch.py": "2ff4df29339c6038c8d1bf012c0b8a0f2a9d14e1c0bf4294cc3f85e3d848890d",
+    "provenance.json": "2a9a583133f7fe119563586f8ee7263c55f9f088451ec6a16642859439046ed9",
+    "runner.py": "a658d9117764472bb16e25cdc98f8621c441b7d0d3d6f4e91c36d9fbb866ce54",
+    "science.py": "a5ee68a2edbf43bc580ec413540dd2f1b7601a332fa77bb707fffccf2e3b268f",
+    "study.py": "6b68dcedd1edee25d4dfd13dd807f6a1d5c14f887bcf048d4438811d945aae50",
+    "test_h221.py": "34b9ac91d8d2da9503a3de661630783684b57888e74cba4f3ad917091070140c"
+  },
+  "authority": "hw_t0530_astra_h221.md",
+  "launch_gate": "Exact merged preregistration before any native regression or training",
+  "deadlines_utc": {
+    "latest_launch": "2026-11-02T15:00:00Z",
+    "complete": "2026-11-02T16:30:00Z"
+  },
+  "bag_members": 5,
+  "member_fits": 165,
+  "gate_cells": 45,
+  "primary_rule": {
+    "ci95_lower_strict_gt": 0,
+    "p_strict_lt": 0.05,
+    "median_gain_strict_gt": 0.001,
+    "harm_le": 0.1,
+    "positive_seeds_ge": 2
+  },
+  "reference_arm": "DELTA_SAFE",
+  "placebo": "BAG5_SHUF_SAFE",
+  "frozen_incumbent": true,
+  "execution_source_commit": "b8ca3509833861d72502714684d3b4b61a206934",
+  "source_sha256_scope": "Immutable execution commit; README updated for closeout; runtime/science/tests/folds unchanged.",
+  "closeout": {
+    "verdict": "NO_ADVANCE",
+    "s3": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H221/astra-t0530/closeout/manifest.json",
+      "version_id": "De_dDVYe.z5YFioFw4HE9pxN0jD4sGWQ",
+      "sha256": "df29b5feb1814ec0d3b30d46255d2a5b998668f3971b7ca9e1e4e4e6f9f31a3c",
+      "bytes": 252911
+    },
+    "retry_allowed": false
+  }
+}

@@ -1,7 +1,36 @@
 {
   "wave": "H218",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "INCOMPLETE",
+  "verdict": "INCOMPLETE_NO_ADVANCE",
+  "scientific_outcome": null,
+  "reason": "monitor load5>85 guard fired 2026-11-02T13:35:23Z (host load from other jobs); preregistered 3-seed scoring never ran",
+  "completed_fits": 41,
+  "expected_fits": 45,
+  "fits_by_seed": {
+    "218101": 15,
+    "218102": 15,
+    "218103": 11
+  },
   "optimizer_updates": 0,
-  "scored_contexts": 0,
-  "verdict": null
+  "scored_a_contexts": 0,
+  "scored_dl_val_arms": 0,
+  "partial_scoring": "refused (not preregistered; avoids cherry-picking on 2/3 seeds)",
+  "r882_dl_val_mean_smoke": 1.1377942,
+  "plateau_reference": 1.1377942,
+  "elo": null,
+  "median_gain": null,
+  "ci95": null,
+  "peak_tree_cores": 3.8890145022798555,
+  "peak_rss_bytes": 3718901760,
+  "elapsed_seconds_full": 6906.881511069834,
+  "sealed_holdout_reads": 0,
+  "gpu": false,
+  "dope_checksum": "c51a56d0 (frozen; not modified, 0 updates)",
+  "terminal_custody": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261102/H218/run-t0400/terminal-custody-20261102T1335Z/h218-terminal-incomplete-load5-41of45-20261102T1335Z.tar.gz",
+    "version_id": "WpYIcJodVJeXVnldMgrA9wwQZFEqX6oJ",
+    "sha256": "8c352164cad04ec0ec5273269d910d9945608ddf189c20efed6462acfc79f674"
+  },
+  "restart": "none (per check-20261102T1318Z producer decision)"
 }

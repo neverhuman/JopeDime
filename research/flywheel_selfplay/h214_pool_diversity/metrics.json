@@ -88,5 +88,40 @@
     "hosted_ci": "WAIVED_NOT_PASS",
     "full_hygiene": "Known two failures reproduced on unchanged main4d9; explicit H214 nonblocking ruling"
   },
-  "next_step": "Separately authorize a prospective source fix for H139 reference-path relocation, add a source/input-only startup preflight, and register any new execution explicitly. No retry or primary launch in this execution; original deadline never reset."
+  "next_step": "Separately authorize a prospective source fix for H139 reference-path relocation, add a source/input-only startup preflight, and register any new execution explicitly. No retry or primary launch in this execution; original deadline never reset.",
+  "terminal_custody": {
+    "status": "ALLOWLISTED_TERMINAL_EVIDENCE_REPLAY_VERIFIED",
+    "verified_utc": "2026-11-02T12:14:48.020289+00:00",
+    "scope": "Explicit allowlisted terminal H214 metadata, both startup failures and pinned source blobs only; not a full raw-root or REL07/lane archive",
+    "full_raw_root_archive": false,
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-evidence.zip",
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-evidence.zip",
+      "version_id": "OUXyphzSwIo3PylNDqpUmtxA812PxLmL",
+      "sha256": "105e24b035cd94b0d01c152fdb55395f2a957137a6e9499b031bffd01fe3f938",
+      "bytes": 101338
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-manifest.json",
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-manifest.json",
+      "version_id": "ZgyLPLG.9ot3uGweg46CvUavdAgy3qOJ",
+      "sha256": "dcb079443c89701c5114d1b74c033d71f716558a841665abec145bff2d0cebc1",
+      "bytes": 16051
+    },
+    "verification": {
+      "create_only_if_none_match": "*",
+      "exact_version_get": true,
+      "archive_bytes_sha256_equal": true,
+      "manifest_bytes_sha256_equal": true,
+      "archive_member_count": 48,
+      "archive_member_names_sizes_sha256_equal": true
+    },
+    "missing_observations": {
+      "resource_samples_file_exists": false,
+      "detached_process_exit_status": null,
+      "post_model_tensor_composite": null
+    }
+  }
 }

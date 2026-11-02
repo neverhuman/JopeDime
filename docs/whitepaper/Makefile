@@ -29,5 +29,7 @@ figs:
 	python3 figures/scripts/make_candidate_retained_trace.py
 	python3 figures/scripts/make_candidate_retained_trace.py --recent
 	python3 figures/scripts/make_admission_block_rates.py
+	python3 figures/scripts/make_program_gain_distribution.py
+	python3 figures/scripts/make_program_gain_distribution.py --rolling-admissions
 clean:
 	latexmk -C

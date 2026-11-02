@@ -1,0 +1,65 @@
+{
+  "schema": "whitepaper.rolling-admissions-source/v1",
+  "csv_sha256": "5da2c00a93c91088760a38d83bbf9aaf2848e194947eca3e1623aba0b6d2ff39",
+  "capture": {
+    "at": "2026-11-02T13:30:46.221977+00:00",
+    "rows": 1000,
+    "rolling_window": 100,
+    "summary_join_rows": 20,
+    "all_selected_per_round_scalars_match": true,
+    "all_retained_summaries_match": true,
+    "round_window": [
+      2710,
+      3709
+    ],
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "selection": "Latest1000 consecutive complete admission records also present in the live per-round audit; fixed recency rule, no outcome filtering",
+    "sources": [
+      {
+        "name": "admissions.jsonl",
+        "sha256": "ba7ae5b6c7e232a0d42795b6e7eea9e6b1545a635f23984e714836e7ee5c963f",
+        "source_prefix": {
+          "name": "adapter_admissions.jsonl",
+          "at": "2026-11-02T13:30:46.131652+00:00",
+          "complete_prefix_bytes": 1551320,
+          "complete_prefix_sha256": "8ff648e0e9ff825e4d1de0467fa61619ae02d053247251223bf77ce9b743ac3e",
+          "stable_prefix_reread_verified": true,
+          "rows": 2936,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      },
+      {
+        "name": "per-round.jsonl",
+        "sha256": "6e0e86a728a9a26fafbfe1e417e031f1ef0d7c8025511a4cf5fb5bf35aee6a97",
+        "source_prefix": {
+          "name": "per-round.jsonl",
+          "at": "2026-11-02T13:30:46.164719+00:00",
+          "complete_prefix_bytes": 2199721,
+          "complete_prefix_sha256": "aca5845ee3244cf014cf21a07c0fae837f9b43edacda95e2757e4a943bde5855",
+          "stable_prefix_reread_verified": true,
+          "rows": 2827,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      },
+      {
+        "name": "summary.jsonl",
+        "sha256": "2d6bfc0a48fc5a94ac3a75f3d37e8f3a7c2e90182e78d005150373fe39838bbb",
+        "source_prefix": {
+          "name": "summary.jsonl",
+          "at": "2026-11-02T13:30:46.195809+00:00",
+          "complete_prefix_bytes": 3358537,
+          "complete_prefix_sha256": "ca97b55cdb3593cd6bc7a544bf9b338441e377f111b218fc79c2a0f436c3d6c0",
+          "stable_prefix_reread_verified": true,
+          "rows": 20,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      }
+    ]
+  },
+  "source_binding": "Logged candidate/previous-best/post-decision-best scalars and decision identities; source/adapter/population/normalization closure remains unqualified",
+  "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --rolling-admissions"
+}
