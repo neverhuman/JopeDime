@@ -1,0 +1,125 @@
+{
+  "wave": "H208",
+  "owner": "rd_astra",
+  "authority": "gbw_2107_rd_astra.md",
+  "status": "PREREGISTRATION_PROPOSED",
+  "execution_status": "NOT_RUN",
+  "executor_ready": false,
+  "verdict": null,
+  "parent_wave": "H200",
+  "parent_closeout_pr": 1725,
+  "parent_execution_commit": "af2825452ec98bd0fc044c826f3c812f1fc02339",
+  "parent_evidence": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H200/astra-closeout-t2040/manifest.json",
+    "version_id": "8L1IkhXCiSBGgA.P3Hz7UOlwlSAzklR1",
+    "sha256": "6c0a44cc020e685c34c8de7c0023982d266c2fac3d4e9283f45174856f3b0547",
+    "bytes": 41712
+  },
+  "inputs": {
+    "cohort": "H139/H195 pinned real-S3 flywheel roster; 1219 DL-Train contexts/205 families; 91 DL-Val contexts/19 families",
+    "s3_catalog": {
+      "snapshot": "v246",
+      "markdown_path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md",
+      "markdown_sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+      "machine_catalog_path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
+      "machine_catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+    },
+    "staging": "~/jope-data/h195/inputs",
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "reference": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h129_runner_reference": "e34d4a3f7ecb82971fa303f05cca665bb1108509abb90021d1a54717fe02cb6c",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h200_nested_blend/PREREG.md": "4ce48078de380462d0dd41a102155f5a358dcdd79b2c812404fdd35994af1e31",
+    "research/flywheel_selfplay/h200_nested_blend/analysis.py": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2",
+    "research/flywheel_selfplay/h200_nested_blend/runner.py": "69addcb1c86ca87a231d44510674b89c64870d86590c56c33f734c47c964dbe1"
+  },
+  "required_baseline": {
+    "contexts": 91,
+    "mean": 1.1377941898164525,
+    "bit_exact": true
+  },
+  "seeds": [
+    208101,
+    208102,
+    208103
+  ],
+  "fold_seeds": {
+    "208101": 208141,
+    "208102": 208142,
+    "208103": 208143
+  },
+  "sample_seed": 208140,
+  "bootstrap_seed": 208150,
+  "elo_seed": 208151,
+  "shuffle_seed": 208160,
+  "arms": [
+    "R882",
+    "NEST_HARM",
+    "NEST_REPAIR",
+    "FIX025",
+    "SHUF_HARM"
+  ],
+  "primary": "NEST_HARM",
+  "holm_m": 1,
+  "lambda_grid": [
+    0,
+    0.1,
+    0.15,
+    0.2,
+    0.25,
+    0.3,
+    0.4,
+    0.5
+  ],
+  "fit_harm_cap": 0.05,
+  "outer_harm_cap": 0.1,
+  "harm_delta": -0.01,
+  "selection_gain_margin": 0.001,
+  "gbm": {
+    "class": "sklearn.ensemble.HistGradientBoostingRegressor",
+    "max_iter": 300,
+    "learning_rate": 0.08,
+    "max_leaf_nodes": 63,
+    "l2_regularization": 1.0,
+    "features": 1089,
+    "rows_per_context": 192,
+    "random_state": "experimental seed",
+    "early_stopping": false,
+    "required_n_iter": 300
+  },
+  "fits": 60,
+  "max_neural_optimizer_updates": 0,
+  "resources": {
+    "planned_host": "xbabe3",
+    "device": "cpu",
+    "wall_seconds": 14400,
+    "cpu_hours": 16,
+    "numeric_threads_max": 4,
+    "numeric_workers": 1,
+    "rss_max_bytes": 6000000000,
+    "available_memory_min_bytes": 17179869184,
+    "free_disk_min_bytes": 40000000000,
+    "disk_used_fraction_strict_max": 0.936,
+    "local_output_max_bytes": 500000000,
+    "nice": 19,
+    "host_cpu_max_percent": 85,
+    "load_max_fraction": 0.85,
+    "resume": false,
+    "gpu_claim": false
+  },
+  "allocation_status": "CPU_EXECUTOR_NOT_READY",
+  "cpu_admission_failure_state": "QUEUED_NEXT_FREE_GPU",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H208/astra-t2107/",
+  "source_sha256": {
+    "PREREG.md": "b75b5941b6113a60aa0c6c93c29942463041877adcddf1986f69c613ff27e551",
+    "README.md": "04ec8c9e1f4798c51cb061655f2d3dbc43439887d5d48b415387d0be07735047",
+    "fold_manifest.json": "afdc402cd1e35aa6ea2d4381ef91ad69b7ae2bd702daee00777f81173a4e819a"
+  }
+}
