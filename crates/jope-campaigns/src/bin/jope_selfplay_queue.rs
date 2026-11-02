@@ -4173,7 +4173,16 @@ mod tests {
                 2
             )
         );
-        assert!(sqlite_table_exists(&connection, "keeper_attempts").unwrap());
+        assert_eq!(
+            connection
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1",
+                    ["keeper_attempts"],
+                    |row| row.get::<_, i64>(0),
+                )
+                .unwrap(),
+            1
+        );
     }
 
     fn submission_transition_fixture(
