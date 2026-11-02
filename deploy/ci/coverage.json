@@ -1273,7 +1273,9 @@
         "kind": "workflow-job"
       },
       "dispositions": [],
-      "lanes": [],
+      "lanes": [
+        "changes"
+      ],
       "scope": "Hosted output-only join of the PR-hosted and provenance-bound manual classifiers; requires exactly the selected classifier to succeed and passes its verified applicability outputs to dependent jobs."
     },
     "job:.github/workflows/ci.yml/changes-dispatch": {
