@@ -1,0 +1,336 @@
+{
+  "wave": "H205",
+  "status": "INCOMPLETE",
+  "scientific_disposition": "EXPLORATORY_NONCONFORMING_HELD_AT_FRESH_BOUNDARY",
+  "causal_h205_claim_status": "NOT_QUALIFIED_NO_ADVANCE",
+  "verdict": "NO_ADVANCE",
+  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
+  "optimizer_updates": 1500,
+  "exploratory_static_data_updates": 750,
+  "exploratory_static_teacher_updates": 750,
+  "fresh_updates": 0,
+  "scored_contexts": 1310,
+  "stage0_r882_parity": {
+    "status": "PASS",
+    "dl_val_contexts": 91,
+    "mean": 1.1377941898164525,
+    "bit_exact": true
+  },
+  "static_teacher_infra": {
+    "status": "READY",
+    "teacher_checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "cached_contexts": 1219,
+    "r882_train_mean": 1.423073434552299
+  },
+  "missing_evidence_limits": {
+    "static_b_panel": null,
+    "static_a_panel": null,
+    "teacher_b_panel": null,
+    "teacher_a_panel": null,
+    "fresh_b_panel": null,
+    "fresh_a_panel": null,
+    "pooled_b_selection_lock": null,
+    "elo_ratings": null,
+    "saved_adapter_checkpoints": null,
+    "missing_reason": "In runner.py at 812ec1ee78cc32a70bb275c109b0c2138d0fb3b8, static_b_panel, static_a_panel, teacher_b_panel, teacher_a_panel, and round_log were held in process memory across Stage 1 and were not flushed to disk before the Stage 2 receipt wait loop (lines 401-420), where owned worker PID 170087 was safely stopped via SIGTERM before FRESH could trigger. No raw score panels or checkpoints were rescued or reconstructed by an unregistered rerun."
+  },
+  "attempts_ledger": [
+    {
+      "attempt_id": "run-20261102T0355Z",
+      "source_commit": "357fc075c913b4e4b883d305ce6009c4d727327f",
+      "status": "FAILED_STAGE0_PARSER",
+      "elapsed_wall_seconds": 11.552287836093456,
+      "optimizer_updates": 0,
+      "scored_contexts": 91,
+      "reason": "KeyError: 'values' when reading best_dev_checkpoint.json before Stage 0 completion"
+    },
+    {
+      "attempt_id": "run-20261102T0358Z",
+      "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
+      "original_prereg_sha256": "7b2b042b4a40dbb9ecc04e587d51647f9431527e7ff74a277f5ead4bd605c18d",
+      "original_manifest_sha256": "aef78c471ebde5bbbb93d3be998bac929b3b5ebfd43e6706eb827b451d6d54a9",
+      "original_runner_sha256": "ad5c228ae5f44e7353bb90bb1c0e52cf333295318f625e3463e5272c5f50bd31",
+      "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING",
+      "worker_pid": 170087,
+      "monitor_pid": 170003,
+      "exit_code": -15,
+      "elapsed_wall_seconds": 1959.3849376700819,
+      "optimizer_updates": 1500,
+      "static_data_updates": 750,
+      "static_teacher_updates": 750,
+      "fresh_updates": 0,
+      "scored_contexts": 1310
+    },
+    {
+      "attempt_id": "regression-seam-20261102T0752Z",
+      "source_commit": "93d909f8cef929cb18f11b94cf37bd9f7fdaf45c",
+      "status": "HISTORICAL_LOCAL_S1PROD_REPLAY_CONTROL",
+      "elapsed_wall_seconds": 50.10207135695964,
+      "local_s1prod_optimizer_steps": 1,
+      "same_s3_train_optimizer_steps": 0,
+      "reason": "Local s1-prod context fa480de3... (1,600 rows from unscaled 80/20 rowselraw1 split across all 1,999 rows; 0 row overlap with 1,000-row min-max scaled S3 train.csv) replay and posthoc S3 custody control; pure S3 train.csv JTT1 (nq=0) blocked by bootstrap.s1main header guard at main.rs:567"
+    }
+  ],
+  "cumulative_budget_ledger": {
+    "gpu_attempts_1_2_elapsed_seconds": 1970.9372255061753,
+    "regression_seam_cpu_elapsed_seconds": 50.10207135695964,
+    "total_elapsed_wall_seconds": 2021.039296863135,
+    "total_elapsed_including_regression_seam_seconds": 2021.039296863135,
+    "campaign_wall_budget_cap_seconds": 25200.0,
+    "remaining_wall_budget_seconds": 23178.960703136865,
+    "remaining_wall_budget_after_regression_seam_seconds": 23178.960703136865,
+    "budget_reset": false
+  },
+  "single_regression_context_milestone": {
+    "status": "HISTORICAL_LOCAL_S1PROD_REPLAY_CONTROL",
+    "seam_qualified": false,
+    "same_s3_train_seam_status": "BLOCKED_NQ0_PROTOCOL",
+    "causal_h205_claim_status": "NOT_QUALIFIED_NO_ADVANCE",
+    "classification": "HISTORICAL_LOCAL_S1PROD_REPLAY_AND_POSTHOC_S3_CUSTODY_CONTROL_NOT_SAME_S3_TRAIN_MILESTONE",
+    "run_id": "regression-seam-20261102T0752Z",
+    "local_dir": "/home/ubuntu/jope-data/h205/regression-seam-20261102T0752Z",
+    "dataset_id": "1db3750d4ceccab9",
+    "family_id": "9a9933b47cabdfdbef3c7d567074e553aaf3dfd92c9a71e3365c777d025452c0",
+    "family_key": "e70bef3cf802dadb1f22458c1e1c6bb553a5d9f3",
+    "context_sha256": "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45",
+    "view_id": "1db3750d4ceccab9__r0__f0__rowselraw1_84a908fcde0e",
+    "fpool_disjoint_datasets_count": 1772,
+    "transitive_disjoint_datasets_count": 1550,
+    "allowed_roster_datasets": 1336,
+    "allowed_roster_families": 1336,
+    "roster_sha256": "c7ea7148129937d516f19a87c05c771b34d250f10ce9a2e53931e8f13760a504",
+    "historical_pre_review1758_roster": {
+      "allowed_roster_datasets": 1928,
+      "allowed_roster_families": 1928,
+      "roster_sha256": "2e9dcee92e5c4b807b6e1fb23ed88ec0e1aba48ac00cc9921a2e45d509868845",
+      "defect": "Stale exclusion schema keys read 0 entries from JRB-01/H150/D4 and leaked 156 D4 panel datasets; corrected to 1,772 (fpool closure), 1,550 (full catalog transitive closure), and 1,336 deduplicated independent families."
+    },
+    "source_train_s3": {
+      "bucket": "veox-jopedime-datasets-use2",
+      "key": "blobs/sha256/6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d",
+      "version_id": "xJwIN6naH0sfM_uMuEBwd63AV2A8H.6_",
+      "size_bytes": 67040,
+      "sha256": "6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d"
+    },
+    "source_manifest_s3": {
+      "bucket": "veox-jopedime-datasets-use2",
+      "key": "datasets/1db3750d4ceccab9/manifest.json",
+      "version_id": "9nTZwIaM1feUD0HpgMd1sktu.vmZd6f0",
+      "size_bytes": 1507,
+      "sha256": "28253e606e580b6566e93ceefa49fedb7216799595ee6228939dcf66e7c072de"
+    },
+    "pure_s3_train_csv_nq0_protocol_check": {
+      "csv_sha256": "6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d",
+      "train_matrix_sha256": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7",
+      "jtt1_nq0_sha256": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+      "jtt1_bytes_len": 49017,
+      "nt": 1000,
+      "nq": 0,
+      "p": 5,
+      "k": 2,
+      "has_header": false,
+      "raw_csv_features_sha256": "a84271417a25b285aed0b5612ebfc0bb953c9cb863e32f24a484ab6127fff33a",
+      "returncode": 1,
+      "stderr": "Error: \"S1 requires exactly two inner folds and an admitted shape\"\n\nCaused by:\n    invalid table counts nt=1000 nq=0 p=5",
+      "nq0_refused_by_header_guard": true,
+      "rust_source_pin": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567",
+      "historical_999row_header_swallowed_jtt1_sha256": "92e097d578e382862e1be8c5e2fe95d2a2e4c030f5615a9249d6591bfe2fa055"
+    },
+    "prospective_train_padding_bridge": {
+      "schema_version": "h206-native-S1-TRAIN-v1",
+      "query_padding_rule": "first-10-TRAIN-rows-cyclic-zero-query-target-v1",
+      "protocol_sha256": "cb967d3c4baa4e855f3b893ccfff2d1045e64435277f89530c11ae4d3a6aa0ed",
+      "evaluator_id": "bootstrap.s1main --fit-s1",
+      "evaluator_binary_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+      "native_rust_source_sha256": "e369e13bfb498dee924cd0afca23a82fb43c6997864e37fdc28063f092cc1fb1",
+      "metric_source_sha256": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+      "dataset_id": "1db3750d4ceccab9",
+      "original_jtt1_nq0_sha256": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+      "original_jtt1_nq0_bytes_len": 49017,
+      "cut_sha256": "d2208c223250e1916dd480fc9cf940342db30a9066bece9735181935bc001f0c",
+      "train_matrix_sha256": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7",
+      "padding_queries_sha256": "4eb522e958e3656f8e8f069e4553f5b927c1a3eb8ae057414b63a2f86aadd5d7",
+      "padded_jtt1_nq10_sha256": "8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1",
+      "padded_jtt1_nq10_bytes_len": 49497,
+      "target_same_s3_train_context_sha256": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+      "padding_examples_added_to_learner": 0,
+      "padding_families_added": 0,
+      "h206_readiness_claimed_from_tokens_alone": false,
+      "hold_status_for_live_scoring": "HOLD_ACTIVE_PRE_SCORING",
+      "h206_measured_fixture_evidence": {
+        "receipt_path": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102/native-protocol/corrected-shape/receipt.json",
+        "receipt_size_bytes": 8414,
+        "receipt_sha256": "63d15495672652297aba8cbe0b1afd4428f0c36f363b9fa66186e86804d4087a",
+        "scientific_replay_path": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102/native-protocol/corrected-shape/scientific-replay.json",
+        "scientific_replay_size_bytes": 1040,
+        "scientific_replay_sha256": "e2d83a76a8b5a81c8f0d8cfd4ac5baaf9bbc4f301cb3dcaca45a06bcca60168f",
+        "native_calls_total": 2,
+        "invariance_raw_equal": false,
+        "scientific_inner_cv_equal": true,
+        "max_abs_scientific_metric_diff": 0.0,
+        "real_TRAIN_or_r882_qualification": false
+      }
+    },
+    "s1_prod_context_bundle": {
+      "provenance_note": "Local s1-prod context fa480de3... (1,600 rows from unscaled 80/20 rowselraw1 split across all 1,999 rows; 0 row overlap with 1,000-row min-max scaled S3 train.csv); 24 live evaluations against 1,152 cached summary.tar.gz rows; uploaded to S3 posthoc after the local optimizer step.",
+      "candidates_count": 1152,
+      "live_evaluated_candidates_count": 24,
+      "labels_sha256": "fc0925e83187741d7f56ec7a1083d2ddd477e7bf8d7a722963754b4654990ec8",
+      "programs_sha256": "843a4f4a69af9478bb9971f3c05aa6224665c9e520f1b9c3af869e23d2650c57",
+      "features_sha256": "d59c2d162ff09b265fe9d2eb883795a39b49323726c2e263e44796782c469dc8",
+      "outer_test_rows_decoded": 0
+    },
+    "engine_consumption": {
+      "used_old_1310_fallback": false,
+      "s3_persisted_and_replayed_before_optimizer_step": false,
+      "historical_contexts_preserved": 1310,
+      "slate_candidates": 24,
+      "loss_value": 50.041358947753906,
+      "optimizer_steps": 1,
+      "trainable_parameters": 29211,
+      "adapter_sha256_before": "b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454",
+      "adapter_sha256_after": "54de3483d939402f04d980f86e2050e33da6e288333ddb7887686bbc5d3df1ce",
+      "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+    },
+    "s3_bundle_custody": {
+      "bucket": "veox-jopedime-learning-use2",
+      "prefix": "experiments/rd_breakthrough_20261101/H205/regression-seam/fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45-20261102T075310Z/",
+      "s3_custody_receipt_version_id": "5C85hyOLoj7kdc_z7lCA5lvjROZVemyZ",
+      "s3_custody_receipt_sha256": "8b8015dcc3788b8beda5ef5adf3fb21e67a2c87265fc94a862c8f141232fbff5",
+      "verified_members": [
+        {
+          "name": "context_manifest.json",
+          "version_id": "5vtJt30oEZYgTIjMbg.HveBfJxLSBa7W",
+          "size_bytes": 2081,
+          "local_sha256": "fa83a92768d61f61b40ed9883ee1cf229dd6e9c2a56501c0a17f66688235d3f3",
+          "downloaded_version_sha256": "fa83a92768d61f61b40ed9883ee1cf229dd6e9c2a56501c0a17f66688235d3f3"
+        },
+        {
+          "name": "native_evaluator_receipt.json",
+          "version_id": "UkjpgA3veVOoTYFnwC43EsO8oCBsFlMl",
+          "size_bytes": 2728,
+          "local_sha256": "f2a8aba0ac26bda046ccd3f918801a05a30e0651f915af3365f875279802d272",
+          "downloaded_version_sha256": "f2a8aba0ac26bda046ccd3f918801a05a30e0651f915af3365f875279802d272"
+        },
+        {
+          "name": "pool.npz",
+          "version_id": "Y0UVRoysS.IcUmiqGMDiufYskES3WVaX",
+          "size_bytes": 2290018,
+          "local_sha256": "027c53236e032de72f8811fa3017142a4c3db243cb540b34a18b89279886fdfb",
+          "downloaded_version_sha256": "027c53236e032de72f8811fa3017142a4c3db243cb540b34a18b89279886fdfb"
+        },
+        {
+          "name": "features.npz",
+          "version_id": "W.kxyUsGg3htRcyA2lPTS10GiPXEO2jp",
+          "size_bytes": 9924,
+          "local_sha256": "4fc3d001040010066ce1091d5625cd21cfac2bd941e4287eb43d49f8df97c204",
+          "downloaded_version_sha256": "4fc3d001040010066ce1091d5625cd21cfac2bd941e4287eb43d49f8df97c204"
+        },
+        {
+          "name": "engine_consumption_receipt.json",
+          "version_id": "OEUdq4EqZcvkQIHRI3hTDwgJz4qhbTnM",
+          "size_bytes": 1078,
+          "local_sha256": "5a65faf4d895ca4afc4cacb2a785255c2c72c3b7d578a2901c93b2394c30164a",
+          "downloaded_version_sha256": "5a65faf4d895ca4afc4cacb2a785255c2c72c3b7d578a2901c93b2394c30164a"
+        }
+      ]
+    }
+  },
+  "s3_terminal_custody": {
+    "bucket": "veox-jopedime-learning-use2",
+    "prefix": "experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/",
+    "terminal_custody_manifest_key": "experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/terminal_custody_manifest_20261102T0502Z.json",
+    "terminal_custody_manifest_version_id": "BInrGnjKhZOFhuK5qS9ZOA.EcIsGFwAS",
+    "terminal_custody_manifest_sha256": "f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186",
+    "verified_members": [
+      {
+        "name": "disposition_nonconforming_hold.json",
+        "version_id": "eR0i4LeBLsPubzVMAXLedPUw73jCI3DK",
+        "size_bytes": 4859,
+        "local_sha256": "65abc94a36ae039e68a6a30e9092437bf216a0b3d0416609e182d23c436734ae",
+        "downloaded_version_sha256": "65abc94a36ae039e68a6a30e9092437bf216a0b3d0416609e182d23c436734ae"
+      },
+      {
+        "name": "gpu-device.json",
+        "version_id": "E5gx51svWTEKgFS5pC.Y7cwDkeuHuJyI",
+        "size_bytes": 495,
+        "local_sha256": "9e771c72892faa93b2c03ca13ec159378931efce3fb413b276b55aaeac0bf7da",
+        "downloaded_version_sha256": "9e771c72892faa93b2c03ca13ec159378931efce3fb413b276b55aaeac0bf7da"
+      },
+      {
+        "name": "launch.json",
+        "version_id": "O56Fs9Xt.777HU97iOeZStJctKnncwsf",
+        "size_bytes": 979,
+        "local_sha256": "83ba869c318ca48c016c4021286148b378d0fa0581257f953c8d960d029743f0",
+        "downloaded_version_sha256": "83ba869c318ca48c016c4021286148b378d0fa0581257f953c8d960d029743f0"
+      },
+      {
+        "name": "progress.json",
+        "version_id": "N_yw8zfAtYWl8U3d_O8uAKYk06jY8i_4",
+        "size_bytes": 407,
+        "local_sha256": "2e22e157518bcea9100dcd84b209f2055e5c2f3d89847cc03e1cf11de356a2fc",
+        "downloaded_version_sha256": "2e22e157518bcea9100dcd84b209f2055e5c2f3d89847cc03e1cf11de356a2fc"
+      },
+      {
+        "name": "resource_summary.json",
+        "version_id": "15JC24QtRVNMahxoln4AsUV30Cou9Yh_",
+        "size_bytes": 282,
+        "local_sha256": "f31afd1b82d1bcf42b3a56bad8ee6b8af0f573c374f198a31cee093599b5443e",
+        "downloaded_version_sha256": "f31afd1b82d1bcf42b3a56bad8ee6b8af0f573c374f198a31cee093599b5443e"
+      },
+      {
+        "name": "resources.jsonl",
+        "version_id": "LGy_aWZudyBlQvQ6oPZgWQH5se9XfgOd",
+        "size_bytes": 729390,
+        "local_sha256": "ac32a31d18a0159dddc42e040e26f358b9484b03ffc86f91105854fd6ae35611",
+        "downloaded_version_sha256": "ac32a31d18a0159dddc42e040e26f358b9484b03ffc86f91105854fd6ae35611"
+      },
+      {
+        "name": "s3_launch_custody.json",
+        "version_id": "b_ppBxgF_slNoylPSy9nlb4a6YDrsrPt",
+        "size_bytes": 1566,
+        "local_sha256": "69f282c0a43f38ad48c36aee8cf0ae366a79a1b82085cdb724b37061a453cb23",
+        "downloaded_version_sha256": "69f282c0a43f38ad48c36aee8cf0ae366a79a1b82085cdb724b37061a453cb23"
+      },
+      {
+        "name": "stage0_r882_parity.json",
+        "version_id": "hxYKFKzErP2Za5LDbQhl3.hAJFWx1Z3A",
+        "size_bytes": 99,
+        "local_sha256": "0ba20d837e640d7fb6b2a1670c188d61d23a94f30e93092cf78b42339718e571",
+        "downloaded_version_sha256": "0ba20d837e640d7fb6b2a1670c188d61d23a94f30e93092cf78b42339718e571"
+      },
+      {
+        "name": "static_teacher_infra.json",
+        "version_id": "skGPR7mE1iF4CBNU.n8jEiaabsVLpE.T",
+        "size_bytes": 235,
+        "local_sha256": "b93cba069e2fe74406791e106412259ac4d268dde729e7e7ac2f3ec4e59c89f7",
+        "downloaded_version_sha256": "b93cba069e2fe74406791e106412259ac4d268dde729e7e7ac2f3ec4e59c89f7"
+      },
+      {
+        "name": "stdout.log",
+        "version_id": "fS2n0Km2JGpK8d.j0lNYGeJafK4wzunL",
+        "size_bytes": 542,
+        "local_sha256": "8c1962081bc6a179ace241b6e22adbbcbdb93c2100040a8dbe90fc43378c9393",
+        "downloaded_version_sha256": "8c1962081bc6a179ace241b6e22adbbcbdb93c2100040a8dbe90fc43378c9393"
+      }
+    ]
+  },
+  "operational_finding5_source": {
+    "status": "SOURCE_FIX_NOT_RUNTIME_QUALIFIED",
+    "new_scientific_attempts": 0,
+    "new_model_native_s3_optimizer_calls": 0,
+    "budget_reset": false,
+    "known_prior_floor_seconds": 2021.039296863135,
+    "campaign_cap_seconds": 25200.0,
+    "later_costs": "OWNER_RECONCILIATION_REQUIRED_UNKNOWN_IS_NOT_ZERO",
+    "worker_status": "PENDING_FINAL_ACCOUNTING",
+    "seam_qualified": false,
+    "existing_supervisor_only": true,
+    "next_owner": "rd_argon",
+    "acceptance": "test_h205.py --deadline-controls OWNED_SCRATCH",
+    "legacy_real_table_model_native_tests": "NOT_RUN_IN_HELPER_LANE"
+  }
+}

@@ -96,6 +96,15 @@ if mode == "link":
     path.symlink_to(output / "summary.md")
 sys.exit(1 if mode in ("failed", "failed-above-floor") else 0)
 '''
+# Stand-in for ops/ci/verify-pyexec-exceptions.sh, which re-audits pinned product files the
+# fixture does not carry. It records its arguments and fails on request.
+EXCEPTIONS = r'''
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$@" > "$AUDIT_TEST_EXCEPTION_ARGS"
+[[ "$AUDIT_TEST_EXCEPTIONS" == pass ]] || { echo 'fixture exception drift' >&2; exit 3; }
+printf '{"fixture": true}\n' > "$3"
+'''
 
 
 class AuditLaneTests(unittest.TestCase):
@@ -115,17 +124,21 @@ class AuditLaneTests(unittest.TestCase):
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes((ROOT / name).read_bytes())
         (self.repo / "README.md").write_text("Audit fixture, not a product checkout.\n")
+        (self.repo / "ops/ci/verify-pyexec-exceptions.sh").write_text(EXCEPTIONS.lstrip())
         subprocess.run(["git", "init", "-q", str(self.repo)], check=True)
-        subprocess.run(["git", "-C", str(self.repo), "add", "--", "README.md", *names], check=True)
+        subprocess.run(["git", "-C", str(self.repo), "add", "--", "README.md",
+                        "ops/ci/verify-pyexec-exceptions.sh", *names], check=True)
         subprocess.run(["git", "-C", str(self.repo), "-c", "user.name=Fixture",
                         "-c", "user.email=fixture@example.invalid", "commit", "-qm", "fixture"], check=True)
         self.auditor = self.base / "auditor"
         self.auditor.write_text(FAKE.lstrip())
         self.auditor.chmod(0o755)
 
-    def run_audit(self, mode, report_only=False, output=None):
+    def run_audit(self, mode, report_only=False, output=None, exceptions="pass"):
         self.output = output or self.base / ("report-" + mode + ("-report-only" if report_only else ""))
-        env = dict(os.environ, JANKURAI_BIN=str(self.auditor), AUDIT_TEST_MODE=mode)
+        env = dict(os.environ, JANKURAI_BIN=str(self.auditor), AUDIT_TEST_MODE=mode,
+                   AUDIT_TEST_EXCEPTIONS=exceptions,
+                   AUDIT_TEST_EXCEPTION_ARGS=str(self.base / "exception-args.txt"))
         for key in ("JOPE_SOURCE_SHA", "GITHUB_STEP_SUMMARY", "JOPE_AUDIT_REPORT_ONLY"):
             env.pop(key, None)
         if report_only:
@@ -205,6 +218,25 @@ class AuditLaneTests(unittest.TestCase):
         receipt = json.loads((self.output / "audit-verification.json").read_text())
         self.assertTrue(receipt["artifact_valid"])
         self.assertTrue(receipt["audit_passed"])
+
+    def test_exception_verifier_receives_captured_source_and_manifest(self):
+        self.assertEqual(0, self.run_audit("pass").returncode)
+        args = (self.base / "exception-args.txt").read_text().splitlines()
+        self.assertEqual(5, len(args))
+        self.assertEqual(str(self.auditor), args[1])
+        expected = [self.output / "input/source", self.output / "pyexec-exceptions.json",
+                    self.repo, self.output / "input/SOURCE_MANIFEST.json"]
+        self.assertEqual([p.resolve() for p in expected],
+                         [Path(arg).resolve() for arg in (args[0], args[2], args[3], args[4])])
+
+    def test_exception_drift_fails_a_passing_audit(self):
+        result = self.run_audit("pass", exceptions="drift")
+        self.assertEqual(3, result.returncode, result.stderr)
+        self.assertIn("fixture exception drift", result.stderr)
+
+    def test_exception_drift_fails_report_only_below_floor(self):
+        self.assertEqual(3, self.run_audit("failed", report_only=True, exceptions="drift").returncode)
+        self.assertFalse((self.output / "report-only.json").exists())
 
     def test_zero_exit_without_reports_is_not_a_pass(self):
         self.assertNotEqual(0, self.run_audit("missing").returncode)

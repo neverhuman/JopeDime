@@ -133,8 +133,7 @@ training and validation probe \citep{real2020automlzero}. Matching a probe
 does not establish agreement on other inputs (\cref{sub:method-move}).
 
 The language bounds what can be expressed; changing its primitives changes
-that space \citep{boden1990creative}. The reference grammar also bounds
-composition depth. Structural constraints can prevent invalid programs; their effect on useful proposal
+that space \citep{boden1990creative}. Structural constraints can prevent invalid programs; their effect on useful proposal
 quality must be measured (\cref{sec:results}).
 
 % ----------------------------------------------------------------------------
@@ -155,12 +154,12 @@ under the same evaluation protocol to displace a board's incumbent.
 The reference design gives a retrained writer a separate proposed admission
 test (\cref{sub:method-selfplay}). The two rules define its self-play:
 a proposer faces incumbents retained from earlier play.
+AlphaGo Zero likewise separated network admission from move
+selection \citep{silver2017mastering}.
 These are reference rules, not a record of writer improvement. The later loop in
 \cref{sec:method-status} updates only a ranking adapter; its default
 admission gate can retain equal utility. That record does not establish
 retraining or admission of the neural writer.
-AlphaGo Zero likewise separated network admission from move
-selection \citep{silver2017mastering}.
 
 Subtracting the incumbent's score does not change which move is best.
 Promotion raises the bar, turns yesterday's winners

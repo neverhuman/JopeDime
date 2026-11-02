@@ -1,0 +1,140 @@
+{
+  "arms": [
+    "R882",
+    "STATIC-DATA",
+    "STATIC-TEACHER",
+    "FRESH"
+  ],
+  "assignment": "/home/ubuntu/nudges/n2022_rd_argon_h205.md",
+  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
+  "boot_seed": 205141,
+  "checkpoint": "/home/ubuntu/jope-data/h196/inputs/round-882.pt",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H205_claim.txt",
+  "common_gate": {
+    "lcb95_min": 0.0,
+    "max_harm_fraction": 0.1,
+    "native_r882_parity_91_exact": 1.1377941898164525,
+    "pooled_families": 205,
+    "sealed_d4_confirmation_excluded_from_training": true
+  },
+  "cuda_runtime_threads_exempt": true,
+  "cumulative_budget_ledger": {
+    "attempt_1_elapsed_seconds": 11.552287836093456,
+    "attempt_2_elapsed_seconds": 1959.3849376700819,
+    "budget_reset": false,
+    "campaign_wall_budget_cap_seconds": 25200.0,
+    "gpu_attempts_1_2_elapsed_seconds": 1970.9372255061753,
+    "regression_seam_0752z_elapsed_seconds": 50.10207135695964,
+    "remaining_wall_budget_seconds": 23178.960703136865,
+    "total_elapsed_wall_seconds": 2021.039296863135
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/",
+  "device": "cuda:0",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "families_per_microbatch": 8,
+  "fold_seed": 205140,
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "holm_m": 2,
+  "host": "xbabe1",
+  "inputs": {
+    "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h196/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+  },
+  "live_flywheel_pid_untouched": 2297929,
+  "microbatches_per_round": 16,
+  "numeric_threads_max": 4,
+  "plan": "/home/ubuntu/nudges/hwave_t2022_plan.md",
+  "primary": "FRESH",
+  "prior_attempt_2_source_pins": {
+    "attempt_id": "run-20261102T0358Z",
+    "original_manifest_sha256": "aef78c471ebde5bbbb93d3be998bac929b3b5ebfd43e6706eb827b451d6d54a9",
+    "original_source_sha256": {
+      "PREREG.md": "7b2b042b4a40dbb9ecc04e587d51647f9431527e7ff74a277f5ead4bd605c18d",
+      "README.md": "95f795a54e8e4d234f9fd2c5f9b69559f74f5ba44bef007124c7b7c0f9e7a26d",
+      "analysis.py": "129d069464d6ae0ec898a50b67ed992401634242c26fb97f73147ad7ef0bf7d0",
+      "monitor.py": "3e973a997bc3578cd6362b712eba580d033302082e5cdf221348c9b6d2e03d1e",
+      "runner.py": "ad5c228ae5f44e7353bb90bb1c0e52cf333295318f625e3463e5272c5f50bd31",
+      "test_h205.py": "fad9b4772dff9c4e064a03971de35d0fe9bd80bdadcef6e762d0573a3c6a9795"
+    },
+    "s3_terminal_custody_manifest_key": "experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/terminal_custody_manifest_20261102T0502Z.json",
+    "s3_terminal_custody_manifest_sha256": "f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186",
+    "s3_terminal_custody_manifest_version_id": "BInrGnjKhZOFhuK5qS9ZOA.EcIsGFwAS",
+    "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
+    "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING"
+  },
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525
+  },
+  "rounds": 50,
+  "seeds": [
+    205101,
+    205102,
+    205103
+  ],
+  "selector": "H178_calibrated_pooled_205_family",
+  "source_sha256": {
+    "PREREG.md": "4827c2884a682449de69363299673e5a067df7c45904be1aff260be2a6aad72c",
+    "README.md": "39ac9695275e02d7e5f30972af36b28e9767ae70fc1700070271f2db05b758f1",
+    "analysis.py": "bb402d63f05cfc247987f2999fdf5df52f3629557781359d7d0b1716c0416e17",
+    "monitor.py": "91baa39155459017e7349bf7587b03cc8c8d8b04eb201f9ceac560f81a8a8127",
+    "runner.py": "7b6f0d5def0af1e2add386b1d5928bf64557c78a6c0afabd8e0830c2cdfac7e6",
+    "test_h205.py": "3dec93ee4a7e5a5d20f3ab4bbe7b06b5cd3a37f65acc964543f33c2cb79cabdd"
+  },
+  "train_padding_bridge_protocol": {
+    "cut_sha256_1db3750d4ceccab9": "d2208c223250e1916dd480fc9cf940342db30a9066bece9735181935bc001f0c",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "evaluator_binary_path": "/home/ubuntu/jope-data/teacher-v2-s1-smoke/bin/jopedime-q1-linux",
+    "evaluator_binary_sha256": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+    "evaluator_id": "bootstrap.s1main --fit-s1",
+    "forbidden_historical_local_replay_hashes": [
+      "fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45"
+    ],
+    "h206_native_fixture_receipt_path": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102/native-protocol/corrected-shape/receipt.json",
+    "h206_native_fixture_receipt_sha256": "63d15495672652297aba8cbe0b1afd4428f0c36f363b9fa66186e86804d4087a",
+    "h206_scientific_replay_receipt_path": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102/native-protocol/corrected-shape/scientific-replay.json",
+    "h206_scientific_replay_receipt_sha256": "e2d83a76a8b5a81c8f0d8cfd4ac5baaf9bbc4f301cb3dcaca45a06bcca60168f",
+    "inner_fold_rule": "even_row_0_odd_row_1_two_fold_s1",
+    "metric_source_path": "research/flywheel_selfplay/rust_evaluator.py",
+    "metric_source_sha256": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
+    "min_inner_fold_rows": 25,
+    "min_train_rows_nt": 50,
+    "native_rust_source_path": "deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs",
+    "native_rust_source_sha256": "e369e13bfb498dee924cd0afca23a82fb43c6997864e37fdc28063f092cc1fb1",
+    "original_jtt1_nq0_sha256_1db3750d4ceccab9": "a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c",
+    "padded_jtt1_nq10_sha256_1db3750d4ceccab9": "8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1",
+    "padding_examples_added_to_learner": 0,
+    "padding_families_added": 0,
+    "padding_queries_sha256_1db3750d4ceccab9": "4eb522e958e3656f8e8f069e4553f5b927c1a3eb8ae057414b63a2f86aadd5d7",
+    "padding_rows_nq": 10,
+    "protocol_sha256": "cb967d3c4baa4e855f3b893ccfff2d1045e64435277f89530c11ae4d3a6aa0ed",
+    "query_padding_rule": "first-10-TRAIN-rows-cyclic-zero-query-target-v1",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "schema_version": "h206-native-S1-TRAIN-v1",
+    "target_same_s3_train_context_sha256_1db3750d4ceccab9": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
+    "train_matrix_sha256_1db3750d4ceccab9": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7"
+  },
+  "wave": "H205",
+  "invocation_accounting_contract": {
+    "schema": "h205-campaign-accounting/v1",
+    "required_launch_fields": [
+      "campaign_ledger_path",
+      "campaign_ledger_sha256",
+      "accounting_invocation_id"
+    ],
+    "no_automatic_ledger_initialization": true,
+    "pending_or_unknown_history_blocks_next_invocation": true,
+    "known_prior_floor_seconds": 2021.039296863135,
+    "budget_reset": false,
+    "terminal_bookkeeping_seconds": null,
+    "owner_exit_cost_reconciliation_required": true,
+    "worker_result_qualified": false,
+    "standalone_worker_is_unqualified": true
+  }
+}

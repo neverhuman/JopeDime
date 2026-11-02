@@ -71,6 +71,23 @@ def _tensor_le_sha256(t: torch.Tensor) -> str:
     return h.hexdigest()
 
 
+def _storage_ptr(t: torch.Tensor) -> int | None:
+    if not isinstance(t, torch.Tensor) or int(t.numel()) == 0:
+        return None
+    try:
+        ptr = int(t.untyped_storage().data_ptr())
+    except Exception:
+        ptr = int(t.data_ptr())
+    return ptr if ptr != 0 else None
+
+
+def _assert_finite_tensor(t: torch.Tensor, label: str) -> None:
+    if (t.is_floating_point() or t.is_complex()) and not bool(torch.isfinite(t).all()):
+        raise DopeFreezeViolationError(
+            f"DOPE freeze violation: `{label}` contains non-finite (NaN/Inf) values."
+        )
+
+
 def reject_research_dope_unfreeze(entrypoint: str) -> None:
     """Serving/flywheel entrypoints must never consume the research environment."""
     flag = os.environ.get("JOPE_RESEARCH_DOPE_UNFREEZE", "0")
@@ -110,7 +127,11 @@ def configure_research_dope(
     dope = getattr(fused_net, "dope_model", None)
     anchor = getattr(fused_net, "gamenet_anchor", None)
     if enabled and isinstance(dope, nn.Module) and isinstance(anchor, nn.Module):
-        if {id(p) for p in dope.parameters()} & {id(p) for p in anchor.parameters()}:
+        dope_ids = {id(p) for p in dope.parameters()}
+        anchor_ids = {id(p) for p in anchor.parameters()}
+        dope_ptrs = {ptr for p in dope.parameters() if (ptr := _storage_ptr(p)) is not None}
+        anchor_ptrs = {ptr for p in anchor.parameters() if (ptr := _storage_ptr(p)) is not None}
+        if (dope_ids & anchor_ids) or (dope_ptrs & anchor_ptrs):
             raise DopeFreezeViolationError("research DOPE and frozen anchor share parameters")
     _lock_dope_weights_and_eval_mode(fused_net)
     launch_metadata["dope_policy"] = {
@@ -137,10 +158,28 @@ def assert_research_optimizer_policy(
         raise DopeFreezeViolationError("optimizer research run id differs from model policy")
     if any(sub.training for sub in fused_net.dope_model.modules()):
         raise DopeFreezeViolationError("research DOPE must remain in eval mode")
+    net_buffers = dict(fused_net.named_buffers())
+    protected_buffers = list(fused_net.dope_model.buffers()) + [
+        net_buffers[name] for name in DOPE_NORMALIZER_BUFFERS if name in net_buffers
+    ]
+    buf_ids = {id(b) for b in protected_buffers}
+    buf_ptrs = {ptr for b in protected_buffers if (ptr := _storage_ptr(b)) is not None}
+    if any(
+        id(p) in buf_ids or ((ptr := _storage_ptr(p)) is not None and ptr in buf_ptrs)
+        for g in optimizer.param_groups
+        for p in g.get("params", [])
+    ):
+        raise DopeFreezeViolationError("research optimizer includes frozen DOPE normalizer buffer")
     anchor = getattr(fused_net, "gamenet_anchor", None)
     if isinstance(anchor, nn.Module):
-        anchor_ids = {id(p) for p in anchor.parameters()}
-        if any(id(p) in anchor_ids for g in optimizer.param_groups for p in g["params"]):
+        anchor_tensors = list(anchor.parameters()) + list(anchor.buffers())
+        anchor_ids = {id(t) for t in anchor_tensors}
+        anchor_ptrs = {ptr for t in anchor_tensors if (ptr := _storage_ptr(t)) is not None}
+        if any(
+            id(p) in anchor_ids or ((ptr := _storage_ptr(p)) is not None and ptr in anchor_ptrs)
+            for g in optimizer.param_groups
+            for p in g.get("params", [])
+        ):
             raise DopeFreezeViolationError("research optimizer includes the frozen anchor")
     return True
 
@@ -168,6 +207,15 @@ def _lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
     for p in dope.parameters():
         p.requires_grad_(False)
         p.grad = None
+    for b in dope.buffers():
+        b.requires_grad_(False)
+        b.grad = None
+    net_buffers = dict(fused_net.named_buffers())
+    for buf_name in DOPE_NORMALIZER_BUFFERS:
+        if buf_name in net_buffers:
+            b = net_buffers[buf_name]
+            b.requires_grad_(False)
+            b.grad = None
 
     def _locked_eval_train(mod_self: nn.Module, mode: bool = True) -> nn.Module:
         for m in mod_self.modules():
@@ -182,6 +230,9 @@ def _lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
         for p in fused_net.gamenet_anchor.parameters():
             p.requires_grad_(False)
             p.grad = None
+        for b in fused_net.gamenet_anchor.buffers():
+            b.requires_grad_(False)
+            b.grad = None
         for sub in fused_net.gamenet_anchor.modules():
             sub.training = False
             sub.train = types.MethodType(_locked_eval_train, sub)
@@ -197,12 +248,24 @@ def _lock_dope_weights_and_eval_mode(fused_net: nn.Module) -> None:
             p.requires_grad_(research)
             if not research:
                 p.grad = None
+        for b in net_self.dope_model.buffers():
+            b.requires_grad_(False)
+            b.grad = None
+        cur_buffers = dict(net_self.named_buffers())
+        for buf_name in DOPE_NORMALIZER_BUFFERS:
+            if buf_name in cur_buffers:
+                b = cur_buffers[buf_name]
+                b.requires_grad_(False)
+                b.grad = None
         if hasattr(net_self, "gamenet_anchor") and isinstance(net_self.gamenet_anchor, nn.Module):
             for sub in net_self.gamenet_anchor.modules():
                 sub.training = False
             for p in net_self.gamenet_anchor.parameters():
                 p.requires_grad_(False)
                 p.grad = None
+            for b in net_self.gamenet_anchor.buffers():
+                b.requires_grad_(False)
+                b.grad = None
         return net_self
 
     if not getattr(fused_net, "_dope_freeze_train_hook_installed", False):
@@ -227,6 +290,24 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
                 f"DOPE freeze violation: `{label}.training` is True (all DOPE submodules must stay False / eval)."
             )
 
+    if hasattr(fused_net, "gamenet_anchor") and isinstance(fused_net.gamenet_anchor, nn.Module):
+        for sub_name, sub_mod in fused_net.gamenet_anchor.named_modules():
+            if sub_mod.training:
+                label = f"gamenet_anchor.{sub_name}" if sub_name else "gamenet_anchor"
+                raise DopeFreezeViolationError(
+                    f"DOPE freeze violation: `{label}.training` is True (frozen anchor must stay False / eval)."
+                )
+        for name, p in sorted(fused_net.gamenet_anchor.named_parameters(), key=lambda kv: kv[0]):
+            if p.requires_grad:
+                raise DopeFreezeViolationError(
+                    f"DOPE freeze violation: parameter `gamenet_anchor.{name}` has requires_grad=True."
+                )
+            if p.grad is not None:
+                raise DopeFreezeViolationError(
+                    f"DOPE freeze violation: parameter `gamenet_anchor.{name}` has non-None `.grad`."
+                )
+            _assert_finite_tensor(p, f"gamenet_anchor.{name}")
+
     tensor_hashes: dict[str, str] = {}
     tensor_shapes: dict[str, list[int]] = {}
     h_params = hashlib.sha256()
@@ -244,6 +325,7 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
                 f"DOPE freeze violation: parameter `dope_model.{name}` has non-None `.grad`."
             )
         full_name = f"dope_model.{name}"
+        _assert_finite_tensor(p, full_name)
         th = _tensor_le_sha256(p)
         tensor_hashes[full_name] = th
         tensor_shapes[full_name] = list(p.shape)
@@ -258,6 +340,15 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
     num_buffer_elements = 0
     for name, b in sorted(dope.named_buffers(), key=lambda kv: kv[0]):
         full_name = f"dope_model.buffer.{name}"
+        if b.requires_grad:
+            raise DopeFreezeViolationError(
+                f"DOPE freeze violation: buffer `{full_name}` has requires_grad=True."
+            )
+        if b.grad is not None:
+            raise DopeFreezeViolationError(
+                f"DOPE freeze violation: buffer `{full_name}` has non-None `.grad`."
+            )
+        _assert_finite_tensor(b, full_name)
         th = _tensor_le_sha256(b)
         tensor_hashes[full_name] = th
         tensor_shapes[full_name] = list(b.shape)
@@ -273,6 +364,15 @@ def snapshot_dope_weights(fused_net: nn.Module) -> DopeFreezeSnapshot:
             )
         b = net_buffers[buf_name]
         full_name = f"normalizer.{buf_name}"
+        if b.requires_grad:
+            raise DopeFreezeViolationError(
+                f"DOPE freeze violation: normalizer buffer `{full_name}` has requires_grad=True."
+            )
+        if b.grad is not None:
+            raise DopeFreezeViolationError(
+                f"DOPE freeze violation: normalizer buffer `{full_name}` has non-None `.grad`."
+            )
+        _assert_finite_tensor(b, full_name)
         th = _tensor_le_sha256(b)
         tensor_hashes[full_name] = th
         tensor_shapes[full_name] = list(b.shape)
@@ -339,6 +439,14 @@ def get_trainable_param_counts_by_submodule(fused_net: nn.Module) -> dict[str, d
                 f"DOPE freeze violation: `{label}.training` is True inside get_trainable_param_counts_by_submodule."
             )
 
+    if hasattr(fused_net, "gamenet_anchor") and isinstance(fused_net.gamenet_anchor, nn.Module):
+        for sub_name, sub_mod in fused_net.gamenet_anchor.named_modules():
+            if sub_mod.training:
+                label = f"gamenet_anchor.{sub_name}" if sub_name else "gamenet_anchor"
+                raise DopeFreezeViolationError(
+                    f"DOPE freeze violation: `{label}.training` is True inside get_trainable_param_counts_by_submodule."
+                )
+
     counts: dict[str, dict[str, int]] = {}
 
     # 1. Direct root parameters (`recurse=False`) so root-level nn.Parameters are never omitted
@@ -383,6 +491,15 @@ def get_trainable_param_counts_by_submodule(fused_net: nn.Module) -> dict[str, d
         raise DopeFreezeViolationError(
             "DOPE freeze violation: a submodule inside `dope_model` has training_mode=True."
         )
+    if "gamenet_anchor" in counts:
+        if counts["gamenet_anchor"]["trainable_params"] != 0:
+            raise DopeFreezeViolationError(
+                f"DOPE freeze violation: gamenet_anchor has non-zero trainable_params={counts['gamenet_anchor']}"
+            )
+        if counts["gamenet_anchor"]["training_mode"]:
+            raise DopeFreezeViolationError(
+                "DOPE freeze violation: a submodule inside `gamenet_anchor` has training_mode=True."
+            )
     return counts
 
 
@@ -392,15 +509,35 @@ def assert_optimizer_excludes_dope(
 ) -> bool:
     """
     Per Jepson's 08:25 EDT HARD REQUIREMENT in NORTH_STAR.md:
-    Asserts that no parameter belonging to `fused_net.dope_model` is present in any
-    `optimizer.param_groups`.
+    Asserts that no parameter, tensor view/alias, normalizer buffer, or frozen anchor
+    tensor belonging to `fused_net.dope_model` / `fused_net.gamenet_anchor` is present
+    in any `optimizer.param_groups`.
     """
-    dope_param_ids = {id(p) for p in fused_net.dope_model.parameters()}
+    if not hasattr(fused_net, "dope_model") or not isinstance(fused_net.dope_model, nn.Module):
+        raise DopeFreezeViolationError("Missing `dope_model` on `fused_net`.")
+    if not hasattr(optimizer, "param_groups") or not isinstance(optimizer.param_groups, list):
+        raise DopeFreezeViolationError("Invalid optimizer: missing `param_groups`.")
+
+    net_buffers = dict(fused_net.named_buffers())
+    protected_tensors = (
+        list(fused_net.dope_model.parameters())
+        + list(fused_net.dope_model.buffers())
+        + [net_buffers[name] for name in DOPE_NORMALIZER_BUFFERS if name in net_buffers]
+    )
+    anchor = getattr(fused_net, "gamenet_anchor", None)
+    if isinstance(anchor, nn.Module):
+        protected_tensors.extend(anchor.parameters())
+        protected_tensors.extend(anchor.buffers())
+
+    protected_ids = {id(t) for t in protected_tensors}
+    protected_ptrs = {ptr for t in protected_tensors if (ptr := _storage_ptr(t)) is not None}
+
     for g_idx, group in enumerate(optimizer.param_groups):
         for p in group.get("params", []):
-            if id(p) in dope_param_ids:
+            p_ptr = _storage_ptr(p) if isinstance(p, torch.Tensor) else None
+            if id(p) in protected_ids or (p_ptr is not None and p_ptr in protected_ptrs):
                 raise DopeFreezeViolationError(
-                    f"DOPE freeze violation: DOPE parameter found in optimizer.param_groups[{g_idx}]!"
+                    f"DOPE freeze violation: frozen DOPE/anchor tensor or storage alias found in optimizer.param_groups[{g_idx}]!"
                 )
     return True
 

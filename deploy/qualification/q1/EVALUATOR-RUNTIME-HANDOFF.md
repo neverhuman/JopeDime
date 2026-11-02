@@ -145,3 +145,32 @@ ledger. A started-only candidate remains consumed with unknown outcome; there is
 no automatic retry. The durable launcher receipt is `jope.q1-launch/v1`, with
 actual `ticket`, source, frozen input hashes, planning, caps and final status.
 Preparation, queue position, runtime qualification and Q1 results remain separate.
+
+
+## Linux CPU replacement and explicit source roles (T0545)
+
+The reviewed evaluator pin records the actual Linux CCAF build, the original build
+and clean recompilation, their explicit same-operator scope, and exact hashes of
+existing admission inputs. Reproduction alone does not qualify runtime.
+
+New plans sign `metadata_source_commit` for the reviewed harness/pin checkout while
+`source_commit` remains the actual compiled evaluator source. The FIFO retains its
+clean checkout, Git ancestry and source-file checks against the signed metadata
+commit. The evaluator pin must match both full binary bytes and compiled source;
+the protocol, vocabulary, dataset/cut identities, budgets and folds stay frozen.
+
+`harness/plan_publisher.py` and `harness/api01_launch.py` are reviewed source for the
+existing API01 publisher and launcher. Install their exact merged bytes at the
+original `api01-t0710/freeze_plan.py` and `api01-t0250/launch.py`; both fix the original
+state directories and ledger. They create no alternate study ledger or launcher.
+The publisher's `--metadata-source` must be a full merged commit descended from the
+compiled source. It records source roles and verifies frozen scientific bytes.
+
+Linux runtime admission rehashes the reviewed native, M2, raw M3, identity and
+reproduction inputs. `PASS_WITH_WAIVER` retains ten executed checks, nine raw passes,
+one raw failure, one separately waived clause and zero unwaived failures. The
+existing M3 validator checks all clauses and every operator/view against the exact
+v1.0.0 ruling; the raw M3 driver exit remains1. Waivers expire atv1.0.1. A changed
+component, numerical failure, zeroed raw failure or mismatched source is refused.
+No qualified trigger, signing request or study attempt follows from these files
+until actual admission succeeds. ENG alone signs; Q1 remains CPU-only.

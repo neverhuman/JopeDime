@@ -1,0 +1,90 @@
+# H205 — Fresh D4 families vs static 205-family pool and static teacher, 50 rounds from r882, H178 pooled selector
+
+**Status: Attempt 2 (`run-20261102T0358Z` at `812ec1ee78cc32a70bb275c109b0c2138d0fb3b8`) closed out as `INCOMPLETE` / `EXPLORATORY_NONCONFORMING_HELD_AT_FRESH_BOUNDARY` (`NO_ADVANCE`, `1,500` exploratory static updates, `0` `FRESH` updates; at least `2,021.04s / 25,200s` known historical wall cost across GPU attempts 1+2 + helper run `0752Z`; remaining time is at most `23,178.96s` until all later costs are reconciled); prospective P1/P2 + `review1758` (#1785) + `H205-TRAIN-BRIDGE-HANDOFF.md` source & counterexample tests implemented (`build_allowed_regression_train_roster` with real exclusion schemas & transitive closure yielding `1,772` `fpool`-disjoint / `1,550` catalog-transitive-disjoint / `1,336` deduplicated independent regression `TRAIN` families; headerless/manifest CSV semantics + prospective `h206-native-S1-TRAIN-v1` `TRAIN`-only `nq=0 -> nq=10` padding compatibility bridge storing both `original_jtt1_nq0_sha256` and `padded_jtt1_nq10_sha256` while extracting learner tensors strictly from the unpadded `nt`-row `TRAIN` matrix and retaining `BLOCKED_NQ0_PROTOCOL` as a negative control; create-only S3 persistence & exact-`VersionId` replay before inherited-engine consumption), awaiting release of `@super_merger_codex` `SOURCE / DATA / OPTIMIZER HOLD` before any live scored/native acquisition.** See [PREREG.md](PREREG.md) and [metrics.json](metrics.json).
+
+- **Authority.** `"Jepson via Grok Bot, card answer 8:22 PM MT" (2026-11-01, t11s3): "Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared."`
+- **Terminal Record of Prior Attempts (`run-20261102T0355Z` & `run-20261102T0358Z`).**
+  - Attempt 1 (`run-20261102T0355Z`, source `357fc075c913b4e4b883d305ce6009c4d727327f`): `FAILED_STAGE0_PARSER` (`11.55s` wall time, `0` optimizer updates).
+  - Attempt 2 (`run-20261102T0358Z`, source `812ec1ee78cc32a70bb275c109b0c2138d0fb3b8`): Verified Stage 0 native `r882` `91/91` bit-exact `DL-Val` parity (`mean = 1.1377941898164525`) and `1,219`-context baseline (`r882_train_mean = 1.423073434552299`), completed `1,500` exploratory static updates (`750` `STATIC-DATA` + `750` `STATIC-TEACHER`), and was safely stopped via owner `SIGTERM` at `STAGE2_WAITING_FOR_JRB01_ADMISSION_PASS` (`1,959.38s` wall time, `0` `FRESH` updates) before `/home/ubuntu/jope_plan/evidence/JRB-01/ADMISSION-PASS.json` existed.
+  - **Evidence limit:** In `812ec1ee78cc32a70bb275c109b0c2138d0fb3b8`, `static_b_panel`, `static_a_panel`, `teacher_b_panel`, and `teacher_a_panel` were kept in process memory across Stage 1 and were not flushed to disk before the Stage 2 wait/stop; raw score panels, saved checkpoints, and Elo ratings for `run-20261102T0358Z` are `null` in [metrics.json](metrics.json) and were not reconstructed by an unregistered rerun.
+  - **Verified S3 Custody (`veox-jopedime-learning-use2`):** Create-only terminal custody manifest `experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/terminal_custody_manifest_20261102T0502Z.json` (`VersionId: BInrGnjKhZOFhuK5qS9ZOA.EcIsGFwAS`, `SHA256: f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186`) pins all 10 available artifacts by true local SHA256 and downloaded exact-`VersionId` byte SHA256 (including `disposition_nonconforming_hold.json` `VersionId: eR0i4LeBLsPubzVMAXLedPUw73jCI3DK`, `4,859` B, `SHA256: 65abc94a36ae039e68a6a30e9092437bf216a0b3d0416609e182d23c436734ae` and `progress.json` `VersionId: N_yw8zfAtYWl8U3d_O8uAKYk06jY8i_4`, `407` B, `SHA256: 2e22e157518bcea9100dcd84b209f2055e5c2f3d89847cc03e1cf11de356a2fc`).
+- **Prospective P1/P2 + `review1758` Corrective Source & Test Repairs.**
+  - `verify_and_load_fresh_d4_pool` and `extract_and_verify_fresh_row_payload` in [analysis.py](analysis.py) plus `ingest_verified_fresh_rows_into_engine` in [runner.py](runner.py) enforce disjoint fresh D4 regression families (`0` overlap with static `205` families or `B_k`/`A_k`/`DL-Val`/sealed families), verify per-row native-Rust-CV (`bootstrap.s1main --fit-s1`) `labels_sha256` / `programs_sha256` / `features_sha256` against NPZ payloads, and ingest fresh `(tokens_10x32, mask_10)` and `(program, fitness, gate)` directly into `engine.tokens`, `engine.masks`, and `engine.pools` with `engine.batch` verification.
+  - `build_equal_compute_round_plan(..., fresh_fit_rows=...)` in [analysis.py](analysis.py) and `run_arm_lockstep_pooled` in [runner.py](runner.py) bind `STATIC-TEACHER` and `FRESH` to the **identical** fresh-family schedule while verifying frozen `r882` teacher identity (`verify_frozen_teacher_identity`).
+  - `admit_round_checkpoint_pooled` and `verify_b_lock_persisted_before_a_eval` in [analysis.py](analysis.py) plus `evaluate_heldout_a_panel` in [runner.py](runner.py) enforce per-round `205`-family paired bootstrap checkpoint selection (`gain > 0.001`, `LCB95 > 0.0`, `harm_rate <= 0.10`, `p_raw < 0.05`) across all 15 `(seed, outer)` cells in lockstep, flush `stage1_static_data_b_panel.npz` prior to the Stage 2 wait loop, and require `pooled_b_selection_lock.json` (`fsync`ed with per-cell checkpoint parameter digests) before any held-out $A$-fold evaluation.
+  - `compute_shared_process_deadline` and `enforce_shared_process_deadline` in [monitor.py](monitor.py) and [runner.py](runner.py) bind the supervisor (`sample["elapsed"] > 23178.960703136865`), Stage 1/2/3 execution, helper stages, and the Stage 2 `JRB-01` wait loop to **one process-start remaining deadline** (`23,178.960703136865s` of the `25,200.0s` campaign cap after `2,021.039296863135s` spent across GPU attempts 1+2 and helper run `0752Z`) and refuse launch on pre-consumed budget.
+  - `build_allowed_regression_train_roster`, `verify_single_regression_train_candidate`, `encode_train_only_jtt1_from_csv`, `build_train_only_padded_native_jtt1`, `verify_scientific_inner_cv_invariance`, `verify_h206_native_protocol_fixture_evidence`, `probe_s1main_nq0_protocol_blocker`, `verify_pre_consumption_s3_replay_bundle`, and `verify_single_context_regression_seam_bundle` in [analysis.py](analysis.py) plus `extract_frozen_dope_tokens_10x32`, `evaluate_slate24_live_s1main`, `consume_single_fresh_context_in_inherited_engine`, and `construct_and_consume_single_regression_context` (`--construct-single-regression-context`) in [runner.py](runner.py) implement and verify the disjoint regression-only data-construction seam (`1,772` datasets after `fpool` closure, `1,550` after full catalog `srcfile`/`url_parent`/`family_keys.derive` transitive closure, and **`1,336` deduplicated independent regression `TRAIN` datasets across `1,336` families**, `roster_sha256: c7ea7148129937d516f19a87c05c771b34d250f10ce9a2e53931e8f13760a504`) without modifying `research/joint_regbin/*` or `research/flywheel_selfplay/h206_search_distill/*`.
+  - **Prospective `TRAIN`-Only Padding Compatibility Bridge (`h206-native-S1-TRAIN-v1`, `protocol_sha256: cb967d3c4baa4e855f3b893ccfff2d1045e64435277f89530c11ae4d3a6aa0ed`):**
+    - Reuses the measured H206 generated-fixture native protocol receipts on `xbabe3` (`/home/ubuntu/jope_plan/evidence/H206/executor-20261102/native-protocol/corrected-shape/receipt.json` `8,414` B `SHA256: 63d15495672652297aba8cbe0b1afd4428f0c36f363b9fa66186e86804d4087a` and `scientific-replay.json` `1,040` B `SHA256: e2d83a76a8b5a81c8f0d8cfd4ac5baaf9bbc4f301cb3dcaca45a06bcca60168f`, `real_TRAIN_or_r882_qualification: false`) with the exact same native binary (`e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8`) and Rust source (`deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs` `SHA256: e369e13bfb498dee924cd0afca23a82fb43c6997864e37fdc28063f092cc1fb1`, lines `558-606`).
+    - On `1db3750d4ceccab9`'s `1,000`-row headerless `train.csv` (`6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d`, `VersionId: xJwIN6naH0sfM_uMuEBwd63AV2A8H.6_`), retains all `1,000` original `TRAIN` rows (`train_matrix_sha256: cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7`) and `1,000` inner-fold cut bytes (`cut_sha256: d2208c223250e1916dd480fc9cf940342db30a9066bece9735181935bc001f0c`), appends `10` deterministic `TRAIN`-derived feature rows cyclically from rows `0..9` with zero query targets (`padding_queries_sha256: 4eb522e958e3656f8e8f069e4553f5b927c1a3eb8ae057414b63a2f86aadd5d7`), and stores both `original_jtt1_nq0_sha256: a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c` (`49,017` B) and `padded_jtt1_nq10_sha256: 8ad082d51dd2345be43a61534fb38d2703d5bb58f5f1cad45e69a939ce859dd1` (`49,497` B) separately (`TARGET_SAME_S3_TRAIN_CONTEXT_SHA256: 1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec`). Learner tensors are extracted strictly from the unpadded `nt`-row `TRAIN` matrix (`padding_examples_added_to_learner == 0`, `padding_families_added == 0`).
+  - **Same-`TRAIN` `nq = 0` Negative Control & Historical Local `s1-prod` Replay Control (`regression-seam-20261102T0752Z`, `status: HISTORICAL_LOCAL_S1PROD_REPLAY_CONTROL`, `same_s3_train_seam_status: BLOCKED_NQ0_PROTOCOL`, `causal_h205_claim_status: NOT_QUALIFIED_NO_ADVANCE`):**
+    - Source S3 `TRAIN` intake (`test.csv` never fetched): `blobs/sha256/6ee10fbb69512880590388c7f608961eaa84532343b45372b7f5b171164ca39d` (`VersionId: xJwIN6naH0sfM_uMuEBwd63AV2A8H.6_`, `67,040` B) and `datasets/1db3750d4ceccab9/manifest.json` (`VersionId: 9nTZwIaM1feUD0HpgMd1sktu.vmZd6f0`, `1,507` B, `has_header: false`, `rows: 1000`, `columns: 6`, `features: 5`).
+    - Pure S3 `train.csv` `n_q = 0` `JTT1` negative control (`use_train_padding_bridge=False`): `jtt1_nq0_sha256: a6d997e39cec56995f579c380a0a1e960d3e887aebb5d40b8a0aae88f613483c` (`49,017` B, `train_matrix_sha256: cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7`, `nt = 1000, nq = 0, p = 5, k = 2`, `1000-row raw_csv_features_sha256: a84271417a25b285aed0b5612ebfc0bb953c9cb863e32f24a484ab6127fff33a`); `bootstrap.s1main --fit-s1` (`e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8`) exits `returncode = 1` with `Error: "S1 requires exactly two inner folds and an admitted shape" / invalid table counts nt=1000 nq=0 p=5` (`deploy/lambda/training/teacher-v2/rust/lambda-worker/src/main.rs:567`).
+    - Historical `regression-seam-20261102T0752Z` local `s1-prod` replay control (`fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45`, `1,600` rows from an unscaled `80/20` `rowselraw1` split across all `1,999` rows, `0` row overlap with min-max scaled `1,000`-row S3 `train.csv`; `24` live evaluations vs `1,152` cached rows): `1` local AdamW step (`adapter_sha256_before = b9ba619e7f13b2ac6beaeb22ca57d53308d180514080d9a8387ed0487c827454` $\neq$ `adapter_sha256_after = 54de3483d939402f04d980f86e2050e33da6e288333ddb7887686bbc5d3df1ce`, `dope_sha256` immutable) and posthoc S3 custody (`s3_custody_receipt.json` `VersionId: 5C85hyOLoj7kdc_z7lCA5lvjROZVemyZ`, `50.10207135695964s` wall time) are preserved as narrow factual receipts, classified as `NOT_SAME_S3_TRAIN_MILESTONE`, and barred by `FORBIDDEN_HISTORICAL_LOCAL_REPLAY_HASHES`.
+- **Code.** [runner.py](runner.py), [analysis.py](analysis.py), [monitor.py](monitor.py), [manifest.json](manifest.json), [metrics.json](metrics.json), and [test_h205.py](test_h205.py).
+
+
+## Operational finding 5: bounded source correction (2026-11-02)
+
+The prospective helper now checks the shared deadline immediately before backward
+and optimizer step, bounds each native/AWS subprocess by the positive remaining
+window (retaining the smaller existing 30/90-second cap), and checks after transport,
+verification and before result publication. Native identity, TRAIN-only padding,
+role exclusions, frozen weights, pre-consumption versioned custody and scientific
+selection rules are unchanged.
+
+The existing `monitor.py` is the sole invocation accountant for this helper. It captures its clock
+before imports/preflight, writes a durable PENDING journal record before validation,
+and passes an exclusive launch snapshot with the ledger-derived prior and the same
+start/deadline to its worker. It observes worker exit, closes owned logs, checks the
+deadline again and charges the entire observed interval once, including startup,
+failure, final custody and summary output. A worker-only result is
+`PENDING_FINAL_ACCOUNTING`, `seam_qualified=false`; an exit code of zero or a HOLD
+summary does not qualify the real TRAIN/native/S3/engine milestone.
+
+Malformed CLI/launch metadata or an unreadable ledger can fail before a ledger can
+be identified. Where the output path is known, the supervisor writes an exclusive
+admission-refusal record with a measured elapsed lower bound and an UNKNOWN tail;
+it does not pretend that an unidentified history was charged. Original ARGON must
+reconcile those refusals as well, avoiding any double charge of an existing journal
+entry. No automatic retry is admitted. Heavy `psutil` preflight and all worker
+imports occur inside the durable admitted invocation. The default GPU study's
+optimizer loop and direct non-construction worker API remain outside this bounded
+construction-helper correction; no new qualification of those paths is claimed.
+
+No code creates or resets a production campaign ledger. An original-owner reconciled
+`h205-campaign-accounting/v1` JSON ledger is required, with `history_complete=true`,
+`baseline_elapsed_seconds >= 2021.039296863135`, `campaign_cap_seconds <= 25200`,
+nonempty `source_evidence`, a `completed` map and `pending=null`. The launch pins
+`campaign_ledger_path`, its current `campaign_ledger_sha256`, and a fresh
+`accounting_invocation_id`. Missing, stale, malformed, nonfinite or pending history
+refuses admission. A duplicate terminal commit does not charge twice or change the
+record. A crashed/incomplete commit leaves PENDING and blocks another invocation.
+
+The terminal ledger commit and supervisor publication/exit occur after the sampled
+cutoff. Their duration is explicitly UNKNOWN, not zero: completion seals
+`history_complete=false` with `unreconciled_tail`. Original ARGON must retain the
+sampled charge, observe the complete supervisor exit and reconcile all remaining
+costs/evidence before publishing a qualified receipt or restoring history completeness
+for another invocation. The new digest and cumulative charge then shorten the next
+window; the old constant is only a floor. Interpreter time before the captured Python
+entry is outside this sample and must not be called measured full-process cost.
+
+Data-free acceptance (supply an owned persistent scratch directory):
+
+```sh
+python3 -B research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py --deadline-controls "$CONTROL_SCRATCH"
+```
+
+This entry executes the committed source AST and in-memory fake clocks/native/AWS/
+parameter/optimizer stubs before NumPy, Torch or research imports. It checks forward
+and backward expiry, final upload/verification, late child exit, startup/failure/tail
+charges, invalid history, failed terminal commits and once-only carry. It performs
+no model, native, S3 or scientific operation. The legacy full tests that require real
+tables/models/native binaries were not executed in this helper lane.
+
+**Next owner: original ARGON.** Source/fixture validation grants no runtime release.
+Reconcile historical and later unknown costs in a versioned owner receipt, obtain
+the existing source/data/optimizer/resource admission, and use the existing monitor's
+`--construct-single-regression-context` path only under that authority. Preserve the
+old attempts and #1799; no new attempt or rerun was made by this correction.

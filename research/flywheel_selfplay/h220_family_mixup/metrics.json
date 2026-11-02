@@ -1,0 +1,287 @@
+{
+  "contrasts": {
+    "CONTROL": {
+      "reference": "R882",
+      "per_seed_gain": [
+        -0.040039557321573625,
+        -0.03706181539658449,
+        -0.03960391829708049
+      ],
+      "median_gain": -0.03960391829708049,
+      "ci95": [
+        -0.07033814207577851,
+        -0.009210127905083588
+      ],
+      "lcb95": -0.06503144241938841,
+      "p_margin": 0.9954004599540046,
+      "harm": 0.3804878048780488,
+      "harmed_families": 78,
+      "positive_seeds": 0
+    },
+    "MIX": {
+      "reference": "R882",
+      "per_seed_gain": [
+        -0.037514461788832006,
+        -0.03566160420945493,
+        -0.04464008185910334
+      ],
+      "median_gain": -0.037514461788832006,
+      "ci95": [
+        -0.06937338667933819,
+        -0.010980756772596106
+      ],
+      "lcb95": -0.06410518091779108,
+      "p_margin": 0.9967003299670033,
+      "harm": 0.3804878048780488,
+      "harmed_families": 78,
+      "positive_seeds": 0
+    },
+    "MIX_vs_CONTROL": {
+      "reference": "CONTROL",
+      "per_seed_gain": [
+        0.0025250955327416153,
+        0.001400211187129563,
+        -0.005036163562022846
+      ],
+      "median_gain": 0.001400211187129563,
+      "ci95": [
+        -0.0013026913879621359,
+        0.003154586153127296
+      ],
+      "lcb95": -0.0007855783259053069,
+      "p_margin": 0.47895210478952105,
+      "harm": 0.024390243902439025,
+      "harmed_families": 5,
+      "positive_seeds": 2
+    }
+  },
+  "holm": {
+    "MIX": {
+      "p": 0.9967003299670033,
+      "alpha": 0.05,
+      "lcb95": -0.06410518091779108,
+      "passes": false
+    }
+  },
+  "holm_multiplicity": 1,
+  "admitted": {
+    "MIX": false
+  },
+  "primary": "MIX",
+  "verdict": "NO_ADVANCE",
+  "bootstrap_draws": 10000,
+  "bootstrap_seed": 220150,
+  "status": "COMPLETE",
+  "optimizer_updates": 1200,
+  "smoke_optimizer_updates": 4,
+  "total_optimizer_updates": 1204,
+  "member_fits": 30,
+  "selection_lock_sha256": "ea10b5602a3b0a755dac04bba3ee3a6bfcd30f105a99edc8c3c2c13f213f731c",
+  "adoption_counts": {
+    "CONTROL": [
+      356,
+      359,
+      375
+    ],
+    "MIX": [
+      348,
+      359,
+      361
+    ]
+  },
+  "adoption_rates": {
+    "CONTROL": [
+      0.29204265791632483,
+      0.2945036915504512,
+      0.30762920426579166
+    ],
+    "MIX": [
+      0.28547990155865466,
+      0.2945036915504512,
+      0.29614438063986875
+    ]
+  },
+  "val_reg_inner_oof": {
+    "R882": {
+      "context_mean_per_seed": [
+        1.423073434552299,
+        1.423073434552299,
+        1.423073434552299
+      ],
+      "equal_family_mean_per_seed": [
+        1.3853554329931828,
+        1.3853554329931828,
+        1.3853554329931828
+      ]
+    },
+    "CONTROL": {
+      "context_mean_per_seed": [
+        1.3836669813113072,
+        1.3863697612145558,
+        1.3823672899655606
+      ],
+      "equal_family_mean_per_seed": [
+        1.345315875671609,
+        1.3482936175965983,
+        1.3457515146961019
+      ]
+    },
+    "MIX": {
+      "context_mean_per_seed": [
+        1.3852803025118003,
+        1.3880919267281984,
+        1.3771312844108772
+      ],
+      "equal_family_mean_per_seed": [
+        1.3478409712043504,
+        1.3496938287837277,
+        1.3407153511340795
+      ]
+    }
+  },
+  "elo_vs_r882": {
+    "CONTROL": {
+      "per_seed": [
+        1485.4749378138922,
+        1482.153747941548,
+        1481.827235004283
+      ],
+      "median": 1482.153747941548,
+      "ci95": [
+        1471.5762097912877,
+        1494.4836139257743
+      ]
+    },
+    "MIX": {
+      "per_seed": [
+        1485.6674396778872,
+        1483.2108148120815,
+        1481.678405576743
+      ],
+      "median": 1483.2108148120815,
+      "ci95": [
+        1472.7419051746524,
+        1495.1761825962703
+      ]
+    }
+  },
+  "U4": null,
+  "U4_reason": "No verified multi-proposal budget in this protocol.",
+  "serving_promotion": false,
+  "source_commit": "98f5ff06746d38c95690932b42c44276bb1389f4",
+  "elapsed_seconds": 292.31159696611576,
+  "native91": 1.1377941898164525,
+  "native91_bit_exact": true,
+  "native91_scope": "unchanged r882 only, before any training; no treatment evaluation",
+  "static_train_parity": true,
+  "dl_val_baseline_contexts": 91,
+  "dl_val_treatment_outcome_reads": 0,
+  "frozen_hash_before_after": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "numeric": {
+    "policy": "<=4 numeric threads (OMP/MKL/OpenBLAS/torch intra-op); CUDA runtime/driver threads exempt",
+    "numeric_threads_upper_bound": 1,
+    "os_threads_diagnostic": 6,
+    "workers": [
+      {
+        "pid": 3866365,
+        "environment": {
+          "OMP_NUM_THREADS": "1",
+          "MKL_NUM_THREADS": "1",
+          "OPENBLAS_NUM_THREADS": "1"
+        },
+        "torch_intraop": 1,
+        "native_pools": [
+          {
+            "user_api": "blas",
+            "internal_api": "openblas",
+            "num_threads": 1
+          },
+          {
+            "user_api": "openmp",
+            "internal_api": "openmp",
+            "num_threads": 1
+          }
+        ]
+      }
+    ]
+  },
+  "wave": "H220",
+  "attempt": 1,
+  "retry_allowed": false,
+  "start_utc": "2026-11-02T12:12:09Z",
+  "finish_utc": "2026-11-02T12:17:08.207587+00:00",
+  "elapsed_supervisor_seconds": 298.72353434562683,
+  "scientific_hypothesis_tested": true,
+  "planned_full_updates": 1200,
+  "planned_smoke_updates": 4,
+  "planned_member_fits": 30,
+  "selection_lock": true,
+  "A_scored": true,
+  "native91_reason": "Unchanged-r882 native91 regression before training; no trained DL-Val evaluation",
+  "audit": {
+    "protected_reads": 0,
+    "list_fields": {
+      "opened": {
+        "count": 1342,
+        "sha256": "3b15946102c2e9a0ed16e209c9703eec0df4a82d08cdb482104e9889ff00cfa7"
+      },
+      "refused": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    }
+  },
+  "resource_summary": {
+    "samples": 142,
+    "max_load1": 43.689453125,
+    "max_load5": 39.8134765625,
+    "max_cpu_percent": 31.0,
+    "min_free_bytes": 456970207232,
+    "min_available_ram_bytes": 81263419392,
+    "max_child_rss_bytes": 2094526464,
+    "max_load_over_seconds": 0.0,
+    "max_cpu_over_seconds": 0.0
+  },
+  "postrun_pinned_files_unchanged": true,
+  "training_proofs": {
+    "durable_full_fits": 30,
+    "durable_full_updates": 1200,
+    "durable_smoke_updates": 4,
+    "all_nonzero_gradients": true,
+    "all_changed_parameters": true,
+    "all_changed_future_forward": true,
+    "devices": [
+      "cuda:0"
+    ],
+    "scope": "Completed durable fits; partial final fit may have additional updates. Empty inventory does not establish training."
+  },
+  "mixup_exposure": {
+    "CONTROL": {
+      "rows": 0,
+      "mixed_rows": 0,
+      "singleton_rows": 0
+    },
+    "MIX": {
+      "rows": 38400,
+      "mixed_rows": 19173,
+      "singleton_rows": 118
+    }
+  },
+  "timing_smoke": {
+    "scored": false,
+    "optimizer_updates": 4,
+    "elapsed_seconds": 4.354164155200124,
+    "scope": "TRAIN FIT-only timing; no held-out labels, selection or promotion; included in one90min budget"
+  },
+  "static_train_parity_receipt": {
+    "contexts": 1219,
+    "bit_exact": true
+  },
+  "custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H220/astra-t0500/closeout/manifest.json",
+    "version_id": "jVUv47WHJrdkms9HA3H_8AVwf_KEJkc.",
+    "sha256": "3380ba762638a4798563144d045d8a208cfc769ac54acb7cc48d93f997481a89",
+    "bytes": 70240
+  }
+}

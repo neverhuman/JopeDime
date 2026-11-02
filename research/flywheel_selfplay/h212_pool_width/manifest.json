@@ -1,0 +1,156 @@
+{
+  "schema": "jope.h212.pool-width/v1",
+  "status": "PREREGISTERED",
+  "owner": "luna_ns_hbaseline",
+  "authority": [
+    "/home/ubuntu/nudges/hw_t0100_h212_lunansh.md",
+    "/home/ubuntu/nudges/hw_t0105_h212_unblock.md"
+  ],
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H212_claim.txt",
+  "hypothesis": "widening the frozen-r882 selector's GP proposal pool from 16 to 32 or 64 raises realized native utility",
+  "arms": [
+    16,
+    32,
+    64
+  ],
+  "primary_width": 64,
+  "seeds": [
+    212001,
+    212002,
+    212003
+  ],
+  "fold_seed": 212140,
+  "bootstrap_seed": 212150,
+  "bootstrap_draws": 10000,
+  "elo_bootstrap_seed": 212151,
+  "elo_bootstrap_draws": 1000,
+  "fold_manifest": "fold_manifest.json",
+  "fold_manifest_sha256": "5b2823eee2633e74687b53e1a9858a814de2166a37b329e72f05fef6f4fae483",
+  "cohort": {
+    "origin": "real S3, catalog v246; H139/H195 approved cohort",
+    "train_contexts": 1219,
+    "train_families": 205,
+    "validation_contexts": 91,
+    "validation_families": 19,
+    "task": "regression",
+    "outer_rows_delivered": 0,
+    "excluded_payloads_opened": 0,
+    "train_validation_family_overlap": 0,
+    "sealed_holdout_meta_test_reads": 0
+  },
+  "catalog": {
+    "version": "v246",
+    "markdown_path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md",
+    "markdown_sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "machine_path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
+    "machine_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+  },
+  "inputs": {
+    "selected_path": "/home/ubuntu/jope-data/h50/input/selected.json",
+    "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_path": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
+    "source_manifest_sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "champions_path": "/home/ubuntu/jope-data/h50/input/champions.json",
+    "champions_sha256": "a444047ffb937dc8d69012cbdbf0891faf3e7d743b127e7cac3baed114cf141d",
+    "cache_manifest_path": "/home/ubuntu/jope-data/h58/cache/cache_manifest.json",
+    "cache_manifest_sha256": "66b1df1374242580d482b7d6f9b72b6fe8f65830f90f658ca662a698aa229897",
+    "context_features_path": "/home/ubuntu/jope-data/h58/cache/context_features.npz",
+    "context_features_sha256": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "pool_priors_path": "/home/ubuntu/jope-data/h58/cache/pool_priors.npz",
+    "pool_priors_sha256": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe",
+    "champions_featurized_path": "/home/ubuntu/jope-data/h58/cache/champions_featurized.json",
+    "champions_featurized_sha256": "ea020d489ec9a813e4dfb2b6fe45c126ff9f8d8a1b59d0ff9f8242cfe5e6efc0",
+    "journal_candidates_path": "/home/ubuntu/jope-data/h58/cache/journal_candidates.json",
+    "journal_candidates_sha256": "f39ebe592d53d875338ecf9d95592f7a04c0a39c3cd0727211a4913e25f3e541",
+    "jtt1_gz_manifest_path": "/home/ubuntu/jope-data/h58/cache/jtt1_gz_manifest.json",
+    "jtt1_gz_manifest_sha256": "4e0115c6d6d6b8805952292b45e6e71384da6d7a9ce81e73af79704a62206769",
+    "best_dev_reference_path": "/home/ubuntu/jope-data/h195/inputs/best_dev_checkpoint.json",
+    "best_dev_reference_sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "r882_owned_copy_path": "/home/ubuntu/jope-data/h51/ckpt/round-882.pt",
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "jtt1_cache_payload_semantics": "gzip contains training_cv_envelope(raw), not raw table bytes"
+  },
+  "source_pins": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686",
+    "repo_rust_evaluator": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
+    "micro_rust_evaluator": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "micro_model": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "micro_phase12_model": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "dope_model": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "h58_prepare_cache": "be0ab8b8aefee8aca2fe96417b6b009d7d4fdaf8c50c02c0eca03db4ad2bd386",
+    "h58_base_module": "abacf87c9efc116e3923e918e5521a14bf25be789b10d5245fc9186309df6fbb",
+    "h58_envelope_source": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0"
+  },
+  "proposal_protocol": {
+    "generator": "propose_flywheel_candidates",
+    "source": "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py",
+    "widths_are_ordered_prefixes": false,
+    "shared_context_parent_bank_and_seed_across_widths": true,
+    "same_context_parent": "pinned H50/H58 champion for that TRAIN context",
+    "cross_context_champions": "DL-Train champion bank outside the target family fold",
+    "existing_context_pool_duplicates_removed_in_generator_order": true,
+    "refill_after_pool_dedup": false,
+    "live_gp_exploration": true,
+    "live_gp_exploration_value": 0.25,
+    "live_gp_exploration_enabled": true,
+    "extra_ranker_or_temperature_filter": false,
+    "max_generated_per_context_each_arm": [
+      16,
+      32,
+      64
+    ],
+    "native_evaluation_deduplicated_across_arms": true
+  },
+  "endpoint": "H139 native first-argmin utility: -fitness when Rust gate passes, else -2.0",
+  "decision": {
+    "primary": "N64 versus paired N16",
+    "per_seed_family_median_ci_lower_gt": 0.0,
+    "per_seed_family_harm_fraction_max": 0.2,
+    "per_seed_paired_elo_ci_lower_gt": 1500.0,
+    "ties_are_acceptance": false,
+    "otherwise": "NO_ADVANCE",
+    "missing_seed_or_family": "INCOMPLETE",
+    "N32_role": "secondary; cannot rescue primary"
+  },
+  "resources": {
+    "host": "xbabe2",
+    "device": "CPU only",
+    "nice": 19,
+    "numeric_threads_max": 4,
+    "evaluator_workers_max": 4,
+    "host_cpu_pct_max": 85,
+    "mem_available_min_bytes": 17179869184,
+    "root_disk_used_fraction_max": 0.938,
+    "aggregate_rss_max_bytes": 6000000000,
+    "attempt_output_max_bytes": 500000000,
+    "wall_seconds_max": 10800,
+    "host_load_action": "pause and wait; do not abort or consume a second attempt",
+    "attempts": 1
+  },
+  "seed_boundary_audit": {
+    "searched_prior_tracked_hwave_sources": true,
+    "seeds": [
+      212001,
+      212002,
+      212003,
+      212140,
+      212150,
+      212151
+    ]
+  },
+  "supplemental_reporting": {
+    "estimand": "median over three seed-level equal-family mean gains; bootstrap shared family resamples across seeds",
+    "bootstrap_draws": 10000,
+    "bootstrap_p": "(1 + count(bootstrap median <= 0)) / 10001",
+    "holm_family": [
+      "N32_vs_N16",
+      "N64_vs_N16"
+    ],
+    "holm_m": 2,
+    "decision_role": "descriptive only; does not change per-seed N64 gates"
+  },
+  "s3_evidence_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H212/",
+  "s3_evidence_manifest": "S3_EVIDENCE_MANIFEST.json"
+}

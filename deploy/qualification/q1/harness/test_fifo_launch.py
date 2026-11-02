@@ -154,6 +154,31 @@ else:
         )
         self.args.signature = message.with_suffix(".sig")
 
+    def test_signed_metadata_source_is_checked_without_relabeling_compiled_source(self):
+        import json
+        import q1_bindings
+
+        compiled = json.loads(q1_bindings.EVALUATOR_PIN.read_text())["source_commit"]
+        self.plan["source_commit"] = compiled
+        self.plan["metadata_source_commit"] = "b" * 40
+        self.resign()
+        seen = []
+        launch.admit(
+            self.args,
+            self.paths,
+            source_check=lambda paths, source: seen.append(source),
+            load=lambda: 0,
+        )
+        self.assertEqual(seen, ["b" * 40])
+        self.assertEqual(self.plan["source_commit"], compiled)
+        self.plan["metadata_source_commit"] = "c" * 40
+        self.planfile.write_bytes(q1.canonical(self.plan))
+        with self.assertRaises(ValueError):
+            launch.admit(
+                self.args, self.paths, source_check=lambda *_: None, load=lambda: 0
+            )
+        self.assertFalse(self.paths.queue.exists() and list(self.paths.queue.iterdir()))
+
     def test_preparation_is_not_a_live_ticket_or_lock_claim(self):
         sentinel = self.queue / "w1-owner.json"
         sentinel.write_text('{"owner":"fixture-W1"}')

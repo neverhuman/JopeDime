@@ -151,6 +151,8 @@ def compute_family_grouped_bradley_terry_elo(
       - When `allow_incomplete_panel=True`, normalizes each pair `(a, b)` by the number of
         eligible records in family `f` where BOTH `a` and `b` have finite scores, so unavailable
         rows on one contender never dilute or shift pairwise family weights for other contenders.
+      - Every contender must have an observed comparison path to the anchor, even with a prior.
+        Disconnected partial panels are rejected instead of receiving arbitrary relative ratings.
     """
     if not records:
         raise ValueError("Cannot compute Bradley-Terry Elo on empty records sequence.")
@@ -234,9 +236,26 @@ def compute_family_grouped_bradley_terry_elo(
                 N_games[ia, ib] += w_pair_fam
                 N_games[ib, ia] += w_pair_fam
 
+    # Relative strengths are identifiable only within the observed comparison component.
+    # A prior must not manufacture evidence connecting an otherwise unmeasured contender.
+    anchor_idx = c_to_idx[anchor_contender]
+    reachable = {anchor_idx}
+    pending = [anchor_idx]
+    while pending:
+        current = pending.pop()
+        for neighbor in np.flatnonzero(N_games[current] > 0.0):
+            if neighbor not in reachable:
+                reachable.add(neighbor)
+                pending.append(neighbor)
+    disconnected = [c for c in contenders if c_to_idx[c] not in reachable]
+    if disconnected:
+        raise ValueError(
+            f"Comparison panel is disconnected from anchor {anchor_contender!r}: {disconnected}. "
+            "Each contender needs an observed comparison path to the anchor."
+        )
+
     # Zermelo Minorization-Maximization (MM) fixed-point solver for Bradley-Terry strengths
     gamma = np.ones(M, dtype=np.float64)
-    anchor_idx = c_to_idx[anchor_contender]
     for _ in range(n_iters):
         new_gamma = np.ones(M, dtype=np.float64)
         for a in range(M):
@@ -283,7 +302,8 @@ def check_phase_d_elo_gate(
 ) -> dict[str, object]:
     """
     Verifies NORTH_STAR Phase D gate:
-      - `len(round_names) >= 3`
+      - All requested round and baseline ratings are finite, non-boolean observations.
+      - `len(round_names) >= 3` (an empty history returns an unmet gate with empty trajectories)
       - Final flywheel Elo >= `h_baseline_name` Elo on overall, regression, and binary classification
       - Monotonically trending up over `>= 3` rounds on both task types.
     """
@@ -293,15 +313,18 @@ def check_phase_d_elo_gate(
         or h_baseline_name not in binary_ratings
     ):
         raise KeyError(f"Baseline {h_baseline_name!r} missing from ratings dictionaries.")
-    reg_seq = [float(regression_ratings[r]) for r in round_names]
-    bin_seq = [float(binary_ratings[r]) for r in round_names]
-    ovr_seq = [float(overall_ratings[r]) for r in round_names]
+    reg_seq = [require_finite_score(regression_ratings, r) for r in round_names]
+    bin_seq = [require_finite_score(binary_ratings, r) for r in round_names]
+    ovr_seq = [require_finite_score(overall_ratings, r) for r in round_names]
 
     reg_rising = len(reg_seq) >= 3 and all(reg_seq[i] > reg_seq[i - 1] for i in range(1, len(reg_seq)))
     bin_rising = len(bin_seq) >= 3 and all(bin_seq[i] > bin_seq[i - 1] for i in range(1, len(bin_seq)))
-    beats_h_reg = reg_seq[-1] >= float(regression_ratings[h_baseline_name])
-    beats_h_bin = bin_seq[-1] >= float(binary_ratings[h_baseline_name])
-    beats_h_ovr = ovr_seq[-1] >= float(overall_ratings[h_baseline_name])
+    baseline_reg = require_finite_score(regression_ratings, h_baseline_name)
+    baseline_bin = require_finite_score(binary_ratings, h_baseline_name)
+    baseline_ovr = require_finite_score(overall_ratings, h_baseline_name)
+    beats_h_reg = bool(reg_seq) and reg_seq[-1] >= baseline_reg
+    beats_h_bin = bool(bin_seq) and bin_seq[-1] >= baseline_bin
+    beats_h_ovr = bool(ovr_seq) and ovr_seq[-1] >= baseline_ovr
 
     gate_pass = bool(reg_rising and bin_rising and beats_h_reg and beats_h_bin and beats_h_ovr)
     return {

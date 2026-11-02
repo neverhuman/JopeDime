@@ -587,9 +587,9 @@ mod tests {
     #[test]
     fn res07_fixture_inventory_loads_every_safetensors_shape() {
         let explicit_root = env::var_os(GOLDEN_DIR_ENV);
-        let strict = [STRICT_ENV, "JOPE_GOLDEN_STRICT"]
-            .iter()
-            .any(|key| env::var(key).is_ok_and(|value| value == "1"));
+        // The default inventory is generated and fetched from custody, never committed, so the
+        // general parity-strict flag must not require it; an explicit root or this flag does.
+        let strict = env::var("JOPE_GOLDEN_STRICT").is_ok_and(|value| value == "1");
         let root = explicit_root.as_ref().map_or_else(
             || {
                 Path::new(env!("CARGO_MANIFEST_DIR"))

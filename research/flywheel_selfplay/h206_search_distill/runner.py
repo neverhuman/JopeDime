@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""H206 CPU-only preregistration skeleton. Execution is deliberately unavailable."""
+"""H206 native-search/learner interfaces; scientific execution stays gated."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -15,13 +16,25 @@ sys.path.insert(0, str(HERE.parent))
 from hwave_numeric_threads import THREAD_POLICY, admit_numeric_threads  # noqa: E402
 
 AUTHORITY = "Jepson via Grok Bot, card answer 8:22 PM MT"
-EXECUTOR_IMPLEMENTED = False
+EXECUTOR_IMPLEMENTED = True
+SCIENTIFIC_EXECUTION_ENABLED = False
 CACHE_BYTES = 40_000_000_000
 REQUIRED_HEADROOM = 50_000_000_000
 
 
 def load_plan() -> dict:
     plan = json.loads((HERE / "launch.json").read_text())
+    raw_bindings = (HERE / "bindings.json").read_bytes()
+    if hashlib.sha256(raw_bindings).hexdigest() != plan["recovered_bindings_sha256"]:
+        raise ValueError("recovered binding manifest hash mismatch")
+    bindings = json.loads(raw_bindings)
+    if (
+        bindings["initial_checkpoint"] != plan["initial_checkpoint_ref"]
+        or bindings["native91_reference"]["object_ref"] != plan["native91_reference_ref"]
+        or bindings["study"]["specification_sha256"] != plan["study_specification_sha256"]
+        or bindings["canonical_ledger"]["path"] != plan["canonical_ledger_path"]
+    ):
+        raise ValueError("recovered binding plan mismatch")
     expected = {
         "authority": AUTHORITY,
         "status": "QUEUED_NOT_RUN",
@@ -35,7 +48,7 @@ def load_plan() -> dict:
         "cache_bytes_cap": CACHE_BYTES,
         "thread_policy": THREAD_POLICY,
         "queue_released": False,
-        "executor_implemented": False,
+        "executor_implemented": True,
     }
     for key, value in expected.items():
         if plan.get(key) != value:
@@ -90,12 +103,16 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--plan", action="store_true", help="print CPU-only queued plan")
-    mode.add_argument("--execute", action="store_true", help="always refused by this skeleton")
+    mode.add_argument(
+        "--execute", action="store_true", help="scientific queue and qualification gates remain closed"
+    )
     ap.add_argument("--run-id", default="H206-QUEUED-PREREG")
     ap.add_argument("--output", type=Path, help="exclusive-create a queued launch plan JSON")
     args = ap.parse_args(argv)
     if args.execute:
-        ap.error("H206 QUEUED: executor not implemented; no GPU/scored inference authorized")
+        ap.error(
+            "H206 QUEUED: model/input/native91/GPU-phase qualification incomplete; no scored run authorized"
+        )
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", args.run_id):
         ap.error("invalid research run id")
     plan = load_plan()

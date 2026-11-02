@@ -6,8 +6,8 @@
 % Historical source notes are archived outside the paper tree.
 \section{EurekaZero: Learning Taste}\label{sec:method}
 
-The reference design trains a writer and separate ranking map on
-search-scored lists, then deploys the frozen writer for one proposal.
+The reference design specifies training a writer and separate ranking map
+on search-scored lists, then deploying the frozen writer for one proposal.
 The record in \cref{sec:method-status} updates only a ranking adapter over
 heuristic, retrieval and grammar proposals. Their cost ledgers
 (\cref{sec:price}) and evaluations are separate.
@@ -104,7 +104,7 @@ error estimate. Comparing its magnitude across problems or reading it as a
 probability of a verified win requires separate evidence. The referee
 still establishes validity and measures performance.
 
-The map learns from scored lists $G_p$ for problem $p$;
+The map's training objective uses scored lists $G_p$ for problem $p$;
 $\rho_w\in[0,1]$ is a program's percentile, 1 for the best.
 Native training requires at least eight scored programs in a source list
 and samples eight per comparison: its champion and seven

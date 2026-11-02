@@ -1,6 +1,10 @@
-"""Synthetic CPU protocol fixtures; no learner, GPU, dataset or score history."""
+"""Synthetic study/learner contract fixtures; no real learning qualification."""
 
+import fcntl
 import hashlib
+from types import SimpleNamespace
+
+import numpy as np
 import json
 import math
 from collections import Counter
@@ -9,7 +13,14 @@ from pathlib import Path
 import pytest
 import torch
 
-from research.joint_regbin import candidate_builder, driver, runtime, worker
+from research.joint_regbin import (
+    candidate_builder,
+    driver,
+    learner,
+    protocol,
+    runtime,
+    worker,
+)
 from research.joint_regbin.admission import (
     PARTIAL_SCHEMA,
     _load_csv,
@@ -40,6 +51,202 @@ from research.joint_regbin.protocol import (
     verify_plan,
 )
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
+
+
+def test_resume_dispatch_load_gate_requires_five_spaced_high_samples():
+    from research.joint_regbin.learner_resume import LoadGate
+
+    gate = LoadGate()
+    assert gate.sample(90, 0)["consecutive_high"] == 1
+    for tick in (1, 10, 59):
+        assert gate.sample(99, tick) is None
+    assert not gate.blocked()
+    assert gate.sample(85, 60)["consecutive_high"] == 0
+    for index in range(1, 5):
+        assert not gate.sample(85.001, 60 + index * 60)["dispatch_paused"]
+    assert gate.sample(86.6, 360)["dispatch_paused"]
+    assert gate.sample(80, 420)["dispatch_paused"]
+    assert gate.sample(70, 480)["dispatch_paused"]
+    assert not gate.sample(69.999, 540)["dispatch_paused"]
+    gate = LoadGate()
+    for tick in (0, 60, 120, 180):
+        gate.sample(90, tick)
+    assert gate.sample(90, 300)["consecutive_high"] == 1
+    assert not gate.blocked()
+
+
+def test_resume_deadline_amendment_carries_old_execution_without_reset():
+    from research.joint_regbin.learner_resume import PLAN_SHA, amended_deadline
+
+    campaign = dict(
+        plan_sha256=PLAN_SHA, wall_seconds=21600, started_unix=0, deadline_unix=21600
+    )
+    assert amended_deadline(campaign, 330, 3600) == 23400
+    with pytest.raises(ValueError, match="reset"):
+        amended_deadline(campaign, 330, 1000)
+    with pytest.raises(ValueError, match="charge differs"):
+        amended_deadline(dict(campaign, wall_seconds=22000), 330, 3600)
+
+
+def test_resume_refusal_requires_proven_preexecution_and_no_artifacts(tmp_path):
+    from research.joint_regbin.learner_resume import proven_preexecution_refusal
+
+    log = tmp_path / "worker.log"
+    response = tmp_path / "unit.response.json"
+    log.write_text(
+        "in configure\nresource_check(device)\nCPU load exceeds 85% host budget\n"
+    )
+    assert proven_preexecution_refusal(log, response)
+    log.write_text(
+        "in train\nresource_check(device)\nCPU load exceeds 85% host budget\n"
+    )
+    assert not proven_preexecution_refusal(log, response)
+    log.write_text(
+        "in configure\nresource_check(device)\nGPU memory exceeds 90% budget\n"
+    )
+    response.write_text("{}")
+    assert not proven_preexecution_refusal(log, response)
+    response.unlink()
+    (tmp_path / "unit.response-checkpoints").mkdir()
+    assert not proven_preexecution_refusal(log, response)
+
+
+def test_resume_fifo_done_follows_actual_lock_release(tmp_path, monkeypatch):
+    import contextlib
+
+    from research.joint_regbin import learner_resume as resume
+
+    events = []
+
+    @contextlib.contextmanager
+    def lock():
+        events.append("acquired")
+        try:
+            yield 123
+        finally:
+            events.append("released")
+
+    def event(kind, **fields):
+        if kind == "FIFO_DONE":
+            assert events == ["acquired", "released"]
+            assert Path(fields["ticket"]).is_file()
+            events.append("done")
+
+    monkeypatch.setattr(resume.driver, "qualification_lock", lock)
+    monkeypatch.setattr(resume, "event", event)
+    monkeypatch.setattr(resume, "QUEUE", tmp_path)
+    with pytest.raises(RuntimeError, match="infrastructure"):
+        with resume.ordered_lock(resume.time.time() + 60) as (descriptor, ticket):
+            assert descriptor == 123
+            assert ticket.is_file() and not ticket.name.endswith(".done")
+            raise RuntimeError("infrastructure")
+    assert events == ["acquired", "released", "done"]
+
+
+def test_resume_fifo_ignores_done_and_dead_without_pruning_peers(tmp_path, monkeypatch):
+    from research.joint_regbin import learner_resume as resume
+
+    names = ("1-100-JRB01.done", "2-200-JRB01", "3-300-Q1")
+    for name in names:
+        (tmp_path / name).touch()
+    monkeypatch.setattr(resume, "QUEUE", tmp_path)
+    monkeypatch.setattr(resume.fifo, "pid_is_alive", lambda pid: pid != 200)
+    assert resume.oldest_ticket() == tmp_path / "3-300-Q1"
+    assert sorted(p.name for p in tmp_path.iterdir()) == sorted(names)
+
+
+def test_resume_fifo_finalizes_own_ticket_when_enqueue_logging_fails(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    def event(kind, **_fields):
+        if kind == "FIFO_ENQUEUED":
+            raise OSError("ledger unavailable")
+
+    monkeypatch.setattr(resume, "QUEUE", tmp_path)
+    monkeypatch.setattr(resume, "event", event)
+    with pytest.raises(OSError, match="ledger unavailable"):
+        with resume.ordered_lock(resume.time.time() + 60):
+            pytest.fail("must not dispatch without enqueue evidence")
+    tickets = list(tmp_path.iterdir())
+    assert len(tickets) == 1 and tickets[0].name.endswith(".done")
+
+
+def test_preparation_sampling_and_padding_preserve_only_train_rows():
+    import gzip
+    import struct
+
+    from research.joint_regbin import learner_prepare as prepare
+
+    x = np.arange(800 * 70, dtype=np.float64).reshape(800, 70)
+    y = np.zeros(800)
+    y[-2:] = 1
+    selected_x, selected_y, rows, columns = prepare.select_input(
+        x, y, "binary", "fixed"
+    )
+    replay = prepare.select_input(x, y, "binary", "fixed")
+    assert np.array_equal(selected_x, replay[0])
+    assert selected_x.shape == (300, 64)
+    assert selected_y.sum() == 2
+    assert np.array_equal(selected_x, x[rows][:, columns])
+    encoded = candidate_builder.encode_two_fold_jtt1(
+        selected_x, selected_y, task="binary", dataset="fixture", seed=136
+    )
+    padded = gzip.decompress(prepare.padded_native_input(encoded))
+    original = gzip.decompress(encoded)
+    assert struct.unpack_from("<4sIIIB", padded) == (b"JTT1", 300, 10, 64, 2)
+    assert padded == original
+    queries = np.frombuffer(padded, dtype="<f8", offset=17 + 300).reshape(310, 65)[300:]
+    assert np.array_equal(queries[:, :-1], selected_x[:10])
+    assert np.count_nonzero(queries[:, -1]) == 0
+    decoded_x, decoded_y = prepare.decode_train_table(encoded)
+    assert np.array_equal(decoded_x, selected_x)
+    assert np.array_equal(decoded_y, selected_y)
+    padded_x, padded_y = prepare.decode_train_table(padded)
+    assert np.array_equal(padded_x, selected_x)
+    assert np.array_equal(padded_y, selected_y)
+    with pytest.raises(ValueError, match="each explicit binary class"):
+        prepare.select_input(x, np.zeros(800), "binary", "fixed")
+
+
+def test_preparation_metrics_bind_actual_predictions_and_fold_targets():
+    from research.joint_regbin import learner_prepare as prepare
+
+    document = dict(
+        status="completed",
+        inner_cv=[
+            dict(
+                index=0,
+                predictions=[1.0, 3.0],
+                targets=[0.0, 1.0],
+                score_rows=2,
+                train_rows=2,
+                serialized_prediction_replay_exact=True,
+                baseline_metrics=dict(rmse=999.0),
+            ),
+            dict(
+                index=1,
+                predictions=[1.0, 2.0],
+                targets=[0.0, 1.0],
+                score_rows=2,
+                train_rows=2,
+                serialized_prediction_replay_exact=True,
+                baseline_metrics=dict(rmse=999.0),
+            ),
+        ],
+    )
+    expected = [np.array([0.0, 1.0]), np.array([0.0, 1.0])]
+    metrics = prepare.dataset_metrics(document, "regression", expected)
+    assert metrics["rmse"] == pytest.approx(math.sqrt(7 / 4))
+    binary = prepare.dataset_metrics(document, "binary", expected)
+    assert 0 <= binary["auc"] <= 1
+    assert math.isfinite(binary["log_loss"])
+    with pytest.raises(ValueError, match="frozen TRAIN cut"):
+        prepare.dataset_metrics(document, "regression", [np.array([1.0, 0.0])] * 2)
+    document["status"] = "failed"
+    with pytest.raises(ValueError, match="unavailable"):
+        prepare.dataset_metrics(document, "regression")
 
 
 def _write_family_exclusion(
@@ -1918,3 +2125,390 @@ def test_frozen_worker_core_checks_state_when_synthetic_core_raises():
     with pytest.raises(RuntimeError, match="synthetic worker failure"):
         core.train_batch([])
     assert guard.checks == 2
+
+
+# Standalone learner contract fixtures; no synthetic learning qualification.
+class FixtureAdapter(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.zeros(29211))
+
+    def predict_costs(self, **inputs):
+        return {"total_cost": inputs["features"] + self.weight[:1]}
+
+
+def fixture_pinned():
+    net = torch.nn.Module()
+    net.adapter_10tok = FixtureAdapter()
+    heads = worker.TwoTaskHeads()
+
+    def tensor_hash(state):
+        return hashlib.sha256(
+            b"".join(
+                name.encode() + value.numpy().tobytes()
+                for name, value in sorted(state.items())
+            )
+        ).hexdigest()
+
+    return SimpleNamespace(
+        net=net,
+        adapter=net.adapter_10tok,
+        heads=heads,
+        h144_runtime=SimpleNamespace(tensor_hash=tensor_hash),
+        verify_frozen_state=lambda: None,
+    )
+
+
+def rows():
+    return [
+        dict(
+            id=task,
+            dataset=task,
+            family=task,
+            task=task,
+            role="train",
+            source_split="train",
+            origin="real",
+            has_meta_test=False,
+            payload=task + ".npz",
+            payload_sha256="0" * 64,
+        )
+        for task in protocol.TASKS
+    ]
+
+
+def fixture_request(arm="joint", rounds=2):
+    selected = [
+        row
+        for row in rows()
+        if arm == "joint"
+        or row["task"] == ("regression" if arm == "reg-only" else "binary")
+    ]
+    config = dict(protocol.DEFAULTS, rounds=rounds, steps=1, contexts=2, eval_every=1)
+    return dict(
+        schema=protocol.SCHEMA,
+        phase="train",
+        arm=arm,
+        seed=136,
+        fold="full",
+        plan_sha256="1" * 64,
+        job_id="fixture-job",
+        contexts=selected,
+        config=config,
+        learner_sha256=protocol.file_sha(learner.__file__),
+        initial_checkpoint_sha256=learner.runtime.R882_CHECKPOINT_SHA256,
+        dope_sha256=protocol.DOPE,
+        evaluation_protocol=protocol.EVALUATION_PROTOCOL,
+        batches=list(protocol.batches(dict(arm=arm, seed=136, train=selected), config)),
+    )
+
+
+def fixture_core(pinned):
+    optimizer = torch.optim.AdamW(
+        [*pinned.adapter.parameters(), *pinned.heads.parameters()], **learner.RECIPE
+    )
+
+    def pack(row):
+        target = torch.ones(1, 2)
+        return {"features": torch.zeros(1, 2)}, target
+
+    return worker.WorkerCore(pinned.adapter, pinned.heads, optimizer, pack)
+
+
+@pytest.mark.parametrize("arm", protocol.ARMS)
+def test_all_arms_execute_and_replay_same_update_checkpoint_path(tmp_path, arm):
+    request = fixture_request(arm)
+    receipts = []
+    for attempt in range(2):
+        pinned = fixture_pinned()
+        core = fixture_core(pinned)
+        receipt = learner.train(
+            request, pinned, core, tmp_path / str(attempt), torch.device("cpu")
+        )
+        assert receipt["actual_budget"] == protocol.expected_counts(request["config"])
+        assert receipt["parameters_before"] != receipt["parameters_after"]
+        traces = receipt["round_receipts"]
+        assert traces[0]["updates"][0]["loss"] > traces[-1]["updates"][0]["loss"]
+        for trace in traces:
+            assert trace["updates"][0]["finite_gradients"]
+            assert trace["updates"][0]["gradient_l2"] > 0
+            assert trace["dope_sha256"] == protocol.DOPE
+            assert (
+                protocol.file_sha(trace["checkpoint_path"])
+                == trace["checkpoint_sha256"]
+            )
+        restored = fixture_pinned()
+        learner.load_checkpoint(
+            Path(traces[-1]["checkpoint_path"]), restored, request, traces[-1]
+        )
+        assert learner.parameter_sha(restored) == receipt["parameters_after"]
+        receipts.append(receipt)
+    assert receipts[0]["parameters_before"] == receipts[1]["parameters_before"]
+    assert receipts[0]["parameters_after"] == receipts[1]["parameters_after"]
+    assert [x["checkpoint_sha256"] for x in receipts[0]["round_receipts"]] == [
+        x["checkpoint_sha256"] for x in receipts[1]["round_receipts"]
+    ]
+
+
+def test_request_rejects_schedule_or_learner_drift():
+    request = fixture_request(rounds=50)
+    request["config"] = dict(protocol.DEFAULTS)
+    request["batches"] = list(
+        protocol.batches(dict(arm="joint", seed=136, train=rows()), request["config"])
+    )
+    learner.validate_request(request)
+    request["batches"][0] = ["binary"] * 32
+    with pytest.raises(ValueError, match="schedule"):
+        learner.validate_request(request)
+    request["learner_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="learner file hash"):
+        learner.validate_request(request)
+
+
+def test_lock_requires_real_inode_and_held_description(tmp_path):
+    path = tmp_path / "fixture.lock"
+    other = tmp_path / "other.lock"
+    with path.open("a") as owner, other.open("a") as wrong:
+        with pytest.raises(ValueError, match="not held"):
+            learner.verify_lock(owner.fileno(), path)
+        fcntl.flock(owner, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        learner.verify_lock(owner.fileno(), path)
+        with pytest.raises(ValueError, match="not the real"):
+            learner.verify_lock(wrong.fileno(), path)
+        with path.open("a") as impostor:
+            with pytest.raises(ValueError, match="does not own"):
+                learner.verify_lock(impostor.fileno(), path)
+
+
+def test_all_paths_checked_before_first_payload_open(tmp_path):
+    contexts = rows()
+    contexts[1]["payload"] = "sealed/data.npz"
+    with pytest.raises(ValueError, match="protected"):
+        learner.load_payloads(contexts, tmp_path)
+
+
+def test_payload_hash_and_explicit_task_bind_actual_packer(tmp_path):
+    row = rows()[1]
+    pool = dict(
+        schema=candidate_builder.POOL_SCHEMA,
+        status="CANDIDATE_TENSORS_NOT_ADMITTED",
+        eligibility_verified=False,
+        task_target="s1_cv_gate_passed",
+        proposal_source_sha256=candidate_builder.FLYWHEEL_EVALUATOR_SHA256,
+        landmark_source_sha256=candidate_builder.FLYWHEEL_LANDMARK_SHA256,
+        native_s1_sha256=candidate_builder.NATIVE_S1_SHA256,
+        context=dict(
+            context_id=row["id"],
+            **{
+                k: v
+                for k, v in row.items()
+                if k not in ("id", "payload", "payload_sha256")
+            },
+        ),
+    )
+    path = tmp_path / row["payload"]
+    np.savez(
+        path,
+        pool_json=json.dumps(
+            dict(learner_payload_schema=learner.PAYLOAD_SCHEMA, pool=pool)
+        ),
+        program=np.zeros((16, 412)),
+        proj16=np.zeros((16, 16)),
+        target=np.ones(16),
+        tokens_10x32=np.zeros((10, 32)),
+        mask_10=np.ones(10),
+    )
+    row["payload_sha256"] = protocol.file_sha(path)
+    pools, tokens, masks, _ = learner.load_payloads([row], tmp_path)
+    packer = candidate_builder.make_worker_packer(
+        pools,
+        tokens,
+        masks,
+        checkpoint_sha256=learner.runtime.R882_CHECKPOINT_SHA256,
+        dope_sha256=protocol.DOPE,
+    )
+    inputs, target = packer(row)
+    assert target.shape == (1, 16)
+    assert inputs["revealed_raw_f"].numel() == 0
+    changed = dict(row, task="regression")
+    with pytest.raises(ValueError, match="task/role"):
+        learner.load_payloads([changed], tmp_path)
+    row["payload_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="payload hash"):
+        learner.load_payloads([row], tmp_path)
+
+
+def test_scores_use_selected_native_dataset_metrics_not_cost_target_error():
+    trace = dict(round=5, checkpoint_sha256="a" * 64)
+    reg = learner.score(
+        rows()[0],
+        torch.tensor([[100.0, -100.0]]),
+        dict(rmse=[5.0, 2.0], ridge_rmse=4.0),
+        trace,
+    )
+    assert reg["value"] == 2
+    assert reg["curve"] == pytest.approx(np.log(0.5))
+    binary = learner.score(
+        rows()[1],
+        torch.tensor([[100.0, -100.0]]),
+        dict(auc=[0.75, 0.99], ridge_auc=0.6, log_loss=[0.4, 0.1]),
+        trace,
+    )
+    assert binary["value"] == 0.75
+    assert binary["curve"] == 0.4
+    with pytest.raises(ValueError, match="unavailable"):
+        learner.score(
+            rows()[1],
+            torch.tensor([[100.0, -100.0]]),
+            dict(auc=[None, 0.99], ridge_auc=0.6, log_loss=[0.4, 0.1]),
+            trace,
+        )
+
+
+def test_evaluation_restores_private_checkpoints_without_updates(tmp_path):
+    request = fixture_request()
+    pinned = fixture_pinned()
+    result = learner.train(
+        request,
+        pinned,
+        fixture_core(pinned),
+        tmp_path / "checkpoints",
+        torch.device("cpu"),
+    )
+    evaluator = fixture_pinned()
+    core = fixture_core(evaluator)
+    core.train_batch = lambda _: pytest.fail("evaluation attempted update")
+    evaluation = dict(request, phase="evaluate", training_receipt=result)
+    metrics = {
+        "regression": dict(rmse=[2.0, 3.0], ridge_rmse=4.0),
+        "binary": dict(auc=[0.7, 0.8], ridge_auc=0.5, log_loss=[0.5, 0.4]),
+    }
+    receipt = learner.evaluate(
+        evaluation, evaluator, core, metrics, tmp_path, torch.device("cpu")
+    )
+    assert len(receipt["scores"]) == 4
+    assert learner.parameter_sha(evaluator) == result["parameters_after"]
+    trace = result["round_receipts"][-1]
+    Path(trace["checkpoint_path"]).write_bytes(b"changed checkpoint")
+    with pytest.raises(ValueError, match="file hash"):
+        learner.evaluate(
+            evaluation, fixture_pinned(), core, metrics, tmp_path, torch.device("cpu")
+        )
+
+
+def test_dependency_pins_match_reviewed_sources():
+    learner.verify_sources()
+
+
+def test_host_load_refused_before_update(monkeypatch):
+    monkeypatch.setattr(learner.os, "sched_getaffinity", lambda _: set(range(8)))
+    monkeypatch.setattr(learner.os, "getloadavg", lambda: (7.0, 0.0, 0.0))
+    with pytest.raises(RuntimeError, match="CPU load"):
+        learner.resource_check(torch.device("cpu"))
+
+
+def test_full_frozen_request_roundtrips_protocol_admission(tmp_path):
+    request = fixture_request()
+    request["config"] = dict(protocol.DEFAULTS)
+    job = dict(
+        arm="joint",
+        seed=request["seed"],
+        train=request["contexts"],
+        evaluation=request["contexts"],
+        id=request["job_id"],
+    )
+    request["batches"] = list(protocol.batches(job, request["config"]))
+    learner.validate_request(request)
+    pinned = fixture_pinned()
+    trained = learner.train(
+        request,
+        pinned,
+        fixture_core(pinned),
+        tmp_path / "checkpoints",
+        torch.device("cpu"),
+    )
+    evaluator = fixture_pinned()
+    evaluation = dict(request, phase="evaluate", training_receipt=trained)
+    metrics = {
+        "regression": dict(rmse=[2.0, 3.0], ridge_rmse=4.0),
+        "binary": dict(auc=[0.7, 0.8], ridge_auc=0.5, log_loss=[0.5, 0.4]),
+    }
+    receipt = learner.evaluate(
+        evaluation,
+        evaluator,
+        fixture_core(evaluator),
+        metrics,
+        tmp_path,
+        torch.device("cpu"),
+    )
+    plan = dict(
+        sha256=request["plan_sha256"],
+        config=request["config"],
+        learner_sha256=request["learner_sha256"],
+        initial_checkpoint_sha256=request["initial_checkpoint_sha256"],
+    )
+    assert protocol.admit_result(plan, job, receipt) is receipt
+
+
+def test_checkpoint_restore_uses_the_same_bytes_it_verified(tmp_path, monkeypatch):
+    request = fixture_request(rounds=1)
+    pinned = fixture_pinned()
+    receipt = learner.train(
+        request,
+        pinned,
+        fixture_core(pinned),
+        tmp_path / "checkpoints",
+        torch.device("cpu"),
+    )
+    trace = receipt["round_receipts"][0]
+    path = Path(trace["checkpoint_path"])
+    original_load = torch.load
+
+    def replace_file_before_deserialization(source, **kwargs):
+        # A replacement after verification must not change the bytes loaded.
+        path.write_bytes(b"replacement after digest verification")
+        return original_load(source, **kwargs)
+
+    monkeypatch.setattr(learner.torch, "load", replace_file_before_deserialization)
+    restored = fixture_pinned()
+    learner.load_checkpoint(path, restored, request, trace)
+    assert learner.parameter_sha(restored) == receipt["parameters_after"]
+
+
+def test_resource_amendment_defers_cpu_and_preserves_gpu_memory_guard(monkeypatch):
+    from research.joint_regbin import learner_resource as amendment
+
+    monkeypatch.setattr(amendment.learner.os, "getloadavg", lambda: (150, 140, 130))
+    amendment.resource_check(torch.device("cpu"))
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda _device: (9, 100))
+    with pytest.raises(RuntimeError, match="GPU memory"):
+        amendment.resource_check(torch.device("cuda:0"))
+    monkeypatch.setattr(torch.cuda, "mem_get_info", lambda _device: (10, 100))
+    amendment.resource_check(torch.device("cuda:0"))
+    old = amendment.learner.resource_check
+    monkeypatch.setattr(amendment.learner, "resource_check", old)
+    amendment.install()
+    assert amendment.learner.resource_check is amendment.resource_check
+
+
+def test_resource_amendment_requires_exact_qualification_source_binding(tmp_path):
+    from research.joint_regbin import learner_resource as amendment
+
+    receipt = dict(
+        status="PASS",
+        base_learner_sha256=amendment.BASE_SHA,
+        wrapper_sha256=protocol.file_sha(amendment.__file__),
+        authority_sha256=amendment.AUTHORITY_SHA,
+        numerical_equivalence=True,
+        finite_gradients=True,
+        actual_optimizer_updates=18,
+        arms=list(protocol.ARMS),
+        dope_sha256=protocol.DOPE,
+    )
+    path = tmp_path / "qualification.json"
+    path.write_text(json.dumps(receipt))
+    amendment.qualification(path, protocol.file_sha(path))
+    receipt["wrapper_sha256"] = "0" * 64
+    path.write_text(json.dumps(receipt))
+    with pytest.raises(ValueError, match="qualified source"):
+        amendment.qualification(path, protocol.file_sha(path))

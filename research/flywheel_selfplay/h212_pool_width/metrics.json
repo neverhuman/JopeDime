@@ -1,0 +1,180 @@
+{
+  "advance": "NO",
+  "attempt": {
+    "elapsed_seconds": 370.49317193217576,
+    "id": "attempt-001",
+    "pid": 2037108,
+    "root": "/home/ubuntu/jope-data/h212/attempt-001",
+    "source_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
+    "started_utc": "2026-11-02T08:19:00Z"
+  },
+  "attempt_003_read_boundary": {
+    "CUDA_initialized": false,
+    "holdout": 0,
+    "meta_test": 0,
+    "optimizer_updates": 0,
+    "outer_rows": 0,
+    "sealed": 0,
+    "smoke_train_contexts": 1,
+    "train_baseline_contexts": 1219,
+    "treatment_candidate_proposals": 0,
+    "treatment_utility_outcomes": 0,
+    "validation_baseline_contexts": 91
+  },
+  "attempts": [
+    {
+      "deviation": "D0 runner false-positive identity check",
+      "id": "attempt-001",
+      "outcomes": 0,
+      "root": "/home/ubuntu/jope-data/h212/attempt-001",
+      "root_mutated_after_closeout": false,
+      "source_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
+      "status": "INCOMPLETE"
+    },
+    {
+      "baseline_parity": "PASS 91/91 exact mean 1.1377941898164525 max error 0.0",
+      "deviation": "D2 runner KeyError while accessing first TRAIN context features",
+      "elapsed_seconds": 390.38535721902736,
+      "id": "attempt-002",
+      "outcomes": 0,
+      "root": "/home/ubuntu/jope-data/h212/attempt-002",
+      "root_mutated_after_closeout": false,
+      "rust_eval_context_directories": 67,
+      "source_commit": "9f4eee0fad5b71581280ed4a52efe47ed270df9e",
+      "status": "INCOMPLETE",
+      "traceback": "predict_dynamic -> runner.py:250 -> cid = context_row['context_sha256'] -> KeyError: context_sha256; H124 feature dict fields: dope629, lm48_z, mask_10, tokens_10x32. Reproduced using the first TRAIN context."
+    },
+    {
+      "baseline_parity": "PASS 91/91 exact mean 1.1377941898164525, max error 0.0",
+      "deviation": "D3 last authorized attempt; runner defect after smoke gate",
+      "elapsed_seconds": 368.412088238867,
+      "error": "FileExistsError creating attempt-003/rust_eval twice after the smoke gate",
+      "evidence": {
+        "attempt_output_bytes": 14406977,
+        "baseline_costs_sha256": "c3c5c2ee7d5707dfc7881454b9a70ff17c7c38e79ee6c2e307a781219f843475",
+        "baseline_parity_sha256": "d5ada77a5224440963f1d97dafc9132a53bb45e4dcaa3dbb3d9391a936d37f58",
+        "dope_receipt_sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+        "metrics_sha256": "2cdedf646094a41196576850663ef8699cc255d91ed906432cfa588edf02c41c"
+      },
+      "id": "attempt-003",
+      "root": "/home/ubuntu/jope-data/h212/attempt-003",
+      "root_mutated_after_closeout": false,
+      "smoke": "PASS one TRAIN context, widths 16/32/64, Rust evaluation, prediction and pool/analysis output; scratch removed",
+      "source_commit": "7ffda29568fee6f34d2fe06b369ea0d774051fe3",
+      "status": "INCOMPLETE",
+      "treatment_outcomes": 0
+    }
+  ],
+  "baseline_parity": {
+    "contexts_matched": 91,
+    "exact_mean": 1.1377941898164525,
+    "max_abs_error": 0.0,
+    "mean": 1.1377941898164525,
+    "mean_error": 0.0,
+    "status": "PASS"
+  },
+  "efficacy_verdict": "NONE",
+  "evidence": {
+    "attempt_metrics_sha256": "91c9d6b3062285b7501a41bc21a4b907052cd3c8400d11b3efcea627f12966f4",
+    "attempt_output_bytes": 14406175,
+    "baseline_parity_sha256": "d5ada77a5224440963f1d97dafc9132a53bb45e4dcaa3dbb3d9391a936d37f58",
+    "dope_receipt_sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2"
+  },
+  "failure": {
+    "H58_base_source_sha256": "abacf87c9efc116e3923e918e5521a14bf25be789b10d5245fc9186309df6fbb",
+    "H58_decompressed_bytes": 181937,
+    "H58_decompressed_equals_training_cv_envelope": true,
+    "H58_decompressed_sha256": "9dd0ed4e72bcbccce5baadfcd7fd381334065499d7ebda3f1109f0f7dc832330",
+    "H58_envelope_source_sha256": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+    "H58_gzip_file_sha256": "6bd7cb7bbd9f9d7794a4b83587fb32986871013faa8a57b16f7d0a436eba07e1",
+    "H58_gzip_manifest_sha256": "6bd7cb7bbd9f9d7794a4b83587fb32986871013faa8a57b16f7d0a436eba07e1",
+    "H58_prepare_cache_source_sha256": "be0ab8b8aefee8aca2fe96417b6b009d7d4fdaf8c50c02c0eca03db4ad2bd386",
+    "classification": "RUNNER_DEFECT_FALSE_POSITIVE",
+    "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "expected_semantics": "gzip payload equals pinned training_cv_envelope(raw), not raw table bytes",
+    "identity_matches_gzip_manifest": true,
+    "identity_matches_selected": false,
+    "raw_selected_table_hash_matches": true,
+    "selected_source_file_bytes": 180817,
+    "selected_source_file_sha256": "c7397751da253966dd6f2ff04eb384cd5ee0c412ec8634d90440d5727dceedcb",
+    "selected_train_record_sha256": "c7397751da253966dd6f2ff04eb384cd5ee0c412ec8634d90440d5727dceedcb",
+    "stage": "first TRAIN cache payload identity check, before proposal call"
+  },
+  "freeze": {
+    "CUDA_initialized": false,
+    "device": "cpu",
+    "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "optimizer_updates": 0
+  },
+  "launch_guard": {
+    "MemAvailable_bytes": 84597444608,
+    "disk_used_fraction": 0.9325158506537843,
+    "host_cpu_pct_sample": 15.2,
+    "load1": 60.47,
+    "online_cores": 128,
+    "swap_free_bytes": 26611712
+  },
+  "next_step": "Close H212 INCOMPLETE and stop. Correct the duplicate scratch directory creation for H214 runner reuse; do not launch H212 again.",
+  "owner_deviation_D1": {
+    "attempt": "attempt-002",
+    "authorized_at_utc": "2026-11-02T08:30:00Z",
+    "authorized_by": "ENG H-wave loop owner nudge hw_t0125_luna.md",
+    "scope": "same preregistered design and guards; fresh attempt root; no attempt-001 receipt mutation",
+    "status": "AUTHORIZED; AWAITING FIX MERGE"
+  },
+  "owner_deviation_D2": {
+    "attempt": "attempt-002",
+    "authorized_by": "ENG H-wave loop owner nudge hw_t0200_luna.md",
+    "status": "CLOSED INCOMPLETE; zero outcomes"
+  },
+  "owner_deviation_D3": {
+    "attempt": "attempt-003",
+    "authorized_by": "ENG H-wave loop owner nudge hw_t0200_luna.md",
+    "status": "CONSUMED; INCOMPLETE; final authorized run; no further H212 attempt"
+  },
+  "prelaunch_smoke_development": {
+    "analysis_row_written": true,
+    "baseline_parity": "91/91 exact; mean 1.1377941898164525; max error 0.0",
+    "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "dynamic_prediction_completed": true,
+    "limitation": "Development smoke passed before merge; attempt-003 runner repeats this smoke after exact merged-head launch verification.",
+    "pool_record_count": 3,
+    "rust_evaluation_completed": true,
+    "scratch_path": "/home/ubuntu/jope-data/h212/smoke-attempt-003",
+    "scratch_removed": true,
+    "smoke_source": "research/flywheel_selfplay/h212_pool_width/runner.py on research/h212-attempt3-fix before PR merge",
+    "status": "PASS",
+    "used_train_only_feature_and_pool_inputs": true,
+    "widths": [
+      16,
+      32,
+      64
+    ]
+  },
+  "preregistration": {
+    "merged_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
+    "pr": 1762,
+    "tested_head": "2672445f03bd764eb3946ecedfee4702eec4112f"
+  },
+  "read_boundary": {
+    "excluded_payloads": 0,
+    "holdout": 0,
+    "meta_test": 0,
+    "outer_rows": 0,
+    "sealed": 0,
+    "train_contexts_in_frozen_r882_baseline_cost_panel": 1219,
+    "train_h58_jtt1_payloads_decompressed": 1,
+    "train_treatment_utility_scored": 0,
+    "validation_baseline_contexts": 91
+  },
+  "reason": "All three authorized attempts stopped before any registered treatment outcomes. Attempt-003 passed exact baseline parity and its TRAIN-only all-width end-to-end smoke, then hit a duplicate rust_eval mkdir before entering the treatment loop. D3 was the last authorized attempt; H212 is closed INCOMPLETE with no efficacy verdict.",
+  "schema": "jope.h212.pool-width-closeout/v1",
+  "status": "INCOMPLETE",
+  "treatment": {
+    "candidate_evaluations": 0,
+    "candidate_panels_written": false,
+    "proposal_calls": 0,
+    "train_utility_scored": 0
+  }
+}

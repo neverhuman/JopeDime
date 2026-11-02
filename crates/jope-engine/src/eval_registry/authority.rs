@@ -1092,28 +1092,13 @@ impl SupervisedCustody {
 pub(super) fn authenticated_peer(
     stream: &std::os::unix::net::UnixStream,
 ) -> Result<ProcessIdentity> {
-    // SAFETY: `ucred` is a Linux C record of integer fields; zero is a valid
-    // initial value, and getsockopt below writes only within this record.
-    let mut credential: libc::ucred = unsafe { std::mem::zeroed() };
-    let mut length = std::mem::size_of::<libc::ucred>() as libc::socklen_t;
-    // SAFETY: both pointers refer to live writable locals; `length` advertises
-    // exactly the capacity of `credential` and is checked after the call.
+    let credential =
+        nix::sys::socket::getsockopt(stream, nix::sys::socket::sockopt::PeerCredentials)?;
     ensure!(
-        unsafe {
-            libc::getsockopt(
-                stream.as_raw_fd(),
-                libc::SOL_SOCKET,
-                libc::SO_PEERCRED,
-                (&mut credential as *mut libc::ucred).cast(),
-                &mut length,
-            )
-        } == 0
-            && length as usize == std::mem::size_of::<libc::ucred>()
-            && credential.pid > 0
-            && credential.uid == crate::host_os::effective_uid(),
+        credential.pid() > 0 && credential.uid() == crate::host_os::effective_uid(),
         "unapproved local authority peer"
     );
-    ProcessIdentity::read(credential.pid as u32)
+    ProcessIdentity::read(credential.pid() as u32)
 }
 
 /// Private status fields prevent a JSON `exit_success=true` from authorizing a
@@ -1156,28 +1141,20 @@ impl ObservedCompletion {
             .min(monotonic_ns()?.saturating_add(deadline.as_nanos().try_into()?));
         let mut timed_out;
         let status = loop {
-            // SAFETY: siginfo_t is a C output record with integer/pointer fields;
-            // the all-zero initial state is valid and waitid initializes it.
-            let mut info: libc::siginfo_t = unsafe { std::mem::zeroed() };
-            // SAFETY: `info` is writable and live for the call; P_PID and the
-            // child id select the already-owned child, and WNOWAIT preserves it.
-            let result = unsafe {
-                libc::waitid(
-                    libc::P_PID,
-                    child.id(),
-                    &mut info,
-                    libc::WEXITED | libc::WNOHANG | libc::WNOWAIT,
-                )
-            };
-            if result < 0 {
-                let error = std::io::Error::last_os_error();
-                if error.kind() == std::io::ErrorKind::Interrupted {
+            let child_pid = nix::unistd::Pid::from_raw(child.id() as i32);
+            let status = match nix::sys::wait::waitid(
+                nix::sys::wait::Id::Pid(child_pid),
+                nix::sys::wait::WaitPidFlag::WEXITED
+                    | nix::sys::wait::WaitPidFlag::WNOHANG
+                    | nix::sys::wait::WaitPidFlag::WNOWAIT,
+            ) {
+                Ok(status) => status,
+                Err(nix::errno::Errno::EINTR) => {
                     continue;
                 }
-                return Err(error.into());
-            }
-            // SAFETY: successful waitid initialized the siginfo_t output.
-            let exited = unsafe { info.si_pid() } == child.id() as i32;
+                Err(error) => return Err(std::io::Error::from(error).into()),
+            };
+            let exited = status != nix::sys::wait::WaitStatus::StillAlive;
             if exited || monotonic_ns()? >= effective {
                 timed_out = !exited;
                 // Keep the original child unreaped until its group is killed.

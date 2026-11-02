@@ -25,6 +25,26 @@ class GatesReceiptTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp.cleanup()
 
+    def test_operator_mix_limits_include_exact_rational_boundary(self) -> None:
+        # A native population of 10,000 and reference population of 1,024
+        # represent both guard thresholds exactly in integer count space.
+        denominator = 10_000 * 1_024
+        for limit_pp in (2, 3):
+            boundary = limit_pp * denominator // 100
+            with self.subTest(limit_pp=limit_pp):
+                self.assertEqual(boundary * 100, limit_pp * denominator)
+                for sign in (-1, 1):
+                    self.assertTrue(
+                        runner._within_operator_mix_limit(
+                            sign * boundary, 10_000, 1_024, limit_pp
+                        )
+                    )
+                    self.assertFalse(
+                        runner._within_operator_mix_limit(
+                            sign * (boundary + 1), 10_000, 1_024, limit_pp
+                        )
+                    )
+
     def gate_rows(self, status: str = "NOT_RUN") -> list[dict[str, str]]:
         return [
             {"id": gate, "status": status, "evidence": f"evidence/{gate}.json"}

@@ -108,8 +108,45 @@ calculations are unchanged. The identity and lineage source pins are regenerated
 transition commit. The append-only known-identity table is unchanged because this work has no
 shipped receipt proving that the new identity existed.
 
+## Current identity transition: P36 safe CPU affinity sets (2026-11-02)
+
+P36 replaces zero-initialized libc CPU sets with `nix::sched::CpuSet`, adding the existing
+`nix` package as a direct `jope-campaigns` dependency and changing `Cargo.lock`. The
+identity-only regeneration also closes the unrecorded identity drift introduced by #1659,
+which was already red on `origin/main` before this lane's change. The transition advances
+implementation hash `e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d` to
+`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716`, Cargo.lock hash
+`96a5734beed7151cfebd89651fdc4611b4b79b822010a0ce16af683a4a72236b` to
+`e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`, and evaluator
+identity digest `2d5c740d8cb55f65d76b4348bec3f71d0b7d8800d84de78a25088d9348853b18` to
+`6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d`. Evaluator
+calculations, DSL ABI, behavior fixtures and lineage source hashes are unchanged; the lineage
+fixture changes only its generation SHA. The transition is registered in
+`rustmem_cpu_affinity_identity_rebaseline.v1.json`. No known-identity row is added because this
+work has no shipped receipt proving the new identity existed.
+
+## Current identity transition: rustunsafe authority lineage (2026-11-02)
+
+The jankurai rustunsafe cap (#1782) replaced libc `getsockopt(SO_PEERCRED)` and `waitid` in
+`crates/jope-engine/src/eval_registry/authority.rs` with `nix` safe wrappers. That file is a
+lineage source hashed into the teaching-store `semantic_dependencies_sha256`, and #1782 merged
+without recording it, so `compat_freeze` `lineage_sources_match_the_recorded_sources` was red on
+`origin/main`. The identity-only regeneration at `1b5154d82787ea955f9e989a52eeb2f23c51627f`
+records the new hash (`a4c02980707758e3067dc68cfc5e34f18f9544a8cb1f4a098ee3f883fd4b7a74` to
+`5755ac38ea47c03427f2357b3e65c17c0822f7f780c2c29561094f1128e5de05`). The evaluator
+implementation hash, Cargo.lock hash and identity digest are unchanged; the evaluator identity
+fixture changes only its generation SHA. The transition is registered in
+`rustunsafe_authority_lineage_rebaseline.v1.json`. No known-identity row is added because this
+work has no shipped receipt proving a new identity existed.
 ## Current identity transition: browser wasm32 portability (2026-11-02)
 
-Browser prediction makes stage_cache's default byte cap representable on32-bit targets, retaining the native64-bit6GiB default. Main's earlier cloud/test Cargo.lock changes were also unannounced. From the prior fixture, implementation `e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d` advances to `938b77002e83e310f9cb933917725618059c864267e537e4e8df0dece49cd6e4`; lock `96a5734beed7151cfebd89651fdc4611b4b79b822010a0ce16af683a4a72236b` to `b6c2e5166be20e42e667ee2ea79b8efb19cefb2a066ff1432f75396bc61a2ab5`; identity `2d5c740d8cb55f65d76b4348bec3f71d0b7d8800d84de78a25088d9348853b18` to `c1e66c2778041b065455e17048f867ed0eaf3366db8afb15dbdf0aae8cb1441b`. The DSL ABI and64-bit evaluator calculations are unchanged. Identity-only regeneration at committed source `e3348a443b665caf00a618da47b8f4b20721b4f5` updates only evaluator/lineage metadata and all13 compatibility tests pass, including every numerical/model/emitter/generator/search comparison. The transition is registered in browser_wasm_identity_rebaseline.v1.json. The historical known-identity table stays unchanged: no shipped receipt is asserted for this identity.
-
-The same unmerged successor also includes the upstream P2 annotations to identity-bearing authority.rs,service.rs,fit_boundary.rs and query.rs. Their source hashes change teaching/query lineages while evaluation math stays unchanged. The final source pin and two fixture hashes are recorded in the browser transition; no historical transition or numerical fixture is edited.
+The browser successor follows the already-merged CPU-affinity and authority-lineage
+transitions above. It changes only the hashed stage-cache source so the default byte cap is
+representable on 32-bit targets, retaining the native 64-bit 6 GiB default. Announced
+identity-only regeneration will advance the current implementation
+`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` and identity
+`6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` from the merged
+main fixture. Cargo.lock, numerical/model/emitter/generator/search fixtures, every historical
+transition and the known-identity table remain unchanged. The two metadata fixture hashes,
+old/new identities and committed generation source are recorded in
+`browser_wasm_identity_rebaseline.v1.json`; no shipped receipt or behavior rebaseline is claimed.

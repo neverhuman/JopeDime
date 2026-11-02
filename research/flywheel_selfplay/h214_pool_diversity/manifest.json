@@ -1,0 +1,145 @@
+{
+  "schema": "jope.h214.pool-diversity/v1",
+  "status": "CLOSED_INCOMPLETE",
+  "owner": "luna_v1_res08",
+  "authority": [
+    "/home/ubuntu/nudges/hw_t0200_res08.md",
+    "/home/ubuntu/nudges/hw_t0230_res08.md"
+  ],
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H214_claim.txt",
+  "arms": [
+    "NATIVE16",
+    "FPS16"
+  ],
+  "scored_width": 16,
+  "parent_slot": 0,
+  "new_proposals_scored": 15,
+  "native_generation_width": 16,
+  "fps_generation_width": 64,
+  "seeds": [
+    214101,
+    214102,
+    214103
+  ],
+  "bootstrap": {
+    "seed": 214150,
+    "draws": 10000,
+    "cluster": "DL-Val family",
+    "shared_across_seeds_and_contrasts": true,
+    "ci_quantiles": [
+      0.025,
+      0.975
+    ]
+  },
+  "cohort": {
+    "source": "H50/H58 real-S3; H212 content-pinned packet",
+    "train_contexts": 1219,
+    "train_families": 205,
+    "primary_contexts": 91,
+    "primary_families": 19,
+    "primary_split": "DL-Val",
+    "sealed_holdout_meta_test_reads": 0,
+    "outer_rows_delivered": 0
+  },
+  "frozen": {
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "checkpoint_copy": "/home/ubuntu/jope-data/h214/input/round-882.pt",
+    "optimizer_updates": 0
+  },
+  "upstream": {
+    "h212_manifest": "../h212_pool_width/manifest.json",
+    "proposer_source_sha256": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "h212_smoke_merged": true,
+    "smoke_pass_at_launch_head_required": true,
+    "h212_manifest_sha256": "2c957d9a10d9971c1308a7ebdab9d14849b4ce08c5688b1b3101dd43b9fa1ca2",
+    "h212_smoke_fix_pr": 1784,
+    "h212_runner_sha256": "cf42b33391aee91d6650b72ad46da10ae85ce9ab9b5e1d2758ba44556d91cce6",
+    "h212_source_commit": "c39a96589f340e3d8faa833840e8ddf224aed2a5",
+    "h212_analysis_sha256": "e09189fabe68d8933fadd6302243bb70313c7c046ec8c0b3c202777a96138e04",
+    "h212_helper_cleanup_pr": 1788
+  },
+  "prelaunch_resolutions": [
+    "real merged-H212 TRAIN smoke PASS at exact merged H214 head"
+  ],
+  "decision": {
+    "median_gain_gt": 0,
+    "lcb95_gt": 0.001546,
+    "holm_m": 1,
+    "holm_adjusted_p_lt": 0.05,
+    "ties": "REJECT",
+    "incomplete_arm": "INCOMPLETE if executable FPS16/NATIVE16 panel, seed or family missing"
+  },
+  "resources": {
+    "host": "xbabe1",
+    "nice": 19,
+    "numeric_threads_max": 4,
+    "evaluator_workers_max": 4,
+    "CUDA_VISIBLE_DEVICES": "",
+    "attempts": 1,
+    "wall_seconds_max": 7200,
+    "root_disk_used_fraction_max": 0.938,
+    "disk_free_min_bytes": 40000000000,
+    "mem_available_min_bytes": 17179869184,
+    "aggregate_rss_max_bytes": 6000000000,
+    "host_cpu_pct_max": 85,
+    "load_fraction_max": 0.85,
+    "high_load1_or_cpu_sustained_seconds": 300,
+    "load5_stop": "immediate",
+    "wall_budget_start": "real TRAIN smoke; unchanged deadline carried into study"
+  },
+  "outcome": {
+    "status": "CLOSED_INCOMPLETE",
+    "attempts_consumed": 0,
+    "utility_readouts": 0
+  },
+  "dropped_arms": {
+    "TEMP16": {
+      "status": "NOT_RUN",
+      "reason": "No native temperature hook; final coordinator ruling; no surrogate"
+    }
+  },
+  "parent_definition": "Native first retrieved TRAIN champion: family-disjoint landmark12 squared-distance minimum, programSHA tiebreak; same parent in both16-total pools",
+  "derived_val_cv_views": "H214-owned envelopes from pinned train-only H50 tables through exact H58 function; frozen H58 cache unchanged",
+  "terminal_custody": {
+    "status": "ALLOWLISTED_TERMINAL_EVIDENCE_REPLAY_VERIFIED",
+    "verified_utc": "2026-11-02T12:14:48.020289+00:00",
+    "scope": "Explicit allowlisted terminal H214 metadata, both startup failures and pinned source blobs only; not a full raw-root or REL07/lane archive",
+    "full_raw_root_archive": false,
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-evidence.zip",
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-evidence.zip",
+      "version_id": "OUXyphzSwIo3PylNDqpUmtxA812PxLmL",
+      "sha256": "105e24b035cd94b0d01c152fdb55395f2a957137a6e9499b031bffd01fe3f938",
+      "bytes": 101338
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-manifest.json",
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261030/H214/terminal-67e25d74535c-105e24b035cd94b0/H214-terminal-manifest.json",
+      "version_id": "ZgyLPLG.9ot3uGweg46CvUavdAgy3qOJ",
+      "sha256": "dcb079443c89701c5114d1b74c033d71f716558a841665abec145bff2d0cebc1",
+      "bytes": 16051
+    },
+    "verification": {
+      "create_only_if_none_match": "*",
+      "exact_version_get": true,
+      "archive_bytes_sha256_equal": true,
+      "manifest_bytes_sha256_equal": true,
+      "archive_member_count": 48,
+      "archive_member_names_sizes_sha256_equal": true
+    },
+    "missing_observations": {
+      "resource_samples_file_exists": false,
+      "detached_process_exit_status": null,
+      "post_model_tensor_composite": null
+    }
+  },
+  "preregistration_manifest": {
+    "source_commit": "4cbb66807a08124e89c5350361f68e8cc71fb699",
+    "path": "research/flywheel_selfplay/h214_pool_diversity/manifest.json",
+    "sha256": "e785426caddfe4547b8d1be94d8c408f125666fd41f7ece8df7ea516998d68ae",
+    "archive_member": "source/4cbb66807a08124e89c5350361f68e8cc71fb699/manifest.json"
+  }
+}

@@ -1035,6 +1035,23 @@ class PublicationStatusTests(unittest.TestCase):
                 if re.match(r'\s*upload-artifact:', line):
                     self.assertEqual('upload-artifact: false', line.strip(), path)
 
+    def test_ci_diff_classifier_is_hosted_for_pr_and_ui_evidence_isolated(self):
+        workflow = (ROOT/'.github/workflows/ci.yml').read_text()
+        pr_classifier = workflow.split('\n  changes-pr:', 1)[1].split('\n  changes-dispatch:', 1)[0]
+        dispatch_classifier = workflow.split('\n  changes-dispatch:', 1)[1].split('\n  changes:', 1)[0]
+        self.assertIn('runs-on: ubuntu-24.04', pr_classifier)
+        self.assertFalse(any('runs-on:' in line and 'self-hosted' in line for line in pr_classifier.splitlines()))
+        self.assertIn("if: github.event_name == 'workflow_dispatch'", dispatch_classifier)
+        self.assertIn('runs-on: [self-hosted, linux, x64, jope-ci]', dispatch_classifier)
+        self.assertIn('./.github/actions/runner-provenance', dispatch_classifier)
+        self.assertIn("inputs.runner_pool == 'native' && 'jope-ci'", dispatch_classifier)
+        ui = workflow.split('\n  observatory-ui:', 1)[1].split('\n  typescript:', 1)[0]
+        self.assertIn('$RUNNER_TEMP/jope-observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/raw', ui)
+        self.assertIn('node --input-type=module "$JOPE_UI_EVIDENCE/tests.json"', ui)
+        self.assertNotIn('process.env', ui)
+        self.assertIn('$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT', ui)
+        self.assertIn('npm test -- --reporter=json --outputFile="$JOPE_UI_EVIDENCE/tests.json"', ui)
+
     def test_cache_evidence_paths_are_workspace_relative_and_match(self):
         for name in ('ci.yml', 'full-main.yml'):
             text = (ROOT/'.github/workflows'/name).read_text()

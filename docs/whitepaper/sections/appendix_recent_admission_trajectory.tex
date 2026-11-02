@@ -1,0 +1,22 @@
+\subsection{Candidate and retained-best decisions in a recent capture}\label{app:recent-admission-trajectory}
+
+\Cref{fig:fw-recent-candidate-retained} shows the latest 500 consecutive
+complete admission records matched to the separate per-round audit at capture.
+This window is separate from the earlier retained views; no intervening gaps
+are joined. The scope and unresolved source-binding requirements of
+\cref{sec:method-status} still apply.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_recent_candidate_retained_trace.pdf}
+  \caption{\textbf{Recent candidate and retained-best adapter trajectory.}
+  Rounds 3112--3611, captured at 10:25 UTC on 2 November 2026.
+  Grey points show candidate utility; blue is the post-decision retained
+  best (logged dimensionless utility, larger preferred). The star marks
+  the one accepted strict gain, at round 3175; the other 499 decisions
+  are rejections. Classification uses exact logged values, with no rounding margin.
+  These are adaptive decisions on repeatedly used development contexts,
+  not independent first-proposal results or evidence of writer/value-net lift.
+  Scope: \cref{sec:method-status}.}
+  \label{fig:fw-recent-candidate-retained}
+\end{figure}

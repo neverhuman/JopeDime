@@ -390,7 +390,7 @@ def admit(args, paths, source_check=source_identity, load=lambda: os.getloadavg(
     )
     q1.require(os.access(files["backend"], os.X_OK), "backend is not executable")
     q1.verify_owner(plan, files["signature"], files["allowed_signers"], paths.prereg)
-    source_check(paths, plan["source_commit"])
+    source_check(paths, plan.get("metadata_source_commit", plan["source_commit"]))
     ledger = Path(args.ledger)
     q1.require(
         ledger.is_absolute()
@@ -653,7 +653,9 @@ def launch(
                 and finished["failed_runs"] == 0,
                 "complete original ledger/receipt binding required",
             )
-            source_check(paths, plan["source_commit"])
+            source_check(
+                paths, plan.get("metadata_source_commit", plan["source_commit"])
+            )
             q1.require(
                 all(
                     Path(getattr(args, key)).resolve() == path

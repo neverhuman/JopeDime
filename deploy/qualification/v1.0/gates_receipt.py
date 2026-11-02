@@ -175,6 +175,13 @@ def _source_proposer_sha256(source_sha: str) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _within_operator_mix_limit(
+    difference: int, native_n: int, reference_n: int, limit_pp: int
+) -> bool:
+    """Compare count-derived percentage points without rounding or float drift."""
+    return abs(difference) * 100 <= limit_pp * native_n * reference_n
+
+
 def _m3_waiver(result: dict, ruling: Path, release_version: str) -> dict:
     if release_version != "v1.0.0":
         raise ValueError("M3 waiver expires at v1.0.1; v1.0.0 only")
@@ -222,7 +229,7 @@ def _m3_waiver(result: dict, ruling: Path, release_version: str) -> dict:
         for op, reference in row["reference_counts"].items():
             difference = row["native_counts"][op] * na - reference * nb
             limit = 3 if op == "edit_replace_head" else 2
-            if abs(difference) * 100 > limit * na * nb:
+            if not _within_operator_mix_limit(difference, nb, na, limit):
                 raise ValueError("M3 waiver guard exceeded: " + op)
             deltas[op] = 100 * difference / (na * nb)
         views.append({"mode": row["mode"], "deltas_pp": deltas})

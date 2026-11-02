@@ -34,10 +34,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  changes:
-    runs-on: [self-hosted, linux, x64, jope-ci]
-    # Action setup and a full-history checkout alone can exceed 3 minutes when GitHub endpoints
-    # stall from the self-hosted network; the lane itself still finishes in seconds.
+  changes-pr:
+    if: github.event_name == 'pull_request'
+    # PR-controlled source classification runs on a disposable hosted worker.
+    runs-on: ubuntu-24.04
+    # Action setup and a full-history checkout can exceed 3 minutes when GitHub endpoints stall.
     timeout-minutes: 10
     outputs:
       rust: ${{ steps.lane.outputs.rust }}
@@ -45,9 +46,38 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
-      # Keep deliberate PR CI on qualified native workers during Mac recovery.
-      # The helper still verifies merged capability; no arbitrary label is accepted.
-      runner_pool: ${{ (github.event_name == 'pull_request' || inputs.runner_pool == 'native') && 'jope-ci' || steps.provenance.outputs.runner-pool }}
+      runner_pool: jope-ci
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Run declared lane and retain receipt
+        id: lane
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/changes"
+          python3 deploy/ci/receipt.py --lane changes --output "$evidence" --backend none -- bash ops/ci/fast-lane.sh changes
+      - name: Upload current lane evidence
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-changes
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/changes/
+
+  changes-dispatch:
+    if: github.event_name == 'workflow_dispatch'
+    # Manual runs retain the admitted native runner and exact deployed-policy proof.
+    runs-on: [self-hosted, linux, x64, jope-ci]
+    timeout-minutes: 10
+    outputs:
+      rust: ${{ steps.lane.outputs.rust }}
+      emitters: ${{ steps.lane.outputs.emitters }}
+      inputs: ${{ steps.lane.outputs.inputs }}
+      python: ${{ steps.lane.outputs.python }}
+      e2e: ${{ steps.lane.outputs.e2e }}
+      runner_pool: ${{ inputs.runner_pool == 'native' && 'jope-ci' || steps.provenance.outputs.runner-pool }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -61,14 +91,39 @@ jobs:
         id: lane
         run: |
           set -euo pipefail
-          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
+          evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/changes"
           python3 deploy/ci/receipt.py --lane changes --output "$evidence" --backend none -- bash ops/ci/fast-lane.sh changes
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
         with:
-          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
-          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
+          name: ci-${{ github.run_id }}-${{ github.run_attempt }}-changes
+          path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/changes/
+
+  changes:
+    needs: [changes-pr, changes-dispatch]
+    if: always()
+    runs-on: ubuntu-24.04
+    outputs:
+      rust: ${{ needs['changes-pr'].outputs.rust || needs['changes-dispatch'].outputs.rust }}
+      emitters: ${{ needs['changes-pr'].outputs.emitters || needs['changes-dispatch'].outputs.emitters }}
+      inputs: ${{ needs['changes-pr'].outputs.inputs || needs['changes-dispatch'].outputs.inputs }}
+      python: ${{ needs['changes-pr'].outputs.python || needs['changes-dispatch'].outputs.python }}
+      e2e: ${{ needs['changes-pr'].outputs.e2e || needs['changes-dispatch'].outputs.e2e }}
+      runner_pool: ${{ needs['changes-pr'].outputs.runner_pool || needs['changes-dispatch'].outputs.runner_pool }}
+    steps:
+      - name: Require the classifier for this event
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_RESULT: ${{ needs['changes-pr'].result }}
+          DISPATCH_RESULT: ${{ needs['changes-dispatch'].result }}
+        run: |
+          set -euo pipefail
+          case "$EVENT" in
+            pull_request) test "$PR_RESULT" = success ;;
+            workflow_dispatch) test "$DISPATCH_RESULT" = success ;;
+            *) echo "unsupported CI event: $EVENT" >&2; exit 2 ;;
+          esac
 
   hygiene:
     # Release security checks require an actually empty tool HOME. Rosetta
@@ -359,19 +414,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export JOPE_UI_EVIDENCE="$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
-          mkdir -p "$JOPE_UI_EVIDENCE"
+          export JOPE_UI_EVIDENCE="$RUNNER_TEMP/jope-observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/raw"
+          bundle="$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          mkdir -p "$JOPE_UI_EVIDENCE" "$bundle"
           test "$(git rev-parse HEAD)" = "$JOPE_UI_SOURCE_SHA"
           node --version
           npm --version
           npm ci --no-audit --no-fund
           npm run typecheck
           npm test -- --reporter=json --outputFile="$JOPE_UI_EVIDENCE/tests.json"
-          node --input-type=module <<'JS'
+          node --input-type=module "$JOPE_UI_EVIDENCE/tests.json" "$JOPE_UI_SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > "$bundle/receipt.json" <<'JS'
           import fs from 'node:fs';
-          const r = JSON.parse(fs.readFileSync(`${process.env.JOPE_UI_EVIDENCE}/tests.json`, 'utf8'));
+          const [, testsPath, sourceSha, runId, attempt] = process.argv;
+          const r = JSON.parse(fs.readFileSync(testsPath, 'utf8'));
           if (!(r.numTotalTests > 0) || r.numFailedTests !== 0 || !r.success) throw new Error('Nonzero passing frontend tests required');
-          fs.writeFileSync(`${process.env.JOPE_UI_EVIDENCE}/receipt.json`, JSON.stringify({schema:'jope.observatory-ui-ci/v1', source_sha:process.env.JOPE_UI_SOURCE_SHA, run_id:process.env.GITHUB_RUN_ID, attempt:process.env.GITHUB_RUN_ATTEMPT, node:process.version, executed:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, scope:'frontend fixtures; not live training qualification'}, null, 2));
+          process.stdout.write(JSON.stringify({schema:'jope.observatory-ui-ci/v1', source_sha:sourceSha, run_id:runId, attempt, node:process.version, executed:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, scope:'frontend fixtures; not live training qualification'}, null, 2));
           JS
           npm run build
           sha256sum package-lock.json dist/index.html dist/assets/* > "$JOPE_UI_EVIDENCE/build-sha256.txt"

@@ -27,7 +27,29 @@ extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "research/flywheel_selfplay/h188_kernel_inputs/treatment.py",
+  # Historical entrants archived verbatim in the paper; not generated product code.
+  # The artifact manifest pins them to the original submissions, and the paper check
+  # verifies the bytes. A source header would invalidate that evidence.
+  "docs/paper/innovationzero/artifacts/sources/GPT6_Astra_Max.rs",
+  "docs/paper/innovationzero/artifacts/sources/GPT6p1_Sol_Max.rs",
+  "docs/paper/innovationzero/artifacts/sources/Gemini4_argon_high.rs",
+  "docs/paper/innovationzero/artifacts/sources/Opus5p5_Extra.rs",
   "deploy/ci/test-gitleaks-config.py",
+  "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py",
+  "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py",
+  "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
+  "research/flywheel_selfplay/golden/capture_cpu.py",
+  "research/flywheel_selfplay/golden/reference.py",
+  "research/flywheel_selfplay/h113_w3_continuous/test_losses.py",
+  "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py",
+  "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py",
+  "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+  "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
+  "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
+  "research/flywheel_selfplay/h149_wd_dose/runtime.py",
+  "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
+  "research/flywheel_selfplay/h153_sam/runtime.py",
   "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",
@@ -86,6 +108,70 @@ extra_excluded_paths = [
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
 
 [[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-encodings"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/encodings.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-holdout"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-metafeatures"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/metafeatures.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-train"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/train.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-s1-outer-test-scorer"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/s1_outer_test_scorer.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-v2-rowsel-build"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-v2-rowsel-raw-coverage"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_coverage.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
+name = "vibe-frozen-dl-custody-work-queue-v2-rowsel-raw-helper"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_helper.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "Frozen 2026-10-06 DL producer source custody (deploy/dl-trainonly/SOURCE_CUSTODY.md, handoff cc9609693ada): these bytes are pinned by deploy/dl-trainonly/test_verify_lane.py, so the local work-queue name stays byte-identical. Renaming it (#1702/#1713) broke custody and was restored."
+
+[[dead_language_allow]]
 name = "vibe-h72-preregistered-work-queue"
 term = "todo"
 paths = ["research/flywheel_selfplay/h72_w8_control_prereg/w8_control.py"]
@@ -116,3 +202,11 @@ paths = ["crates/jope-learning/src/clover/round_qual.rs"]
 owner = "rust"
 expires = "2027-02-01"
 reason = "TODO is one explicit input sentinel rejected by the placeholder contract; the refusal behavior remains covered by selfplay_round_qual tests."
+
+[[dead_language_allow]]
+name = "vibe-native-overlay-refusal-sidecar"
+term = "best effort"
+paths = ["deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "The late overlay-refusal sidecar is diagnostic only; if its create-only write fails, the build raises and cannot produce the caller-owned positive acceptance envelope required for admission."

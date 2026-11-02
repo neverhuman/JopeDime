@@ -89,11 +89,14 @@ impl Policy {
             ensure!(
                 !exception.feature_sets.is_empty()
                     && exception.feature_sets.iter().all(|set| {
-                        set.iter().all(|f| {
-                            !f.is_empty() && !f.contains('*') && !f.chars().any(char::is_whitespace)
-                        })
+                        !set.is_empty()
+                            && set.iter().all(|f| {
+                                !f.is_empty()
+                                    && !f.contains('*')
+                                    && !f.chars().any(char::is_whitespace)
+                            })
                     }),
-                "exception needs explicit feature selections"
+                "exception needs explicit nonempty feature selections"
             );
         }
         Ok(())
@@ -373,7 +376,7 @@ mod tests {
                 1 => e.version = "^0.11".into(),
                 2 => e.reason = " ".into(),
                 3 => e.feature_sets.clear(),
-                _ => e.feature_sets = vec![vec!["*".into()]],
+                _ => e.feature_sets = vec![vec![]],
             }
             assert!(policy.validate().is_err());
         }

@@ -1,0 +1,519 @@
+{
+  "auditor": "jankurai 1.7.6",
+  "cross_file_findings": [
+    {
+      "check_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR:copy-code",
+      "class_id": "copy-code-unit-python-28fe6215583fcaec",
+      "disposition": "This exact duplicate is preserved in pinned historical experiment runtimes. It is not claimed fixed; the changed-scope repository audit requires this class fingerprint to remain unchanged.",
+      "fingerprint": "sha256:f19b9afde2f6d8a61b0d4c70e2ad77533c4bc3b8a2fd170c44317a2fa1f2939d",
+      "line": 50,
+      "participants": {
+        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc",
+        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6",
+        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b",
+        "research/flywheel_selfplay/h153_sam/runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a",
+        "research/flywheel_selfplay/h158_distillation/runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4",
+        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b",
+        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+      },
+      "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
+      "rule_id": "HLT-043-COPY-PASTE-BAD-BEHAVIOR"
+    }
+  ],
+  "expires_on": "2026-12-02",
+  "generated_unix": 1793590976,
+  "owner": "P37 / jankurai python-bad-behavior cap",
+  "paths": {
+    "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:43a3619ff38b6ef609ec69763289f07639825ebbd5678701517f2e6feae65477",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:ae2e6c6309a5e93001be6645bc47b3c1d4fe0a129ff71cfe2a9d25c98fec7d1c",
+          "line": 33,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:ab8cc443bcb57b13f9c615f83837a3d854f9a80e24325c32dc6cb8e1799da26e",
+          "line": 38,
+          "problem": "string-built SQL reaches a database sink without parameter binding",
+          "reason": "the SQL text is assembled inline before the execute/query call",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:854cf7c51e988d40546adf6fef1fa4a88c3f4e4ae3d8bec06112d8b674cacf9f",
+          "line": 187,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
+    },
+    "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:3b5622eb4a2c5e03fd2db9efb18f7e7f639dc73b6ca2cac257d04c458e1d33fd",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:26899bc6cf581e8cce1936a8bb7c7904309aa2ba7bae6c200dd80d09ea0abd67",
+          "line": 109,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "d217c4fba71c30243272f7e20cb9b0e4d0e141ff4c9d758b1909176062bc5c1a"
+    },
+    "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_native_build.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:1d0a6204dde32b426374e444b7176f518c9af0f6f721d821e538f1fc389a8e28",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:748ac262c5a82e79441290877934a9dad51a5d1df76d888465b72dc339b86c74",
+          "line": 129,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:b6129552cabc5e09325fc5d7a4175fc13696f0dbcfef6d27e4f78ec64502b746",
+          "line": 130,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        }
+      ],
+      "sha256": "32bf2aa07e7964c0a935ca9894113f1a512ceff3325a1c3db3016e80ba59d2e3"
+    },
+    "deploy/dl-flywheel/pipelines/hpc_verified_v5/test_operations_launch.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:481fd31126e2bf5f7fc2f72b483d63f054cf3eb2f0f26e12c6e5a2117d8a7ac7",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:9fcdf81e43c2e8f006031e8133ecacf498ee5eab69157b9b0679502e98ba3974",
+          "line": 220,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:3044c682d9f2c56b8aca8a04d1ee1f1c5ede99f1c7b02be283e4b2cc12831795",
+          "line": 221,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:7b59dc18e5c24d1049e09b033d32c4f09134ba2c53aedebbb4244d897e0b3fcc",
+          "line": 223,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "d326be2130f6ec5871823867ef3f352bf2aa579a655e86eb3552324c4e805c68"
+    },
+    "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:757cf4c781833450e591fedfc9421b8caed5749e87581d6ef7a6b59af05198bb",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:167577228256838a98914fe64562e88668757a9985ae577f83adf8ffdb82d809",
+          "line": 831,
+          "problem": "fallback soup detected in product code",
+          "reason": null,
+          "rule_id": "HLT-001-DEAD-MARKER"
+        },
+        {
+          "fingerprint": "sha256:a3ef262ddd3ad3e161412f4d695f07623d321e8ba8bda0ed3e5eb4c4bbd1f223",
+          "line": 1497,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:1255ba121c567af2c06a27ac2e0e3bc0e93aefcef246f59bdf4b2ef038fdab8a",
+          "line": 1498,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        }
+      ],
+      "sha256": "b1487969896224a733a9af9f8106c6d1ff879526fca9d0e17719196828631a00"
+    },
+    "research/flywheel_selfplay/golden/capture_cpu.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:a256d3f618b0501bf47aa3eabd72d12f9ac3ff5269315744c0670cfbaab7905b",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:a15be3164ce727420bc01b0ebc08fa1197133b7f9c7ef1731a8ea6487d58c1c3",
+          "line": 113,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:d05648cb47815f3e709154b62339e9bd8791e0222544b2c83d8aa45b7a93afc9",
+          "line": 114,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        }
+      ],
+      "sha256": "98330cd3bd39bd71ce1011b04af35c25f7ed5b53d7eb182da326267e7e509dab"
+    },
+    "research/flywheel_selfplay/golden/reference.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:4f3b21a368f322e3e5312dea0053171851606538939af325163e06d4b96c847f",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:509c88c401ca101d90ab50dbe1417dcec5ed0071546b742bc7867fa30d0d0f7c",
+          "line": 164,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:cf815a2ae39314e44da7f65ba31e235ffd036baea30634a0c8da6c46b5a5dccc",
+          "line": 165,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        }
+      ],
+      "sha256": "ab83c64fb88523710588e0b7554cd4e8005f4f7988e8ec4e3d2f949c71c323ce"
+    },
+    "research/flywheel_selfplay/h113_w3_continuous/test_losses.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:ded7efc85d9c3d6940b17ba549d4ae3abfb782884522693f2ebf2a1cda4aa30d",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:f6cf784e54635bbd901651015c46732ca1930c9d6f9eb8c5a3107fe87b105865",
+          "line": 142,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:ff3c943e95df7cfa9c2ba11f18c3c3ab7a7d50b05b96963886faccdcae08e652",
+          "line": 143,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        }
+      ],
+      "sha256": "8481461c08f7c3b8a55c32a2ca3c1aa1aad57ed5f9f3edae943347420daa9db0"
+    },
+    "research/flywheel_selfplay/h119_gbm_ctx_confirm/runner.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:63a8d3e63addd6f2289864e14308d136770534aa03c36bfb8affbf2d5967f5a9",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:96147bcf7fd7839ecdb43a5aae7193d6ee4a8027b98229b5bb184395ea32855a",
+          "line": 91,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:000b442fd7dae151c16186d5f69df03c8d3ca838817c5c701fa380dff0c00ac6",
+          "line": 92,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        }
+      ],
+      "sha256": "8ed175fa240c3769f1fcef81e23c6128736bf539f7e771358da84f4dc7278ab7"
+    },
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:0f7411a077d25da93fc39e9b3f1ffd0e5e38928b06334cbe8dd6b4fd024eedd4",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:1b568003a853f1d3913d1fe78e4e8098f9d1325d68712256145f5b04750ae327",
+          "line": 112,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:22a484f959fbb56f29f151e096ff27b3351559a22866fa380d4cd1757314f55e",
+          "line": 113,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        }
+      ],
+      "sha256": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a"
+    },
+    "research/flywheel_selfplay/h144_reg_sweep/runtime.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:17f600d5c87b4d985a5965bfb5c478e6123aed0a7e2f921e8f02497dc0f78d18",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:f05f5138423fe55ebe20a7e6222b3ae71d26f439af9e561538e71279ccebb924",
+          "line": 99,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:0127c3db2681d4fe41c31187f505694448649b577fa64264f5c4144fb6a20fbf",
+          "line": 100,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:cf09edd872cfb6a38060707813a48d96226d333cf45868d2926e41f4da51ee81",
+          "line": 119,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc"
+    },
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:ec37bc3c6c9547de35d04d1da46617a0dfabc80d7f4f0ab297751c7b6142c232",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:716a3cf6e578cebd7050e1df3652fc33c42fef12cefbc1ceb93ef371f9cceeed",
+          "line": 100,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:e8d42c91801ac8d5d18c9e42986345bc727725579c00849260ac90a1868bc676",
+          "line": 101,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:4fdf30569cc73bfd5502abf25b21037b87df93aa8d49ffca5cf1efffd6580f2c",
+          "line": 120,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4"
+    },
+    "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:f5620a7d391faba39329561e87111f6e34ec9754d0e86709100a5822a82d28bf",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:c52ff8a891e8d1d5eb71d82ef4ac808160cb134414f3bee299e7e16b64da359a",
+          "line": 227,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:5a08dd2ff4840ff5e5b404f87f22f41fbb2e8aebc3b14416d60d09e7c7e99db4",
+          "line": 228,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:aa45f70317f190b992be2f00d416f4f82c7978e2d04fcc7327b78f00d7e59bc3",
+          "line": 248,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:7ef660c7e89936069173811a8598c80ecead60b743c155f3c6c5082f9d0a8119",
+          "line": 344,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+    },
+    "research/flywheel_selfplay/h149_wd_dose/runtime.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:adc043805b73e618a44f77540fbf028ba714874e62aa727db15403db3e2d641f",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:c2a0ebfaeb38f4b7d0214d7b656b7e11bfe313a881c24b6858203422830531fd",
+          "line": 99,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:9a1743264d9e145bb6cc71ad9bc908eca4b8a6d5421c569230cd1911a06d3f6a",
+          "line": 100,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:ebda579bdf66b8879b5a9a59ff16cdfbf2b934f34d60ceb04f0e5591a6ed95d4",
+          "line": 119,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6"
+    },
+    "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:824bf3a78c8f3c100c4fa39d2626ae62f198ed44d22ca310cdad43e2879afebf",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:59b7f8db14933ca7fc18dff34783ae0f06f620a0b5a0dfa8298c20e76e8f6a91",
+          "line": 99,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:3435e11cc15a58b04fb9115c1857df23f19f26c0314296c2fe72e81438eb51c0",
+          "line": 100,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:40e88b1f9da3ae1b0856afb5dcb3cdbbf3bd82a97cd852e1742debd982cd256c",
+          "line": 127,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b"
+    },
+    "research/flywheel_selfplay/h153_sam/runtime.py": {
+      "findings": [
+        {
+          "fingerprint": "sha256:34571be633c338157bac3bfcdc40f091a56dbe7e17e2783ce547f21a75e5ad87",
+          "line": null,
+          "problem": "runtime code uses a language outside the chosen optimal stack",
+          "reason": null,
+          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
+        },
+        {
+          "fingerprint": "sha256:06a85304cd21ef186279ebe7009e77554435bf9042d92a8a98bab84aaa9fbe74",
+          "line": 99,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:714270c5904ecf4d08c9069c1900e0a3d57411b074cf7fc3520e65e72dfc97b9",
+          "line": 100,
+          "problem": "unsafe or unvalidated input boundary marker appears in product code",
+          "reason": "input handling risk needs deterministic negative tests",
+          "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
+        },
+        {
+          "fingerprint": "sha256:0740000c26014b08d7f1b00262049a09724393c014a46738a8ca015a6145aff3",
+          "line": 119,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        }
+      ],
+      "sha256": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a"
+    }
+  },
+  "reviewed_on": "2026-11-02",
+  "rule_dispositions": {
+    "HLT-000-SCORE-DIMENSION:stack": "Historical/test and offline data tooling files are outside the supported product runtime; finding remains enumerated and is not claimed fixed.",
+    "HLT-001-DEAD-MARKER": "The one legacy fallback marker in the pinned training builder remains enumerated; this disposition does not claim the fallback was repaired.",
+    "HLT-023-INPUT-BOUNDARY-GAP": "Static marker findings adjacent to the audited pinned calls remain enumerated; this disposition does not claim a general boundary repair.",
+    "HLT-033-PYTHON-BAD-BEHAVIOR": "P37 packet sites are documented in jankurai-pyexec-p37-exceptions-20261102.md; adjudication is per exact source identity and finding fingerprint. This entry does not claim these findings were removed.",
+    "HLT-033-PYTHON-BAD-BEHAVIOR:duplication": "The exact copy-unit finding is in an immutable historical experiment runtime; it remains enumerated, not claimed fixed.",
+    "HLT-033-PYTHON-BAD-BEHAVIOR:sql": "The table identifier is a fixed internal constant and value data remains parameter-bound; the finding remains enumerated pending detector-specific adjudication."
+  },
+  "schema": "jopedime.jankurai-pyexec-dispositions/v1",
+  "scope_reason": "These exact test, generated-admission, training-tool, and historical research files contain the 23 packet HLT-033 sites and file-level findings recorded below. Their bytes are pinned by source manifests or experiment identity. The file-scoped auditor skip is coarse, so CI re-audits every whole file and requires exact source SHA-256 plus exact rule/fingerprint inventory; a changed-scope repository audit also checks the cross-file duplicate finding. Any byte drift, missing finding, or new finding fails closed."
+}

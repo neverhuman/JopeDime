@@ -198,3 +198,48 @@ outcomes. No new dataset/family/cut or training reassignment. All four subgroup
 checks retain the -0.02 margin and 0.05/4 lower quantile. Wide has only three
 families, limiting precision and coverage; this is not the original five-family
 design. No scientific PASS/FAIL, signed approval or execution is claimed here.
+
+## Post-#1754 Q1 admission recheck — 2026-11-02 08:23 UTC (T0115)
+
+Owner direction is to use the pinned Linux evaluator only and to route any Q1 plan signature through the delegated signer. PR #1754 is merged at `fa07e1336c8fc7c04994faadf8f6efabded0a195`. A non-consuming preview of the merged publisher used compiled evaluator source `ccaf14b210b3b55a350218e60f6b49ef76524cf3` and metadata source `b5519c31df3601858ccd9b7ba83fba3a929fa7c3`. It regenerated the R20 plan from metadata only: 97 selected owner families, 153 verified cut checks, zero unknown authoritative families, all minima met (including exactly the three eligible wide families), and waiver validator `PASS`. Preview plan SHA-256: `bcd9ee1626d3eb7a4afb7ec52b19e45a299a7551f7d5dd2cab3722dc67993293`; canonical plan digest: `463b423ec65f20691c4ab0bcf10b2f807f2438d689254de8088cf753d5ebcd0c`. Full preview receipt: `/home/ubuntu/jope_plan/evidence/QLT-04/qlt02-t0115/PREVIEW-POSTMERGE-LATEST.json`.
+
+This preview is not a frozen or signable plan. It reports `signable=false`, `Q1=NOT_RUN`, and `Actual source-bound runtime QUALIFIED-INPUTS.json absent`. The retained `api01-t0545/RUNTIME-RECEIPT-CANDIDATE.json` is explicitly `qualified=false` and `signable=false`; it is premerge admission evidence, not the required runtime-qualified input. The required ready handoff `/home/ubuntu/jope_plan/evidence/QLT-04/api01-t0250/handoff.ready.json` and `QUALIFIED-INPUTS.json` are absent. No `kind=q1` signing request, Q1 FIFO ticket, or started/finished ledger marker exists. The canonical `/home/ubuntu/jope_plan/qualification.lock` exists and was left unchanged.
+
+Therefore Q1 was not launched and no delegated signature was requested. No sealed/holdout payload was opened. Effect, interval, subgroup outcomes, failures, study compute, and the guidance default remain **UNKNOWN / NOT RUN**. The prior candidate and this metadata-only preview cannot be used to record a default. QLT-04 remains open until API01's exact-source runtime qualification and identity closure are admitted, the maintained publisher produces a signable frozen plan and ready handoff, and the pinned evaluator completes the signed single-use study.
+
+## Signed-plan and owner-default update — 2026-11-02 08:30 UTC (T0115)
+
+The preceding subsection is the 08:23 snapshot and is superseded for admission status by
+the completed GOV03 handoff. The maintained publisher now reports `signable=true` for
+the frozen R20 plan over 97 owner-family representatives (small 70, large 27, narrow
+94, wide 3), with the required subgroup minima met and no unmerged prerequisite PRs.
+The canonical plan digest is
+`d71ebeda6fe7c5575025a063807662b66c93c5f743689dc96bc5bae0fe26d19a`; frozen
+`plan.json` SHA-256 is
+`bee63b8e50c7f70d8a8927a808bb5b11d090c708cf77dfba9d9ed7b228f05cdf`.
+
+The exact source-bound runtime input is admitted for evaluator source
+`ccaf14b210b3b55a350218e60f6b49ef76524cf3`, evaluator artifact SHA-256
+`4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177`, and merged
+metadata source `fa07e1336c8fc7c04994faadf8f6efabded0a195`. Its 10 qualification checks
+contain nine raw passes and one raw numerical M3 failure explicitly dispositioned
+`WAIVED_V1_0_0`, with zero unwaived failures. This is a version-limited disposition;
+the raw M3 verdict remains `NUMERICAL_FAIL` and the ±2.0 pp criterion remains in force
+for future releases. `QUALIFIED-INPUTS.json` SHA-256 is
+`a6cc92ca4c69aa8b44db1e8f9e5cb8d98fc34c49070a4b071b8afe65c6a4edc3`.
+
+The one delegated signing request is complete. The independently verified watcher
+receipt is `/home/ubuntu/jope_plan/signing/receipts/q1-20261102T082653Z.json`
+(SHA-256 `da21afbb1974cfad3ae28e72e0acba722616ffc35f025e8eefe4a91b29250c79`);
+the exact plan signature verification exited 0. Evidence summary:
+`/home/ubuntu/jope_plan/evidence/QLT-04/gov03-t0115/SIGNED-PLAN-VERIFIED.json`
+(SHA-256 `018d81c10f592eab24530a10c7f9620dc9578971f6ea13db2048d38679f6f728`).
+
+OWNER-R21 already records the v1.0.0 guidance default as **OFF**: learned guidance
+does not ship as the v1.0.0 default. This is the previously ratified product default,
+not a Q1 outcome or a post-study decision. Q1 itself remains **NOT RUN / UNKNOWN**:
+no effect estimate, interval, subgroup verdicts, failures, study compute, or run-receipt
+hashes exist. GOV03 owns the original FIFO dispatcher and has directed this lane not
+to start a duplicate Q1. The signed single-use plan must be run only through the pinned
+Linux evaluator under that original dispatch path. No sealed or holdout contents were
+opened by this report update.

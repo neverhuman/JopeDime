@@ -70,7 +70,12 @@ def main():
     yy = list(range(len(facts)))
     labels = [f"{r['round_window'][0]}–{r['round_window'][1]}" for r in facts]
     window_events = [
-        [int(r["program_events"]) for r in sorted(groups[tuple(f["round_window"])], key=lambda x: int(x["round"]))]
+        [
+            int(r["program_events"])
+            for r in sorted(
+                groups[tuple(f["round_window"])], key=lambda x: int(x["round"])
+            )
+        ]
         for f in facts
     ]
     left = [0] * len(facts)
@@ -82,7 +87,9 @@ def main():
     ]
     for b_label, pred, b_color, t_color in bin_specs:
         vals = [sum(1 for c in evs if pred(c)) for evs in window_events]
-        bars = ax_bins.barh(yy, vals, left=left, height=0.55, color=b_color, label=b_label)
+        bars = ax_bins.barh(
+            yy, vals, left=left, height=0.55, color=b_color, label=b_label
+        )
         for bar, v in zip(bars, vals):
             if v >= 2:
                 ax_bins.text(
@@ -235,13 +242,113 @@ def make_round_clock():
     print(json.dumps(facts))
 
 
+def make_current_program_clock():
+    """Replay one separate, journal-checked live operating window."""
+    from matplotlib.ticker import MaxNLocator
+
+    data = FIGURES / "data/current_program_clock.csv"
+    receipt = FIGURES / "data/current_program_clock.source.json"
+    output = FIGURES / "fig_fw_current_program_clock.pdf"
+    provenance = FIGURES / "data/current_program_clock.provenance.json"
+    source = json.loads(receipt.read_text())
+    assert sha(data) == source["csv_sha256"], "Current program-clock CSV hash mismatch"
+    with data.open() as stream:
+        rows = list(csv.DictReader(stream))
+    rounds = [int(r["round"]) for r in rows]
+    assert len(rows) == source["capture"]["rows"] == 20
+    assert rounds == list(range(rounds[0], rounds[0] + 20))
+    assert [rounds[0], rounds[-1]] == source["capture"]["round_window"]
+    walls = [Decimal(r["wall_seconds"]) for r in rows]
+    events = [int(r["program_events"]) for r in rows]
+    assert all(w.is_finite() and w > 0 for w in walls)
+    assert all(n >= 0 for n in events)
+    assert events == [
+        r["program_events"] for r in source["capture"]["journal_counts"]
+    ], "CSV/journal event-count mismatch"
+    assert rounds == [r["round"] for r in source["capture"]["journal_counts"]]
+    assert source["capture"]["all20_summary_counts_matched"]
+    assert source["capture"]["all20_retained_round_JSON_matched"]
+    admissions = [int(r["adapter_accepted"]) for r in rows]
+    assert all(v in (0, 1) for v in admissions)
+    assert sum(admissions) == source["capture"]["adapter_admissions"]
+    assert sum(events) == source["capture"]["program_events"]
+    rates = [Decimal(3600) * n / w for n, w in zip(events, walls)]
+    window_rate = Decimal(3600) * sum(events) / sum(walls)
+    assert abs(
+        window_rate - Decimal(rows[-1]["logged_rolling_events_per_hour"])
+    ) < Decimal("1e-10")
+    plt.rcParams.update(
+        {
+            "font.family": "serif",
+            "font.size": 8,
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "pdf.fonttype": 42,
+        }
+    )
+    fig, ax = plt.subplots(figsize=(3.25, 2.05))
+    ax.bar(
+        rounds,
+        [float(v) for v in rates],
+        width=0.7,
+        color="#7451b8",
+        label="per-round event rate",
+    )
+    ax.axhline(
+        float(window_rate),
+        color="#2b8a3e",
+        ls="--",
+        lw=0.9,
+        label="window events / total time",
+    )
+    ax.set(
+        xlabel="completed round",
+        ylabel="strict program events / hour",
+        xlim=(rounds[0] - 0.7, rounds[-1] + 0.7),
+        ylim=(0, max(1, float(max(rates))) * 1.25),
+    )
+    ax.set_xticks([rounds[0], rounds[6], rounds[12], rounds[-1]])
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=4))
+    ax.tick_params(axis="both", labelsize=7)
+    ax.grid(axis="y", alpha=0.2, linewidth=0.4)
+    ax.set_axisbelow(True)
+    ax.legend(loc="upper center", fontsize=6.3, frameon=False)
+    fig.tight_layout(pad=0.45)
+    fig.savefig(output, metadata={"CreationDate": None, "ModDate": None})
+    plt.close(fig)
+    facts = dict(
+        schema="whitepaper.current-program-clock-figure/v1",
+        input_csv_sha256=sha(data),
+        source_receipt_sha256=sha(receipt),
+        generator_sha256=sha(Path(__file__)),
+        figure_sha256=sha(output),
+        rows=20,
+        round_window=[rounds[0], rounds[-1]],
+        program_events=sum(events),
+        logged_wall_seconds=str(sum(walls)),
+        events_per_logged_hour=str(window_rate),
+        zero_event_rounds=events.count(0),
+        adapter_admissions=sum(int(r["adapter_accepted"]) for r in rows),
+        definitions=source["definitions"],
+        scope=source["scope"],
+        matplotlib_version=matplotlib.__version__,
+        reproduce="python3 figures/scripts/make_latest_event_rates_figure.py --current-program-clock",
+    )
+    provenance.write_text(json.dumps(facts, indent=2) + "\n")
+    print(json.dumps(facts))
+
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--round-clock-only", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--round-clock-only", action="store_true")
+    mode.add_argument("--current-program-clock", action="store_true")
     args = parser.parse_args()
-    if args.round_clock_only:
+    if args.current_program_clock:
+        make_current_program_clock()
+    elif args.round_clock_only:
         make_round_clock()
     else:
         main()

@@ -51,7 +51,7 @@ halicin, an antibiotic that then treated infections in mice
 CLIP put images and captions in one shared space
 \citep{radford2021clip}, an analogy for our problem--program ranking map
 (\cref{sec:method}).
-The reference map learns from programs scored within each problem.
+Reference training supervises the map with programs scored within each problem.
 Its ranks can influence search-parent selection
 (\cref{sub:method-map}); they neither condition nor screen the writer.
 Map-ranking accuracy and first-proposal quality require separate tests.
@@ -279,8 +279,8 @@ it is separate from the adapter record in \cref{sec:method-status}.
 The cross-task predictors and network generators
 \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025} differ from
 readable-program output; one candidate does not equalize compute or inputs.
-Absolute Zero and STP use correctness feedback. A declared incumbent sets
-our comparison standard; \cref{sec:game} defines how the referee judges a
+Absolute Zero and STP use correctness feedback, whereas a declared incumbent
+sets our comparison standard; \cref{sec:game} defines how the referee judges a
 program against it.
 
 \begin{keyidea}

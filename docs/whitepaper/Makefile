@@ -19,12 +19,16 @@ figs:
 	python3 figures/scripts/make_live_admissions_figures.py
 	python3 figures/scripts/make_live_development_figure.py
 	python3 figures/scripts/make_round_throughput_figure.py
+	python3 figures/scripts/make_round_throughput_figure.py --live-window
 	python3 figures/scripts/make_acceptance_over_rounds_figure.py
 	python3 figures/scripts/make_promotions_per_hour_figure.py
 	python3 figures/scripts/make_latest_admissions_figure.py
 	python3 figures/scripts/make_latest_event_rates_figure.py
 	python3 figures/scripts/make_latest_event_rates_figure.py --round-clock-only
+	python3 figures/scripts/make_latest_event_rates_figure.py --current-program-clock
 	python3 figures/scripts/make_candidate_retained_trace.py
+	python3 figures/scripts/make_candidate_retained_trace.py --recent
 	python3 figures/scripts/make_admission_block_rates.py
+	python3 figures/scripts/make_program_gain_distribution.py
 clean:
 	latexmk -C

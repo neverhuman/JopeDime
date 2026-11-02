@@ -1,0 +1,559 @@
+"""Synthetic admission controls; no qualification, signing or model execution."""
+
+from pathlib import Path
+import copy
+import os
+import tempfile
+import hashlib
+import json
+import runpy
+import sys
+import unittest
+import subprocess
+import importlib.util
+from unittest.mock import patch
+
+import plan_publisher as publisher
+import api01_launch as api_launcher
+
+ROOT = Path(__file__).resolve().parents[4]
+V1 = ROOT / "deploy/qualification/v1.0"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+class RuntimeAdmission(unittest.TestCase):
+    def setUp(self):
+        sys.path.insert(0, str(V1))
+        self.addCleanup(sys.path.remove, str(V1))
+        fixture_type = runpy.run_path(str(V1 / "test_gates_receipt.py"))[
+            "M3WaiverTests"
+        ]
+        self.m3 = fixture_type()
+        self.m3.setUp()
+        self.addCleanup(self.m3.doCleanups)
+        self.root = self.m3.fixture.root
+        source = self.m3.fixture.source
+        binary = self.m3.fixture.digest
+        dataset = {
+            "id": "0123456789abcdef",
+            "dataset_sha256": "0123456789abcdef" + "0" * 48,
+            "cut_sha256": "2" * 64,
+            "family": "3" * 64,
+        }
+        pins = {
+            "bundle_sha256": publisher.BUNDLE,
+            "dope_sha256": publisher.DOPE,
+            "evaluator_sha256": binary,
+            "training_family_manifest_sha256": "4" * 64,
+        }
+        self.plan = {
+            "source_commit": source,
+            "metadata_source_commit": "b" * 40,
+            "backend_sha256": "5" * 64,
+            "pins": pins,
+            "datasets": [dataset],
+        }
+        identity = {"source_commit": source, "evaluator_sha256": binary}
+        self.data = {
+            "native": dict(
+                identity,
+                status="PASS_PRODUCTION_NATIVE_COMPONENT",
+                backend_sha256=self.plan["backend_sha256"],
+                version={"source_sha40": source},
+                qualification_cases=[{"id": str(i), "passed": True} for i in range(5)],
+                observations=[
+                    {
+                        "policy": p,
+                        "charged": 24,
+                        "completed": 24,
+                        "folds_per_completed": 3,
+                        "exact_terminal_replay": True,
+                        "adapter_exit": 0,
+                    }
+                    for p in ["heuristic", "learned"]
+                ],
+                stop={"engine_exit": 0, "owned_group_processes_remaining": []},
+                activity={"learned_forward_count": 4},
+            ),
+            "native_driver": dict(identity, exit=0),
+            "m3_driver": dict(identity, exit=1, status="EXCLUSIVE_RELEASED"),
+            "link_inputs": dict(identity),
+            "m2_report": {
+                "source": source,
+                "passed": True,
+                "contexts": 50,
+                "slates": 100,
+                "failed_values": 0,
+                "optimizer_updates": 0,
+            },
+            "m3_raw": copy.deepcopy(self.m3.report),
+            "identity_closure": dict(
+                identity,
+                status="PASS_PINNED_NAMESPACE",
+                training_family_manifest_sha256=pins["training_family_manifest_sha256"],
+                overlap_counts={"family": 0},
+                selected_bindings=[dict(dataset, family="fam-" + dataset["family"])],
+            ),
+            "reproduction": dict(
+                identity,
+                verdict="MATCH",
+                reused_cargo_units=0,
+                compiled_units=288,
+                source_clean_after=True,
+            ),
+        }
+        self.refs = {}
+        for name, value in self.data.items():
+            self.write(name, value)
+        self.data["m2"] = dict(
+            identity,
+            status="PASS_EXACT_ORIGINAL_LINK_INPUTS",
+            compile_exit=0,
+            replay_exit=0,
+            original_link_inputs_sha256=self.refs["link_inputs"]["sha256"],
+            report_sha256=self.refs["m2_report"]["sha256"],
+        )
+        self.write("m2", self.data["m2"])
+        self.pin = {
+            "source_commit": source,
+            "sha256": binary,
+            "admission_inputs": {k: v["sha256"] for k, v in self.refs.items()},
+        }
+        self.receipt = dict(
+            identity,
+            status="PASS_WITH_WAIVER",
+            metadata_source_commit=self.plan["metadata_source_commit"],
+            release_version="v1.0.0",
+            backend_sha256=self.plan["backend_sha256"],
+            pins=pins,
+            fold_count=3,
+            bundle_sha256=publisher.BUNDLE,
+            dope_sha256=publisher.DOPE,
+            charged_admissions={"heuristic": 24, "learned": 24},
+            learned_forward_count=4,
+            qualified_dataset_cut_identities=[
+                {k: dataset[k] for k in ["id", "dataset_sha256", "cut_sha256"]}
+            ],
+            components=self.refs,
+            m3_waiver_ruling=str(self.m3.ruling),
+            M3_raw_status="NUMERICAL_FAIL",
+            M3_disposition="WAIVED_V1_0_0",
+            executed_qualification_checks=10,
+            passed_qualification_checks=9,
+            failed_qualification_checks=1,
+            waived_qualification_checks=1,
+            unwaived_failed_qualification_checks=0,
+        )
+        self.ruling_sha = digest(self.m3.ruling)
+        original_module = publisher.module
+
+        def source_module(name, source, filename):
+            value = original_module(name, source, filename)
+            if name == "_q1_waiver_gates":
+                value.M3_WAIVER_RULING_SHA256 = self.ruling_sha
+                value._source_proposer_sha256 = lambda source: (
+                    "48ebbfc081451baf0470ae25e1ae04621823ac4de3dfb0d8e93576206c8dbe39"
+                )
+            return value
+
+        self.addCleanup(patch.stopall)
+        patch.object(publisher, "EVIDENCE", self.root).start()
+        patch.object(publisher, "REPO", ROOT).start()
+        # Source authorization is exercised separately with real private Git fixtures.
+        patch.object(publisher, "_authorize_module_source").start()
+        patch.object(
+            publisher,
+            "raw",
+            side_effect=lambda source, path: (ROOT / path).read_bytes(),
+        ).start()
+        # `raw` serves working-tree bytes, so pin those; reviewed-pin enforcement
+        # against real Git objects is covered by the private-fixture tests below.
+        patch.dict(
+            publisher.MODULE_PINS,
+            {
+                name: (path, digest(ROOT / path), frozen)
+                for name, (path, _, frozen) in publisher.MODULE_PINS.items()
+            },
+        ).start()
+        patch.object(publisher, "module", side_effect=source_module).start()
+
+    def write(self, name, value, repin=False):
+        path = self.root / (name + ".json")
+        path.write_text(json.dumps(value))
+        self.refs[name] = {"path": str(path), "sha256": digest(path)}
+        if repin:
+            self.pin["admission_inputs"][name] = self.refs[name]["sha256"]
+
+    def admit(self):
+        return publisher.validate_runtime_receipt(
+            self.receipt, self.plan, self.pin, "b" * 40
+        )
+
+    def test_retains_one_raw_failure_and_returns_only_explicit_waiver(self):
+        before = copy.deepcopy(self.receipt)
+        result = self.admit()
+        self.assertEqual(result["disposition"], "WAIVED_V1_0_0")
+        self.assertEqual(self.receipt, before)
+        self.assertEqual(self.receipt["failed_qualification_checks"], 1)
+
+    def test_zeroed_failure_missing_waiver_and_future_release_are_refused(self):
+        for key, value in [
+            ("failed_qualification_checks", 0),
+            ("waived_qualification_checks", 0),
+            ("unwaived_failed_qualification_checks", 1),
+            ("status", "PASS"),
+            ("M3_raw_status", "NUMERICAL_PASS"),
+            ("release_version", "v1.0.1"),
+        ]:
+            with self.subTest(key=key):
+                before = self.receipt[key]
+                self.receipt[key] = value
+                try:
+                    with self.assertRaises(ValueError):
+                        self.admit()
+                finally:
+                    self.receipt[key] = before
+
+    def test_compiled_metadata_source_and_evaluator_mismatches_are_refused(self):
+        for target, key in [
+            (self.pin, "source_commit"),
+            (self.pin, "sha256"),
+            (self.plan, "metadata_source_commit"),
+            (self.receipt, "metadata_source_commit"),
+        ]:
+            before = target[key]
+            target[key] = "c" * 40
+            try:
+                with self.assertRaises(ValueError):
+                    self.admit()
+            finally:
+                target[key] = before
+
+    def test_changed_missing_and_unreviewed_component_files_are_refused(self):
+        path = Path(self.refs["native"]["path"])
+        before = path.read_bytes()
+        path.write_bytes(before + b" ")
+        with self.assertRaises(ValueError):
+            self.admit()
+        path.write_bytes(before)
+        ref = self.refs.pop("native")
+        with self.assertRaises(ValueError):
+            self.admit()
+        self.refs["native"] = ref
+        self.pin["admission_inputs"]["native"] = "0" * 64
+        with self.assertRaises(ValueError):
+            self.admit()
+
+    def test_unwaived_cv_failure_cannot_be_admitted_even_with_new_receipt_hash(self):
+        raw = self.data["m3_raw"]
+        raw["clauses"]["full_train_cv"]["passed"] = False
+        raw["clauses"]["full_train_cv"]["mismatches"] = 1
+        raw["counts"].update(passed=2, failed=2)
+        self.write("m3_raw", raw, repin=True)
+        with self.assertRaises(ValueError):
+            self.admit()
+
+    def test_operator_outside_owner_guard_is_refused(self):
+        raw = self.data["m3_raw"]
+        rows = raw["clauses"]["r0_proposer"]["strata"]
+        for row in [rows[0], rows[2]]:
+            row["native_counts"]["edit_replace_head"] += 80
+            row["native_counts"]["champion_retrieval"] -= 40
+            row["native_counts"]["edit_parameter"] -= 40
+        self.write("m3_raw", raw, repin=True)
+        with self.assertRaises(ValueError):
+            self.admit()
+
+    def test_namespace_overlap_and_nonclean_reproduction_are_refused(self):
+        self.data["identity_closure"]["overlap_counts"]["family"] = 1
+        self.write("identity_closure", self.data["identity_closure"], repin=True)
+        with self.assertRaises(ValueError):
+            self.admit()
+        self.data["identity_closure"]["overlap_counts"]["family"] = 0
+        self.write("identity_closure", self.data["identity_closure"], repin=True)
+        self.data["reproduction"]["reused_cargo_units"] = 1
+        self.write("reproduction", self.data["reproduction"], repin=True)
+        with self.assertRaises(ValueError):
+            self.admit()
+
+    def test_changed_ruling_is_refused(self):
+        self.m3.ruling.write_bytes(self.m3.ruling.read_bytes() + b" ")
+        with self.assertRaises(ValueError):
+            self.admit()
+
+
+class PinSourceBinding(unittest.TestCase):
+    def setUp(self):
+        self.source = "a" * 40
+        self.metadata = "b" * 40
+        self.pin = {
+            "schema": "jope.q1-evaluator-pin/v1",
+            "status": "BUILD_IDENTITY_ONLY_NOT_RUNTIME_QUALIFICATION",
+            "source_commit": self.source,
+            "source_tree": "1" * 40,
+            "sha256": "4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177",
+            "target": "x86_64-unknown-linux-gnu",
+            "recipe": {
+                "path": "evaluator-repro-linux/recipe.json",
+                "sha256": publisher.sha(b"{}"),
+            },
+            "reproductions": [
+                {
+                    "path": "evaluator-repro-linux/one.json",
+                    "sha256": publisher.sha(b"{}"),
+                },
+                {
+                    "path": "evaluator-repro-linux/two.json",
+                    "sha256": publisher.sha(b"{}"),
+                },
+            ],
+        }
+        self.sources = []
+
+        def raw(source, path):
+            self.sources.append(source)
+            return (
+                json.dumps(self.pin).encode()
+                if path.endswith("/evaluator-pin.json")
+                else b"{}"
+            )
+
+        self.addCleanup(patch.stopall)
+        patch.object(publisher, "raw", side_effect=raw).start()
+        patch.object(
+            publisher,
+            "git",
+            side_effect=lambda *args: (
+                ("1" * 40).encode() if args[0] == "rev-parse" else b""
+            ),
+        ).start()
+
+    def test_pin_metadata_read_from_explicit_commit_and_compiled_source_retained(self):
+        pin, source, files = publisher.pin_materials(
+            self.source, self.metadata, self.metadata
+        )
+        self.assertEqual(source, self.metadata)
+        self.assertEqual(pin["source_commit"], self.source)
+        self.assertEqual(len(files), 4)
+        self.assertEqual(set(self.sources), {self.metadata})
+
+    def test_old_source_wrong_tree_unbound_linux_and_escaped_metadata_refused(self):
+        for key, value in [("source_commit", "c" * 40), ("source_tree", "2" * 40)]:
+            before = self.pin[key]
+            self.pin[key] = value
+            with self.assertRaises(ValueError):
+                publisher.pin_materials(self.source, self.metadata, self.metadata)
+            self.pin[key] = before
+        with self.assertRaises(ValueError):
+            publisher.pin_materials(self.source, None, self.metadata)
+        self.pin["recipe"]["path"] = "../escape.json"
+        with self.assertRaises(ValueError):
+            publisher.pin_materials(self.source, self.metadata, self.metadata)
+
+
+class OriginalLedgerIdentity(unittest.TestCase):
+    def test_same_path_replacement_ledger_is_refused(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state = root / "api01-t0250"
+            state.mkdir()
+            ledger = root / "fixture-ledger"
+            ledger.mkdir()
+            identity = {
+                "driver_host": os.uname().nodename.split(".")[0],
+                "ledger": str(ledger),
+                "resolved": str(ledger.resolve()),
+                "device": ledger.stat().st_dev,
+                "inode": ledger.stat().st_ino,
+            }
+            record = root / "api01-t0640"
+            record.mkdir()
+            (record / "ORIGINAL-LEDGER-IDENTITY.json").write_text(json.dumps(identity))
+            with (
+                patch.object(api_launcher, "E", state),
+                patch.object(api_launcher, "LEDGER", ledger),
+            ):
+                api_launcher.original_ledger_identity()
+                ledger.rename(root / "original-retained")
+                ledger.mkdir()
+                with self.assertRaisesRegex(ValueError, "physical ledger differs"):
+                    api_launcher.original_ledger_identity()
+                self.assertTrue((root / "original-retained").is_dir())
+
+
+class PinnedModuleLoaderTests(unittest.TestCase):
+    """Real private Git inputs; no source authorization or import mock in positives."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix="q1-loader-")
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        self.repo = self.root / "repo"
+        self.repo.mkdir()
+        self.state = self.root / "publisher"
+        self.state.mkdir()
+        self.env = dict(
+            os.environ,
+            GIT_AUTHOR_NAME="Loader fixture",
+            GIT_COMMITTER_NAME="Loader fixture",
+            GIT_AUTHOR_EMAIL="loader@example.invalid",
+            GIT_COMMITTER_EMAIL="loader@example.invalid",
+        )
+        self.path = "deploy/qualification/q1/harness/q1_cut.py"
+        self.data = b"VALUE = 'pinned Git source'\n"
+        (self.repo / self.path).parent.mkdir(parents=True)
+        (self.repo / self.path).write_bytes(self.data)
+        self.git("init", "-q")
+        self.source = self.commit()
+        self.frozen = self.source
+        self.git("update-ref", "refs/remotes/origin/main", self.source)
+        self.pins = dict(publisher.MODULE_PINS)
+        self.pins["q1_cut"] = (self.path, publisher.sha(self.data), False)
+        for name, value in [
+            ("REPO", self.repo),
+            ("E", self.state),
+            ("FROZEN_SOURCE", self.frozen),
+            ("MODULE_PINS", self.pins),
+        ]:
+            item = patch.object(publisher, name, value)
+            item.start()
+            self.addCleanup(item.stop)
+        present, previous = "q1_cut" in sys.modules, sys.modules.get("q1_cut")
+
+        def restore():
+            if present:
+                sys.modules["q1_cut"] = previous
+            else:
+                sys.modules.pop("q1_cut", None)
+
+        self.addCleanup(restore)
+
+    def git(self, *args):
+        return subprocess.check_output(
+            ["git", "-C", str(self.repo), *args],
+            env=self.env,
+            stderr=subprocess.PIPE,
+            text=True,
+        ).strip()
+
+    def commit(self):
+        self.git("add", ".")
+        self.git("commit", "-qm", "private module fixture")
+        return self.git("rev-parse", "HEAD")
+
+    def filename(self):
+        return (
+            self.state
+            / "frozen"
+            / self.frozen
+            / "metadata"
+            / self.source
+            / "validation-inputs/q1_cut.py"
+        )
+
+    def test_git_pin_wins_over_filesystem_source_and_bytecode(self):
+        filename = self.filename()
+        filename.parent.mkdir(parents=True)
+        filename.write_text("raise AssertionError('filesystem source was executed')\n")
+        bytecode = Path(importlib.util.cache_from_source(str(filename)))
+        bytecode.parent.mkdir()
+        bytecode.write_bytes(b"untrusted bytecode must never be read")
+        value = publisher.module("q1_cut", self.source, filename)
+        self.assertEqual(value.VALUE, "pinned Git source")
+        self.assertEqual(Path(value.__file__), filename)
+        self.assertEqual(
+            bytecode.read_bytes(), b"untrusted bytecode must never be read"
+        )
+        loader = publisher._PinnedGitLoader(
+            "q1_cut", filename, self.data, publisher.sha(self.data)
+        )
+        with self.assertRaises(OSError):
+            loader.get_data(str(bytecode))
+
+    def test_unreviewed_commit_refused_even_with_identical_code(self):
+        (self.repo / "unreviewed.txt").write_text("unmerged branch\n")
+        self.source = self.commit()
+        with self.assertRaisesRegex(ValueError, "reviewed main ancestry"):
+            publisher.module("q1_cut", self.source, self.filename())
+
+    def test_changed_git_bytes_refused_before_import(self):
+        (self.repo / self.path).write_text("VALUE = 'unreviewed drift'\n")
+        self.source = self.commit()
+        self.git("update-ref", "refs/remotes/origin/main", self.source)
+        with patch.object(publisher._PinnedGitLoader, "exec_module") as imported:
+            with self.assertRaisesRegex(ValueError, "Git bytes differ"):
+                publisher.module("q1_cut", self.source, self.filename())
+            imported.assert_not_called()
+
+    def test_unknown_names_escaped_paths_and_symlinks_are_refused(self):
+        with self.assertRaisesRegex(ValueError, "module name"):
+            publisher.module("arbitrary", self.source, self.filename())
+        escaped = self.filename().parent / os.pardir / self.filename().name
+        self.assertIn(os.pardir, escaped.parts)
+        for filename in [
+            Path("q1_cut.py"),
+            self.root / "outside.py",
+            escaped,
+            self.filename().with_name("other.py"),
+        ]:
+            with self.subTest(filename=str(filename)), self.assertRaises(ValueError):
+                publisher.module("q1_cut", self.source, filename)
+        filename = self.filename()
+        filename.parent.parent.mkdir(parents=True)
+        target = self.root / "foreign"
+        target.mkdir()
+        filename.parent.symlink_to(target, target_is_directory=True)
+        with self.assertRaisesRegex(ValueError, "unsafe module filename"):
+            publisher.module("q1_cut", self.source, filename)
+
+    def test_full_source_sha_and_frozen_source_are_required(self):
+        for source in [b"VALUE = 'arbitrary code'", "main", "a" * 39, "g" * 40, None]:
+            with (
+                self.subTest(source=source),
+                self.assertRaisesRegex(ValueError, "full module source"),
+            ):
+                publisher.module("q1_cut", source, self.filename())
+        (self.repo / "later.txt").write_text("later source\n")
+        later = self.commit()
+        with self.assertRaisesRegex(ValueError, "frozen compiled source"):
+            publisher._authorize_module_source(later, True)
+
+    def test_failed_import_restores_existing_and_absent_module_state(self):
+        code = b"raise RuntimeError('deliberate pinned fixture failure')\n"
+        (self.repo / self.path).write_bytes(code)
+        self.source = self.commit()
+        self.git("update-ref", "refs/remotes/origin/main", self.source)
+        self.pins["q1_cut"] = (self.path, publisher.sha(code), False)
+        previous = object()
+        sys.modules["q1_cut"] = previous
+        with self.assertRaisesRegex(RuntimeError, "deliberate pinned fixture"):
+            publisher.module("q1_cut", self.source, self.filename())
+        self.assertIs(sys.modules["q1_cut"], previous)
+        sys.modules.pop("q1_cut")
+        with self.assertRaisesRegex(RuntimeError, "deliberate pinned fixture"):
+            publisher.module("q1_cut", self.source, self.filename())
+        self.assertNotIn("q1_cut", sys.modules)
+
+
+class ReviewedModulePins(unittest.TestCase):
+    # The signed Q1 plan's metadata source; re-signing at a newer source needs a reviewed re-pin.
+    SIGNED_METADATA_SOURCE = "fa07e1336c8fc7c04994faadf8f6efabded0a195"
+
+    def test_pins_equal_reviewed_git_bytes(self):
+        for name, (path, expected, frozen) in publisher.MODULE_PINS.items():
+            source = publisher.FROZEN_SOURCE if frozen else self.SIGNED_METADATA_SOURCE
+            with self.subTest(name=name):
+                shown = subprocess.run(
+                    ["git", "-C", str(ROOT), "show", f"{source}:{path}"],
+                    capture_output=True,
+                )
+                if shown.returncode != 0:
+                    self.skipTest(f"{source} is not in local Git history")
+                self.assertEqual(hashlib.sha256(shown.stdout).hexdigest(), expected)
+
+
+if __name__ == "__main__":
+    unittest.main()
