@@ -531,6 +531,10 @@ crates/jope-campaigns/src/bin/jope_causal_pair_repair/repair_spec.rs
 crates/jope-campaigns/src/bin/jope_causal_pair_repair/state.rs
 crates/jope-campaigns/src/bin/jope_causal_pair_repair/tests.rs
 crates/jope-campaigns/src/bin/jope_compile_cache.rs
+crates/jope-campaigns/src/bin/jope_compile_cache/cache.rs
+crates/jope-campaigns/src/bin/jope_compile_cache/numeric.rs
+crates/jope-campaigns/src/bin/jope_compile_cache/selection.rs
+crates/jope-campaigns/src/bin/jope_compile_cache/tests.rs
 crates/jope-campaigns/src/bin/jope_compile_cache/build.rs
 crates/jope-campaigns/src/bin/jope_compile_cache/replay.rs
 crates/jope-campaigns/src/bin/jope_dlgp_best5.rs
