@@ -1,7 +1,7 @@
 use super::*;
 
 use super::negative::{judge, record};
-use super::round_six::{deepdir, place_positions, round_six_tree};
+use super::round_six::{deepdir, place_positions, round_six_tree, unescape};
 
 /// Replay every case of a round fixture (the layout of `negative-r2.json`); `message_differs` names
 /// the cases where both refuse in different words, `stricter` those the Python accepted and the
@@ -13,7 +13,7 @@ use super::round_six::{deepdir, place_positions, round_six_tree};
 /// names that are not UTF-8 (`@Xhh@`, in arguments too), links, a deep directory and the locale
 /// the Python ran under (see [`round_six_tree`]); a codec position `@ROOT+k@` counts this root.
 /// Returns each case's exit status, stdout and stderr (the root written `@ROOT@`).
-fn replay_round(
+pub(super) fn replay_round(
     file: &str,
     count: usize,
     message_differs: &[&str],

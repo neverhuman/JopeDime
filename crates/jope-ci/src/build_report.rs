@@ -17,6 +17,7 @@
 //! `--approved-root` and whose checksum every receipt records. `report` fails unless exactly two
 //! are given and the configuration names exactly those.
 
+pub use jope_records::py::abspath;
 use jope_records::py::{self, PosixPath, ResolveError};
 use jope_records::pyjson::{self, Dict, Value};
 use sha2::{Digest, Sha256};

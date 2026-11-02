@@ -152,5 +152,7 @@ fn fixture_scan_doc(root: &str) -> Value {
     )
 }
 
+#[path = "build_report/report.rs"]
 mod report;
+#[path = "build_report/scan.rs"]
 mod scan;

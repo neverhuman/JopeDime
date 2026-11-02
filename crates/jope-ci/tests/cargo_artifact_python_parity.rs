@@ -75,11 +75,17 @@ fn executable(path: &Path, text: &str) {
     fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
 }
 
+#[path = "cargo_artifact_python_parity/captured.rs"]
 mod captured;
+#[path = "cargo_artifact_python_parity/negative.rs"]
 mod negative;
+#[path = "cargo_artifact_python_parity/replay.rs"]
 mod replay;
+#[path = "cargo_artifact_python_parity/round_six.rs"]
 mod round_six;
+#[path = "cargo_artifact_python_parity/rounds_r2_r5.rs"]
 mod rounds_r2_r5;
+#[path = "cargo_artifact_python_parity/rounds_r3_r7.rs"]
 mod rounds_r3_r7;
 
 use replay::replay_round;
