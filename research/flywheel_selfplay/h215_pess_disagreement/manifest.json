@@ -46,7 +46,7 @@
   },
   "schema": "jope.h215-pess-disagreement/v1",
   "wave": "H215",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "CLOSED_COMPLETE",
   "owner": "rd_astra",
   "source_base": "9fc915eacdfd102e44fb91bf036b46420f449977",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
@@ -146,5 +146,18 @@
     0.5,
     1,
     2
-  ]
+  ],
+  "execution_source_commit": "79c02dbb233e6c88afe584357c6a072ff5919966",
+  "source_sha256_scope": "Historical bytes executed at execution_source_commit, including the preregistration README; closeout does not relabel those bytes.",
+  "closeout": {
+    "metrics": "metrics.json",
+    "s3": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H215/astra-t0230/closeout-t0230/manifest.json",
+      "version_id": "AoXxY9lgOKe7mkrZJPqSMBnSAGlzGs9W",
+      "sha256": "50d1a67449857f1e35470be6cc4b3025a806aadbbbb056297dfea24ca5c5aaf1",
+      "bytes": 713366
+    },
+    "attempt_consumed": true,
+    "retry_allowed": false
+  }
 }
