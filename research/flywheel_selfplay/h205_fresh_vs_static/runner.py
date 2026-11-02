@@ -2,10 +2,13 @@
 
 Executes inside a single GPU worker process on xbabe1 cuda:0 alongside live flywheel PID 2297929:
 - Stage 0: Native r882 parity 91/91 exact (1.1377941898164525) on DL-Val before any candidate forward.
-- Stage 1: STATIC-DATA (50 rounds from r882 on fixed 1,219 contexts / 205 families with H178 per-round
-  pooled cross-fit selector admission) + STATIC-TEACHER frozen-r882 teacher infrastructure initialization.
-- Stage 2: Gated on luna_v1_tel's JRB-01 ADMISSION PASS receipt; executes STATIC-TEACHER and FRESH
-  (50 rounds each from r882 under equal compute and H178 per-round pooled selector admission).
+- Stage 1: STATIC-DATA (50 rounds from r882 on fixed 1,219 contexts / 205 families with lockstep H178
+  per-round 205-family pooled cross-fit selector admission) + frozen-r882 teacher identity snapshot,
+  flushed to stage1_static_data_panels.npz before Stage 2.
+- Stage 2: Gated on luna_v1_tel's JRB-01 ADMISSION PASS receipt and verified fresh D4 regression pool
+  with native-Rust-CV (`bootstrap.s1main --fit-s1`) label receipts; executes STATIC-TEACHER and FRESH
+  on the identical fresh-family schedule (50 rounds each from r882 under equal compute and lockstep
+  H178 per-round 205-family pooled selector admission).
 """
 
 import argparse
@@ -58,6 +61,16 @@ def place(value, device):
     if isinstance(value, list):
         return [place(v, device) for v in value]
     return value
+
+
+def parameter_digest(named_tensors):
+    """Compute a deterministic SHA256 over ordered parameter names and float32/float64 bytes."""
+    h = hashlib.sha256()
+    for name, tensor in sorted(named_tensors.items()):
+        h.update(name.encode("utf-8"))
+        arr = tensor.detach().cpu().numpy()
+        h.update(arr.tobytes())
+    return h.hexdigest()
 
 
 def load_h170_parent():
@@ -137,6 +150,13 @@ def run_gpu_wave(out, launch, manifest):
     net.adapter_10tok.predict_costs = gpu_predict_costs
     rt.check_frozen(net, guard, names, frozen)
 
+    initial_state = {
+        n: p.detach().cpu().clone()
+        for n, p in net.named_parameters()
+        if p.requires_grad
+    }
+    initial_teacher_digest = parameter_digest(initial_state)
+
     device_receipt = dict(
         pid=os.getpid(),
         host=os.uname().nodename,
@@ -144,6 +164,7 @@ def run_gpu_wave(out, launch, manifest):
         gpu=torch.cuda.get_device_name(0),
         dope_sha256=rt.DOPE,
         r882_sha256=stat.R882_SHA256,
+        teacher_param_sha256=initial_teacher_digest,
         trainable_parameters=sum(
             p.numel() for p in net.parameters() if p.requires_grad
         ),
@@ -152,6 +173,8 @@ def run_gpu_wave(out, launch, manifest):
         memory_fraction=0.18,
         tf32=False,
         live_flywheel_pid_untouched=mon.LIVE_FLYWHEEL_PID,
+        prior_attempts_elapsed_seconds=stat.PRIOR_ATTEMPTS_ELAPSED_SECONDS,
+        remaining_wall_budget_seconds=stat.REMAINING_WALL_BUDGET_SECONDS,
         utc=datetime.now(timezone.utc).isoformat(),
     )
     save(out / "gpu-device.json", device_receipt)
@@ -203,15 +226,10 @@ def run_gpu_wave(out, launch, manifest):
         flush=True,
     )
 
-    # Stage 1: Load 1,219 DL-Train pools, evaluate baseline r882 & cache STATIC-TEACHER rankings
+    # Stage 1: Load 1,219 DL-Train pools & evaluate baseline r882
     engine.load(train)
-    train_base_eval, train_base_raw = engine.evaluate(
-        train, native=True, prove_identity=False
-    )
+    train_base_eval, _ = engine.evaluate(train, native=True, prove_identity=False)
     r882_train_values = np.asarray(train_base_eval["values"], dtype=np.float64)
-    teacher_orders = {
-        cid: np.argsort(cost, kind="mergesort") for cid, cost in train_base_raw.items()
-    }
     gt_orders = {
         r["context_sha256"]: np.argsort(
             np.where(
@@ -223,22 +241,6 @@ def run_gpu_wave(out, launch, manifest):
         )
         for r in train
     }
-    save(
-        out / "static_teacher_infra.json",
-        dict(
-            status="READY",
-            teacher_checkpoint_sha256=stat.R882_SHA256,
-            cached_contexts=len(teacher_orders),
-            r882_train_mean=float(r882_train_values.mean()),
-            utc=datetime.now(timezone.utc).isoformat(),
-        ),
-    )
-
-    initial_state = {
-        n: p.detach().cpu().clone()
-        for n, p in net.named_parameters()
-        if p.requires_grad
-    }
 
     def restore_adapter(state_cpu):
         with torch.no_grad():
@@ -246,161 +248,237 @@ def run_gpu_wave(out, launch, manifest):
                 if n in state_cpu:
                     p.copy_(state_cpu[n].to(p.device))
 
-    cid_to_idx = {r["context_sha256"]: i for i, r in enumerate(train)}
-    static_b_panel = np.broadcast_to(
-        r882_train_values[None, :], (len(stat.SEEDS), len(train))
-    ).copy()
-    static_a_panel = np.broadcast_to(
-        r882_train_values[None, :], (len(stat.SEEDS), len(train))
-    ).copy()
-    teacher_b_panel = np.broadcast_to(
-        r882_train_values[None, :], (len(stat.SEEDS), len(train))
-    ).copy()
-    teacher_a_panel = np.broadcast_to(
-        r882_train_values[None, :], (len(stat.SEEDS), len(train))
-    ).copy()
+    teacher_identity_check = stat.verify_frozen_teacher_identity(
+        teacher_checkpoint_sha256=stat.R882_SHA256,
+        dope_sha256=rt.DOPE,
+        initial_param_sha256=initial_teacher_digest,
+        current_param_sha256=parameter_digest(initial_state),
+        teacher_training_mode=False,
+        any_requires_grad=False,
+    )
+    save(
+        out / "static_teacher_infra.json",
+        dict(
+            status="READY",
+            teacher_checkpoint_sha256=stat.R882_SHA256,
+            teacher_param_sha256=initial_teacher_digest,
+            teacher_identity_verified=teacher_identity_check["immutable"],
+            r882_train_mean=float(r882_train_values.mean()),
+            utc=datetime.now(timezone.utc).isoformat(),
+        ),
+    )
 
+    cid_to_idx = {r["context_sha256"]: i for i, r in enumerate(train)}
     updates = 0
     round_log = []
 
-    def run_arm_cell(arm_name, si, seed, outer, orders_map):
+    def run_arm_lockstep_pooled(
+        arm_name,
+        orders_map,
+        fresh_rows_for_arm=None,
+        teacher_cost_by_cid=None,
+    ):
+        """Run 50 rounds across all 3 seeds x 5 outer folds in lockstep with H178 pooled 205-family checkpoint selection."""
         nonlocal updates
-        fit_rows, b_rows, a_rows = stat.partition(train, outer)
-        slates = stat.h177_analysis.fit_slates(fit_rows, orders_map, seed, outer)
-        plan = stat.build_equal_compute_round_plan(fit_rows, seed, outer)[arm_name]
-        restore_adapter(initial_state)
-        params = [p for n, p in net.named_parameters() if p.requires_grad]
-        opt = torch.optim.AdamW(params, lr=3e-5, betas=(0.9, 0.999), weight_decay=0.01)
-
-        incumbent_state = {
-            n: p.detach().cpu().clone()
-            for n, p in net.named_parameters()
-            if p.requires_grad
-        }
-        b_indices = [cid_to_idx[r["context_sha256"]] for r in b_rows]
-        a_indices = [cid_to_idx[r["context_sha256"]] for r in a_rows]
-        incumbent_b_vals = r882_train_values[b_indices].copy()
-        admitted_rounds = 0
-
-        fit_cids = sorted(slates.keys())
-        slate_anchors = {}
-        for start in range(0, len(fit_cids), 32):
-            chunk = fit_cids[start : start + 32]
-            kw_chunk, _, _, _, _ = engine.batch(chunk, [slates[c] for c in chunk])
-            anc = engine.anchored(kw_chunk)
-            for idx_c, cid_c in enumerate(chunk):
-                slate_anchors[cid_c] = (anc[0][idx_c].clone(), anc[1][idx_c].clone())
-
-        for r_info in plan:
-            r_idx = r_info["round"]
-            opt.zero_grad(set_to_none=True)
-            for mb in r_info["microbatches"]:
-                cids = mb["cids"]
-                ixs = [slates[c] for c in cids]
-                kwargs, tok, mask, fitness, gate = engine.batch(cids, ixs)
-                anchor = (
-                    torch.stack([slate_anchors[c][0] for c in cids]),
-                    torch.stack([slate_anchors[c][1] for c in cids]),
-                )
-                pred = engine.forward(kwargs, tok, mask, anchor)
-                if arm_name == "STATIC-TEACHER":
-                    t_cost = torch.stack(
-                        [
-                            torch.as_tensor(train_base_raw[c][ix], dtype=torch.float32)
-                            for c, ix in zip(cids, ixs, strict=True)
-                        ]
+        incumbent_b_panel = np.broadcast_to(
+            r882_train_values[None, :], (len(stat.SEEDS), len(train))
+        ).copy()
+        cells = {}
+        for si, seed in enumerate(stat.SEEDS):
+            for outer in range(5):
+                fit_rows, b_rows, a_rows = stat.partition(train, outer)
+                if fresh_rows_for_arm is not None:
+                    fresh_fit = stat.partition_fresh_rows(fresh_rows_for_arm, outer)
+                    slates = stat.h177_analysis.fit_slates(
+                        fresh_fit, orders_map, seed, outer
                     )
-                    t_gate = torch.ones_like(gate, dtype=torch.bool)
-                    loss_val = rt.loss(pred, t_cost, t_gate) / len(
-                        r_info["microbatches"]
-                    )
+                    plan = stat.build_equal_compute_round_plan(
+                        fit_rows, seed, outer, fresh_fit_rows=fresh_fit
+                    )[arm_name]
                 else:
-                    loss_val = rt.loss(pred, fitness, gate) / len(
-                        r_info["microbatches"]
+                    slates = stat.h177_analysis.fit_slates(
+                        fit_rows, orders_map, seed, outer
                     )
-                loss_val.backward()
-            opt.step()
-            updates += 1
+                    plan = stat.build_equal_compute_round_plan(fit_rows, seed, outer)[
+                        arm_name
+                    ]
+
+                fit_cids = sorted(slates.keys())
+                slate_anchors = {}
+                for start in range(0, len(fit_cids), 32):
+                    chunk = fit_cids[start : start + 32]
+                    kw_chunk, _, _, _, _ = engine.batch(
+                        chunk, [slates[c] for c in chunk]
+                    )
+                    anc = engine.anchored(kw_chunk)
+                    for idx_c, cid_c in enumerate(chunk):
+                        slate_anchors[cid_c] = (
+                            anc[0][idx_c].clone(),
+                            anc[1][idx_c].clone(),
+                        )
+
+                cells[(si, outer)] = dict(
+                    seed=seed,
+                    outer=outer,
+                    b_rows=b_rows,
+                    a_rows=a_rows,
+                    b_indices=[cid_to_idx[r["context_sha256"]] for r in b_rows],
+                    a_indices=[cid_to_idx[r["context_sha256"]] for r in a_rows],
+                    slates=slates,
+                    slate_anchors=slate_anchors,
+                    plan=plan,
+                    incumbent_state={k: v.clone() for k, v in initial_state.items()},
+                    candidate_state={k: v.clone() for k, v in initial_state.items()},
+                    opt_state=None,
+                )
+
+        admitted_rounds = 0
+        for r_idx in range(1, stat.ROUNDS + 1):
+            for (si, outer), cell in cells.items():
+                restore_adapter(cell["candidate_state"])
+                params = [p for n, p in net.named_parameters() if p.requires_grad]
+                opt = torch.optim.AdamW(
+                    params, lr=3e-5, betas=(0.9, 0.999), weight_decay=0.01
+                )
+                if cell["opt_state"] is not None:
+                    opt.load_state_dict(cell["opt_state"])
+                r_info = cell["plan"][r_idx - 1]
+                opt.zero_grad(set_to_none=True)
+                for mb in r_info["microbatches"]:
+                    cids = mb["cids"]
+                    ixs = [cell["slates"][c] for c in cids]
+                    kwargs, tok, mask, fitness, gate = engine.batch(cids, ixs)
+                    anchor = (
+                        torch.stack([cell["slate_anchors"][c][0] for c in cids]),
+                        torch.stack([cell["slate_anchors"][c][1] for c in cids]),
+                    )
+                    pred = engine.forward(kwargs, tok, mask, anchor)
+                    if arm_name == "STATIC-TEACHER":
+                        t_cost = torch.stack(
+                            [
+                                torch.as_tensor(
+                                    teacher_cost_by_cid[c][ix], dtype=torch.float32
+                                )
+                                for c, ix in zip(cids, ixs, strict=True)
+                            ]
+                        )
+                        t_gate = torch.ones_like(gate, dtype=torch.bool)
+                        loss_val = rt.loss(pred, t_cost, t_gate) / len(
+                            r_info["microbatches"]
+                        )
+                    else:
+                        loss_val = rt.loss(pred, fitness, gate) / len(
+                            r_info["microbatches"]
+                        )
+                    loss_val.backward()
+                opt.step()
+                updates += 1
+                cell["candidate_state"] = {
+                    n: p.detach().cpu().clone()
+                    for n, p in net.named_parameters()
+                    if p.requires_grad
+                }
+                cell["opt_state"] = opt.state_dict()
 
             if r_idx % 10 == 0 or r_idx == stat.ROUNDS:
-                b_eval, _ = engine.evaluate(b_rows, native=False)
-                cand_b_vals = np.asarray(b_eval["values"], dtype=np.float64)
-                if (
-                    float(cand_b_vals.mean())
-                    > float(incumbent_b_vals.mean()) + stat.MIN_GAIN_MARGIN
-                ):
-                    incumbent_b_vals = cand_b_vals
-                    incumbent_state = {
-                        n: p.detach().cpu().clone()
-                        for n, p in net.named_parameters()
-                        if p.requires_grad
-                    }
-                    admitted_rounds += 1
-                else:
-                    restore_adapter(incumbent_state)
+                cand_b_panel = incumbent_b_panel.copy()
+                for (si, outer), cell in cells.items():
+                    restore_adapter(cell["candidate_state"])
+                    b_eval, _ = engine.evaluate(cell["b_rows"], native=False)
+                    cand_b_panel[si, cell["b_indices"]] = np.asarray(
+                        b_eval["values"], dtype=np.float64
+                    )
 
-            if r_idx % 5 == 0 or r_idx == 1:
-                save(
-                    out / "progress.json",
+                pooled_decision = stat.admit_round_checkpoint_pooled(
+                    train,
+                    incumbent_b_panel,
+                    cand_b_panel,
+                    seed=stat.BOOT_SEED + r_idx,
+                )
+                round_log.append(
                     dict(
-                        wave=stat.WAVE,
-                        stage="STAGE1_STATIC_ARMS",
                         arm=arm_name,
-                        seed=seed,
-                        outer_fold=outer,
                         round=r_idx,
-                        total_rounds=stat.ROUNDS,
-                        optimizer_updates=updates,
-                        admitted_rounds=admitted_rounds,
-                        r882_parity_verified=True,
-                        utc=datetime.now(timezone.utc).isoformat(),
-                    ),
+                        admit=pooled_decision["admit"],
+                        gain=pooled_decision["gain"],
+                        lcb95=pooled_decision["lcb95"],
+                        harm_rate=pooled_decision["harm_rate"],
+                        p_raw=pooled_decision["p_raw"],
+                    )
                 )
+                if pooled_decision["admit"]:
+                    incumbent_b_panel = cand_b_panel
+                    admitted_rounds += 1
+                    for cell in cells.values():
+                        cell["incumbent_state"] = {
+                            k: v.clone() for k, v in cell["candidate_state"].items()
+                        }
+                else:
+                    for cell in cells.values():
+                        cell["candidate_state"] = {
+                            k: v.clone() for k, v in cell["incumbent_state"].items()
+                        }
 
-        restore_adapter(incumbent_state)
-        a_eval, _ = engine.evaluate(a_rows, native=False)
-        return (
-            incumbent_b_vals,
-            np.asarray(a_eval["values"], dtype=np.float64),
-            b_indices,
-            a_indices,
-            admitted_rounds,
-        )
-
-    for si, seed in enumerate(stat.SEEDS):
-        for outer in range(5):
-            b_vals, a_vals, b_ix, a_ix, adm = run_arm_cell(
-                "STATIC-DATA", si, seed, outer, gt_orders
-            )
-            static_b_panel[si, b_ix] = b_vals
-            static_a_panel[si, a_ix] = a_vals
-            round_log.append(
-                dict(arm="STATIC-DATA", seed=seed, outer=outer, admitted_rounds=adm)
-            )
-
-            tb_vals, ta_vals, b_ix, a_ix, t_adm = run_arm_cell(
-                "STATIC-TEACHER", si, seed, outer, teacher_orders
-            )
-            teacher_b_panel[si, b_ix] = tb_vals
-            teacher_a_panel[si, a_ix] = ta_vals
-            round_log.append(
+            save(
+                out / "progress.json",
                 dict(
-                    arm="STATIC-TEACHER", seed=seed, outer=outer, admitted_rounds=t_adm
-                )
+                    wave=stat.WAVE,
+                    stage="STAGE1_STATIC_DATA"
+                    if arm_name == "STATIC-DATA"
+                    else "STAGE2_FRESH_AND_TEACHER",
+                    arm=arm_name,
+                    round=r_idx,
+                    total_rounds=stat.ROUNDS,
+                    optimizer_updates=updates,
+                    admitted_rounds=admitted_rounds,
+                    r882_parity_verified=True,
+                    utc=datetime.now(timezone.utc).isoformat(),
+                ),
             )
 
-    # Stage 2: Gate FRESH arm on JRB-01 ADMISSION PASS receipt
+        a_panel = np.broadcast_to(
+            r882_train_values[None, :], (len(stat.SEEDS), len(train))
+        ).copy()
+        for (si, outer), cell in cells.items():
+            restore_adapter(cell["incumbent_state"])
+            a_eval, _ = engine.evaluate(cell["a_rows"], native=False)
+            a_panel[si, cell["a_indices"]] = np.asarray(
+                a_eval["values"], dtype=np.float64
+            )
+        return incumbent_b_panel, a_panel, admitted_rounds
+
+    # Execute Stage 1: STATIC-DATA and durably flush panels before Stage 2 wait
+    static_b_panel, static_a_panel, static_adm = run_arm_lockstep_pooled(
+        "STATIC-DATA", gt_orders
+    )
+    np.savez_compressed(
+        out / "stage1_static_data_panels.npz",
+        static_b_panel=static_b_panel,
+        static_a_panel=static_a_panel,
+        r882_train_values=r882_train_values,
+    )
+
+    # Stage 2: Gate STATIC-TEACHER and FRESH on JRB-01 ADMISSION PASS + verified fresh D4 pool
     jrb_receipt_path = Path(
         launch.get(
             "jrb01_admission_receipt",
             "/home/ubuntu/jope_plan/evidence/JRB-01/ADMISSION-PASS.json",
         )
     )
-    wait_deadline = time.monotonic() + float(launch.get("fresh_wait_seconds", 18000))
-    jrb_gate = None
+    hold_file = out / "hold_before_fresh.json"
+    wait_deadline = time.monotonic() + float(
+        launch.get("fresh_wait_seconds", stat.REMAINING_WALL_BUDGET_SECONDS)
+    )
+    fresh_bundle = None
     while time.monotonic() < wait_deadline:
+        if hold_file.is_file():
+            raise RuntimeError(
+                f"FRESH boundary hold requested by owner file: {hold_file}"
+            )
         try:
-            jrb_gate = stat.verify_fresh_admission_gate(jrb_receipt_path)
+            fresh_bundle = stat.verify_and_load_fresh_d4_pool(
+                jrb_receipt_path, train, eval_rows=train + val
+            )
             break
         except RuntimeError as exc:
             save(
@@ -412,33 +490,61 @@ def run_gpu_wave(out, launch, manifest):
                     jrb01_receipt_path=str(jrb_receipt_path),
                     reason=str(exc),
                     r882_parity_verified=True,
-                    static_arms_complete=True,
+                    stage1_static_data_flushed=True,
+                    static_data_admitted_rounds=static_adm,
                     utc=datetime.now(timezone.utc).isoformat(),
                 ),
             )
             time.sleep(5.0)
 
-    if jrb_gate is None:
+    if fresh_bundle is None:
         raise RuntimeError(
-            f"FRESH arm blocked: JRB-01 ADMISSION PASS receipt not available at {jrb_receipt_path}"
+            f"FRESH and STATIC-TEACHER arms blocked: verified fresh D4 pool not available at {jrb_receipt_path}"
         )
 
-    fresh_b_panel = np.broadcast_to(
-        r882_train_values[None, :], (len(stat.SEEDS), len(train))
-    ).copy()
-    fresh_a_panel = np.broadcast_to(
-        r882_train_values[None, :], (len(stat.SEEDS), len(train))
-    ).copy()
-    for si, seed in enumerate(stat.SEEDS):
-        for outer in range(5):
-            fb_vals, fa_vals, b_ix, a_ix, f_adm = run_arm_cell(
-                "FRESH", si, seed, outer, gt_orders
-            )
-            fresh_b_panel[si, b_ix] = fb_vals
-            fresh_a_panel[si, a_ix] = fa_vals
-            round_log.append(
-                dict(arm="FRESH", seed=seed, outer=outer, admitted_rounds=f_adm)
-            )
+    fresh_rows = fresh_bundle["records"]
+    engine.load(fresh_rows)
+    restore_adapter(initial_state)
+    stat.verify_frozen_teacher_identity(
+        teacher_checkpoint_sha256=stat.R882_SHA256,
+        dope_sha256=rt.DOPE,
+        initial_param_sha256=initial_teacher_digest,
+        current_param_sha256=parameter_digest(
+            {n: p.detach().cpu() for n, p in net.named_parameters() if p.requires_grad}
+        ),
+        teacher_training_mode=bool(
+            net.dope_model.training or net.adapter_10tok.training
+        ),
+        any_requires_grad=False,
+    )
+    _, fresh_teacher_raw = engine.evaluate(fresh_rows, native=False)
+    fresh_teacher_orders = {
+        cid: np.argsort(cost, kind="mergesort")
+        for cid, cost in fresh_teacher_raw.items()
+    }
+    fresh_gt_orders = {
+        r["context_sha256"]: np.argsort(
+            np.where(
+                engine.pools[r["context_sha256"]]["gate"],
+                engine.pools[r["context_sha256"]]["fitness"],
+                2.0,
+            ),
+            kind="mergesort",
+        )
+        for r in fresh_rows
+    }
+
+    teacher_b_panel, teacher_a_panel, teacher_adm = run_arm_lockstep_pooled(
+        "STATIC-TEACHER",
+        fresh_teacher_orders,
+        fresh_rows_for_arm=fresh_rows,
+        teacher_cost_by_cid=fresh_teacher_raw,
+    )
+    fresh_b_panel, fresh_a_panel, fresh_adm = run_arm_lockstep_pooled(
+        "FRESH",
+        fresh_gt_orders,
+        fresh_rows_for_arm=fresh_rows,
+    )
 
     b_lock = stat.h178_round_select(
         train,
@@ -468,15 +574,26 @@ def run_gpu_wave(out, launch, manifest):
         authority=stat.AUTHORITY_STRING,
         optimizer_updates=updates,
         scored_contexts=len(train) + len(val),
-        jrb01_admission_gate=jrb_gate,
-        pooled_b_selection=b_lock,
+        jrb01_admission=dict(
+            status=fresh_bundle["status"],
+            admitted_rows=fresh_bundle["admitted_rows"],
+            admitted_families=fresh_bundle["admitted_families"],
+            manifest_sha256=fresh_bundle["manifest_sha256"],
+        ),
+        r882_parity=parity,
+        pooled_b_selection=b_lock["decisions"],
         common_gate=gate_summary,
+        admitted_rounds_summary=dict(
+            STATIC_DATA=static_adm,
+            STATIC_TEACHER=teacher_adm,
+            FRESH=fresh_adm,
+        ),
         round_log=round_log,
         verdict=gate_summary["verdict"],
         utc=datetime.now(timezone.utc).isoformat(),
     )
     save(out / "metrics.json", metrics)
-    print("COMPLETE", metrics["verdict"], flush=True)
+    return metrics
 
 
 def main():
@@ -486,33 +603,31 @@ def main():
     ap.add_argument("--smoke", action="store_true")
     args = ap.parse_args()
 
-    manifest = json.loads((HERE / "manifest.json").read_text())
+    manifest_path = HERE / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest_sha = sha(manifest_path)
     launch = json.loads(args.launch.read_text())
-    validate_launch(launch, sha(HERE / "manifest.json"))
+    validate_launch(launch, manifest_sha)
     configure_threads(launch.get("numeric_threads", 2))
 
-    out = args.output.resolve()
-    out.mkdir(parents=True, exist_ok=True)
-
+    args.output.mkdir(parents=True, exist_ok=True)
     if args.smoke:
-        save(
-            out / "smoke.json",
-            dict(
-                wave=stat.WAVE,
-                status="PASS",
-                authority=stat.AUTHORITY_STRING,
-                optimizer_updates=0,
-                scored_contexts=0,
-                numeric_threads=torch.get_num_threads(),
-                cuda_runtime_threads_exempt=True,
-                imported_h177_rule_identity=bool(
-                    stat.h178_calibration.h177_analysis.pooled_b_select is not None
-                ),
-            ),
+        smoke_payload = dict(
+            wave=stat.WAVE,
+            status="PASS",
+            mode="smoke",
+            authority=stat.AUTHORITY_STRING,
+            manifest_sha256=manifest_sha,
+            numeric_threads=torch.get_num_threads(),
+            cuda_runtime_threads_exempt=True,
+            optimizer_updates=0,
+            scored_contexts=0,
         )
+        save(args.output / "smoke.json", smoke_payload)
+        print(json.dumps(smoke_payload), flush=True)
         return
 
-    run_gpu_wave(out, launch, manifest)
+    run_gpu_wave(args.output, launch, manifest)
 
 
 if __name__ == "__main__":

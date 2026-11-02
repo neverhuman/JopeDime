@@ -34,6 +34,15 @@ HARM_EPS = 0.01
 MIN_GAIN_MARGIN = 0.001
 DRAWS = 10000
 EPS = 1e-12
+SLATE_CANDIDATES = 24
+NATIVE_RUST_EVALUATOR_ID = "bootstrap.s1main --fit-s1"
+
+# Cumulative campaign budget ledger (preserved across attempts; never reset)
+CAMPAIGN_WALL_BUDGET_CAP_SECONDS = 25200.0
+PRIOR_ATTEMPTS_ELAPSED_SECONDS = 1970.9372255061753
+REMAINING_WALL_BUDGET_SECONDS = (
+    CAMPAIGN_WALL_BUDGET_CAP_SECONDS - PRIOR_ATTEMPTS_ELAPSED_SECONDS
+)
 
 
 def _load_sibling_module(mod_name, rel_path):
@@ -64,6 +73,32 @@ def stream_seed(*parts):
     )
 
 
+def _is_hex64(value):
+    if not isinstance(value, str) or len(value) != 64:
+        return False
+    try:
+        int(value, 16)
+    except ValueError:
+        return False
+    return True
+
+
+def _row_family_aliases(row):
+    aliases = set()
+    fid = row.get("family_id") or row.get("family")
+    if isinstance(fid, str) and fid.strip():
+        aliases.add(fid.strip())
+    fk = row.get("family_key")
+    if isinstance(fk, str) and fk.strip():
+        aliases.add(fk.strip())
+    raw_aliases = row.get("family_aliases") or row.get("union_evidence") or ()
+    if isinstance(raw_aliases, (list, tuple, set)):
+        for item in raw_aliases:
+            if isinstance(item, str) and item.strip():
+                aliases.add(item.strip())
+    return aliases
+
+
 def folds(rows, fold_seed=FOLD_SEED):
     fams = sorted({r["family_id"] for r in rows})
     if len(fams) != DLTRAIN_FAMILY_COUNT:
@@ -80,6 +115,22 @@ def partition(rows, outer, fold_seed=FOLD_SEED):
         [r for r in rows if r["family_id"] in b],
         [r for r in rows if r["family_id"] in a],
     )
+
+
+def partition_fresh_rows(fresh_rows, outer, fold_seed=FOLD_SEED):
+    """Partition admitted fresh D4 families into 5 deterministic folds and return FIT_outer rows (3/5 of fresh families)."""
+    fams = sorted({r["family_id"] for r in fresh_rows})
+    if len(fams) < FAMILIES_PER_MICROBATCH * 2:
+        raise ValueError(
+            f"fresh pool requires at least {FAMILIES_PER_MICROBATCH * 2} distinct families, got {len(fams)}"
+        )
+    order = np.random.default_rng(fold_seed + 1000).permutation(len(fams))
+    groups = [sorted(fams[i] for i in group) for group in np.array_split(order, 5)]
+    hold_a, hold_b = set(groups[outer]), set(groups[(outer + 1) % 5])
+    fit_rows = [r for r in fresh_rows if r["family_id"] not in (hold_a | hold_b)]
+    if len({r["family_id"] for r in fit_rows}) < FAMILIES_PER_MICROBATCH:
+        raise ValueError("fresh FIT fold has fewer than 8 distinct families")
+    return fit_rows
 
 
 def verify_pooled_b_coverage(rows, fold_seed=FOLD_SEED):
@@ -120,10 +171,9 @@ def verify_pooled_b_coverage(rows, fold_seed=FOLD_SEED):
     )
 
 
-def build_equal_compute_round_plan(
-    fit_rows, seed, outer, rounds=ROUNDS, excluded_cids=()
+def _build_single_schedule(
+    fit_rows, stream_tag, seed, outer, rounds=ROUNDS, excluded_cids=()
 ):
-    """Build 50 rounds x 16 family-stratified microbatches (8 distinct fit families per microbatch) for each arm."""
     if rounds != ROUNDS:
         raise ValueError(f"H205 requires exactly {ROUNDS} rounds per arm, got {rounds}")
     excl = set(excluded_cids)
@@ -138,45 +188,106 @@ def build_equal_compute_round_plan(
     fams = sorted(fam_map)
     if len(fams) < FAMILIES_PER_MICROBATCH:
         raise ValueError("at least 8 distinct fit families required")
-    plan_by_arm = {}
-    for arm in ARMS:
-        rounds_plan = []
-        for r_idx in range(1, rounds + 1):
-            stream = stream_seed(seed, outer, arm, "round", r_idx)
-            rng = np.random.default_rng(stream)
-            need = MICROBATCHES_PER_ROUND * FAMILIES_PER_MICROBATCH
-            fam_seq = []
-            while len(fam_seq) < need:
-                perm = [fams[i] for i in rng.permutation(len(fams))]
-                if fam_seq:
-                    rem = len(fam_seq) % FAMILIES_PER_MICROBATCH
-                    tail = set(fam_seq[-rem:]) if rem else set()
-                    head_ok = [f for f in perm if f not in tail]
-                    head_rest = [f for f in perm if f in tail]
-                    perm = head_ok + head_rest
-                fam_seq.extend(perm)
-            fam_seq = fam_seq[:need]
-            microbatches = []
-            for m in range(MICROBATCHES_PER_ROUND):
-                mb_fams = fam_seq[
-                    m * FAMILIES_PER_MICROBATCH : (m + 1) * FAMILIES_PER_MICROBATCH
-                ]
-                if len(set(mb_fams)) != FAMILIES_PER_MICROBATCH:
-                    raise RuntimeError("microbatch family collision")
-                cids = [
-                    fam_map[f][int(rng.integers(0, len(fam_map[f])))] for f in mb_fams
-                ]
-                microbatches.append(dict(microbatch=m, families=mb_fams, cids=cids))
-            rounds_plan.append(
-                dict(
-                    round=r_idx,
-                    arm=arm,
-                    stream=stream,
-                    microbatches=microbatches,
-                )
+
+    rounds_plan = []
+    for r_idx in range(1, rounds + 1):
+        stream = stream_seed(seed, outer, stream_tag, "round", r_idx)
+        rng = np.random.default_rng(stream)
+        need = MICROBATCHES_PER_ROUND * FAMILIES_PER_MICROBATCH
+        fam_seq = []
+        while len(fam_seq) < need:
+            perm = [fams[i] for i in rng.permutation(len(fams))]
+            if fam_seq:
+                rem = len(fam_seq) % FAMILIES_PER_MICROBATCH
+                tail = set(fam_seq[-rem:]) if rem else set()
+                head_ok = [f for f in perm if f not in tail]
+                head_rest = [f for f in perm if f in tail]
+                perm = head_ok + head_rest
+            fam_seq.extend(perm)
+        fam_seq = fam_seq[:need]
+        microbatches = []
+        for m in range(MICROBATCHES_PER_ROUND):
+            mb_fams = fam_seq[
+                m * FAMILIES_PER_MICROBATCH : (m + 1) * FAMILIES_PER_MICROBATCH
+            ]
+            if len(set(mb_fams)) != FAMILIES_PER_MICROBATCH:
+                raise RuntimeError("microbatch family collision")
+            cids = [fam_map[f][int(rng.integers(0, len(fam_map[f])))] for f in mb_fams]
+            microbatches.append(dict(microbatch=m, families=mb_fams, cids=cids))
+        rounds_plan.append(
+            dict(
+                round=r_idx,
+                arm=stream_tag,
+                stream=stream,
+                microbatches=microbatches,
             )
-        plan_by_arm[arm] = rounds_plan
-    return plan_by_arm
+        )
+    return rounds_plan
+
+
+def build_equal_compute_round_plan(
+    fit_rows, seed, outer, rounds=ROUNDS, excluded_cids=(), fresh_fit_rows=None
+):
+    """Build 50 rounds x 16 family-stratified microbatches (8 distinct fit families per microbatch) for each arm.
+
+    When `fresh_fit_rows` is provided (prospective P1-repaired mode), `STATIC-DATA` uses `fit_rows`
+    while `STATIC-TEACHER` and `FRESH` share the exact same fresh-family schedule built from
+    `fresh_fit_rows` (`stream_tag="FRESH_SHARED"`), isolating fresh covariate support from fresh
+    ground-truth native-Rust-CV labels.
+    """
+    static_plan = _build_single_schedule(
+        fit_rows,
+        "STATIC-DATA",
+        seed,
+        outer,
+        rounds=rounds,
+        excluded_cids=excluded_cids,
+    )
+    if fresh_fit_rows is not None:
+        static_fams = {r["family_id"] for r in fit_rows}
+        fresh_fams = {r["family_id"] for r in fresh_fit_rows}
+        if static_fams & fresh_fams:
+            raise ValueError(
+                "fresh_fit_rows must be strictly disjoint from static fit_rows families"
+            )
+        shared_fresh = _build_single_schedule(
+            fresh_fit_rows,
+            "FRESH_SHARED",
+            seed,
+            outer,
+            rounds=rounds,
+            excluded_cids=excluded_cids,
+        )
+        teacher_plan = [
+            dict(
+                round=r["round"],
+                arm="STATIC-TEACHER",
+                stream=r["stream"],
+                microbatches=[dict(mb) for mb in r["microbatches"]],
+            )
+            for r in shared_fresh
+        ]
+        fresh_plan = [
+            dict(
+                round=r["round"],
+                arm="FRESH",
+                stream=r["stream"],
+                microbatches=[dict(mb) for mb in r["microbatches"]],
+            )
+            for r in shared_fresh
+        ]
+        return {
+            "STATIC-DATA": static_plan,
+            "STATIC-TEACHER": teacher_plan,
+            "FRESH": fresh_plan,
+        }
+
+    return {
+        arm: _build_single_schedule(
+            fit_rows, arm, seed, outer, rounds=rounds, excluded_cids=excluded_cids
+        )
+        for arm in ARMS
+    }
 
 
 def verify_r882_native_parity(actual_values, reference_values):
@@ -213,18 +324,286 @@ def verify_fresh_admission_gate(receipt_path):
     if int(payload.get("sealed_overlap_count", 0)) != 0:
         raise RuntimeError("JRB-01 admission receipt has non-zero sealed overlap")
     manifest_sha = str(payload.get("manifest_sha256", "")).strip()
-    if len(manifest_sha) != 64:
+    if not _is_hex64(manifest_sha):
         raise RuntimeError("JRB-01 admission receipt missing valid manifest_sha256")
     return dict(
         status="PASS",
         admitted_families=int(payload["admitted_families"]),
         admitted_datasets=int(payload.get("admitted_datasets", 0)),
         manifest_sha256=manifest_sha,
+        fresh_pool_manifest=payload.get("fresh_pool_manifest"),
+    )
+
+
+def verify_and_load_fresh_d4_pool(
+    receipt_path,
+    static_train_rows,
+    eval_rows=(),
+    sealed_family_keys=(),
+    fresh_rows_override=None,
+):
+    """Validate JRB-01 admission receipt plus admitted fresh D4 regression rows & native-Rust-CV label receipts.
+
+    Enforces:
+    1. Valid JRB-01 ADMISSION PASS receipt.
+    2. Every fresh row has task=='regression', valid dataset_id, source_split=='train',
+       dl_split=='DL-Train', has_meta_test==False, 64-hex context_sha256 and train_sha256,
+       and a verified native-Rust-CV label receipt (`bootstrap.s1main --fit-s1`, status=='PASS',
+       64-hex evaluator_binary_sha256 & labels_sha256, 24 finite fitness values, boolean gate with >=1 True).
+    3. Zero family/alias or context_sha256 overlap with the static 205-family roster (`static_train_rows`).
+       Fake-fresh rows drawn from the old 205 families are unconditionally rejected.
+    4. Zero family/alias or context_sha256 overlap with any evaluation (`B_k`, `A_k`, `DL-Val`) or sealed family.
+    """
+    gate = verify_fresh_admission_gate(receipt_path)
+    if fresh_rows_override is not None:
+        fresh_rows = list(fresh_rows_override)
+    else:
+        manifest_rel = gate.get("fresh_pool_manifest")
+        if not manifest_rel:
+            raise RuntimeError(
+                "JRB-01 admission receipt missing fresh_pool_manifest path for fresh D4 regression rows"
+            )
+        manifest_path = Path(manifest_rel)
+        if not manifest_path.is_file():
+            raise RuntimeError(f"fresh D4 pool manifest missing: {manifest_path}")
+        if (
+            hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+            != gate["manifest_sha256"]
+        ):
+            raise RuntimeError(
+                "fresh D4 pool manifest SHA256 does not match receipt manifest_sha256"
+            )
+        raw_manifest = json.loads(manifest_path.read_text())
+        fresh_rows = list(raw_manifest.get("records", ()))
+
+    if not fresh_rows:
+        raise RuntimeError("fresh D4 pool contains zero rows")
+
+    static_fams = set()
+    static_cids = set()
+    for r in static_train_rows:
+        static_fams |= _row_family_aliases(r)
+        if r.get("context_sha256"):
+            static_cids.add(r["context_sha256"])
+
+    forbidden_eval_aliases = {
+        str(k).strip() for k in sealed_family_keys if str(k).strip()
+    }
+    forbidden_eval_cids = set()
+    for r in eval_rows:
+        forbidden_eval_aliases |= _row_family_aliases(r)
+        if r.get("context_sha256"):
+            forbidden_eval_cids.add(r["context_sha256"])
+
+    validated_rows = []
+    seen_cids = set()
+    for idx, row in enumerate(fresh_rows):
+        if not isinstance(row, dict):
+            raise RuntimeError(f"fresh row {idx} is not a dict")
+        if row.get("task") != "regression":
+            raise RuntimeError(
+                f"fresh row {idx} invalid task {row.get('task')!r}; regression required"
+            )
+        ds_id = str(row.get("dataset_id") or row.get("dataset") or "").strip()
+        if not ds_id:
+            raise RuntimeError(f"fresh row {idx} missing dataset_id")
+        if (
+            row.get("source_split") != "train"
+            or row.get("dl_split") != "DL-Train"
+            or bool(row.get("has_meta_test", False))
+        ):
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) invalid cut/split or has_meta_test=True"
+            )
+        cid = str(row.get("context_sha256", "")).strip()
+        train_sha = str(row.get("train_sha256", "")).strip()
+        if not _is_hex64(cid) or not _is_hex64(train_sha):
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) missing 64-hex context_sha256 or train_sha256"
+            )
+        if cid in seen_cids:
+            raise RuntimeError(f"duplicate fresh context_sha256 {cid}")
+        seen_cids.add(cid)
+
+        fam_id = str(row.get("family_id") or row.get("family") or "").strip()
+        if not fam_id:
+            raise RuntimeError(f"fresh row {idx} ({ds_id}) missing family_id")
+        aliases = _row_family_aliases(row)
+
+        if cid in static_cids or (aliases & static_fams):
+            raise RuntimeError(
+                f"fake-fresh violation: row {ds_id} ({fam_id}) overlaps static 205-family roster"
+            )
+        if cid in forbidden_eval_cids or (aliases & forbidden_eval_aliases):
+            raise RuntimeError(
+                f"leakage violation: evaluation or sealed family/alias {aliases & forbidden_eval_aliases} cannot enter training"
+            )
+
+        receipt = row.get("native_evaluator_receipt")
+        if not isinstance(receipt, dict):
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) missing native_evaluator_receipt"
+            )
+        if receipt.get("status") != "PASS":
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) native_evaluator_receipt status is not PASS"
+            )
+        if receipt.get("evaluator") != NATIVE_RUST_EVALUATOR_ID:
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) invalid native evaluator {receipt.get('evaluator')!r}"
+            )
+        if not _is_hex64(receipt.get("evaluator_binary_sha256", "")) or not _is_hex64(
+            receipt.get("labels_sha256", "")
+        ):
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) native_evaluator_receipt missing 64-hex binary/labels sha256"
+            )
+        if receipt.get("context_sha256") != cid or receipt.get("dataset_id") != ds_id:
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) native_evaluator_receipt dataset/context mismatch"
+            )
+
+        fitness = np.asarray(row.get("fitness", ()), dtype=np.float64)
+        gate_arr = np.asarray(row.get("gate", ()), dtype=bool)
+        if (
+            fitness.shape != (SLATE_CANDIDATES,)
+            or gate_arr.shape != (SLATE_CANDIDATES,)
+            or not np.isfinite(fitness).all()
+            or not bool(gate_arr.any())
+        ):
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) invalid 24-candidate native fitness/gate arrays"
+            )
+        expected_label_sha = hashlib.sha256(
+            fitness.tobytes() + gate_arr.tobytes()
+        ).hexdigest()
+        if receipt.get("labels_sha256") != expected_label_sha:
+            raise RuntimeError(
+                f"fresh row {idx} ({ds_id}) native labels_sha256 mismatch against fitness/gate payload"
+            )
+        validated_rows.append(row)
+
+    distinct_fresh_fams = {r["family_id"] for r in validated_rows}
+    if len(distinct_fresh_fams) < FAMILIES_PER_MICROBATCH * 2:
+        raise RuntimeError(
+            f"fresh D4 pool requires at least {FAMILIES_PER_MICROBATCH * 2} distinct families, got {len(distinct_fresh_fams)}"
+        )
+
+    return dict(
+        status="PASS",
+        admitted_rows=len(validated_rows),
+        admitted_families=len(distinct_fresh_fams),
+        manifest_sha256=gate["manifest_sha256"],
+        records=validated_rows,
+    )
+
+
+def verify_frozen_teacher_identity(
+    teacher_checkpoint_sha256,
+    dope_sha256,
+    initial_param_sha256,
+    current_param_sha256,
+    teacher_training_mode=False,
+    any_requires_grad=False,
+):
+    """Verify that the frozen r882 teacher actor/parameters never mutate or enter training mode."""
+    if teacher_checkpoint_sha256 != R882_SHA256:
+        raise RuntimeError("frozen-teacher identity violation: r882 SHA256 mismatch")
+    if dope_sha256 != DOPE_SHA256:
+        raise RuntimeError("frozen-teacher identity violation: DOPE SHA256 mismatch")
+    if not _is_hex64(initial_param_sha256) or not _is_hex64(current_param_sha256):
+        raise RuntimeError(
+            "frozen-teacher identity violation: invalid parameter digest"
+        )
+    if initial_param_sha256 != current_param_sha256:
+        raise RuntimeError(
+            "frozen-teacher identity violation: teacher parameter digest mutated"
+        )
+    if bool(teacher_training_mode):
+        raise RuntimeError(
+            "frozen-teacher identity violation: teacher model is in training mode"
+        )
+    if bool(any_requires_grad):
+        raise RuntimeError(
+            "frozen-teacher identity violation: teacher parameter has requires_grad=True"
+        )
+    return dict(
+        status="PASS",
+        teacher_checkpoint_sha256=teacher_checkpoint_sha256,
+        dope_sha256=dope_sha256,
+        param_sha256=current_param_sha256,
+        immutable=True,
+    )
+
+
+def admit_round_checkpoint_pooled(
+    rows, incumbent_values, candidate_panel, seed=BOOT_SEED
+):
+    """Per-round single-arm pooled 205-family paired bootstrap checkpoint selector.
+
+    Evaluates a candidate checkpoint across all 3 seeds x 205 pooled B families (10,000 draws)
+    BEFORE checkpoint retention. A positive mean gain with 95% CI crossing 0 (`lcb95 <= 0`)
+    or excess family harm (`harm_rate > 0.10`) is strictly rejected.
+    """
+    families = [r["family_id"] for r in rows]
+    fams_sorted = sorted(set(families))
+    n_fams = len(fams_sorted)
+    if n_fams != DLTRAIN_FAMILY_COUNT:
+        raise ValueError(
+            f"pooled checkpoint selector requires 205 families, got {n_fams}"
+        )
+
+    base = np.asarray(incumbent_values, dtype=np.float64)
+    if base.ndim == 1:
+        if base.shape != (len(rows),):
+            raise ValueError("1D incumbent_values must match len(rows)")
+        base_3 = np.broadcast_to(base[None, :], (3, len(rows)))
+    elif base.ndim == 2 and base.shape == (3, len(rows)):
+        base_3 = base
+    else:
+        raise ValueError("incumbent_values must have shape (N_ctx,) or (3, N_ctx)")
+
+    cand = np.asarray(candidate_panel, dtype=np.float64)
+    if cand.ndim != 2 or cand.shape != (3, len(rows)):
+        raise ValueError(f"candidate_panel must have shape (3, {len(rows)})")
+    if not np.isfinite(base_3).all() or not np.isfinite(cand).all():
+        raise ValueError("nonfinite values in pooled checkpoint selector")
+
+    fm_base = np.stack([h177_analysis.family_matrix(v, families)[1] for v in base_3])
+    fm_cand = np.stack([h177_analysis.family_matrix(v, families)[1] for v in cand])
+    diff_3 = fm_cand - fm_base
+    fam_diff = diff_3.mean(axis=0)  # (205,)
+    gain = float(fam_diff.mean())
+    ix = np.random.default_rng(seed).integers(0, n_fams, (DRAWS, n_fams))
+    boot_means = fam_diff[ix].mean(axis=1)
+    lcb95 = float(np.quantile(boot_means, 0.025))
+    ucb95 = float(np.quantile(boot_means, 0.975))
+    p_raw = float((np.sum(boot_means <= MIN_GAIN_MARGIN) + 1) / (DRAWS + 1))
+    harm_count = int(np.sum(fam_diff < -HARM_EPS))
+    harm_rate = float(harm_count / n_fams)
+
+    admit = bool(
+        gain > MIN_GAIN_MARGIN + EPS
+        and lcb95 > 0.0
+        and harm_rate <= MAX_HARM_FRACTION + EPS
+        and p_raw < 0.05
+    )
+    return dict(
+        pooled_b_families=n_fams,
+        gain=gain,
+        ci95=[lcb95, ucb95],
+        lcb95=lcb95,
+        ucb95=ucb95,
+        p_raw=p_raw,
+        harm_count=harm_count,
+        harm_rate=harm_rate,
+        admit=admit,
+        decision="ADMIT" if admit else "REJECT_RETAIN_INCUMBENT",
     )
 
 
 def h178_round_select(rows, incumbent_values, candidate_panels_by_arm, seed=BOOT_SEED):
-    """Per-round H178 calibrated 205-family pooled cross-fit selector.
+    """Per-round H178 calibrated 205-family pooled cross-fit selector across all 3 arms.
 
     Reuses H177/H178 family-matrix & 10,000-draw paired family bootstrap after averaging the 3 seeds
     within each of the 205 families, and additionally enforces family harm <= 10% (<= 20/205 families
@@ -246,63 +625,14 @@ def h178_round_select(rows, incumbent_values, candidate_panels_by_arm, seed=BOOT
         rows, incumbent_values, h177_compat_map, seed=seed
     )
 
-    families = [r["family_id"] for r in rows]
-    fams_sorted = sorted(set(families))
-    n_fams = len(fams_sorted)
-    if n_fams != DLTRAIN_FAMILY_COUNT:
-        raise ValueError(f"pooled selector requires 205 families, got {n_fams}")
-
-    base = np.asarray(incumbent_values, dtype=np.float64)
-    if base.ndim == 1:
-        if base.shape != (len(rows),):
-            raise ValueError("1D incumbent_values must match len(rows)")
-        base_3 = np.broadcast_to(base[None, :], (3, len(rows)))
-    elif base.ndim == 2 and base.shape == (3, len(rows)):
-        base_3 = base
-    else:
-        raise ValueError("incumbent_values must have shape (N_ctx,) or (3, N_ctx)")
-    if not np.isfinite(base_3).all():
-        raise ValueError("nonfinite incumbent_values")
-
-    fm_base = np.stack(
-        [h177_analysis.family_matrix(v, families)[1] for v in base_3]
-    )  # (3, 205)
-    ix = np.random.default_rng(seed).integers(0, n_fams, (DRAWS, n_fams))
-
     raw_decisions = {}
     pvals = {}
     for arm in ARMS:
-        arr = np.asarray(candidate_panels_by_arm[arm], dtype=np.float64)
-        if arr.ndim != 2 or arr.shape != (3, len(rows)):
-            raise ValueError(f"arm {arm} must provide shape (3, {len(rows)})")
-        if not np.isfinite(arr).all():
-            raise ValueError(f"nonfinite candidate values in {arm}")
-        fm_cand = np.stack([h177_analysis.family_matrix(v, families)[1] for v in arr])
-        diff_3 = fm_cand - fm_base
-        fam_diff = diff_3.mean(axis=0)  # (205,)
-        gain = float(fam_diff.mean())
-        boot_means = fam_diff[ix].mean(axis=1)
-        lcb95, ucb95 = (
-            float(np.quantile(boot_means, 0.025)),
-            float(np.quantile(boot_means, 0.975)),
+        single = admit_round_checkpoint_pooled(
+            rows, incumbent_values, candidate_panels_by_arm[arm], seed=seed
         )
-        p_raw = float((np.sum(boot_means <= MIN_GAIN_MARGIN) + 1) / (DRAWS + 1))
-        harm_count = int(np.sum(fam_diff < -HARM_EPS))
-        harm_rate = float(harm_count / n_fams)
-        pvals[arm] = p_raw
-        raw_decisions[arm] = dict(
-            arm=arm,
-            pooled_b_families=n_fams,
-            gain=gain,
-            ci95=[lcb95, ucb95],
-            lcb95=lcb95,
-            ucb95=ucb95,
-            p_raw=p_raw,
-            harm_count=harm_count,
-            harm_rate=harm_rate,
-            improved_families=int(np.sum(fam_diff > EPS)),
-            degraded_families=int(np.sum(fam_diff < -EPS)),
-        )
+        pvals[arm] = single["p_raw"]
+        raw_decisions[arm] = dict(arm=arm, **single)
 
     holm_p = h177_analysis.holm(pvals)
     decisions = {}
@@ -325,7 +655,7 @@ def h178_round_select(rows, incumbent_values, candidate_panels_by_arm, seed=BOOT
         h177_rule_verified=bool(
             len(h177_check["CTRL"]["seed_averaged_family_means"]) == 205
         ),
-        pooled_b_families=n_fams,
+        pooled_b_families=DLTRAIN_FAMILY_COUNT,
         decisions=decisions,
     )
 

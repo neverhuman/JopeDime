@@ -1,7 +1,7 @@
 # H205 — Fresh D4 families vs static 205-family pool and static teacher, 50 rounds from r882, H178 pooled selector
 
 **Owner:** `rd_argon` `[ARGON]`.
-**Assignment:** `~/nudges/n2022_rd_argon_h205.md` and `~/nudges/hwave_t2022_plan.md`.
+**Assignment:** `~/nudges/n2022_rd_argon_h205.md`, `~/nudges/hwave_t2022_plan.md`, and `/home/ubuntu/jope_plan/evidence/research_restore_20261101/H205-TERMINAL-AND-REPAIR-0454.md`.
 **Authority:** `"Jepson via Grok Bot, card answer 8:22 PM MT" (2026-11-01, t11s3): "Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared."`
 **Claim:** `~/jope_plan/ns/receipts/H205_claim.txt` and `CLAIM GPU xbabe1 H205 rd_argon` in `AGENT_CHAT.md`.
 
@@ -13,7 +13,7 @@
   - `H206` (`gpu_fused_redteam_codex`): Search distillation on `xbabe3` RTX 3090 (queued until `xbabe3` disk is cleared below `~88%`).
   - `H207` (`rd_astra`): Singleton test-time augmentation (`TTA`) diagnostic addendum (renumbered from `rd_astra`'s earlier H204 TTA).
 - **Authorized unblocks (`t2022`):**
-  1. **Unblock (a) — Real-catalog D4 family-exclusion fix:** `luna_v1_tel` owns the 2-line fix in `research/joint_regbin/admission.py` (accepting bare `dedupe_fingerprint:*` and `source_file:*` keys in `exclude_d4_families` and scoping `source_file` binary exclusion to rows not in `admitted_d4_keys`). `STATIC-DATA`, `STATIC-TEACHER` infrastructure, and native `r882` `91/91` parity launch immediately on `xbabe1` RTX 4090; `FRESH` arm execution gates on `luna_v1_tel`'s `JRB-01 ADMISSION PASS` receipt.
+  1. **Unblock (a) — Real-catalog D4 family-exclusion fix:** `luna_v1_tel` owns the fix in `research/joint_regbin/admission.py` (PR #1722). Note: catalog/role-manifest closure alone does not qualify `H205` fresh training inputs; `FRESH` and `STATIC-TEACHER` require admitted fresh D4 regression rows plus verified native-Rust-CV (`bootstrap.s1main --fit-s1`) label receipts.
   2. **Unblock (b) — Numeric thread rule:** `<= 4` numeric threads (`OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `NUMEXPR_NUM_THREADS`, `RAYON_NUM_THREADS`, and PyTorch intra-op/inter-op threads `<= 4`); CUDA runtime and driver helper threads (`cuda*`, `nv*`, `pt_autograd*`, `cudnn*`, `cublas*`) are exempt from the numeric thread cap while retaining `nice -n 19`, CPU `<= 85%`, RSS `<= 6 GB`, disk `<= 93.8%` (`>= 40 GB` free), and single-GPU-process admission.
   3. **Unblock (c) — Launch before prereg PR review:** Launch before prereg PR review is authorized provided `PREREG.md` is committed and the prereg PR is opened before scored inference. `rd_argon` does not merge its own PR.
 
@@ -21,36 +21,51 @@
 
 Every continuation wave from `H140` through `H202` updated the `29,211`-parameter `adapter_10tok` head on the fixed `1,219` `DL-Train` contexts (`205` families) and hit a hard covariate-support ceiling (`NO_ADVANCE`). Does supplying fresh, nonsealed D4 `TRAIN` families with newly verified Rust-CV (`bootstrap.s1main --fit-s1`) evaluations across 50 rounds break the static-pool ceiling under equal compute, and how much of any change comes from fresh covariate support alone (`STATIC-TEACHER`) versus fresh ground-truth Rust-CV labels (`FRESH`)?
 
-## Arms and Equal-Compute Design
+## Arms, Shared Fresh Schedule, and Frozen Teacher Contract
 
 All three active arms start from the exact `r882` checkpoint (`0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64`) with frozen `DOPE` (`c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`) and run **50 rounds** across seeds `205101, 205102, 205103` (fold seed `205140`, bootstrap seed `205141`) with identical optimizer step budgets (`16` family-stratified microbatches of `8` distinct families per round, `24`-candidate slates per context: `4` revealed + `20` unrevealed):
 
 | Arm | Covariate Support (Families) | Supervision Signal | Compute Budget | Role |
 |---|---|---|---|---|
 | `R882` | Fixed reference (`0` updates) | None (frozen `r882`) | `0` rounds | Baseline reference (`Elo 1500`); `91/91` exact `DL-Val` parity (`1.1377941898164525`) verified before any candidate forward |
-| `STATIC-DATA` | Fixed `1,219` `DL-Train` contexts (`205` families) | Fixed pool fitness + gate (current flywheel recipe) | `50` rounds $\times$ `16` microbatches | Control 1 (static covariate support, ground-truth labels) |
-| `STATIC-TEACHER` | Fresh nonsealed D4 `TRAIN` families each round | Frozen `r882` teacher cost rankings on fresh D4 pools | `50` rounds $\times$ `16` microbatches | Control 2 (fresh covariate support, static teacher labels) |
-| `FRESH` | Fresh nonsealed D4 `TRAIN` families each round (post `JRB-01 ADMISSION PASS`) | Newly verified Rust-CV (`bootstrap.s1main --fit-s1`) fitness + gate | `50` rounds $\times$ `16` microbatches | **Primary treatment** (Holm $m = 2$ vs `STATIC-DATA` and `STATIC-TEACHER`) |
+| `STATIC-DATA` | Fixed `1,219` `DL-Train` contexts (`205` families, `123` `FIT` families/fold) | Fixed pool fitness + gate (current flywheel recipe) | `50` rounds $\times$ `16` microbatches | Control 1 (static covariate support, ground-truth labels) |
+| `STATIC-TEACHER` | Admitted fresh nonsealed D4 `TRAIN` families (shared schedule with `FRESH`, strictly disjoint from static `205` families and all evaluation/sealed families) | Frozen `r882` teacher cost rankings (`verify_frozen_teacher_identity` enforced) on the shared fresh D4 schedule | `50` rounds $\times$ `16` microbatches | Control 2 (fresh covariate support, frozen `r882` teacher labels) |
+| `FRESH` | Admitted fresh nonsealed D4 `TRAIN` families (shared schedule with `STATIC-TEACHER`, strictly disjoint from static `205` families and all evaluation/sealed families) | Newly verified native-Rust-CV (`bootstrap.s1main --fit-s1`) fitness + gate receipts (`verify_and_load_fresh_d4_pool`) | `50` rounds $\times$ `16` microbatches | **Primary treatment** (Holm $m = 2$ vs `STATIC-DATA` and `STATIC-TEACHER`) |
 
-## Per-Round Admission (`H178` Calibrated Pooled Selector)
+### Prospective P1 Guards (`verify_and_load_fresh_d4_pool` & `verify_frozen_teacher_identity`)
+1. **Disjoint Fresh-Family & Native-Label Admission (`verify_and_load_fresh_d4_pool`):**
+   - Requires `JRB-01` `status == "PASS"` receipt plus admitted fresh D4 regression records (`task == "regression"`, `source_split == "train"`, `dl_split == "DL-Train"`, `has_meta_test == False`, 64-hex `context_sha256` and `train_sha256`).
+   - Requires each fresh record to carry a verified `native_evaluator_receipt` (`status == "PASS"`, `evaluator == "bootstrap.s1main --fit-s1"`, 64-hex `evaluator_binary_sha256`, and 64-hex `labels_sha256` matching the 24-candidate `fitness` and `gate` payload).
+   - **Fake-fresh rejection:** Any fresh family ID, alias, or `context_sha256` present in the static `205`-family roster (`1,219` `DL-Train` contexts) is rejected (`RuntimeError`).
+   - **Evaluation/sealed leakage rejection:** Any fresh family ID, alias, or `context_sha256` intersecting `B_k`, `A_k`, `DL-Val`, or sealed D4 confirmation families is rejected (`RuntimeError`).
+   - **Identical Fresh Schedule:** `STATIC-TEACHER` and `FRESH` share the exact same `(round, microbatch, families, cids)` fresh schedule (`stream_tag="FRESH_SHARED"` in `build_equal_compute_round_plan(..., fresh_fit_rows=...)`).
+2. **Frozen Teacher Identity (`verify_frozen_teacher_identity`):**
+   - Verifies that the teacher checkpoint SHA256 (`0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64`), `DOPE` SHA256 (`c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`), and initial `r882` parameter digest remain immutable, with `training=False` and `requires_grad=False`.
 
-At the end of each round $t \in \{1, \dots, 50\}$, the round candidate is evaluated on the 5-fold cross-fit selector folds $B_0 \cup \dots \cup B_4$ (`205` families, `1,219` contexts) using the `H177`/`H178` pooled selector (`research/flywheel_selfplay/h177_pooled_selector/analysis.py` and `research/flywheel_selfplay/h178_pooled_calibration/calibration.py`):
-- Average across the 3 seeds within each of the `205` families before running `10,000` paired family-bootstrap draws (`boot_seed = 205141`).
-- Admit round $t$'s checkpoint iff:
+## Per-Round Admission (`H178` Lockstep Calibrated Pooled Selector)
+
+Rounds $t \in \{1, \dots, 50\}$ execute in lockstep across all $3 \text{ seeds} \times 5 \text{ outer folds} = 15$ cells per arm. At each checkpoint evaluation round, the full `(3, 1219)` pooled-$B$ candidate panel across $B_0 \cup \dots \cup B_4$ (`205` families) is evaluated via `admit_round_checkpoint_pooled` (`10,000` paired family-bootstrap draws, `boot_seed = 205141 + t`) **before** checkpoint retention:
+- Average across the 3 seeds within each of the `205` families before running `10,000` paired family-bootstrap draws.
+- Admit round $t$'s checkpoint across the arm's 15 cells iff **all four** hold:
   1. Equal-family native utility gain over the current incumbent `> 0.001 + 1e-12`;
-  2. One-sided 95% lower confidence bound `LCB95 > 0.0`;
-  3. Family harm rate `<= 10%` (`<= 20 / 205` families degraded by more than `0.01`).
-- If rejected, the arm retains its previous admitted checkpoint for round $t + 1$.
-- Stage-1 pooled-$B$ selection locks are written and `fsync`ed (`pooled_b_selection_lock.json`) before any held-out $A$-fold or confirmation scoring (`StageOrderGuard`).
+  2. One-sided 95% lower confidence bound `LCB95 > 0.0` (a favorable mean with 95% CI crossing `0` cannot advance);
+  3. Family harm rate `<= 10%` (`<= 20 / 205` families degraded by more than `0.01`; excess harm cannot advance);
+  4. Bootstrap $p_{\text{raw}} < 0.05$.
+- If rejected, all 15 cells for that arm revert to their previous admitted `incumbent_state` before round $t + 1$.
+- Stage-1 `STATIC-DATA` panels are flushed to `stage1_static_data_panels.npz` before waiting on Stage 2, and `pooled_b_selection_lock.json` is written and `fsync`ed before any held-out $A$-fold or confirmation scoring.
 
 ## Common Gate (`hwave_t2022_plan.md`)
 
 1. **Native `r882` Parity Gate (Stage 0):** Before any candidate forward or optimizer step, `r882` must reproduce `91/91` exact native `DL-Val` utilities (`mean = 1.1377941898164525`, byte-identical to `best_dev_checkpoint.json`). Any mismatch aborts immediately.
 2. **205-Family Pooled Cross-Fit Gate:** On the held-out cross-fit assessment panel $A_0 \cup \dots \cup A_4$ (`205` families), `FRESH` must achieve `LCB95 > 0.0`, Holm-adjusted $p < 0.05$ ($m = 2$ contrasts: `FRESH - STATIC-DATA` and `FRESH - STATIC-TEACHER`), and family harm `<= 10%` (`<= 20 / 205` families).
-3. **Sealed D4 Confirmation Separation:** The `76` sealed D4 confirmation families (`122` datasets) never enter training, inner fitting, teacher distillation, or per-round $B$ selection. The runtime `Audit` hook blocks any open of `/sealed`, `/holdout`, `meta-test`, or sealed confirmation paths during training and development. Final confirmation readout is permitted only once, after Stage-2 pooled-$A$ lock and only if the 205-family pooled cross-fit gate passes.
+3. **Sealed D4 Confirmation Separation:** The `76` sealed D4 confirmation families (`122` datasets) never enter training, inner fitting, teacher distillation, or per-round $B$ selection.
 
-## Host, GPU Sharing, and Custody
+## Prior Attempt Terminal Ledger & Cumulative Budget (No Reset)
 
-- **Host & Device:** `xbabe1` `cuda:0` (`NVIDIA GeForce RTX 4090`), sharing the GPU with the live flywheel `PID 2297929` (`~17.2 GiB / 24.5 GiB` used, `~7.3 GiB` free).
-- **Non-Interference:** `H205` runs as a single GPU process with `torch.cuda.set_per_process_memory_fraction(0.18, 0)` (`<= 4.4 GiB` VRAM), `nice -n 19`, and `<= 4` numeric threads. `PID 2297929` is never stopped, signaled, or reniced.
-- **Run Directory & Custody:** `/home/ubuntu/jope-data/h205/run-<UTC>` on `xbabe1`, mirrored create-only to `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/`.
+- **Attempt 1 (`run-20261102T0355Z`, source `357fc075c913b4e4b883d305ce6009c4d727327f`):** Failed at `Stage 0` (`11.552287836093456s` wall time, `0` optimizer updates) due to `KeyError: 'values'` when reading `best_dev_checkpoint.json`.
+- **Attempt 2 (`run-20261102T0358Z`, source `812ec1ee78cc32a70bb275c109b0c2138d0fb3b8`):**
+  - Terminal disposition: **`INCOMPLETE` / `EXPLORATORY_NONCONFORMING_HELD_AT_FRESH_BOUNDARY` (`NO_ADVANCE`)**.
+  - Verified Stage 0 native `r882` `91/91` bit-exact parity (`mean = 1.1377941898164525`), completed `1,500` exploratory static optimizer updates (`750` `STATIC-DATA` + `750` `STATIC-TEACHER` under the pre-repair `812ec1ee` source), `0` `FRESH` updates, and was safely stopped by owner `SIGTERM` at `STAGE2_WAITING_FOR_JRB01_ADMISSION_PASS` (`1,959.3849376700819s` wall time) before `ADMISSION-PASS.json` existed.
+  - **Missing-panel evidence limit:** In `812ec1ee78cc32a70bb275c109b0c2138d0fb3b8`, `static_b_panel`, `static_a_panel`, `teacher_b_panel`, `teacher_a_panel`, and `round_log` were held in process memory across Stage 1 and were not flushed to disk before the Stage 2 wait loop; raw score panels, saved checkpoints, and Elo ratings for `run-20261102T0358Z` are therefore recorded as `null` (`metrics.json`) and were not reconstructed by an unregistered rerun.
+  - **Create-only S3 custody:** Pinned by local SHA256 and exact-S3-VersionId downloaded-byte SHA256 in `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/terminal_custody_manifest_20261102T0502Z.json` (`VersionId: BInrGnjKhZOFhuK5qS9ZOA.EcIsGFwAS`, `SHA256: f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186`).
+- **Cumulative Campaign Wall Budget:** `1,970.9372255061753s` consumed of `25,200.0s` (`7h` cap); **`23,229.062774493825s` (`6.45h`) remaining**.

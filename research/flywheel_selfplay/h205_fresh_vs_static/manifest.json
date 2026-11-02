@@ -53,12 +53,37 @@
     "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
   },
   "source_sha256": {
-    "PREREG.md": "7b2b042b4a40dbb9ecc04e587d51647f9431527e7ff74a277f5ead4bd605c18d",
-    "README.md": "95f795a54e8e4d234f9fd2c5f9b69559f74f5ba44bef007124c7b7c0f9e7a26d",
-    "analysis.py": "129d069464d6ae0ec898a50b67ed992401634242c26fb97f73147ad7ef0bf7d0",
+    "PREREG.md": "495312b9e51f28728990ed5a473fe1c0278849e18a108f83343588b1317c503f",
+    "README.md": "a25961b865d97dd777a71dd96c870d323828f539c9d4896dd55758087063ff41",
+    "analysis.py": "45dfbdef48b2c8daa1249ef3177cbacb4a28e6b67aeb4ea40fdb7a5682559105",
     "monitor.py": "3e973a997bc3578cd6362b712eba580d033302082e5cdf221348c9b6d2e03d1e",
-    "runner.py": "ad5c228ae5f44e7353bb90bb1c0e52cf333295318f625e3463e5272c5f50bd31",
-    "test_h205.py": "fad9b4772dff9c4e064a03971de35d0fe9bd80bdadcef6e762d0573a3c6a9795"
+    "runner.py": "d11c55a48226a72c5913e7062cf35545f8f855f4bd7a282d45494a0f27da0433",
+    "test_h205.py": "d7b2332c48c426ac315fd3a63cfb970c46670d10fd5acbbe6961d6d0649ba3af"
   },
-  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/"
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/",
+  "prior_attempt_2_source_pins": {
+    "attempt_id": "run-20261102T0358Z",
+    "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
+    "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING",
+    "original_manifest_sha256": "aef78c471ebde5bbbb93d3be998bac929b3b5ebfd43e6706eb827b451d6d54a9",
+    "original_source_sha256": {
+      "PREREG.md": "7b2b042b4a40dbb9ecc04e587d51647f9431527e7ff74a277f5ead4bd605c18d",
+      "README.md": "95f795a54e8e4d234f9fd2c5f9b69559f74f5ba44bef007124c7b7c0f9e7a26d",
+      "analysis.py": "129d069464d6ae0ec898a50b67ed992401634242c26fb97f73147ad7ef0bf7d0",
+      "monitor.py": "3e973a997bc3578cd6362b712eba580d033302082e5cdf221348c9b6d2e03d1e",
+      "runner.py": "ad5c228ae5f44e7353bb90bb1c0e52cf333295318f625e3463e5272c5f50bd31",
+      "test_h205.py": "fad9b4772dff9c4e064a03971de35d0fe9bd80bdadcef6e762d0573a3c6a9795"
+    },
+    "s3_terminal_custody_manifest_key": "experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/terminal_custody_manifest_20261102T0502Z.json",
+    "s3_terminal_custody_manifest_version_id": "BInrGnjKhZOFhuK5qS9ZOA.EcIsGFwAS",
+    "s3_terminal_custody_manifest_sha256": "f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186"
+  },
+  "cumulative_budget_ledger": {
+    "attempt_1_elapsed_seconds": 11.552287836093456,
+    "attempt_2_elapsed_seconds": 1959.3849376700819,
+    "total_elapsed_wall_seconds": 1970.9372255061753,
+    "campaign_wall_budget_cap_seconds": 25200.0,
+    "remaining_wall_budget_seconds": 23229.062774493825,
+    "budget_reset": false
+  }
 }
