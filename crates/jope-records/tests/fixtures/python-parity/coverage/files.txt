@@ -356,6 +356,8 @@ crates/jope-bench/src/panel/inference_report/json.rs
 crates/jope-bench/src/panel/inference_report/tests.rs
 crates/jope-bench/src/panel/inference_report/tests/tests_01.rs
 crates/jope-bench/src/panel/inference_report/tests/tests_02.rs
+crates/jope-bench/src/panel/inference_report/summary.rs
+crates/jope-bench/src/panel/inference_report/validation.rs
 crates/jope-bench/src/panel/methods.rs
 crates/jope-bench/src/panel/mod.rs
 crates/jope-bench/src/panel/optimize.rs
