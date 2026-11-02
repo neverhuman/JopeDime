@@ -1086,9 +1086,7 @@ def evaluate_slate24_live_s1main(
             if gate:
                 fit_live = 0.8 * mean_lr + 0.1 * tail_lr + 0.1 * sd_lr + 0.0005 * comp
             else:
-                fit_live = (
-                    100.0 + max(mean_lr, 0.0) + max(tail_lr, 0.0) + max(sd_lr, 0.0)
-                )
+                fit_live = 100.0 + mean_lr + tail_lr + sd_lr
             max_diffs.append(abs(float(fit_live) - float(rec["fitness"])))
             gate_matches.append(bool(gate) == bool(rec["cv_gate_passed"]))
 
