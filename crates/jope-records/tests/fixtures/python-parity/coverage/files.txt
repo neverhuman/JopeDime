@@ -638,6 +638,9 @@ crates/jope-campaigns/src/jope_generalized_gp/catalog.rs
 crates/jope-campaigns/src/jope_generalized_gp/contracts.rs
 crates/jope-campaigns/src/jope_generalized_gp/evaluator.rs
 crates/jope-campaigns/src/jope_generalized_gp/evolution.rs
+crates/jope-campaigns/src/jope_generalized_gp/evolution/archive.rs
+crates/jope-campaigns/src/jope_generalized_gp/evolution/offspring.rs
+crates/jope-campaigns/src/jope_generalized_gp/evolution/ranking.rs
 crates/jope-campaigns/src/jope_generalized_gp/mod.rs
 crates/jope-campaigns/src/jope_generalized_gp/pilot.rs
 crates/jope-campaigns/src/jope_generalized_gp/splits.rs
