@@ -245,11 +245,16 @@ def test_partial_client_selection_requires_exclusion_reason():
 
 
 def test_partial_client_capture_records_excluded_client(a5_tmp_path):
+    original_mask = signal.pthread_sigmask(signal.SIG_BLOCK, ())
+    original_handler = signal.getsignal(signal.SIGINT)
     args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
     args.clients = ["claude_code", "codex_cli"]
     args.exclude_reason = "Gemini CLI MCP configuration unavailable"
 
     result = THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert signal.pthread_sigmask(signal.SIG_BLOCK, ()) == original_mask
+    assert signal.getsignal(signal.SIGINT) is original_handler
 
     assert result["status"] == "PARTIAL_CAPTURES_PENDING_SEMANTIC_REVIEW"
     assert result["selected_clients"] == ["claude_code", "codex_cli"]
