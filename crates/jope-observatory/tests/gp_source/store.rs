@@ -40,7 +40,6 @@ fn every_language_compiles_and_every_token_survives_restart_and_duplicates() {
     assert_eq!(store.sequence, 10);
 }
 
-/// Replay: `cargo test -p jope-observatory --test gp_source store::unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens -- --exact`.
 #[test]
 fn unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens() {
     fn assert_failed_artifact_has_no_fabricated_source(artifact: &gp_source::Artifact) {
