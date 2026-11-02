@@ -1,4 +1,4 @@
-//! `jope motifs …`: the same `Cli`/`Cmd`/`exec`/`run` shape as the other subcommand crates,
+//! `jope motifs …`: the same `Cli`/`exec`/`run` shape as the other subcommand crates,
 //! so the umbrella can delegate to it in process.
 //!
 //! `mine` reads the qualified records of a learning State and writes one new private
@@ -105,12 +105,12 @@ pub const CHECK_CODES: [(&str, &str); 17] = [
 pub struct Cli {
     #[command(subcommand)]
     /// The requested mining or validation operation.
-    pub cmd: Cmd,
+    pub cmd: MotifsCommand,
 }
 
 #[derive(Subcommand)]
 /// Supported private motif commands.
-pub enum Cmd {
+pub enum MotifsCommand {
     /// Build a new private fragment table.
     Mine {
         /// State root; otherwise the resolved default.
@@ -163,6 +163,9 @@ pub enum Cmd {
         json: bool,
     },
 }
+
+/// Compatibility name for the motif command enum.
+pub type Cmd = MotifsCommand;
 
 /// Where outputs may be written, and how a State is opened.
 pub(crate) struct Env {
@@ -234,7 +237,7 @@ pub(crate) fn run_with(
     err: &mut dyn Write,
 ) -> Result<u8> {
     match cli.cmd {
-        Cmd::Mine {
+        MotifsCommand::Mine {
             state,
             out: directory,
             min_datasets,
@@ -265,7 +268,7 @@ pub(crate) fn run_with(
                 }
             }
         }
-        Cmd::Validate {
+        MotifsCommand::Validate {
             table,
             hosts_per_fragment,
             state,
