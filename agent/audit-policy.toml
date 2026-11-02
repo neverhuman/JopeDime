@@ -54,6 +54,9 @@ extra_excluded_paths = [
   # Variety-b HLT-001 sha256:f73fa835...: `old` identifies the prior archiver
   # service whose retirement is checked; exact-path disposition is documented.
   "deploy/dl-flywheel/pipelines/telemetry/trace_archive.py",
+  # Prodlang HLT-046 sha256:c8f09a3c...: this lifecycle Stage is a distinct domain
+  # from research evidence phases and CUDA tensor projection checkpoints; see disposition.
+  "crates/jope-pipeline/src/resource_ledger.rs",
   # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
   # Ciaudit HLT-043 sha256:804e402d...: exact provenance-pinned copy; see disposition.
