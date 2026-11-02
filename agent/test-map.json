@@ -1,6 +1,11 @@
 {
   "schema": "jope-dime.test-map/v1",
   "tests": {
+    ".cargo/config.toml": {
+      "command": "just hygiene",
+      "lane": "fast",
+      "purpose": "validate Cargo configuration routing and repository hygiene"
+    },
     "AGENTS.md": {
       "command": "python3 deploy/ci/test-runner.py",
       "lane": "score",

@@ -2,6 +2,7 @@
   "schema": "jope-dime.owner-map/v1",
   "workspace": "jope-dime",
   "owners": {
+    ".cargo/config.toml": "ops",
     "AGENTS.md": "workspace",
     "README.md": "docs",
     "MASTER_PLAN.md": "workspace",
