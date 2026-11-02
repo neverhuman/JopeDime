@@ -499,14 +499,19 @@ impl Proposer {
                         let first = index(&mut rng, heads.len());
                         let before = batch.proposals.len();
                         let first_dsl = assemble(parsed.stages.clone(), heads[first].clone());
-                        let collision = memo_key(&first_dsl)
-                            .is_ok_and(|key| seen.contains(&key) || memo.contains(&key));
+                        // An unchanged selected parent is a no-op, not a
+                        // changed head that collided with a known program.
+                        // Keep the frozen single rejected draw for that case.
+                        let parent_key = memo_key(&parent.dsl)?;
+                        let collision = memo_key(&first_dsl).is_ok_and(|key| {
+                            key != parent_key && (seen.contains(&key) || memo.contains(&key))
+                        });
                         let order = if collision {
                             head_retry_order(first, heads.len(), step, &rng)
                         } else {
                             vec![first]
                         };
-                        // A repeated known key should not consume this typed
+                        // A genuine changed-head collision should not consume this typed
                         // mutation slot while a legal, novel head is available.
                         // Keep the initial weighted draw and RNG position; the
                         // finite retry order preserves the pool's weights.
@@ -875,6 +880,104 @@ mod tests {
             exhausted.proposals.len()
                 + exhausted.invalid_or_filtered
                 + exhausted.duplicates_or_memo
+        );
+    }
+
+    #[test]
+    fn unchanged_head_draw_is_rejected_before_the_next_edit_family() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let lm = [0.0; 48];
+        let (_, templates) = select_landmark_preferred_pools(&lm);
+        let parents = [Program::from_dsl(format!("(pipe X {})", templates[0]))];
+        let parent_key = memo_key(&parents[0].dsl).unwrap();
+        let mut controls = 0;
+        for seed in 0..128 {
+            let mut req = request(&parents, &lm, false);
+            req.seed = seed;
+            let mut rng = round_rng(req.seed, req.round);
+            let mut parameter = proposer.pipeline(&parents[0]).unwrap();
+            for stage in &mut parameter.stages {
+                mutate_parameters(stage, &mut rng);
+            }
+            let first = format!("(pipe X {})", templates[index(&mut rng, templates.len())]);
+            if memo_key(&first).unwrap() != parent_key {
+                continue;
+            }
+            let batch = proposer.propose(&req, &NoBank, &BTreeSet::new()).unwrap();
+            let insert = batch
+                .proposals
+                .iter()
+                .position(|p| p.family == ProposalFamily::Insert)
+                .expect("the next applicable edit is insertion");
+            assert!(
+                batch.proposals[..insert]
+                    .iter()
+                    .all(|p| p.family != ProposalFamily::ReplaceHead),
+                "an unchanged parent was promoted into a novel head edit for seed {seed}"
+            );
+            assert!(batch.proposals.iter().all(|p| p.memo_key != parent_key));
+            assert_eq!(batch.proposals.len(), 8);
+            assert_eq!(
+                batch.attempts.values().sum::<usize>(),
+                batch.proposals.len() + batch.invalid_or_filtered + batch.duplicates_or_memo
+            );
+            assert_eq!(
+                batch,
+                proposer.propose(&req, &NoBank, &BTreeSet::new()).unwrap()
+            );
+            controls += 1;
+        }
+        assert!(controls > 0, "the no-op control must actually execute");
+    }
+
+    #[test]
+    fn a_changed_head_matching_another_parent_still_retries() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let lm = [0.0; 48];
+        let (_, templates) = select_landmark_preferred_pools(&lm);
+        let first = Program::from_dsl(format!("(pipe X {})", templates[0]));
+        let first_key = memo_key(&first.dsl).unwrap();
+        let other = templates
+            .iter()
+            .map(|t| Program::from_dsl(format!("(pipe X {t})")))
+            .find(|p| memo_key(&p.dsl).unwrap() != first_key)
+            .unwrap();
+        let parents = [first, other];
+        let known: BTreeSet<_> = parents.iter().map(|p| memo_key(&p.dsl).unwrap()).collect();
+        let mut controls = 0;
+        for seed in 0..128 {
+            let mut req = request(&parents, &lm, false);
+            req.seed = seed;
+            let mut rng = round_rng(req.seed, req.round);
+            let mut parameter = proposer.pipeline(&parents[0]).unwrap();
+            for stage in &mut parameter.stages {
+                mutate_parameters(stage, &mut rng);
+            }
+            let draw = format!("(pipe X {})", templates[index(&mut rng, templates.len())]);
+            if memo_key(&draw).unwrap() != first_key {
+                continue;
+            }
+            // Step 1 edits parents[1], so this first choice changes its head
+            // but collides with parents[0]. It is a real edit, not a no-op.
+            let batch = proposer.propose(&req, &NoBank, &BTreeSet::new()).unwrap();
+            let head = batch
+                .proposals
+                .iter()
+                .position(|p| p.family == ProposalFamily::ReplaceHead)
+                .unwrap();
+            let insert = batch
+                .proposals
+                .iter()
+                .position(|p| p.family == ProposalFamily::Insert)
+                .unwrap();
+            assert!(head < insert, "a genuine parent collision lost its retry");
+            assert!(batch.proposals.iter().all(|p| !known.contains(&p.memo_key)));
+            assert_eq!(batch.proposals.len(), 8);
+            controls += 1;
+        }
+        assert!(
+            controls > 0,
+            "the changed-head control must actually execute"
         );
     }
 
