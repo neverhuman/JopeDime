@@ -33,7 +33,7 @@ report = {
     "auditor_version": "1.7.6", "schema_version": "1.9.0",
     "standard_version": "0.9.0", "paper_edition": "2026.05-ed8",
     "scope": {"mode": "full", "paths": []},
-    "policy_fingerprint": "sha256:131f419494eae9e811ca69b52a2f78a621115fa30765d5daae2519b21f828111",
+    "policy_fingerprint": "sha256:da7cc7893bb61401234c296062e81571858032ff815bd2bcbd828c05c4af941a",
     "policy": {"minimum_score": floor, "mode": "standard", "fail_on": ["critical", "high"], "advisory_on": ["low", "medium"]},
     "score": 52 if low else 94, "raw_score": 52 if low else 94,
     "decision": {"status": "fail" if failed else "pass", "passed": not failed,
