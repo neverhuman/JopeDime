@@ -39,14 +39,14 @@ Freeze the evaluation contract before opening final outcomes. Bind evidence to s
 | R25 | [07_results.tex:224](sections/07_results.tex#L224) | outcomes and time |
 | R26 | [07_results.tex:225](sections/07_results.tex#L225) | score |
 | R27 | [07_results.tex:226](sections/07_results.tex#L226) | score |
-| D1 | [08_meaning.tex:3](sections/08_meaning.tex#L3) | Supply a source-grounded discussion of the completed evaluation from Jepson. Reconcile every conclusion below with those outcomes and their uncertainty. |
+| D1 | [08_meaning.tex:4](sections/08_meaning.tex#L4) | Supply a source-grounded discussion of the completed evaluation from Jepson. Reconcile every conclusion below with those outcomes and their uncertainty. |
 | D2 | [08_meaning.tex:8](sections/08_meaning.tex#L8) | Use Jepson's supplied output and archive comparisons, with program behavior checks, to distinguish selection from useful new composition. |
-| D3 | [08_meaning.tex:13](sections/08_meaning.tex#L13) | Interpret transfer of first-proposal quality across problems using the matched conditions and paired family-level uncertainty supplied by Jepson. |
-| D4 | [08_meaning.tex:18](sections/08_meaning.tex#L18) | Discuss referee validity, contamination, admission versus generalization, and documented failure limits from Jepson's source. |
-| D5 | [08_meaning.tex:23](sections/08_meaning.tex#L23) | State which level of self-improvement is supported by source-bound training changes and independent proposal outcomes supplied by Jepson. |
-| D6 | [08_meaning.tex:28](sections/08_meaning.tex#L28) | Describe limits on task coverage, the program language, referee reliability and measured cost using Jepson's supplied source. |
-| D7 | [08_meaning.tex:33](sections/08_meaning.tex#L33) | Supply the conclusion and next steps justified by Jepson's results and their limits; reserve stronger claims until their required evidence is supplied. |
-| P1 | [flywheel_status.tex:84](sections/06_method/flywheel_status.tex#L84) | Bind the retained snapshot to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. |
+| D3 | [08_meaning.tex:12](sections/08_meaning.tex#L12) | Interpret transfer of first-proposal quality across problems using the matched conditions and paired family-level uncertainty supplied by Jepson. |
+| D4 | [08_meaning.tex:16](sections/08_meaning.tex#L16) | Discuss referee validity, contamination, admission versus generalization, and documented failure limits from Jepson's source. |
+| D5 | [08_meaning.tex:20](sections/08_meaning.tex#L20) | State which level of self-improvement is supported by source-bound training changes and independent proposal outcomes supplied by Jepson. |
+| D6 | [08_meaning.tex:24](sections/08_meaning.tex#L24) | Describe limits on task coverage, the program language, referee reliability and measured cost using Jepson's supplied source. |
+| D7 | [08_meaning.tex:28](sections/08_meaning.tex#L28) | Supply the conclusion and next steps justified by Jepson's results and their limits; reserve stronger claims until their required evidence is supplied. |
+| P1 | [flywheel_status.tex:36](sections/06_method/flywheel_status.tex#L36) | Bind the retained snapshot to the exact loop source, adapter, candidate pools, revealed-history inputs and utility normalization. |
 
 The marker table follows the current source lines. Update it whenever a placeholder is added, moved, filled or removed; keep the compiled count and source inventory consistent.
 
