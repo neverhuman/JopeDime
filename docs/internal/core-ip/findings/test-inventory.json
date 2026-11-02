@@ -1816,6 +1816,12 @@
         "training"
       ]
     },
+    "python:python/tests/test_dime_score_worker_validation.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "python:python/tests/test_durable_selfplay.py": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
