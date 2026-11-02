@@ -1,12 +1,11 @@
 \FloatBarrier
 \section{A Later Program-Incumbent Event Clock}\label{app:current-program-clock}
 
-\Cref{fig:fw-current-program-clock} uses a separate capture of
-20 consecutive completed summaries, with every program-event count checked
-against the promotion journal. The full-round clock includes all work and
-waits, including rounds with no event. These records retain the adaptive
-training-side scope and unresolved source-binding requirements of
-\cref{sec:method-status}; independent first-proposal outcomes remain pending.
+\Cref{fig:fw-current-program-clock} uses a separate 20-round summary
+capture, with every program-event count checked against the promotion
+journal. Full-round time includes all work, waits and zero-event rounds.
+The adaptive training-side scope and source-binding limits of
+\cref{sec:method-status} apply; first-proposal results remain pending.
 
 \begin{figure}[tb]
   \centering
@@ -17,7 +16,7 @@ training-side scope and unresolved source-binding requirements of
   the dashed line divides the five events by the total
   \num{2033.96}\,s (8.85 events per hour). All 20 rounds are retained,
   including 17 with no event. The window records zero adapter admissions
-  and no increase in retained adapter utility; these program events do not
-  measure independent first-proposal or serving performance. Scope: \cref{sec:method-status}.}
+  and no retained-utility gain; these program events do not measure
+  independent first-proposal or serving performance. Scope: \cref{sec:method-status}.}
   \label{fig:fw-current-program-clock}
 \end{figure}
