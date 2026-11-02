@@ -762,7 +762,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         old_fixture("transitions/p35_sealed_corpus_identity_rebaseline.v1.json");
     assert_eq!(
         p35_corpus_identity["source_commit"],
-        "1af2e6e337a3aa1d27c85bcdf3a1d68840222d53"
+        "8e44ad43d913f105da5df8d2f8d1094585043d20"
     );
     assert_eq!(
         gov04_portable_pty["source_commit"],
