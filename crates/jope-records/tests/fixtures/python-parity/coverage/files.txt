@@ -905,6 +905,8 @@ crates/jope-datasets/tests/repo_verify.rs
 crates/jope-datasets/tests/roundtrip.rs
 crates/jope-datasets/tests/schema_agreement.rs
 crates/jope-datasets/tests/staging_disposition.rs
+crates/jope-datasets/tests/staging_disposition/custody.rs
+crates/jope-datasets/tests/staging_disposition/protocol.rs
 crates/jope-encoders/Cargo.toml
 crates/jope-encoders/artifacts/model-bundle.v1.json
 crates/jope-encoders/src/bin/model_bundle_pack.rs
