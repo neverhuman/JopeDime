@@ -33,6 +33,8 @@ client_markers = [
   "crates/jope-client/src/sse.rs",
   "crates/jope-client/src/files.rs",
   "crates/jope-client/src/discover.rs",
+  "crates/jope-client/src/discover/local.rs",
+  "crates/jope-client/src/discover/tests.rs",
   "crates/jope-client/src/inproc.rs",
   "crates/jope-client/src/fake.rs",
 ]
