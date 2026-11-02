@@ -6,15 +6,17 @@ advisory_on = ["medium", "low", "info"]
 
 [scan]
 # Generated caches and owner-approved, exact-file false-positive exceptions only.
-# P5 R2 exceptions have per-path evidence and reasons in
-# docs/release/jankurai-p5-r2-exceptions-20261102.md. They do not alter Gitleaks,
-# Rust/Python tests, or source content. Do not add directories, broad globs, or
-# unreviewed paths; each exact exception must be removed when its rationale ends.
+# Exact-file exceptions have per-path evidence and reasons in
+# docs/release/jankurai-p5-r2-exceptions-20261102.md and docs/streaming.md. They
+# do not alter Gitleaks, Rust/Python tests, or source content. Do not add
+# directories, broad globs, or unreviewed paths; each exact exception must be
+# removed when its rationale ends.
 # Existing custody and synthetic-scanner exceptions remain narrowly scoped.
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "deploy/ci/test-gitleaks-config.py",
+  "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",
   "crates/jope-api/src/bin/jope-api-openapi.rs",
@@ -34,6 +36,7 @@ extra_excluded_paths = [
   "crates/jope-client/src/inproc.rs",
   "crates/jope-datasets/src/blobs.rs",
   "crates/jope-datasets/src/cli.rs",
+  "crates/jope-engine/src/sealed_storage.rs",
   "crates/jope-learning/src/clover/round_qual.rs",
   "crates/jope-learning/src/lake/archive.rs",
   "crates/jope-learning/src/lake/roles.rs",

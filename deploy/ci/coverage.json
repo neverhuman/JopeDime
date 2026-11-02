@@ -1320,6 +1320,16 @@
       ],
       "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
     },
+    "job:.github/workflows/ci.yml/jankurai-audit": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "source-audit"
+      ],
+      "scope": "Required same-repository ci.yml PR/manual job; checksum-pinned Jankurai 1.7.5 runs via ops/ci/jankurai.sh, verifies the captured checkout, publishes canonical .jankurai/repo-score.json and .jankurai/repo-score.md repair paths, and uploads the full target/full-audit package containing both reports. Fork PRs are deliberately skipped. Report-only below score 85 preserves the failed audit decision and does not establish a passing audit."
+    },
     "job:.github/workflows/ci.yml/observatory-ui": {
       "discovery": {
         "kind": "workflow-job"
@@ -14291,9 +14301,10 @@
         "inputs",
         "python",
         "e2e-smoke",
+        "source-audit",
         "aggregate"
       ],
-      "scope": "Configured fast PR/manual lane; path-excluded jobs are not passes."
+      "scope": "Configured fast PR/manual lanes plus the required same-repository full-source Jankurai audit; path-excluded jobs are not passes."
     },
     "workflow:.github/workflows/clean-host.yml": {
       "discovery": {
@@ -16031,10 +16042,11 @@
       "environment": {
         "JANKURAI_BIN": "checksum-pinned Jankurai 1.7.5 installed by deploy/ci/install-jankurai.sh",
         "JANKURAI_NO_UPDATE_CHECK": "1",
-        "JOPE_AUDIT_REPORT_ONLY": "1 on trusted main until the score reaches 85 (owner decision 2026-10-22)"
+        "JOPE_AUDIT_REPORT_ONLY": "1 on trusted main and required CI until the score reaches 85 (owner decision 2026-10-22)"
       },
       "evidence": [
         "full default-policy audit reports, including failed gates",
+        "agent repair-routing pair at .jankurai/repo-score.json and .jankurai/repo-score.md for CI runs, included in the uploaded full audit package",
         "complete source archive and SOURCE_MANIFEST.json bound to the full Git SHA",
         "audit-verification.json: report consistency and source closure; validity does not imply score >=85",
         "report-only.json and a job warning when a verified audit is below the floor; the job passes only then, and every integrity, consistency or tool failure still fails it"
@@ -16046,7 +16058,7 @@
         "default audit policy and unchanged score floor 85",
         "captured source path, mode and blob digest manifest"
       ],
-      "path_applicability": "every push to main and manual dispatch of main; independent from the eleven full-* CPU families",
+      "path_applicability": "every push/manual full-main run and every same-repository ci.yml PR/manual run; independent from product CPU test families",
       "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "execution"

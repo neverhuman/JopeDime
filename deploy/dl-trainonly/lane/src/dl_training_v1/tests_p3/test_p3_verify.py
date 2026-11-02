@@ -287,7 +287,8 @@ class SelectionCodeIdentity(fx.P3Case):
         # review fix P3I-1: the review gate applies families.check_provenance, so the P2 modules join the closure
         self.assertEqual([p for p, _ in r["source_tree"]],
                          ["dltrain/__init__.py", "dltrain/common.py", "dltrain/families.py", "dltrain/family_keys.py",
-                          "dltrain/family_pin.py", "dltrain/family_screen.py", "dltrain/holdout.py", "dltrain/s3io.py"])
+                          "dltrain/family_pin.py", "dltrain/family_screen.py", "dltrain/holdout.py", "dltrain/jtt1.py",
+                          "dltrain/quarantine.py", "dltrain/s3io.py"])
         self.assertEqual(r["source_tree_sha256"], fx.sha("".join(f"{p}\0{d}\n" for p, d in r["source_tree"]).encode()))
         self.assertEqual(r["runtime_sha256"], fx.sha(common.canonical(r["runtime"])))
         self.assertEqual(set(r["runtime"]), {"python", "executable_sha256", "boto3", "botocore"})
