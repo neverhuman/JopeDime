@@ -34,7 +34,7 @@ The run-8 receipt contains 16 screenshots: six page states plus checkpoint-dialo
 interrupted-feed states, each at desktop (1440×1000) and mobile (390×844). I reviewed each
 rendered capture; the screenshot-bound notes, verdicts, visual-baseline disposition, receipt
 hash and limitations are recorded in
-[`e2e/reviews/rendered-ux-review.json`](e2e/reviews/rendered-ux-review.json). The review is an
+[`e2e/visual_review.json`](e2e/visual_review.json). The review is an
 implementing-agent self-review. Only the overview screenshots are compared with committed
 Playwright baselines; the other captures have reviewer notes but no configured baseline.
 
