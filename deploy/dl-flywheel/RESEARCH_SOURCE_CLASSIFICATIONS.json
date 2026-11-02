@@ -1855,12 +1855,12 @@
       "sha256": "d1bc811f4ef1c298c0c6bcc680a5006cf987c81fda5d2b33b30ed2df16455f11"
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py": {
-      "bytes": 905,
+      "bytes": 941,
       "classification": {
         "reason": "Bounded research-only generated train-target reference exporter with 28 corrected CPU fixtures. Sealed readonly cutoff, exact successful wrapper/artifact/role bindings, fixed licensed Kumo2051, alias dedup and old-ref retention. No GP/S3 writes, numerical targets, CE promotion, live admission or RL. Production callbacks and actual runtime remain separately qualified.",
         "role": "research"
       },
-      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+      "sha256": "0f4b75b2e15fc665bdc78a92cf2bd7b4d9b9094e1d7023f5ea3f2ed785a032d8"
     },
     "python:deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/operations/runtime_inventory.py": {
       "bytes": 2495,
@@ -3457,13 +3457,13 @@
       "sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
-      "bytes": 17268,
+      "bytes": 17273,
       "classification": {
         "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py": {
       "bytes": 5352,
@@ -3493,13 +3493,13 @@
       "sha256": "e2a89841496d672713831c430462902230b2157398ea4048dd3145024980ab08"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py": {
-      "bytes": 17268,
+      "bytes": 17273,
       "classification": {
         "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py": {
       "bytes": 20376,
@@ -3527,12 +3527,12 @@
       "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py": {
-      "bytes": 17268,
+      "bytes": 17273,
       "classification": {
         "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py": {
       "bytes": 20376,
@@ -3556,7 +3556,7 @@
         "reason": "Bounded research-only exact-version generated-target callbacks/reference compatibility. Source-only support for current physical parent roles, canonical seven-body verifier, fixed Kumo2051 and original normalization; no GP/PUT/numeric-target construction/CE promotion/optimizer admission/RL. Global runner adds exact37+7+11+8 isolated identities, preserving prior749 without rerun. This source/helper or copied historical fixture is not separately counted as an additional wired test family.",
         "role": "research"
       },
-      "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
+      "sha256": "17c034261de03499533d35ffc308bb56b5adb82008b2a53ab73f52429cbb8252"
     },
     "python:deploy/dl-flywheel/run_fresh32_offline.py": {
       "bytes": 4380,

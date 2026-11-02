@@ -26,7 +26,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "9135f0f7096b967184bcce8c10606c9b5d60ae33a7fb2f33baedde37ca75a739"
+      "sha256": "c41f117fe09af13977c7e03b1227c0c5cdd51406f8ab1bfebf422c5d2c9b836d"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -2297,18 +2297,18 @@
       "sha256": "e61f36cc773d5f30a4506fc2360914fac8f0234ca1b29a1e82d3b323fa9fb0c2"
     },
     {
-      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "normalization": "Identifier terminology correction only; append-only transition behavior unchanged; original source hash retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
       "origin_sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d",
       "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/README.md",
       "sha256": "edb7394fedaf8a09ee2c078298bbc10e7645a84def76d11dff805d514d01252d"
     },
     {
-      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "normalization": "Current transition source pin updated for the identifier-only rename; prior qualification receipts and original source pins retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
       "origin_sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c",
       "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/SOURCE_PINS.json",
-      "sha256": "045c8f5838920d323dcc3ae8d6ae1a44baf7cdeb629d0e062e2260a33d19978c"
+      "sha256": "c675048269abd90ab95217df6efff319889aaeee428a8cc32f7c6dfbcf1f4254"
     },
     {
       "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
@@ -2500,11 +2500,11 @@
       "sha256": "706d3c5740ad5ed716f848a312e3574a53194de8603958d153914d669eb64bb3"
     },
     {
-      "normalization": "Exact corrected frozen source/proof bytes; no transformation.",
+      "normalization": "Identifier terminology correction only; append-only transition behavior unchanged; original source hash retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1731/generated-target-export-v2/deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py",
       "origin_sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30",
       "path": "deploy/dl-flywheel/pipelines/generated_target_admission_v1/transition.py",
-      "sha256": "fff9bd5ede97dc0d4cefc529a915a601ef65679772e460905f9b5b88c7e63b30"
+      "sha256": "0f4b75b2e15fc665bdc78a92cf2bd7b4d9b9094e1d7023f5ea3f2ed785a032d8"
     },
     {
       "normalization": "New integration/operational boundary documentation; frozen author docs retained.",
@@ -2514,11 +2514,11 @@
       "sha256": "9b2e6560d93cbf57b9c632e829c796c0e61669b1564d10c925d281fb7f872301"
     },
     {
-      "normalization": "Explicit isolated revision37/7/11 and compatibility8 roster; duplicate2 revision2 configuration IDs omitted.",
+      "normalization": "Explicit isolated revision37/7/11 and compatibility8 roster; updated current transition and source-pin-manifest digests, with prior fixture identities retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration/assemble_local.py",
       "origin_sha256": "b0d9ffc6256dcaa5f86f78449d92d83429b4a3b7dba434e259862dce0d6ec121",
       "path": "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/integration-fixtures.json",
-      "sha256": "b54c059aebd34e750da06f0617469ee47e629da82bf79f00e08177c3abd03874"
+      "sha256": "51c4dd208f0819c8a83c570dadc4fc084590eec33bffcb3f07038c9be082e790"
     },
     {
       "normalization": "Exact historical scoped operational source; embedded old path/unit/clock are not reusable launch authorization.",
@@ -4621,11 +4621,11 @@
       "sha256": "8e05f8b4b2719d111beff716ac09c48ba0dd7e0da8cf97fa626d3fb13471d14c"
     },
     {
-      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; no live promotion.",
+      "normalization": "Reviewed exact sealed-config SHA binding with21 CPU custody fixtures; identifier-only process/diagnostic terminology update, trace schema and recovery behavior unchanged; no live promotion.",
       "origin": "Codex telemetry unknown-upload recovery source; live deployment is separate",
       "origin_sha256": "9914b52a792429c441253bccfaf64674484de117ddf9f7d1f099148831e4ac6f",
       "path": "deploy/dl-flywheel/pipelines/telemetry/trace_archive.py",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     {
       "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority.",
@@ -4719,11 +4719,11 @@
       "sha256": "f8d2ee0bac9f392c0c59250fc39ae6a9c1b3527ee8ff2841f49cf40d8e21baad"
     },
     {
-      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority.",
+      "normalization": "Identifier-only process/diagnostic terminology update; trace bytes/schema and recovery behavior unchanged. Dated deployment paths remain evidence, not portable defaults; no live action.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/trace_archive_v1_c8a13033.py",
       "origin_sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
       "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     {
       "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority.",
@@ -4817,11 +4817,11 @@
       "sha256": "c8e9817a7083e4754f87a5cb79b55f43acfa5c6a327dae823ba424234e09b9b3"
     },
     {
-      "normalization": "Exact frozen source bytes; no transformation.",
+      "normalization": "Identifier-only process/diagnostic terminology update; trace bytes/schema and recovery behavior unchanged; original source hash retained.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/trace_archive_v1_c8a13033.py",
       "origin_sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
       "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
-      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     {
       "normalization": "Exact frozen source bytes; no transformation.",
@@ -4852,11 +4852,11 @@
       "sha256": "ad5c6caf1a3a86d8651b5766e7677ea565243b90ffdea943487d4da21cc5360b"
     },
     {
-      "normalization": "New external isolated child runner. Frozen package runners and Python roots unchanged; no tests executed during assembly.",
+      "normalization": "Current integration-roster digest updated for the source-pin refresh; offline fixture roster unchanged.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration/runner_template.py",
       "origin_sha256": "133ff6039591b7714c177e9d83c4030fd40f6120a516323966975d3f103b672a",
       "path": "deploy/dl-flywheel/run_callback_targets_offline.py",
-      "sha256": "c31178eed46d2255f69ba3558350b5ccb9ae4936e3f45d85a3b1483c9fb0c4f8"
+      "sha256": "17c034261de03499533d35ffc308bb56b5adb82008b2a53ab73f52429cbb8252"
     },
     {
       "origin": "continuous follow-up authored packaging",
