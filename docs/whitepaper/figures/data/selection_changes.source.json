@@ -1,0 +1,70 @@
+{
+  "schema": "whitepaper.selection-changes-source/v1",
+  "csv_sha256": "a0ea4013fa38bb3bbb8211b8a4399515b342f60f9dc4e966a1754259430d7e9e",
+  "capture": {
+    "at": "2026-11-02T14:34:04.962252+00:00",
+    "rows": 1000,
+    "reference_round": 882,
+    "development_contexts": 91,
+    "producer_script_sha256": "3a5828c9f03e6c9e35df2257d79cd66f65831b7d4feb94608a7a0e0dd57a422f",
+    "baseline_receipt_sha256": "6382a586912e62b0282fee8cfab667c165721d1f4298c42570febb14ca530630",
+    "selected_manifest_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "summary_join_rows": 20,
+    "all_selected_per_round_scalars_match": true,
+    "all_retained_summaries_match": true,
+    "round_window": [
+      2744,
+      3743
+    ],
+    "evaluation_identity_sha256": "03e997dfcfef451de7a35b2726d850b3811f6eeb646486b9b42e5ad0730ef1c6",
+    "selection": "Latest1000 consecutive complete admission records also present in the live per-round audit; fixed recency rule, no outcome filtering",
+    "sources": [
+      {
+        "name": "admissions.jsonl",
+        "sha256": "3100b7e2ab892a02fc819edbde55d52b8771a7c2c5eda0385466577aa9f1b6dc",
+        "source_prefix": {
+          "name": "adapter_admissions.jsonl",
+          "at": "2026-11-02T14:34:04.870836+00:00",
+          "complete_prefix_bytes": 1569669,
+          "complete_prefix_sha256": "bf86c7c2b2644860dfe69da87bd3754d57a2683e322790503f99a2a49b52101c",
+          "stable_prefix_reread_verified": true,
+          "rows": 2970,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      },
+      {
+        "name": "per-round.jsonl",
+        "sha256": "673f85b6018773d309dbd28d760709c9e4b38d9f2ce758d11243842107ef5480",
+        "source_prefix": {
+          "name": "per-round.jsonl",
+          "at": "2026-11-02T14:34:04.902599+00:00",
+          "complete_prefix_bytes": 2226194,
+          "complete_prefix_sha256": "ecc425428ced29d729dc01f62eb729d4bb243c902375cc61cca10b49c4ed0764",
+          "stable_prefix_reread_verified": true,
+          "rows": 2861,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      },
+      {
+        "name": "summary.jsonl",
+        "sha256": "51f15b65d13fdce1cb74d39542a0d08c63dad49705ee9fb8dce045e9038b3dee",
+        "source_prefix": {
+          "name": "summary.jsonl",
+          "at": "2026-11-02T14:34:04.932653+00:00",
+          "complete_prefix_bytes": 3358631,
+          "complete_prefix_sha256": "c6e87b4def8a5c3c9460ee1df79d3b2b512e697abfae7055290b91a837e2930e",
+          "stable_prefix_reread_verified": true,
+          "rows": 20,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Whitelisted round-level admission scalars only; no per-context values/payloads/checkpoint paths"
+      }
+    ]
+  },
+  "field_definition": "Observer compares selected program identities against the recorded round882reference; candidate is pre-decision, retained is post-decision; counts use91ordereddevelopmentcontexts. Changes may reflect both adapter and candidate-pool variation.",
+  "source_binding": "Observer script hash and reference receipt metadata checked; installed loop source/adapter/population/normalization closure remains unqualified",
+  "scope": "Adaptive repeatedly used development population; no independent first-proposal, deployment, transfer or learned writer/value-net benefit inferred",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py --selection-changes"
+}
