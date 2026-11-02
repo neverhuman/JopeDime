@@ -617,6 +617,7 @@ crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime/queue.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/runtime/supervisor.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/supply.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/tests.rs
+crates/jope-campaigns/src/bin/jope_selfplay_supply/tests/v2_cohort_contexts.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/tests_tail.rs
 crates/jope-campaigns/src/bin/jope_selfplay_supply/wave_builder.rs
 crates/jope-campaigns/src/bin/jope_selfplay_trainer_watchdog.rs
