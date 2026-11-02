@@ -6554,7 +6554,13 @@
       "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
       "origin_sha256": "6ba69dfe17bf4ac12b672cc27a4833275d87ba79119dc316a9b8236900295a34",
       "path": "deploy/dl-flywheel/ingest_joined_roster/roster.py",
-      "sha256": "05848d5f48d531062ce5136310de447277eaf4ea3c5f55f1dbd38915fd46bb06"
+      "sha256": "6e241cd7fdab5d3cd9a0be3bf1d3985ed03be555de167ab5f18494585c3c3b1b"
+    },
+    {
+      "origin": "HLT-001 mechanical split from deploy/dl-flywheel/ingest_joined_roster/roster.py",
+      "origin_sha256": "05848d5f48d531062ce5136310de447277eaf4ea3c5f55f1dbd38915fd46bb06",
+      "path": "deploy/dl-flywheel/ingest_joined_roster/roster_support.py",
+      "sha256": "3de69e969e0d2a85151581c4bf86321d397673b8e398cdd1f7c787c27f7aebc7"
     },
     {
       "origin": "CX-MET GB-01 owner BUILD ONLY ingest module on main5e6e2adcdb89459eb317ae86a4f80ef327b4fc5e; no optimizer admission",
