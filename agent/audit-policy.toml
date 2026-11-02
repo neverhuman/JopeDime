@@ -15,13 +15,6 @@ advisory_on = ["medium", "low", "info"]
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
-  # The preregistered H72 controller uses this queue for jobs absent from its
-  # results ledger; see the exact scope and review date in the vibe register.
-  "research/flywheel_selfplay/h72_w8_control_prereg/w8_control.py",
-  # These source-specific HLT-001 terms are validated diagnostics/work queues,
-  # not unfinished behavior; their reasons are in the vibe exception register.
-  "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py",
-  "deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py",
   "deploy/ci/test-gitleaks-config.py",
   "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
@@ -44,7 +37,6 @@ extra_excluded_paths = [
   "crates/jope-datasets/src/blobs.rs",
   "crates/jope-datasets/src/cli.rs",
   "crates/jope-engine/src/sealed_storage.rs",
-  "crates/jope-learning/src/clover/round_qual.rs",
   "crates/jope-learning/src/lake/archive.rs",
   "crates/jope-learning/src/lake/roles.rs",
   "crates/jope-learning/src/main.rs",
@@ -65,3 +57,35 @@ extra_excluded_paths = [
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
+
+[[dead_language_allow]]
+name = "vibe-h72-preregistered-work-queue"
+term = "todo"
+paths = ["research/flywheel_selfplay/h72_w8_control_prereg/w8_control.py"]
+owner = "research"
+expires = "2027-02-01"
+reason = "The preregistered H72 controller uses this local work queue for jobs absent from the result ledger; no fit has run, and cap, queue, worker, and fit logic remain unchanged."
+
+[[dead_language_allow]]
+name = "vibe-frozen-compatibility-oracle-work-queue"
+term = "todo"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/tests_p6/test_encodings.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "This local list tracks comparisons in the frozen compatibility oracle; the copied implementation and source hash are preserved, and its regression tests remain enabled."
+
+[[dead_language_allow]]
+name = "vibe-retired-family-diagnostic"
+term = "old"
+paths = ["deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py"]
+owner = "ops"
+expires = "2027-02-01"
+reason = "The diagnostic names the retired family identifier in the required old-to-new remapping; registry validation still checks the retirement and replacement."
+
+[[dead_language_allow]]
+name = "vibe-preregistration-sentinel-value"
+term = "todo"
+paths = ["crates/jope-learning/src/clover/round_qual.rs"]
+owner = "rust"
+expires = "2027-02-01"
+reason = "TODO is one explicit input sentinel rejected by the placeholder contract; the refusal behavior remains covered by selfplay_round_qual tests."
