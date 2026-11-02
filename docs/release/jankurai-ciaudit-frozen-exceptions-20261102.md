@@ -36,3 +36,20 @@ and for the frozen copy in
 Only the exact finding source path is excluded from Jankurai scoring. Tests and
 other security scans remain in place. Revisit if the pinned provenance is retired
 or either recorded hash changes; this does not cover other findings in the file.
+
+## `training_snapshot.py`
+
+The same full audit reports HLT-043 fingerprint
+`sha256:e41dc90b284d1301fdf77d6e5d608798082813395422428cec2d948f8b35b477` at
+`deploy/dl-flywheel/jope_flywheel/training_snapshot.py`. The duplicate is the
+manifest-pinned historical copy
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/training_snapshot.py`.
+Both files have SHA-256
+`392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09`; the
+identity is recorded for both paths in `deploy/dl-flywheel/SOURCE_MANIFEST.json`
+and for the frozen copy in
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/provenance/FINAL_VALIDATION.json`.
+
+Only the exact finding source path is excluded from Jankurai scoring. Tests and
+other security scans remain in place. Revisit if the pinned provenance is retired
+or either recorded hash changes; this does not cover other findings in the file.

@@ -45,6 +45,8 @@ extra_excluded_paths = [
   "deploy/dl-flywheel/jope_flywheel/batch_stream.py",
   # Ciaudit HLT-043 sha256:fac8174f...: exact hash-pinned package copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/evidence.py",
+  # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
+  "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
   "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py",
   "research/flywheel_selfplay/golden/capture_cpu.py",
   "research/flywheel_selfplay/golden/reference.py",
