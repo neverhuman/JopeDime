@@ -886,7 +886,11 @@ fn cgroup_allowed_cpus(
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 mod platform {
-    use nix::{sched::sched_getaffinity, sys::statvfs::statvfs, unistd::Pid};
+    use nix::{
+        sched::{sched_getaffinity, CpuSet},
+        sys::statvfs::statvfs,
+        unistd::Pid,
+    };
     use std::{fs, path::Path};
 
     pub(super) fn logical_cpus() -> Result<f64, String> {
@@ -901,7 +905,12 @@ mod platform {
 
     pub(super) fn allowed_cpus() -> Result<f64, String> {
         let set = sched_getaffinity(Pid::from_raw(0)).map_err(|_| "affinity_unavailable")?;
-        let affinity = set.count() as f64;
+        let mut affinity = 0.0;
+        for cpu in 0..CpuSet::count() {
+            if set.is_set(cpu).map_err(|_| "affinity_unavailable")? {
+                affinity += 1.0;
+            }
+        }
         let membership = fs::read_to_string("/proc/self/cgroup").unwrap_or_default();
         super::cgroup_allowed_cpus(&membership, affinity, |path| {
             fs::read_to_string(Path::new("/sys/fs/cgroup").join(path).join("cpu.max")).ok()
