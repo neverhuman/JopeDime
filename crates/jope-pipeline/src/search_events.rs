@@ -128,7 +128,7 @@ impl SearchBinding {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
-pub enum BehaviorLaw {
+pub enum ProposalBehaviorLaw {
     Unknown {
         reason: String,
     },
@@ -146,7 +146,10 @@ pub enum BehaviorLaw {
     },
 }
 
-impl BehaviorLaw {
+/// Backwards-compatible name for the proposal probability law recorded in search events.
+pub type BehaviorLaw = ProposalBehaviorLaw;
+
+impl ProposalBehaviorLaw {
     fn check(&self, source: &str, program: &Option<String>) -> Result<()> {
         // An edit's unconditional child law is not established by parent selection or seed law.
         if matches!(source, "mutate" | "crossover" | "random_fallback") {
@@ -238,7 +241,7 @@ pub struct SearchDecision {
     #[serde(rename = "draw_disposition")]
     pub outcome: String,
     pub detail: Option<String>,
-    pub behavior_law: BehaviorLaw,
+    pub behavior_law: ProposalBehaviorLaw,
     pub proposal_cost: Effort,
 }
 
