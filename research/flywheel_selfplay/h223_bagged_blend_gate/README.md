@@ -109,8 +109,10 @@ All three executions share one run root, `~/jope-data/h223/run-20261102T1405Z` o
   check-20261102T1553Z). It only continues after the original 17:25Z deadline stop. The receipt is
   `~/jope_plan/evidence/H223/continuation-guard-v2-receipt.json`.
 - **Note on main's code.** After A2, jankurai dedupe PRs #1932 and #1936 refactored H223's `analysis.py` and
-  `monitor.py` on main. The run executed the pinned `be474a54` code, not main's. On main, one H223 monitor test now
-  fails, because the A1 pause became an abort; this was flagged to that lane.
+  `monitor.py` on main to import shared H195/H217 helpers. The run executed the pinned `be474a54` code, not main's.
+  All 40 H223 tests pass on main. A test failure flagged at 19:52Z was a clock dependence in H223's own
+  signal-group test (after 17:25Z a fresh attempt's deadline is already past), fixed by #2044. It was not a refactor
+  regression.
 
 ## Caveats
 
@@ -136,8 +138,6 @@ optimizer updates, DOPE frozen, no serving promotion.
 - **GATED_025 is now replicated on three partition sets** (H210, H217, H223). Its DL-Val gain stays at about
   +0.0008 to +0.0015, under the plateau margin. A larger lift needs a different outcome-free signal or a better base
   model, not a lower-variance blend.
-- **Fix main's H223 monitor.** The jankurai dedupe (#1932/#1936) turned the A1 pause into an abort; flagged to
-  that lane.
 
 ## Custody
 
