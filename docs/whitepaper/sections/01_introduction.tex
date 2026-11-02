@@ -131,6 +131,7 @@ We call the design \emph{engineered intelligence}: its aim, proposer, referee
 and retained state are specified for audit. Pretrained components still supply prior knowledge
 (\cref{box:searchone}); execution feedback supplies the additional teacher.
 
+\begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
 \begin{itemize}[leftmargin=*,nosep]
   \item \textbf{One inference, one candidate.} For a new problem, the program
@@ -148,6 +149,7 @@ and retained state are specified for audit. Pretrained components still supply p
 primitives and pretrained encoding components supply prior knowledge. The
 Zero analogy concerns the additional training feedback from the referee.
 \end{explainer}
+\end{figure}
 
 \paragraph{Contributions.}
 We formulate algorithm invention as a game and give a tabular-regression

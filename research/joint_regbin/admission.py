@@ -41,9 +41,6 @@ DEFAULT_FAMILY_EXCLUSION_PATH = (
 OWNER_ALIAS_RECEIPT_SHA256 = (
     "114c57bf328c3556315a4b69f2f230ee0987086bda5ee1043aa50016ad9147b4"
 )
-CATALOG_POOL_RECEIPT_SHA256 = (
-    "9f82ecb4df818975072071b5d6464f3b1b6b9478ce54c6eed84b09da2a400953"
-)
 FLYWHEEL_SELECTED_SHA256 = (
     "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
 )
@@ -445,6 +442,8 @@ def build_catalog_pool_manifest(
     catalog_sha256: str,
     owner_alias: dict,
     owner_alias_sha256: str,
+    *,
+    family_exclusion_path: Path | None = None,
 ) -> dict:
     """Build both task candidate pools without assigning roles or eligibility."""
     inventory = catalog.get("inventory", {})
@@ -517,10 +516,70 @@ def build_catalog_pool_manifest(
         ):
             raise ValueError(f"catalog train metadata is invalid: {row.get('id')}")
 
+    family_exclusion = (
+        _load_family_exclusion(
+            family_exclusion_path, FAMILY_EXCLUSION_SHA256, catalog_sha256
+        )
+        if family_exclusion_path is not None
+        else None
+    )
     family_review = review_catalog_families(task_rows)
     review_by_id = {row["dataset"]: row for row in family_review["records"]}
+    d4_excluded_ids: set[str] = set()
+    if family_exclusion is not None:
+        exclusion_keys = {
+            (item["kind"], item["value"]) for item in family_exclusion["family_keys"]
+        }
+        keys_by_id = {
+            row["dataset"]: {tuple(key) for key in row["union_evidence"]}
+            for row in family_review["records"]
+        }
+        catalog_ids = set(keys_by_id)
+        joined_keys = set().union(*keys_by_id.values())
+        if not exclusion_keys <= joined_keys:
+            raise ValueError("D4 family exclusion key is absent from reviewed catalog")
+        if not set(family_exclusion["unkeyed_catalog_ids"]) <= catalog_ids:
+            raise ValueError(
+                "D4 unkeyed catalog identity is absent from reviewed catalog"
+            )
+        catalog_by_id = {row["id"]: row for row in task_rows}
+        if any(
+            catalog_by_id[dataset_id].get("family_key")
+            for dataset_id in family_exclusion["unkeyed_catalog_ids"]
+        ):
+            raise ValueError("D4 exclusion marks a keyed catalog identity unkeyed")
+        excluded_families = {
+            family_review["family_by_dataset"][dataset_id]
+            for dataset_id, keys in keys_by_id.items()
+            if keys & exclusion_keys
+        }
+        excluded_families.update(
+            family_review["family_by_dataset"][dataset_id]
+            for dataset_id in family_exclusion["unkeyed_catalog_ids"]
+        )
+        d4_excluded_ids = {
+            dataset_id
+            for dataset_id, family in family_review["family_by_dataset"].items()
+            if family in excluded_families
+        }
     candidate_pools = {task: [] for task in protocol.TASKS}
+    candidate_exclusions = {
+        task: {"d4_family": 0, "sourcefile_dependent": 0} for task in protocol.TASKS
+    }
     for row in sorted(task_rows, key=lambda item: (item["task"], item["id"])):
+        if row["id"] in d4_excluded_ids:
+            candidate_exclusions[row["task"]]["d4_family"] += 1
+            continue
+        # R15 leaves these aliases unresolved at the source-file layer. Keep
+        # source-file-dependent binary records out of the role candidates;
+        # the pinned D4 identity artifact closes the remaining family union.
+        if (
+            family_exclusion is not None
+            and row["task"] == "binary"
+            and _srcfile_key(row) is not None
+        ):
+            candidate_exclusions["binary"]["sourcefile_dependent"] += 1
+            continue
         reviewed = review_by_id[row["id"]]
         candidate_pools[row["task"]].append(
             {
@@ -543,6 +602,19 @@ def build_catalog_pool_manifest(
         owner_alias.get("regression_direct_owner_alias_intersections") == 0
         and owner_alias.get("regression_transitive_owner_alias_intersections") == 0
     )
+    d4_closes_owner_aliases = family_exclusion is not None
+    owner_aliases_closed = (
+        d4_closes_owner_aliases
+        and owner_alias.get("binary_direct_owner_alias_intersections") == 0
+        and owner_alias.get("binary_transitive_owner_alias_intersections") == 0
+    )
+    candidate_counts = {task: len(candidate_pools[task]) for task in protocol.TASKS}
+    blockers = [
+        "catalog rows are candidates and do not assign reviewed train/val/panel roles",
+        "actual two-task worker and qualification receipt are not supplied by this manifest",
+    ]
+    if not owner_aliases_closed:
+        blockers.append("owner source-file alias closure is incomplete")
     return {
         "schema": CATALOG_POOL_SCHEMA,
         "admission_status": "CATALOG_CANDIDATES_NOT_ADMITTED",
@@ -556,7 +628,7 @@ def build_catalog_pool_manifest(
         "owner_identity_manifest_sha256": owner_alias["owner_identity_manifest_sha256"],
         "family_review_sha256": canonical_json_sha(family_review),
         "family_review": family_review,
-        "candidate_counts": actual_counts,
+        "candidate_counts": candidate_counts,
         "candidate_pools": candidate_pools,
         "closure": {
             "catalog_aliases_closed": True,
@@ -567,47 +639,63 @@ def build_catalog_pool_manifest(
             "owner_binary_recorded_alias_intersections": 0,
             "owner_binary_alias_reviewed": True,
             "owner_regression_alias_intersections_reviewed": (
-                owner_regression_alias_intersections_reviewed
+                owner_regression_alias_intersections_reviewed or d4_closes_owner_aliases
             ),
             "owner_identity_count": owner_alias["owner_identities"],
             "owner_identity_raw_catalog_joins": owner_alias[
                 "owner_identities_joined_raw_catalog"
             ],
-            "owner_aliases_fully_closed": (
-                sourcefile_gaps == 0 and owner_regression_alias_intersections_reviewed
+            "owner_aliases_fully_closed": owner_aliases_closed,
+            "unresolved_owner_sourcefile_aliases": (
+                0 if owner_aliases_closed else sourcefile_gaps
             ),
-            "unresolved_owner_sourcefile_aliases": sourcefile_gaps,
+            "owner_alias_closure_basis": (
+                "R15+D4 pinned conservative family exclusion"
+                if owner_aliases_closed
+                else "owner source-file alias receipt only"
+            ),
+            "candidate_exclusions": candidate_exclusions,
+            "d4_excluded_catalog_ids": sorted(d4_excluded_ids),
+            "family_exclusion_sha256": (
+                FAMILY_EXCLUSION_SHA256 if d4_closes_owner_aliases else None
+            ),
             "owner_identity_manifest_sha256": owner_alias[
                 "owner_identity_manifest_sha256"
             ],
             "protected_payloads_opened": 0,
         },
-        "blockers": [
-            "catalog rows are candidates and do not assign reviewed train/val/panel roles",
-            "owner source-file alias closure is incomplete",
-            "actual two-task worker and qualification receipt are not supplied by this manifest",
-        ],
+        "blockers": blockers,
     }
 
 
 def build_catalog_pool_manifest_from_files(
-    catalog_path: Path, owner_alias_path: Path
+    catalog_path: Path,
+    owner_alias_path: Path,
+    family_exclusion_path: Path | None = None,
 ) -> dict:
     """Load and pin approved metadata inputs, then build fail-closed pool candidates."""
     catalog_path = Path(catalog_path)
     owner_alias_path = Path(owner_alias_path)
+    family_exclusion_path = Path(family_exclusion_path or DEFAULT_FAMILY_EXCLUSION_PATH)
     catalog_bytes = catalog_path.read_bytes()
     owner_alias_bytes = owner_alias_path.read_bytes()
     catalog = json.loads(catalog_bytes)
     owner_alias = json.loads(owner_alias_bytes)
+    catalog_sha = hashlib.sha256(catalog_bytes).hexdigest()
     owner_alias_sha = hashlib.sha256(owner_alias_bytes).hexdigest()
     if owner_alias_sha != OWNER_ALIAS_EXPANSION_SHA256:
         raise ValueError("owner alias expansion is not the pinned metadata receipt")
+    _load_family_exclusion(
+        family_exclusion_path,
+        FAMILY_EXCLUSION_SHA256,
+        catalog_sha,
+    )
     return build_catalog_pool_manifest(
         catalog,
-        hashlib.sha256(catalog_bytes).hexdigest(),
+        catalog_sha,
         owner_alias,
         owner_alias_sha,
+        family_exclusion_path=family_exclusion_path,
     )
 
 
@@ -1011,6 +1099,16 @@ def build_task_role_candidate_manifest(
     protected_dataset_ids, protected_member_ids = _protected_catalog_member_ids(
         protected_manifest, protected_manifest_sha256
     )
+    d4_alias_closure = (
+        catalog_pool.get("closure", {}).get("owner_aliases_fully_closed") is True
+        and catalog_pool.get("closure", {}).get("family_exclusion_sha256")
+        == FAMILY_EXCLUSION_SHA256
+    )
+    d4_excluded_ids = set(
+        catalog_pool.get("closure", {}).get("d4_excluded_catalog_ids", [])
+        if d4_alias_closure
+        else []
+    )
 
     catalog_rows = catalog.get("datasets", [])
     catalog_by_id = {row.get("id"): row for row in catalog_rows}
@@ -1037,6 +1135,11 @@ def build_task_role_candidate_manifest(
         "val": {task: 0 for task in protocol.TASKS},
         "panel": {task: 0 for task in protocol.TASKS},
     }
+    if d4_alias_closure:
+        role_exclusion_counts["train"]["binary"] = sum(
+            row.get("task") == "binary" and _srcfile_key(row) is not None
+            for row in catalog_rows
+        )
 
     def is_protected(dataset: str) -> bool:
         return (
@@ -1050,7 +1153,15 @@ def build_task_role_candidate_manifest(
         if not isinstance(rows, list):
             raise ValueError("catalog-pool task is missing from role inputs")
         pool_by_id = {row.get("dataset"): row for row in rows}
-        expected_ids = {row["id"] for row in catalog_rows if row.get("task") == task}
+        expected_ids = {
+            row["id"]
+            for row in catalog_rows
+            if row.get("task") == task
+            and row["id"] not in d4_excluded_ids
+            and not (
+                d4_alias_closure and task == "binary" and _srcfile_key(row) is not None
+            )
+        }
         if len(pool_by_id) != len(rows) or set(pool_by_id) != expected_ids:
             raise ValueError(f"{task} candidate pool differs from curated catalog")
         pool_rows[task] = pool_by_id
@@ -1269,6 +1380,12 @@ def build_task_role_candidate_manifest(
         },
         "closure": {
             "catalog_p2_srcfile_url_aliases_closed": True,
+            "owner_r15_d4_exclusion_verified": d4_alias_closure,
+            "sourcefile_dependent_binary_rows_excluded": d4_alias_closure,
+            "d4_excluded_catalog_id_count": len(d4_excluded_ids),
+            "d4_excluded_catalog_ids_sha256": canonical_json_sha(
+                sorted(d4_excluded_ids)
+            ),
             "unresolved_owner_aliases_collapsed_to_one_excluded_family": 14,
             "owner_alias_family_id": "owner-aliases:conservative-single-family",
             "owner_alias_family_source_sha256": owner_alias[
@@ -1311,7 +1428,6 @@ def build_task_role_candidate_manifest_from_files(
     expected = {
         "catalog": CATALOG_V246_SHA256,
         "owner_alias": OWNER_ALIAS_RECEIPT_SHA256,
-        "catalog_pool": CATALOG_POOL_RECEIPT_SHA256,
         "selected": FLYWHEEL_SELECTED_SHA256,
         "flywheel_run": FLYWHEEL_RUN_MANIFEST_SHA256,
         "panel": ELO_PANEL_V1_SHA256,
@@ -1319,11 +1435,16 @@ def build_task_role_candidate_manifest_from_files(
     }
     raw = {name: path.read_bytes() for name, path in paths.items()}
     actual = {name: hashlib.sha256(data).hexdigest() for name, data in raw.items()}
-    if actual != expected:
+    if any(actual[name] != digest for name, digest in expected.items()):
         raise ValueError(
             "role-candidate input file hash differs from owner-pinned source"
         )
     objects = {name: json.loads(data) for name, data in raw.items()}
+    expected_catalog_pool = build_catalog_pool_manifest_from_files(
+        paths["catalog"], paths["owner_alias"]
+    )
+    if objects["catalog_pool"] != expected_catalog_pool:
+        raise ValueError("catalog-pool receipt differs from the rederived R15/D4 pool")
     return build_task_role_candidate_manifest(
         objects["catalog"],
         actual["catalog"],

@@ -43,7 +43,7 @@ training improves a first proposal on an unseen family. The development
 records in \cref{sec:method-status} concern program search and adapter
 admission; their clock and decisions do not establish deployment performance.
 \Cref{tab:results-plan} separates the training, fixed-method, search and
-map comparisons from the failure analyses. All outcomes remain pending.
+map comparisons from the failure analyses. All first-proposal evaluation outcomes remain pending.
 \TBD{Add independent evaluation evidence before making a performance claim.}
 \TBD{Supply a source-bound benchmark before claiming deployment throughput.}
 
@@ -230,12 +230,66 @@ without updating the writer.
 \end{table}
 
 \subsection{Earlier development diagnostics}\label{sub:results-diagnostics}
-Historical search and ranking diagnostics provide context for the discussion; the contract above still requires independent first-proposal comparisons.
-\TBD{Supply Jepson's source-bound search and ranking diagnostics, including
-original inventories, comparison conditions, overlap checks and uncertainty.
-Keep their scope separate from the final first-proposal comparisons.}
-\par Record the exact experimental conditions under which those earlier diagnostic runs were executed.
-\TBD{Pin the inventories, checkpoints and seeding, timing and ranking
-protocols, separately from the final comparisons above.}
-\par Bound what those diagnostic comparisons can and cannot establish before the final evaluation is unblinded.
-\TBD{Supply the interpretation and limits of these comparisons in \cref{sec:meaning} once Jepson provides the source.}
+Closed-out development studies evaluate a frozen reference adapter and its
+modifications, rather than the writer's independent first proposals.
+The first three studies use 1,219 development-training contexts from
+205 families and three seeds with different five-way family partitions.
+Prior fitting and gradient-clipping continuations exclude evaluation and
+selection families. Test-time adaptation uses only the four revealed
+candidates in each context and resets its weights after scoring.
+Fits or settings were locked before outer-fold evaluation.
+Contexts are averaged within families; families receive equal weight.
+Utility-gain intervals use 10,000 paired-family bootstrap draws shared
+across seeds and summarize the median seed gain. Reported intervals are
+95\%; $p$ values are one-sided, with one primary contrast per study.
+These studies reuse a development population; they are not independent
+replications.
+
+\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h195_blend025_kernel_confirm/README.md}{\textbf{Calibrated blend.}}
+A calibrated tree prior receives weight $0.25$ in a cost-space blend with
+the reference adapter. Its primary endpoint is the maximum utility among
+four revealed and four lowest-cost unrevealed candidates, rather than a
+single native choice. The gain is $+0.0137$ (95\% interval
+$[+0.0056,+0.0259]$; $p=0.0005$ against a $+0.001$ margin).
+Elo is $1523.1$ $[1513.5,1532.4]$, relative to the reference at $1500$.
+Family harm below $-0.01$ is $7.3\%$ ($15/205$).
+The result is a \textbf{candidate}, with no adoption and zero adapter
+optimizer updates; the tree prior was fitted.
+
+\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h197_pcgc/README.md}{\textbf{Per-context clipping.}}
+Clipping each context's gradient before averaging, with 40 updates per
+trajectory, gives utility gain $-0.02510$
+($[-0.05128,+0.00009]$; $p=0.9743$; $0/3$ positive seeds).
+Elo is $1485.63$ (lift $-14.37$, 95\% interval $[-24.34,-4.38]$).
+Family harm below zero is $46.83\%$, and the treatment does not strictly
+beat its shuffled-factor placebo: \textbf{NO\_ADVANCE}.
+
+\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h198_ttt/README.md}{\textbf{Revealed-only adaptation.}}
+Selection on a separate panel chose one SGD step at learning rate
+$10^{-5}$ in all $15/15$ cells. At that locked setting, adaptation
+changes scores in $1{,}219/1{,}219$ contexts but changes no selected
+program. The largest grid budgets flip only $1$--$4$ of $1{,}219$ choices.
+Utility gain is $0.000000$, with interval $[0.000000,0.000000]$.
+Elo is $1500.00$, with interval $[1500.00,1500.00]$.
+The verdict is \textbf{NO\_ADVANCE (inert treatment)} within the tested
+one-to-five-step, $10^{-5}$--$10^{-4}$ learning-rate grid; it does not
+exclude effective adaptation at larger budgets.
+
+\href{https://github.com/neverhuman/JopeDime/blob/717f6e272ef258e9c38c88504eb76c7faf3f2530/research/flywheel_selfplay/h201_strict_admission/README.md}{\textbf{Admission audit.}}
+The sole primary attempt is \textbf{INCOMPLETE}, with formal verdict
+\textbf{INCONCLUSIVE}: one of $91$ choices in $19$ development-validation
+families differs from its archived choice, failing the native parity gate.
+Post-failure descriptive replay of a stricter admission rule accepts
+$0/2{,}418$ historical proposals. This replay neither qualifies the
+checkpoint nor establishes future power or sequential error control.
+
+The single-choice studies use the selected candidate's utility, with
+invalid choices assigned $-2$. Their endpoint differs from the blend's
+best-of-eight endpoint; the reported Elo values are specific to each
+protocol. Checkpoints, cohort identities, seeds and locks are pinned by
+the linked reports and their accompanying protocol and metrics records.
+
+None of these closeouts adopts a checkpoint or establishes learning of
+independent first proposals, deployment throughput or unseen-family
+transfer. The final comparisons above and their interpretation in
+\cref{sec:meaning} remain pending.

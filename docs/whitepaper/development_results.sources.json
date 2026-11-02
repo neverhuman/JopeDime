@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "scope": "Closed-out development adapter diagnostics only; no independent first-proposal, serving or throughput qualification.",
+  "authority": "n1615_wp_sol_writer.md; lanes_t1615.md",
+  "filled_markers": [
+    "R28",
+    "R29",
+    "R30"
+  ],
+  "remaining_markers": 37,
+  "studies": [
+    {
+      "id": "H195",
+      "source_snapshot_commit": "717f6e272ef258e9c38c88504eb76c7faf3f2530",
+      "closeout_pr": 1639,
+      "closeout_merge": "ca1cd19e300b15bbe93165f62fc2c0f4f6239fe0",
+      "files": {
+        "README.md": {
+          "path": "research/flywheel_selfplay/h195_blend025_kernel_confirm/README.md",
+          "git_blob": "3afdb6f1e57bbd9cd9346f3bc4f603fcd380d09d",
+          "sha256": "2451608fe893b011f80e0ca44f4ede710cd78d72e8c4f86effca47a237e8ec03"
+        },
+        "PREREG.md": {
+          "path": "research/flywheel_selfplay/h195_blend025_kernel_confirm/PREREG.md",
+          "git_blob": "d8ddc7cc097da67e0b078c07293433182f535e49",
+          "sha256": "943c4ace6863bf13c82a180b6224c87faf127157189e51107f52aced2af23903"
+        },
+        "metrics.json": {
+          "path": "research/flywheel_selfplay/h195_blend025_kernel_confirm/metrics.json",
+          "git_blob": "131877ad2c4217f88b995c0f3c6e07a6e186adcf",
+          "sha256": "9aa9e167b13421dcc5725b319ebecf11f97140f8a0b2e799ac66965644388bb3"
+        },
+        "fold_manifest.json": {
+          "path": "research/flywheel_selfplay/h195_blend025_kernel_confirm/fold_manifest.json",
+          "git_blob": "b6a53c27c85bdd49bb63f605400133335df2ca22",
+          "sha256": "72764c1a6b267d43e63786f94f28726455c5d948a9c61324a27ba75135bdaf4f"
+        }
+      },
+      "status": "COMPLETE",
+      "verdict": "CANDIDATE: BLEND_025",
+      "rendered_label": "Calibrated blend"
+    },
+    {
+      "id": "H197",
+      "source_snapshot_commit": "717f6e272ef258e9c38c88504eb76c7faf3f2530",
+      "closeout_pr": 1663,
+      "closeout_merge": "11a776e9ad0f81d6deaea2bd7530b2765da71dce",
+      "files": {
+        "README.md": {
+          "path": "research/flywheel_selfplay/h197_pcgc/README.md",
+          "git_blob": "826a6d83533ab01eca6b60bdcfd5e674e5a46d5e",
+          "sha256": "3059ef606822c3202bb6126c043fe6ed40241795ed8923cdc5b8b02651c076cc"
+        },
+        "PREREG.md": {
+          "path": "research/flywheel_selfplay/h197_pcgc/PREREG.md",
+          "git_blob": "1d550cc9552404e4916f9b7245ed9a59155160f8",
+          "sha256": "5d2707a57b2c6fd29b2bcae4e56d2f40d079c96ca1ef374e909d85005d22bdeb"
+        },
+        "metrics.json": {
+          "path": "research/flywheel_selfplay/h197_pcgc/metrics.json",
+          "git_blob": "189dc8343a0477b447375f2fb33f1179e5e3d6a9",
+          "sha256": "ec11d969508e0508c2b162d98ff4c20aff3c11d2fa8ba7df23db11f5c1a4ba42"
+        },
+        "fold_manifest.json": {
+          "path": "research/flywheel_selfplay/h197_pcgc/fold_manifest.json",
+          "git_blob": "2d439682540c6198f9d9e7d25d9f3785299da1a2",
+          "sha256": "edc4a3b24205994829a14b8dc33622417f8a085687837889e6e9a44cfdc0e6df"
+        }
+      },
+      "status": "COMPLETE",
+      "verdict": "NO_ADVANCE",
+      "rendered_label": "Per-context clipping"
+    },
+    {
+      "id": "H198",
+      "source_snapshot_commit": "717f6e272ef258e9c38c88504eb76c7faf3f2530",
+      "closeout_pr": 1647,
+      "closeout_merge": "261ce4501742e3540efdf9ed6aed9ba2cba88ff3",
+      "files": {
+        "README.md": {
+          "path": "research/flywheel_selfplay/h198_ttt/README.md",
+          "git_blob": "da245bc26253137ea1c28cee3a4b2a78ed1c7a13",
+          "sha256": "fcc5bdf451783038cc63f5c437e4923af36b0f0c591de81034650cb9c6eb96f1"
+        },
+        "PREREG.md": {
+          "path": "research/flywheel_selfplay/h198_ttt/PREREG.md",
+          "git_blob": "3c77b3c3adea38122b96640b5d49e17c9ebcf6dd",
+          "sha256": "261f3d672715f3d14467a21a4949576d44ba39a8ec07153f4ae0d6e25a530776"
+        },
+        "metrics.json": {
+          "path": "research/flywheel_selfplay/h198_ttt/metrics.json",
+          "git_blob": "44b0887ca51288c3882967061c33cb3b48b30c56",
+          "sha256": "d6bed0ea45aac8d2d6c959b00839fd17402482f11ebd9d517b8458eb9bc12822"
+        },
+        "fold_manifest.json": {
+          "path": "research/flywheel_selfplay/h198_ttt/fold_manifest.json",
+          "git_blob": "c68860940f877dcca58d511512d1a84222c95131",
+          "sha256": "d7ffde5ad058d0cf8d3e659612c1c242f28712635b2c00b3aec4e29d3aa37bcd"
+        }
+      },
+      "status": "COMPLETE",
+      "verdict": "NO_ADVANCE",
+      "rendered_label": "Revealed-only adaptation"
+    },
+    {
+      "id": "H201",
+      "source_snapshot_commit": "717f6e272ef258e9c38c88504eb76c7faf3f2530",
+      "closeout_pr": 1675,
+      "closeout_merge": "8ce38fbf27bc4e3598440b48fdfad795615fab02",
+      "files": {
+        "README.md": {
+          "path": "research/flywheel_selfplay/h201_strict_admission/README.md",
+          "git_blob": "f2ab63de10424b0cae5617b7f1ab08bc7fbf8e02",
+          "sha256": "08bac80380c909773e700e87a47beadabf54bb7ccb49c3957741866b5a562d6b"
+        },
+        "PREREG.md": {
+          "path": "research/flywheel_selfplay/h201_strict_admission/PREREG.md",
+          "git_blob": "dfe4d03d038ad317311fc3925df4838e73d680ee",
+          "sha256": "845f0d0e6b109431de53ab9de4fb13a33ba33f669ed7f13151808b3feb939bac"
+        },
+        "metrics.json": {
+          "path": "research/flywheel_selfplay/h201_strict_admission/metrics.json",
+          "git_blob": "a69e2fdbdce85bf006f41b5abb4c3da3bdd23a7e",
+          "sha256": "d0bc0b9c71818d04aa40a27c78e98e96620743219a297a81fc8c3325696ae614"
+        },
+        "manifest.json": {
+          "path": "research/flywheel_selfplay/h201_strict_admission/manifest.json",
+          "git_blob": "5e22abf9302ad80620c74f7a7a9ac21447ce970c",
+          "sha256": "e8b7c64751ca1b97b115f0d9083329463a2f1ee755bda683a2ff6c32967c6b8b"
+        }
+      },
+      "status": "INCOMPLETE",
+      "verdict": "INCONCLUSIVE",
+      "rendered_label": "Admission audit"
+    }
+  ],
+  "rounding": "Rendered estimates retain the exact rounded numbers in the merged README reports. Raw metrics are pinned without re-estimation.",
+  "H199": "Excluded pending actual merge of PR1682; no unmerged result used.",
+  "scientific_actions": "Read-only Git report/protocol/compact-metrics provenance. No inference, optimization or protected payload reads."
+}
