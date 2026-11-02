@@ -11,6 +11,24 @@ use std::{
 const BUNDLE: &str = "sha256:94fd9587675c7806bd0a0582b6e97540cd2fdc7ebbc51958411b905185cad85c";
 const JOPE_SHA: &str = "ce39c75f37624e64dfbf89e6493adbf74811a5248f9355997161491e93a132ef";
 const R882_JOPE_SHA: &str = "ff3f9ea5d76fa6c13cd74d40a9effbf7e9c891d98746dc542d851726b9e3138c";
+const LANDMARK_SLOTS: [usize; 4] = [0, 1, 7, 9];
+
+fn intervene_on_landmark_tokens(tokens: &mut [[f32; 32]; 10], delta: f32) {
+    for slot in LANDMARK_SLOTS {
+        for (channel, value) in tokens[slot].iter_mut().enumerate() {
+            let direction = if channel % 2 == 0 { -1.0 } else { 1.0 };
+            *value += delta * direction;
+        }
+    }
+}
+
+fn layer_norm_channels(values: &[f32; 32]) -> [f32; 32] {
+    let mean = values.iter().sum::<f32>() / values.len() as f32;
+    let centered = values.map(|value| value - mean);
+    let variance = centered.iter().map(|value| value * value).sum::<f32>() / values.len() as f32;
+    let denom = (variance + 1e-5).sqrt();
+    centered.map(|value| value / denom)
+}
 
 fn output_oracle_matches(
     reference_bundle: &str,
@@ -235,6 +253,32 @@ fn output_oracle_requires_matching_bundle_and_jope_weights() {
     ));
 }
 
+#[test]
+fn landmark_intervention_survives_token_layer_norm() {
+    let constant_minus = layer_norm_channels(&[-6.0; 32]);
+    let constant_zero = layer_norm_channels(&[0.0; 32]);
+    let constant_plus = layer_norm_channels(&[6.0; 32]);
+    assert_eq!(constant_minus, constant_zero);
+    assert_eq!(constant_zero, constant_plus);
+
+    let original = std::array::from_fn(|channel| channel as f32 / 16.0 - 1.0);
+    let baseline = layer_norm_channels(&original);
+    for delta in [-6.0, 6.0] {
+        let mut tokens = [[0.0; 32]; 10];
+        for slot in LANDMARK_SLOTS {
+            tokens[slot] = original;
+        }
+        intervene_on_landmark_tokens(&mut tokens, delta);
+        for slot in LANDMARK_SLOTS {
+            assert_ne!(
+                layer_norm_channels(&tokens[slot]),
+                baseline,
+                "landmark delta {delta} must survive token normalization"
+            );
+        }
+    }
+}
+
 fn round_admission_fixture(causal_measurements_only: bool) {
     use crate::discover::r#loop::{Plan, RoundAdmission, RoundContext, RoundMeasurement};
     use crate::ranker::admission::{
@@ -297,13 +341,12 @@ fn round_admission_fixture(causal_measurements_only: bool) {
                     result.pool_gates.pop();
                 }
                 5..=7 => {
-                    // These slots depend on landmarks; preserve DOPE-only slots
-                    // and every mask bit so this is not a missing-input control.
-                    for slot in [0, 1, 7, 9] {
-                        for value in &mut result.conditioning.tokens[slot] {
-                            *value = [-6.0, 0.0, 6.0][usize::from(self.mode.get() - 5)];
-                        }
-                    }
+                    // Add a zero-mean channel pattern so token LayerNorm does
+                    // not erase the landmark-only intervention.
+                    intervene_on_landmark_tokens(
+                        &mut result.conditioning.tokens,
+                        [-6.0, 0.0, 6.0][usize::from(self.mode.get() - 5)],
+                    );
                 }
                 _ => {}
             }
@@ -719,7 +762,9 @@ fn round_admission_fixture(causal_measurements_only: bool) {
                     "landmark_only_changed_admission":serving_landmark_changes,
                     "fitness_changed_admission":serving_fitness_changes,
                     "disconnected_heuristic_mismatches":serving_disconnected_changes,
-                    "landmark_slots":[0,1,7,9],"interventions":[-6.0,0.0,6.0],
+                    "landmark_slots":[0,1,7,9],
+                    "intervention_kind":"zero_mean_additive_landmark_delta",
+                    "interventions":[-6.0,0.0,6.0],
                     "masks_and_dope_only_slots_preserved":true}}
         });
         let root = PathBuf::from(

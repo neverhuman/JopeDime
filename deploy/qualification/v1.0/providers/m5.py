@@ -290,6 +290,7 @@ def causal_report(path: Path) -> dict:
         or details["Q1_ready"] is not False
         or serving["slates"] != 50
         or serving["landmark_slots"] != [0, 1, 7, 9]
+        or serving["intervention_kind"] != "zero_mean_additive_landmark_delta"
         or serving["interventions"] != [-6.0, 0.0, 6.0]
         or serving["masks_and_dope_only_slots_preserved"] is not True
         or any(
