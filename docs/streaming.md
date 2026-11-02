@@ -50,29 +50,3 @@
   invariants cited above, and the review in
   `docs/reviews/hpc-audit-20261021.md`. Keep the descriptor-transfer controls;
   do not rename their identifiers to influence the detector.
-
-## Pinned KL reference fixture
-
-- **Owner authorization:** Jepson's FASTLANE assignment in COORD at
-  2026-11-02T19:14Z, for HLT-019 fingerprint
-  `sha256:3cd49f1c3886e329566608707ba09946af5672ce041abb3ecba0a623c66e0273`.
-- **Owner:** `ops` (the fixture is maintained with the continuous-v6 test
-  references).
-- **Scope:** the exact Jankurai scoring exception for
-  `deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py`.
-  The boundary detector matches the word “nats” in the KL entropy unit
-  docstring at line 142; this is a mathematical unit, not a NATS client or
-  streaming runtime dependency. The file is explicitly a verbatim test
-  reference copy and is not shipped product code.
-- **Review expiry:** 2027-02-01. Recheck the finding fingerprint, file pin,
-  and that the fixture remains test-only before renewal.
-- **Migration path:** remove this exact-file exception if the fixture stops
-  being a pinned reference copy or moves into runtime code. Do not edit or
-  deduplicate the fixture independently of its source and pin record.
-- **Evidence:** `deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_pins.json`
-  records module SHA-256
-  `f4a424b360d5ba6306d65ef14874f307779664ecb9d2ac3ff9ab415778f1028f` and
-  hashes each reference definition; the fixture header states its verbatim
-  provenance and the registered pin checks validate those hashes. The policy
-  exception suppresses only Jankurai scoring for this exact path; Python
-  tests, Gitleaks, and other scanners still inspect it.
