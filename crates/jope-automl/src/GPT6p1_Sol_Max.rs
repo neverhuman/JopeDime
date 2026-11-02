@@ -27,7 +27,7 @@ mod random;
 use random::{sample_indices, Random};
 #[path = "GPT6p1_Sol_Max/tree.rs"]
 mod tree;
-use tree::{growth, tree_limit, Growth, Tree};
+use tree::{growth, tree_limit, Tree};
 #[path = "GPT6p1_Sol_Max/selection.rs"]
 mod selection;
 use selection::{choose, fit_final};
