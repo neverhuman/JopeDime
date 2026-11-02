@@ -11,7 +11,8 @@
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Reference training and proposed one-move evaluation.}
   Training loop (\cref{sub:method-selfplay}), separate from the adapter
-  record (\cref{sec:method-status}). Blue: game day; dashed: proposed training.
+  record (\cref{sec:method-status}). Blue: game day (\searchone{}); dashed box:
+  proposed training.
   Valid scored programs enter learning lists; failed attempts consume budget.}
   \label{fig:game-loop}
 \end{figure*}
@@ -43,10 +44,13 @@ question of cost (\cref{sec:price}).
 \subsection{The rules}\label{sub:game-rules}
 
 \Cref{tab:go-vs-innovation} sets the game beside Go. An illegal move is
-counted as a failed attempt. The reference writer $\writer$ reads the encoded problem.
-The referee keeps the incumbent as a separate comparison standard
+counted as a failed attempt. The reference writer $\writer$ reads the encoded problem,
+while the referee keeps the incumbent as a separate comparison standard
 (\cref{sub:method-board}); its code and score must stay outside the writer's
 input.
+
+\Cref{fig:game-loop} separates training from game day. Its top row follows
+the single-candidate contract in \cref{box:searchone}.
 
 \begin{table}[htb]
   \caption{\textbf{Go and the innovation game, element by element.}
@@ -94,12 +98,9 @@ verdict is the reward \citep{lattimore2020bandit}. The incumbent supplies a
 changing comparison standard as verified programs displace it. The asymmetry is in the
 moves: Go offers about 250 legal moves per turn over about 150 turns, each free
 to check \citep{silver2016mastering}, while this game offers one move, costly to
-judge. Under a single-attempt budget, the chance $\winprob$ of a win matters
+judge. Under a single-candidate budget, the chance $\winprob$ of a win matters
 directly (\cref{eq:taste}). Whether training raises that chance on new
 families is the test in \cref{sec:results}.
-
-\Cref{fig:game-loop} separates training from game day. Its top row follows
-the single-candidate contract in \cref{box:searchone}.
 
 % ----------------------------------------------------------------------------
 \subsection{The board and the move}\label{sub:game-board}
@@ -170,6 +171,14 @@ reference learning targets use each program's rank within its scored list
 % ----------------------------------------------------------------------------
 \subsection{One game, many boards}\label{sub:game-boards}
 
+Casting algorithm discovery as a game is not new, but earlier games wrote one
+family of problems into their rules, as AlphaTensor did for matrix
+multiplication and AlphaDev for sorting
+\citep{fawzi2022alphatensor,mankowitz2023alphadev}. AlphaZero used one algorithm
+for three games and trained a separate network for each
+\citep{silver2018general}. Here the problem is an input on the board, so one
+player can, in principle, learn many boards.
+
 The accepted checkpoint route and both fixed comparators support only
 tabular regression. Binary and multiclass classification, ranking, forecasting
 and relational prediction remain prospective boards, each needing a qualified
@@ -181,14 +190,6 @@ Beyond machine learning, examples of referees include sorting tests
 \citep{novikov2025alphaevolve}. These motivate extensions of the recipe,
 rather than results of this paper (\cref{sec:meaning}).
 
-Casting algorithm discovery as a game is not new, but earlier games wrote one
-family of problems into their rules, as AlphaTensor did for matrix
-multiplication and AlphaDev for sorting
-\citep{fawzi2022alphatensor,mankowitz2023alphadev}. AlphaZero used one algorithm
-for three games and trained a separate network for each
-\citep{silver2018general}. Here the problem is an input on the board, so one
-player can, in principle, learn many boards.
-
 \begin{keyidea}
 A reliable referee makes a discipline a candidate for this game; transfer
 to that discipline still needs evidence.
@@ -197,17 +198,16 @@ to that discipline still needs evidence.
 % ----------------------------------------------------------------------------
 \subsection{The analogy's limits}\label{sub:game-played}
 
-A worked game, chosen by a rule fixed before inspection, is to be reported with
-the results (\cref{sub:results-failures}). The analogy breaks in four places.
+The analogy breaks in four places.
 
 \textbf{The referee is noisy}: picking a
 winner by a noisy validation score biases that score upward
 \citep{cawley2010overfitting}. Strict numerical improvement alone does not
 quantify confidence; independent evaluation and an uncertainty protocol are
 needed to interpret it.
-\textbf{Moves are expensive}, each a fit and a cross-validation
+\textbf{Moves are expensive}: each is a fit and a cross-validation
 (\cref{sec:price}).
-\textbf{Judges can be gamed}: the evaluation harness must resist exploits
+\textbf{The referee can be gamed}: the evaluation harness must resist exploits
 \citep{metr2025rewardhacking}. \Cref{sub:method-referee} specifies the
 isolation and parity checks required here.
 And \textbf{no algorithm wins everywhere}: averaged
@@ -219,6 +219,8 @@ reads the board can choose its bias board by board. \Cref{sec:results} reserves 
 frontier-designed regressors, with paired outcomes beside Elo summaries
 \citep{elo1978rating}. Non-transitive comparisons are one reason not to
 reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
+A worked game, chosen by a rule fixed before inspection, is to be reported with
+the results (\cref{sub:results-failures}).
 
 The referee judges each attempt; cost accounting must also include
 invalid programs and valid attempts that lose. \Cref{sec:price} prices
