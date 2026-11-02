@@ -676,6 +676,7 @@ def build_catalog_pool_manifest_from_files(
     """Load and pin approved metadata inputs, then build fail-closed pool candidates."""
     catalog_path = Path(catalog_path)
     owner_alias_path = Path(owner_alias_path)
+    family_exclusion_path = Path(family_exclusion_path or DEFAULT_FAMILY_EXCLUSION_PATH)
     catalog_bytes = catalog_path.read_bytes()
     owner_alias_bytes = owner_alias_path.read_bytes()
     catalog = json.loads(catalog_bytes)

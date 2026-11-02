@@ -257,6 +257,65 @@ class CatalogPoolManifestTests(unittest.TestCase):
         )
         self.assertFalse(manifest["eligibility_verified"])
 
+    def test_catalog_pool_file_default_path_applies_d4_exclusion(self) -> None:
+        from research.joint_regbin import admission
+
+        catalog, _, owner_alias, _ = self._inputs()
+        with tempfile.TemporaryDirectory() as directory:
+            directory_path = Path(directory)
+            catalog_path = directory_path / "catalog.json"
+            owner_alias_path = directory_path / "owner-alias.json"
+            exclusion_path = directory_path / "family-exclusion.json"
+            catalog_bytes = json.dumps(
+                catalog, sort_keys=True, separators=(",", ":")
+            ).encode()
+            catalog_sha = hashlib.sha256(catalog_bytes).hexdigest()
+            catalog_path.write_bytes(catalog_bytes)
+            owner_alias["curated_catalog_sha256"] = catalog_sha
+            owner_alias_bytes = json.dumps(
+                owner_alias, sort_keys=True, separators=(",", ":")
+            ).encode()
+            owner_alias_path.write_bytes(owner_alias_bytes)
+            exclusion = {
+                "schema": admission.FAMILY_EXCLUSION_SCHEMA,
+                "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
+                "catalog_sha256": catalog_sha,
+                "family_keys": [
+                    {"kind": "dedupe_fingerprint", "value": "pmlb:" + "f" * 64}
+                ],
+                "unkeyed_catalog_ids": [],
+            }
+            exclusion_bytes = json.dumps(
+                exclusion, sort_keys=True, separators=(",", ":")
+            ).encode()
+            exclusion_path.write_bytes(exclusion_bytes)
+            with (
+                patch.object(
+                    admission,
+                    "OWNER_ALIAS_EXPANSION_SHA256",
+                    hashlib.sha256(owner_alias_bytes).hexdigest(),
+                ),
+                patch.object(
+                    admission,
+                    "FAMILY_EXCLUSION_SHA256",
+                    hashlib.sha256(exclusion_bytes).hexdigest(),
+                ),
+                patch.object(
+                    admission, "DEFAULT_FAMILY_EXCLUSION_PATH", exclusion_path
+                ),
+            ):
+                manifest = admission.build_catalog_pool_manifest_from_files(
+                    catalog_path, owner_alias_path
+                )
+
+        self.assertTrue(manifest["closure"]["owner_aliases_fully_closed"])
+        self.assertEqual(manifest["candidate_counts"], {"binary": 0, "regression": 0})
+        self.assertEqual(
+            manifest["closure"]["d4_excluded_catalog_ids"],
+            ["bin-a", "reg-a", "reg-b"],
+        )
+        self.assertFalse(manifest["eligibility_verified"])
+
 
 class TaskRoleCandidateManifestTests(unittest.TestCase):
     def _inputs(self):
