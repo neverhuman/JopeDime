@@ -1,0 +1,276 @@
+{
+  "schema": "whitepaper.program-gain-source/v1",
+  "csv_sha256": "3754dc2b22a5e1ee08a3881705504cc7afea0a4aea9795de54417a44ff19d6ef",
+  "capture": {
+    "at": "2026-11-02T12:25:46.460022+00:00",
+    "round_window": [
+      3656,
+      3675
+    ],
+    "completed_rounds": 20,
+    "rounds": [
+      {
+        "round": 3656,
+        "program_events": 1,
+        "wall_seconds": "78.863313292",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3657,
+        "program_events": 0,
+        "wall_seconds": "88.543586189",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3658,
+        "program_events": 0,
+        "wall_seconds": "78.012195995",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3659,
+        "program_events": 1,
+        "wall_seconds": "114.089174125",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3660,
+        "program_events": 2,
+        "wall_seconds": "97.32177764",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3661,
+        "program_events": 0,
+        "wall_seconds": "99.487885601",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3662,
+        "program_events": 0,
+        "wall_seconds": "96.133087629",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3663,
+        "program_events": 0,
+        "wall_seconds": "81.86903753",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3664,
+        "program_events": 0,
+        "wall_seconds": "74.626590469",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3665,
+        "program_events": 0,
+        "wall_seconds": "90.660357223",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3666,
+        "program_events": 0,
+        "wall_seconds": "104.212526801",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3667,
+        "program_events": 0,
+        "wall_seconds": "112.078590188",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3668,
+        "program_events": 0,
+        "wall_seconds": "100.889675603",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3669,
+        "program_events": 0,
+        "wall_seconds": "121.193336437",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3670,
+        "program_events": 0,
+        "wall_seconds": "96.576714486",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3671,
+        "program_events": 0,
+        "wall_seconds": "96.094860435",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3672,
+        "program_events": 1,
+        "wall_seconds": "88.179867261",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3673,
+        "program_events": 1,
+        "wall_seconds": "85.757629259",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3674,
+        "program_events": 2,
+        "wall_seconds": "111.201392639",
+        "adapter_accepted": false
+      },
+      {
+        "round": 3675,
+        "program_events": 1,
+        "wall_seconds": "124.218825724",
+        "adapter_accepted": false
+      }
+    ],
+    "events": [
+      {
+        "event": 1,
+        "round": 3656,
+        "old_utility": "0.5188411982596018",
+        "new_utility": "0.5225875599859826",
+        "utility_gain": "0.0037463617263808",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T11:47:22.395206+00:00"
+      },
+      {
+        "event": 2,
+        "round": 3659,
+        "old_utility": "1.7999680751116627",
+        "new_utility": "1.8081610578521121",
+        "utility_gain": "0.0081929827404494",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T11:53:13.569505+00:00"
+      },
+      {
+        "event": 3,
+        "round": 3660,
+        "old_utility": "0.34556133674102335",
+        "new_utility": "0.34590370156200995",
+        "utility_gain": "0.00034236482098660",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T11:54:40.388906+00:00"
+      },
+      {
+        "event": 4,
+        "round": 3660,
+        "old_utility": "0.3981749711860857",
+        "new_utility": "0.40244603783501215",
+        "utility_gain": "0.00427106664892645",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T11:54:51.074040+00:00"
+      },
+      {
+        "event": 5,
+        "round": 3672,
+        "old_utility": "2.194031175437134",
+        "new_utility": "2.1948961121748267",
+        "utility_gain": "0.0008649367376927",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T12:18:21.694494+00:00"
+      },
+      {
+        "event": 6,
+        "round": 3673,
+        "old_utility": "0.3492202844944254",
+        "new_utility": "0.34933771420765564",
+        "utility_gain": "0.00011742971323024",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T12:19:15.274609+00:00"
+      },
+      {
+        "event": 7,
+        "round": 3674,
+        "old_utility": "0.20297287476022344",
+        "new_utility": "0.20342801308650663",
+        "utility_gain": "0.00045513832628319",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T12:21:25.327166+00:00"
+      },
+      {
+        "event": 8,
+        "round": 3674,
+        "old_utility": "2.453740513059186",
+        "new_utility": "2.48586055818665",
+        "utility_gain": "0.032120045127464",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T12:22:07.945763+00:00"
+      },
+      {
+        "event": 9,
+        "round": 3675,
+        "old_utility": "2.2042181482418375",
+        "new_utility": "2.236557073855877",
+        "utility_gain": "0.0323389256140395",
+        "cv_gate_passed": true,
+        "evaluation_scope": "full_train_cv",
+        "CI_scope": "unavailable",
+        "timestamp": "2026-11-02T12:24:29.273236+00:00"
+      }
+    ],
+    "sources": [
+      {
+        "name": "summary.jsonl",
+        "sha256": "f1a47126aaa5de07debebe0920d04eefef857854b8fce62c9256bfb1f8a3c12b",
+        "source_prefix": {
+          "name": "summary.jsonl",
+          "at": "2026-11-02T12:25:45.991522+00:00",
+          "complete_prefix_bytes": 3358642,
+          "complete_prefix_sha256": "933d976315c9357115a2199dfc7da4cfd5aa1224bcb2a82efb34c07ee99d3d35",
+          "stable_prefix_reread_verified": true,
+          "rows": 20,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Latest20 consecutive complete summaries; all strict promotion events in the same inclusive round range. Whitelisted training-side scalar metadata only; no program/context identifiers, arrays or payloads."
+      },
+      {
+        "name": "promotions.jsonl",
+        "sha256": "fd5d98b81aca2c18fb1bd9997aa0a0ee48a5c05c4e7ccd1f4555184e0376e563",
+        "source_prefix": {
+          "name": "promotions.jsonl",
+          "at": "2026-11-02T12:25:46.404205+00:00",
+          "complete_prefix_bytes": 11406995,
+          "complete_prefix_sha256": "bea800a16d7ce8b654f41597a83c80c2f24030d5aa81b11db7abc06b29459cfd",
+          "stable_prefix_reread_verified": true,
+          "rows": 3153,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Latest20 consecutive complete summaries; all strict promotion events in the same inclusive round range. Whitelisted training-side scalar metadata only; no program/context identifiers, arrays or payloads."
+      }
+    ],
+    "program_events": 9,
+    "zero_event_rounds": 13,
+    "adapter_admissions": 0,
+    "CI_scope": {
+      "unavailable": 9
+    },
+    "all20_summary_journal_counts_match": true,
+    "all20_retained_round_scalars_match": true
+  },
+  "definition": "Each observed strict training-program event contributes exactly one logged new_utility minus old_utility increment. ECDF counts events equally, conditional on a strict event; zero-event rounds are counted in the window denominator but do not become zero-gain observations. No aggregation into overall model or independent performance.",
+  "scope": "Adaptive training-side journal observations; distinct from adapter admissions, independent first proposals, Elo and serving performance. Source/adapter/evaluation-population/normalization binding remains unqualified.",
+  "reproduce": "python3 figures/scripts/make_program_gain_distribution.py"
+}
