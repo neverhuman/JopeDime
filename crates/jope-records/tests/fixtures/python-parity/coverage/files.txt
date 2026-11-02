@@ -548,6 +548,7 @@ crates/jope-campaigns/src/bin/jope_timeseries_export.rs
 crates/jope-campaigns/src/bin/jope_training_archive.rs
 crates/jope-campaigns/src/bin/jope_training_archive/commands.rs
 crates/jope-campaigns/src/bin/jope_training_archive/ingest.rs
+crates/jope-campaigns/src/bin/jope_training_archive/ingest/reports.rs
 crates/jope-campaigns/src/bin/jope_training_archive/sources.rs
 crates/jope-campaigns/src/bin/jope_training_history.rs
 crates/jope-campaigns/src/bin/jope_training_replica.rs
