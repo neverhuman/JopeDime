@@ -14973,6 +14973,26 @@
       ],
       "lanes": [],
       "scope": "H214 synthetic runtime adapter proof: family-disjoint TRAIN bank/parent tie, only selected16-wide panels evaluated, explicit context identity with feature-only records, exact native order/coverage and no timeout-to-gate-failure relabel. No actual data/model/Rust worker."
+    },
+    "python:research/flywheel_selfplay/h217_gated025_confirm/test_h217.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H217 (fresh-fold confirmation of H210 GATED_025) data-free controls: frozen H210 gate recipe (zgap, disagreement, tau grid, FIT-only tau selection, blend bodies identical), cyclic A/B/FIT cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest with cross-wave Jaccard and refusal of reused partitions, primary verdict (LCB95, 3/3 seeds, harm), DL-Val plateau co-primary (gain > +0.002 with family-bootstrap LCB95 > 0, ties not a win), Elo orientation, xbabe2-only admission before any side effect, limits from effective CPU affinity, source binding before the claim, absolute deadline inherited by the resume, 20 GiB memory stop, amendment-A1 200 GB free-disk stop"
+    },
+    "python:research/flywheel_selfplay/h216_init_lottery/test_h216.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H216 data-free CPU controls for K=16 untrained adapter lottery selection on reserved B with strict q10>0.005 bootstrap margin, family-shuffled B placebo, diagnostic-only ORACLE_A ceiling, Holm m=2, harm<=10% gate, resource guards and manifest pin verification."
     }
   },
   "lanes": {

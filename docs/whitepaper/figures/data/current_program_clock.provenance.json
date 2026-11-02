@@ -1,0 +1,21 @@
+{
+  "schema": "whitepaper.current-program-clock-figure/v1",
+  "input_csv_sha256": "3190503d23afbade74225cc54c1a3f2a2470e97f4cfa501b53dbc9583209ec74",
+  "source_receipt_sha256": "f35f7f2e0a468e3cdd0c7cd944ff8fce71863d93b419dac39683ed6107437db1",
+  "generator_sha256": "fb9bf962c439837dda0bfe82335cf799aafa8b31fe6271c5ce8b46cce17be622",
+  "figure_sha256": "f35ecb7a5194fe3fea3c1677a9e6fd8f2b435c3850923ed1d697fd7e6a8291c0",
+  "rows": 20,
+  "round_window": [
+    3609,
+    3628
+  ],
+  "program_events": 7,
+  "logged_wall_seconds": "1914.914594052",
+  "events_per_logged_hour": "13.159855838100990260884057216827514044589797131016",
+  "zero_event_rounds": 13,
+  "adapter_admissions": 0,
+  "definitions": "Per-round rate=3600*kind=promotion journal count/full logged round seconds. Dashed window rate=3600*sum(counts)/sum(seconds), not mean of per-round rates; clock includes all within-round work/waits.",
+  "scope": "Adaptive training-side program-incumbent events, distinct from adapter admissions and independent first-proposal/serving performance",
+  "matplotlib_version": "3.10.8",
+  "reproduce": "python3 figures/scripts/make_latest_event_rates_figure.py --current-program-clock"
+}
