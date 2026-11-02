@@ -1,6 +1,8 @@
 """Data-free H225 leakage, selection, exact-tie and resource controls."""
 
 import importlib.util
+from importlib.machinery import SourceFileLoader
+import hashlib
 import json
 import signal
 import subprocess
@@ -24,6 +26,90 @@ def module(name):
 
 
 sci, monitor = module("science"), module("monitor")
+
+
+def continuation_module():
+    loader = SourceFileLoader("h225_continuation_test", str(HERE / "continuation"))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    value = importlib.util.module_from_spec(spec)
+    loader.exec_module(value)
+    return value
+
+
+def test_continuation_reuses_only_exact_hash_and_fit_identity(tmp_path):
+    cont = continuation_module()
+    original = tmp_path / "original"
+    (original / "states").mkdir(parents=True)
+    state = original / "states/test.pt"
+    state.write_bytes(b"synthetic state bytes, not a tensor")
+    rows = [dict(context_sha256="one", family_id="family")]
+    config = sci.CONFIGS[0]
+    proof = dict(
+        label="test",
+        config=config,
+        stream_seed=17,
+        steps=8,
+        fit_context_ids_sha256=hashlib.sha256(b"one").hexdigest(),
+        fit_families=["family"],
+        dope_sha256_before=cont.DOPE,
+        dope_sha256_after=cont.DOPE,
+        nonadapter_unchanged=True,
+        forward_changed=True,
+        adapter_before_sha256="before",
+        adapter_after_sha256="after",
+        state_path=str(state),
+        state_sha256=hashlib.sha256(state.read_bytes()).hexdigest(),
+    )
+    assert (
+        cont.verify_fit(proof, rows, config, 17, "test", original)["sha256"]
+        == proof["state_sha256"]
+    )
+    for changed in [
+        dict(stream_seed=18),
+        dict(fit_families=["another"]),
+        dict(state_sha256="0" * 64),
+        dict(dope_sha256_after="changed"),
+    ]:
+        with pytest.raises(RuntimeError):
+            cont.verify_fit({**proof, **changed}, rows, config, 17, "test", original)
+    with pytest.raises(RuntimeError):
+        cont.verify_fit(
+            proof,
+            [dict(context_sha256="two", family_id="family")],
+            config,
+            17,
+            "test",
+            original,
+        )
+
+
+def test_continuation_cannot_handoff_early_or_start_an_early_worker(monkeypatch):
+    cont = continuation_module()
+    assert not cont.handoff_ready(cont.START - 0.001, False, False)
+    assert not cont.handoff_ready(cont.START, True, False)
+    assert not cont.handoff_ready(cont.START, False, True)
+    assert cont.handoff_ready(cont.START, False, False)
+    monkeypatch.setattr(cont.time, "time", lambda: cont.START - 1)
+    with pytest.raises(RuntimeError, match="post-19:00"):
+        cont.worker("synthetic-amendment")
+
+
+def test_continuation_projection_reads_fit_metadata_only(tmp_path, monkeypatch):
+    cont = continuation_module()
+    original = tmp_path / "original"
+    (original / "progress").mkdir(parents=True)
+    import os
+
+    for i in range(32):
+        path = original / "progress" / f"{i}.json"
+        path.write_text(json.dumps(dict(fits=89 + i, updates=i)))
+        os.utime(path, (cont.DECIDE - 31 * 30 + i * 30,) * 2)
+    monkeypatch.setattr(cont, "ORIGINAL", original)
+    result = cont.projection(cont.DECIDE)
+    assert result["completed_fits"] == 120 and result["trigger"]
+    path.write_text(json.dumps(dict(fits=360, updates=8280)))
+    os.utime(path, (cont.DECIDE, cont.DECIDE))
+    assert not cont.projection(cont.DECIDE)["trigger"]
 
 
 def test_exact_grid_and_nested_fit_budget():

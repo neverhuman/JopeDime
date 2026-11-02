@@ -124,3 +124,34 @@ observations. Use create-only S3 custody plus exact-version replay. Close out
 README, small metrics and both index rows via a second focused PR off current
 main. If time or a required capability prevents completion, close INCOMPLETE
 with the actual evidence and missing observations.
+
+## Pre-outcome contingency activation — 2026-11-02 t1800
+
+The owner decided in `hw_t1800_dsc01_h225_trigger.md` that the previously
+registered continuation trigger is effectively met. This amendment changes
+operational continuation only. The original worker/supervisor and finisher keep
+their original behavior and 19:00Z stop; no earlier signal or edit is permitted.
+The timer records the fit-metadata projection at 18:30Z. Only after the original
+worker and supervisor have stopped at 19:00Z does it transfer the old finisher's
+sole-writer role and start one continuation, ending at 22:30Z with closeout23:00Z.
+
+Numerical functions, inputs, seeds, partitions, eight-proposal grid, temperature,
+selection, readout and resource guards come unchanged from execution source
+`bd028747af73f0e72f66c9ddb64b1c486a382b13`. The operational entrypoint is
+`continuation`; its controls are in `CONTINUATION.json`. No candidate outcomes
+are read by the timer, and no incomplete-cohort statistics are published.
+
+Only completed fits whose state SHA, proof, configuration, stream and exact FIT
+identities verify are reused. Unfinished/unverified fits start again from the
+same r882 state and stream in a fresh continuation output root; original files
+remain untouched. All original partial optimizer cost is charged. There remain
+360 logical fits/8280 logical updates plus2 smoke updates. At most one interrupted
+original fit (<=32 updates) can be discarded, giving a conservative physical cap
+of8314 including smoke; unmatched intents remain explicit unknown costs. There
+is no additional proposal, seed, fold, tuning choice or scientific retry.
+
+If the original unexpectedly completes, no continuation is needed. An earlier
+unrelated failure does not authorize a retry. If the continued complete cohort
+is unavailable at22:30Z, close INCOMPLETE honestly by23:00Z with both index rows,
+null missing statistics and version-replayed S3 custody. Median plateau gain
+must still exceed+0.002 and its CI lower bound0 across three seeds; ties REJECT.
