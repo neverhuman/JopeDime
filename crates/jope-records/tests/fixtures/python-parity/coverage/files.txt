@@ -618,6 +618,15 @@ crates/jope-campaigns/src/task_preflight.rs
 crates/jope-campaigns/src/task_rating.rs
 crates/jope-campaigns/src/test_adaptive.rs
 crates/jope-campaigns/src/test_adaptive/aggressive.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/checkpoint.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/dataset.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/model.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/population.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/preflight.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/runner.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/tests.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/validation.rs
+crates/jope-campaigns/src/test_adaptive/aggressive/views.rs
 crates/jope-campaigns/src/test_adaptive/binary42.rs
 crates/jope-campaigns/src/test_adaptive/island_extension.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60.rs
