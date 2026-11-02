@@ -16,6 +16,14 @@ monitor = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(monitor)
 
 
+def _shared_h203_test_helpers():
+    path = HERE.parent / "h203_blend025_gated" / "test_h203.py"
+    spec = importlib.util.spec_from_file_location("h203_shared_test_helpers", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def families(n=205):
     return [f"f{f:03}" for f in range(n)]
 
@@ -28,27 +36,7 @@ def test_cells_partition_folds_cyclically():
 
 
 def test_fit_plan_is_minimal_and_covers_every_cell():
-    outers, inners = stat.fit_plan()
-    assert (
-        len(outers) == 5 and len(inners) == 10
-    )  # all adjacent pairs, all C(5,3) triples
-    for k in range(5):
-        a, b, fit = stat.cell(k)
-        assert tuple(sorted((a, b))) in outers
-        used = [stat.inner_model_for(k, j) for j in fit]
-        assert len(set(used)) == 3 and all(m in inners for m in used)
-        for j, m in zip(fit, used):
-            assert {a, b, j} == set(
-                m
-            )  # inner model never saw A, B or its own calibration fold
-    with pytest.raises(ValueError):
-        stat.inner_model_for(0, 1)
-    budget = sum(len(stat.FIT_SEEDS[t]) * 15 for t in stat.FIT_SEEDS)
-    assert (
-        budget == 45
-        and stat.FIT_SEEDS["BLEND"] == stat.SEEDS
-        and stat.FIT_SEEDS["SHUF"] == ()
-    )
+    _shared_h203_test_helpers()._assert_fit_plan_is_minimal_and_covers_every_cell(stat)
 
 
 def test_seed_folds_reproduce_h124_algorithm_and_differ_by_seed():
@@ -435,24 +423,9 @@ def test_choose_tau_falls_back_to_r882_when_nothing_is_safe_and_ties_go_conserva
 
 
 def test_arm_costs_gate_falls_back_to_r882_and_is_outcome_free():
-    import runner
-
-    base = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0])
-    gbm = np.array(
-        [9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, -30.0]
-    )  # pulls the blend pick to slot 7
-    closed = {arm: -math.inf for arm in stat.GATES}
-    costs, opened, signal = runner.arm_costs(stat, base, gbm, closed)
-    assert not any(opened.values()) and signal["zgap"] > 0
-    assert all(np.array_equal(costs[arm], base) for arm in stat.GATES)
-    assert int(np.argmin(costs["BLEND_025"])) == 7
-    costs, opened, _ = runner.arm_costs(
-        stat, base, gbm, {arm: math.inf for arm in stat.GATES}
+    _shared_h203_test_helpers()._assert_arm_costs_gate_falls_back_to_r882_and_is_outcome_free(
+        stat
     )
-    assert all(opened.values()) and all(
-        np.array_equal(costs[a], costs["BLEND_025"]) for a in stat.GATES
-    )
-    assert set(costs) == set(stat.ARMS) and stat.PRIMARY == "GATED_025"
 
 
 def test_jsonable_encodes_infinite_thresholds_only():

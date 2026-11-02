@@ -26,7 +26,7 @@ def test_cells_partition_folds_cyclically():
         assert sorted((a, b, *fit)) == list(range(5)) and len(fit) == 3
 
 
-def test_fit_plan_is_minimal_and_covers_every_cell():
+def _assert_fit_plan_is_minimal_and_covers_every_cell(stat):
     outers, inners = stat.fit_plan()
     assert (
         len(outers) == 5 and len(inners) == 10
@@ -44,6 +44,10 @@ def test_fit_plan_is_minimal_and_covers_every_cell():
         stat.inner_model_for(0, 1)
     budget = sum(len(stat.FIT_SEEDS[t]) * 15 for t in stat.FIT_SEEDS)
     assert budget == 60 and stat.FIT_SEEDS["BLEND"] == stat.SEEDS
+
+
+def test_fit_plan_is_minimal_and_covers_every_cell():
+    _assert_fit_plan_is_minimal_and_covers_every_cell(stat)
 
 
 def test_seed_folds_reproduce_h124_algorithm_and_differ_by_seed():
