@@ -7,6 +7,7 @@
 pub mod broad_shadow_catalog;
 pub mod broad_shadow_cli;
 pub mod cost;
+pub mod broad_shadow;
 pub mod dime_activation;
 pub mod dime_runtime_contracts;
 pub mod encoder_v2_authority;
