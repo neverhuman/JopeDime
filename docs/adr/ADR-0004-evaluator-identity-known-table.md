@@ -107,3 +107,20 @@ Implementation hash `d8cc9c3e1e7e7a426e3c3e5fdfb2af74f74af5d4b2174f4019ef84d83fa
 calculations are unchanged. The identity and lineage source pins are regenerated at the
 transition commit. The append-only known-identity table is unchanged because this work has no
 shipped receipt proving that the new identity existed.
+
+## Current identity transition: P36 safe CPU affinity sets (2026-11-02)
+
+P36 replaces zero-initialized libc CPU sets with `nix::sched::CpuSet`, adding the existing
+`nix` package as a direct `jope-campaigns` dependency and changing `Cargo.lock`. The
+identity-only regeneration also closes the unrecorded identity drift introduced by #1659,
+which was already red on `origin/main` before this lane's change. The transition advances
+implementation hash `e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d` to
+`e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716`, Cargo.lock hash
+`96a5734beed7151cfebd89651fdc4611b4b79b822010a0ce16af683a4a72236b` to
+`e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`, and evaluator
+identity digest `2d5c740d8cb55f65d76b4348bec3f71d0b7d8800d84de78a25088d9348853b18` to
+`6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d`. Evaluator
+calculations, DSL ABI, behavior fixtures and lineage source hashes are unchanged; the lineage
+fixture changes only its generation SHA. The transition is registered in
+`rustmem_cpu_affinity_identity_rebaseline.v1.json`. No known-identity row is added because this
+work has no shipped receipt proving the new identity existed.
