@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-schema-width-adapter-preserves-numeric-profile-identity-and-output owner=feat-math expires=2027-04-01
 //! Active schema-width adapter; does not modify existing generator pools or RNG streams.
 //!
 //! Lifecycle: owner is the feat-math maintainers. This adapter scopes
