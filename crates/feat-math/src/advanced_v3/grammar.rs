@@ -14,6 +14,8 @@ use super::interfaces::CompiledV3Genome;
 use super::schema::{ColumnKind, DataSchema, RowSemantics};
 use super::types::{TaskKind, TaskSpec};
 use crate::dsl::{DslExpr, ParamValue, Stage};
+use crate::kernel::capabilities::WidthEffect;
+pub(crate) use crate::kernel::pipeline::StageClass;
 use crate::GenomeIr;
 use anyhow::{bail, Context, Result};
 use sha2::{Digest, Sha256};
@@ -72,14 +74,6 @@ pub(crate) enum EmitterTarget {
     Runtime,
     Python,
     Rust,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum StageClass {
-    Target,
-    Input,
-    Transform,
-    Head,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -190,18 +184,6 @@ pub(crate) struct ParamDescriptor {
     pub prototype_domain: Option<ParamDomain>,
     pub production_domain: Option<ParamDomain>,
     pub active_when: ActiveWhen,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum WidthEffect {
-    None,
-    Input,
-    OneToOne,
-    GeneratedPerFeature,
-    ExpansionPerFeature { parameter: &'static str },
-    Select { parameter: &'static str },
-    Projection { parameter: &'static str },
-    Impute,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1261,7 +1243,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "ridge",
         aliases = &["logistic"],
-        class = Head,
+        class = Learner,
         tasks = REGRESSION_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1279,7 +1261,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "logit_ridge",
         aliases = &["logistic"],
-        class = Head,
+        class = Learner,
         tasks = BINARY_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1297,7 +1279,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "multiclass_ridge",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = REGRESSION_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1315,7 +1297,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "tab_boost",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BOTH_TASKS,
         roles = Any / NumericOrNative,
         rows = Any,
@@ -1333,7 +1315,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "extra_trees",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BOTH_TASKS,
         roles = Any / NumericOrNative,
         rows = Any,
@@ -1351,7 +1333,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "gam_boost",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BOTH_TASKS,
         roles = Any / NumericOrNative,
         rows = Any,
@@ -1369,7 +1351,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "pls",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = REGRESSION_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1387,7 +1369,7 @@ const REGISTRY: &[OperationDescriptor] = &[
     operation!(
         "portfolio",
         aliases = NO_ALIASES,
-        class = Head,
+        class = Learner,
         tasks = BINARY_ONLY,
         roles = Any / NumericLike,
         rows = Any,
@@ -1460,7 +1442,7 @@ impl crate::kernel::registry_v2::Entry {
                 StageClass::Target => "target",
                 StageClass::Input => "input",
                 StageClass::Transform => "transform",
-                StageClass::Head => "head",
+                StageClass::Learner => "head",
             },
             parameters: serde_json::json!(row
                 .parameters
@@ -1734,7 +1716,7 @@ pub(crate) fn compile_v3_genome(
     check_operation(input_descriptor, task, schema, options, &shape)?;
 
     while let Some((stage, descriptor)) = classified.get(cursor).copied() {
-        if descriptor.stage_class == StageClass::Head {
+        if descriptor.stage_class == StageClass::Learner {
             break;
         }
         let canonical = materialize_stage(stage, descriptor, task, options.mode)?;
@@ -1748,7 +1730,7 @@ pub(crate) fn compile_v3_genome(
     }
 
     let head = if let Some((stage, descriptor)) = classified.get(cursor).copied() {
-        debug_assert_eq!(descriptor.stage_class, StageClass::Head);
+        debug_assert_eq!(descriptor.stage_class, StageClass::Learner);
         cursor += 1;
         (
             materialize_stage(stage, descriptor, task, options.mode)?,
@@ -1835,7 +1817,7 @@ fn classify_stages(
                     bail!("transform '{}' cannot follow a model head", stage.op);
                 }
             }
-            StageClass::Head => {
+            StageClass::Learner => {
                 head_count += 1;
                 if head_count != 1 || index + 1 != stages.len() {
                     bail!("model heads are only valid as the final stage");
@@ -2326,6 +2308,9 @@ fn count_role(layout: &CompileInputLayout, role: FeatureRole) -> usize {
 fn apply_width_effect(effect: WidthEffect, stage: &Stage, shape: &mut FeatureShape) -> Result<()> {
     let append = bool_value(stage, "append").unwrap_or(false);
     match effect {
+        WidthEffect::Registry(_) => {
+            bail!("registry width rule is not valid in advanced-v3 grammar")
+        }
         WidthEffect::None | WidthEffect::Input => {}
         WidthEffect::OneToOne => {
             if append {
