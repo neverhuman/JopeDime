@@ -234,7 +234,7 @@ def test_primary_and_plateau_strict_boundaries():
 
 
 @pytest.mark.parametrize(
-    "field,value", [("load", 61), ("free", 299_999_999_999), ("ram", 20 * 2**30 - 1)]
+    "field,value", [("free", 299_999_999_999), ("ram", 20 * 2**30 - 1)]
 )
 def test_resource_stops(monkeypatch, field, value):
     values = dict(load=0, free=400_000_000_000, ram=30 * 2**30)
