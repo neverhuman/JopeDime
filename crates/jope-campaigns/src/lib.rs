@@ -5,6 +5,7 @@
 //! and deployment policy live in this crate.
 
 pub mod broad_shadow_catalog;
+pub mod broad_shadow_cli;
 pub mod dime_activation;
 pub mod dime_runtime_contracts;
 pub mod encoder_v2_authority;
