@@ -9,6 +9,9 @@ import signal
 import subprocess
 import sys
 import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from h159_fail_logit_veto.monitor import run_monitor as _run_monitor
 import psutil
 
 HERE = Path(__file__).resolve().parent
@@ -103,65 +106,7 @@ def main():
     p.add_argument("--custody", type=Path, required=True)
     p.add_argument("--smoke", action="store_true")
     args = p.parse_args()
-    os.setpriority(os.PRIO_PROCESS, 0, 19)
-    c = args.custody.resolve()
-    c.mkdir(parents=True, exist_ok=True)
-    label = "smoke" if args.smoke else "run"
-    if (c / label).exists():
-        raise RuntimeError("attempt already exists")
-    with (c / f"{label}.started").open("x") as f:
-        f.write(datetime.datetime.now(datetime.timezone.utc).isoformat())
-    child = None
-    record = dict(
-        status="WAITING",
-        stages=[],
-        nice=os.getpriority(os.PRIO_PROCESS, 0),
-        host=os.uname().nodename,
-    )
-    started = time.monotonic()
-    try:
-        s = sample(c)
-        action, why = classify(s)
-        if action != "run":
-            raise RuntimeError("prelaunch guard " + str(why))
-        cmd = [
-            sys.executable,
-            "-B",
-            str(HERE / "runner.py"),
-            "--output",
-            str(c / label),
-        ] + (["--smoke"] if args.smoke else [])
-        with (c / f"{label}.log").open("w") as log:
-            child = subprocess.Popen(
-                cmd,
-                env=environment(),
-                stdout=log,
-                stderr=subprocess.STDOUT,
-                start_new_session=True,
-            )
-            record.update(status="RUNNING", command=cmd, pid=child.pid)
-            with (c / f"{label}-resources.jsonl").open("w") as resources:
-                while child.poll() is None:
-                    s = sample(c, child)
-                    resources.write(json.dumps(s) + "\n")
-                    resources.flush()
-                    action, why = classify(s)
-                    if action == "abort":
-                        raise RuntimeError("guard " + why)
-                    time.sleep(0.25)
-            code = child.wait()
-            record["exit_status"] = code
-            if code:
-                raise RuntimeError(f"worker exit {code}")
-        record["status"] = "COMPLETE"
-    except BaseException as e:
-        record.update(status="INCOMPLETE", error=str(e))
-        raise
-    finally:
-        stop(child)
-        record["wall_seconds"] = time.monotonic() - started
-        (c / f"{label}-monitor.json").write_text(json.dumps(record, indent=2) + "\n")
-
+    _run_monitor(args, HERE, environment, sample, classify, stop)
 
 if __name__ == "__main__":
     main()

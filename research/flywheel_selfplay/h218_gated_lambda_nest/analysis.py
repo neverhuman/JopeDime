@@ -14,6 +14,12 @@ import json
 import math
 
 import numpy as np
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from h195_blend025_kernel_confirm.analysis import family_matrix as _shared_family_matrix
+from h217_gated025_confirm.analysis import _plateau as _shared_plateau
 
 SEEDS = (218101, 218102, 218103)
 FOLD_SEEDS = {218101: 218141, 218102: 218142, 218103: 218143}
@@ -49,6 +55,15 @@ R882_DL_VAL = (
 )
 PLATEAU_MARGIN = 0.002  # co-primary: DL-Val context-mean gain must exceed this, with family-bootstrap LCB95 > 0
 PLATEAU_SEED = BOOT_SEED + 2
+
+
+def plateau(arm_values, ref_values, families, seed=PLATEAU_SEED):
+    return _shared_plateau(arm_values, ref_values, families, seed, DRAWS, PLATEAU_MARGIN)
+
+
+def family_win_matrix(values_by_context, family_ids, tie_margin=TIE_MARGIN):
+    from h195_blend025_kernel_confirm.analysis import family_win_matrix as shared
+    return shared(values_by_context, family_ids, tie_margin)
 
 
 # ------------------------------------------------------------------ folds and fit plan
@@ -153,11 +168,12 @@ def blend(reference_cost, gbm_cost, lam=LAMBDA):
 # ------------------------------------------------------------------ statistics
 
 
+
+
+
+
 def family_matrix(values, families):
-    order = sorted(set(families))
-    v = np.asarray(values, dtype=np.float64)
-    m = np.asarray([v[..., np.asarray(families) == f].mean(axis=-1) for f in order])
-    return order, np.moveaxis(m, 0, -1)
+    return _shared_family_matrix(values, families)
 
 
 def contrast(panel, base, families, seed=BOOT_SEED):
@@ -187,14 +203,6 @@ def contrast(panel, base, families, seed=BOOT_SEED):
     )
 
 
-def family_win_matrix(values_by_context, family_ids, tie_margin=TIE_MARGIN):
-    v = np.asarray(values_by_context, dtype=np.float64)
-    diff = v[:, :, None] - v[:, None, :]
-    wins = np.where(diff > tie_margin, 1.0, np.where(diff < -tie_margin, 0.0, 0.5)) * (
-        1.0 - np.eye(v.shape[1])
-    )
-    fams = sorted(set(family_ids))
-    return np.array([wins[np.asarray(family_ids) == f].mean(axis=0) for f in fams])
 
 
 def bt_ratings(wins, anchor=0, prior=0.01):
@@ -373,32 +381,6 @@ def lambda_selection_counts(cells, arm="GATED_NEST"):
     return counts
 
 
-def plateau(arm_values, ref_values, families, seed=PLATEAU_SEED):
-    """Co-primary on DL-Val flywheel91: per-context native utilities of the arm and of r882 (91 contexts, each averaged
-    over the 15 cells). Gain = context-mean delta. CI95 = 10,000 family-cluster draws (families resampled with
-    replacement, every drawn family's contexts pooled, context-mean delta). WIN iff gain > +0.002 AND LCB95 > 0;
-    a tie (gain exactly 0 or <= the margin) is not a win."""
-    a, r = np.asarray(arm_values, np.float64), np.asarray(ref_values, np.float64)
-    fams = np.asarray(families)
-    if a.shape != r.shape or a.shape != fams.shape or not np.isfinite(a - r).all():
-        raise ValueError("matching finite per-context values required")
-    delta = a - r
-    order = sorted(set(fams.tolist()))
-    sums = np.array([delta[fams == f].sum() for f in order])
-    counts = np.array([(fams == f).sum() for f in order])
-    draw = np.random.default_rng(seed).integers(0, len(order), (DRAWS, len(order)))
-    boot = sums[draw].sum(axis=1) / counts[draw].sum(axis=1)
-    gain = float(delta.mean())
-    ci = np.quantile(boot, [0.025, 0.975]).tolist()
-    return dict(
-        arm_context_mean=float(a.mean()),
-        r882_context_mean=float(r.mean()),
-        gain=gain,
-        ci95=ci,
-        contexts=int(len(a)),
-        families=len(order),
-        win=bool(gain > PLATEAU_MARGIN and ci[0] > 0),
-    )
 
 
 def verdict(primary, plateau_result):
