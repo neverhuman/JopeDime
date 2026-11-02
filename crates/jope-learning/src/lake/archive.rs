@@ -23,13 +23,16 @@ pub enum ArchiveScope {
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-/// `Fidelity` is an enum for the fidelity contract in this module: Bounded quality-diversity proposal memory.
-pub enum Fidelity {
-    /// The `Low` case of `Fidelity`.
+/// Fidelity level recorded for a bounded quality-diversity archive candidate.
+pub enum ArchiveFidelity {
+    /// The `Low` case of `ArchiveFidelity`.
     Low,
-    /// The `Final` case of `Fidelity`.
+    /// The `Final` case of `ArchiveFidelity`.
     Final,
 }
+
+/// Compatibility name for the archive candidate fidelity contract.
+pub type Fidelity = ArchiveFidelity;
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -64,7 +67,7 @@ pub struct Candidate {
     /// SHA-256 digest identifying the associated evaluator identity.
     pub evaluator_identity_sha256: String,
     /// Fidelity recorded for this candidate.
-    pub fidelity: Fidelity,
+    pub fidelity: ArchiveFidelity,
     /// Data or authority role assigned to this value.
     pub role: CandidateRole,
     /// Identifier for the associated context.
