@@ -42,6 +42,8 @@ class BudgetLedger:
                 or state["gpu_cap_seconds"] != 18 * 3600
             ):
                 raise ValueError("campaign caps changed")
+            if state.get("accounting_status") != "RECONCILED":
+                raise ValueError("campaign accounting is not reconciled")
             result = fn(state)
             temp = self.path.with_suffix(".next")
             with temp.open("w") as f:

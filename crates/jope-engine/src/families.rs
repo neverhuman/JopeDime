@@ -152,26 +152,27 @@ impl Registry {
             };
             ensure!(file_hash(&path)? == prior.sha256, "growth parent changed");
             let parent: Registry = read_json(&path)?;
-            for (name, old) in &parent.families {
+            for (name, previous) in &parent.families {
                 let new = self
                     .families
                     .get(name)
                     .context("growth removed historical family")?;
                 ensure!(
-                    new.partition == old.partition
-                        && new.assignment_method == old.assignment_method
-                        && new.assignment_hash == old.assignment_hash
-                        && new.bucket == old.bucket
-                        && old.source_keys.is_subset(&new.source_keys)
-                        && old.holds.is_subset(&new.holds),
+                    new.partition == previous.partition
+                        && new.assignment_method == previous.assignment_method
+                        && new.assignment_hash == previous.assignment_hash
+                        && new.bucket == previous.bucket
+                        && previous.source_keys.is_subset(&new.source_keys)
+                        && previous.holds.is_subset(&new.holds),
                     "growth changed protected historical membership"
                 );
-                for dataset in &old.datasets {
-                    let old_value = serde_json::to_value(dataset)?;
+                for dataset in &previous.datasets {
+                    let previous_dataset_json = serde_json::to_value(dataset)?;
                     ensure!(
                         new.datasets
                             .iter()
-                            .any(|d| serde_json::to_value(d).ok().as_ref() == Some(&old_value)),
+                            .any(|d| serde_json::to_value(d).ok().as_ref()
+                                == Some(&previous_dataset_json)),
                         "growth changed historical dataset evidence"
                     );
                 }
@@ -853,24 +854,26 @@ pub fn freeze(
         }
     }
     if let Some(parent) = &prior {
-        for (name, old) in &parent.families {
+        for (name, previous) in &parent.families {
             let new = registry
                 .families
                 .get(name)
                 .context("append removed an existing family")?;
             ensure!(
-                new.partition == old.partition
-                    && new.assignment_hash == old.assignment_hash
-                    && new.bucket == old.bucket,
+                new.partition == previous.partition
+                    && new.assignment_hash == previous.assignment_hash
+                    && new.bucket == previous.bucket,
                 "append changed frozen assignment for {name}"
             );
-            for old_dataset in &old.datasets {
+            for previous_dataset in &previous.datasets {
                 ensure!(
-                    new.datasets.iter().any(|d| d.dataset == old_dataset.dataset
-                        && d.source_key == old_dataset.source_key
-                        && d.metadata_sha256 == old_dataset.metadata_sha256
-                        && d.entity_review_sha256 == old_dataset.entity_review_sha256),
-                    "append removed or changed old dataset identity"
+                    new.datasets
+                        .iter()
+                        .any(|d| d.dataset == previous_dataset.dataset
+                            && d.source_key == previous_dataset.source_key
+                            && d.metadata_sha256 == previous_dataset.metadata_sha256
+                            && d.entity_review_sha256 == previous_dataset.entity_review_sha256),
+                    "append removed or changed the preceding dataset identity"
                 );
             }
         }

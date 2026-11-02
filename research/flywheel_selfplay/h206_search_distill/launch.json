@@ -86,6 +86,25 @@
   "native_metric_source_sha256": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
   "native_train_bridge": "first-10-TRAIN-rows-cyclic-zero-query-target-v1",
   "binding_status": "MISSING_PINS.md",
-  "conditional_launch_authority": "gbw_0108_gpu_fused_redteam_codex.md",
-  "execution_admission": "PENDING_MODEL_INPUT_NATIVE91_STUDY_RUNTIME_AND_LEDGER"
+  "conditional_launch_authority": "gbw_0135_gpu_fused_redteam_codex.md",
+  "execution_admission": "PENDING_MODEL_INPUT_NATIVE91_STUDY_RUNTIME_AND_LEDGER",
+  "recovered_bindings_sha256": "62e41c27478662eb94756953ae89668ab2717a5e0de6190a805664c3626bc5b6",
+  "initial_checkpoint_ref": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261101/H206/immutable-inputs/0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64/round-882.pt",
+    "version_id": "JsZ_4aJytgLUB0Mp6IidEneFPhlq1Un7",
+    "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+  },
+  "native91_reference_ref": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261101/H206/immutable-inputs/30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a/best_dev_checkpoint.json",
+    "version_id": "6ETtveab2VJ0d.y6jFpg8qY5VYJj3l4c",
+    "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "study_id": "H206",
+  "study_specification_sha256": "e3ca089fff1657f863c1425d36379d0d5b8d6ab113b81fd7777d0e8bd4e04cdf",
+  "canonical_ledger_host": "xbabe3",
+  "canonical_ledger_path": "/home/ubuntu/jope_plan/evidence/H206/campaign-ledger.json",
+  "canonical_ledger_registered": true,
+  "accounting_status": "UNRECONCILED"
 }

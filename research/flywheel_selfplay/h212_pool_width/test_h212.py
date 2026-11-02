@@ -89,6 +89,28 @@ def test_width_outputs_are_validated_independently():
         analysis.validate_width_proposals(arms[64], 64)
 
 
+def test_end_to_end_smoke_receipt_requires_all_widths_and_outputs():
+    receipt = {
+        "status": "PASS",
+        "widths": list(analysis.WIDTHS),
+        "rust_evaluation_completed": True,
+        "analysis_row_written": True,
+        "pool_record_count": len(analysis.WIDTHS),
+    }
+    runner.validate_smoke_receipt(receipt)
+    with pytest.raises(RuntimeError, match="all registered widths"):
+        runner.validate_smoke_receipt({**receipt, "widths": [16]})
+    with pytest.raises(RuntimeError, match="Rust evaluation"):
+        runner.validate_smoke_receipt({**receipt, "rust_evaluation_completed": False})
+
+
+def test_dynamic_prediction_uses_explicit_context_identity():
+    result = runner.predict_dynamic(
+        None, None, REAL_CID, {"lm48_z": np.zeros((1, 48))}, None, None, [], None
+    )
+    assert result.size == 0
+
+
 @pytest.mark.skipif(
     not all(path.is_file() for path in (SELECTED_PATH, RAW_TABLE_PATH, CACHED_GZ_PATH)),
     reason="approved H50/H58 TRAIN files are host-local",

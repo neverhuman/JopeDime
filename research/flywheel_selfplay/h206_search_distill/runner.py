@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import re
@@ -23,6 +24,17 @@ REQUIRED_HEADROOM = 50_000_000_000
 
 def load_plan() -> dict:
     plan = json.loads((HERE / "launch.json").read_text())
+    raw_bindings = (HERE / "bindings.json").read_bytes()
+    if hashlib.sha256(raw_bindings).hexdigest() != plan["recovered_bindings_sha256"]:
+        raise ValueError("recovered binding manifest hash mismatch")
+    bindings = json.loads(raw_bindings)
+    if (
+        bindings["initial_checkpoint"] != plan["initial_checkpoint_ref"]
+        or bindings["native91_reference"]["object_ref"] != plan["native91_reference_ref"]
+        or bindings["study"]["specification_sha256"] != plan["study_specification_sha256"]
+        or bindings["canonical_ledger"]["path"] != plan["canonical_ledger_path"]
+    ):
+        raise ValueError("recovered binding plan mismatch")
     expected = {
         "authority": AUTHORITY,
         "status": "QUEUED_NOT_RUN",

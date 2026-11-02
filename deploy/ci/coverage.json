@@ -505,7 +505,9 @@
     "feature:jope-appliance/client": {
       "discovery": {
         "dependencies": [
-          "dep:jope-client"
+          "dep:jope-client",
+          "dep:ureq",
+          "dep:zip"
         ],
         "kind": "feature"
       },
@@ -513,7 +515,23 @@
       "lanes": [
         "lite-client"
       ],
-      "scope": "BAT-07 explicit client-only build and strict normal dependency graph; existing CLT-04 loopback HTTP/in-process/SSE fixture contracts. Full product CLI/MCP A1 remains dependent on their composition tasks."
+      "scope": "BAT-07 explicit client-only build and strict normal dependency graph, with featureless ureq and zip for the JAIN cloud client (plain loopback HTTP only; HTTPS needs cloud-tls); existing CLT-04 loopback HTTP/in-process/SSE fixture contracts. Full product CLI/MCP A1 remains dependent on their composition tasks."
+    },
+    "feature:jope-appliance/cloud-tls": {
+      "discovery": {
+        "dependencies": [
+          "client",
+          "dep:rustls",
+          "ureq/rustls-no-provider",
+          "ureq/rustls-webpki-roots"
+        ],
+        "kind": "feature"
+      },
+      "dispositions": [
+        "release"
+      ],
+      "lanes": [],
+      "scope": "Opt-in HTTPS for JAIN cloud workspaces (rustls with the aws-lc-rs provider). No audited appliance feature set selects it: deploy/appliance/dependencies-deny.toml denies rustls/aws-* and keeps ureq featureless, so shipping it needs a reviewed dependency-policy amendment. Local check, clippy and cloud tests with the feature are recorded in its PR."
     },
     "feature:jope-appliance/default": {
       "discovery": {

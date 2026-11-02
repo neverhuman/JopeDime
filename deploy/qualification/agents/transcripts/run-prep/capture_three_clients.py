@@ -262,6 +262,41 @@ def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
     return None
 
 
+NORMAL_EXIT_DRAIN_MAX_SECONDS = 2.0
+
+
+def _group_has_live_members(pgid: int) -> bool:
+    proc = Path("/proc")
+    if not proc.is_dir():
+        try:
+            os.killpg(pgid, 0)
+            return True
+        except ProcessLookupError:
+            return False
+    for entry in proc.iterdir():
+        if not entry.name.isdecimal():
+            continue
+        try:
+            stat = (entry / "stat").read_text(encoding="ascii")
+            fields = stat.rsplit(")", 1)[1].split()
+            state, member_pgid = fields[0], int(fields[2])
+        except (OSError, IndexError, ValueError):
+            continue
+        if member_pgid == pgid and state not in {"Z", "X"}:
+            return True
+    return False
+
+
+def drain_group(
+    process: subprocess.Popen, deadline: float, check_interrupted=lambda: None
+) -> None:
+    """Let normal-exit descendants finish, bounded by the client deadline."""
+    drain_deadline = min(deadline, time.monotonic() + NORMAL_EXIT_DRAIN_MAX_SECONDS)
+    while _group_has_live_members(process.pid) and time.monotonic() < drain_deadline:
+        check_interrupted()
+        time.sleep(min(0.05, max(0, drain_deadline - time.monotonic())))
+
+
 def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
     previous_mask, pending_error = _block_sigint()
     pgid = process.pid
@@ -295,32 +330,11 @@ def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
         except BaseException as error:
             remember(error)
 
-        def live_group_members() -> bool:
-            proc = Path("/proc")
-            if not proc.is_dir():
-                try:
-                    os.killpg(pgid, 0)
-                    return True
-                except ProcessLookupError:
-                    return False
-            for entry in proc.iterdir():
-                if not entry.name.isdecimal():
-                    continue
-                try:
-                    stat = (entry / "stat").read_text(encoding="ascii")
-                    fields = stat.rsplit(")", 1)[1].split()
-                    state, member_pgid = fields[0], int(fields[2])
-                except (OSError, IndexError, ValueError):
-                    continue
-                if member_pgid == pgid and state not in {"Z", "X"}:
-                    return True
-            return False
-
         grace_deadline = time.monotonic() + max(0, grace_seconds)
         wait(max(0, grace_seconds))
-        while live_group_members() and time.monotonic() < grace_deadline:
+        while _group_has_live_members(pgid) and time.monotonic() < grace_deadline:
             pause(min(0.05, max(0, grace_deadline - time.monotonic())))
-        if live_group_members():
+        if _group_has_live_members(pgid):
             try:
                 os.killpg(pgid, signal.SIGKILL)
             except ProcessLookupError:
@@ -328,9 +342,9 @@ def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
             except BaseException as error:
                 remember(error)
             kill_deadline = time.monotonic() + 2
-            while live_group_members() and time.monotonic() < kill_deadline:
+            while _group_has_live_members(pgid) and time.monotonic() < kill_deadline:
                 pause(0.02)
-            if live_group_members():
+            if _group_has_live_members(pgid):
                 cleanup_error = CaptureError(f"process group {pgid} survived SIGKILL")
 
         reap_deadline = time.monotonic() + 2
@@ -677,6 +691,12 @@ def run_capture(args: argparse.Namespace) -> dict:
                                 client_exit = active_client.wait(
                                     timeout=min(0.1, remaining)
                                 )
+                                if client_exit == 0:
+                                    drain_group(
+                                        active_client,
+                                        client_deadline,
+                                        raise_if_sigint_pending,
+                                    )
                                 break
                             except subprocess.TimeoutExpired:
                                 continue
