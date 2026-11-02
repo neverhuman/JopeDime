@@ -4,7 +4,7 @@ use super::model::{
 };
 use super::prelude::*;
 
-pub(super) fn valid_dataset_id(value: &str) -> bool {
+pub(crate) fn valid_dataset_id(value: &str) -> bool {
     let hash = value.strip_prefix("synth_").unwrap_or(value);
     hash.len() == 16
         && hash
@@ -12,11 +12,11 @@ pub(super) fn valid_dataset_id(value: &str) -> bool {
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
-pub(super) fn read_meta(path: &Path) -> Result<Value> {
+pub(crate) fn read_meta(path: &Path) -> Result<Value> {
     read_json(path).with_context(|| format!("read dataset metadata {}", path.display()))
 }
 
-pub(super) fn mirror_dataset(
+pub(crate) fn mirror_dataset(
     paths: &ExpansionPaths,
     task: &str,
     dataset_id: &str,
@@ -32,7 +32,7 @@ pub(super) fn mirror_dataset(
     .find(|candidate| candidate.is_dir())
 }
 
-pub(super) fn write_conflict_receipt(
+pub(crate) fn write_conflict_receipt(
     paths: &ExpansionPaths,
     task: &str,
     dataset_id: &str,
@@ -71,13 +71,13 @@ pub(super) fn write_conflict_receipt(
     Ok((digest, destination))
 }
 
-pub(super) enum MirrorEvidence {
+pub(crate) enum MirrorEvidence {
     Absent,
     Matched(PathBuf),
     Conflict(MirrorConflict),
 }
 
-pub(super) fn compare_mirror_evidence(
+pub(crate) fn compare_mirror_evidence(
     paths: &ExpansionPaths,
     task: &str,
     dataset_id: &str,
@@ -140,7 +140,7 @@ pub fn compare_mirror(
     }
 }
 
-pub(super) fn candidate_directories(
+pub(crate) fn candidate_directories(
     paths: &ExpansionPaths,
     task_filter: Option<&str>,
     limit: Option<usize>,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_stage_folds(
+pub(crate) fn validate_stage_folds(
     folds: &[PairedFoldEvidenceV1],
     expected_folds: usize,
     arms: &[FeatureViewKindV1],
@@ -173,7 +173,7 @@ pub fn build_grouped_fold_plan(
     })
 }
 
-pub(super) fn validate_plan_feature_feasibility(
+pub(crate) fn validate_plan_feature_feasibility(
     plan: &GroupedFoldPlanV1,
     arms: &[FeatureViewKindV1],
     raw_features: usize,
@@ -295,7 +295,7 @@ pub fn write_gate_artifacts(
     )
 }
 
-pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<(), String> {
+pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<(), String> {
     if path.exists() {
         let present =
             fs::read(path).map_err(|error| format!("read existing {}: {error}", path.display()))?;

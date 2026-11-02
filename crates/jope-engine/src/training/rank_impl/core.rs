@@ -4,7 +4,7 @@ use super::*;
 #[path = "training_loop.rs"]
 mod training_loop;
 
-pub(super) fn rank_impl(
+pub(crate) fn rank_impl(
     root: &Path,
     corpus: &Path,
     run: &Path,

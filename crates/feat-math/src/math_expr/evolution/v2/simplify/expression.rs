@@ -1,7 +1,7 @@
 use super::*;
 
 /// Every variable `expr` reads, in first-read order.
-pub(super) fn variables(expr: &Expr, out: &mut Vec<Var>) {
+pub(crate) fn variables(expr: &Expr, out: &mut Vec<Var>) {
     match expr {
         Expr::Var(v) => {
             if !out.contains(v) {
@@ -20,7 +20,7 @@ pub(super) fn variables(expr: &Expr, out: &mut Vec<Var>) {
 
 /// The one variable a subtree reads, and its `(v, f)` samples on the training rows. `None` when it
 /// reads no variable or more than one, or any row raises any fault or gives a non-finite value.
-pub(super) fn samples(subtree: &MathExpr, rows: &[Vec<f64>]) -> Option<(Var, Vec<(f64, f64)>)> {
+pub(crate) fn samples(subtree: &MathExpr, rows: &[Vec<f64>]) -> Option<(Var, Vec<(f64, f64)>)> {
     let mut found = Vec::new();
     variables(&subtree.root, &mut found);
     let [var] = found[..] else {
@@ -43,7 +43,7 @@ pub(super) fn samples(subtree: &MathExpr, rows: &[Vec<f64>]) -> Option<(Var, Vec
 /// target [`samples`] records at such a row. A fault-free read of a finite value passes it on
 /// unchanged, so the subtree with `var` read as the element `x` computes the same target from
 /// `v`. `None` when that evaluation faults or is not finite, which no sampled row allows.
-pub(super) fn target_at(subtree: &Expr, var: Var, v: f64) -> Option<f64> {
+pub(crate) fn target_at(subtree: &Expr, var: Var, v: f64) -> Option<f64> {
     let mut tree = subtree.clone();
     read_as_element(&mut tree, var);
     let (f, faults) = MathExpr::from_ast(tree).ok()?.eval_element_traced(v, &[]);
@@ -51,7 +51,7 @@ pub(super) fn target_at(subtree: &Expr, var: Var, v: f64) -> Option<f64> {
 }
 
 /// `expr` with each read of `var` made a read of the element `x`.
-pub(super) fn read_as_element(expr: &mut Expr, var: Var) {
+pub(crate) fn read_as_element(expr: &mut Expr, var: Var) {
     match expr {
         Expr::Var(v) => {
             if *v == var {
@@ -75,7 +75,7 @@ pub(super) fn read_as_element(expr: &mut Expr, var: Var) {
 /// nodes than the smallest line (`x * a`, three nodes at depth two), and sits where that line fits
 /// `max_depth`. Under the kernel2 depth limit of 4 these are the root and its children, and a
 /// grandchild only when it is a call of three arguments.
-pub(super) fn linearizable(root: &Expr, max_depth: usize) -> Vec<Vec<usize>> {
+pub(crate) fn linearizable(root: &Expr, max_depth: usize) -> Vec<Vec<usize>> {
     paths(root)
         .into_iter()
         .filter(|path| {
@@ -88,11 +88,11 @@ pub(super) fn linearizable(root: &Expr, max_depth: usize) -> Vec<Vec<usize>> {
 }
 
 /// How a line's own largest error over the training samples is measured, from its coefficients.
-pub(super) type Measure = Box<dyn FnOnce(&[f64]) -> Option<f64>>;
+pub(crate) type Measure = Box<dyn FnOnce(&[f64]) -> Option<f64>>;
 
 /// Where a linearization's training measurements come from: the training rows themselves, or a
 /// record of what was measured on them, by subtree index.
-pub(super) enum Source<'a> {
+pub(crate) enum Source<'a> {
     Rows(&'a [Vec<f64>]),
     Recorded(&'a mut dyn FnMut(usize) -> Result<LinearizationEvidence>),
 }
@@ -113,7 +113,7 @@ pub(super) enum Source<'a> {
 /// to `64 ε 1e12` (about 0.014), and widens the bound with it. It cannot tell a consistent record
 /// from the fit the training rows give: without the rows, an edit that keeps every number
 /// consistent (say, a larger `max_error` and `levelled` with a closed bracket) passes.
-pub(super) fn consistent(fit: &LinearFit) -> bool {
+pub(crate) fn consistent(fit: &LinearFit) -> bool {
     let finite = [fit.lo, fit.hi, fit.levelled, fit.max_error, fit.max_abs]
         .iter()
         .all(|v| v.is_finite());
@@ -174,7 +174,7 @@ pub(super) fn consistent(fit: &LinearFit) -> bool {
 /// side). The conversion's own code, in its own order: `value` itself (`+0.0` for a zero), and a
 /// zero slope, each NaN where the conversion scales zero by an infinite `α` or `β`. A zero slope's
 /// sign never shows in the sums, which add it to `+0.0` or to `value`.
-pub(super) fn constant_line(value: f64, lo: f64, hi: f64) -> [f64; 2] {
+pub(crate) fn constant_line(value: f64, lo: f64, hi: f64) -> [f64; 2] {
     let line = Minimax {
         lo,
         hi,
@@ -193,7 +193,7 @@ pub(super) fn constant_line(value: f64, lo: f64, hi: f64) -> [f64; 2] {
 /// Whether recorded coefficients are the constant line's on `[lo, hi]`: bit for bit, a NaN where
 /// the conversion gives one; or both NaN where it gives a NaN, as a published record keeps a pair
 /// with any coefficient that is not finite (as absent, read back as NaN).
-pub(super) fn constant_line_recorded(coefficients: [f64; 2], value: f64, lo: f64, hi: f64) -> bool {
+pub(crate) fn constant_line_recorded(coefficients: [f64; 2], value: f64, lo: f64, hi: f64) -> bool {
     let expected = constant_line(value, lo, hi);
     let exact = coefficients.iter().zip(expected).all(|(c, e)| {
         if e.is_nan() {
@@ -215,25 +215,25 @@ pub(super) fn constant_line_recorded(coefficients: [f64; 2], value: f64, lo: f64
 /// could not be built ([`LINEARIZE_INPUT_FAULTS`]) are missing for every subtree, so that refusal
 /// is recorded for all of the expression's subtrees or none.
 #[derive(Default)]
-pub(super) struct Shared {
+pub(crate) struct Shared {
     /// Each recorded subtree with its fit, its line's error, and its refusal when it has no fit.
-    pub(super) subtrees: Vec<(Expr, SampleEvidence)>,
+    pub(crate) subtrees: Vec<(Expr, SampleEvidence)>,
     /// Per variable: the training range its fits record, and whether a fit refused its values.
-    pub(super) variables: std::collections::BTreeMap<Var, (Option<(u64, u64)>, bool)>,
+    pub(crate) variables: std::collections::BTreeMap<Var, (Option<(u64, u64)>, bool)>,
     /// Whether the expression's input rows could not be built, as its first record says.
-    pub(super) input_faults: Option<bool>,
+    pub(crate) input_faults: Option<bool>,
 }
 
 /// The fit, the line's measured error, and the refusal of a subtree without a fit, with every
 /// number as its exact bits. A record compares with another bit for bit, NaN included: a fit
 /// refused for coefficients that are not finite is published without them and read back as NaN,
 /// which never equals itself, while two records of the same subtree hold the same bits.
-pub(super) type SampleEvidence = (Option<FitBits>, Option<u64>, Option<String>);
+pub(crate) type SampleEvidence = (Option<FitBits>, Option<u64>, Option<String>);
 
 /// A fit as exact bits: its stop, coefficients, range, bracket and largest `|f|`, and its steps.
-pub(super) type FitBits = (MinimaxStop, [u64; 2], [u64; 5], [usize; 2]);
+pub(crate) type FitBits = (MinimaxStop, [u64; 2], [u64; 5], [usize; 2]);
 
-pub(super) fn fit_bits(fit: &LinearFit) -> FitBits {
+pub(crate) fn fit_bits(fit: &LinearFit) -> FitBits {
     (
         fit.stop,
         fit.coefficients.map(f64::to_bits),
@@ -243,7 +243,7 @@ pub(super) fn fit_bits(fit: &LinearFit) -> FitBits {
 }
 
 impl Shared {
-    pub(super) fn check(
+    pub(crate) fn check(
         &mut self,
         subtree: &Expr,
         var: Var,
@@ -295,7 +295,7 @@ impl Shared {
 }
 
 /// Whether `a` and `b` are the same tree, each literal compared by its bits.
-pub(super) fn same_tree(a: &Expr, b: &Expr) -> bool {
+pub(crate) fn same_tree(a: &Expr, b: &Expr) -> bool {
     match (a, b) {
         (Expr::Const(x), Expr::Const(y)) => x.to_bits() == y.to_bits(),
         (Expr::Var(x), Expr::Var(y)) => x == y,
@@ -318,7 +318,7 @@ pub(super) fn same_tree(a: &Expr, b: &Expr) -> bool {
 /// `floor`, `round`) each give zero from zero, and NaN or zero from NaN. A sample's target is
 /// finite, so such a subtree's targets are all zero on any training rows. The test is
 /// sufficient, not complete: `false` says nothing.
-pub(super) fn zero_wherever_finite(expr: &Expr) -> bool {
+pub(crate) fn zero_wherever_finite(expr: &Expr) -> bool {
     match expr {
         Expr::Const(c) => *c == 0.0,
         Expr::Var(_) => false,
@@ -356,7 +356,7 @@ pub(super) fn zero_wherever_finite(expr: &Expr) -> bool {
 /// in size: each gives results of equal size from either, or faults (a divisor near zero, the
 /// logarithm, a negative power), so every finite target of such a subtree has one size, on any
 /// training rows. The test is sufficient, not complete.
-pub(super) fn one_value_wherever_finite(expr: &Expr) -> bool {
+pub(crate) fn one_value_wherever_finite(expr: &Expr) -> bool {
     zero_wherever_finite(expr)
         || match expr {
             Expr::Const(_) => true,
@@ -379,7 +379,7 @@ pub(super) fn one_value_wherever_finite(expr: &Expr) -> bool {
 /// operand's, `exp` of its clamped argument, `min`, `max` and `clip` the larger of their
 /// operands' or bounds'. Quotients, powers, logarithms and `asinh` are unbounded here. A sample's
 /// target is finite, so no target of a subtree is larger than its bound, on any training rows.
-pub(super) fn largest_magnitude(expr: &Expr) -> f64 {
+pub(crate) fn largest_magnitude(expr: &Expr) -> f64 {
     let up = |v: f64| if v == 0.0 { 0.0 } else { v.next_up() };
     if zero_wherever_finite(expr) {
         return 0.0;

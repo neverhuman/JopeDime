@@ -5,8 +5,8 @@ use super::{
     model::{ExpansionPaths, FileLock, CONTEXT_STRIDE, TASKS},
 };
 
-pub(super) const LIVE_POINTER_SCHEMA: &str = "JopeTestOnlyContextPointer.v1";
-pub(super) const LIVE_CATALOG_SCHEMA: &str = "JopeTestOnlyContextCatalog.v1";
+pub(crate) const LIVE_POINTER_SCHEMA: &str = "JopeTestOnlyContextPointer.v1";
+pub(crate) const LIVE_CATALOG_SCHEMA: &str = "JopeTestOnlyContextCatalog.v1";
 pub const SIDECAR_NAMES: [&str; 4] = [
     "hyperion3train128dim.vs",
     "hyperion3train.vs",
@@ -14,7 +14,7 @@ pub const SIDECAR_NAMES: [&str; 4] = [
     "train_target.vs",
 ];
 
-pub(super) fn read_live_pointer(live_root: &Path) -> Result<(Value, Value, Vec<u8>)> {
+pub(crate) fn read_live_pointer(live_root: &Path) -> Result<(Value, Value, Vec<u8>)> {
     let pointer_path = live_root.join("current.json");
     let pointer = read_json(&pointer_path)?;
     ensure!(
@@ -75,7 +75,7 @@ pub(super) fn read_live_pointer(live_root: &Path) -> Result<(Value, Value, Vec<u
     Ok((pointer, catalog, blob))
 }
 
-pub(super) struct TrancheLoad {
+pub(crate) struct TrancheLoad {
     tranche_id: String,
     catalog_path: PathBuf,
     catalog_sha256: String,
@@ -83,7 +83,7 @@ pub(super) struct TrancheLoad {
     blob: Vec<u8>,
 }
 
-pub(super) fn load_activated_tranches(
+pub(crate) fn load_activated_tranches(
     catalog_root: &Path,
     exclude: &[String],
 ) -> Result<Vec<TrancheLoad>> {
@@ -167,7 +167,7 @@ pub(super) fn load_activated_tranches(
     Ok(loads)
 }
 
-pub(super) fn append_history(live_root: &Path, previous_pointer: &Value) -> Result<()> {
+pub(crate) fn append_history(live_root: &Path, previous_pointer: &Value) -> Result<()> {
     let mut record = json!({
         "schema": "JopeLiveCatalogPointerHistory.v1",
         "replaced_at_ms": now_ms(),

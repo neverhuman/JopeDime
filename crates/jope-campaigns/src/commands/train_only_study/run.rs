@@ -1,31 +1,31 @@
 use super::*;
 
-pub(super) fn checkpoint_path(root: &Path, dataset: &str, generation: usize) -> PathBuf {
+pub(crate) fn checkpoint_path(root: &Path, dataset: &str, generation: usize) -> PathBuf {
     root.join("datasets")
         .join(dataset)
         .join("generations")
         .join(format!("generation-{generation:03}.v2.json"))
 }
 
-pub(super) fn selection_path(root: &Path, dataset: &str) -> PathBuf {
+pub(crate) fn selection_path(root: &Path, dataset: &str) -> PathBuf {
     root.join("datasets")
         .join(dataset)
         .join("selection-complete.v2.json")
 }
 
-pub(super) fn champion_validation_path(root: &Path, dataset: &str) -> PathBuf {
+pub(crate) fn champion_validation_path(root: &Path, dataset: &str) -> PathBuf {
     root.join("datasets")
         .join(dataset)
         .join("champion-fixed-grid.v2.json")
 }
 
-pub(super) fn dataset_validation_path(root: &Path, dataset: &str) -> PathBuf {
+pub(crate) fn dataset_validation_path(root: &Path, dataset: &str) -> PathBuf {
     root.join("datasets")
         .join(dataset)
         .join("validation-success.v2.json")
 }
 
-pub(super) fn run_dataset(
+pub(crate) fn run_dataset(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,

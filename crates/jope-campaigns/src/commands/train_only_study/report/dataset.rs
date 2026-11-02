@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn report_dataset(
+pub(crate) fn report_dataset(
     root: &Path,
     dataset: &DatasetStudyEntry,
     posthoc: &TrainOnlyPosthocScore,

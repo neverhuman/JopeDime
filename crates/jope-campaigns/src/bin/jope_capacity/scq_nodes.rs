@@ -1,8 +1,8 @@
 use super::*;
 
-pub(super) type ScqNodes = (Vec<NodeTelemetry>, BTreeMap<String, Vec<String>>, bool);
+pub(crate) type ScqNodes = (Vec<NodeTelemetry>, BTreeMap<String, Vec<String>>, bool);
 
-pub(super) fn parse_scq_nodes(value: &Value) -> Result<ScqNodes> {
+pub(crate) fn parse_scq_nodes(value: &Value) -> Result<ScqNodes> {
     let rows = value
         .get("Nodes")
         .and_then(|row| row.get("nodes"))
@@ -82,7 +82,7 @@ pub(super) fn parse_scq_nodes(value: &Value) -> Result<ScqNodes> {
     Ok((nodes, gpu_allocations, scheduler_supports))
 }
 
-pub(super) fn zero_pressure() -> StoredPressure {
+pub(crate) fn zero_pressure() -> StoredPressure {
     StoredPressure {
         cpu_psi: 0.0,
         memory_psi: 0.0,
@@ -94,7 +94,7 @@ pub(super) fn zero_pressure() -> StoredPressure {
     }
 }
 
-pub(super) fn integer(value: &Value, key: &str) -> Result<i64> {
+pub(crate) fn integer(value: &Value, key: &str) -> Result<i64> {
     value
         .get(key)
         .and_then(|field| {
@@ -105,7 +105,7 @@ pub(super) fn integer(value: &Value, key: &str) -> Result<i64> {
         .with_context(|| format!("SCQ node lacks integer {key}"))
 }
 
-pub(super) fn number(value: &Value, key: &str) -> Result<f64> {
+pub(crate) fn number(value: &Value, key: &str) -> Result<f64> {
     let result = value
         .get(key)
         .and_then(Value::as_f64)

@@ -5,5 +5,5 @@ mod execution;
 mod gate;
 
 pub use cache::{build_registry_cache, verify_complete_registry_cache};
-pub(super) use execution::{precomputed_fold_encoding, StageExecution};
+pub(crate) use execution::{precomputed_fold_encoding, StageExecution};
 pub use gate::run_gate_command;

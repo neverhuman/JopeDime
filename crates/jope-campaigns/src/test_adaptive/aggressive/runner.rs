@@ -92,7 +92,7 @@ pub(crate) fn run_aggressive(
     )
 }
 
-pub(super) fn run_aggressive_with_specs(
+pub(crate) fn run_aggressive_with_specs(
     registry: &Path,
     run_id: &str,
     dataset_selector: Option<&str>,
@@ -248,7 +248,7 @@ pub(crate) fn validate_aggressive(registry: &Path, run_id: &str) -> Result<()> {
     validate_aggressive_with_specs(registry, run_id, all_specs, None)
 }
 
-pub(super) fn validate_aggressive_with_specs(
+pub(crate) fn validate_aggressive_with_specs(
     registry: &Path,
     run_id: &str,
     all_specs: Vec<DatasetSpec>,

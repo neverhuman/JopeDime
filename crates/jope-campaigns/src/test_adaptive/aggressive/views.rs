@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn remove_csv_header(bytes: &[u8], remove: bool, label: &str) -> Result<Vec<u8>> {
+pub(crate) fn remove_csv_header(bytes: &[u8], remove: bool, label: &str) -> Result<Vec<u8>> {
     if !remove {
         return Ok(bytes.to_vec());
     }
@@ -15,7 +15,7 @@ pub(super) fn remove_csv_header(bytes: &[u8], remove: bool, label: &str) -> Resu
     Ok(data)
 }
 
-pub(super) fn golden46_panel_value() -> Result<(Value, Vec<u8>, String)> {
+pub(crate) fn golden46_panel_value() -> Result<(Value, Vec<u8>, String)> {
     let path = Path::new(golden46_panel_manifest_str());
     let bytes = fs::read(path)?;
     let value: Value = serde_json::from_slice(&bytes)?;
@@ -43,7 +43,7 @@ pub(super) fn golden46_panel_value() -> Result<(Value, Vec<u8>, String)> {
     Ok((value, bytes, digest))
 }
 
-pub(super) fn prepare_golden46_evolution_views(
+pub(crate) fn prepare_golden46_evolution_views(
     source_registry: &Path,
 ) -> Result<(PathBuf, String)> {
     let (panel, _, panel_sha256) = golden46_panel_value()?;
@@ -140,7 +140,7 @@ pub(super) fn prepare_golden46_evolution_views(
     Ok((registry, sha256_bytes(&manifest_bytes)))
 }
 
-pub(super) fn load_golden46_specs(
+pub(crate) fn load_golden46_specs(
     registry: &Path,
 ) -> Result<(Vec<DatasetSpec>, String, String, String)> {
     let (_, _, panel_sha256) = golden46_panel_value()?;
@@ -258,7 +258,7 @@ pub(super) fn load_golden46_specs(
     ))
 }
 
-pub(super) fn select_dataset_specs(
+pub(crate) fn select_dataset_specs(
     specs: &[DatasetSpec],
     selector: Option<&str>,
     start_index: usize,

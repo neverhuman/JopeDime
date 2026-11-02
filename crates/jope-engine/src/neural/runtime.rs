@@ -4,7 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub(super) fn native_error() -> String {
+pub(crate) fn native_error() -> String {
     // SAFETY: jp_error returns c_str() of this thread's error string: non-null and
     // NUL-terminated; it is copied before any further native call can change it.
     unsafe { CStr::from_ptr(jp_error()).to_string_lossy().into_owned() }

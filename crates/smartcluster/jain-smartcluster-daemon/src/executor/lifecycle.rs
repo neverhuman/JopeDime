@@ -97,11 +97,11 @@ pub struct RunningWorkload {
     pub child: Child,
     pub control: ControlChannel,
     pub io: WorkloadIo,
-    pub(super) cgroups: CgroupManager,
-    pub(super) execution: ExecutionConfig,
-    pub(super) control_sequence: u64,
-    pub(super) _single_allocation_permit: Option<OwnedSemaphorePermit>,
-    pub(super) launch_guard: LaunchGuard,
+    pub(crate) cgroups: CgroupManager,
+    pub(crate) execution: ExecutionConfig,
+    pub(crate) control_sequence: u64,
+    pub(crate) _single_allocation_permit: Option<OwnedSemaphorePermit>,
+    pub(crate) launch_guard: LaunchGuard,
 }
 
 impl RunningWorkload {
@@ -252,11 +252,11 @@ impl RunningWorkload {
     }
 }
 
-pub(super) struct LaunchGuard {
-    pub(super) cgroup: Option<JobCgroup>,
-    pub(super) pid: u32,
-    pub(super) cgroups: CgroupManager,
-    pub(super) armed: bool,
+pub(crate) struct LaunchGuard {
+    pub(crate) cgroup: Option<JobCgroup>,
+    pub(crate) pid: u32,
+    pub(crate) cgroups: CgroupManager,
+    pub(crate) armed: bool,
 }
 
 impl Drop for LaunchGuard {
@@ -292,7 +292,7 @@ pub struct RunningParts {
 
 pub struct ProcessWaiter {
     child: Child,
-    pub(super) _single_allocation_permit: Option<OwnedSemaphorePermit>,
+    pub(crate) _single_allocation_permit: Option<OwnedSemaphorePermit>,
 }
 
 impl ProcessWaiter {

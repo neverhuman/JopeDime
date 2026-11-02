@@ -2,14 +2,14 @@ use super::*;
 
 /// Immutable output and dataset identities for a fold encoding.
 #[derive(Clone, Copy)]
-pub(super) struct FoldEncodingScope<'a> {
+pub(crate) struct FoldEncodingScope<'a> {
     pub plan_sha256: &'a str,
     pub encoding_root: &'a Path,
     pub registry_sha256: &'a str,
     pub dataset: &'a TrainOnlyDatasetV1,
 }
 
-pub(super) fn encode_fold(
+pub(crate) fn encode_fold(
     encoder: &HyperionEncoderIdentityV1,
     source: &RegressionTable,
     fold: &GroupedFoldV1,

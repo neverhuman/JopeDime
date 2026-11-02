@@ -27,7 +27,7 @@ use feat_math::kernel::expression_search::{
 };
 
 /// Evaluations of a stage's allowance kept for the start's and the winner's pipeline passes.
-pub(super) const PIPELINE_PASSES: usize = 2;
+pub(crate) const PIPELINE_PASSES: usize = 2;
 
 /// The surrogate passes a change needs besides one Jacobian: its initial value, one trial and the
 /// winner's re-score (`optimize_constants_lm_guarded` keeps one evaluation for the re-score).
@@ -98,9 +98,9 @@ pub(crate) fn parse_untrusted_pipeline(text: &str) -> Result<DslExpr> {
 
 /// The training rows and targets a refinement receives; nothing else reaches it.
 #[derive(Clone, Copy)]
-pub(super) struct Training<'a> {
-    pub(super) rows: &'a Rows,
-    pub(super) targets: &'a [f64],
+pub(crate) struct Training<'a> {
+    pub(crate) rows: &'a Rows,
+    pub(crate) targets: &'a [f64],
 }
 
 /// One expression stage's refinement request.
@@ -124,7 +124,7 @@ impl Kernel2Evaluator {
     /// `refine_training_guarded` with the damped least-squares method: the same admission,
     /// allowance, guard and stage order, with each expression stage refined as the module
     /// documentation describes. The trace is attached once a trial was charged.
-    pub(super) fn refine_training_lm_guarded(
+    pub(crate) fn refine_training_lm_guarded(
         &self,
         options: LmOptions,
         text: &str,

@@ -1,7 +1,7 @@
 use super::*;
 
 /// One (dataset, seed) pair: A's and B's M1.
-pub(super) struct Pair<'a> {
+pub(crate) struct Pair<'a> {
     dataset: &'a str,
     seed: u64,
     a: &'a Best,
@@ -89,7 +89,7 @@ pub fn paired(datasets: &[String], runs: &[RunRecord]) -> Result<Paired> {
     })
 }
 
-pub(super) fn paired_counts(pairs: &[Pair<'_>]) -> Result<PairedCounts> {
+pub(crate) fn paired_counts(pairs: &[Pair<'_>]) -> Result<PairedCounts> {
     ensure!(!pairs.is_empty(), "no pair to compare");
     let (mut wins, mut ties, mut losses) = (0, 0, 0);
     for pair in pairs {
@@ -241,9 +241,9 @@ pub fn sign_test(wins: u64, losses: u64) -> f64 {
 /// rounded once to the nearest f64 with ties to even, and capped at 1. The rounding keeps 53 significant
 /// bits in the normal range and whole multiples of `2^-1074` below it, so subnormal results are
 /// rounded once too, never twice.
-pub(super) fn round_scaled(s: &[u64], n: u64) -> f64 {
+pub(crate) fn round_scaled(s: &[u64], n: u64) -> f64 {
     /// Bit `index` of `s`, which has `length` significant bits; 0 outside them.
-    pub(super) fn bit(s: &[u64], length: u64, index: i64) -> bool {
+    pub(crate) fn bit(s: &[u64], length: u64, index: i64) -> bool {
         index >= 0 && (index as u64) < length && (s[(index / 64) as usize] >> (index % 64)) & 1 == 1
     }
     let Some(top) = s.iter().rposition(|&limb| limb != 0) else {
@@ -285,7 +285,7 @@ pub(super) fn round_scaled(s: &[u64], n: u64) -> f64 {
 }
 
 /// Each slot's search seconds, for `timing.paired`.
-pub(super) fn paired_timing(runs: &[RunTiming]) -> PairedTiming {
+pub(crate) fn paired_timing(runs: &[RunTiming]) -> PairedTiming {
     let seconds = |slot: &str| -> Vec<f64> {
         runs.iter()
             .filter(|t| t.slot == slot)

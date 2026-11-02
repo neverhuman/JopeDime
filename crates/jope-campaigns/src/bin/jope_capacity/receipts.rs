@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn write_receipt(root: &Path, key: &str, decision: &Value) -> Result<Value> {
+pub(crate) fn write_receipt(root: &Path, key: &str, decision: &Value) -> Result<Value> {
     let (receipts, idempotency) = receipt_dirs(root);
     fs::create_dir_all(&receipts)?;
     fs::create_dir_all(&idempotency)?;

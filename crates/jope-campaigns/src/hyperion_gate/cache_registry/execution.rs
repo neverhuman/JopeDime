@@ -1,14 +1,14 @@
 use super::*;
 
 #[derive(Debug)]
-pub(super) struct StageExecution {
-    pub(super) evidence: Vec<PairedFoldEvidenceV1>,
-    pub(super) receipts: Vec<JopeHyperionFoldReceiptV1>,
-    pub(super) encoding_milliseconds: u64,
-    pub(super) scoring_milliseconds: u64,
+pub(crate) struct StageExecution {
+    pub(crate) evidence: Vec<PairedFoldEvidenceV1>,
+    pub(crate) receipts: Vec<JopeHyperionFoldReceiptV1>,
+    pub(crate) encoding_milliseconds: u64,
+    pub(crate) scoring_milliseconds: u64,
 }
 
-pub(super) fn precomputed_fold_encoding(
+pub(crate) fn precomputed_fold_encoding(
     blocks: &PrecomputedTrainFeatureBlocks,
     fold: &GroupedFoldV1,
     plan_sha256: &str,
@@ -72,7 +72,7 @@ pub(super) fn precomputed_fold_encoding(
     })
 }
 
-pub(super) fn sidecars_for_view(
+pub(crate) fn sidecars_for_view(
     sidecars: &[MatrixArtifactV1],
     view: FeatureViewKindV1,
 ) -> Vec<MatrixArtifactV1> {

@@ -2,9 +2,9 @@ use anyhow::Result;
 
 /// One tiled patch's top-left corner in PERMUTED coordinates.
 #[derive(Clone, Copy, Debug)]
-pub(super) struct PatchCoord {
-    pub(super) r: usize,
-    pub(super) c: usize,
+pub(crate) struct PatchCoord {
+    pub(crate) r: usize,
+    pub(crate) c: usize,
 }
 
 /// Outputs of one model batch over `batch` p×p patches.

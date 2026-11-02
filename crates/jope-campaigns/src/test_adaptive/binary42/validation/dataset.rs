@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_dataset_campaign(
+pub(crate) fn validate_dataset_campaign(
     run_id: &str,
     dataset: &str,
     all_dataset_cohort: bool,

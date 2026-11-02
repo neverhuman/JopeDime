@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) struct Guardrails {
-    pub(super) alarms_path: PathBuf,
-    pub(super) keeper_path: PathBuf,
-    pub(super) waves_dir: PathBuf,
-    pub(super) disk_paths: Vec<PathBuf>,
+pub(crate) struct Guardrails {
+    pub(crate) alarms_path: PathBuf,
+    pub(crate) keeper_path: PathBuf,
+    pub(crate) waves_dir: PathBuf,
+    pub(crate) disk_paths: Vec<PathBuf>,
 }
 
-pub(super) fn newest_wave_age(waves_dir: &Path) -> Option<u64> {
+pub(crate) fn newest_wave_age(waves_dir: &Path) -> Option<u64> {
     std::fs::read_dir(waves_dir)
         .ok()?
         .flatten()
@@ -18,7 +18,7 @@ pub(super) fn newest_wave_age(waves_dir: &Path) -> Option<u64> {
         .map(|d| d.as_secs())
 }
 
-pub(super) fn disk_use_pct(path: &Path) -> Option<f64> {
+pub(crate) fn disk_use_pct(path: &Path) -> Option<f64> {
     // statvfs via `df` keeps this dependency-free.
     let out = Command::new("df")
         .arg("--output=pcent")
@@ -34,7 +34,7 @@ pub(super) fn disk_use_pct(path: &Path) -> Option<f64> {
         .ok()
 }
 
-pub(super) fn disk_pause_decision(was_paused: bool, maximum_used_pct: Option<f64>) -> bool {
+pub(crate) fn disk_pause_decision(was_paused: bool, maximum_used_pct: Option<f64>) -> bool {
     match maximum_used_pct {
         Some(used) if was_paused => used >= 80.0,
         Some(used) => used >= 85.0,
@@ -42,7 +42,7 @@ pub(super) fn disk_pause_decision(was_paused: bool, maximum_used_pct: Option<f64
     }
 }
 
-pub(super) fn disk_hysteresis_block(root: &Path, paths: &[PathBuf]) -> Result<Option<String>> {
+pub(crate) fn disk_hysteresis_block(root: &Path, paths: &[PathBuf]) -> Result<Option<String>> {
     let state_path = root.join("ops/expansion-disk-hysteresis.v1.json");
     let was_paused = state_path
         .is_file()
@@ -81,7 +81,7 @@ pub(super) fn disk_hysteresis_block(root: &Path, paths: &[PathBuf]) -> Result<Op
 }
 
 /// Returns Some(reason) when the cycle must not run tranche work.
-pub(super) fn guardrail_block(g: &Guardrails, coverage: Option<f64>) -> Option<String> {
+pub(crate) fn guardrail_block(g: &Guardrails, coverage: Option<f64>) -> Option<String> {
     if let Ok(alarms) = read_json(&g.alarms_path) {
         for alarm in alarms
             .get("alarms")

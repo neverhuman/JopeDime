@@ -67,7 +67,7 @@ pub fn assemble_registered(
     )
 }
 
-pub(super) fn registered_prepared(
+pub(crate) fn registered_prepared(
     registry: &crate::families::Registry,
     p: &Prepared,
 ) -> Result<Value> {

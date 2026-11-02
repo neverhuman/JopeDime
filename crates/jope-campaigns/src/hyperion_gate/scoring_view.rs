@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn score_view(
+pub(crate) fn score_view(
     view: FeatureViewKindV1,
     dataset: &TrainOnlyDatasetV1,
     source: &RegressionTable,

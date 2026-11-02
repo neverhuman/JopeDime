@@ -1,7 +1,7 @@
 use super::*;
 
 /// The TLS server name a client sends; identity is the pinned certificate, never this name.
-pub(super) const SERVER_NAME: &str = "jope-bounded-peer";
+pub(crate) const SERVER_NAME: &str = "jope-bounded-peer";
 /// Bound on the courtesy `close_notify` of a dropped [`TlsStream`], whatever its write timeout.
 pub const CLOSE_TIMEOUT: Duration = Duration::from_secs(1);
 

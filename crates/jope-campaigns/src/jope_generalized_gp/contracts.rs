@@ -14,7 +14,7 @@ pub const DEVELOPMENT_BINARY_DATASETS: u64 = 5_030;
 pub const VALIDATION_REGRESSION_DATASETS: u64 = 1_928;
 pub const VALIDATION_BINARY_DATASETS: u64 = 569;
 
-pub(super) fn schema(actual: &str, expected: &str) -> Result<(), String> {
+pub(crate) fn schema(actual: &str, expected: &str) -> Result<(), String> {
     if actual == expected {
         Ok(())
     } else {
@@ -22,7 +22,7 @@ pub(super) fn schema(actual: &str, expected: &str) -> Result<(), String> {
     }
 }
 
-pub(super) fn finite(name: &str, value: f64) -> Result<(), String> {
+pub(crate) fn finite(name: &str, value: f64) -> Result<(), String> {
     if value.is_finite() {
         Ok(())
     } else {
@@ -30,7 +30,7 @@ pub(super) fn finite(name: &str, value: f64) -> Result<(), String> {
     }
 }
 
-pub(super) fn nonempty(name: &str, value: &str) -> Result<(), String> {
+pub(crate) fn nonempty(name: &str, value: &str) -> Result<(), String> {
     if value.trim().is_empty() {
         Err(format!("{name} must not be empty"))
     } else {

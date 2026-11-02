@@ -1,7 +1,7 @@
 use super::*;
 
 type Slot = Option<(usize, Child, Instant)>;
-pub(super) struct OwnedSlots(Vec<Slot>);
+pub(crate) struct OwnedSlots(Vec<Slot>);
 impl std::ops::Deref for OwnedSlots {
     type Target = Vec<Slot>;
     fn deref(&self) -> &Self::Target {
@@ -26,7 +26,7 @@ impl Drop for OwnedSlots {
         }
     }
 }
-pub(super) static STOP: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-pub(super) extern "C" fn stop(_: libc::c_int) {
+pub(crate) static STOP: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+pub(crate) extern "C" fn stop(_: libc::c_int) {
     STOP.store(true, std::sync::atomic::Ordering::Relaxed);
 }

@@ -130,7 +130,7 @@ pub fn verify_precomputed_train_feature_coverage(
     Ok(frozen)
 }
 
-pub(super) fn require_frozen_precomputed_dataset_binding(
+pub(crate) fn require_frozen_precomputed_dataset_binding(
     registry: &JopeHyperionTrainOnlyRegistryV2,
     registry_root: &Path,
     receipt: &PrecomputedTrainFeatureReceiptV1,
@@ -165,7 +165,7 @@ pub(super) fn require_frozen_precomputed_dataset_binding(
     Ok(())
 }
 
-pub(super) fn read_authorized_table(
+pub(crate) fn read_authorized_table(
     registry_root: &Path,
     dataset: &TrainOnlyDatasetV1,
 ) -> Result<RegressionTable, String> {
@@ -199,7 +199,7 @@ fn sibling_train_sidecar(
     Ok((relative, path))
 }
 
-pub(super) fn load_precomputed_train_features(
+pub(crate) fn load_precomputed_train_features(
     registry: &JopeHyperionTrainOnlyRegistryV2,
     registry_root: &Path,
     registry_sha256: &str,

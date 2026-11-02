@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) enum FeatureView {
+pub(crate) enum FeatureView {
     Identity,
     SignedLog,
     QuantileNormal,
@@ -9,7 +9,7 @@ pub(super) enum FeatureView {
     Robust,
 }
 
-pub(super) fn apply_feature_view(
+pub(crate) fn apply_feature_view(
     view: FeatureView,
     ctx_x: &[f32],
     qx: &[f32],

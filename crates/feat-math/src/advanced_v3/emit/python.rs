@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn emit_bound_python(
+pub(crate) fn emit_bound_python(
     model: &BoundModel,
     partition_point_quantile_bounds: bool,
 ) -> Result<String> {

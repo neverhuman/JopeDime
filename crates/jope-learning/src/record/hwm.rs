@@ -239,7 +239,7 @@ impl HwmRecord {
 #[serde(deny_unknown_fields)]
 
 /// A required-but-nullable 64-hex field (schemars drops the null when `required` is set).
-pub(super) fn nullable_hex64(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+pub(crate) fn nullable_hex64(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({
         "type": ["string", "null"],
         "pattern": "^[0-9a-f]{64}$"

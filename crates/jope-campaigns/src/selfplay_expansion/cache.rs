@@ -9,7 +9,7 @@ use super::{
     sidecars::validate_sidecar,
 };
 
-pub(super) fn copy_reflink_or_copy(source: &Path, destination: &Path) -> Result<()> {
+pub(crate) fn copy_reflink_or_copy(source: &Path, destination: &Path) -> Result<()> {
     if let Some(parent) = destination.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -33,7 +33,7 @@ pub(super) fn copy_reflink_or_copy(source: &Path, destination: &Path) -> Result<
     Ok(())
 }
 
-pub(super) fn encoder_protocol_sha256() -> Result<String> {
+pub(crate) fn encoder_protocol_sha256() -> Result<String> {
     canonical_json_sha256(&json!({"protocol": ENCODER_PROTOCOL, "train_only": true}))
 }
 
@@ -48,7 +48,7 @@ pub(super) fn encoder_protocol_sha256() -> Result<String> {
 /// encoder itself to report it; until then this narrows an unknown to a
 /// declared expectation, and a mismatch between the two is exactly the audit
 /// this field makes possible.
-pub(super) fn observed_encoder_backend() -> Option<String> {
+pub(crate) fn observed_encoder_backend() -> Option<String> {
     match std::env::var("CUDA_VISIBLE_DEVICES") {
         Ok(value) if value.trim().is_empty() => Some("cpu".to_owned()),
         Ok(_) => Some("cuda-requested".to_owned()),
@@ -115,7 +115,7 @@ pub fn validate_cache(path: &Path, expected: Option<&InventoryEntry>) -> Result<
     Ok(manifest)
 }
 
-pub(super) fn is_legacy_cache(path: &Path) -> Result<bool> {
+pub(crate) fn is_legacy_cache(path: &Path) -> Result<bool> {
     let value = read_json(&path.join("cache-manifest.v1.json"))?;
     Ok(
         value["schema"].as_str() == Some("JopeExpandedEncodingCache.v1")
@@ -135,7 +135,7 @@ pub(super) fn is_legacy_cache(path: &Path) -> Result<bool> {
 /// current activation contract. Every old manifest/file hash is checked before
 /// any new file is written; the only added data files come from the audited
 /// authoritative source.
-pub(super) fn repair_legacy_cache(path: &Path, entry: &InventoryEntry) -> Result<CacheManifest> {
+pub(crate) fn repair_legacy_cache(path: &Path, entry: &InventoryEntry) -> Result<CacheManifest> {
     ensure!(
         path.is_dir(),
         "legacy cache directory is absent: {}",
@@ -304,7 +304,7 @@ pub(super) fn repair_legacy_cache(path: &Path, entry: &InventoryEntry) -> Result
     validate_cache(path, Some(entry))
 }
 
-pub(super) fn verify_native_encoder(path: &Path) -> Result<()> {
+pub(crate) fn verify_native_encoder(path: &Path) -> Result<()> {
     ensure!(path.is_file(), "Rust encoder is absent: {}", path.display());
     let mut header = [0_u8; 4];
     File::open(path)?.read_exact(&mut header)?;
@@ -315,7 +315,7 @@ pub(super) fn verify_native_encoder(path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn run_native_encoder(
+pub(crate) fn run_native_encoder(
     encoder: &Path,
     source: &Path,
     destination: &Path,
@@ -342,7 +342,7 @@ pub(super) fn run_native_encoder(
     Ok(())
 }
 
-pub(super) fn cleanup_staging(path: &Path) {
+pub(crate) fn cleanup_staging(path: &Path) {
     if path.is_dir() {
         let _ = fs::remove_dir_all(path);
     } else if path.exists() {

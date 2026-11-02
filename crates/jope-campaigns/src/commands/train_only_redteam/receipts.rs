@@ -1,63 +1,63 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ParentLink {
-    pub(super) run_id: String,
-    pub(super) manifest_path: PathBuf,
-    pub(super) manifest_sha256: String,
-    pub(super) validation_path: PathBuf,
-    pub(super) validation_sha256: String,
+pub(crate) struct ParentLink {
+    pub(crate) run_id: String,
+    pub(crate) manifest_path: PathBuf,
+    pub(crate) manifest_sha256: String,
+    pub(crate) validation_path: PathBuf,
+    pub(crate) validation_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ProposalBundleLink {
-    pub(super) path: PathBuf,
-    pub(super) sha256: String,
-    pub(super) exact_rows_per_dataset: usize,
-    pub(super) jittered_rows_per_dataset: usize,
-    pub(super) scaling_statistic_sha256: String,
+pub(crate) struct ProposalBundleLink {
+    pub(crate) path: PathBuf,
+    pub(crate) sha256: String,
+    pub(crate) exact_rows_per_dataset: usize,
+    pub(crate) jittered_rows_per_dataset: usize,
+    pub(crate) scaling_statistic_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct DatasetInput {
-    pub(super) dataset_hash: String,
-    pub(super) train_path: PathBuf,
-    pub(super) train_sha256: String,
-    pub(super) rows: usize,
-    pub(super) features: usize,
-    pub(super) context_sha256: String,
-    pub(super) transfer_ranking_path: PathBuf,
-    pub(super) transfer_ranking_sha256: String,
-    pub(super) parent_generation_paths: Vec<PathBuf>,
-    pub(super) parent_generation_sha256: Vec<String>,
-    pub(super) fold_bank_path: PathBuf,
-    pub(super) fold_bank_sha256: String,
+pub(crate) struct DatasetInput {
+    pub(crate) dataset_hash: String,
+    pub(crate) train_path: PathBuf,
+    pub(crate) train_sha256: String,
+    pub(crate) rows: usize,
+    pub(crate) features: usize,
+    pub(crate) context_sha256: String,
+    pub(crate) transfer_ranking_path: PathBuf,
+    pub(crate) transfer_ranking_sha256: String,
+    pub(crate) parent_generation_paths: Vec<PathBuf>,
+    pub(crate) parent_generation_sha256: Vec<String>,
+    pub(crate) fold_bank_path: PathBuf,
+    pub(crate) fold_bank_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct TrainOnlyRedteamManifest {
-    pub(super) schema: String,
-    pub(super) run_id: String,
-    pub(super) config: TrainOnlyRedteamConfig,
-    pub(super) config_sha256: String,
-    pub(super) development_only: bool,
-    pub(super) confirmatory_valid: bool,
-    pub(super) test_reuse_disclosure: String,
-    pub(super) parent: ParentLink,
-    pub(super) proposal_bundle: ProposalBundleLink,
-    pub(super) scaling_statistic_path: PathBuf,
-    pub(super) scaling_statistic_sha256: String,
-    pub(super) datasets: Vec<DatasetInput>,
-    pub(super) firewall: SelectionFirewall,
+pub(crate) struct TrainOnlyRedteamManifest {
+    pub(crate) schema: String,
+    pub(crate) run_id: String,
+    pub(crate) config: TrainOnlyRedteamConfig,
+    pub(crate) config_sha256: String,
+    pub(crate) development_only: bool,
+    pub(crate) confirmatory_valid: bool,
+    pub(crate) test_reuse_disclosure: String,
+    pub(crate) parent: ParentLink,
+    pub(crate) proposal_bundle: ProposalBundleLink,
+    pub(crate) scaling_statistic_path: PathBuf,
+    pub(crate) scaling_statistic_sha256: String,
+    pub(crate) datasets: Vec<DatasetInput>,
+    pub(crate) firewall: SelectionFirewall,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct SelectionFirewall {
-    pub(super) selection_workers_receive_training_only: bool,
-    pub(super) contains_test_paths: bool,
-    pub(super) contains_baseline_paths: bool,
-    pub(super) test_paths_constructed: bool,
-    pub(super) baseline_paths_constructed: bool,
+pub(crate) struct SelectionFirewall {
+    pub(crate) selection_workers_receive_training_only: bool,
+    pub(crate) contains_test_paths: bool,
+    pub(crate) contains_baseline_paths: bool,
+    pub(crate) test_paths_constructed: bool,
+    pub(crate) baseline_paths_constructed: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -83,61 +83,61 @@ pub(crate) struct ScqExecutionProvenance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ScalingStatistic {
-    pub(super) schema: String,
-    pub(super) source_catalog_sha256: String,
-    pub(super) contexts: usize,
-    pub(super) dimensions: usize,
-    pub(super) population_sd: Vec<f64>,
+pub(crate) struct ScalingStatistic {
+    pub(crate) schema: String,
+    pub(crate) source_catalog_sha256: String,
+    pub(crate) contexts: usize,
+    pub(crate) dimensions: usize,
+    pub(crate) population_sd: Vec<f64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct FoldBankReceipt {
-    pub(super) schema: String,
-    pub(super) run_id: String,
-    pub(super) dataset_hash: String,
-    pub(super) train_sha256: String,
-    pub(super) rows: usize,
-    pub(super) folds: usize,
-    pub(super) search: Vec<FoldRepeat>,
-    pub(super) selector: Vec<FoldRepeat>,
-    pub(super) audit: Vec<FoldRepeat>,
+pub(crate) struct FoldBankReceipt {
+    pub(crate) schema: String,
+    pub(crate) run_id: String,
+    pub(crate) dataset_hash: String,
+    pub(crate) train_sha256: String,
+    pub(crate) rows: usize,
+    pub(crate) folds: usize,
+    pub(crate) search: Vec<FoldRepeat>,
+    pub(crate) selector: Vec<FoldRepeat>,
+    pub(crate) audit: Vec<FoldRepeat>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct FoldRepeat {
-    pub(super) purpose: String,
-    pub(super) repeat: usize,
-    pub(super) seed: u64,
-    pub(super) validation_indices: Vec<Vec<usize>>,
-    pub(super) repeat_sha256: String,
+pub(crate) struct FoldRepeat {
+    pub(crate) purpose: String,
+    pub(crate) repeat: usize,
+    pub(crate) seed: u64,
+    pub(crate) validation_indices: Vec<Vec<usize>>,
+    pub(crate) repeat_sha256: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ProposalRequest {
-    pub(super) schema: String,
-    pub(super) run_id: String,
-    pub(super) parent_manifest_sha256: String,
-    pub(super) checkpoint_path: PathBuf,
-    pub(super) checkpoint_sha256: String,
-    pub(super) catalog_pointer_path: PathBuf,
-    pub(super) proposal_dataset_manifest_path: PathBuf,
-    pub(super) scaling_statistic_path: PathBuf,
-    pub(super) scaling_statistic_sha256: String,
-    pub(super) exact_decoder_seeds: Vec<u64>,
-    pub(super) jitter_decoder_seeds: Vec<u64>,
-    pub(super) perturbation_seeds: Vec<u64>,
-    pub(super) proposals_per_invocation: usize,
-    pub(super) expected_combined_path: PathBuf,
-    pub(super) development_only: bool,
-    pub(super) confirmatory_valid: bool,
+pub(crate) struct ProposalRequest {
+    pub(crate) schema: String,
+    pub(crate) run_id: String,
+    pub(crate) parent_manifest_sha256: String,
+    pub(crate) checkpoint_path: PathBuf,
+    pub(crate) checkpoint_sha256: String,
+    pub(crate) catalog_pointer_path: PathBuf,
+    pub(crate) proposal_dataset_manifest_path: PathBuf,
+    pub(crate) scaling_statistic_path: PathBuf,
+    pub(crate) scaling_statistic_sha256: String,
+    pub(crate) exact_decoder_seeds: Vec<u64>,
+    pub(crate) jitter_decoder_seeds: Vec<u64>,
+    pub(crate) perturbation_seeds: Vec<u64>,
+    pub(crate) proposals_per_invocation: usize,
+    pub(crate) expected_combined_path: PathBuf,
+    pub(crate) development_only: bool,
+    pub(crate) confirmatory_valid: bool,
 }
 
-pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
+pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
-pub(super) fn sha256_file(path: &Path) -> Result<String> {
+pub(crate) fn sha256_file(path: &Path) -> Result<String> {
     let mut file = File::open(path).with_context(|| format!("open {}", path.display()))?;
     let mut hash = Sha256::new();
     let mut buffer = [0_u8; 1024 * 1024];
@@ -151,7 +151,7 @@ pub(super) fn sha256_file(path: &Path) -> Result<String> {
     Ok(hex::encode(hash.finalize()))
 }
 
-pub(super) fn canonicalize_json(value: Value) -> Value {
+pub(crate) fn canonicalize_json(value: Value) -> Value {
     match value {
         Value::Object(object) => {
             let mut entries = object.into_iter().collect::<Vec<_>>();
@@ -167,21 +167,21 @@ pub(super) fn canonicalize_json(value: Value) -> Value {
     }
 }
 
-pub(super) fn canonical_json_bytes(value: &Value) -> Result<Vec<u8>> {
+pub(crate) fn canonical_json_bytes(value: &Value) -> Result<Vec<u8>> {
     Ok(serde_json::to_vec(&canonicalize_json(value.clone()))?)
 }
 
-pub(super) fn receipt_digest<T: Serialize>(receipt: &T) -> Result<String> {
+pub(crate) fn receipt_digest<T: Serialize>(receipt: &T) -> Result<String> {
     Ok(sha256_bytes(&canonical_json_bytes(&serde_json::to_value(
         receipt,
     )?)?))
 }
 
-pub(super) fn scq_env(name: &str) -> Option<String> {
+pub(crate) fn scq_env(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|value| !value.is_empty())
 }
 
-pub(super) fn scq_execution_provenance(
+pub(crate) fn scq_execution_provenance(
     manifest: &TrainOnlyRedteamManifest,
     dataset: Option<&DatasetInput>,
     workers: usize,
@@ -243,7 +243,7 @@ pub(super) fn scq_execution_provenance(
     })
 }
 
-pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     let parent = path.parent().context("immutable artifact has no parent")?;
     fs::create_dir_all(parent)?;
     if path.exists() {
@@ -273,7 +273,7 @@ pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn write_receipt<T: Serialize>(path: &Path, receipt: &T) -> Result<String> {
+pub(crate) fn write_receipt<T: Serialize>(path: &Path, receipt: &T) -> Result<String> {
     let mut value = serde_json::to_value(receipt)?;
     let digest = sha256_bytes(&canonical_json_bytes(&value)?);
     value
@@ -286,7 +286,7 @@ pub(super) fn write_receipt<T: Serialize>(path: &Path, receipt: &T) -> Result<St
     Ok(digest)
 }
 
-pub(super) fn read_receipt<T: DeserializeOwned>(path: &Path) -> Result<(T, String)> {
+pub(crate) fn read_receipt<T: DeserializeOwned>(path: &Path) -> Result<(T, String)> {
     let mut value: Value = serde_json::from_slice(
         &fs::read(path).with_context(|| format!("read {}", path.display()))?,
     )?;
@@ -302,7 +302,7 @@ pub(super) fn read_receipt<T: DeserializeOwned>(path: &Path) -> Result<(T, Strin
     Ok((serde_json::from_value(value)?, actual))
 }
 
-pub(super) fn absolute(path: &Path) -> Result<PathBuf> {
+pub(crate) fn absolute(path: &Path) -> Result<PathBuf> {
     let absolute = if path.is_absolute() {
         path.to_path_buf()
     } else {
@@ -316,7 +316,7 @@ pub(super) fn absolute(path: &Path) -> Result<PathBuf> {
     Ok(absolute)
 }
 
-pub(super) fn run_root(study_root: &Path, run_id: &str) -> Result<PathBuf> {
+pub(crate) fn run_root(study_root: &Path, run_id: &str) -> Result<PathBuf> {
     if run_id.is_empty()
         || !run_id
             .bytes()
@@ -327,7 +327,7 @@ pub(super) fn run_root(study_root: &Path, run_id: &str) -> Result<PathBuf> {
     Ok(study_root.join(run_id))
 }
 
-pub(super) fn value_string(value: &Value, pointer: &str) -> Result<String> {
+pub(crate) fn value_string(value: &Value, pointer: &str) -> Result<String> {
     value
         .pointer(pointer)
         .and_then(Value::as_str)
@@ -335,7 +335,7 @@ pub(super) fn value_string(value: &Value, pointer: &str) -> Result<String> {
         .with_context(|| format!("missing string at {pointer}"))
 }
 
-pub(super) fn value_usize(value: &Value, pointer: &str) -> Result<usize> {
+pub(crate) fn value_usize(value: &Value, pointer: &str) -> Result<usize> {
     value
         .pointer(pointer)
         .and_then(Value::as_u64)

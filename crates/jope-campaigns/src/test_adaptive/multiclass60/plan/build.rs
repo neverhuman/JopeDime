@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn bind_frozen_comparator(
+pub(crate) fn bind_frozen_comparator(
     mut binding: DatasetBinding,
     comparator_root: &Path,
     gate: &CoverageGate,
@@ -143,7 +143,7 @@ pub(super) fn bind_frozen_comparator(
     Ok(Some(binding))
 }
 
-pub(super) fn build_plan(
+pub(crate) fn build_plan(
     run_id: &str,
     corpus_path: &Path,
     comparator_root: &Path,

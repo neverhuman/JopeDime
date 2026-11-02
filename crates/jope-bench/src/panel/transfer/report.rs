@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
-pub(super) fn rmse(actual: &[f64], predicted: &[f64]) -> Result<f64> {
+pub(crate) fn rmse(actual: &[f64], predicted: &[f64]) -> Result<f64> {
     ensure!(
         !actual.is_empty() && actual.len() == predicted.len(),
         "prediction length mismatch"
@@ -32,7 +32,7 @@ struct Gains {
     parent_audit_skill: f64,
     parent_outer_skill: f64,
 }
-pub(super) fn gains(audit: &[(f64, f64, f64)], outer: (f64, f64, f64)) -> Result<Gains> {
+pub(crate) fn gains(audit: &[(f64, f64, f64)], outer: (f64, f64, f64)) -> Result<Gains> {
     ensure!(audit.len() == 5, "five audit folds required");
     let gain = |(p, c, b): (f64, f64, f64)| -> Result<(f64, f64)> {
         ensure!(
@@ -317,7 +317,7 @@ fn report_validated(
     super::worker::write_private(output, &result)?;
     Ok(result)
 }
-pub(super) fn average(gs: &[Gains]) -> Gains {
+pub(crate) fn average(gs: &[Gains]) -> Gains {
     let n = gs.len() as f64;
     Gains {
         audit: gs.iter().map(|g| g.audit / n).sum(),
@@ -329,7 +329,7 @@ pub(super) fn average(gs: &[Gains]) -> Gains {
         parent_outer_skill: gs.iter().map(|g| g.parent_outer_skill / n).sum(),
     }
 }
-pub(super) fn sign(x: f64) -> i8 {
+pub(crate) fn sign(x: f64) -> i8 {
     if x > 0.0 {
         1
     } else if x < 0.0 {

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn execute(
+pub(crate) fn execute(
     allocation: &Allocation,
     path: &Path,
     sha: &str,

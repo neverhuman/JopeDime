@@ -45,7 +45,7 @@ impl Default for FabricConfig {
 }
 
 impl FabricConfig {
-    pub(super) fn validate(&self) -> Result<(), ConfigError> {
+    pub(crate) fn validate(&self) -> Result<(), ConfigError> {
         if self.enabled {
             return Err(ConfigError::FabricNotImplemented);
         }

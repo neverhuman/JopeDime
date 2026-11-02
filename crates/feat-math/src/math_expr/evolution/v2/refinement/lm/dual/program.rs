@@ -2,7 +2,7 @@ use super::*;
 use crate::math_expr::fault::Collect;
 
 #[derive(Clone, Copy, Debug)]
-pub(super) enum Op {
+pub(crate) enum Op {
     Constant(f64),
     Param(u8),
     Variable(Var),
@@ -12,16 +12,16 @@ pub(super) enum Op {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) struct Dual {
+pub(crate) struct Dual {
     v: f64,
     d: Lanes,
 }
 
-pub(super) const DUAL_ZERO: Dual = Dual { v: 0.0, d: ZERO };
+pub(crate) const DUAL_ZERO: Dual = Dual { v: 0.0, d: ZERO };
 
 /// One row's evaluation: `eval_row_traced`'s value and faults, and the tangent of the value.
 #[derive(Clone, Copy, Debug)]
-pub(super) struct RowDual {
+pub(crate) struct RowDual {
     pub value: f64,
     pub faults: FaultSet,
     pub tangent: Lanes,
@@ -30,7 +30,7 @@ pub(super) struct RowDual {
 
 /// A row expression in postorder with parameter sites.
 #[derive(Clone, Debug)]
-pub(super) struct Program {
+pub(crate) struct Program {
     code: Vec<Op>,
     params: usize,
 }

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn accepted_parents(root: &Path) -> Result<(BTreeMap<Task, Sha256Digest>, bool)> {
+pub(crate) fn accepted_parents(root: &Path) -> Result<(BTreeMap<Task, Sha256Digest>, bool)> {
     let pointer = read_json(&root.join("training/accepted-by-task.json"))?;
     ensure!(
         pointer.get("schema").and_then(Value::as_str) == Some("JopeSelfplayAcceptedByTask.v1"),
@@ -51,7 +51,7 @@ pub(super) fn accepted_parents(root: &Path) -> Result<(BTreeMap<Task, Sha256Dige
     Ok((output, valid))
 }
 
-pub(super) fn wave_states(root: &Path) -> Result<BTreeMap<u64, WaveState>> {
+pub(crate) fn wave_states(root: &Path) -> Result<BTreeMap<u64, WaveState>> {
     let mut output = BTreeMap::new();
     let waves = root.join("waves");
     if !waves.is_dir() {
@@ -125,7 +125,7 @@ pub(super) fn wave_states(root: &Path) -> Result<BTreeMap<u64, WaveState>> {
     Ok(output)
 }
 
-pub(super) fn receipt_rows(
+pub(crate) fn receipt_rows(
     connection: &Connection,
     accepted: &BTreeMap<Task, Sha256Digest>,
     accepted_lineage_valid: bool,
@@ -241,7 +241,7 @@ pub(super) fn receipt_rows(
     Ok(output)
 }
 
-pub(super) fn backfill_raw_receipts(root: &Path) -> Result<Value> {
+pub(crate) fn backfill_raw_receipts(root: &Path) -> Result<Value> {
     let corpus = root.join("corpus/strict-test-exact.sqlite");
     let mut connection = open_corpus(&corpus)?;
     // Receipt replay is idempotent and each row is protected by its immutable
@@ -312,6 +312,6 @@ pub(super) fn backfill_raw_receipts(root: &Path) -> Result<Value> {
     }))
 }
 
-pub(super) fn parse_wave(value: &str) -> Option<u64> {
+pub(crate) fn parse_wave(value: &str) -> Option<u64> {
     value.strip_prefix("strict-wave-")?.parse().ok()
 }

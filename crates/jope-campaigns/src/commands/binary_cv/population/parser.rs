@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn parse_binary_population(
+pub(crate) fn parse_binary_population(
     bytes: &[u8],
     expected: usize,
     task: &TaskSpec,

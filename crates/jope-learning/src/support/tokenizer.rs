@@ -234,7 +234,7 @@ fn is_plain_number(value: &[u8]) -> bool {
     parts.next().is_none()
 }
 
-pub(super) fn validate_program(vocab: &Vocabulary, program: &super::Program) -> Result<()> {
+pub(crate) fn validate_program(vocab: &Vocabulary, program: &super::Program) -> Result<()> {
     if program.program_sha256 != sha256_hex(program.dsl.as_bytes()) {
         bail!("canonical program SHA mismatch");
     }

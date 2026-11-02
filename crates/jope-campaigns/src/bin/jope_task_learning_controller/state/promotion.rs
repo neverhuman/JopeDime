@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn corpus_pointer(root: &Path) -> Result<CorpusPointer> {
+pub(crate) fn corpus_pointer(root: &Path) -> Result<CorpusPointer> {
     let value = read_json(&root.join("training/current-corpus.json"))?;
     let manifest = PathBuf::from(
         value
@@ -42,7 +42,7 @@ pub(super) fn corpus_pointer(root: &Path) -> Result<CorpusPointer> {
     Ok(pointer)
 }
 
-pub(super) fn load_ledger(root: &Path) -> Result<Option<CausalEvidenceLedgerV3>> {
+pub(crate) fn load_ledger(root: &Path) -> Result<Option<CausalEvidenceLedgerV3>> {
     let path = root.join("training/causal-evidence-ledger.v3.json");
     if !path.is_file() {
         return Ok(None);

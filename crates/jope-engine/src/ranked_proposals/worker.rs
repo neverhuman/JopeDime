@@ -22,7 +22,7 @@ pub fn run(root: &Path, manifest_path: &Path, rank: usize, world: usize) -> Resu
 }
 
 // Private post-admission implementation. Public callers must cross the hold above.
-pub(super) fn run_admitted(
+pub(crate) fn run_admitted(
     root: &Path,
     manifest_path: &Path,
     rank: usize,

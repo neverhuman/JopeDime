@@ -1,19 +1,19 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct PlsHeadModel {
-    pub(super) projection: V3Op,
-    pub(super) ridge: RidgeModel,
+pub(crate) struct PlsHeadModel {
+    pub(crate) projection: V3Op,
+    pub(crate) ridge: RidgeModel,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct ClassificationPortfolioModel {
-    pub(super) members: Vec<V3Head>,
-    pub(super) weights: Vec<f64>,
+pub(crate) struct ClassificationPortfolioModel {
+    pub(crate) members: Vec<V3Head>,
+    pub(crate) weights: Vec<f64>,
 }
 
 impl ClassificationPortfolioModel {
-    pub(super) fn fit(x: &Rows, y: &[f64]) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64]) -> Result<Self> {
         validate_binary_fit_target(y, x.len())?;
         let stages = [
             Stage::new("logit_ridge"),
@@ -76,7 +76,7 @@ impl ClassificationPortfolioModel {
         Ok(Self { members, weights })
     }
 
-    pub(super) fn predict(&self, x: &Rows) -> Result<Vec<f64>> {
+    pub(crate) fn predict(&self, x: &Rows) -> Result<Vec<f64>> {
         let columns: Vec<Vec<f64>> = self
             .members
             .iter()
@@ -96,7 +96,7 @@ impl ClassificationPortfolioModel {
 }
 
 impl PlsHeadModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], k: usize) -> Self {
+    pub(crate) fn fit(x: &Rows, y: &[f64], k: usize) -> Self {
         let (means, weights) = fit_pls_weights(x, y, k);
         let projection = V3Op::PlsProject {
             means,
@@ -108,7 +108,7 @@ impl PlsHeadModel {
         Self { projection, ridge }
     }
 
-    pub(super) fn predict(&self, x: &Rows) -> Vec<f64> {
+    pub(crate) fn predict(&self, x: &Rows) -> Vec<f64> {
         self.ridge.predict(&self.projection.apply(x))
     }
 }

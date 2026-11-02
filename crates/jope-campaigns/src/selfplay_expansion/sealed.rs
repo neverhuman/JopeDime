@@ -1,7 +1,7 @@
 use super::model::{sealed_target, ExpansionPaths, InventoryEntry, SealedCohort, TASKS};
 use super::prelude::*;
 
-pub(super) fn deterministic_sealed_key(seed: u64, row: &InventoryEntry) -> [u8; 32] {
+pub(crate) fn deterministic_sealed_key(seed: u64, row: &InventoryEntry) -> [u8; 32] {
     Sha256::digest(
         format!(
             "{seed}|sealed|{}|{}|{}",
@@ -12,7 +12,7 @@ pub(super) fn deterministic_sealed_key(seed: u64, row: &InventoryEntry) -> [u8; 
     .into()
 }
 
-pub(super) fn cohort_hash(cohort: &SealedCohort) -> Result<String> {
+pub(crate) fn cohort_hash(cohort: &SealedCohort) -> Result<String> {
     let value = json!({
         "schema": cohort.schema,
         "immutable": cohort.immutable,
@@ -25,7 +25,7 @@ pub(super) fn cohort_hash(cohort: &SealedCohort) -> Result<String> {
     canonical_json_sha256(&value)
 }
 
-pub(super) fn validate_sealed_cohort(cohort: &SealedCohort) -> Result<()> {
+pub(crate) fn validate_sealed_cohort(cohort: &SealedCohort) -> Result<()> {
     ensure!(
         cohort.schema == "JopeSealedExpandedCohort.v1"
             && cohort.immutable
@@ -133,10 +133,10 @@ pub fn freeze_sealed(
     Ok(json!({"cohort_sha256": cohort.cohort_sha256, "counts": cohort.counts}))
 }
 
-pub(super) type DatasetKeys = HashSet<(String, String)>;
-pub(super) type FamilyKeys = HashSet<String>;
+pub(crate) type DatasetKeys = HashSet<(String, String)>;
+pub(crate) type FamilyKeys = HashSet<String>;
 
-pub(super) fn load_sealed_exclusions(paths: &ExpansionPaths) -> Result<(DatasetKeys, FamilyKeys)> {
+pub(crate) fn load_sealed_exclusions(paths: &ExpansionPaths) -> Result<(DatasetKeys, FamilyKeys)> {
     ensure!(
         paths.sealed_path.is_file(),
         "sealed cohort must be frozen before adaptive activation"

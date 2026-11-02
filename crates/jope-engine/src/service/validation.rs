@@ -39,7 +39,7 @@ pub fn validate_generation(root: &Path, job: &GpJob) -> Result<()> {
 
 /// The CPUs in `/proc/self/status`'s `Cpus_allowed_list` (affinity mask and cpuset), e.g.
 /// `0-3,8,10-11`.
-pub(super) fn allowed_cpus(status: &str) -> Result<std::collections::BTreeSet<usize>> {
+pub(crate) fn allowed_cpus(status: &str) -> Result<std::collections::BTreeSet<usize>> {
     let list = status
         .lines()
         .find_map(|line| line.strip_prefix("Cpus_allowed_list:"))

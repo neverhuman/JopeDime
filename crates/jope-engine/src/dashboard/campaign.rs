@@ -382,7 +382,7 @@ pub fn campaign(root: &Path) -> Value {
     }
     run
 }
-pub(super) fn goal_phase<'a>(run: &'a Value, neural: &'a Value, gp: &'a Value) -> &'a str {
+pub(crate) fn goal_phase<'a>(run: &'a Value, neural: &'a Value, gp: &'a Value) -> &'a str {
     if run["continuous"].is_object() {
         if run["operations"]["services"]["jope-parallel-campaign"]["ActiveState"] != "active"
             || now().saturating_sub(number(&run["continuous"], "timestamp")) > 15
@@ -450,7 +450,7 @@ pub(super) fn goal_phase<'a>(run: &'a Value, neural: &'a Value, gp: &'a Value) -
     }
     phase(run)
 }
-pub(super) fn gpu_reason(run: &Value, neural: &Value, hardware: &Hardware) -> String {
+pub(crate) fn gpu_reason(run: &Value, neural: &Value, hardware: &Hardware) -> String {
     if hardware.gpus.len() != 8 {
         return "GPU telemetry incomplete; inspect Hardware for missing devices.".into();
     }
@@ -588,7 +588,7 @@ pub(super) fn gpu_reason(run: &Value, neural: &Value, hardware: &Hardware) -> St
     "GPU work receipt unavailable; consult Neural and recent events.".into()
 }
 
-pub(super) fn stage_work_detail(cycle: &Value) -> String {
+pub(crate) fn stage_work_detail(cycle: &Value) -> String {
     if cycle["heartbeat_role"] == "controller_liveness" {
         let work = &cycle["work"];
         format!(
@@ -609,7 +609,7 @@ pub(super) fn stage_work_detail(cycle: &Value) -> String {
             .into()
     }
 }
-pub(super) fn milestone_lines(run: &Value, gp: &Value, neural: &Value) -> Vec<Line<'static>> {
+pub(crate) fn milestone_lines(run: &Value, gp: &Value, neural: &Value) -> Vec<Line<'static>> {
     let contexts = &run["contexts"];
     let policy =
         if run["policy"]["corpus_sha256"].is_string() && run["policy"]["invalidated"] != true {

@@ -4,7 +4,7 @@ use super::*;
 // Python `json.dumps`, `repr`/`str` and `csv` spelling.
 
 #[derive(Clone, Copy)]
-pub(super) struct Style {
+pub(crate) struct Style {
     /// `ensure_ascii`.
     ascii: bool,
     /// `indent`; `None` writes one line.
@@ -15,20 +15,20 @@ pub(super) struct Style {
 
 impl Style {
     /// `json.dumps(value, indent=2, allow_nan=False)`.
-    pub(super) const REPORT: Style = Style {
+    pub(crate) const REPORT: Style = Style {
         ascii: true,
         indent: Some(2),
         spaced: false,
     };
     /// `json.dumps(value, ensure_ascii=False, separators=(',', ':'))`.
-    pub(super) const IDENTITY: Style = Style {
+    pub(crate) const IDENTITY: Style = Style {
         ascii: false,
         indent: None,
         spaced: false,
     };
     /// `json.dumps(value)`.
     #[cfg_attr(not(any(test, feature = "inference-cuda")), allow(dead_code))]
-    pub(super) const DEFAULT: Style = Style {
+    pub(crate) const DEFAULT: Style = Style {
         ascii: true,
         indent: None,
         spaced: true,
@@ -55,13 +55,13 @@ impl Style {
     }
 }
 
-pub(super) fn dumps(value: &Json, style: Style) -> Result<String> {
+pub(crate) fn dumps(value: &Json, style: Style) -> Result<String> {
     let mut out = String::new();
     dump(value, style, 0, &mut out)?;
     Ok(out)
 }
 
-pub(super) fn dump(value: &Json, style: Style, level: usize, out: &mut String) -> Result<()> {
+pub(crate) fn dump(value: &Json, style: Style, level: usize, out: &mut String) -> Result<()> {
     match value {
         Json::Null => out.push_str("null"),
         Json::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
@@ -107,7 +107,7 @@ pub(super) fn dump(value: &Json, style: Style, level: usize, out: &mut String) -
 }
 
 /// A JSON string literal, escaped as Python's encoder escapes it.
-pub(super) fn quote(text: &str, ascii: bool, out: &mut String) {
+pub(crate) fn quote(text: &str, ascii: bool, out: &mut String) {
     out.push('"');
     for c in text.chars() {
         match c {
@@ -130,7 +130,7 @@ pub(super) fn quote(text: &str, ascii: bool, out: &mut String) {
 }
 
 /// Python's `repr(float)`: shortest round-trip digits, positional for exponents -4..=15.
-pub(super) fn float_repr(x: f64) -> String {
+pub(crate) fn float_repr(x: f64) -> String {
     if x == 0.0 {
         return if x.is_sign_negative() { "-0.0" } else { "0.0" }.into();
     }
@@ -174,14 +174,14 @@ pub(super) fn float_repr(x: f64) -> String {
 }
 
 /// Python `str()` of a JSON value, as f-strings and `csv` render it.
-pub(super) fn py_str(value: &Json) -> String {
+pub(crate) fn py_str(value: &Json) -> String {
     match value {
         Json::Str(s) => s.clone(),
         other => py_repr(other),
     }
 }
 
-pub(super) fn py_repr(value: &Json) -> String {
+pub(crate) fn py_repr(value: &Json) -> String {
     match value {
         Json::Null => "None".into(),
         Json::Bool(true) => "True".into(),
@@ -205,7 +205,7 @@ pub(super) fn py_repr(value: &Json) -> String {
 
 /// Python `repr(str)`. Printability of non-ASCII characters follows the common Unicode
 /// separator, format, control and private-use ranges rather than the full database.
-pub(super) fn str_repr(text: &str) -> String {
+pub(crate) fn str_repr(text: &str) -> String {
     let delimiter = if text.contains('\'') && !text.contains('"') {
         '"'
     } else {
@@ -241,7 +241,7 @@ pub(super) fn str_repr(text: &str) -> String {
     out
 }
 
-pub(super) fn printable(code: u32) -> bool {
+pub(crate) fn printable(code: u32) -> bool {
     !matches!(
         code,
         0x80..=0xa0
@@ -263,7 +263,7 @@ pub(super) fn printable(code: u32) -> bool {
 }
 
 /// One `csv.writer` row (excel dialect, minimal quoting, CRLF). `None` is an empty field.
-pub(super) fn csv_row(fields: &[&Json], out: &mut String) {
+pub(crate) fn csv_row(fields: &[&Json], out: &mut String) {
     for (position, field) in fields.iter().enumerate() {
         if position > 0 {
             out.push(',');
@@ -284,4 +284,4 @@ pub(super) fn csv_row(fields: &[&Json], out: &mut String) {
 }
 
 mod statistics;
-pub(super) use statistics::{distribution, mean, midpoint, power_of_two, rational};
+pub(crate) use statistics::{distribution, mean, midpoint, power_of_two, rational};

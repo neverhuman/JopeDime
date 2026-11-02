@@ -5,7 +5,7 @@ use super::*;
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum SupervisorVerdict {
+pub(crate) enum SupervisorVerdict {
     /// Busy and every producer is producing.
     Ok,
     /// Not busy, and there is genuinely nothing left to run. Not an alarm.
@@ -21,7 +21,7 @@ pub(super) enum SupervisorVerdict {
 }
 
 impl SupervisorVerdict {
-    pub(super) fn as_str(self) -> &'static str {
+    pub(crate) fn as_str(self) -> &'static str {
         match self {
             SupervisorVerdict::Ok => "ok",
             SupervisorVerdict::IdleNoWork => "idle_no_work",
@@ -31,7 +31,7 @@ impl SupervisorVerdict {
     }
 }
 
-pub(super) fn judge(
+pub(crate) fn judge(
     args: &Args,
     util: &Utilization,
     work: &WorkOnDisk,
@@ -62,7 +62,7 @@ pub(super) fn judge(
     SupervisorVerdict::Ok
 }
 
-pub(super) fn effective_queue_target(args: &Args, util: &Utilization) -> u64 {
+pub(crate) fn effective_queue_target(args: &Args, util: &Utilization) -> u64 {
     let slot_target = util.slots_total.saturating_mul(5).saturating_add(3) / 4;
     args.queue_floor_jobs.max(slot_target).min(4096)
 }
@@ -72,19 +72,19 @@ pub(super) fn effective_queue_target(args: &Args, util: &Utilization) -> u64 {
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Default)]
-pub(super) struct State {
-    pub(super) consecutive_idle: u32,
-    pub(super) consecutive_degraded: u32,
-    pub(super) escalated: bool,
-    pub(super) escalated_at_ms: u64,
-    pub(super) last_notify_ms: u64,
+pub(crate) struct State {
+    pub(crate) consecutive_idle: u32,
+    pub(crate) consecutive_degraded: u32,
+    pub(crate) escalated: bool,
+    pub(crate) escalated_at_ms: u64,
+    pub(crate) last_notify_ms: u64,
     /// action key -> (consecutive attempts, last attempt ms)
-    pub(super) attempts: BTreeMap<String, (u32, u64)>,
+    pub(crate) attempts: BTreeMap<String, (u32, u64)>,
     /// epoch-ms of every action taken, trimmed to the last hour.
-    pub(super) action_log: Vec<u64>,
+    pub(crate) action_log: Vec<u64>,
 }
 
-pub(super) fn load_state(path: &Path) -> State {
+pub(crate) fn load_state(path: &Path) -> State {
     let Some(value) = read_json(path) else {
         return State::default();
     };
@@ -116,7 +116,7 @@ pub(super) fn load_state(path: &Path) -> State {
     state
 }
 
-pub(super) fn save_state(path: &Path, state: &State) -> Result<()> {
+pub(crate) fn save_state(path: &Path, state: &State) -> Result<()> {
     let attempts: serde_json::Map<String, Value> = state
         .attempts
         .iter()
@@ -142,7 +142,7 @@ pub(super) fn save_state(path: &Path, state: &State) -> Result<()> {
     )
 }
 
-pub(super) fn backoff_ms(args: &Args, attempts: u32) -> u64 {
+pub(crate) fn backoff_ms(args: &Args, attempts: u32) -> u64 {
     if attempts == 0 {
         return 0;
     }
@@ -154,7 +154,7 @@ pub(super) fn backoff_ms(args: &Args, attempts: u32) -> u64 {
 /// Choose at most ONE repair per cycle. One action per cycle is the whole
 /// bounding argument: with a 120 s timer the ceiling is 30 actions/hour before
 /// backoff, and `--max-actions-per-hour` clamps it to 6 after.
-pub(super) fn plan_repair<'a>(
+pub(crate) fn plan_repair<'a>(
     args: &Args,
     verdict: SupervisorVerdict,
     stages: &'a [Stage],
@@ -222,7 +222,7 @@ pub(super) fn plan_repair<'a>(
     )
 }
 
-pub(super) fn run_repair(args: &Args, repair: &Repair) -> (bool, String) {
+pub(crate) fn run_repair(args: &Args, repair: &Repair) -> (bool, String) {
     if args.dry_run {
         return (
             false,
@@ -275,7 +275,7 @@ pub(super) fn run_repair(args: &Args, repair: &Repair) -> (bool, String) {
 /// Every notification runs under `timeout` so no delivery channel can stall a
 /// cycle. A supervisor blocked inside its own alarm is indistinguishable from
 /// the daemon it was watching.
-pub(super) fn notify(argv: &[&str]) -> bool {
+pub(crate) fn notify(argv: &[&str]) -> bool {
     Command::new("timeout")
         .arg("10")
         .args(argv)
@@ -284,7 +284,7 @@ pub(super) fn notify(argv: &[&str]) -> bool {
         .unwrap_or(false)
 }
 
-pub(super) fn escalate(args: &Args, summary: &str, detail: &str) -> Vec<Value> {
+pub(crate) fn escalate(args: &Args, summary: &str, detail: &str) -> Vec<Value> {
     let mut channels = Vec::new();
     if args.dry_run {
         channels.push(
@@ -360,7 +360,7 @@ pub(super) fn escalate(args: &Args, summary: &str, detail: &str) -> Vec<Value> {
     channels
 }
 
-pub(super) fn write_alarms(
+pub(crate) fn write_alarms(
     args: &Args,
     verdict: SupervisorVerdict,
     escalated: bool,

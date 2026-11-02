@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn prelaunch_rejection(
+pub(crate) fn prelaunch_rejection(
     job: &JobRecord,
     message: String,
     at: Timestamp,
@@ -24,7 +24,7 @@ pub(super) fn prelaunch_rejection(
     }
 }
 
-pub(super) fn completion_ready(
+pub(crate) fn completion_ready(
     leader_exited: bool,
     tree_drained: bool,
     output_drains_pending: u8,
@@ -33,7 +33,7 @@ pub(super) fn completion_ready(
     leader_exited && tree_drained && output_drains_pending == 0 && control_drained
 }
 
-pub(super) fn known_jain_gpu_compatibility(
+pub(crate) fn known_jain_gpu_compatibility(
     known_jain: bool,
     mps_shareable: bool,
     mig_inventory: bool,

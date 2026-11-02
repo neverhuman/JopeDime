@@ -2,7 +2,7 @@ use super::*;
 
 /// [`shared_scratch_config`] as command-line arguments.
 
-pub(super) fn shared_scratch_args(scratch: PathBuf, out: PathBuf) -> AblationArgs {
+pub(crate) fn shared_scratch_args(scratch: PathBuf, out: PathBuf) -> AblationArgs {
     AblationArgs {
         profile_a: Profile::Kernel2Baseline.id().to_owned(),
         profile_b: Profile::Kernel2Baseline.id().to_owned(),
@@ -21,12 +21,12 @@ pub(super) fn shared_scratch_args(scratch: PathBuf, out: PathBuf) -> AblationArg
 
 /// A comparison refused for its scratch directory ([`SCRATCH_NOT_UNUSED`]): its message,
 /// which must pass the shipped-text lint with the path left out.
-pub(super) fn scratch_refusal(config: &Config, scratch: &Path) -> String {
+pub(crate) fn scratch_refusal(config: &Config, scratch: &Path) -> String {
     scratch_refusal_saying(config, scratch, SCRATCH_NOT_UNUSED)
 }
 
 /// [`scratch_refusal`] with the text the message must contain.
-pub(super) fn scratch_refusal_saying(config: &Config, scratch: &Path, needle: &str) -> String {
+pub(crate) fn scratch_refusal_saying(config: &Config, scratch: &Path, needle: &str) -> String {
     let error = format!("{:#}", run(config, scratch).unwrap_err());
     assert!(error.contains(needle), "{needle:?} not in {error}");
     let text = error.replace(&scratch.display().to_string(), "<scratch>");
@@ -41,7 +41,7 @@ pub(super) fn scratch_refusal_saying(config: &Config, scratch: &Path, needle: &s
 /// written, also with a legacy slot A: every entry keeps its kind, modification time and
 /// bytes, nothing is added, and the first document's `prepared_sha256` still names the file.
 #[test]
-pub(super) fn ablation_kernel2_refuses_a_used_scratch_with_a_new_fold_seed() {
+pub(crate) fn ablation_kernel2_refuses_a_used_scratch_with_a_new_fold_seed() {
     let config = shared_scratch_config();
     let dir = scratch();
     let first = run(&config, dir.path()).unwrap();
@@ -81,7 +81,7 @@ pub(super) fn ablation_kernel2_refuses_a_used_scratch_with_a_new_fold_seed() {
 /// the same fold seed and cuts, which would write the same partition, is refused too, with
 /// nothing changed.
 #[test]
-pub(super) fn ablation_kernel2_refuses_a_used_scratch_with_the_same_fold_seed() {
+pub(crate) fn ablation_kernel2_refuses_a_used_scratch_with_the_same_fold_seed() {
     let config = shared_scratch_config();
     let dir = scratch();
     run(&config, dir.path()).unwrap();
@@ -109,7 +109,7 @@ pub(super) fn ablation_kernel2_refuses_a_used_scratch_with_the_same_fold_seed() 
 /// two under the reservation, whose lock file is created and removed in the scratch
 /// directory, so that directory's own modification time is the one change allowed.
 #[test]
-pub(super) fn ablation_kernel2_refuses_a_scratch_that_is_not_unused() {
+pub(crate) fn ablation_kernel2_refuses_a_scratch_that_is_not_unused() {
     let config = shared_scratch_config();
     let refused = |needle: &dyn Fn(&Path) -> String, make: &dyn Fn(&Path) -> PathBuf| {
         let root = scratch();
@@ -169,7 +169,7 @@ pub(super) fn ablation_kernel2_refuses_a_scratch_that_is_not_unused() {
 /// An unused scratch directory is admitted: an existing empty directory, an absent path (the
 /// comparison creates it), and the empty directory `execute` creates for `--scratch`.
 #[test]
-pub(super) fn ablation_kernel2_admits_an_unused_scratch() {
+pub(crate) fn ablation_kernel2_admits_an_unused_scratch() {
     let config = shared_scratch_config();
     let dir = scratch();
     let report = run(&config, dir.path()).unwrap();
@@ -196,7 +196,7 @@ pub(super) fn ablation_kernel2_admits_an_unused_scratch() {
 /// finite value and NaN against a finite value, each also with the sides swapped, and a NaN
 /// after a valid pair on another dataset.
 #[test]
-pub(super) fn ablation_paired_refuses_a_nonfinite_m1() {
+pub(crate) fn ablation_paired_refuses_a_nonfinite_m1() {
     let (nan, inf) = (f64::NAN, f64::INFINITY);
     for (a, b, slot) in [
         (nan, nan, "A"),
@@ -240,7 +240,7 @@ pub(super) fn ablation_paired_refuses_a_nonfinite_m1() {
 /// Finite M1 RMSEs whose summary would leave the range of an f64 are refused, so every number
 /// a returned summary holds is finite; the largest finite difference is still reported.
 #[test]
-pub(super) fn ablation_paired_refuses_a_summary_that_is_not_finite() {
+pub(crate) fn ablation_paired_refuses_a_summary_that_is_not_finite() {
     let max = f64::MAX;
     // One difference of f64::MAX minus -f64::MAX.
     let error = paired_refusal(
@@ -286,7 +286,7 @@ pub(super) fn ablation_paired_refuses_a_summary_that_is_not_finite() {
 
 /// The independent reviewer's PR0-R5 regression test (review 02), adopted unchanged.
 #[test]
-pub(super) fn review02_public_paired_refuses_nonfinite_m1() {
+pub(crate) fn review02_public_paired_refuses_nonfinite_m1() {
     let mut accepted = Vec::new();
     for (name, a, b) in [
         ("same_nan", f64::NAN, f64::NAN),
@@ -323,7 +323,7 @@ pub(super) fn review02_public_paired_refuses_nonfinite_m1() {
 
 /// The reproducer's dataset compared legacy against legacy: seed `seed`, fold seed
 /// `fold_seed`, one evaluation, one cut and one job.
-pub(super) fn legacy_scratch_config(seed: u64, fold_seed: u64) -> Config {
+pub(crate) fn legacy_scratch_config(seed: u64, fold_seed: u64) -> Config {
     Config {
         profile_a: Profile::Legacy,
         profile_b: Profile::Legacy,
@@ -335,7 +335,7 @@ pub(super) fn legacy_scratch_config(seed: u64, fold_seed: u64) -> Config {
 }
 
 /// The names directly under `dir`.
-pub(super) fn names(dir: &Path) -> BTreeSet<String> {
+pub(crate) fn names(dir: &Path) -> BTreeSet<String> {
     std::fs::read_dir(dir)
         .unwrap()
         .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
@@ -343,6 +343,6 @@ pub(super) fn names(dir: &Path) -> BTreeSet<String> {
 }
 
 /// `names` as a set.
-pub(super) fn set(names: &[&str]) -> BTreeSet<String> {
+pub(crate) fn set(names: &[&str]) -> BTreeSet<String> {
     names.iter().map(|name| (*name).to_owned()).collect()
 }

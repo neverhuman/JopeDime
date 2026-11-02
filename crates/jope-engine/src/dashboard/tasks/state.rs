@@ -1,19 +1,19 @@
 use super::*;
 
-pub(super) fn label<'a>(key: &str, value: impl Into<String>) -> Line<'a> {
+pub(crate) fn label<'a>(key: &str, value: impl Into<String>) -> Line<'a> {
     Line::from(vec![
         Span::styled(format!("{key:<23}"), Style::default().fg(MUTED)),
         Span::raw(value.into()),
     ])
 }
-pub(super) struct TaskRow {
-    pub(super) name: String,
-    pub(super) status: String,
-    pub(super) progress: String,
-    pub(super) detail: String,
+pub(crate) struct TaskRow {
+    pub(crate) name: String,
+    pub(crate) status: String,
+    pub(crate) progress: String,
+    pub(crate) detail: String,
 }
 impl TaskRow {
-    pub(super) fn table_row(self) -> Row<'static> {
+    pub(crate) fn table_row(self) -> Row<'static> {
         let color = match self.status.as_str() {
             "DONE" => GREEN,
             "RUNNING" => BLUE,
@@ -29,7 +29,7 @@ impl TaskRow {
         ])
     }
 }
-pub(super) fn task_row(name: &str, status: &str, progress: String, detail: String) -> TaskRow {
+pub(crate) fn task_row(name: &str, status: &str, progress: String, detail: String) -> TaskRow {
     TaskRow {
         name: name.into(),
         status: status.into(),
@@ -37,7 +37,7 @@ pub(super) fn task_row(name: &str, status: &str, progress: String, detail: Strin
         detail,
     }
 }
-pub(super) fn training_hold(run: &Value, policy: &Value) -> Option<String> {
+pub(crate) fn training_hold(run: &Value, policy: &Value) -> Option<String> {
     for value in [&run["continuous"], policy] {
         let state = value["status"].as_str().unwrap_or("").to_ascii_lowercase();
         let phase = phase(value).to_ascii_lowercase();
@@ -61,7 +61,7 @@ pub(super) fn training_hold(run: &Value, policy: &Value) -> Option<String> {
     }
     None
 }
-pub(super) fn receipt_task_state(v: &Value) -> &'static str {
+pub(crate) fn receipt_task_state(v: &Value) -> &'static str {
     if v["invalidated"] == true || v["status"] == "failed" {
         "FAILED"
     } else if training_hold(&Value::Null, v).is_some() {
@@ -78,7 +78,7 @@ pub(super) fn receipt_task_state(v: &Value) -> &'static str {
         "RUNNING"
     }
 }
-pub(super) fn policy_task_state(run: &Value, policy: &Value) -> (&'static str, String) {
+pub(crate) fn policy_task_state(run: &Value, policy: &Value) -> (&'static str, String) {
     if let Some(reason) = training_hold(run, policy) {
         let active = run["continuous"]["training_task_reservation"].is_object();
         return (
@@ -104,7 +104,7 @@ pub(super) fn policy_task_state(run: &Value, policy: &Value) -> (&'static str, S
     )
 }
 // Campaign progress is written at phase transitions. It is not a heartbeat.
-pub(super) fn campaign_task_state(run: &Value, neural: &Value) -> (&'static str, String) {
+pub(crate) fn campaign_task_state(run: &Value, neural: &Value) -> (&'static str, String) {
     let campaign = &run["campaign_service"];
     let actual = &run["operations"]["services"]["jope-parallel-campaign"];
     let continuous = &run["continuous"];
@@ -205,7 +205,7 @@ pub(super) fn campaign_task_state(run: &Value, neural: &Value) -> (&'static str,
         ),
     )
 }
-pub(super) fn proposal_library_status(v: &Value) -> &'static str {
+pub(crate) fn proposal_library_status(v: &Value) -> &'static str {
     if v["complete"] == true || phase(v).ends_with("comparison complete") {
         return "SAVED";
     }
@@ -220,7 +220,7 @@ pub(super) fn proposal_library_status(v: &Value) -> &'static str {
         _ => "RUNNING",
     }
 }
-pub(super) fn report_status(v: &Value) -> &'static str {
+pub(crate) fn report_status(v: &Value) -> &'static str {
     if completed(v) {
         "DONE"
     } else if v["invalidated"] == true || phase(v) == "Report needs inspection" {

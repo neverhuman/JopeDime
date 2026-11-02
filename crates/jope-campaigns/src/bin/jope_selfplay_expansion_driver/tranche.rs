@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn installable(conn: &Connection, task: &str) -> Result<Vec<String>> {
+pub(crate) fn installable(conn: &Connection, task: &str) -> Result<Vec<String>> {
     let fetched: HashSet<String> = std::fs::read_dir(fetch_root(task).join("targets"))
         .map(|entries| {
             entries
@@ -22,7 +22,7 @@ pub(super) fn installable(conn: &Connection, task: &str) -> Result<Vec<String>> 
     Ok(ids)
 }
 
-pub(super) fn curate_tranche(
+pub(crate) fn curate_tranche(
     root: &Path,
     conn: &Connection,
     task: &str,
@@ -67,7 +67,7 @@ pub(super) fn curate_tranche(
     Ok(selected.len())
 }
 
-pub(super) fn prune_tranche(tranche_file: &Path, task: &str) -> Result<Value> {
+pub(crate) fn prune_tranche(tranche_file: &Path, task: &str) -> Result<Value> {
     let entries = read_json(tranche_file)?;
     let entries = entries
         .as_array()
@@ -107,7 +107,7 @@ pub(super) fn prune_tranche(tranche_file: &Path, task: &str) -> Result<Value> {
     Ok(json!({"kept": kept.len(), "dropped": dropped}))
 }
 
-pub(super) fn run_tranche(
+pub(crate) fn run_tranche(
     root: &Path,
     conn: &Connection,
     task: &str,
@@ -184,7 +184,7 @@ pub(super) fn run_tranche(
     Ok(Some(tranche_id))
 }
 
-pub(super) fn install_batch(
+pub(crate) fn install_batch(
     root: &Path,
     task: &str,
     ids: &[String],
@@ -231,7 +231,7 @@ pub(super) fn install_batch(
 // Cycle
 // ---------------------------------------------------------------------------
 
-pub(super) fn run_cycle(root: &Path) -> Result<Value> {
+pub(crate) fn run_cycle(root: &Path) -> Result<Value> {
     reject_v1_quarantine_window(Path::new(encodings_str()))?;
     let conn = open_state_db(root)?;
     let (scanned, _) = refresh_filesystem_state(&conn, root)?;
@@ -394,7 +394,7 @@ pub(super) fn run_cycle(root: &Path) -> Result<Value> {
     Ok(report)
 }
 
-pub(super) fn query(root: &Path, dataset: Option<&str>, summary: bool) -> Result<()> {
+pub(crate) fn query(root: &Path, dataset: Option<&str>, summary: bool) -> Result<()> {
     let conn = open_state_db(root)?;
     if let Some(id) = dataset {
         let mut statement = conn.prepare("SELECT * FROM datasets WHERE dataset_hash=?")?;

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_transfer_rankings(
+pub(crate) fn build_transfer_rankings(
     run_id: &str,
     observation_db: &Path,
     observation_db_sha256: &str,

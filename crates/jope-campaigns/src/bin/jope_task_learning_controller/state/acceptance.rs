@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn apply_task_canary_acceptances(
+pub(crate) fn apply_task_canary_acceptances(
     args: &Args,
     state: &mut ControllerState,
     accepted: &BTreeMap<Task, AcceptedPointer>,
@@ -126,7 +126,7 @@ pub(super) fn apply_task_canary_acceptances(
     Ok(promoted)
 }
 
-pub(super) fn independent_external_passes(
+pub(crate) fn independent_external_passes(
     root: &Path,
     task: Task,
     parent: &Sha256Digest,

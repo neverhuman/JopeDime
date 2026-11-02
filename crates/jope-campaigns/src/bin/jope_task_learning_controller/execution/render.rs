@@ -1,7 +1,7 @@
 use super::*;
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn render_spec(
+pub(crate) fn render_spec(
     args: &Args,
     job_id: &str,
     output_name: &str,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn pairwise_results(scored: &[ScoredDataset]) -> Value {
+pub(crate) fn pairwise_results(scored: &[ScoredDataset]) -> Value {
     let players = players();
     let mut rows = Vec::new();
     for left_index in 0..players.len() {
@@ -29,13 +29,13 @@ pub(super) fn pairwise_results(scored: &[ScoredDataset]) -> Value {
     Value::Array(rows)
 }
 
-pub(super) fn players() -> Vec<&'static str> {
+pub(crate) fn players() -> Vec<&'static str> {
     let mut values = BASELINES.to_vec();
     values.push(MODEL);
     values
 }
 
-pub(super) fn elo_standings(scored: &[ScoredDataset]) -> Value {
+pub(crate) fn elo_standings(scored: &[ScoredDataset]) -> Value {
     const K: f64 = 16.0;
     let players = players();
     let mut ratings = players

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn trainer_recipe(
+pub(crate) fn trainer_recipe(
     corpus: &CorpusPointer,
     task: Task,
     mode: TrainerMode,

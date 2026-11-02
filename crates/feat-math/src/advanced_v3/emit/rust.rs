@@ -3,7 +3,7 @@ use super::rust_input::*;
 use super::rust_ops::*;
 use super::*;
 
-pub(super) fn emit_bound_rust(model: &BoundModel) -> Result<String> {
+pub(crate) fn emit_bound_rust(model: &BoundModel) -> Result<String> {
     let BoundPredictor::Pipeline {
         target,
         ops,

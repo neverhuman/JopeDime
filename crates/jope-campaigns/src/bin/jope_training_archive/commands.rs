@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn cmd_stats(root: &Path) -> Result<()> {
+pub(crate) fn cmd_stats(root: &Path) -> Result<()> {
     let conn = open_db(root)?;
     let (runs, rows): (i64, i64) = conn.query_row(
         "SELECT (SELECT COUNT(*) FROM run),(SELECT COUNT(*) FROM epoch)",
@@ -90,7 +90,7 @@ pub(super) fn cmd_stats(root: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn fmt_ms(ms: Option<i64>) -> String {
+pub(crate) fn fmt_ms(ms: Option<i64>) -> String {
     let Some(ms) = ms else { return "-".into() };
     // civil_from_days
     let secs = ms / 1000;
@@ -117,7 +117,7 @@ pub(super) fn fmt_ms(ms: Option<i64>) -> String {
     )
 }
 
-pub(super) fn cmd_runs(root: &Path, lane: Option<String>) -> Result<()> {
+pub(crate) fn cmd_runs(root: &Path, lane: Option<String>) -> Result<()> {
     let conn = open_db(root)?;
     let sql = "SELECT run_key,lane,node,model_version,recipe,sampler,corpus_snapshot,anti_overfit,
                       warm_start_sha256,warm_start_tensors_loaded,warm_start_tensors_total,
@@ -197,7 +197,7 @@ pub(super) fn cmd_runs(root: &Path, lane: Option<String>) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn cmd_flags(root: &Path, severity: Option<String>) -> Result<()> {
+pub(crate) fn cmd_flags(root: &Path, severity: Option<String>) -> Result<()> {
     let conn = open_db(root)?;
     let mut st = conn.prepare(
         "SELECT severity,code,run_key,epoch,phase,detail FROM flag
@@ -235,7 +235,7 @@ pub(super) fn cmd_flags(root: &Path, severity: Option<String>) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn cmd_verify(root: &Path) -> Result<()> {
+pub(crate) fn cmd_verify(root: &Path) -> Result<()> {
     let conn = open_db(root)?;
     let mut st = conn.prepare("SELECT run_key,epoch,phase,raw_json,raw_sha256 FROM epoch")?;
     let mut bad = 0;
@@ -325,7 +325,7 @@ struct Point {
     early_stopped: i64,
 }
 
-pub(super) fn load_points(conn: &Connection, policy_only: bool) -> Result<Vec<Point>> {
+pub(crate) fn load_points(conn: &Connection, policy_only: bool) -> Result<Vec<Point>> {
     let sql = format!(
         "SELECT e.run_key, r.lane, e.epoch, e.phase, e.train_loss, e.val_loss, e.overfit_gap,
                 e.val_pairwise_win_accuracy, e.val_conditional_advantage, e.wall_ms,
@@ -375,7 +375,7 @@ pub(super) fn load_points(conn: &Connection, policy_only: bool) -> Result<Vec<Po
     Ok(out)
 }
 
-pub(super) fn cmd_export(
+pub(crate) fn cmd_export(
     root: &Path,
     format: &str,
     out: Option<PathBuf>,
@@ -700,7 +700,7 @@ pub(super) fn cmd_export(
     Ok(())
 }
 
-pub(super) fn build_tex(pts: &[Point], boundaries: &[(i64, String, String, String)]) -> String {
+pub(crate) fn build_tex(pts: &[Point], boundaries: &[(i64, String, String, String)]) -> String {
     let maxg = pts.last().map(|p| p.gidx).unwrap_or(1);
     let mut marks = String::new();
     // 91 run boundaries would overplot the axis. Draw a rule at every boundary,
@@ -773,7 +773,7 @@ pub(super) fn build_tex(pts: &[Point], boundaries: &[(i64, String, String, Strin
     )
 }
 
-pub(super) fn tex_escape(s: &str) -> String {
+pub(crate) fn tex_escape(s: &str) -> String {
     s.replace('\\', "\\textbackslash{}")
         .replace('_', "\\_")
         .replace('&', "\\&")

@@ -196,11 +196,11 @@ impl SeedInferenceResponseV2 {
     }
 }
 
-pub(super) fn descending_f64(left: f64, right: f64) -> Ordering {
+pub(crate) fn descending_f64(left: f64, right: f64) -> Ordering {
     right.total_cmp(&left)
 }
 
-pub(super) fn select_ranked(
+pub(crate) fn select_ranked(
     available: &[(usize, ModelProposalV2)],
     selected: &mut BTreeSet<usize>,
     retained: &mut Vec<RetainedModelProposalV2>,
@@ -231,7 +231,7 @@ pub(super) fn select_ranked(
     }
 }
 
-pub(super) fn seeded_temperature_score(seed: u64, semantic_sha256: &str, logit: f64) -> f64 {
+pub(crate) fn seeded_temperature_score(seed: u64, semantic_sha256: &str, logit: f64) -> f64 {
     let mut hash = Sha256::new();
     hash.update(b"jope-dime/seeded-temperature/v1\0");
     hash.update(seed.to_le_bytes());

@@ -9,7 +9,7 @@ use super::*;
 pub const ASSEMBLY_REPLAY_MAX_ABS: f32 = 1e-4;
 
 /// Input scope of one encode: sha256 of the prepared training rows' JSON.
-pub(super) fn input_scope(rows: &[Vec<f64>]) -> Result<String> {
+pub(crate) fn input_scope(rows: &[Vec<f64>]) -> Result<String> {
     Ok(sha(&serde_json::to_vec(rows)?))
 }
 
@@ -26,7 +26,7 @@ macro_rules! product {
             pub const WIDTH: usize = $width;
             /// The named transformation that constructs this product.
             pub const TRANSFORMATION: &'static str = $transformation;
-            pub(super) fn checked(values: Vec<f32>, scope: &str) -> Result<Self> {
+            pub(crate) fn checked(values: Vec<f32>, scope: &str) -> Result<Self> {
                 vector(&values, $width)
                     .with_context(|| format!("{} layout", stringify!($name)))?;
                 validate_hex(scope, 64)?;
@@ -39,7 +39,7 @@ macro_rules! product {
             /// crate's own tests.
             #[cfg(test)]
             #[allow(dead_code)]
-            pub(super) fn for_testing(values: Vec<f32>, scope: &str) -> Self {
+            pub(crate) fn for_testing(values: Vec<f32>, scope: &str) -> Self {
                 Self::checked(values, scope).unwrap()
             }
             pub fn values(&self) -> &[f32] {
@@ -137,18 +137,18 @@ impl HyperionSignature {
 }
 impl RawFoundation {
     /// Wrap the Foundation encoder's output for the encode with input scope `scope`.
-    pub(super) fn from_foundation_encoder(values: Vec<f32>, scope: &str) -> Result<Self> {
+    pub(crate) fn from_foundation_encoder(values: Vec<f32>, scope: &str) -> Result<Self> {
         Self::checked(values, scope)
     }
 }
 impl TargetBlock {
     /// Wrap the fused target encoder's output for the encode with input scope `scope`.
-    pub(super) fn from_target_encoder(values: Vec<f32>, scope: &str) -> Result<Self> {
+    pub(crate) fn from_target_encoder(values: Vec<f32>, scope: &str) -> Result<Self> {
         Self::checked(values, scope)
     }
 }
 impl FinalContext {
-    pub(super) fn from_assembly(values: Vec<f32>, scope: &str) -> Result<Self> {
+    pub(crate) fn from_assembly(values: Vec<f32>, scope: &str) -> Result<Self> {
         let context = Self::checked(values, scope)?;
         ensure!(
             context.values.iter().all(|v| v.abs() <= 32.0),
@@ -181,7 +181,7 @@ impl CellSurface {
     pub const TRANSFORMATION: &'static str = "hyperion.v7.fitted-quantile-bounds-u8-grid/v1";
     /// Wrap the frozen quantization of `rows` prepared training rows of the encode with input
     /// scope `scope`.
-    pub(super) fn from_quantized_rows(
+    pub(crate) fn from_quantized_rows(
         grid: hyperion::hyperion_v7::grid::U8Grid,
         rows: usize,
         scope: &str,
@@ -197,7 +197,7 @@ impl CellSurface {
             scope: scope.into(),
         })
     }
-    pub(super) fn grid(&self) -> &hyperion::hyperion_v7::grid::U8Grid {
+    pub(crate) fn grid(&self) -> &hyperion::hyperion_v7::grid::U8Grid {
         &self.grid
     }
     pub fn rows(&self) -> usize {
@@ -263,12 +263,12 @@ impl RowEmbeddings {
         "hyperion.v7.composite-sweep3-scales4-7-11-15-batch1024/v1";
     /// Unit-test support only.
     #[cfg(test)]
-    pub(super) fn for_testing(values: Vec<f32>, rows: usize, scope: &str) -> Self {
+    pub(crate) fn for_testing(values: Vec<f32>, rows: usize, scope: &str) -> Self {
         Self::in_scope(values, rows, scope).unwrap()
     }
     /// Wrap the frozen Hyperion sweep output of `surface`: one embedding per row of that
     /// surface, in that surface's input scope.
-    pub(super) fn from_hyperion_sweep(values: Vec<f32>, surface: &CellSurface) -> Result<Self> {
+    pub(crate) fn from_hyperion_sweep(values: Vec<f32>, surface: &CellSurface) -> Result<Self> {
         Self::in_scope(values, surface.rows, &surface.scope)
     }
     fn in_scope(values: Vec<f32>, rows: usize, scope: &str) -> Result<Self> {

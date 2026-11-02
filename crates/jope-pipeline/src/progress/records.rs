@@ -64,12 +64,12 @@ pub struct CandidateLine {
 
 /// An evaluation waiting for its `candidate` record.
 #[derive(Clone, Copy)]
-pub(super) struct PendingCandidate {
-    pub(super) generation: u64,
-    pub(super) cut: usize,
-    pub(super) hold_r2: Option<f64>,
-    pub(super) hold_rmse: Option<f64>,
-    pub(super) measured: bool,
+pub(crate) struct PendingCandidate {
+    pub(crate) generation: u64,
+    pub(crate) cut: usize,
+    pub(crate) hold_r2: Option<f64>,
+    pub(crate) hold_rmse: Option<f64>,
+    pub(crate) measured: bool,
 }
 
 /// Finite values sorted descending, evenly downsampled (first and last kept) to `max`.

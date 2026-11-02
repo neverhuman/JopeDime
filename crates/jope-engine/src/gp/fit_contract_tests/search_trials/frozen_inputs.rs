@@ -2,7 +2,7 @@ use super::*;
 
 /// A seeded, vocabulary-adapted search whose seed slots name proposal records (W4-T07), with
 /// the caller's input files removed afterwards. Returns the output and the input bytes.
-pub(super) fn frozen_input_search(
+pub(crate) fn frozen_input_search(
     root: &Path,
     prepared: &Path,
     authority: &Fixture,
@@ -54,7 +54,7 @@ pub(super) fn frozen_input_search(
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_seeded_search_freezes_the_inputs_its_lineage_is_verified_against() {
+pub(crate) fn a_seeded_search_freezes_the_inputs_its_lineage_is_verified_against() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);

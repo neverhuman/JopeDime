@@ -11,11 +11,11 @@ use sha2::{Digest, Sha256};
 
 #[derive(Clone)]
 pub struct PathStatsModel {
-    pub(super) program: PathStatsProgram,
-    pub(super) task: TaskMode,
-    pub(super) fold: FoldBoundary,
-    pub(super) state: PathState,
-    pub(super) predictor: BoundModel,
+    pub(crate) program: PathStatsProgram,
+    pub(crate) task: TaskMode,
+    pub(crate) fold: FoldBoundary,
+    pub(crate) state: PathState,
+    pub(crate) predictor: BoundModel,
 }
 
 impl std::fmt::Debug for PathStatsModel {

@@ -8,19 +8,19 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub(super) const PROTOCOL: &str = "jope.transfer-procedure-audit/v1";
-pub(super) fn hash(bytes: &[u8]) -> String {
+pub(crate) const PROTOCOL: &str = "jope.transfer-procedure-audit/v1";
+pub(crate) fn hash(bytes: &[u8]) -> String {
     jope_pipeline::sha256_hex(bytes)
 }
-pub(super) fn digest(value: &impl Serialize) -> Result<String> {
+pub(crate) fn digest(value: &impl Serialize) -> Result<String> {
     Ok(hash(&serde_json::to_vec(value)?))
 }
-pub(super) fn hex(s: &str, n: usize) -> bool {
+pub(crate) fn hex(s: &str, n: usize) -> bool {
     s.len() == n
         && s.bytes()
             .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
 }
-pub(super) fn read_bytes(path: &Path) -> Result<Vec<u8>> {
+pub(crate) fn read_bytes(path: &Path) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
     std::fs::File::open(path)?
         .take(128 * 1024 * 1024 + 1)
@@ -32,7 +32,7 @@ fn read<T: for<'a> Deserialize<'a>>(path: &Path) -> Result<T> {
     Ok(serde_json::from_slice(&read_bytes(path)?)?)
 }
 
-pub(super) fn verify_asset(a: &Asset) -> Result<()> {
+pub(crate) fn verify_asset(a: &Asset) -> Result<()> {
     ensure!(hex(&a.sha256, 64), "invalid asset digest");
     let mut file =
         std::fs::File::open(&a.path).with_context(|| format!("read {}", a.path.display()))?;
@@ -52,7 +52,7 @@ pub(super) fn verify_asset(a: &Asset) -> Result<()> {
     );
     Ok(())
 }
-pub(super) fn asset(a: &Asset) -> Result<Vec<u8>> {
+pub(crate) fn asset(a: &Asset) -> Result<Vec<u8>> {
     ensure!(
         std::fs::metadata(&a.path)?.len() <= 128 * 1024 * 1024,
         "JSON evidence exceeds 128 MiB"
@@ -86,7 +86,7 @@ fn partition(rows: &[&Row]) -> Vec<Vec<String>> {
         })
         .collect()
 }
-pub(super) fn build(specification: Specification) -> Result<Plan> {
+pub(crate) fn build(specification: Specification) -> Result<Plan> {
     let s = &specification;
     ensure!(
         s.schema == "jope.transfer-spec/v1" && !s.round.is_empty() && hex(&s.source_sha, 40),

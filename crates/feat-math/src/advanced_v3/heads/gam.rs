@@ -1,22 +1,22 @@
 use super::*;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct GamTerm {
-    pub(super) feature: usize,
-    pub(super) edges: Vec<f64>,
-    pub(super) values: Vec<f64>,
+pub(crate) struct GamTerm {
+    pub(crate) feature: usize,
+    pub(crate) edges: Vec<f64>,
+    pub(crate) values: Vec<f64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct GamBoostModel {
-    pub(super) base: f64,
-    pub(super) learning_rate: f64,
-    pub(super) binary: bool,
-    pub(super) terms: Vec<GamTerm>,
+pub(crate) struct GamBoostModel {
+    pub(crate) base: f64,
+    pub(crate) learning_rate: f64,
+    pub(crate) binary: bool,
+    pub(crate) terms: Vec<GamTerm>,
 }
 
 impl GamBoostModel {
-    pub(super) fn fit(x: &Rows, y: &[f64], stage: &Stage, binary: bool) -> Result<Self> {
+    pub(crate) fn fit(x: &Rows, y: &[f64], stage: &Stage, binary: bool) -> Result<Self> {
         if binary {
             validate_binary_fit_target(y, x.len())?;
         }
@@ -108,7 +108,7 @@ impl GamBoostModel {
         })
     }
 
-    pub(super) fn predict(&self, x: &Rows) -> Vec<f64> {
+    pub(crate) fn predict(&self, x: &Rows) -> Vec<f64> {
         x.iter()
             .map(|row| {
                 let mut prediction = self.base;

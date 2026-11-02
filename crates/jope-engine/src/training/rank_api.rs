@@ -350,7 +350,7 @@ pub(crate) fn smartcluster_rank(
 
 /// NCCL rendezvous and rank receipts belong to one actual native allocation.
 /// Preserve the original logical optimizer window and every old launch verbatim.
-pub(super) fn native_attempt_launch(
+pub(crate) fn native_attempt_launch(
     root: &Path,
     attempt: jain_smartcluster::FencedAttempt,
     window: &Value,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn refill_binary_population(
+pub(crate) fn refill_binary_population(
     seed: u64,
     generation: usize,
     ranked: &[BinarySlotLedger],

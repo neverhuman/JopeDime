@@ -75,7 +75,7 @@ fn is_synthetic(root: &Path, node: &Value, verified: Option<&Path>) -> bool {
         .is_some_and(|body| synthetic::marked(&body))
 }
 
-pub(super) fn parents(node: &Value) -> Vec<Value> {
+pub(crate) fn parents(node: &Value) -> Vec<Value> {
     node.get("depends_on")
         .and_then(Value::as_list)
         .cloned()

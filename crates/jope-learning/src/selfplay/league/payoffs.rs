@@ -276,7 +276,7 @@ impl PayoffManifest {
         (!values.is_empty()).then(|| values.iter().sum::<f64>() / values.len() as f64)
     }
 
-    pub(super) fn accepted_competitor_ids(&self) -> Vec<&str> {
+    pub(crate) fn accepted_competitor_ids(&self) -> Vec<&str> {
         self.members
             .iter()
             .filter(|m| {
@@ -286,7 +286,7 @@ impl PayoffManifest {
             .collect()
     }
 
-    pub(super) fn has_nontransitive_cycle(&self, ids: &[&str]) -> bool {
+    pub(crate) fn has_nontransitive_cycle(&self, ids: &[&str]) -> bool {
         for &a in ids {
             for &b in ids {
                 if a == b || self.pair_mean_difference(a, b).unwrap_or(0.0) <= 0.0 {
@@ -307,7 +307,7 @@ impl PayoffManifest {
         false
     }
 
-    pub(super) fn has_family_specialization(&self, ids: &[&str]) -> bool {
+    pub(crate) fn has_family_specialization(&self, ids: &[&str]) -> bool {
         if ids.len() < 2 {
             return false;
         }

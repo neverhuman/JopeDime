@@ -12,7 +12,7 @@ use super::*;
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
 
-pub(super) fn search_proposals_fits_and_scores_depend_only_on_their_permitted_rows() {
+pub(crate) fn search_proposals_fits_and_scores_depend_only_on_their_permitted_rows() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().canonicalize().unwrap();
     let variants = [
@@ -170,10 +170,10 @@ pub(super) fn search_proposals_fits_and_scores_depend_only_on_their_permitted_ro
 }
 
 /// Raw-unit sealed final-test rows for the view fixture (`x`, `target`).
-pub(super) const SEALED_TEST: &str = "12,136\n13,139\n14,142.5\n";
+pub(crate) const SEALED_TEST: &str = "12,136\n13,139\n14,142.5\n";
 
 /// A completed search of the view fixture and its exported selected predictor.
-pub(super) fn exported_subject(
+pub(crate) fn exported_subject(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
@@ -197,7 +197,7 @@ pub(super) fn exported_subject(
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score() {
+pub(crate) fn a_selection_receipt_alone_neither_reads_caller_chosen_labels_nor_publishes_a_score() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let prepared = root.join(prepared.strip_prefix(temp.path()).unwrap());

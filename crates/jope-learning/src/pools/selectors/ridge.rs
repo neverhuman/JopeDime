@@ -9,7 +9,7 @@ pub struct RidgeProgram<'a> {
 }
 
 /// Solve `A x = b` for symmetric positive definite `A` (row-major, `n x n`) by Cholesky.
-pub(super) fn cholesky_solve(mut a: Vec<f64>, mut b: Vec<f64>, n: usize) -> Result<Vec<f64>> {
+pub(crate) fn cholesky_solve(mut a: Vec<f64>, mut b: Vec<f64>, n: usize) -> Result<Vec<f64>> {
     ensure!(
         a.len() == n * n && b.len() == n && a.iter().chain(&b).all(|v| v.is_finite()),
         "nonfinite or malformed ridge system"

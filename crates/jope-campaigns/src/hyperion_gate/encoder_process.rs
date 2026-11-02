@@ -95,7 +95,7 @@ fn terminate_encoder_group(child: &mut std::process::Child, grace: Duration) -> 
     Ok(())
 }
 
-pub(super) fn run_encoder_with_timeout(
+pub(crate) fn run_encoder_with_timeout(
     encoder: &HyperionEncoderIdentityV1,
     fit: &Path,
     hold: &Path,
@@ -262,7 +262,7 @@ pub(super) fn run_encoder_with_timeout(
     Ok(EncoderRun { status, proof })
 }
 
-pub(super) fn read_output_matrices(
+pub(crate) fn read_output_matrices(
     outputs: &[(&str, PathBuf, usize, usize)],
 ) -> Result<Vec<Vec<Vec<f64>>>, String> {
     outputs
@@ -271,7 +271,7 @@ pub(super) fn read_output_matrices(
         .collect()
 }
 
-pub(super) fn output_artifacts(
+pub(crate) fn output_artifacts(
     outputs: &[(&str, PathBuf, usize, usize)],
 ) -> Result<Vec<MatrixArtifactV1>, String> {
     outputs
@@ -289,7 +289,7 @@ pub(super) fn output_artifacts(
         .collect()
 }
 
-pub(super) fn read_vs_matrix(
+pub(crate) fn read_vs_matrix(
     path: &Path,
     expected_rows: usize,
     expected_columns: usize,
@@ -325,7 +325,7 @@ pub(super) fn read_vs_matrix(
     Ok(matrix)
 }
 
-pub(super) fn require_cuda_device(ordinal: u32) -> Result<(), String> {
+pub(crate) fn require_cuda_device(ordinal: u32) -> Result<(), String> {
     let output = Command::new("nvidia-smi")
         .args(["--query-gpu=index", "--format=csv,noheader,nounits"])
         .output()
@@ -340,7 +340,7 @@ pub(super) fn require_cuda_device(ordinal: u32) -> Result<(), String> {
     Ok(())
 }
 
-pub(super) fn verify_runtime_identity(encoder: &HyperionEncoderIdentityV1) -> Result<(), String> {
+pub(crate) fn verify_runtime_identity(encoder: &HyperionEncoderIdentityV1) -> Result<(), String> {
     let rustc = Command::new("rustc")
         .arg("--version")
         .output()
@@ -377,7 +377,7 @@ pub(super) fn verify_runtime_identity(encoder: &HyperionEncoderIdentityV1) -> Re
     Ok(())
 }
 
-pub(super) fn parse_regression_csv(
+pub(crate) fn parse_regression_csv(
     bytes: &[u8],
     expected_features: usize,
 ) -> Result<RegressionTable, String> {
@@ -427,7 +427,7 @@ pub(super) fn parse_regression_csv(
     Ok(RegressionTable { features, targets })
 }
 
-pub(super) fn csv_for_rows(
+pub(crate) fn csv_for_rows(
     source: &RegressionTable,
     rows: &[usize],
     dummy_target: bool,
@@ -450,11 +450,11 @@ pub(super) fn csv_for_rows(
     bytes
 }
 
-pub(super) fn select_rows(values: &[Vec<f64>], rows: &[usize]) -> Vec<Vec<f64>> {
+pub(crate) fn select_rows(values: &[Vec<f64>], rows: &[usize]) -> Vec<Vec<f64>> {
     rows.iter().map(|row| values[*row].clone()).collect()
 }
 
-pub(super) fn hash_selected_strings(values: &[String], rows: &[usize]) -> String {
+pub(crate) fn hash_selected_strings(values: &[String], rows: &[usize]) -> String {
     let mut bytes = Vec::new();
     for row in rows {
         bytes.extend_from_slice(values[*row].as_bytes());
@@ -463,7 +463,7 @@ pub(super) fn hash_selected_strings(values: &[String], rows: &[usize]) -> String
     raw_sha256(&bytes)
 }
 
-pub(super) fn hash_strings(values: &[String]) -> String {
+pub(crate) fn hash_strings(values: &[String]) -> String {
     let mut bytes = Vec::new();
     for value in values {
         bytes.extend_from_slice(&(value.len() as u64).to_le_bytes());
@@ -472,7 +472,7 @@ pub(super) fn hash_strings(values: &[String]) -> String {
     raw_sha256(&bytes)
 }
 
-pub(super) fn hash_matrix(values: &[Vec<f64>]) -> String {
+pub(crate) fn hash_matrix(values: &[Vec<f64>]) -> String {
     let mut bytes = Vec::new();
     bytes.extend_from_slice(&(values.len() as u64).to_le_bytes());
     bytes.extend_from_slice(&(values.first().map(Vec::len).unwrap_or(0) as u64).to_le_bytes());
@@ -484,7 +484,7 @@ pub(super) fn hash_matrix(values: &[Vec<f64>]) -> String {
     raw_sha256(&bytes)
 }
 
-pub(super) fn hash_f64(values: &[f64]) -> String {
+pub(crate) fn hash_f64(values: &[f64]) -> String {
     let mut bytes = Vec::with_capacity(values.len() * 8);
     for value in values {
         bytes.extend_from_slice(&value.to_bits().to_le_bytes());
@@ -492,6 +492,6 @@ pub(super) fn hash_f64(values: &[f64]) -> String {
     raw_sha256(&bytes)
 }
 
-pub(super) fn elapsed_milliseconds(started: Instant) -> u64 {
+pub(crate) fn elapsed_milliseconds(started: Instant) -> u64 {
     u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
 }

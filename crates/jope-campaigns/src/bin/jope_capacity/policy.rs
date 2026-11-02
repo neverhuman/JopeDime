@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn parse_policy(text: &str) -> Result<StaticPolicy> {
+pub(crate) fn parse_policy(text: &str) -> Result<StaticPolicy> {
     let mut poll_ms = None;
     let mut telemetry_ms = None;
     let mut current_node: Option<String> = None;
@@ -62,7 +62,7 @@ pub(super) fn parse_policy(text: &str) -> Result<StaticPolicy> {
     })
 }
 
-pub(super) fn validate_policy(policy: &StaticPolicy) -> Result<()> {
+pub(crate) fn validate_policy(policy: &StaticPolicy) -> Result<()> {
     if policy.poll_ms != 2_000 || policy.telemetry_ms != 1_000 {
         bail!("self-play policy must use a 2s scheduler tick and 1s telemetry");
     }
@@ -84,7 +84,7 @@ pub(super) fn validate_policy(policy: &StaticPolicy) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_metrics(metrics: &ExternalMetrics) -> Result<()> {
+pub(crate) fn validate_metrics(metrics: &ExternalMetrics) -> Result<()> {
     for (name, value) in [
         ("failure_rate", metrics.failure_rate),
         ("p95_runtime_seconds", metrics.p95_runtime_seconds),

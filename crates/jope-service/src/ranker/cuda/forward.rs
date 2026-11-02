@@ -81,7 +81,7 @@ impl FusedForward {
         )
     }
 
-    pub(super) fn from_bytes(
+    pub(crate) fn from_bytes(
         dope: &[u8],
         jope: &[u8],
         device: Device,
@@ -139,7 +139,7 @@ impl FusedForward {
     }
 
     #[cfg(test)]
-    pub(super) fn device_sync_for_test(&self) {
+    pub(crate) fn device_sync_for_test(&self) {
         self.device.synchronize().unwrap();
     }
 

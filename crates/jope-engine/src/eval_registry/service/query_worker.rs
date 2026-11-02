@@ -87,7 +87,7 @@ pub fn execute_query_worker() -> Result<()> {
     Ok(())
 }
 
-pub(super) fn predict(
+pub(crate) fn predict(
     state: &State,
     model: &[u8],
     rows: &[Vec<f64>],

@@ -7,7 +7,7 @@ pub fn run(root: &Path, spec_path: &Path) -> Result<()> {
 }
 
 #[cfg(feature = "neural")]
-pub(super) fn run_admitted(root: &Path, spec_path: &Path) -> Result<()> {
+pub(crate) fn run_admitted(root: &Path, spec_path: &Path) -> Result<()> {
     let spec: Spec = read_json(spec_path)?;
     ensure!(
         spec.schema == "parallel.campaign.v1" && spec.qualification,

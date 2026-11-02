@@ -1,8 +1,8 @@
 use super::*;
 
-pub(super) struct NativeRoundInputs {
-    pub(super) inputs: NativeCaptureInputs,
-    pub(super) conditioning: TokenProjection,
+pub(crate) struct NativeRoundInputs {
+    pub(crate) inputs: NativeCaptureInputs,
+    pub(crate) conditioning: TokenProjection,
 }
 impl NativeRoundInputs {
     fn program(&self, dsl: &str) -> Result<RoundProgram> {
@@ -45,13 +45,13 @@ impl RoundInputProvider for NativeRoundInputs {
     }
 }
 
-pub(super) struct LiveProvenance {
+pub(crate) struct LiveProvenance {
     plan_sha256: String,
     origins: Mutex<BTreeMap<(u64, String), OperatorOrigin>>,
     pending: Mutex<BTreeMap<String, OperatorOrigin>>,
 }
 impl LiveProvenance {
-    pub(super) fn new(plan: &Plan, seeds: &BTreeSet<String>) -> Result<Self> {
+    pub(crate) fn new(plan: &Plan, seeds: &BTreeSet<String>) -> Result<Self> {
         Ok(Self {
             plan_sha256: digest(&serde_json::to_vec(plan)?),
             origins: Mutex::new(
@@ -112,8 +112,8 @@ impl OperatorProvenance for LiveProvenance {
             .context("unobserved native program origin")
     }
 }
-pub(super) struct RecordingSpace {
-    pub(super) provenance: Arc<LiveProvenance>,
+pub(crate) struct RecordingSpace {
+    pub(crate) provenance: Arc<LiveProvenance>,
 }
 impl SearchSpace for RecordingSpace {
     fn canonical(&self, dsl: &str) -> Result<String> {

@@ -3,7 +3,7 @@ use super::*;
 /// The sign test against the exact binomial tail computed in integers, and finite far past
 /// the 1023 pairs where `2^n` leaves the range of an f64.
 #[test]
-pub(super) fn ablation_sign_test_matches_the_exact_binomial_tail() {
+pub(crate) fn ablation_sign_test_matches_the_exact_binomial_tail() {
     assert_eq!(sign_test(0, 0), 1.0);
     assert_eq!(sign_test(5, 0), 0.0625);
     assert_eq!(sign_test(0, 6), 0.031_25);
@@ -37,7 +37,7 @@ pub(super) fn ablation_sign_test_matches_the_exact_binomial_tail() {
 /// Every text the kernel2 arms add, the option names and help, the profile ids, the new
 /// document keys and fixed values, and the refusal, passes the shipped-text lint.
 #[test]
-pub(super) fn ablation_kernel2_text_passes_the_shipped_text_lint() {
+pub(crate) fn ablation_kernel2_text_passes_the_shipped_text_lint() {
     use clap::Args as _;
     let command = AblationArgs::augment_args(clap::Command::new("ablation"));
     let mut texts: Vec<String> = Vec::new();
@@ -128,7 +128,7 @@ pub(super) fn ablation_kernel2_text_passes_the_shipped_text_lint() {
 type Entry = (&'static str, std::time::SystemTime, Vec<u8>);
 
 /// Every entry under `root`, symbolic links not followed.
-pub(super) fn tree(root: &Path) -> BTreeMap<PathBuf, Entry> {
+pub(crate) fn tree(root: &Path) -> BTreeMap<PathBuf, Entry> {
     let mut entries = BTreeMap::new();
     let mut pending = vec![root.to_path_buf()];
     while let Some(dir) = pending.pop() {
@@ -154,7 +154,7 @@ pub(super) fn tree(root: &Path) -> BTreeMap<PathBuf, Entry> {
 
 /// The entries whose kind, modification time or content differs between two [`tree`]s, or
 /// that only one of them has.
-pub(super) fn changed_entries(
+pub(crate) fn changed_entries(
     before: &BTreeMap<PathBuf, Entry>,
     after: &BTreeMap<PathBuf, Entry>,
 ) -> Vec<PathBuf> {
@@ -172,7 +172,7 @@ pub(super) fn changed_entries(
 /// seed, the jobs or the other slot's profile differ. A planned kernel2 output that is a
 /// dangling symbolic link is refused the same way, with nothing written.
 #[test]
-pub(super) fn ablation_kernel2_refuses_a_scratch_that_holds_its_searches() {
+pub(crate) fn ablation_kernel2_refuses_a_scratch_that_holds_its_searches() {
     let config = Config {
         datasets: vec![d5("pmlb-first-principles-supernovae-zg")],
         evaluations: 1,
@@ -244,7 +244,7 @@ pub(super) fn ablation_kernel2_refuses_a_scratch_that_holds_its_searches() {
 }
 
 /// A paired refusal: its message, which must pass the shipped-text lint.
-pub(super) fn paired_refusal(datasets: &[&str], runs: &[RunRecord]) -> String {
+pub(crate) fn paired_refusal(datasets: &[&str], runs: &[RunRecord]) -> String {
     let datasets: Vec<String> = datasets.iter().map(|d| (*d).to_owned()).collect();
     let error = match paired(&datasets, runs) {
         Ok(summary) => panic!("refusal expected, received {summary:?}"),
@@ -259,7 +259,7 @@ pub(super) fn paired_refusal(datasets: &[&str], runs: &[RunRecord]) -> String {
 /// pair is balanced by an unpaired B run is refused, not counted as two wins; so is the
 /// mirror case on the B side.
 #[test]
-pub(super) fn ablation_paired_rejects_duplicate_a_and_unpaired_b() {
+pub(crate) fn ablation_paired_rejects_duplicate_a_and_unpaired_b() {
     let error = paired_refusal(
         &["d0"],
         &[
@@ -286,7 +286,7 @@ pub(super) fn ablation_paired_rejects_duplicate_a_and_unpaired_b() {
 /// comparison does not list is refused rather than left out; so is a B run there, paired or
 /// not, and a B run on a listed dataset without its A run.
 #[test]
-pub(super) fn ablation_paired_rejects_unlisted_unpaired_a() {
+pub(crate) fn ablation_paired_rejects_unlisted_unpaired_a() {
     let pair = [
         paired_run("A", "d0", 1, 1.0, "p"),
         paired_run("B", "d0", 1, 0.5, "q"),
@@ -311,7 +311,7 @@ pub(super) fn ablation_paired_rejects_unlisted_unpaired_a() {
 
 /// The pairing refuses a run whose slot is neither A nor B, and a dataset listed twice.
 #[test]
-pub(super) fn ablation_paired_rejects_a_repeated_dataset_or_an_unknown_slot() {
+pub(crate) fn ablation_paired_rejects_a_repeated_dataset_or_an_unknown_slot() {
     let pair = [
         paired_run("A", "d0", 1, 1.0, "p"),
         paired_run("B", "d0", 1, 0.5, "q"),
@@ -328,7 +328,7 @@ pub(super) fn ablation_paired_rejects_a_repeated_dataset_or_an_unknown_slot() {
 /// (review finding PR0-R3): for each refused combination neither the `--scratch` path, nor
 /// any of its parents under the test directory, nor `--out` exists afterwards.
 #[test]
-pub(super) fn ablation_execute_refuses_before_creating_scratch() {
+pub(crate) fn ablation_execute_refuses_before_creating_scratch() {
     let root = scratch();
     let base = AblationArgs {
         profile_a: Profile::Kernel2Baseline.id().to_owned(),
@@ -471,7 +471,7 @@ pub(super) fn ablation_execute_refuses_before_creating_scratch() {
 /// The configuration of the reviewer's PR0-R4 reproducer: kernel2-baseline A=A on
 /// supernovae-zg, seed 6, fold seed 20260907, one evaluation, one cut, one job and no
 /// refinement.
-pub(super) fn shared_scratch_config() -> Config {
+pub(crate) fn shared_scratch_config() -> Config {
     Config {
         datasets: vec![d5("pmlb-first-principles-supernovae-zg")],
         evaluations: 1,

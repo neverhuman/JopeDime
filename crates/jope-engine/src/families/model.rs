@@ -13,7 +13,7 @@ pub struct FileBinding {
     pub sha256: String,
 }
 impl FileBinding {
-    pub(super) fn new(path: &Path) -> Result<Self> {
+    pub(crate) fn new(path: &Path) -> Result<Self> {
         Ok(Self {
             path: path.canonicalize()?,
             sha256: file_hash(path)?,

@@ -164,10 +164,10 @@ impl PrecomputedTrainFeatureCoverageV1 {
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct PrecomputedTrainFeatureBlocks {
-    pub(super) cell: Vec<Vec<f64>>,
-    pub(super) row128: Option<Vec<Vec<f64>>>,
-    pub(super) receipt: PrecomputedTrainFeatureReceiptV1,
+pub(crate) struct PrecomputedTrainFeatureBlocks {
+    pub(crate) cell: Vec<Vec<f64>>,
+    pub(crate) row128: Option<Vec<Vec<f64>>>,
+    pub(crate) receipt: PrecomputedTrainFeatureReceiptV1,
 }
 
 impl HistoricalTrain3InventoryV1 {

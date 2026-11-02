@@ -146,7 +146,7 @@ pub fn query_retrieve(
     ensure!(result.reused, "query retrieval cannot create an execution");
     validate_query_response(result, inputs, &identity, deadline_monotonic_ns)
 }
-pub(super) fn validate_query_response(
+pub(crate) fn validate_query_response(
     result: ServiceQueryResult,
     inputs: &query::QueryInputs,
     identity: &ServiceIdentity,
@@ -202,7 +202,7 @@ pub fn stats(socket: &Path, root: &Path, witness: &Path) -> Result<ServiceStats>
     let response: Value = receive_json(&mut stream, Duration::from_secs(5))?;
     Ok(serde_json::from_value(response["stats"].clone())?)
 }
-pub(super) fn validate_response(
+pub(crate) fn validate_response(
     result: ServiceResult,
     identity: &ServiceIdentity,
 ) -> Result<ServiceResult> {

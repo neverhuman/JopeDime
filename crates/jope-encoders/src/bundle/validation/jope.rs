@@ -221,7 +221,7 @@ fn verify_jope_vocab_and_grammar(
     Ok(())
 }
 
-pub(super) fn tensor<'a>(
+pub(crate) fn tensor<'a>(
     tensors: &'a [TensorSpec],
     name: &str,
     shape: &[usize],
@@ -229,7 +229,7 @@ pub(super) fn tensor<'a>(
     typed_tensor(tensors, name, "F32", shape)
 }
 
-pub(super) fn typed_tensor<'a>(
+pub(crate) fn typed_tensor<'a>(
     tensors: &'a [TensorSpec],
     name: &str,
     dtype: &str,

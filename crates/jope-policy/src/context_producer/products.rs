@@ -68,5 +68,5 @@ mod transforms;
 mod types;
 
 pub use transforms::FrozenTransforms;
-pub(super) use types::input_scope;
+pub(crate) use types::input_scope;
 pub use types::*;

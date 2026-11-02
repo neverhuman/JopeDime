@@ -19,7 +19,7 @@ impl Drop for OriginalChild {
         }
     }
 }
-pub(super) fn supervise(
+pub(crate) fn supervise(
     state: &Arc<State>,
     fit: &VerifiedFit,
     inputs: &ServiceInputs,
@@ -283,7 +283,7 @@ pub(super) fn supervise(
     result_from_original(state, &sha, false)
 }
 
-pub(super) fn result_from_original(
+pub(crate) fn result_from_original(
     state: &State,
     completion: &str,
     reused: bool,

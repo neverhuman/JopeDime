@@ -7,7 +7,6 @@
 //! refuses, listing every reason, rather than admitting a partially matching group.
 use super::{contract::BoundedRunContract, is_commit, is_digest, is_name};
 use anyhow::{ensure, Result};
-use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 mod model;
@@ -26,8 +25,6 @@ const MAX_OWNERSHIP_PER_HOST: usize = 4096;
 
 /// Loaded runtime closure. Optional members are `None` on hosts without that component and
 /// must then be `None` in the plan as well; absence is compared, never assumed equal.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
 impl HostCensus {
     /// Bounded parse of an untrusted census record plus structural validation.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {

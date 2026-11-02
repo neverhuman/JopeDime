@@ -54,7 +54,7 @@ pub struct AblationArgs {
 /// Where a run without `--scratch` makes its temporary scratch directory: `TMPDIR`, when it is
 /// set and not empty. There is no fallback to the system temporary directory; without `TMPDIR`
 /// the run is refused and asks for `--scratch`.
-pub(super) fn default_scratch_root(tmpdir: Option<std::ffi::OsString>) -> Result<PathBuf> {
+pub(crate) fn default_scratch_root(tmpdir: Option<std::ffi::OsString>) -> Result<PathBuf> {
     match tmpdir {
         Some(dir) if !dir.is_empty() => Ok(PathBuf::from(dir)),
         _ => bail!(
@@ -67,7 +67,7 @@ pub(super) fn default_scratch_root(tmpdir: Option<std::ffi::OsString>) -> Result
 /// The comparison `args` asks for. A refinement option given alone is refused here; every other
 /// refusal of the options is [`Config`]'s, which [`execute`] makes before it creates a scratch
 /// directory and [`run`] makes again.
-pub(super) fn config(args: &AblationArgs) -> Result<Config> {
+pub(crate) fn config(args: &AblationArgs) -> Result<Config> {
     let profile_a = Profile::parse(&args.profile_a)?;
     let profile_b = Profile::parse(&args.profile_b)?;
     let kernel2 = profile_a.is_kernel2() || profile_b.is_kernel2();
@@ -100,7 +100,7 @@ pub(super) fn config(args: &AblationArgs) -> Result<Config> {
 }
 
 /// One line of the command's paired summary.
-pub(super) fn paired_line(label: &str, c: &PairedCounts) -> String {
+pub(crate) fn paired_line(label: &str, c: &PairedCounts) -> String {
     format!(
         "  {label}: W/T/L {}/{}/{} over {} pairs, median M1 RMSE A {} B {}, sign test p {}, \
          same M1 program {}/{}",

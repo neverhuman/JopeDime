@@ -161,7 +161,7 @@ fn sample_device(
     })
 }
 
-pub(super) fn parse_visible_devices(value: &str) -> BTreeSet<String> {
+pub(crate) fn parse_visible_devices(value: &str) -> BTreeSet<String> {
     if value.split(',').any(|token| token.trim() == "-1") {
         return BTreeSet::new();
     }
@@ -173,7 +173,7 @@ pub(super) fn parse_visible_devices(value: &str) -> BTreeSet<String> {
         .collect()
 }
 
-pub(super) fn is_visible(selectors: Option<&BTreeSet<String>>, index: u32, uuid: &str) -> bool {
+pub(crate) fn is_visible(selectors: Option<&BTreeSet<String>>, index: u32, uuid: &str) -> bool {
     selectors
         .is_none_or(|selectors| selectors.contains(&index.to_string()) || selectors.contains(uuid))
 }

@@ -14,7 +14,7 @@ pub fn reconstruct_classification(train: &Table, m: &Value) -> Result<(Table, Va
     reconstruct_recorded(train, m, true, None)
 }
 
-pub(super) fn check_classification_recipe(m: &Value) -> Result<()> {
+pub(crate) fn check_classification_recipe(m: &Value) -> Result<()> {
     ensure!(
         m["target_scaling"]["mode"] == "classification",
         "classification needs a recorded label mapping"
@@ -28,7 +28,7 @@ pub(super) fn check_classification_recipe(m: &Value) -> Result<()> {
 
 /// [`reconstruct_classification`] with the explicit backing allowlist that
 /// may relocate a missing recorded source (route R1).
-pub(super) fn reconstruct_classification_with(
+pub(crate) fn reconstruct_classification_with(
     train: &Table,
     m: &Value,
     allowlist: &TransferManifest,
@@ -37,7 +37,7 @@ pub(super) fn reconstruct_classification_with(
     reconstruct_recorded(train, m, true, Some(allowlist))
 }
 
-pub(super) fn historical_class(target: &str, m: &Value) -> Result<f64> {
+pub(crate) fn historical_class(target: &str, m: &Value) -> Result<f64> {
     let source = &m["target_source_encoding"];
     let value = match source["kind"].as_str() {
         Some("numeric") => target.parse::<f64>().context("invalid original class")?,
@@ -84,7 +84,7 @@ pub(super) fn historical_class(target: &str, m: &Value) -> Result<f64> {
 /// The part of a recorded backing path after its `hyper/data` components.
 /// Recorded backing sources predate ADR-0003 and name a retired host tree
 /// (`…/hyper/data/<rel>`); `<rel>` is their relative identity.
-pub(super) fn hyper_data_relative(path: &Path) -> Option<std::path::PathBuf> {
+pub(crate) fn hyper_data_relative(path: &Path) -> Option<std::path::PathBuf> {
     let components: Vec<_> = path.components().collect();
     let index = components
         .windows(2)
@@ -98,7 +98,7 @@ pub(super) fn hyper_data_relative(path: &Path) -> Option<std::path::PathBuf> {
 /// backing allowlist names as a `source` with the same `hyper/data`-relative
 /// identity, and exactly one such location. The process environment (and so
 /// `jope_paths::quant_root`) is never consulted.
-pub(super) fn backing_source_location(
+pub(crate) fn backing_source_location(
     recorded: &Path,
     allowlist: Option<&TransferManifest>,
 ) -> Result<(std::path::PathBuf, Value)> {
@@ -130,7 +130,7 @@ pub(super) fn backing_source_location(
     ))
 }
 
-pub(super) fn reconstruct_recorded(
+pub(crate) fn reconstruct_recorded(
     train: &Table,
     m: &Value,
     classification: bool,
@@ -341,7 +341,7 @@ pub(super) fn reconstruct_recorded(
     ))
 }
 
-pub(super) fn documented_entity_columns(m: &Value) -> Vec<String> {
+pub(crate) fn documented_entity_columns(m: &Value) -> Vec<String> {
     match m["source_dataset_id"].as_str().unwrap_or("") {
         "MASS/epil" => vec!["subject".into()],
         "MASS/OME" => vec!["ID".into()],
@@ -351,7 +351,7 @@ pub(super) fn documented_entity_columns(m: &Value) -> Vec<String> {
         _ => vec![],
     }
 }
-pub(super) fn entity_documentation(m: &Value) -> Option<String> {
+pub(crate) fn entity_documentation(m: &Value) -> Option<String> {
     if documented_entity_columns(m).is_empty() {
         None
     } else {
@@ -361,7 +361,7 @@ pub(super) fn entity_documentation(m: &Value) -> Option<String> {
         ))
     }
 }
-pub(super) fn reviewed_entity_columns(
+pub(crate) fn reviewed_entity_columns(
     path: &Path,
     expected_sha256: &str,
     dataset: &Dataset,
@@ -424,7 +424,7 @@ pub(super) fn reviewed_entity_columns(
         serde_json::json!({"schema":"parallel.entity_grouping_binding.v1","manifest_sha256":expected_sha256,"dataset":dataset.id,"source_key":entry["source_key"],"entity_columns":columns,"documentation":documentation,"training_sha256":entry["reconstruction"]["training_sha256"],"row_mapping_sha256":entry["reconstruction"]["row_mapping_sha256"]}),
     ))
 }
-pub(super) fn entity_values(
+pub(crate) fn entity_values(
     rows: &[Vec<String>],
     features: &[String],
     columns: &[String],

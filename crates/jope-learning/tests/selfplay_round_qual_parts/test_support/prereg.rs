@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) struct PreregFixture {
+pub(crate) struct PreregFixture {
     pub(crate) identity: ExperimentIdentity,
     pub(crate) plan: RoundQualPlan,
     pub(crate) prereg_path: std::path::PathBuf,
@@ -15,7 +15,7 @@ pub(super) struct PreregFixture {
     pub(crate) pinned_plan: RoundQualPlan,
 }
 
-pub(super) fn prereg_fixture() -> PreregFixture {
+pub(crate) fn prereg_fixture() -> PreregFixture {
     let identity = fixture_identity();
     let mut plan = fixture_plan(&identity);
     plan.bootstrap_resamples = 2000;
@@ -180,7 +180,7 @@ pub(super) fn prereg_fixture() -> PreregFixture {
     }
 }
 
-pub(super) struct CliInputs {
+pub(crate) struct CliInputs {
     pub(crate) dir: tempfile::TempDir,
     pub(crate) plan_file: std::path::PathBuf,
     pub(crate) id_file: std::path::PathBuf,
@@ -191,7 +191,7 @@ pub(super) struct CliInputs {
     pub(crate) out_file: std::path::PathBuf,
 }
 
-pub(super) fn write_cli_inputs(f: &PreregFixture) -> CliInputs {
+pub(crate) fn write_cli_inputs(f: &PreregFixture) -> CliInputs {
     let dir = tempfile::tempdir().expect("tempdir");
     let plan_file = dir.path().join("plan.json");
     let id_file = dir.path().join("id.json");

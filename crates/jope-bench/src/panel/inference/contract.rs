@@ -33,14 +33,14 @@ impl Backend {
             NUMERICAL_POLICY.into()
         }
     }
-    pub(super) fn emitter(self) -> &'static str {
+    pub(crate) fn emitter(self) -> &'static str {
         if matches!(self, Self::Cpp17 | Self::Cpp20) {
             FITTED_PUBLIC_CPP_EMITTER
         } else {
             FITTED_PORTABLE_EMITTER
         }
     }
-    pub(super) fn runtime(self) -> &'static str {
+    pub(crate) fn runtime(self) -> &'static str {
         match self {
             Self::JavaScript => "ES2019 or later; Node.js 12 or later; ECMAScript Math",
             Self::Python => "Python 3.10 or later; host libm",
@@ -49,7 +49,7 @@ impl Backend {
             Self::Cpp20 => "C++20 plus Python 3.10 ctypes typed-table host; host libm",
         }
     }
-    pub(super) fn host_boundary(self) -> &'static str {
+    pub(crate) fn host_boundary(self) -> &'static str {
         if matches!(self, Self::Cpp17 | Self::Cpp20) {
             "python-ctypes-typed-table"
         } else {

@@ -5,7 +5,7 @@ use super::*;
 /// program, so a count of tied scores would also pass it; here a tie with different programs
 /// is not the same winner, and a win with the same program is.
 #[test]
-pub(super) fn review05_same_winner_means_program_identity_including_score_ties() {
+pub(crate) fn review05_same_winner_means_program_identity_including_score_ties() {
     let runs = [
         paired_run("A", "d0", 1, 1.0, "p"),
         paired_run("B", "d0", 1, 1.0, "q"),
@@ -33,7 +33,7 @@ pub(super) fn review05_same_winner_means_program_identity_including_score_ties()
 /// is half the smallest positive f64 and rounds to even. Also the review's independent
 /// integer oracle for every split up to 120 pairs.
 #[test]
-pub(super) fn ablation_sign_test_is_exact_down_to_the_smallest_positive_f64() {
+pub(crate) fn ablation_sign_test_is_exact_down_to_the_smallest_positive_f64() {
     for (n, expected) in [
         (1074, f64::from_bits(2)),
         (1075, f64::from_bits(1)),
@@ -68,7 +68,7 @@ pub(super) fn ablation_sign_test_is_exact_down_to_the_smallest_positive_f64() {
 /// directory. A replaced read-only `--out` gets the mode of any new file in that directory,
 /// not its old mode.
 #[test]
-pub(super) fn ablation_document_replacement_syncs_its_directory_and_keeps_the_bytes() {
+pub(crate) fn ablation_document_replacement_syncs_its_directory_and_keeps_the_bytes() {
     let root = scratch();
     let report = run(
         &legacy_scratch_config(6, 20_260_907),
@@ -107,7 +107,7 @@ pub(super) fn ablation_document_replacement_syncs_its_directory_and_keeps_the_by
 /// `n <= 1200`, computed apart from [`round_scaled`]. A normal result is the f64 conversion
 /// of `s` (to nearest, ties to even) scaled by two exact powers of two. A subnormal result is
 /// `s / 2^(n-1075)` rounded to an integer, ties to even, which is its bit pattern.
-pub(super) fn correctly_rounded(s: u128, n: u32) -> f64 {
+pub(crate) fn correctly_rounded(s: u128, n: u32) -> f64 {
     assert!(n <= 1200);
     let length = 128 - s.leading_zeros();
     if length >= n {
@@ -138,7 +138,7 @@ pub(super) fn correctly_rounded(s: u128, n: u32) -> f64 {
 /// earlier arithmetic changed in the normal range, and the review's cases that it sent to 0
 /// although the exact value rounds to the smallest positive f64.
 #[test]
-pub(super) fn review06_sign_test_is_the_correctly_rounded_exact_tail() {
+pub(crate) fn review06_sign_test_is_the_correctly_rounded_exact_tail() {
     let check = |n: u32, max_tail: u32| {
         let mut binomial = 1_u128;
         let mut sum = 1_u128;
@@ -187,7 +187,7 @@ pub(super) fn review06_sign_test_is_the_correctly_rounded_exact_tail() {
 /// `wins + losses` does not fit in a u64, it is NaN, which `paired_counts` refuses as not
 /// finite. Every case here costs at most a few binomial steps.
 #[test]
-pub(super) fn review07_sign_test_bounds_its_count_domain() {
+pub(crate) fn review07_sign_test_bounds_its_count_domain() {
     let max = MAX_SIGN_TEST_PAIRS;
     assert_eq!(max, 1 << 20);
     // At the bound: 2^(1-max) and a 3-against-(max-3) tail are far below 2^-1075, so 0, and

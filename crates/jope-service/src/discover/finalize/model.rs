@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn put_frozen_model(
+pub(crate) fn put_frozen_model(
     tx: &mut crate::store::Write<'_>,
     key: RecordKey,
     record: Record,
@@ -31,7 +31,7 @@ fn is_digest(value: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
-pub(super) fn load(part: &Partition, plan: &Plan, maximum: u64) -> Result<CsvTable> {
+pub(crate) fn load(part: &Partition, plan: &Plan, maximum: u64) -> Result<CsvTable> {
     let bytes = jope_runtime::model_object::read_bounded(&part.path, maximum)?;
     ensure!(digest(&bytes) == part.sha256, "partition digest mismatch");
     let matrix = Matrix::open(bytes)?;
@@ -95,7 +95,7 @@ struct NativeFit {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn refit(
+pub(crate) fn refit(
     executor: &impl Executor,
     plan: &Plan,
     champion: &Champion,
@@ -239,11 +239,11 @@ pub(super) fn refit(
     );
     Ok(object)
 }
-pub(super) fn predict(object: &ModelObject, table: &CsvTable) -> Result<Vec<f64>> {
+pub(crate) fn predict(object: &ModelObject, table: &CsvTable) -> Result<Vec<f64>> {
     jope_runtime::budget::Budget::new(None, 1)
         .install(|| object.math_pipeline()?.predict_table(table).map(|x| x.0))?
 }
-pub(super) fn score(
+pub(crate) fn score(
     object: &ModelObject,
     table: &CsvTable,
     target: &str,
@@ -268,7 +268,7 @@ pub(super) fn score(
         .collect::<Result<Vec<_>>>()?;
     Ok(objective.evaluate(&labels, &predictions)?.value)
 }
-pub(super) fn publish(store: &Store, object: &ModelObject) -> Result<Vec<BlobRef>> {
+pub(crate) fn publish(store: &Store, object: &ModelObject) -> Result<Vec<BlobRef>> {
     std::iter::once(object.manifest_bytes())
         .chain(object.parts().values().map(Vec::as_slice))
         .map(|bytes| store.publish_blob(bytes).map_err(anyhow::Error::from))

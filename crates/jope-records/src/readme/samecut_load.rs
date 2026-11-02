@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) struct SameCut {
+pub(crate) struct SameCut {
     deep: Value,
     deep_rows: Vec<Dict>,
     reports: Vec<Value>,
@@ -10,11 +10,11 @@ pub(super) struct SameCut {
     specs: Vec<Value>,
 }
 
-pub(super) fn kind_of(m: &Value) -> Result<String> {
+pub(crate) fn kind_of(m: &Value) -> Result<String> {
     Ok(s(at(at(m, "method")?, "kind")?))
 }
 
-pub(super) fn engine_specs(r: &Value) -> Result<Vec<Value>> {
+pub(crate) fn engine_specs(r: &Value) -> Result<Vec<Value>> {
     let mut specs = vec![];
     for m in &items(at(r, "methods")?, &format!("{SAMECUT} report methods"))? {
         if kind_of(m)? == "adapter" {
@@ -31,7 +31,7 @@ pub(super) fn engine_specs(r: &Value) -> Result<Vec<Value>> {
 }
 
 /// The committed same-cut evidence, cross-checked. Fails closed on any disagreement.
-pub(super) fn load_samecut(p: &Paths) -> Result<SameCut> {
+pub(crate) fn load_samecut(p: &Paths) -> Result<SameCut> {
     let deep_csv = samecut_path(&format!("leaderboard-{SAMECUT_TRACK_ID}-deep.csv"));
     let deep_snapshot = samecut_path(&format!("elo-{SAMECUT_TRACK_ID}-deep.json"));
     let screen_csv = samecut_path(&format!("leaderboard-{SAMECUT_TRACK_ID}-screen.csv"));

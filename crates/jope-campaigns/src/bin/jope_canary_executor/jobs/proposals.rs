@@ -1,7 +1,7 @@
 use super::job_io::*;
 use super::*;
 
-pub(super) fn ensure_proposals(
+pub(crate) fn ensure_proposals(
     args: &Args,
     pending: &PendingIntent,
     work: &Path,

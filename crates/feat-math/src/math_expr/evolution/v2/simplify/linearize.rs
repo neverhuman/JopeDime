@@ -2,14 +2,14 @@ use super::*;
 
 /// Why a public linearization entry refuses a tree outside the structure limits, before any copy
 /// of it.
-pub(super) const STRUCTURE_REFUSAL: &str =
+pub(crate) const STRUCTURE_REFUSAL: &str =
     "the linearization refuses a tree outside the structure limits before it is copied";
 
 /// The bounded minimax linearization of `expression`'s one-variable subtrees; see
 /// [`MathExpr::linearize_v2`]. `expression` may be any tree, one decoded from JSON included, and
 /// the copy and the admission's normalization both recurse, so its borrowed structure check
 /// (`from_ast`'s limits, walked with an explicit stack) comes first.
-pub(super) fn linearize(
+pub(crate) fn linearize(
     expression: &MathExpr,
     profile: &SearchProfile,
     scope: ExpressionScope,

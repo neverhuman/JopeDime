@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
+pub(crate) fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStream> {
     let bytes = path.as_os_str().as_bytes();
     let mut address = libc::sockaddr_un {
         sun_family: 0,
@@ -84,7 +84,7 @@ pub(super) fn connect_bounded(path: &Path, timeout: Duration) -> Result<UnixStre
     }
 }
 
-pub(super) fn connect_approved(
+pub(crate) fn connect_approved(
     socket: &Path,
     root: &Path,
     witness: &Path,
@@ -94,7 +94,7 @@ pub(super) fn connect_approved(
         .context("authority connection deadline overflow")?;
     connect_approved_until(socket, root, witness, deadline)
 }
-pub(super) fn connect_approved_until(
+pub(crate) fn connect_approved_until(
     socket: &Path,
     root: &Path,
     witness: &Path,
@@ -131,11 +131,11 @@ pub(super) fn connect_approved_until(
 }
 // Kernel-held executing files cannot be rewritten in place. Share a digest only
 // for our own executing inode, which stays held for this cache's entire lifetime.
-pub(super) fn verified_executable(process: &ProcessIdentity) -> Result<String> {
+pub(crate) fn verified_executable(process: &ProcessIdentity) -> Result<String> {
     static CACHE: std::sync::OnceLock<Mutex<BTreeMap<String, String>>> = std::sync::OnceLock::new();
     verified_executable_cached(process, CACHE.get_or_init(|| Mutex::new(BTreeMap::new())))
 }
-pub(super) fn verified_executable_cached(
+pub(crate) fn verified_executable_cached(
     process: &ProcessIdentity,
     cache: &Mutex<BTreeMap<String, String>>,
 ) -> Result<String> {
@@ -166,7 +166,7 @@ pub(super) fn verified_executable_cached(
     }
     Ok(digest)
 }
-pub(super) fn executable_cache_key(
+pub(crate) fn executable_cache_key(
     process: &ProcessIdentity,
     meta: &fs::Metadata,
 ) -> Result<String> {
@@ -192,12 +192,12 @@ pub(super) fn executable_cache_key(
         meta.len()
     ))
 }
-pub(super) fn identity_path(socket: &Path) -> PathBuf {
+pub(crate) fn identity_path(socket: &Path) -> PathBuf {
     let mut name = socket.as_os_str().to_os_string();
     name.push(".identity.json");
     PathBuf::from(name)
 }
-pub(super) fn check_socket(identity: &ServiceIdentity, path: &Path) -> Result<()> {
+pub(crate) fn check_socket(identity: &ServiceIdentity, path: &Path) -> Result<()> {
     let m = fs::symlink_metadata(path)?;
     ensure!(
         (m.dev(), m.ino()) == (identity.socket_device, identity.socket_inode)
@@ -206,7 +206,7 @@ pub(super) fn check_socket(identity: &ServiceIdentity, path: &Path) -> Result<()
     );
     Ok(())
 }
-pub(super) fn read_content(path: &Path, expected: &str) -> Result<Vec<u8>> {
+pub(crate) fn read_content(path: &Path, expected: &str) -> Result<Vec<u8>> {
     ensure!(
         expected.len() == 64
             && expected
@@ -223,7 +223,7 @@ pub(super) fn read_content(path: &Path, expected: &str) -> Result<Vec<u8>> {
     ensure!(sha(&bytes) == expected, "immutable content changed");
     Ok(bytes)
 }
-pub(super) fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut f = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -235,7 +235,7 @@ pub(super) fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
     File::open(path.parent().context("artifact parent absent")?)?.sync_all()?;
     Ok(())
 }
-pub(super) fn sealed(bytes: &[u8]) -> Result<File> {
+pub(crate) fn sealed(bytes: &[u8]) -> Result<File> {
     let name = std::ffi::CString::new("jope-native-fit")?;
     // SAFETY: name is a live NUL-terminated string; successful memfd_create
     // returns a fresh descriptor, checked below before taking ownership.
@@ -253,7 +253,7 @@ pub(super) fn sealed(bytes: &[u8]) -> Result<File> {
     );
     Ok(f)
 }
-pub(super) fn read_sealed(file: &File, limit: u64) -> Result<Vec<u8>> {
+pub(crate) fn read_sealed(file: &File, limit: u64) -> Result<Vec<u8>> {
     // SAFETY: F_GET_SEALS takes a borrowed live descriptor and no pointers.
     let seals = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GET_SEALS) };
     ensure!(
@@ -267,7 +267,7 @@ pub(super) fn read_sealed(file: &File, limit: u64) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
-pub(super) fn wait_fd(fd: i32, events: i16, deadline: Instant) -> Result<()> {
+pub(crate) fn wait_fd(fd: i32, events: i16, deadline: Instant) -> Result<()> {
     loop {
         ensure!(Instant::now() < deadline, "absolute IPC deadline exceeded");
         let mut p = libc::pollfd {
@@ -292,7 +292,7 @@ pub(super) fn wait_fd(fd: i32, events: i16, deadline: Instant) -> Result<()> {
         }
     }
 }
-pub(super) fn read_exact_until(
+pub(crate) fn read_exact_until(
     stream: &mut UnixStream,
     mut bytes: &mut [u8],
     deadline: Instant,
@@ -315,7 +315,7 @@ pub(super) fn read_exact_until(
     }
     Ok(())
 }
-pub(super) fn send_json(
+pub(crate) fn send_json(
     stream: &mut UnixStream,
     value: &impl Serialize,
     timeout: Duration,
@@ -342,7 +342,7 @@ pub(super) fn send_json(
     }
     Ok(())
 }
-pub(super) fn receive_json<T: serde::de::DeserializeOwned>(
+pub(crate) fn receive_json<T: serde::de::DeserializeOwned>(
     stream: &mut UnixStream,
     timeout: Duration,
 ) -> Result<T> {
@@ -358,7 +358,7 @@ pub(super) fn receive_json<T: serde::de::DeserializeOwned>(
     read_exact_until(stream, &mut bytes, deadline)?;
     Ok(serde_json::from_slice(&bytes)?)
 }
-pub(super) fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result<()> {
+pub(crate) fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result<()> {
     let deadline = Instant::now() + timeout;
     loop {
         wait_fd(stream.as_raw_fd(), libc::POLLOUT, deadline)?;
@@ -409,7 +409,7 @@ pub(super) fn send_fd(stream: &UnixStream, fd: i32, timeout: Duration) -> Result
         }
     }
 }
-pub(super) fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
+pub(crate) fn receive_fd(stream: &UnixStream, timeout: Duration) -> Result<OwnedFd> {
     let deadline = Instant::now() + timeout;
     loop {
         wait_fd(stream.as_raw_fd(), libc::POLLIN, deadline)?;

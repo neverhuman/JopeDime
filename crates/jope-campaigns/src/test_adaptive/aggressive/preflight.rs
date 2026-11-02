@@ -1,11 +1,11 @@
 use super::*;
 
-pub(super) fn is_golden46_run(run_id: &str) -> bool {
+pub(crate) fn is_golden46_run(run_id: &str) -> bool {
     run_id == GOLDEN46_RUN_PREFIX
         || run_id == format!("{GOLDEN46_RUN_PREFIX}{GOLDEN46_TRANSFER_SUFFIX}")
 }
 
-pub(super) fn root(run_id: &str) -> PathBuf {
+pub(crate) fn root(run_id: &str) -> PathBuf {
     if run_id == format!("{GOLDEN46_RUN_PREFIX}{GOLDEN46_TRANSFER_SUFFIX}") {
         return campaign_state_root()
             .join("runs")
@@ -16,25 +16,25 @@ pub(super) fn root(run_id: &str) -> PathBuf {
     campaign_state_root().join("runs").join(run_id)
 }
 
-pub(super) fn dataset_root(run_id: &str, dataset_hash: &str) -> PathBuf {
+pub(crate) fn dataset_root(run_id: &str, dataset_hash: &str) -> PathBuf {
     root(run_id).join("datasets").join(dataset_hash)
 }
 
-pub(super) fn checkpoint_path(run_id: &str, dataset_hash: &str, generation: usize) -> PathBuf {
+pub(crate) fn checkpoint_path(run_id: &str, dataset_hash: &str, generation: usize) -> PathBuf {
     dataset_root(run_id, dataset_hash)
         .join("checkpoints")
         .join(format!("generation-{generation:03}.v1.json"))
 }
 
-pub(super) fn confirmation_path(run_id: &str, dataset_hash: &str) -> PathBuf {
+pub(crate) fn confirmation_path(run_id: &str, dataset_hash: &str) -> PathBuf {
     dataset_root(run_id, dataset_hash).join("confirmation.v1.json")
 }
 
-pub(super) fn result_path(run_id: &str, dataset_hash: &str) -> PathBuf {
+pub(crate) fn result_path(run_id: &str, dataset_hash: &str) -> PathBuf {
     dataset_root(run_id, dataset_hash).join("final-result.v1.json")
 }
 
-pub(super) fn atomic_immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn atomic_immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.exists() {
         if fs::read(path)? == bytes {
             return Ok(());
@@ -62,7 +62,7 @@ pub(super) fn atomic_immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn ssh(node: &str, args: &[&str], label: &str) -> Result<Vec<u8>> {
+pub(crate) fn ssh(node: &str, args: &[&str], label: &str) -> Result<Vec<u8>> {
     let output = Command::new("ssh")
         .arg(node)
         .arg("--")
@@ -78,7 +78,7 @@ pub(super) fn ssh(node: &str, args: &[&str], label: &str) -> Result<Vec<u8>> {
     Ok(output.stdout)
 }
 
-pub(super) fn parse_kib_field(text: &str, name: &str) -> Result<u64> {
+pub(crate) fn parse_kib_field(text: &str, name: &str) -> Result<u64> {
     let value = text
         .lines()
         .find_map(|line| {
@@ -93,7 +93,7 @@ pub(super) fn parse_kib_field(text: &str, name: &str) -> Result<u64> {
         .context("memory byte count overflow")
 }
 
-pub(super) fn inspect_node(node: &str) -> Result<NodeResources> {
+pub(crate) fn inspect_node(node: &str) -> Result<NodeResources> {
     let local_hostname = String::from_utf8(
         Command::new("hostname")
             .arg("-s")
@@ -148,14 +148,14 @@ pub(super) fn inspect_node(node: &str) -> Result<NodeResources> {
     })
 }
 
-pub(super) fn scq_job_is_active(job: &Value) -> bool {
+pub(crate) fn scq_job_is_active(job: &Value) -> bool {
     !matches!(
         job.get("state").and_then(Value::as_str),
         Some("completed" | "failed" | "cancelled")
     )
 }
 
-pub(super) fn is_competing_process(
+pub(crate) fn is_competing_process(
     line: &str,
     node: &str,
     local_hostname: &str,
@@ -185,7 +185,7 @@ pub(super) fn is_competing_process(
         && !is_this_controller
 }
 
-pub(super) fn preflight() -> Result<PreflightReceipt> {
+pub(crate) fn preflight() -> Result<PreflightReceipt> {
     let scq = paths::scq_binary();
     let output = Command::new(scq)
         .args(["--json", "ls"])

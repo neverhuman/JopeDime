@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-pub(super) fn ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference() {
+pub(crate) fn ablation_a_equals_a_replays_byte_for_byte_and_reports_no_difference() {
     let config = small_config();
     let (first_dir, second_dir) = (scratch(), scratch());
     let first = run(&config, first_dir.path()).unwrap();
@@ -68,7 +68,7 @@ pub(super) fn ablation_a_equals_a_replays_byte_for_byte_and_reports_no_differenc
 }
 
 #[test]
-pub(super) fn ablation_metric_definitions() {
+pub(crate) fn ablation_metric_definitions() {
     // M3: 95% of the improvement from the first measured candidate to the final best.
     let curve = [
         None,
@@ -105,7 +105,7 @@ pub(super) fn ablation_metric_definitions() {
 }
 
 #[test]
-pub(super) fn ablation_gates_report_a_difference() {
+pub(crate) fn ablation_gates_report_a_difference() {
     let a = slot("A", [1.0, 2.0], Some(0.1), 10.0);
     // B is worse on d1 by more than 0.25 sigma: G-A fails.
     let worse = slot("B", [1.0, 2.1], Some(0.1), 10.0);
@@ -161,7 +161,7 @@ pub(super) fn ablation_gates_report_a_difference() {
 }
 
 #[test]
-pub(super) fn ablation_refuses_a_phase_the_seconds_bound_ended() {
+pub(crate) fn ablation_refuses_a_phase_the_seconds_bound_ended() {
     let phase = |stopped_by: &str| jope_pipeline::receipt::Phase {
         evaluation_limit: 20,
         seconds_limit: 600.0,
@@ -206,7 +206,7 @@ pub(super) fn ablation_refuses_a_phase_the_seconds_bound_ended() {
 }
 
 #[test]
-pub(super) fn ablation_profiles_and_inputs_are_checked() {
+pub(crate) fn ablation_profiles_and_inputs_are_checked() {
     assert_eq!(Profile::parse("legacy").unwrap(), Profile::Legacy);
     let error = Profile::parse("other").unwrap_err().to_string();
     assert!(error.contains("known: legacy"), "{error}");
@@ -253,7 +253,7 @@ pub(super) fn ablation_profiles_and_inputs_are_checked() {
 /// with `JOPE_ABLATION_HEAVY=1` and `--run-ignored only`.
 #[test]
 #[ignore = "heavy: the ten D5 regression datasets x five seeds; set JOPE_ABLATION_HEAVY=1"]
-pub(super) fn ablation_heavy_a_equals_a_on_every_d5_regression_dataset() {
+pub(crate) fn ablation_heavy_a_equals_a_on_every_d5_regression_dataset() {
     assert!(
         std::env::var_os("JOPE_ABLATION_HEAVY").is_some_and(|v| v == "1"),
         "the heavy ablation runs only with JOPE_ABLATION_HEAVY=1"

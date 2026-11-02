@@ -31,7 +31,7 @@ pub struct Manifest {
     #[serde(default = "default_seed")]
     pub seed: u64,
 }
-pub(super) fn default_seed() -> u64 {
+pub(crate) fn default_seed() -> u64 {
     20260908
 }
 
@@ -62,14 +62,14 @@ pub struct Candidate {
     pub origins: Vec<Origin>,
 }
 
-pub(super) fn path(root: &Path, p: &Path) -> PathBuf {
+pub(crate) fn path(root: &Path, p: &Path) -> PathBuf {
     if p.is_absolute() {
         p.to_path_buf()
     } else {
         root.join(p)
     }
 }
-pub(super) fn immutable_json(p: &Path, value: &impl Serialize) -> Result<()> {
+pub(crate) fn immutable_json(p: &Path, value: &impl Serialize) -> Result<()> {
     let bytes = serde_json::to_vec_pretty(value)?;
     if p.exists() {
         ensure!(
@@ -120,7 +120,7 @@ pub fn round_robin_bank(mut entries: Vec<BankEntry>, cap: usize) -> Vec<BankEntr
     bank
 }
 
-pub(super) fn bank(index: &Index, corpus: &Path, vocab: &Vocab) -> Result<(Vec<BankEntry>, Value)> {
+pub(crate) fn bank(index: &Index, corpus: &Path, vocab: &Vocab) -> Result<(Vec<BankEntry>, Value)> {
     let mut wanted = BTreeMap::<usize, &ContextRow>::new();
     for group in &index.groups {
         if group.partition != "meta_train" {
@@ -186,7 +186,7 @@ pub(super) fn bank(index: &Index, corpus: &Path, vocab: &Vocab) -> Result<(Vec<B
     ))
 }
 
-pub(super) fn insert(
+pub(crate) fn insert(
     pool: &mut Vec<Candidate>,
     lookup: &mut BTreeMap<String, usize>,
     program: String,

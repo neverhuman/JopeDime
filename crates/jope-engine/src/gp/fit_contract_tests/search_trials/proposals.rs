@@ -1,13 +1,13 @@
 use super::*;
 
 /// The featmath grammar vocabulary shipped with this crate.
-pub(super) fn vocabulary_path() -> PathBuf {
+pub(crate) fn vocabulary_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json")
 }
 
 /// Independent enumeration of the generic bootstrap: `(original generator
 /// draw, its single adaptation)` per slot, starting with the fixed reference.
-pub(super) fn generic_bootstrap(
+pub(crate) fn generic_bootstrap(
     vocab: &crate::grammar::Vocab,
     slots: usize,
 ) -> Vec<(String, String, u64)> {
@@ -31,7 +31,7 @@ pub(super) fn generic_bootstrap(
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation() {
+pub(crate) fn generic_bootstrap_candidates_retain_their_original_proposal_and_one_adaptation() {
     let vocabulary = vocabulary_path();
     let vocab: crate::grammar::Vocab = read_json(&vocabulary).unwrap();
     let expected = generic_bootstrap(&vocab, 12);
@@ -141,7 +141,7 @@ pub(super) fn generic_bootstrap_candidates_retain_their_original_proposal_and_on
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn variation_children_record_parents_and_cannot_alter_parent_fitted_state() {
+pub(crate) fn variation_children_record_parents_and_cannot_alter_parent_fitted_state() {
     let vocabulary = vocabulary_path();
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();

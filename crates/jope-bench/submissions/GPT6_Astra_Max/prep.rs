@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn choose_features(
+pub(crate) fn choose_features(
     table: &[f64],
     cols: usize,
     rows: &[usize],
@@ -101,7 +101,7 @@ pub(super) fn choose_features(
     selected
 }
 
-pub(super) fn prepare(
+pub(crate) fn prepare(
     table: &[f64],
     cols: usize,
     rows: &[usize],
@@ -214,7 +214,7 @@ pub(super) fn prepare(
     )
 }
 
-pub(super) fn encode(table: &[f64], cols: usize, rows: &[usize], prep: &Preparation) -> Matrix {
+pub(crate) fn encode(table: &[f64], cols: usize, rows: &[usize], prep: &Preparation) -> Matrix {
     let n = rows.len();
     let mut matrix = Matrix {
         n,
@@ -234,7 +234,7 @@ pub(super) fn encode(table: &[f64], cols: usize, rows: &[usize], prep: &Preparat
     matrix
 }
 
-pub(super) fn ridge(matrix: &Matrix, y: &[f64], lambda: f64) -> Vec<f64> {
+pub(crate) fn ridge(matrix: &Matrix, y: &[f64], lambda: f64) -> Vec<f64> {
     let n = matrix.n;
     let d = matrix.linear.len() / n;
     let mut coefficients = vec![0.0; d];
@@ -281,7 +281,7 @@ pub(super) fn ridge(matrix: &Matrix, y: &[f64], lambda: f64) -> Vec<f64> {
     coefficients
 }
 
-pub(super) fn linear_predictions(matrix: &Matrix, coefficients: &[f64]) -> Vec<f64> {
+pub(crate) fn linear_predictions(matrix: &Matrix, coefficients: &[f64]) -> Vec<f64> {
     let mut result = vec![0.0; matrix.n];
     for (j, &coefficient) in coefficients.iter().enumerate() {
         for i in 0..matrix.n {

@@ -5,7 +5,7 @@ use super::*;
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline() {
+pub(crate) fn a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadline() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let census = root.join("census");
@@ -63,7 +63,7 @@ pub(super) fn a_blocked_fitter_and_its_helpers_are_killed_at_the_original_deadli
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch() {
+pub(crate) fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_dispatch() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let census = root.join("census");
@@ -105,7 +105,7 @@ pub(super) fn helpers_left_by_a_finished_evaluator_are_drained_before_the_next_d
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn helpers_do_not_survive_a_killed_search_controller() {
+pub(crate) fn helpers_do_not_survive_a_killed_search_controller() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let census = root.join("census");
@@ -147,7 +147,7 @@ pub(super) fn helpers_do_not_survive_a_killed_search_controller() {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_second_searcher_cannot_dispatch_into_a_live_search() {
+pub(crate) fn a_second_searcher_cannot_dispatch_into_a_live_search() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
@@ -205,7 +205,7 @@ pub(super) fn a_second_searcher_cannot_dispatch_into_a_live_search() {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn an_evaluator_allocation_failure_is_a_contained_failed_row() {
+pub(crate) fn an_evaluator_allocation_failure_is_a_contained_failed_row() {
     let (temp, prepared) = view_fixture();
     let root = temp.path();
     let mut authority = Fixture::activated(root, vec![cut_training_hash(&prepared)]);
@@ -240,7 +240,7 @@ pub(super) fn an_evaluator_allocation_failure_is_a_contained_failed_row() {
 
 /// A completed three-candidate search whose seed population leads with two
 /// fittable programs and one deterministic fit failure.
-pub(super) fn handoff_search(
+pub(crate) fn handoff_search(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
@@ -264,7 +264,7 @@ pub(super) fn handoff_search(
 }
 
 /// The cycle pipeline's handoff, run as a configured client.
-pub(super) fn export_selected(
+pub(crate) fn export_selected(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
@@ -294,7 +294,7 @@ pub(super) fn export_selected(
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn the_predictor_handoff_exports_only_the_sealed_replayed_selection() {
+pub(crate) fn the_predictor_handoff_exports_only_the_sealed_replayed_selection() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);
@@ -374,7 +374,7 @@ pub(super) fn the_predictor_handoff_exports_only_the_sealed_replayed_selection()
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails() {
+pub(crate) fn a_sealed_selection_refuses_swaps_and_keeps_the_selection_when_export_fails() {
     let (temp, prepared) = view_fixture();
     let root = temp.path().canonicalize().unwrap();
     let mut authority = Fixture::activated(&root, vec![cut_training_hash(&prepared)]);

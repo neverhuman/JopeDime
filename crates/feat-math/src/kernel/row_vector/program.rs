@@ -12,9 +12,9 @@ pub enum RowStage {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Program {
-    pub(super) input_width: usize,
-    pub(super) stages: Vec<RowStage>,
-    pub(super) lambda_bits: u64,
+    pub(crate) input_width: usize,
+    pub(crate) stages: Vec<RowStage>,
+    pub(crate) lambda_bits: u64,
 }
 
 impl<'de> Deserialize<'de> for Program {
@@ -132,7 +132,7 @@ impl Program {
         }
     }
 
-    pub(super) fn has_goertzel(&self) -> bool {
+    pub(crate) fn has_goertzel(&self) -> bool {
         self.stages
             .iter()
             .any(|stage| matches!(stage, RowStage::Goertzel(_)))

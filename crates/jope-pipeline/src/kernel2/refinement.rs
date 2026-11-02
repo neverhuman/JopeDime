@@ -213,7 +213,7 @@ impl Kernel2Evaluator {
 
 /// The training rows stage `index` reads: the earlier stages fitted and applied on the training
 /// rows alone, refused when any of them faults. The linearization pass samples on these too.
-pub(super) fn training_prefix(
+pub(crate) fn training_prefix(
     pipe: &DslExpr,
     index: usize,
     rows: &Rows,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn activations(root: &Path) -> Result<Vec<Value>> {
+pub(crate) fn activations(root: &Path) -> Result<Vec<Value>> {
     let path = root.join("catalog/v2/activations.jsonl");
     let mut rows = Vec::new();
     if let Ok(text) = std::fs::read_to_string(path) {
@@ -13,7 +13,7 @@ pub(super) fn activations(root: &Path) -> Result<Vec<Value>> {
     Ok(rows)
 }
 
-pub(super) fn next_tranche_id(existing: &[Value], prefix: char) -> String {
+pub(crate) fn next_tranche_id(existing: &[Value], prefix: char) -> String {
     let max = existing
         .iter()
         .filter_map(|row| row.get("tranche_id").and_then(Value::as_str))
@@ -29,7 +29,7 @@ pub(super) fn next_tranche_id(existing: &[Value], prefix: char) -> String {
 /// lanes, so a fresh regression tranche (coverage ~0) shut the binary lane down
 /// for hours even when the last binary tranche was fully absorbed — the model
 /// has two task branches and both must keep widening.
-pub(super) fn latest_tranche_for(existing: &[Value], prefix: char) -> Option<(String, PathBuf)> {
+pub(crate) fn latest_tranche_for(existing: &[Value], prefix: char) -> Option<(String, PathBuf)> {
     let want = format!("expanded-{prefix}");
     existing
         .iter()
@@ -54,7 +54,7 @@ pub(super) fn latest_tranche_for(existing: &[Value], prefix: char) -> Option<(St
 // Dataset-state index
 // ---------------------------------------------------------------------------
 
-pub(super) fn open_state_db(root: &Path) -> Result<Connection> {
+pub(crate) fn open_state_db(root: &Path) -> Result<Connection> {
     let conn = Connection::open(root.join("ops/dataset-state.sqlite"))?;
     conn.busy_timeout(Duration::from_secs(60))?;
     conn.execute_batch(
@@ -85,7 +85,7 @@ pub(super) fn open_state_db(root: &Path) -> Result<Connection> {
     Ok(conn)
 }
 
-pub(super) fn refresh_filesystem_state(conn: &Connection, root: &Path) -> Result<(u64, u64)> {
+pub(crate) fn refresh_filesystem_state(conn: &Connection, root: &Path) -> Result<(u64, u64)> {
     let ptr = read_json(&root.join("catalog/current.json"))?;
     let cat = read_json(Path::new(
         ptr.get("catalog").and_then(Value::as_str).unwrap_or(""),
@@ -192,7 +192,7 @@ pub(super) fn refresh_filesystem_state(conn: &Connection, root: &Path) -> Result
     Ok((scanned, now))
 }
 
-pub(super) fn refresh_observation_state(conn: &Connection, root: &Path) -> Result<u64> {
+pub(crate) fn refresh_observation_state(conn: &Connection, root: &Path) -> Result<u64> {
     let last: i64 = conn
         .query_row(
             "SELECT value FROM meta WHERE key='obs_watermark_ms'",
@@ -258,7 +258,7 @@ pub(super) fn refresh_observation_state(conn: &Connection, root: &Path) -> Resul
     Ok(count)
 }
 
-pub(super) fn stage_summary(conn: &Connection) -> Result<Value> {
+pub(crate) fn stage_summary(conn: &Connection) -> Result<Value> {
     let mut summary = BTreeMap::new();
     for task in TASKS {
         let row = conn.query_row(
@@ -290,7 +290,7 @@ pub(super) fn stage_summary(conn: &Connection) -> Result<Value> {
     Ok(json!(summary))
 }
 
-pub(super) fn emit_encoding_exclusion_receipts(conn: &Connection, root: &Path) -> Result<usize> {
+pub(crate) fn emit_encoding_exclusion_receipts(conn: &Connection, root: &Path) -> Result<usize> {
     let directory = root.join("ops/encoding-exclusions-v1");
     std::fs::create_dir_all(&directory)?;
     let mut statement = conn.prepare(
@@ -351,7 +351,7 @@ pub(super) fn emit_encoding_exclusion_receipts(conn: &Connection, root: &Path) -
     Ok(created)
 }
 
-pub(super) fn tranche_coverage(conn: &Connection, tranche_catalog: &Path) -> Result<f64> {
+pub(crate) fn tranche_coverage(conn: &Connection, tranche_catalog: &Path) -> Result<f64> {
     let tranche = read_json(tranche_catalog)?;
     let binding = Vec::new();
     let entries = tranche

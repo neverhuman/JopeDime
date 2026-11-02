@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run_build(
+pub(crate) fn run_build(
     args: &Args,
     request: &Request,
     request_sha256: &str,
@@ -122,7 +122,7 @@ pub(super) fn run_build(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn build_entry(
+pub(crate) fn build_entry(
     entry: &Path,
     request: &Request,
     dataset: &Dataset,
@@ -249,7 +249,7 @@ pub(super) fn build_entry(
     validate_entry(entry, request, dataset, candidate, key)
 }
 
-pub(super) fn validate_entry(
+pub(crate) fn validate_entry(
     entry: &Path,
     request: &Request,
     dataset: &Dataset,

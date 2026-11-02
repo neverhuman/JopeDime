@@ -127,10 +127,10 @@ fn namespace_pids(pid: u32) -> io::Result<BTreeSet<u32>> {
 /// the configured daemon exposes the Volta MPS client/server identity protocol.
 #[derive(Clone, Debug)]
 pub struct MpsController {
-    pub(super) control_executable: PathBuf,
-    pub(super) pipe_directory: PathBuf,
-    pub(super) command_timeout: Duration,
-    pub(super) max_control_output_bytes: usize,
+    pub(crate) control_executable: PathBuf,
+    pub(crate) pipe_directory: PathBuf,
+    pub(crate) command_timeout: Duration,
+    pub(crate) max_control_output_bytes: usize,
 }
 
 impl MpsController {
@@ -339,7 +339,7 @@ async fn read_bounded(reader: impl AsyncRead + Unpin, max_bytes: usize) -> io::R
     Ok(output)
 }
 
-pub(super) fn compute_percent(compute_share_per_mille: u16) -> Result<u16, GpuError> {
+pub(crate) fn compute_percent(compute_share_per_mille: u16) -> Result<u16, GpuError> {
     if !(10..=1_000).contains(&compute_share_per_mille) {
         return Err(GpuError::ComputeShare(compute_share_per_mille));
     }
@@ -348,7 +348,7 @@ pub(super) fn compute_percent(compute_share_per_mille: u16) -> Result<u16, GpuEr
     Ok(compute_share_per_mille / 10)
 }
 
-pub(super) fn format_vram_limits(limits: &BTreeMap<String, u64>) -> Result<String, GpuError> {
+pub(crate) fn format_vram_limits(limits: &BTreeMap<String, u64>) -> Result<String, GpuError> {
     if limits.is_empty() {
         return Err(GpuError::MpsVramLimitsEmpty);
     }
@@ -380,7 +380,7 @@ fn valid_device_selector(device: &str) -> bool {
     ordinal || uuid
 }
 
-pub(super) fn parse_ps(output: &str) -> Result<Vec<MpsClient>, GpuError> {
+pub(crate) fn parse_ps(output: &str) -> Result<Vec<MpsClient>, GpuError> {
     let mut lines = output.lines().filter(|line| !line.trim().is_empty());
     let header: Vec<_> = lines
         .next()
@@ -409,7 +409,7 @@ pub(super) fn parse_ps(output: &str) -> Result<Vec<MpsClient>, GpuError> {
         .collect()
 }
 
-pub(super) fn parse_termination_response(output: &str) -> Result<(), GpuError> {
+pub(crate) fn parse_termination_response(output: &str) -> Result<(), GpuError> {
     if output.trim() == "0" {
         Ok(())
     } else {

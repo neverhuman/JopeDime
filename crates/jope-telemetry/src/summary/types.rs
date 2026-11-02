@@ -25,7 +25,7 @@ pub struct Dist {
 }
 
 impl Dist {
-    pub(super) fn of(values: &[f64]) -> Self {
+    pub(crate) fn of(values: &[f64]) -> Self {
         let mut finite: Vec<f64> = values.iter().copied().filter(|v| v.is_finite()).collect();
         let first = finite.first().copied();
         let last = finite.last().copied();
@@ -185,6 +185,6 @@ pub fn is_flywheel_contender(name: &str) -> bool {
     name.starts_with("ROUND_") || name.starts_with("flywheel")
 }
 
-pub(super) fn opt(v: Option<f64>) -> String {
+pub(crate) fn opt(v: Option<f64>) -> String {
     v.map_or_else(|| "-".to_owned(), |x| format!("{x:.4}"))
 }

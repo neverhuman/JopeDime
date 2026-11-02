@@ -2,13 +2,13 @@ use super::*;
 
 /// A malformed map or metadata value the Python crashed on (a traceback, no report, exit status
 /// 1): the field, then what could not be done with it and its type (see [`py::exception`]).
-pub(super) fn raised(context: impl std::fmt::Display, exception: String) -> Error {
+pub(crate) fn raised(context: impl std::fmt::Display, exception: String) -> Error {
     Error::Shape(format!("{context}: {exception}"))
 }
 
 /// A discovery field that is a list of strings (what discovery writes and Cargo reports); anything
 /// else is refused rather than filtered.
-pub(super) fn strings(value: &Value, context: &str) -> Result<Vec<String>> {
+pub(crate) fn strings(value: &Value, context: &str) -> Result<Vec<String>> {
     let refuse = || {
         Error::Shape(format!(
             "{context}: expected a list of strings, found {}",
@@ -76,7 +76,7 @@ fn command_output(root: &Path, program: &str, args: &[&str]) -> Result<Vec<u8>> 
 /// `str(Path(path).relative_to(root))`: `.` for the root itself; a path outside the root refuses
 /// (the Python crashed with `ValueError`). pathlib compares the two as spelled after parsing, so a
 /// path under POSIX's distinct `//` root is outside the resolved root, which is spelled `/`.
-pub(super) fn relative(path: &str, root: &Path, context: &str) -> Result<String> {
+pub(crate) fn relative(path: &str, root: &Path, context: &str) -> Result<String> {
     let path = py::PosixPath::parse(path);
     // A root that is not UTF-8 holds a byte no metadata string can (the port's JSON strings hold
     // no lone surrogate), so no path is under it; the refusal names it as `repr` printed the
@@ -101,13 +101,13 @@ fn stem(name: &str) -> &str {
     }
 }
 
-pub(super) fn kind(kind: &str) -> Dict {
+pub(crate) fn kind(kind: &str) -> Dict {
     [("kind", Value::from(kind))].into_iter().collect()
 }
 
 /// `for x in value`: the items (a list's, a dict's keys, a string's characters), or Python's
 /// `TypeError`.
-pub(super) fn iterate(value: &Value, context: &str) -> Result<Vec<Value>> {
+pub(crate) fn iterate(value: &Value, context: &str) -> Result<Vec<Value>> {
     py::iterate(value).ok_or_else(|| raised(context, py::exception::not_iterable(value)))
 }
 

@@ -92,11 +92,11 @@ pub const STAGE1_DATASET_IDS: [&str; 10] = [
     "f8536dfeef471c2f",
 ];
 
-pub(super) fn sorted_unique(values: &[String]) -> bool {
+pub(crate) fn sorted_unique(values: &[String]) -> bool {
     values.windows(2).all(|pair| pair[0] < pair[1])
 }
 
-pub(super) fn finite_positive(values: &[f64]) -> bool {
+pub(crate) fn finite_positive(values: &[f64]) -> bool {
     values.iter().all(|value| value.is_finite() && *value > 0.0)
 }
 

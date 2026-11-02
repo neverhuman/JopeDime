@@ -105,7 +105,7 @@ pub(crate) fn fit_method(
     Ok(fit_rust(&request)?.artifact)
 }
 
-pub(super) fn hostile_categories() -> Vec<Option<String>> {
+pub(crate) fn hostile_categories() -> Vec<Option<String>> {
     let mut categories: Vec<Option<String>> = vec![None];
     categories.extend(
         HOSTILE_CATEGORIES
@@ -119,7 +119,7 @@ pub(crate) fn hostile_fixture(task: Task, family: &str) -> FittedRustArtifact {
     fit(task, family, &hostile_categories(), &|_| 3, false).unwrap()
 }
 
-pub(super) fn row(values: &[Option<&str>]) -> Value {
+pub(crate) fn row(values: &[Option<&str>]) -> Value {
     Value::Array(
         values
             .iter()
@@ -137,7 +137,7 @@ pub(crate) struct Case {
     pub expect_refusal: bool,
 }
 
-pub(super) fn typed(value: &Value) -> Option<Vec<Vec<Option<String>>>> {
+pub(crate) fn typed(value: &Value) -> Option<Vec<Vec<Option<String>>>> {
     value
         .as_array()?
         .iter()
@@ -154,7 +154,7 @@ pub(super) fn typed(value: &Value) -> Option<Vec<Vec<Option<String>>>> {
         .collect()
 }
 
-pub(super) fn case(name: &str, rows: Value, refuse: bool) -> Case {
+pub(crate) fn case(name: &str, rows: Value, refuse: bool) -> Case {
     Case {
         name: name.into(),
         text: serde_json::to_string(&rows).unwrap(),

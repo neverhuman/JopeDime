@@ -24,7 +24,7 @@ pub struct Tombstone {
 }
 
 impl Tombstone {
-    pub(super) fn new(
+    pub(crate) fn new(
         reservation: &RetirementReservation,
         target: &StrongPhysicalRef,
     ) -> Result<Self> {
@@ -47,7 +47,7 @@ impl Tombstone {
         Ok(tombstone)
     }
 
-    pub(super) fn reseal(&mut self) -> Result<()> {
+    pub(crate) fn reseal(&mut self) -> Result<()> {
         self.tombstone_sha256.clear();
         self.tombstone_sha256 = canonical_sha256(self)?;
         Ok(())

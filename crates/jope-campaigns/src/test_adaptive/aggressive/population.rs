@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn worker_identity(
+pub(crate) fn worker_identity(
     manifest: &AggressiveManifest,
     spec: &DatasetSpec,
 ) -> CampaignIdentity {
@@ -33,7 +33,7 @@ pub(super) fn worker_identity(
     }
 }
 
-pub(super) fn is_fresh_novel_descendant(member: &Member) -> bool {
+pub(crate) fn is_fresh_novel_descendant(member: &Member) -> bool {
     member.evolved_descendant
         && matches!(member.ancestry.operation.as_str(), "mutation" | "crossover")
         && !member.ancestry.parents.is_empty()
@@ -44,7 +44,7 @@ pub(super) fn is_fresh_novel_descendant(member: &Member) -> bool {
             .all(|parent| parent != &member.semantic_sha256)
 }
 
-pub(super) fn evolutionary_winner_slot(
+pub(crate) fn evolutionary_winner_slot(
     ranked: &[SlotOutcome],
     generation: usize,
     leader_rmse: f64,
@@ -64,7 +64,7 @@ pub(super) fn evolutionary_winner_slot(
         .map(|outcome| outcome.slot)
 }
 
-pub(super) fn provenance_group(dataset_hash: &str) -> &str {
+pub(crate) fn provenance_group(dataset_hash: &str) -> &str {
     if matches!(dataset_hash, "ZTS" | "ZTS_small") {
         "ZTS"
     } else {
@@ -73,12 +73,12 @@ pub(super) fn provenance_group(dataset_hash: &str) -> &str {
 }
 
 mod seed;
-pub(super) use seed::{
+pub(crate) use seed::{
     derive_corrected_generation_zero, expand_initial_population,
     golden46_generation_zero_population, initial_population,
 };
 
-pub(super) fn offspring_seed(
+pub(crate) fn offspring_seed(
     run_id: &str,
     dataset_hash: &str,
     generation: usize,
@@ -95,7 +95,7 @@ pub(super) fn offspring_seed(
     u64::from_le_bytes(digest[..8].try_into().unwrap())
 }
 
-pub(super) fn next_island_population(
+pub(crate) fn next_island_population(
     ranked: &[SlotOutcome],
     run_id: &str,
     dataset_hash: &str,
@@ -175,7 +175,7 @@ pub(super) fn next_island_population(
 
 // Keep generation identity, population pools and island limits explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn next_golden46_island_population(
+pub(crate) fn next_golden46_island_population(
     ranked: &[SlotOutcome],
     run_id: &str,
     dataset_hash: &str,
@@ -273,7 +273,7 @@ pub(super) fn next_golden46_island_population(
     Ok(next)
 }
 
-pub(super) fn next_golden46_population(
+pub(crate) fn next_golden46_population(
     ranked_islands: &[Vec<SlotOutcome>],
     run_id: &str,
     dataset_hash: &str,
@@ -301,7 +301,7 @@ pub(super) fn next_golden46_population(
     Ok(next)
 }
 
-pub(super) fn rank_islands_with_global_recovery(
+pub(crate) fn rank_islands_with_global_recovery(
     slots: &[SlotOutcome],
 ) -> Result<(Vec<Vec<SlotOutcome>>, Vec<usize>)> {
     let mut global_valid = slots

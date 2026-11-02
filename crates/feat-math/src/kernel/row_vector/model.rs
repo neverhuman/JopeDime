@@ -2,9 +2,9 @@ use super::*;
 
 #[derive(Clone, Debug)]
 pub struct Model {
-    pub(super) program: Program,
-    pub(super) stages: Vec<FittedStage>,
-    pub(super) ridge: RidgeModel,
+    pub(crate) program: Program,
+    pub(crate) stages: Vec<FittedStage>,
+    pub(crate) ridge: RidgeModel,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -194,24 +194,24 @@ fn emitter_identity(bank: bool) -> &'static str {
     }
 }
 
-pub(super) fn savgol_stages(stages: &[RowStage]) -> Vec<usize> {
+pub(crate) fn savgol_stages(stages: &[RowStage]) -> Vec<usize> {
     (0..stages.len())
         .filter(|&i| matches!(stages[i], RowStage::Savgol(_)))
         .collect()
 }
 
-pub(super) fn goertzel_stages(stages: &[RowStage]) -> Vec<usize> {
+pub(crate) fn goertzel_stages(stages: &[RowStage]) -> Vec<usize> {
     (0..stages.len())
         .filter(|&i| matches!(stages[i], RowStage::Goertzel(_)))
         .collect()
 }
 
 /// The exact grid k/128 for k = 0..=64 (dividing by a power of two is exact).
-pub(super) fn grid_frequency(draw: u32) -> f64 {
+pub(crate) fn grid_frequency(draw: u32) -> f64 {
     f64::from(draw % 65) / 128.0
 }
 
-pub(super) fn goertzel_config(frequencies: &[f64]) -> Result<goertzel::Config> {
+pub(crate) fn goertzel_config(frequencies: &[f64]) -> Result<goertzel::Config> {
     goertzel::Config::new(
         2,
         61,
@@ -220,7 +220,7 @@ pub(super) fn goertzel_config(frequencies: &[f64]) -> Result<goertzel::Config> {
     )
 }
 
-pub(super) fn validate_rows(rows: &Rows, width: usize) -> Result<()> {
+pub(crate) fn validate_rows(rows: &Rows, width: usize) -> Result<()> {
     if rows.iter().any(|row| row.len() != width) {
         return Err(Error::Shape(
             "row-vector rows must have the declared input width".into(),
@@ -229,7 +229,7 @@ pub(super) fn validate_rows(rows: &Rows, width: usize) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn transform(stages: &[FittedStage], rows: &Rows) -> Result<(Rows, Vec<u32>)> {
+pub(crate) fn transform(stages: &[FittedStage], rows: &Rows) -> Result<(Rows, Vec<u32>)> {
     let mut result = Vec::with_capacity(rows.len());
     let mut faults = Vec::with_capacity(rows.len());
     for row in rows {

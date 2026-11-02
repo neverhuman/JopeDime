@@ -153,7 +153,7 @@ fn validate_matrix(values: &[Vec<f64>], width: usize, name: &str) -> Result<(), 
     Ok(())
 }
 
-pub(super) fn rmse(actual: &[f64], predicted: &[f64]) -> f64 {
+pub(crate) fn rmse(actual: &[f64], predicted: &[f64]) -> f64 {
     (actual
         .iter()
         .zip(predicted)
@@ -163,7 +163,7 @@ pub(super) fn rmse(actual: &[f64], predicted: &[f64]) -> f64 {
         .sqrt()
 }
 
-pub(super) fn seed64(parts: &[&str]) -> u64 {
+pub(crate) fn seed64(parts: &[&str]) -> u64 {
     let digest = raw_sha256(parts.join("|").as_bytes());
     u64::from_be_bytes(hex::decode(&digest[..16]).unwrap().try_into().unwrap())
 }

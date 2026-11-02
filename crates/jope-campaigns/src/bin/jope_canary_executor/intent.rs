@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn normalized_intent(path: &Path) -> Result<CanaryIntentV2> {
+pub(crate) fn normalized_intent(path: &Path) -> Result<CanaryIntentV2> {
     let value = read_json(path)?;
     if value.get("schema").and_then(Value::as_str) == Some(CANARY_INTENT_SCHEMA) {
         let intent: CanaryIntentV2 = serde_json::from_value(value)?;
@@ -87,7 +87,7 @@ pub(super) fn normalized_intent(path: &Path) -> Result<CanaryIntentV2> {
     Ok(intent)
 }
 
-pub(super) fn pending_intents(root: &Path) -> Result<Vec<PendingIntent>> {
+pub(crate) fn pending_intents(root: &Path) -> Result<Vec<PendingIntent>> {
     let mut output = Vec::new();
     for relative in [
         "training/shadow-canaries/pending",
@@ -209,7 +209,7 @@ pub(super) fn pending_intents(root: &Path) -> Result<Vec<PendingIntent>> {
     Ok(output)
 }
 
-pub(super) fn predecessor_passed(root: &Path, pending: &PendingIntent) -> Result<bool> {
+pub(crate) fn predecessor_passed(root: &Path, pending: &PendingIntent) -> Result<bool> {
     let Some(promotion) = &pending.promotion else {
         return production_predecessor_passed(root, &pending.value);
     };
@@ -242,7 +242,7 @@ pub(super) fn predecessor_passed(root: &Path, pending: &PendingIntent) -> Result
     Ok(false)
 }
 
-pub(super) fn production_predecessor_passed(root: &Path, intent: &CanaryIntentV2) -> Result<bool> {
+pub(crate) fn production_predecessor_passed(root: &Path, intent: &CanaryIntentV2) -> Result<bool> {
     if intent.mode != CanaryMode::Production || intent.run_index == 0 {
         return Ok(true);
     }
@@ -270,7 +270,7 @@ pub(super) fn production_predecessor_passed(root: &Path, intent: &CanaryIntentV2
     Ok(false)
 }
 
-pub(super) fn checkpoint_paths(root: &Path, pending: &PendingIntent) -> Result<(PathBuf, PathBuf)> {
+pub(crate) fn checkpoint_paths(root: &Path, pending: &PendingIntent) -> Result<(PathBuf, PathBuf)> {
     let intent = &pending.value;
     let accepted = read_json(&root.join("training/accepted-by-task.json"))?;
     let accepted_row = accepted

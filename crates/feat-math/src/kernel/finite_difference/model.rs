@@ -11,11 +11,11 @@ use sha2::{Digest, Sha256};
 
 #[derive(Clone)]
 pub struct DifferenceModel {
-    pub(super) program: DifferenceProgram,
-    pub(super) task: TaskMode,
-    pub(super) fold: FoldBoundary,
-    pub(super) state: DifferenceState,
-    pub(super) predictor: BoundModel,
+    pub(crate) program: DifferenceProgram,
+    pub(crate) task: TaskMode,
+    pub(crate) fold: FoldBoundary,
+    pub(crate) state: DifferenceState,
+    pub(crate) predictor: BoundModel,
 }
 
 impl std::fmt::Debug for DifferenceModel {

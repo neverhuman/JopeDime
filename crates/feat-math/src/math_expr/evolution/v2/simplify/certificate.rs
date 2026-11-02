@@ -7,32 +7,32 @@ use super::*;
 /// A closed interval of reals, widened outward by one ulp after every operation.
 #[cfg(test)]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) struct Interval {
-    pub(super) lo: f64,
-    pub(super) hi: f64,
+pub(crate) struct Interval {
+    pub(crate) lo: f64,
+    pub(crate) hi: f64,
 }
 
 #[cfg(test)]
 impl Interval {
-    pub(super) fn point(x: f64) -> Self {
+    pub(crate) fn point(x: f64) -> Self {
         Self { lo: x, hi: x }
     }
 
-    pub(super) fn add(self, o: Self) -> Self {
+    pub(crate) fn add(self, o: Self) -> Self {
         Self {
             lo: (self.lo + o.lo).next_down(),
             hi: (self.hi + o.hi).next_up(),
         }
     }
 
-    pub(super) fn sub(self, o: Self) -> Self {
+    pub(crate) fn sub(self, o: Self) -> Self {
         Self {
             lo: (self.lo - o.hi).next_down(),
             hi: (self.hi - o.lo).next_up(),
         }
     }
 
-    pub(super) fn mul(self, o: Self) -> Self {
+    pub(crate) fn mul(self, o: Self) -> Self {
         let p = [
             self.lo * o.lo,
             self.lo * o.hi,
@@ -47,7 +47,7 @@ impl Interval {
         }
     }
 
-    pub(super) fn half(self) -> Self {
+    pub(crate) fn half(self) -> Self {
         // Halving is exact unless it underflows; widen anyway.
         Self {
             lo: (self.lo * 0.5).next_down(),
@@ -59,7 +59,7 @@ impl Interval {
 /// The verdict of [`certify`].
 #[cfg(test)]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) enum Certificate {
+pub(crate) enum Certificate {
     /// `Q ≥ margin` on the whole interval.
     Positive { margin: f64, depth: usize },
     /// `Q ≤ -margin` on the whole interval.
@@ -77,7 +77,7 @@ pub(super) enum Certificate {
 /// is a `q` whose Horner evaluation could overflow on `[lo, hi]`: the evaluation-error bound
 /// holds only when no intermediate does.
 #[cfg(test)]
-pub(super) fn certify(
+pub(crate) fn certify(
     q: &[f64],
     lo: f64,
     hi: f64,
@@ -180,13 +180,13 @@ pub(super) fn certify(
 }
 
 #[cfg(test)]
-pub(super) fn binomial(n: usize, k: usize) -> f64 {
+pub(crate) fn binomial(n: usize, k: usize) -> f64 {
     (0..k).fold(1.0, |acc, i| acc * (n - i) as f64 / (i + 1) as f64)
 }
 
 /// The Bernstein coefficients of the two halves of the interval (de Casteljau at 1/2).
 #[cfg(test)]
-pub(super) fn de_casteljau_halves(b: &[Interval]) -> (Vec<Interval>, Vec<Interval>) {
+pub(crate) fn de_casteljau_halves(b: &[Interval]) -> (Vec<Interval>, Vec<Interval>) {
     let m = b.len();
     let mut work = b.to_vec();
     let mut left = Vec::with_capacity(m);

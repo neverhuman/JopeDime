@@ -6,7 +6,7 @@ use super::{
     model::{corpus_dir_name, load_v1_quarantine, v1_identity_denied, ExpansionPaths, TASKS},
 };
 
-pub(super) fn validate_sidecar(path: &Path, name: &str) -> Result<String> {
+pub(crate) fn validate_sidecar(path: &Path, name: &str) -> Result<String> {
     let rows = match name {
         "hyperion3train128dim.vs" => read_vs_matrix(path, Some(128))?,
         _ => read_vs_matrix(path, None)?,

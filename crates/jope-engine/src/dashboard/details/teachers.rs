@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn teacher_lines(run: &Value) -> Vec<Line<'static>> {
+pub(crate) fn teacher_lines(run: &Value) -> Vec<Line<'static>> {
     let teacher = &run["teacher"];
     let boot = &run["bootstrap"];
     let mut lines = vec![
@@ -55,7 +55,7 @@ pub(super) fn teacher_lines(run: &Value) -> Vec<Line<'static>> {
     ));
     lines
 }
-pub(super) fn teacher_evolution_lines(run: &Value) -> Vec<Line<'static>> {
+pub(crate) fn teacher_evolution_lines(run: &Value) -> Vec<Line<'static>> {
     let teacher = &run["teacher"];
     let mut lines = vec![
         Line::styled(

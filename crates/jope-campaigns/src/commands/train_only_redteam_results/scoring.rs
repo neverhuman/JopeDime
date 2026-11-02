@@ -187,7 +187,7 @@ fn frozen_variants(
     ])
 }
 
-pub(super) fn score_run(
+pub(crate) fn score_run(
     study_root: &Path,
     run_id: &str,
     sotarena_root: &Path,

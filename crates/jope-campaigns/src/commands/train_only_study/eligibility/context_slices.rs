@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn copy_context_slices(
+pub(crate) fn copy_context_slices(
     source_blob: &Path,
     output_blob: &Path,
     selected: &[(CatalogEntry, RegressionData, String, SotarenaReportHashes)],

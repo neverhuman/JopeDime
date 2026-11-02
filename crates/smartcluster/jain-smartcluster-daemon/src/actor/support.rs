@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn retry_delay(job: &JobRecord) -> Duration {
+pub(crate) fn retry_delay(job: &JobRecord) -> Duration {
     let exponent = job.failure_count.saturating_sub(1).min(31);
     let base = job
         .spec
@@ -22,7 +22,7 @@ pub(super) fn retry_delay(job: &JobRecord) -> Duration {
     )
 }
 
-pub(super) fn remaining_retry_delay(job: &JobRecord, now: Timestamp) -> Duration {
+pub(crate) fn remaining_retry_delay(job: &JobRecord, now: Timestamp) -> Duration {
     let total = retry_delay(job);
     let elapsed = Duration::from_millis(
         now.as_unix_millis()
@@ -31,7 +31,7 @@ pub(super) fn remaining_retry_delay(job: &JobRecord, now: Timestamp) -> Duration
     total.saturating_sub(elapsed)
 }
 
-pub(super) fn workload_has_environment(workload: &jain_smartcluster_core::Workload) -> bool {
+pub(crate) fn workload_has_environment(workload: &jain_smartcluster_core::Workload) -> bool {
     match workload {
         jain_smartcluster_core::Workload::Jain { environment, .. }
         | jain_smartcluster_core::Workload::TrustedService { environment, .. }
@@ -41,7 +41,7 @@ pub(super) fn workload_has_environment(workload: &jain_smartcluster_core::Worklo
     }
 }
 
-pub(super) fn bounded_control(
+pub(crate) fn bounded_control(
     mut control: jain_smartcluster_core::ControlMessage,
     execution: &ExecutionConfig,
 ) -> Result<jain_smartcluster_core::ControlMessage, ServerError> {
@@ -62,17 +62,17 @@ pub(super) fn bounded_control(
     Ok(control)
 }
 
-pub(super) fn deadline_expired(job: &JobRecord, now: Timestamp) -> bool {
+pub(crate) fn deadline_expired(job: &JobRecord, now: Timestamp) -> bool {
     job.spec.deadline.is_some_and(|deadline| deadline <= now)
 }
 
-pub(super) fn next_lease_expiry(current: Timestamp, now: Timestamp) -> Timestamp {
+pub(crate) fn next_lease_expiry(current: Timestamp, now: Timestamp) -> Timestamp {
     let minimum = now.as_unix_millis().saturating_add(ATTEMPT_LEASE_MS);
     let advance = current.as_unix_millis().saturating_add(1);
     Timestamp::from_unix_millis(minimum.max(advance))
 }
 
-pub(super) fn attempt_allocation_key(attempt: FencedAttempt) -> String {
+pub(crate) fn attempt_allocation_key(attempt: FencedAttempt) -> String {
     format!(
         "attempt-allocation/{}/{}/{}",
         attempt.job_id,
@@ -81,7 +81,7 @@ pub(super) fn attempt_allocation_key(attempt: FencedAttempt) -> String {
     )
 }
 
-pub(super) fn attempt_pid_start_key(attempt: FencedAttempt) -> String {
+pub(crate) fn attempt_pid_start_key(attempt: FencedAttempt) -> String {
     format!(
         "attempt-pid-start/{}/{}/{}",
         attempt.job_id,
@@ -90,7 +90,7 @@ pub(super) fn attempt_pid_start_key(attempt: FencedAttempt) -> String {
     )
 }
 
-pub(super) fn attempt_overload_pause_key(attempt: FencedAttempt) -> String {
+pub(crate) fn attempt_overload_pause_key(attempt: FencedAttempt) -> String {
     format!(
         "attempt-overload-pause/{}/{}/{}",
         attempt.job_id,
@@ -99,7 +99,7 @@ pub(super) fn attempt_overload_pause_key(attempt: FencedAttempt) -> String {
     )
 }
 
-pub(super) fn exit_failure_class(
+pub(crate) fn exit_failure_class(
     exit_success: bool,
     wait_failed: bool,
     host_oom: bool,
@@ -122,14 +122,14 @@ pub(super) fn exit_failure_class(
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(super) enum GpuHistoryAction {
+pub(crate) enum GpuHistoryAction {
     None,
     CleanExclusive,
     FailedExclusive,
     SharedCudaOom,
 }
 
-pub(super) fn gpu_history_action(
+pub(crate) fn gpu_history_action(
     exclusively_isolated: bool,
     observed_vram_bytes: u64,
     successful: bool,
@@ -146,14 +146,14 @@ pub(super) fn gpu_history_action(
     }
 }
 
-pub(super) fn tenant_matches_principal(
+pub(crate) fn tenant_matches_principal(
     tenant: &jain_smartcluster_core::TenantId,
     principal: &Principal,
 ) -> bool {
     tenant.as_str() == principal.to_string()
 }
 
-pub(super) fn now_timestamp() -> Timestamp {
+pub(crate) fn now_timestamp() -> Timestamp {
     let millis = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
@@ -163,15 +163,15 @@ pub(super) fn now_timestamp() -> Timestamp {
     Timestamp::from_unix_millis(millis)
 }
 
-pub(super) fn unavailable() -> ServerError {
+pub(crate) fn unavailable() -> ServerError {
     ServerError::unavailable("scqd actor is unavailable", 1_000)
 }
 
-pub(super) fn auth_error(error: impl std::fmt::Display) -> ServerError {
+pub(crate) fn auth_error(error: impl std::fmt::Display) -> ServerError {
     ServerError::new(ErrorCode::Forbidden, error.to_string())
 }
 
-pub(super) fn store_error(error: StoreError) -> ServerError {
+pub(crate) fn store_error(error: StoreError) -> ServerError {
     let code = match error {
         StoreError::JobNotFound(_) => ErrorCode::NotFound,
         StoreError::IdempotencyConflict { .. }
@@ -185,23 +185,23 @@ pub(super) fn store_error(error: StoreError) -> ServerError {
     ServerError::new(code, error.to_string())
 }
 
-pub(super) fn executor_error(error: impl std::fmt::Display) -> ServerError {
+pub(crate) fn executor_error(error: impl std::fmt::Display) -> ServerError {
     ServerError::new(ErrorCode::Unavailable, error.to_string())
 }
 
-pub(super) fn event_error(error: impl std::fmt::Display) -> ServerError {
+pub(crate) fn event_error(error: impl std::fmt::Display) -> ServerError {
     ServerError::new(ErrorCode::Internal, error.to_string())
 }
 
-pub(super) fn actor_server_error(error: ActorError) -> ServerError {
+pub(crate) fn actor_server_error(error: ActorError) -> ServerError {
     ServerError::new(ErrorCode::Internal, error.to_string())
 }
 
-pub(super) fn io_error(error: std::io::Error) -> ServerError {
+pub(crate) fn io_error(error: std::io::Error) -> ServerError {
     ServerError::new(ErrorCode::Unavailable, error.to_string())
 }
 
-pub(super) fn io_timeout_error() -> ServerError {
+pub(crate) fn io_timeout_error() -> ServerError {
     ServerError::new(
         ErrorCode::Unavailable,
         "actor I/O write exceeded the configured timeout",
@@ -209,7 +209,7 @@ pub(super) fn io_timeout_error() -> ServerError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(super) enum ActorError {
+pub(crate) enum ActorError {
     #[error(transparent)]
     Store(#[from] StoreError),
     #[error(transparent)]
@@ -232,9 +232,9 @@ pub(super) enum ActorError {
 
 #[derive(Debug, thiserror::Error)]
 #[error("daemon startup recovery failed: {0}")]
-pub struct ActorStartError(pub(super) String);
+pub struct ActorStartError(pub(crate) String);
 
-pub(super) fn attempt_cpu_pool_key(attempt: FencedAttempt) -> String {
+pub(crate) fn attempt_cpu_pool_key(attempt: FencedAttempt) -> String {
     format!(
         "attempt-cpu-pool:{}:{}:{}",
         attempt.job_id,

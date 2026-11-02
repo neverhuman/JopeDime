@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn read_bounded(path: &Path, expected: Option<&str>) -> Result<Vec<u8>> {
+pub(crate) fn read_bounded(path: &Path, expected: Option<&str>) -> Result<Vec<u8>> {
     let file = fs::OpenOptions::new()
         .read(true)
         .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
@@ -15,7 +15,7 @@ pub(super) fn read_bounded(path: &Path, expected: Option<&str>) -> Result<Vec<u8
     Ok(bytes)
 }
 
-pub(super) fn load_policy() -> Result<WorkerPolicy> {
+pub(crate) fn load_policy() -> Result<WorkerPolicy> {
     let path = Path::new(POLICY_PATH);
     for ancestor in path.ancestors() {
         let meta = fs::symlink_metadata(ancestor)?;
@@ -51,7 +51,7 @@ pub fn runtime_observation() -> Result<Value> {
         std::process::id(),
     )?)
 }
-pub(super) fn verify_loaded_runtime(policy: &WorkerPolicy) -> Result<()> {
+pub(crate) fn verify_loaded_runtime(policy: &WorkerPolicy) -> Result<()> {
     let observed = runtime_observation()?;
     let digest = observed["runtime_sha256"]
         .as_str()
@@ -63,15 +63,15 @@ pub(super) fn verify_loaded_runtime(policy: &WorkerPolicy) -> Result<()> {
     Ok(())
 }
 
-pub(super) struct Allocation {
-    pub(super) policy: WorkerPolicy,
-    pub(super) attempt: FencedAttempt,
-    pub(super) stream: UnixStream,
-    pub(super) bootstrap: TaskManifest,
-    pub(super) daemon_identity: crate::eval_registry::ProcessIdentity,
+pub(crate) struct Allocation {
+    pub(crate) policy: WorkerPolicy,
+    pub(crate) attempt: FencedAttempt,
+    pub(crate) stream: UnixStream,
+    pub(crate) bootstrap: TaskManifest,
+    pub(crate) daemon_identity: crate::eval_registry::ProcessIdentity,
 }
 
-pub(super) fn current_job(
+pub(crate) fn current_job(
     policy: &WorkerPolicy,
     id: jain_smartcluster::JobId,
     expected: &crate::eval_registry::ProcessIdentity,
@@ -103,7 +103,7 @@ pub(super) fn current_job(
     }
 }
 
-pub(super) fn retain_control_descriptor(descriptor: i32) -> Result<UnixStream> {
+pub(crate) fn retain_control_descriptor(descriptor: i32) -> Result<UnixStream> {
     // SAFETY: F_DUPFD_CLOEXEC takes an integer minimum and touches no memory; an invalid
     // `descriptor` only yields -1 (EBADF), checked below.
     let duplicate = unsafe { libc::fcntl(descriptor, libc::F_DUPFD_CLOEXEC, 3) };
@@ -119,7 +119,7 @@ pub(super) fn retain_control_descriptor(descriptor: i32) -> Result<UnixStream> {
     Ok(unsafe { UnixStream::from_raw_fd(duplicate) })
 }
 
-pub(super) fn authenticate(policy: WorkerPolicy, path: &Path, sha: &str) -> Result<Allocation> {
+pub(crate) fn authenticate(policy: WorkerPolicy, path: &Path, sha: &str) -> Result<Allocation> {
     let descriptor: i32 = std::env::var("SCQ_CONTROL_FD")
         .context("inherited native control socket required")?
         .parse()?;
@@ -183,7 +183,7 @@ pub(super) fn authenticate(policy: WorkerPolicy, path: &Path, sha: &str) -> Resu
     })
 }
 
-pub(super) fn load_task(
+pub(crate) fn load_task(
     policy: &WorkerPolicy,
     path: &Path,
     sha: &str,

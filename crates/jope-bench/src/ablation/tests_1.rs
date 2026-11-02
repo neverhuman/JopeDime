@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn summary_with(m1_rmse: f64, m3: f64) -> Summary {
+pub(crate) fn summary_with(m1_rmse: f64, m3: f64) -> Summary {
     Summary {
         m1_rmse,
         m1_r2: 0.5,
@@ -15,7 +15,7 @@ pub(super) fn summary_with(m1_rmse: f64, m3: f64) -> Summary {
     }
 }
 
-pub(super) fn slot(name: &'static str, rmse: [f64; 2], sd: Option<f64>, m3: f64) -> SlotAggregate {
+pub(crate) fn slot(name: &'static str, rmse: [f64; 2], sd: Option<f64>, m3: f64) -> SlotAggregate {
     SlotAggregate {
         slot: name,
         profile: "legacy",
@@ -35,8 +35,8 @@ pub(super) fn slot(name: &'static str, rmse: [f64; 2], sd: Option<f64>, m3: f64)
 
 /// Evaluations of the PR-tier kernel2 comparison, and its refinement allowance: one refined
 /// parent per round with two objective trials.
-pub(super) const KERNEL2_EVALUATIONS: usize = 16;
-pub(super) const SMALL_REFINEMENT: Refinement = Refinement {
+pub(crate) const KERNEL2_EVALUATIONS: usize = 16;
+pub(crate) const SMALL_REFINEMENT: Refinement = Refinement {
     top_k: 1,
     trials_per_program: 2,
 };
@@ -45,7 +45,7 @@ pub(super) const SMALL_REFINEMENT: Refinement = Refinement {
 /// on both sides and seed 6 only. Seed 5 draws boosted-tree heads of 1000 rounds there, which
 /// take 13 to 20 seconds a search in a debug build; seed 6's take about 3 and still spend
 /// refinement trials.
-pub(super) fn kernel2_config() -> Config {
+pub(crate) fn kernel2_config() -> Config {
     Config {
         profile_a: Profile::Kernel2Baseline,
         profile_b: Profile::Kernel2Baseline,
@@ -59,7 +59,7 @@ pub(super) fn kernel2_config() -> Config {
 /// kernel2-baseline against itself, twice with different job counts: byte-identical bodies
 /// (wall time is in `timing`, never in the body), no difference, the route's own winner as
 /// M1, consistent budget accounting, and a paired comparison of nothing but ties.
-pub(super) fn sorted_keys(value: &serde_json::Value) -> Vec<String> {
+pub(crate) fn sorted_keys(value: &serde_json::Value) -> Vec<String> {
     let mut keys: Vec<String> = value.as_object().unwrap().keys().cloned().collect();
     keys.sort();
     keys
@@ -69,7 +69,7 @@ pub(super) fn sorted_keys(value: &serde_json::Value) -> Vec<String> {
 /// legacy cut record serialize to the bytes they had before, and a legacy-only run's body,
 /// run records and timing carry exactly the keys they had before.
 /// A run record carrying what the paired comparison reads: slot, dataset, seed and M1.
-pub(super) fn paired_run(
+pub(crate) fn paired_run(
     slot: &'static str,
     dataset: &str,
     seed: u64,
@@ -141,6 +141,6 @@ mod kernel2;
 mod legacy;
 mod paired;
 
-pub(super) use kernel2::*;
-pub(super) use legacy::*;
-pub(super) use paired::*;
+pub(crate) use kernel2::*;
+pub(crate) use legacy::*;
+pub(crate) use paired::*;

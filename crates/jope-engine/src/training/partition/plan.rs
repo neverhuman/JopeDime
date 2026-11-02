@@ -135,7 +135,7 @@ impl Plan {
         }
     }
 
-    pub(super) fn rank_state(
+    pub(crate) fn rank_state(
         &self,
         rank: usize,
         seed: u64,

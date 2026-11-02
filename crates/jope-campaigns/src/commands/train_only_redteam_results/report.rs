@@ -21,7 +21,7 @@ fn median(mut values: Vec<f64>) -> Result<f64> {
     })
 }
 
-pub(super) fn report_run(
+pub(crate) fn report_run(
     study_root: &Path,
     run_id: &str,
     _sotarena_root: &Path,

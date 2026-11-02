@@ -49,21 +49,21 @@ const MIN_FREE_DISK_BYTES: u64 = 100 * 1024 * 1024 * 1024;
 const MAX_SWAP_USED_BYTES: u64 = 9 * 1024 * 1024 * 1024;
 
 mod model;
-pub(super) use model::*;
+pub(crate) use model::*;
 mod preflight;
-pub(super) use preflight::*;
+pub(crate) use preflight::*;
 mod population;
-pub(super) use population::*;
+pub(crate) use population::*;
 mod checkpoint;
-pub(super) use checkpoint::*;
+pub(crate) use checkpoint::*;
 mod dataset;
-pub(super) use dataset::*;
+pub(crate) use dataset::*;
 mod views;
-pub(super) use views::*;
+pub(crate) use views::*;
 mod validation;
-pub(super) use validation::*;
+pub(crate) use validation::*;
 mod runner;
-pub(super) use runner::{run_aggressive_with_specs, validate_aggressive_with_specs};
+pub(crate) use runner::{run_aggressive_with_specs, validate_aggressive_with_specs};
 
 pub(crate) use runner::{run_aggressive, run_golden46, validate_aggressive, validate_golden46};
 

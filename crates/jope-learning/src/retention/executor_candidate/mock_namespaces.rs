@@ -62,7 +62,7 @@ impl MockRecoveryNamespace {
 #[derive(Clone, Debug, Default)]
 pub struct MockNamespace {
     objects: BTreeSet<StrongPhysicalRef>,
-    pub(super) requests: BTreeMap<String, StrongPhysicalRef>,
+    pub(crate) requests: BTreeMap<String, StrongPhysicalRef>,
     pub exact_request_count: u64,
     pub simulated_effect_count: u64,
 }
@@ -83,7 +83,7 @@ impl MockNamespace {
         u64::from(self.requests.contains_key(request_id))
     }
 
-    pub(super) fn request_exact(
+    pub(crate) fn request_exact(
         &mut self,
         request_id: &str,
         target: &StrongPhysicalRef,

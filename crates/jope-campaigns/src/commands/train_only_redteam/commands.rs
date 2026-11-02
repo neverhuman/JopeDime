@@ -55,7 +55,7 @@ pub(crate) fn report(
     report_run(study_root, run_id, sotarena_root, workers)
 }
 
-pub(super) fn run_arm(
+pub(crate) fn run_arm(
     manifest_path: &Path,
     arm: Arm,
     selection_mode: SelectionMode,
@@ -73,7 +73,7 @@ pub(super) fn run_arm(
     )
 }
 
-pub(super) fn validate_run(
+pub(crate) fn validate_run(
     study_root: &Path,
     run_id: &str,
     sotarena_root: &Path,
@@ -83,7 +83,7 @@ pub(super) fn validate_run(
     results::validate_run(study_root, run_id, sotarena_root, workers, selected_dataset)
 }
 
-pub(super) fn score_run(
+pub(crate) fn score_run(
     study_root: &Path,
     run_id: &str,
     sotarena_root: &Path,
@@ -92,7 +92,7 @@ pub(super) fn score_run(
     results::score_run(study_root, run_id, sotarena_root, workers)
 }
 
-pub(super) fn report_run(
+pub(crate) fn report_run(
     study_root: &Path,
     run_id: &str,
     sotarena_root: &Path,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn short(value: &str) -> String {
+pub(crate) fn short(value: &str) -> String {
     safe(&value.chars().take(12).collect::<String>())
 }
 pub fn safe(value: &str) -> String {
@@ -20,7 +20,7 @@ pub fn safe(value: &str) -> String {
     }
     out
 }
-pub(super) fn stage_text(stage: &crate::StageView) -> String {
+pub(crate) fn stage_text(stage: &crate::StageView) -> String {
     let params = stage
         .params
         .iter()
@@ -34,13 +34,13 @@ pub(super) fn stage_text(stage: &crate::StageView) -> String {
     }
 }
 
-pub(super) fn value(value: &Option<crate::ExactValue>) -> String {
+pub(crate) fn value(value: &Option<crate::ExactValue>) -> String {
     value
         .as_ref()
         .map(|v| safe(&v.display()))
         .unwrap_or_else(|| "omitted".into())
 }
-pub(super) fn edit_text(edit: &AtomicEdit) -> String {
+pub(crate) fn edit_text(edit: &AtomicEdit) -> String {
     match edit {
         AtomicEdit::Parameter {
             at,
@@ -75,7 +75,7 @@ pub(super) fn edit_text(edit: &AtomicEdit) -> String {
         }
     }
 }
-pub(super) fn hypothesis(delta: &ProgramDelta) -> String {
+pub(crate) fn hypothesis(delta: &ProgramDelta) -> String {
     if let [AtomicEdit::Parameter { op, key, .. }] = delta.edits.as_slice() {
         if matches!(op.as_str(), "ridge" | "logistic") && key == "lambda_frac" {
             return "Observer question: would this different ridge regularization setting help validation? The measured result is pending.".into();
@@ -87,7 +87,7 @@ pub(super) fn hypothesis(delta: &ProgramDelta) -> String {
     "Observer question: how will the changed recipe measure as a whole? Validation is pending, and any eventual gain cannot yet be attributed to an individual edit.".into()
 }
 
-pub(super) fn evidence_refs(links: &Links, evidence: &str) -> Vec<String> {
+pub(crate) fn evidence_refs(links: &Links, evidence: &str) -> Vec<String> {
     std::iter::once(evidence.to_string())
         .chain(
             [
@@ -103,7 +103,7 @@ pub(super) fn evidence_refs(links: &Links, evidence: &str) -> Vec<String> {
         .collect()
 }
 
-pub(super) fn append_boundary_note(
+pub(crate) fn append_boundary_note(
     out: &mut Narration,
     fact: &LineageFact,
     links: &Links,

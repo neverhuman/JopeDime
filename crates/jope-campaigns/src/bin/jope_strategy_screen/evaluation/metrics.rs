@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_csv(path: &str) -> Result<(Rows, Vec<f64>), String> {
+pub(crate) fn load_csv(path: &str) -> Result<(Rows, Vec<f64>), String> {
     let text = fs::read_to_string(path).map_err(|e| format!("read {path}: {e}"))?;
     let mut x: Rows = Vec::new();
     let mut y = Vec::new();
@@ -32,7 +32,7 @@ pub(super) fn load_csv(path: &str) -> Result<(Rows, Vec<f64>), String> {
     Ok((x, y))
 }
 
-pub(super) fn r2(actual: &[f64], predicted: &[f64]) -> Option<f64> {
+pub(crate) fn r2(actual: &[f64], predicted: &[f64]) -> Option<f64> {
     if actual.len() != predicted.len() || actual.is_empty() {
         return None;
     }
@@ -52,7 +52,7 @@ pub(super) fn r2(actual: &[f64], predicted: &[f64]) -> Option<f64> {
     Some(1.0 - ss_res / ss_tot)
 }
 
-pub(super) fn rmse(actual: &[f64], predicted: &[f64]) -> Option<f64> {
+pub(crate) fn rmse(actual: &[f64], predicted: &[f64]) -> Option<f64> {
     if actual.len() != predicted.len() || actual.is_empty() {
         return None;
     }
@@ -70,7 +70,7 @@ pub(super) fn rmse(actual: &[f64], predicted: &[f64]) -> Option<f64> {
 
 /// Copied from train_only_study.rs::paired_robust_fitness (mean - 0.25*sd,
 /// scores clipped to >= -1 so one catastrophic split cannot dominate).
-pub(super) fn robust_fitness(scores: &[f64]) -> f64 {
+pub(crate) fn robust_fitness(scores: &[f64]) -> f64 {
     if scores.is_empty() {
         return -1.0;
     }
@@ -81,7 +81,7 @@ pub(super) fn robust_fitness(scores: &[f64]) -> f64 {
     mean - 0.25 * sd.min(1.0)
 }
 
-pub(super) fn worst_split(scores: &[f64]) -> f64 {
+pub(crate) fn worst_split(scores: &[f64]) -> f64 {
     scores
         .iter()
         .map(|v| v.max(-1.0))
@@ -90,7 +90,7 @@ pub(super) fn worst_split(scores: &[f64]) -> f64 {
 
 /// rank_scored ordering from train_only_study.rs: fitness desc, worst-split
 /// desc, complexity asc, semantic asc (fully deterministic).
-pub(super) fn rank(members: &mut [Member]) {
+pub(crate) fn rank(members: &mut [Member]) {
     members.sort_by(|a, b| {
         b.fitness_complete
             .cmp(&a.fitness_complete)

@@ -5,7 +5,7 @@ fn stage_append(stage: &Stage) -> bool {
         || stage.get_usize("append", 0) == 1
 }
 
-pub(super) fn fit_v3_op(
+pub(crate) fn fit_v3_op(
     stage: &Stage,
     block: &FeatureBlock,
     y: &[f64],

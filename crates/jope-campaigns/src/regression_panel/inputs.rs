@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_static_inputs() -> Result<()> {
+pub(crate) fn validate_static_inputs() -> Result<()> {
     if sha256_bytes(seed_bytes()) != SEED_SHA256 {
         bail!("seed population hash mismatch");
     }
@@ -16,7 +16,7 @@ pub(super) fn validate_static_inputs() -> Result<()> {
     Ok(())
 }
 
-pub(super) fn verify_inputs(registry: &Path) -> Result<()> {
+pub(crate) fn verify_inputs(registry: &Path) -> Result<()> {
     validate_static_inputs()?;
     for hash in DATASETS {
         let train_path = registry.join(hash).join("train.csv");
@@ -35,7 +35,7 @@ pub(super) fn verify_inputs(registry: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn select_panel(registry: &Path, panel_id: &str, only: Option<&str>) -> Result<()> {
+pub(crate) fn select_panel(registry: &Path, panel_id: &str, only: Option<&str>) -> Result<()> {
     validate_static_inputs()?;
     if only.is_some_and(|wanted| !DATASETS.contains(&wanted)) {
         bail!("requested dataset is absent from the pinned panel");
@@ -108,7 +108,7 @@ pub(super) fn select_panel(registry: &Path, panel_id: &str, only: Option<&str>) 
     Ok(())
 }
 
-pub(super) fn load_validated_panel(
+pub(crate) fn load_validated_panel(
     registry: &Path,
     panel_id: &str,
 ) -> Result<BTreeMap<String, ValidatedFreeze>> {
@@ -149,7 +149,7 @@ pub(super) fn load_validated_panel(
     Ok(frozen)
 }
 
-pub(super) fn validate_panel(registry: &Path, panel_id: &str) -> Result<()> {
+pub(crate) fn validate_panel(registry: &Path, panel_id: &str) -> Result<()> {
     let frozen = load_validated_panel(registry, panel_id)?;
     println!(
         "validated {} independent freezes, 25200 evolutionary slots, 420 complete CV7 finalist receipts",
@@ -158,7 +158,7 @@ pub(super) fn validate_panel(registry: &Path, panel_id: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn load_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64>>> {
+pub(crate) fn load_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64>>> {
     let path = manifest_dir().join("panel-analysis.v1.json");
     if hash_file(&path)? != PANEL_ANALYSIS_SHA256 {
         bail!("baseline panel SHA-256 mismatch");
@@ -199,7 +199,7 @@ pub(super) fn load_baselines() -> Result<BTreeMap<String, BTreeMap<String, f64>>
     Ok(result)
 }
 
-pub(super) fn prediction_bytes(predictions: &[f64]) -> Result<Vec<u8>> {
+pub(crate) fn prediction_bytes(predictions: &[f64]) -> Result<Vec<u8>> {
     let mut bytes = Vec::new();
     for prediction in predictions {
         if !prediction.is_finite() {

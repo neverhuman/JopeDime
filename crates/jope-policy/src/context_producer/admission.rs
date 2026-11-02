@@ -470,7 +470,7 @@ impl CpuProducer {
 
     /// Private unqualified computation. Only a successful comparison can yield
     /// the ordinary worker output; a failed diagnostic is never an admission.
-    pub(super) fn produce_reference_case(
+    pub(crate) fn produce_reference_case(
         &self,
         case_bytes: &[u8],
         expected_case_sha256: &str,
@@ -512,7 +512,7 @@ impl CpuProducer {
     }
 }
 
-pub(super) fn validate_reference_case(
+pub(crate) fn validate_reference_case(
     case_bytes: &[u8],
     result: &QualificationCaseResult,
 ) -> Result<()> {

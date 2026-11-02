@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn parse_campaign(value: Option<&Value>) -> CampaignSummary {
+pub(crate) fn parse_campaign(value: Option<&Value>) -> CampaignSummary {
     let value = value.unwrap_or(&Value::Null);
     let rung_counts = value.get("rung_counts").unwrap_or(&Value::Null);
     let active_progress = value
@@ -64,14 +64,14 @@ pub(super) fn parse_campaign(value: Option<&Value>) -> CampaignSummary {
     }
 }
 
-pub(super) fn infrastructure_attempt_number(job_identity: &str) -> u64 {
+pub(crate) fn infrastructure_attempt_number(job_identity: &str) -> u64 {
     job_identity
         .rsplit_once("-infra")
         .and_then(|(_, suffix)| suffix.parse::<u64>().ok())
         .unwrap_or(1)
 }
 
-pub(super) fn enrich_gpu_admission(gpus: &mut [GpuRow], value: Option<&Value>) {
+pub(crate) fn enrich_gpu_admission(gpus: &mut [GpuRow], value: Option<&Value>) {
     let Some(states) = value
         .and_then(|value| value.get("states"))
         .and_then(Value::as_object)

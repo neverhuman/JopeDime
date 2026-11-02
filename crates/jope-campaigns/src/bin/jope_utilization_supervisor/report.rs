@@ -4,7 +4,7 @@ use super::*;
 // RECORD — historical utilization
 // ---------------------------------------------------------------------------
 
-pub(super) fn report(args: &Args, hours: f64) -> Result<()> {
+pub(crate) fn report(args: &Args, hours: f64) -> Result<()> {
     let path = args.series();
     let bytes = fs::read(&path).with_context(|| format!("read {}", path.display()))?;
     let cutoff = now_ms().saturating_sub((hours * 3_600_000.0) as u64);
@@ -85,7 +85,7 @@ pub(super) fn report(args: &Args, hours: f64) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn human_span(ms: u64) -> String {
+pub(crate) fn human_span(ms: u64) -> String {
     let secs = ms / 1000;
     if secs < 120 {
         format!("{secs}s")

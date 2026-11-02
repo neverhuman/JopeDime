@@ -17,10 +17,10 @@ pub struct OrderedRow {
 
 #[derive(Clone, Debug)]
 pub struct DifferenceProgram {
-    pub(super) config: DifferenceConfig,
-    pub(super) width: usize,
-    pub(super) input: OrderedInputIdentity,
-    pub(super) downstream: GenomeIr,
+    pub(crate) config: DifferenceConfig,
+    pub(crate) width: usize,
+    pub(crate) input: OrderedInputIdentity,
+    pub(crate) downstream: GenomeIr,
 }
 
 impl DifferenceProgram {

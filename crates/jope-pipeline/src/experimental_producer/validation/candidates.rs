@@ -1,7 +1,7 @@
 use super::*;
 
 // This is a structural helper only; no public admission token can be made here.
-pub(super) fn check_candidates(
+pub(crate) fn check_candidates(
     plan: &RequestPlan,
     candidates: &[CandidateClaim],
     neural_candidates: usize,

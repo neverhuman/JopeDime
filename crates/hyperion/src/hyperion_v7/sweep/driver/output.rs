@@ -16,7 +16,7 @@ pub struct SweepAccum {
 }
 
 impl SweepAccum {
-    pub(super) fn new(h: usize, w: usize, with_confidence: bool) -> Self {
+    pub(crate) fn new(h: usize, w: usize, with_confidence: bool) -> Self {
         Self {
             h,
             w,
@@ -62,7 +62,7 @@ impl SweepAccum {
 }
 
 #[inline]
-pub(super) fn sigmoid(x: f32) -> f32 {
+pub(crate) fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + (-x).exp())
 }
 

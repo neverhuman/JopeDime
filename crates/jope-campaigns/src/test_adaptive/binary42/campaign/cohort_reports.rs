@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn summarize_dataset(
+pub(crate) fn summarize_dataset(
     run_id: &str,
     spec: &FrozenDataset,
 ) -> Result<(DatasetValidationSummary, Vec<AllEvaluationIndexRecord>)> {
@@ -60,7 +60,7 @@ pub(super) fn summarize_dataset(
     ))
 }
 
-pub(super) fn rebuild_cohort_indexes(
+pub(crate) fn rebuild_cohort_indexes(
     run_id: &str,
     cohort: &FrozenCohort,
 ) -> Result<(Vec<DatasetValidationSummary>, usize)> {

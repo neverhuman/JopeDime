@@ -44,7 +44,7 @@ fn evidence_path(root: &Path, finding: &str, reference: &Value) -> Result<PathBu
     Ok(path)
 }
 
-pub(super) fn load_evidence(
+pub(crate) fn load_evidence(
     root: &Path,
     finding: &str,
     stage: &str,
@@ -96,7 +96,7 @@ fn names(body: &Value, field: &str) -> Result<Vec<Value>> {
 }
 
 /// Named tests must appear with the outcome their role requires.
-pub(super) fn check_tests(
+pub(crate) fn check_tests(
     finding: &str,
     attestation: &Value,
     commit: &str,

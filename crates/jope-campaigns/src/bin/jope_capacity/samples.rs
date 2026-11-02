@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build_sample(
+pub(crate) fn build_sample(
     sampled_at_ms: u128,
     nodes: &[NodeTelemetry],
     metrics: ExternalMetrics,
@@ -51,7 +51,7 @@ pub(super) fn build_sample(
     })
 }
 
-pub(super) fn load_history(path: &Path) -> Result<Vec<StoredSample>> {
+pub(crate) fn load_history(path: &Path) -> Result<Vec<StoredSample>> {
     if !path.is_file() {
         return Ok(Vec::new());
     }
@@ -59,13 +59,13 @@ pub(super) fn load_history(path: &Path) -> Result<Vec<StoredSample>> {
         .with_context(|| format!("parse capacity telemetry {}", path.display()))
 }
 
-pub(super) fn sample_due(history: &[StoredSample], now: u128) -> bool {
+pub(crate) fn sample_due(history: &[StoredSample], now: u128) -> bool {
     history
         .last()
         .is_none_or(|sample| now.saturating_sub(sample.sampled_at_ms) >= SAMPLE_MIN_GAP_MS)
 }
 
-pub(super) fn trailing_minute_samples(history: &[StoredSample]) -> Vec<StoredSample> {
+pub(crate) fn trailing_minute_samples(history: &[StoredSample]) -> Vec<StoredSample> {
     if history.is_empty() {
         return Vec::new();
     }

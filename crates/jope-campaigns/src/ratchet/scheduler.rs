@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_dataset_set(label: &str, datasets: &[String]) -> Result<()> {
+pub(crate) fn validate_dataset_set(label: &str, datasets: &[String]) -> Result<()> {
     for dataset in datasets {
         validate_sha256(label, dataset)?;
     }
@@ -17,7 +17,7 @@ pub(crate) enum SchedulerLaneV4 {
 }
 
 impl SchedulerLaneV4 {
-    pub(super) fn all() -> [Self; 4] {
+    pub(crate) fn all() -> [Self; 4] {
         [
             Self::Challenge,
             Self::Uniform,
@@ -26,7 +26,7 @@ impl SchedulerLaneV4 {
         ]
     }
 
-    pub(super) fn share_basis_points(self) -> i128 {
+    pub(crate) fn share_basis_points(self) -> i128 {
         match self {
             Self::Challenge => 7_000,
             Self::Uniform => 1_500,
@@ -144,7 +144,7 @@ pub(crate) struct SchedulerDrawV4 {
 }
 
 impl SchedulerDrawV4 {
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         validate_hashes([
             ("scheduler dataset", self.dataset_sha256.as_str()),
             (

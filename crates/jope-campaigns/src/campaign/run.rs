@@ -1,9 +1,9 @@
 use super::*;
 
 mod execute;
-pub(super) use execute::execute_campaign;
+pub(crate) use execute::execute_campaign;
 
-pub(super) fn live_best_cmp(left: &LiveBest, right: &LiveBest) -> Ordering {
+pub(crate) fn live_best_cmp(left: &LiveBest, right: &LiveBest) -> Ordering {
     right
         .robust_fitness
         .total_cmp(&left.robust_fitness)
@@ -20,7 +20,7 @@ pub(crate) fn run(args: JainRegressorArgs) -> Result<()> {
     }
 }
 
-pub(super) fn validate_common_exact_flags(args: &JainRegressorArgs) -> Result<()> {
+pub(crate) fn validate_common_exact_flags(args: &JainRegressorArgs) -> Result<()> {
     if args.fitness != "exact-cv" {
         bail!("the exact-CV runner requires --fitness exact-cv");
     }
@@ -71,7 +71,7 @@ pub(super) fn validate_common_exact_flags(args: &JainRegressorArgs) -> Result<()
     Ok(())
 }
 
-pub(super) fn run_phase1(args: &JainRegressorArgs) -> Result<()> {
+pub(crate) fn run_phase1(args: &JainRegressorArgs) -> Result<()> {
     if args.gens != GENERATIONS || args.pop != POPULATION || args.folds != CV5_FOLDS {
         bail!(
             "phase one requires --gens {GENERATIONS}, --pop {POPULATION}, and --folds {CV5_FOLDS}"
@@ -153,7 +153,7 @@ pub(super) fn run_phase1(args: &JainRegressorArgs) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn run_phase2(args: &JainRegressorArgs) -> Result<()> {
+pub(crate) fn run_phase2(args: &JainRegressorArgs) -> Result<()> {
     if args.exact_initial_population
         || args.seed_genomes_file.is_some()
         || args.initial_population_sha256.is_some()

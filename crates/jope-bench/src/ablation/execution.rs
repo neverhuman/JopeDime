@@ -134,14 +134,14 @@ pub fn run(config: &Config, scratch: &Path) -> Result<Report> {
 }
 
 /// One search reduced to what the document records.
-pub(super) struct Searched {
+pub(crate) struct Searched {
     metrics: Metrics,
     cuts: Vec<CutRecord>,
     search_seconds: f64,
     evaluations: u64,
 }
 
-pub(super) fn run_one(
+pub(crate) fn run_one(
     spec: &Spec,
     dataset: &Dataset,
     budget: Budget,
@@ -206,7 +206,7 @@ pub(super) fn run_one(
 }
 
 /// Where the search of one (slot, dataset, seed) writes its evidence.
-pub(super) fn search_output(scratch: &Path, slot: &str, dataset_hash: &str, seed: u64) -> PathBuf {
+pub(crate) fn search_output(scratch: &Path, slot: &str, dataset_hash: &str, seed: u64) -> PathBuf {
     scratch
         .join("search")
         .join(slot)
@@ -215,9 +215,9 @@ pub(super) fn search_output(scratch: &Path, slot: &str, dataset_hash: &str, seed
 }
 
 mod scratch;
-pub(super) use scratch::*;
+pub(crate) use scratch::*;
 
-pub(super) fn legacy_searched(searches: &[CutSearch]) -> Result<Searched> {
+pub(crate) fn legacy_searched(searches: &[CutSearch]) -> Result<Searched> {
     let metrics = metrics(searches)?;
     let cuts = searches
         .iter()
@@ -243,7 +243,7 @@ pub(super) fn legacy_searched(searches: &[CutSearch]) -> Result<Searched> {
 /// One kernel2 search on the comparison's single cut, as `jope pipeline run` runs it: refused
 /// when `output` is already in use or the clock ended it, its evidence published under `output`
 /// (`search/cut-0`), and reduced.
-pub(super) fn kernel2_search(
+pub(crate) fn kernel2_search(
     profile: Profile,
     cuts: &[Cut],
     budget: Budget,
@@ -323,7 +323,7 @@ pub fn check_kernel2_replayable(searched: &kernel2::search::CutSearch) -> Result
     )
 }
 
-pub(super) fn check_phases(
+pub(crate) fn check_phases(
     cut: usize,
     phases: &[(&str, &str)],
     seconds: f64,
@@ -344,7 +344,7 @@ pub(super) fn check_phases(
 }
 
 /// Run `work` over `items` on up to `jobs` threads; results keep the items' order.
-pub(super) fn parallel_map<T: Sync, R: Send>(
+pub(crate) fn parallel_map<T: Sync, R: Send>(
     items: &[T],
     jobs: usize,
     work: impl Fn(&T) -> R + Sync,

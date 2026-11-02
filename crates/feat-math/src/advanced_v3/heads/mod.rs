@@ -5,15 +5,15 @@ mod multiclass;
 mod portfolio;
 mod tab_boost;
 
-pub(super) use extra_trees::{ExtraNode, ExtraTreesModel};
-pub(super) use gam::{GamBoostModel, GamTerm};
-pub(super) use logistic::{sigmoid, LogitRidgeModel};
-pub(super) use multiclass::{
+pub(crate) use extra_trees::{ExtraNode, ExtraTreesModel};
+pub(crate) use gam::{GamBoostModel, GamTerm};
+pub(crate) use logistic::{sigmoid, LogitRidgeModel};
+pub(crate) use multiclass::{
     MulticlassDiagonalLdaModel, MulticlassNearestCentroidModel, MulticlassOvrLogisticModel,
     MulticlassRidgeModel,
 };
-pub(super) use portfolio::{ClassificationPortfolioModel, PlsHeadModel};
-pub(super) use tab_boost::{BoostStump, TabBoostModel};
+pub(crate) use portfolio::{ClassificationPortfolioModel, PlsHeadModel};
+pub(crate) use tab_boost::{BoostStump, TabBoostModel};
 
 use super::input::str_param;
 use super::transforms::{fit_pls_weights, V3Op};
@@ -38,7 +38,7 @@ enum ClassWeight {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) enum V3Head {
+pub(crate) enum V3Head {
     Legacy(FittedHead),
     LogitRidge(LogitRidgeModel),
     TabBoost(TabBoostModel),
@@ -53,7 +53,7 @@ pub(super) enum V3Head {
 }
 
 impl V3Head {
-    pub(super) fn predict(&self, x: &Rows) -> Result<Vec<f64>> {
+    pub(crate) fn predict(&self, x: &Rows) -> Result<Vec<f64>> {
         Ok(match self {
             V3Head::Legacy(head) => head.predict(x)?,
             V3Head::LogitRidge(head) => head.predict(x),
@@ -79,7 +79,7 @@ impl V3Head {
         })
     }
 
-    pub(super) fn multiclass_probabilities(&self, x: &Rows) -> Option<(Vec<i64>, Vec<Vec<f64>>)> {
+    pub(crate) fn multiclass_probabilities(&self, x: &Rows) -> Option<(Vec<i64>, Vec<Vec<f64>>)> {
         match self {
             V3Head::MulticlassRidge(head) => Some((head.classes.clone(), head.probabilities(x))),
             V3Head::MulticlassOvrLogistic(head) => {
@@ -110,7 +110,7 @@ fn probability_labels(classes: &[i64], probabilities: Vec<Vec<f64>>) -> Vec<f64>
         .collect()
 }
 
-pub(super) fn fit_v3_head(stage: &Stage, x: &Rows, y: &[f64], task: TaskKind) -> Result<V3Head> {
+pub(crate) fn fit_v3_head(stage: &Stage, x: &Rows, y: &[f64], task: TaskKind) -> Result<V3Head> {
     let binary = task == TaskKind::Binary;
     match stage.op.as_str() {
         "multiclass_ridge" if task == TaskKind::Multiclass => Ok(V3Head::MulticlassRidge(
@@ -177,7 +177,7 @@ fn parse_class_weight(stage: &Stage) -> Result<ClassWeight> {
     }
 }
 
-pub(super) fn validate_binary_target(y: &[f64], rows: usize) -> Result<()> {
+pub(crate) fn validate_binary_target(y: &[f64], rows: usize) -> Result<()> {
     if y.len() != rows || rows == 0 {
         bail!("binary target length differs from nonempty training rows");
     }
@@ -191,7 +191,7 @@ pub(super) fn validate_binary_target(y: &[f64], rows: usize) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_multiclass_target(y: &[f64], rows: usize) -> Result<Vec<i64>> {
+pub(crate) fn validate_multiclass_target(y: &[f64], rows: usize) -> Result<Vec<i64>> {
     if y.len() != rows || rows == 0 {
         bail!("multiclass target length differs from nonempty training rows");
     }
@@ -232,7 +232,7 @@ fn validate_binary_fit_target(y: &[f64], rows: usize) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn finite(value: f64) -> f64 {
+pub(crate) fn finite(value: f64) -> f64 {
     if value.is_finite() {
         value
     } else {

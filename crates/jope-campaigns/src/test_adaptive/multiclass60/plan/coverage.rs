@@ -2,7 +2,7 @@ use super::*;
 
 use super::*;
 
-pub(super) fn canonical_manifest_sha256(mut value: Value) -> Result<String> {
+pub(crate) fn canonical_manifest_sha256(mut value: Value) -> Result<String> {
     value
         .as_object_mut()
         .context("manifest must be an object")?
@@ -10,7 +10,7 @@ pub(super) fn canonical_manifest_sha256(mut value: Value) -> Result<String> {
     Ok(sha256_bytes(&serde_json::to_vec(&value)?))
 }
 
-pub(super) fn required_hash(value: &Value, pointer: &str) -> Result<String> {
+pub(crate) fn required_hash(value: &Value, pointer: &str) -> Result<String> {
     let hash = value
         .pointer(pointer)
         .and_then(Value::as_str)
@@ -21,12 +21,12 @@ pub(super) fn required_hash(value: &Value, pointer: &str) -> Result<String> {
     Ok(hash.to_string())
 }
 
-pub(super) fn read_value(path: &Path) -> Result<Value> {
+pub(crate) fn read_value(path: &Path) -> Result<Value> {
     let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
     serde_json::from_slice(&bytes).with_context(|| format!("parse JSON {}", path.display()))
 }
 
-pub(super) fn validate_source_manifest(path: &Path, schema: &str) -> Result<Value> {
+pub(crate) fn validate_source_manifest(path: &Path, schema: &str) -> Result<Value> {
     let value = read_value(path)?;
     if value.get("schema_version").and_then(Value::as_str) != Some(schema) {
         bail!("{} has the wrong schema", path.display());
@@ -38,7 +38,7 @@ pub(super) fn validate_source_manifest(path: &Path, schema: &str) -> Result<Valu
     Ok(value)
 }
 
-pub(super) fn validate_coverage_receipt(
+pub(crate) fn validate_coverage_receipt(
     path: &Path,
     campaign_id: &str,
     manifest_sha256: &str,
@@ -79,7 +79,7 @@ pub(super) fn validate_coverage_receipt(
     Ok(embedded)
 }
 
-pub(super) fn coverage_gate(comparator_root: &Path) -> Result<CoverageGate> {
+pub(crate) fn coverage_gate(comparator_root: &Path) -> Result<CoverageGate> {
     let mc_manifest =
         validate_source_manifest(Path::new(mc_coverage_manifest_str()), CORPUS_SCHEMA)?;
     if required_hash(&mc_manifest, "/manifest_sha256")? != MC_COVERAGE_MANIFEST_SHA256 {
@@ -204,7 +204,7 @@ pub(super) fn coverage_gate(comparator_root: &Path) -> Result<CoverageGate> {
     })
 }
 
-pub(super) fn rewrite_seed(source: &str, slot: usize) -> Result<SeedMember> {
+pub(crate) fn rewrite_seed(source: &str, slot: usize) -> Result<SeedMember> {
     let GenomeIr::Pipeline(mut pipeline) = GenomeIr::parse(source)? else {
         bail!("multiclass generation-zero seeds must be pipelines");
     };
@@ -272,7 +272,7 @@ pub(super) fn rewrite_seed(source: &str, slot: usize) -> Result<SeedMember> {
     })
 }
 
-pub(super) fn seed_population(path: &Path) -> Result<Vec<SeedMember>> {
+pub(crate) fn seed_population(path: &Path) -> Result<Vec<SeedMember>> {
     let mut seen = BTreeSet::new();
     let mut family_counts = BTreeMap::<String, usize>::new();
     let mut members = Vec::new();
@@ -320,7 +320,7 @@ pub(super) fn seed_population(path: &Path) -> Result<Vec<SeedMember>> {
     Ok(members)
 }
 
-pub(super) fn multiclass_head_family(source: &str) -> Result<String> {
+pub(crate) fn multiclass_head_family(source: &str) -> Result<String> {
     let GenomeIr::Pipeline(pipeline) = GenomeIr::parse(source)? else {
         bail!("multiclass member must be a pipeline");
     };
@@ -334,7 +334,7 @@ pub(super) fn multiclass_head_family(source: &str) -> Result<String> {
     Ok(head.op.clone())
 }
 
-pub(super) fn seed_sources_sha256(path: &Path) -> Result<String> {
+pub(crate) fn seed_sources_sha256(path: &Path) -> Result<String> {
     let fallback = path.with_file_name("generation-zero-binary.txt");
     let mut bytes = fs::read(path)?;
     bytes.push(0);
@@ -342,7 +342,7 @@ pub(super) fn seed_sources_sha256(path: &Path) -> Result<String> {
     Ok(sha256_bytes(&bytes))
 }
 
-pub(super) fn dataset_entries(trusted: &Value) -> Result<BTreeMap<String, Value>> {
+pub(crate) fn dataset_entries(trusted: &Value) -> Result<BTreeMap<String, Value>> {
     let rows = trusted
         .get("datasets")
         .and_then(Value::as_array)

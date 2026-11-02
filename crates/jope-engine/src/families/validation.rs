@@ -4,7 +4,7 @@ use super::*;
 /// (`crate::family_growth`, the native port of the retired `family_growth_policy.py`). No
 /// helper in the workspace is consulted, so a replaced or forged one cannot authorize a
 /// component. The receipt's bytes are hashed and parsed once.
-pub(super) fn verified_growth(binding: &FileBinding) -> Result<Value> {
+pub(crate) fn verified_growth(binding: &FileBinding) -> Result<Value> {
     let bytes = fs::read(&binding.path)?;
     ensure!(hash(&bytes) == binding.sha256, "growth receipt changed");
     let request: Value = serde_json::from_slice(&bytes)?;

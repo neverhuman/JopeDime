@@ -37,15 +37,15 @@ struct OriginalEffect {
     key: String,
     row: Value,
 }
-pub(super) struct EventIdentity {
-    pub(super) seq: u64,
-    pub(super) deadline: u64,
+pub(crate) struct EventIdentity {
+    pub(crate) seq: u64,
+    pub(crate) deadline: u64,
 }
 #[cfg(test)]
-pub(super) fn event_identity(policy: &WitnessPolicy, event: &[u8]) -> Result<EventIdentity> {
+pub(crate) fn event_identity(policy: &WitnessPolicy, event: &[u8]) -> Result<EventIdentity> {
     event_identity_effective(policy, policy, event)
 }
-pub(super) fn event_identity_effective(
+pub(crate) fn event_identity_effective(
     base: &WitnessPolicy,
     policy: &WitnessPolicy,
     event: &[u8],
@@ -260,18 +260,18 @@ impl SignedAck {
 /// Storage stays outside the authority database restore domain. No startup
 /// creates storage, repairs missing committed tails, or erases unknown files.
 pub struct WitnessStore {
-    pub(super) root: PathBuf,
-    pub(super) policy: WitnessPolicy,
-    pub(super) signing: Option<SigningKey>,
-    pub(super) _lease: File,
-    pub(super) records: BTreeMap<u64, (String, SignedAck, String)>,
-    pub(super) native_grants: native_grants::NativeGrantState,
-    pub(super) epoch_proofs: Vec<WitnessEpochProof>,
-    pub(super) sequence: u64,
-    pub(super) tip: String,
-    pub(super) root_identity: (u64, u64),
-    pub(super) segment_identity: (u64, u64),
-    pub(super) lease_identity: (u64, u64),
-    pub(super) read_only: bool,
+    pub(crate) root: PathBuf,
+    pub(crate) policy: WitnessPolicy,
+    pub(crate) signing: Option<SigningKey>,
+    pub(crate) _lease: File,
+    pub(crate) records: BTreeMap<u64, (String, SignedAck, String)>,
+    pub(crate) native_grants: native_grants::NativeGrantState,
+    pub(crate) epoch_proofs: Vec<WitnessEpochProof>,
+    pub(crate) sequence: u64,
+    pub(crate) tip: String,
+    pub(crate) root_identity: (u64, u64),
+    pub(crate) segment_identity: (u64, u64),
+    pub(crate) lease_identity: (u64, u64),
+    pub(crate) read_only: bool,
 }
 mod operations;
