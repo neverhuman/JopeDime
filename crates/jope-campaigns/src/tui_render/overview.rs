@@ -88,7 +88,9 @@ pub(crate) fn origin_label(origin: Origin) -> (&'static str, Color) {
     }
 }
 
+#[path = "overview/gameplay_tab.rs"]
 mod gameplay_tab;
+#[path = "overview/gpu_tab.rs"]
 mod gpu_tab;
 
 pub(crate) use gameplay_tab::*;

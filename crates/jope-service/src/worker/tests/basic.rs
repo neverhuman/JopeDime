@@ -5,11 +5,10 @@ fn timeout_and_memory_breach_are_bounded_and_the_run_continues() {
     let _guard = process_test_guard();
     let file = matrix();
     let pool = pool(1);
-    assert!(
-        pool.evaluate(&request(file.path(), 0, 1, "ok"))
-            .failure
-            .is_none()
-    );
+    assert!(pool
+        .evaluate(&request(file.path(), 0, 1, "ok"))
+        .failure
+        .is_none());
     let mut hang = request(file.path(), 1, 1, "loop");
     hang.limits.wall_ms = 200;
     let started = Instant::now();
@@ -107,11 +106,10 @@ fn newer_and_revoked_attempts_fence_running_and_queued_work() {
             Some(WorkerFailure::StaleAttempt)
         );
     });
-    assert!(
-        pool.evaluate(&request(file.path(), 2, 1, "ok"))
-            .failure
-            .is_none()
-    );
+    assert!(pool
+        .evaluate(&request(file.path(), 2, 1, "ok"))
+        .failure
+        .is_none());
 }
 
 #[test]
@@ -132,11 +130,10 @@ fn panic_nonfinite_and_bad_matrix_fail_only_the_candidate() {
         pool.evaluate(&missing).failure,
         Some(WorkerFailure::InvalidRequest)
     );
-    assert!(
-        pool.evaluate(&request(file.path(), 4, 1, "ok"))
-            .failure
-            .is_none()
-    );
+    assert!(pool
+        .evaluate(&request(file.path(), 4, 1, "ok"))
+        .failure
+        .is_none());
 }
 
 #[test]

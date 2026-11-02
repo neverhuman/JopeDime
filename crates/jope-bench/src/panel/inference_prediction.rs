@@ -25,7 +25,9 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
+#[path = "inference_prediction/compat.rs"]
 mod compat;
+#[path = "inference_prediction/runner.rs"]
 mod runner;
 
 use compat::*;

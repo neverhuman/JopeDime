@@ -122,7 +122,6 @@ struct Args {
     dry_run: bool,
 }
 
-
 mod catalog;
 mod cycle;
 mod publish;

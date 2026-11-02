@@ -41,9 +41,12 @@ const REQUEST_COLUMNS: [&str; 6] = [
 ];
 const BOUNDARY: &str = "Fitting data to first prediction, including preprocessing, encoders, policy, fitting, emission and compilation. Backends emitted sequentially; later milestones include earlier backend work. No LLM speed comparison.";
 
+#[path = "inference_report/format.rs"]
 mod format;
+#[path = "inference_report/json.rs"]
 mod json;
 #[cfg(test)]
+#[path = "inference_report/tests.rs"]
 mod tests;
 
 pub(super) use format::*;

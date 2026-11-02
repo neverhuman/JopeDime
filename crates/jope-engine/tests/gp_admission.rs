@@ -92,10 +92,7 @@ fn search_without_authority_cannot_publish_an_admissible_quality_label() {
             !row["failure"].is_null(),
             "missing authority produced a successful fit: {row}"
         );
-        assert!(
-            row["metrics"].is_null(),
-            "failed dispatch recorded metrics"
-        );
+        assert!(row["metrics"].is_null(), "failed dispatch recorded metrics");
     }
     let receipt: Value = read_json(&output.join("search.json")).unwrap();
     assert_eq!(receipt["terminal"], true);

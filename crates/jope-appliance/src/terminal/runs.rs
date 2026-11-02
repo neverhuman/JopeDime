@@ -224,14 +224,23 @@ mod tests {
         assert!(
             matches!(browser.handle(&key(KeyCode::Enter)), RunBrowserAction::Open(url) if url.ends_with("/runs/cloud-id"))
         );
-        assert!(matches!(browser.handle(&key(KeyCode::Esc)), RunBrowserAction::Close));
+        assert!(matches!(
+            browser.handle(&key(KeyCode::Esc)),
+            RunBrowserAction::Close
+        ));
     }
     #[test]
     fn empty_browser_navigation_is_safe_and_refresh_is_explicit() {
         let mut browser = Browser::default();
         browser.replace(Vec::new(), "Local".into());
-        assert!(matches!(browser.handle(&key(KeyCode::Down)), RunBrowserAction::None));
-        assert!(matches!(browser.handle(&key(KeyCode::Enter)), RunBrowserAction::None));
+        assert!(matches!(
+            browser.handle(&key(KeyCode::Down)),
+            RunBrowserAction::None
+        ));
+        assert!(matches!(
+            browser.handle(&key(KeyCode::Enter)),
+            RunBrowserAction::None
+        ));
         assert!(matches!(
             browser.handle(&key(KeyCode::Char('r'))),
             RunBrowserAction::Refresh

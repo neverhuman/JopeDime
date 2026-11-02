@@ -60,6 +60,7 @@ pub(crate) fn precise_sincos(x: f64) -> (f64, f64) {
     (linux_reference::sin(x), linux_reference::cos(x))
 }
 
+#[path = "frozen_s1/linux_reference/mod.rs"]
 mod linux_reference;
 
 #[cfg(test)]

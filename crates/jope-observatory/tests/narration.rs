@@ -1,7 +1,7 @@
 //! Executable delivery contracts: retained text, cursors, corruption and MCP framing.
 use jope_narrator::{Claim, Cursor, Envelope, FactJournal, LineageFact, Links, Narration, SCHEMA};
 use jope_observatory::narration::{self, Index, Limits, MAX_PAGE_BYTES};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
     fs::{self, OpenOptions},

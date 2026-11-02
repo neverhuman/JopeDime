@@ -6,6 +6,9 @@
 //! 256-value vector and raw 24-column descriptors; ranker-facing columns are
 //! projected into the existing 64-by-17 shape. Numeric feature scaling is
 //! regression-only, matching the source recipe's numeric input contract.
+#[path = "landmarks/mod.rs"]
+mod recipe;
+pub use recipe::{fit_transform_and_extract_bundle_high, RecipeError};
 
 pub const VECTOR_WIDTH: usize = 256;
 pub const REPORT_WIDTH: usize = 116;

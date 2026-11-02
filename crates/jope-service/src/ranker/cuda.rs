@@ -548,18 +548,12 @@ mod tests {
         for invalid in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
             let mut bad = good;
             bad[0] = invalid;
-            assert!(compare_stage(
-                TensorStage::Lm48,
-                view(&[48], &good),
-                view(&[48], &bad)
-            )
-            .is_err());
-            assert!(compare_stage(
-                TensorStage::Lm48,
-                view(&[48], &bad),
-                view(&[48], &good)
-            )
-            .is_err());
+            assert!(
+                compare_stage(TensorStage::Lm48, view(&[48], &good), view(&[48], &bad)).is_err()
+            );
+            assert!(
+                compare_stage(TensorStage::Lm48, view(&[48], &bad), view(&[48], &good)).is_err()
+            );
         }
         assert!(compare_stage(
             TensorStage::Lm48,
@@ -579,12 +573,9 @@ mod tests {
         .is_err());
         for n in [12, 20] {
             let costs = vec![0.0; n];
-            assert!(compare_stage(
-                TensorStage::Costs,
-                view(&[n], &costs),
-                view(&[n], &costs)
-            )
-            .is_ok());
+            assert!(
+                compare_stage(TensorStage::Costs, view(&[n], &costs), view(&[n], &costs)).is_ok()
+            );
         }
         assert!(compare_stage(
             TensorStage::Costs,

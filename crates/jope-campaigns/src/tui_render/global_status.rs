@@ -1,4 +1,6 @@
+#[path = "global_status/fleet.rs"]
 mod fleet;
+#[path = "global_status/learning.rs"]
 mod learning;
 
 pub(crate) use fleet::{

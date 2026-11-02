@@ -241,7 +241,11 @@ async fn repoll_wait_or_kill(harness: &RuntimeHarness, container: &str) {
     observe_wait_or_kill(harness, container, previous).await;
 }
 
+#[path = "dispatch_tests/concurrent.rs"]
 mod concurrent;
+#[path = "dispatch_tests/deadlines.rs"]
 mod deadlines;
+#[path = "dispatch_tests/recovery.rs"]
 mod recovery;
+#[path = "dispatch_tests/recovery_failures.rs"]
 mod recovery_failures;

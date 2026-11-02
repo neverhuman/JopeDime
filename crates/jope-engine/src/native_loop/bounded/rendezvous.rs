@@ -1042,8 +1042,8 @@ pub fn gather(
     now: &dyn Fn() -> u64,
 ) -> Result<(GroupAdmission, Vec<Connected>), GroupRefusal> {
     let limit = rendezvous.contract.rendezvous.max_message_bytes;
-    let challenge = serde_json::to_vec(rendezvous.challenge())
-        .expect("rendezvous challenge is serializable");
+    let challenge =
+        serde_json::to_vec(rendezvous.challenge()).expect("rendezvous challenge is serializable");
     let mut connected = Vec::new();
     loop {
         if let Some(admission) = rendezvous.admit(coordinator, now())? {

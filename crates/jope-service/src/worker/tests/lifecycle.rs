@@ -119,11 +119,10 @@ fn crash_is_not_reexecuted_under_the_same_controller_attempt() {
     let pool = pool(1);
     let dir = tempfile::tempdir().unwrap();
     for mode in ["crash", "exit_zero"] {
-        assert!(
-            pool.evaluate(&request(file.path(), 0, 1, "ok"))
-                .failure
-                .is_none()
-        );
+        assert!(pool
+            .evaluate(&request(file.path(), 0, 1, "ok"))
+            .failure
+            .is_none());
         let marker = dir.path().join(mode);
         let mut value = request(file.path(), 1, 1, mode);
         value.fold_spec = serde_json::json!({"execution_marker": marker});

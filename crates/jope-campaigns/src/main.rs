@@ -34,7 +34,7 @@ mod score_corpus;
 mod test_adaptive;
 
 use binary_panel::*;
-use cli::{Cli, Command, KernelVersion};
+use cli::{CampaignCommand, Cli, KernelVersion};
 use regression_panel::*;
 
 jope_paths::once_str!(
@@ -133,11 +133,13 @@ fn main() -> Result<()> {
         );
     }
     match cli.command {
-        Command::VerifyInputs => verify_inputs(&cli.registry),
-        Command::SelectPanel => select_panel(&cli.registry, &cli.panel_id, cli.dataset.as_deref()),
-        Command::ValidatePanel => validate_panel(&cli.registry, &cli.panel_id),
-        Command::ScorePanel => score_panel(&cli.registry, &cli.panel_id),
-        Command::PrepareTrainOnlyStudy {
+        CampaignCommand::VerifyInputs => verify_inputs(&cli.registry),
+        CampaignCommand::SelectPanel => {
+            select_panel(&cli.registry, &cli.panel_id, cli.dataset.as_deref())
+        }
+        CampaignCommand::ValidatePanel => validate_panel(&cli.registry, &cli.panel_id),
+        CampaignCommand::ScorePanel => score_panel(&cli.registry, &cli.panel_id),
+        CampaignCommand::PrepareTrainOnlyStudy {
             run_id,
             study_root,
             checkpoint_pointer,
@@ -174,7 +176,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::RunTrainOnlyStudy {
+        CampaignCommand::RunTrainOnlyStudy {
             manifest,
             resume,
             workers,
@@ -191,7 +193,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::ValidateTrainOnlyStudy {
+        CampaignCommand::ValidateTrainOnlyStudy {
             run_id,
             study_root,
             sotarena_root,
@@ -210,7 +212,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::ScoreTrainOnlyStudy {
+        CampaignCommand::ScoreTrainOnlyStudy {
             run_id,
             study_root,
             sotarena_root,
@@ -224,7 +226,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::ReportTrainOnlyStudy {
+        CampaignCommand::ReportTrainOnlyStudy {
             run_id,
             study_root,
             sotarena_root,
@@ -238,7 +240,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::PrepareTrainOnlyRedteam {
+        CampaignCommand::PrepareTrainOnlyRedteam {
             run_id,
             study_root,
             sotarena_root,
@@ -263,7 +265,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::RunTrainOnlyRedteam {
+        CampaignCommand::RunTrainOnlyRedteam {
             run_id,
             study_root,
             sotarena_root: _,
@@ -316,7 +318,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::ValidateTrainOnlyRedteam {
+        CampaignCommand::ValidateTrainOnlyRedteam {
             run_id,
             study_root,
             sotarena_root,
@@ -335,7 +337,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::ScoreTrainOnlyRedteam {
+        CampaignCommand::ScoreTrainOnlyRedteam {
             run_id,
             study_root,
             sotarena_root,
@@ -349,7 +351,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::ScoreSmartV3Redteam {
+        CampaignCommand::ScoreSmartV3Redteam {
             run_id,
             study_root,
             sotarena_root,
@@ -367,7 +369,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::ReportTrainOnlyRedteam {
+        CampaignCommand::ReportTrainOnlyRedteam {
             run_id,
             study_root,
             sotarena_root,
@@ -385,7 +387,7 @@ fn main() -> Result<()> {
             println!("{}", path.display());
             Ok(())
         }
-        Command::VerifyEvaluationV2 { manifest } => {
+        CampaignCommand::VerifyEvaluationV2 { manifest } => {
             if cli.kernel_version != KernelVersion::LegacyV2 {
                 bail!("verify-evaluation-v2 is pinned to the legacy-v2 evaluator");
             }
@@ -395,39 +397,39 @@ fn main() -> Result<()> {
                 cli.dataset.as_deref(),
             )
         }
-        Command::VerifyInputsBinary => verify_inputs_binary(&cli.registry),
-        Command::SelectPanelBinary => {
+        CampaignCommand::VerifyInputsBinary => verify_inputs_binary(&cli.registry),
+        CampaignCommand::SelectPanelBinary => {
             select_panel_binary(&cli.registry, &cli.panel_id, cli.dataset.as_deref())
         }
-        Command::ValidatePanelBinary => validate_panel_binary(&cli.registry, &cli.panel_id),
-        Command::ScorePanelBinary => score_panel_binary(&cli.registry, &cli.panel_id),
-        Command::RunBinaryTestAdaptive { run_id, resume } => {
+        CampaignCommand::ValidatePanelBinary => validate_panel_binary(&cli.registry, &cli.panel_id),
+        CampaignCommand::ScorePanelBinary => score_panel_binary(&cli.registry, &cli.panel_id),
+        CampaignCommand::RunBinaryTestAdaptive { run_id, resume } => {
             let dataset = cli
                 .dataset
                 .as_deref()
                 .context("run-binary-test-adaptive requires --dataset")?;
             test_adaptive::run_binary42(&run_id, dataset, resume)
         }
-        Command::ValidateBinaryTestAdaptive { run_id } => {
+        CampaignCommand::ValidateBinaryTestAdaptive { run_id } => {
             let dataset = cli
                 .dataset
                 .as_deref()
                 .context("validate-binary-test-adaptive requires --dataset")?;
             test_adaptive::validate_binary42(&run_id, dataset)
         }
-        Command::RunBinaryTestAdaptiveAll { run_id, resume } => {
+        CampaignCommand::RunBinaryTestAdaptiveAll { run_id, resume } => {
             if cli.dataset.is_some() {
                 bail!("run-binary-test-adaptive-all does not accept --dataset");
             }
             test_adaptive::run_binary42_all(&run_id, resume)
         }
-        Command::ValidateBinaryTestAdaptiveAll { run_id } => {
+        CampaignCommand::ValidateBinaryTestAdaptiveAll { run_id } => {
             if cli.dataset.is_some() {
                 bail!("validate-binary-test-adaptive-all does not accept --dataset");
             }
             test_adaptive::validate_binary42_all(&run_id)
         }
-        Command::PlanMulticlassTestAdaptive {
+        CampaignCommand::PlanMulticlassTestAdaptive {
             run_id,
             campaign_root,
             corpus_manifest,
@@ -452,7 +454,7 @@ fn main() -> Result<()> {
                 &seed_catalog,
             )
         }
-        Command::RunMulticlassTestAdaptiveAll {
+        CampaignCommand::RunMulticlassTestAdaptiveAll {
             run_id,
             campaign_root,
             resume,
@@ -462,7 +464,7 @@ fn main() -> Result<()> {
             }
             test_adaptive::run_multiclass60_all(&run_id, &campaign_root, resume)
         }
-        Command::ValidateMulticlassTestAdaptiveAll {
+        CampaignCommand::ValidateMulticlassTestAdaptiveAll {
             run_id,
             campaign_root,
         } => {
@@ -471,19 +473,19 @@ fn main() -> Result<()> {
             }
             test_adaptive::validate_multiclass60_all(&run_id, &campaign_root)
         }
-        Command::RunTimeseriesTestAdaptiveAll { run_id, resume } => {
+        CampaignCommand::RunTimeseriesTestAdaptiveAll { run_id, resume } => {
             if cli.dataset.is_some() {
                 bail!("run-timeseries-test-adaptive-all does not accept --dataset");
             }
             test_adaptive::run_timeseries42_all(&run_id, resume)
         }
-        Command::ValidateTimeseriesTestAdaptiveAll { run_id } => {
+        CampaignCommand::ValidateTimeseriesTestAdaptiveAll { run_id } => {
             if cli.dataset.is_some() {
                 bail!("validate-timeseries-test-adaptive-all does not accept --dataset");
             }
             test_adaptive::validate_timeseries42_all(&run_id)
         }
-        Command::RunTimeseriesTestAdaptiveGen30 {
+        CampaignCommand::RunTimeseriesTestAdaptiveGen30 {
             base_run_id,
             run_id,
             resume,
@@ -493,7 +495,7 @@ fn main() -> Result<()> {
             }
             test_adaptive::run_timeseries42_gen30(&base_run_id, &run_id, resume)
         }
-        Command::ValidateTimeseriesTestAdaptiveGen30 {
+        CampaignCommand::ValidateTimeseriesTestAdaptiveGen30 {
             base_run_id,
             run_id,
         } => {
@@ -502,7 +504,7 @@ fn main() -> Result<()> {
             }
             test_adaptive::validate_timeseries42_gen30(&base_run_id, &run_id)
         }
-        Command::RunTimeseriesTestAdaptiveWinall {
+        CampaignCommand::RunTimeseriesTestAdaptiveWinall {
             source_run_id,
             run_id,
             max_generations,
@@ -520,11 +522,11 @@ fn main() -> Result<()> {
                 lineage_salt.as_deref(),
             )
         }
-        Command::BinaryTestAdaptiveBatchWorker {
+        CampaignCommand::BinaryTestAdaptiveBatchWorker {
             manifest,
             output_dir,
         } => test_adaptive::binary42_batch_worker(&manifest, &output_dir),
-        Command::TimeseriesTestAdaptiveBatchWorker {
+        CampaignCommand::TimeseriesTestAdaptiveBatchWorker {
             manifest,
             output_dir,
             corpus_eval,
@@ -535,61 +537,63 @@ fn main() -> Result<()> {
             &corpus_eval,
             timeout_seconds,
         ),
-        Command::RunPanel => {
+        CampaignCommand::RunPanel => {
             select_panel(&cli.registry, &cli.panel_id, cli.dataset.as_deref())?;
             score_panel(&cli.registry, &cli.panel_id)
         }
-        Command::Summarize => summarize(&cli.registry, &cli.panel_id),
-        Command::RunLosses3x => followup::run(&cli.registry),
-        Command::ValidateLosses3x => followup::validate(&cli.registry),
-        Command::RunTestAdaptive { run_id, resume } => {
+        CampaignCommand::Summarize => summarize(&cli.registry, &cli.panel_id),
+        CampaignCommand::RunLosses3x => followup::run(&cli.registry),
+        CampaignCommand::ValidateLosses3x => followup::validate(&cli.registry),
+        CampaignCommand::RunTestAdaptive { run_id, resume } => {
             test_adaptive::run(&cli.registry, &run_id, resume)
         }
-        Command::RunTestAdaptivePanel { run_id, resume } => {
+        CampaignCommand::RunTestAdaptivePanel { run_id, resume } => {
             test_adaptive::run_panel(&cli.registry, &run_id, resume)
         }
-        Command::RunTestAdaptiveExtension { run_id, resume } => {
+        CampaignCommand::RunTestAdaptiveExtension { run_id, resume } => {
             test_adaptive::run_extension(&cli.registry, &run_id, resume)
         }
-        Command::RunTestAdaptiveIslandExtension { run_id, resume } => {
+        CampaignCommand::RunTestAdaptiveIslandExtension { run_id, resume } => {
             test_adaptive::run_island_extension(&cli.registry, &run_id, resume)
         }
-        Command::RunGolden42Champions { run_id, resume } => {
+        CampaignCommand::RunGolden42Champions { run_id, resume } => {
             test_adaptive::run_champion_continuation(&cli.registry, &run_id, resume)
         }
-        Command::RunTabarenaLiteIslands { run_id, resume } => {
+        CampaignCommand::RunTabarenaLiteIslands { run_id, resume } => {
             test_adaptive::run_tabarena_lite_islands(&run_id, resume, cli.dataset.as_deref())
         }
-        Command::RecoverTabarenaLiteResult { run_id, dataset } => {
+        CampaignCommand::RecoverTabarenaLiteResult { run_id, dataset } => {
             test_adaptive::recover_tabarena_lite_result(&run_id, &dataset)
         }
-        Command::TestAdaptiveWorker { request } => test_adaptive::worker(&request),
-        Command::TestAdaptiveIslandBatchWorker {
+        CampaignCommand::TestAdaptiveWorker { request } => test_adaptive::worker(&request),
+        CampaignCommand::TestAdaptiveIslandBatchWorker {
             manifest,
             output_dir,
         } => test_adaptive::island_batch_worker(&manifest, &output_dir),
-        Command::ValidateTestAdaptive { run_id } => test_adaptive::validate(&cli.registry, &run_id),
-        Command::ValidateTestAdaptivePanel { run_id } => {
+        CampaignCommand::ValidateTestAdaptive { run_id } => {
+            test_adaptive::validate(&cli.registry, &run_id)
+        }
+        CampaignCommand::ValidateTestAdaptivePanel { run_id } => {
             test_adaptive::validate_panel(&cli.registry, &run_id)
         }
-        Command::ValidateTestAdaptiveExtension { run_id } => {
+        CampaignCommand::ValidateTestAdaptiveExtension { run_id } => {
             test_adaptive::validate_extension(&cli.registry, &run_id)
         }
-        Command::ValidateTestAdaptiveIslandExtension { run_id } => {
+        CampaignCommand::ValidateTestAdaptiveIslandExtension { run_id } => {
             test_adaptive::validate_island_extension(&cli.registry, &run_id)
         }
-        Command::ValidateGolden42Champions { run_id } => {
+        CampaignCommand::ValidateGolden42Champions { run_id } => {
             test_adaptive::validate_champion_continuation(&cli.registry, &run_id)
         }
-        Command::ValidateTabarenaLiteIslands { run_id } => {
+        CampaignCommand::ValidateTabarenaLiteIslands { run_id } => {
             test_adaptive::validate_tabarena_lite_islands(&run_id)
         }
-        Command::BenchLanguagesV3 { output } => aggressive::bench_languages(&output),
-        Command::AdmitFittedBackendV1 { output } => {
+        CampaignCommand::BenchLanguagesV3 { output } => aggressive::bench_languages(&output),
+        CampaignCommand::AdmitFittedBackendV1 { output } => {
             aggressive::write_fitted_backend_admission(&output)
         }
-        Command::AdmitFittedCppV3 { output } => golden42_panel::admit(&output),
-        Command::RunGolden42V3Max {
+        CampaignCommand::AdmitFittedCppV3 { output } => golden42_panel::admit(&output),
+        CampaignCommand::RunGolden42V3Max {
             run_id,
             dataset,
             node,
@@ -610,13 +614,15 @@ fn main() -> Result<()> {
                 resume,
             )
         }
-        Command::ValidateGolden42V3Max { run_id } => golden42_panel::validate(&run_id),
-        Command::Golden42V3PersistentWorker { bootstrap } => {
+        CampaignCommand::ValidateGolden42V3Max { run_id } => golden42_panel::validate(&run_id),
+        CampaignCommand::Golden42V3PersistentWorker { bootstrap } => {
             golden42_panel::persistent_worker(&bootstrap)
         }
-        Command::Golden42V3Confirm { request } => golden42_panel::confirm(&request),
-        Command::PlanGolden42Aggressive { output } => aggressive::preflight_contract(&output),
-        Command::RunGolden42Aggressive {
+        CampaignCommand::Golden42V3Confirm { request } => golden42_panel::confirm(&request),
+        CampaignCommand::PlanGolden42Aggressive { output } => {
+            aggressive::preflight_contract(&output)
+        }
+        CampaignCommand::RunGolden42Aggressive {
             run_id,
             dataset,
             start_index,
@@ -628,10 +634,10 @@ fn main() -> Result<()> {
             start_index,
             resume,
         ),
-        Command::ValidateGolden42Aggressive { run_id } => {
+        CampaignCommand::ValidateGolden42Aggressive { run_id } => {
             test_adaptive::validate_aggressive(&cli.registry, &run_id)
         }
-        Command::RunGolden46 {
+        CampaignCommand::RunGolden46 {
             run_id,
             dataset,
             transfer_arm,
@@ -643,21 +649,23 @@ fn main() -> Result<()> {
             transfer_arm,
             resume,
         ),
-        Command::ValidateGolden46 {
+        CampaignCommand::ValidateGolden46 {
             run_id,
             transfer_arm,
         } => test_adaptive::validate_golden46(&cli.registry, &run_id, transfer_arm),
-        Command::Golden42AggressiveBatchWorker {
+        CampaignCommand::Golden42AggressiveBatchWorker {
             manifest,
             output_dir,
         } => test_adaptive::aggressive_batch_worker(&manifest, &output_dir),
-        Command::MaterializeScoreCorpus {
+        CampaignCommand::MaterializeScoreCorpus {
             archive_root,
             output_root,
             cohort,
         } => score_corpus::materialize(&archive_root, &output_root, cohort.as_deref()),
-        Command::ValidateRatchetArtifact { input } => ratchet::validate_artifact_file(&input),
-        Command::RatchetRetainModelSeeds {
+        CampaignCommand::ValidateRatchetArtifact { input } => {
+            ratchet::validate_artifact_file(&input)
+        }
+        CampaignCommand::RatchetRetainModelSeeds {
             request,
             response,
             excluded_semantics,
@@ -668,18 +676,18 @@ fn main() -> Result<()> {
             &excluded_semantics,
             &output,
         ),
-        Command::RatchetCommitDatasetState {
+        CampaignCommand::RatchetCommitDatasetState {
             root,
             state,
             committed_at_unix_seconds,
         } => ratchet::commit_dataset_state_from_file(&root, &state, committed_at_unix_seconds),
-        Command::RatchetPublishTrainingHead {
+        CampaignCommand::RatchetPublishTrainingHead {
             root,
             manifest,
             micro_batch,
             replay,
         } => ratchet::publish_training_head_from_files(&root, &manifest, &micro_batch, &replay),
-        Command::RatchetPublishServingWave {
+        CampaignCommand::RatchetPublishServingWave {
             root,
             manifest,
             rollout_switches,
@@ -690,16 +698,16 @@ fn main() -> Result<()> {
             &rollout_switches,
             &frozen_splits,
         ),
-        Command::RatchetAdmitAttempt {
+        CampaignCommand::RatchetAdmitAttempt {
             root,
             generation_zero,
             admission,
         } => ratchet::admit_attempt_from_files(&root, &generation_zero, &admission),
-        Command::GenomeBoostFeatures {
+        CampaignCommand::GenomeBoostFeatures {
             manifest,
             output_dir,
         } => genome_boost::run_features(&manifest, &output_dir),
-        Command::ValidateGenomeBoostFeatures { output_dir } => {
+        CampaignCommand::ValidateGenomeBoostFeatures { output_dir } => {
             genome_boost::validate_features(&output_dir)
         }
     }
@@ -708,27 +716,27 @@ fn main() -> Result<()> {
 fn command_starts_campaign(command: &Command) -> bool {
     matches!(
         command,
-        Command::SelectPanel
-            | Command::RunPanel
-            | Command::PrepareTrainOnlyStudy { .. }
-            | Command::RunTrainOnlyStudy { .. }
-            | Command::PrepareTrainOnlyRedteam { .. }
-            | Command::RunTrainOnlyRedteam { .. }
-            | Command::RunLosses3x
-            | Command::RunTimeseriesTestAdaptiveAll { .. }
-            | Command::RunTimeseriesTestAdaptiveGen30 { .. }
-            | Command::TimeseriesTestAdaptiveBatchWorker { .. }
-            | Command::RunTestAdaptive { .. }
-            | Command::RunTestAdaptivePanel { .. }
-            | Command::RunTestAdaptiveExtension { .. }
-            | Command::RunTestAdaptiveIslandExtension { .. }
-            | Command::RunGolden42Champions { .. }
-            | Command::RunTabarenaLiteIslands { .. }
-            | Command::TestAdaptiveWorker { .. }
-            | Command::TestAdaptiveIslandBatchWorker { .. }
-            | Command::RunGolden42Aggressive { .. }
-            | Command::RunGolden46 { .. }
-            | Command::Golden42AggressiveBatchWorker { .. }
+        CampaignCommand::SelectPanel
+            | CampaignCommand::RunPanel
+            | CampaignCommand::PrepareTrainOnlyStudy { .. }
+            | CampaignCommand::RunTrainOnlyStudy { .. }
+            | CampaignCommand::PrepareTrainOnlyRedteam { .. }
+            | CampaignCommand::RunTrainOnlyRedteam { .. }
+            | CampaignCommand::RunLosses3x
+            | CampaignCommand::RunTimeseriesTestAdaptiveAll { .. }
+            | CampaignCommand::RunTimeseriesTestAdaptiveGen30 { .. }
+            | CampaignCommand::TimeseriesTestAdaptiveBatchWorker { .. }
+            | CampaignCommand::RunTestAdaptive { .. }
+            | CampaignCommand::RunTestAdaptivePanel { .. }
+            | CampaignCommand::RunTestAdaptiveExtension { .. }
+            | CampaignCommand::RunTestAdaptiveIslandExtension { .. }
+            | CampaignCommand::RunGolden42Champions { .. }
+            | CampaignCommand::RunTabarenaLiteIslands { .. }
+            | CampaignCommand::TestAdaptiveWorker { .. }
+            | CampaignCommand::TestAdaptiveIslandBatchWorker { .. }
+            | CampaignCommand::RunGolden42Aggressive { .. }
+            | CampaignCommand::RunGolden46 { .. }
+            | CampaignCommand::Golden42AggressiveBatchWorker { .. }
     )
 }
 
@@ -858,7 +866,7 @@ mod tests {
         ])
         .unwrap();
         match cli.command {
-            Command::RunTimeseriesTestAdaptiveGen30 {
+            CampaignCommand::RunTimeseriesTestAdaptiveGen30 {
                 base_run_id,
                 run_id,
                 resume,
@@ -888,7 +896,7 @@ mod tests {
         ])
         .unwrap();
         match cli.command {
-            Command::RunTimeseriesTestAdaptiveWinall {
+            CampaignCommand::RunTimeseriesTestAdaptiveWinall {
                 source_run_id,
                 run_id,
                 max_generations,

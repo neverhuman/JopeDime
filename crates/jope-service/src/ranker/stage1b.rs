@@ -238,4 +238,5 @@ fn lm_smart_80(lm48: &[f32; LM48_FEATURES], mean: &[f32; 80], std: &[f32; 80]) -
 }
 
 #[cfg(test)]
+#[path = "stage1b/tests.rs"]
 mod tests;

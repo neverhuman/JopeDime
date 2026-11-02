@@ -14,8 +14,11 @@ use serde_json::{json, Value};
 use std::path::Path;
 use std::process::Command;
 
+#[path = "inference_contract_tests/contracts.rs"]
 mod contracts;
+#[path = "inference_contract_tests/fixtures.rs"]
 mod fixtures;
+#[path = "inference_contract_tests/runner.rs"]
 mod runner;
 
 pub(super) use fixtures::{case, hostile_categories, row, typed};

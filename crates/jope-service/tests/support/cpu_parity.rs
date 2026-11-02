@@ -8,6 +8,7 @@ use std::{
     path::{Component, Path, PathBuf},
 };
 
+#[path = "cpu_parity/round_admission.rs"]
 mod round_admission;
 pub(super) use round_admission::round_admission_fixture;
 

@@ -3156,8 +3156,8 @@ fn now_ms() -> u128 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::tui_dashboard::{blocked_banner, build_dashboard, enrich_gpu_admission};
+    use super::*;
 
     #[test]
     fn four_task_scoreboard_is_complete_when_telemetry_is_absent() {
@@ -4577,11 +4577,18 @@ mod tests {
         assert_eq!(tui_render::arm_latest(arms[0]).unwrap().epoch, 5);
         assert_eq!(tui_render::arm_latest(arms[1]).unwrap().epoch, 9);
         assert_eq!(
-            tui_render::arm_latest(arms[1]).unwrap().val_conditional_advantage,
+            tui_render::arm_latest(arms[1])
+                .unwrap()
+                .val_conditional_advantage,
             Some(0.021)
         );
         // An arm with no advantage recorded must not borrow a neighbour's.
-        assert_eq!(tui_render::arm_latest(arms[2]).unwrap().val_conditional_advantage, None);
+        assert_eq!(
+            tui_render::arm_latest(arms[2])
+                .unwrap()
+                .val_conditional_advantage,
+            None
+        );
     }
 
     #[test]
@@ -4607,7 +4614,9 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
         for arm in 0..4usize {
             terminal
-                .draw(|frame| tui_render::render(frame, &dashboard, 250, UiState { tab: Tab::Dl, arm }))
+                .draw(|frame| {
+                    tui_render::render(frame, &dashboard, 250, UiState { tab: Tab::Dl, arm })
+                })
                 .unwrap();
         }
         let rendered = terminal

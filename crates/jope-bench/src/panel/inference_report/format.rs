@@ -283,5 +283,6 @@ pub(crate) fn csv_row(fields: &[&Json], out: &mut String) {
     out.push_str("\r\n");
 }
 
+#[path = "format/statistics.rs"]
 mod statistics;
 pub(crate) use statistics::{distribution, mean, midpoint, power_of_two, rational};

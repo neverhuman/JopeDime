@@ -123,7 +123,9 @@ pub fn write_until(stream: &mut UnixStream, mut bytes: &[u8], deadline: u64) -> 
     Ok(())
 }
 
+#[path = "resident_protocol/artifacts.rs"]
 mod artifacts;
 pub use artifacts::*;
+#[path = "resident_protocol/dispatch.rs"]
 mod dispatch;
 pub use dispatch::*;

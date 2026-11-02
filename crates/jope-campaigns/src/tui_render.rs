@@ -1,10 +1,15 @@
 use super::tui_dashboard::blocked_banner;
 use super::*;
 
+#[path = "tui_render/compact.rs"]
 mod compact;
+#[path = "tui_render/dl_charts.rs"]
 mod dl_charts;
+#[path = "tui_render/global_status.rs"]
 mod global_status;
+#[path = "tui_render/overview.rs"]
 mod overview;
+#[path = "tui_render/scoreboard.rs"]
 mod scoreboard;
 
 pub(super) use compact::*;

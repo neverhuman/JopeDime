@@ -353,5 +353,7 @@ pub(super) fn execute(dir: &Path, name: &str, source: &str, lang: TimeGradientLa
     }
 }
 
+#[path = "recipes/budget.rs"]
 mod budget;
+#[path = "recipes/recipe_contract.rs"]
 mod recipe_contract;

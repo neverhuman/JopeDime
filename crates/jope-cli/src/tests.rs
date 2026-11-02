@@ -84,5 +84,41 @@ const PRE_D5_FIXTURES: [(&str, &str); 10] = [
     ),
 ];
 
-#[path = "tests/mod.rs"]
-mod cases;
+#[path = "tests/a_fifo_is_rejected_without_waiting_for_a_writer.rs"]
+mod a_fifo_is_rejected_without_waiting_for_a_writer;
+#[path = "tests/altered_file_and_replaced_checksum_cannot_redefine_trust.rs"]
+mod altered_file_and_replaced_checksum_cannot_redefine_trust;
+#[path = "tests/forty_scenarios_are_valid_and_regeneration_is_byte_identical.rs"]
+mod forty_scenarios_are_valid_and_regeneration_is_byte_identical;
+#[path = "tests/generation_never_overwrites_existing_or_incomplete_output.rs"]
+mod generation_never_overwrites_existing_or_incomplete_output;
+#[path = "tests/grouping_is_enforced_even_outside_the_named_grouped_scenario.rs"]
+mod grouping_is_enforced_even_outside_the_named_grouped_scenario;
+#[path = "tests/groups_cannot_cross_partitions_or_lose_identity.rs"]
+mod groups_cannot_cross_partitions_or_lose_identity;
+#[path = "tests/individual_dataset_reads_reject_unsafe_objects_and_oversized_payloads.rs"]
+mod individual_dataset_reads_reject_unsafe_objects_and_oversized_payloads;
+#[path = "tests/malformed_features_targets_ids_and_splits_fail_schema_validation.rs"]
+mod malformed_features_targets_ids_and_splits_fail_schema_validation;
+#[path = "tests/missing_extra_duplicate_and_untrusted_catalog_entries_fail.rs"]
+mod missing_extra_duplicate_and_untrusted_catalog_entries_fail;
+#[path = "tests/missing_unmanifested_and_oversized_files_fail.rs"]
+mod missing_unmanifested_and_oversized_files_fail;
+#[path = "tests/named_stress_scenarios_have_their_promised_structure.rs"]
+mod named_stress_scenarios_have_their_promised_structure;
+#[path = "tests/pre_d5_fixtures_keep_their_bytes.rs"]
+mod pre_d5_fixtures_keep_their_bytes;
+#[path = "tests/pre_d5_ten_member_catalog_is_rejected.rs"]
+mod pre_d5_ten_member_catalog_is_rejected;
+#[path = "tests/swapped_root_and_file_paths_cannot_change_bytes_already_opened.rs"]
+mod swapped_root_and_file_paths_cannot_change_bytes_already_opened;
+#[path = "tests/symlink_files_directories_and_roots_are_rejected.rs"]
+mod symlink_files_directories_and_roots_are_rejected;
+#[path = "tests/time_reversal_duplicate_times_and_future_partitions_fail.rs"]
+mod time_reversal_duplicate_times_and_future_partitions_fail;
+#[path = "tests/traversal_and_nonportable_paths_are_rejected.rs"]
+mod traversal_and_nonportable_paths_are_rejected;
+#[path = "tests/unknown_fields_and_unsupported_target_shapes_are_rejected.rs"]
+mod unknown_fields_and_unsupported_target_shapes_are_rejected;
+#[path = "tests/zero_width_rows_are_refused_at_cli_admission.rs"]
+mod zero_width_rows_are_refused_at_cli_admission;

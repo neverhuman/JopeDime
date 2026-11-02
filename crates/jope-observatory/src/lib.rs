@@ -265,7 +265,7 @@ pub fn campaign(root: &Path) -> Value {
         ],
     );
     cfg_public["snapshot"] = selected(&cfg.value["snapshot"], &["sha256", "bytes"]);
-    // These counters remain null on invalid/mismatched evidence, never fabricated zero.
+    // These counters remain null on invalid/mismatched evidence, never invented zero.
     evidence.value = if recognized {
         selected(
             &p,

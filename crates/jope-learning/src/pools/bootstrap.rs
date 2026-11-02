@@ -233,7 +233,10 @@ mod tests {
             IntervalVerdict::from_interval(-1.0, 0.0),
             IntervalVerdict::Inconclusive
         );
-        assert_eq!(IntervalVerdict::from_interval(-2.0, -1.0), IntervalVerdict::Less);
+        assert_eq!(
+            IntervalVerdict::from_interval(-2.0, -1.0),
+            IntervalVerdict::Less
+        );
     }
 
     #[test]
