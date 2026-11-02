@@ -2901,6 +2901,7 @@ python/src/jope/broad_shadow/cli.py
 python/src/jope/broad_shadow/cluster.py
 python/src/jope/broad_shadow/contracts.py
 python/src/jope/broad_shadow/corpus.py
+python/src/jope/broad_shadow/corpus_sampler.py
 python/src/jope/broad_shadow/experiment.py
 python/src/jope/broad_shadow/gates.py
 python/src/jope/broad_shadow/probe.py
