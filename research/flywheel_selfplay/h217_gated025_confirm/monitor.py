@@ -13,7 +13,7 @@ H217 runs on xbabe2 only (hw_t0330). Changes from H210, all operational:
 - xbabe2 swap is full: stop when MemAvailable < 20 GiB; admission needs 24 GiB.
 
 Load gate (unchanged from H210 in shape): admission needs load1 and load5 <= 50% of effective cores, host CPU <= 50%,
-MemAvailable >= 24 GiB and disk used < 93.7%. While running, host overload ends the attempt only when it is sustained:
+MemAvailable >= 24 GiB and disk free >= 220 GB (amendment A1). While running, host overload ends the attempt only when it is sustained:
 load5 > 85% of effective cores, or load1 / host CPU > 85% continuously for 300 s. Memory, disk, RSS and the worker's
 own core cap stay instantaneous."""
 
@@ -36,10 +36,12 @@ HOST_CORES = len(AFFINITY)  # effective allocation, not SC_NPROCESSORS_ONLN
 LOAD_LIMIT = 0.85 * HOST_CORES
 ADMIT_LOAD = 0.50 * HOST_CORES
 ADMIT_CPU = 50.0
-ADMIT_USED = 0.937
+ADMIT_FREE = 220_000_000_000  # amendment A1: 20 GB margin above the stop
 ADMIT_MEM = 24 * 2**30
 MEM_MIN = 20 * 2**30  # hw_t0330: stop if available memory < 20 GB (xbabe2 swap full)
-MAX_USED = 0.938  # lanes_t1615 disk guard
+MIN_FREE = (
+    200_000_000_000  # amendment A1 (hw_t0400): on xbabe2 the disk stop is free < 200 GB
+)
 SUSTAIN = 300.0
 CORE_LIMIT = 4.5
 ALLOWED_HOSTS = (
@@ -62,8 +64,7 @@ def violations(sample):
             ),
             (sample["cpu_over_s"] >= SUSTAIN, "host CPU>85% for 300 s"),
             (sample["available"] < MEM_MIN, "MemAvailable<20GiB"),
-            (sample["free"] < 40_000_000_000, "disk free<40GB"),
-            (sample["disk_used_fraction"] >= MAX_USED, "disk used>=93.8%"),
+            (sample["free"] < MIN_FREE, "disk free<200GB (A1)"),
             (sample["rss"] >= 6_000_000_000, "aggregate RSS>=6GB"),
             (
                 sample["tree_cores"] > CORE_LIMIT,
@@ -83,7 +84,7 @@ def admission_refusals(sample):
             (sample["load5"] > ADMIT_LOAD, "admission: load5>50% of cores"),
             (sample["cpu"] > ADMIT_CPU, "admission: host CPU>50%"),
             (sample["available"] < ADMIT_MEM, "admission: MemAvailable<24GiB"),
-            (sample["disk_used_fraction"] >= ADMIT_USED, "admission: disk used>=93.7%"),
+            (sample["free"] < ADMIT_FREE, "admission: disk free<220GB"),
         ]
         if bad
     ]

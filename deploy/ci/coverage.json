@@ -14982,7 +14982,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H217 (fresh-fold confirmation of H210 GATED_025) data-free controls: frozen H210 gate recipe (zgap, disagreement, tau grid, FIT-only tau selection, blend bodies identical), cyclic A/B/FIT cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest with cross-wave Jaccard and refusal of reused partitions, primary verdict (LCB95, 3/3 seeds, harm), DL-Val plateau co-primary (gain > +0.002 with family-bootstrap LCB95 > 0, ties not a win), Elo orientation, xbabe2-only admission before any side effect, limits from effective CPU affinity, source binding before the claim, absolute deadline inherited by the resume, 20 GiB memory stop, 93.8% disk rule"
+      "scope": "H217 (fresh-fold confirmation of H210 GATED_025) data-free controls: frozen H210 gate recipe (zgap, disagreement, tau grid, FIT-only tau selection, blend bodies identical), cyclic A/B/FIT cells, minimal 45-fit plan, H124 folds per fresh fold seed, fold manifest with cross-wave Jaccard and refusal of reused partitions, primary verdict (LCB95, 3/3 seeds, harm), DL-Val plateau co-primary (gain > +0.002 with family-bootstrap LCB95 > 0, ties not a win), Elo orientation, xbabe2-only admission before any side effect, limits from effective CPU affinity, source binding before the claim, absolute deadline inherited by the resume, 20 GiB memory stop, amendment-A1 200 GB free-disk stop"
     },
     "python:research/flywheel_selfplay/h216_init_lottery/test_h216.py": {
       "discovery": {

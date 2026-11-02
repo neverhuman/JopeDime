@@ -74,9 +74,9 @@
   "host": "xbabe2 CPU only (admission before any side effect); no GPU, no GPU claim",
   "guards": {
     "effective_cores": "len(os.sched_getaffinity) = 102 of 128 online on xbabe2",
-    "admission": "load1/load5 <= 50% of effective cores, host CPU (allowed CPUs) <= 50%, MemAvailable >= 24 GiB, disk used < 93.7%; refusal = no claim",
+    "admission": "load1/load5 <= 50% of effective cores, host CPU (allowed CPUs) <= 50%, MemAvailable >= 24 GiB, disk free >= 220 GB (A1); refusal = no claim",
     "source_check": "runner.py --check-launch before the claim",
-    "runtime": "stop on load5 > 85% of effective cores, load1 or host CPU > 85% for 300 s, MemAvailable < 20 GiB, disk free < 40 GB or used >= 93.8%, RSS >= 6 GB, worker tree > 4.5 cores over 30 s",
+    "runtime": "stop on load5 > 85% of effective cores, load1 or host CPU > 85% for 300 s, MemAvailable < 20 GiB, disk free < 200 GB (A1), RSS >= 6 GB, worker tree > 4.5 cores over 30 s",
     "deadline": "absolute: attempt claim time + 4 h; resume inherits it"
   },
   "budget": {
@@ -104,5 +104,14 @@
     ],
     "vs_H210_best_match_max": 0.18294261294261296,
     "vs_H203_best_match_max": 0.1790816867758544
-  }
+  },
+  "amendments": [
+    {
+      "id": "A1",
+      "utc": "2026-11-02T11:05Z",
+      "authority": "hw_t0400_opus_h217.md",
+      "pre_outcome": true,
+      "change": "xbabe2 disk stop free < 200 GB (was free < 40 GB or used >= 93.8%); admission free >= 220 GB (was used < 93.7%); 93.8% rule kept for xbabe1"
+    }
+  ]
 }
