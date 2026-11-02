@@ -3042,7 +3042,11 @@ fn task_status(
 ) -> Result<Value> {
     let accepted = optional_json(&root.join("training/accepted-by-task.json"))?;
     let controller = optional_json(&root.join("ops/task-learning-controller.v2.json"))?;
-    let accepted_tasks = accepted.get("tasks").cloned().unwrap_or_else(|| json!({}));
+    let accepted_tasks = match accepted.get("tasks") {
+        Some(Value::Object(tasks)) => Some(tasks),
+        Some(_) => bail!("accepted-by-task tasks must be a JSON object"),
+        None => None,
+    };
     let shadows = controller
         .get("shadow_models")
         .cloned()
@@ -3053,7 +3057,10 @@ fn task_status(
         .unwrap_or_else(|| json!({}));
     let mut tasks = Map::new();
     for task in crate::selfplay_expansion::TASKS {
-        let accepted_row = accepted_tasks.get(task).cloned().unwrap_or(Value::Null);
+        let accepted_row = accepted_tasks
+            .and_then(|tasks| tasks.get(task))
+            .cloned()
+            .unwrap_or(Value::Null);
         let shadow_row = shadows.get(task).cloned().unwrap_or(Value::Null);
         let task_learning = learning
             .get("tasks")
