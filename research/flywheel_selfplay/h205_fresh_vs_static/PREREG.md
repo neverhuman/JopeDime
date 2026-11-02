@@ -101,3 +101,16 @@ Per `H205-REGRESSION-DATA-OWNER.md`, `H205-CORRECTIVE-HANDOFF.md`, and `H205-TRA
      - Both `original_jtt1_nq0_sha256` and `padded_jtt1_nq10_sha256` are stored separately (`original_jtt1_nq0_sha256 != padded_jtt1_nq10_sha256`). Learner tensors (`tokens_10x32`, `mask_10`, `dope629`, `lm48_z`, `ctx_feat_584`) are extracted strictly from the unpadded `nt`-row `TRAIN` matrix (`padding_examples_added_to_learner == 0`, `padding_families_added == 0`, `h206_readiness_claimed_from_tokens_alone == False`).
      - Retains `use_train_padding_bridge=False` (`BLOCKED_NQ0_PROTOCOL`) as a negative control, refuses any live scoring while `SOURCE / DATA / OPTIMIZER HOLD` is active (`require_hold_release_for_live=True` $\rightarrow$ `status = "HOLD_ACTIVE_PRE_SCORING"`, `optimizer_steps = 0`, `native_calls_total = 0`), and once HOLD is released evaluates all `24` candidates live via `bootstrap.s1main --fit-s1` on `padded_jtt1_nq10`, uploads `context_manifest.json`, `native_evaluator_receipt.json`, `pool.npz`, `features.npz`, and `s3_pre_consumption_custody_receipt.json` create-only (`--if-none-match "*"`) to `s3://veox-jopedime-learning-use2`, replays every object by exact `VersionId` into `verified_s3_replay/`, verifies `verify_pre_consumption_s3_replay_bundle` **before** calling `consume_single_fresh_context_in_inherited_engine`, and then consumes the replayed S3 bundle.
      - **Historical Local Replay Control (`regression-seam-20261102T0752Z`):** Reclassified honestly as `HISTORICAL_LOCAL_S1PROD_REPLAY_CONTROL` (`NOT_SAME_S3_TRAIN_MILESTONE`, `causal_h205_claim_status: NOT_QUALIFIED_NO_ADVANCE`) and explicitly barred in `FORBIDDEN_HISTORICAL_LOCAL_REPLAY_HASHES` (`fa480de30f3fba6fda1d7e9a1df65019acab3de752ded46b96448d0848f86d45` cannot be relabeled as the same-S3-`TRAIN` context or have its cached labels copied).
+
+
+### Operational correction, 2026-11-02: remaining finding 5
+
+This changes enforcement/accounting, not the preregistered scientific protocol.
+The existing supervisor owns the fixed entry-to-worker-exit clock; native/AWS timeouts
+and pre-backward/pre-step/final-custody guards share it. Each invocation requires a
+digest-pinned reconciled campaign ledger, charges startup/failure/finalization once,
+and retains unknown terminal bookkeeping as a blocking reconciliation item. Worker
+summaries remain unqualified pending final accounting. The recorded 2021.039296863135s
+is a lower bound; no later cost is erased and no budget is reset. Original ARGON
+retains execution and all scientific/data/native/optimizer/S3 admission. Acceptance
+is data-free committed AST/fake-clock controls only; no new real context or attempt.
