@@ -6034,6 +6034,16 @@
       "lanes": [],
       "scope": "Owner-requested pytest proofs for the RES-06 deterministic frozen fused-bundle exporter; research custody tooling outside the release lanes."
     },
+    "python:research/flywheel_selfplay/test_hwave_numeric_threads.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "Prospective H-wave numeric-thread admission controls: runtime numeric caps and native pools, multiworker bound, CUDA/OS overhead diagnostics and unknown-evidence refusal. Data-free CPU research fixtures; not a live GPU or serving qualification."
+    },
     "python:research/flywheel_selfplay/test_phase3_gates.py": {
       "discovery": {
         "kind": "python-family"
