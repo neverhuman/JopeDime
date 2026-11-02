@@ -384,9 +384,8 @@ def worker(root, phase, source, smoke, smoke_sha=None):
             row = runtime["train"][0]
             cid = row["context_sha256"]
             folds = json.loads(h212.FOLD_MANIFEST.read_text())["folds"]
-            excluded = next(
-                set(f["families"]) for f in folds if row["family_id"] in f["families"]
-            )
+            fold = next(f for f in folds if row["family_id"] in f["families"])
+            excluded = set(fold["families"])
             bank = [r for r in runtime["champions"] if r["family_id"] not in excluded]
             champion = next(
                 r for r in runtime["champions"] if r["context_sha256"] == cid
@@ -394,7 +393,7 @@ def worker(root, phase, source, smoke, smoke_sha=None):
             receipt = h212.end_to_end_smoke(
                 root / "h212-smoke",
                 row,
-                0,
+                fold["fold"],
                 runtime["context"],
                 runtime["projection"],
                 runtime["pools"][cid],

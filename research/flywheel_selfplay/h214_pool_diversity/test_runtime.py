@@ -142,3 +142,64 @@ def test_incomplete_native_result_is_not_relabelled_as_gate_failure():
     results[0]["status"] = "timeout"
     with pytest.raises(ValueError):
         r.score_panels(pools, programs, results, np.zeros(16))
+
+
+def test_smoke_routes_actual_nonzero_family_fold_to_h212(tmp_path, monkeypatch):
+    source = "a" * 40
+    cid = "b" * 64
+    fold_file = tmp_path / "folds.json"
+    fold_file.write_text(
+        json.dumps(
+            {
+                "folds": [
+                    {"fold": 0, "families": ["other"]},
+                    {"fold": 4, "families": ["target"]},
+                ]
+            }
+        )
+    )
+    captured = []
+
+    def upstream_smoke(*args):
+        captured.append(args[2])
+        assert args[2] == 4
+        assert all(row["family_id"] != "target" for row in args[7])
+        return dict(
+            status="PASS",
+            widths=[16, 32, 64],
+            pool_record_count=3,
+            rust_evaluation_completed=True,
+            analysis_row_written=True,
+        )
+
+    fake = SimpleNamespace(FOLD_MANIFEST=fold_file, end_to_end_smoke=upstream_smoke)
+    runtime = dict(
+        h212=fake,
+        train=[dict(context_sha256=cid, family_id="target")],
+        champions=[
+            dict(context_sha256=cid, family_id="target"),
+            dict(context_sha256="c" * 64, family_id="other"),
+        ],
+        context={},
+        projection=None,
+        pools={cid: None},
+        net=None,
+        h124=None,
+        generator=SimpleNamespace(),
+    )
+    monkeypatch.setattr(r, "setup", lambda root: runtime)
+    monkeypatch.setattr(
+        r,
+        "measure",
+        lambda *args: dict(
+            arms={
+                arm: dict(ordered_program_sha256=[str(i) for i in range(16)])
+                for arm in ["NATIVE16", "FPS16"]
+            }
+        ),
+    )
+    monkeypatch.setattr(r, "frozen_after", lambda runtime: dict(optimizer_updates=0))
+    monkeypatch.setattr(r.subprocess, "check_output", lambda *args, **kwargs: source)
+    assert r.worker(tmp_path, "smoke", source, None) == 0
+    assert captured == [4]
+    assert json.loads((tmp_path / "metrics.json").read_text())["status"] == "SMOKE_PASS"
