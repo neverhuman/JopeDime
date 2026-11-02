@@ -1531,6 +1531,7 @@ crates/jope-policy/src/seeds.rs
 crates/jope-policy/tests/decode_outcomes.rs
 crates/jope-policy/tests/fixtures/accepted-hyperion-manifest.json
 crates/jope-policy/tests/grammar_differential.rs
+crates/jope-policy/tests/grammar_differential/token_budget.rs
 crates/jope-policy/tests/jope_dime.rs
 crates/jope-policy/tests/scorer_dependencies.rs
 crates/jope-records/Cargo.toml
