@@ -1,0 +1,33 @@
+{
+  "wave": "H228",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "primary": "ANDMASK",
+  "co_primary_holm_family": [
+    "ANDMASK",
+    "GDRO"
+  ],
+  "holm_multiplicity": 2,
+  "placebo_control": "ANDMASK_SHUF",
+  "reference_arms": [
+    "R882",
+    "CTRL"
+  ],
+  "optimizer_updates": 0,
+  "smoke_optimizer_updates": 0,
+  "total_optimizer_updates": 0,
+  "member_fits": 0,
+  "planned_member_fits": 60,
+  "planned_full_updates": 2400,
+  "planned_smoke_updates": 4,
+  "planned_total_updates": 2404,
+  "native91": null,
+  "native91_bit_exact": null,
+  "arms": null,
+  "contrasts": null,
+  "dl_val91": null,
+  "elo_vs_r882": null,
+  "dl_val91_elo_vs_r882": null,
+  "invariant_exposure": null,
+  "serving_promotion": false
+}
