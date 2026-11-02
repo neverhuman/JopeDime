@@ -6531,13 +6531,25 @@ mod tests {
     }
 
     fn host_load_guard_allows_wall_assertion() -> bool {
-        let cpus = std::thread::available_parallelism().map_or(1, |n| n.get()) as f64;
+        // Mirror remote_test.sh: cap at 32 slots, then reserve eight per queued Cargo job.
+        let cpus = std::thread::available_parallelism().map_or(0, |n| n.get()) as f64;
         let load_1 = std::fs::read_to_string("/proc/loadavg")
             .ok()
             .and_then(|contents| contents.split_whitespace().next()?.parse::<f64>().ok());
-        match load_1 {
-            Some(load_1) => (cpus * 0.85 - load_1) as i64 >= 4,
-            None => true,
+        let queued = std::process::Command::new("pgrep")
+            .args(["-fc", r"remote_tests/src\.[0-9]+ &&"])
+            .output()
+            .ok()
+            .filter(|output| output.status.success())
+            .and_then(|output| String::from_utf8(output.stdout).ok())
+            .and_then(|count| count.trim().parse::<i64>().ok());
+        match (load_1, queued) {
+            (Some(load_1), Some(queued)) => {
+                let mut slots = (cpus * 0.85 - load_1) as i64;
+                slots = slots.min(32) - 8 * queued;
+                slots >= 4
+            }
+            _ => false,
         }
     }
 
@@ -6555,6 +6567,8 @@ mod tests {
         cfg.pop = 64;
         cfg.gens = 10_000;
         cfg.time_budget_secs = f64::MIN_POSITIVE;
+        // Match remote_test.sh's preflight guard: at least four unreserved CPU slots.
+        let assert_wall_bound = host_load_guard_allows_wall_assertion();
         let t = Instant::now();
         let out = evolve_lite_race(&x, &y, &metric, &cfg, &quiet_obs());
         let elapsed = t.elapsed().as_secs_f64();
@@ -6562,7 +6576,8 @@ mod tests {
         assert_eq!(out.rung_evals[0], RACE_CHUNK as u64);
         assert_eq!(out.rung_evals[1], 0, "tiny budget must stop before rung 1");
         assert_eq!(out.rung_evals[2], 0, "tiny budget must stop before rung 2");
-        if host_load_guard_allows_wall_assertion() {
+        if assert_wall_bound {
+            // 30s is over 5x the slowest of four valid unloaded-main samples (5.51s).
             assert!(elapsed < 30.0, "race exceeded 30s on a load-guarded host");
         } else {
             eprintln!(
