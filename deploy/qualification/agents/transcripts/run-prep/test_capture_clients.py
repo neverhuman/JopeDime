@@ -266,30 +266,25 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
     args.client_plan.write_text(json.dumps(plan), encoding="utf-8")
 
     class ShiftedTime:
-        offset = 0.0
+        calls = 0
 
         @staticmethod
         def monotonic():
-            return time.monotonic() + ShiftedTime.offset
+            ShiftedTime.calls += 1
+            now = time.monotonic()
+            return now if ShiftedTime.calls == 1 else now + 2
 
         @staticmethod
         def sleep(seconds):
             return time.sleep(seconds)
 
-    original_wait = THREE_CLIENTS_MODULE.subprocess.Popen.wait
-    first_client_wait = True
+    original_popen = THREE_CLIENTS_MODULE.subprocess.Popen
 
-    def wait_then_report_timeout(process, timeout=None):
-        nonlocal first_client_wait
-        if str(client) in process.args and first_client_wait:
-            first_client_wait = False
-            exit_code = original_wait(process, timeout=5)
-            assert exit_code == 0
-            # The client exits as wait reports its deadline; the next loop
-            # iteration must not create a recorder grace window.
-            ShiftedTime.offset = 1.1
-            raise subprocess.TimeoutExpired(process.args, timeout)
-        return original_wait(process, timeout=timeout)
+    def exit_client_before_deadline_poll(command, *positional, **kwargs):
+        process = original_popen(command, *positional, **kwargs)
+        if command[0] == str(client):
+            assert process.wait(timeout=5) == 0
+        return process
 
     drain_calls = []
 
@@ -300,9 +295,9 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
     with monkeypatch.context() as patch:
         patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
         patch.setattr(
-            THREE_CLIENTS_MODULE.subprocess.Popen,
-            "wait",
-            wait_then_report_timeout,
+            THREE_CLIENTS_MODULE.subprocess,
+            "Popen",
+            exit_client_before_deadline_poll,
         )
         patch.setattr(THREE_CLIENTS_MODULE, "drain_group", drain_must_not_run)
         result = THREE_CLIENTS_MODULE.run_capture(args)
