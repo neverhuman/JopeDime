@@ -162,8 +162,7 @@ def test_ns4_binary_clf_metrics_and_valid_mask_nan_counterexample() -> None:
     assert bool(ev_nan["valid_eval_mask"][0].item())
     assert abs(float(ev_fin["roc_auc"][0].item()) - float(ev_nan["roc_auc"][0].item())) < 1e-6
     assert (
-        abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item()))
-        < 1e-6
+        abs(float(ev_fin["unified_r2_score"][0].item()) - float(ev_nan["unified_r2_score"][0].item())) < 1e-6
     )
 
     # Codex 13:41:58Z counterexample: 2 valid holdout rows with BOTH predictions NaN
@@ -507,9 +506,7 @@ def test_ns14_rust_fitness_tie_averaged_roc_auc_and_validation() -> None:
 
     # 4. Holdout target validation rejects non-finite labels, constant regression targets, and invalid binary targets
     with pytest.raises(ValueError, match="y_val must contain only finite"):
-        compile_and_eval_rust_fitness(
-            rs_unit, X_pt_fwd, np.array([0.0, math.nan, 1.0, 1.0]), is_binary=False
-        )
+        compile_and_eval_rust_fitness(rs_unit, X_pt_fwd, np.array([0.0, math.nan, 1.0, 1.0]), is_binary=False)
     with pytest.raises(ValueError, match="Degenerate constant regression holdout target"):
         compile_and_eval_rust_fitness(rs_unit, X_pt_fwd, np.ones(4, dtype=np.float64), is_binary=False)
     with pytest.raises(ValueError, match="Degenerate single-class binary holdout target"):
