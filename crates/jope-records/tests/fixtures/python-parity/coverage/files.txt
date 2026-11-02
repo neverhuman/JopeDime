@@ -771,6 +771,12 @@ crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/proposal_cache.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/sealed_panels.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests.rs
 crates/jope-campaigns/src/selfplay_shadow/state.rs
+crates/jope-campaigns/src/selfplay_shadow/state/accepted.rs
+crates/jope-campaigns/src/selfplay_shadow/state/lineage.rs
+crates/jope-campaigns/src/selfplay_shadow/state/queue.rs
+crates/jope-campaigns/src/selfplay_shadow/state/status.rs
+crates/jope-campaigns/src/selfplay_shadow/state/supply.rs
+crates/jope-campaigns/src/selfplay_shadow/state/tests.rs
 crates/jope-campaigns/src/selfplay_shadow/store.rs
 crates/jope-campaigns/src/spec_drift.rs
 crates/jope-campaigns/src/spec_policy.rs
