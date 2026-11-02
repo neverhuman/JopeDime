@@ -17,6 +17,7 @@ pub mod encoder_v2_store;
 pub mod encoder_v2_worker;
 pub mod epoch6;
 pub mod epoch6_wave;
+pub mod engines_config;
 pub mod four_task;
 pub mod hyperion_gate;
 pub mod hyperion_router;
