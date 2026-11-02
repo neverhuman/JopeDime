@@ -1,5 +1,3 @@
-use super::*;
-
 /// The most parameters one pass differentiates.
 pub(crate) const MAX_PARAMS: usize = 16;
 

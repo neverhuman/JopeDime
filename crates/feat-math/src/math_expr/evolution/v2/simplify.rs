@@ -65,7 +65,6 @@ mod lowering;
 pub(super) use certificate::*;
 pub(super) use expression::*;
 pub(super) use fit::*;
-pub(super) use linearize::*;
 pub(super) use lowering::*;
 
 #[cfg(test)]

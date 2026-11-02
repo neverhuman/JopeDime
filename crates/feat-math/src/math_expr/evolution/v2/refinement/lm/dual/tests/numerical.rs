@@ -1,3 +1,4 @@
+use super::super::range::{SCALE_DOWN, SCALE_UP};
 use super::*;
 
 #[test]
