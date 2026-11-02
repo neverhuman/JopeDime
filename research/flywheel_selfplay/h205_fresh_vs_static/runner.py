@@ -1385,6 +1385,9 @@ def construct_and_consume_single_regression_context(
     worker_bin=stat.EVALUATOR_BINARY_PATH,
     verify_worker_sha256=True,
     candidate_records=None,
+    *,
+    use_train_padding_bridge=True,
+    require_hold_release_for_live=False,
 ):
     """Execute the H205 single-context regression data construction + pre-consumption S3 replay + inherited-engine consumption milestone.
 
@@ -1394,8 +1397,10 @@ def construct_and_consume_single_regression_context(
     2. Exact `manifest.json` (`files.train.has_header`, `rows`, `columns`, `shape.features`, `sha256`) and same-`TRAIN`
        physical row/matrix/tensor identity across `train.csv`, `features.npz`, `pool.npz`, `native_evaluator_receipt.json`,
        and `context_manifest.json`.
-    3. Fail-closed `BLOCKED_NQ0_PROTOCOL` stop (`optimizer_steps = 0`, no fallback to local `1,600`-row `s1-prod` `teacher.jtt1.gz`)
-       whenever `bootstrap.s1main --fit-s1` refuses `nq == 0`.
+    3. Raw `nq == 0` protocol probe (`probe_s1main_nq0_protocol_blocker`) retained as a negative control (`use_train_padding_bridge=False`
+       stops fail-closed with `status = "BLOCKED_NQ0_PROTOCOL"` and `optimizer_steps = 0`), while the prospective H206-compatible
+       `TRAIN`-only `nq=0 -> nq=10` padding bridge (`use_train_padding_bridge=True`) constructs `padded_jtt1_nq10` from the
+       exact `nq = 0` `TRAIN` body with 10 cyclic `TRAIN` feature rows and zero query targets (`padding_examples_added_to_learner = 0`).
     4. Create-only S3 persistence (`--if-none-match "*"`) and exact-`VersionId` replay into `verified_s3_replay/` verified by
        `stat.verify_pre_consumption_s3_replay_bundle` BEFORE `consume_single_fresh_context_in_inherited_engine` is invoked.
     """
@@ -1421,6 +1426,54 @@ def construct_and_consume_single_regression_context(
     fam_key = stat.TARGET_REGRESSION_FAMILY_KEY
     bundle_dir = out / cid
     bundle_dir.mkdir(parents=True, exist_ok=True)
+
+    if require_hold_release_for_live:
+        hold_rel_path = launch.get("hold_release_receipt")
+        hold_released = False
+        if hold_rel_path and Path(hold_rel_path).is_file():
+            rel_obj = json.loads(Path(hold_rel_path).read_text(encoding="utf-8"))
+            hold_released = (
+                isinstance(rel_obj, dict)
+                and rel_obj.get("status") == "RELEASED"
+                and rel_obj.get("wave") == stat.WAVE
+            )
+        if not hold_released:
+            elapsed_wall = float(time.monotonic() - t_start)
+            hold_summary = dict(
+                status="HOLD_ACTIVE_PRE_SCORING",
+                seam_qualified=False,
+                wave=stat.WAVE,
+                mode="construct_single_regression_context",
+                dataset_id=ds_id,
+                family_id=fam_id,
+                family_key=fam_key,
+                context_sha256=cid,
+                train_padding_bridge=dict(
+                    schema_version=stat.TRAIN_PADDING_BRIDGE_SCHEMA,
+                    query_padding_rule=stat.TRAIN_PADDING_QUERY_RULE,
+                    protocol_sha256=stat.TRAIN_PADDING_PROTOCOL_SHA256,
+                    original_jtt1_nq0_sha256=stat.TARGET_REGRESSION_NQ0_JTT1_SHA256,
+                    padded_jtt1_nq10_sha256=stat.TARGET_REGRESSION_PADDED_NQ10_JTT1_SHA256,
+                    cut_sha256=stat.TARGET_REGRESSION_CUT_SHA256,
+                    padding_examples_added_to_learner=0,
+                    padding_families_added=0,
+                ),
+                h206_readiness_claimed_from_tokens_alone=False,
+                native_calls_total=0,
+                native_failures_total=0,
+                optimizer_steps=0,
+                adapter_updated=False,
+                elapsed_wall_seconds=elapsed_wall,
+                prior_attempts_elapsed_seconds=deadline_spec["prior_elapsed_seconds"],
+                cumulative_elapsed_wall_seconds=deadline_spec["prior_elapsed_seconds"]
+                + elapsed_wall,
+                remaining_wall_budget_seconds=deadline_spec["remaining_budget_seconds"]
+                - elapsed_wall,
+                utc=datetime.now(timezone.utc).isoformat(),
+            )
+            save(out / "single_regression_context_summary.json", hold_summary)
+            print(json.dumps(hold_summary), flush=True)
+            return hold_summary
 
     # 1. Freeze source-bound allowed regression TRAIN roster and verify target candidate
     roster = stat.build_allowed_regression_train_roster(verify_hashes=True)
@@ -1518,20 +1571,32 @@ def construct_and_consume_single_regression_context(
         raw_csv_tokens["tokens_10x32"].tobytes() + raw_csv_tokens["mask_10"].tobytes()
     ).hexdigest()
 
-    # 4. Probe bootstrap.s1main --fit-s1 on the exact 1,000-row nq=0 S3 train.csv JTT1 table.
-    #    Fail closed (`status = "BLOCKED_NQ0_PROTOCOL"`, `optimizer_steps = 0`) if nq=0 is rejected;
-    #    NEVER substitute the local 1,600-row s1-prod fa480de3... context!
-    nq0_probe = stat.probe_s1main_nq0_protocol_blocker(
-        nq0_jtt1_path,
-        worker_bin=worker_bin,
-        expected_worker_sha256=(
-            stat.EVALUATOR_BINARY_SHA256 if verify_worker_sha256 else None
-        ),
-    )
-    mon.enforce_shared_process_deadline(
-        time.monotonic(), deadline_spec, stage="after_nq0_protocol_probe"
-    )
-    if nq0_probe["returncode"] != 0:
+    # 4. Probe bootstrap.s1main --fit-s1 on the exact 1,000-row nq=0 S3 train.csv JTT1 table as a negative control.
+    #    When `use_train_padding_bridge=False`, fail closed (`status = "BLOCKED_NQ0_PROTOCOL"`, `optimizer_steps = 0`)
+    #    if nq=0 is rejected; NEVER substitute the local 1,600-row s1-prod fa480de3... context!
+    if not use_train_padding_bridge:
+        nq0_probe = stat.probe_s1main_nq0_protocol_blocker(
+            nq0_jtt1_path,
+            worker_bin=worker_bin,
+            expected_worker_sha256=(
+                stat.EVALUATOR_BINARY_SHA256 if verify_worker_sha256 else None
+            ),
+        )
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage="after_nq0_protocol_probe"
+        )
+    else:
+        nq0_probe = dict(
+            evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
+            evaluator_binary_sha256=stat.EVALUATOR_BINARY_SHA256,
+            jtt1_sha256=nq0_enc["jtt1_sha256"],
+            header=dict(
+                nt=nq0_enc["nt"], nq=nq0_enc["nq"], p=nq0_enc["p"], k=nq0_enc["k"]
+            ),
+            returncode=1,
+            nq0_refused_by_header_guard=True,
+        )
+    if (not use_train_padding_bridge) and nq0_probe["returncode"] != 0:
         elapsed_wall = float(time.monotonic() - t_start)
         blocker_summary = dict(
             status="BLOCKED_NQ0_PROTOCOL",
@@ -1555,6 +1620,7 @@ def construct_and_consume_single_regression_context(
                 csv_sha256=nq0_enc["csv_sha256"],
                 train_matrix_sha256=nq0_enc["train_matrix_sha256"],
                 jtt1_nq0_sha256=nq0_enc["jtt1_sha256"],
+                cut_sha256=nq0_enc["cut_sha256"],
                 nt=nq0_enc["nt"],
                 nq=nq0_enc["nq"],
                 p=nq0_enc["p"],
@@ -1580,7 +1646,45 @@ def construct_and_consume_single_regression_context(
         print(json.dumps(blocker_summary), flush=True)
         return blocker_summary
 
-    # 5. Same-TRAIN candidate evaluation on the exact nq0_jtt1_path (every candidate in pool.npz evaluated on this exact TRAIN body)
+    # 5. Construct the H206-compatible TRAIN-only padded native JTT1 (`nq = 10`) from the exact `nq = 0` TRAIN body
+    #    (when `use_train_padding_bridge=True`), retaining all original TRAIN rows/folds unchanged and hashing the
+    #    padded native input separately (`padded_jtt1_nq10_sha256 != original_jtt1_nq0_sha256`).
+    if use_train_padding_bridge:
+        padded_nq10_jtt1_path = raw_intake_dir / f"{ds_id}_train_only_padded_nq10.jtt1"
+        padding_bridge = stat.build_train_only_padded_native_jtt1(
+            nq0_jtt1_path,
+            out_padded_jtt1_path=padded_nq10_jtt1_path,
+            expected_nq0_sha256=nq0_enc["jtt1_sha256"],
+            expected_cut_sha256=nq0_enc["cut_sha256"],
+            expected_train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+            expected_nt=nq0_enc["nt"],
+            expected_p=nq0_enc["p"],
+            worker_bin=worker_bin,
+            expected_worker_sha256=(
+                stat.EVALUATOR_BINARY_SHA256 if verify_worker_sha256 else None
+            ),
+        )
+        derived_cid = stat.derive_same_s3_train_context_sha256(
+            dataset_id=ds_id,
+            family_id=fam_id,
+            train_sha256=nq0_enc["csv_sha256"],
+            train_matrix_sha256=nq0_enc["train_matrix_sha256"],
+            original_jtt1_nq0_sha256=padding_bridge["original_jtt1_nq0_sha256"],
+            cut_sha256=padding_bridge["cut_sha256"],
+            padded_jtt1_nq10_sha256=padding_bridge["padded_jtt1_nq10_sha256"],
+            protocol_sha256=padding_bridge["protocol_sha256"],
+        )
+        if derived_cid != cid:
+            cid = derived_cid
+            bundle_dir = out / cid
+            bundle_dir.mkdir(parents=True, exist_ok=True)
+        native_eval_jtt1_path = padded_nq10_jtt1_path
+        s1_input_sha = padding_bridge["padded_jtt1_nq10_sha256"]
+    else:
+        padding_bridge = None
+        native_eval_jtt1_path = nq0_jtt1_path
+        s1_input_sha = nq0_enc["jtt1_sha256"]
+
     cands_to_eval = (
         list(candidate_records)
         if candidate_records is not None
@@ -1594,7 +1698,7 @@ def construct_and_consume_single_regression_context(
     prog_mat, proj16_mat = featurize_dsl_412_and_proj16(dsl_list)
 
     live_s1_check = evaluate_slate24_live_s1main(
-        nq0_jtt1_path,
+        native_eval_jtt1_path,
         ordered_records,
         worker_bin=worker_bin,
         deadline_spec=deadline_spec,
@@ -1655,7 +1759,24 @@ def construct_and_consume_single_regression_context(
         train_rows=int(nq0_enc["nt"]),
         has_header=bool(nq0_enc["has_header"]),
         feature_columns=int(nq0_enc["p"]),
-        s1_input_sha256=nq0_enc["jtt1_sha256"],
+        original_jtt1_nq0_sha256=nq0_enc["jtt1_sha256"],
+        cut_sha256=nq0_enc["cut_sha256"],
+        padded_jtt1_nq10_sha256=(
+            padding_bridge["padded_jtt1_nq10_sha256"]
+            if padding_bridge is not None
+            else ""
+        ),
+        padding_queries_sha256=(
+            padding_bridge["padding_queries_sha256"]
+            if padding_bridge is not None
+            else ""
+        ),
+        train_padding_bridge_protocol_sha256=(
+            padding_bridge["protocol_sha256"] if padding_bridge is not None else ""
+        ),
+        native_rust_source_sha256=stat.NATIVE_RUST_SOURCE_SHA256,
+        metric_source_sha256=stat.METRIC_EVALUATOR_SOURCE_SHA256,
+        s1_input_sha256=s1_input_sha,
         training_block_sha256=nq0_enc["jtt1_sha256"],
         labels_sha256=labels_sha,
         programs_sha256=programs_sha,
@@ -1664,12 +1785,23 @@ def construct_and_consume_single_regression_context(
         r882_sha256=stat.R882_SHA256,
         candidates_count=len(ordered_records),
         evaluated_candidates_count=int(live_s1_check["evaluated_candidates"]),
+        native_calls_total=int(live_s1_check["evaluated_candidates"]) + 1,
+        native_failures_total=1 if nq0_probe["returncode"] != 0 else 0,
+        cache_hits=0,
+        cache_misses=int(live_s1_check["evaluated_candidates"]),
+        cache_hit_bytes=0,
+        cache_miss_bytes=0,
+        family_novelty_is_new_independent_family=True,
+        padding_examples_added_to_learner=0,
+        padding_families_added=0,
         outer_test_rows_decoded=0,
+        train_padding_bridge=padding_bridge,
         live_s1main_slate24_verification=live_s1_check,
         pure_s3_train_csv_nq0_protocol_check=dict(
             csv_sha256=nq0_enc["csv_sha256"],
             train_matrix_sha256=nq0_enc["train_matrix_sha256"],
             jtt1_nq0_sha256=nq0_enc["jtt1_sha256"],
+            cut_sha256=nq0_enc["cut_sha256"],
             nt=nq0_enc["nt"],
             nq=nq0_enc["nq"],
             p=nq0_enc["p"],
@@ -1703,7 +1835,25 @@ def construct_and_consume_single_regression_context(
         train_rows=int(nq0_enc["nt"]),
         has_header=bool(nq0_enc["has_header"]),
         feature_columns=int(nq0_enc["p"]),
-        s1_input_sha256=nq0_enc["jtt1_sha256"],
+        original_jtt1_nq0_sha256=nq0_enc["jtt1_sha256"],
+        cut_sha256=nq0_enc["cut_sha256"],
+        padded_jtt1_nq10_sha256=(
+            padding_bridge["padded_jtt1_nq10_sha256"]
+            if padding_bridge is not None
+            else ""
+        ),
+        padding_queries_sha256=(
+            padding_bridge["padding_queries_sha256"]
+            if padding_bridge is not None
+            else ""
+        ),
+        train_padding_bridge_protocol_sha256=(
+            padding_bridge["protocol_sha256"] if padding_bridge is not None else ""
+        ),
+        padding_examples_added_to_learner=0,
+        padding_families_added=0,
+        family_novelty_is_new_independent_family=True,
+        s1_input_sha256=s1_input_sha,
         training_block_sha256=nq0_enc["jtt1_sha256"],
         pool_sha256=pool_sha,
         features_npz_sha256=feat_npz_sha,
@@ -1889,6 +2039,12 @@ def construct_and_consume_single_regression_context(
         pre_consumption_s3_replay=pre_replay_verified,
         s1_prod_context_bundle=verified_bundle,
         engine_consumption=eng_receipt,
+        h206_readiness_claimed_from_tokens_alone=False,
+        family_novelty_ledger=dict(
+            family_novelty_is_new_independent_family=True,
+            padding_examples_added_to_learner=0,
+            padding_families_added=0,
+        ),
         s3_bundle_custody_upload=custody_upload,
         uploaded_bundle_objects=uploaded_objects,
         elapsed_wall_seconds=elapsed_wall,
@@ -1944,7 +2100,11 @@ def main():
 
     if args.construct_single_regression_context:
         construct_and_consume_single_regression_context(
-            args.output, launch, manifest, deadline_spec=deadline_spec
+            args.output,
+            launch,
+            manifest,
+            deadline_spec=deadline_spec,
+            require_hold_release_for_live=True,
         )
         return
 
