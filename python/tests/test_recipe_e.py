@@ -4,9 +4,7 @@ from pathlib import Path
 
 import pytest
 
-import jope.research
-
-SCRIPTS = Path(jope.research.__file__).parent
+SCRIPTS = Path(__file__).resolve().parents[1] / "test-support" / "jope" / "research"
 
 from test_exact_packed_corpus import _write_recipe_e_evidence_index  # noqa: E402
 from test_exact_train import (  # noqa: E402

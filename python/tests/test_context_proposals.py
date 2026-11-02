@@ -4,9 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 
-import jope.research
-
-SCRIPT_DIR = Path(jope.research.__file__).parent
+SCRIPT_DIR = Path(__file__).resolve().parents[1] / "test-support" / "jope" / "research"
 SPEC = importlib.util.spec_from_file_location(
     "test_exact_context_proposals",
     SCRIPT_DIR / "test_exact_context_proposals.py",

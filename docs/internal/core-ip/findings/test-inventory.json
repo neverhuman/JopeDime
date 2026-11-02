@@ -1703,115 +1703,115 @@
       "reason": "Operational S3 shard-cache unit test against an in-memory fake client; not collected by any CI lane (coverage disposition: maintenance).",
       "role": "infrastructure"
     },
-    "python:python/src/jope/research/test_exact_accept.py": {
+    "python:python/test-support/jope/research/test_exact_accept.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_adaptive.py": {
+    "python:python/test-support/jope/research/test_exact_adaptive.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_backlog.py": {
+    "python:python/test-support/jope/research/test_exact_backlog.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_campaign.py": {
+    "python:python/test-support/jope/research/test_exact_campaign.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_canary.py": {
+    "python:python/test-support/jope/research/test_exact_canary.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_canary_propose.py": {
+    "python:python/test-support/jope/research/test_exact_canary_propose.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_common.py": {
+    "python:python/test-support/jope/research/test_exact_common.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_compile_cache.py": {
+    "python:python/test-support/jope/research/test_exact_compile_cache.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_context_proposals.py": {
+    "python:python/test-support/jope/research/test_exact_context_proposals.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_controller.py": {
+    "python:python/test-support/jope/research/test_exact_controller.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_dl_generate.py": {
+    "python:python/test-support/jope/research/test_exact_dl_generate.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_evaluator.py": {
+    "python:python/test-support/jope/research/test_exact_evaluator.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_freshness.py": {
+    "python:python/test-support/jope/research/test_exact_freshness.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_ingest.py": {
+    "python:python/test-support/jope/research/test_exact_ingest.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_monitor.py": {
+    "python:python/test-support/jope/research/test_exact_monitor.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_ops.py": {
+    "python:python/test-support/jope/research/test_exact_ops.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_packed_corpus.py": {
+    "python:python/test-support/jope/research/test_exact_packed_corpus.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_pair_registry.py": {
+    "python:python/test-support/jope/research/test_exact_pair_registry.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_sealed_audit.py": {
+    "python:python/test-support/jope/research/test_exact_sealed_audit.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_service.py": {
+    "python:python/test-support/jope/research/test_exact_service.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_status.py": {
+    "python:python/test-support/jope/research/test_exact_status.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_train.py": {
+    "python:python/test-support/jope/research/test_exact_train.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_wave.py": {
+    "python:python/test-support/jope/research/test_exact_wave.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_exact_winner_scan.py": {
+    "python:python/test-support/jope/research/test_exact_winner_scan.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_proposal_task_routing.py": {
+    "python:python/test-support/jope/research/test_proposal_task_routing.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_smart_v3_cpu_scq.py": {
+    "python:python/test-support/jope/research/test_smart_v3_cpu_scq.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_train_only_redteam_generation.py": {
+    "python:python/test-support/jope/research/test_train_only_redteam_generation.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
-    "python:python/src/jope/research/test_train_spec_policy.py": {
+    "python:python/test-support/jope/research/test_train_spec_policy.py": {
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
