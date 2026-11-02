@@ -16,8 +16,9 @@
   exact `ucred` size check. Each operation has a local `SAFETY` invariant. The
   exception suppresses only Jankurai's scoring for this exact file; Rust tests,
   Clippy, Gitleaks, and other scanners still inspect it.
-- **Review expiry:** 2027-02-01. Recheck the source and the finding at that
-  date; renew only if the same test-only false positive is still confirmed.
+- **Review expiry:** 2027-02-01. Recheck all five findings covered by this
+  exact-file entry; renew only while each remains a verified false positive
+  and the source behavior is unchanged.
 - **Migration path:** no runtime migration applies to the current code. If a
   queue or streaming client is introduced, put it behind the declared
   `crates/adapters/queues` boundary before use and remove this exception after
