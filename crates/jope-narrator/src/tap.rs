@@ -286,36 +286,10 @@ pub(crate) fn channel_with(limits: Limits) -> (Tap, FactReceiver) {
     )
 }
 
-/// Explicit test support; absent from normal production builds.
 #[cfg(feature = "testing")]
-pub struct RecordingTap {
-    tap: Tap,
-    facts: RecordedFacts,
-}
+mod recording;
 #[cfg(feature = "testing")]
-impl Default for RecordingTap {
-    fn default() -> Self {
-        let (mut tap, receiver) = channel_with(Limits::default());
-        drop(receiver);
-        // The collector has its own explicit lifetime; no production receiver is used.
-        tap.shared.closing.store(false, Ordering::Release);
-        let facts = Arc::new(Mutex::new(Vec::new()));
-        tap.recording = Some(facts.clone());
-        Self { tap, facts }
-    }
-}
-#[cfg(feature = "testing")]
-impl RecordingTap {
-    pub fn tap(&self) -> Tap {
-        self.tap.clone()
-    }
-    pub fn facts(&self) -> Vec<LineageFact> {
-        self.linked_facts().into_iter().map(|p| p.0).collect()
-    }
-    pub fn linked_facts(&self) -> Vec<(LineageFact, Links)> {
-        self.facts.lock().expect("test collector poisoned").clone()
-    }
-}
+pub use recording::RecordingTap;
 
 pub(crate) fn validate_fact(fact: &LineageFact) -> anyhow::Result<()> {
     use LineageFact::*;
@@ -516,15 +490,4 @@ pub(crate) fn validate_links(links: &Links) -> anyhow::Result<()> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn malformed_owned_frame_is_an_error_not_clean_closure() {
-        let (tap, mut receiver) = fact_channel(2, 4096);
-        tap.shared.bytes.store(1, Ordering::Release);
-        tap.shared.queued.store(1, Ordering::Release);
-        tap.sender.try_send(Pending { bytes: vec![b'x'] }).unwrap();
-        tap.close();
-        assert!(receiver.recv_linked().is_err());
-    }
-}
+mod tests;
