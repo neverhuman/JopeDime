@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import Any
 
 from .champion_miner import build_champions
+from .gp_factory_io import _atomic_json
 from .data.active_v3 import robust_score
 from .prime_config import load_config
 from .prime_staging import stage_read_only_dataset
@@ -87,12 +88,6 @@ CANDIDATE_POOLS_GLOB = str(
     _PRIME_CONFIG.legacy_root / "runs/self_play_v33/candidate_pools/candidate_pools_g*.jsonl"
 )
 POOL_SEEDS_PER_DATASET = 8
-
-
-def _atomic_json(path: Path, payload: dict) -> None:
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(payload), encoding="utf-8")
-    tmp.replace(path)
 
 
 class GpFactory:
