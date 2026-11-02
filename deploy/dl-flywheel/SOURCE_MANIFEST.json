@@ -405,7 +405,13 @@
       "origin": "work/flywheel-20261008/patch/deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
       "origin_sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
       "path": "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
-      "sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09"
+      "sha256": "00e06d54637dd4bbb63c2e63bb9bc385da39d4a67c0a1082f3b4d83a76abc345"
+    },
+    {
+      "origin": "live canonical implementation extracted from deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
+      "origin_sha256": "392348275c255f49fe2d774df4da678d8d23331235559e68e5885aafbe90ec09",
+      "path": "deploy/dl-flywheel/jope_flywheel/training_snapshot_core.py",
+      "sha256": "3dde6ddc94ad257c5360920a84ae09d684852de5ad5fcc4f49d05f6eee11748b"
     },
     {
       "origin": "work/flywheel-20261008/kumos-snapshot-recovery3/runtime/jope_flywheel/training_snapshot_kumos.py",
