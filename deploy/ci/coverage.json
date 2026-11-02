@@ -5554,6 +5554,16 @@
       "lanes": [],
       "scope": "H170 data-free one-cycle LR/beta1 endpoints and applied native AdamW steps, mean-LR dose match, None-gradient and full-adapter drift, family cross-fit/strict best-only selector, shared-family median bootstrap/Holm/canonical Elo, exact prediction/adapter pseudoreplication disclosures, aggregate terminal resources and external launch binding. Offline real-S3 regression research only; no product, sealed, serving or speed qualification."
     },
+    "python:research/flywheel_selfplay/h206_search_distill/test_h206.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H206 queued search-distillation preregistration and disabled executor skeleton: authority/unknown-result integrity, queue and reserved-cache admission, numeric versus driver limits, and research anchor optimizer refusal. Data-free CPU controls only; no GPU, corpus, scientific or sealed qualification."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"

@@ -1,0 +1,16 @@
+{
+  "schema": "h206-metrics-v1",
+  "status": "QUEUED_NOT_RUN",
+  "verdict": null,
+  "native_parity": null,
+  "completed_expert_rounds": 0,
+  "scientific_optimizer_updates": 0,
+  "cpu_core_hours": null,
+  "gpu_hours": null,
+  "student_k1_results": null,
+  "search_curve": null,
+  "pooled_b_decision": null,
+  "pooled_a_confirmation": null,
+  "sealed_d4_confirmation": null,
+  "serving_promotion": false
+}
