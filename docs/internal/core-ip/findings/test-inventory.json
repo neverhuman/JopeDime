@@ -5673,6 +5673,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h227_pool_headroom/test_h227.py": {
+      "role": "research",
+      "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

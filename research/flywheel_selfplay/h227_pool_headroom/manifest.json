@@ -1,0 +1,181 @@
+{
+  "schema": "jope.h227.pool-headroom/v1",
+  "wave": "H227",
+  "owner": "luna_v1_res08",
+  "status": "PREREGISTERED_NOT_RUN",
+  "authority": "/home/ubuntu/nudges/hw_t1530_res08_h227.md",
+  "recorded_utc": "2026-11-02T15:57:26.092636+00:00",
+  "source_parent": "31207ade1cb12da1df2036d1adbbfcc50c3d8dce",
+  "source_pins": {
+    "research/flywheel_selfplay/h212_pool_width/runner.py": "cf42b33391aee91d6650b72ad46da10ae85ce9ab9b5e1d2758ba44556d91cce6",
+    "research/flywheel_selfplay/h212_pool_width/analysis.py": "e09189fabe68d8933fadd6302243bb70313c7c046ec8c0b3c202777a96138e04",
+    "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686",
+    "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "research/flywheel_selfplay/automatic_promotion.py": "261d2d1865c2f50e1c7388dfd2ac404e85f599df3a5b7aaaab69415cf250d8a0",
+    "research/flywheel_selfplay/dev_incumbent.py": "81ebdafa5fe1accb1da56a424bee669f0e381fee2bd5e23c751c17618079523f",
+    "research/flywheel_selfplay/run_fused_closed_loop.py": "abacf87c9efc116e3923e918e5521a14bf25be789b10d5245fc9186309df6fbb"
+  },
+  "input_pins": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/champions.json": "a444047ffb937dc8d69012cbdbf0891faf3e7d743b127e7cac3baed114cf141d",
+    "/home/ubuntu/jope-data/h58/cache/cache_manifest.json": "66b1df1374242580d482b7d6f9b72b6fe8f65830f90f658ca662a698aa229897",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe",
+    "/home/ubuntu/jope-data/h58/cache/champions_featurized.json": "ea020d489ec9a813e4dfb2b6fe45c126ff9f8d8a1b59d0ff9f8242cfe5e6efc0",
+    "/home/ubuntu/jope-data/h58/cache/journal_candidates.json": "f39ebe592d53d875338ecf9d95592f7a04c0a39c3cd0727211a4913e25f3e541",
+    "/home/ubuntu/jope-data/h58/cache/jtt1_gz_manifest.json": "4e0115c6d6d6b8805952292b45e6e71384da6d7a9ce81e73af79704a62206769",
+    "/home/ubuntu/jope-data/h195/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/jope-data/h214/input/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/JopeDimeMicro/bin/bootstrap.s1main": "e3be938644722d14a1c1a0e82168518838c4d174cfe031076a339745c48870a8",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/program-feature-names.json": "c4e4373d1bc7e99bc38e44eb4acda22d0f9ecc9e332fa8cb9c6a0b463fe37962"
+  },
+  "external_source_pins": {
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
+  "checkpoint_copy_source": "/home/ubuntu/jope-data/h214/input/round-882.pt",
+  "owned_checkpoint": "/home/ubuntu/jope-data/h227/input/round-882.pt",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "seeds": [
+    227101,
+    227102,
+    227103
+  ],
+  "fold_seeds": [
+    227141,
+    227142,
+    227143
+  ],
+  "fold_manifest_sha256": "052eda0ae6467abf1c8c15bae886067d8dbd45836b0e5d93ab7f73acad824db2",
+  "cohort": {
+    "real_S3": true,
+    "train_contexts": 1219,
+    "train_families": 205,
+    "validation_contexts": 91,
+    "validation_families": 19,
+    "task": "regression",
+    "sealed_holdout_meta_test": 0,
+    "outer_rows": 0
+  },
+  "arms": {
+    "NATIVE16": "same parent +15 native proposals",
+    "NATIVE64": "same parent +63 native proposals",
+    "FPS16of64": "same parent +15 farthest-point picks from NATIVE64; normalized native proj16 distance, earliest generator order breaks ties"
+  },
+  "proposal": {
+    "generator": "pinned native propose_flywheel_candidates",
+    "paired_context_seed": true,
+    "width_calls": [
+      15,
+      63
+    ],
+    "prefixes_assumed": false,
+    "parent": "nearest landmark TRAIN champion outside target family; TRAIN smoke excludes target fresh fold",
+    "outcome_free_pool_locks_before_native_evaluation": true,
+    "evaluation_deduplicated_across_arms": true,
+    "logical_widths": [
+      16,
+      64,
+      16
+    ],
+    "scorer": "frozen r882; separately predict each arm with4 conditioning anchors; select only registered arm programs"
+  },
+  "native_width_binding": {
+    "control_total_scored_width": 16,
+    "source_generation_widths": {
+      "exploration": 16,
+      "exploitation": 8
+    },
+    "source_native_fit_cap": 4,
+    "binding": "Fixed owner-requested16-program exploration-width control; published planner has variable8/16 generation and4 native fits. Offline logical evaluation width differs from that live fit cap; no claim of complete live-budget replay.",
+    "live_runtime_or_custody_inspected": false
+  },
+  "endpoint": "first predicted-cost argmin over each arm; -native fitness if gate passes, otherwise -2",
+  "regression": {
+    "before_any_proposal": true,
+    "bit_exact_contexts": 91,
+    "mean": 1.1377941898164525
+  },
+  "statistics": {
+    "primary": "NATIVE64 minus NATIVE16, equal-family means; report separate91-context plateau mean",
+    "secondary": "FPS16of64 minus NATIVE16",
+    "median_over_seeds": 3,
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 227150,
+    "bootstrap": "shared paired19-family resamples across all seeds and both contrasts; median of seed equal-family means",
+    "ci": "two-sided percentile95%",
+    "p": "(1+count(bootstrap median<=0))/10001",
+    "holm_m": 2,
+    "advance": "primary plateau context-mean median > +0.002 AND equal-family95% CI lower >0 AND Holm-adjusted one-sided p<0.05; exact ties reject. Secondary is reported separately and cannot rescue primary.",
+    "elo": "paired family Bradley-Terry vs R882=1500, exact ties, prior0.01; descriptive",
+    "oracle": "best budgeted native utility within each fixed pool, diagnostic only; never selection/tuning/admission"
+  },
+  "native_failures": "Explicit finite failed/gate-false native records retain native utility -2; all failures remain recorded. Missing/unordered/nonfinite outputs or zero completed native results in a unit are operational INCOMPLETE, not a zero-gain verdict.",
+  "engineering_fixes": [
+    "external context ID to actual H212 predict_dynamic",
+    "idempotent own rust_eval mkdir",
+    "H139.ARM_DIR relocated to H195 reference before roster",
+    "raw TRAIN hash and transformed H58 CV envelope validated separately",
+    "full approved cache identity roster before subset baseline scoring",
+    "native NumPy arrays serialized without dropping returned evidence",
+    "legacy baseline requests clamped to single-thread Torch math"
+  ],
+  "resources": {
+    "host": "xbabe1",
+    "device": "CPU",
+    "nice": 19,
+    "affinity_max": 4,
+    "numeric_threads": 1,
+    "evaluator_workers": 4,
+    "RSS_tree_max_bytes": 6442450944,
+    "MemAvailable_min_bytes": 10737418240,
+    "free_disk_min_bytes": 50000000000,
+    "output_max_bytes": 2000000000,
+    "pause_load5_gt": 70,
+    "resume_load5_le": 60,
+    "recheck_seconds": 60,
+    "pause_boundary": "between context units; supervisor never aborts on load",
+    "hard_guards": [
+      "RSS",
+      "MemAvailable",
+      "free disk",
+      "output",
+      "absolute deadline"
+    ],
+    "prereg_deadline_utc": "2026-11-02T17:15:00+00:00",
+    "smoke_deadline_utc": "2026-11-02T17:45:00+00:00",
+    "compute_deadline_utc": "2026-11-02T21:30:00+00:00",
+    "closeout_deadline_utc": "2026-11-02T22:00:00+00:00",
+    "smoke_attempts_max": 2,
+    "primary_attempts": 1,
+    "optimizer_updates": 0
+  },
+  "execution": "Immutable Git objects at exact merged source, own process tree/roots; no checkout/HEAD/index mutation on xbabe1 object cache",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H227/res08-t1530/",
+  "outcome": {
+    "status": "NOT_RUN",
+    "primary_units": 0,
+    "optimizer_updates": 0,
+    "median_gain": null,
+    "ci95": null,
+    "elo": null
+  }
+}
