@@ -281,7 +281,7 @@ pub(super) enum Origin {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum EventKind {
+pub(super) enum TuiEventKind {
     Eval,
     StrictWin,
 }
@@ -299,7 +299,7 @@ pub(super) struct GameplayEvent {
     pub(super) node: String,
     pub(super) wave: String,
     pub(super) valid: bool,
-    pub(super) kind: EventKind,
+    pub(super) kind: TuiEventKind,
 }
 
 #[derive(Clone, Debug, Default)]
