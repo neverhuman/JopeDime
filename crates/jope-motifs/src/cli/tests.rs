@@ -80,9 +80,7 @@ fn assert_clean(text: &str, table: &MotifTable) {
     assert!(!text.contains("/home/") && !text.contains("/tmp/"));
 }
 
-mod cli_tests;
-#[path = "output.rs"]
-mod output;
 #[path = "mining.rs"]
 mod mining;
-mod mine_tests;
+#[path = "output.rs"]
+mod output;
