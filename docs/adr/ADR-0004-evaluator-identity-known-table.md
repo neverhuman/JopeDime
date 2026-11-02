@@ -22,6 +22,22 @@ Old receipts remain verifiable and auditable under the identity that produced th
 (WP2's `gpr.rs`, `registry.rs`) creates a new current identity without invalidating history. Reviewers see every
 accepted historical identity in one file.
 
+## Current identity transition: sealed corpus mapping (2026-11-02)
+
+P35 changes `crates/jope-engine/src/corpus.rs` to snapshot unverified record files into sealed
+storage and use safe `memmap2` slice access; it also adds the existing `memmap2` package as a
+direct `jope-parallel` dependency. Both `corpus.rs` and `Cargo.lock` are evaluator identity
+inputs, so this change announces an identity-only transition. `implementation_sha256` changes
+from `e4dd3486d173c65209da3df7fdc6cc8aaccdbc5d7e0102eab512bd6f7f491716` to
+`143fefc220a06431b4217c95dfa98dd8a23b5297ed69cee3acdc35cc3075128d`; `cargo_lock_sha256`
+changes from `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401` to
+`06f623742889266c3493eee1be2a1bc2453d61e0afab042e08a3de0db55487a9`; and `identity_digest`
+changes from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` to
+`545bf844bebb344e6f17dba49c6050bf98bcabe330326a0beb75e506aafe6f39`. The DSL ABI is
+unchanged. The identity-only regeneration and its receipt are documented in
+[`P35 corpus identity transition`](../qualification/jankurai-p35-corpus-identity-20261102.md).
+The append-only known-identity table gains no row because this identity has no shipped receipt.
+
 ## Current identity transition: public stage names (2026-10-30)
 
 PUB-02 adds the public-names module declaration to `crates/feat-math/src/lib.rs`, which is an ADR-0004
