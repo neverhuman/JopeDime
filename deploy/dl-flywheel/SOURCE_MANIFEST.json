@@ -26,7 +26,7 @@
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1843/target-callback-integration-final/append_selected_receipt.py",
       "origin_sha256": "24541ce55ce5357036b6897261e4c9ca2ccf582bb426676a50ffda89f7b521bf",
       "path": "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json",
-      "sha256": "c41f117fe09af13977c7e03b1227c0c5cdd51406f8ab1bfebf422c5d2c9b836d"
+      "sha256": "4ce3daaeadeff8063e8b7d49ee560948c7eace2029ce0d8f181d10193b266f23"
     },
     {
       "normalization": "New38 isolated fixtures and documentation; production source/global clocks preserved, prior540 identities unchanged.",
@@ -4719,11 +4719,11 @@
       "sha256": "f8d2ee0bac9f392c0c59250fc39ae6a9c1b3527ee8ff2841f49cf40d8e21baad"
     },
     {
-      "normalization": "Identifier-only process/diagnostic terminology update; trace bytes/schema and recovery behavior unchanged. Dated deployment paths remain evidence, not portable defaults; no live action.",
+      "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/trace-recovery-v2/trace_archive_v1_c8a13033.py",
       "origin_sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
       "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
-      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
     },
     {
       "normalization": "Exact frozen source/evidence bytes; dated absolute deployment paths are evidence, not portable defaults. Only offline temporary fixture JSON is rebased. No live action or replay authority.",
@@ -4817,11 +4817,11 @@
       "sha256": "c8e9817a7083e4754f87a5cb79b55f43acfa5c6a327dae823ba424234e09b9b3"
     },
     {
-      "normalization": "Identifier-only process/diagnostic terminology update; trace bytes/schema and recovery behavior unchanged; original source hash retained.",
+      "normalization": "Exact frozen source bytes; dated absolute deployment paths are evidence, not portable defaults. No live action or replay authority.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1633/trace-recovery3/trace_archive_v1_c8a13033.py",
       "origin_sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69",
       "path": "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
-      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
     },
     {
       "normalization": "Exact frozen source bytes; no transformation.",

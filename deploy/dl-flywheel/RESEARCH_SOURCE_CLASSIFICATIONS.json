@@ -3493,13 +3493,13 @@
       "sha256": "e2a89841496d672713831c430462902230b2157398ea4048dd3145024980ab08"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py": {
-      "bytes": 17273,
+      "bytes": 17268,
       "classification": {
         "reason": "Frozen next128-r2 Kumo Small and cold trace-v2 custody sources, with38 isolated CPU fixtures additive after prior540. Production source/clock bytes preserved; fixture-only temporary JSON path rebasing and fixed wallclock explicitly disclosed. Raw publication, encoder verification, GP measurement, admission and actual training exposure remain separate. No automatic live replay or promotion.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_recovery_v2.py": {
       "bytes": 20376,
@@ -3527,12 +3527,12 @@
       "sha256": "2310001c40d326dae7706e26d3ac184a3e5ccffe0f937316c8572ad39e5d5e13"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py": {
-      "bytes": 17273,
+      "bytes": 17268,
       "classification": {
         "reason": "Frozen telemetry recovery3 source with34 new synthetic fixtures additive after prior687. Preserves unknown part153 and all1213 charged attempts; starts607 only after exact physical historical custody preflight. No replay, deadline renewal, data admission, optimizer or GP execution claim.",
         "role": "research"
       },
-      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
+      "sha256": "c8a13033c6a93bb97d14d3ccb4de0d2fae01be0928a75f654cfd79f32d835c69"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_recovery_v2.py": {
       "bytes": 20376,
