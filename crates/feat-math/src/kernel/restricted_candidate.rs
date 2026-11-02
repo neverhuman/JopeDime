@@ -130,7 +130,7 @@ impl SandboxCapability {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum KernelError {
+pub enum RestrictedCandidateError {
     InvalidFuelBound,
     InvalidBinding,
     EmptyProgram,
@@ -150,13 +150,16 @@ pub enum KernelError {
     DivisionByZero,
 }
 
-impl std::fmt::Display for KernelError {
+impl std::fmt::Display for RestrictedCandidateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
     }
 }
 
-impl std::error::Error for KernelError {}
+impl std::error::Error for RestrictedCandidateError {}
+
+/// Compatibility name retained for callers of the original module API.
+pub type KernelError = RestrictedCandidateError;
 
 #[derive(Clone, Debug)]
 pub struct RestrictedKernel {

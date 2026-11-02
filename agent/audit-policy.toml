@@ -65,6 +65,8 @@ extra_excluded_paths = [
   "crates/jope-pipeline/src/resource_ledger.rs",
   # Ciaudit HLT-043 sha256:e41dc90b...: exact provenance-pinned copy; see disposition.
   "deploy/dl-flywheel/jope_flywheel/training_snapshot.py",
+  # Frozen continuous runtime source pin; preserve its required import resolution.
+  "deploy/dl-flywheel/pipelines/continuous/runtime/jope_flywheel/training_snapshot_native.py",
   # Variety B HLT-001/HLT-043: versioned trace-archive copies are hash-pinned; see disposition.
   "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/trace_archive_v1_c8a13033.py",
   "deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v3/trace_archive_v1_c8a13033.py",
