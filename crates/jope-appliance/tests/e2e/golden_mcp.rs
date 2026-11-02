@@ -60,59 +60,6 @@ fn qualification_report_passes(report: &serde_json::Value) -> bool {
             .is_some_and(Vec::is_empty)
 }
 
-#[cfg(test)]
-mod qualification_report_tests {
-    use super::{qualification_report_passes, REQUIRED_CHECKS};
-    use serde_json::{json, Value};
-
-    fn report(checks: Value) -> Value {
-        json!({
-            "checks": checks,
-            "full_AG1_qualified": true,
-            "cleanup_errors": [],
-        })
-    }
-
-    #[test]
-    fn qualification_requires_every_unique_named_check_to_pass() {
-        let complete = REQUIRED_CHECKS
-            .iter()
-            .map(|name| ((*name).to_owned(), Value::Bool(true)))
-            .collect::<serde_json::Map<_, _>>();
-        assert!(qualification_report_passes(&report(Value::Object(
-            complete.clone()
-        ))));
-
-        assert!(!qualification_report_passes(&report(json!({}))));
-        let missing = complete
-            .iter()
-            .filter(|(name, _)| name.as_str() != REQUIRED_CHECKS[0])
-            .map(|(name, value)| (name.clone(), value.clone()))
-            .collect();
-        assert!(!qualification_report_passes(&report(Value::Object(
-            missing
-        ))));
-
-        let mut failed = complete.clone();
-        failed.insert(REQUIRED_CHECKS[0].to_owned(), Value::Bool(false));
-        assert!(!qualification_report_passes(&report(Value::Object(failed))));
-
-        let mut unexpected = complete.clone();
-        unexpected.insert("unexpected_check".to_owned(), Value::Bool(true));
-        assert!(!qualification_report_passes(&report(Value::Object(
-            unexpected
-        ))));
-
-        let mut incomplete = report(Value::Object(complete.clone()));
-        incomplete["full_AG1_qualified"] = Value::Bool(false);
-        assert!(!qualification_report_passes(&incomplete));
-
-        let mut cleanup_failed = report(Value::Object(complete));
-        cleanup_failed["cleanup_errors"] = json!(["daemon did not stop"]);
-        assert!(!qualification_report_passes(&cleanup_failed));
-    }
-}
-
 pub(super) fn run(
     executable: &Path,
     source: &str,
@@ -566,3 +513,56 @@ print(json.dumps(report))
 if report['full_AG1_qualified'] is not True or report['cleanup_errors']:
     raise AssertionError('AG1 acceptance failed or owned-process cleanup was incomplete')
 "####;
+
+#[cfg(test)]
+mod qualification_report_tests {
+    use super::{qualification_report_passes, REQUIRED_CHECKS};
+    use serde_json::{json, Value};
+
+    fn report(checks: Value) -> Value {
+        json!({
+            "checks": checks,
+            "full_AG1_qualified": true,
+            "cleanup_errors": [],
+        })
+    }
+
+    #[test]
+    fn qualification_requires_every_unique_named_check_to_pass() {
+        let complete = REQUIRED_CHECKS
+            .iter()
+            .map(|name| ((*name).to_owned(), Value::Bool(true)))
+            .collect::<serde_json::Map<_, _>>();
+        assert!(qualification_report_passes(&report(Value::Object(
+            complete.clone()
+        ))));
+
+        assert!(!qualification_report_passes(&report(json!({}))));
+        let missing = complete
+            .iter()
+            .filter(|(name, _)| name.as_str() != REQUIRED_CHECKS[0])
+            .map(|(name, value)| (name.clone(), value.clone()))
+            .collect();
+        assert!(!qualification_report_passes(&report(Value::Object(
+            missing
+        ))));
+
+        let mut failed = complete.clone();
+        failed.insert(REQUIRED_CHECKS[0].to_owned(), Value::Bool(false));
+        assert!(!qualification_report_passes(&report(Value::Object(failed))));
+
+        let mut unexpected = complete.clone();
+        unexpected.insert("unexpected_check".to_owned(), Value::Bool(true));
+        assert!(!qualification_report_passes(&report(Value::Object(
+            unexpected
+        ))));
+
+        let mut incomplete = report(Value::Object(complete.clone()));
+        incomplete["full_AG1_qualified"] = Value::Bool(false);
+        assert!(!qualification_report_passes(&incomplete));
+
+        let mut cleanup_failed = report(Value::Object(complete));
+        cleanup_failed["cleanup_errors"] = json!(["daemon did not stop"]);
+        assert!(!qualification_report_passes(&cleanup_failed));
+    }
+}
