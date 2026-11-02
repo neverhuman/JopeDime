@@ -4358,6 +4358,24 @@
       "lanes": [],
       "scope": "REL-07 Codex normal-exit recorder drain regression. Synthetic same-process-group recorder fixture only; no named client or candidate execution."
     },
+    "python:deploy/qualification/q1/harness/fifo_launch_admission.py": {
+      "discovery": {"kind": "python-family"},
+      "dispositions": ["research"],
+      "lanes": [],
+      "scope": "QLT-04 FIFO launcher admission and signed-input test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
+    },
+    "python:deploy/qualification/q1/harness/fifo_launch_process.py": {
+      "discovery": {"kind": "python-family"},
+      "dispositions": ["research"],
+      "lanes": [],
+      "scope": "QLT-04 FIFO launcher process cleanup test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
+    },
+    "python:deploy/qualification/q1/harness/fifo_launch_queue.py": {
+      "discovery": {"kind": "python-family"},
+      "dispositions": ["research"],
+      "lanes": [],
+      "scope": "QLT-04 FIFO launcher queue/lease test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
+    },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "discovery": {
         "kind": "python-family"
