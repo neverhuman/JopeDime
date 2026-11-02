@@ -64,14 +64,19 @@ def native_run(command,directory,name,deadline,timeout):
 
 class CUDAForwards:
     """CUDA events around each actual forward; sum excludes between-call waits."""
-    def __init__(self,net):self.net=net;self.pairs=[];self.handles=[];self.enabled=next(net.parameters()).is_cuda
+    def __init__(self,net):
+        self.net=net;self.pairs=[];self.handles=[];self.enabled=next(net.parameters()).is_cuda
+        self._event_type=None
+    def _before_forward(self,module,args):
+        a=self._event_type(enable_timing=True);b=self._event_type(enable_timing=True)
+        a.record();self.pairs.append((a,b))
+    def _after_forward(self,module,args,result):self.pairs[-1][1].record()
     def __enter__(self):
         if self.enabled:
             import torch
-            def before(module,args):
-                a=torch.cuda.Event(enable_timing=True);b=torch.cuda.Event(enable_timing=True);a.record();self.pairs.append((a,b))
-            def after(module,args,result):self.pairs[-1][1].record()
-            self.handles=[self.net.register_forward_pre_hook(before),self.net.register_forward_hook(after)]
+            self._event_type=torch.cuda.Event
+            self.handles=[self.net.register_forward_pre_hook(self._before_forward),
+                          self.net.register_forward_hook(self._after_forward)]
         return self
     def __exit__(self,*args):
         for h in self.handles:h.remove()

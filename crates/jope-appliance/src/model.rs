@@ -160,7 +160,7 @@ fn export_bytes(object: &ModelObject, format: &str) -> anyhow::Result<Vec<u8>> {
         },
         "bound-json" => serde_json::to_vec(&object.bound()?).map_err(Into::into),
         "python" | "rust" | "javascript" => object.export_source(format),
-        "onnx" => Err(Failure::backend("ONNX conversion is not implemented; retain the complete model object. A custom-domain ONNX graph also requires a compatible operator runtime.")),
+        "onnx" => Err(Failure::backend("ONNX export is unavailable in this build; retain the complete model object. A custom-domain ONNX graph also requires a compatible operator runtime.")),
         _ => Err(Failure::input("format must be object, fitted, bound-json, python, rust, javascript or onnx")),
     }
 }

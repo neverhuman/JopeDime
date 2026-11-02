@@ -615,10 +615,11 @@ impl Authority {
             "independent witness snapshot belongs to another original authority/epoch"
         );
         let mut required_acks = Vec::new();
-        for table in ["authorization_witness", "funding_witness"] {
-            let mut statement = authority
-                .db
-                .prepare(&format!("SELECT ack_sha FROM {table} ORDER BY ack_sha"))?;
+        for query in [
+            "SELECT ack_sha FROM authorization_witness ORDER BY ack_sha",
+            "SELECT ack_sha FROM funding_witness ORDER BY ack_sha",
+        ] {
+            let mut statement = authority.db.prepare(query)?;
             let rows = statement.query_map([], |r| r.get::<_, String>(0))?;
             for row in rows {
                 ensure!(
