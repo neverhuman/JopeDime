@@ -24,8 +24,11 @@ use scq::{
 };
 use tokio::io::AsyncReadExt;
 
+#[path = "main/interactive.rs"]
 mod interactive;
+#[path = "main/output.rs"]
 mod output;
+#[path = "main/submission.rs"]
 mod submission;
 
 use interactive::{run_attach, run_tui, stream_events};
