@@ -1,6 +1,6 @@
 //! Renderer v2: explicit refusal decisions and corrected sentence grammar.
 //! The v1 implementation and transcripts remain immutable for retained replay.
-use super::v1::{Claim, Narration};
+use super::v1::{implementation_notes, resolution, Claim, Narration};
 use crate::{diff_programs, digest, AtomicEdit, LineageFact, Links, ProgramDelta, ProgramSnapshot};
 use anyhow::{ensure, Result};
 use serde_json::{json, Value};
@@ -629,105 +629,4 @@ fn hypothesis(delta: &ProgramDelta) -> String {
         }
     }
     "Observer question: how will the changed recipe measure as a whole? Validation is pending, and any eventual gain cannot yet be attributed to an individual edit.".into()
-}
-fn resolution(edit: &AtomicEdit) -> Option<(String, bool)> {
-    let AtomicEdit::Parameter {
-        op,
-        key,
-        before,
-        after,
-        ..
-    } = edit
-    else {
-        return None;
-    };
-    let number = |v: &Option<crate::ExactValue>, default: f64| -> Option<f64> {
-        match v {
-            None => Some(default),
-            Some(v) => match v.to_param().ok()? {
-                feat_math::dsl::ParamValue::Int(n) => Some(n as f64),
-                feat_math::dsl::ParamValue::Float(n) if n.is_finite() => Some(n),
-                _ => None,
-            },
-        }
-    };
-    if matches!(op.as_str(), "winsor_clip" | "winsor_moments") && key == "q" {
-        let (a, b) = (
-            number(before, 0.05)?.clamp(0.0, 0.25),
-            number(after, 0.05)?.clamp(0.0, 0.25),
-        );
-        let unchanged = a.to_bits() == b.to_bits();
-        return Some((
-            if unchanged {
-                format!("Under the legacy planner, both requests resolve to q={a}; this parameter has no resolved change.")
-            } else {
-                format!("The legacy planner resolves q from {a} to {b}.")
-            },
-            unchanged,
-        ));
-    }
-    let (default, min, max) = match (op.as_str(), key.as_str()) {
-        ("quantile_bins", "bins") => (8, 2, 64),
-        ("cheb", "degree") => (4, 1, 8),
-        ("bin_onehot", "bins") => (6, 2, 32),
-        ("hinge", "knots") => (4, 1, 16),
-        ("rff_cos" | "rff_sin" | "oblique_hinge", "n") => (32, 1, 256),
-        ("rand_proj", "k") => (16, 1, 256),
-        ("landmark_dist" | "nystrom", "k") => (16, 1, 128),
-        ("pair_prod", "topk") => (8, 2, 24),
-        ("target_bin_encode", "bins") => (8, 2, 32),
-        ("spline", "knots") => (5, 3, 12),
-        ("svd_project", "k") => (8, 1, 64),
-        ("gbm" | "histgbm", "rounds") => (150, 1, 500),
-        ("gbm" | "histgbm", "depth") => (3, 1, 8),
-        ("gbm" | "histgbm", "bins") => (64, 2, 255),
-        _ => return None,
-    };
-    let resolve = |v: &Option<crate::ExactValue>| -> Option<usize> {
-        Some(
-            match v {
-                None => default,
-                Some(v) => v.to_param().ok()?.as_usize().unwrap_or(default),
-            }
-            .clamp(min, max),
-        )
-    };
-    let (a, b) = (resolve(before)?, resolve(after)?);
-    Some((
-        if a == b {
-            format!("Under the legacy planner, both requests resolve to {}={a}; this parameter has no resolved change.",safe(key))
-        } else {
-            format!("The legacy planner resolves {} from {a} to {b}.", safe(key))
-        },
-        a == b,
-    ))
-}
-
-fn implementation_notes(source: &str) -> Vec<String> {
-    let Ok(feat_math::GenomeIr::Pipeline(p)) = feat_math::GenomeIr::parse(source) else {
-        return Vec::new();
-    };
-    let Some(head) = p.stages.last() else {
-        return Vec::new();
-    };
-    let mut notes = Vec::new();
-    let alias = match head.op.as_str() {
-        "logistic" => Some("ridge"),
-        "gbm" => Some("histgbm"),
-        "ensemble" => Some("ensemble_ridge_gbm"),
-        _ => None,
-    };
-    if let Some(alias) = alias {
-        notes.push(format!(
-            "The legacy planner resolves the requested {} head to {alias}.",
-            safe(&head.op)
-        ));
-    }
-    if matches!(head.op.as_str(), "ridge" | "logistic") {
-        let fraction = head.get_f64("lambda_frac", 0.02);
-        if fraction.is_finite() {
-            notes.push(format!("Ridge lambda_frac={fraction} sets a fitting penalty max(lambda_frac × fitting rows, 0.001)."));
-        }
-    }
-    notes
 }

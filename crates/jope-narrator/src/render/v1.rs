@@ -674,7 +674,7 @@ fn hypothesis(delta: &ProgramDelta) -> String {
     }
     "Observer question: how will the changed recipe measure as a whole? Validation is pending, and any eventual gain cannot yet be attributed to an individual edit.".into()
 }
-fn resolution(edit: &AtomicEdit) -> Option<(String, bool)> {
+pub(crate) fn resolution(edit: &AtomicEdit) -> Option<(String, bool)> {
     let AtomicEdit::Parameter {
         op,
         key,
@@ -747,7 +747,7 @@ fn resolution(edit: &AtomicEdit) -> Option<(String, bool)> {
     ))
 }
 
-fn implementation_notes(source: &str) -> Vec<String> {
+pub(crate) fn implementation_notes(source: &str) -> Vec<String> {
     let Ok(feat_math::GenomeIr::Pipeline(p)) = feat_math::GenomeIr::parse(source) else {
         return Vec::new();
     };
