@@ -40,19 +40,83 @@ fn every_language_compiles_and_every_token_survives_restart_and_duplicates() {
     assert_eq!(store.sequence, 10);
 }
 
+/// Replay: `cargo test -p jope-observatory --test gp_source store::unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens -- --exact`.
 #[test]
 fn unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens() {
+    fn assert_failed_artifact_has_no_fabricated_source(artifact: &gp_source::Artifact) {
+        assert_eq!(artifact.status, Status::Failed, "{}", artifact.language);
+        assert!(artifact.source.is_none(), "{}", artifact.language);
+        assert!(artifact.sha256.is_none(), "{}", artifact.language);
+        assert_eq!(
+            (artifact.code_tokens, artifact.doc_tokens, artifact.bytes),
+            (0, 0, 0),
+            "failed emitter produced accounting for {}",
+            artifact.language
+        );
+        assert!(
+            artifact
+                .error
+                .as_deref()
+                .is_some_and(|error| !error.is_empty()),
+            "failed emitter omitted its diagnostic for {}",
+            artifact.language
+        );
+    }
+
     let directory = test_dir();
     let mut store = Store::open(directory.path()).unwrap();
-    publish(&mut store, "invalid", "this does not parse");
+    let invalid = occurrence("invalid", "this does not parse");
+    let (invalid_artifacts, invalid_emit_ns) = gp_source::emit(&invalid).unwrap();
+    assert_eq!(invalid_artifacts.len(), gp_source::LANGUAGES.len());
+    for artifact in &invalid_artifacts {
+        assert_failed_artifact_has_no_fabricated_source(artifact);
+    }
+    store
+        .publish(invalid, invalid_artifacts, invalid_emit_ns)
+        .unwrap();
     assert_eq!(counts(&store)["emission_errors"], 4);
     assert_eq!(counts(&store)["emitted_tokens"], 0);
     assert_eq!(store.snapshot()["total"]["artifact_yield"], 0.0);
     assert!(store.snapshot()["total"]["token_yield"].is_null());
-    publish(&mut store, "histgbm", "(pipe X (histgbm depth=2 rounds=2))");
-    assert!(counts(&store)["emission_errors"].as_u64().unwrap() >= 6);
-    assert!(counts(&store)["emitted_tokens"].as_u64().unwrap() > 0);
-    assert_eq!(counts(&store)["artifacts"], 8);
+
+    let unsupported = occurrence("histgbm", "(pipe X (histgbm depth=2 rounds=2))");
+    let (artifacts, emit_ns) = gp_source::emit(&unsupported).unwrap();
+    assert_eq!(artifacts.len(), gp_source::LANGUAGES.len());
+    let failures = artifacts
+        .iter()
+        .filter(|artifact| artifact.status == Status::Failed)
+        .count();
+    assert_eq!(
+        failures, 2,
+        "unsupported targets must remain explicit failures"
+    );
+    for artifact in &artifacts {
+        match artifact.status {
+            Status::Failed => assert_failed_artifact_has_no_fabricated_source(artifact),
+            Status::Pending => {
+                let source = artifact.source.as_deref().expect("pending source bytes");
+                let digest = gp_source::hash(source.as_bytes());
+                assert_eq!(artifact.sha256.as_deref(), Some(digest.as_str()));
+                assert_eq!(artifact.bytes, source.len() as u64);
+                assert!(artifact.tokens() > 0, "{}", artifact.language);
+            }
+            Status::Passed => panic!("emission cannot pre-approve {}", artifact.language),
+        }
+    }
+    let emitted_tokens: u64 = artifacts.iter().map(gp_source::Artifact::tokens).sum();
+    assert!(
+        emitted_tokens > 0,
+        "supported emitters must retain source tokens"
+    );
+    store.publish(unsupported, artifacts, emit_ns).unwrap();
+
+    let observed = counts(&store);
+    assert_eq!(observed["emission_errors"], 6);
+    assert_eq!(observed["emitted_tokens"].as_u64(), Some(emitted_tokens));
+    assert_eq!(observed["pending_tokens"].as_u64(), Some(emitted_tokens));
+    assert_eq!(observed["pending_artifacts"], 2);
+    assert_eq!(observed["artifacts"], 8);
+    assert_eq!(store.snapshot()["total"]["token_yield"], 0.0);
 }
 
 #[test]
