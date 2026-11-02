@@ -2,18 +2,18 @@
   "schema": "feat-math.compat-freeze.identity-rebaseline.v1",
   "decision": "P23 fitted-language product runtime port, following the merged browser wasm32, P35 corpus, and P45 dedicated-pool identity transitions. The fitted runtime moved from C++ to Rust; the byte-identical C++ implementation remains only as a test parity oracle. This mints a new evaluator implementation identity. DSL ABI, emitted bytes and Cargo.lock are unchanged. The evaluator identity and lineage source fixtures are regenerated for the P23 source. No known-identity row is added without a shipped receipt.",
   "plan_reference": "jankurai P23 non-optimal-product-language cap; ADR-0004; compat_freeze identity-only procedure",
-  "base_commit": "eee267f0dd1ed89f957eddd2b2e4ca2ee0fda1c9",
-  "source_commit": "77650cb472deb6a03c8d9fbc6c278d636ade6976",
+  "base_commit": "bcece5cd4613154d1175ff496f994b8a7f41b244",
+  "source_commit": "f5ae8c309fcaefe4afc1ddb0d49ac61465474f4b",
   "fixtures": [
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/evaluator_identity.v1.json",
       "before": "c0e9775a3538e93c069a9041cd71c77cdfb47c182396c803f26f8f12795b9bac",
-      "after": "478fd630f6019760ad783e11b0659fbc554a1553a4a3cd8950dc5e1203959dd6"
+      "after": "5f8fc35bec84b9d9630b4316e2d15ef086b777602edad7a0750e1ef04ce3a773"
     },
     {
       "path": "crates/feat-math/tests/fixtures/compat_freeze/lineage_sources.v1.json",
       "before": "7bdd2c734a36fb9f184fb292cdbaf42285f959fc8cdc6cfddbab6f149f410b2d",
-      "after": "1c4a9706d8ed167d2c202d94248d6e695a947771040d69586b04e2f271487d99"
+      "after": "8d225fb703ab5b0ed29ec93cfdd3007cc3b797dd8e51fe78f173041f629ee5d4"
     }
   ]
 }
