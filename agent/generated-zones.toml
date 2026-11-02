@@ -14,13 +14,6 @@ command = "just score"
 read_only = true
 write_policy = "auditor_output"
 
-[[zone]]
-path = "deploy/kernel-v1/source/"
-source = "agent/deployment-source-map.json (immutable historical Git source)"
-command = "python3 ops/ci/snapshot.py --verify"
-read_only = true
-write_policy = "auditor_output"
-
 # Historical third-party environment snapshot retained as research custody evidence.
 # Never edit or regenerate in place; verify its inventory against the owning manifest.
 [[zone]]
