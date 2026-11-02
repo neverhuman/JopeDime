@@ -1,0 +1,18 @@
+{
+  "source_commit": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+  "source_tree": "2e4324f0bb387ece970664eac193a7ef6a8eb05c",
+  "sha256": "4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177",
+  "bytes": 188081592,
+  "target": "x86_64-unknown-linux-gnu",
+  "artifact": "/mnt/jope-build-native/jope-artifacts/sol_v1_api01/qlt04-rc4-linux/jopedime-q1-linux",
+  "owner": "sol_v1_api01",
+  "exit": 0,
+  "started": "2026-11-02T03:54:07.802204+00:00",
+  "finished": "2026-11-02T03:55:32.809718+00:00",
+  "source_clean_after": true,
+  "build_identity": "/home/ubuntu/jope_plan/evidence/QLT-04/api01-linux-rc4-t1955/BUILD-IDENTITY.json",
+  "build_identity_sha256": "487f6e77ef49ac5d00a86349334ae722c5a6fdecb48f21487815dde502cee9f4",
+  "same_operator_as_second_build": true,
+  "runtime_qualified": false,
+  "Q1": "NOT_RUN"
+}

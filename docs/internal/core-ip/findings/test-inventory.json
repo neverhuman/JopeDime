@@ -1599,6 +1599,10 @@
       "reason": "QLT-04 FIFO launcher controls with private queue/key/backend fixtures; admission, lease, mutation, ledger and process cleanup proofs, not live qualification.",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/q1/harness/test_plan_publisher.py": {
+      "reason": "QLT-04 synthetic source-bound publisher and original-ledger admission controls; preserved raw M3 failure plus v1.0.0 waiver, changed-input and expired-waiver refusals. Manually executed infrastructure fixtures only; no signing, model, training, sealed payload or live Q1 study.",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/q1/harness/test_production_backend.py": {
       "reason": "QLT-01-F01 unit controls for the Q1 production receipt adapter (daemon.json bearer token binding, loopback endpoint, closed schema/identity/family/champion validation, and projection). Synthetic receipts only, not Q1 qualification.",
       "role": "infrastructure"

@@ -1,6 +1,7 @@
 """Protocol/statistical fixtures only; no learned model or sealed payload is executed."""
 
 import copy
+import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -31,7 +32,9 @@ def qualification_plan():
     return {
         "schema": "jope.q1-plan/v1",
         "mode": "qualification",
-        "source_commit": "a" * 40,
+        "source_commit": json.loads(q1_bindings.EVALUATOR_PIN.read_text())[
+            "source_commit"
+        ],
         "preregistration_sha256": q1.sha_file(q1.PREREGISTRATION),
         "backend_sha256": "b" * 64,
         "budget": 24,
@@ -49,7 +52,9 @@ def qualification_plan():
                 )
             },
             **q1_bindings.expected_pins(),
-            "evaluator_sha256": "76721923b663dd2ad2f9fe82c787791e2b97ec32426efa5eab8ec81f146ab0a6",
+            "evaluator_sha256": json.loads(q1_bindings.EVALUATOR_PIN.read_text())[
+                "sha256"
+            ],
         },
         "timeout_seconds": 600,
         "ledger_root": "/qualification-test-ledger",
@@ -828,7 +833,7 @@ class OwnerSelectionTests(unittest.TestCase):
         plan = q1_dedup.make_plan(
             q1_dedup.load_selection(),
             ["f" * 40],
-            "a" * 40,
+            qualification_plan()["source_commit"],
             qualification_plan()["pins"]["evaluator_sha256"],
         )
         q1.validate_plan(plan)  # Unsigned metadata fixture, no evaluator execution.
@@ -863,7 +868,7 @@ class OwnerSelectionTests(unittest.TestCase):
         plan = q1_dedup.make_plan(
             q1_dedup.load_selection(),
             ["f" * 40],
-            "a" * 40,
+            qualification_plan()["source_commit"],
             qualification_plan()["pins"]["evaluator_sha256"],
         )
         rows = fixture_receipts(plan, 0.5)
@@ -881,6 +886,45 @@ class OwnerSelectionTests(unittest.TestCase):
         self.assertGreater(result["primary"]["lower"], 0)
         self.assertEqual(result["decision"], "FAIL")
         self.assertLess(result["subgroups"]["wide"]["lower"], -0.02)
+
+
+class MetadataSourceTests(unittest.TestCase):
+    def plan(self):
+        plan = qualification_plan()
+        plan["source_commit"] = json.loads(q1_bindings.EVALUATOR_PIN.read_text())[
+            "source_commit"
+        ]
+        plan["metadata_source_commit"] = "b" * 40
+        return plan
+
+    def test_explicit_metadata_and_actual_compiled_source_are_separate(self):
+        plan = self.plan()
+        q1.validate_plan(plan)
+        self.assertNotEqual(plan["source_commit"], plan["metadata_source_commit"])
+
+    def test_wrong_compiled_source_and_malformed_metadata_are_refused(self):
+        plan = self.plan()
+        plan["source_commit"] = "a" * 40
+        with self.assertRaisesRegex(ValueError, "compiled evaluator source"):
+            q1.validate_plan(plan)
+        for value in [None, False, "x" * 40, "b" * 39]:
+            plan = self.plan()
+            plan["metadata_source_commit"] = value
+            with self.assertRaisesRegex(ValueError, "metadata source commit"):
+                q1.validate_plan(plan)
+
+    def test_omitting_metadata_field_cannot_hide_wrong_compiled_source(self):
+        plan = self.plan()
+        plan.pop("metadata_source_commit")
+        plan["source_commit"] = "a" * 40
+        with self.assertRaisesRegex(ValueError, "compiled evaluator source"):
+            q1.validate_plan(plan)
+
+    def test_metadata_source_is_covered_by_owner_approval_payload(self):
+        plan = self.plan()
+        before = q1.approval_payload(plan)
+        plan["metadata_source_commit"] = "c" * 40
+        self.assertNotEqual(q1.approval_payload(plan), before)
 
 
 if __name__ == "__main__":
