@@ -1,0 +1,586 @@
+{
+  "schema": "h206-approved-native91-compat-inputs-v1",
+  "scope": "Only the mandated existing91 DL-Val native baseline; not H206 TRAIN admission or a data/scientific/GPU launch waiver",
+  "selected": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1/selected.json",
+    "version_id": "5baEJPJOYg4BBE3acbyCrN2U09NVmx6B",
+    "sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+  },
+  "source_manifest": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4/source_manifest.json",
+    "version_id": "gmDwqfn8hLh7qzCLx.BYlNqtCsCPz18H",
+    "sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "feature_cache": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf/context_features.npz",
+    "version_id": "Zy6PMT9jhlOQeEqskjRswfwkleDuX0Iz",
+    "sha256": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+  },
+  "reference_costs": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/a5109aff14e9aed679752f9884059adf9ce580f1a2d266c2d0a88fe42194ee38/native91-reference-costs.npz",
+    "version_id": "gnklqmWuxKE9sDqn2icQ8eYDXLDZqRwE",
+    "sha256": "a5109aff14e9aed679752f9884059adf9ce580f1a2d266c2d0a88fe42194ee38"
+  },
+  "pools": {
+    "016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/cd576affa23ed1d4990340de628cd70ab0b961181ada5ad6fd7700727e17dc0f/016648dc8e6f474c5554815f87b12779cdb83966ce57ce52899da8847347c6da.npz",
+      "version_id": "VXQIPL7CdYntoyYptY050v3TRE3s54kg",
+      "sha256": "cd576affa23ed1d4990340de628cd70ab0b961181ada5ad6fd7700727e17dc0f"
+    },
+    "05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/62bee8c6f079033c5f1829aefec3e14fcd70a7a2496841db387adcd8317c0684/05264057bc225a9692c2018730dbe1772682fd24e3fc272a488693192e65a6da.npz",
+      "version_id": "jXEtYXIZ2qDD_JZ6r.YW497EclHsJ.5M",
+      "sha256": "62bee8c6f079033c5f1829aefec3e14fcd70a7a2496841db387adcd8317c0684"
+    },
+    "064c9ff995a5405ae751cf1b7e3b20fbd4f52912a26b1d251e191bba08b35318": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/52bd057d344ae27fe87583d511bf844c86d56d567af2e71bd972616367e5c668/064c9ff995a5405ae751cf1b7e3b20fbd4f52912a26b1d251e191bba08b35318.npz",
+      "version_id": "YEeAkvyBaG56jjV488b8CncejpTPz3Px",
+      "sha256": "52bd057d344ae27fe87583d511bf844c86d56d567af2e71bd972616367e5c668"
+    },
+    "087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/18e379b497e4da6513036f4251bb7a686291cacf805a03fc695517da553e685f/087f69944563f778a91d99894dbba6a9cdd339f5d0a93b4e58a4f0003765d920.npz",
+      "version_id": "dDvErzXJR.QO6lKYT8c1s7ryizkaziHw",
+      "sha256": "18e379b497e4da6513036f4251bb7a686291cacf805a03fc695517da553e685f"
+    },
+    "0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/bb5838f4dc2185ad59755d2f7513594112f46a188fb7a4bc72b2987e0ac8d9e3/0a05f8f58b55c4c7682550bfee8cc27fd4ee14fc5f8eeec1a04a8d3ea8ea0755.npz",
+      "version_id": "83bnRDBsn0qndbdCQKLeq9waF.bFqdPl",
+      "sha256": "bb5838f4dc2185ad59755d2f7513594112f46a188fb7a4bc72b2987e0ac8d9e3"
+    },
+    "0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/e3928f712f661548a874951f6e119c9114fc2492f4a97a91d4dfd46e57cd23f6/0b07774cc5e5c481ad4054f4bad95f87903e82bff3522bb847cd5b02aa7331fd.npz",
+      "version_id": "mzioYk1Vio1wwwUzCxdAQSj8iv47sBFZ",
+      "sha256": "e3928f712f661548a874951f6e119c9114fc2492f4a97a91d4dfd46e57cd23f6"
+    },
+    "0cd637de21a92fef5b8f0ab923205bc19c60d1afaf84d22cdff9a7fc933d4826": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/2a338aff2e0bb0ec6d47564d2c2a484c627a8e5b84f4d8f7a59e19f8fde57787/0cd637de21a92fef5b8f0ab923205bc19c60d1afaf84d22cdff9a7fc933d4826.npz",
+      "version_id": "yKoBgiF9eZyCBR27wAWrAzW1kQb2W6.z",
+      "sha256": "2a338aff2e0bb0ec6d47564d2c2a484c627a8e5b84f4d8f7a59e19f8fde57787"
+    },
+    "0d316ab90ca1558fd69b22a01fce4821edafe8c13d51686aae5d71f19564f83e": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/46ef7ea292143893c65bff79151ca132d9e50cb204cda186856194a8fcff20f4/0d316ab90ca1558fd69b22a01fce4821edafe8c13d51686aae5d71f19564f83e.npz",
+      "version_id": "xHBqTS1OT9Qty1JldvvV8EyaImPRUsQ3",
+      "sha256": "46ef7ea292143893c65bff79151ca132d9e50cb204cda186856194a8fcff20f4"
+    },
+    "0e49978b3ed4e2e2ea9d992f1cd33541cf063af5fd61293bd1ac8cd4b20c4e4c": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/a11aa0830899424d0ae9c45bfded0eaf97e69f159a0a4325c04716b34162769e/0e49978b3ed4e2e2ea9d992f1cd33541cf063af5fd61293bd1ac8cd4b20c4e4c.npz",
+      "version_id": "P2OFuah4Q8y4YUtVhWFWrM7pW_M6YOc0",
+      "sha256": "a11aa0830899424d0ae9c45bfded0eaf97e69f159a0a4325c04716b34162769e"
+    },
+    "0e52abc2b4490ec9cc12713b50c8e4bf93f84252ad7906aa5f7d91fe364ec281": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/bf5ed9e3e1f49543584392240f6727372b65f40d9c80f31f3d9e2e50d53be7d8/0e52abc2b4490ec9cc12713b50c8e4bf93f84252ad7906aa5f7d91fe364ec281.npz",
+      "version_id": "8Ie6V5BHZH5aWr.cZ6bJUSj3OVNhG3AZ",
+      "sha256": "bf5ed9e3e1f49543584392240f6727372b65f40d9c80f31f3d9e2e50d53be7d8"
+    },
+    "15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/38f641cf72b9a14edd51931efb51e7772f8c9164378edd4c2d772adea0d30257/15e9e1e67bb6f9d45f9aabc0047d316cc44eacb24da62ef850e3e1ba5d0f42bf.npz",
+      "version_id": "onbLHASIvQEmJGg7hmbQtz9ieX0PWqs7",
+      "sha256": "38f641cf72b9a14edd51931efb51e7772f8c9164378edd4c2d772adea0d30257"
+    },
+    "17f77ac2b2f0cb3333d5d7a68355f7fb52f8ca1b52ff4a24f1efc98fbed0f2ce": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/c191a52a179b19a98157a38de2660248b38abe2be5fb17b3397a64f9876217da/17f77ac2b2f0cb3333d5d7a68355f7fb52f8ca1b52ff4a24f1efc98fbed0f2ce.npz",
+      "version_id": "rpiDjW0Hzlb1HIWq0uZ64ZzBdCE7DJ09",
+      "sha256": "c191a52a179b19a98157a38de2660248b38abe2be5fb17b3397a64f9876217da"
+    },
+    "1904558704af02ce447393649010660c2a6c608e0f1250484e1c21fd74dd1d59": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/31abd7a3e34be30fb4413e494e250c5a7dd64563e4f513bef472f3b3b84d984a/1904558704af02ce447393649010660c2a6c608e0f1250484e1c21fd74dd1d59.npz",
+      "version_id": "Vl982KLTfJYG6MnyzAkif2Y_UuzrJugB",
+      "sha256": "31abd7a3e34be30fb4413e494e250c5a7dd64563e4f513bef472f3b3b84d984a"
+    },
+    "1ad9d95cffce95734ff5b4b14d7f291da3cee9338f139596cecf593a86f6f39a": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d21ea0db34b9f5247fa9360dc6e7d58006ada3a92f273d4b60bd6324ab09ef10/1ad9d95cffce95734ff5b4b14d7f291da3cee9338f139596cecf593a86f6f39a.npz",
+      "version_id": "VpCFGsxio8fsarXcXdhr6MyCAGNqHNkG",
+      "sha256": "d21ea0db34b9f5247fa9360dc6e7d58006ada3a92f273d4b60bd6324ab09ef10"
+    },
+    "1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/707095c13a6934f079f7406e0aa5596819264eebc7a598dc8c6fd62e297b2b9f/1b770a1e9840309a0b299379e96b17770a6068e85dcbd4ab6c29a7f4afb0a689.npz",
+      "version_id": "dJtP13i8XmCyiTTm9FtlAAky3k4OSJBj",
+      "sha256": "707095c13a6934f079f7406e0aa5596819264eebc7a598dc8c6fd62e297b2b9f"
+    },
+    "1cd86c6087f25f2044a29d25091d8e3fa6b8a6bffdb4f1e7815908b744759bb9": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/f17a6f6274cc214f73dd63eb195835e9275962510568bf9359ff2910befbee19/1cd86c6087f25f2044a29d25091d8e3fa6b8a6bffdb4f1e7815908b744759bb9.npz",
+      "version_id": "2JjE.Z.0rM56JkFfmZmwa1vjQdctf7Y7",
+      "sha256": "f17a6f6274cc214f73dd63eb195835e9275962510568bf9359ff2910befbee19"
+    },
+    "23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/e2d6f8d2709cfbb13ed38605944e67cda686f9775bee2f90b0a8aaaf72ca400b/23e1d8c03439318820118549fef92fc4ee5d795a067a57573d1b312ffb7b3631.npz",
+      "version_id": "1nGkEdDDXh6dtPs8PaTun6vNJXXmR2eP",
+      "sha256": "e2d6f8d2709cfbb13ed38605944e67cda686f9775bee2f90b0a8aaaf72ca400b"
+    },
+    "24c9ee141b718ef99ecf0a0a170f498c9051fc5d1ba8af2b38b7d8c1953df150": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/786f9f24677fae47d7e9854e48dae8ff56623b65c3706471c102861fee4f81c7/24c9ee141b718ef99ecf0a0a170f498c9051fc5d1ba8af2b38b7d8c1953df150.npz",
+      "version_id": "aVOODZLYhpjECzwN_U2AJWaG_DmPQ9BD",
+      "sha256": "786f9f24677fae47d7e9854e48dae8ff56623b65c3706471c102861fee4f81c7"
+    },
+    "25aff0bcd9fb3ea4dd28c6a71463b1e02d8293401f40a2e48e56c2b5a3ab54d8": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/7c9aeeb01741eca05fbd5605e30d7fd5cbfd2345f6b5a22a7b06b4b3c83ba397/25aff0bcd9fb3ea4dd28c6a71463b1e02d8293401f40a2e48e56c2b5a3ab54d8.npz",
+      "version_id": "tiJLfy6bS2H4k9Y2rbNPqaDUQpraNway",
+      "sha256": "7c9aeeb01741eca05fbd5605e30d7fd5cbfd2345f6b5a22a7b06b4b3c83ba397"
+    },
+    "283fb463e021e3cef432a5e46ccf21d95731e25af46eb52be91099d1e248a6ae": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d9064e80c0445571c929a0e2953e8dcdaf4954b8eec15d51b85bca0bc7da9279/283fb463e021e3cef432a5e46ccf21d95731e25af46eb52be91099d1e248a6ae.npz",
+      "version_id": "J03XB6as5ATrtTdlwmFjM5BVG31GSLsa",
+      "sha256": "d9064e80c0445571c929a0e2953e8dcdaf4954b8eec15d51b85bca0bc7da9279"
+    },
+    "293dd9add416aa1ea1b54ae5476780f1fbe84ebc2a95e949f1a29b1d93754b6b": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/39ca544fb0d498312adfad256fa8514a2337d8accd67d3ca293102b8f4fbc29d/293dd9add416aa1ea1b54ae5476780f1fbe84ebc2a95e949f1a29b1d93754b6b.npz",
+      "version_id": "Q4nF6BFp1sfAAWL_XMdlJoseEMj6uThE",
+      "sha256": "39ca544fb0d498312adfad256fa8514a2337d8accd67d3ca293102b8f4fbc29d"
+    },
+    "2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/7dc069027e7005c97f4d7123031d1c560fb144409de753dc03bdb2696156020d/2d7f56bce09d136473a7847a4672718e147e08b3b4c4db6dec40f481b293d421.npz",
+      "version_id": "Z12NfM5jV6VrsA0_Xy.46_oSU_QuxAGx",
+      "sha256": "7dc069027e7005c97f4d7123031d1c560fb144409de753dc03bdb2696156020d"
+    },
+    "2e8f7388b3d3ac447d8589803c8f53284db1ae43b718c3d11464b0c271afe9b6": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/274f37580050b6faf8f37bf14eb981ce0dcf7c2bbd60c32605a50f7c9e562044/2e8f7388b3d3ac447d8589803c8f53284db1ae43b718c3d11464b0c271afe9b6.npz",
+      "version_id": "anD7z2aTXxmsXFS9t0lOiMA4Z9Kiz2Br",
+      "sha256": "274f37580050b6faf8f37bf14eb981ce0dcf7c2bbd60c32605a50f7c9e562044"
+    },
+    "2f8d9e662f5f5dd584a151bb4cca1d2935d866b0240c334bca389a9c35d52662": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/18d7440151813367a5312564525e2ce60cca3ed4f9ddbfb550dae301d7383d65/2f8d9e662f5f5dd584a151bb4cca1d2935d866b0240c334bca389a9c35d52662.npz",
+      "version_id": "HR_66bHIqGhkuY5NciIccAQ3V6aAuYfg",
+      "sha256": "18d7440151813367a5312564525e2ce60cca3ed4f9ddbfb550dae301d7383d65"
+    },
+    "3abd4bab0e6b2454b393ac2c8e8f47badda291a0cd8edaa95e7b1985326c4a38": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/17e32fa6dd8fce757301bf1d1182ee41109aafa1c2ffe2269a514f8de8394ae3/3abd4bab0e6b2454b393ac2c8e8f47badda291a0cd8edaa95e7b1985326c4a38.npz",
+      "version_id": "RgpUd85RdoPa_tz95IsdV.6nok1TWVIk",
+      "sha256": "17e32fa6dd8fce757301bf1d1182ee41109aafa1c2ffe2269a514f8de8394ae3"
+    },
+    "3e62bd2aea6725a8791da30ac1f26b5498e1f4605f942d099f9e307328fde1b1": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/f360aeca30d73a48cabfe997907a38e3e5f1e27271720d316fafb4dd6dd9e702/3e62bd2aea6725a8791da30ac1f26b5498e1f4605f942d099f9e307328fde1b1.npz",
+      "version_id": "pOdp_MLHA8L.BcgHFbeRvqvPWT.rAXGO",
+      "sha256": "f360aeca30d73a48cabfe997907a38e3e5f1e27271720d316fafb4dd6dd9e702"
+    },
+    "42db82ea39dbc7a7def1af111b6fd0099aebf783c7ea01548b3f55883fd836e1": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/fee3a0e28018a8fd1024a82400f4abc8d30ab579d9bb03586cfc348bf0c4775c/42db82ea39dbc7a7def1af111b6fd0099aebf783c7ea01548b3f55883fd836e1.npz",
+      "version_id": "vYiZ3ruFRiP0xctio_pZNWXleUw2E5zM",
+      "sha256": "fee3a0e28018a8fd1024a82400f4abc8d30ab579d9bb03586cfc348bf0c4775c"
+    },
+    "43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/efe9cf2919290db187eb902dc439213c1a9bdb58f423b3c580e5e73a9281bc72/43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91.npz",
+      "version_id": "HfyU0aMpkAZeLFRxZLt7ITjdKT9V5Die",
+      "sha256": "efe9cf2919290db187eb902dc439213c1a9bdb58f423b3c580e5e73a9281bc72"
+    },
+    "4425fbe7fee2bd08ad54abfdfdbb2437681bd8e6a83e36cef7063144eaa4e1bd": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/5c82312761b83c93cd51fb9c28affaeaa2d47f18bd7c92e62d543b5c1904c2a1/4425fbe7fee2bd08ad54abfdfdbb2437681bd8e6a83e36cef7063144eaa4e1bd.npz",
+      "version_id": "i1.eo1Y3rY3okDbPVxCwp_XaCqd72Ymi",
+      "sha256": "5c82312761b83c93cd51fb9c28affaeaa2d47f18bd7c92e62d543b5c1904c2a1"
+    },
+    "498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d6a16a1c8e77206d9e5c68cec3bff8aea806c9deddd39761ba2b3e41115062a3/498fc9a0b029cd79c0d02ef1eb97a8c44e66411c980aadfa29602f4f313f9c38.npz",
+      "version_id": "xojuad5_I7bR2hUWz9w_lVkJo47xOmAV",
+      "sha256": "d6a16a1c8e77206d9e5c68cec3bff8aea806c9deddd39761ba2b3e41115062a3"
+    },
+    "4c8751e8bd56a491d60a7279d62cce46ebb8c415c079745cea238a4a9c610375": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/6000ae4b48a68b7ef3d49be2a88d2aa88e50fabbdf53df3894e6908098b3b966/4c8751e8bd56a491d60a7279d62cce46ebb8c415c079745cea238a4a9c610375.npz",
+      "version_id": "LgzD7B0E4s8KJ_UTQWIKETQskE.ZsUzY",
+      "sha256": "6000ae4b48a68b7ef3d49be2a88d2aa88e50fabbdf53df3894e6908098b3b966"
+    },
+    "4dbf3f3b88aca9f6b915e9cf6f494e956217c8c7447e8c1ae95a65924d27af4a": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/8da9e4bcd1f3e8fd1de18ee0ff439da3376f33b610801e4b548029be761c4589/4dbf3f3b88aca9f6b915e9cf6f494e956217c8c7447e8c1ae95a65924d27af4a.npz",
+      "version_id": "Yzt8XMCkbfAdc7pPDAgYtl3o0.Wpf_DR",
+      "sha256": "8da9e4bcd1f3e8fd1de18ee0ff439da3376f33b610801e4b548029be761c4589"
+    },
+    "4ec0e23fdfb640c76a38f5a3d649ef24b871e5a6dad9338d77fa8582fc8cdc07": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/ed5150312548fb0983c64602ac8e020961eb3130617b4f64ab97e76e52bb7a9a/4ec0e23fdfb640c76a38f5a3d649ef24b871e5a6dad9338d77fa8582fc8cdc07.npz",
+      "version_id": "S98IPOCVzHMs1HiRDSDuU__IG0mhgYc7",
+      "sha256": "ed5150312548fb0983c64602ac8e020961eb3130617b4f64ab97e76e52bb7a9a"
+    },
+    "4f7d3f5391d70e8b069ee39bb59adc30b1c4a4050cdb86fdfea2eac35ef1f0d8": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/7697a0015452c1e44275ac9b52254638c2c93886ef4f2bcf3164ca73a6a94b31/4f7d3f5391d70e8b069ee39bb59adc30b1c4a4050cdb86fdfea2eac35ef1f0d8.npz",
+      "version_id": "02OHS_VV6C2K6HNKs8pRLdrbbmz_lWz6",
+      "sha256": "7697a0015452c1e44275ac9b52254638c2c93886ef4f2bcf3164ca73a6a94b31"
+    },
+    "55a2d1b0fbc8ae57936d3a1301cf26d020186d46528ffd6e589c2c4fb62d46de": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/b3ff408bd6ad429db068e44ae1418a286420ab6904d9750a1d3bbf5709da7220/55a2d1b0fbc8ae57936d3a1301cf26d020186d46528ffd6e589c2c4fb62d46de.npz",
+      "version_id": "FPAq71eEgFHsybI9eTzotSGxnLDLwn4F",
+      "sha256": "b3ff408bd6ad429db068e44ae1418a286420ab6904d9750a1d3bbf5709da7220"
+    },
+    "55de002335a4375843a826913f248b38c74b7b875b27726907fc9dc378939d99": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/2885955f4a6f115e3b4991d4b9a70e98e3ef29a23e89b2a5b8d4436a264fb2dd/55de002335a4375843a826913f248b38c74b7b875b27726907fc9dc378939d99.npz",
+      "version_id": "QhzBhlq5NzLRW_6OqNtDqWaNVjnBq21r",
+      "sha256": "2885955f4a6f115e3b4991d4b9a70e98e3ef29a23e89b2a5b8d4436a264fb2dd"
+    },
+    "5898d170c160a78afded189081bf82ea71d7b6e9a9c8c8b7145b7526a9f06ad1": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/72f77bc9e8925e948d75afff33646a96f857da9cbd6b66df98f4c3617a6e6cf6/5898d170c160a78afded189081bf82ea71d7b6e9a9c8c8b7145b7526a9f06ad1.npz",
+      "version_id": "S3J7pEcauwEZppseSTHt5m3U4qZOxsvA",
+      "sha256": "72f77bc9e8925e948d75afff33646a96f857da9cbd6b66df98f4c3617a6e6cf6"
+    },
+    "59aae6f8f8fdedc6caae8e929b0882d99bc8a75d38205a3a99dad3ad95a5376a": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/c6a1bec372dd6fa02d034b9eebafec39e04d29e05db1cdde3b6b562d5fd9eba4/59aae6f8f8fdedc6caae8e929b0882d99bc8a75d38205a3a99dad3ad95a5376a.npz",
+      "version_id": "0FxLxxhCgGjaNeAd5WBng8lIGKOt2twF",
+      "sha256": "c6a1bec372dd6fa02d034b9eebafec39e04d29e05db1cdde3b6b562d5fd9eba4"
+    },
+    "5cff215fc5432a6f802dec3f1b64c58542ac03905a55a65af1afdde0189e3e37": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/75db692b0b42fbfc0b258fe1c715b183cc93160cb0e602a071a6326451227f01/5cff215fc5432a6f802dec3f1b64c58542ac03905a55a65af1afdde0189e3e37.npz",
+      "version_id": "FDR8yVA1R9iSp07BqHQ9nc1lXPP34ibm",
+      "sha256": "75db692b0b42fbfc0b258fe1c715b183cc93160cb0e602a071a6326451227f01"
+    },
+    "6230069cacc7c6a7cee92a732cd29bab1f0e2ce6e356e148cfabf6571f92df08": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/0ca4b32b50b0bcd58efa691e2fd59b526ae7f8f426f6b44fb432d3281eb739fe/6230069cacc7c6a7cee92a732cd29bab1f0e2ce6e356e148cfabf6571f92df08.npz",
+      "version_id": ".NN_iRDasbtDiX4iSMVdIiP1LylV5qjj",
+      "sha256": "0ca4b32b50b0bcd58efa691e2fd59b526ae7f8f426f6b44fb432d3281eb739fe"
+    },
+    "640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/bfa7c0d98a8040c153ec28687775648f5bb62fd4b0232220ce8b7e1329a92329/640522f13fee887c7750667a6c1f4b0770941f96aac5a5e9ba5436997da61042.npz",
+      "version_id": "OP_A3.iFUm0IljmyLXw_mHbd_jDgFfhN",
+      "sha256": "bfa7c0d98a8040c153ec28687775648f5bb62fd4b0232220ce8b7e1329a92329"
+    },
+    "65cfbf5b12763b855fa54f54d1ef627123f33f59776b7602240ba3a509298a6f": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/b48b1af0e89b01028d1b900c332167b26cbbe31dd0cba9524081814f2cf970a4/65cfbf5b12763b855fa54f54d1ef627123f33f59776b7602240ba3a509298a6f.npz",
+      "version_id": "4ldxm4PeM1oJmzr5WQPiuGgNDjVxREVE",
+      "sha256": "b48b1af0e89b01028d1b900c332167b26cbbe31dd0cba9524081814f2cf970a4"
+    },
+    "65e0dcc10529cdd462c1220a80eaf2cd303bc741a81cfaecb193292f034d9f21": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/10cf2e685ca4d65581e821441a79998cddd05ce0effb2d1c54261716d334cc38/65e0dcc10529cdd462c1220a80eaf2cd303bc741a81cfaecb193292f034d9f21.npz",
+      "version_id": "rpAeADn92icHE1.E6Gwj.RuSe0mQn.MB",
+      "sha256": "10cf2e685ca4d65581e821441a79998cddd05ce0effb2d1c54261716d334cc38"
+    },
+    "692dc11dc7fa81a5804a58a9a7bfbb578ce99d2eed858b75a2f7c7e88a553d22": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/943c6e161b8b03c29ab6c8d41adfe85dbee3d071c0ccbf9a06042617f1b1473e/692dc11dc7fa81a5804a58a9a7bfbb578ce99d2eed858b75a2f7c7e88a553d22.npz",
+      "version_id": "RWsWq1PilIcqM6g2oP7VWiVnekYGy2KS",
+      "sha256": "943c6e161b8b03c29ab6c8d41adfe85dbee3d071c0ccbf9a06042617f1b1473e"
+    },
+    "6aed4a28263cda4af3b17d8f941b6216c69c30643b61448c8d40dc7913a66409": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d39142605747d7f4f8128766751dd47c5fa45cbc2d224f926e4c39ae44322abd/6aed4a28263cda4af3b17d8f941b6216c69c30643b61448c8d40dc7913a66409.npz",
+      "version_id": "ts3Ca2xE7XE6Jc0gfx05MxEkC3_.OWzz",
+      "sha256": "d39142605747d7f4f8128766751dd47c5fa45cbc2d224f926e4c39ae44322abd"
+    },
+    "6ecbb7d5ec5384b3079e5faaa161bbe05b4ce9cf11a0b837e857a3965ed3aa61": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/0ad664937d63c1ba5717358aa8f38133fb1f5e372f0ce429ed0c208cbb1eab70/6ecbb7d5ec5384b3079e5faaa161bbe05b4ce9cf11a0b837e857a3965ed3aa61.npz",
+      "version_id": "IH.6m9HTvSg_gZDYyqR85yEDkcZl1145",
+      "sha256": "0ad664937d63c1ba5717358aa8f38133fb1f5e372f0ce429ed0c208cbb1eab70"
+    },
+    "767797b0cfdd57b0a6133c067403172d868d141a72378e6ea8124576805d698f": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/3e66082c657d21f81298588fac020a166f71253144a3b8cb0bd16088f1bd7338/767797b0cfdd57b0a6133c067403172d868d141a72378e6ea8124576805d698f.npz",
+      "version_id": "AVQDz5N7E5ZR9LXsAvM9BEvybBqOIQXH",
+      "sha256": "3e66082c657d21f81298588fac020a166f71253144a3b8cb0bd16088f1bd7338"
+    },
+    "76e4c4045ab34d9485790c28f4ec26fa07c10d21000beeba1a6f59f3066b43ca": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/cdfb72e254f61d0f2f276023e883aa037abdc6264e5f8b4331209847de1aab4c/76e4c4045ab34d9485790c28f4ec26fa07c10d21000beeba1a6f59f3066b43ca.npz",
+      "version_id": "C6pZFGo934uZk1H9gDOv5I.MZ4a6CYsF",
+      "sha256": "cdfb72e254f61d0f2f276023e883aa037abdc6264e5f8b4331209847de1aab4c"
+    },
+    "804456d521ee30419a541fc7d83329a6523a449a2c9eb60e017fd64ef4b90d0f": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/7da4727e18e37daed1bb857eb85268de72beed22de1871bf38c46a0181ef37f3/804456d521ee30419a541fc7d83329a6523a449a2c9eb60e017fd64ef4b90d0f.npz",
+      "version_id": "_j5NHJ4Tz7Nksc.daa9X3xss7ZLxwsfI",
+      "sha256": "7da4727e18e37daed1bb857eb85268de72beed22de1871bf38c46a0181ef37f3"
+    },
+    "81b6226e1ab33c3a4b07d5dab1f7bffcd8324038cb563e154efd975264fbb70d": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/85285b2eb45d6279075a7203706e7129ff7265143228ae2be380188bf7d559d6/81b6226e1ab33c3a4b07d5dab1f7bffcd8324038cb563e154efd975264fbb70d.npz",
+      "version_id": "dhVpv3VMcVndfM8ovdLyY5.1fHq1_uX4",
+      "sha256": "85285b2eb45d6279075a7203706e7129ff7265143228ae2be380188bf7d559d6"
+    },
+    "8208128119c70f4c872e4a870016d04a2b6d739bddac399459641b8332d0f2d9": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/90a031bef80bf724ba6adeda66958c7000eab62ea95865d801b6e13ba141df9b/8208128119c70f4c872e4a870016d04a2b6d739bddac399459641b8332d0f2d9.npz",
+      "version_id": "trcfTMDgDORIML3UxTMh1IWut9Vpbe0q",
+      "sha256": "90a031bef80bf724ba6adeda66958c7000eab62ea95865d801b6e13ba141df9b"
+    },
+    "8a13471f5d9ac1032ea6f7a2feec6c8c2c8887180673371c8862bc204eb42235": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/ffefd0f944cc9b59f8a6e8649d8590819bb4a9d2485a6a6aa461ec4b26ec4f3e/8a13471f5d9ac1032ea6f7a2feec6c8c2c8887180673371c8862bc204eb42235.npz",
+      "version_id": "0DI0YVR8IsgfeXEJjoliJMuDOBKsgnlN",
+      "sha256": "ffefd0f944cc9b59f8a6e8649d8590819bb4a9d2485a6a6aa461ec4b26ec4f3e"
+    },
+    "8c424963eef97edcc0520b61061f6c4c34e107e1b8c1f3ca0986a80c9b9bb114": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/2f109d8986e8582c54ad6800816eaf7cfac5d098741a64631449c0888e26d8f9/8c424963eef97edcc0520b61061f6c4c34e107e1b8c1f3ca0986a80c9b9bb114.npz",
+      "version_id": "M96brerPmNCz.bn41d0cEv846YmRRXk.",
+      "sha256": "2f109d8986e8582c54ad6800816eaf7cfac5d098741a64631449c0888e26d8f9"
+    },
+    "8ce52a03cba8a51f8badf92c9d2360e2bdf9843bf4533794da77c9fc2ed37916": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/42da15913fcb5b47ec275c79b37e87c24a445fdff220d7caa1cf7031da777608/8ce52a03cba8a51f8badf92c9d2360e2bdf9843bf4533794da77c9fc2ed37916.npz",
+      "version_id": "Nn6EuYR4zc0N2PSHytjxWBghsJpBnjvw",
+      "sha256": "42da15913fcb5b47ec275c79b37e87c24a445fdff220d7caa1cf7031da777608"
+    },
+    "8eeca816e18117d6d2abd063fd2cf46055d736c3cb39207547742494f6891f47": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d8a4d3889a843edb80eab3d015774f80af454c996790e748e155e1a2300eda1b/8eeca816e18117d6d2abd063fd2cf46055d736c3cb39207547742494f6891f47.npz",
+      "version_id": "AtMhXMgKHJsaBssVVFIuPLTbCTfKAZ8U",
+      "sha256": "d8a4d3889a843edb80eab3d015774f80af454c996790e748e155e1a2300eda1b"
+    },
+    "90bfbd3079a5a8c32a9207ec764885d8c9aaa55f754ae262c9215e91a6362a0c": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/65820c22d888adbd35a624f2f54857fdeccdaba5f11e1b8a7244b6e0dfdf8b18/90bfbd3079a5a8c32a9207ec764885d8c9aaa55f754ae262c9215e91a6362a0c.npz",
+      "version_id": "LyhocCM0fXcSJw1DfwdZAfKWatM4zKs7",
+      "sha256": "65820c22d888adbd35a624f2f54857fdeccdaba5f11e1b8a7244b6e0dfdf8b18"
+    },
+    "96eac9c1d1cd5d6c15b93aacb03f3abe9e80cbfbfab757cc8c20e85ba365c23c": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/b4cce4dfa7e5e9d55b847530339608e80b3b67d3fb0d7a1ce2803ecfbca8553c/96eac9c1d1cd5d6c15b93aacb03f3abe9e80cbfbfab757cc8c20e85ba365c23c.npz",
+      "version_id": "iZSoEYwnzkW_BUvx.1OEHmOYU.DyHcmv",
+      "sha256": "b4cce4dfa7e5e9d55b847530339608e80b3b67d3fb0d7a1ce2803ecfbca8553c"
+    },
+    "983bb1e5e396d436d7347fc8ca1ebd116cfed99493c6e91f6026a7d167c19780": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/51cd78daf228b82323283ac1570ee9cabdd7ef84b02af2f0fea685d90166cdc8/983bb1e5e396d436d7347fc8ca1ebd116cfed99493c6e91f6026a7d167c19780.npz",
+      "version_id": "0J0TrOcEmBo.V0kSPRwGsBIAYTWCyuoj",
+      "sha256": "51cd78daf228b82323283ac1570ee9cabdd7ef84b02af2f0fea685d90166cdc8"
+    },
+    "9a3bd46cd866ea55d3f99f9d713cbcc789e1fb8ea427b02aba6ee75e732f883f": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/0d50f34a850b01d149d2485cde3809bc68a3c4ec594283317c01b89dfde2f5fe/9a3bd46cd866ea55d3f99f9d713cbcc789e1fb8ea427b02aba6ee75e732f883f.npz",
+      "version_id": "ePM0jBcLIs.2T6rRRSPZuV2Mz5BkJpkV",
+      "sha256": "0d50f34a850b01d149d2485cde3809bc68a3c4ec594283317c01b89dfde2f5fe"
+    },
+    "9c22e2651db3b28da0963a6365612e70c82e0aceaa70336abff13a23aca77c6b": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/90a7d9070e073102db8ffe2cee9898e27b8b7d358b0f4f3b402ce3ef1e15c84f/9c22e2651db3b28da0963a6365612e70c82e0aceaa70336abff13a23aca77c6b.npz",
+      "version_id": "x81WIWrDSKMU57xXdulUoidWc0Z4DhRD",
+      "sha256": "90a7d9070e073102db8ffe2cee9898e27b8b7d358b0f4f3b402ce3ef1e15c84f"
+    },
+    "9df0bcb0f8cf6ce721786f461577a7fcdb752bca13319bd8cc0399c523d5cc99": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/7f80a71902407e1eed90564c9f0b2ee00761f4db600b7e32336e4460721a0935/9df0bcb0f8cf6ce721786f461577a7fcdb752bca13319bd8cc0399c523d5cc99.npz",
+      "version_id": "BIKSMy71EWwdRvughhJe5KSeEbI5ydL0",
+      "sha256": "7f80a71902407e1eed90564c9f0b2ee00761f4db600b7e32336e4460721a0935"
+    },
+    "9e52d08b1cb33a60d40f6968d29cdd77f9d9eaed1fe99a1ceae6515ca8c321ba": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/85ddeca771391d4a603872a5d5bcdb83abaaa425b966a08d26d4bf5aafe2d882/9e52d08b1cb33a60d40f6968d29cdd77f9d9eaed1fe99a1ceae6515ca8c321ba.npz",
+      "version_id": "OdhjdvRatetfx1EYpthMIbFDgYo2IKSR",
+      "sha256": "85ddeca771391d4a603872a5d5bcdb83abaaa425b966a08d26d4bf5aafe2d882"
+    },
+    "9edb5a73e0be7797ac823636470c30f9fb6eec0395b850cfed59dcf503d69704": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/8d8821495ea468a74ab1c22da2c347c98faac92af28a29b9076a1c38f0f67917/9edb5a73e0be7797ac823636470c30f9fb6eec0395b850cfed59dcf503d69704.npz",
+      "version_id": "FZd.Rbau5Pyfgj3oWkyShVavQj2di8H_",
+      "sha256": "8d8821495ea468a74ab1c22da2c347c98faac92af28a29b9076a1c38f0f67917"
+    },
+    "a5f7054e2579b9621abced81485d180f84fba472bc81781851ff0d1373962f6f": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d209e6c06a34dfdac3a61c6c1658e3100efc96d5c1883a951e173c34e507cf3a/a5f7054e2579b9621abced81485d180f84fba472bc81781851ff0d1373962f6f.npz",
+      "version_id": "Uv2N00rMwsXCfwCe1e_4beHIdswHUCEA",
+      "sha256": "d209e6c06a34dfdac3a61c6c1658e3100efc96d5c1883a951e173c34e507cf3a"
+    },
+    "ac07466e92de77e35088ea1849f7190b24c77b557431bd3a3e8ee63fa479b1e9": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/560068f89c7094dd3af1d82ac7cd5a12d1d322e26d4d9a80e21ceceb6d12ad53/ac07466e92de77e35088ea1849f7190b24c77b557431bd3a3e8ee63fa479b1e9.npz",
+      "version_id": "Hxjpg5yUVvZz8sR6U2NwNCGsfGhH7VOa",
+      "sha256": "560068f89c7094dd3af1d82ac7cd5a12d1d322e26d4d9a80e21ceceb6d12ad53"
+    },
+    "ae7517ee777c8424af919eb9c4c9c266f420920e8e30f533b0140e352abb1a74": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/c6c0de32d79cb13834b1edded4e114f67472e17d8048b12bca7e7cd8c0f5a99b/ae7517ee777c8424af919eb9c4c9c266f420920e8e30f533b0140e352abb1a74.npz",
+      "version_id": "mG1EmCZ5jfK_7kWi4i2RdfLBaWHjGdsu",
+      "sha256": "c6c0de32d79cb13834b1edded4e114f67472e17d8048b12bca7e7cd8c0f5a99b"
+    },
+    "b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/0e3e5e5bd13e561695f9111fa1e977a8917463700b4ae557c76a20edeb8e15e7/b1a5c1a1fc9208f28c9d5d2277e7f96d8de7f960a32fc7feba75a1703e2cead8.npz",
+      "version_id": "pXXpdKOf19qHcWHgaIWM3XWEisWLG0aB",
+      "sha256": "0e3e5e5bd13e561695f9111fa1e977a8917463700b4ae557c76a20edeb8e15e7"
+    },
+    "b1c4f4fab9ea3b621e62b704c3898d22c4c14c5b8c8946ab7c0330313b3bc854": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/736b9fa6ced4e9768a15007e58dbc576b5dbe839534ee2f422e002a087a2ba0b/b1c4f4fab9ea3b621e62b704c3898d22c4c14c5b8c8946ab7c0330313b3bc854.npz",
+      "version_id": "TapdCRwcm0jMA6XRTY0FvsyHueIaUAJY",
+      "sha256": "736b9fa6ced4e9768a15007e58dbc576b5dbe839534ee2f422e002a087a2ba0b"
+    },
+    "bad21c5c67d19f4bdec4daab97e2e990189082e1cf8dac3fb296fe6653e3899a": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/85ce46e58083bcab775c6459cb6174d59f806b6db7e6475073aa322525261ba6/bad21c5c67d19f4bdec4daab97e2e990189082e1cf8dac3fb296fe6653e3899a.npz",
+      "version_id": "_PdZZ1rTf6WwGLZFUnQQkinh3V8ELF8T",
+      "sha256": "85ce46e58083bcab775c6459cb6174d59f806b6db7e6475073aa322525261ba6"
+    },
+    "bb3ee96aded9f6f741afc354935eba4137c1d8721820b25e1179a38b18335411": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/7ebb23dc9db6d3a1e0a9cfa5b86f1d23fcbc714c2fe77a017ce9271daa5a9130/bb3ee96aded9f6f741afc354935eba4137c1d8721820b25e1179a38b18335411.npz",
+      "version_id": "jRtTRDRG4pCGqyeCritd_A7SJzQkdFVm",
+      "sha256": "7ebb23dc9db6d3a1e0a9cfa5b86f1d23fcbc714c2fe77a017ce9271daa5a9130"
+    },
+    "c845917ca3b8f0b24a9e5e86156a696456195c3b170612a03a372e0882e4b3f7": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/09d5e0bebf3b2491270d4218eddbd5352beb9c03a0f3da8ccfdb09460ca76b31/c845917ca3b8f0b24a9e5e86156a696456195c3b170612a03a372e0882e4b3f7.npz",
+      "version_id": "QbGJ1LT7PBOu2qbFY0W1njs6SjOO5vZO",
+      "sha256": "09d5e0bebf3b2491270d4218eddbd5352beb9c03a0f3da8ccfdb09460ca76b31"
+    },
+    "cf33479433d1207ec6216811cfabb9437ee9f8c92b622edeac602c0148540cac": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/750d501d23fc59768f2ca1b138571c0dd76b7f249dc30e3af4b5eb491cc33653/cf33479433d1207ec6216811cfabb9437ee9f8c92b622edeac602c0148540cac.npz",
+      "version_id": "DTCBDcZOJ5pgZTHS1VswzXO1en.fFSeM",
+      "sha256": "750d501d23fc59768f2ca1b138571c0dd76b7f249dc30e3af4b5eb491cc33653"
+    },
+    "d1c6afdb520325a5eec929a0de17f9a8ca8adcce17ac18d65573f1ad1b9fbdec": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/8d6f5566831e1e32fc6de5801aa9b9c9abcd72a85b386ce49454303885fb9fca/d1c6afdb520325a5eec929a0de17f9a8ca8adcce17ac18d65573f1ad1b9fbdec.npz",
+      "version_id": "BKaP6TBLwNP9qzH4f4WEizg6gQSMEfUM",
+      "sha256": "8d6f5566831e1e32fc6de5801aa9b9c9abcd72a85b386ce49454303885fb9fca"
+    },
+    "d268b611456872363e0ca930c279e51245cebfba09d4c55efa4d207cfe8ec64c": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/fa335c46218ef24158b91d34cbd643d7a92addc584b2091c2305c343a3dac5d1/d268b611456872363e0ca930c279e51245cebfba09d4c55efa4d207cfe8ec64c.npz",
+      "version_id": "Uibujao04SNSAvSiSujf19IgZQvfJExz",
+      "sha256": "fa335c46218ef24158b91d34cbd643d7a92addc584b2091c2305c343a3dac5d1"
+    },
+    "d3256ae1379733db78cffa708665e2a969bb4462f220f7939f788af563c4a2b1": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/f9a458b6c4734c37f91c15c41bd3797bca004360a7a18a683ac8c138c2df3b4b/d3256ae1379733db78cffa708665e2a969bb4462f220f7939f788af563c4a2b1.npz",
+      "version_id": "0cR09GrcXgaWNaGkcJy7KLkOGpwt7IVF",
+      "sha256": "f9a458b6c4734c37f91c15c41bd3797bca004360a7a18a683ac8c138c2df3b4b"
+    },
+    "d77243cf0858886491d4009e8bf1731257f9f0cfd0759c924f75396d6a7dc62b": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/b5cc3f023dc770ba6817c4dc67bdee38e8c3266822e7ebc22aab9e51168b1668/d77243cf0858886491d4009e8bf1731257f9f0cfd0759c924f75396d6a7dc62b.npz",
+      "version_id": "b3PPQjQ278j4dtqxQMdOJbwZ6Uimr3lr",
+      "sha256": "b5cc3f023dc770ba6817c4dc67bdee38e8c3266822e7ebc22aab9e51168b1668"
+    },
+    "dbaf4dda74e91180243f917dc31bf3ba8d864a144d23c486bf7f12e72f98193f": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/8e1eee5e0c2314d1494d9fa7ce91f8253ce5d201b0c099b169a727fef5be1cc4/dbaf4dda74e91180243f917dc31bf3ba8d864a144d23c486bf7f12e72f98193f.npz",
+      "version_id": "aIyqc3ZPg8HAvGySMi9ccknTn19ThbxR",
+      "sha256": "8e1eee5e0c2314d1494d9fa7ce91f8253ce5d201b0c099b169a727fef5be1cc4"
+    },
+    "e08aa019a5ed29d85716048f297b069afb2d85999f764a617f95a6df621a4911": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/ffc8a3b129a4899f64e38b4d59188b62dd5f6d91665e3c6c479c6d47085d883a/e08aa019a5ed29d85716048f297b069afb2d85999f764a617f95a6df621a4911.npz",
+      "version_id": "vlUUGUidlfMEdHDYLPEh1cGOofro1nbz",
+      "sha256": "ffc8a3b129a4899f64e38b4d59188b62dd5f6d91665e3c6c479c6d47085d883a"
+    },
+    "e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/ae2e8aa331bf1e2ed3a751bc0629fa62d941c6c7ed8b5cee09e577913095ade7/e11f224d9011e7c8258479682f7956e13443cf8b0143fef3f1aa7f6ada9b8bcf.npz",
+      "version_id": "tJBef1M1KfADFAvXRNr3gLh3DaWSpy7Y",
+      "sha256": "ae2e8aa331bf1e2ed3a751bc0629fa62d941c6c7ed8b5cee09e577913095ade7"
+    },
+    "e45a09e4268091fe13cc0edb43644cc9df2c7d714cd7778b1dd0b888b468787d": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/b2c2940bc72516195eed1c123e75b2692874eb1038317d739cb2dbcb94e95e61/e45a09e4268091fe13cc0edb43644cc9df2c7d714cd7778b1dd0b888b468787d.npz",
+      "version_id": "SlcAvcLBtx22789C2Kb2mtfJPSKhtD2L",
+      "sha256": "b2c2940bc72516195eed1c123e75b2692874eb1038317d739cb2dbcb94e95e61"
+    },
+    "e7bc043b55c6a460b6c80463e1818adbf57c90c089cd73f50489275849263ee2": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/04ba6366bf0dbb23884c923a524b900172c4aae23271a66faa1a989977588847/e7bc043b55c6a460b6c80463e1818adbf57c90c089cd73f50489275849263ee2.npz",
+      "version_id": "nwbIV7acdr6nbycPM0eePU6HPj1QnXbI",
+      "sha256": "04ba6366bf0dbb23884c923a524b900172c4aae23271a66faa1a989977588847"
+    },
+    "e96c21d81d9e5a5aa82468a48c096751748816b62238511ae7b5d65d30c4f5d7": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/84407c06c9fb941c7f4450d4696be71cb1d9bcb96ad9f6fef4d65f9003c6503b/e96c21d81d9e5a5aa82468a48c096751748816b62238511ae7b5d65d30c4f5d7.npz",
+      "version_id": "dGMDVG1X3b9.NpX4cIA7pVMk13nWZiry",
+      "sha256": "84407c06c9fb941c7f4450d4696be71cb1d9bcb96ad9f6fef4d65f9003c6503b"
+    },
+    "e9d0481cc6545966fa4dbadb785ab9c85198c1d237549eae009c42250434cdf8": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/39c5b93a2d8a9812de9d0bd38ef51bbcedf74559d3c8a4c0915b150353401339/e9d0481cc6545966fa4dbadb785ab9c85198c1d237549eae009c42250434cdf8.npz",
+      "version_id": "XWmY0El8_n4qyQ3CA72qNNZJhTwXSnC6",
+      "sha256": "39c5b93a2d8a9812de9d0bd38ef51bbcedf74559d3c8a4c0915b150353401339"
+    },
+    "ede9d2973b86e72742f16ea74f5e22535b08815aec354eaa02b3bedf210583f6": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/c8bdd58387a076a46ad50625c59de18b275e22de82f811104bc40f9d5cd7a91e/ede9d2973b86e72742f16ea74f5e22535b08815aec354eaa02b3bedf210583f6.npz",
+      "version_id": "qSM43779RnwJXBALKRfebd_t3TpRph3s",
+      "sha256": "c8bdd58387a076a46ad50625c59de18b275e22de82f811104bc40f9d5cd7a91e"
+    },
+    "ef2a5b74b537b84846779a8980d058d1e54d89a3308ad5373f703f63a930c825": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/5621c75056484c2e5c0cd2aa1c52393a817beb7142845d20b66ca6b893c93118/ef2a5b74b537b84846779a8980d058d1e54d89a3308ad5373f703f63a930c825.npz",
+      "version_id": "OSDTagW4ko63.0CH7ZaAPiuN35ZiGxh4",
+      "sha256": "5621c75056484c2e5c0cd2aa1c52393a817beb7142845d20b66ca6b893c93118"
+    },
+    "ef9eb57297cd8a960e3349140f1cd6b069913737f4bd4b7a04394d0596d90f87": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/cc6ebd83887f80e6508530e61f70b7ae5ce8276bd6ff56892a9328da8b63330a/ef9eb57297cd8a960e3349140f1cd6b069913737f4bd4b7a04394d0596d90f87.npz",
+      "version_id": "jcpT1JL5Bb4LVxA5gnMml1m5uyJpjPAi",
+      "sha256": "cc6ebd83887f80e6508530e61f70b7ae5ce8276bd6ff56892a9328da8b63330a"
+    },
+    "f3daa4829e1936cd14c617ebc4decbc4e5cc0f6e3357827c0344416102f4dd17": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/4167234f4a6a7dfc6f153de74ca46a2fa13efd20c0c1d9c0ff5666efad39324a/f3daa4829e1936cd14c617ebc4decbc4e5cc0f6e3357827c0344416102f4dd17.npz",
+      "version_id": "oKf0J_H2_IGJUrZ0uXwJwxzGxz.NYhBZ",
+      "sha256": "4167234f4a6a7dfc6f153de74ca46a2fa13efd20c0c1d9c0ff5666efad39324a"
+    },
+    "f7736af9a19bd89aa476f452bb9d987faf0d438be9b9b853688435739e1d117a": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d8f3261d668f94913d3b2e5a0ed45132da08914bd51f4a54940edcc3c22e2c21/f7736af9a19bd89aa476f452bb9d987faf0d438be9b9b853688435739e1d117a.npz",
+      "version_id": "ZrkivdjkIIYKIAOmQm_QRnXcFHCfPkPZ",
+      "sha256": "d8f3261d668f94913d3b2e5a0ed45132da08914bd51f4a54940edcc3c22e2c21"
+    },
+    "f84cf79d872e75573689f53559944dca750d5e087206646364f7f28862b8b589": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/d6b7bc38c65e9f10949dbad994d59e31f20c330e52df7691c9bdabbf947bead5/f84cf79d872e75573689f53559944dca750d5e087206646364f7f28862b8b589.npz",
+      "version_id": "ZqTgR7SH3JWjsb1cIpx50WVqZ7qj69Us",
+      "sha256": "d6b7bc38c65e9f10949dbad994d59e31f20c330e52df7691c9bdabbf947bead5"
+    },
+    "f9faf6b9e96f5cca3fc953f0f373e376bc221be103b293650615cfa869ae3434": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/4145407dcbe2a8d70b9ffb51147ad05b5cf6f1fc9b46bb0b624f9c05f2284a53/f9faf6b9e96f5cca3fc953f0f373e376bc221be103b293650615cfa869ae3434.npz",
+      "version_id": "59WFAp_c2uAXZW8kCJnJYfkJLKAb.3tj",
+      "sha256": "4145407dcbe2a8d70b9ffb51147ad05b5cf6f1fc9b46bb0b624f9c05f2284a53"
+    },
+    "fcfd54c8f474349f7bd6a5003252fccec8ac1e83e902615a3c2416242cc1ada7": {
+      "bucket": "veox-jopedime-learning-use2",
+      "key": "experiments/rd_breakthrough_20261101/H206/native91-inputs/83f814829dd19a7f8cee6cf1577423d573462beccd3c0222b6c2f27d341a12e4/fcfd54c8f474349f7bd6a5003252fccec8ac1e83e902615a3c2416242cc1ada7.npz",
+      "version_id": "Spj7NV4AzGEIEVx6LA9BrPqyEoO4WBw6",
+      "sha256": "83f814829dd19a7f8cee6cf1577423d573462beccd3c0222b6c2f27d341a12e4"
+    }
+  },
+  "reference": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261101/H206/immutable-inputs/30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a/best_dev_checkpoint.json",
+    "version_id": "6ETtveab2VJ0d.y6jFpg8qY5VYJj3l4c",
+    "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "raw_training_table_bodies_consumed": false,
+  "outer_or_sealed_tables_consumed": false,
+  "permission_source": "H206 PREREG mandated native91 only + H206-ACTUAL-QUALIFICATION-HANDOFF.md approved historical unprotected compatibility inputs",
+  "source_created_utc": "2026-10-23T23:48:38Z"
+}

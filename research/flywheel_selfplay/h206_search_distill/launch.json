@@ -63,7 +63,7 @@
   "input_manifest_sha256": null,
   "fold_manifest_sha256": null,
   "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
-  "executor_scope": "CPU native-search/learner cell interfaces; scientific GPU coordinator NOT_QUALIFIED",
+  "executor_scope": "Actual pinned model factory + conditional phased CUDA study/controller source; science admission remains incomplete",
   "scientific_execution_enabled": false,
   "architecture": {
     "schema": "h206-student-width128-v1",
@@ -106,5 +106,9 @@
   "canonical_ledger_host": "xbabe3",
   "canonical_ledger_path": "/home/ubuntu/jope_plan/evidence/H206/campaign-ledger.json",
   "canonical_ledger_registered": true,
-  "accounting_status": "UNRECONCILED"
+  "accounting_status": "UNRECONCILED",
+  "full_study_implementation": "study.py + supervisor.py",
+  "actual_factory_implementation": "model.py, original constructor/strict-state qualification",
+  "native91_compatibility_inputs_sha256": "019049235b6c2f840f6c8c3f1f0d5b97cad6a114e6c25d6f165db6cf0401f4e6",
+  "cuda_execution_qualification": "NOT_RUN"
 }

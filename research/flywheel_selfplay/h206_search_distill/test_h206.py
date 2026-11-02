@@ -20,6 +20,7 @@ from torch import nn
 from research.flywheel_selfplay.h206_search_distill.contracts import (
     ArraySpec,
     Context,
+    ObjectRef,
     Scope,
     array_hash,
     canonical,
@@ -530,6 +531,12 @@ Path(sys.argv[4]).write_text(json.dumps({"inner_cv":[{"metrics":{"rmse":ratio},"
         row = replace(initial_rows[role].context, actor_sha256=actor_hash, seed=206101 + round_index)
         return [load_context(row, scope, store, role=role)]
 
+    approved_acquire.scope = Scope(
+        canonical(role_doc),
+        canonical(closure_doc),
+        roles_sha256=sha(canonical(role_doc)),
+        exclusion_sha256=sha(canonical(closure_doc)),
+    )
     return learner, approved_acquire, native, cache, store, client, ledger
 
 
@@ -1014,3 +1021,367 @@ def test_recovered_binding_poison_is_refused(tmp_path, monkeypatch, update_hash)
     error = "recovered binding plan mismatch" if update_hash else "recovered binding manifest hash mismatch"
     with pytest.raises(ValueError, match=error):
         runner.load_plan()
+
+
+def _study_rows():
+    return [
+        {"context_id": f"family-{i:03d}-context-{j}", "family_id": f"family-{i:03d}"}
+        for i in range(205)
+        for j in range(6 if i < 194 else 5)
+    ]
+
+
+def test_full_study_fixed_60_cells_and_exact_once_roles():
+    from research.flywheel_selfplay.h206_search_distill.study import registered_cells
+
+    rows = _study_rows()
+    plan = registered_cells(rows)
+    assert len(plan["cells"]) == 60
+    assert plan["rounds"] == 3 and plan["updates_per_round"] == 600
+    for seed in (206101, 206102, 206103):
+        cells = [c for c in plan["cells"] if c["seed"] == seed and c["arm"] == "CTRL"]
+        for role in ("B", "A"):
+            assert sorted(cid for c in cells for cid in c["context_ids"][role]) == sorted(
+                r["context_id"] for r in rows
+            )
+        for cell in cells:
+            assert {r: len(f) for r, f in cell["family_ids"].items()} == {"A": 41, "B": 41, "FIT": 123}
+    with pytest.raises(ValueError, match="population"):
+        registered_cells(rows[:-1])
+
+
+def test_selector_private_step_and_joint_harm_gate():
+    from research.flywheel_selfplay.h177_pooled_selector import analysis as original
+    from research.flywheel_selfplay.h206_search_distill.study import load_selector, pooled_select
+
+    rows = _study_rows()
+    before = dict(original.PRESPECIFIED_CANDIDATE_STEP)
+    private = load_selector(HERE.parents[2])
+    assert set(private.PRESPECIFIED_CANDIDATE_STEP.values()) == {1800}
+    base = np.ones((3, len(rows)))
+    panels = {
+        a: base + gain for a, gain in zip(("CTRL", "ACC4", "ACC16", "OC15"), (0.002, 0.003, 0.004, 0.02))
+    }
+    harmed = {r["family_id"] for r in rows[:126]}
+    assert len(harmed) == 21
+    panels["OC15"][:, [i for i, r in enumerate(rows) if r["family_id"] in harmed]] = 0.9
+    result = pooled_select(HERE.parents[2], rows, base, panels)
+    assert result["selected_arm"] == "ACC16"
+    assert result["decisions"]["OC15"]["harm_families"] == 21
+    assert result["decisions"]["OC15"]["admitted_with_harm"] is False
+    assert original.PRESPECIFIED_CANDIDATE_STEP == before
+
+
+def test_phased_runtime_real_labels_and_per_step_durability(integrated, tmp_path):
+    from research.flywheel_selfplay.h206_search_distill.study import PhaseRuntime
+
+    learner, acquire, native, cache, store, client, ledger = integrated
+    for round_index in (1, 2, 3):
+        rows = acquire(round_index, learner.state_hash())
+        runtime = PhaseRuntime(store, ledger, scientific=False, journal=tmp_path / f"journal-{round_index}")
+        with ledger.operation(f"controlled-round-{round_index}", cpu_reserve=120, gpu_reserve=0):
+            proposal = runtime.propose(learner, rows, f"phased/{round_index}/propose")
+            teachers = runtime.teachers(
+                proposal, acquire.scope, native, cache, 1, f"phased/{round_index}/teacher"
+            )
+            doc = json.loads(teachers.read(store))
+            refs = [ObjectRef(**r["teacher"]) for r in doc["rows"]]
+            result_ref = runtime.train(
+                learner, rows, refs, f"phased/{round_index}/train", round_index=round_index, updates=3
+            )
+        result = json.loads(result_ref.read(store))
+        assert len(result["steps"]) == 3 and result["proof"]["forward_changed"]
+        assert min(result["proof"]["gradient_squared_sums"].values()) > 0
+        step = json.loads(ObjectRef(**result["steps"][-1]).read(store))
+        assert np.isfinite(step["loss_before"]) and np.isfinite(step["loss_after"])
+        assert step["state_before"] != step["state_after"]
+        assert step["changed_parameters"]
+    assert learner.updates == 9 and native.calls == 3
+    # Every update's remote readback precedes the next optimizer update.
+    step_gets = [i for i, e in enumerate(client.trace) if e[0] == "get" and "/steps/" in e[1]]
+    assert len(step_gets) >= 9
+
+
+def test_incremental_proof_and_partial_model_survive_step_custody_failure(integrated, tmp_path, monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill.study import PhaseRuntime
+
+    learner, acquire, native, cache, store, _, ledger = integrated
+    rows = acquire(1, learner.state_hash())
+    journal = tmp_path / "partial-journal"
+    runtime = PhaseRuntime(store, ledger, scientific=False, journal=journal)
+    with ledger.operation("controlled-failure", cpu_reserve=120, gpu_reserve=0):
+        proposal = runtime.propose(learner, rows, "partial/propose")
+        teachers = runtime.teachers(proposal, acquire.scope, native, cache, 1, "partial/teacher")
+        refs = [ObjectRef(**r["teacher"]) for r in json.loads(teachers.read(store))["rows"]]
+        put = store.put
+
+        def stopped_put(name, body):
+            if "/steps/000002.json" in name or name.endswith("partial-checkpoint.pt"):
+                raise OSError("controlled persistent custody outage")
+            return put(name, body)
+
+        monkeypatch.setattr(store, "put", stopped_put)
+        with pytest.raises(OSError, match="custody outage"):
+            runtime.train(learner, rows, refs, "partial/train", round_index=1, updates=3)
+    assert learner.updates == 2
+    local = json.loads((journal / "update-000002.json").read_text())
+    assert local["update"] == 2 and local["state_after"] == learner.state_hash()
+    assert json.loads((journal / "INCOMPLETE.json").read_text())["updates"] == 2
+    state = torch.load(journal / "partial-checkpoint.pt", weights_only=True)
+    assert state["updates"] == 2 and state["examples"] == 64
+    assert (journal / "custody-failure.json").is_file()
+
+
+def test_parent_reservation_token_is_reused_without_budget_renewal(tmp_path):
+    from research.flywheel_selfplay.h206_search_distill.supervisor import ReservedPhaseBudget
+
+    ledger = fixture_ledger(tmp_path / "parent-ledger.json", used_cpu=123)
+    with ledger.operation("parent-phase", cpu_reserve=10, gpu_reserve=0) as token:
+        assert token
+        child = ReservedPhaseBudget(ledger.path, token, "parent-phase")
+        with child.measure("actual child stage"):
+            sum(range(100))
+        with pytest.raises(RuntimeError, match="cannot create another"):
+            child.operation("bad nested", cpu_reserve=10, gpu_reserve=0)
+        with pytest.raises(ValueError, match="missing parent"):
+            ReservedPhaseBudget(ledger.path, "invented-token", "parent-phase")
+    state = json.loads(ledger.path.read_text())
+    assert state["cpu_used_seconds"] >= 123 and len(state["entries"]) == 1
+    assert state["reservations"] == {}
+
+
+def test_real_gpu_permit_refuses_before_any_cuda_probe(tmp_path, monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill.supervisor import GPUWorkerPermit
+
+    def forbidden():
+        raise AssertionError("unadmitted GPU probe")
+
+    monkeypatch.setattr(torch.cuda, "device_count", forbidden)
+    permit = GPUWorkerPermit(
+        {"reservation": "unowned", "phase": "teacher", "supervisor_pid": -1}, tmp_path, None
+    )
+    with pytest.raises(ValueError, match="not the admitted"):
+        permit.validate()
+
+
+@pytest.mark.parametrize("used,free,launch", [(89, 11, True), (94, 6, False)])
+def test_study_resource_guards_keep_disk_limits(used, free, launch):
+    from research.flywheel_selfplay.h206_search_distill.supervisor import require_resources
+
+    snapshot = {
+        "nice": 19,
+        "cpu_percent": 1,
+        "available_bytes": 32 * 2**30,
+        "tree_rss_bytes": 1,
+        "disk_used_bytes": used * 10**10,
+        "disk_available_bytes": free * 10**10,
+        "effective_cores": 4,
+    }
+    with pytest.raises(RuntimeError):
+        require_resources(snapshot, launching_gpu=launch)
+
+
+def test_model_cache_new_version_requires_its_own_verified_get(tmp_path, integrated):
+    from research.flywheel_selfplay.h206_search_distill.model import ModelCache
+
+    _, _, _, _, store, client, _ = integrated
+    body = b"same approved model bytes"
+    first = store.put("model-one", body)
+    second = store.put("model-two", body)
+    cache = ModelCache(tmp_path / "actual-model-cache", HERE.parents[2])
+    cache.fetch(first, store)
+    before = len(client.trace)
+    cache.fetch(second, store)
+    assert any(e[0] == "get" and e[1] == second.key for e in client.trace[before:])
+    before = len(client.trace)
+    cache.fetch(second, store)
+    assert len(client.trace) == before
+
+
+def test_native91_rejects_nonargmin_vector_change_and_order_before_scoring():
+    from research.flywheel_selfplay.h206_search_distill.model import native91_replay
+
+    target = 1.1377941898164525
+    values = np.zeros(91, dtype=np.float64)
+    values[-1] = target * 91
+    assert float(values.mean()) == target
+    contract = [
+        {"cid": str(i), "pool_sha256": "a" * 64, "training_table_sha256": "b" * 64} for i in range(91)
+    ]
+    rows = [{**c, "reference_costs": np.array([0.0, 1.0], dtype=np.float32)} for c in contract]
+    reference = canonical(
+        {
+            "evaluation_contract": {"contexts": contract},
+            "utility": {"selected_programs": ["p"] * 91, "per_context": values.tolist(), "mean": target},
+        }
+    )
+    identities = {"scope": "controlled source fixture, never scientific qualification"}
+    saved = []
+
+    def score(row):
+        return {
+            "identities": identities,
+            "costs": np.array([0.0, 1.0], dtype=np.float32),
+            "selected_program": "p",
+            "utility": float(values[int(row["cid"])]),
+        }
+
+    result = native91_replay(
+        rows, reference, score=score, expected_identities=identities, persist=saved.append
+    )
+    assert result["contexts"] == 91 and len(saved) == 91
+
+    def changed(row):
+        out = score(row)
+        out["costs"][1] = np.nextafter(np.float32(1), np.float32(2))
+        return out
+
+    saved.clear()
+    with pytest.raises(ValueError, match="full-vector"):
+        native91_replay(rows, reference, score=changed, expected_identities=identities, persist=saved.append)
+    assert len(saved) == 1
+
+    def forbidden(row):
+        raise AssertionError("wrong row order must fail before any scored forward")
+
+    with pytest.raises(ValueError, match="ordered batch"):
+        native91_replay(
+            rows[::-1], reference, score=forbidden, expected_identities=identities, persist=saved.append
+        )
+
+
+def test_native_scratch_custody_restores_before_owned_reclamation(integrated, monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill.study import preserve_native_scratch
+
+    learner, acquire, native, cache, store, client, ledger = integrated
+    row = acquire(1, learner.state_hash())[0]
+    with ledger.operation("controlled-native-custody", cpu_reserve=30, gpu_reserve=0):
+        teacher = collect_teacher(row, learner.score(row), 1, native, cache, store, "pack-teacher", ledger)
+        doc = json.loads(teacher.read(store))
+        jobs = [Path(r["scratch_job"]) for r in doc["records"]]
+        original = Path.unlink
+
+        def guarded_unlink(path, *args, **kwargs):
+            assert any(
+                e[0] == "get" and e[1].endswith("owned-native-pack-restoration.json") for e in client.trace
+            )
+            return original(path, *args, **kwargs)
+
+        with monkeypatch.context() as scoped:
+            scoped.setattr(Path, "unlink", guarded_unlink)
+            proof = preserve_native_scratch(teacher, row, native, cache, store, "pack-proof")
+    recovered = json.loads(proof.read(store))
+    assert recovered["all_restored_sha256_match"] is True
+    assert len(recovered["members"]) == 4
+    assert all(not job.exists() for job in jobs)
+    # Durable labels remain consumable after owned scratch/cache copies are gone.
+    assert isinstance(learner.teacher_target(row, teacher, store), int)
+
+
+@pytest.mark.parametrize("abort_fit", [False, True])
+def test_full_controller_order_and_whole_attempt_abort(integrated, abort_fit):
+    from contextlib import contextmanager
+
+    from research.flywheel_selfplay.h206_search_distill.study import ARMS, StudyController, registered_cells
+
+    _, _, _, _, store, _, _ = integrated
+    rows = _study_rows()
+    baseline = store.put(
+        "macro/baseline.json",
+        canonical({"context_ids": [r["context_id"] for r in rows], "values": [1.0] * len(rows)}),
+    )
+    inputs = {
+        cell["cell_id"]: {
+            "cpu_reserve_seconds": {p: 1 for p in ("propose", "teacher", "train", "score", "utility")},
+            "phase_caps": {p: 1 for p in ("propose", "teacher", "score", "utility")},
+        }
+        for cell in registered_cells(rows)["cells"]
+    }
+
+    class ControlledSupervisor:
+        """Metadata-only state-machine control; never a real controller/device."""
+
+        def __init__(self):
+            self.store, self.trace = store, []
+            self.admission = {
+                "source": {"fixture": "metadata control, no source/science qualification"},
+                "study_input_payload_sha256": digest(
+                    {"rows": rows, "inputs": inputs, "baseline": asdict(baseline)}
+                ),
+                "fold_manifest_sha256": digest(registered_cells(rows)),
+            }
+
+        @contextmanager
+        def controller(self):
+            yield self
+
+        def phase(self, task, **kwargs):
+            self.trace.append((task["round"], task["phase"], task["cell_id"], task.get("role")))
+            if abort_fit and task["phase"] == "train":
+                raise RuntimeError("controlled required fit failure")
+            if task["phase"] == "train":
+                doc = {"updates": 600 * task["round"], "state_sha256": digest(task["cell_id"])}
+            elif task["phase"] == "utility":
+                if task["role"] == "A":
+                    lock = json.loads(ObjectRef(**task["b_lock"]).read(store))
+                    assert lock["status"] == "B_LOCKED" and len(lock["checkpoint_sha256"]) == 60
+                utility = 1.0 + (list(ARMS).index(task["arm"]) + 1) * 0.002
+                doc = {
+                    cid: {"role": task["role"], "student": {"utility": utility}}
+                    for cid in task["context_ids"][task["role"]]
+                }
+            else:
+                doc = {"scope": "metadata-only controller test"}
+            return store.put("macro/results/" + str(len(self.trace)), canonical(doc))
+
+    supervisor = ControlledSupervisor()
+    controller = StudyController(supervisor, rows, inputs, baseline, repo=HERE.parents[2])
+    if abort_fit:
+        with pytest.raises(RuntimeError, match="required fit failure"):
+            controller.run()
+        assert not any(p in ("score", "utility") for _, p, _, _ in supervisor.trace)
+        return
+    ref = controller.run()
+    result = json.loads(ref.read(store))
+    assert result["selected_arm"] == "OC15" and result["confirmed_lift"] is False
+    assert result["sealed_confirmation"] == "NOT_RUN"
+    assert len([t for t in supervisor.trace if t[1] == "train"]) == 180
+    assert len(supervisor.trace) == 780
+    first_a = next(i for i, t in enumerate(supervisor.trace) if t[3] == "A")
+    assert len([t for t in supervisor.trace[:first_a] if t[1] == "utility" and t[3] == "B"]) == 60
+
+
+def test_protected_role_metadata_refuses_before_template_body(integrated, monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill.study import StudyInputs
+
+    learner, acquire, _, _, store, _, _ = integrated
+    scope = acquire.scope
+    roles = scope.roles
+    role_ref = store.put("protected-template/roles.json", canonical(roles))
+    links = [["dataset:" + r["dataset_id"], "family:" + r["family_id"]] for r in roles["contexts"].values()]
+    row = next(r for r in roles["contexts"].values() if r["role"] == "FIT")
+    exclusion_ref = store.put(
+        "protected-template/exclusion.json",
+        canonical(
+            {
+                "schema": "h206-exclusion-contract-v1",
+                "links": links,
+                "protected": ["family:" + row["family_id"]],
+            }
+        ),
+    )
+    missing = ObjectRef("fixture-only", "forbidden-template-body", "v1", "a" * 64)
+    task = {
+        "scope": {"roles": asdict(role_ref), "exclusion": asdict(exclusion_ref)},
+        "round": 1,
+        "context_ids": {"FIT": [row["context_id"]]},
+        "templates": {"1": {"FIT": asdict(missing)}},
+    }
+    inputs = StudyInputs(task, store)
+
+    def forbidden(ref):
+        raise AssertionError("protected metadata must refuse before ANY template/tensor/body GET")
+
+    monkeypatch.setattr(store, "get", forbidden)
+    with pytest.raises(ValueError, match="transitively protected"):
+        inputs.acquire("FIT", learner.state_hash())
