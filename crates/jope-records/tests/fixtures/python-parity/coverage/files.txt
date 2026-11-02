@@ -1320,6 +1320,9 @@ crates/jope-engine/src/training/ancestry/exposure.rs
 crates/jope-engine/src/training/ancestry/genealogy.rs
 crates/jope-engine/src/training/checkpoint_commit.rs
 crates/jope-engine/src/training/consumption.rs
+crates/jope-engine/src/training/consumption/journal.rs
+crates/jope-engine/src/training/consumption/model.rs
+crates/jope-engine/src/training/consumption/reconcile.rs
 crates/jope-engine/src/training/continuation.rs
 crates/jope-engine/src/training/inputs.rs
 crates/jope-engine/src/training/objective.rs
