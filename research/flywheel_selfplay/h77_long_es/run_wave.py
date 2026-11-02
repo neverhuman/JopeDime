@@ -836,24 +836,31 @@ def terminal_mode() -> dict:
     return summary
 
 
-def all_mode(args) -> dict:
+def run_all(
+    args,
+    timing_mode_fn,
+    outcome_mode_fn,
+    terminal_mode_fn,
+    build_metrics_fn,
+    audit_fn,
+) -> dict:
     """Run timing -> set/check cap -> run outcomes -> build admission/metrics -> run terminal-val if admitted."""
-    timing_res = timing_mode(args)
+    timing_res = timing_mode_fn(args)
     prior_wall = float(timing_res["coordinator_wall_seconds"])
     prior_wait = float(timing_res["lock_wait_seconds"])
-    outcome_res = outcome_mode(args, prior_gpu_wall=prior_wall, prior_wait=prior_wait)
+    outcome_res = outcome_mode_fn(args, prior_gpu_wall=prior_wall, prior_wait=prior_wait)
     if not outcome_res.get("complete"):
         return {"timing": timing_res, "outcomes": outcome_res, "complete": False}
-    subprocess.run([sys.executable, str(BUILD_METRICS), str(RUN_ROOT)], cwd=ROOT, check=True)
-    term_res = terminal_mode()
+    build_metrics_fn()
+    term_res = terminal_mode_fn()
     if term_res.get("read_count", 0) > 0:
-        subprocess.run([sys.executable, str(BUILD_METRICS), str(RUN_ROOT)], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, str(AUDIT), "--stage", "outcomes", str(RUN_ROOT)], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, str(AUDIT), "--stage", "terminal", str(RUN_ROOT)], cwd=ROOT, check=True)
+        build_metrics_fn()
+    audit_fn("outcomes")
+    audit_fn("terminal")
     return {"timing": timing_res, "outcomes": outcome_res, "terminal_val": term_res, "complete": True}
 
 
-def main() -> None:
+def run_cli(timing_mode_fn, outcome_mode_fn, terminal_mode_fn, all_mode_fn) -> None:
     parser = argparse.ArgumentParser()
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--timing", action="store_true")
@@ -866,14 +873,35 @@ def main() -> None:
     if args.prior_lock_wait_seconds < 0:
         raise RuntimeError("prior lock wait cannot be negative")
     if args.timing:
-        mode, result = "timing", timing_mode(args)
+        mode, result = "timing", timing_mode_fn(args)
     elif args.outcomes:
-        mode, result = "outcomes", outcome_mode(args)
+        mode, result = "outcomes", outcome_mode_fn(args)
     elif args.terminal_val:
-        mode, result = "terminal-val", terminal_mode()
+        mode, result = "terminal-val", terminal_mode_fn()
     else:
-        mode, result = "all", all_mode(args)
+        mode, result = "all", all_mode_fn(args)
     print(json.dumps({"mode": mode, "result": result}, sort_keys=True), flush=True)
+
+
+def all_mode(args) -> dict:
+    return run_all(
+        args,
+        timing_mode,
+        outcome_mode,
+        terminal_mode,
+        lambda: subprocess.run(
+            [sys.executable, str(BUILD_METRICS), str(RUN_ROOT)], cwd=ROOT, check=True
+        ),
+        lambda stage: subprocess.run(
+            [sys.executable, str(AUDIT), "--stage", stage, str(RUN_ROOT)],
+            cwd=ROOT,
+            check=True,
+        ),
+    )
+
+
+def main() -> None:
+    run_cli(timing_mode, outcome_mode, terminal_mode, all_mode)
 
 
 if __name__ == "__main__":
