@@ -807,6 +807,12 @@ crates/jope-campaigns/tests/dlgp_best5/search_tests.rs
 crates/jope-campaigns/tests/dlgp_best5/worker_tests.rs
 crates/jope-campaigns/tests/dlgp_budget_campaign.rs
 crates/jope-campaigns/tests/encoder_v2_recovery.rs
+crates/jope-campaigns/tests/encoder_v2_recovery/helpers.rs
+crates/jope-campaigns/tests/encoder_v2_recovery/identity.rs
+crates/jope-campaigns/tests/encoder_v2_recovery/mod.rs
+crates/jope-campaigns/tests/encoder_v2_recovery/qualification.rs
+crates/jope-campaigns/tests/encoder_v2_recovery/quarantine.rs
+crates/jope-campaigns/tests/encoder_v2_recovery/worker.rs
 crates/jope-campaigns/tests/epoch6_foundation.rs
 crates/jope-campaigns/tests/epoch6_waves.rs
 crates/jope-campaigns/tests/fixtures/conditionality_gate_parity.json
