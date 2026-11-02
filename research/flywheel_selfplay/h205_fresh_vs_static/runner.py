@@ -219,7 +219,7 @@ def load_h170_parent():
     return module
 
 
-def validate_launch(launch, manifest_sha):
+def validate_launch(launch, manifest_sha, process_start_monotonic=None):
     if launch.get("wave") != stat.WAVE:
         raise RuntimeError(f"launch wave mismatch: {launch.get('wave')!r}")
     if launch.get("authority") != stat.AUTHORITY_STRING:
@@ -237,6 +237,43 @@ def validate_launch(launch, manifest_sha):
         raise RuntimeError(
             "launch.json must record live_flywheel_pid_untouched=2297929"
         )
+    start_mono = (
+        float(process_start_monotonic)
+        if process_start_monotonic is not None
+        else float(os.environ.get("H205_PROCESS_START_MONOTONIC", time.monotonic()))
+    )
+    prior_elapsed = float(
+        launch.get(
+            "prior_attempts_elapsed_seconds",
+            os.environ.get(
+                "H205_PRIOR_ELAPSED_SECONDS", stat.PRIOR_ATTEMPTS_ELAPSED_SECONDS
+            ),
+        )
+    )
+    cap_seconds = float(
+        launch.get(
+            "campaign_wall_budget_cap_seconds", stat.CAMPAIGN_WALL_BUDGET_CAP_SECONDS
+        )
+    )
+    req_rem = launch.get(
+        "remaining_wall_budget_seconds",
+        os.environ.get("H205_REMAINING_BUDGET_SECONDS"),
+    )
+    env_hard = os.environ.get("H205_HARD_DEADLINE_MONOTONIC")
+    deadline_spec = mon.compute_shared_process_deadline(
+        start_mono,
+        prior_elapsed_seconds=prior_elapsed,
+        campaign_cap_seconds=cap_seconds,
+        requested_remaining_seconds=req_rem,
+        env_hard_deadline_monotonic=env_hard,
+    )
+    if "fresh_wait_seconds" in launch:
+        fw = float(launch["fresh_wait_seconds"])
+        if fw <= 0.0 or fw > deadline_spec["remaining_budget_seconds"] + 1e-9:
+            raise RuntimeError(
+                f"launch.json fresh_wait_seconds ({fw}) must be in (0, {deadline_spec['remaining_budget_seconds']}]"
+            )
+    return deadline_spec
 
 
 def configure_threads(numeric_threads):
@@ -255,7 +292,23 @@ def configure_threads(numeric_threads):
         raise RuntimeError(f"numeric thread configuration violation: {bad}")
 
 
-def run_gpu_wave(out, launch, manifest):
+def run_gpu_wave(out, launch, manifest, deadline_spec=None):
+    if deadline_spec is None:
+        deadline_spec = mon.compute_shared_process_deadline(
+            float(os.environ.get("H205_PROCESS_START_MONOTONIC", time.monotonic())),
+            prior_elapsed_seconds=launch.get(
+                "prior_attempts_elapsed_seconds", stat.PRIOR_ATTEMPTS_ELAPSED_SECONDS
+            ),
+            campaign_cap_seconds=launch.get(
+                "campaign_wall_budget_cap_seconds",
+                stat.CAMPAIGN_WALL_BUDGET_CAP_SECONDS,
+            ),
+            requested_remaining_seconds=launch.get("remaining_wall_budget_seconds"),
+            env_hard_deadline_monotonic=os.environ.get("H205_HARD_DEADLINE_MONOTONIC"),
+        )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="run_gpu_wave_entry"
+    )
     host = os.uname().nodename.split(".")[0]
     if host != "xbabe1" or os.getpriority(os.PRIO_PROCESS, 0) != 19:
         raise RuntimeError(
@@ -475,6 +528,9 @@ def run_gpu_wave(out, launch, manifest):
 
         admitted_rounds = 0
         for r_idx in range(1, stat.ROUNDS + 1):
+            mon.enforce_shared_process_deadline(
+                time.monotonic(), deadline_spec, stage=f"{arm_name}_round_{r_idx}"
+            )
             for (si, outer), cell in cells.items():
                 restore_adapter(cell["candidate_state"])
                 params = [p for n, p in net.named_parameters() if p.requires_grad]
@@ -522,6 +578,11 @@ def run_gpu_wave(out, launch, manifest):
                 cell["opt_state"] = opt.state_dict()
 
             if r_idx % 10 == 0 or r_idx == stat.ROUNDS:
+                mon.enforce_shared_process_deadline(
+                    time.monotonic(),
+                    deadline_spec,
+                    stage=f"{arm_name}_round_{r_idx}_b_eval",
+                )
                 cand_b_panel = incumbent_b_panel.copy()
                 for (si, outer), cell in cells.items():
                     restore_adapter(cell["candidate_state"])
@@ -596,6 +657,7 @@ def run_gpu_wave(out, launch, manifest):
     )
 
     # Stage 2: Gate STATIC-TEACHER and FRESH on JRB-01 ADMISSION PASS + verified fresh D4 pool
+    # Shares the single process-start remaining deadline (never adds a fresh budget after Stage 1).
     jrb_receipt_path = Path(
         launch.get(
             "jrb01_admission_receipt",
@@ -603,11 +665,18 @@ def run_gpu_wave(out, launch, manifest):
         )
     )
     hold_file = out / "hold_before_fresh.json"
-    wait_deadline = time.monotonic() + float(
-        launch.get("fresh_wait_seconds", stat.REMAINING_WALL_BUDGET_SECONDS)
-    )
+    wait_deadline = deadline_spec["hard_deadline_monotonic"]
+    if "fresh_wait_seconds" in launch:
+        wait_deadline = min(
+            wait_deadline,
+            deadline_spec["process_start_monotonic"]
+            + float(launch["fresh_wait_seconds"]),
+        )
     fresh_bundle = None
     while time.monotonic() < wait_deadline:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage="stage2_wait_jrb01"
+        )
         if hold_file.is_file():
             raise RuntimeError(
                 f"FRESH boundary hold requested by owner file: {hold_file}"
@@ -618,6 +687,7 @@ def run_gpu_wave(out, launch, manifest):
             )
             break
         except RuntimeError as exc:
+            now_wait = time.monotonic()
             save(
                 out / "progress.json",
                 dict(
@@ -629,10 +699,17 @@ def run_gpu_wave(out, launch, manifest):
                     r882_parity_verified=True,
                     stage1_static_data_b_panel_flushed=True,
                     static_data_admitted_rounds=static_adm,
+                    elapsed_seconds=now_wait - deadline_spec["process_start_monotonic"],
+                    cumulative_elapsed_seconds=deadline_spec["prior_elapsed_seconds"]
+                    + (now_wait - deadline_spec["process_start_monotonic"]),
+                    remaining_budget_seconds=wait_deadline - now_wait,
                     utc=datetime.now(timezone.utc).isoformat(),
                 ),
             )
-            time.sleep(5.0)
+            sleep_for = min(5.0, max(0.0, wait_deadline - time.monotonic()))
+            if sleep_for <= 0.0:
+                break
+            time.sleep(sleep_for)
 
     if fresh_bundle is None:
         raise RuntimeError(
@@ -793,11 +870,14 @@ def main():
     manifest = json.loads(manifest_path.read_text())
     manifest_sha = sha(manifest_path)
     launch = json.loads(args.launch.read_text())
-    validate_launch(launch, manifest_sha)
+    deadline_spec = validate_launch(launch, manifest_sha)
     configure_threads(launch.get("numeric_threads", 2))
 
     args.output.mkdir(parents=True, exist_ok=True)
     if args.smoke:
+        mon.enforce_shared_process_deadline(
+            time.monotonic(), deadline_spec, stage="smoke"
+        )
         smoke_payload = dict(
             wave=stat.WAVE,
             status="PASS",
@@ -806,6 +886,9 @@ def main():
             manifest_sha256=manifest_sha,
             numeric_threads=torch.get_num_threads(),
             cuda_runtime_threads_exempt=True,
+            prior_attempts_elapsed_seconds=deadline_spec["prior_elapsed_seconds"],
+            remaining_wall_budget_seconds=deadline_spec["remaining_budget_seconds"],
+            campaign_wall_budget_cap_seconds=deadline_spec["campaign_cap_seconds"],
             optimizer_updates=0,
             scored_contexts=0,
         )
@@ -813,7 +896,7 @@ def main():
         print(json.dumps(smoke_payload), flush=True)
         return
 
-    run_gpu_wave(args.output, launch, manifest)
+    run_gpu_wave(args.output, launch, manifest, deadline_spec=deadline_spec)
 
 
 if __name__ == "__main__":

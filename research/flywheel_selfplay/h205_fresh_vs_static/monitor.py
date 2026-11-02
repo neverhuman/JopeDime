@@ -25,6 +25,11 @@ HOST_CORES = os.sysconf("SC_NPROCESSORS_ONLN")
 LOAD_LIMIT = 0.85 * HOST_CORES
 MAX_NUMERIC_THREADS = 4
 LIVE_FLYWHEEL_PID = 2297929
+CAMPAIGN_WALL_BUDGET_CAP_SECONDS = 25200.0
+PRIOR_ATTEMPTS_ELAPSED_SECONDS = 1970.9372255061753
+REMAINING_WALL_BUDGET_SECONDS = (
+    CAMPAIGN_WALL_BUDGET_CAP_SECONDS - PRIOR_ATTEMPTS_ELAPSED_SECONDS
+)
 NUMERIC_ENV_KEYS = (
     "OMP_NUM_THREADS",
     "MKL_NUM_THREADS",
@@ -81,6 +86,109 @@ def check_numeric_env_and_torch(env=None, torch_intra_op=None, torch_inter_op=No
     if torch_inter_op is not None and int(torch_inter_op) > MAX_NUMERIC_THREADS:
         bad.append(f"torch_inter_op={torch_inter_op}>{MAX_NUMERIC_THREADS}")
     return bad
+
+
+def compute_remaining_wall_budget_seconds(
+    prior_elapsed_seconds=PRIOR_ATTEMPTS_ELAPSED_SECONDS,
+    campaign_cap_seconds=CAMPAIGN_WALL_BUDGET_CAP_SECONDS,
+    requested_remaining_seconds=None,
+):
+    """Compute remaining campaign wall budget and refuse launch if pre-consumed budget >= cap."""
+    prior = float(prior_elapsed_seconds)
+    cap = float(campaign_cap_seconds)
+    if prior < PRIOR_ATTEMPTS_ELAPSED_SECONDS - 1e-9:
+        raise RuntimeError(
+            f"cannot reduce prior_elapsed_seconds below recorded ledger ({prior} < {PRIOR_ATTEMPTS_ELAPSED_SECONDS})"
+        )
+    if cap > CAMPAIGN_WALL_BUDGET_CAP_SECONDS + 1e-9:
+        raise RuntimeError(
+            f"cannot increase campaign_cap_seconds above {CAMPAIGN_WALL_BUDGET_CAP_SECONDS} ({cap})"
+        )
+    remaining = cap - prior
+    if requested_remaining_seconds is not None:
+        req = float(requested_remaining_seconds)
+        if req > remaining + 1e-9:
+            raise RuntimeError(
+                f"requested_remaining_seconds ({req}) exceeds remaining campaign budget ({remaining})"
+            )
+        remaining = min(remaining, req)
+    if remaining <= 0.0:
+        raise RuntimeError(
+            f"prelaunch cumulative budget refusal: prior_elapsed={prior}s, cap={cap}s, remaining={remaining}s <= 0"
+        )
+    return remaining
+
+
+def compute_shared_process_deadline(
+    process_start_monotonic,
+    prior_elapsed_seconds=PRIOR_ATTEMPTS_ELAPSED_SECONDS,
+    campaign_cap_seconds=CAMPAIGN_WALL_BUDGET_CAP_SECONDS,
+    requested_remaining_seconds=None,
+    env_hard_deadline_monotonic=None,
+):
+    """Bind supervisor, runner Stage 1/2/3, and JRB-01 wait loop to ONE process-start remaining deadline."""
+    start_mono = float(process_start_monotonic)
+    remaining = compute_remaining_wall_budget_seconds(
+        prior_elapsed_seconds=prior_elapsed_seconds,
+        campaign_cap_seconds=campaign_cap_seconds,
+        requested_remaining_seconds=requested_remaining_seconds,
+    )
+    hard_deadline = start_mono + remaining
+    if env_hard_deadline_monotonic is not None:
+        hard_deadline = min(hard_deadline, float(env_hard_deadline_monotonic))
+    eff_remaining = hard_deadline - start_mono
+    if eff_remaining <= 0.0:
+        raise RuntimeError(
+            f"prelaunch cumulative budget refusal: non-positive effective remaining window ({eff_remaining}s)"
+        )
+    return dict(
+        process_start_monotonic=start_mono,
+        prior_elapsed_seconds=float(prior_elapsed_seconds),
+        campaign_cap_seconds=float(campaign_cap_seconds),
+        remaining_budget_seconds=float(eff_remaining),
+        hard_deadline_monotonic=float(hard_deadline),
+    )
+
+
+def is_cumulative_wall_deadline_exceeded(
+    elapsed_seconds,
+    prior_elapsed_seconds=PRIOR_ATTEMPTS_ELAPSED_SECONDS,
+    campaign_cap_seconds=CAMPAIGN_WALL_BUDGET_CAP_SECONDS,
+    remaining_budget_seconds=REMAINING_WALL_BUDGET_SECONDS,
+):
+    """Return True iff elapsed_seconds exceeds remaining_budget_seconds or prior + elapsed > cap."""
+    el = float(elapsed_seconds)
+    return (
+        el > 23229.062774493825
+        or el > float(remaining_budget_seconds)
+        or (float(prior_elapsed_seconds) + el) > float(campaign_cap_seconds)
+    )
+
+
+def enforce_shared_process_deadline(now_monotonic, deadline_spec, stage="execution"):
+    """Raise RuntimeError immediately if now_monotonic exceeds the shared process-start deadline."""
+    now_m = float(now_monotonic)
+    elapsed = now_m - float(deadline_spec["process_start_monotonic"])
+    prior = float(deadline_spec["prior_elapsed_seconds"])
+    cap = float(deadline_spec["campaign_cap_seconds"])
+    rem = float(deadline_spec["remaining_budget_seconds"])
+    hard = float(deadline_spec["hard_deadline_monotonic"])
+    if now_m > hard or is_cumulative_wall_deadline_exceeded(
+        elapsed,
+        prior_elapsed_seconds=prior,
+        campaign_cap_seconds=cap,
+        remaining_budget_seconds=rem,
+    ):
+        raise RuntimeError(
+            f"cumulative 7h hard wall deadline exceeded during {stage}: "
+            f"elapsed={elapsed:.3f}s, cumulative={prior + elapsed:.3f}s > {cap:.1f}s "
+            f"(remaining_budget={rem:.3f}s)"
+        )
+    return dict(
+        elapsed_seconds=elapsed,
+        cumulative_elapsed_seconds=prior + elapsed,
+        remaining_seconds=hard - now_m,
+    )
 
 
 def read_process_thread_names(pid):
@@ -213,6 +321,25 @@ def main():
     load_guard = SustainedLoad()
     load_guard.check(initial["load"], time.monotonic())
     started = time.monotonic()
+    launch_payload = (
+        json.loads(args.launch.read_text()) if args.launch.is_file() else {}
+    )
+    deadline_spec = compute_shared_process_deadline(
+        started,
+        prior_elapsed_seconds=launch_payload.get(
+            "prior_attempts_elapsed_seconds", PRIOR_ATTEMPTS_ELAPSED_SECONDS
+        ),
+        campaign_cap_seconds=launch_payload.get(
+            "campaign_wall_budget_cap_seconds", CAMPAIGN_WALL_BUDGET_CAP_SECONDS
+        ),
+        requested_remaining_seconds=launch_payload.get("remaining_wall_budget_seconds"),
+    )
+    remaining_budget = deadline_spec["remaining_budget_seconds"]
+    hard_deadline = deadline_spec["hard_deadline_monotonic"]
+    env["H205_PROCESS_START_MONOTONIC"] = repr(started)
+    env["H205_PRIOR_ELAPSED_SECONDS"] = repr(deadline_spec["prior_elapsed_seconds"])
+    env["H205_REMAINING_BUDGET_SECONDS"] = repr(remaining_budget)
+    env["H205_HARD_DEADLINE_MONOTONIC"] = repr(hard_deadline)
 
     claim_path = args.output.parent / "attempt.claim"
     if not args.smoke and not claim_path.exists():
@@ -224,6 +351,13 @@ def main():
                     output=str(args.output.resolve()),
                     launch=str(args.launch.resolve()),
                     live_flywheel_pid_untouched=LIVE_FLYWHEEL_PID,
+                    prior_attempts_elapsed_seconds=deadline_spec[
+                        "prior_elapsed_seconds"
+                    ],
+                    remaining_wall_budget_seconds=remaining_budget,
+                    campaign_wall_budget_cap_seconds=deadline_spec[
+                        "campaign_cap_seconds"
+                    ],
                 ),
                 f,
             )
@@ -255,6 +389,10 @@ def main():
         while child.poll() is None:
             sample = snapshot(child=child, env=env)
             sample["elapsed"] = time.monotonic() - started
+            sample["cumulative_elapsed"] = (
+                deadline_spec["prior_elapsed_seconds"] + sample["elapsed"]
+            )
+            sample["remaining_budget_seconds"] = remaining_budget - sample["elapsed"]
             sample["output_bytes"] = sum(
                 p.stat().st_size for p in args.output.parent.rglob("*") if p.is_file()
             )
@@ -265,8 +403,14 @@ def main():
                 reasons.append("sustained load>85%: three readings five seconds apart")
             if sample["output_bytes"] >= 500_000_000:
                 reasons.append("owned output root >=500MB")
-            if sample["elapsed"] > 25200:
-                reasons.append("7h hard wall deadline")
+            if sample["elapsed"] > 23229.062774493825:
+                reasons.append(
+                    "7h cumulative hard wall deadline (23229.062774493825s remaining)"
+                )
+            elif (
+                sample["elapsed"] > remaining_budget or time.monotonic() > hard_deadline
+            ):
+                reasons.append("shared process-start remaining wall deadline exceeded")
             if reasons:
                 if child.pid != LIVE_FLYWHEEL_PID:
                     os.killpg(child.pid, signal.SIGTERM)
@@ -278,12 +422,18 @@ def main():
             time.sleep(0.2 if args.smoke else 1.0)
         code = child.wait()
 
+    elapsed_final = time.monotonic() - started
     result = dict(
         wave="H205",
         status="PASS" if code == 0 and not reasons else "INCOMPLETE",
         exit_code=code,
         reasons=reasons,
-        elapsed_seconds=time.monotonic() - started,
+        elapsed_seconds=elapsed_final,
+        prior_attempts_elapsed_seconds=deadline_spec["prior_elapsed_seconds"],
+        cumulative_elapsed_seconds=deadline_spec["prior_elapsed_seconds"]
+        + elapsed_final,
+        remaining_wall_budget_seconds_at_start=remaining_budget,
+        campaign_wall_budget_cap_seconds=deadline_spec["campaign_cap_seconds"],
         host_online_cores=HOST_CORES,
         load_limit=LOAD_LIMIT,
         max_numeric_threads=MAX_NUMERIC_THREADS,

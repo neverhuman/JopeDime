@@ -839,6 +839,118 @@ def test_stage_order_b_lock_persisted_before_heldout_a_evaluation(tmp_path):
         )
 
 
+def test_cumulative_budget_shared_deadline_and_preconsumed_refusal():
+    """Counterexample 6 (1723-budget-counterexample.json): monitor AST predicate, shared process-start deadline, and pre-consumed budget refusal."""
+    import ast
+
+    # 1. Verify stdlib AST predicate in monitor.py directly stops at sample["elapsed"] = 23230.062774493825
+    # (where prior_attempt_seconds = 1970.9372255061753 gives cumulative 25201.0s > 25200.0s).
+    mon_src = (HERE / "monitor.py").read_text(encoding="utf-8")
+    tree = ast.parse(mon_src)
+    elapsed_if_tests = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.If):
+            src_seg = ast.get_source_segment(mon_src, node.test) or ""
+            if 'sample["elapsed"]' in src_seg and "23229.062774493825" in src_seg:
+                elapsed_if_tests.append((node.lineno, node.test, src_seg))
+    assert elapsed_if_tests, (
+        'monitor.py must contain explicit AST predicate `sample["elapsed"] > 23229.062774493825`'
+    )
+    _, test_node, src_seg = elapsed_if_tests[0]
+    assert src_seg.strip() == 'sample["elapsed"] > 23229.062774493825'
+    code_obj = compile(ast.Expression(test_node), "<monitor_ast>", "eval")
+    assert (
+        eval(
+            code_obj,
+            {"__builtins__": {}},
+            {"sample": {"elapsed": 23230.062774493825}},
+        )
+        is True
+    )
+    assert (
+        eval(
+            code_obj,
+            {"__builtins__": {}},
+            {"sample": {"elapsed": 23229.0}},
+        )
+        is False
+    )
+
+    # 2. Verify shared process-start deadline binds monitor, runner, and JRB-01 wait to ONE deadline
+    deadline = mon.compute_shared_process_deadline(process_start_monotonic=1000.0)
+    assert np.isclose(
+        deadline["remaining_budget_seconds"],
+        23229.062774493825,
+        rtol=0.0,
+        atol=1e-9,
+    )
+    assert np.isclose(
+        deadline["hard_deadline_monotonic"],
+        1000.0 + 23229.062774493825,
+        rtol=0.0,
+        atol=1e-9,
+    )
+    ok_check = mon.enforce_shared_process_deadline(
+        1000.0 + 1800.0, deadline, stage="stage1_static_data"
+    )
+    assert np.isclose(
+        ok_check["remaining_seconds"],
+        23229.062774493825 - 1800.0,
+        rtol=0.0,
+        atol=1e-9,
+    )
+    with pytest.raises(RuntimeError, match="cumulative 7h hard wall deadline exceeded"):
+        mon.enforce_shared_process_deadline(
+            1000.0 + 23230.062774493825,
+            deadline,
+            stage="stage2_wait_jrb01",
+        )
+
+    # 3. Verify pre-consumed budget refusal in monitor and runner.validate_launch
+    with pytest.raises(RuntimeError, match="prelaunch cumulative budget refusal"):
+        mon.compute_remaining_wall_budget_seconds(
+            prior_elapsed_seconds=25200.0, campaign_cap_seconds=25200.0
+        )
+    with pytest.raises(RuntimeError, match="prelaunch cumulative budget refusal"):
+        mon.compute_shared_process_deadline(
+            process_start_monotonic=500.0,
+            prior_elapsed_seconds=25201.0,
+            campaign_cap_seconds=25200.0,
+        )
+    with pytest.raises(RuntimeError, match="cannot reduce prior_elapsed_seconds"):
+        mon.compute_remaining_wall_budget_seconds(prior_elapsed_seconds=0.0)
+    with pytest.raises(RuntimeError, match="cannot increase campaign_cap_seconds"):
+        mon.compute_remaining_wall_budget_seconds(campaign_cap_seconds=30000.0)
+
+    manifest_sha = run_mod.sha(HERE / "manifest.json")
+    base_launch = dict(
+        wave="H205",
+        authority=stat.AUTHORITY_STRING,
+        manifest_sha256=manifest_sha,
+        numeric_threads=2,
+        cuda_runtime_threads_exempt=True,
+        live_flywheel_pid_untouched=2297929,
+    )
+    with pytest.raises(RuntimeError, match="prelaunch cumulative budget refusal"):
+        run_mod.validate_launch(
+            dict(base_launch, prior_attempts_elapsed_seconds=25200.0),
+            manifest_sha,
+            process_start_monotonic=100.0,
+        )
+    with pytest.raises(RuntimeError, match="prelaunch cumulative budget refusal"):
+        run_mod.validate_launch(
+            dict(base_launch, remaining_wall_budget_seconds=0.0),
+            manifest_sha,
+            process_start_monotonic=100.0,
+        )
+    with pytest.raises(RuntimeError, match="fresh_wait_seconds"):
+        run_mod.validate_launch(
+            dict(base_launch, fresh_wait_seconds=24000.0),
+            manifest_sha,
+            process_start_monotonic=100.0,
+        )
+
+
 def test_runner_smoke_mode(tmp_path):
     out_dir = tmp_path / "smoke_out"
     launch_path = tmp_path / "launch.json"
