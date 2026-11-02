@@ -630,6 +630,13 @@ crates/jope-campaigns/src/test_adaptive/aggressive/views.rs
 crates/jope-campaigns/src/test_adaptive/binary42.rs
 crates/jope-campaigns/src/test_adaptive/island_extension.rs
 crates/jope-campaigns/src/test_adaptive/multiclass60.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/evolution.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/ledger.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/plan.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/replay.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/runtime.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/tests.rs
+crates/jope-campaigns/src/test_adaptive/multiclass60/validation.rs
 crates/jope-campaigns/src/test_adaptive/scq_batch.rs
 crates/jope-campaigns/src/test_adaptive/tabarena_islands.rs
 crates/jope-campaigns/src/test_adaptive/timeseries42.rs
