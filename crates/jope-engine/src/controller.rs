@@ -46,6 +46,28 @@ fn read_rank_receipt(path: &Path) -> Result<Option<serde_json::Value>> {
         .with_context(|| format!("parse rank receipt {}", path.display()))
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct TrainingRankProgress {
+    step: u64,
+    timestamp: u64,
+}
+
+fn read_training_rank_progress(path: &Path) -> Result<Option<TrainingRankProgress>> {
+    let Some(receipt) = read_rank_receipt(path)? else {
+        return Ok(None);
+    };
+    let step = receipt["step"]
+        .as_u64()
+        .with_context(|| format!("rank receipt step missing or invalid: {}", path.display()))?;
+    let timestamp = receipt["timestamp"].as_u64().with_context(|| {
+        format!(
+            "rank receipt timestamp missing or invalid: {}",
+            path.display()
+        )
+    })?;
+    Ok(Some(TrainingRankProgress { step, timestamp }))
+}
+
 pub(crate) fn bind_proposal_protocol(spec: &mut serde_json::Value) {
     spec["sampling_protocol"] = "pure-v4".into();
     spec["pure_prediction_protocol"] = crate::proposal_population::PURE_PROTOCOL.into();
@@ -865,24 +887,39 @@ pub(crate) fn train_controlled(
                 );
                 let mut complete = true;
                 for (rank, child) in children.0.iter_mut().enumerate() {
-                    let receipt: serde_json::Value =
-                        read_json(&launch.join(format!("rank-{rank}.json"))).unwrap_or_default();
+                    let receipt_path = launch.join(format!("rank-{rank}.json"));
+                    let mut receipt = read_training_rank_progress(&receipt_path)?;
                     if !injected
                         && fail_rank == Some(rank)
                         && output.join("latest.json").exists()
-                        && receipt["step"].as_u64().unwrap_or(0) >= checkpoint_steps as u64
+                        && receipt
+                            .as_ref()
+                            .is_some_and(|progress| progress.step >= checkpoint_steps as u64)
                     {
                         child.kill()?;
                         injected = true;
                     }
                     match child.try_wait()? {
-                        Some(s) => ensure!(s.success(), "rank {rank} failed: {s}"),
+                        Some(status) => {
+                            ensure!(status.success(), "rank {rank} failed: {status}");
+                            if receipt.is_none() {
+                                // The final receipt may have appeared between our read and wait.
+                                receipt = read_training_rank_progress(&receipt_path)?;
+                            }
+                            ensure!(
+                                receipt.is_some(),
+                                "rank {rank} exited successfully without a receipt: {}",
+                                receipt_path.display()
+                            );
+                        }
                         None => {
                             complete = false;
-                            let age = receipt["timestamp"]
-                                .as_u64()
-                                .map(|t| crate::telemetry::now().saturating_sub(t))
-                                .unwrap_or(begun.elapsed().as_secs());
+                            let age = match receipt.as_ref() {
+                                Some(progress) => {
+                                    crate::telemetry::now().saturating_sub(progress.timestamp)
+                                }
+                                None => begun.elapsed().as_secs(),
+                            };
                             ensure!(age < 600, "rank {rank} heartbeat timed out");
                         }
                     }
@@ -1334,6 +1371,14 @@ mod proposal_protocol_tests {
         assert_eq!(
             read_rank_receipt(&rank_path).unwrap(),
             Some(serde_json::json!({"timestamp":17}))
+        );
+        assert!(read_training_rank_progress(&rank_path).is_err());
+        fs::write(&rank_path, br#"{"step":4,"timestamp":17}"#).unwrap();
+        assert_eq!(
+            read_training_rank_progress(&rank_path)
+                .unwrap()
+                .map(|progress| (progress.step, progress.timestamp)),
+            Some((4, 17))
         );
         fs::write(&rank_path, b"{").unwrap();
         assert!(read_rank_receipt(&rank_path)

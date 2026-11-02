@@ -196,7 +196,8 @@ pub struct SynthesizedWorkerOutput {
     pub artifact: FittedSynthesizedArtifact,
 }
 /// One actual fit_table call, then lossless fitted reload and prediction replay.
-/// Failure before publication supplies no fabricated physical-fit counter.
+/// The worker publishes no fit counter when validation fails; see
+/// `tests::invalid_synthesized_fit_is_not_published_with_a_fit_count`.
 pub fn fit_synthesized(request: &SynthesizedFitRequest) -> Result<SynthesizedWorkerOutput> {
     request.validate()?;
     let model = fit_table(
@@ -264,6 +265,32 @@ pub fn worker(input: &Path, output: &Path) -> Result<()> {
 mod tests {
     use super::*;
     use feat_math::advanced_v3::{ColumnSpec, RowSemantics};
+
+    #[test]
+    fn invalid_synthesized_fit_is_not_published_with_a_fit_count() -> Result<()> {
+        let request = SynthesizedFitRequest {
+            task: Task::Regression,
+            schema: DataSchema {
+                columns: vec![ColumnSpec::numeric("x")],
+                row_semantics: RowSemantics::Iid,
+            },
+            classes: vec![],
+            train: RawTable::new(vec!["y".into()], vec![vec!["1".into()]])?,
+            targets: vec![1.0],
+            predict: RawTable::new(vec!["y".into()], vec![vec!["1".into()]])?,
+            recipe: SynthesizedRecipe::new("(pipe X (ridge lambda=0.5))".into())?,
+            scheduling_seed: 0,
+        };
+        let dir = tempfile::tempdir()?;
+        let input = dir.path().join("request.json");
+        let output = dir.path().join("worker-output.json");
+        std::fs::write(&input, serde_json::to_vec(&request)?)?;
+
+        assert!(worker(&input, &output).is_err());
+        assert!(!output.exists());
+        Ok(())
+    }
+
     #[test]
     fn generated_recipe_is_fitted_saved_reloaded_with_missing_and_unseen_categories() -> Result<()>
     {

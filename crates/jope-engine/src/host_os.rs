@@ -2,8 +2,8 @@
 //!
 //! Deadlines cross process boundaries here as `CLOCK_MONOTONIC` (or, for the fit authority,
 //! `CLOCK_BOOTTIME`) nanoseconds, so the opaque `std::time::Instant` cannot replace them. Eight
-//! modules each carried their own `unsafe { libc::clock_gettime(..) }` plus seconds-to-nanos
-//! arithmetic with slightly different overflow handling; they now share this one checked path.
+//! modules each carried their own raw `clock_gettime` call plus seconds-to-nanos arithmetic
+//! with slightly different overflow handling; they now share this one checked path.
 
 use nix::time::{clock_gettime, ClockId};
 use std::io;
