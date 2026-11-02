@@ -553,15 +553,19 @@ impl Ledger {
     }
 }
 
-fn context_counts(tx: &rusqlite::Transaction<'_>, key: &str) -> Result<Counts> {
-    Ok(tx.query_row(
-        "SELECT strict_commits,attempted,
+// Keep this statement fixed: `key` is data and is supplied only through the
+// rusqlite parameter binding below, never interpolated into SQL text.
+const CONTEXT_COUNTS_SQL: &str = "SELECT strict_commits,attempted,
         (SELECT count(*) FROM coverage_requests WHERE context=?1 AND state='reserved') +
         (SELECT count(*) FROM coverage_plans WHERE context=?1),
         (SELECT count(*) FROM coverage_requests WHERE context=?1 AND state='unknown'),ready_at,
         (SELECT count(*) FROM coverage_plans WHERE context=?1)
-        FROM coverage_contexts WHERE identity=?1",
-        [key],
+        FROM coverage_contexts WHERE identity=?1";
+
+fn context_counts(tx: &rusqlite::Transaction<'_>, key: &str) -> Result<Counts> {
+    Ok(tx.query_row(
+        CONTEXT_COUNTS_SQL,
+        rusqlite::params![key],
         |r| {
             let attempted: u64 = r.get(1)?;
             let pending_plans: u64 = r.get(5)?;
