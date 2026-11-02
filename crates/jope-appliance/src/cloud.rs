@@ -202,7 +202,13 @@ pub fn account_label() -> String {
 }
 impl Client {
     pub fn new(workspace: &str, token: Option<String>, gateway: Option<Gateway>) -> Result<Self> {
+        let tls = ureq::tls::TlsConfig::builder()
+            .unversioned_rustls_crypto_provider(Arc::new(
+                rustls::crypto::aws_lc_rs::default_provider(),
+            ))
+            .build();
         let config = ureq::Agent::config_builder()
+            .tls_config(tls)
             .proxy(None)
             .max_redirects(0)
             .http_status_as_error(false)

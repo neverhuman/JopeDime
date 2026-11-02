@@ -25,10 +25,11 @@ jope-runtime = { path = "../jope-runtime" }
 jope-service = { path = "../jope-service", optional = true }
 ratatui = { version = "=0.29.0", default-features = false, features = ["crossterm"] }
 signal-hook = "=0.3.18"
+rustls.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 ulid.workspace = true
-ureq = { version = "=3.5.0", default-features = false, features = ["rustls"] }
+ureq = { version = "=3.5.0", default-features = false, features = ["rustls-no-provider", "rustls-webpki-roots"] }
 zip = { version = "=9.1.3", default-features = false, features = ["deflate"] }
 
 [dev-dependencies]
