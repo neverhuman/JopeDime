@@ -2,24 +2,35 @@
   "schema": "h206-prereg-source-manifest-v1",
   "authority": "Jepson via Grok Bot, card answer 8:22 PM MT",
   "status": "QUEUED_NOT_RUN",
-  "scope": "Preregistration and CPU-only disabled executor skeleton; no scientific qualification.",
+  "scope": "Native search/TRAIN loader/live DOPE student/durable CPU-round interfaces with controlled and generated-native protocol proofs; scientific model/input/native91/GPU qualification remains pending.",
   "source_sha256": {
-    "PREREG.md": "d6b18fc50d4bb8dd352c844bd72dab69846579aca7010acfe30d670c7538f287",
-    "README.md": "603a2676160c31dc1c19154c8452a4ef8f449424bf544b7799dcee14d9b8a70b",
-    "launch.json": "c1b96e1dc794aaf7ce1353547efb35bc83f0450f188623c3c7ae121f948cd407",
+    "MISSING_PINS.md": "b43395281c73c3a605b940eb1e0b2d39ad5d2f0270bcd18a3a26395e7f6ed607",
+    "PREREG.md": "66de18ae00b9c3d184a890938004e1f623d82d20694d2683021e243b1d8cfea0",
+    "README.md": "b2d2adaf2b18fde65b79e9b7ee5e93c64f772799bb3b29c8e20d4718d4e973fb",
+    "contracts.py": "b6a29ef722b52ca708a4dc2bd7bbaa544249673a8ea76b2c1b8423b66d068081",
+    "executor.py": "83bc3e91faf7db3af72b0a7f9a20ff2413c0526f0e1ecd8ddbfb7ecc18ebe216",
+    "launch.json": "4a8666edf5737fec99dc14ec939f474c3f4e4bf42f9a54344e49fcee67e6b7c3",
     "launch.sh": "10f3f0daaae300c16683eedf4c0ad7222de2f2303067f6bc488254ca435d6658",
-    "metrics.json": "b0fe1f0358e5dbfc549440e91fff406b2a02324c9428562e7c15309cb7adf053",
-    "runner.py": "aaa354367dff47db1a98925b59dbc872265935835bb6e567078ca52554094c0e",
-    "test_h206.py": "8e445d6615d016f43b1975942013007300410723510c4eda299d43278354f8df"
+    "metrics.json": "9b4aae68af0139aa71df5fe9d883b0d7c889881234f3670f080c7528facf8cd9",
+    "native.py": "4a15304aceb472d1b37b6d419ba3dabed4b64d4be61c1715dc068ab0b53d62fd",
+    "runner.py": "4421fbbd78fdfa10d1316b1e314356e8d986cebde9ea411bc2b64e52f31b29fc",
+    "student.py": "c47e8b93ef150e178046bd7eec5e2e7278e0d79d15665c40d84c6e5ab94039da",
+    "test_h206.py": "628bd83615611256cd91a859a107bd8767b5681e2a2878077bc5225dbcdbd4b1"
   },
   "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
   "evidence": [],
   "pending": [
-    "reviewed scientific executor",
-    "pinned width128 architecture and r882 initialization",
-    "versioned real-data and fold bindings",
-    "queue-release nudge and fresh GPU/disk admission",
-    "native91 exact and actual gradient qualification",
-    "sanctioned sealed confirmation evaluator"
-  ]
+    "MISSING_PINS.md: original model/tensor/state/asset ObjectRefs",
+    "approved normalized regression TRAIN role/closure and raw live-encoder tensors",
+    "genuine r88291 full-vector/pick replay",
+    "reconciled original cumulative campaign ledger",
+    "GPU phase/study/selector bindings and explicit queue release"
+  ],
+  "dependency_source_sha256": {
+    "python/src/jope/north_star/dope_freeze_guard.py": "908547a91fcb6841868aed68e1c0811befbdc2cf182053125fdf4004549fd2b1",
+    "research/flywheel_selfplay/hwave_numeric_threads.py": "9cb334d61a95f9d648dd52100f7010d7f6c7b7d00e5bed5c2dc58507121c668d",
+    "research/flywheel_selfplay/rust_evaluator.py": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
+    "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab"
+  },
+  "local_source_evidence": "/home/ubuntu/jope_plan/evidence/H206/executor-20261102"
 }
