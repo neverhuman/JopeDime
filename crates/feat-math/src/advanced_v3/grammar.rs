@@ -134,18 +134,20 @@ mod registry_entry;
 mod tests;
 mod types;
 
-pub(super) use compile_layout::*;
-pub(super) use compile_shape::*;
+use compile_layout::*;
+use compile_shape::*;
+#[cfg(test)]
 pub(crate) use compile_stages::compile_v3_genome;
-pub(super) use compile_stages::*;
+use compile_stages::*;
 pub(crate) use compile_types::{CompileFeature, CompileInputLayout, CompileV3Options};
-pub(super) use compile_values::*;
-pub(super) use params_base::*;
-pub(super) use params_models::*;
-pub(super) use registry::*;
+use compile_values::*;
+use params_base::*;
+use params_models::*;
+use registry::*;
+#[cfg(test)]
 pub(crate) use registry_entry::v3_operation_registry;
 pub(crate) use types::{
     ActiveWhen, BackendSupport, CompileMode, EmitterTarget, ModeDefaults, OperationDescriptor,
-    ParamDescriptor, ParamDomain, ParamKind, ProductionAdmission, RolePolicy, RowRequirement,
-    StaticValue, TargetSupport, TaskMask, V3ParamDomain,
+    ParamDescriptor, ParamKind, ProductionAdmission, RolePolicy, RowRequirement, StaticValue,
+    TaskMask, V3ParamDomain,
 };

@@ -1,3 +1,6 @@
+/// Exhaustive admission check. Every fitted enum is matched explicitly so a
+/// newly added registry variant fails compilation until its C++ semantics are
+/// deliberately classified.
 pub fn supports_fitted_cpp17(model: &BoundModel) -> Result<()> {
     model.validate_binding()?;
     match &model.schema.row_semantics {
