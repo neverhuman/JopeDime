@@ -37,6 +37,23 @@ Only the exact finding source path is excluded from Jankurai scoring. Tests and
 other security scans remain in place. Revisit if the pinned provenance is retired
 or either recorded hash changes; this does not cover other findings in the file.
 
+## `s3_library.py`
+
+The full audit `rerun/j_ffba82986.json` reports HLT-043 fingerprint
+`sha256:7ec8a15a8c065dde9220d99090f7dbafb39b5ba80bfb4454ec8b0f743cbff839` at
+`deploy/dl-flywheel/jope_flywheel/s3_library.py`. The duplicate includes the
+manifest-pinned historical copy
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/s3_library.py`.
+Both files have SHA-256
+`28e1e0d41f322b69de4ee7a41ae8ba611b788934cac2963c279267260b1773b9`; the
+identity is recorded for both paths in `deploy/dl-flywheel/SOURCE_MANIFEST.json`
+and for the frozen copy in
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/provenance/FINAL_VALIDATION.json`.
+
+Only the exact finding source path is excluded from Jankurai scoring. Tests and
+other security scans remain in place. Revisit if the pinned provenance is retired
+or either recorded hash changes; this does not cover other findings in the file.
+
 ## `target_noise.py`
 
 The full audit `rerun/j_ffba82986.json` reports HLT-043 fingerprint
