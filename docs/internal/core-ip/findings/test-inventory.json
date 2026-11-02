@@ -1811,6 +1811,12 @@
       "reason": "research script test outside the maintained product surface",
       "role": "research"
     },
+    "python:python/tests/test_auto_fuse.py": {
+      "role": "regression",
+      "subsystems": [
+        "training"
+      ]
+    },
     "python:python/tests/test_context_proposals.py": {
       "role": "regression",
       "subsystems": [
@@ -2361,6 +2367,10 @@
     },
     "python:research/flywheel_selfplay/h225_multistep_regret/test_h225.py": {
       "reason": "H225 offline frozen-DOPE multi-step adapter proposals: TRAIN-only nested family-CV continuous-regret/top1/placebo selection, strict ties, global readout lock, and owned CPU load pause/deadline controls. Data-free tests are not study outcomes or serving qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h226_gated025_r3175/test_h226.py": {
+      "reason": "H226 (frozen GATED_025 recipe on the retained-best r3175 base) data-free controls: cyclic cells and minimal fit plan, H124 seed folds and a fresh fold manifest, family-preserving shuffles, BT-Elo orientation, H129 blend/disagreement definitions, FIT-only tau choice with base fallback, primary and r882/r3175 plateau verdict rules, frozen H210/H217 gate recipe, xbabe2-only host, nice 19, source binding before the claim, load pause hysteresis and the capped absolute deadline; not study outcomes.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
