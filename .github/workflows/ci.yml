@@ -100,6 +100,56 @@ jobs:
           name: ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}/
 
+  jankurai-audit:
+    # A required CI job for same-repository PRs and manual runs; fork PRs do not write to the
+    # self-hosted evidence store.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Persistent Cargo target
+        uses: ./.github/actions/cargo-target
+      - name: Runner provenance
+        uses: ./.github/actions/runner-provenance
+      - name: Install checksum-pinned Jankurai
+        id: install-jankurai
+        run: bash deploy/ci/install-jankurai.sh
+      - name: Run full Jankurai audit and verify captured source
+        id: run-jankurai-audit
+        env:
+          JANKURAI_NO_UPDATE_CHECK: "1"
+          JANKURAI_BIN: ${{ github.workspace }}/target/jankurai/jankurai-1.7.5-x86_64-unknown-linux-gnu/jankurai
+          # Owner decision 2026-10-22: report-only below the score floor of 85; the audit decision
+          # and verified source evidence remain retained until the floor is reached.
+          JOPE_AUDIT_REPORT_ONLY: "1"
+        run: nice -n 10 bash ops/ci/jankurai.sh "target/full-audit/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+      - name: Publish canonical repair-routing reports
+        id: repair-reports
+        if: always()
+        env:
+          REPORTS: target/full-audit/${{ github.run_id }}/${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          if [[ -f "$REPORTS/repo-score.json" && -f "$REPORTS/repo-score.md" ]]; then
+            mkdir -p .jankurai
+            cp -- "$REPORTS/repo-score.json" .jankurai/repo-score.json
+            cp -- "$REPORTS/repo-score.md" .jankurai/repo-score.md
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Retain current Jankurai audit evidence
+        if: always()
+        uses: ./.github/actions/upload-ci-evidence
+        with:
+          name: jankurai-${{ github.run_id }}-${{ github.run_attempt }}
+          path: target/full-audit/${{ github.run_id }}/${{ github.run_attempt }}/
+
   rust-check:
     needs: changes
     if: needs.changes.outputs.rust == 'true'
@@ -368,7 +418,7 @@ jobs:
     uses: ./.github/workflows/export-parity.yml
 
   aggregate:
-    needs: [changes, hygiene, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go, export-parity]
+    needs: [changes, hygiene, jankurai-audit, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go, export-parity]
     if: always()
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
@@ -380,6 +430,15 @@ jobs:
           fetch-depth: 0
       - name: Runner provenance
         uses: ./.github/actions/runner-provenance
+      - name: Require the current-source Jankurai audit
+        env:
+          JANKURAI_AUDIT_RESULT: ${{ needs.jankurai-audit.result }}
+          JANKURAI_AUDIT_REQUIRED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          set -euo pipefail
+          expected=skipped
+          if [ "$JANKURAI_AUDIT_REQUIRED" = true ]; then expected=success; fi
+          test "$JANKURAI_AUDIT_RESULT" = "$expected"
       # Evidence arrives through run/attempt-scoped cache entries (no artifact storage); each unit
       # lands in its own directory under ci-download, exactly the layout aggregate.py verifies.
       - name: Collect changes evidence
@@ -624,6 +683,8 @@ jobs:
           EXPORT_REQUIRED: ${{ github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
           GO_RESULT: ${{ needs.go.result }}
           GO_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
+          JANKURAI_AUDIT_RESULT: ${{ needs.jankurai-audit.result }}
+          JANKURAI_AUDIT_REQUIRED: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           NEEDS_JSON: ${{ toJson(needs) }}
           TYPESCRIPT_RESULT: ${{ needs.typescript.result }}
           TYPESCRIPT_REQUIRED: ${{ needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true' }}
@@ -641,8 +702,11 @@ jobs:
           expected=skipped
           if [ "$EXPORT_REQUIRED" = true ]; then expected=success; fi
           test "$EXPORT_RESULT" = "$expected"
+          expected=skipped
+          if [ "$JANKURAI_AUDIT_REQUIRED" = true ]; then expected=success; fi
+          test "$JANKURAI_AUDIT_RESULT" = "$expected"
           # UI, publication, language and export evidence are independently verified above.
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); n.pop("go"); n.pop("typescript"); n.pop("export-parity"); print(json.dumps(n))' > "$output/needs.json"
+          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); n.pop("go"); n.pop("typescript"); n.pop("export-parity"); n.pop("jankurai-audit"); print(json.dumps(n))' > "$output/needs.json"
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once
