@@ -1421,6 +1421,7 @@ crates/jope-engine/src/jain_vocabulary.rs
 crates/jope-engine/src/label_admission.rs
 crates/jope-engine/src/learning_history.rs
 crates/jope-engine/src/learning_history/chart.rs
+crates/jope-engine/src/learning_history/discovery.rs
 crates/jope-engine/src/lib.rs
 crates/jope-engine/src/main.rs
 crates/jope-engine/src/manifest.rs
