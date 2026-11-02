@@ -158,8 +158,8 @@ pub(crate) fn restore_missing_values(block: &mut FeatureBlock) {
 
 pub(crate) struct ParsedPipeline<'a> {
     pub(crate) target: Option<&'a Stage>,
-    input: Option<&'a Stage>,
-    transforms: &'a [Stage],
+    pub(super) input: Option<&'a Stage>,
+    pub(super) transforms: &'a [Stage],
     pub(crate) head: Option<&'a Stage>,
 }
 

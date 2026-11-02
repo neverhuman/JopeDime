@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct LogitRidgeModel {
     pub(crate) means: Vec<f64>,
     pub(crate) scales: Vec<f64>,
