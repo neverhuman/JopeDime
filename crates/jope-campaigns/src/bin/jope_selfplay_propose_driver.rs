@@ -898,8 +898,14 @@ fn rebind_task(root: &Path, lane: &Lane, installed: &Installed) -> Result<Value>
 // cycle
 // ---------------------------------------------------------------------------
 
-fn read_state(path: &Path) -> Value {
-    read_json(path).unwrap_or_else(|_| json!({"schema": STATE_SCHEMA}))
+fn read_state(path: &Path) -> Result<Value> {
+    match fs::symlink_metadata(path) {
+        Ok(_) => read_json(path),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            Ok(json!({"schema": STATE_SCHEMA}))
+        }
+        Err(error) => Err(error).with_context(|| format!("inspect {}", path.display())),
+    }
 }
 
 fn attempt_for(state: &Value, key: &str) -> u64 {
@@ -1115,7 +1121,7 @@ fn run_lane(
             outcome["proposals"] = json!(installed.proposals.to_string_lossy());
             outcome["proposals_sha256"] = json!(installed.proposals_sha256);
             append_event(events, &outcome)?;
-            let mut state = read_state(state_path);
+            let mut state = read_state(state_path)?;
             state[format!("last_install:{}", lane.label())] = outcome.clone();
             if lane.task.is_none() {
                 state["last_install"] = outcome.clone();
@@ -1130,7 +1136,7 @@ fn run_lane(
     }
 
     // Nothing active and nothing installable: submit (or retry) a generation.
-    let mut state = read_state(state_path);
+    let mut state = read_state(state_path)?;
     let terminal_failures = jobs
         .iter()
         .filter(|(id, state)| {
