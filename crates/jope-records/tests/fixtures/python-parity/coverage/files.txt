@@ -687,6 +687,7 @@ crates/jope-campaigns/src/selfplay_ingest.rs
 crates/jope-campaigns/src/selfplay_registry.rs
 crates/jope-campaigns/src/selfplay_runtime.rs
 crates/jope-campaigns/src/selfplay_shadow/causal_evidence.rs
+crates/jope-campaigns/src/selfplay_shadow/causal_evidence/canary.rs
 crates/jope-campaigns/src/selfplay_shadow/contracts.rs
 crates/jope-campaigns/src/selfplay_shadow/flywheel.rs
 crates/jope-campaigns/src/selfplay_shadow/mod.rs
