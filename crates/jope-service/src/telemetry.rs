@@ -883,9 +883,14 @@ fn cgroup_allowed_cpus(
     }
 }
 
+fn native_unsigned_to_u64<T: Into<u64>>(value: T) -> u64 {
+    value.into()
+}
+
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
 mod platform {
+    use super::native_unsigned_to_u64;
     use std::{ffi::CString, fs, os::unix::ffi::OsStrExt, path::Path};
 
     pub(super) fn logical_cpus() -> Result<f64, String> {
@@ -899,14 +904,15 @@ mod platform {
     }
 
     pub(super) fn allowed_cpus() -> Result<f64, String> {
-        // SAFETY: an all-zero cpu_set_t is valid; sched_getaffinity writes at most its size.
-        let mut set: libc::cpu_set_t = unsafe { std::mem::zeroed() };
+        let mut set = std::mem::MaybeUninit::<libc::cpu_set_t>::uninit();
         let size = std::mem::size_of::<libc::cpu_set_t>();
-        // SAFETY: `set` is a valid, writable cpu_set_t of `size` bytes for pid 0 (this thread).
-        if unsafe { libc::sched_getaffinity(0, size, &mut set) } != 0 {
+        // SAFETY: the pointer addresses `size` writable bytes and pid 0 means this thread.
+        if unsafe { libc::sched_getaffinity(0, size, set.as_mut_ptr()) } != 0 {
             return Err("affinity_unavailable".to_owned());
         }
-        // SAFETY: `set` was initialized by sched_getaffinity above.
+        // SAFETY: success means sched_getaffinity filled the requested cpu_set_t buffer.
+        let set = unsafe { set.assume_init() };
+        // SAFETY: `set` is now fully initialized by sched_getaffinity.
         let affinity = unsafe { libc::CPU_COUNT(&set) } as f64;
         let membership = fs::read_to_string("/proc/self/cgroup").unwrap_or_default();
         super::cgroup_allowed_cpus(&membership, affinity, |path| {
@@ -926,19 +932,22 @@ mod platform {
 
     pub(super) fn disk_free(path: &Path) -> Result<u64, String> {
         let path = CString::new(path.as_os_str().as_bytes()).map_err(|_| "invalid_store_path")?;
-        // SAFETY: an all-zero statvfs is valid output storage for statvfs below.
-        let mut stats: libc::statvfs = unsafe { std::mem::zeroed() };
-        // SAFETY: `path` is NUL-terminated and `stats` is valid writable storage.
-        if unsafe { libc::statvfs(path.as_ptr(), &mut stats) } != 0 {
+        let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
+        // SAFETY: `path` is NUL-terminated and `stats` points to writable output storage.
+        if unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } != 0 {
             return Err("statvfs_failed".to_owned());
         }
-        Ok((stats.f_bavail as u64).saturating_mul(stats.f_frsize as u64))
+        // SAFETY: POSIX statvfs initializes the full output structure on success.
+        let stats = unsafe { stats.assume_init() };
+        Ok(native_unsigned_to_u64(stats.f_bavail)
+            .saturating_mul(native_unsigned_to_u64(stats.f_frsize)))
     }
 }
 
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 mod platform {
+    use super::native_unsigned_to_u64;
     use std::{ffi::CString, os::unix::ffi::OsStrExt, path::Path};
 
     // libc exposes host_statistics64 and mach_host_self, but not the matching
@@ -969,15 +978,14 @@ mod platform {
         if host == 0 {
             return Err("mach_host_unavailable".to_owned());
         }
-        // SAFETY: this C statistics struct consists of integer fields and accepts zeroes.
-        let mut stats: libc::vm_statistics64 = unsafe { std::mem::zeroed() };
+        let mut stats = std::mem::MaybeUninit::<libc::vm_statistics64>::uninit();
         let mut count = libc::HOST_VM_INFO64_COUNT;
         // SAFETY: stats has room for HOST_VM_INFO64_COUNT integer words; count is writable.
         let status = unsafe {
             libc::host_statistics64(
                 host,
                 libc::HOST_VM_INFO64,
-                (&mut stats as *mut libc::vm_statistics64).cast(),
+                stats.as_mut_ptr().cast(),
                 &mut count,
             )
         };
@@ -996,10 +1004,15 @@ mod platform {
         if count < required_count {
             return Err("host_statistics_truncated".to_owned());
         }
+        // SAFETY: a successful call returned at least the word count covering both fields;
+        // read only those initialized integer fields instead of assuming the whole struct.
+        let free_count = unsafe { std::ptr::addr_of!((*stats.as_ptr()).free_count).read() };
+        // SAFETY: same count check above covers inactive_count and the preceding fields.
+        let inactive_count = unsafe { std::ptr::addr_of!((*stats.as_ptr()).inactive_count).read() };
         // XNU mach/vm_statistics.h documents speculative_count as already included
         // in free_count. Adding it again would overstate admission headroom.
-        let pages = u64::from(stats.free_count)
-            .checked_add(u64::from(stats.inactive_count))
+        let pages = u64::from(free_count)
+            .checked_add(u64::from(inactive_count))
             .ok_or_else(|| "memory_pages_overflow".to_owned())?;
         // SAFETY: libSystem initializes this immutable VM page-size value before main.
         let page_size = unsafe { libc::vm_page_size } as u64;
@@ -1013,13 +1026,15 @@ mod platform {
 
     pub(super) fn disk_free(path: &Path) -> Result<u64, String> {
         let path = CString::new(path.as_os_str().as_bytes()).map_err(|_| "invalid_store_path")?;
-        // SAFETY: an all-zero statvfs is valid output storage for statvfs below.
-        let mut stats: libc::statvfs = unsafe { std::mem::zeroed() };
-        // SAFETY: path is NUL-terminated; stats is valid writable output storage.
-        if unsafe { libc::statvfs(path.as_ptr(), &mut stats) } != 0 {
+        let mut stats = std::mem::MaybeUninit::<libc::statvfs>::uninit();
+        // SAFETY: path is NUL-terminated; stats points to writable output storage.
+        if unsafe { libc::statvfs(path.as_ptr(), stats.as_mut_ptr()) } != 0 {
             return Err("statvfs_failed".to_owned());
         }
-        Ok((stats.f_bavail as u64).saturating_mul(stats.f_frsize as u64))
+        // SAFETY: POSIX statvfs initializes the full output structure on success.
+        let stats = unsafe { stats.assume_init() };
+        Ok(native_unsigned_to_u64(stats.f_bavail)
+            .saturating_mul(native_unsigned_to_u64(stats.f_frsize)))
     }
 }
 
@@ -1062,6 +1077,22 @@ mod tests {
     fn macos_system_memory_sensor_reports_available_bytes() {
         let available = platform::mem_available().expect("native Mach VM memory sensor");
         assert!(available > 0, "available memory must be nonzero");
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_affinity_and_disk_sensors_read_successful_outputs() {
+        let allowed = platform::allowed_cpus().expect("native CPU affinity sensor");
+        assert!(allowed > 0.0, "at least one CPU must be available");
+        let _free =
+            platform::disk_free(std::path::Path::new(".")).expect("native statvfs disk sensor");
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_disk_sensor_reads_successful_statvfs_output() {
+        let _free =
+            platform::disk_free(std::path::Path::new(".")).expect("native statvfs disk sensor");
     }
 
     #[derive(Clone, Default)]
