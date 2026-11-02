@@ -6,6 +6,10 @@ edition = "2021"
 license = "Apache-2.0"
 description = "Frozen 42-dataset jope-dime regression benchmark campaign"
 
+[[bin]]
+name = "search-v3"
+path = "src/bin/campaign_search.rs"
+
 [dependencies]
 anyhow = "1"
 clap = { workspace = true }

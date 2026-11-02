@@ -1,5 +1,25 @@
 # Campaigns
 
+## Binary classification campaign
+
+`commands/binary_cv.rs` evaluates genomes through the public schema-bound
+`feat_math::advanced_v3` fit and prediction API. It creates an all-numeric
+IID schema and formats each input with Rust's shortest-round-trip float
+format, preserving the numeric feature values through encoding. Folds use
+SHA-keyed, class-stratified assignments and shared per-fold string tables.
+Binary fitness is mean defined-fold Gini minus 0.25 times its standard
+deviation; single-class validation folds have undefined AUC and do not enter
+that penalty, while their rows remain in pooled out-of-fold results.
+
+Offspring generation derives from canonical parents and the offspring seed:
+the v3 head is detached, the legacy body uses the frozen canonical mutation
+and crossover operators, and a deterministically selected probability-capable
+head is reattached before v3 genome validation. The regression lane has a
+stage-prefix cache; the binary v3 path does not. Binary runs also omit core
+pinning, live logging, checkpoints, generation summaries, and phase-two
+receipts. Slot-level artifacts are not published; fitted winner artifacts
+are emitted after model fitting.
+
 > **Status on `main`:** this page describes the target design from the port plan. Run `jope --help` on `main` for the verbs that exist today. There is no `jope learn`, `jope hwm`, `jope scores` or `jope arena`; the learning store is the separate `jope-learning` binary, with `hwm` and `scores` subcommands, and the arena is the separate `jope-arena` binary. See the README's "What this SHA actually does".
 
 `crates/jope-campaigns` (package `jope-dime-regressor` until the WP5 rename) is the benchmark
@@ -12,12 +32,12 @@ B27; decision [ADR-0004](adr/ADR-0004-evaluator-identity-known-table.md).
 
 | Family | Source | What it does |
 |---|---|---|
-| Golden42 / Golden46 panels | `src/golden42_v3.rs`, `src/main.rs` (`run-golden46`, ledger validators), `manifests/panel.txt`, `manifests/panel-analysis.v1.json` | The frozen regression panels: **Golden42 = SOTArena `tabular-regression-v1`** (42 datasets), **Golden46 = `tabular-regression-v2`** (46). A panel run searches per-dataset programs under the exact-CV protocol, writes a per-cell ledger and a max-manifest (`jope-dime.golden42-v3-max-manifest.v1`), and is what the Elo reporter reads |
+| Golden42 / Golden46 panels | `src/golden42_panel.rs`, `src/main.rs` (`run-golden46`, ledger validators), `manifests/panel.txt`, `manifests/panel-analysis.v1.json` | The frozen regression panels: **Golden42 = SOTArena `tabular-regression-v1`** (42 datasets), **Golden46 = `tabular-regression-v2`** (46). A panel run searches per-dataset programs under the exact-CV protocol, writes a per-cell ledger and a max-manifest (`jope-dime.golden42-v3-max-manifest.v1`), and is what the Elo reporter reads |
 | Exact CV / binary CV | `src/commands/{exact_cv,exact_cv_v2,binary_cv}.rs`, `seeds/generation-zero{,-binary}.txt` (B6/B7 — `include_bytes!` inputs, hence crate-local) | The evaluation protocol every score is measured under: fixed folds, fixed seeds, receipts with the evaluator identity |
 | Test-adaptive | `src/test_adaptive/`, `manifests/binary42-test-adaptive.v1.json`, `fixtures/binary42-historical-reports/v1` (B8) | Adaptive test-time protocols and their historical report replays |
 | DL best5 / budget-first | `src/jope_dlgp_best5/`, `tests/dlgp_best5.rs`, `tests/dlgp_budget_campaign.rs`, `manifests/dlgp-budget-first/` | The deep-learning-proposed program campaigns (policy proposals → search refinement) |
-| Generalized search, search v3 | `src/jope_generalized_gp/`, `src/search_v3/`, `tests/{generalized_gp,search_v3}.rs`, `src/bin/search-v3.rs` | The multi-task generalisation and the v3 search driver |
-| Hyperion gate / router, encoder v2 | `src/hyperion_{gate,router}.rs`, `src/encoder_v2_*.rs`, `manifests/hyperion-*`, `tests/{hyperion_gate,encoder_v2_recovery,router_contracts_v2}.rs` | The routing/gating campaigns that decide which encoder composition serves which task |
+| Generalized search, search v3 | `src/jope_generalized_gp/`, `src/search_v3/`, `tests/{generalized_gp,search_v3}.rs`, `src/bin/campaign_search.rs` | The multi-task generalisation and the v3 search driver |
+| Hyperion gate / router, encoder v2 | `src/hyperion_{gate,router}.rs`, `src/encoder_v2_*.rs`, `manifests/hyperion-*`, `tests/{hyperion_gate,encoder_v2_recovery,router_contracts}.rs` | The routing/gating campaigns that decide which encoder composition serves which task |
 | Evaluation identity | `src/evaluation_v2.rs`, `known-evaluator-identities.json` | `JopeDimeEvaluatorIdentity.v1` hashes ~30 feat-math sources plus the manifest and lockfile; receipts (`JopeDimeSemanticEvaluationReceipt.v2`) validate under the current identity **or** any row of the append-only known table (ADR-0004), so the workspace merge and the WP2 feat-math changes did not invalidate history |
 | Train-only study / red-team | `src/commands/train_only_*.rs` | The train-only leakage studies; read the Elo-reporter root (`SOTARENA_REPORTER_ROOT` after WP4) |
 | Corpus eval, canary, capacity, causal tools, reporting | `src/bin/{corpus_eval,jope_canary_executor,jope_capacity,jope_causal_*,jope_reporting,…}.rs` | Campaign-side operational programs (55 binaries today; one binary with argv[0] dispatch after WP5) |
@@ -31,7 +51,7 @@ store, not in git.
 
 ## Golden42 / Golden46 and the xbabe2-only resource gates
 
-`src/golden42_v3.rs` was written for one machine. Its constants are the gate:
+`src/golden42_panel.rs` was written for one machine. Its constants are the gate:
 
 ```rust
 const WORKERS: usize = 80;
@@ -40,7 +60,7 @@ const MIN_RAM: u64 = 64 * 1024 * 1024 * 1024;   // 64 GiB
 const MIN_DISK: u64 = 100 * 1024 * 1024 * 1024; // 100 GiB
 ```
 
-plus `taskset` CPU pinning (`golden42_v3.rs:1150,1556`) and, in the Python tooling,
+plus `taskset` CPU pinning (`golden42_panel.rs:1150,1556`) and, in the Python tooling,
 `taskset -c 60,123`. A panel run therefore **never executes on a hosted runner** (B27): the code
 sits behind an explicit `xbabe2` marker, `.config/nextest.toml`'s `pr` profile excludes
 `package(jope-campaigns)` entirely (the crate is `cargo check --all-targets`-ed on PRs and its

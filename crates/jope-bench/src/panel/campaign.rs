@@ -10,11 +10,11 @@ use super::{
 use anyhow::{ensure, Context, Result};
 use jope_datasets::catalog::Task;
 use jope_pipeline::{
+    evaluation_result::{Consumption, EvaluationResult, RESULT_SCHEMA},
     execution::{Artifact, ExecutionPool, WorkerCommand, WorkerJob, WorkerOutcome},
     experiment::{
         EvaluationRequest, EvaluationStage, EvaluationStatus, Experiment, Panel, REQUEST_SCHEMA,
     },
-    experiment_v2::{Consumption, EvaluationResult, RESULT_SCHEMA},
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};

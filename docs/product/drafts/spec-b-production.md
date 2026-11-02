@@ -1663,7 +1663,7 @@ Repository links below are pinned to the audited commits. External protocol/libr
 [J07]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-encoders/src/jope_policy.rs
 [J08]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-runtime/src/service.rs
 [J09]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-appliance/src/model.rs
-[J10]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-narrator/src/render/v3.rs
+[J10]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-narrator/src/render/scope_corrected.rs
 [J11]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-narrator/src/facts.rs
 [J12]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-telemetry/src/collectors.rs
 [J13]: https://github.com/neverhuman/JopeDime/blob/c1318a7b09b62ce12b78b4da892106c6f2d22b18/crates/jope-observatory/src/gp_source.rs

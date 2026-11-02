@@ -137,7 +137,7 @@ F01–F10 were identified by the drafts and re-verified; F11–F24 are new.
 | F01 | The h40b research ranker and the Rust `jope_policy` path are different graphs | `research/flywheel_selfplay/run_fused_closed_loop.py:237`; `crates/jope-encoders/src/jope_policy.rs` | Port h40b exactly; never load a mismatched bundle | PR3 |
 | F02 | Landmark sidecars do not influence search | `crates/jope-pipeline/src/landmark_encoding.rs:1` | Conditioning becomes a ranker input in the product loop | PR3 |
 | F03 | The legacy `full` appliance profile is blocked | `deploy/appliance/models.lock.json` (`internal-restricted`, `blocked`) | New `fused-cpu`/`fused-cuda` profiles | PR8 |
-| F04 | Narration uses GP vocabulary ("generations") | `crates/jope-narrator/src/render/v3.rs:57` | Separate public types and phrasing | PR4 |
+| F04 | Narration uses GP vocabulary ("generations") | `crates/jope-narrator/src/render/scope_corrected.rs:57` | Separate public types and phrasing | PR4 |
 | F05 | Three hand-written MCP servers; one skips the init lifecycle | `crates/jope-runtime/src/service.rs`; `crates/jope-appliance/src/model.rs:476`; `crates/jope-observatory/src/narration/mcp.rs` | One MCP adapter over the API; old tool names kept as aliases | PR7 |
 | F06 | Process CPU % divides by per-core ticks and clamps to 100 | `crates/jope-telemetry/src/collectors.rs:149–155` | Report core-equivalents and host % separately | PR4 |
 | F07 | Custom objectives are not uniform across search modes | `docs/regression-objectives.md` | One `ObjectiveSpec` per run in the new loop | PR2 |

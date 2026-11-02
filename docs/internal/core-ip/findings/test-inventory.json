@@ -4021,7 +4021,7 @@
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
     },
-    "target:jope-dime-regressor/test/router_contracts_v2": {
+    "target:jope-dime-regressor/test/router_contracts": {
       "reason": "historical campaign tooling retained for replay; not a maintained regression control",
       "role": "historical"
     },

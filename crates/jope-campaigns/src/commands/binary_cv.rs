@@ -1,33 +1,7 @@
 //! Binary-classification campaign lane (advanced-v3 kernel), v2-binary schemas.
 //!
-//! Design notes:
-//! - Genomes are evaluated through the public schema-bound v3 path
-//!   (`feat_math::advanced_v3::fit_table` / `BoundModel::predict_table`) over a
-//!   synthetic all-numeric schema (`c0..c{n-1}`, IID rows). Numeric cells are
-//!   rendered with `{v:?}` (shortest round-trip), so the encoded feature block
-//!   equals the numeric matrix bit-for-bit under the compatibility input
-//!   config; this was chosen over a private matrix adapter because it is the
-//!   only public v3 fit surface and exercises exactly the code path the
-//!   emitted bound artifacts mirror.
-//! - Folds are class-stratified (`stratified_assignments`: SHA-keyed, per-class
-//!   ±1, fold 0 always holds a minority row) and materialized once per
-//!   (fold-plan, fold) as shared string tables, mirroring the regression
-//!   lane's `FoldPlanCache`.
-//! - Fitness is `robust_fitness_binary` (Gini − 0.25·SD over DEFINED fold
-//!   Ginis); folds whose validation split holds a single class have undefined
-//!   AUC (`fold_defined = false`) and are excluded from the penalty while
-//!   their rows still enter the pooled OOF.
-//! - Offspring are a pure function of (parent canonicals, offspring_seed):
-//!   the v3 head is detached, the legacy body is mutated/crossed with the
-//!   frozen canonical operators, and a deterministically drawn
-//!   probability-capable head from `HEADS_BINARY` is reattached before
-//!   re-canonicalization; admission requires `validate_v3_genome`.
-//! - The stage-prefix cache is regression-lane only for now (v3 fit paths
-//!   differ); wiring it here is future work.
-//! - Deviations from the regression lane, recorded: no core pinning, no live
-//!   logger/checkpoints/generation summaries/phase2 receipts; slot-level
-//!   artifacts are not published (bound emission requires a fitted model —
-//!   the WINNER's bound artifacts are published instead).
+//! Binary campaign implementation. Design and operational scope are documented
+//! in `docs/campaigns.md`.
 
 use anyhow::{bail, Context, Result};
 use feat_math::advanced_v3::{

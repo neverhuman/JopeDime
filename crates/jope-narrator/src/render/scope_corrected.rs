@@ -1,15 +1,15 @@
 //! Renderer v3 corrects two scope descriptions while preserving v2 replay.
+use super::refusal_aware;
 use super::v1::{safe, Narration};
-use super::v2;
 use crate::{LineageFact, Links};
 use anyhow::Result;
 
 pub const RENDERER: &str = "controlled-search-commentary/3";
 
-pub(crate) struct Renderer(v2::Renderer);
+pub(crate) struct Renderer(refusal_aware::Renderer);
 impl Renderer {
     pub(crate) fn new() -> Self {
-        Self(v2::Renderer::new())
+        Self(refusal_aware::Renderer::new())
     }
     pub(crate) fn render(
         &mut self,
@@ -27,7 +27,7 @@ impl Renderer {
     ) -> Result<Narration> {
         Ok(correct_scope(
             fact,
-            v2::Renderer::rederive(fact, links, evidence, variant)?,
+            refusal_aware::Renderer::rederive(fact, links, evidence, variant)?,
         ))
     }
 }

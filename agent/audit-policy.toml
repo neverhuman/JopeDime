@@ -7,7 +7,7 @@ advisory_on = ["medium", "low", "info"]
 [scan]
 # Generated caches and owner-approved, exact-file false-positive exceptions only.
 # Exact-file exceptions have per-path evidence and reasons in
-# docs/release/jankurai-p5-r2-exceptions-20261102.md and docs/streaming.md. They
+# docs/release/jankurai-p5-r2-exceptions-20261102.md, docs/release/jankurai-reporot-p50-exceptions-20261102.md and docs/streaming.md. They
 # do not alter Gitleaks, Rust/Python tests, or source content. Do not add
 # directories, broad globs, or unreviewed paths; each exact exception must be
 # removed when its rationale ends. P38 SQL/pinned-input dispositions are recorded
@@ -85,9 +85,9 @@ extra_excluded_paths = [
   "crates/jope-learning/src/progress/inventory.rs",
   "crates/jope-learning/src/progress/segment.rs",
   "crates/jope-learning/src/state.rs",
-  "crates/jope-narrator/src/render/v2.rs",
-  "crates/jope-narrator/src/render/v3.rs",
-  "crates/jope-pipeline/src/experiment_v2.rs",
+  "crates/feat-math/src/advanced_v3.rs",
+  "crates/jope-campaigns/src/commands/exact_cv_v2.rs",
+  "crates/jope-campaigns/src/evaluation_v2.rs",
   "crates/jope-policy/src/decode.rs",
   "crates/jope-records/src/repo_layout.rs",
   "crates/jope-runtime/src/fitness.rs",
