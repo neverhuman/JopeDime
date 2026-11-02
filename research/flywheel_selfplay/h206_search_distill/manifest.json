@@ -2,24 +2,24 @@
   "schema": "h206-prereg-source-manifest-v1",
   "authority": "Jepson via Grok Bot, card answer 8:22 PM MT",
   "status": "QUEUED_NOT_RUN",
-  "scope": "Actual original r882 factory/state, conditional phased study/supervisor, ordered native91 and per-update durable proofs; no scientific or CUDA qualification claimed.",
+  "scope": "Existing H206 controller admission: purpose-specific CUDA proof/queue, original cost/deadline guards and actual raw-proof/observed-exit interface; no actual qualification/science launch.",
   "source_sha256": {
-    "MISSING_PINS.md": "545f589dbb41cbb3189f068fe6b26fc079391be8ad0cdeca1cb15e37a1121cdd",
-    "PREREG.md": "2d174427e734a7609f756b3d5025474a4242b77d9796511e4bf6b918e777d242",
-    "README.md": "3fe7051e92dd5ce684c1f4e824640d36c99efb00c4fc42b431379ccf7778d38e",
-    "contracts.py": "8f314afe7ab57a240ecae19924d6f0562beefc5a5c726d6c6080bf007abbe0cd",
-    "executor.py": "e9a376364a4d1c23dcb51674fc632db252351658f3d3e7446abc784c9d69d14f",
-    "launch.json": "5a4fb14dc559393e2b3f512ed0ace9069d77bae9e8f63ef92285f0e37c2b2d69",
+    "MISSING_PINS.md": "9b1d114bf6168f673f73a2af14ad15b68f71276618b4603d81d3d055b2b2f959",
+    "PREREG.md": "f2247735b8e5583140271295b4bf308b50897b8fdd9d0446e46e76c5525fa6bf",
+    "README.md": "73efac66506d56b1bc6b3a64e74697dfbcf3339117ffa4629f1d063b7e5ebf5d",
+    "contracts.py": "975ec3285228253e149d8f8415ce059c8fae89ba95aa159c84da93060746bbc2",
+    "executor.py": "a0d6d7651b3ad12078da4d85028906f093da5d4ecce17762968eeb8de7429a27",
+    "launch.json": "a0220ae103e49c6829794d5083d2c10a12d8b0308399751f2ed519d37fa8ea76",
     "launch.sh": "10f3f0daaae300c16683eedf4c0ad7222de2f2303067f6bc488254ca435d6658",
     "metrics.json": "9b4aae68af0139aa71df5fe9d883b0d7c889881234f3670f080c7528facf8cd9",
-    "native.py": "cda0a71a922dcd1d70d80bbeee6cbc44a606872bb0bde57219af65258948a2a2",
+    "native.py": "9a7278ebf89e8e3f7c15915a5dc8cfd774d3fb19b7fa8595a38fca31152fe06f",
     "runner.py": "2410ddcde8fc55006e11b473843849c3c341e73f6a02ed3f44c781243bf78477",
-    "student.py": "c47e8b93ef150e178046bd7eec5e2e7278e0d79d15665c40d84c6e5ab94039da",
-    "test_h206.py": "91ffc659196318f6233433faf8df4bf96bfa6ca595bf0446eb80c0e06fbc341f",
+    "student.py": "30a9300bdd33161ccaa49f5e089817677beffb96a2cf2320226ef602efe83335",
+    "test_h206.py": "54262d56d2069cb44bbb90a7b0fa828098d350ddd3055db95dd82f9e6165faf3",
     "bindings.json": "62e41c27478662eb94756953ae89668ab2717a5e0de6190a805664c3626bc5b6",
     "model.py": "71078f357fd53b5886e351e50daa16bf0fd1c703406e60b213d45b5ce9176eb6",
-    "study.py": "c039eef86377628350c31c3964d2ec8442df0f92499864041393d8f782c30cd4",
-    "supervisor.py": "ee6064c9ba99cb79acbd8684532ffcc8cec608f5309f68228845804be02f34df",
+    "study.py": "faef29985a57133927cffe76835add53de5f243645b677da6eba06fad7069f91",
+    "supervisor.py": "41ce8b13bfc2249c7caeb4364fa0d2d6e9d6a2f5fec06f797688e798d3509de9",
     "native91_inputs.json": "019049235b6c2f840f6c8c3f1f0d5b97cad6a114e6c25d6f165db6cf0401f4e6"
   },
   "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/",
@@ -30,7 +30,7 @@
     "real merged-source CUDA qualification, queue and fresh resources before scientific launch"
   ],
   "dependency_source_sha256": {
-    "python/src/jope/north_star/dope_freeze_guard.py": "908547a91fcb6841868aed68e1c0811befbdc2cf182053125fdf4004549fd2b1",
+    "python/src/jope/north_star/dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2",
     "research/flywheel_selfplay/hwave_numeric_threads.py": "9cb334d61a95f9d648dd52100f7010d7f6c7b7d00e5bed5c2dc58507121c668d",
     "research/flywheel_selfplay/rust_evaluator.py": "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45",
     "research/flywheel_selfplay/custody/files/home/ubuntu/jope-data/res-01/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
@@ -56,5 +56,13 @@
     "factory_receipt_sha256": "018dd5448ef27633c9b2ac1c9a7cc6f1c216b4da5314fcf55d3f8fd49afb7eee",
     "optimizer_updates": 0,
     "gpu": false
-  }
+  },
+  "receiving_guard": {
+    "prior_declared_sha256": "908547a91fcb6841868aed68e1c0811befbdc2cf182053125fdf4004549fd2b1",
+    "current_sha256": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2",
+    "source_pr": 1833,
+    "actual_loaded_model_requalification": "NOT_RUN_CURRENT_GUARD",
+    "source_controls": "targeted stricter-guard/real-controlled-learner receipts outside Git"
+  },
+  "runtime_qualification_status": "SOURCE_ONLY_NOT_RUN"
 }

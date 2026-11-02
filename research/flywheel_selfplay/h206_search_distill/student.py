@@ -193,7 +193,9 @@ class Learner:
             for record in records:
                 if (
                     record["binary_sha256"] != loaded.context.native_binary_sha256
-                    or record["original_train_sha256"] != loaded.context.train.sha256
+                    or record["original_train_sha256"]
+                    != (loaded.context.original_train or loaded.context.train).sha256
+                    or record.get("native_train_sha256") != loaded.context.train.sha256
                     or record["protocol_sha256"] != loaded.context.protocol_sha256
                     or record["environment_sha256"] != loaded.context.environment_sha256
                     or record["program_sha256"] != sha(loaded.context.programs[record["index"]].encode())
@@ -219,7 +221,9 @@ class Learner:
     def update(self, loaded, teacher_ref, store):
         return self.update_batch([loaded], [teacher_ref], store)
 
-    def update_batch(self, rows, teacher_refs, store):
+    def update_batch(self, rows, teacher_refs, store, *, deadline_guard=None):
+        guard = deadline_guard or (lambda: None)
+        guard()
         guard_cpu(Path(__file__).parent)
         if not rows or len(rows) != len(teacher_refs):
             raise ValueError("nonempty aligned training batch required")
@@ -238,12 +242,14 @@ class Learner:
         self.optimizer.zero_grad(set_to_none=True)
         loss_value = 0.0
         for loaded, target in zip(rows, targets, strict=True):
+            guard()
             scores = self.model(loaded)
             loss = torch.nn.functional.cross_entropy(
                 -scores[None], torch.tensor([target], device=scores.device)
             ) / len(rows)
             if not torch.isfinite(loss):
                 raise ValueError("nonfinite student loss")
+            guard()  # A forward/teacher read may have exhausted the original deadline.
             loss.backward()
             loss_value += float(loss.detach())
         for group, module in (("dope", self.model.dope_model), ("residual", self.model.residual)):
@@ -253,6 +259,7 @@ class Learner:
             if not np.isfinite(grad):
                 raise ValueError("nonfinite research gradient")
             self.gradient_squares[group] += grad
+        guard()  # Never start a step after a blocking operation exhausted the budget.
         self.optimizer.step()
         self.updates += 1
         self.examples += len(rows)

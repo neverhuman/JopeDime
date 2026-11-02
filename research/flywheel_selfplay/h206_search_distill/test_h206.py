@@ -1449,3 +1449,614 @@ def test_factory_runtime_keeps_original_lazy_import_alive_and_restores_ambient(m
     assert sys.modules["phase12_multimodal_model"] is ambient
     with pytest.raises(ImportError):
         lazy_import()
+
+
+@pytest.mark.parametrize("held", ["scope", "allowance", "below_lower"])
+def test_admission_reconciled_label_cannot_release_unknown_history(tmp_path, held):
+    path = tmp_path / "ledger.json"
+    budget = fixture_ledger(path)
+    state = json.loads(path.read_text())
+    if held == "scope":
+        state["unreconciled_scopes"] = ["prior source call CPU unknown"]
+    elif held == "allowance":
+        state["conservative_unmeasured_cpu_reservation_seconds"] = 1
+    else:
+        state["cpu_used_seconds_lower_bound"] = 10
+    path.write_bytes(canonical(state))
+    before = path.read_bytes()
+    with pytest.raises(ValueError, match="unknown cumulative|below retained"):
+        with budget.operation("must-not-run", cpu_reserve=1, gpu_reserve=0):
+            pytest.fail("history cannot be reset by changing the status string")
+    assert path.read_bytes() == before
+
+
+def test_admission_ledger_inspection_preserves_digest_and_refuses_reset(tmp_path):
+    path = tmp_path / "ledger.json"
+    budget = fixture_ledger(path)
+    state = json.loads(path.read_text())
+    state["cpu_used_seconds"] = 50
+    path.write_text(json.dumps(state, indent=2))
+    before = path.read_bytes()
+    budget.mutate(lambda s: None)
+    assert path.read_bytes() == before
+    with pytest.raises(ValueError, match="cannot decrease"):
+        budget.mutate(lambda s: s.update(cpu_used_seconds=0))
+    assert path.read_bytes() == before
+
+
+def test_admission_deadline_monotonic_and_forward_clock_expiry(monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill import supervisor
+
+    clock = {"wall": 100, "mono": 10}
+    monkeypatch.setattr(supervisor.time, "time", lambda: clock["wall"])
+    monkeypatch.setattr(supervisor.time, "monotonic", lambda: clock["mono"])
+    guard = supervisor.original_deadline_guard({"deadline_epoch": 200}, 110)
+    guard()
+    clock.update(wall=0, mono=21)
+    with pytest.raises(RuntimeError, match="deadline expired"):
+        guard()
+    clock.update(wall=210, mono=10)
+    with pytest.raises(RuntimeError, match="deadline expired"):
+        supervisor.original_deadline_guard({"deadline_epoch": 200})()
+
+
+def test_admission_forward_expiry_prevents_real_backward_and_optimizer(integrated, monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill import supervisor
+
+    learner, acquire, native, cache, store, _, ledger = integrated
+    row = acquire(1, learner.state_hash())[0]
+    with ledger.operation("deadline-teacher", cpu_reserve=30, gpu_reserve=0):
+        teacher = collect_teacher(
+            row, learner.score(row), 1, native, cache, store, "deadline/teacher", ledger
+        )
+    learner.witness = (row, learner.score(row))
+    before = learner.state_hash()
+    clock = [100.0]
+    monkeypatch.setattr(supervisor.time, "time", lambda: clock[0])
+    guard = supervisor.original_deadline_guard({"deadline_epoch": 110})
+    original = learner.model.forward
+
+    def expire_during_forward(loaded):
+        result = original(loaded)
+        clock[0] = 120
+        return result
+
+    monkeypatch.setattr(learner.model, "forward", expire_during_forward)
+
+    def forbidden_step():
+        pytest.fail("optimizer must not run after forward consumed the deadline")
+
+    monkeypatch.setattr(learner.optimizer, "step", forbidden_step)
+    with pytest.raises(RuntimeError, match="deadline expired"):
+        learner.update_batch([row], [teacher], store, deadline_guard=guard)
+    assert learner.updates == learner.examples == 0 and learner.state_hash() == before
+    assert all(p.grad is None for p in learner.model.parameters())
+
+
+def test_admission_persistence_expiry_keeps_actual_update_and_partial_proof(
+    integrated, tmp_path, monkeypatch
+):
+    from research.flywheel_selfplay.h206_search_distill import supervisor
+    from research.flywheel_selfplay.h206_search_distill.study import PhaseRuntime
+
+    learner, acquire, native, cache, store, _, ledger = integrated
+    row = acquire(1, learner.state_hash())[0]
+    clock = [100.0]
+    monkeypatch.setattr(supervisor.time, "time", lambda: clock[0])
+    guard = supervisor.original_deadline_guard({"deadline_epoch": 110})
+    runtime = PhaseRuntime(
+        store, ledger, scientific=False, journal=tmp_path / "journal", deadline_guard=guard
+    )
+    original = store.put
+
+    def expire_after_verified_step(name, body):
+        ref = original(name, body)
+        if "/steps/" in name:
+            clock[0] = 120
+        return ref
+
+    with ledger.operation("late-persistence", cpu_reserve=30, gpu_reserve=0):
+        teacher = collect_teacher(row, learner.score(row), 1, native, cache, store, "late/teacher", ledger)
+        monkeypatch.setattr(store, "put", expire_after_verified_step)
+        with pytest.raises(RuntimeError, match="deadline expired"):
+            runtime.train(learner, [row], [teacher], "late/train", round_index=1, updates=3)
+    assert learner.updates == 1 and learner.examples == 32
+    assert (runtime.journal / "update-000001.json").exists()
+    assert (runtime.journal / "partial-checkpoint.pt").exists()
+    assert json.loads((runtime.journal / "INCOMPLETE.json").read_text())["updates"] == 1
+
+
+def test_admission_stricter_guard_rejects_distinct_parameters_sharing_anchor_storage():
+    from jope.north_star.dope_freeze_guard import DopeFreezeViolationError, configure_research_dope
+
+    model = nn.Module()
+    model.dope_model, model.gamenet_anchor = nn.Linear(2, 2), nn.Linear(2, 2)
+    model.gamenet_anchor.weight = nn.Parameter(
+        model.dope_model.weight.detach().view_as(model.dope_model.weight)
+    )
+    assert model.gamenet_anchor.weight is not model.dope_model.weight
+    with pytest.raises(DopeFreezeViolationError, match="share parameters"):
+        configure_research_dope(
+            model, launch_metadata={}, unfreeze=True, research_run_id="H206-alias-fixture"
+        )
+
+
+def _admission_runtime_document(store, source_files=None):
+    from research.flywheel_selfplay.h206_search_distill.supervisor import GPU_UUID, runtime_qualification_plan
+
+    plan = runtime_qualification_plan()
+    proofs, phases = [], []
+    for arm in plan["arms"]:
+        for round_index in (1, 2, 3):
+            state = digest([arm, round_index])
+            proof = {
+                "state_sha256": state,
+                "updates_this_round": 600,
+                "examples_this_round": 19200,
+                "forward_changed": True,
+                "gradient_squared_sums": {"dope": 1, "residual": 2},
+                "changed_parameters": ["encoder.dope_model.weight", "residual.0.weight"],
+            }
+            body = {
+                "updates": 600 * round_index,
+                "state_sha256": state,
+                "proof": proof,
+                "steps": [
+                    asdict(ObjectRef("fixture-only", f"steps/{arm}/{round_index}/{i}", "v1", digest(i)))
+                    for i in range(600)
+                ],
+            }
+            raw = store.put(f"qualification-fixture/{arm}/{round_index}/round.json", canonical(body))
+            proofs.append(
+                {
+                    "arm": arm,
+                    "round": round_index,
+                    "updates": body["updates"],
+                    "state_sha256": state,
+                    "durable_steps": 600,
+                    "round_object": asdict(raw),
+                    "proof": proof,
+                }
+            )
+            for phase in ("propose", "teacher", "train"):
+                result = (
+                    raw
+                    if phase == "train"
+                    else store.put(
+                        f"qualification-fixture/{arm}/{round_index}/{phase}/result",
+                        canonical({"scope": "metadata fixture", "actor": plan["initial_state_sha256"]}),
+                    )
+                )
+                execution = {
+                    "schema": "h206-phase-execution-v1",
+                    "fixture": False,
+                    "purpose": "runtime_qualification",
+                    "child_exit_code": 0,
+                    "source_files": source_files or {},
+                    "result": asdict(result),
+                    "runtime": {
+                        "pid": 99999998,
+                        "numeric": {"numeric_threads_upper_bound": 1},
+                        "cuda_visible": "" if phase == "teacher" else GPU_UUID,
+                    },
+                    "device": None if phase == "teacher" else {"uuid": GPU_UUID},
+                }
+                ref = store.put(
+                    f"qualification-fixture/{arm}/{round_index}/{phase}.json", canonical(execution)
+                )
+                phases.append({"arm": arm, "round": round_index, "phase": phase, "execution": asdict(ref)})
+    return {
+        "fixture": False,
+        "qualification_plan": plan,
+        "b_a_payload_reads": 0,
+        "initial_state_sha256": plan["initial_state_sha256"],
+        "checkpoints_eligible_for_study": False,
+        "round_proofs": proofs,
+        "phase_executions": phases,
+    }
+
+
+@pytest.mark.parametrize(
+    "fault", [None, "missing_round", "zero_gradient", "missing_steps", "ba_read", "missing_phase"]
+)
+def test_admission_runtime_proof_coverage_and_real_update_requirements(integrated, fault):
+    from research.flywheel_selfplay.h206_search_distill.supervisor import validate_runtime_proofs
+
+    store = integrated[4]
+    document = _admission_runtime_document(store)
+    if fault == "missing_round":
+        document["round_proofs"].pop()
+    elif fault == "zero_gradient":
+        document["round_proofs"][0]["proof"]["gradient_squared_sums"]["dope"] = 0
+    elif fault == "missing_steps":
+        document["round_proofs"][0]["durable_steps"] = 599
+    elif fault == "ba_read":
+        document["b_a_payload_reads"] = 1
+    elif fault == "missing_phase":
+        document["phase_executions"].pop()
+    if fault:
+        with pytest.raises(ValueError):
+            validate_runtime_proofs(document)
+    else:
+        assert validate_runtime_proofs(document)
+
+
+def _admission_gate_fixture(store, purpose):
+    admission = {
+        "purpose": purpose,
+        "source": {"files": {"source.py": "a" * 64}},
+        "study_sha256": "b" * 64,
+        "study_input_payload_sha256": "c" * 64,
+        "fold_manifest_sha256": "d" * 64,
+        "bindings_sha256": "e" * 64,
+        "deadline_epoch": 9999999999,
+    }
+    schemas = {
+        "model_qualification": "h206-actual-model-qualified-v1",
+        "native91_qualification": "h206-native91-qualified-v1",
+        "input_qualification": "h206-approved-study-inputs-v1",
+        "queue_authority": "h206-owner-queue-release-v1",
+    }
+    for key, schema in schemas.items():
+        doc = {
+            **admission,
+            "schema": schema,
+            "status": "PASS",
+            "fixture": False,
+            "source_files": admission["source"]["files"],
+        }
+        admission[key] = asdict(store.put("admission-fixture/" + purpose + "/" + key, canonical(doc)))
+    return admission
+
+
+def test_admission_cpu_proofs_never_imply_cuda_and_queue_release_is_purpose_scoped(integrated):
+    from research.flywheel_selfplay.h206_search_distill.supervisor import verify_qualifications
+
+    store = integrated[4]
+    qualification = _admission_gate_fixture(store, "runtime_qualification")
+    assert verify_qualifications(qualification, store)
+    study = _admission_gate_fixture(store, "study")
+    with pytest.raises(ValueError, match="cuda_runtime_qualification"):
+        verify_qualifications(study, store)
+    study["queue_authority"] = qualification["queue_authority"]
+    with pytest.raises(ValueError, match="purpose/original deadline"):
+        verify_qualifications(study, store)
+
+
+def test_admission_qualification_child_cannot_open_heldout_phase_before_cuda(monkeypatch, tmp_path):
+    import os
+
+    from research.flywheel_selfplay.h206_search_distill.supervisor import GPUWorkerPermit
+
+    def forbidden():
+        pytest.fail("purpose rejection must precede any CUDA initialization")
+
+    monkeypatch.setattr(torch.cuda, "device_count", forbidden)
+    task = {
+        "reservation": "fixture",
+        "phase": "score",
+        "supervisor_pid": os.getppid(),
+        "admission": {"purpose": "runtime_qualification"},
+        "seed": 206101,
+        "fold": 0,
+        "arm": "CTRL",
+        "k": 1,
+    }
+    with pytest.raises(ValueError, match="never B/A"):
+        GPUWorkerPermit(task, tmp_path, None).validate()
+
+
+@pytest.mark.parametrize("abort_fit", [False, True])
+def test_admission_existing_controller_qualification_is_fit_only_and_pending_exit(integrated, abort_fit):
+    from contextlib import contextmanager
+
+    from research.flywheel_selfplay.h206_search_distill.study import StudyController, registered_cells
+
+    store = integrated[4]
+    rows = _study_rows()
+    baseline = ObjectRef("fixture-only", "must-never-open-baseline", "v1", "f" * 64)
+    inputs = {
+        c["cell_id"]: {
+            "cpu_reserve_seconds": {p: 1 for p in ("propose", "teacher", "train")},
+            "phase_caps": {p: 1 for p in ("propose", "teacher")},
+        }
+        for c in registered_cells(rows)["cells"]
+    }
+    expected = _admission_runtime_document(store)
+
+    class ControlledSupervisor:
+        def __init__(self):
+            self.store, self.trace, self.executions = store, [], []
+            self.admission = {
+                "purpose": "runtime_qualification",
+                "source": {"files": {}},
+                "study_input_payload_sha256": digest(
+                    {"rows": rows, "inputs": inputs, "baseline": asdict(baseline)}
+                ),
+                "fold_manifest_sha256": digest(registered_cells(rows)),
+                "study_sha256": "a" * 64,
+                "bindings_sha256": "b" * 64,
+                "deadline_epoch": 9999999999,
+            }
+
+        @contextmanager
+        def controller(self):
+            yield self
+
+        def phase(self, task, **kwargs):
+            self.trace.append((task["arm"], task["round"], task["phase"]))
+            assert task["seed"] == 206101 and task["fold"] == 0
+            if abort_fit and task["phase"] == "train":
+                raise RuntimeError("controlled qualification failure")
+            if task["phase"] == "train":
+                doc = next(
+                    r
+                    for r in expected["round_proofs"]
+                    if r["arm"] == task["arm"] and r["round"] == task["round"]
+                )
+                doc = {**doc, "steps": ["fixture"] * 600}
+            else:
+                doc = {"scope": "phase metadata only", "actor": expected["initial_state_sha256"]}
+            execution = next(
+                r
+                for r in expected["phase_executions"]
+                if (r["arm"], r["round"], r["phase"]) == self.trace[-1]
+            )
+            self.executions.append(execution)
+            return store.put("controller-fixture/" + str(len(self.trace)), canonical(doc))
+
+    supervisor = ControlledSupervisor()
+    controller = StudyController(supervisor, rows, inputs, baseline, repo=HERE.parents[2])
+    with pytest.raises(ValueError, match="cannot execute the scientific study"):
+        controller.run()
+    if abort_fit:
+        with pytest.raises(RuntimeError, match="controlled qualification failure"):
+            controller.qualify_runtime()
+    else:
+        result = json.loads(controller.qualify_runtime().read(store))
+        assert result["status"] == "PENDING_FINAL_ACCOUNTING" and result["b_a_payload_reads"] == 0
+        assert len(result["round_proofs"]) == 12 and len(supervisor.trace) == 36
+    assert all(t[2] in ("propose", "teacher", "train") for t in supervisor.trace)
+
+
+def test_admission_unbounded_accounting_refuses_before_any_qualification_get(tmp_path, monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill import supervisor
+
+    path = tmp_path / "ledger.json"
+    budget = fixture_ledger(path)
+    state = json.loads(path.read_text())
+    state.update(accounting_status="UNRECONCILED", cpu_used_seconds=None)
+    path.write_bytes(canonical(state))
+    instance = object.__new__(supervisor.PhaseSupervisor)
+    instance.repo, instance.cache, instance.budget = tmp_path, tmp_path, budget
+    instance.store = None
+    instance.admission = {
+        "source": {},
+        "host": "xbabe3",
+        "gpu_uuid": supervisor.GPU_UUID,
+        "wave": "H206",
+        "attempt": 1,
+        "deadline_epoch": 9999999999,
+        "sealed_access": False,
+    }
+    monkeypatch.setattr(supervisor, "verify_merged_source", lambda *args: None)
+
+    def forbidden(*args):
+        pytest.fail("unknown accounting must refuse before any qualification body/S3/CUDA")
+
+    monkeypatch.setattr(supervisor, "verify_qualifications", forbidden)
+    monkeypatch.setattr(supervisor, "actual_gpu", forbidden)
+    with pytest.raises(ValueError, match="accounting is not reconciled"):
+        instance.validate()
+
+
+@pytest.mark.parametrize("fault", [None, "tail", "live_controller", "unknown_budget", "wrong_device"])
+def test_admission_acceptance_requires_observed_exit_full_raw_proofs_and_costs(
+    integrated, tmp_path, monkeypatch, fault
+):
+    from research.flywheel_selfplay.h206_search_distill import supervisor
+
+    store = integrated[4]
+    admission = _admission_gate_fixture(store, "runtime_qualification")
+    doc = _admission_runtime_document(store, admission["source"]["files"])
+    doc.update(
+        schema="h206-cuda-runtime-pending-v1",
+        status="PENDING_FINAL_ACCOUNTING",
+        source_files=admission["source"]["files"],
+        study_sha256=admission["study_sha256"],
+        study_input_payload_sha256=admission["study_input_payload_sha256"],
+        fold_manifest_sha256=admission["fold_manifest_sha256"],
+        bindings_sha256=admission["bindings_sha256"],
+    )
+    if fault == "wrong_device":
+        phase = doc["phase_executions"][0]
+        raw = json.loads(ObjectRef(**phase["execution"]).read(store))
+        raw["device"]["uuid"] = "different-GPU"
+        phase["execution"] = asdict(store.put("bad-device-execution.json", canonical(raw)))
+    pending = store.put("pending-fixture.json", canonical(doc))
+    path = tmp_path / "qualification-ledger.json"
+    fixture_ledger(path)
+    state = json.loads(path.read_text())
+    state["execution_admitted"] = True
+    for arm in supervisor.runtime_qualification_plan()["arms"]:
+        for r in (1, 2, 3):
+            for phase in ("propose", "teacher", "train"):
+                state["entries"].append(
+                    {
+                        "stage": f"round-{r}/seed-206101/fold-0/{arm}/{phase}",
+                        "cpu_seconds": 0.1,
+                        "gpu_seconds": 0 if phase == "teacher" else 0.2,
+                        "failed": False,
+                        "reservation_overrun": False,
+                    }
+                )
+    state["cpu_used_seconds"] = sum(e["cpu_seconds"] for e in state["entries"])
+    state["gpu_used_seconds"] = sum(e["gpu_seconds"] for e in state["entries"])
+    state["runtime_qualification_attempt"] = {
+        "terminal": True,
+        "supervisor_pid": 99999999,
+        "admission_sha256": sha(canonical(admission)),
+        "entry_start_index": 0,
+        "entry_end_index": len(state["entries"]),
+    }
+    if fault == "unknown_budget":
+        state.update(accounting_status="UNRECONCILED", cpu_used_seconds=None)
+    path.write_bytes(canonical(state))
+    exit_doc = {
+        "schema": "h206-observed-qualification-exit-v1",
+        "fixture": False,
+        "controller_exit_code": 0,
+        "controller_alive": False,
+        "worker_alive": False,
+        "logs_closed": True,
+        "unresolved_tail": fault == "tail",
+        "pending_proof": asdict(pending),
+        "admission_sha256": sha(canonical(admission)),
+        "ledger_sha256": sha(path.read_bytes()),
+        "controller_pid": 99999999,
+    }
+    observed = store.put("observed-exit-fixture.json", canonical(exit_doc))
+    monkeypatch.setattr(supervisor.psutil, "pid_exists", lambda pid: fault == "live_controller")
+    budget = BudgetLedger(path)
+
+    def prepare():
+        with budget.operation("runtime-qualification-acceptance", cpu_reserve=30, gpu_reserve=0) as token:
+            return supervisor.prepare_runtime_acceptance(
+                pending, observed, store=store, admission=admission, budget=budget, reservation_token=token
+            )
+
+    if fault:
+        with pytest.raises(ValueError):
+            prepare()
+    else:
+        candidate = prepare()
+        result = json.loads(candidate.read(store))
+        assert result["status"] == "PENDING_ACCEPTANCE_PUBLISHER_COSTS"
+        assert result["observed_exit_reconciled"] is True
+        assert result["acceptance_publisher_costs_reconciled"] is False
+        state = json.loads(path.read_text())
+        assert state["entries"][-1]["stage"] == "runtime-qualification-acceptance"
+        assert state["entries"][-1]["cpu_seconds"] > 0 and state["reservations"] == {}
+
+
+def test_admission_input_packet_cannot_override_registered_scientific_cell(integrated):
+    from types import SimpleNamespace
+
+    from research.flywheel_selfplay.h206_search_distill.study import StudyController, registered_cells
+
+    rows = _study_rows()
+    cells = registered_cells(rows)
+    inputs = {c["cell_id"]: {} for c in cells["cells"]}
+    inputs[cells["cells"][0]["cell_id"]] = {"seed": 123, "k": 256}
+    baseline = ObjectRef("fixture-only", "no-read", "v1", "f" * 64)
+    # Even a matching candidate payload hash cannot authorize a different experiment.
+    admission = {
+        "study_input_payload_sha256": digest({"rows": rows, "inputs": inputs, "baseline": asdict(baseline)}),
+        "fold_manifest_sha256": digest(cells),
+    }
+    supervisor = SimpleNamespace(store=integrated[4], admission=admission)
+    with pytest.raises(ValueError, match="cannot override preregistered cell"):
+        StudyController(supervisor, rows, inputs, baseline, repo=HERE.parents[2])
+
+
+def test_admission_original_provenance_missing_refuses_before_body_get(integrated, monkeypatch):
+    learner, acquire, _, _, store, _, _ = integrated
+    row = acquire(1, learner.state_hash())[0]
+
+    def forbidden(ref):
+        pytest.fail("missing original provenance must refuse before any tensor/native/original body GET")
+
+    monkeypatch.setattr(store, "get", forbidden)
+    with pytest.raises(ValueError, match="original TRAIN/derivation refs required"):
+        load_context(row.context, acquire.scope, store, require_original_provenance=True)
+
+
+@pytest.mark.parametrize("fault", [None, "original_identity", "native_matrix", "source_pin"])
+@pytest.mark.parametrize("encoding", ["jtt1-gzip", "jtt1-raw"])
+def test_admission_original_train_derived_native_and_encoder_linkage(integrated, fault, encoding):
+    learner, acquire, native, cache, store, _, ledger = integrated
+    row = acquire(1, learner.state_hash())[0]
+    original = store.put(
+        "provenance/original-train-body",
+        b"synthetic original TRAIN byte identity; upstream semantic derivation remains separately qualified",
+    )
+    body = gzip.decompress(row.train_bytes)
+    native_ref = row.context.train if encoding == "jtt1-gzip" else store.put("provenance/train-nq0.jtt1", body)
+    witness = {
+        "schema": "h206-original-train-derivation-v1",
+        "context_id": row.context.context_id,
+        "dataset_id": row.context.dataset_id,
+        "family_id": row.context.family_id,
+        "task": "regression",
+        "original_train": asdict(original),
+        "native_train": asdict(native_ref),
+        "tensors": asdict(row.context.tensors),
+        "cut_sha256": row.context.cut_sha256,
+        "encoder_sha256": row.context.encoder_sha256,
+        "encoder_model_sha256": row.context.encoder_model_sha256,
+        "native_dtype": "<f8",
+        "native_encoding": encoding,
+        "query_rows": 0,
+        "native_shape": [64, 3],
+        "source_row_ids": list(range(64)),
+        "original_rows_sha256": digest(list(range(64))),
+        "native_matrix_sha256": sha(body[17 + 64 :]),
+        "train_derivation_source_sha256": "a" * 64,
+        "tensor_derivation_source_sha256": "b" * 64,
+    }
+    if fault == "original_identity":
+        witness["original_train"]["sha256"] = "f" * 64
+    elif fault == "native_matrix":
+        witness["native_matrix_sha256"] = "f" * 64
+    elif fault == "source_pin":
+        witness["tensor_derivation_source_sha256"] = "f" * 64
+    derivation = store.put("provenance/approved-witness", canonical(witness))
+    context = replace(row.context, train=native_ref, native_encoding=encoding, original_train=original, derivation=derivation)
+    roles = json.loads(canonical(acquire.scope.roles))
+    roles["sources"].update(train_derivation_source_sha256="a" * 64, tensor_derivation_source_sha256="b" * 64)
+    roles["contexts"][context.context_id].update(
+        train=asdict(native_ref), original_train=asdict(original), derivation=asdict(derivation)
+    )
+    if encoding != "jtt1-gzip":
+        roles["contexts"][context.context_id]["native_encoding"] = encoding
+    exclusion = {
+        "schema": "h206-exclusion-contract-v1",
+        "protected": [],
+        "links": [
+            ["dataset:" + r["dataset_id"], "family:" + r["family_id"]] for r in roles["contexts"].values()
+        ],
+    }
+    a, b = canonical(roles), canonical(exclusion)
+    scope = Scope(a, b, roles_sha256=sha(a), exclusion_sha256=sha(b))
+    if fault:
+        with pytest.raises(ValueError, match="derivation identity|row/dtype/cut|source is not approved"):
+            load_context(context, scope, store, require_original_provenance=True)
+        assert learner.updates == 0 and native.calls == 0
+    else:
+        loaded = load_context(context, scope, store, require_original_provenance=True)
+        assert loaded.context.original_train.sha256 == original.sha256
+        with ledger.operation("provenance-native-teacher", cpu_reserve=30, gpu_reserve=0):
+            ref = collect_teacher(
+                loaded, learner.score(loaded), 1, native, cache, store, "provenance/teacher", ledger
+            )
+            teacher = json.loads(ref.read(store))
+            assert teacher["records"][0]["original_train_sha256"] == original.sha256
+            assert teacher["records"][0]["native_train_sha256"] == native_ref.sha256
+            assert isinstance(learner.teacher_target(loaded, ref, store), int)
+        assert learner.updates == 0
+
+
+def test_admission_scientific_source_closure_covers_manifest_and_strict_guard(monkeypatch):
+    from research.flywheel_selfplay.h206_search_distill import supervisor
+
+    repo = HERE.parents[2]
+    files = supervisor.scientific_source_files(repo)
+    assert files["python/src/jope/north_star/dope_freeze_guard.py"] == sha((repo / "python/src/jope/north_star/dope_freeze_guard.py").read_bytes())
+    assert "research/flywheel_selfplay/h206_search_distill/manifest.json" in files
+    source = {"merged_head": "1" * 40, "files": {next(iter(files)): next(iter(files.values()))}}
+    monkeypatch.setattr(supervisor.subprocess, "check_output", lambda args, **kwargs: "" if "status" in args else "1" * 40)
+    monkeypatch.setattr(supervisor.subprocess, "run", lambda *args, **kwargs: None)
+    with pytest.raises(ValueError, match="complete merged scientific source closure"):
+        supervisor.verify_merged_source(repo, source)
+    source["files"] = files
+    assert supervisor.verify_merged_source(repo, source) == "1" * 40

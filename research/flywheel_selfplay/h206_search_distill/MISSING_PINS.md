@@ -75,3 +75,58 @@ the canonical ledger. Missing earlier setup/iteration/wait/publication CPU
 measurements stay explicit; unknown allowance remains held and authoritative
 used/remaining remain null. This source does not turn the measured lower bound
 into available budget. Owner: original H206 canonical coordinator.
+
+
+## After merged1822: current admission work
+
+Mergedfa0e2f74 retains the H206 tree and established actual CPU91 proof.
+Receiving review recorded48PASS plus16disk-resource refusals, not64green.
+Fresh-main guard38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2
+replaces the previously declared908547a91fcb6841868aed68e1c0811befbdc2cf182053125fdf4004549fd2b1;
+its owner source is preserved. Targeted source/controlled-learner compatibility
+is separate from a new actual loaded-model/CUDA qualification, which is NOT_RUN.
+No model, native91, input or S3 replay is requested while costs remain unbounded.
+
+The same controller now has a fixed FIT-only runtime qualification purpose and
+a scientific CUDA-proof barrier, raw36-phase/twelve-round proof acceptance,
+observed-exit/canonical-cost handback and nonrenewable deadline checks. This is
+prospective source. Original ARGON still owns the full original-TRAIN/role/raw
+encoder producer. Canonical producer and receiving-merger cost requests are in
+AGENT_CHAT; no producer/controller or queue authority transfers.
+
+A retained-ledger audit recovered32.602982 additional measured inner-operation
+CPU seconds from earlier tests1/2/3. These do not overlap the already aggregated
+tests4/final/publication runs. Outer invocation/import/transport/tail cost remains
+unknown. The source-session index supplies timestamps and hashes, not CPU or a
+history-complete flag; five unpolled lifetimes and external receiving1822 costs
+still lack complete scope-bound counters. The canonical minimum continues to
+increase with new source controls. Total/remaining remain null and all unknown
+allowance held; source inspection cannot admit qualification or scientific work.
+
+
+ARGON delivered a genuine reconciled H205 single-context seam at source05ab7ddf,
+manifest538a36df34e5d02410df043b138d56e0b24c79f7b7b3ec61a07e994245ec3041:
+original TRAIN6ee10fbb,1000 rows,24 live native candidates, versioned pre-step
+replay and one adapter update under H205's own budget/owner. H206 read delivered
+metadata/source only, with no replay or consumption. Exact CID1fbfcda0, dataset
+1db3750d4ceccab9 and family9a9933b4 have no direct match in the fixed H206 roster;
+authorized alias/row/family-role mapping or an in-cohort packet is still required.
+Merged H205 features writer persists tokens/mask/dope629/lm48_z/ctx_feat_584 and
+source hashes, but does not persist raw vec256 or col_lm. Its24-program pool is
+not the registered256-slate input. H206 cannot infer raw encoder qualification,
+expand the cohort, reuse H205's trained adapter or duplicate the producer.
+Original ARGON retains the complete same-TRAIN/role/raw-encoder handback.
+
+Normalized production Context.original_train and Context.derivation are now
+accepted explicit ObjectRefs; missing/mismatched original, source, native matrix
+or row/cut/dtype linkage refuses before model/learner use. The same normalized
+role authority must approve them and the train/tensor derivation source hashes.
+Actual semantic CSV/encoder derivation remains an upstream qualification, not
+a consumer claim from byte equality. H206 acquisition owns normalization/folds
+once the actual complete producer artifact and allowed-cohort join are supplied.
+
+Runtime proof acceptance itself is an original-budget accounted operation and
+stays PENDING_ACCEPTANCE_PUBLISHER_COSTS until external publisher/exit/tail cost
+handback. No qualification candidate is a scientific queue release. Current
+source/control/merger/transport/finalization unknowns remain unbounded and held;
+no qualification/scientific compute is admitted by this source continuation.

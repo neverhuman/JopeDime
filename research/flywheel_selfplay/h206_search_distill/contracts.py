@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import io
 import json
+import struct
 from dataclasses import asdict, dataclass
 
 import numpy as np
@@ -90,8 +92,13 @@ class Context:
     protocol_sha256: str
     encoder_sha256: str
     encoder_model_sha256: str
+    original_train: ObjectRef | None = None
+    derivation: ObjectRef | None = None
+    native_encoding: str = "jtt1-gzip"
 
     def __post_init__(self):
+        if self.native_encoding not in ("jtt1-gzip", "jtt1-raw"):
+            raise ValueError("explicit approved native TRAIN encoding required")
         for name in (
             "context_id",
             "cut_sha256",
@@ -119,6 +126,9 @@ class Context:
         row = dict(value)
         row["train"] = ObjectRef(**row["train"])
         row["tensors"] = ObjectRef(**row["tensors"])
+        for name in ("original_train", "derivation"):
+            if row.get(name) is not None:
+                row[name] = ObjectRef(**row[name])
         row["arrays"] = {
             k: ArraySpec(tuple(v["shape"]), v["dtype"], v["sha256"]) for k, v in row["arrays"].items()
         }
@@ -192,7 +202,12 @@ class Scope:
         return row
 
     def verify(self, context: Context, role: str):
-        data_fields = ("context_id", "dataset_id", "family_id", "task", "role", "train", "cut_sha256")
+        data_fields = ["context_id", "dataset_id", "family_id", "task", "role", "train", "cut_sha256"]
+        data_fields += [
+            name for name in ("original_train", "derivation") if getattr(context, name) is not None
+        ]
+        if context.native_encoding != "jtt1-gzip":
+            data_fields.append("native_encoding")
         data_identity = {k: v for k, v in json.loads(canonical(asdict(context))).items() if k in data_fields}
         if context.role != role or self.roles["contexts"].get(context.context_id) != data_identity:
             raise ValueError("context role/identity differs from approved role manifest")
@@ -248,8 +263,58 @@ class LoadedContext:
             self.context.arrays[key].check(value)
 
 
-def load_context(context: Context, scope: Scope, store, *, role="FIT") -> LoadedContext:
+def native_train_body(context, data):
+    if context.native_encoding == "jtt1-raw":
+        return data
+    if context.native_encoding == "jtt1-gzip":
+        return gzip.decompress(data)
+    raise ValueError("explicit approved native TRAIN encoding required")
+
+
+def admitted_original_derivation(context, scope, store):
+    """Verify approved original bytes/linkage; semantic CSV derivation stays with ARGON.
+
+    The role authority must already pin this actual producer-qualified witness.
+    Matching hashes/booleans alone never qualify the producer or arbitrary CSV
+    decoding. The actual input qualification and upstream row/dtype proof remain
+    mandatory, separate from this consumer byte/shape/cut/linkage verification.
+    """
+    if context.original_train is None or context.derivation is None:
+        raise ValueError("complete original TRAIN/derivation refs required before payload access")
+    doc = json.loads(context.derivation.read(store))
+    expected = {
+        "schema": "h206-original-train-derivation-v1",
+        "context_id": context.context_id,
+        "dataset_id": context.dataset_id,
+        "family_id": context.family_id,
+        "task": "regression",
+        "original_train": asdict(context.original_train),
+        "native_train": asdict(context.train),
+        "tensors": asdict(context.tensors),
+        "cut_sha256": context.cut_sha256,
+        "encoder_sha256": context.encoder_sha256,
+        "encoder_model_sha256": context.encoder_model_sha256,
+        "native_dtype": "<f8",
+        "native_encoding": context.native_encoding,
+        "query_rows": 0,
+    }
+    if any(doc.get(key) != value for key, value in expected.items()):
+        raise ValueError("original TRAIN/derivation identity or cut mismatch")
+    for key in ("train_derivation_source_sha256", "tensor_derivation_source_sha256"):
+        require_hash(doc.get(key))
+        if doc[key] != scope.roles["sources"].get(key):
+            raise ValueError("original TRAIN/encoder derivation source is not approved")
+    require_hash(doc.get("original_rows_sha256"))
+    require_hash(doc.get("native_matrix_sha256"))
+    context.original_train.read(store)  # Actual named VersionId GET/body SHA, never a URI label.
+    return doc
+
+
+def load_context(
+    context: Context, scope: Scope, store, *, role="FIT", require_original_provenance=False
+) -> LoadedContext:
     scope.verify(context, role)  # BEFORE any object body access.
+    provenance = admitted_original_derivation(context, scope, store) if require_original_provenance else None
     payload = context.tensors.read(store)
     with np.load(io.BytesIO(payload), allow_pickle=False) as bundle:
         tensors = {k: bundle[k].copy() for k in bundle.files}
@@ -263,6 +328,29 @@ def load_context(context: Context, scope: Scope, store, *, role="FIT") -> Loaded
         scope.component_hash(context.family_id),
     )
     loaded.verify()
+    if provenance is not None:
+        body = native_train_body(context, loaded.train_bytes)
+        if len(body) < 17 or body[:4] != b"JTT1":
+            raise ValueError("derived native TRAIN is not the approved JTT1 body")
+        nt, nq, columns, folds = struct.unpack_from("<IIIB", body, 4)
+        row_ids = provenance.get("source_row_ids", [])
+        if (
+            nq != 0
+            or folds != 2
+            or nt < 50
+            or not 1 <= columns <= 512
+            or len(body) != 17 + nt + 8 * nt * (columns + 1)
+            or provenance.get("native_shape") != [nt, columns + 1]
+            or not isinstance(row_ids, list)
+            or len(row_ids) != nt
+            or any(type(i) is not int or i < 0 for i in row_ids)
+            or len(set(row_ids)) != nt
+            or (nt + 10) * columns > 16_000_000
+            or sha(body[17 : 17 + nt]) != context.cut_sha256
+            or sha(body[17 + nt :]) != provenance["native_matrix_sha256"]
+            or not np.isfinite(np.frombuffer(body, dtype="<f8", offset=17 + nt)).all()
+        ):
+            raise ValueError("derived native TRAIN row/dtype/cut witness mismatch")
     k = len(context.programs)
     shapes = SHAPES | {
         "program": (k, 412),
