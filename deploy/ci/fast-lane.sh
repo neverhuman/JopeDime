@@ -176,7 +176,7 @@ python3 deploy/ci/training-proof.py python --junit "$EVIDENCE/junit.xml"
     # Frozen split identities require their original sklearn, independently of the
     # application's current ML dependencies. Keep a separate real execution receipt;
     # do not rewrite the frozen splitter or mix two summaries into the parent counts.
-python3 deploy/ci/receipt.py --lane python-benchmark --backend pytest --junit "$EVIDENCE/benchmark/junit.xml" --output "$EVIDENCE/benchmark" -- \
+python3 deploy/ci/receipt.py --lane python --backend pytest --junit "$EVIDENCE/benchmark/junit.xml" --output "$EVIDENCE/benchmark" -- \
   bash deploy/ci/pytest-evidence.sh uv run --locked --project benchmarks python -m pytest -q "$PWD/benchmarks/test_prepare.py" -p no:cacheprovider > "$EVIDENCE/benchmark.log" 2>&1 || { cat "$EVIDENCE/benchmark.log"; exit 1; }
 python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["counts"]["executed"] > 0 and r["counts"]["failed"] == 0' "$EVIDENCE/benchmark/receipt.json"
 echo 'Frozen benchmark split tests passed; exact execution evidence: benchmark/receipt.json'
