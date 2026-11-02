@@ -112,6 +112,209 @@ def test_continuation_projection_reads_fit_metadata_only(tmp_path, monkeypatch):
     assert not cont.projection(cont.DECIDE)["trigger"]
 
 
+def deadline_fixture(cont):
+    finished = "2026-11-02T19:00:02+00:00"
+    terminal = dict(
+        status="INCOMPLETE",
+        source_commit=cont.SOURCE,
+        finished_utc=finished,
+        error="fixed H225 19:00Z compute deadline",
+        phases=[dict(phase="smoke", exit_code=0)],
+    )
+    observed = {
+        name: dict(last_live=cont.START - 0.05, first_absent=cont.START + 2.1)
+        for name in ("worker", "supervisor")
+    }
+    return terminal, observed
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "valid",
+        "no_time",
+        "naive_time",
+        "early",
+        "late",
+        "no_cause",
+        "other_cause",
+        "complete",
+        "source",
+        "early_exit",
+        "no_observation",
+        "conflicting_run",
+    ],
+)
+def test_continuation_requires_exact_scheduled_stop_fact(case):
+    cont = continuation_module()
+    terminal, observed = deadline_fixture(cont)
+    if case == "no_time":
+        terminal.pop("finished_utc")
+    if case == "naive_time":
+        terminal["finished_utc"] = "2026-11-02T19:00:02"
+    if case == "early":
+        terminal["finished_utc"] = "2026-11-02T18:59:59+00:00"
+    if case == "late":
+        terminal["finished_utc"] = "2026-11-02T19:01:00+00:00"
+    if case == "no_cause":
+        terminal.pop("error")
+    if case == "other_cause":
+        terminal["error"] = "hard RSS boundary"
+    if case == "complete":
+        terminal["status"] = "COMPLETE"
+    if case == "source":
+        terminal["source_commit"] = "unrelated"
+    if case == "early_exit":
+        observed["worker"]["first_absent"] = cont.START - 0.1
+    if case == "no_observation":
+        observed["supervisor"]["last_live"] = None
+    if case == "conflicting_run":
+        terminal["phases"].append(dict(phase="run", exit_code=0))
+    if case == "valid":
+        assert (
+            cont.scheduled_stop_fact(terminal, observed, cont.START + 3)["cause"]
+            == terminal["error"]
+        )
+    else:
+        with pytest.raises(RuntimeError, match="not qualified"):
+            cont.scheduled_stop_fact(terminal, observed, cont.START + 3)
+
+
+def test_continuation_accepts_worker_deadline_only_with_matching_terminal_metadata():
+    cont = continuation_module()
+    terminal, observed = deadline_fixture(cont)
+    terminal["error"] = "run exited nonzero; no retry"
+    terminal["phases"].append(dict(phase="run", exit_code=1))
+    worker = dict(
+        status="INCOMPLETE",
+        source_commit=cont.SOURCE,
+        finished_utc="2026-11-02T19:00:01+00:00",
+        error="absolute H225 compute deadline",
+    )
+    assert cont.scheduled_stop_fact(terminal, observed, cont.START + 3, worker)
+    for changed in [
+        None,
+        {**worker, "status": "COMPLETE"},
+        {**worker, "error": "other"},
+        {**worker, "source_commit": "other"},
+    ]:
+        with pytest.raises(RuntimeError):
+            cont.scheduled_stop_fact(terminal, observed, cont.START + 3, changed)
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "valid",
+        "missing",
+        "malformed",
+        "readout",
+        "worker_complete",
+        "pin",
+        "pid",
+        "source",
+    ],
+)
+def test_continuation_persisted_admission_and_worker_replay(
+    tmp_path, monkeypatch, case
+):
+    cont = continuation_module()
+    data, old, evidence = tmp_path / "data", tmp_path / "old", tmp_path / "evidence"
+    for p in (data / "attempt-001", old, evidence):
+        p.mkdir(parents=True)
+    monkeypatch.setattr(cont, "DATA", data)
+    monkeypatch.setattr(cont, "ORIGINAL", data / "attempt-001")
+    monkeypatch.setattr(cont, "OLD_EVIDENCE", old)
+    monkeypatch.setattr(cont, "EVIDENCE", evidence)
+    worker = dict(
+        source_commit=cont.SOURCE,
+        pid=2148342,
+        create_time=1793631812.37,
+        phase="run",
+        deadline="2026-11-02T19:00:00Z",
+    )
+    supervisor = dict(
+        source_commit=cont.SOURCE,
+        pid=939623,
+        create_time=1793630787.38,
+        compute_stop="2026-11-02T19:00:00Z",
+    )
+    if case == "pid":
+        worker["pid"] += 1
+    if case == "source":
+        worker["source_commit"] = "unrelated"
+    records = {
+        data / "run-launch.json": worker,
+        old / "SUPERVISOR-LAUNCH.json": supervisor,
+        data / "experiment-launch.json": dict(
+            source_commit=cont.SOURCE, compute_deadline="2026-11-02T19:00:00Z"
+        ),
+    }
+    for path, value in records.items():
+        path.write_text(json.dumps(value))
+    config = dict(
+        original_records_sha256={str(path): cont.sha(path) for path in records}
+    )
+    monkeypatch.setattr(
+        cont.subprocess, "check_output", lambda *a, **kw: json.dumps(config).encode()
+    )
+    monkeypatch.setattr(cont, "process_alive", lambda _: False)
+    monkeypatch.setattr(cont.time, "time", lambda: cont.START + 3)
+    terminal, observed = deadline_fixture(cont)
+    path = data / "terminal-supervisor.json"
+    path.write_text(json.dumps(terminal))
+    if case == "missing":
+        path.unlink()
+    if case == "malformed":
+        path.write_text("{")
+    if case == "readout":
+        (data / "attempt-001/selection-lock.json").write_text("{}")
+    if case == "worker_complete":
+        (data / "attempt-001/metrics.json").write_text(
+            json.dumps(dict(status="COMPLETE"))
+        )
+    if case == "pin":
+        (data / "run-launch.json").write_text("{}")
+    if case != "valid":
+        with pytest.raises((RuntimeError, FileNotFoundError, ValueError)):
+            cont.validate_original_stop("amendment", observed, cont.START + 3)
+        return
+    fact = cont.validate_original_stop("amendment", observed, cont.START + 3)
+    stop_path = evidence / "ORIGINAL-SCHEDULED-STOP.json"
+    cont.save(stop_path, dict(amendment_source="amendment", observed=observed, **fact))
+    cont.save(
+        evidence / "FINISHER-HANDOFF.json",
+        dict(
+            amendment_source="amendment",
+            original_scheduled_stop_sha256=cont.sha(stop_path),
+        ),
+    )
+
+    def numerical_entry(*a, **kw):
+        raise RuntimeError("reached unchanged numerical runtime")
+
+    monkeypatch.setattr(cont, "load", numerical_entry)
+    with pytest.raises(RuntimeError, match="reached unchanged"):
+        cont.worker("amendment")
+    path.write_text(
+        json.dumps({**terminal, "finished_utc": "2026-11-02T19:00:01+00:00"})
+    )
+    with pytest.raises(RuntimeError, match="changed after handoff"):
+        cont.worker("amendment")
+
+
+def test_continuation_pid_reuse_is_an_error(monkeypatch):
+    cont = continuation_module()
+
+    class Reused:
+        def create_time(self):
+            return 2
+
+    monkeypatch.setattr(cont.psutil, "Process", lambda _: Reused())
+    with pytest.raises(RuntimeError, match="PID reused"):
+        cont.process_alive(dict(pid=1, create_time=1))
+
+
 def test_exact_grid_and_nested_fit_budget():
     assert len(sci.CONFIGS) == 8
     assert len({c["name"] for c in sci.CONFIGS}) == 8

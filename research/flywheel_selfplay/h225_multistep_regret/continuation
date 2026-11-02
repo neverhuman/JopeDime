@@ -136,6 +136,16 @@ def worker(amendment):
         raise RuntimeError(
             "continuation worker requires the post-19:00 stopped-owner handoff"
         )
+    transferred = json.loads(handoff.read_text())
+    stop_path = EVIDENCE / "ORIGINAL-SCHEDULED-STOP.json"
+    if transferred.get("original_scheduled_stop_sha256") != sha(stop_path):
+        raise RuntimeError("persisted scheduled-stop handoff differs")
+    stopped = json.loads(stop_path.read_text())
+    if stopped["amendment_source"] != amendment:
+        raise RuntimeError("scheduled-stop admission source differs")
+    replayed = validate_original_stop(amendment, stopped["observed"], time.time())
+    if any(stopped.get(key) != value for key, value in replayed.items()):
+        raise RuntimeError("original scheduled-stop receipt changed after handoff")
     runner = load(PREFIX + "runner.py", "h225_cont_original_runner")
     runner.END = END  # Only the operational wall deadline changes.
     runner.check()
@@ -258,16 +268,140 @@ def worker(amendment):
 def process_alive(record):
     try:
         p = psutil.Process(record["pid"])
-        return (
-            p.create_time() == record["create_time"]
-            and p.status() != psutil.STATUS_ZOMBIE
-        )
+        if p.create_time() != record["create_time"]:
+            raise RuntimeError("original process PID reused; fail closed")
+        return p.status() != psutil.STATUS_ZOMBIE
     except psutil.NoSuchProcess:
         return False
 
 
 def handoff_ready(now, worker_alive, supervisor_alive):
     return now >= START and not worker_alive and not supervisor_alive
+
+
+def timestamp(value):
+    parsed = dt.datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        raise ValueError("terminal time must have a timezone")
+    return parsed.timestamp()
+
+
+def scheduled_stop_fact(terminal, observed, now, worker_metadata=None):
+    """Qualify only the original scheduled deadline, never mere process absence."""
+    try:
+        finished = timestamp(terminal["finished_utc"])
+        if (
+            terminal["status"] != "INCOMPLETE"
+            or terminal["source_commit"] != SOURCE
+            or not START <= finished <= min(now, START + 15)
+        ):
+            raise ValueError("terminal source/status/time differs")
+        for name in ("worker", "supervisor"):
+            record = observed[name]
+            if (
+                not START - 2 <= record["last_live"] <= record["first_absent"]
+                or not START <= record["first_absent"] <= now
+            ):
+                raise ValueError("original exited prematurely or was not observed")
+        phases = terminal["phases"]
+        if not phases or phases[0]["phase"] != "smoke" or phases[0]["exit_code"] != 0:
+            raise ValueError("original smoke phase differs")
+        error = terminal["error"]
+        if error == "fixed H225 19:00Z compute deadline":
+            if len(phases) != 1:
+                raise ValueError("supervisor deadline has conflicting run phase")
+        elif error == "run exited nonzero; no retry":
+            if (
+                len(phases) != 2
+                or phases[1]["phase"] != "run"
+                or phases[1]["exit_code"] != 1
+                or worker_metadata["status"] != "INCOMPLETE"
+                or worker_metadata["source_commit"] != SOURCE
+                or worker_metadata["error"] != "absolute H225 compute deadline"
+                or not START <= timestamp(worker_metadata["finished_utc"]) <= finished
+            ):
+                raise ValueError("worker exit does not prove its scheduled deadline")
+        else:
+            raise ValueError("unrelated or missing scheduled-stop cause")
+        if worker_metadata is not None and (
+            worker_metadata["status"] != "INCOMPLETE"
+            or worker_metadata["source_commit"] != SOURCE
+            or worker_metadata["error"] != "absolute H225 compute deadline"
+            or not START <= timestamp(worker_metadata["finished_utc"]) <= finished
+        ):
+            raise ValueError("conflicting original worker terminal metadata")
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
+        raise RuntimeError(
+            "original scheduled-stop fact not qualified: " + str(error)
+        ) from error
+    return dict(
+        source_commit=SOURCE, finished_utc=terminal["finished_utc"], cause=error
+    )
+
+
+def original_records(amendment):
+    config = json.loads(
+        subprocess.check_output(
+            ["git", "show", amendment + ":" + PREFIX + "CONTINUATION.json"], cwd=REPO
+        )
+    )
+    for path, expected in config["original_records_sha256"].items():
+        if Path(path).is_symlink() or sha(path) != expected:
+            raise RuntimeError("pinned original launch record differs: " + path)
+    supervisor = json.loads((OLD_EVIDENCE / "SUPERVISOR-LAUNCH.json").read_text())
+    worker_record = json.loads((DATA / "run-launch.json").read_text())
+    experiment = json.loads((DATA / "experiment-launch.json").read_text())
+    if (
+        supervisor["source_commit"] != SOURCE
+        or supervisor["pid"] != 939623
+        or supervisor["create_time"] != 1793630787.38
+        or supervisor["compute_stop"] != "2026-11-02T19:00:00Z"
+        or worker_record["source_commit"] != SOURCE
+        or worker_record["pid"] != 2148342
+        or worker_record["create_time"] != 1793631812.37
+        or worker_record["phase"] != "run"
+        or worker_record["deadline"] != "2026-11-02T19:00:00Z"
+        or experiment["source_commit"] != SOURCE
+        or experiment["compute_deadline"] != "2026-11-02T19:00:00Z"
+    ):
+        raise RuntimeError("original PID/start/source/deadline binding differs")
+    return worker_record, supervisor
+
+
+def validate_original_stop(amendment, observed, now):
+    original_worker, original_supervisor = original_records(amendment)
+    if not handoff_ready(
+        now, process_alive(original_worker), process_alive(original_supervisor)
+    ):
+        raise RuntimeError("original processes still active or deadline not reached")
+    path = DATA / "terminal-supervisor.json"
+    # No fallback receipt: the immutable original supervisor must persist its fact.
+    if path.is_symlink():
+        raise RuntimeError("original terminal receipt is a symlink")
+    terminal = json.loads(path.read_text())
+    if (ORIGINAL / "selection-lock.json").exists():
+        raise RuntimeError(
+            "original readout lock conflicts with an unfinished-fit continuation"
+        )
+    metrics = ORIGINAL / "metrics.json"
+    worker_metadata = None
+    if metrics.exists():
+        if metrics.is_symlink():
+            raise RuntimeError("original worker terminal is a symlink")
+        # Status/error/time/source only; no candidate statistics are inspected.
+        worker_metadata = {
+            k: v
+            for k, v in json.loads(metrics.read_text()).items()
+            if k in ("status", "error", "finished_utc", "source_commit")
+        }
+    fact = scheduled_stop_fact(terminal, observed, now, worker_metadata)
+    return dict(
+        **fact,
+        terminal_sha256=sha(path),
+        worker_metadata_sha256=sha(metrics) if metrics.exists() else None,
+        original_worker=original_worker,
+        original_supervisor=original_supervisor,
+    )
 
 
 def finish(amendment, terminal):
@@ -415,81 +549,94 @@ def finish(amendment, terminal):
 def controller(amendment):
     import fcntl
 
+    controller_lock = (EVIDENCE / "CONTROLLER.lock").open("a")
+    fcntl.flock(controller_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     subprocess.run(
         ["git", "merge-base", "--is-ancestor", amendment, "origin/main"],
         cwd=REPO,
         check=True,
     )
     monitor = load(PREFIX + "monitor.py", "h225_cont_original_monitor")
-    original_supervisor = json.loads(
-        (OLD_EVIDENCE / "SUPERVISOR-LAUNCH.json").read_text()
-    )
-    original_worker = json.loads((DATA / "run-launch.json").read_text())
+    original_worker, original_supervisor = original_records(amendment)
     old_finisher = json.loads((OLD_EVIDENCE / "FINISHER-LAUNCH.json").read_text())
-    while time.time() < DECIDE:
-        time.sleep(min(1, DECIDE - time.time()))
-    decision = projection(time.time())
-    save(
-        EVIDENCE / "PROJECTION-1830.json",
-        dict(
-            at=dt.datetime.now(dt.timezone.utc).isoformat(),
-            amendment_source=amendment,
-            **decision,
-        ),
-    )
-    claim = Path("/home/ubuntu/jope_plan/ns/receipts/H225_claim.txt")
-    with open(str(claim) + ".lock", "a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        with claim.open("a") as f:
-            f.write(
-                "["
-                + dt.datetime.now(dt.timezone.utc).isoformat()
-                + "] 18:30Z projection "
-                + json.dumps(decision, sort_keys=True)
-                + "; amendment="
-                + amendment
-                + "; one continuation armed only after original19:00Z stop; original worker/finisher untouched before then.\n"
-            )
-            f.flush()
-            os.fsync(f.fileno())
+    if not process_alive(old_finisher):
+        raise RuntimeError("original finisher is absent before ownership handoff")
+    # Preserve the already persisted 18:30 decision; replacement is not a new decision.
+    projection_path = EVIDENCE / "PROJECTION-1830.json"
+    if (
+        sha(projection_path)
+        != "63baa4cfa87a8aab379c9417d66afe5aaf2b7a075e93238d917596db23d3ae06"
+    ):
+        raise RuntimeError("persisted 18:30 projection differs")
+    decision = json.loads(projection_path.read_text())
     if not decision["trigger"]:
         save(EVIDENCE / "CONTINUATION-NOT-NEEDED.json", decision)
         return 0
-    while not handoff_ready(
-        time.time(), process_alive(original_worker), process_alive(original_supervisor)
-    ):
-        time.sleep(0.1 if time.time() >= START else min(1, START - time.time()))
-    original_terminal_path = DATA / "terminal-supervisor.json"
-    terminal_original = (
-        json.loads(original_terminal_path.read_text())
-        if original_terminal_path.exists()
-        else dict(status="INCOMPLETE", reason="original terminal receipt missing")
-    )
-    if terminal_original["status"] == "COMPLETE":
-        save(
-            EVIDENCE / "CONTINUATION-NOT-NEEDED.json",
-            dict(reason="original completed", decision=decision),
+    if time.time() >= START:
+        raise RuntimeError(
+            "replacement must observe exact original processes before19:00"
         )
-        return 0
-    finished = terminal_original.get("finished_utc")
-    if finished and dt.datetime.fromisoformat(finished).timestamp() < START - 5:
-        save(
-            EVIDENCE / "CONTINUATION-NOT-ARMED.json",
-            dict(
-                reason="original failed before scheduled stop; not an authorized arbitrary retry",
-                terminal=terminal_original,
-            ),
-        )
-        return 0
-    # No signal to either original worker or supervisor; only the old metadata helper.
-    if process_alive(old_finisher):
+    if (DATA / "terminal-supervisor.json").exists():
+        raise RuntimeError("original terminal receipt already existed before deadline")
+    for record in (original_worker, original_supervisor):
         if (
-            os.getsid(old_finisher["pid"]) != old_finisher["pid"]
-            or os.getpgid(old_finisher["pid"]) != old_finisher["pid"]
+            not process_alive(record)
+            or psutil.Process(record["pid"]).cmdline() != record["command"]
         ):
-            raise RuntimeError("old finisher session identity differs")
-        os.killpg(old_finisher["pid"], signal.SIGSTOP)
-        os.killpg(old_finisher["pid"], signal.SIGKILL)
+            raise RuntimeError("original live command/source identity differs")
+    observed = {
+        name: dict(last_live=None, first_absent=None)
+        for name in ("worker", "supervisor")
+    }
+    last_journal = None
+    with (EVIDENCE / "ORIGINAL-OBSERVATIONS.jsonl").open("x") as journal:
+        while True:
+            now = time.time()
+            active = {}
+            for name, record in (
+                ("worker", original_worker),
+                ("supervisor", original_supervisor),
+            ):
+                active[name] = process_alive(record)
+                if active[name]:
+                    if observed[name]["first_absent"] is not None:
+                        raise RuntimeError(
+                            "original process returned after terminal observation"
+                        )
+                    observed[name]["last_live"] = now
+                elif observed[name]["first_absent"] is None:
+                    observed[name]["first_absent"] = now
+                    if now < START:
+                        raise RuntimeError(
+                            "original process exited before scheduled19:00 stop"
+                        )
+            if int(now) != last_journal or not all(active.values()):
+                journal.write(
+                    json.dumps(dict(at=now, active=active, observed=observed)) + "\n"
+                )
+                journal.flush()
+                os.fsync(journal.fileno())
+                last_journal = int(now)
+            if handoff_ready(now, active["worker"], active["supervisor"]):
+                break
+            if now >= START + 15:
+                raise RuntimeError("original scheduled stop not qualified in time")
+            time.sleep(0.1)
+    fact = validate_original_stop(amendment, observed, time.time())
+    save(
+        EVIDENCE / "ORIGINAL-SCHEDULED-STOP.json",
+        dict(amendment_source=amendment, observed=observed, **fact),
+    )
+    # No signal to either original worker or supervisor; only the old metadata helper.
+    if not process_alive(old_finisher):
+        raise RuntimeError("original finisher disappeared before verified handoff")
+    if (
+        os.getsid(old_finisher["pid"]) != old_finisher["pid"]
+        or os.getpgid(old_finisher["pid"]) != old_finisher["pid"]
+    ):
+        raise RuntimeError("old finisher session identity differs")
+    os.killpg(old_finisher["pid"], signal.SIGSTOP)
+    os.killpg(old_finisher["pid"], signal.SIGKILL)
     save(
         EVIDENCE / "FINISHER-HANDOFF.json",
         dict(
@@ -499,6 +646,9 @@ def controller(amendment):
             original_supervisor_stopped=True,
             previous_finisher=old_finisher,
             new_controller_pid=os.getpid(),
+            original_scheduled_stop_sha256=sha(
+                EVIDENCE / "ORIGINAL-SCHEDULED-STOP.json"
+            ),
         ),
     )
     CONTROL.mkdir(exist_ok=False)

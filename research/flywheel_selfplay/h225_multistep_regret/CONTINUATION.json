@@ -28,7 +28,7 @@
     "disk>=300GB",
     "load5>60 pauses"
   ],
-  "finisher_handoff": "After the original worker and supervisor stop, terminate only the identity-verified old metadata finisher and transfer closeout ownership. No earlier signal or edit to either original process.",
+  "finisher_handoff": "Require persisted exact-source scheduled19:00 deadline terminal receipt, pinned original launch PID/start/source records, continuous identity observation through deadline with no premature exit or PID reuse, and no conflicting completed/readout artifacts; missing/malformed facts fail closed. Only then stop the old finisher and transfer ownership. Original worker/supervisor remain unchanged.",
   "numerical_source_sha256": {
     "science.py": "15fde3b2ce18118f12e4f9813dc565f0000c03c0cfb839682a197b8f715a0f8d",
     "backend.py": "7c751e2057a443a9b531ebd27771f26c35e227cac1d21f3805eb5830ce20dadd",
@@ -36,5 +36,12 @@
     "monitor.py": "11e13723847533ef7d5ab7824e112d9654a9fea63fe090e1e71e47bc91fcbf34",
     "manifest.json": "401946b2238dcb75e43cd92a52dad1cc49a1380e53cd376a6a92efe6182bb1ef",
     "fold_manifest.json": "54dbdf0f07e91e54854671a87463148f91831c33abc8bd9e06f2b3e2752204a6"
-  }
+  },
+  "original_records_sha256": {
+    "/home/ubuntu/jope_plan/evidence/H225/dsc01-t1405/SUPERVISOR-LAUNCH.json": "84e05a65f1190ef5976929ed8ab246e70b5474706245cf552383d1b836b8d465",
+    "/home/ubuntu/jope_plan/evidence/H225/dsc01-t1405/FINISHER-LAUNCH.json": "797a8d44638b5fa2318b630ba90421cff240a8e42ceae9f56adec32dcedb785d",
+    "/home/ubuntu/jope-data/h225/run-launch.json": "1891dc72a6a1cd905ad506fd6f1b7b590b4ba446953a809029822e6871b589fa",
+    "/home/ubuntu/jope-data/h225/experiment-launch.json": "10c46aa7de250e69fac542ac5a8bf6b46e0ac4f2c5359bb97b29057c1fb5d9db"
+  },
+  "guard_review_sha256": "1eeaf10c421fff41cfe03584da1bea8ba7f1d12660335569c8ec02a307188caf"
 }

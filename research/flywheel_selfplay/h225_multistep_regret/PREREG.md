@@ -155,3 +155,28 @@ unrelated failure does not authorize a retry. If the continued complete cohort
 is unavailable at22:30Z, close INCOMPLETE honestly by23:00Z with both index rows,
 null missing statistics and version-replayed S3 custody. Median plateau gain
 must still exceed+0.002 and its CI lower bound0 across three seeds; ties REJECT.
+
+### Prospective scheduled-stop gate correction, 18:33Z (pre-outcome)
+
+Static review identified that clock time and absent PIDs alone did not prove
+the original scheduled stop. No early activation was observed. The old future
+controller was identity-verified and stopped before19:00; its persisted18:30
+projection is retained byte-for-byte. Original worker2148342, supervisor939623
+and finisher2032762 remain unchanged.
+
+The replacement is a single controller, admitted before19:00 under an exclusive
+lock. Original launch receipts are SHA-pinned in `CONTINUATION.json`, including
+PID/start/source and the original19:00 deadline. It observes both original
+identities through the deadline, rejecting PID reuse or premature exit. A
+persisted, source-bound INCOMPLETE terminal receipt must identify the original
+scheduled deadline and finish between19:00 and19:00:15Z. A worker-first deadline
+exit additionally requires matching source/time/deadline-error metadata. Missing
+or malformed receipts, unrelated causes, COMPLETE status and existing readout
+locks fail closed. No fallback terminal receipt authorizes continuation.
+
+The exact fact, receipt hashes, original identities and observations are fsynced
+before stopping the old finisher. The continuation worker revalidates them after
+handoff. Gate failure leaves the original finisher responsible for honest
+closeout, with no continuation. All original and discarded costs, science,
+120 outer proposals/360 logical fits, one continuation and22:30/23:00 limits stay
+unchanged. These controls qualify admission only, not scientific completion.
