@@ -1275,6 +1275,10 @@ crates/jope-engine/tests/native_loop_continuation.rs
 crates/jope-engine/tests/objective_fixtures.rs
 crates/jope-engine/tests/outer_release_cli.rs
 crates/jope-engine/tests/partition_wiring.rs
+crates/jope-engine/tests/partition_wiring/checkpoint.rs
+crates/jope-engine/tests/partition_wiring/continuation.rs
+crates/jope-engine/tests/partition_wiring/partition_tests.rs
+crates/jope-engine/tests/partition_wiring/validation.rs
 crates/jope-engine/tests/preparation_semantics.rs
 crates/jope-engine/tests/projected_export.rs
 crates/jope-engine/tests/proposal_ranking.rs
