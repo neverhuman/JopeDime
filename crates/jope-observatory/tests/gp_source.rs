@@ -366,6 +366,7 @@ fn compiler_timeout_charges_loss_and_retains_the_timeout_exit() {
         .unwrap();
     let result = once_with_rustc(journals.path(), state.path(), &tool);
     assert_eq!(result["total"]["counts"]["compile_errors"], 1);
+    assert!(result["total"]["counts"]["lost_tokens"].as_u64().unwrap() > 0);
     let events = fs::read_to_string(state.path().join("events.jsonl")).unwrap();
     assert!(events
         .lines()
