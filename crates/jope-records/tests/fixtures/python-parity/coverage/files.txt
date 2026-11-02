@@ -128,6 +128,17 @@ crates/feat-math/src/advanced_v3/fitted_portable/render.rs
 crates/feat-math/src/advanced_v3/fitted_portable/scalar.rs
 crates/feat-math/src/advanced_v3/fitted_portable/tests.rs
 crates/feat-math/src/advanced_v3/grammar.rs
+crates/feat-math/src/advanced_v3/grammar/compile_layout.rs
+crates/feat-math/src/advanced_v3/grammar/compile_shape.rs
+crates/feat-math/src/advanced_v3/grammar/compile_stages.rs
+crates/feat-math/src/advanced_v3/grammar/compile_types.rs
+crates/feat-math/src/advanced_v3/grammar/compile_values.rs
+crates/feat-math/src/advanced_v3/grammar/params_base.rs
+crates/feat-math/src/advanced_v3/grammar/params_models.rs
+crates/feat-math/src/advanced_v3/grammar/registry.rs
+crates/feat-math/src/advanced_v3/grammar/registry_entry.rs
+crates/feat-math/src/advanced_v3/grammar/tests.rs
+crates/feat-math/src/advanced_v3/grammar/types.rs
 crates/feat-math/src/advanced_v3/heads/extra_trees.rs
 crates/feat-math/src/advanced_v3/heads/gam.rs
 crates/feat-math/src/advanced_v3/heads/logistic.rs
