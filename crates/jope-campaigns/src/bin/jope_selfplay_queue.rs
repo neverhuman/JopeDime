@@ -2883,8 +2883,7 @@ fn ensure_native_reserved_attempts(
             "SELECT attempt_no,state,owner,manifest_sha256,job_id FROM attempts \
                  WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
                    AND state IN ('reserved','submitted') ORDER BY attempt_no DESC",
-            "SELECT COALESCE(MAX(attempt_no),0)+1 FROM attempts WHERE task=? \
-                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            include_str!("../../sql/native_attempts_next_no.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_no,state,owner,manifest_path,manifest_sha256,job_id,created_at_ms) \
                  VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -2894,8 +2893,7 @@ fn ensure_native_reserved_attempts(
                  FROM attempts WHERE task=? AND dataset_hash=? AND semantic_sha256=? \
                    AND protocol_sha256=? AND state IN ('reserved','submitted') \
                  ORDER BY attempt_no DESC",
-            "SELECT COALESCE(MAX(attempt_no),0)+1 FROM attempts WHERE task=? \
-                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            include_str!("../../sql/native_attempts_next_no.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_no,state,reservation_owner,manifest_path,manifest_sha256,job_id,\
                  created_at_ms) VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -2904,8 +2902,7 @@ fn ensure_native_reserved_attempts(
             "SELECT attempt_number,state,owner,manifest_sha256,job_id FROM attempts \
                  WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
                    AND state IN ('reserved','submitted') ORDER BY attempt_number DESC",
-            "SELECT COALESCE(MAX(attempt_number),0)+1 FROM attempts WHERE task=? \
-                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            include_str!("../../sql/native_attempts_next_number.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_number,state,owner,manifest_path,manifest_sha256,job_id,created_at_ms) \
                  VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -2915,8 +2912,7 @@ fn ensure_native_reserved_attempts(
                  FROM attempts WHERE task=? AND dataset_hash=? AND semantic_sha256=? \
                    AND protocol_sha256=? AND state IN ('reserved','submitted') \
                  ORDER BY attempt_number DESC",
-            "SELECT COALESCE(MAX(attempt_number),0)+1 FROM attempts WHERE task=? \
-                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
+            include_str!("../../sql/native_attempts_next_number.sql"),
             "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
                  attempt_number,state,reservation_owner,manifest_path,manifest_sha256,job_id,\
                  created_at_ms) VALUES(?,?,?,?,?,'reserved',?,?,?,NULL,?)",
@@ -3002,18 +2998,17 @@ fn update_pairs_submitted(
     owner: &str,
     job_id: &str,
 ) -> Result<()> {
-    let select = format!(
-        "SELECT state,{},manifest_sha256,job_id FROM pairs \
-         WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
-        schema.owner_column
-    );
-    let update = format!(
-        "UPDATE pairs SET state='submitted',job_id=?,updated_at_ms=? \
-         WHERE task=? AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=? \
-           AND {}=? AND manifest_sha256=? \
-           AND state IN ('reserved','infrastructure_retry')",
-        schema.owner_column
-    );
+    let (select, update) = match schema.owner_column {
+        "owner" => (
+            include_str!("../../sql/pairs_submitted_select_owner.sql"),
+            include_str!("../../sql/pairs_submitted_update_owner.sql"),
+        ),
+        "reservation_owner" => (
+            include_str!("../../sql/pairs_submitted_select_reservation_owner.sql"),
+            include_str!("../../sql/pairs_submitted_update_reservation_owner.sql"),
+        ),
+        _ => bail!("pair registry schema is not supported"),
+    };
     let mut select_statement = tx.prepare_cached(&select)?;
     let mut update_statement = tx.prepare_cached(&update)?;
     for pair in &manifest.pairs {
@@ -3153,12 +3148,13 @@ fn append_native_retry_attempts(
             }
             continue;
         }
+        let next_attempt_query = match attempts.number_column {
+            "attempt_no" => include_str!("../../sql/native_attempts_next_no.sql"),
+            "attempt_number" => include_str!("../../sql/native_attempts_next_number.sql"),
+            _ => bail!("attempt ledger schema is not supported"),
+        };
         let attempt_number: i64 = tx.query_row(
-            &format!(
-                "SELECT COALESCE(MAX({}),0)+1 FROM attempts WHERE task=? \
-                 AND dataset_hash=? AND semantic_sha256=? AND protocol_sha256=?",
-                attempts.number_column
-            ),
+            next_attempt_query,
             params![
                 pair.task,
                 pair.dataset_hash,
@@ -3167,13 +3163,23 @@ fn append_native_retry_attempts(
             ],
             |row| row.get(0),
         )?;
+        let insert_query = match (attempts.number_column, attempts.owner_column) {
+            ("attempt_no", "owner") => {
+                include_str!("../../sql/native_attempt_no_owner_retry_insert.sql")
+            }
+            ("attempt_no", "reservation_owner") => {
+                include_str!("../../sql/native_attempt_no_reservation_owner_retry_insert.sql")
+            }
+            ("attempt_number", "owner") => {
+                include_str!("../../sql/native_attempt_number_owner_retry_insert.sql")
+            }
+            ("attempt_number", "reservation_owner") => {
+                include_str!("../../sql/native_attempt_number_reservation_owner_retry_insert.sql")
+            }
+            _ => bail!("attempt ledger schema is not supported"),
+        };
         tx.execute(
-            &format!(
-                "INSERT INTO attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
-                 {},state,{},manifest_path,manifest_sha256,job_id,created_at_ms) \
-                 VALUES(?,?,?,?,?,'reserved',?,?,?,?,?)",
-                attempts.number_column, attempts.owner_column
-            ),
+            insert_query,
             params![
                 pair.task,
                 pair.dataset_hash,
