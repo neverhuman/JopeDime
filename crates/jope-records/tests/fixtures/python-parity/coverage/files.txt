@@ -1067,6 +1067,9 @@ crates/jope-engine/src/native_provisioner.rs
 crates/jope-engine/src/native_provisioner/service.rs
 crates/jope-engine/src/native_review.rs
 crates/jope-engine/src/neural.rs
+crates/jope-engine/src/neural/objectives.rs
+crates/jope-engine/src/neural/optimizer.rs
+crates/jope-engine/src/neural/runtime.rs
 crates/jope-engine/src/operations.rs
 crates/jope-engine/src/pipeline.rs
 crates/jope-engine/src/policy_export.rs
