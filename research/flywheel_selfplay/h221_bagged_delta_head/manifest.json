@@ -46,7 +46,7 @@
   },
   "schema": "jope.h221-bagged-delta/v1",
   "wave": "H221",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "owner": "rd_astra",
   "source_base": "71ea06190270e1677dc499be5976d9417296e739",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
@@ -152,5 +152,17 @@
   },
   "reference_arm": "DELTA_SAFE",
   "placebo": "BAG5_SHUF_SAFE",
-  "frozen_incumbent": true
+  "frozen_incumbent": true,
+  "execution_source_commit": "b8ca3509833861d72502714684d3b4b61a206934",
+  "source_sha256_scope": "Immutable execution commit; README updated for closeout; runtime/science/tests/folds unchanged.",
+  "closeout": {
+    "verdict": "NO_ADVANCE",
+    "s3": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H221/astra-t0530/closeout/manifest.json",
+      "version_id": "De_dDVYe.z5YFioFw4HE9pxN0jD4sGWQ",
+      "sha256": "df29b5feb1814ec0d3b30d46255d2a5b998668f3971b7ca9e1e4e4e6f9f31a3c",
+      "bytes": 252911
+    },
+    "retry_allowed": false
+  }
 }
