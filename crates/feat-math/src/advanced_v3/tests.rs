@@ -803,9 +803,16 @@ fn v3_admission_matches_manifest() {
                 StageClass::Target => OpKind::Target,
                 StageClass::Input => OpKind::Input,
                 StageClass::Transform => OpKind::Transform,
-                StageClass::Head => OpKind::Head,
+                StageClass::Learner => OpKind::Head,
             };
             assert_eq!(row.kind, kind, "{name}");
+            let role = match kind {
+                OpKind::Target => "target",
+                OpKind::Input => "input",
+                OpKind::Transform => "transform",
+                OpKind::Head => "head",
+            };
+            assert_eq!(descriptor.advanced_facts().role, role, "{name}");
             assert_eq!(row.requires_labels, descriptor.target_aware, "{name}");
             assert_eq!(
                 row.requires_row_order,

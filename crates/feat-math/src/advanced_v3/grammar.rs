@@ -15,6 +15,7 @@ use super::schema::{ColumnKind, DataSchema, RowSemantics};
 use super::types::{TaskKind, TaskSpec};
 use crate::dsl::{DslExpr, ParamValue, Stage};
 use crate::kernel::capabilities::WidthEffect;
+pub(crate) use crate::kernel::pipeline::StageClass;
 use crate::GenomeIr;
 use anyhow::{bail, Context, Result};
 use sha2::{Digest, Sha256};
@@ -73,14 +74,6 @@ pub(crate) enum EmitterTarget {
     Runtime,
     Python,
     Rust,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum StageClass {
-    Target,
-    Input,
-    Transform,
-    Head,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1449,7 +1442,7 @@ impl crate::kernel::registry_v2::Entry {
                 StageClass::Target => "target",
                 StageClass::Input => "input",
                 StageClass::Transform => "transform",
-                StageClass::Head => "head",
+                StageClass::Learner => "head",
             },
             parameters: serde_json::json!(row
                 .parameters
@@ -1723,7 +1716,7 @@ pub(crate) fn compile_v3_genome(
     check_operation(input_descriptor, task, schema, options, &shape)?;
 
     while let Some((stage, descriptor)) = classified.get(cursor).copied() {
-        if descriptor.stage_class == StageClass::Head {
+        if descriptor.stage_class == StageClass::Learner {
             break;
         }
         let canonical = materialize_stage(stage, descriptor, task, options.mode)?;
@@ -1737,7 +1730,7 @@ pub(crate) fn compile_v3_genome(
     }
 
     let head = if let Some((stage, descriptor)) = classified.get(cursor).copied() {
-        debug_assert_eq!(descriptor.stage_class, StageClass::Head);
+        debug_assert_eq!(descriptor.stage_class, StageClass::Learner);
         cursor += 1;
         (
             materialize_stage(stage, descriptor, task, options.mode)?,
@@ -1824,7 +1817,7 @@ fn classify_stages(
                     bail!("transform '{}' cannot follow a model head", stage.op);
                 }
             }
-            StageClass::Head => {
+            StageClass::Learner => {
                 head_count += 1;
                 if head_count != 1 || index + 1 != stages.len() {
                     bail!("model heads are only valid as the final stage");
