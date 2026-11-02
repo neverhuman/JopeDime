@@ -1,0 +1,65 @@
+{
+  "wave": "H200",
+  "authority": "/home/ubuntu/nudges/hw_t1350_h200_hbaseline.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H200_claim.txt",
+  "arms": ["R882", "FIX025", "NEST_L", "RANK025", "NEST_SHUF"],
+  "primary": "NEST_L",
+  "holm_m": 2,
+  "lambda_grid": [0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5],
+  "nested_selection_margin": 0.001,
+  "seeds": [200101, 200102, 200103],
+  "fold_seeds": {"200101": 200141, "200102": 200142, "200103": 200143},
+  "sample_seed": 200140,
+  "boot_seed": 200150,
+  "elo_boot_seed": 200151,
+  "shuffle_seed": 200160,
+  "bootstrap_draws": 10000,
+  "elo_draws": 1000,
+  "folds": {"families": 205, "contexts": 1219, "outer": "A=k, B=(k+1)%5, FIT=remaining folds"},
+  "fits": {"outer": 5, "inner": 10, "calibrator": 5, "per_seed": 20, "total": 60},
+  "gbm": {
+    "class": "sklearn.ensemble.HistGradientBoostingRegressor",
+    "max_iter": 300,
+    "learning_rate": 0.08,
+    "max_leaf_nodes": 63,
+    "l2_regularization": 1.0,
+    "features": 1089,
+    "rows_per_context": 192,
+    "random_state": "experimental seed"
+  },
+  "inputs": {
+    "cohort": "H139/H195 pinned real-S3 flywheel roster; 1219 DL-Train contexts/205 families; 91 DL-Val contexts/19 families",
+    "s3_catalog": {
+      "snapshot": "v246",
+      "markdown_path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md",
+      "markdown_sha256": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+      "machine_catalog_path": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
+      "machine_catalog_sha256": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+    },
+    "staging": "~/jope-data/h195/inputs",
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "reference": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h129_runner_reference": "e34d4a3f7ecb82971fa303f05cca665bb1108509abb90021d1a54717fe02cb6c",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "decision": "NEST_L only candidate if bootstrap CI lower > 0, Holm-adjusted p<0.05 vs +0.001, and family harm <=10%; ties rejected",
+  "resources": {
+    "host": "xbabe1 only",
+    "nice": 19,
+    "omp_threads": 4,
+    "worker_tree_cores_max": 4.0,
+    "rss_max_bytes": 6000000000,
+    "mem_available_min_bytes": 17179869184,
+    "disk_free_min_bytes": 40000000000,
+    "load_max_fraction": 0.85,
+    "output_max_bytes": 500000000,
+    "deadline_seconds": 14400,
+    "resume": false
+  },
+  "forbidden": ["xbabe0", "xbabe2", "xbabe3", "GPU", "live writes", "holdout", "sealed", "meta-test"]
+}
