@@ -131,9 +131,9 @@ pub mod ranking;
 pub mod seeds;
 pub mod semantic;
 pub mod support_transition;
+pub mod tokens_build;
 pub mod tokens_expr;
 pub mod training_input_closure;
-pub mod tokens_build;
 
 /// Test support (`testing`, never enabled by a product build): untrained weights and
 /// unbound helpers. Every helper here refuses the accepted state, so even a test build cannot

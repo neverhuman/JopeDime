@@ -2,6 +2,7 @@
 use super::*;
 use jope_narrator::Survivor;
 
+#[path = "golden_v1/branches.rs"]
 mod branches;
 pub(super) use branches::{branch_facts, branch_fixture};
 

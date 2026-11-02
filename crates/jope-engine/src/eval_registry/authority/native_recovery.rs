@@ -417,7 +417,9 @@ fn verify_recorded_drains(body: &NativeRecoveryBody, evidence: &Value) -> Result
     );
     Ok(())
 }
+#[path = "native_recovery/recovery.rs"]
 mod recovery;
 
 #[cfg(test)]
+#[path = "native_recovery/tests.rs"]
 mod tests;
