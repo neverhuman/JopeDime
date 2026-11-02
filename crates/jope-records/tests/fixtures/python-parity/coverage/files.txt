@@ -637,6 +637,15 @@ crates/jope-campaigns/src/selfplay_shadow/policy.rs
 crates/jope-campaigns/src/selfplay_shadow/promotion_evidence.rs
 crates/jope-campaigns/src/selfplay_shadow/state.rs
 crates/jope-campaigns/src/selfplay_shadow/store.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/dataset_profile.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/packed_corpus.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/plateau.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/preflight.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/progress.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/promotion_eval.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/proposal_cache.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/sealed_panels.rs
+crates/jope-campaigns/src/selfplay_shadow/promotion_evidence/tests.rs
 crates/jope-campaigns/src/spec_drift.rs
 crates/jope-campaigns/src/spec_policy.rs
 crates/jope-campaigns/src/task.rs
