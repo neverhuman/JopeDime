@@ -61,8 +61,7 @@ jobs:
 
   changes-dispatch:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    # Classification is unprivileged and hosted; downstream self-hosted jobs still perform
-    # their own runner provenance and resource admission before executing candidate work.
+    # Manual classification runs only on main; pull requests use changes-pr.
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
@@ -149,6 +148,10 @@ jobs:
           set -euo pipefail
           evidence="$GITHUB_WORKSPACE/target/ci-evidence/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/$GITHUB_JOB"
           python3 deploy/ci/receipt.py --lane hygiene --output "$evidence" --backend unittest -- bash ops/ci/fast-lane.sh hygiene
+      - name: Run source supply-chain scans directly
+        env:
+          JOPE_LANE_EVIDENCE: ${{ github.workspace }}/target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/${{ github.job }}
+        run: bash tools/security-lane.sh
       - name: Upload current lane evidence
         if: always()
         uses: ./.github/actions/upload-ci-evidence
