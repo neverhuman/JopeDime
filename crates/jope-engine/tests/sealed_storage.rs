@@ -36,13 +36,12 @@ fn native_ranks_share_a_sealed_identity_and_server_restart_reverifies() {
     fs::write(root.join("expected"), hash(&bytes)).unwrap();
     for restart in [false, true] {
         let mut server = Command::new("python3")
-            // -E ignores PYTHON* environment variables. The script's sibling import of
-            // resume_expired_cycle relies on sys.path[0] being the script's own directory, which an
-            // ambient PYTHONSAFEPATH=1 would remove; -E costs nothing and takes that away.
+            // -E ignores PYTHON* environment variables. The helper imports its sibling, so sys.path[0]
+            // must remain the script's directory; -E prevents ambient PYTHONSAFEPATH=1 from removing it.
             .args(["-B", "-E"])
             .arg(
                 PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .join("../../python/src/jope/tools/shared_teaching_cache.py"),
+                    .join("../../python/tests/support/jope_tools/shared_teaching_cache.py"),
             )
             .arg("--root")
             .arg(root)
