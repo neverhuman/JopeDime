@@ -1,0 +1,66 @@
+{
+  "schema": "h206-launch-plan-v1",
+  "authority": "Jepson via Grok Bot, card answer 8:22 PM MT",
+  "wave": "H206",
+  "status": "QUEUED_NOT_RUN",
+  "owner": "gpu_fused_redteam_codex",
+  "backup": "rd_astra",
+  "host": "xbabe3",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "research_run_id": "H206-QUEUED-PREREG",
+  "source_head": null,
+  "prereg_pr": null,
+  "queue_released": false,
+  "executor_implemented": false,
+  "search_k": [
+    16,
+    64,
+    256
+  ],
+  "control_k": 1,
+  "expert_rounds": 3,
+  "outer_seeds": [
+    206101,
+    206102,
+    206103
+  ],
+  "fold_seeds": [
+    206141,
+    206142,
+    206143
+  ],
+  "bootstrap_seed": 206150,
+  "updates_per_round": 600,
+  "terminal_updates": 1800,
+  "arm_slots": {
+    "CTRL": "K1_SELF_DISTILL",
+    "ACC4": "K16",
+    "ACC16": "K64",
+    "OC15": "K256"
+  },
+  "cpu_core_hours_cap": 400,
+  "gpu_hours_cap": 18,
+  "gpu_hours_per_round_cap": 6,
+  "gpu_fit_seconds_cap": 300,
+  "cache_bytes_cap": 40000000000,
+  "pre_reservation_disk_fraction_cap": 0.88,
+  "post_reservation_disk_fraction_exclusive_cap": 0.938,
+  "headroom_bytes_min": 50000000000,
+  "thread_policy": "<=4 numeric threads (OMP/MKL/OpenBLAS/torch intra-op); CUDA runtime/driver threads exempt",
+  "dope_policy": {
+    "research_dope_unfreeze": true,
+    "research_run_id": "H206-QUEUED-PREREG",
+    "entrypoint": "research",
+    "dope_eval_mode": true,
+    "serving_eligible": false,
+    "status": "PLANNED_NOT_APPLIED"
+  },
+  "native_reference_contexts": 91,
+  "native_reference_mean": 1.1377941898164525,
+  "native_gate_status": "NOT_RUN",
+  "model_architecture_sha256": null,
+  "model_initial_state_sha256": null,
+  "input_manifest_sha256": null,
+  "fold_manifest_sha256": null,
+  "evidence_root": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H206/"
+}
