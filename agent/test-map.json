@@ -291,6 +291,21 @@
       "lane": "inputs",
       "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
     },
+    "crates/jope-cli/src/main/commands.rs": {
+      "command": "cargo test -p jope-cli --locked",
+      "lane": "inputs",
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
+    },
+    "crates/jope-cli/src/main/dispatch.rs": {
+      "command": "cargo test -p jope-cli --locked",
+      "lane": "inputs",
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
+    },
+    "crates/jope-cli/src/main/entry.rs": {
+      "command": "cargo test -p jope-cli --locked",
+      "lane": "inputs",
+      "purpose": "exercise CLI parsing, storage, schema, admission, generators, and offline fixtures"
+    },
     "crates/jope-cli/src/storage.rs": {
       "command": "cargo test -p jope-cli --locked",
       "lane": "inputs",

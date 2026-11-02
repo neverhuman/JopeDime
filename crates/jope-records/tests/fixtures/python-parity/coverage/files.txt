@@ -691,9 +691,9 @@ crates/jope-campaigns/src/broad_shadow/validation.rs
 crates/jope-campaigns/src/broad_shadow_cli.rs
 crates/jope-campaigns/src/broad_shadow_cli/tests.rs
 crates/jope-campaigns/src/campaign.rs
-crates/jope-campaigns/src/campaign/live.rs
 crates/jope-campaigns/src/campaign/artifacts.rs
 crates/jope-campaigns/src/campaign/file_io.rs
+crates/jope-campaigns/src/campaign/live.rs
 crates/jope-campaigns/src/campaign/population.rs
 crates/jope-campaigns/src/campaign/population/selection.rs
 crates/jope-campaigns/src/campaign/run.rs
@@ -1065,6 +1065,9 @@ crates/jope-cli/src/generator/temporal.rs
 crates/jope-cli/src/kernel.rs
 crates/jope-cli/src/lib.rs
 crates/jope-cli/src/main.rs
+crates/jope-cli/src/main/commands.rs
+crates/jope-cli/src/main/dispatch.rs
+crates/jope-cli/src/main/entry.rs
 crates/jope-cli/src/router.rs
 crates/jope-cli/src/schema.rs
 crates/jope-cli/src/storage.rs
@@ -1386,7 +1389,6 @@ crates/jope-engine/src/fit_boundary.rs
 crates/jope-engine/src/gp.rs
 crates/jope-engine/src/gp/fit_contract_tests.rs
 crates/jope-engine/src/gp/fit_contract_tests/cli.rs
-crates/jope-engine/src/gp/fit_contract_tests/support.rs
 crates/jope-engine/src/gp/fit_contract_tests/fit_views.rs
 crates/jope-engine/src/gp/fit_contract_tests/fit_views/recovery.rs
 crates/jope-engine/src/gp/fit_contract_tests/fit_views/roundtrips.rs
@@ -1396,6 +1398,7 @@ crates/jope-engine/src/gp/fit_contract_tests/search_lifecycle.rs
 crates/jope-engine/src/gp/fit_contract_tests/search_lineage.rs
 crates/jope-engine/src/gp/fit_contract_tests/search_trials.rs
 crates/jope-engine/src/gp/fit_contract_tests/selection.rs
+crates/jope-engine/src/gp/fit_contract_tests/support.rs
 crates/jope-engine/src/gp/fit_contract_tests/view_exports.rs
 crates/jope-engine/src/gp/handoff.rs
 crates/jope-engine/src/gp/lineage.rs
