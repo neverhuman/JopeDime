@@ -601,6 +601,7 @@ crates/jope-campaigns/src/bin/jope_selfplay_queue/dispatch.rs
 crates/jope-campaigns/src/bin/jope_selfplay_queue/keeper_claims.rs
 crates/jope-campaigns/src/bin/jope_selfplay_queue/keeper_cycle.rs
 crates/jope-campaigns/src/bin/jope_selfplay_queue/manifests.rs
+crates/jope-campaigns/src/bin/jope_selfplay_queue/scheduler_json.rs
 crates/jope-campaigns/src/bin/jope_selfplay_queue/screening.rs
 crates/jope-campaigns/src/bin/jope_selfplay_queue/tests.rs
 crates/jope-campaigns/src/bin/jope_selfplay_shadow.rs
