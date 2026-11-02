@@ -40,18 +40,11 @@ validity rate without weight updates (\cref{sub:method-move,sec:method-status}).
 These rates alone do not identify a learned improvement
 (\cref{sub:results-ablation}).
 
-Generating a token costs about 2~FLOPs per active parameter, and
-training on one about~6 \citep{kaplan2020scaling}. Cost projections require reproducible inputs and calculations (\cref{sub:price-run}).
-
 For an observed batch, cost per verified win is the total ledger divided
 by verified wins, including update and operating costs where applicable.
 This accounting does not require independent attempts. Adaptive search
 still needs empirical cost and attempt curves; a batch with no verified
 win has no finite observed cost per win.
-
-\Cref{fig:fw-latest-round-clock} pairs program-event counts with full round
-durations in a later capture. That clock includes all work and waits;
-turning it into a proposal price still requires the attempt ledger.
 
 Training and deployment need separate ledgers. Training pays for every
 attempt, including failures. The proposed deployment protocol pays for
@@ -86,11 +79,15 @@ the agent comparators of \cref{sub:results-headtohead,sub:results-search}.
 The compact reference network and its generation limit are specified in
 \cref{sec:method}.
 
+Generating a token costs about 2~FLOPs per active parameter, and
+training on one about~6 \citep{kaplan2020scaling}.
+
 Small models are cheap per token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller
 writer can tolerate a win rate about 190 times lower before that
-component's cost per win matches.
+component's cost per win matches. \Cref{sub:price-run} separates active
+compute from resident model memory.
 
 If it needs three times the tokens per
 attempt, the generation-only ratio falls to about 60. Repair turns also
@@ -167,7 +164,8 @@ floor is separate from the full cost projection discussed next.
 A reproducible projection therefore needs a pinned model and hardware
 configuration, dated prices, measured or justified utilization and an
 explicit accounting boundary. Those inputs remain unrecorded; a full
-cost projection remains a measurement task.
+cost projection remains a measurement task. Pricing the adapter
+operating clocks (\cref{sec:method-status}) still requires an attempt ledger.
 
 \begin{keyidea}
   Cost per verified improvement depends on both the cost of an attempt
@@ -177,4 +175,5 @@ cost projection remains a measurement task.
 Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves
 expected cost per win only if mean attempt cost stays fixed. Measuring that
 tradeoff requires a common task mix, incumbent and verification rule.
-\Cref{sec:method} turns from the price of an attempt to the learner that makes it.
+\Cref{sec:method} specifies the reference learner before turning to the
+separate adapter record.
