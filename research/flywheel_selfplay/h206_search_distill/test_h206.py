@@ -1385,3 +1385,32 @@ def test_protected_role_metadata_refuses_before_template_body(integrated, monkey
     monkeypatch.setattr(store, "get", forbidden)
     with pytest.raises(ValueError, match="transitively protected"):
         inputs.acquire("FIT", learner.state_hash())
+
+
+def test_factory_private_source_closure_replaces_ambient_optional_import(monkeypatch):
+    import inspect
+    import sys
+    import types
+
+    from research.flywheel_selfplay.h206_search_distill.model import pinned_original_modules
+
+    repo = HERE.parents[2]
+    manifest = json.loads((repo / "research/flywheel_selfplay/h170_onecycle/manifest.json").read_text())
+    pins = {
+        "research/flywheel_selfplay/custody/files" + p: value
+        for p, value in manifest["assets"].items()
+        if p.endswith(".py")
+    }
+    pins[str(FUSED_SOURCE.relative_to(repo))] = sha(FUSED_SOURCE.read_bytes())
+    ambient = types.ModuleType("rank_prepare")
+    monkeypatch.setitem(sys.modules, "rank_prepare", ambient)
+    before_path = list(sys.path)
+    with pinned_original_modules(repo, pins) as fused:
+        feature_fn = fused.get_w1_sign_matrix.__globals__["dsl_features_dict"]
+        assert feature_fn is not None
+        path = Path(inspect.getsourcefile(feature_fn)).resolve()
+        assert path.is_relative_to(repo / "research/flywheel_selfplay/custody/files")
+        assert (
+            sha(path.read_bytes()) == manifest["assets"]["/home/ubuntu/JopeDimeMicro/python/rank_prepare.py"]
+        )
+    assert sys.modules["rank_prepare"] is ambient and sys.path == before_path

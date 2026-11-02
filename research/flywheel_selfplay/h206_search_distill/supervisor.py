@@ -341,7 +341,11 @@ class PhaseSupervisor:
         if path != expected:
             raise ValueError("shared assigned GPU lease path required")
         path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("a") as lock:
+        with (
+            Path("/home/ubuntu/jope_plan/qualification.lock").open("a") as qualification,
+            path.open("a") as lock,
+        ):
+            fcntl.flock(qualification, fcntl.LOCK_EX | fcntl.LOCK_NB)
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             require_resources(current_resources(self.cache), launching_gpu=True)
             snapshot = actual_gpu()

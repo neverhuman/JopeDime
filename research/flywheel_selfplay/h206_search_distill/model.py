@@ -21,6 +21,7 @@ _CODE_PREFIX = "research/flywheel_selfplay/custody/files"
 _FUSED_PATH = _CODE_PREFIX + "/home/ubuntu/jope-data/res-01/input/cpu_exact_fused.py"
 _MICRO = "/home/ubuntu/JopeDimeMicro/python/"
 _ORDER = (
+    ("rank_prepare", "rank_prepare.py"),
     ("rust_evaluator", "rust_evaluator.py"),
     ("model", "model.py"),
     ("phase12_multimodal_model", "phase12_multimodal_model.py"),
