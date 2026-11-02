@@ -316,6 +316,6 @@ def run(create_model, version):
     except (ImportError, ModuleNotFoundError) as error:
         sys.stderr.write(f"unavailable dependency: {error}\n")
         return 69
-    except Exception as error:
+    except (OSError, TypeError, ValueError) as error:
         sys.stderr.write(f"panel adapter failed: {error}\n")
         return 1
