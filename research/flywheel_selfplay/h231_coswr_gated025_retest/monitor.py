@@ -104,6 +104,8 @@ def main(args):
     if not set(cores) <= set(os.sched_getaffinity(0)):
         raise RuntimeError("registered core IDs unavailable")
     os.sched_setaffinity(0, cores)
+    if time.time() > 1793658600:
+        raise RuntimeError("launch missed22:30Z")
     if time.time() >= DEADLINE - 1800:
         raise RuntimeError("too late for single primary attempt")
     pr = json.loads(
@@ -141,9 +143,9 @@ def main(args):
 
     if (
         datetime.fromisoformat(pr["mergedAt"].replace("Z", "+00:00")).timestamp()
-        > 1793656800
+        > 1793658600
     ):
-        raise RuntimeError("prereg merge missed22:00Z")
+        raise RuntimeError("prereg merge missed22:30Z")
     pins = json.loads(blob("manifest.json"))
     for name, expected in pins["source_sha256"].items():
         if hashlib.sha256(blob(name)).hexdigest() != expected:
@@ -154,7 +156,7 @@ def main(args):
         attempt=1,
         source_commit=args.commit,
         pr=args.pr,
-        authority="gbw_2040_rd_astra.md",
+        authority="hw_t2100_astra_h231_merge.md",
         boot_id=Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
         reboot_disposition="INTERRUPTED; no restart",
         deadline_epoch=DEADLINE,

@@ -61,13 +61,14 @@
     "load_pause_above": 60,
     "load_resume_at_or_below": 55,
     "load_check_seconds": 60,
-    "prereg_deadline": "2026-11-02T22:00:00Z",
+    "prereg_deadline": "2026-11-02T22:30:00Z",
     "compute_stop": "2026-11-03T03:30:00Z",
     "closeout_deadline": "2026-11-03T04:00:00Z",
     "retry_allowed": false,
     "reboot_status": "INTERRUPTED",
     "max_disk_used_percent": 93.8,
-    "max_concurrent_waves": 4
+    "max_concurrent_waves": 4,
+    "launch_deadline": "2026-11-02T22:30:00Z"
   },
   "inventory": {
     "unique_histgbm_fits": 45,
@@ -92,11 +93,11 @@
     "provenance.json": "02be59a496ed6b5b2619bb961ec2d000756b5d5104afd8e4c0e7e9ef825d69f4",
     "gate.py": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e",
     "analysis.py": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
-    "PREREG.md": "611695d00ecfe0a72aca27ce9036a3574d49900687bed16d2e3fcd6ed2782601",
-    "monitor.py": "ebbb7644a388437a510d65d405c927346e2151bc454922d2dff72d761059b3bd",
+    "PREREG.md": "b3c632dcd90dff71e8e8f2111e0c503539d6a9c3dd2b2efaf0de39850593fbb1",
+    "monitor.py": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
     "fold_manifest.json": "8cb3f1e2488d235155b1c7fd6f93e236e3f9596d398bb81500645804073bd446",
     "test_h231.py": "fad020a5bcb243b2d374a27cc9348b612840370cfc2e0309ac85fa6b39f83f5c",
-    "README.md": "8ba890a98cc2ce908a7002157a4cdb8015c39eafd502c1ccc1b9c5d83bb85c3b",
+    "README.md": "5073fe3971f6137eec7d34aee67fe19c479a7ea40e1b41dffe92bf52316ebe30",
     "runner.py": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e"
   },
   "predecessor_commit": "0d7388b1aaf30629c673a40ab551a382cf939b22",
@@ -107,5 +108,15 @@
     "raw NPZ regression test",
     "disk-used threshold 93.8% and four-wave admission"
   ],
-  "same_folds_as_H230": true
+  "same_folds_as_H230": true,
+  "amendments": [
+    {
+      "id": "A1",
+      "utc": "2026-11-02T20:59:58.474906+00:00",
+      "authority": "hw_t2100_astra_h231_merge.md",
+      "authority_sha256": "444faac325d6c0e992bfed5d373e2f2a044529ed53c81280a22adc5670c01bdc",
+      "scope": "Local-check admin squash admission; merge/launch22:30Z; no scientific change",
+      "before_any_fit": true
+    }
+  ]
 }

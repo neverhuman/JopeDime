@@ -1,7 +1,7 @@
 # H231 — COSWR × GATED_025 stack
 
 Owner `gbw_2040_rd_astra.md`; separately authorized retest of closed H230 (#2056), which stopped during setup with 0 fits/updates. No H231 model fit or outcome has run.
-Merge this preregistration by2026-11-02T22:00Z before any real TRAIN smoke or
+Merge and launch this preregistration by2026-11-02T22:30Z before any real TRAIN smoke or
 primary attempt. H224 closeout merged as#2042 before H231 work started.
 
 ## Hypothesis and four arms
@@ -151,10 +151,20 @@ optimizer recipe and 45-fit/600-update inventory remain unchanged. The folds are
 identical to H230 (Jaccard 1); the retest is not an independent replication.
 H230 produced no treatment outcomes. Its closed attempt is never resumed.
 
-The new wave retains H230's original 22:00Z preregistration deadline, 03:30Z
-compute stop and 04:00Z closeout on Nov3 (preregistration Nov2). It adds the
+A1 below sets the merge/launch cutoff at22:30Z Nov2, with unchanged03:30Z
+compute stop and04:00Z closeout on Nov3. It adds the
 owner's hard disk-used threshold of 93.8%, alongside the existing 300GB free
 minimum, and admission below the four-wave cap. TRAIN smoke remains the first
 four HistGBMs plus first40-update adapter, reused in the fixed inventory; it
-must pass before primary continuation. Normal repository CI/review/merge rules
-apply; H230's one-off remote-check exception is not inherited.
+must pass before primary continuation. The A1 owner ruling below defines local-check merge admission.
+
+## A1 — owner process ruling, 2026-11-02T20:59:58.474906+00:00
+
+`hw_t2100_astra_h231_merge.md` explicitly authorizes admin squash of PR2058
+after exact-head local25targeted tests, Ruff and five records/pins/links.
+Inherited Rustfmt/audit failures and non-main manual-dispatch refusal are
+not H231 gates; preserve their receipts without calling remote CI passed.
+This supersedes the initially requested normal-CI gate before any H231 fit
+or outcome. No scientific choice changes. Merge and launch by22:30Z Nov2
+or close INCOMPLETE. Absolute compute03:30Z/closeout04:00Z Nov3 remain.
+Swap exhaustion is not permission to relax the MemAvailable>=20GiB hard guard.

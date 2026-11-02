@@ -4,4 +4,6 @@ PREREGISTERED, NOT RUN. Separately authorized retest after H230 failed during se
 
 [PREREG.md](PREREG.md) freezes the protocol and loader regression test, native91 check, TRAIN smoke reused in the 45-HistGBM/600-update inventory, resource limits and fixed deadline. [manifest.json](manifest.json), [fold_manifest.json](fold_manifest.json) and [provenance.json](provenance.json) bind identities.
 
-Next: pass the raw-container regression, normal exact-head CI/review/merge and TRAIN smoke, then execute the one CPU attempt. No treatment outcome or qualification claim.
+Next: pass the raw-container regression, owner-authorized exact-head local checks/review/squash and TRAIN smoke, then execute the one CPU attempt. No treatment outcome or qualification claim.
+
+A1 (`hw_t2100_astra_h231_merge.md`): inherited remote CI failures are non-gates; exact-head local checks control the owner-authorized admin squash. Merge/launch cutoff22:30Z Nov2; compute03:30Z and closeout04Z Nov3 unchanged. No outcomes read.

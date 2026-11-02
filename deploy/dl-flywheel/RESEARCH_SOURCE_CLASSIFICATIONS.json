@@ -25,8 +25,8 @@
         }
       },
       "python:research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py": {
-        "bytes": 9112,
-        "sha256": "ebbb7644a388437a510d65d405c927346e2151bc454922d2dff72d761059b3bd",
+        "bytes": 9203,
+        "sha256": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
         "classification": {
           "role": "research",
           "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
