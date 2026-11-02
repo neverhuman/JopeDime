@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import gzip
 import inspect
 import json
 import os
@@ -19,7 +18,7 @@ from research.flywheel_selfplay.rust_evaluator import (
     propose_flywheel_candidates,
 )
 
-from .contracts import ObjectRef, canonical, digest, guard_cpu, sha
+from .contracts import ObjectRef, canonical, digest, guard_cpu, native_train_body, sha
 
 
 class S3Store:
@@ -133,7 +132,7 @@ class RustS1Evaluator:
         if sha(self.binary.read_bytes()) != self.binary_sha256:
             raise ValueError("native binary changed before call")
         # Consume ONLY the admitted TRAIN body. Never derive/read an outer payload.
-        body = gzip.decompress(loaded.train_bytes)
+        body = native_train_body(context, loaded.train_bytes)
         if body[:4] != b"JTT1":
             raise ValueError("admitted TRAIN body is not JTT1")
         import struct
@@ -239,7 +238,8 @@ class RustS1Evaluator:
             "raw_output": raw.decode(errors="replace"),
             "binary_sha256": self.binary_sha256,
             "input_sha256": sha(body),
-            "original_train_sha256": context.train.sha256,
+            "original_train_sha256": (context.original_train or context.train).sha256,
+            "native_train_sha256": context.train.sha256,
             "protocol_sha256": self.protocol_sha256,
             "environment_sha256": self.environment_sha256,
             "resources": resources,

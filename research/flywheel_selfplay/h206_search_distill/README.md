@@ -123,3 +123,11 @@ factory.runtime preserves the verified private source environment through each
 qualification/model phase and restores ambient modules afterward. No scientific
 optimizer update or GPU was used. Receipt details are in MISSING_PINS.md;
 actual CUDA qualification, H205 input admission and accounting remain held.
+
+The post1822 admission interface uses this same controller for a purpose-scoped
+FIT-only CUDA runtime qualification. It returns pending exit/accounting rather
+than a qualified scientific result. Scientific admission requires the completed
+raw CUDA proof plus its own explicit queue release. Deadlines guard backward/
+step and late persistence, and input metadata cannot override registered cells.
+No actual CUDA qualification runs while the canonical ledger or ARGON's complete
+original-TRAIN/role/raw-encoder packet remains held. See the final PREREG section.

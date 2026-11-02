@@ -165,3 +165,28 @@ are reported: no AUC.
 - **Unchanged.** RSS ≥ 4 GiB, MemAvailable < 20 GiB, free disk < 300 GB, the 8-core tree cap and the absolute
   deadline stay hard aborts. A paused attempt that reaches the deadline closes INCOMPLETE. Science, seeds, folds, arms,
   members and decision rules are unchanged.
+
+## Amendment A2 (pre-outcome): one continuation after the 17:25Z deadline stop
+
+- **When and who.** Recorded 2026-11-02T15:02:57Z by the H-wave owner (rd_opus) under `~/nudges/hw_t1500_opus_h223_cont.md`
+  (H-wave owner decision, 15:00Z). The attempt `run-20261102T1405Z` was running. Under A1 it had been paused for load
+  since 14:36:45Z, with 3 of 45 units done. No stage-1 lock, A score or DL-Val outcome existed, and none is read.
+- **Why.** Fits run at about 6 min per outer unit, so 45 units take about 3 h 40 min before any load pause. That
+  cannot finish by the preregistered 17:25Z deadline (ETA warning posted at 14:17Z).
+- **The running attempt is unchanged.** There is no clock reset and no change to seeds, members or cores. It stops at
+  its own 17:25Z deadline, and every completed, hash-verified unit is archived to S3 as usual.
+- **Continuation.**
+  - **One** continuation attempt (`--resume` of the same root, under its own exclusive `H223_resume.claim`), started
+    after the 17:25Z stop.
+  - It reuses **only** units whose member receipts and prediction hashes verify. Any partial unit is renamed
+    `.incomplete` (kept, never deleted) and refit.
+  - It fits the remaining units with identical code, seeds, folds and members. A test pins the bodies of
+    `fit_unit`, `verified_unit` and `unit_name` by hash, and `analysis.py` is unchanged.
+  - The DL-Val regression and the TRAIN r882 forward rerun in `regression-resume/` and `train-resume/`, as for any
+    resume. The stage-1 lock is written as `stage1_lock-resume.json` before any A or DL-Val scoring.
+  - It keeps the A1 load pause and the hard RSS, MemAvailable, disk and core caps.
+  - It has a new fixed absolute compute deadline, **2026-11-02T21:30:00Z**. Closeout is due by **22:00Z**.
+- **One continuation only.** If it also misses its deadline, H223 closes **INCOMPLETE** with evidence and no
+  verdict.
+- **Unchanged.** Arms, statistics and the decision rules: primary CANDIDATE iff LCB95 > 0, 3/3 seeds and harm ≤ 10%;
+  PLATEAU_WIN iff the DL-Val gain is > +0.002 with LCB95 > 0. Median, CI and Elo are reported.

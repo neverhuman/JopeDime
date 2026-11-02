@@ -5593,12 +5593,12 @@
       "sha256": "0638c6ff0caabf1b6a62df3f8c39697f2921456f80e41cf3b5e672ba2709c938"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/monitor.py": {
-      "bytes": 13388,
+      "bytes": 13713,
       "classification": {
         "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
         "role": "research"
       },
-      "sha256": "84554e789abba09d8103b02391fc7894b9fc9f425ca59464a5eb612b8f5c62a9"
+      "sha256": "b29d83f58fbf2f710dd92574684562b2fdc44462977dc7da44778fef5f0dc88e"
     },
     "python:research/flywheel_selfplay/h223_bagged_blend_gate/runner.py": {
       "bytes": 38153,
@@ -5606,7 +5606,7 @@
         "reason": "H223 preregistered CPU-only diagnostic: bagged blend component inside the frozen GATED_025 recipe (GATED_BAG3 = r882 + 0.25*(calibrated mean of 3 HistGBM members - r882), member 0 = the H217 fit, members 1-2 = family-bootstrap refits via sample weights; same outcome-free zgap gate and FIT-only tau rule, max FIT native gain s.t. FIT harm <= 5%, else r882; GATED_025 frozen reference; H129 disagreement placebo) vs r882 on the flywheel native protocol, 205-family pooled cross-fit with fresh fold seeds; xbabe2 CPU, nice 19, <= 8 cores, RSS < 4 GiB; 0 optimizer updates; DOPE frozen; no sealed/holdout reads.",
         "role": "research"
       },
-      "sha256": "a3d14404978a9da0373cbfd567d23a2143f5eb1f6a43a5d044633fd1c078d07e"
+      "sha256": "40592ec66b97e08f15371c23b5dead8c2e454d31f9d77356f31de62a4e486fe1"
     },
     "python:research/flywheel_selfplay/h224_learned_switch_gate/analysis.py": {
       "bytes": 14695,

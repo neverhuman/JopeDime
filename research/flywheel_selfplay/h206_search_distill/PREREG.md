@@ -264,3 +264,74 @@ Creation and custody costs remain charged once to the original cumulative
 campaign. A terminated scientific attempt is INCOMPLETE, not a retry/reset or
 partial-arm efficacy result. Source fixtures and metadata-only full-controller
 controls never establish actual GPU/model/native/data scientific qualification.
+
+
+## Receiving-main admission continuation (after PR1822)
+
+The actual CPU91 singleton full-vector/pick/utility gate is already established
+at15f365; it is not repeated by this continuation and does not qualify CUDA.
+Receiving main merged the stricter storage-alias/buffer/anchor freeze guard in
+PR1833 while the H206 dependency manifest still named its predecessor. Keep
+both identities in the receiving receipt; update the source pin only with
+new targeted stricter-guard and controlled real-learner checks. The original
+r882 model/assets/scorer/reference and scientific comparisons do not change.
+
+The existing StudyController and PhaseSupervisor now distinguish study from
+runtime_qualification authority. There is no second study or controller.
+Scientific study admission additionally requires an actual source/input/fold/
+model-bound CUDA runtime proof and explicit purpose-matched queue release.
+CPU compatibility or an unscoped queue document cannot satisfy that gate.
+
+A prospective FIT-only runtime qualification uses the existing first seed206101,
+fold0 four registered arms (k1/16/64/256), all three expert rounds, the same600
+updates/round, singleton32-example batches, actor/native/learner interfaces,
+per-fit300s and original cumulative/per-round budgets. All four heads start
+from the pinned original seed206101 state dbe16fbce2060a0493b4129c5e5579414a874e1fde3d156ad6c2b44339313a2d.
+The qualification never opens the baseline/B/A panels, applies the selector,
+claims an efficacy endpoint or supplies a checkpoint to the scientific study.
+All qualification updates, native fits, setup/finalization, failures and queue
+reservations consume the ORIGINAL400CPUh/18GPUh; no extra window is granted.
+A separate single qualification claim is retained beside the original single
+scientific attempt, with no automatic retry, overwrite or reset. Both use the
+same canonical deadline, which cannot be renewed between purposes.
+
+Qualification itself still needs merged exact source, genuine approved complete
+original-TRAIN/role/encoder/slate inputs, actual model/CPU91 bindings, reconciled
+canonical costs, fresh resource/device admission and explicit queue authority
+for runtime_qualification. Its presence in source authorizes no compute now.
+Current accounting is UNRECONCILED and execution stays disabled.
+
+Every actual phase emits an immutable source-bound worker/numeric/device/exit
+receipt. Each of twelve qualification round proofs must bind600 durable step
+objects,19200 examples, positive DOPE/residual gradients and parameter/forward/
+checkpoint changes. All36 actual phase receipts and the complete round objects
+are restored for acceptance. The controller writes PENDING_FINAL_ACCOUNTING;
+PASS requires external observed controller/worker exit, closed logs, reconciled
+canonical36-phase cost range and no unresolved tail. A live controller, a missing
+phase, stale source/input, unknown allowance or a renewed deadline refuses.
+
+The learner rechecks the original campaign/phase deadline before each training
+forward, backward and optimizer step. A deadline consumed by scoring or verified
+persistence leaves zero additional steps; any already completed step, gradient/
+loss/state journal and partial checkpoint remain durable on the terminal path.
+Templates cannot override the registered cell/seed/fold/arm/k/role partition,
+even when a candidate input-payload hash happens to match that template.
+
+
+Production Context now distinguishes native TRAIN JTT1 from original_train and
+derivation ObjectRefs. The approved role contract binds both. Before production
+payload use, verify the actual original VersionId/body and approved producer
+witness linking row/cut/dtype/native matrix/raw encoder/tensor source identities.
+Native receipts retain both original_train_sha256 and native_train_sha256.
+This consumer proves custody/linkage and the native header/matrix/cut shape;
+ARGON retains semantic original-CSV row/encoder derivation qualification. The
+consumer never infers that qualification from tokens, hashes or a boolean alone.
+Generated CPU fixture contexts remain separate from production admission.
+
+After actual controller exit, prepare_runtime_acceptance requires an existing
+positive original-budget runtime-qualification-acceptance reservation. Its raw
+proof-restoration/publication work is charged once by that parent. It returns
+PENDING_ACCEPTANCE_PUBLISHER_COSTS, never automatic CUDA PASS. Scientific
+admission also requires the original owner's versioned acceptance candidate and
+final publisher observed-exit/tail cost receipt, with no unresolved cost scope.
+No helper can spend from an unknown allowance or claim its own final tail is zero.

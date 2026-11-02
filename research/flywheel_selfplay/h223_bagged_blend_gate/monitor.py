@@ -6,8 +6,9 @@ worker tree <= 8 cores; one core of headroom for OpenMP helper bursts, as H217 k
 
 H223 runs on xbabe2 only. Carried over from H217: limits from the EFFECTIVE CPU affinity (os.sched_getaffinity), host
 CPU as the mean busy share of the allowed CPUs, the source binding checked BEFORE the claim, and one absolute deadline
-recorded in the attempt claim and inherited by the resume (H223_DEADLINE_EPOCH to the worker). The deadline is the
-earlier of claim + 4 h and 2026-11-02T17:25:00Z, which leaves the closeout time before hw_t1325's 18:00Z.
+recorded in the attempt claim (H223_DEADLINE_EPOCH to the worker). The attempt's deadline is the earlier of claim + 4 h
+and 2026-11-02T17:25:00Z. Amendment A2 (hw_t1500): the single continuation (--resume) reuses only hash-verified units
+and has its own fixed absolute deadline, 2026-11-02T21:30:00Z.
 
 Resources (hw_t1325): stop when MemAvailable < 20 GiB (swap is full), disk free < 300 GB, process-tree RSS >= 4 GiB,
 or tree CPU > 8.0 cores. Amendment A1 (hw_t1400, pre-outcome): host load PAUSES the worker instead of stopping it.
@@ -54,6 +55,7 @@ DEADLINE_ENV = "H223_DEADLINE_EPOCH"
 RUN_END = (
     1793640300.0  # 2026-11-02T17:25:00Z: closeout must finish by 18:00Z (hw_t1325)
 )
+CONTINUATION_END = 1793655000.0  # amendment A2 (hw_t1500): 2026-11-02T21:30:00Z, the single continuation
 CLAIMS = Path.home() / "jope-data/h223"  # attempt claims live on the run host
 
 
@@ -118,17 +120,17 @@ def track_overload(sample, since, now):
 
 
 def attempt_deadline(claims, resume, now):
-    """Absolute deadline epoch. A fresh attempt starts the 4 h budget now; the resume inherits the attempt's deadline
-    and is refused once it has passed."""
+    """Absolute deadline epoch. A fresh attempt gets the earlier of now + 4 h and 17:25Z. Amendment A2 (hw_t1500): the
+    single continuation (the --resume, which needs the attempt claim; its own claim is exclusive) gets one fixed
+    absolute deadline, 2026-11-02T21:30:00Z, and is refused once that has passed. No clock restarts after it."""
     if not resume:
         return min(now + DEADLINE, RUN_END)
     attempt = claims / "H223_attempt.claim"
     if not attempt.exists():
         raise RuntimeError("resume requires the attempt claim")
-    end = float(json.loads(attempt.read_text())["deadline_epoch"])
-    if now >= end:
-        raise RuntimeError("absolute deadline from the attempt claim has passed")
-    return end
+    if now >= CONTINUATION_END:
+        raise RuntimeError("absolute continuation deadline (A2) has passed")
+    return CONTINUATION_END
 
 
 def check_source(launch):
