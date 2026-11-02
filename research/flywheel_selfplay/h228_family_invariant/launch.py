@@ -15,17 +15,26 @@ import time
 import psutil
 
 PREFIX = "research/flywheel_selfplay/h228_family_invariant/"
-GPU = "GPU-44c63d19-492a-ab46-cc6a-56e12a2ef51b"
-REPO = Path("/home/ubuntu/JopeDime/.agent/worktrees/h226-argon")
+GPU = "GPU-784030c4-b1f9-d5a3-f0eb-9337f133f503"
+DEFAULT_REPO = (
+    Path("/home/ubuntu/JopeDime/.agent/worktrees/h205-argon")
+    if Path("/home/ubuntu/JopeDime/.agent/worktrees/h205-argon").exists()
+    else Path("/home/ubuntu/JopeDime/.agent/worktrees/h226-argon")
+)
+REPO = DEFAULT_REPO
 CUSTODY = Path("/home/ubuntu/jope-rescue-20260921/h228-argon")
 COMPUTE_DEADLINE_EPOCH = 1793662200  # 2026-11-02 23:30:00Z
-LOAD5_PAUSE_THRESHOLD = 60.0
-LOAD5_RESUME_THRESHOLD = 55.0
+LOAD5_PAUSE_THRESHOLD = 85.0
+LOAD5_RESUME_THRESHOLD = 80.0
+MIN_GPU_FREE_MIB = 6144
+MIN_AVAILABLE_RAM = 8 * 2**30
+MIN_FREE_DISK = 150_000_000_000
 
 
-def blob(commit, path):
+def blob(commit, path, repo=None):
+    target_repo = REPO if repo is None else repo
     return subprocess.check_output(
-        ["git", "-C", str(REPO), "show", commit + ":" + path]
+        ["git", "-C", str(target_repo), "show", commit + ":" + path]
     )
 
 
@@ -37,20 +46,38 @@ def write_new(path, value):
         os.fsync(f.fileno())
 
 
-def process_gpu_pids():
-    raw = subprocess.check_output(
+def gpu_vram_and_apps():
+    raw_gpu = subprocess.check_output(
         [
             "nvidia-smi",
-            "--query-compute-apps=gpu_uuid,pid",
+            "--query-gpu=uuid,memory.free",
             "--format=csv,noheader,nounits",
         ],
         text=True,
     )
-    return {
-        int(line.split(",")[1])
-        for line in raw.splitlines()
-        if line.split(",")[0].strip() == GPU
-    }
+    free_mib = 0
+    for line in raw_gpu.splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) >= 2 and parts[0] == GPU:
+            free_mib = int(float(parts[1]))
+            break
+    raw_apps = subprocess.check_output(
+        [
+            "nvidia-smi",
+            "--query-compute-apps=gpu_uuid,pid,used_memory",
+            "--format=csv,noheader,nounits",
+        ],
+        text=True,
+    )
+    app_mib = {}
+    for line in raw_apps.splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) >= 3 and parts[0] == GPU:
+            try:
+                app_mib[int(parts[1])] = int(float(parts[2]))
+            except ValueError:
+                app_mib[int(parts[1])] = 0
+    return free_mib, app_mib
 
 
 class SustainedLoad:
@@ -76,7 +103,7 @@ LOAD_STATE = SustainedLoad()
 
 
 def should_pause_worker(load5, paused):
-    """Hysteresis load5 pause guard for own worker only: pause > 60.0 (and > 85.0), resume <= 55.0."""
+    """Hysteresis load5 pause guard for own worker only: pause > 85.0, resume <= 80.0."""
     if not paused and load5 > LOAD5_PAUSE_THRESHOLD:
         return True
     if paused and load5 > LOAD5_RESUME_THRESHOLD:
@@ -86,13 +113,19 @@ def should_pause_worker(load5, paused):
 
 def guard_violations(sample, *, paused=False, other_gpu_pids=None):
     violations = []
-    if sample["available"] < 20 * 2**30:
+    if sample["available"] < MIN_AVAILABLE_RAM:
         violations.append(
-            dict(field="available", value=sample["available"], limit=20 * 2**30)
+            dict(field="available", value=sample["available"], limit=MIN_AVAILABLE_RAM)
         )
-    if sample["free"] < 300_000_000_000:
+    if sample["free"] < MIN_FREE_DISK:
+        violations.append(dict(field="free", value=sample["free"], limit=MIN_FREE_DISK))
+    if sample.get("effective_gpu_free_mib", MIN_GPU_FREE_MIB) < MIN_GPU_FREE_MIB:
         violations.append(
-            dict(field="free", value=sample["free"], limit=300_000_000_000)
+            dict(
+                field="gpu_free_mib",
+                value=sample["effective_gpu_free_mib"],
+                limit=MIN_GPU_FREE_MIB,
+            )
         )
     if sample["effective_cores"] > 4:
         violations.append(
@@ -112,10 +145,8 @@ def guard_violations(sample, *, paused=False, other_gpu_pids=None):
         )
     if sample.get("overloaded"):
         violations.append(dict(field="overloaded", value=True, limit=False))
-    if other_gpu_pids:
-        violations.append(
-            dict(field="other_gpu_pids", value=sorted(other_gpu_pids), limit=[])
-        )
+    if other_gpu_pids is not None:
+        sample["other_gpu_pids"] = sorted(other_gpu_pids)
     sample["guard_trip"] = bool(violations)
     sample["violating_field"] = violations[0]["field"] if violations else None
     sample["violating_value"] = violations[0]["value"] if violations else None
@@ -125,7 +156,7 @@ def guard_violations(sample, *, paused=False, other_gpu_pids=None):
 
 def guard(child=None, *, state=None, now=None, paused=False, pause_on_trip=False):
     disk = psutil.disk_usage("/home/ubuntu")
-    host_cores = os.cpu_count() or 76
+    host_cores = os.cpu_count() or 102
     sample = dict(
         load1=os.getloadavg()[0],
         load5=os.getloadavg()[1],
@@ -169,13 +200,19 @@ def guard(child=None, *, state=None, now=None, paused=False, pause_on_trip=False
             except psutil.NoSuchProcess:
                 pass
         sample["child_rss"] = rss_total
-    other_gpu = process_gpu_pids() - allowed
+    gpu_free_mib, app_mib = gpu_vram_and_apps()
+    own_gpu_mib = sum(mib for pid, mib in app_mib.items() if pid in allowed)
+    other_gpu = set(app_mib) - allowed
+    sample["gpu_free_mib"] = gpu_free_mib
+    sample["own_gpu_mib"] = own_gpu_mib
+    sample["effective_gpu_free_mib"] = gpu_free_mib + own_gpu_mib
     guard_violations(sample, paused=paused, other_gpu_pids=other_gpu)
     if pause_on_trip:
         return sample
     if (
-        sample["available"] < 20 * 2**30
-        or sample["free"] < 300_000_000_000
+        sample["available"] < MIN_AVAILABLE_RAM
+        or sample["free"] < MIN_FREE_DISK
+        or sample["effective_gpu_free_mib"] < MIN_GPU_FREE_MIB
         or sample["effective_cores"] > 4
     ):
         raise RuntimeError(
@@ -184,10 +221,6 @@ def guard(child=None, *, state=None, now=None, paused=False, pause_on_trip=False
     if sample.get("child_rss", 0) >= 6_000_000_000:
         raise RuntimeError(
             f"child RSS limit ({sample['violating_field']}={sample['violating_value']})"
-        )
-    if other_gpu:
-        raise RuntimeError(
-            f"other GPU consumer ({sample['violating_field']}={sample['violating_value']}); no shared GPU"
         )
     return sample
 
@@ -250,19 +283,32 @@ def fifo_lock():
         ticket.with_name(ticket.name + ".done").touch(exist_ok=False)
 
 
-def main(args):
-    os.nice(19)
-    os.sched_setaffinity(0, {0, 1, 2, 3})
-    if os.uname().nodename != "xbabe2":
-        raise RuntimeError("xbabe2 only")
-    pr = json.loads(
+def load_pr_metadata(pr_number, pr_receipt=None, repo=REPO):
+    if pr_receipt is not None:
+        pr = json.loads(Path(pr_receipt).read_text())
+        merge_oid = (pr.get("mergeCommit") or {}).get("oid", "")
+        if not merge_oid:
+            raise RuntimeError("PR receipt missing mergeCommit.oid")
+        subprocess.check_call(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "merge-base",
+                "--is-ancestor",
+                merge_oid,
+                "origin/main",
+            ]
+        )
+        return pr
+    return json.loads(
         subprocess.check_output(
             [
                 "/home/ubuntu/.local/bin/gh-role",
                 "writer",
                 "pr",
                 "view",
-                str(args.pr),
+                str(pr_number),
                 "--repo",
                 "neverhuman/JopeDime",
                 "--json",
@@ -271,12 +317,23 @@ def main(args):
             text=True,
         )
     )
+
+
+def main(args):
+    global REPO
+    if getattr(args, "repo", None):
+        REPO = Path(args.repo)
+    os.nice(19)
+    os.sched_setaffinity(0, {0, 1, 2, 3})
+    if os.uname().nodename != "xbabe1":
+        raise RuntimeError("xbabe1 only")
+    pr = load_pr_metadata(args.pr, getattr(args, "pr_receipt", None), REPO)
     if not admitted_pr(pr, args.commit):
         raise RuntimeError("requires exact merged H228 preregistration")
-    pins_raw = blob(args.commit, PREFIX + "manifest.json")
+    pins_raw = blob(args.commit, PREFIX + "manifest.json", REPO)
     pins = json.loads(pins_raw)
     for name, expected in pins["source_sha256"].items():
-        raw = blob(args.commit, PREFIX + name)
+        raw = blob(args.commit, PREFIX + name, REPO)
         if hashlib.sha256(raw).hexdigest() != expected:
             raise RuntimeError("merged source pin mismatch")
     if pins["gpu_uuid"] != GPU:
@@ -316,7 +373,7 @@ def main(args):
         claim = dict(
             wave="H228",
             fifo_ticket=ticket,
-            authority="hw_t1640_argon_h228.md: merged-before-smoke/full launch authorized",
+            authority="hw_t1640_argon_h228.md; hw_t1905_argon_h228_gpulost.md: pre-outcome xbabe1 RTX 4090 retarget authorized",
             attempt=1,
             source_commit=args.commit,
             pr=pr,
@@ -429,4 +486,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--commit", required=True)
     parser.add_argument("--pr", required=True, type=int)
+    parser.add_argument("--repo", default=str(DEFAULT_REPO))
+    parser.add_argument("--pr-receipt", default=None)
     main(parser.parse_args())

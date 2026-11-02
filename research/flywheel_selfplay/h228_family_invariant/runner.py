@@ -212,7 +212,7 @@ def snapshot():
         load=os.getloadavg()[0],
         load5=os.getloadavg()[1],
         cores=len(os.sched_getaffinity(0)),
-        host_cores=os.cpu_count() or 76,
+        host_cores=os.cpu_count() or 102,
         cpu=psutil.cpu_percent(),
         available=psutil.virtual_memory().available,
         swap_free=psutil.swap_memory().free,
@@ -239,7 +239,7 @@ class SustainedLoad:
             self.elapsed[key] = (
                 0.0 if self.since[key] is None else now - self.since[key]
             )
-        return load5 > 0.85 * cores or any(t >= 300 for t in self.elapsed.values())
+        return load5 > 85 or any(t >= 300 for t in self.elapsed.values())
 
 
 LOAD_STATE = SustainedLoad()
@@ -248,23 +248,23 @@ LOAD_STATE = SustainedLoad()
 def guard_violations(s, *, admission=False, overloaded=False):
     host_cores = s.get("host_cores", s["cores"])
     violations = []
-    if s["available"] < 20 * 2**30:
+    if s["available"] < 8 * 2**30:
         violations.append(
-            dict(field="available", value=s["available"], limit=20 * 2**30)
+            dict(field="available", value=s["available"], limit=8 * 2**30)
         )
-    if s["free"] < 300_000_000_000:
-        violations.append(dict(field="free", value=s["free"], limit=300_000_000_000))
+    if s["free"] < 150_000_000_000:
+        violations.append(dict(field="free", value=s["free"], limit=150_000_000_000))
     if s["rss"] >= 6_000_000_000:
         violations.append(dict(field="rss", value=s["rss"], limit=6_000_000_000))
     if s["cores"] > 4:
         violations.append(dict(field="cores", value=s["cores"], limit=4))
+    if s["load5"] > 85:
+        violations.append(dict(field="load5", value=s["load5"], limit=85))
     if admission:
         if s["load"] > 0.85 * host_cores:
             violations.append(
                 dict(field="load", value=s["load"], limit=0.85 * host_cores)
             )
-        if s["load5"] > 85:
-            violations.append(dict(field="load5", value=s["load5"], limit=85))
         if s["cpu"] > 85:
             violations.append(dict(field="cpu", value=s["cpu"], limit=85))
         if overloaded:
@@ -306,12 +306,12 @@ def guard(
         raise RuntimeError(
             f"resource refusal ({s['violating_field']}={s['violating_value']}): {s!r}"
         )
-    # Pause-and-wait on guard trip (hw_t1700_argon_h228_launch.md): persist violating
-    # field+value to log and wait for recovery rather than exiting.
+    # Pause-and-wait on guard trip (hw_t1700_argon_h228_launch.md / hw_t1905_argon_h228_gpulost.md):
+    # persist violating field+value to log and wait for recovery rather than exiting.
     while violations:
         if s["cores"] > 4:
             os.sched_setaffinity(0, {0, 1, 2, 3})
-        if s["rss"] >= 6_000_000_000 or s["available"] < 20 * 2**30:
+        if s["rss"] >= 6_000_000_000 or s["available"] < 8 * 2**30:
             gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
@@ -373,8 +373,8 @@ def run(args):
     os.nice(19)
     if len(os.sched_getaffinity(0)) > 4:
         os.sched_setaffinity(0, {0, 1, 2, 3})
-    if os.uname().nodename != "xbabe2" or os.environ.get("CUDA_VISIBLE_DEVICES") != "0":
-        raise RuntimeError("xbabe2 GPU0 only")
+    if os.uname().nodename != "xbabe1" or os.environ.get("CUDA_VISIBLE_DEVICES") != "0":
+        raise RuntimeError("xbabe1 GPU0 only")
     psutil.cpu_percent()
     time.sleep(1)
     if args.output.exists():
@@ -507,7 +507,7 @@ def run(args):
                 start_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 deadline_seconds=5400,
                 resource_limits=pins["resource_limits"],
-                authority="hw_t1640_argon_h228.md",
+                authority="hw_t1640_argon_h228.md; hw_t1905_argon_h228_gpulost.md",
                 optimizer_updates=0,
             ),
         )
