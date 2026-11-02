@@ -1,15 +1,8 @@
-//! Draft v3 bounded campaign protocol for native multi-round research.
+//! Test-only state model for the bounded native-loop rejection protocol.
 //!
-//! Status: retained as a noncompiled design draft; no current entrypoint imports
-//! this file. Owner: JopeDime engine maintainers. Review/expiry: 2027-01-01.
-//! Migration plan: either promote it by adding explicit protocol tests and an
-//! entrypoint that consumes it, or preserve its history and remove the draft
-//! after its outstanding state transitions have been reconciled.
-//!
-//! This module is intentionally private to the worker allocation until the
-//! integrator adds the version dispatcher, schema files, and observer hook.
-//! It models durable protocol transitions; it does not run an optimizer or
-//! confer serving eligibility.
+//! `tests/native_loop_v3.rs` imports this file directly to exercise durable
+//! transition invariants. No production entrypoint dispatches to this model;
+//! numerical rounds and serving eligibility remain outside its scope.
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
