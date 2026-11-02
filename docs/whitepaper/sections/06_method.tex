@@ -164,7 +164,7 @@ do not supply that comparison.
 % Algorithm 1 is defined at the start of the subsection so that the full-width
 % float can reach the top of the next page.
 \begin{algorithm*}[t]
-\caption{The reference self-play loop (training).}\label{alg:selfplay}
+\caption{\textbf{The reference self-play loop (training).}}\label{alg:selfplay}
 \begin{algorithmic}[1]
 \Require training problems; serving writer $\writer$ and map $\mapv$; incumbents $\inc{p}$
 \For{each round}
@@ -217,9 +217,8 @@ weight in the writer loss. Its referee score also contributes to the map's
 ranking targets.
 
 The reference procedure uses two ratchets (\cref{sec:game}). A program
-displaces a board's incumbent only by strictly beating it.
-
-The proposed reference admission test calls for 16 held-out cuts with three seeds
+displaces a board's incumbent only by strictly beating it. The proposed
+reference admission test calls for 16 held-out cuts with three seeds
 each. A challenger may replace the serving writer
 only if its mean log error ratio favors it. It must also win at least as
 many cuts as it loses and fail no more often.
@@ -275,7 +274,7 @@ and all incurred costs retained. \Cref{sub:results-learning} compares that
 draw with a frozen reference under matched conditions.
 
 \begin{algorithm}[tb]
-\caption{Proposed game-day protocol (\searchone).}\label{alg:gameday}
+\caption{\textbf{Proposed game-day protocol (\searchone).}}\label{alg:gameday}
 \begin{algorithmic}[1]
 \Require new regression problem $p$ with training rows and metric; frozen $\encP$ and $\writer$
 \State $z_p \gets \encP(p)$ \Comment{read the board}
@@ -287,6 +286,5 @@ draw with a frozen reference under matched conditions.
 \end{algorithm}
 
 Report later search separately, as \citet{silver2017mastering} reported
-AlphaGo Zero's raw network apart from its search. We now turn to the
-adapter's candidate-selection and admission record.
+AlphaGo Zero's raw network apart from its search (\cref{sec:method-status}).
 \input{sections/06_method/flywheel_status}

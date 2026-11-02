@@ -60,7 +60,6 @@ A stillborn attempt fails to produce a usable program under the declared
 protocol: generation is incomplete, parsing or type-checking fails,
 execution exceeds its limits or crashes, or outputs fail predeclared
 validity checks. An also-ran is valid but does not beat the incumbent.
-
 The pilot funnel planned for \cref{sec:results} (\cref{fig:price}, panel~a) traces
 those stages and the compute spent before each failed attempt stops.
 
@@ -79,10 +78,9 @@ the agent comparators of \cref{sub:results-headtohead,sub:results-search}.
 The compact reference network and its generation limit are specified in
 \cref{sec:method}.
 
-Generating a token costs about 2~FLOPs per active parameter, and
-training on one about~6 \citep{kaplan2020scaling}.
-
-Small models are cheap per token and can be dear per win. For generation
+Generating a token costs about 2\,FLOPs per active parameter, and
+training on one about~6 \citep{kaplan2020scaling}. Small models are cheap per
+token and can be dear per win. For generation
 alone, compute per token falls about 190-fold from a hypothetical dense 1.5T writer to
 an 8B one. With equal token counts and compute unit costs, the smaller
 writer can tolerate a win rate about 190 times lower before that
