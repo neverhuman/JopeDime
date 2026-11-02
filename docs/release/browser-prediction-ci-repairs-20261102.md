@@ -20,7 +20,7 @@ PR1702 and subsequent audit cleanups renamed variables or rewrote equivalent exp
 
 The application now locks sklearn1.9.1, but benchmarks/prepare.py explicitly requires1.7.2 for its frozen split identity. Keep the application lock untouched. Run every benchmark preparation test in its own locked Python3.12 project with sklearn1.7.2, preserving a separate identity-bound nonzero execution receipt and full JUnit. The parent Python receipt continues to count its own application/adaptor pytest run once. Benchmark lock and project are bound in CI receipt inputs. No splitter/labels/partitions change, no version guard is relaxed.
 
-## Authenticated CLI HTTPS (A24)
+## Authenticated CLI HTTPS (A20)
 
 PR1659 introduced the explicitly requested cloud login and model sync. Its mandatory TLS dependencies violated the older no-TLS appliance fence. Make rustls optional and select it plus ureq TLS only through the existing client feature. The no-default-feature and inference-only GPU selections retain featureless ureq and no TLS/native-crypto closure; attempting HTTPS without client fails explicitly. The normal client keeps its verified HTTPS behavior and the existing workspace AWS-LC provider, with no second provider.
 
@@ -43,3 +43,7 @@ After restoring the imported bytes, the original P3 receipt assertion fails beca
 ## Native compatibility and local test isolation
 
 All13 compatibility surfaces compare successfully in the documented identity-only mode; only source/lock/lineage metadata changes, with old/new identities announced before regeneration and a recorded transition. No numerical or emitted/model fixture is rewritten. The local full suite also exposed default-engine interference and invalid fixture placement when TMPDIR was inside a registered checkout. The typed in-process API unit now owns a private temporary engine instead of opening a user's running default engine. Test scratch is staged outside registered checkouts and parallel fixtures are bounded. Qualified RES07 fixtures are materialized from the README's independently SHA-pinned catalog a16efb5c3a8bd09ea08caaaf030c199f5d2d733153874d112b928a3f1cd2bb86, using original read-only custody objects from xbabe2, never fabricated or regenerated numerical fixtures. These are environment corrections and stronger isolation, not skipped assertions.
+
+## Measured development-package gate
+
+The old A18 fixture size gate also failed unchanged pre-connected-CLI main. Paired same-host dist-ci builds measure8144488/8267461B code/package before PR1659 and8144648/8268941B for this candidate. Only160B code and1480B net package growth are new; compressed dependency notices account for the net package delta, with model bytes unchanged. A21 records exact source/code/package hashes and explicitly unattributed inherited main growth. Only the development fixture baseline updates, keeping5% tolerance and every release profile/ceiling unchanged. The candidate passes development-key cryptographic verification, the updated size gate and the network-isolated clean-host fit/predict check.
