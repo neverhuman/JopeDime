@@ -1140,6 +1140,10 @@ crates/jope-engine/src/proposals.rs
 crates/jope-engine/src/qualification_slots.rs
 crates/jope-engine/src/queue.rs
 crates/jope-engine/src/ranked_proposals.rs
+crates/jope-engine/src/ranked_proposals/assemble.rs
+crates/jope-engine/src/ranked_proposals/catalog.rs
+crates/jope-engine/src/ranked_proposals/sampling.rs
+crates/jope-engine/src/ranked_proposals/worker.rs
 crates/jope-engine/src/resident_protocol.rs
 crates/jope-engine/src/runtime_custody.rs
 crates/jope-engine/src/sealed_storage.rs
