@@ -49,7 +49,6 @@ import json
 import math
 import multiprocessing
 from pathlib import Path
-import pickle
 import random
 import resource
 import select
@@ -150,11 +149,11 @@ def _forked_worker_entry(w_fd: int, r_fd: int, worker_fn, item) -> None:
         pass
     try:
         res = worker_fn(item)
-        payload = pickle.dumps(("OK", res), protocol=pickle.HIGHEST_PROTOCOL)
+        payload = json.dumps(("OK", res), separators=(",", ":")).encode("utf-8")
     except DeadlineExpiredError as exc:
-        payload = pickle.dumps(("DEADLINE", str(exc)), protocol=pickle.HIGHEST_PROTOCOL)
+        payload = json.dumps(("DEADLINE", str(exc)), separators=(",", ":")).encode("utf-8")
     except BaseException as exc:
-        payload = pickle.dumps(("ERR", f"{type(exc).__name__}: {exc}"), protocol=pickle.HIGHEST_PROTOCOL)
+        payload = json.dumps(("ERR", f"{type(exc).__name__}: {exc}"), separators=(",", ":")).encode("utf-8")
     try:
         with os.fdopen(w_fd, "wb", closefd=True) as wf:
             wf.write(payload)
@@ -402,7 +401,7 @@ class DeadlineController:
                             self._active_worker_pids.discard(proc.pid)
                         proc.join(timeout=0.2)
                         if buf:
-                            status, payload = pickle.loads(bytes(buf))
+                            status, payload = json.loads(bytes(buf).decode("utf-8"))
                             if status == "OK":
                                 results_by_pos[pos] = payload
                             elif status == "DEADLINE":
