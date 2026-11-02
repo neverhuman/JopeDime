@@ -61,7 +61,8 @@ pub fn emit(genome: &GenomeIr, options: &EmitOptions) -> Result<GoEmitted> {
 }
 
 fn recipe_from_rust(rust: String) -> GoEmitted {
-    let source = include_str!("go/model.go").replace("__BOUND_HEADERS__", "[]string(nil)");
+    let source = include_str!("../templates/go/model.go.template")
+        .replace("__BOUND_HEADERS__", "[]string(nil)");
     let body = format!(
         "{}\n{}",
         include_str!("go/buffers.rs.txt"),
@@ -114,7 +115,8 @@ pub fn emit_bound(
             .collect::<Vec<_>>()
             .join(",")
     );
-    let source = include_str!("go/model.go").replace("__BOUND_HEADERS__", &json);
+    let source = include_str!("../templates/go/model.go.template")
+        .replace("__BOUND_HEADERS__", &json);
     let rust_headers = format!(
         "[{}]",
         headers
