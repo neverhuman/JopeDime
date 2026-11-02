@@ -1448,6 +1448,10 @@ crates/jope-learning/src/progress/cadence.rs
 crates/jope-learning/src/progress/census.rs
 crates/jope-learning/src/progress/inventory.rs
 crates/jope-learning/src/progress/outbox.rs
+crates/jope-learning/src/progress/outbox/append.rs
+crates/jope-learning/src/progress/outbox/delivery.rs
+crates/jope-learning/src/progress/outbox/open.rs
+crates/jope-learning/src/progress/outbox/query.rs
 crates/jope-learning/src/progress/publish.rs
 crates/jope-learning/src/progress/publish/publication.rs
 crates/jope-learning/src/progress/rebuild.rs
