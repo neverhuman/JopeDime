@@ -272,8 +272,8 @@ fn unrepresentable_floats(r: &HwmRecord) -> Vec<String> {
 ///
 /// This is deliberately *not* a [`Decision`]: a rejection event is itself a ledger write, and the
 /// whole point is that this record cannot be put in the ledger in any shape. Writing it as a
-/// rejection would poison the chain exactly as accepting it would; writing it with a substituted
-/// score would be a fabricated number in an append-only record of what was measured. So the run
+/// rejection would poison the chain exactly as accepting it would; recording a substitute score
+/// would misstate what was measured in this append-only ledger. So the run
 /// fails, names the candidate and the field, and nothing moves — the source is wrong and only the
 /// source can fix it. Ordinary ties and inferior candidates are unaffected: they are
 /// representable, so they keep their readable rejection event.
