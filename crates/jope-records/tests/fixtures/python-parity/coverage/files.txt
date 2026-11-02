@@ -662,6 +662,15 @@ crates/jope-campaigns/src/search_v3/qualification.rs
 crates/jope-campaigns/src/selfplay_core.rs
 crates/jope-campaigns/src/selfplay_data.rs
 crates/jope-campaigns/src/selfplay_expansion.rs
+crates/jope-campaigns/src/selfplay_expansion/activation.rs
+crates/jope-campaigns/src/selfplay_expansion/cache.rs
+crates/jope-campaigns/src/selfplay_expansion/context.rs
+crates/jope-campaigns/src/selfplay_expansion/inventory.rs
+crates/jope-campaigns/src/selfplay_expansion/live.rs
+crates/jope-campaigns/src/selfplay_expansion/model.rs
+crates/jope-campaigns/src/selfplay_expansion/sealed.rs
+crates/jope-campaigns/src/selfplay_expansion/sidecars.rs
+crates/jope-campaigns/src/selfplay_expansion/tests.rs
 crates/jope-campaigns/src/selfplay_ingest.rs
 crates/jope-campaigns/src/selfplay_registry.rs
 crates/jope-campaigns/src/selfplay_runtime.rs
