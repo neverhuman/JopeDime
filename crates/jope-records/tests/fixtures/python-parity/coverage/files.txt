@@ -1165,6 +1165,9 @@ crates/jope-engine/src/eval_registry/service/native_scq.rs
 crates/jope-engine/src/eval_registry/service/query_worker.rs
 crates/jope-engine/src/eval_registry/service/runtime.rs
 crates/jope-engine/src/eval_registry/service/tests.rs
+crates/jope-engine/src/eval_registry/service/tests/executable_cache.rs
+crates/jope-engine/src/eval_registry/service/tests/query_tests.rs
+crates/jope-engine/src/eval_registry/service/tests/service_tests.rs
 crates/jope-engine/src/eval_registry/service/transport.rs
 crates/jope-engine/src/eval_registry/service/worker.rs
 crates/jope-engine/src/eval_registry/witness.rs
