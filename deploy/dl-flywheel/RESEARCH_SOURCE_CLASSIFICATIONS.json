@@ -5455,11 +5455,11 @@
       }
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/runner.py": {
-      "bytes": 29154,
-      "sha256": "c5f4dbc74eb51b31d00bf73b0860271397525014ed935ade1d651077a19aa044",
+      "bytes": 29531,
+      "sha256": "06a4412fe3dd81e1557ec7a3254674e007f1e75dc609db831f3fe2941412a2f0",
       "classification": {
         "role": "research",
-        "reason": "H209 single-attempt CUDA training on pinned historical real-S3 TRAIN pools, frozen r882 exact-vector gate, role-scoped labels, B lock before A, actual-update proofs and versioned S3 custody; not fresh labels or promotion."
+        "reason": "H209 single-attempt CUDA training on pinned historical real-S3 TRAIN pools, frozen r882 exact-vector gate, role-scoped labels, B lock before A, actual-update proofs and versioned S3 custody; not fresh labels or promotion. Prospective reentry fix; original H209 execution remains pinned to d609dab4, no retry."
       }
     },
     "python:research/flywheel_selfplay/h209_gpu_delta_calibration/launch.py": {
@@ -5492,6 +5492,30 @@
       "classification": {
         "role": "research",
         "reason": "H210 preregistered CPU-only diagnostic (H203 retry, fresh seeds, xbabe1 load gate): BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882)) gated per context by an outcome-free cost signal (zgap; H129 disagreement report-only) with a FIT-only threshold (max FIT native gain s.t. FIT harm <= 5%, else fall back to r882), against r882 on the flywheel native first-argmin protocol over the 205-family pooled cross-fit; stage-1 lock before A; m=1 CANDIDATE gate (LCB95>0, p<0.05, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h211_gpu_delta_calibration/science.py": {
+      "bytes": 5334,
+      "sha256": "0849dc9fad90d4176a7d4f775d279a8845be25c1ebe17d454d954449065cfc17",
+      "classification": {
+        "role": "research",
+        "reason": "H211 prospective GPU utility-delta rerun with nonreentrant resource check, fixed static-TRAIN scientific protocol, one attempt and explicit exact-open-PR launch authority; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h211_gpu_delta_calibration/runner.py": {
+      "bytes": 29531,
+      "sha256": "e8be61a63ce24e77ec786ed48b9ce86c60981ebfe3640058c93f4324a6cbc6b6",
+      "classification": {
+        "role": "research",
+        "reason": "H211 prospective GPU utility-delta rerun with nonreentrant resource check, fixed static-TRAIN scientific protocol, one attempt and explicit exact-open-PR launch authority; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h211_gpu_delta_calibration/launch.py": {
+      "bytes": 8328,
+      "sha256": "8d68c92b047a2190b6979b6a4897c470536aa194d65eae60b79f57536176c518",
+      "classification": {
+        "role": "research",
+        "reason": "H211 prospective GPU utility-delta rerun with nonreentrant resource check, fixed static-TRAIN scientific protocol, one attempt and explicit exact-open-PR launch authority; no serving promotion."
       }
     }
   },
