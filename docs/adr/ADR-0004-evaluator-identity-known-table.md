@@ -107,3 +107,20 @@ Implementation hash `d8cc9c3e1e7e7a426e3c3e5fdfb2af74f74af5d4b2174f4019ef84d83fa
 calculations are unchanged. The identity and lineage source pins are regenerated at the
 transition commit. The append-only known-identity table is unchanged because this work has no
 shipped receipt proving that the new identity existed.
+
+## Current identity transition: fitted host loader in Rust (2026-11-02)
+
+P23 moves fitted-model loading and prediction dispatch into the Rust host runtime and retains the
+historical C++ runtime source only as a sanitizer-tested parity oracle. It changes the hashed
+`feat-math` manifest and library inputs, but does not change emitted fitted artifact bytes or the
+DSL ABI. Main already contains the #1659 lockfile update: implementation hash
+`e9540104996cee7b38ded1cbfec626eef45893a820e891619d4bfc2e92f4836d`, Cargo.lock hash
+`b6c2e5166be20e42e667ee2ea79b8efb19cefb2a066ff1432f75396bc61a2ab5`, and evaluator identity
+`d7f863b8e08bb978ef88c20b2ee999f8742d2037d7b90a3c19ea5ff2c9b21d19` precede P23. P23 advances
+the implementation hash to `25c2973f3b4acb39c6e6c6116f19f6a774c2d7cbb66b3bc0294680bd13073e6a`
+and identity digest to `d20925aef0f8de74385ef251a494e935cd64fa3804c5e4563ba37ee7a1ae93e7`; the
+Cargo.lock hash and DSL ABI remain unchanged by P23. The committed identity fixture still reflected
+an earlier lockfile hash, so the identity-only rebaseline records both the existing mainline lock
+transition and P23's implementation transition. `compat_freeze` separately verifies the emitted
+artifact byte pins. No known-identity row is added because P23 has no shipped receipt proving this
+identity existed.
