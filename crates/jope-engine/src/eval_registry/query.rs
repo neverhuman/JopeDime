@@ -181,6 +181,8 @@ fn monotonic_ns() -> Result<u64> {
         tv_sec: 0,
         tv_nsec: 0,
     };
+    // SAFETY: `time` points to a live, writable timespec and has the exact
+    // layout expected by clock_gettime; the return code gates its use below.
     ensure!(
         unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut time) } == 0,
         "query monotonic clock unavailable"
