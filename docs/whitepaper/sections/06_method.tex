@@ -269,6 +269,11 @@ test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as t
 
 \subsection{Game day: \texorpdfstring{\searchone}{search = 1}}\label{sub:method-gameday}
 
+\Cref{alg:gameday} applies the contract in \cref{box:searchone} to
+regression: frozen components, a recorded seed and one draw, with failures
+and all incurred costs retained. \Cref{sub:results-learning} compares that
+draw with a frozen reference under matched conditions.
+
 \begin{algorithm}[tb]
 \caption{Proposed game-day protocol (\searchone).}\label{alg:gameday}
 \begin{algorithmic}[1]
@@ -280,11 +285,6 @@ test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as t
 \State \Return $w,\ \hat{y}$
 \end{algorithmic}
 \end{algorithm}
-
-\Cref{alg:gameday} applies the contract in \cref{box:searchone} to
-regression: frozen components, a recorded seed and one draw, with failures
-and all incurred costs retained. \Cref{sub:results-learning} compares that
-draw with a frozen reference under matched conditions.
 
 Report later search separately, as \citet{silver2017mastering} reported
 AlphaGo Zero's raw network apart from its search. We now turn to the
