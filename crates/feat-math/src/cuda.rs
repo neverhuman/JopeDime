@@ -235,7 +235,7 @@ fn assemble(
     let mut files: BTreeMap<String, String> = BTreeMap::from([
         (
             "cuda/model.hpp".into(),
-            include_str!("cuda/model.hpp").into(),
+            include_str!("cuda/model.hpp.template").into(),
         ),
         (
             "cuda/model.cu".into(),
