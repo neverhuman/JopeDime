@@ -18,6 +18,7 @@ Admission needs load1 <= 60 and load5 <= 55 (amendment A1), host CPU <= 50%, Mem
 
 import argparse
 from collections import deque
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -30,6 +31,13 @@ import time
 import psutil
 
 HERE = Path(__file__).resolve().parent
+_shared_path = HERE.parent / "h217_gated025_confirm/monitor.py"
+_shared_spec = importlib.util.spec_from_file_location("h217_monitor_runtime", _shared_path)
+if _shared_spec is None or _shared_spec.loader is None:
+    raise RuntimeError(f"cannot import shared monitor runtime {_shared_path}")
+_shared_monitor = importlib.util.module_from_spec(_shared_spec)
+sys.modules[_shared_spec.name] = _shared_monitor
+_shared_spec.loader.exec_module(_shared_monitor)
 AFFINITY = sorted(os.sched_getaffinity(0))
 HOST_CORES = len(AFFINITY)  # effective allocation, not SC_NPROCESSORS_ONLN
 LOAD_LIMIT = 0.85 * HOST_CORES
@@ -150,58 +158,21 @@ def check_source(launch):
         raise RuntimeError("prelaunch source binding failed: " + done.stderr[-500:])
 
 
-def tree_of(child):
-    tree = [psutil.Process()]
-    if child is not None:
-        try:
-            p = psutil.Process(child.pid)
-            tree += [p] + p.children(recursive=True)
-        except psutil.NoSuchProcess:
-            pass
-    return {p.pid: p for p in tree}.values()
+tree_of = _shared_monitor.tree_of
 
 
 def host_cpu():
-    """Mean busy percent of the allowed CPUs since the previous call."""
-    per = psutil.cpu_percent(percpu=True)
-    return sum(per[i] for i in AFFINITY) / HOST_CORES
+    return _shared_monitor.host_cpu(AFFINITY)
 
 
 def snapshot(child=None, history=None):
-    disk = psutil.disk_usage("/home/ubuntu")
-    rss = threads = 0
-    cpu_seconds = 0.0
-    for p in tree_of(child):
-        try:
-            rss += p.memory_info().rss
-            threads += p.num_threads()
-            t = p.cpu_times()
-            cpu_seconds += t.user + t.system
-        except psutil.NoSuchProcess:
-            pass
-    now = time.monotonic()
-    cores = 0.0
-    if history is not None:
-        history.append((now, cpu_seconds))
-        while len(history) > 1 and now - history[0][0] > WINDOW:
-            history.popleft()
-        t0, c0 = history[0]
-        cores = (cpu_seconds - c0) / (now - t0) if now - t0 >= 1.0 else 0.0
-    load1, load5, _ = os.getloadavg()
-    return dict(
-        load=load1,
-        load5=load5,
-        cpu=host_cpu(),
-        available=psutil.virtual_memory().available,
-        free=disk.free,
-        disk_used_fraction=disk.used / (disk.used + disk.free),
-        rss=rss,
-        threads=threads,
-        tree_cpu_seconds=cpu_seconds,
-        tree_cores=cores,
-        host_online_cores=os.cpu_count(),
-        effective_cores=HOST_CORES,
+    return _shared_monitor.snapshot(
+        child,
+        history,
+        affinity=AFFINITY,
+        host_cores=HOST_CORES,
         load_limit=LOAD_LIMIT,
+        window=WINDOW,
     )
 
 

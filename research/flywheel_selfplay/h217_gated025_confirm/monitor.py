@@ -143,13 +143,21 @@ def tree_of(child):
     return {p.pid: p for p in tree}.values()
 
 
-def host_cpu():
+def host_cpu(affinity=AFFINITY):
     """Mean busy percent of the allowed CPUs since the previous call."""
     per = psutil.cpu_percent(percpu=True)
-    return sum(per[i] for i in AFFINITY) / HOST_CORES
+    return sum(per[i] for i in affinity) / len(affinity)
 
 
-def snapshot(child=None, history=None):
+def snapshot(
+    child=None,
+    history=None,
+    *,
+    affinity=AFFINITY,
+    host_cores=HOST_CORES,
+    load_limit=LOAD_LIMIT,
+    window=WINDOW,
+):
     disk = psutil.disk_usage("/home/ubuntu")
     rss = threads = 0
     cpu_seconds = 0.0
@@ -165,7 +173,7 @@ def snapshot(child=None, history=None):
     cores = 0.0
     if history is not None:
         history.append((now, cpu_seconds))
-        while len(history) > 1 and now - history[0][0] > WINDOW:
+        while len(history) > 1 and now - history[0][0] > window:
             history.popleft()
         t0, c0 = history[0]
         cores = (cpu_seconds - c0) / (now - t0) if now - t0 >= 1.0 else 0.0
@@ -173,7 +181,7 @@ def snapshot(child=None, history=None):
     return dict(
         load=load1,
         load5=load5,
-        cpu=host_cpu(),
+        cpu=host_cpu(affinity),
         available=psutil.virtual_memory().available,
         free=disk.free,
         disk_used_fraction=disk.used / (disk.used + disk.free),
@@ -182,8 +190,8 @@ def snapshot(child=None, history=None):
         tree_cpu_seconds=cpu_seconds,
         tree_cores=cores,
         host_online_cores=os.cpu_count(),
-        effective_cores=HOST_CORES,
-        load_limit=LOAD_LIMIT,
+        effective_cores=host_cores,
+        load_limit=load_limit,
     )
 
 

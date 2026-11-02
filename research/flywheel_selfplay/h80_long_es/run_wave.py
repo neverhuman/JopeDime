@@ -33,6 +33,8 @@ def _import_module(name: str, path: Path):
 
 fifo_lock = _import_module("h80_fifo_lock", FIFO_PATH)
 runner_mod = _import_module("h80_runner_for_wave", RUNNER)
+H77_WAVE_PATH = ROOT / "research/flywheel_selfplay/h77_long_es/run_wave.py"
+h77_wave = _import_module("h77_wave_runtime", H77_WAVE_PATH)
 
 LOCK = fifo_lock.LOCK_PATH
 QUEUE_DIR = fifo_lock.QUEUE_DIR
@@ -855,43 +857,24 @@ def terminal_mode() -> dict:
 
 
 def all_mode(args) -> dict:
-    """Run timing -> set/check cap -> run outcomes -> build admission/metrics -> run terminal-val if admitted."""
-    timing_res = timing_mode(args)
-    prior_wall = float(timing_res["coordinator_wall_seconds"])
-    prior_wait = float(timing_res["lock_wait_seconds"])
-    outcome_res = outcome_mode(args, prior_gpu_wall=prior_wall, prior_wait=prior_wait)
-    if not outcome_res.get("complete"):
-        return {"timing": timing_res, "outcomes": outcome_res, "complete": False}
-    subprocess.run([sys.executable, str(BUILD_METRICS), str(RUN_ROOT)], cwd=ROOT, check=True)
-    term_res = terminal_mode()
-    if term_res.get("read_count", 0) > 0:
-        subprocess.run([sys.executable, str(BUILD_METRICS), str(RUN_ROOT)], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, str(AUDIT), "--stage", "outcomes", str(RUN_ROOT)], cwd=ROOT, check=True)
-    subprocess.run([sys.executable, str(AUDIT), "--stage", "terminal", str(RUN_ROOT)], cwd=ROOT, check=True)
-    return {"timing": timing_res, "outcomes": outcome_res, "terminal_val": term_res, "complete": True}
+    return h77_wave.run_all(
+        args,
+        timing_mode,
+        outcome_mode,
+        terminal_mode,
+        lambda: subprocess.run(
+            [sys.executable, str(BUILD_METRICS), str(RUN_ROOT)], cwd=ROOT, check=True
+        ),
+        lambda stage: subprocess.run(
+            [sys.executable, str(AUDIT), "--stage", stage, str(RUN_ROOT)],
+            cwd=ROOT,
+            check=True,
+        ),
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    modes = parser.add_mutually_exclusive_group(required=True)
-    modes.add_argument("--timing", action="store_true")
-    modes.add_argument("--outcomes", action="store_true")
-    modes.add_argument("--terminal-val", action="store_true")
-    modes.add_argument("--all", action="store_true")
-    parser.add_argument("--amendment", type=Path)
-    parser.add_argument("--prior-lock-wait-seconds", type=float, default=0.0)
-    args = parser.parse_args()
-    if args.prior_lock_wait_seconds < 0:
-        raise RuntimeError("prior lock wait cannot be negative")
-    if args.timing:
-        mode, result = "timing", timing_mode(args)
-    elif args.outcomes:
-        mode, result = "outcomes", outcome_mode(args)
-    elif args.terminal_val:
-        mode, result = "terminal-val", terminal_mode()
-    else:
-        mode, result = "all", all_mode(args)
-    print(json.dumps({"mode": mode, "result": result}, sort_keys=True), flush=True)
+    h77_wave.run_cli(timing_mode, outcome_mode, terminal_mode, all_mode)
 
 
 if __name__ == "__main__":
