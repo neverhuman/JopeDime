@@ -32,7 +32,7 @@ use crate::control::{ControlChannel, ControlPair, DaemonControlFrameError, CONTR
 
 pub const EXEC_HELPER_MARKER: &str = "__scqd_exec_helper";
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Debug, Error)]
 pub enum ExecutorError {
     #[error("workload program must be absolute: {0}")]
     ProgramNotAbsolute(PathBuf),

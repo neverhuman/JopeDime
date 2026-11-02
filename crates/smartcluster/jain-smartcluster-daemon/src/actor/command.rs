@@ -1,6 +1,6 @@
 use super::*;
 
-enum ActorCommand {
+pub(super) enum ActorCommand {
     Shutdown(oneshot::Sender<()>),
     ShutdownRetry,
     Request {

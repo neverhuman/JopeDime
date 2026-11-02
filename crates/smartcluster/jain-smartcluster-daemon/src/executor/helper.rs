@@ -30,14 +30,16 @@ pub fn run_exec_helper(arguments: &[String]) -> Result<(), ExecutorError> {
     })
 }
 
-struct HelperInvocation<'a> {
-    expected_parent: Pid,
-    identity: Option<(u32, u32)>,
-    program: &'a str,
-    arguments: &'a [String],
+pub(super) struct HelperInvocation<'a> {
+    pub(super) expected_parent: Pid,
+    pub(super) identity: Option<(u32, u32)>,
+    pub(super) program: &'a str,
+    pub(super) arguments: &'a [String],
 }
 
-fn parse_helper_arguments(arguments: &[String]) -> Result<HelperInvocation<'_>, ExecutorError> {
+pub(super) fn parse_helper_arguments(
+    arguments: &[String],
+) -> Result<HelperInvocation<'_>, ExecutorError> {
     let [expected_parent, uid, gid, remainder @ ..] = arguments else {
         return Err(ExecutorError::HelperArguments);
     };

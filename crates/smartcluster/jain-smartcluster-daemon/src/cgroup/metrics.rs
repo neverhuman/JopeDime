@@ -47,12 +47,12 @@ pub(crate) fn read_pids(path: &Path) -> Result<Vec<i32>, CgroupError> {
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-struct CgroupEvents {
-    populated: bool,
-    frozen: bool,
+pub(super) struct CgroupEvents {
+    pub(super) populated: bool,
+    pub(super) frozen: bool,
 }
 
-pub(crate) fn read_cgroup_events(path: &Path) -> Result<CgroupEvents, CgroupError> {
+pub(super) fn read_cgroup_events(path: &Path) -> Result<CgroupEvents, CgroupError> {
     let source = fs::read_to_string(path.join("cgroup.events"))?;
     let populated = parse_named(&source, "populated")? != 0;
     let frozen = parse_named(&source, "frozen")? != 0;

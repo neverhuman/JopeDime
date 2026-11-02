@@ -272,7 +272,7 @@ impl Drop for LaunchGuard {
     }
 }
 
-fn signal_process_group(pid: u32, signal: Signal) -> Result<(), ExecutorError> {
+pub(super) fn signal_process_group(pid: u32, signal: Signal) -> Result<(), ExecutorError> {
     let pid = i32::try_from(pid).map_err(|_| ExecutorError::ProcessIdOutOfRange(pid))?;
     match kill(Pid::from_raw(-pid), signal) {
         Ok(()) | Err(nix::errno::Errno::ESRCH) => Ok(()),

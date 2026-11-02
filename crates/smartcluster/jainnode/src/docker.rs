@@ -19,9 +19,9 @@ mod protocol;
 pub use engine::*;
 pub(crate) use protocol::percent_encode;
 pub(super) use protocol::{
-    decode_chunked, decode_http_body, drain_chunked, drain_content_length, find_subsequence,
-    parse_http_body_framing, read_stream_header, take_multiplexed_logs, CreateResponse,
-    HttpBodyFraming, InspectResponse, InspectState, WaitResponse,
+    decode_http_body, drain_chunked, drain_content_length, find_subsequence,
+    parse_http_body_framing, take_multiplexed_logs, CreateResponse, HttpBodyFraming,
+    InspectResponse, WaitResponse,
 };
 
 #[cfg(test)]
@@ -162,6 +162,8 @@ mod tests {
         let listener = UnixListener::bind(&socket).unwrap();
         let server = tokio::spawn(async move {
             let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request = [0_u8; 4096];
+            stream.read(&mut request).await.unwrap();
             stream.write_all(&response).await.unwrap();
             stream.shutdown().await.unwrap();
         });

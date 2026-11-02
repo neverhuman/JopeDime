@@ -3,6 +3,7 @@ use std::os::unix::fs::{symlink, PermissionsExt};
 use ed25519_dalek::SigningKey;
 
 use super::*;
+use crate::EventSink;
 use crate::{EventIdentity, ExecutionPhase};
 
 fn hub_key() -> SigningKey {

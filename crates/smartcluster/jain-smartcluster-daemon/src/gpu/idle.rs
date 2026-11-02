@@ -41,7 +41,7 @@ impl QualifiedIdleBaseline {
 }
 
 /// Both process inventories must succeed before any idle-baseline decision.
-fn complete_process_inventory<T>(
+pub(super) fn complete_process_inventory<T>(
     compute: Result<Vec<T>, NvmlError>,
     graphics: Result<Vec<T>, NvmlError>,
 ) -> Result<Vec<T>, NvmlError> {

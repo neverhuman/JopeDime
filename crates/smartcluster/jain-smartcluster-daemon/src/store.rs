@@ -213,14 +213,12 @@ impl std::fmt::Debug for Store {
     }
 }
 
-impl Store {
-    include!("store/open.rs");
-    include!("store/submit.rs");
-    include!("store/reads.rs");
-    include!("store/transitions.rs");
-    include!("store/leases.rs");
-    include!("store/metadata.rs");
-}
+include!("store/open.rs");
+include!("store/submit.rs");
+include!("store/reads.rs");
+include!("store/transitions.rs");
+include!("store/leases.rs");
+include!("store/metadata.rs");
 
 #[cfg(test)]
 mod tests;

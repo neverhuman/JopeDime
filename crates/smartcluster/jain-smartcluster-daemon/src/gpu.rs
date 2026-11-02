@@ -28,11 +28,9 @@ pub(crate) use idle::qualified_idle_usage;
 pub use idle::QualifiedIdleBaseline;
 
 mod inventory;
-pub(super) use inventory::{is_visible, parse_visible_devices};
 pub use inventory::{GpuDevice, GpuInventory, GpuProcess};
 
 mod mps;
-pub(super) use mps::{compute_percent, format_vram_limits, parse_ps, parse_termination_response};
 pub use mps::{mps_client_matches_pids, MpsCapability, MpsClient, MpsClientLimits, MpsController};
 
 mod events;

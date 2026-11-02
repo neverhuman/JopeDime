@@ -1,8 +1,8 @@
-use super::*;
-
 use std::{path::Path, sync::Mutex, time::Duration};
 
 use crate::docker::DockerError;
+use crate::*;
+use async_trait::async_trait;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{UnixListener, UnixStream},

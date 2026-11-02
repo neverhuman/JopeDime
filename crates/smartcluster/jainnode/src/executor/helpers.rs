@@ -87,7 +87,7 @@ pub(crate) struct Emitter {
     cursor: u64,
     stream_offset: u64,
     control_position: u64,
-    phase: ExecutionPhase,
+    pub(super) phase: ExecutionPhase,
 }
 
 impl Emitter {

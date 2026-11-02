@@ -1,4 +1,5 @@
 use super::*;
+use jain_smartcluster_core::PriorityClass;
 
 impl DaemonActor {
     pub(crate) async fn schedule_one(&mut self) -> Result<(), ActorError> {

@@ -134,7 +134,7 @@ pub(crate) fn decode_chunked(mut body: &[u8]) -> Result<Vec<u8>, DockerError> {
     }
 }
 
-async fn read_stream_header(
+pub(super) async fn read_stream_header(
     stream: &mut UnixStream,
     timeout: Duration,
 ) -> Result<(String, Vec<u8>), DockerError> {

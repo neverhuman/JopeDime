@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 #[test]
 fn visible_devices_filters_empty_and_disabled_values() {
     assert!(parse_visible_devices("").is_empty());
@@ -138,3 +136,5 @@ fn ten_percent_vram_headroom_is_reserved() {
     let total = 80_u64 * 1024 * 1024 * 1024;
     assert_eq!(total.saturating_mul(90) / 100, 72_u64 * 1024 * 1024 * 1024);
 }
+use super::inventory::{is_visible, parse_visible_devices};
+use super::mps::{compute_percent, format_vram_limits, parse_ps, parse_termination_response};

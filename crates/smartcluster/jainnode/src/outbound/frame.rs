@@ -1,3 +1,4 @@
+use super::validation::empty_node_signature;
 use super::*;
 
 impl NodeControlFrame {
