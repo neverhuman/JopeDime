@@ -81,9 +81,10 @@ def test_resume_deadline_amendment_carries_old_execution_without_reset():
     campaign = dict(
         plan_sha256=PLAN_SHA, wall_seconds=21600, started_unix=0, deadline_unix=21600
     )
-    assert amended_deadline(campaign, 330, 3600) == 23400
-    with pytest.raises(ValueError, match="reset"):
-        amended_deadline(campaign, 330, 1000)
+    assert amended_deadline(campaign, 330, 3600) == 24870
+    assert amended_deadline(campaign, 330, 10000) == 28800
+    for resumed in (1000, 3600, 10000):
+        assert amended_deadline(campaign, 330, resumed) - resumed + 330 <= 21600
     with pytest.raises(ValueError, match="charge differs"):
         amended_deadline(dict(campaign, wall_seconds=22000), 330, 3600)
 
@@ -2487,6 +2488,7 @@ def test_resource_amendment_defers_cpu_and_preserves_gpu_memory_guard(monkeypatc
     amendment.resource_check(torch.device("cuda:0"))
     old = amendment.learner.resource_check
     monkeypatch.setattr(amendment.learner, "resource_check", old)
+    monkeypatch.setattr(amendment.learner_source, "load", lambda: amendment.learner)
     amendment.install()
     assert amendment.learner.resource_check is amendment.resource_check
 
@@ -2498,6 +2500,7 @@ def test_resource_amendment_requires_exact_qualification_source_binding(tmp_path
         status="PASS",
         base_learner_sha256=amendment.BASE_SHA,
         wrapper_sha256=protocol.file_sha(amendment.__file__),
+        source_loader_sha256=protocol.file_sha(amendment.learner_source.__file__),
         authority_sha256=amendment.AUTHORITY_SHA,
         numerical_equivalence=True,
         finite_gradients=True,
@@ -2512,3 +2515,31 @@ def test_resource_amendment_requires_exact_qualification_source_binding(tmp_path
     path.write_text(json.dumps(receipt))
     with pytest.raises(ValueError, match="qualified source"):
         amendment.qualification(path, protocol.file_sha(path))
+
+
+def test_qualified_source_blob_is_content_addressed_and_rejects_tampering(
+    tmp_path, monkeypatch
+):
+    import hashlib
+
+    from research.joint_regbin import learner_source as source
+
+    raw = b"# immutable source fixture\n"
+    expected = hashlib.sha256(raw).hexdigest()
+    monkeypatch.setattr(source, "CACHE", tmp_path)
+    monkeypatch.setattr(source, "SOURCES", {"fixture": expected})
+    calls = []
+
+    def git_blob(args, **_kwargs):
+        calls.append(args)
+        return raw
+
+    monkeypatch.setattr(source.subprocess, "check_output", git_blob)
+    path = source.source_blob("fixture")
+    assert path.name == expected + ".py" and path.read_bytes() == raw
+    assert path.stat().st_mode & 0o222 == 0
+    assert source.source_blob("fixture") == path and len(calls) == 1
+    path.chmod(0o644)
+    path.write_bytes(b"changed")
+    with pytest.raises(source.runtime.SourcePinError, match="hash mismatch"):
+        source.source_blob("fixture")

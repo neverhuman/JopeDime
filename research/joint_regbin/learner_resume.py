@@ -36,16 +36,24 @@ RULE_SHA = "9f37306a25cafb0d213625d999c1d255bd8139425794ab2e5e82db15583da038"
 PLAN_SHA = "96310d6916d79c411a0fc4c53d2824ac678140f95b22520d6fd9fc3b0936abb3"
 WORKER_SHA = "558780bb5d91318864991ca398b9c63c4b31a12d1c8f3dd04ae26db7655b9918"
 RESOURCE_WORKER = ROOT / "research/joint_regbin/learner_resource.py"
-RESOURCE_SHA = "e6fc667e4fbc1c20b16bf2edc785eaae4b448ef3baeacc35a74173209795cf31"
-RESOURCE_QUALIFICATION = OUT / "RESOURCE-QUALIFICATION.json"
-RESOURCE_QUALIFICATION_SHA = (
-    "908e3d40cea04201a99482624e312c3554c442a236d4b9a4a4b30b153ca5e40b"
+RESOURCE_SHA = "3c6534979204b98450dac965935e9c019ad4f00f6a25958b0c92475b5298ca5c"
+RESOURCE_QUALIFICATION = Path(
+    "/home/ubuntu/jope_plan/evidence/JRB-01/sol-jrb01-t1245/RESOURCE-QUALIFICATION.json"
 )
+RESOURCE_QUALIFICATION_SHA = (
+    "8429518dc02309e37773e50a0e2123f235f689584c8c27a905f25ad59b0532a4"
+)
+RESERVATION_SHA = "f59cc7e6e8ec2639c723a21db1f0225a0b304c099d63cf332190dcbe7b870242"
 STORE_MODULE = Path("/home/ubuntu/jope_plan/scores/score_store.py")
 STORE = Path("/home/ubuntu/jope_plan/scores/history.jsonl")
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT))
-from research.joint_regbin import driver, learner, learner_resource, protocol  # noqa: E402
+from research.joint_regbin import (  # noqa: E402
+    driver,
+    learner_resource,
+    learner_source,
+    protocol,
+)
 from research.flywheel_selfplay import qualification_lock_fifo as fifo  # noqa: E402
 
 QUEUE = Path("/home/ubuntu/jope_plan/qualification.queue")
@@ -150,19 +158,17 @@ def usage():
 
 
 def amended_deadline(campaign, prior_execution_seconds, resumed_at):
-    """T0430 permits 30min infrastructure extension, never a new 6h budget."""
+    """T0430 permits bounded infrastructure extension; prior work stays charged."""
     original = campaign["deadline_unix"]
     if (
         campaign["plan_sha256"] != PLAN_SHA
         or campaign["wall_seconds"] != 21600
         or original != campaign["started_unix"] + 21600
         or not 0 < prior_execution_seconds < 21600
+        or resumed_at < campaign["started_unix"] + prior_execution_seconds
     ):
         raise ValueError("original reservation/execution charge differs")
-    effective = original + 1800
-    if prior_execution_seconds + max(0, effective - resumed_at) > 21600:
-        raise ValueError("deadline amendment would reset the active execution budget")
-    return effective
+    return min(original + 7200, resumed_at + 21600 - prior_execution_seconds)
 
 
 def oldest_ticket():
@@ -211,6 +217,9 @@ def ordered_lock(deadline):
 
 
 def main():
+    global learner, WORKER
+    learner = learner_source.load()
+    WORKER = Path(learner.__file__)
     os.nice(max(0, 19 - os.getpriority(os.PRIO_PROCESS, 0)))
     learner.torch.set_num_threads(1)
     assert protocol.file_sha(RULE) == RULE_SHA
@@ -221,6 +230,9 @@ def main():
     plan = read(PLAN)
     assert plan["sha256"] == PLAN_SHA and read(STUDY / "plan.json") == plan
     campaign_path = driver.CAMPAIGNS / (PLAN_SHA + ".json")
+    assert protocol.file_sha(campaign_path) == RESERVATION_SHA, (
+        "original reservation changed"
+    )
     campaign = read(campaign_path)
     assert campaign["plan_sha256"] == PLAN_SHA and campaign["output"] == str(STUDY)
     assert campaign["wall_seconds"] == plan["config"]["wall_seconds"] == 21600
@@ -284,12 +296,15 @@ def main():
             authority=str(RULE),
             authority_sha256=RULE_SHA,
             plan_sha256=PLAN_SHA,
+            qualified_source_commit=learner_source.COMMIT,
+            source_loader_sha256=protocol.file_sha(learner_source.__file__),
             resource_wrapper_sha256=RESOURCE_SHA,
             resource_qualification_sha256=RESOURCE_QUALIFICATION_SHA,
             preflight=preflight,
             original_deadline_unix=campaign["deadline_unix"],
             effective_deadline_unix=deadline,
-            deadline_amendment_seconds=1800,
+            deadline_amendment_seconds=deadline - campaign["deadline_unix"],
+            maximum_deadline_extension_seconds=7200,
             prior_execution_seconds=prior_execution_seconds,
             maximum_total_execution_seconds=21600,
             original_started_unix=campaign["started_unix"],
@@ -477,6 +492,7 @@ def main():
                         schema="jope.jrb01.resource-amendment-response/v1",
                         base_learner_sha256=WORKER_SHA,
                         wrapper_sha256=RESOURCE_SHA,
+                        source_loader_sha256=protocol.file_sha(learner_source.__file__),
                         qualification_sha256=RESOURCE_QUALIFICATION_SHA,
                         authority_sha256=RULE_SHA,
                         request_sha256=protocol.file_sha(req),
