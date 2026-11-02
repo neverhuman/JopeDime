@@ -476,7 +476,7 @@ pub(crate) fn checked_predictions(
             ensure!(
                 fitted["path"] == "output.json.fitted.pkl"
                     && fitted["sha256"] == artifact.sha256
-                    && fitted["reload_verified"] == true
+                    && fitted["reload_verified"] == false
                     && fitted["format"] == "jope.panel-fitted-python/v1"
                     && fitted["preprocessing_policy"] == super::methods::INPUT_POLICY
                     && fitted["bytes"].as_u64() == Some(fs::metadata(&artifact_path)?.len()),
@@ -1310,7 +1310,7 @@ mod tests {
         let output = json!({"contract":super::super::methods::ADAPTER_CONTRACT,
             "input_sha256":input_hash,"engine_version":"fixture-1","predictions":predictions,
             "fitted":{"path":"output.json.fitted.pkl","sha256":artifact_hash,
-                "reload_verified":true,"format":"jope.panel-fitted-python/v1",
+                "reload_verified":false,"format":"jope.panel-fitted-python/v1",
                 "preprocessing_policy":super::super::methods::INPUT_POLICY,
                 "bytes":artifact_bytes.len()}});
         let output_path = directory.join("output.json");

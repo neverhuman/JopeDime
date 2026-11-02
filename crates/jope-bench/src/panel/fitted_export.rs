@@ -177,7 +177,7 @@ impl PreparedExport {
                     && output["fitted"]["format"] == "jope.panel-fitted-python/v1"
                     && output["fitted"]["preprocessing_policy"] == super::methods::INPUT_POLICY
                     && output["fitted"]["sha256"] == *fitted
-                    && output["fitted"]["reload_verified"] == true
+                    && output["fitted"]["reload_verified"] == false
                     && self.original_outputs.iter().any(|a| a.path
                         == self.original_job.directory.join("output.json.fitted.pkl")
                         && a.sha256 == *fitted),
@@ -553,10 +553,10 @@ pub fn prepare(args: ExportArgs) -> Result<Value> {
         ensure!(
             output["contract"] == super::methods::ADAPTER_CONTRACT
                 && output["fitted"]["sha256"] == fitted_sha
-                && output["fitted"]["reload_verified"] == true,
+                && output["fitted"]["reload_verified"] == false,
             "external native fitted receipt changed"
         );
-        ORDER.into_iter().map(|backend|Entry::Unsupported{backend,reason:json!({"kind":"external_library_state","detail":"complete native fitted pickle and reload remain available; standalone lowering is not implemented"})}).collect()
+        ORDER.into_iter().map(|backend|Entry::Unsupported{backend,reason:json!({"kind":"external_library_state","detail":"complete fitted pickle is retained but reload is not verified; standalone lowering is not implemented"})}).collect()
     };
     let mut prepared = PreparedExport {
         schema: "jope.fitted-winner-export/v1".into(),

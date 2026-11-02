@@ -18,10 +18,10 @@ Jankurai dispositions; the adapter row retains its existing P5 R2 policy entry.
 
 | Path | Findings | Reason and boundary |
 | --- | ---: | --- |
-| `crates/jope-bench/adapters/_panel.py` | 1 (t1900 HLT-033 `sha256:1c443c636b1b88d0d7cfdbce8cbd9df12ceb097bd4b6bd4d0add623bc890c7f7`) | P5 R2 exception #14: the private CLI serializes and reloads bytes created by the same fit invocation. The pin is trusted in-process state; SHA-256 is integrity, not authenticity. No external artifact import route exists. Pickle remains executable and arbitrary artifacts must not be loaded. |
+| `crates/jope-bench/adapters/_panel.py` | 1 (t1900 HLT-033 `sha256:1c443c636b1b88d0d7cfdbce8cbd9df12ceb097bd4b6bd4d0add623bc890c7f7`) | Superseded by the t1955 deeper fix: the private CLI emits and hashes pickle bytes but does not deserialize them; it reports `reload_verified: false`. The artifact remains opaque executable state, not a safe import format. |
 | `research/joint_regbin/runtime.py` | 2 | HLT-033 `sha256:7e8d63e1b2027b450f784c4b9679325c4f0cae377782f0579c4b116bf93c9e12` and `sha256:5027af590b9fc66853e882519f2dccd5613a3544317a7cbf854f62594534825c`: `_load_pinned_h144_runtime` rejects symlinks/non-files and checks the one-read source bytes against `H144_RUNTIME_SHA256` before `exec`; `_load_pinned_fused_source` does the same against `FUSED_SOURCE_SHA256`, which is also bound by the verified H144 manifest. H144 pins the runtime bytes and manifest. This is integrity of fixed research source, not authentication or a safe boundary for caller-supplied pickle. |
 | `research/joint_regbin/test_study.py` | 1 | HLT-033 `sha256:6361b80d037b9716c419f848d804622385fcc62fe80a3cf1cdf661887c39edc7`: controlled `tmp_path` negative test replaces a pinned source after the check and asserts the loader rejects it without running replacement bytes; it covers one-read/TOCTOU behavior and does not deserialize external artifacts. |
-| `crates/jope-bench/adapters/test_panel.py` | 4 | P5 R2 exception #15–18: synthetic tests inspect or spy on model artifacts produced by their own fit helper. Tests now call the private adapter helper rather than `pickle.loads` directly. |
+| `crates/jope-bench/adapters/test_panel.py` | 4 | Superseded by the t1955 deeper fix: synthetic fit tests patch `pickle.loads` to fail, proving fitting does not deserialize the emitted artifact. |
 | `deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py` | 1 | Test-only in-memory SQLite setup. Fixture row values use placeholders; table names come from fixed module constants. |
 | `deploy/dl-flywheel/pipelines/encoding/next128/test_next128.py` | 11 | Test-only in-memory SQLite setup. Row values are bound; dynamic placeholder counts derive from fixture shape, and identifiers are fixed queue constants. |
 | `deploy/dl-flywheel/pipelines/final_capture_v1/probe.py` | 2 | Fixed read-only SELECT statements in a source-pinned qualification probe; no caller-controlled SQL fragments. |
@@ -34,7 +34,8 @@ Jankurai dispositions; the adapter row retains its existing P5 R2 policy entry.
 | `research/flywheel_selfplay/h106_w9_proposal_scorer_replay/run_h106.py` | 1 | Program models are SHA-256 checked against `PROG_MODELS_SHA` before loading; the surrounding replay uses pinned research inputs. |
 | `research/flywheel_selfplay/h115_w6_xfamily/run_h114.py` | 1 | Program models are SHA-256 checked against the preregistered `PROG_MODELS_SHA` before loading; H106/H110 source and fit inputs are pinned. |
 
-The panel pickle case is a documented private fit/replay trust boundary, not a claim that
-untrusted pickle is safe. Any public import or caller-supplied artifact path requires
-native engine formats, a closed preprocessing schema, Rust contract updates, and all
-twelve engine/task replay-equivalence cases before this exception can be removed.
+The panel pickle case was changed in the t1955 deeper fix: it remains an opaque private
+output, and the adapter never deserializes it. Any public import or caller-supplied
+artifact path requires native engine formats, a closed preprocessing schema, Rust
+contract updates, and all twelve engine/task replay-equivalence cases before reload is
+supported.

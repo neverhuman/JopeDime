@@ -283,6 +283,7 @@ pub struct AdapterArtifact {
     pub bytes: u64,
     pub format: String,
     pub preprocessing_policy: String,
+    /// False for executable Python pickle artifacts: adapters emit and hash bytes but do not load them.
     pub reload_verified: bool,
 }
 
