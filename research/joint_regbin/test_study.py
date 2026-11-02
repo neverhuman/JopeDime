@@ -53,6 +53,81 @@ from research.joint_regbin.protocol import (
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
 
 
+def test_preparation_sampling_and_padding_preserve_only_train_rows():
+    import gzip
+    import struct
+
+    from research.joint_regbin import learner_prepare as prepare
+
+    x = np.arange(800 * 70, dtype=np.float64).reshape(800, 70)
+    y = np.zeros(800)
+    y[-2:] = 1
+    selected_x, selected_y, rows, columns = prepare.select_input(
+        x, y, "binary", "fixed"
+    )
+    replay = prepare.select_input(x, y, "binary", "fixed")
+    assert np.array_equal(selected_x, replay[0])
+    assert selected_x.shape == (300, 64)
+    assert selected_y.sum() == 2
+    assert np.array_equal(selected_x, x[rows][:, columns])
+    encoded = candidate_builder.encode_two_fold_jtt1(
+        selected_x, selected_y, task="binary", dataset="fixture", seed=136
+    )
+    padded = gzip.decompress(prepare.padded_native_input(encoded))
+    original = gzip.decompress(encoded)
+    assert struct.unpack_from("<4sIIIB", padded) == (b"JTT1", 300, 10, 64, 2)
+    assert padded[17 : len(original)] == original[17:]
+    queries = np.frombuffer(padded[len(original) :], dtype="<f8").reshape(10, 65)
+    assert np.array_equal(queries[:, :-1], selected_x[:10])
+    assert np.count_nonzero(queries[:, -1]) == 0
+    decoded_x, decoded_y = prepare.decode_train_table(encoded)
+    assert np.array_equal(decoded_x, selected_x)
+    assert np.array_equal(decoded_y, selected_y)
+    with pytest.raises(ValueError, match="TRAIN-only"):
+        prepare.decode_train_table(padded)
+    with pytest.raises(ValueError, match="each explicit binary class"):
+        prepare.select_input(x, np.zeros(800), "binary", "fixed")
+
+
+def test_preparation_metrics_bind_actual_predictions_and_fold_targets():
+    from research.joint_regbin import learner_prepare as prepare
+
+    document = dict(
+        status="completed",
+        inner_cv=[
+            dict(
+                index=0,
+                predictions=[1.0, 3.0],
+                targets=[0.0, 1.0],
+                score_rows=2,
+                train_rows=2,
+                serialized_prediction_replay_exact=True,
+                baseline_metrics=dict(rmse=999.0),
+            ),
+            dict(
+                index=1,
+                predictions=[1.0, 2.0],
+                targets=[0.0, 1.0],
+                score_rows=2,
+                train_rows=2,
+                serialized_prediction_replay_exact=True,
+                baseline_metrics=dict(rmse=999.0),
+            ),
+        ],
+    )
+    expected = [np.array([0.0, 1.0]), np.array([0.0, 1.0])]
+    metrics = prepare.dataset_metrics(document, "regression", expected)
+    assert metrics["rmse"] == pytest.approx(math.sqrt(7 / 4))
+    binary = prepare.dataset_metrics(document, "binary", expected)
+    assert 0 <= binary["auc"] <= 1
+    assert math.isfinite(binary["log_loss"])
+    with pytest.raises(ValueError, match="frozen TRAIN cut"):
+        prepare.dataset_metrics(document, "regression", [np.array([1.0, 0.0])] * 2)
+    document["status"] = "failed"
+    with pytest.raises(ValueError, match="unavailable"):
+        prepare.dataset_metrics(document, "regression")
+
+
 def _write_family_exclusion(
     tmp_path, *, catalog_sha, keys=(), ids=(), monkeypatch=None
 ):
