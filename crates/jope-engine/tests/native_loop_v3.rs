@@ -1,7 +1,7 @@
-//! Protocol-only fixtures for the draft v3 state machine. Numerical rounds
-//! require the separately admitted I32 fixture executables and are not proven here.
+//! Protocol-only fixtures for the bounded native-loop rejection state model.
+//! Numerical rounds require separately admitted I32 fixture executables and are not proven here.
 
-#[path = "../src/native_loop/v3.rs"]
+#[path = "../src/native_loop/rejection_state_machine.rs"]
 mod v3;
 
 use v3::{Campaign, Decision, Event, Grant, Round, RoundEvidence};
