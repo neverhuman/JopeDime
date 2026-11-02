@@ -37,6 +37,23 @@ Only the exact finding source path is excluded from Jankurai scoring. Tests and
 other security scans remain in place. Revisit if the pinned provenance is retired
 or either recorded hash changes; this does not cover other findings in the file.
 
+## `augmentation.py`
+
+The full audit `rerun/j_ffba82986.json` reports HLT-043 fingerprint
+`sha256:804e402da408d7af58a4c8a5c5348b120712c8460316d52c93662b46d02af3bd` at
+`deploy/dl-flywheel/jope_flywheel/augmentation.py`. The duplicate is the
+manifest-pinned historical copy
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/jope_flywheel/augmentation.py`.
+Both files have SHA-256
+`cc0343abd3bcf709cdec933601efb7febd6258b56f395ccddc0ef7d88c2611bd`; the
+identity is recorded for both paths in `deploy/dl-flywheel/SOURCE_MANIFEST.json`
+and for the frozen copy in
+`deploy/dl-flywheel/pipelines/hpc_verified_v5/provenance/FINAL_VALIDATION.json`.
+
+Only the exact finding source path is excluded from Jankurai scoring. Tests and
+other security scans remain in place. Revisit if the pinned provenance is retired
+or either recorded hash changes; this does not cover other findings in the file.
+
 ## `training_snapshot.py`
 
 The same full audit reports HLT-043 fingerprint
