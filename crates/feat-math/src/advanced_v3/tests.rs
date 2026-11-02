@@ -781,7 +781,7 @@ fn synthesis_width_overflow_is_explicit_not_a_mask_dimension_failure() {
 
 #[test]
 fn v3_admission_matches_manifest() {
-    use crate::kernel::capabilities::{Manifest, OpKind, V3Admission, WidthEffect};
+    use crate::kernel::capabilities::{Manifest, OpKind, V3Admission};
     use grammar::{ProductionAdmission, RowRequirement, StageClass};
     let manifest = Manifest::current();
     let mut found = std::collections::BTreeSet::new();
@@ -813,21 +813,7 @@ fn v3_admission_matches_manifest() {
                 "{name}"
             );
             if crate::registry::operator(name).is_none() {
-                let expected = match descriptor.width_effect {
-                    grammar::WidthEffect::None => WidthEffect::None,
-                    grammar::WidthEffect::Input => WidthEffect::Input,
-                    grammar::WidthEffect::OneToOne => WidthEffect::OneToOne,
-                    grammar::WidthEffect::GeneratedPerFeature => WidthEffect::GeneratedPerFeature,
-                    grammar::WidthEffect::ExpansionPerFeature { parameter } => {
-                        WidthEffect::ExpansionPerFeature { parameter }
-                    }
-                    grammar::WidthEffect::Select { parameter } => WidthEffect::Select { parameter },
-                    grammar::WidthEffect::Projection { parameter } => {
-                        WidthEffect::Projection { parameter }
-                    }
-                    grammar::WidthEffect::Impute => WidthEffect::Impute,
-                };
-                assert_eq!(row.width_effect, expected, "{name}");
+                assert_eq!(row.width_effect, descriptor.width_effect, "{name}");
             }
         }
     }
