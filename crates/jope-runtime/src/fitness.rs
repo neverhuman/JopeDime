@@ -38,10 +38,13 @@ pub fn schema() -> serde_json::Value {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Direction {
+pub enum FitnessDirection {
     Minimize,
     Maximize,
 }
+
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Direction = FitnessDirection;
 
 /// Every parameter is part of the serialized objective identity.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

@@ -101,7 +101,7 @@ pub fn require_accepted_task(root: &Path, task: &Task) -> Result<()> {
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "kind")]
-pub enum Task {
+pub enum ResidentTask {
     Train {
         corpus: PathBuf,
         run: PathBuf,
@@ -135,7 +135,10 @@ pub enum Task {
         output: PathBuf,
     },
 }
-impl Task {
+
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Task = ResidentTask;
+impl ResidentTask {
     fn receipt(&self, rank: usize) -> PathBuf {
         match self {
             Self::Train { launch, .. } => launch.join(format!("complete-{rank}.json")),

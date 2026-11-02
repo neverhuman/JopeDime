@@ -35,14 +35,17 @@ pub enum Metric {
 #[serde(rename_all = "lowercase")]
 #[cfg_attr(
     doc,
-    doc = "`Direction` is an enum for the direction contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."
+    doc = "`MetricDirection` is an enum for the direction contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."
 )]
-pub enum Direction {
-    #[cfg_attr(doc, doc = "The `Higher` case of `Direction`.")]
+pub enum MetricDirection {
+    #[cfg_attr(doc, doc = "The `Higher` case of `MetricDirection`.")]
     Higher,
-    #[cfg_attr(doc, doc = "The `Lower` case of `Direction`.")]
+    #[cfg_attr(doc, doc = "The `Lower` case of `MetricDirection`.")]
     Lower,
 }
+
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Direction = MetricDirection;
 
 impl Metric {
     #[cfg_attr(doc, doc = "Constant identifying the all.")]
@@ -96,7 +99,7 @@ impl std::fmt::Display for Metric {
     }
 }
 
-impl Direction {
+impl MetricDirection {
     /// Strict improvement only: an equal score is never an improvement (`champions.rs:452`).
     pub fn strictly_improves(self, candidate: f64, incumbent: f64) -> bool {
         if !candidate.is_finite() {

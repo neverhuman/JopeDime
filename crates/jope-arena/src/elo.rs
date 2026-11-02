@@ -41,14 +41,17 @@ fn elo_scale() -> f64 {
 /// Whether lower or higher metric values win.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
-pub enum Direction {
+pub enum EloDirection {
     /// Higher is better (`roc_auc`, `macro_f1`).
     Maximize,
     /// Lower is better (`rmse`, `mase`).
     Minimize,
 }
 
-impl Direction {
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Direction = EloDirection;
+
+impl EloDirection {
     /// The JSON spelling.
     pub fn as_str(self) -> &'static str {
         match self {
