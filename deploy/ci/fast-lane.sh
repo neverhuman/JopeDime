@@ -20,7 +20,7 @@ for t in shellcheck actionlint gitleaks; do
   printf '%-12s %s\n' "$t" "$(command -v "$t")"
 done
     # Root layout allowlist: research and run output belong under research/, never the repo root
-root_allow=' .config .githooks .github .gitignore .gitleaks.toml .gitleaksignore .jope-home AGENTS.md AGENT_CHAT.md CHANGELOG.md CLAUDE.md CODE_OF_CONDUCT.md CONTRIBUTING.md Cargo.lock Cargo.toml LICENSE MASTER_CLEAN_UP.md MASTER_PLAN.md NOTICE PYTHON_EXCEPTIONS.md PY_TO_RUST_PLAN.md README.md SECURITY.md assets benchmarks catalogs cliff.toml crates datasets deny.toml deploy docs examples justfile models ops python research rust-toolchain.toml schemas scripts test-support tools vendor web xtools '
+root_allow=' .config .githooks .github .gitignore .gitleaks.toml .gitleaksignore .jope-home AGENTS.md AGENT_CHAT.md CHANGELOG.md CLAUDE.md CODE_OF_CONDUCT.md CONTRIBUTING.md Cargo.lock Cargo.toml LICENSE MASTER_CLEAN_UP.md MASTER_PLAN.md NOTICE PYTHON_EXCEPTIONS.md PY_TO_RUST_PLAN.md README.md SECURITY.md agent assets benchmarks catalogs cliff.toml crates datasets deny.toml deploy docs examples justfile models ops python research rust-toolchain.toml schemas scripts test-support tools vendor web xtools '
 root_bad=0
 while IFS= read -r e; do
   case "$root_allow" in *" $e "*) ;; *) echo "root layout: '$e' is not allowed at the repo root (H-wave output goes in research/flywheel_selfplay/hNN/)" >&2; root_bad=1 ;; esac
