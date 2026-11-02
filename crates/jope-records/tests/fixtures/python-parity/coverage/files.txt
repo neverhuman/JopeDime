@@ -509,6 +509,11 @@ crates/jope-campaigns/seeds/generation-zero-binary.txt
 crates/jope-campaigns/seeds/generation-zero.txt
 crates/jope-campaigns/src/aggressive.rs
 crates/jope-campaigns/src/args.rs
+crates/jope-campaigns/src/broad_shadow.rs
+crates/jope-campaigns/src/broad_shadow/canonical.rs
+crates/jope-campaigns/src/broad_shadow/receipts.rs
+crates/jope-campaigns/src/broad_shadow/receipts/tests.rs
+crates/jope-campaigns/src/broad_shadow/validation.rs
 crates/jope-campaigns/src/bin/aspfm_recovery_evolve.rs
 crates/jope-campaigns/src/bin/corpus_eval.rs
 crates/jope-campaigns/src/bin/jope_canary_executor.rs
