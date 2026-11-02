@@ -1,29 +1,42 @@
 {
+  "source_commit": "ccaf14b210b3b55a350218e60f6b49ef76524cf3",
+  "source_tree": "2e4324f0bb387ece970664eac193a7ef6a8eb05c",
+  "sha256": "4e9239a1126589a42c3d80b1742d463d1b2331def59e5a08796169b4f3cec177",
+  "bytes": 188081592,
+  "target": "x86_64-unknown-linux-gnu",
   "schema": "jope.q1-evaluator-pin/v1",
-  "decision": "ENG:watcher T1440 D5 (2026-11-01)",
+  "decision": "ENG:watcher T0545Z 2026-11-02 Linux CPU replacement; exact-head review and coordinator merge required",
   "status": "BUILD_IDENTITY_ONLY_NOT_RUNTIME_QUALIFICATION",
-  "sha256": "76721923b663dd2ad2f9fe82c787791e2b97ec32426efa5eab8ec81f146ab0a6",
-  "bytes": 107739816,
-  "source_commit": "2317d4d168b9dc6390916d4874cbe69db734c4c8",
-  "source_tree": "ba4595e6b8cf6c0b40c7b469986508e6f0447dab",
-  "target": "aarch64-apple-darwin",
   "recipe": {
-    "path": "evaluator-repro/RECIPE.json",
-    "sha256": "8f45c77de8f1181a548e6d5e9b5bb07016ca2494e25363f8330ac922bcc66362"
+    "path": "evaluator-repro-linux/RECIPE.json",
+    "sha256": "7f19c1f2f127654edaa05f609b13c726058809961c92723ed588290640b8691e"
   },
   "reproductions": [
     {
-      "owner": "luna_v1_res03",
-      "path": "evaluator-repro/res03-REPRO.json",
-      "sha256": "a60d7790ef9efe381e65adc5dd010f4af0b020dd6696dd8f7c1c948754abfc5b"
+      "owner": "sol_v1_api01",
+      "path": "evaluator-repro-linux/api01-BUILD-1.json",
+      "sha256": "44051637476eb6836b09a70e3c20f7b960ff2d28aa2e2371352ebaa7682bd1e0"
     },
     {
-      "owner": "sol_v1_mcp01",
-      "path": "evaluator-repro/mcp01-REPRO.json",
-      "sha256": "d1f6b96f1c2121e8def0a0e02b9fa6d3a58da46f26ae375b1cb26f0a749eda41"
+      "owner": "sol_v1_api01",
+      "path": "evaluator-repro-linux/api01-CLEAN-REPRO-2.json",
+      "sha256": "60603be28f0fe9b39e919505ebf280cefb74290a8dad5c711fff4da19b96a533"
     }
   ],
-  "supersedes_evaluator_sha256": "40bc4318abdfcc8a178039dcada4328f7144456061b3ae09a77e3583d136260e",
-  "runtime_qualification": "REQUIRED_ON_NEW_BYTES; OLD_RUNTIME_NOT_INHERITED",
-  "Q1": "NOT_RUN"
+  "supersedes_evaluator_sha256": "76721923b663dd2ad2f9fe82c787791e2b97ec32426efa5eab8ec81f146ab0a6",
+  "reproduction_independence": "Same operator and host; second compilation rebuilt288Cargoartifactunits with0reuse after complete recovery verification. No second-owner or independent-review claim; ENG decision required.",
+  "runtime_qualification": "Fresh Linux component receipts retained separately, including rawoperatorM3FAIL+WAIVED_V1_0_0; actual plan/owner admission still required; old runtime not inherited.",
+  "Q1": "NOT_RUN",
+  "admission_inputs": {
+    "native": "2d920232ce85311317fb2a1a0374b6a6d050685cb146c2eba7c105313132e12a",
+    "native_driver": "d098bce29101ff9a294e87e0f5e595e61283f83bef124a2e5bf85cbb8fa6b9e4",
+    "m2": "1e2eba35c9229743fe4e1a92679cc439e7cbf06c499b4a8c5f487eb1767087f6",
+    "m2_report": "ef0ef9253d61b952a3fffa9b13f24464ce0aff1065c17b51dde43deb5ef2ded4",
+    "m3_raw": "1ec5cd754a3c8c9884a02477c3b79a48e311a6ba12a637f609000036dddc0c2c",
+    "m3_driver": "8e6449859af4eb86206d8b2cc1d70f625722b92aa107eb9f8cfcabf77b7e384f",
+    "link_inputs": "1c8b036cc1ebefb2ba1d35352699bd9274a5a353e03f7f749e48df2ffd19f716",
+    "identity_closure": "61885c89be6840c0e46840db7b9a83ac9d40b62909dae0472c50138bc0e04e93",
+    "reproduction": "60603be28f0fe9b39e919505ebf280cefb74290a8dad5c711fff4da19b96a533"
+  },
+  "decision_scope": "Pins exact existing component evidence for admission validation, not runtime qualification by declaration."
 }
