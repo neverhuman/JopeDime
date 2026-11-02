@@ -107,8 +107,8 @@ qualification pending. The separate adapter snapshot is in
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
   for measured seconds $s\geq0$ and raw head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
-  In \cref{eq:totalLoss}, $q_w=1/(1+\mathrm{RMSE}_w/m_p)$, where $m_p$ is
-  the corpus list's median RMSE. In the microbatch-normalized route,
+  Here $q_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
+  the corpus list's median RMSE. For microbatch normalization,
   Bradley--Terry weights use $|q_w-q_u|$, doubled when either member is at
   or above the 90th percentile. Weights are mean-scaled and cast to
   \texttt{float32}; weighted losses average non-tied within-comparison pairs
