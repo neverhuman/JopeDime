@@ -2,7 +2,7 @@ use super::*;
 
 /// Append semantics + width cap + sanitize (mirrors the artifact epilogue of
 /// every transform function).
-fn finish(op: &FittedOp, input: &Rows, mut out: Rows) -> Rows {
+pub(crate) fn finish(op: &FittedOp, input: &Rows, mut out: Rows) -> Rows {
     let append = op_append(op);
     let width = out.first().map_or(0, Vec::len);
     if out.len() * width.max(1) >= 65_536 && crate::is_parallel_enabled() {
@@ -59,7 +59,7 @@ fn finish(op: &FittedOp, input: &Rows, mut out: Rows) -> Rows {
 
 /// Ten per-row summary statistics: mean, std, min, max, median, q25, q75,
 /// skewness, excess kurtosis, energy.
-fn row_stats(r: &[f64]) -> Vec<f64> {
+pub(crate) fn row_stats(r: &[f64]) -> Vec<f64> {
     let n = r.len() as f64;
     let mean = r.iter().sum::<f64>() / n;
     let mut m2 = 0.0;
@@ -111,7 +111,7 @@ fn row_stats(r: &[f64]) -> Vec<f64> {
 /// Magnitudes of the plain O(d²) DFT of one row at frequencies f = 1..=k:
 /// mag_f = sqrt((Σ_j x_j cos(2π f j / d))² + (Σ_j x_j sin(2π f j / d))²) / d.
 /// Angle is computed left-to-right as ((2π · f) · j) / d for exact Python parity.
-fn dft_mags(r: &[f64], k: usize) -> Vec<f64> {
+pub(crate) fn dft_mags(r: &[f64], k: usize) -> Vec<f64> {
     let d = r.len() as f64;
     let mut out = Vec::with_capacity(k);
     for f in 1..=k {
@@ -132,7 +132,7 @@ fn dft_mags(r: &[f64], k: usize) -> Vec<f64> {
 /// p <= 1e-12 skipped), spectral moments m1 = Σ f·p and m2 = Σ f²·p, peak
 /// frequency (lowest f on ties, as f64), peak magnitude. Width-1 rows (no
 /// frequencies) emit all zeros.
-fn row_spectral(r: &[f64]) -> Vec<f64> {
+pub(crate) fn row_spectral(r: &[f64]) -> Vec<f64> {
     let nf = r.len() / 2;
     if nf == 0 {
         return vec![0.0; 5];
@@ -168,7 +168,7 @@ fn row_spectral(r: &[f64]) -> Vec<f64> {
 /// diffs / (d−1), lag-1 autocorrelation of the ORIGINAL row (Pearson of
 /// x[..d−1] vs x[1..], zero variance → 0), energy = mean d². Rows shorter
 /// than 2 emit all zeros.
-fn row_diff_stats(r: &[f64]) -> Vec<f64> {
+pub(crate) fn row_diff_stats(r: &[f64]) -> Vec<f64> {
     let d = r.len();
     if d < 2 {
         return vec![0.0; 8];

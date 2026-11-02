@@ -23,10 +23,12 @@ mod targets;
 
 pub(super) use canonical::{canonical, check_digest, domain_hash, safe_relative};
 pub use canonical::{ArtifactDomain, Domain};
-pub use identity::{BuildExecution, BuildIdentity, FittedIdentity, OptionsIdentity};
+pub(crate) use canonical::{ArtifactEnvelope, OwnId};
+pub use identity::{BuildExecution, BuildIdentity, OptionsIdentity};
 pub use manifest::ArtifactManifestV3;
 pub use read::{
     read_artifact, read_manifest, verify_directory, ExpectedArtifactV3, TargetEmission,
 };
-pub use records::{FileBinding, TargetRecord, TargetState};
+pub use records::{FileBinding, FittedIdentity, TargetRecord, TargetState};
+pub(super) use targets::validate_requests;
 pub use targets::Target;

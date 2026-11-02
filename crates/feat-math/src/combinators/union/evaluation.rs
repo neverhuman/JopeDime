@@ -1,7 +1,7 @@
 use super::*;
 
 /// Decode the exact affine parameters. A malformed or non-finite value is refused.
-pub(super) fn affine_parameters(
+pub(in crate::combinators) fn affine_parameters(
     id: usize,
     scale: &ExactScalar,
     offset: &ExactScalar,

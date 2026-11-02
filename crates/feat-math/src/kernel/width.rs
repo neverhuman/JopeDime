@@ -38,9 +38,9 @@ mod models;
 mod ops;
 
 pub use models::{check_input_width, required_head_width};
-use ops::past_max;
 pub(crate) use ops::stage_name;
 pub use ops::{check_fitted_state, output_width, required_input_width};
+use ops::{finished_width, past_max};
 
 /// The widest row a `Vec<f64>` can hold. A wider output row is refused rather
 /// than left to the capacity-overflow panic of `Vec`.

@@ -169,7 +169,8 @@ impl VersionedModel {
         let value: Value = serde_json::from_str(json)
             .map_err(|error| VersionError::Malformed(error.to_string()))?;
         // B05–B07: scalar envelope reader runs before any legacy dispatch.
-        if value.get("schema").and_then(Value::as_str) == Some(super::scalar_program::MODEL_SCHEMA)
+        if value.get("schema").and_then(Value::as_str)
+            == Some(crate::kernel::scalar_program::MODEL_SCHEMA)
         {
             return ScalarModel::from_json(json)
                 .map(Box::new)

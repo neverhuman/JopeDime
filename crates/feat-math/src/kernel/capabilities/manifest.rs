@@ -128,10 +128,10 @@ pub struct Manifest {
 impl Manifest {
     pub fn current() -> Self {
         let v3 = grammar_ops(include_str!(
-            "../../../jope-engine/assets/grammar/featmath.json"
+            "../../../../jope-engine/assets/grammar/featmath.json"
         ));
         let jain = grammar_ops(include_str!(
-            "../../../jope-engine/assets/grammar/featmath-jain-v1.json"
+            "../../../../jope-engine/assets/grammar/featmath-jain-v1.json"
         ));
         let mut names = BTreeSet::new();
         names.extend(registry::operator_registry().iter().map(|row| row.name));

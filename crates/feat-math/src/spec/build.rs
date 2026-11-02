@@ -1,6 +1,6 @@
 use super::*;
 
-const HEAD_OPS: [&str; 14] = [
+pub(crate) const HEAD_OPS: [&str; 14] = [
     "ridge",
     "logistic",
     "ridge_gcv",
@@ -17,7 +17,7 @@ const HEAD_OPS: [&str; 14] = [
     "portfolio",
 ];
 
-fn get_append(stage: &Stage) -> bool {
+pub(crate) fn get_append(stage: &Stage) -> bool {
     matches!(stage.params.get("append"), Some(ParamValue::Bool(true)))
         || stage.get_usize("append", 0) == 1
 }
@@ -35,7 +35,7 @@ pub(crate) fn finite_f64(
     v
 }
 
-fn gbm_plan(stage: &Stage, problems: &mut Vec<String>) -> GbmPlan {
+pub(crate) fn gbm_plan(stage: &Stage, problems: &mut Vec<String>) -> GbmPlan {
     GbmPlan {
         rounds: stage.get_usize("rounds", 150).clamp(1, 500),
         depth: stage.get_usize("depth", 3).clamp(1, 8),

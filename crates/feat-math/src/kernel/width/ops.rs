@@ -339,7 +339,7 @@ fn spline_columns(knots: &[f64]) -> usize {
 }
 
 /// [`output_width`] once the state and `input` are known to be admitted.
-fn finished_width(op: &FittedOp, input: usize) -> Result<usize> {
+pub(super) fn finished_width(op: &FittedOp, input: usize) -> Result<usize> {
     let overflow = || {
         Error::Resource(format!(
             "{} output width overflows at input width {input}",

@@ -1,7 +1,7 @@
 use super::*;
 
 /// Assemble the `Model` struct with its `fit`/`predict` methods from the plan.
-pub(crate) fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> String {
+pub(super) fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions: bool) -> String {
     let (head_fit, head_predict, head_ty) = head_calls_cpp(head);
 
     let mut fields: Vec<String> = Vec::new();
@@ -134,7 +134,7 @@ pub(crate) fn model_cpp(stages: &[PlannedStage], head: &PlannedHead, expressions
     out
 }
 
-pub(crate) fn expression_stage_cpp(
+pub(super) fn expression_stage_cpp(
     n: usize,
     expr: &crate::mathexpr::MathAst,
     map: bool,
@@ -163,7 +163,7 @@ pub(crate) fn expression_stage_cpp(
     ))
 }
 
-pub(crate) fn symbolic_cpp(
+pub(super) fn symbolic_cpp(
     expr: &crate::mathexpr::MathAst,
     affine: bool,
 ) -> Result<String, Vec<String>> {

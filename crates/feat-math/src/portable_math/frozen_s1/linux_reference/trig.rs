@@ -1,3 +1,4 @@
+use super::exp::{CS2, CS4, CS6, SN3, SN5};
 use super::trig_tables::*;
 
 fn table(u: f64) -> (f64, f64, f64, f64) {

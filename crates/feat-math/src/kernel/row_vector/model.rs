@@ -159,7 +159,7 @@ impl Model {
     }
 }
 
-fn check_stage_wires(parameters: &serde_json::Value) -> VersionResult<()> {
+pub(crate) fn check_stage_wires(parameters: &serde_json::Value) -> VersionResult<()> {
     if let Some(stages) = parameters
         .get("stages")
         .and_then(serde_json::Value::as_array)

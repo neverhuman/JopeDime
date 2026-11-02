@@ -267,7 +267,7 @@ mod tests {
         }
         assert_eq!(
             render_markdown(),
-            include_str!("../../../../docs/internal/kernel2/capabilities.generated.md")
+            include_str!("../../../../../docs/internal/kernel2/capabilities.generated.md")
         );
     }
 

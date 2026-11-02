@@ -44,7 +44,7 @@ fn emit_cpp_inner(
             target: Some(_), ..
         } => return Err(vec!["target transforms".to_string()]),
         Plan::Symbolic { expr, affine, .. } if expressions => {
-            let model = symbolic_cpp(expr, *affine)?;
+            let model = model::symbolic_cpp(expr, *affine)?;
             // Symbolic recipes have no ridge/stage use of max_num. Mark only
             // this opt-in copy; historical/default emitted bytes stay frozen.
             let preamble = PREAMBLE.replacen(
@@ -149,7 +149,7 @@ fn emit_cpp_inner(
                     );
                 }
                 PlannedOp::MapExpr { expr, .. } | PlannedOp::DeriveExpr { expr, .. } => {
-                    sections.push(expression_stage_cpp(
+                    sections.push(model::expression_stage_cpp(
                         index + 1,
                         expr,
                         matches!(stage.op, PlannedOp::MapExpr { .. }),
@@ -166,7 +166,7 @@ fn emit_cpp_inner(
         }
     }
     sections.push(head_src_cpp(head).to_string());
-    sections.push(model_cpp(stages, head, expressions));
+    sections.push(model::model_cpp(stages, head, expressions));
     sections.push(IO_BLOCK.to_string());
     let mut source = sections.join("\n\n") + "\n";
     if opts.math_kernel == MathKernel::Portable {
@@ -205,4 +205,6 @@ use templates_base::*;
 use templates_basic_ops::*;
 use templates_heads::*;
 use templates_io::*;
+#[cfg(test)]
+pub(crate) use templates_portable::portable_math_matches_verified_fixture;
 use templates_portable::*;
