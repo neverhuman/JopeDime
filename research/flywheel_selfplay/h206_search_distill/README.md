@@ -1,25 +1,40 @@
-# H206 search distillation
+# H206 native-search / student learning
 
-**QUEUED / NOT RUN.** This is the preregistration and CPU-only runner/launch
-skeleton requested by n2022. It contains no executable search, training, GPU
-probe or sealed evaluator. Metrics remain unmeasured.
+**CPU interfaces implemented; scientific run NOT STARTED; execution qualification PENDING.**
 
-The fixed protocol is in [PREREG.md](PREREG.md): k=16/64/256 Rust-CV teachers,
-a k=1 self-distillation control, three expert iterations, a terminal k=1 student,
-four-arm pooled selection and separate sanctioned sealed confirmation.
+The source now includes:
 
-Run `nice -n 19 bash research/flywheel_selfplay/h206_search_distill/launch.sh --plan`
-to print the queued plan. `--output /path/to/new/launch.json` creates an exclusive
-CPU preparation record with the authority string and research run ID.
-`--execute` always refuses. A successful plan print is not resource admission.
+- contracts.py: original TRAIN ObjectRefs, exact-version body/tensor hashes,
+  immutable per-cell roles and transitive protected-family closure.
+- native.py: real inherited GP proposal generation, source/binary/environment
+  bound --fit-s1 subprocess calls, full-identity outcome cache, and create-only
+  S3 objects with exact-version GET verification.
+- student.py: fixed width128 residual adapter, a frozen r882 anchor, live
+  inherited DOPE/SVD tokens, batch32 gradient accumulation and actual per-round
+  parameter/gradient/forward-change proofs.
+- executor.py: charged initialization, persisted native teacher consumption,
+  three linked expert rounds, verified model+optimizer resume, terminal-only
+  B scoring, durable cost panels and cumulative cost reservations.
 
-Future work before launch: reviewed/pinned width128 architecture and r882
-initialization, full Rust candidate/search/distillation executor, immutable
-real-data/fold/source bindings, native91 parity, runtime gradient/resource
-qualification, and the later H206 queue-release nudge. xbabe3 needs <=88% used
-before reserving the40GB cache and >=50GB headroom; post-reservation used must
-stay<93.8%, with the RTX3090 unclaimed. No foreign cleanup is authorized.
+The initial architecture/initialization and TRAIN-only S1 bridge amendment are
+in [PREREG.md](PREREG.md). All unresolved model/data/source/runtime bindings and
+their owners are listed in [MISSING_PINS.md](MISSING_PINS.md).
 
-No efficacy, completed optimizer updates, scientific gate PASS or serving
-promotion is claimed. Current manifest evidence is empty because no experiment
-has run or uploaded artifacts.
+Data-free integration tests execute the original inherited token methods (asset
+constructor omitted), controlled native subprocesses, real AdamW updates and
+S3 protocol fixtures. Three fixture rounds perform9 updates/288 examples and
+require DOPE+residual changes in EACH round. A prior successful round cannot
+hide a later no-op optimizer. These are source integration proofs, not real
+r882/native-label/learning results.
+
+A separate bounded CPU check uses the real SHA-pinned S1 binary on generated
+data. The initial undersized fixture was refused and retained. At admitted
+shape, scientific CV fields are exact under a change of TRAIN-derived query
+rows; raw timing fields naturally differ. No numerical tolerance, real dataset,
+model payload or GPU was used. Receipts and costs remain outside Git under
+evidence/H206/executor-20261102/native-protocol/.
+
+Run launch.sh --plan to inspect the queued metadata. --execute remains refused.
+The CPU round interface also refuses CUDA models: the GPU phase controller and
+full study/qualification bindings have not been supplied. No verdict, positive
+lift, completed scientific endpoint or serving promotion is claimed.

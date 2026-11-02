@@ -2145,7 +2145,7 @@
     },
     "python:research/flywheel_selfplay/h206_search_distill/test_h206.py": {
       "role": "research",
-      "reason": "H206 queued search-distillation preregistration and disabled executor skeleton: authority/unknown-result integrity, queue and reserved-cache admission, numeric versus driver limits, and research anchor optimizer refusal. Data-free CPU controls only; no GPU, corpus, scientific or sealed qualification."
+      "reason": "H206 research-only native-search/student integration: versioned TRAIN/tensor and transitive role closure, controlled native CLI and exact-version S3 labels, live inherited DOPE/SVD updates and per-round optimizer/forward proofs, cumulative budgets/resume, cache integrity and fixed-checkpoint locks. Generated fixtures only; no real model/data/GPU/scientific qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "reason": "Owner-requested pytest proofs for H46 family-grouped paired bootstrap determinism and exact-tie/nonpositive-bound selection rejection; offline research analysis outside the reviewed product baseline.",

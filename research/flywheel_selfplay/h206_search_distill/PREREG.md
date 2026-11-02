@@ -2,7 +2,7 @@
 
 Authority: **Jepson via Grok Bot, card answer 8:22 PM MT**.
 Owner: gpu_fused_redteam_codex; backup rd_astra.
-Status: **QUEUED / NOT RUN / EXECUTOR SKELETON**. Target: xbabe3 RTX 3090.
+Status: **QUEUED / NOT RUN / CPU EXECUTOR INTERFACES IMPLEMENTED**. Target: xbabe3 RTX 3090.
 This PR registers the experiment and CPU-only preparation code. It authorizes
 no launch now. A later owner queue-release nudge, reviewed executor and immutable
 input/model bindings are required. No GPU claim has been made.
@@ -166,3 +166,73 @@ just lint-paths and diff checks, plus exact-head central review. Remote CI waive
 by n2022 policy; no author merge. The executor is intentionally unimplemented:
 runtime gradient propagation, model/slate compatibility, native parity, numeric
 resource admission and science have NOT been qualified by skeleton tests.
+
+
+## Prospective source/initialization amendment — owner resume 2026-11-02
+
+Authority: **Jepson via Grok Bot, card answer 8:22 PM MT**, continued by the
+H206-OWNER-RESUME packet. This amendment precedes any H206 scientific outcome
+or actual model/data run and awaits the assigned merger's review.
+
+Fix the allowed widened-adapter option concretely: frozen r882 adapter_10tok
+anchor plus a112,641-parameter residual MLP, Linear749->128/GELU/128/GELU/1,
+no dropout, zero output layer, native unscaled cost residual. The749 inputs are
+412 program features,16 projection coordinates,320 masked live token coordinates
+and one frozen native-anchor cost. Use seed206101/102/103 for the corresponding
+outer-seed initialization. Model-content hashes, original r882 checkpoint
+ObjectRef and transitive assets remain required before real data use. Do not
+substitute any H204 trained/checkpoint winner. ARCHITECTURE and its digest are
+recorded in student.py and launch.json. The only trainable closure is DOPE plus
+this residual. Original r882 tokens feed only the frozen anchor; fresh inherited
+DOPE/router/column gates and Stage1B SVD feed the residual. There is no cached
+embedding difference trick. Verify r882 native91 first; this source amendment
+and its generated fixtures do not satisfy that gate.
+
+Each optimizer update averages32 singleton-forward/backward examples, with
+family components sampled uniformly then a context uniformly within component,
+using the context's pinned seed. Save the batch-plan digest.600 updates per
+round and3 rounds remain unchanged. Short fixture updates are logged as
+non-endpoint source controls; B scoring is refused before round3/update1800.
+Record intended parameter/gradient/forward deltas within EACH round; cumulative
+prior progress cannot hide a later no-op. Resume model+optimizer+counts from
+exact-version verified bytes and reuse the existing cost ledger.
+
+Native bridge: require original TRAIN-only JTT1 with nq0, exactly two folds,
+>=50 rows and>=25 per inner fold,1..512 columns, and<=16M cells after padding.
+The pinned S1 parser requires nq>=10 but never decodes query cells. Supply10
+query feature rows taken cyclically from original TRAIN X, with zero query
+labels; never fetch or decode outer/test data. Preserve the original TRAIN
+ObjectRef/bodySHA/cut and separately hash the actual native input. Freeze this
+bridge's protocol/environment identity. The actual pinned binary succeeds on
+an admitted-size generated fixture. Every scientific CV field is exact under
+a change of TRAIN-derived query rows; only runtime timestamps/durations differ.
+The original undersized refusal and raw timing-inclusive comparison failure
+remain in evidence/H206/executor-20261102/native-protocol. This is one synthetic
+protocol proof, not broad real-data/native91 qualification or permission to use
+unapproved labels. Native failures/hard negatives stay in persisted outcomes.
+
+Input role admission and learner qualification remain separate. Bind approved
+original TRAIN refs, full role/alias exclusion closure, encoder source/model
+and all tensor shapes/dtypes/hashes before body reads. Native cache identity
+includes the complete context, encoder, source, environment, protocol, ordered
+slate, actor and seed; identical semantics alone permit reuse. Acquisition
+interfaces invoke real inherited GP mutations and enforce256 distinct DSLs
+within4096 attempts. Production parent banks, feature/projection generation
+and first actual admitted-context transport remain unresolved bindings.
+
+Native teachers are flushed create-only to S3, GET-verified at exact VersionId,
+then consumed by the learner from those same hashed bytes. Persist checkpoints,
+per-round source/identity/cost/novelty proofs and fixed cost panels before any
+wait or stop. Component-level family novelty is distinct from repeated contexts,
+new actor/native labels or cache hits. The400 CPU-core-hour/18 GPU-hour original
+campaign caps remain cumulative; BudgetLedger requires an existing reconciled
+ledger and never silently creates or resets it. Setup, waits, failures, helpers,
+search, tokens, updates and custody are included in charged operation scopes;
+per-stage breakdowns are not charged twice.
+
+Current source implements CPU cell/round interfaces and rejects CUDA models.
+The GPU reservation controller, full multicell/H178 selection wiring, actual
+model/input/native91 qualification and source/openPR/resource/queue gates still
+require binding. --execute remains refused. See MISSING_PINS.md for exact
+artifacts/owners. No scientific training, real-data verdict, GPU allocation,
+serving change or queue release follows from this source PR.
