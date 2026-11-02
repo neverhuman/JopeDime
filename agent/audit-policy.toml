@@ -210,10 +210,6 @@ extra_excluded_paths = [
   # Exact HLT-019 false positive: Rust uses op_entropy_nat while serde keeps
   # the op_entropy_nats wire key required for pre-1.0 compatibility.
   "crates/jope-telemetry/src/gp.rs",
-  # HLT-019 sha256:3cd49f1c...: this exact test fixture is a verbatim,
-  # definition-hash-pinned reference copy; its docstring's "nats" unit is not
-  # a streaming client. See the path-specific disposition in docs/streaming.md.
-  "deploy/dl-flywheel/pipelines/continuous_v6/tests/fixtures/kl_ref_r22_harness_v2.py",
   "crates/smartcluster/jain-smartcluster-daemon/src/control.rs",
   # P38: pinned research artifacts load only inputs whose complete identity is checked.
   # P38: in-memory SQLite fixtures bind row values; only fixed table/placeholder syntax is composed.
@@ -237,13 +233,19 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h222_lipschitz_adapter/runner.py",
   "research/flywheel_selfplay/h224_learned_switch_gate/runner.py",
   "research/flywheel_selfplay/h225_multistep_regret/runner.py",
-# P37 t1900 exact HLT-033 loader dispositions; see
-# docs/release/jankurai-p37-t1900-exceptions-20261102.md.
-# Inputs are SHA-256 checked before deserialization/execution; H94 also verifies
-# its cached model output before loading it.
+  # P37 t1900 exact HLT-033 loader dispositions; see
+  # docs/release/jankurai-p37-t1900-exceptions-20261102.md.
+  # Inputs are SHA-256 checked before deserialization/execution; H94 also verifies
+  # its cached model output before loading it.
   "research/flywheel_selfplay/h75_closed_loop_evolution/scoring/score_panel.py",
   "research/flywheel_selfplay/h94_w6_prospective_hedge/run_prospective_hedge.py",
   "research/flywheel_selfplay/h96_w4_active_reveal/run_w4.py",
+  # H227 HLT-033 exact paths validate the full source commit and approved ancestry
+  # before blob execution; backend/test blobs require manifest SHA-256 pins. See
+  # the fingerprint-level review in the H227 source-execution exception record.
+  "research/flywheel_selfplay/h227_pool_headroom/backend.py",
+  "research/flywheel_selfplay/h227_pool_headroom/launcher.py",
+  "research/flywheel_selfplay/h227_pool_headroom/test_h227.py",
 # Additional current-main exact-path exceptions retain their existing rationale
   # in the P5 and streaming evidence registers referenced above.
 ]

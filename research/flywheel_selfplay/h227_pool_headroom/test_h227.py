@@ -89,6 +89,10 @@ def test_context_id_is_external_in_actual_h212_prediction():
         ],
         cwd=b.REPO,
     )
+    source_pin = json.loads((HERE / "manifest.json").read_text())["source_pins"][
+        "research/flywheel_selfplay/h212_pool_width/runner.py"
+    ]
+    assert hashlib.sha256(source).hexdigest() == source_pin
     fn = next(
         n
         for n in ast.parse(source).body
