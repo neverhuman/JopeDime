@@ -1,0 +1,28 @@
+\FloatBarrier
+\section{Rolling Adapter Admission Frequencies}\label{app:rolling-admissions}
+
+\Cref{fig:fw-rolling-admissions} uses a separate recent capture of adapter
+decisions. The earlier ledger in \cref{tab:admission-ledger} retains its
+own capture and cutoff. Each trailing window contains exactly 100 observed
+decisions, including accepted ties and rejected candidates. These overlapping
+counts describe the logged policy on an adaptively reused development
+population; the independent first-proposal comparison remains pending.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_rolling_admissions.pdf}
+  \caption{\textbf{Trailing 100-round adapter acceptance and rejection counts.}
+  The source window contains \num{1000} consecutive completed rounds,
+  2710--3709, captured at 13:30 UTC on 2 November 2026. It records four
+  admissions (two strict gains and two exact ties) and 996 rejections.
+  Panels (a) and (b) show the complementary accepted and rejected counts
+  in each full trailing window, plotted at its final round: 2809--3709,
+  or 901 overlapping windows. The first 99 source rows supply history
+  without a plotted partial window. Every accepted/rejected pair sums to
+  100; one decision per 100 rounds also equals one percentage point.
+  Decisions use unrounded candidate and prior-best utility.
+  These are adapter admissions, distinct from training-program incumbent
+  events; no uncertainty interval or independent improvement estimate is
+  implied. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-rolling-admissions}
+\end{figure}
