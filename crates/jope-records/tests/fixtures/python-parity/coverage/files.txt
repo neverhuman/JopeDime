@@ -1457,6 +1457,11 @@ crates/jope-records/src/py/values.rs
 crates/jope-records/src/pycsv.rs
 crates/jope-records/src/pyjson.rs
 crates/jope-records/src/readme.rs
+crates/jope-records/src/readme/arena.rs
+crates/jope-records/src/readme/numeric.rs
+crates/jope-records/src/readme/samecut_load.rs
+crates/jope-records/src/readme/samecut_render.rs
+crates/jope-records/src/readme/values.rs
 crates/jope-records/src/scope_check.rs
 crates/jope-records/src/synthetic.rs
 crates/jope-records/src/task_status.rs
