@@ -33,6 +33,70 @@ THREE_CLIENTS_MODULE = importlib.util.module_from_spec(THREE_CLIENTS_SPEC)
 THREE_CLIENTS_SPEC.loader.exec_module(THREE_CLIENTS_MODULE)
 
 
+def test_reviewed_transport_bounds_admit_v14_and_refuse_above_limit():
+    actual_v14 = {
+        "seconds": 390.0,
+        "stream_bytes": 16_777_216,
+        "frame_bytes": 1_048_576,
+    }
+    assert THREE_CLIENTS_MODULE.MAX_TRANSPORT_SECONDS == actual_v14["seconds"]
+    assert THREE_CLIENTS_MODULE.transport_limits_within_reviewed_bounds(actual_v14)
+
+    above_seconds = {**actual_v14, "seconds": 390.0001}
+    assert not THREE_CLIENTS_MODULE.transport_limits_within_reviewed_bounds(
+        above_seconds
+    )
+
+
+@pytest.mark.parametrize(
+    ("seconds", "expected_status"),
+    [
+        (390, "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"),
+        (391, "INCOMPLETE"),
+    ],
+)
+def test_real_recorder_transport_limit_matches_consumer(
+    seconds, expected_status, a5_tmp_path
+):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path,
+        transport_key="claude_code",
+        recorder_seconds=seconds,
+    )
+
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert result["status"] == expected_status
+    row = result["clients"]["claude_code"]
+    if seconds == 390:
+        receipt = json.loads(
+            (args.out_dir / "clients/claude_code/transport/capture.json").read_text()
+        )
+        assert receipt["limits"]["seconds"] == 390
+        assert row["capture_error"] is None
+    else:
+        assert "transport limits exceed the reviewed bounds" in row["capture_error"]
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"stream_bytes": 16_777_217},
+        {"frame_bytes": 1_048_575},
+        {"seconds": True},
+        {"stream_bytes": True},
+    ],
+)
+def test_reviewed_transport_bounds_keep_byte_frame_and_type_guards(changes):
+    limits = {
+        "seconds": 390.0,
+        "stream_bytes": 16_777_216,
+        "frame_bytes": 1_048_576,
+        **changes,
+    }
+    assert not THREE_CLIENTS_MODULE.transport_limits_within_reviewed_bounds(limits)
+
+
 def _runner_fixture(
     tmp_path,
     *,

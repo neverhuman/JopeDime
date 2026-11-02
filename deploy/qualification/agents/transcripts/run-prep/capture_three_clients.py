@@ -30,6 +30,11 @@ CLIENTS = {
 }
 SHA = re.compile(r"[0-9a-f]{64}\Z")
 GIT_SHA = re.compile(r"[0-9a-f]{40}\Z")
+# v14's reviewed recorder contract uses a 390-second ceiling. Keep the
+# consumer aligned with the producer's declared limit; byte/frame caps stay fixed.
+MAX_TRANSPORT_SECONDS = 390.0
+MAX_TRANSPORT_STREAM_BYTES = 16_777_216
+MAX_TRANSPORT_FRAME_BYTES = 1_048_576
 PLACEHOLDERS = {
     "{candidate}",
     "{capture_dir}",
@@ -69,6 +74,25 @@ class CaptureError(ValueError):
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise CaptureError(message)
+
+
+def transport_limits_within_reviewed_bounds(limits: object) -> bool:
+    if not isinstance(limits, dict):
+        return False
+    seconds = limits.get("seconds")
+    stream_bytes = limits.get("stream_bytes")
+    frame_bytes = limits.get("frame_bytes")
+    return (
+        isinstance(seconds, (int, float))
+        and not isinstance(seconds, bool)
+        and seconds <= MAX_TRANSPORT_SECONDS
+        and isinstance(stream_bytes, int)
+        and not isinstance(stream_bytes, bool)
+        and stream_bytes <= MAX_TRANSPORT_STREAM_BYTES
+        and isinstance(frame_bytes, int)
+        and not isinstance(frame_bytes, bool)
+        and frame_bytes == MAX_TRANSPORT_FRAME_BYTES
+    )
 
 
 def digest(path: Path) -> str:
@@ -1011,10 +1035,7 @@ def run_capture(args: argparse.Namespace) -> dict:
                     )
                     limits = capture.get("limits")
                     require(
-                        isinstance(limits, dict)
-                        and limits.get("seconds", 0) <= 300
-                        and limits.get("stream_bytes", 0) <= 16_777_216
-                        and limits.get("frame_bytes") == 1_048_576,
+                        transport_limits_within_reviewed_bounds(limits),
                         f"{key} transport limits exceed the reviewed bounds",
                     )
                     require(
