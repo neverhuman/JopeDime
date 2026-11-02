@@ -1,0 +1,55 @@
+{
+  "arms": [
+    "R882_CONT",
+    "H180_RAND",
+    "PROPOSER_W128",
+    "PROPOSER_W256",
+    "PROPOSER_W512"
+  ],
+  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
+  "boot_seed": 204141,
+  "evaluator_contract_id": "fixed-dev-cost-argmin-negative-fitness/v1",
+  "fold_seed": 204140,
+  "gpu_device": "cuda:0",
+  "gpu_name_expected": "NVIDIA GeForce RTX 3090",
+  "host": "xbabe2",
+  "k_candidates_range": [
+    8,
+    16
+  ],
+  "owner": "gpu_tokbench_agy",
+  "r882_expected_dl_val_mean_cost": 1.1377941898164525,
+  "research_dope_unfreeze_flag": "JOPE_RESEARCH_DOPE_UNFREEZE=1",
+  "research_run_id_required": true,
+  "resource_guards": {
+    "cuda_driver_threads_exempt": true,
+    "max_cpu_util_pct": 85.0,
+    "max_disk_used_ratio": 0.938,
+    "max_labeler_workers": 2,
+    "max_local_cache_bytes": 21474836480,
+    "max_numeric_threads": 4,
+    "max_rss_bytes": 6442450944,
+    "min_disk_free_bytes": 42949672960,
+    "required_nice": 19
+  },
+  "s3_datasets_bucket": "s3://veox-jopedime-datasets-use2",
+  "s3_evidence_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H204/",
+  "seeds": [
+    204101,
+    204102,
+    204103
+  ],
+  "stage1_arms": [
+    "R882_CONT",
+    "H180_RAND",
+    "PROPOSER_W128"
+  ],
+  "stage1_width": 128,
+  "status": "PREREGISTERED",
+  "wave": "H204",
+  "widths": [
+    128,
+    256,
+    512
+  ]
+}
