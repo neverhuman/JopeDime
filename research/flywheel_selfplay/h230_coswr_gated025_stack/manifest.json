@@ -11,7 +11,7 @@
   },
   "scientific_statistics_commit": "e3c978d5d36f50a190b82543e592834b549e0844",
   "scientific_statistics_sha256": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434",
-  "h136_recipe_path": "/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/run_h136_cpu.py",
+  "h136_recipe_path": "/home/ubuntu/jope-rescue-20260921/h230-astra/h136-recipe.py",
   "h136_recipe_sha256": "b0eda24a960f31c52fc308f5b667f1b76c9a6a55dd0ce031898beeda4fc21072",
   "seeds": [
     230101,
@@ -91,7 +91,7 @@
     "README.md": "297ee279700f4a9ffc5a8a00d6c20701288b0730fa1f6b046b04bddea1e34ff3",
     "analysis.py": "0c648fde0a59d43ec70c781076753c086563adb71fa657a2882a941c1111fbc9",
     "fold_manifest.json": "bcf20a4a10db4551dabf3fd75a998c5c881e795cffdd09063ce165fb1cdc969a",
-    "gate.py": "75d084a5c89d126db50f28763c7551b305aedd8ee4074630ec65a6dbfab811d7",
+    "gate.py": "6943da4fef95e86b7d498b31d22e4ea078c0021f1a0bd05e779d3899359dc0f9",
     "monitor.py": "b6f98cb5e54f460cdac0ba6c23db0b9ca55d5d4428a4d60e2073dc80c98d79e3",
     "provenance.json": "aaab3096757b1d3e4859af22fcd0451d8f5c380e23599330b34513b04ee60b6c",
     "runner.py": "c293080c8332b0a507e95545506f3f5e1dccb24903f8c8307bd71030c9b99acc",

@@ -13,7 +13,7 @@ import subprocess
 import types
 import numpy as np
 
-H136 = Path("/home/ubuntu/jope-rescue-20260921/h136-fambal-cosine-run/run_h136_cpu.py")
+H136 = Path("/home/ubuntu/jope-rescue-20260921/h230-astra/h136-recipe.py")
 H136_SHA = "b0eda24a960f31c52fc308f5b667f1b76c9a6a55dd0ce031898beeda4fc21072"
 SOURCE = "e3c978d5d36f50a190b82543e592834b549e0844"
 
@@ -291,6 +291,8 @@ class Controller:
             seed=seed,
             outer=outer,
             updates=40,
+            trainable_parameters=29211,
+            trainable_tensors=47,
             fit_contexts=len(ids),
             fit_context_ids_sha256=hashlib.sha256(json.dumps(ids).encode()).hexdigest(),
             lrs=lrs,

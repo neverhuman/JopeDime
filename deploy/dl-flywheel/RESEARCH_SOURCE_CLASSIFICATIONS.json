@@ -5793,12 +5793,12 @@
       "sha256": "0c648fde0a59d43ec70c781076753c086563adb71fa657a2882a941c1111fbc9"
     },
     "python:research/flywheel_selfplay/h230_coswr_gated025_stack/gate.py": {
-      "bytes": 11649,
+      "bytes": 11710,
       "classification": {
         "reason": "H230 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion.",
         "role": "research"
       },
-      "sha256": "75d084a5c89d126db50f28763c7551b305aedd8ee4074630ec65a6dbfab811d7"
+      "sha256": "6943da4fef95e86b7d498b31d22e4ea078c0021f1a0bd05e779d3899359dc0f9"
     },
     "python:research/flywheel_selfplay/h230_coswr_gated025_stack/monitor.py": {
       "bytes": 9019,
