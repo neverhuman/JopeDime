@@ -5504,6 +5504,46 @@
       },
       "sha256": "7f4fbaa5c43a2104b72b5e12948c1cb1cf069c31bffafe1031a98df51e87412d"
     },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/backend.py": {
+      "bytes": 6595,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "94543734011f7c552e5c57da35f82152da0aa39288ee7829c40f472b6b6cb2ae"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/launch.py": {
+      "bytes": 11790,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "2ff4df29339c6038c8d1bf012c0b8a0f2a9d14e1c0bf4294cc3f85e3d848890d"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/runner.py": {
+      "bytes": 22939,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a658d9117764472bb16e25cdc98f8621c441b7d0d3d6f4e91c36d9fbb866ce54"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/science.py": {
+      "bytes": 7783,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "a5ee68a2edbf43bc580ec413540dd2f1b7601a332fa77bb707fffccf2e3b268f"
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/study.py": {
+      "bytes": 5639,
+      "classification": {
+        "reason": "H221 owner-authorized, preregistered five-family-bootstrap separate utility-delta heads and unchanged H213 B-only safe gate with pinned H213 helpers,165 separate-head fits; r882 never trains, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "6b68dcedd1edee25d4dfd13dd807f6a1d5c14f887bcf048d4438811d945aae50"
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
