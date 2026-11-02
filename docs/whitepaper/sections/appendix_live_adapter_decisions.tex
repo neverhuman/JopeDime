@@ -1,0 +1,23 @@
+\FloatBarrier
+\section{Current Adapter Admission Decisions}\label{app:live-adapter-decisions}
+
+\Cref{fig:fw-live-adapter-decisions} isolates the adapter admission
+check from training-program incumbent events. Each round compares its
+candidate with the retained adapter before that decision. The capture
+matches complete scalar entries from the summary, adapter-admission and
+per-round journals; it does not use retained round-level JSON files.
+The records retain the development scope and unresolved source-binding
+requirements of \cref{sec:method-status}.
+
+\begin{figure}[tb]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_fw_live_adapter_decisions.pdf}
+  \caption{\textbf{Candidate utility relative to the retained adapter.}
+  Rounds 3881--3900, captured at 21:25 UTC on 2 November 2026.
+  Each point is candidate utility minus the pre-round recorded best;
+  zero denotes equality. Markers show logged admission decisions, with
+  all 20 candidates rejected. Recorded-best utility remained 1.1389572.
+  This adaptive development window does not measure independent
+  first-proposal or serving performance. Scope: \cref{sec:method-status}.}
+  \label{fig:fw-live-adapter-decisions}
+\end{figure}
