@@ -15,10 +15,11 @@ advisory_on = ["medium", "low", "info"]
 extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
-  # Historical entrant archived verbatim in the paper; not generated product code.
-  # The artifact manifest pins it to the original submission, and the paper check
+  # Historical entrants archived verbatim in the paper; not generated product code.
+  # The artifact manifest pins them to the original submissions, and the paper check
   # verifies the bytes. A source header would invalidate that evidence.
   "docs/paper/innovationzero/artifacts/sources/GPT6_Astra_Max.rs",
+  "docs/paper/innovationzero/artifacts/sources/GPT6p1_Sol_Max.rs",
   "deploy/ci/test-gitleaks-config.py",
   "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
