@@ -6,6 +6,7 @@
 
 pub mod broad_shadow_catalog;
 pub mod broad_shadow_cli;
+pub mod broad_shadow_ranking;
 pub mod cost;
 pub mod broad_shadow;
 pub mod dime_activation;
@@ -29,7 +30,6 @@ pub mod loop_selection;
 pub mod paths;
 pub mod recovery_contracts;
 pub mod router_contracts;
-pub mod validation_gp_study_reporting;
 pub mod search_v3;
 pub mod selfplay_core;
 pub mod selfplay_data;
@@ -49,4 +49,5 @@ pub mod task_preflight;
 pub mod task_rating;
 pub mod timeseries;
 pub mod training_history;
+pub mod validation_gp_study_reporting;
 pub mod validation_gp_study_selection;
