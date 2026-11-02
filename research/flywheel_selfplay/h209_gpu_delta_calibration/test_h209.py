@@ -209,3 +209,85 @@ def test_unmerged_launch_refused_before_gpu_or_claim(monkeypatch):
     )
     with pytest.raises(RuntimeError, match="merged preregistration"):
         launch.main(types.SimpleNamespace(pr=1, commit="a" * 40))
+
+
+def make_actual_resource_check(resources, guard):
+    """Compile the production closure, without starting a model or worker."""
+    import ast
+    import json
+    import time
+    import types
+
+    tree = ast.parse((HERE / "runner.py").read_text())
+    run = next(
+        n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "run"
+    )
+    check = next(
+        n for n in run.body if isinstance(n, ast.FunctionDef) and n.name == "check"
+    )
+    factory = ast.parse(
+        "def factory():\n    checking = False\n    return check\n"
+    ).body[0]
+    factory.body.insert(1, check)
+    ns = dict(
+        resources=resources,
+        guard=guard,
+        snapshot=lambda: {},
+        json=json,
+        time=time,
+        started=time.monotonic(),
+        args=types.SimpleNamespace(output=HERE),
+    )
+    exec(
+        compile(
+            ast.fix_missing_locations(ast.Module(body=[factory], type_ignores=[])),
+            str(HERE / "runner.py"),
+            "exec",
+        ),
+        ns,
+    )
+    return ns["factory"]()
+
+
+def test_alarm_during_buffered_write_does_not_reenter_resource_check():
+    import signal
+
+    class AlarmDuringWrite(io.RawIOBase):
+        fired = False
+
+        def writable(self):
+            return True
+
+        def write(self, data):
+            if not self.fired:
+                self.fired = True
+                signal.raise_signal(signal.SIGALRM)
+            return len(data)
+
+    raw = AlarmDuringWrite()
+    stream = io.TextIOWrapper(io.BufferedWriter(raw, buffer_size=1))
+    calls = []
+    check = make_actual_resource_check(stream, lambda sample: calls.append(sample))
+    previous = signal.signal(signal.SIGALRM, check)
+    try:
+        check()
+        assert raw.fired and len(calls) == 1
+        check()
+        assert len(calls) == 2
+    finally:
+        signal.signal(signal.SIGALRM, previous)
+        stream.close()
+
+
+def test_resource_guard_failure_releases_reentry_flag():
+    calls = []
+
+    def refuse(sample):
+        calls.append(sample)
+        raise RuntimeError("resource gate")
+
+    check = make_actual_resource_check(io.StringIO(), refuse)
+    for _ in range(2):
+        with pytest.raises(RuntimeError, match="resource gate"):
+            check()
+    assert len(calls) == 2

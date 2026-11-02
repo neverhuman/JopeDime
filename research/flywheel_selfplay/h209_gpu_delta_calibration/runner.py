@@ -241,19 +241,30 @@ def run(args):
         args.repo
     )  # Used only as Git cwd by the immutable historical guard loader.
 
+    checking = False
+
     def check(*unused):
-        sample = snapshot()
-        resources.write(
-            json.dumps(dict(sample, elapsed=time.monotonic() - started)) + "\n"
-        )
-        resources.flush()
-        guard(sample)
-        if (
-            time.monotonic() - started > 3600
-            or sum(p.stat().st_size for p in args.output.rglob("*") if p.is_file())
-            >= 300_000_000
-        ):
-            raise RuntimeError("fixed wall/output budget exceeded")
+        nonlocal checking
+        # SIGALRM can arrive during a synchronous buffered write. The active
+        # check already samples/enforces all limits; do not enter its I/O twice.
+        if checking:
+            return
+        checking = True
+        try:
+            sample = snapshot()
+            resources.write(
+                json.dumps(dict(sample, elapsed=time.monotonic() - started)) + "\n"
+            )
+            resources.flush()
+            guard(sample)
+            if (
+                time.monotonic() - started > 3600
+                or sum(p.stat().st_size for p in args.output.rglob("*") if p.is_file())
+                >= 300_000_000
+            ):
+                raise RuntimeError("fixed wall/output budget exceeded")
+        finally:
+            checking = False
 
     def numeric_check():
         report = numeric.capture_numeric_threads(torch)
