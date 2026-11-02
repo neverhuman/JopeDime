@@ -1,8 +1,6 @@
-#[path = "../src/kernel/strategy/bandit.rs"]
-mod bandit;
-
-use bandit::{
-    AttemptDisposition, BanditConfig, BanditError, BehaviorLaw, FeedbackStatus, OperatorBandit,
+use feat_math::kernel::strategy::bandit::{
+    self, AttemptDisposition, BanditConfig, BanditError, BehaviorLaw, FeedbackStatus,
+    OperatorBandit,
 };
 
 fn config() -> BanditConfig {
@@ -80,7 +78,7 @@ fn zero_gain_ties_and_single_legal_arm_have_defined_probabilities() {
 }
 
 #[test]
-fn empty_legal_set_is_retained_as_unavailable_without_invented_probability() {
+fn empty_legal_set_is_recorded_without_selection_or_propensity() {
     let mut bandit = OperatorBandit::new(config()).unwrap();
     assert!(bandit
         .select("empty", "ctx-v1:small-table", &[], 0.25)
@@ -90,6 +88,10 @@ fn empty_legal_set_is_retained_as_unavailable_without_invented_probability() {
     assert_eq!(attempt.disposition, AttemptDisposition::Unavailable);
     assert!(attempt.selection.is_none());
     assert!(attempt.feedback.is_empty());
+    let serialized = serde_json::to_value(attempt).unwrap();
+    assert_eq!(serialized["disposition"], "unavailable");
+    assert!(serialized["selection"].is_null());
+    assert!(serialized.get("propensity").is_none());
 }
 
 #[test]

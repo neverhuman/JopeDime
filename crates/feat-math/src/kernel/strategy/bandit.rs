@@ -178,7 +178,8 @@ impl OperatorBandit {
         }
     }
 
-    /// Empty legal sets are logged as unavailable, with no fabricated action or probability.
+    /// Empty legal sets record `Unavailable` without a selection; the public-route regression is
+    /// `operator_bandit::empty_legal_set_is_recorded_without_selection_or_propensity`.
     pub fn select(
         &mut self,
         attempt_id: impl Into<String>,
