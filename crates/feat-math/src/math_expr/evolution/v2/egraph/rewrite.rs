@@ -1,3 +1,5 @@
+use crate::math_expr::evaluator::compute_binary;
+
 fn is(value: Option<f64>, expected: f64) -> bool {
     value.is_some_and(|v| v.to_bits() == expected.to_bits())
 }

@@ -13,6 +13,7 @@
 //! exactly one Hard class, together with the faults raised before it, and a Hard class is raised
 //! only together with an error.
 
+use super::evaluator::{compute_expr_with, safe_with};
 use super::*;
 use std::fmt;
 

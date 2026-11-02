@@ -1,11 +1,9 @@
 //! Reuse the raw protected operations without changing the frozen evaluator.
 //! New policy helpers have their already-certified local bounds; legacy
 //! intermediate arithmetic is sanitized only at the complete tree's output.
+use super::super::evaluator::{compute_binary_with, compute_func_with, eval_var_with, safe_with};
 use super::super::fault::{Collect, FaultSink};
-use super::super::{
-    compute_binary_with, compute_func_with, eval_var_with, safe_with, EvalContext, Func, UnOp, Var,
-    MAX_NODES,
-};
+use super::super::{EvalContext, Func, UnOp, Var, MAX_NODES};
 use crate::kernel::numerical_policy::{asinh_v2, reduce_v2, NumericalPolicy, Reduction};
 use crate::kernel::scalar_execution::{CompiledScalarProgram, Instruction, ScalarEvaluation};
 use crate::kernel::scalar_program::{ScalarExpressionProgram, ScalarFunction, ScalarNode};

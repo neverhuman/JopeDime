@@ -13,8 +13,8 @@ pub(crate) enum Op {
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Dual {
-    v: f64,
-    d: Lanes,
+    pub(super) v: f64,
+    pub(super) d: Lanes,
 }
 
 pub(crate) const DUAL_ZERO: Dual = Dual { v: 0.0, d: ZERO };

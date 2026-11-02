@@ -9,8 +9,8 @@ pub(crate) type Lanes = [f64; MAX_PARAMS];
 pub(crate) const ZERO: Lanes = [0.0; MAX_PARAMS];
 
 /// 2^600 and 2^-600. Multiplying by either is exact while the product stays a normal number.
-const SCALE_UP: f64 = f64::from_bits((1023 + 600) << 52);
-const SCALE_DOWN: f64 = f64::from_bits((1023 - 600) << 52);
+pub(super) const SCALE_UP: f64 = f64::from_bits((1023 + 600) << 52);
+pub(super) const SCALE_DOWN: f64 = f64::from_bits((1023 - 600) << 52);
 
 /// `x = m · 2^e` with `1 ≤ |m| < 2` for a finite nonzero `x`, subnormals included. Zero and
 /// non-finite `x` come back as `(x, 0)`.

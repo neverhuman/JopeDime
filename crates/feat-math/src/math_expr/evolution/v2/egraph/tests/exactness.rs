@@ -1,3 +1,5 @@
+use crate::math_expr::evaluator::compute_expr_with;
+
 /// The raw evaluation of `tree` on `row`, before the root's `safe`: the value's bits with
 /// every NaN collapsed to one (`None` for an error), and the faults.
 fn raw(tree: &Expr, row: &[f64]) -> (Option<u64>, FaultSet) {
