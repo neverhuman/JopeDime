@@ -11,13 +11,6 @@ on:
         type: string
         required: false
         default: ""
-      runner_pool:
-        description: "Use native Linux workers while Mac capacity is unavailable"
-        type: choice
-        options:
-          - auto
-          - native
-        default: auto
 permissions:
   contents: read
   pull-requests: read
@@ -67,9 +60,10 @@ jobs:
           path: target/ci-evidence/${{ github.run_id }}/${{ github.run_attempt }}/changes/
 
   changes-dispatch:
-    if: github.event_name == 'workflow_dispatch'
-    # Manual runs retain the admitted native runner and exact deployed-policy proof.
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    # Classification is unprivileged and hosted; downstream self-hosted jobs still perform
+    # their own runner provenance and resource admission before executing candidate work.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       rust: ${{ steps.lane.outputs.rust }}
@@ -77,16 +71,13 @@ jobs:
       inputs: ${{ steps.lane.outputs.inputs }}
       python: ${{ steps.lane.outputs.python }}
       e2e: ${{ steps.lane.outputs.e2e }}
-      runner_pool: ${{ inputs.runner_pool == 'native' && 'jope-ci' || steps.provenance.outputs.runner-pool }}
+      runner_pool: jope-ci
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Runner provenance
-        id: provenance
-        uses: ./.github/actions/runner-provenance
       - name: Run declared lane and retain receipt
         id: lane
         run: |
@@ -117,17 +108,27 @@ jobs:
           EVENT: ${{ github.event_name }}
           PR_RESULT: ${{ needs['changes-pr'].result }}
           DISPATCH_RESULT: ${{ needs['changes-dispatch'].result }}
+          REF: ${{ github.ref }}
         run: |
           set -euo pipefail
           case "$EVENT" in
             pull_request) test "$PR_RESULT" = success ;;
-            workflow_dispatch) test "$DISPATCH_RESULT" = success ;;
+            workflow_dispatch)
+              if [ "$REF" = refs/heads/main ]; then
+                test "$DISPATCH_RESULT" = success
+              else
+                test "$DISPATCH_RESULT" = skipped
+                echo "non-main manual dispatch was refused before privileged runner admission" >&2
+                exit 1
+              fi
+              ;;
             *) echo "unsupported CI event: $EVENT" >&2; exit 2 ;;
           esac
 
   hygiene:
     # Release security checks require an actually empty tool HOME. Rosetta
     # creates .cache/rosetta when jq starts; retain the checks on native Linux.
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
     # Headroom for the three bounded evidence-publication attempts, each of which can stall for
     # about two minutes on a blackholed connection before it resets.
@@ -158,7 +159,7 @@ jobs:
   jankurai-audit:
     # A required CI job for same-repository PRs and manual runs; fork PRs do not write to the
     # self-hosted evidence store.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: [self-hosted, linux, x64, jope-ci, xbabe1-ci]
     timeout-minutes: 35
     steps:
@@ -411,16 +412,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export JOPE_UI_EVIDENCE="$RUNNER_TEMP/jope-observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/raw"
+          raw_results="$RUNNER_TEMP/jope-observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/raw"
           bundle="$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
-          mkdir -p "$JOPE_UI_EVIDENCE" "$bundle"
+          mkdir -p "$raw_results" "$bundle"
           test "$(git rev-parse HEAD)" = "$JOPE_UI_SOURCE_SHA"
           node --version
           npm --version
           npm ci --no-audit --no-fund
           npm run typecheck
-          npm test -- --reporter=json --outputFile="$JOPE_UI_EVIDENCE/tests.json"
-          node --input-type=module "$JOPE_UI_EVIDENCE/tests.json" "$JOPE_UI_SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > "$bundle/receipt.json" <<'JS'
+          npm test -- --reporter=json --outputFile="$raw_results/tests.json"
+          node --input-type=module "$raw_results/tests.json" "$JOPE_UI_SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > "$bundle/receipt.json" <<'JS'
           import fs from 'node:fs';
           const [, testsPath, sourceSha, runId, attempt] = process.argv;
           const r = JSON.parse(fs.readFileSync(testsPath, 'utf8'));
@@ -428,7 +429,7 @@ jobs:
           process.stdout.write(JSON.stringify({schema:'jope.observatory-ui-ci/v1', source_sha:sourceSha, run_id:runId, attempt, node:process.version, executed:r.numTotalTests, passed:r.numPassedTests, failed:r.numFailedTests, scope:'frontend fixtures; not live training qualification'}, null, 2));
           JS
           npm run build
-          sha256sum package-lock.json dist/index.html dist/assets/* > "$JOPE_UI_EVIDENCE/build-sha256.txt"
+          sha256sum package-lock.json dist/index.html dist/assets/* > "$raw_results/build-sha256.txt"
       - name: Rendered UX, keyboard navigation and accessibility
         working-directory: web/training-dashboard
         shell: bash
@@ -461,6 +462,7 @@ jobs:
     uses: ./.github/workflows/typescript.yml
 
   paper:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     uses: ./.github/workflows/paper.yml
 
   go:
@@ -476,7 +478,7 @@ jobs:
 
   aggregate:
     needs: [changes, hygiene, jankurai-audit, rust-check, rust-test, emitters, inputs, python, e2e-smoke, observatory-ui, paper, typescript, go, export-parity]
-    if: always()
+    if: always() && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
@@ -565,39 +567,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$PAPER_RESULT" = success
-          python3 - <<'PY'
-          import hashlib, json, os, pathlib
-          root = pathlib.Path('target/ci-paper-download') / os.environ['GITHUB_RUN_ID'] / os.environ['GITHUB_RUN_ATTEMPT']
-          paths = list(root.rglob('receipt.json'))
-          assert len(paths) == 1, 'one publication receipt required'
-          path = paths[0]; r = json.loads(path.read_text())
-          assert r['schema'] == 'jope.ci-receipt/v1' and r['lane'] == 'paper'
-          assert r['source_sha'] == os.environ['JOPE_SOURCE_SHA']
-          assert r['checkout_sha'] == os.environ['GITHUB_SHA']
-          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and type(r['attempt']) is int and 1 <= r['attempt'] <= int(os.environ['GITHUB_RUN_ATTEMPT'])
-          assert r['event'] == os.environ['GITHUB_EVENT_NAME']
-          assert r['status'] == 'passed' and r['exit_status'] == 0 and not r.get('diagnostic')
-          assert r['dirty_source'] == r['dirty_source_after'] == []
-          assert r['command'] == ['make', '-C', 'docs/paper/innovationzero', 'check', 'self-test']
-          required = {'command.log', 'evidence/source-identity.json'}
-          assert required <= set(r['evidence'])
-          actual = {str(p.relative_to(path.parent)) for p in path.parent.rglob('*') if p.is_file() and p != path}
-          assert actual == set(r['evidence'])
-          for name, sha in r['evidence'].items():
-              member = path.parent / name
-              assert not pathlib.Path(name).is_absolute() and '..' not in pathlib.Path(name).parts
-              assert not member.is_symlink() and member.resolve().is_relative_to(path.parent.resolve())
-              assert hashlib.sha256(member.read_bytes()).hexdigest() == sha
-          identity = json.loads((path.parent / 'evidence/source-identity.json').read_text())
-          assert identity['schema'] == 'jope.publication-source/v1'
-          assert identity['source_sha'] == r['source_sha']
-          assert identity['checkout_sha'] == identity['event_sha'] == r['checkout_sha']
-          assert identity['run_id'] == r['run_id'] and identity['attempt'] == r['attempt'] and identity['event'] == r['event']
-          import subprocess
-          current_tree = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
-          assert identity['source_tree'] == identity['checkout_tree'] == current_tree
-          print('Exact-head publication source checks and refusal checks retained; PDF rendering is separate')
-          PY
+          python3 deploy/ci/aggregate-evidence.py publication \
+            --root "target/ci-paper-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" \
+            --source-sha "$JOPE_SOURCE_SHA" --checkout-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT" --event "$GITHUB_EVENT_NAME"
       - name: Collect frontend evidence
         uses: ./.github/actions/download-ci-evidence
         with:
@@ -611,27 +584,18 @@ jobs:
         run: |
           set -euo pipefail
           test "$UI_RESULT" = success
-          python3 - <<'PY'
-          import json, os, pathlib
-          root = pathlib.Path('target/ci-ui-download') / os.environ['GITHUB_RUN_ID'] / os.environ['GITHUB_RUN_ATTEMPT']
-          receipts = list(root.rglob('receipt.json'))
-          assert len(receipts) == 1, 'one retained frontend receipt required'
-          r = json.loads(receipts[0].read_text())
-          assert r['schema'] == 'jope.observatory-ui-ci/v1'
-          assert r['source_sha'] == os.environ['JOPE_SOURCE_SHA']
-          assert r['run_id'] == os.environ['GITHUB_RUN_ID'] and isinstance(r['attempt'], str) and r['attempt'].isdecimal() and 1 <= int(r['attempt']) <= int(os.environ['GITHUB_RUN_ATTEMPT'])
-          assert r['executed'] > 0 and r['passed'] == r['executed'] and r['failed'] == 0
-          print('Exact-head frontend tests:', r['executed'], 'passed')
-          PY
+          python3 deploy/ci/aggregate-evidence.py frontend \
+            --root "target/ci-ui-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" \
+            --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$GITHUB_RUN_ATTEMPT"
       - name: Require exact-head complete rendered UX evidence
         if: always()
         run: |
           set -euo pipefail
-          root="target/ci-ui-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
-          rendered_root=$(python3 -c 'import pathlib,sys; p=list(pathlib.Path(sys.argv[1]).rglob("rendered-receipt.json")); assert len(p)==1, "one rendered receipt required"; print(p[0].parent)' "$root")
-          ui_attempt=$(python3 -c 'import json,os,pathlib,sys; p=list(pathlib.Path(sys.argv[1]).rglob("receipt.json")); assert len(p)==1; a=json.loads(p[0].read_text())["attempt"]; assert isinstance(a,str) and a.isdecimal() and 1<=int(a)<=int(os.environ["GITHUB_RUN_ATTEMPT"]); print(a)' "$root")
           # UI checks out the source head explicitly; aggregate may use a synthetic PR merge.
-          python3 deploy/ci/rendered-ux-receipt.py verify --root "$rendered_root" --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" --attempt "$ui_attempt" --checkout-sha "$JOPE_SOURCE_SHA" --event-sha "$GITHUB_SHA"
+          python3 deploy/ci/aggregate-evidence.py rendered-ux \
+            --root "target/ci-ui-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" \
+            --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT" --event-sha "$GITHUB_SHA"
       - name: Collect TypeScript Node 24.19.0 evidence
         if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
         uses: ./.github/actions/download-ci-evidence
@@ -673,60 +637,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$EXPORT_RESULT" = success
-          python3 - <<'PYVERIFY'
-          import hashlib, json, os, pathlib
-          root = pathlib.Path('target/ci-export-parity') / os.environ['GITHUB_RUN_ID'] / os.environ['GITHUB_RUN_ATTEMPT']
-          paths = list(root.rglob('report.json'))
-          assert len(paths) == 1, 'one hosted parity report required'
-          path = paths[0]; r = json.loads(path.read_text())
-          assert r['schema'] == 'jope.export-parity/v1' and r['status'] == 'pass' and r['passed'] is True
-          assert r['ci_executed'] is True and r['source_stable'] is True and not r['source_dirty']
-          assert r['source_sha'] == r['source_end'] == os.environ['JOPE_SOURCE_SHA']
-          assert r['harness_sha256'] == hashlib.sha256(pathlib.Path('deploy/ci/export-parity.sh').read_bytes()).hexdigest()
-          assert r['cargo_lock_sha256'] == hashlib.sha256(pathlib.Path('Cargo.lock').read_bytes()).hexdigest()
-          c = r['ci_context']
-          assert c['GITHUB_REPOSITORY'] == os.environ['GITHUB_REPOSITORY'] == 'neverhuman/JopeDime'
-          assert c['GITHUB_EVENT_NAME'] == os.environ['GITHUB_EVENT_NAME'] == 'workflow_dispatch'
-          assert c['GITHUB_RUN_ID'] == os.environ['GITHUB_RUN_ID']
-          assert c['GITHUB_RUN_ATTEMPT'] == os.environ['GITHUB_RUN_ATTEMPT']
-          assert r['fault_injected'] is False
-          assert r['toolchains']['rustc'].startswith('rustc 1.97.1 ')
-          assert r['toolchains']['python'] == 'Python 3.12.3' and r['toolchains']['node'] == 'v26.1.0'
-          registry = json.loads((path.parent / 'registry.json').read_text())
-          assert hashlib.sha256((path.parent / 'registry.json').read_bytes()).hexdigest() == r['registry_sha256']
-          assert hashlib.sha256((path.parent / 'fixtures.json').read_bytes()).hexdigest() == r['fixture_sha256']
-          expected = {(x['kind'].capitalize() + '/' + x['name'], lang): admitted for x in registry['entries'] for lang, admitted in x['supported'].items()}
-          cells = r['cells']; supported = [x for x in cells if x['supported']]
-          assert {(x['key'], x['language']): x['supported'] for x in cells} == expected
-          assert len({(x['key'], x['language']) for x in cells}) == len(cells)
-          assert len(supported) > 0 and all(x['status'] == 'pass' for x in supported)
-          assert r['expected_supported_cells'] == r['executed_supported_cells'] == len(supported)
-          assert all(x['status'] == 'unsupported_registry' for x in cells if not x['supported'])
-          cases = r['cases']
-          assert r['expected_emitted_modules'] == r['executed_emitted_modules'] == len(cases) > 0
-          assert all(x['status'] == 'pass' and x['self_check_rows'] == 64 for x in cases)
-          assert {x['language'] for x in cases} == {'rust', 'python', 'javascript'}
-          routing = [x for x in cases if x.get('decision_measurement')]
-          assert routing and all(x['golden_flip_rate'] == 0 and x['randomized_flip_rate'] <= .001 for x in routing)
-          assert len(r['raw_numeric_contract']) == 3 and all(x['status'] == 'pass' and x['rows'] > 0 for x in r['raw_numeric_contract'])
-          commands = r['commands']; assert commands and all(type(x['exit']) is int for x in commands)
-          for command in commands:
-              assert {'argv', 'exit', 'stdout', 'stderr', 'seconds'} <= command.keys()
-              assert command['argv'] and command['stdout'] in r['files'] and command['stderr'] in r['files']
-          actual = {str(x.relative_to(path.parent)) for x in path.parent.rglob('*') if x.is_file() and x != path and x != path.parent / 'MANIFEST.sha256'}
-          assert actual == set(r['files']), 'complete generated predictor/model/subprocess inventory'
-          assert {'harness.sh', 'generate.rs', 'registry.json', 'fixtures.json'} <= r['files'].keys()
-          assert any(name.endswith('/model.json') for name in r['files'])
-          for extension in ('rs', 'py', 'mjs'):
-              assert any(name.endswith('/predictor.' + extension) for name in r['files'])
-          for name, item in r['files'].items():
-              member = path.parent / name
-              assert not pathlib.Path(name).is_absolute() and '..' not in pathlib.Path(name).parts
-              assert not member.is_symlink() and member.resolve().is_relative_to(path.parent.resolve())
-              assert member.stat().st_size == item['bytes']
-              assert hashlib.sha256(member.read_bytes()).hexdigest() == item['sha256']
-          print('Hosted export parity:', len(supported), 'supported cells;', len(cases), 'emitted modules; source/run/attempt and every file verified')
-          PYVERIFY
+          python3 deploy/ci/aggregate-evidence.py export-parity \
+            --root "target/ci-export-parity/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" \
+            --source-sha "$JOPE_SOURCE_SHA" --run-id "$GITHUB_RUN_ID" \
+            --attempt "$GITHUB_RUN_ATTEMPT" --repository "$GITHUB_REPOSITORY" \
+            --event "$GITHUB_EVENT_NAME"
       - name: Retain hosted export parity on aggregate runner
         if: always() && github.repository == 'neverhuman/JopeDime' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
         uses: ./.github/actions/upload-ci-evidence
@@ -763,7 +678,10 @@ jobs:
           if [ "$JANKURAI_AUDIT_REQUIRED" = true ]; then expected=success; fi
           test "$JANKURAI_AUDIT_RESULT" = "$expected"
           # UI, publication, language and export evidence are independently verified above.
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("observatory-ui"); n.pop("paper"); n.pop("go"); n.pop("typescript"); n.pop("export-parity"); n.pop("jankurai-audit"); print(json.dumps(n))' > "$output/needs.json"
+          python3 deploy/ci/aggregate-evidence.py filter-needs \
+            --input "$output/all-needs.json" --output "$output/needs.json" \
+            --exclude observatory-ui --exclude paper --exclude go --exclude typescript \
+            --exclude export-parity --exclude jankurai-audit
           python3 deploy/ci/aggregate.py --receipts "target/ci-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output/aggregate.json"
       # aggregate.py already fails on this; the separate report is the retained proof.
       - name: Rust test slices cover the unsharded rust-test set exactly once

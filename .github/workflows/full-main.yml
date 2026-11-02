@@ -136,7 +136,8 @@ jobs:
           output="target/full-cpu-aggregate/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           mkdir -p "$output"
           printf '%s\n' "$NEEDS_JSON" > "$output/all-needs.json"
-          python3 -c 'import json,os; n=json.loads(os.environ["NEEDS_JSON"]); n.pop("paper"); print(json.dumps(n))' > "$output/needs.json"
+          python3 deploy/ci/aggregate-evidence.py filter-needs \
+            --input "$output/all-needs.json" --output "$output/needs.json" --exclude paper
           python3 deploy/ci/full-main.py aggregate --downloads "target/full-cpu-download/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" --needs "$output/needs.json" --output "$output"
       - name: Upload aggregate inventory
         if: always()
