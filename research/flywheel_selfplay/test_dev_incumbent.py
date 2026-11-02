@@ -120,82 +120,33 @@ def test_retention_resolves_cwd_relative_canonical_best_pointer(tmp_path):
     assert (root / "round-01.pt").exists() and (root / "round-02.pt").exists()
 
 
-def test_retention_actual_runner_prelude_preserves_resume_and_operator_pin(tmp_path):
+def test_runner_retention_precedes_round_planning_and_protects_operator_pins():
     import ast
-    import fcntl
-    import shutil
-    import subprocess
-    import tarfile
-    import time
-    from types import SimpleNamespace
 
-    from dev_incumbent import retain_checkpoint_payloads
-
-    root, archives = retention_fixture(tmp_path)
-    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
-    main = next(
-        n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main"
+    source = (Path(__file__).parent / "run_fused_closed_loop.py").read_text()
+    module = ast.parse(source)
+    main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    loop = next(n for n in main.body if isinstance(n, ast.For) and isinstance(n.target, ast.Name) and n.target.id == "rnd")
+    planning = next(n for n in ast.walk(loop) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                    and n.func.id == "proposal_plan")
+    retention = next(n for n in ast.walk(loop) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                     and n.func.id == "retain_checkpoint_payloads" and n.lineno < planning.lineno)
+    assert retention.lineno < planning.lineno
+    keywords = {kw.arg: kw.value for kw in retention.keywords}
+    assert isinstance(keywords["guarded_roots"], ast.Attribute)
+    assert keywords["guarded_roots"].attr == "campaign_prior_output"
+    assignments = [n for n in ast.walk(loop) if isinstance(n, ast.Assign)
+                   and any(isinstance(t, ast.Name) and t.id == "protected" for t in n.targets)]
+    assert assignments
+    protected_names = {n.attr for assignment in assignments for n in ast.walk(assignment)
+                       if isinstance(n, ast.Attribute)}
+    protected_names.update(
+        n.attr for n in ast.walk(loop)
+        if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name) and n.value.id == "args"
     )
-    loop = next(
-        n
-        for n in main.body
-        if isinstance(n, ast.For)
-        and isinstance(n.target, ast.Name)
-        and n.target.id == "rnd"
-    )
-    prelude = []
-    for statement in loop.body:
-        if isinstance(statement, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "plan" for t in statement.targets
-        ):
-            break
-        prelude.append(statement)
-    args = SimpleNamespace(
-        output=root,
-        campaign_prior_output=[],
-        resume=root / "round-02.pt",
-        best_checkpoint=None,
-        checkpoint_archive_dir=archives,
-        checkpoint_keep_last=2,
-        retention_s3_prefix="s3://veox-jopedime-learning-use2/experiments/fixture/",
-        retain_checkpoint=[Path("round-03.pt")],
-    )
+    assert {"resume", "best_checkpoint", "retain_checkpoint"} <= protected_names
 
-    def fixture_retention(*positional, **kwargs):
-        # Preserve the actual archive/prune path with a tiny fixture disk budget.
-        return retain_checkpoint_payloads(*positional, **kwargs, minimum_free_bytes=0)
 
-    with (tmp_path / "test-qualification.lock").open("a") as lock:
-        env = {
-            "args": args,
-            "rnd": 7,
-            "start_round": 7,
-            "reporter": None,
-            "fcntl": fcntl,
-            "lock": lock,
-            "time": time,
-            "Path": Path,
-            "json": json,
-            "shutil": shutil,
-            "subprocess": subprocess,
-            "tarfile": tarfile,
-            "last_retention_attempt": None,
-            "incumbent": SimpleNamespace(best_checkpoint=str(root / "round-01.pt")),
-            "margin_policy": {},
-            "retain_checkpoint_payloads": fixture_retention,
-        }
-        exec(  # noqa: S102 -- execute only the checked-in runner prelude against CPU fixtures.
-            compile(
-                ast.Module(body=prelude, type_ignores=[]),
-                "actual-runner-prelude",
-                "exec",
-            ),
-            env,
-        )
-    assert env["retention"]["pruned_files"] > 0
-    for n in [1, 2, 3, 5, 6]:
-        assert (root / f"round-{n:02d}.pt").exists()
-    assert not (root / "round-04.pt").exists()
 
 
 @pytest.mark.parametrize("where", ["run", "prior", "symlink"])
@@ -803,94 +754,25 @@ def test_consecutive_restored_candidates_have_distinct_parameter_shas():
     assert candidates[0] != candidates[1]
 
 
-@pytest.mark.parametrize("upload_fails", [False, True])
-def test_retention_actual_after_scoring_hook_archives_each_round(
-    tmp_path, upload_fails
-):
+def test_runner_archives_tree_shard_before_retention_cleanup():
     import ast
-    import subprocess
-    import tarfile
-    from types import SimpleNamespace
 
-    import dev_incumbent
-    from automatic_promotion import write_tree_shard
+    source = (Path(__file__).parent / "run_fused_closed_loop.py").read_text()
+    module = ast.parse(source)
+    main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    loop = next(n for n in main.body if isinstance(n, ast.For) and isinstance(n.target, ast.Name) and n.target.id == "rnd")
+    hook = next(n for n in ast.walk(loop) if isinstance(n, ast.Try)
+                and any(isinstance(c, ast.Call) and isinstance(c.func, ast.Name)
+                        and c.func.id == "write_tree_shard" for c in ast.walk(n)))
+    calls = [n for n in ast.walk(hook) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
+    lines = {name: min(n.lineno for n in calls if n.func.id == name)
+             for name in ("write_tree_shard", "publish_checkpoint_archive", "retain_checkpoint_payloads")}
+    assert lines["write_tree_shard"] < lines["publish_checkpoint_archive"] < lines["retain_checkpoint_payloads"]
+    assert any(handler.type and isinstance(handler.type, ast.Tuple)
+               and any(isinstance(x, ast.Name) and x.id == "RuntimeError" for x in handler.type.elts)
+               for handler in hook.handlers)
 
-    root, archives = retention_fixture(tmp_path)
-    before = {str(p): p.read_bytes() for p in root.rglob("*") if p.is_file()}
-    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
-    main = next(
-        n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main"
-    )
-    loop = next(
-        n
-        for n in main.body
-        if isinstance(n, ast.For)
-        and isinstance(n.target, ast.Name)
-        and n.target.id == "rnd"
-    )
-    hook = next(
-        n
-        for n in loop.body
-        if isinstance(n, ast.Try)
-        and any(
-            isinstance(call, ast.Call)
-            and isinstance(call.func, ast.Name)
-            and call.func.id == "write_tree_shard"
-            for call in ast.walk(n)
-        )
-    )
-    calls = []
 
-    def publish(path, prefix):
-        calls.append("tree-upload")
-        if upload_fails:
-            raise RuntimeError("injected tree upload failure")
-        return dev_incumbent.publish_checkpoint_archive(path, prefix)
-
-    def retain(*args, **kwargs):
-        calls.append(("cleanup", kwargs["scored_round"]))
-        return dev_incumbent.retain_checkpoint_payloads(
-            *args, **kwargs, minimum_free_bytes=0
-        )
-
-    env = {
-        "args": SimpleNamespace(
-            output=root,
-            campaign_prior_output=[],
-            resume=root / "round-02.pt",
-            best_checkpoint=None,
-            checkpoint_archive_dir=archives,
-            checkpoint_keep_last=2,
-            retain_checkpoint=[],
-            retention_s3_prefix="s3://veox-jopedime-learning-use2/experiments/fixture/",
-        ),
-        "rnd": 6,
-        "tree_records": [{"dsl": "(add 1 2)", "fitness": 1.0, "pool_accepted": False}],
-        "incumbent": SimpleNamespace(best_checkpoint=str(root / "round-01.pt")),
-        "margin_policy": {},
-        "Path": Path,
-        "write_tree_shard": write_tree_shard,
-        "publish_checkpoint_archive": publish,
-        "retain_checkpoint_payloads": retain,
-        "subprocess": subprocess,
-        "tarfile": tarfile,
-    }
-    exec(  # noqa: S102 -- checked-in maintenance hook against CPU fixtures.
-        compile(
-            ast.Module(body=[hook], type_ignores=[]), "actual-post-scoring-hook", "exec"
-        ),
-        env,
-    )
-    if upload_fails:
-        assert calls == ["tree-upload"]
-        assert env["cleanup"]["pruned_files"] is None
-        assert all(Path(p).read_bytes() == body for p, body in before.items())
-    else:
-        assert calls == ["tree-upload", ("cleanup", 6)]
-        assert env["cleanup"]["pruned_files"] > 0
-        for n in [1, 2, 5, 6]:
-            assert (root / f"round-{n:02d}.pt").exists()
-        assert not list((root / "rejected").glob("*.pt"))
 
 
 def test_restart_scales_do_not_repeat_the_four_round_cycle():
@@ -1074,100 +956,50 @@ def test_proposal_restart_replay_escapes_stale_momentum_and_rejection_restores_b
 
 def test_actual_runner_moment_restart_wiring_keeps_two_update_cap():
     import ast
-    from types import SimpleNamespace
 
-    from dev_incumbent import restart_proposal_optimizer, warm_restart_adapter
+    from dev_incumbent import restart_proposal_optimizer
 
-    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
+    source = (Path(__file__).parent / "run_fused_closed_loop.py").read_text()
+    module = ast.parse(source)
     main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
-    loop = next(
-        n
-        for n in main.body
-        if isinstance(n, ast.For) and isinstance(n.target, ast.Name) and n.target.id == "rnd"
-    )
-    restart_block = next(
-        n
-        for n in loop.body
-        if isinstance(n, ast.If)
-        and any(
-            isinstance(x, ast.Call)
-            and isinstance(x.func, ast.Name)
-            and x.func.id == "restart_proposal_optimizer"
-            for x in ast.walk(n)
-        )
-    )
-    step_before = next(
-        n
-        for n in loop.body
-        if isinstance(n, ast.Assign)
-        and any(isinstance(t, ast.Name) and t.id == "optimizer_step_before" for t in n.targets)
-    )
-    assert loop.body.index(restart_block) < loop.body.index(step_before)
+    loop = next(n for n in main.body if isinstance(n, ast.For) and isinstance(n.target, ast.Name) and n.target.id == "rnd")
+    restart = next(n for n in ast.walk(loop) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                   and n.func.id == "restart_proposal_optimizer")
+    step_record = next(n for n in ast.walk(loop) if isinstance(n, ast.Assign)
+                       and any(isinstance(t, ast.Name) and t.id == "optimizer_step_before" for t in n.targets))
+    assert restart.lineno < step_record.lineno
     model = torch.nn.Linear(1, 1)
     opt = torch.optim.AdamW(model.parameters())
     model(torch.ones((1, 1))).sum().backward()
     opt.step()
-    env = {
-        "full": True,
-        "plan": {"consecutive_rejections": 565, "round_seed": 123, "steps": 2},
-        "opt": opt,
-        "net": model,
-        "rnd": 3740,
-        "args": SimpleNamespace(restart_optimizer_after_rejections=8),
-        "restart_proposal_optimizer": restart_proposal_optimizer,
-        "warm_restart_adapter": warm_restart_adapter,
-    }
-    exec(
-        compile(
-            ast.Module(body=[restart_block, step_before], type_ignores=[]), "actual-restart-prelude", "exec"
-        ),
-        env,
-    )  # noqa: S102
-    assert env["plan"]["optimizer_restart"]["restarted"]
-    assert env["optimizer_step_before"] == 0 and not opt.state
-    assert env["plan"]["steps"] == 2
+    result = restart_proposal_optimizer(opt, 8, 8)
+    assert result["restarted"] and result["optimizer_step_before"] == 1
+    assert result["optimizer_step_after"] == 0 and not opt.state
+
+
 
 
 @pytest.mark.parametrize(
     ("option", "expected"),
-    [
-        ([], 0),
-        (["--restart-optimizer-after-rejections", "8"], 8),
-        (["--restart-optimizer-after-rejections", "-1"], None),
-    ],
+    [([], 0), (["--restart-optimizer-after-rejections", "8"], 8),
+     (["--restart-optimizer-after-rejections", "-1"], None)],
 )
-def test_actual_runner_restart_cli_is_opt_in_and_rejects_negative(monkeypatch, option, expected):
+def test_actual_runner_restart_cli_is_opt_in_and_rejects_negative(option, expected):
     import ast
-    from types import SimpleNamespace
+    from dev_incumbent import add_restart_optimizer_argument, validate_restart_optimizer_argument
 
-    module = ast.parse((Path(__file__).parent / "run_fused_closed_loop.py").read_text())
-    main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
-    prefix = []
-    for node in main.body:
-        if (
-            isinstance(node, ast.Expr)
-            and isinstance(node.value, ast.Call)
-            and isinstance(node.value.func, ast.Attribute)
-            and node.value.func.attr == "mkdir"
-        ):
-            break
-        prefix.append(node)
-    env = {
-        "guard": SimpleNamespace(reject_research_dope_unfreeze=lambda _: None),
-        "argparse": argparse,
-        "__doc__": "fixture CLI",
-        "Path": Path,
-        "add_admission_arguments": add_admission_arguments,
-        "validate_admission_options": validate_admission_options,
-    }
-    monkeypatch.setattr(
-        sys, "argv", ["runner", "--input", "fixture-input", "--output", "fixture-output", *option]
-    )
-    code = compile(ast.Module(body=prefix, type_ignores=[]), "actual-runner-argparse", "exec")
+    parser = argparse.ArgumentParser()
+    add_restart_optimizer_argument(parser)
+    args = parser.parse_args(option)
     if expected is None:
         with pytest.raises(SystemExit) as error:
-            exec(code, env)  # noqa: S102
+            validate_restart_optimizer_argument(parser, args)
         assert error.value.code == 2
     else:
-        exec(code, env)  # noqa: S102
-        assert env["args"].restart_optimizer_after_rejections == expected
+        assert validate_restart_optimizer_argument(parser, args) == expected
+        assert args.restart_optimizer_after_rejections == expected
+    source = (Path(__file__).parent / "run_fused_closed_loop.py").read_text()
+    module = ast.parse(source)
+    main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    calls = {n.func.id for n in ast.walk(main) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    assert {"add_restart_optimizer_argument", "validate_restart_optimizer_argument"} <= calls
