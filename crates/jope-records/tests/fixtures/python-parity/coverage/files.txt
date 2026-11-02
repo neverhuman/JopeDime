@@ -833,6 +833,9 @@ crates/jope-campaigns/tests/generalized_gp.rs
 crates/jope-campaigns/tests/hyperion_gate.rs
 crates/jope-campaigns/tests/router_contracts_v2.rs
 crates/jope-campaigns/tests/search_v3.rs
+crates/jope-campaigns/tests/search_v3/evidence.rs
+crates/jope-campaigns/tests/search_v3/folds.rs
+crates/jope-campaigns/tests/search_v3/schedules.rs
 crates/jope-campaigns/tests/selfplay_shadow_integration.rs
 crates/jope-campaigns/tests/systemd_unit_paths.rs
 crates/jope-ci/Cargo.toml
