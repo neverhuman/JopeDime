@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H200/astra-closeout-t2040/manifest.json",
+    "version_id": "8L1IkhXCiSBGgA.P3Hz7UOlwlSAzklR1",
+    "sha256": "6c0a44cc020e685c34c8de7c0023982d266c2fac3d4e9283f45174856f3b0547",
+    "bytes": 41712
+  },
+  "outputs": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H200/astra-closeout-t2040/evidence.zip",
+    "version_id": "E8wpUvJ9G5KldL3rpMn9v591yQwhFWaU",
+    "sha256": "85f00cce924c6eaf4cb11673db722859db0b9f65f260501e9d9a57ff1d630f4f",
+    "bytes": 212591958
+  },
+  "verified_members": 153,
+  "source_host_files_verified": 137
+}

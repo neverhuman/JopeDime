@@ -1,5 +1,11 @@
 //! Draft v3 bounded campaign protocol for native multi-round research.
 //!
+//! Status: retained as a noncompiled design draft; no current entrypoint imports
+//! this file. Owner: JopeDime engine maintainers. Review/expiry: 2027-01-01.
+//! Migration plan: either promote it by adding explicit protocol tests and an
+//! entrypoint that consumes it, or preserve its history and remove the draft
+//! after its outstanding state transitions have been reconciled.
+//!
 //! This module is intentionally private to the worker allocation until the
 //! integrator adds the version dispatcher, schema files, and observer hook.
 //! It models durable protocol transitions; it does not run an optimizer or
