@@ -1132,6 +1132,20 @@ class WorkflowAdmissionTests(unittest.TestCase):
         self.assertIsNotNone(match, f'missing workflow job {name}')
         return match.group(1)
 
+    def test_typescript_pr_parity_uses_disposable_runner(self):
+        workflow = (ROOT/'.github/workflows/typescript.yml').read_text()
+        admission = self.job(workflow, 'trust-admission')
+        parity = self.job(workflow, 'typescript-parity')
+        self.assertIn('PR_BASE_REPOSITORY_ID', admission)
+        self.assertIn('PR_HEAD_REPOSITORY_ID', admission)
+        self.assertIn("github.workflow_ref", admission)
+        self.assertIn('runs-on: ubuntu-24.04', parity)
+        self.assertNotIn('self-hosted', parity)
+        self.assertNotIn('runner-provenance', parity)
+        self.assertIn('RUNNER_ENVIRONMENT: ${{ runner.environment }}', parity)
+        self.assertIn('CARGO_TARGET_DIR: ${{ github.workspace }}/target/typescript-cargo', parity)
+        self.assertIn('repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}', parity)
+
     def test_nonmain_manual_source_cannot_reach_privileged_ci_jobs(self):
         workflow = (ROOT/'.github/workflows/ci.yml').read_text()
         dispatch = self.job(workflow, 'changes-dispatch')

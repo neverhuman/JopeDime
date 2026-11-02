@@ -46,10 +46,10 @@ jobs:
 
           case "${EVENT_NAME:-}" in
             pull_request)
-              [[ "${PR_HEAD_REPOSITORY:-}" == "$expected_repository" ]] || refuse
-              [[ "${PR_HEAD_REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
               [[ "${PR_BASE_REPOSITORY:-}" == "$expected_repository" ]] || refuse
               [[ "${PR_BASE_REPOSITORY_ID:-}" == "$expected_repository_id" ]] || refuse
+              [[ "${PR_HEAD_REPOSITORY:-}" =~ ^[^/]+/[^/]+$ ]] || refuse
+              [[ "${PR_HEAD_REPOSITORY_ID:-}" =~ ^[0-9]+$ ]] || refuse
               ;;
             workflow_dispatch)
               ;;
@@ -64,8 +64,8 @@ jobs:
   typescript-parity:
     needs: trust-admission
     if: needs.trust-admission.outputs.admitted == 'true'
-    # Reusable under ci.yml, the existing PR/manual admission context.
-    runs-on: [self-hosted, linux, x64, jope-ci]
+    # PR-controlled source runs only on an ephemeral, GitHub-hosted machine.
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -75,17 +75,28 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
       CARGO_BUILD_JOBS: '2'
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target/typescript-cargo
       JOPE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Checkout exact source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - name: Persistent Cargo target
-        uses: ./.github/actions/cargo-target
-      - name: Runner provenance
-        uses: ./.github/actions/runner-provenance
+      - name: Require disposable GitHub-hosted runner
+        env:
+          RUNNER_ENVIRONMENT: ${{ runner.environment }}
+        run: test "$RUNNER_ENVIRONMENT" = github-hosted
+      - name: Install the repository-pinned Rust toolchain
+        env:
+          RUSTUP_HOME: /opt/rust/rustup
+        run: |
+          set -euo pipefail
+          sudo install -d -m 0755 -o "$(id -un)" -g "$(id -gn)" "$RUSTUP_HOME"
+          rustup toolchain install 1.97.1 --profile minimal --component rustfmt --component clippy --target wasm32-unknown-unknown
+          rustup default 1.97.1
+          printf 'RUSTUP_HOME=%s\n' "$RUSTUP_HOME" >> "$GITHUB_ENV"
       - name: Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
