@@ -1064,6 +1064,8 @@ crates/jope-engine/src/fit_boundary.rs
 crates/jope-engine/src/gp.rs
 crates/jope-engine/src/gp/fit_contract_tests.rs
 crates/jope-engine/src/gp/fit_contract_tests/fit_views.rs
+crates/jope-engine/src/gp/fit_contract_tests/fit_views/recovery.rs
+crates/jope-engine/src/gp/fit_contract_tests/fit_views/roundtrips.rs
 crates/jope-engine/src/gp/fit_contract_tests/outer_grants.rs
 crates/jope-engine/src/gp/fit_contract_tests/outer_release.rs
 crates/jope-engine/src/gp/fit_contract_tests/search_lifecycle.rs
