@@ -820,9 +820,9 @@ def build_shard(out: Path, shard: int, of: int, items: list, loader, codes: dict
     counts = collections.Counter()
     failed, datasets, pauses = [], {}, 0
     for n, (h, its) in enumerate(groups.items()):
-        pending_views = [it for it in its if it[0]["view_id"] not in done]
-        counts["already_done"] += len(its) - len(pending_views)
-        if not pending_views:
+        todo = [it for it in its if it[0]["view_id"] not in done]
+        counts["already_done"] += len(its) - len(todo)
+        if not todo:
             continue
         pauses += guard_fn()
         try:
@@ -830,7 +830,7 @@ def build_shard(out: Path, shard: int, of: int, items: list, loader, codes: dict
             check_cap_label(ds, its[0][2])
         except Exception as e:  # a dataset-level failure: every context not yet done fails with the dataset's reason
             reason = e.reason if isinstance(e, RebuildError) else "dataset_error"
-            for r, lab, _ in pending_views:
+            for r, lab, _ in todo:
                 failed.append({"view_id": r["view_id"], "dataset_hash": h, "fold": int(r["fold"]), "label": lab,
                                "reason": reason, "detail": f"{type(e).__name__}: {e}"[:400]})
             datasets[h] = {"status": "failed", "reason": reason}
@@ -840,7 +840,7 @@ def build_shard(out: Path, shard: int, of: int, items: list, loader, codes: dict
         dsdir = out / "_datasets"
         dsdir.mkdir(parents=True, exist_ok=True)
         atomic(dsdir / f"{h}.json", jdump(ds["lineage"]))
-        for r, lab, acq_rec in pending_views:
+        for r, lab, acq_rec in todo:
             pauses += guard_fn()
             try:
                 res = rebuild_context(ds, r, lab, acq_rec, shard_dir, codes, refs, budget=budget, select_fn=select_fn)

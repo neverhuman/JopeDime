@@ -1,6 +1,6 @@
 # Jankurai vibe findings: scoped language allowances
 
-The five `dead_language_allow` records in `agent/audit-policy.toml` cover only
+The thirteen `dead_language_allow` records in `agent/audit-policy.toml` cover only
 the exact term and file listed below. They keep those validated source terms
 out of the vibe cap while leaving the files in the scan, so other findings in
 these files remain visible. Each allowance expires 2027-02-01 and must be
@@ -64,3 +64,23 @@ reassessed against fresh source and test evidence.
   crosses the original wall or monotonic bound, checks that refused packets
   remain inadmissible, and verifies no retry. The pipeline README documents
   that only the caller writes the post-return acceptance envelope.
+
+## Frozen DL producer source custody
+
+- **Scope:** term `todo` in eight files of the pinned 2026-10-06 DL lane handoff:
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/encodings.py`, lines 388, 389, 390, 395, 993, 994, 1008, 1010, 1013
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/holdout.py`, lines 683, 684, 685, 690
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/metafeatures.py`, lines 608, 609, 610, 615
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/train.py`, lines 278, 279, 280, 285
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/tools/s1_outer_test_scorer.py`, lines 370, 372, 374, 381
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_build.py`, lines 823, 824, 825, 833, 843
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_coverage.py`, lines 266, 269, 272
+  - `deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_raw_helper.py`, lines 130, 142, 143, 152
+- **Reason:** these bytes are frozen producer source custody
+  (`deploy/dl-trainonly/SOURCE_CUSTODY.md`, handoff `cc9609693ada…`). #1702 and #1713 renamed the
+  local work-queue variables, which changed pinned bytes and turned
+  `deploy/dl-trainonly/test_verify_lane.py` red; the original bytes are restored instead of
+  re-pinning, which would misstate the historical producer source.
+- **Evidence:** `Custody.test_actual_import_matches_frozen_producer_pins` passes on the restored
+  bytes. The P37 register entry for `tools/v2_rowsel_build.py` keeps its four finding
+  fingerprints, and only its file digest returns to the restored bytes.
