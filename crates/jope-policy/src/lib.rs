@@ -118,6 +118,7 @@ pub mod context;
 #[cfg(feature = "context-producer")]
 pub mod context_producer;
 pub mod decode;
+pub mod experimental_runtime;
 pub mod grammar;
 mod hashing;
 pub mod jope_embed;
