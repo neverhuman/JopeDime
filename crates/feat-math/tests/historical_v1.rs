@@ -1812,8 +1812,8 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
         p45_race_pool_identity,
         prodlang_rust_runtime,
     ];
-    assert_eq!(rows.len(), 49);
-    assert_eq!(index["source_count"], 49);
+    assert_eq!(rows.len(), 50);
+    assert_eq!(index["source_count"], 50);
     let mut old_fixtures = 0;
     let mut release = 0;
     let mut bundles = 0;
