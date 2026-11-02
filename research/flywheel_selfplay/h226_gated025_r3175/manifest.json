@@ -1,0 +1,125 @@
+{
+  "wave": "H226",
+  "authority": "/home/ubuntu/nudges/hw_t1435_argon_h226.md",
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H226_claim.txt",
+  "parent_waves": {
+    "H217": "CONFIRMED: GATED_025 + NO_PLATEAU_WIN (native +0.0216 [+0.0038,+0.0418], harm 4.4%, 3/3, Elo 1504.8; DL-Val91 +0.00145 < +0.002)",
+    "H210": "CANDIDATE: GATED_025 (native +0.0140 [+0.0022,+0.0355], harm 3.4%, 3/3, Elo 1505.6)",
+    "H139": "selection/winner's-curse audit framework and exact native endpoint",
+    "H129": "BLEND_025 recipe; disagreement statistic"
+  },
+  "arms": [
+    "R882",
+    "G3175",
+    "R3175",
+    "G882",
+    "G3175_DIS",
+    "B3175",
+    "B882"
+  ],
+  "arm_roles": {
+    "G3175": "primary and co-primary (frozen GATED_025 recipe on r3175 base)",
+    "R3175": "retained-best r3175 base alone (0 updates)",
+    "R882": "reference r882 base (Elo 1500; 0 updates)",
+    "G882": "H217 GATED_025 recipe on r882 (replication anchor on fresh folds)",
+    "G3175_DIS": "H129 disagreement placebo on r3175, report-only",
+    "B3175": "ungated lambda=0.25 blend on r3175, report-only",
+    "B882": "ungated lambda=0.25 blend on r882, report-only"
+  },
+  "primary": "G3175",
+  "lambda": 0.25,
+  "gate": {
+    "frozen_from": "H210/H217 (function bodies tested identical)",
+    "primary_signal": "zgap = (base[b]-base[a])/std(base), a/b = first argmin of base/blend; 0 if same pick; costs only",
+    "placebo_signal": "H129 disagreement = 1 - Spearman(GBM, base) over unrevealed slots",
+    "tau_grid": "[-inf (closed), FIT q10,q25,q50,q75,q90 among switching contexts, +inf (open)]",
+    "selection": "per cell, FIT only (inner OOF calibrated GBM): max FIT equal-family native gain over arm's own base (R3175 or R882) s.t. FIT harm <= 0.05; ties -> smaller tau; closed always feasible"
+  },
+  "endpoint": "flywheel native fixed-dev-cost-argmin-negative-fitness/v1",
+  "seeds": [
+    226101,
+    226102,
+    226103
+  ],
+  "fold_seeds": {
+    "226101": 226141,
+    "226102": 226142,
+    "226103": 226143
+  },
+  "sample_seed": 226140,
+  "boot_seed": 226150,
+  "elo_boot_seed": 226151,
+  "plateau_boot_seed": 226152,
+  "bootstrap_draws": 10000,
+  "elo_draws": 1000,
+  "fits": {
+    "BLEND": 45,
+    "SHUF": 0,
+    "total": 45
+  },
+  "decision": {
+    "primary": "CONFIRMED: G3175 iff LCB95>0 AND 3/3 seeds positive AND harm<=10% vs R882 (205 families, pooled-A native, 10k paired family-cluster bootstrap); else NOT_CONFIRMED",
+    "secondary": "G3175 vs R3175, G882 vs R882, R3175 vs R882, G3175 vs G882, G3175_DIS vs R882/R3175",
+    "co_primary": "PLATEAU_WIN iff DL-Val91 context-mean gain of G3175 vs R882 > +0.002 AND family-bootstrap LCB95 > 0 AND G3175-vs-R3175 DL-Val91 family-bootstrap LCB95 > 0; ties not a win; else NO_PLATEAU_WIN",
+    "combined": "<primary> + <co_primary>"
+  },
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525,
+    "r3175_native_mean": 1.1389572403748425
+  },
+  "inputs": {
+    "staging": "xbabe2 ~/jope-data/h226/inputs -> ~/jope-data/h195/inputs",
+    "hash_list_sha256": "2f7a364221e809d86abca30d14c3b80f5be1e2ba36db5b45ca1fe09ba82792e8",
+    "files": 2628,
+    "r882": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "r3175": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "dope": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
+  },
+  "pinned_modules": {
+    "h124_runner": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+    "h139_runner": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
+  },
+  "host": "xbabe2 CPU only (admission before any side effect); no GPU, no GPU claim",
+  "guards": {
+    "worker_affinity": "whole-tree affinity <= 4 cores (os.sched_setaffinity, OMP_NUM_THREADS=4, tree cap 4.5 cores over 30 s)",
+    "admission": "load1 <= 60, load5 <= 55, host CPU <= 50%, MemAvailable >= 24 GiB, disk free >= 320 GB; refusal = no claim",
+    "source_check": "runner.py --check-launch before the claim",
+    "runtime_aborts": "MemAvailable < 20 GiB, disk free < 300 GB, RSS >= 4 GiB, worker affinity > 4 cores, worker tree > 4.5 cores over 30 s, or compute stop 18:30Z",
+    "load_pause": "load5 > 60 pauses worker (SIGSTOP / sleep), rechecks every 60 s, resumes at load5 <= 55",
+    "deadline": "absolute: min(attempt claim + 4 h, 2026-11-02T18:30:00Z = 1793644200.0); hard closeout 19:00Z"
+  },
+  "budget": {
+    "fits": 45,
+    "expected_wall": "~1h30m",
+    "compute_stop_utc": "2026-11-02T18:30:00Z",
+    "closeout_utc": "2026-11-02T19:00:00Z",
+    "root_max_bytes": 600000000
+  },
+  "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H226/<run_id>/ (create-only)",
+  "never": [
+    "sealed",
+    "holdout",
+    "meta-test",
+    "live flywheel",
+    "xbabe0",
+    "xbabe1",
+    "xbabe3",
+    "GPU"
+  ],
+  "fold_overlap": {
+    "within_best_match_range": [
+      0.13576864535768646,
+      0.1785106204147305
+    ],
+    "vs_H203_best_match_max": 0.17606906143586337,
+    "vs_H210_best_match_max": 0.17841497407291146,
+    "vs_H217_best_match_max": 0.18181041920748706,
+    "vs_H218_best_match_max": 0.17570219875491366,
+    "vs_H222_best_match_max": 0.18850566313481912,
+    "vs_H223_best_match_max": 0.1853057303754325,
+    "vs_H224_best_match_max": 0.1723864428485223,
+    "vs_H225_best_match_max": 0.1684117263970295
+  }
+}

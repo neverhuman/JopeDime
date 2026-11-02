@@ -27,6 +27,9 @@
   MemAvailable < 20 GiB or free disk < 300 GB. One absolute deadline: the earlier of claim + 4 h and 17:25Z.
 - **Amendment A1 (hw_t1400, pre-outcome).** Host load pauses the worker (load5 > 60) and resumes it (load5 ≤ 55); it
   never ends the attempt.
-- **Budget.** 135 HistGBM fits, about 3 h. Closeout by 18:00Z, or INCOMPLETE with evidence.
+- **Amendment A2 (hw_t1500, pre-outcome).** The attempt stops at its 17:25Z deadline. One continuation then reuses its
+  hash-verified units with identical code and runs to a fixed 21:30Z deadline; closeout by 22:00Z, else INCOMPLETE.
+- **Budget.** 135 HistGBM fits, about 3 h 40 min before load pauses. Closeout by 22:00Z (A2), or INCOMPLETE with
+  evidence.
 - **Code.** [runner.py](runner.py), [analysis.py](analysis.py), [monitor.py](monitor.py) and
-  [test_h223.py](test_h223.py) (39 data-free tests).
+  [test_h223.py](test_h223.py) (40 data-free tests).
