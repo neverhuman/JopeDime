@@ -1,4 +1,11 @@
-//! Schema-width adapter; does not modify existing generator pools or RNG streams.
+//! Active schema-width adapter; does not modify existing generator pools or RNG streams.
+//!
+//! Lifecycle: owner is the feat-math maintainers. This adapter scopes
+//! schema-aware numeric-v2 expressions while preserving legacy evolution
+//! behavior. Its proof lane is the `feat-math` suite's numeric-v2 tests and
+//! historical/emitter parity checks. Expiry is reviewed at each artifact-schema
+//! major release. Migration may retire it only with a qualified replacement
+//! that preserves those identities and outputs.
 use crate::math_expr::{Expr, MathExpr, Var};
 use crate::numeric_v2::NumericProfileV2;
 use anyhow::{ensure, Context, Result};
