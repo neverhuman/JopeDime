@@ -3,6 +3,44 @@ use super::layout::{compact_layout, compact_lines, DashboardData, History};
 use super::prelude::*;
 use super::render::render;
 
+enum HardwareState {
+    Available(Hardware),
+    Missing,
+    Invalid(String),
+}
+
+impl HardwareState {
+    fn read(path: &Path) -> Self {
+        match read_json(path) {
+            Ok(hardware) => Self::Available(hardware),
+            Err(error)
+                if error.chain().any(|cause| {
+                    cause
+                        .downcast_ref::<std::io::Error>()
+                        .is_some_and(|io| io.kind() == std::io::ErrorKind::NotFound)
+                }) =>
+            {
+                Self::Missing
+            }
+            Err(error) => Self::Invalid(format!("{error:#}")),
+        }
+    }
+
+    fn into_dashboard_hardware(self, path: &Path) -> Hardware {
+        match self {
+            Self::Available(hardware) => hardware,
+            Self::Missing => Hardware {
+                errors: vec![format!("hardware telemetry missing: {}", path.display())],
+                ..Hardware::default()
+            },
+            Self::Invalid(reason) => Hardware {
+                errors: vec![format!("hardware telemetry invalid: {reason}")],
+                ..Hardware::default()
+            },
+        }
+    }
+}
+
 pub fn run(root: &Path) -> Result<()> {
     run_with_manifest(root, None)
 }
@@ -33,7 +71,8 @@ pub fn run_with_manifest(root: &Path, experiment_manifest: Option<&Path>) -> Res
         if let Some(snapshot) = learning.latest() {
             history.learning = snapshot;
         }
-        let h: Hardware = read_json(&root.join("runs/hardware.json")).unwrap_or_default();
+        let hardware_path = root.join("runs/hardware.json");
+        let h = HardwareState::read(&hardware_path).into_dashboard_hardware(&hardware_path);
         history.update(&h);
         let gp =
             crate::telemetry::observed_status(&state(&root.join("runs/gp-service.json")), now());
