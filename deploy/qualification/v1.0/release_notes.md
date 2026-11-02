@@ -1,8 +1,9 @@
 # JopeDime v1.0.0 — release notes draft
 
-**DRAFT / NOT RELEASED.** Final qualification receipts and OWNER release approval
-are pending. This document does not assert that the candidate has passed every
-release gate. Candidate runtime source:
+**DRAFT / NOT RELEASED.** Final signed-byte qualification and OWNER release
+approval are pending. `qualification_receipt.json` is an explicitly non-signable
+draft snapshot, not the final assembler receipt. This document does not assert
+that the candidate has passed every release gate. Candidate runtime source:
 `ccaf14b210b3b55a350218e60f6b49ef76524cf3`.
 
 **Q1 guidance default — OWNER-RECORDED DECISION REQUIRED:**
@@ -16,10 +17,11 @@ No learned-quality, Elo improvement or successful Q1 outcome is claimed here.
 
 M3 operator mix has a one-time waiver for v1.0.0 under
 `M3-WAIVER-V1.0.0-T1955`. The recorded merged-proposer head-replacement deviations
-are **+2.30015625 percentage points overall**, **+0.05208333 points non-exploring**
-and **+2.79084158 points exploring**. The raw verdict remains **FAIL**; the separate
-release disposition is **WAIVED_V1_0_0**, never PASS. Final measurements and hashes
-must be recorded in the qualification receipt before release.
+are **+2.30015625 percentage points overall**, **+0.05208333 points non-exploring**,
+and **+2.79084158 points exploring**. The raw verdict remains **FAIL**; the
+separate release disposition is **WAIVED_V1_0_0**, never PASS. The draft receipt
+records the raw report, waiver guard, ruling, and their hashes; final assembly
+must still use the completed gate run.
 
 This accepts a small search-mix bias toward head replacement in the exploring
 stratum. It makes no claim about improved neural quality. The waiver applies
@@ -41,10 +43,15 @@ Known limits and qualification boundaries:
   separate. Do not infer a startup or first-model speed guarantee from a size PASS.
 - The full candidate uses the `internal-restricted` package scope. Its envelope
   signature does not grant unrestricted redistribution of embedded assets.
-- Draft qualification blocker: fresh Darwin worker CV recorded 58/1,024 parity
-  failures outside the operator-mix waiver. Preserve that failure and its scope;
-  do not relabel it PASS or treat a Linux result as Darwin qualification. Replace
-  this draft blocker only with the actual resolved source/runtime disposition.
+- Current REL-07 closeout is blocked: the latest final-controller attempt recorded
+  an M2 preflight FAIL because its parity-report path already existed, and A5 is
+  BLOCKED pending a complete candidate-bound named-client transcript manifest and
+  the next immutable provider-input binding. Neither is a passing gate result.
+- The fresh RC4 M3 report records raw `FAIL` for operator mix while its three
+  non-waived clauses and the separate v1.0.0 waiver guard pass. Its disposition is
+  `WAIVED_V1_0_0`, never PASS; see the exact hashes and measured values in
+  `qualification_receipt.json`. This release-only waiver does not qualify M3 for
+  later releases and does not waive any other gate.
 
 The final qualification receipt will identify the tested signed bytes, commands,
 inputs, outputs, hashes and machines. Envelope signatures and component proofs
