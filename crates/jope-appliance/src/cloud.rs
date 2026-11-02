@@ -1309,15 +1309,20 @@ mod tests {
             "https://app.veox.ai"
         );
     }
+    /// Non-secret test fixtures: these values only exercise header construction and never reach a server.
+    const FIXTURE_ACCOUNT_TOKEN: &str = "fixture-account-token";
+    const FIXTURE_GATEWAY_USER: &str = "dev";
+    const FIXTURE_GATEWAY_PASS: &str = "fixture-gateway-pass";
+
     #[test]
     fn basic_gateway_and_account_credentials_are_distinct_sensitive_headers() {
         let c = Client::new(
             "https://example.test",
-            Some("account-secret".into()),
+            Some(FIXTURE_ACCOUNT_TOKEN.into()),
             Some(Gateway {
                 origin: "https://example.test".into(),
-                username: "dev".into(),
-                password: "gateway-secret".into(),
+                username: FIXTURE_GATEWAY_USER.into(),
+                password: FIXTURE_GATEWAY_PASS.into(),
             }),
         )
         .unwrap();
