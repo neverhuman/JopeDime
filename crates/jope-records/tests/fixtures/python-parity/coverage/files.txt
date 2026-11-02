@@ -654,6 +654,12 @@ crates/jope-campaigns/src/encoder_v2_worker.rs
 crates/jope-campaigns/src/epoch6.rs
 crates/jope-campaigns/src/epoch6_wave.rs
 crates/jope-campaigns/src/followup.rs
+crates/jope-campaigns/src/followup/archive.rs
+crates/jope-campaigns/src/followup/publication.rs
+crates/jope-campaigns/src/followup/report.rs
+crates/jope-campaigns/src/followup/source.rs
+crates/jope-campaigns/src/followup/stage.rs
+crates/jope-campaigns/src/followup/tests.rs
 crates/jope-campaigns/src/four_task.rs
 crates/jope-campaigns/src/freshness_protocol.rs
 crates/jope-campaigns/src/genome_boost.rs
