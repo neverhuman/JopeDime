@@ -5456,6 +5456,54 @@
       },
       "sha256": "1801c36cb16bfd04feeda4f7a1b9f479073474efd8d7ea6159419ab6838fa531"
     },
+    "python:research/flywheel_selfplay/h220_family_mixup/backend.py": {
+      "bytes": 13048,
+      "classification": {
+        "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "ce4d6770691121ba33a9c3a632afb01d97afe173826ee354cadea30605387835"
+    },
+    "python:research/flywheel_selfplay/h220_family_mixup/launch.py": {
+      "bytes": 11637,
+      "classification": {
+        "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "6c23b98259fec88ca2cdc40f3ed0ba479a31acd49130e2b745aeb83a14e851f8"
+    },
+    "python:research/flywheel_selfplay/h220_family_mixup/mixup.py": {
+      "bytes": 1889,
+      "classification": {
+        "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "7fbf224b608407ae7817d4b980103d1f232525d994ff5d802f75aabc030b6a58"
+    },
+    "python:research/flywheel_selfplay/h220_family_mixup/runner.py": {
+      "bytes": 24885,
+      "classification": {
+        "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "d8731991b6edaf527e84217ce5fe3026fc29db57eca5c34116eda178b067441e"
+    },
+    "python:research/flywheel_selfplay/h220_family_mixup/science.py": {
+      "bytes": 5505,
+      "classification": {
+        "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "dc4e803d273888603376811761d67fb8fce0bd1f9aed0ca0c51eb6fc929fc4ae"
+    },
+    "python:research/flywheel_selfplay/h220_family_mixup/study.py": {
+      "bytes": 5267,
+      "classification": {
+        "reason": "H220 owner-authorized, preregistered within-family input/target mixup with four-microbatch accumulation with pinned H109 helpers,30matched r882-initialized fits, TRAIN-only global lock, strict Holm1/median utility gate; no serving promotion.",
+        "role": "research"
+      },
+      "sha256": "7f4fbaa5c43a2104b72b5e12948c1cb1cf069c31bffafe1031a98df51e87412d"
+    },
     "python:research/flywheel_selfplay/h53/audit.py": {
       "bytes": 14374,
       "classification": {
