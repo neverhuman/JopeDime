@@ -59,6 +59,62 @@ def test_timing_and_outcome_attempts_have_distinct_scratch_paths(tmp_path):
     assert timing.name == "timing-EB4-seed30-attempt1"
 
 
+def test_shared_child_supervisor_records_resource_observations(tmp_path, monkeypatch):
+    class FakeLease:
+        def fileno(self):
+            return 17
+
+    class FakeProcess:
+        pid = 1234
+        returncode = 0
+
+        def __init__(self):
+            self.poll_count = 0
+
+        def poll(self):
+            self.poll_count += 1
+            return None if self.poll_count == 1 else self.returncode
+
+    process = FakeProcess()
+    popen_calls = {}
+
+    def fake_popen(command, **kwargs):
+        popen_calls.update(command=command, **kwargs)
+        return process
+
+    monkeypatch.setattr(w.h82_wave.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(w.h82_wave.time, "sleep", lambda _seconds: None)
+    monkeypatch.setattr(
+        w.h82_wave.fair,
+        "process_rss_kib",
+        lambda pid: 4096 if pid == process.pid else None,
+    )
+    monkeypatch.setattr(
+        w.h82_wave,
+        "preflight",
+        lambda: {
+            "load1": 2.5,
+            "host_cpu_percent": 12.0,
+            "mem_available_kib": 65536,
+        },
+    )
+    record = {}
+    log_path = tmp_path / "child.log"
+
+    w.run_child(["worker"], log_path, 30, FakeLease(), record)
+
+    assert record == {
+        "child_pid": process.pid,
+        "max_rss_kib": 4096,
+        "max_load1": 2.5,
+        "max_host_cpu_percent": 12.0,
+        "min_mem_available_kib": 65536,
+    }
+    assert popen_calls["cwd"] == w.h82_wave.r.ROOT
+    assert popen_calls["pass_fds"] == (17,)
+    assert popen_calls["env"]["OMP_NUM_THREADS"] == "4"
+
+
 def test_fresh_seeds_share_the_actual_h76_optimizer_and_sampler():
     assert r.SEEDS == (30, 31, 32)
     assert not set(r.SEEDS) & set(range(12, 30))

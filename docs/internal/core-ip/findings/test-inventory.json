@@ -2506,7 +2506,7 @@
       "role": "research"
     },
     "python:research/flywheel_selfplay/h93_lookahead_noise/test_h93.py": {
-      "reason": "CPU-only H93 Lookahead/noise/effective-batch, unique per-attempt scratch-collision regression, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification.",
+      "reason": "CPU-only H93 Lookahead/noise/effective-batch, unique per-attempt scratch-collision regression, paired Elo/admission, top-four overlap, and launch-barrier fixtures; offline research outside product qualification. Includes a CPU-only regression for shared child-supervisor resource sampling and launch configuration.",
       "role": "research"
     },
     "python:research/flywheel_selfplay/h94_w6_prospective_hedge/test_run_prospective_hedge.py": {
