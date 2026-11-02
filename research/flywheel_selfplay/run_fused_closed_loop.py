@@ -158,6 +158,7 @@ def load_packet(root):
 
 
 def main():
+    guard.reject_research_dope_unfreeze("fused closed-loop flywheel")
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input", type=Path, required=True)
     ap.add_argument("--output", type=Path, required=True)
