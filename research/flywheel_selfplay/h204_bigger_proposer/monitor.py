@@ -178,8 +178,8 @@ def build_launch_manifest(
     source_commit: str,
     device_str: str = GPU_DEVICE,
     k_candidates: int = 16,
-    epochs: int = 8,
-    batch_size: int = 64,
+    epochs: int = 30,
+    batch_size: int = 32,
 ) -> dict[str, Any]:
     """Create and write `launch.json` containing the verbatim owner authority string."""
     run_dir = Path(run_dir)
@@ -245,8 +245,8 @@ def main() -> int:
     parser.add_argument("--source-commit", type=str, default="HEAD", help="Git commit SHA")
     parser.add_argument("--device", type=str, default=GPU_DEVICE, help="CUDA device (default cuda:0)")
     parser.add_argument("--k-candidates", type=int, default=16, help="Candidates per context (8..16)")
-    parser.add_argument("--epochs", type=int, default=8, help="Training epochs per fold")
-    parser.add_argument("--batch-size", type=int, default=64, help="Training batch size")
+    parser.add_argument("--epochs", type=int, default=30, help="Training epochs per fold")
+    parser.add_argument("--batch-size", type=int, default=32, help="Training batch size")
     parser.add_argument("--allow-stage2", action="store_true", help="Run widths 256/512 if W128 passes gate")
     args = parser.parse_args()
 

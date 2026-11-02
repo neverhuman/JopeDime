@@ -377,6 +377,11 @@ def load_cpu_exact_fused_network(
     device: torch.device | str = "cpu",
 ) -> nn.Module:
     """Load the canonical `FusedJopeNetwork` (`r882` checkpoint) on `device`."""
+    import research
+
+    jope_dime_research = "/home/ubuntu/jope-dime/research"
+    if hasattr(research, "__path__") and jope_dime_research not in research.__path__:
+        research.__path__.append(jope_dime_research)
     input_dir = str(h50_input_root)
     if input_dir not in sys.path:
         sys.path.insert(0, input_dir)
@@ -496,8 +501,8 @@ def train_and_eval_single_fold(
     val_full_scores: np.ndarray,
     device: torch.device,
     seed: int,
-    epochs: int = 8,
-    batch_size: int = 64,
+    epochs: int = 30,
+    batch_size: int = 32,
     lr_proposer: float = 8e-4,
     lr_dope: float = 1.5e-5,
 ) -> dict[str, Any]:
@@ -728,8 +733,8 @@ def run_arm_across_seeds(
     val_full_scores: np.ndarray,
     device: torch.device,
     seeds: tuple[int, ...] = SEEDS,
-    epochs: int = 8,
-    batch_size: int = 64,
+    epochs: int = 30,
+    batch_size: int = 32,
     progress_callback: Any = None,
 ) -> dict[str, Any]:
     """Run 5-fold cross-fitting across all preregistered seeds for one arm."""
@@ -864,8 +869,8 @@ def run_h204_stage1(
     run_dir: Path,
     device_str: str = "cuda:0",
     k_candidates: int = 16,
-    epochs: int = 8,
-    batch_size: int = 64,
+    epochs: int = 30,
+    batch_size: int = 32,
     allow_stage2: bool = False,
 ) -> dict[str, Any]:
     """Execute H204 Stage 0 + Stage 1 (labeling + width 128 + R882_CONT + H180_RAND)."""
