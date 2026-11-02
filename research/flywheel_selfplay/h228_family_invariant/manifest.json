@@ -41,7 +41,7 @@
   "wave": "H228",
   "status": "PREREGISTERED",
   "owner": "rd_argon",
-  "source_base": "406ed1053c810151f5c815c9cfd42d0d30d44100",
+  "source_base": "e543aca9f24cfff5d9a9000ad1e28231fae8bf90",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
   "catalog": "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json",
   "source_manifest": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
@@ -112,7 +112,8 @@
     "os_threads": "diagnostic only; CUDA driver threads exempt",
     "sustained_overload_seconds": 300,
     "swap_free": "receipt only; MemAvailable is the guard",
-    "smoke_in_same_absolute_budget": true
+    "smoke_in_same_absolute_budget": true,
+    "on_guard_trip": "pause_and_wait_persist_violating_field_and_value"
   },
   "data_scope": "Real S3 DL-Train 1,219 contexts / 205 families (5-fold OOF) + pre-fit native91 r882 baseline parity + post-lock DL-Val91 readout (91 contexts / 19 families); zero sealed/holdout/meta-test access",
   "serving_promotion": false,
@@ -128,20 +129,20 @@
     "research/flywheel_selfplay/h219_fbal_accum_run/study.py": "1801c36cb16bfd04feeda4f7a1b9f479073474efd8d7ea6159419ab6838fa531"
   },
   "source_sha256": {
-    "PREREG.md": "7b758fbec5db79cba9760c06f82992929abe89dd5d9cb6ad530559ac36a3b47f",
-    "README.md": "40627bbc489c9cc987b7b2921430a3c2efe530151aac44be27e3e55b983eec75",
-    "backend.py": "cfc4a3df276921b85dbd968242bcd050d942cba514e3459579cdb92970b2a04b",
+    "PREREG.md": "ccf30edbdaa5bf8412b9c0b5bed16f0df0ad286acf5f2e82c379b259a87c2ebd",
+    "README.md": "bb7203312f34c92caaa9969e7503a82228574ed244ecb25810db99fc1149e774",
+    "backend.py": "1f7567d789b9d3a3c2b7db2d1ceeb0a97b3c77ad552ffee8aa063739e03b6379",
     "fold_jaccard.json": "65122351b9ae9484e168b67c5b960aa580099e6c59a4141e8d43b0d22bd491fc",
     "fold_manifest.json": "8ee909c4ba703da6608aaed8cddec69753325396aeecc878da851a7abe9afa68",
     "invariant.py": "071a6512cf9bde7d94ddc6c7f90dd61c5f01f78d9d72cb6812472fc0dff4e07e",
-    "launch.py": "4e772fc9e8fc45aebd2dad421d667ee2af8c34e163425c2334d23088d3f386cd",
+    "launch.py": "9867736f08b0da2b0b35845d19493f7ade9c79f68b9afd074989a8ba8d236f3e",
     "provenance.json": "b9d8caccadd2d289cf0d6a7c72477a88c00d7364808d9e9c4cac0a349410b302",
-    "runner.py": "54bb9daae3da3c15b99a1fbe0c2e0667df27d72c09cf3ccf5a589b2a31320cd9",
+    "runner.py": "558d795a0eea1cbfc0ac74b0c804c3a3e4f099cefe0d2da3fcb4d21f8a2bf3b4",
     "science.py": "f867746b289a348b8fdcbef8a90cf92f4bdfd363de3bcda9029c4da549ca7c21",
     "study.py": "f95370083326ce7671cc1862d6d879b898770ebd3d47a21cca0e24b8190eaba8",
-    "test_h228.py": "0304ebd4675be5852f6c28d1dc29b6997165f66af8f54aa46494525d39c56ef1"
+    "test_h228.py": "4ddefed1cd9ec8fb19239740f78883a25a653a2a6fa69ce5f54df50a4c6f9432"
   },
-  "authority": "hw_t1640_argon_h228.md",
+  "authority": "hw_t1640_argon_h228.md; hw_t1700_argon_h228_launch.md",
   "launch_gate": "Exact merged preregistration commit before timing smoke and full run",
   "deadlines_utc": {
     "prereg_merge": "2026-11-02T18:30:00Z",

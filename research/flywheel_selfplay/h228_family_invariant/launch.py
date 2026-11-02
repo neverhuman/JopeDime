@@ -84,7 +84,46 @@ def should_pause_worker(load5, paused):
     return False
 
 
-def guard(child=None, *, state=None, now=None):
+def guard_violations(sample, *, paused=False, other_gpu_pids=None):
+    violations = []
+    if sample["available"] < 20 * 2**30:
+        violations.append(
+            dict(field="available", value=sample["available"], limit=20 * 2**30)
+        )
+    if sample["free"] < 300_000_000_000:
+        violations.append(
+            dict(field="free", value=sample["free"], limit=300_000_000_000)
+        )
+    if sample["effective_cores"] > 4:
+        violations.append(
+            dict(field="effective_cores", value=sample["effective_cores"], limit=4)
+        )
+    if sample.get("child_rss", 0) >= 6_000_000_000:
+        violations.append(
+            dict(field="child_rss", value=sample["child_rss"], limit=6_000_000_000)
+        )
+    if should_pause_worker(sample["load5"], paused):
+        violations.append(
+            dict(
+                field="load5",
+                value=sample["load5"],
+                limit=LOAD5_RESUME_THRESHOLD if paused else LOAD5_PAUSE_THRESHOLD,
+            )
+        )
+    if sample.get("overloaded"):
+        violations.append(dict(field="overloaded", value=True, limit=False))
+    if other_gpu_pids:
+        violations.append(
+            dict(field="other_gpu_pids", value=sorted(other_gpu_pids), limit=[])
+        )
+    sample["guard_trip"] = bool(violations)
+    sample["violating_field"] = violations[0]["field"] if violations else None
+    sample["violating_value"] = violations[0]["value"] if violations else None
+    sample["violations"] = violations
+    return violations
+
+
+def guard(child=None, *, state=None, now=None, paused=False, pause_on_trip=False):
     disk = psutil.disk_usage("/home/ubuntu")
     host_cores = os.cpu_count() or 76
     sample = dict(
@@ -111,12 +150,6 @@ def guard(child=None, *, state=None, now=None):
         cpu_over_seconds=state.elapsed["cpu"],
         overloaded=overloaded,
     )
-    if (
-        sample["available"] < 20 * 2**30
-        or sample["free"] < 300_000_000_000
-        or sample["effective_cores"] > 4
-    ):
-        raise RuntimeError("resource refusal: " + repr(sample))
     allowed = set()
     if child is not None:
         parent = psutil.Process(child.pid)
@@ -136,16 +169,32 @@ def guard(child=None, *, state=None, now=None):
             except psutil.NoSuchProcess:
                 pass
         sample["child_rss"] = rss_total
-        if sample["child_rss"] >= 6_000_000_000:
-            raise RuntimeError("child RSS limit")
-    if process_gpu_pids() - allowed:
-        raise RuntimeError("other GPU consumer; no shared GPU")
+    other_gpu = process_gpu_pids() - allowed
+    guard_violations(sample, paused=paused, other_gpu_pids=other_gpu)
+    if pause_on_trip:
+        return sample
+    if (
+        sample["available"] < 20 * 2**30
+        or sample["free"] < 300_000_000_000
+        or sample["effective_cores"] > 4
+    ):
+        raise RuntimeError(
+            f"resource refusal ({sample['violating_field']}={sample['violating_value']}): {sample!r}"
+        )
+    if sample.get("child_rss", 0) >= 6_000_000_000:
+        raise RuntimeError(
+            f"child RSS limit ({sample['violating_field']}={sample['violating_value']})"
+        )
+    if other_gpu:
+        raise RuntimeError(
+            f"other GPU consumer ({sample['violating_field']}={sample['violating_value']}); no shared GPU"
+        )
     return sample
 
 
 def admitted_pr(pr, commit):
     if (
-        pr.get("headRefName") != "rd/h228-family-invariant"
+        not str(pr.get("headRefName", "")).startswith("rd/h228-family-invariant")
         or pr.get("baseRefName") != "main"
         or pr.get("isDraft")
     ):
@@ -244,7 +293,26 @@ def main(args):
             raise RuntimeError("compute stop 23:30Z passed")
         psutil.cpu_percent()
         time.sleep(1)
-        preflight = guard()
+        preflight = guard(paused=False, pause_on_trip=True)
+        while preflight["guard_trip"]:
+            with (CUSTODY / "preflight-guard.jsonl").open("a") as pf_log:
+                pf_log.write(
+                    json.dumps(
+                        dict(
+                            preflight,
+                            at=time.time(),
+                            paused_before_start=True,
+                        )
+                    )
+                    + "\n"
+                )
+                pf_log.flush()
+            if time.time() >= COMPUTE_DEADLINE_EPOCH:
+                raise RuntimeError(
+                    f"compute stop 23:30Z passed during preflight wait ({preflight['violating_field']}={preflight['violating_value']})"
+                )
+            time.sleep(2)
+            preflight = guard(paused=True, pause_on_trip=True)
         claim = dict(
             wave="H228",
             fifo_ticket=ticket,
@@ -307,12 +375,12 @@ def main(args):
                 )
                 while child.poll() is None:
                     try:
-                        sample = guard(child)
+                        sample = guard(child, paused=paused, pause_on_trip=True)
                     except psutil.NoSuchProcess:
                         if child.poll() is not None:
                             break
                         raise
-                    want_pause = should_pause_worker(sample["load5"], paused)
+                    want_pause = bool(sample["guard_trip"])
                     if want_pause and not paused:
                         os.killpg(child.pid, signal.SIGSTOP)
                         paused = True

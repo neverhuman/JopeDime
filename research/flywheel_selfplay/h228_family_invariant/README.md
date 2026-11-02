@@ -19,7 +19,7 @@ Restricting `r882` adapter continuation updates to coordinate directions whose g
 | Pre-Fit Gate | Bit-exact Native91 `r882` utility vector and mean `1.1377941898164525` before any fit; static TRAIN parity across all `1,219` contexts |
 | Total Fits & Updates | `60` OOF fits (`2,400` full updates) + `1` timing smoke fit (`4` updates) = `2,404` total updates |
 | Admission Rule | `median_gain > +0.002` AND `CI95_lower > 0` across 3 seeds (`harm <= 10%`, `3/3` positive seeds; exact ties reject); `BREAKTHROUGH` requires passing both TRAIN OOF and `DL-Val91` |
-| Compute & Guards | `xbabe2` `GPU0` under `~/qualification.lock` FIFO, `nice 19`, $\le 4$ CPU cores (`taskset`), `RSS < 6 GiB`, `MemAvailable >= 20 GiB`, `free disk >= 300 GB`, self-pause own worker on `load5 > 60` (`resume <= 55`) |
-| Deadlines | Prereg merge by `18:30Z`; compute stop `23:30Z`; closeout PR by `00:00Z` |
+| Compute & Guards | `xbabe2` `GPU0` under `~/qualification.lock` FIFO, `nice 19`, $\le 4$ CPU cores (`taskset`), `RSS < 6 GiB`, `MemAvailable >= 20 GiB`, `free disk >= 300 GB`, pause-and-wait on `load5 > 60` (`resume <= 55`) or `MemAvailable`/`RSS`/`free` guard trip (`hw_t1700_argon_h228_launch.md`), persisting exact `violating_field` + `violating_value` |
+| Deadlines | Prereg merge by `18:30Z` (`#1917` @ `f78f0d6e3`); compute stop `23:30Z`; closeout PR by `00:00Z` |
 
 See [PREREG.md](PREREG.md) for the complete mathematical and operational protocol, [manifest.json](manifest.json) for source/input pins, [fold_manifest.json](fold_manifest.json) and [fold_jaccard.json](fold_jaccard.json) for fold partitions and overlap checks, and [test_h228.py](test_h228.py) for the data-free verification suite.
