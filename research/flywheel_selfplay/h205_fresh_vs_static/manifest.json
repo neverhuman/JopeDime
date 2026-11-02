@@ -80,12 +80,12 @@
   ],
   "selector": "H178_calibrated_pooled_205_family",
   "source_sha256": {
-    "PREREG.md": "f00a6e5f72bc23d05b033d6174790ad25770db570e2aab85f94325a75345e4f2",
-    "README.md": "4c2b1a670f0eb432cd85e0265b7e103ab5389ae0dbf957b4a7c1846add0a5ec3",
-    "analysis.py": "bf28f6c736b41fe85c2921fde6c64ab679e131110632bc3c8d702c25c5c28692",
-    "monitor.py": "e4d111929b3dc317fc420b4be6fd10840e93d4f0d544d1d3da486210bb605b9b",
-    "runner.py": "03721c8f03dac89f5df3ff4df9eeec76637d913c43dda94df28ce4b75eee42e5",
-    "test_h205.py": "d13b34fa3f00f7848c25d8d2158d3156d8d839540833ff2021fbb1e048d64c81"
+    "PREREG.md": "4827c2884a682449de69363299673e5a067df7c45904be1aff260be2a6aad72c",
+    "README.md": "39ac9695275e02d7e5f30972af36b28e9767ae70fc1700070271f2db05b758f1",
+    "analysis.py": "bb402d63f05cfc247987f2999fdf5df52f3629557781359d7d0b1716c0416e17",
+    "monitor.py": "c41e68a350d70e32851c37b3e54d7f62f6d0f78b1a4be492b8c6fb5bb94becd4",
+    "runner.py": "04245fb630cce1be3a2beeeebcb398f3e0dacea77e344e60ab4c6f273446e0d5",
+    "test_h205.py": "0970b3dacde1b12a96c53af74a6bd3b70e70a7c68c82ce7c945bb54de20e71d6"
   },
   "train_padding_bridge_protocol": {
     "cut_sha256_1db3750d4ceccab9": "d2208c223250e1916dd480fc9cf940342db30a9066bece9735181935bc001f0c",
@@ -120,5 +120,21 @@
     "target_same_s3_train_context_sha256_1db3750d4ceccab9": "1fbfcda0fe137f075069472dc5a6a0f2cf314b8c5b4eeb1ee76b91aa03ec5aec",
     "train_matrix_sha256_1db3750d4ceccab9": "cb04fa33aed43118c9c15a794bfac1324e049d56b3833adef56913d26583dff7"
   },
-  "wave": "H205"
+  "wave": "H205",
+  "invocation_accounting_contract": {
+    "schema": "h205-campaign-accounting/v1",
+    "required_launch_fields": [
+      "campaign_ledger_path",
+      "campaign_ledger_sha256",
+      "accounting_invocation_id"
+    ],
+    "no_automatic_ledger_initialization": true,
+    "pending_or_unknown_history_blocks_next_invocation": true,
+    "known_prior_floor_seconds": 2021.039296863135,
+    "budget_reset": false,
+    "terminal_bookkeeping_seconds": null,
+    "owner_exit_cost_reconciliation_required": true,
+    "worker_result_qualified": false,
+    "standalone_worker_is_unqualified": true
+  }
 }
