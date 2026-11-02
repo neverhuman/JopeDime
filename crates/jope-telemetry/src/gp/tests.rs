@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 #[test]
 fn entropy_field_rename_preserves_telemetry_wire_key() {
     let mut summary = test_gen_summary("test", 1, 0.5);

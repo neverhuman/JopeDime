@@ -99,7 +99,10 @@ pub fn distilled_round(path: &Path) -> Result<(RoundRecord, Retention)> {
     ))
 }
 
-fn round_record_from_metrics(round: u32, rm: &Map<String, Value>) -> RoundRecord {
+pub(in crate::import) fn round_record_from_metrics(
+    round: u32,
+    rm: &Map<String, Value>,
+) -> RoundRecord {
     let mut target_deltas = BTreeMap::new();
     for k in [
         "mean_strat300_evo_fitness_delta",
