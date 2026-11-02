@@ -123,6 +123,9 @@ crates/feat-math/src/advanced_v3/fitted_portable.js
 crates/feat-math/src/advanced_v3/fitted_portable.py
 crates/feat-math/src/advanced_v3/fitted_portable.rs
 crates/feat-math/src/advanced_v3/fitted_portable.rs.txt
+crates/feat-math/src/advanced_v3/fitted_portable/admission.rs
+crates/feat-math/src/advanced_v3/fitted_portable/render.rs
+crates/feat-math/src/advanced_v3/fitted_portable/tests.rs
 crates/feat-math/src/advanced_v3/fitted_portable/scalar.rs
 crates/feat-math/src/advanced_v3/grammar.rs
 crates/feat-math/src/advanced_v3/heads/mod.rs
