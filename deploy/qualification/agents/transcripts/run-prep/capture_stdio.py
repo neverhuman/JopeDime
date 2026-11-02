@@ -197,184 +197,229 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
         require(not eof or not buffer, "unterminated JSON-RPC frame at EOF")
 
     try:
-        source_pins = {name: digest(path) for name, path in source_paths.items()}
-        if executable:
-            executable_pin = digest(executable)
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            old_handlers[sig] = signal.signal(sig, interrupt)
-        # Publish ownership before detaching, so timeout cleanup covers startup too.
-        own_pid = os.getpid()
-        start_ticks = int(
-            Path("/proc/self/stat")
-            .read_text(encoding="ascii")
-            .rsplit(")", 1)[1]
-            .split()[19]
-        )
-        publish_private_json(
-            directory / "recorder.json",
-            dict(
-                schema="jopedime.mcp-recorder-session/v2",
-                pid=own_pid,
-                owner_session=owner_session,
-                start_ticks=start_ticks,
-                producer_sha256=source_pins["producer_sha256"],
-                argv=command,
-            ),
-        )
-        require(
-            os.getsid(0) == os.getpgrp() == own_pid, "recorder session isolation failed"
-        )
-        child = subprocess.Popen(
-            command,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            process_group=0,  # Independent server group inside the owned recorder session.
-            bufsize=0,
-            env=environment,
-        )
-        for fd in (
-            0,
-            1,
-            child.stdin.fileno(),
-            child.stdout.fileno(),
-            child.stderr.fileno(),
-        ):
-            os.set_blocking(fd, False)
-        readers = {
-            0: "client_to_server",
-            child.stdout.fileno(): "server_to_client",
-            child.stderr.fileno(): "stderr",
-        }
-        for fd, label in readers.items():
-            selector.register(fd, selectors.EVENT_READ, label)
-        input_eof = False
-        writers = {"to_server": child.stdin.fileno(), "to_client": 1}
-        while True:
-            require(not interrupted, "capture interrupted")
-            require(time.monotonic() < deadline, "capture deadline exceeded")
-            # Observe without reaping: reserve the leader PID/PGID through group cleanup.
-            exited = (
-                os.waitid(os.P_PID, child.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
-                is not None
+        try:
+            source_pins = {name: digest(path) for name, path in source_paths.items()}
+            if executable:
+                executable_pin = digest(executable)
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                old_handlers[sig] = signal.signal(sig, interrupt)
+            # Publish ownership before detaching, so timeout cleanup covers startup too.
+            own_pid = os.getpid()
+            start_ticks = int(
+                Path("/proc/self/stat")
+                .read_text(encoding="ascii")
+                .rsplit(")", 1)[1]
+                .split()[19]
             )
-            if (
-                exited
-                and 0 in readers
-                and not any(key.fd == 0 for key, _ in selector.select(0))
-            ):
-                selector.unregister(0)
-                del readers[0]
-                observed("client_to_server", b"", True)
-                input_eof = True
-            for label, fd in list(writers.items()):
-                registered = fd in selector.get_map()
-                if outgoing[label] and not registered:
-                    selector.register(fd, selectors.EVENT_WRITE, label)
-                elif not outgoing[label] and registered:
-                    selector.unregister(fd)
-            if input_eof and not outgoing["to_server"] and "to_server" in writers:
-                child.stdin.close()
-                del writers["to_server"]
-            if exited and not readers and not any(outgoing.values()):
-                break
-            for key, _events in selector.select(
-                min(0.05, max(0, deadline - time.monotonic()))
-            ):
-                fd, label = key.fd, key.data
-                try:
-                    if label in outgoing:
-                        count = os.write(fd, outgoing[label])
-                        del outgoing[label][:count]
-                    else:
-                        chunk = os.read(fd, 65536)
-                        if chunk:
-                            name = {
-                                "client_to_server": "client.raw",
-                                "server_to_client": "server.raw",
-                                "stderr": "server.stderr",
-                            }[label]
-                            retain(name, chunk)
-                        else:
-                            selector.unregister(fd)
-                            del readers[fd]
-                            if fd == 0:
-                                input_eof = True
-                        if label != "stderr":
-                            observed(label, chunk, not chunk)
-                except BlockingIOError:
-                    continue
-        if executable_pin:
+            publish_private_json(
+                directory / "recorder.json",
+                dict(
+                    schema="jopedime.mcp-recorder-session/v2",
+                    pid=own_pid,
+                    owner_session=owner_session,
+                    start_ticks=start_ticks,
+                    producer_sha256=source_pins["producer_sha256"],
+                    argv=command,
+                ),
+            )
             require(
-                digest(executable) == executable_pin,
-                "server executable changed during capture",
+                os.getsid(0) == os.getpgrp() == own_pid, "recorder session isolation failed"
             )
-        require(
-            all(digest(source_paths[name]) == pin for name, pin in source_pins.items()),
-            "capture source changed during execution",
-        )
-    except (CaptureError, OSError) as exc:
-        error = str(exc) if isinstance(exc, CaptureError) else type(exc).__name__
-    finally:
-        if child is not None:
-            # Only this fresh session's process group, while its leader PID is reserved.
-            for sig in (signal.SIGTERM, signal.SIGKILL):
+            child = subprocess.Popen(
+                command,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                process_group=0,  # Independent server group inside the owned recorder session.
+                bufsize=0,
+                env=environment,
+            )
+            for fd in (
+                0,
+                1,
+                child.stdin.fileno(),
+                child.stdout.fileno(),
+                child.stderr.fileno(),
+            ):
+                os.set_blocking(fd, False)
+            readers = {
+                0: "client_to_server",
+                child.stdout.fileno(): "server_to_client",
+                child.stderr.fileno(): "stderr",
+            }
+            for fd, label in readers.items():
+                selector.register(fd, selectors.EVENT_READ, label)
+            input_eof = False
+            actual_input_eof = False
+            writers = {"to_server": child.stdin.fileno(), "to_client": 1}
+
+            def consume_client_chunk(chunk):
+                nonlocal input_eof, actual_input_eof
+                if chunk:
+                    retain("client.raw", chunk)
+                else:
+                    selector.unregister(0)
+                    del readers[0]
+                    input_eof = True
+                    actual_input_eof = True
+                observed("client_to_server", chunk, not chunk)
+
+            def drain_interrupted_client_eof():
+                """Accept TERM only when client stdin is already at a real EOF."""
+                if actual_input_eof:
+                    return True
+                if 0 not in readers or not any(
+                    key.fd == 0 for key, _ in selector.select(0)
+                ):
+                    return False
+                while True:
+                    try:
+                        chunk = os.read(0, 65536)
+                    except BlockingIOError:
+                        return actual_input_eof
+                    consume_client_chunk(chunk)
+                    if not chunk:
+                        return True
+
+            while True:
+                require(time.monotonic() < deadline, "capture deadline exceeded")
+                if interrupted:
+                    require(
+                        drain_interrupted_client_eof(),
+                        "capture interrupted before client stdin EOF",
+                    )
+                # Observe without reaping: reserve the leader PID/PGID through group cleanup.
+                exited = (
+                    os.waitid(os.P_PID, child.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                    is not None
+                )
+                if (
+                    exited
+                    and 0 in readers
+                    and not any(key.fd == 0 for key, _ in selector.select(0))
+                ):
+                    selector.unregister(0)
+                    del readers[0]
+                    observed("client_to_server", b"", True)
+                    input_eof = True
+                for label, fd in list(writers.items()):
+                    registered = fd in selector.get_map()
+                    if outgoing[label] and not registered:
+                        selector.register(fd, selectors.EVENT_WRITE, label)
+                    elif not outgoing[label] and registered:
+                        selector.unregister(fd)
+                if input_eof and not outgoing["to_server"] and "to_server" in writers:
+                    child.stdin.close()
+                    del writers["to_server"]
+                if exited and not readers and not any(outgoing.values()):
+                    break
+                for key, _events in selector.select(
+                    min(0.05, max(0, deadline - time.monotonic()))
+                ):
+                    fd, label = key.fd, key.data
+                    try:
+                        if label in outgoing:
+                            count = os.write(fd, outgoing[label])
+                            del outgoing[label][:count]
+                        else:
+                            chunk = os.read(fd, 65536)
+                            if fd == 0:
+                                consume_client_chunk(chunk)
+                            else:
+                                if chunk:
+                                    name = {
+                                        "server_to_client": "server.raw",
+                                        "stderr": "server.stderr",
+                                    }[label]
+                                    retain(name, chunk)
+                                else:
+                                    selector.unregister(fd)
+                                    del readers[fd]
+                                if label != "stderr":
+                                    observed(label, chunk, not chunk)
+                    except BlockingIOError:
+                        continue
+            if executable_pin:
+                require(
+                    digest(executable) == executable_pin,
+                    "server executable changed during capture",
+                )
+            require(
+                all(digest(source_paths[name]) == pin for name, pin in source_pins.items()),
+                "capture source changed during execution",
+            )
+        except (CaptureError, OSError) as exc:
+            error = str(exc) if isinstance(exc, CaptureError) else type(exc).__name__
+        finally:
+            if child is not None:
+                # Only this fresh session's process group, while its leader PID is reserved.
+                for sig in (signal.SIGTERM, signal.SIGKILL):
+                    try:
+                        os.killpg(child.pid, sig)
+                    except ProcessLookupError:
+                        pass
+                    if sig == signal.SIGTERM:
+                        time.sleep(0.05)
                 try:
-                    os.killpg(child.pid, sig)
-                except ProcessLookupError:
-                    pass
-                if sig == signal.SIGTERM:
-                    time.sleep(0.05)
-            try:
-                server_exit = child.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                error = "owned server did not exit after group cleanup"
-            for pipe in (child.stdin, child.stdout, child.stderr):
-                pipe.close()
-        selector.close()
-        for fd, value in blocking.items():
-            os.set_blocking(fd, value)
+                    server_exit = child.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    error = "owned server did not exit after group cleanup"
+                for pipe in (child.stdin, child.stdout, child.stderr):
+                    pipe.close()
+            selector.close()
+            for fd, value in blocking.items():
+                os.set_blocking(fd, value)
+            for stream in streams.values():
+                stream.close()
+
+        if interrupted and not (
+            actual_input_eof
+            and input_eof
+            and not any(fragments.values())
+            and not any(outgoing.values())
+            and not readers
+            and server_exit == 0
+            and time.monotonic() < deadline
+            and error is None
+        ):
+            error = error or "capture interrupted"
+        code = 125 if error else (server_exit if server_exit >= 0 else 128 - server_exit)
+        receipt = dict(
+            schema="jopedime.mcp-stdio-capture/v1",
+            started_at=started,
+            ended_at=datetime.now(timezone.utc).isoformat(),
+            argv=command,
+            **source_pins,
+            python_version=sys.version.split()[0],
+            platform=sys.platform,
+            nice=os.getpriority(os.PRIO_PROCESS, 0),
+            environment_names=sorted(environment),
+            extra_environment_names=sorted(set(env_allow)),
+            executable=executable,
+            executable_sha256=executable_pin,
+            server_pid=child.pid if child else None,
+            elapsed_seconds=time.monotonic() - deadline + seconds,
+            server_exit_code=server_exit,
+            relay_exit_code=code,
+            client_exit_code=None,
+            complete=error is None,
+            error=error,
+            a5_status="UNVERIFIED",
+            limits=dict(seconds=seconds, stream_bytes=max_bytes, frame_bytes=1024 * 1024),
+            frames=frames,
+            retained_stream_bytes=retained,
+            files={
+                name: dict(bytes=path.stat().st_size, sha256=digest(path))
+                for name, path in paths.items()
+            },
+        )
+        publish_private_json(directory / "capture.json", receipt)
+        if error:
+            print(f"MCP capture refused: {error}", file=sys.stderr)
+        return code
+    finally:
         for sig, handler in old_handlers.items():
             signal.signal(sig, handler)
-        for stream in streams.values():
-            stream.close()
-
-    if interrupted:
-        error = "capture interrupted"
-    code = 125 if error else (server_exit if server_exit >= 0 else 128 - server_exit)
-    receipt = dict(
-        schema="jopedime.mcp-stdio-capture/v1",
-        started_at=started,
-        ended_at=datetime.now(timezone.utc).isoformat(),
-        argv=command,
-        **source_pins,
-        python_version=sys.version.split()[0],
-        platform=sys.platform,
-        nice=os.getpriority(os.PRIO_PROCESS, 0),
-        environment_names=sorted(environment),
-        extra_environment_names=sorted(set(env_allow)),
-        executable=executable,
-        executable_sha256=executable_pin,
-        server_pid=child.pid if child else None,
-        elapsed_seconds=time.monotonic() - deadline + seconds,
-        server_exit_code=server_exit,
-        relay_exit_code=code,
-        client_exit_code=None,
-        complete=error is None,
-        error=error,
-        a5_status="UNVERIFIED",
-        limits=dict(seconds=seconds, stream_bytes=max_bytes, frame_bytes=1024 * 1024),
-        frames=frames,
-        retained_stream_bytes=retained,
-        files={
-            name: dict(bytes=path.stat().st_size, sha256=digest(path))
-            for name, path in paths.items()
-        },
-    )
-    publish_private_json(directory / "capture.json", receipt)
-    if error:
-        print(f"MCP capture refused: {error}", file=sys.stderr)
-    return code
 
 
 def self_test():
