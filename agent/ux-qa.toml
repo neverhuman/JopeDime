@@ -1,0 +1,162 @@
+artifactRoot = "target/ci-evidence/rendered-ux"
+outputRoot = "target/jankurai/ux-qa"
+decisionThreshold = "error"
+readyState = "load"
+timeoutMs = 45000
+requiredStates = ["success", "empty", "error"]
+visualBaselineMode = "pass"
+visualBaselineRoot = "web/training-dashboard/e2e/observatory.spec.ts-snapshots"
+visualDiffRoot = "target/ci-evidence/rendered-ux/visual-diffs"
+baselineOwner = "web/training-dashboard"
+baselineApprovedBy = "Codex implementing-agent self-review"
+baselineApprovedAt = "2026-11-02T03:54:43Z"
+baselineApprovalNote = "All 16 rendered screenshot states have per-capture visual notes and approved baseline hashes in web/training-dashboard/e2e/visual_review.json; overview entry also pins its initial-state baselines. Self-review of synthetic fixtures, not independent human approval or live-service qualification."
+stateQueryParam = "state"
+screenshotRequired = true
+ariaSnapshotRequired = false
+accessibilityScanRequired = true
+viewports = ["1440x1000", "390x844"]
+
+[[routes]]
+id = "overview-desktop"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-section-desktop-linux.png"
+
+[[routes]]
+id = "training-desktop"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/training-desktop-linux.png"
+
+[[routes]]
+id = "fleet-desktop"
+url = "/"
+states = ["empty"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/fleet-desktop-linux.png"
+
+[[routes]]
+id = "storage-datasets-desktop"
+url = "/"
+states = ["empty"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/storage-datasets-desktop-linux.png"
+
+[[routes]]
+id = "gp-library-desktop"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/gp-library-desktop-linux.png"
+
+[[routes]]
+id = "results-lineage-desktop"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/results-lineage-desktop-linux.png"
+
+[[routes]]
+id = "checkpoint-dialog-desktop"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/checkpoint-dialog-desktop-linux.png"
+
+[[routes]]
+id = "interrupted-feed-desktop"
+url = "/"
+states = ["error"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/interrupted-feed-desktop-linux.png"
+
+[[routes]]
+id = "overview-mobile"
+url = "/"
+states = ["success"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-section-mobile-linux.png"
+
+[[routes]]
+id = "training-mobile"
+url = "/"
+states = ["success"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/training-mobile-linux.png"
+
+[[routes]]
+id = "fleet-mobile"
+url = "/"
+states = ["empty"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/fleet-mobile-linux.png"
+
+[[routes]]
+id = "storage-datasets-mobile"
+url = "/"
+states = ["empty"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/storage-datasets-mobile-linux.png"
+
+[[routes]]
+id = "gp-library-mobile"
+url = "/"
+states = ["success"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/gp-library-mobile-linux.png"
+
+[[routes]]
+id = "results-lineage-mobile"
+url = "/"
+states = ["success"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/results-lineage-mobile-linux.png"
+
+[[routes]]
+id = "checkpoint-dialog-mobile"
+url = "/"
+states = ["success"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/checkpoint-dialog-mobile-linux.png"
+
+[[routes]]
+id = "interrupted-feed-mobile"
+url = "/"
+states = ["error"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/interrupted-feed-mobile-linux.png"
+
+[[routes]]
+id = "overview-initial-desktop"
+url = "/"
+states = ["success"]
+viewports = ["1440x1000"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-desktop-linux.png"
+
+[[routes]]
+id = "overview-initial-mobile"
+url = "/"
+states = ["success"]
+viewports = ["390x844"]
+visualBaselineMode = "pass"
+baselinePath = "web/training-dashboard/e2e/observatory.spec.ts-snapshots/overview-mobile-linux.png"
