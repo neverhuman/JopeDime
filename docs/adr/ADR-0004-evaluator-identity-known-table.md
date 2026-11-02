@@ -154,5 +154,9 @@ advances from `f98fd62d588375253f46904c63641349164b78b92df1318810b04f47d0b7ab1c`
 remains `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`. The compatibility
 identity fixtures were regenerated at source commit
 `74167bd507c4bcfe7b43608ceffea73b12e73749` using the announced identity-only procedure; the
-transition is recorded in `p45_feat_math_race_30s_test_identity_rebaseline.v1.json`. No known-identity
-row is added because this work has no shipped receipt proving the new identity existed.
+transition is recorded in `p45_feat_math_race_30s_test_identity_rebaseline.v1.json`. After
+rebasing on main `2b4014b7c3036f2b23bba92a0593b76242ed6e90`, the lineage source `search_v3/checkpoint.rs`
+changed, so the lineage fixture was regenerated at `f13324870ad12a25b35cdad8080762a82e4f70c4`. The
+evaluator implementation hash and identity digest remained unchanged; that source-only refresh is
+recorded in `p45_feat_math_race_main_lineage_rebaseline.v1.json`. No known-identity row is added
+because this work has no shipped receipt proving the new identity existed.
