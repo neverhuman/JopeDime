@@ -54,7 +54,7 @@ pub(crate) fn ensure_success(status: ExitStatus) -> Result<(), ExecutionError> {
 pub(crate) fn platform_environment(
     work: &VerifiedWorkUnit,
     placement: &Placement,
-    phase: ExecutionPhase,
+    pub(super) phase: ExecutionPhase,
 ) -> BTreeMap<String, String> {
     BTreeMap::from([
         ("JAIN_RUN_ID".to_owned(), work.run_id.to_string()),

@@ -91,7 +91,7 @@ impl NodeTerminalOutcome {
 
 mod frame;
 mod validation;
-pub(crate) use validation::*;
+pub(super) use validation::*;
 
 #[cfg(test)]
 #[path = "outbound/tests.rs"]
