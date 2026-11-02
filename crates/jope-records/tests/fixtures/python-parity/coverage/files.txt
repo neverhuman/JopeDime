@@ -365,10 +365,10 @@ crates/jope-bench/src/panel/inference_prediction.rs
 crates/jope-bench/src/panel/inference_report.rs
 crates/jope-bench/src/panel/inference_report/format.rs
 crates/jope-bench/src/panel/inference_report/json.rs
+crates/jope-bench/src/panel/inference_report/summary.rs
 crates/jope-bench/src/panel/inference_report/tests.rs
 crates/jope-bench/src/panel/inference_report/tests/tests_01.rs
 crates/jope-bench/src/panel/inference_report/tests/tests_02.rs
-crates/jope-bench/src/panel/inference_report/summary.rs
 crates/jope-bench/src/panel/inference_report/validation.rs
 crates/jope-bench/src/panel/methods.rs
 crates/jope-bench/src/panel/mod.rs
@@ -509,11 +509,6 @@ crates/jope-campaigns/seeds/generation-zero-binary.txt
 crates/jope-campaigns/seeds/generation-zero.txt
 crates/jope-campaigns/src/aggressive.rs
 crates/jope-campaigns/src/args.rs
-crates/jope-campaigns/src/broad_shadow.rs
-crates/jope-campaigns/src/broad_shadow/canonical.rs
-crates/jope-campaigns/src/broad_shadow/receipts.rs
-crates/jope-campaigns/src/broad_shadow/receipts/tests.rs
-crates/jope-campaigns/src/broad_shadow/validation.rs
 crates/jope-campaigns/src/bin/aspfm_recovery_evolve.rs
 crates/jope-campaigns/src/bin/corpus_eval.rs
 crates/jope-campaigns/src/bin/jope_canary_executor.rs
@@ -679,6 +674,11 @@ crates/jope-campaigns/src/bin/jope_v3_control.rs
 crates/jope-campaigns/src/bin/scq_runs_gc.rs
 crates/jope-campaigns/src/bin/search-v3.rs
 crates/jope-campaigns/src/binary_panel.rs
+crates/jope-campaigns/src/broad_shadow.rs
+crates/jope-campaigns/src/broad_shadow/canonical.rs
+crates/jope-campaigns/src/broad_shadow/receipts.rs
+crates/jope-campaigns/src/broad_shadow/receipts/tests.rs
+crates/jope-campaigns/src/broad_shadow/validation.rs
 crates/jope-campaigns/src/broad_shadow_cli.rs
 crates/jope-campaigns/src/broad_shadow_cli/tests.rs
 crates/jope-campaigns/src/campaign.rs
@@ -1468,6 +1468,9 @@ crates/jope-engine/src/sealed_storage.rs
 crates/jope-engine/src/service.rs
 crates/jope-engine/src/service/allowed_cpu_tests.rs
 crates/jope-engine/src/service/coverage.rs
+crates/jope-engine/src/service/coverage/source_part1.rs
+crates/jope-engine/src/service/coverage/source_part2.rs
+crates/jope-engine/src/service/coverage/source_part3.rs
 crates/jope-engine/src/service/coverage/tests.rs
 crates/jope-engine/src/service/coverage/tests/balancing.rs
 crates/jope-engine/src/service/coverage/tests/population.rs
