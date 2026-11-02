@@ -446,15 +446,18 @@ fn version_two_javascript_preserves_f64_and_refuses_non_finite_outputs() {
     model.input.target.min = 1e308;
     assert!(model.predict_cells(&[vec![Some("1")]]).is_err());
     let source = String::from_utf8(model.export_javascript().unwrap()).unwrap();
-    let program=format!("{source}\ntry{{predictRows([[\"1\"]]);process.exit(2)}}catch(e){{if(!String(e).includes(\"prediction undefined\"))throw e;process.stdout.write(\"refused\")}}");
+    let program = format!("{source}\npredictRows([[\"1\"]]);");
     let output = Command::new("node")
         .args(["-e", &program])
         .output()
         .unwrap();
     assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
+        !output.status.success(),
+        "expected JavaScript prediction to refuse a non-finite result"
     );
-    assert_eq!(output.stdout, b"refused");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("prediction undefined"),
+        "unexpected JavaScript failure: {stderr}"
+    );
 }
