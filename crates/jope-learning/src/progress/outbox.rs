@@ -177,13 +177,16 @@ pub struct Record {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-/// `Outcome` is an enum for the outcome contract in this module: W8-T02: persist locally before acknowledging completion.
-pub enum Outcome {
+/// The remote acknowledgement state for a progress outbox delivery.
+pub enum ProgressOutboxOutcome {
     /// The remote created the object.
     Created,
     /// The remote already held exactly these bytes.
     Existed,
 }
+
+/// Compatibility name retained for callers of the progress outbox API.
+pub type Outcome = ProgressOutboxOutcome;
 
 /// A delivery acknowledgement: bound to one record and to the exact bytes the remote accepted.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
