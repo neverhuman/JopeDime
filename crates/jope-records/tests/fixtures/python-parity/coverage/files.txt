@@ -1854,6 +1854,11 @@ crates/jope-records/src/layout.rs
 crates/jope-records/src/lib.rs
 crates/jope-records/src/main.rs
 crates/jope-records/src/parity.rs
+crates/jope-records/src/parity/bins.rs
+crates/jope-records/src/parity/commands.rs
+crates/jope-records/src/parity/matrix.rs
+crates/jope-records/src/parity/scan.rs
+crates/jope-records/src/parity/tests.rs
 crates/jope-records/src/progress_view.rs
 crates/jope-records/src/py.rs
 crates/jope-records/src/py/float.rs
