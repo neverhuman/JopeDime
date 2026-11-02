@@ -1630,6 +1630,9 @@ deploy/ci/emitters/driver.js
 deploy/ci/fast-lane.sh
 deploy/ci/full-lane.sh
 deploy/ci/full-main.py
+deploy/ci/full_main_suite_build.py
+deploy/ci/full_main_suite_workflow.py
+deploy/ci/full_main_test_support.py
 deploy/ci/ip-scrub-exempt.txt
 deploy/ci/ip-scrub.sh
 deploy/ci/kernel-v1-product-build.sh
