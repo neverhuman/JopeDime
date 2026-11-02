@@ -223,4 +223,5 @@ fn finite_or_zero(value: f32) -> f32 {
 }
 
 #[cfg(test)]
+#[path = "landmarks/tests.rs"]
 mod tests;

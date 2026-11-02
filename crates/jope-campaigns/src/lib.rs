@@ -4,11 +4,11 @@
 //! boundary. Queueing, provenance, fitness bookkeeping, freshness, datasets,
 //! and deployment policy live in this crate.
 
+pub mod broad_shadow;
 pub mod broad_shadow_catalog;
 pub mod broad_shadow_cli;
 pub mod broad_shadow_ranking;
 pub mod cost;
-pub mod broad_shadow;
 pub mod dime_activation;
 pub mod dime_runtime_contracts;
 pub mod encoder_v2_authority;
@@ -17,9 +17,9 @@ pub mod encoder_v2_execution;
 pub mod encoder_v2_identity;
 pub mod encoder_v2_store;
 pub mod encoder_v2_worker;
+pub mod engines_config;
 pub mod epoch6;
 pub mod epoch6_wave;
-pub mod engines_config;
 pub mod four_task;
 pub mod hyperion_gate;
 pub mod hyperion_router;
@@ -32,13 +32,13 @@ pub mod recovery_contracts;
 pub mod remote_eval_driver;
 pub mod router_contracts;
 pub mod search_v3;
+pub mod self_play_evaluation;
 pub mod selfplay_core;
 pub mod selfplay_data;
 pub mod selfplay_expansion;
 pub mod selfplay_ingest;
 pub mod selfplay_registry;
 pub mod selfplay_runtime;
-pub mod self_play_evaluation;
 pub mod selfplay_shadow;
 /// WS-2: the single source of truth for scq job specs, and the drift test that
 /// fails when two renderers disagree.
