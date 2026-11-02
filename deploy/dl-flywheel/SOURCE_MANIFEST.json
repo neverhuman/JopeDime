@@ -3561,9 +3561,16 @@
       "sha256": "d005f24f2d6cc134fdc2f46f7182cb1156bcf30f265b3c0243d078803e8c250f"
     },
     {
-      "origin": "work/flywheel-20261008/proposals/native-original-cached-v1/native_inputs.py",
-      "origin_sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+      "origin": "FASTLANE t2020 compatibility facade over shared native_inputs_core.py",
+      "origin_sha256": "0a1932057231c93e912f195323af7e8f9fd31f2182d26b68519e413b2123badb",
       "path": "deploy/dl-flywheel/pipelines/hpc/native_inputs.py",
+      "sha256": "0a1932057231c93e912f195323af7e8f9fd31f2182d26b68519e413b2123badb"
+    },
+    {
+      "normalization": "Shared implementation extracted for mutable HPC and hpc_verified_v4 callers; pinned v5 remains unchanged.",
+      "origin": "FASTLANE t2020 shared native-input implementation",
+      "origin_sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+      "path": "deploy/dl-flywheel/pipelines/hpc/native_inputs_core.py",
       "sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77"
     },
     {
@@ -3579,11 +3586,11 @@
       "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288"
     },
     {
-      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies.",
+      "normalization": "FASTLANE t2020 shared native-input staging migration; other worker sources unchanged.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/manifest.template.json",
-      "origin_sha256": "46d316f5b5719b68d3a2780507aa3b14bf30ffaf04838646658a78aa71dad0b2",
+      "origin_sha256": "e62bcc5195a2ac6bfe3652f5db6a660ec001942dd50a2ead576a61a7914a08d7",
       "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/manifest.template.json",
-      "sha256": "46d316f5b5719b68d3a2780507aa3b14bf30ffaf04838646658a78aa71dad0b2"
+      "sha256": "e62bcc5195a2ac6bfe3652f5db6a660ec001942dd50a2ead576a61a7914a08d7"
     },
     {
       "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies.",
@@ -3593,11 +3600,11 @@
       "sha256": "053eaf06901b77ada26252e627a34aa61b14d593494d2687fc2fa836e624d90e"
     },
     {
-      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies.",
+      "normalization": "FASTLANE t2020 shared native-input staging migration; other worker sources unchanged.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/operations_pool.py",
-      "origin_sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2",
+      "origin_sha256": "903bd9fb4cfce58efd1295ee303c5a81ac392c8eb914a94519a3ee405ca1e3f4",
       "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/operations_pool.py",
-      "sha256": "d9894721dd1b730b76bf738f16b708b6628b23962a169db9694fe3cf08d7e0d2"
+      "sha256": "903bd9fb4cfce58efd1295ee303c5a81ac392c8eb914a94519a3ee405ca1e3f4"
     },
     {
       "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies.",
@@ -3698,11 +3705,11 @@
       "sha256": "26e1b981004dc65712329ea3523fcbbbcacfe5321a098b38ba2dddbc29e48e6a"
     },
     {
-      "normalization": "Byte-exact source copy; historical references are provenance, not local executable dependencies.",
+      "normalization": "FASTLANE t2020 shared native-input staging migration; other worker sources unchanged.",
       "origin": "/Users/bentaylor/Documents/Codex/2026-10-06/on-x20/work/heartbeat-20261009-1203/native-pool-v1/test_pool.py",
-      "origin_sha256": "a5cd50ae1eaba1ca917033dd1bbfcda2b7a8e169d12f8dda0eb4658aa326bcdf",
+      "origin_sha256": "8aeb5742912e3b22f1b83946ac0c71a071b1095332847e2c61be0cea5bd42b6f",
       "path": "deploy/dl-flywheel/pipelines/hpc_pool_v1/test_pool.py",
-      "sha256": "a5cd50ae1eaba1ca917033dd1bbfcda2b7a8e169d12f8dda0eb4658aa326bcdf"
+      "sha256": "8aeb5742912e3b22f1b83946ac0c71a071b1095332847e2c61be0cea5bd42b6f"
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/historical_custody.py",
@@ -3755,10 +3762,10 @@
       "sha256": "41138783459d778da1c5618a6c92fb5aacb4c8e095c37976830ee44f2d28cb99"
     },
     {
-      "origin": "work/heartbeat-20261009-0616/native-v4/native_inputs.py",
-      "origin_sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77",
+      "origin": "FASTLANE t2020 compatibility facade over shared native_inputs_core.py",
+      "origin_sha256": "ad3672664d3c873f21a31b145c52e8ae9ff82c2e53fedfea131f959ea698ea52",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/native_inputs.py",
-      "sha256": "74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77"
+      "sha256": "ad3672664d3c873f21a31b145c52e8ae9ff82c2e53fedfea131f959ea698ea52"
     },
     {
       "origin": "work/heartbeat-20261009-0616/native-v4/neural_outbox.py",

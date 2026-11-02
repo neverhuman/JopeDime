@@ -184,8 +184,16 @@ def validate_parent(m, p, template):
          m['parent_plan']['path']==str(Path(parent['root'])/'plan.json'),'parent plan/stage manifest closure')
     original={x['relative_path']:(x['ref']['sha256'],x['ref']['bytes'])for x in parent['source_files']}
     current={x['relative_path']:(x['ref']['sha256'],x['ref']['bytes'])for x in m['source_files']}
-    need(original==current and len(original)==len(parent['source_files'])==len(m['source_files'])==34,
-         'all 34 parent worker sources byte unchanged')
+    old_inputs=original.pop('native_inputs.py',None)
+    current_inputs=current.pop('native_inputs.py',None)
+    shared_inputs=current.pop('native_inputs_core.py',None)
+    need(len(original)==len(parent['source_files'])-1==33 and
+         len(current)==len(m['source_files'])-2==33 and original==current and
+         len(parent['source_files'])==34 and len(m['source_files'])==35 and
+         old_inputs==('74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77',7575) and
+         current_inputs==('0a1932057231c93e912f195323af7e8f9fd31f2182d26b68519e413b2123badb',776) and
+         shared_inputs==('74f7ae7f3b960f08b4352960fcdf8cfda23b6fe091d1ad26bb5c73dfa2749e77',7575),
+         'exact native-input extraction; all other parent worker sources byte unchanged')
     guard=parent_guard(m,p);units=[]
     for i,w in enumerate(old['workers']):
         need(set(w)=={'index','unit','config'} and w['index']==i and w['unit']==parent['unit_prefix']+'-worker'+str(i) and
@@ -376,7 +384,7 @@ def inputs(manifest_ref):
         total+=len(read(item['ref']));names.append(name)
     need(total<=CAP and names==sorted(set(names)) and
          {'native_dispatch.py','native_build.py','native_global_guard.py','readonly_snapshot.py','neural_outbox.py',
-          'native_evaluate.py','native_inputs.py','native_failure.py','verified_cache.py',
+          'native_evaluate.py','native_inputs.py','native_inputs_core.py','native_failure.py','verified_cache.py',
           'native_corpus_authority.py','jope_flywheel/__init__.py'}<=set(names),'complete bounded staged source names')
     validate_parent(m,p,template)
     return m,p,template
