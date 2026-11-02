@@ -665,7 +665,7 @@ The “validation-pool fixed-8-program” item cited by FUP-04 assignment has no
 
 ### 6.2 Layout
 
-Owner direction, 2026-11-01: use a full-screen alternate-screen session. The opening view has a large creative ASCII **JAIN** wordmark, **JAIN by VEOX**, and **Powered by JopeDime**. A scrolling transcript sits above the bottom composer. Page Up/Down and mouse wheel browse output; End follows live output. New events preserve the history view and pending draft, with a new-lines indicator. The client restores the previous screen, cursor, mouse and input modes on exit. `NO_COLOR` selects monochrome; narrow/short or dumb terminals use line mode. The illustrative transcript below describes card content rather than the superseded inline layout.
+Owner direction, 2026-11-02: use a full-screen alternate-screen session branded **VEOX CLI**, launched with `veox` or `vex-dev` for development. The opening view has a centered VEOX silhouette formed from dim ASCII characters; a sliding, pulsing wave brightens and boldens the lettering. Center **Your data. Your models. Your next discovery.** beneath it, with a human-readable help/open sentence above the command input. A scrolling transcript sits above the bottom composer. Page Up/Down and mouse wheel browse output; End follows live output. New events preserve the history view and pending draft, with a new-lines indicator. The client restores the previous screen, cursor, mouse and input modes on exit. `NO_COLOR` selects monochrome; narrow/short or dumb terminals use line mode. The illustrative transcript below describes card content rather than the superseded inline layout.
 
 ```text
  JopeDime 1.0.0 · bundle h40b (cpu) · engine background (pid 4182, idle exit 30m)

@@ -165,7 +165,7 @@ impl Screen {
         .split(area);
         frame.render_widget(
             Paragraph::new(Line::from(vec![
-                Span::styled(" JAIN by VEOX ", accent.add_modifier(Modifier::BOLD)),
+                Span::styled(" VEOX CLI ", accent.add_modifier(Modifier::BOLD)),
                 Span::styled(format!("/ CLI   ·   JopeDime {version}"), muted),
             ])),
             rows[0],
@@ -374,7 +374,7 @@ mod tests {
                     .collect::<String>()
             };
             let output = (0..height).map(row).collect::<Vec<_>>().join("\n");
-            assert!(output.contains("JAIN by VEOX"));
+            assert!(output.contains("VEOX CLI"));
             assert!(output.contains("Your data."));
             assert!(output.contains("Your models."));
             assert!(output.contains("Your next"));

@@ -5,7 +5,8 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
-    name = "jopedime",
+    name = "veox",
+    bin_name = "veox",
     about = "Fit and predict tabular models with native Rust methods, from one signed executable.",
     disable_version_flag = true,
     after_help = "Exit status: 0 success, 2 invalid input, 3 integrity or compatibility, \

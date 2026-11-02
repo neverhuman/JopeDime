@@ -1,10 +1,14 @@
 # Terminal reference
 
-The `jopedime` executable provides local model commands and commands that communicate with the shared background engine. Use `jopedime --help` to see the commands in the installed build.
+The **VEOX CLI** provides local model commands and commands that communicate with the shared background engine. Start it with `veox`, or `vex-dev` for a development installation. Use `veox --help` to see the commands in the installed build.
+
+When installing a locally built executable, name it `veox` (or `vex-dev` for development). The internal Cargo binary target remains `jopedime`; existing executable aliases continue to work.
 
 ## Interactive screen
 
-Launching without arguments in a terminal opens the full-screen **JAIN by VEOX** landing view, with a large ASCII wordmark and **Powered by JopeDime**. Submit a command to start the transcript; the composer stays near the bottom.
+Launching without arguments opens the full-screen **VEOX CLI** landing view. A centered VEOX silhouette rests in dim ASCII dots and colons; a sliding, pulsing wave brightens and boldens the characters through `+`, `*`, `#`, and `@`, then fades. The tagline reads **Your data. Your models. Your next discovery.** A sentence above the command input explains how to get help or open a CSV. Submit a command to start the transcript; the composer stays near the bottom.
+
+The animation stops when results replace the landing view. `NO_COLOR` selects a static monochrome rendering; `JOPEDIME_REDUCED_MOTION=1` keeps the colored logo static.
 
 Use **Page Up / Page Down** or the mouse wheel to scroll results. While reading history, new output keeps your position and increments a new-lines indicator; **End** returns to live output. Scrolling does not change your pending input. The view retains up to 2,000 lines / 1 MiB; durable run results remain in the engine.
 
@@ -39,16 +43,16 @@ An active run continues in the local background engine. Reconnect with `jopedime
 
 ## Connect to VEOX
 
-Run `/login` in the interactive CLI, or `jain-dev auth login --workspace https://dev-xbabe0.veox.ai`. The default workspace is your saved choice, `JAIN_WORKSPACE`, or https://app.veox.ai. The CLI prints a short pairing code and opens the browser; over SSH, open that URL on your own machine. Sign in normally, check that the code matches, and approve the CLI. No password or browser cookie is copied into the terminal. `/logout` revokes this CLI credential and removes its local copy; `auth status` shows the selected account.
+Run `/login` in the interactive CLI, or `vex-dev auth login --workspace https://dev-xbabe0.veox.ai`. The default workspace is your saved choice, `JAIN_WORKSPACE`, or https://app.veox.ai. The CLI prints a short pairing code and opens the browser; over SSH, open that URL on your own machine. Sign in normally, check that the code matches, and approve the CLI. No password or browser cookie is copied into the terminal. `/logout` revokes this CLI credential and removes its local copy; `auth status` shows the selected account.
 
 Device credentials grant account reads and connected-run/model publication, expire after 30 days, and can be revoked from the account page. Ordinary cloud-training and dataset-deletion writes remain forbidden. The CLI stores its credential in a private 0600 file inside a 0700 directory, bound to the selected account and HTTPS workspace origin. Automation may use `auth login --token-file PRIVATE_FILE` or redirected `--token-stdin`; token input is not accepted through an interactive echoed prompt.
 
-New runs created in a signed-in interactive CLI synchronize status and metrics. Existing/attached runs are shared only after `/sync [RUN]`; use `jain-dev cloud sync --run RUN` outside the interface. Metadata queues survive an offline failure and retry without creating duplicate cloud runs. Dataset files and raw rows are not part of metadata sync. A run already associated with another account/workspace is refused rather than silently republished.
+New runs created in a signed-in interactive CLI synchronize status and metrics. Existing/attached runs are shared only after `/sync [RUN]`; use `vex-dev cloud sync --run RUN` outside the interface. Metadata queues survive an offline failure and retry without creating duplicate cloud runs. Dataset files and raw rows are not part of metadata sync. A run already associated with another account/workspace is refused rather than silently republished.
 
 Left Arrow from empty input opens the runs panel. Left continues ordinary editing when text is present. The panel traverses local and account-visible cloud pages, shows status separately from Local only / Cloud only / Local + cloud, and includes the real workspace URL. Up/Down selects, Enter attaches a local run or opens a cloud-only run, `o` opens the cloud URL, `d` downloads a model, `r` refreshes, and Esc/Right returns to the composer. A metadata cache does not imply the model is downloaded.
 
 `/publish [RUN]` explicitly exports and publishes the selected fitted model; `cloud publish RUN --model OBJECT_DIRECTORY` can choose an existing portable object. Fitted state can retain training rows, so publishing a model shares that state even though no dataset file is uploaded. Published objects are immutable per connected run in this development version; identical retries succeed and different replacements are refused. Limits are 32 MiB per model and 512 MiB of connected models per account.
 
-`/fetch CLOUD_UUID` or `jain-dev cloud fetch CLOUD_UUID` downloads and verifies the model before installing it in the active account's local model store. It prints the model path and whether this build can execute its codec. Use `jopedime model verify --model PATH --require-executable` before local prediction. Connected-run status and metrics are client reported. Cloud scoring is not yet available for these newly published connected artifacts; existing supported cloud-trained runs retain their browser prediction workflow.
+`/fetch CLOUD_UUID` or `vex-dev cloud fetch CLOUD_UUID` downloads and verifies the model before installing it in the active account's local model store. It prints the model path and whether this build can execute its codec. Use `veox model verify --model PATH --require-executable` before local prediction. Connected-run status and metrics are client reported. Cloud scoring is not yet available for these newly published connected artifacts; existing supported cloud-trained runs retain their browser prediction workflow.
 
 The development gateway is separate from VEOX account login. For that environment only, configure a private gateway JSON file with `origin`, `username`, and `password`, and pass `--gateway-auth-file PATH` or `JAIN_GATEWAY_AUTH_FILE`. Gateway credentials are refused for a different origin. The application token remains distinct and uses `X-Veox-Api-Token` behind Basic Auth. Never place account or gateway secrets in a URL or command argument.

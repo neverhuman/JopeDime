@@ -22,10 +22,7 @@ fn jopedime_help_runs_in_a_pty_and_resize_is_applied() -> std::io::Result<()> {
     assert_eq!(session.size()?, (100, 40));
 
     let screen = session.wait_for_text("Usage:", Duration::from_secs(10))?;
-    assert!(
-        screen.contains("jopedime"),
-        "unexpected help output: {screen}"
-    );
+    assert!(screen.contains("veox"), "unexpected help output: {screen}");
     assert_no_internal_sentinels(&screen);
     Ok(())
 }
