@@ -221,11 +221,7 @@ fn collect_named_schema(
     schemas: &mut Map<String, Value>,
 ) -> Result<(), Box<dyn Error>> {
     let mut value = serde_json::to_value(schema)?;
-    let definitions = value
-        .as_object_mut()
-        .and_then(|root| root.remove("$defs"))
-        .unwrap_or_else(|| json!({}));
-    let mut additions = definitions.as_object().cloned().unwrap_or_default();
+    let mut additions = take_schema_definitions(&mut value, name)?;
     additions.insert(name.to_owned(), value);
     for schema in additions.values_mut() {
         rewrite_definition_refs(schema);
@@ -242,6 +238,26 @@ fn collect_named_schema(
         }
     }
     Ok(())
+}
+
+fn take_schema_definitions(
+    schema: &mut Value,
+    name: &str,
+) -> Result<Map<String, Value>, io::Error> {
+    let root = schema.as_object_mut().ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("generated schema {name} must be an object"),
+        )
+    })?;
+    match root.remove("$defs") {
+        None => Ok(Map::new()),
+        Some(Value::Object(definitions)) => Ok(definitions),
+        Some(_) => Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("generated schema {name} $defs must be an object"),
+        )),
+    }
 }
 
 fn without_schema_metadata(value: &Value) -> Value {
@@ -304,6 +320,17 @@ mod tests {
         .unwrap_err();
         assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
         assert_eq!(error.to_string(), "usage: jope-api-openapi [OUTPUT_PATH]");
+    }
+
+    #[test]
+    fn schema_definitions_reject_malformed_shape() {
+        let mut schema = json!({"$defs": []});
+        let error = take_schema_definitions(&mut schema, "Problem").unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert_eq!(
+            error.to_string(),
+            "generated schema Problem $defs must be an object"
+        );
     }
 
     #[test]
