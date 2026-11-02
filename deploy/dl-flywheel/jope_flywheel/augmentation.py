@@ -11,13 +11,20 @@ from dataclasses import asdict, dataclass
 import hashlib
 import math
 import numpy as np
-from .protocol import canonical, digest, partition, require as _need, sha256, validate_name as _name
+from .protocol import canonical, digest, partition, sha256
+from .program_io import need as _need
 
 SCHEMA='jope.flywheel-augmentation/v1'
 RNG='sha256-domain-PCG64-per-row/v1'
 TRANSFORMS='small-drop-trainstd-noise-gaussian-nuisance/v1'
 KINDS=('continuous','integer','binary','categorical')
 ROLES=('fit','validation','test')
+
+# Runtime namespaces use a pinned protocol without the canonical name validator.
+def _name(value):
+    _need(isinstance(value,str) and 0<len(value)<=256 and value.strip()==value
+          and not any(ord(c)<32 for c in value),'invalid column/identity name')
+    return value
 
 @dataclass(frozen=True)
 class Feature:

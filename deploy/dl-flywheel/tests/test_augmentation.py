@@ -1,6 +1,10 @@
 import dataclasses
 import hashlib
 import json
+import os
+from pathlib import Path
+import subprocess
+import sys
 import unittest
 import numpy as np
 from jope_flywheel import augmentation as a
@@ -116,5 +120,19 @@ class AugmentationTests(unittest.TestCase):
         self.assertEqual(len(state.nuisance_names),8)
         one=a.apply(x,self.y,row_ids=range(30),state=state);two=a.apply(x,self.y*100000,row_ids=range(30),state=state)
         np.testing.assert_array_equal(one.x,two.x);np.testing.assert_array_equal(two.y,self.y*100000)
+
+    def test_canonical_augmentation_imports_with_the_frozen_runtime_protocol(self):
+        root=Path(a.__file__).resolve().parent.parent
+        runtime=root/'pipelines/continuous/runtime'
+        env=dict(os.environ,PYTHONPATH=os.pathsep.join((str(runtime),str(root))),
+                 PYTHONDONTWRITEBYTECODE='1')
+        code=("from pathlib import Path; import sys; "
+              "from jope_flywheel import augmentation, protocol; "
+              "assert Path(protocol.__file__).resolve()==Path(sys.argv[1]).resolve(); "
+              "augmentation.Feature('x','continuous','float32')")
+        result=subprocess.run([sys.executable,'-c',code,
+                               str(runtime/'jope_flywheel/protocol.py')],
+                              capture_output=True,text=True,env=env)
+        self.assertEqual(result.returncode,0,result.stderr)
 
 if __name__=='__main__':unittest.main()
