@@ -1094,6 +1094,9 @@ crates/jope-engine/src/dashboard.rs
 crates/jope-engine/src/dashboard/app.rs
 crates/jope-engine/src/dashboard/campaign.rs
 crates/jope-engine/src/dashboard/details.rs
+crates/jope-engine/src/dashboard/details/charts.rs
+crates/jope-engine/src/dashboard/details/comparison.rs
+crates/jope-engine/src/dashboard/details/teachers.rs
 crates/jope-engine/src/dashboard/evidence.rs
 crates/jope-engine/src/dashboard/layout.rs
 crates/jope-engine/src/dashboard/render.rs
