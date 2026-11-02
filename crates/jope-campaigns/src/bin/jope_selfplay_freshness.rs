@@ -1080,9 +1080,6 @@ impl Supervisor {
                 expected_pair_state,
                 &retirement,
             )?;
-            if count == 0 {
-                bail!("{job_id}: stale retirement selected no protocol pairs");
-            }
             self.mark_claim_superseded(job_id, &current.manifest_sha256)?;
             self.event(
                 "stale_job_retired",
