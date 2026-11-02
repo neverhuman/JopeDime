@@ -1,0 +1,18 @@
+{
+  "schema": "jope.research-source-reference/v1",
+  "canonical_source": "research/flywheel_selfplay/rnk10_r882_acceptance/run_acceptance.py",
+  "canonical_source_sha256": "a735302c4b810756c94fc4d9dce94ecb960d691e7eae97dec47c021b6fa45710",
+  "compatibility_entrypoint": "run_acceptance.py",
+  "preserved_snapshot": "run_acceptance.py.snapshot",
+  "preserved_snapshot_sha256": "a735302c4b810756c94fc4d9dce94ecb960d691e7eae97dec47c021b6fa45710",
+  "hash_pin_references": [
+    "research/flywheel_selfplay/rnk10_r882_acceptance/evaluation_manifest.json",
+    "research/flywheel_selfplay/rnk10_r882_acceptance/outcome_ledger.json",
+    "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/acceptance-result.json",
+    "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/evaluation_manifest.json",
+    "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/model-smoke.json",
+    "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/outcome-summary.json",
+    "research/flywheel_selfplay/rnk10_r882_acceptance/result/attempt-02/outcome_ledger.json"
+  ],
+  "reason": "The attempt directory held a byte-identical historical copy whose SHA-256 is pinned by the listed manifests and receipts, but the copied path itself is not referenced. Preserve the pinned bytes as a non-executable snapshot, leave every SHA-256 pin unchanged, and keep the original entrypoint as a small bridge that imports the canonical implementation."
+}
