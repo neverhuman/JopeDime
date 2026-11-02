@@ -123,6 +123,7 @@ class RuntimeAdmission(unittest.TestCase):
         self.receipt = dict(
             identity,
             status="PASS_WITH_WAIVER",
+            metadata_source_commit=self.plan["metadata_source_commit"],
             release_version="v1.0.0",
             backend_sha256=self.plan["backend_sha256"],
             pins=pins,
@@ -208,6 +209,7 @@ class RuntimeAdmission(unittest.TestCase):
             (self.pin, "source_commit"),
             (self.pin, "sha256"),
             (self.plan, "metadata_source_commit"),
+            (self.receipt, "metadata_source_commit"),
         ]:
             before = target[key]
             target[key] = "c" * 40
