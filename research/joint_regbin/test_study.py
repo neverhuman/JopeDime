@@ -75,9 +75,11 @@ def test_resume_dispatch_load_gate_requires_five_spaced_high_samples():
     assert not gate.blocked()
 
 
-def test_resume_deadline_amendment_carries_old_execution_without_reset():
+def test_resume_deadline_amendment_carries_old_execution_without_reset(monkeypatch):
     from research.joint_regbin.learner_resume import PLAN_SHA, amended_deadline
 
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION", raising=False)
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", raising=False)
     campaign = dict(
         plan_sha256=PLAN_SHA, wall_seconds=21600, started_unix=0, deadline_unix=21600
     )
@@ -87,6 +89,87 @@ def test_resume_deadline_amendment_carries_old_execution_without_reset():
         assert amended_deadline(campaign, 330, resumed) - resumed + 330 <= 21600
     with pytest.raises(ValueError, match="charge differs"):
         amended_deadline(dict(campaign, wall_seconds=22000), 330, 3600)
+
+
+def test_resume_owner_deadline_extension_hash_window_and_latest_start(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    approval = dict(
+        kind="OWNER_DEADLINE_EXTENSION_APPROVAL",
+        approval_ref="t188s1838",
+        plan_sha256=resume.PLAN_SHA,
+        reservation_sha256=resume.RESERVATION_SHA,
+        computation=dict(window_seconds=22658),
+        new_deadline=dict(
+            resume_must_occur_before_utc="2026-11-02T17:30:00Z (otherwise re-record)"
+        ),
+    )
+    path = tmp_path / "owner-extension.json"
+    path.write_text(json.dumps(approval))
+    sha = protocol.file_sha(path)
+    # The fixture pin substitutes for the immutable production approval pin.
+    monkeypatch.setattr(resume, "OWNER_EXTENSION_SHA", sha)
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION", str(path))
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", sha)
+    campaign = dict(
+        plan_sha256=resume.PLAN_SHA,
+        wall_seconds=21600,
+        started_unix=0,
+        deadline_unix=21600,
+    )
+    assert resume.amended_deadline(campaign, 925.815489, 10000) == 32658
+    late = resume.datetime.datetime(
+        2026, 11, 2, 17, 30, tzinfo=resume.datetime.UTC
+    ).timestamp()
+    with pytest.raises(ValueError, match="fresh receipt"):
+        resume.amended_deadline(campaign, 925.815489, late)
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", "wrong hash")
+    with pytest.raises(ValueError, match="hash differs"):
+        resume.amended_deadline(campaign, 925.815489, 10000)
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256")
+    with pytest.raises(ValueError, match="hash differs"):
+        resume.amended_deadline(campaign, 925.815489, 10000)
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION")
+    assert resume.amended_deadline(campaign, 925.815489, 10000) == 28800
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("kind", "OTHER_APPROVAL"),
+        ("approval_ref", "wrong reference"),
+        ("plan_sha256", "wrong plan"),
+        ("reservation_sha256", "wrong reservation"),
+        ("window_seconds", 21600),
+        ("window_seconds", 22659),
+    ],
+)
+def test_resume_owner_deadline_extension_refuses_wrong_scope(
+    tmp_path, monkeypatch, field, value
+):
+    from research.joint_regbin import learner_resume as resume
+
+    approval = dict(
+        kind="OWNER_DEADLINE_EXTENSION_APPROVAL",
+        approval_ref="t188s1838",
+        plan_sha256=resume.PLAN_SHA,
+        reservation_sha256=resume.RESERVATION_SHA,
+        computation=dict(window_seconds=22658),
+    )
+    if field == "window_seconds":
+        approval["computation"][field] = value
+    else:
+        approval[field] = value
+    path = tmp_path / "wrong-scope.json"
+    path.write_text(json.dumps(approval))
+    sha = protocol.file_sha(path)
+    monkeypatch.setattr(resume, "OWNER_EXTENSION_SHA", sha)
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION", str(path))
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", sha)
+    with pytest.raises(ValueError, match="scope differs"):
+        resume.owner_deadline_extension()
 
 
 def test_resume_charges_rejected_attempt_and_drain_without_overlap():

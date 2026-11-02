@@ -288,7 +288,7 @@ def _restore_sigint(previous_mask: set[signal.Signals]) -> BaseException | None:
 
 # MCP recorders can need several seconds after client EOF to flush their receipt.
 NORMAL_EXIT_DRAIN_MAX_SECONDS = 15.0
-NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS = 10.0
+NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS = 15.0
 
 
 def _group_has_live_members(pgid: int) -> bool:
@@ -432,7 +432,7 @@ def terminate_group(process: subprocess.Popen, grace_seconds: float = 5) -> int:
     return engine_exit
 
 
-RECORDER_DRAIN_SECONDS = 5.0
+RECORDER_DRAIN_SECONDS = 15.0
 
 
 def _process_info(pid: int) -> dict | None:
@@ -939,15 +939,16 @@ def run_capture(args: argparse.Namespace) -> dict:
                         if client_exit is not None:
                             break
                         time.sleep(min(0.05, remaining))
-                    if client_exit == 0 and not timed_out and not deadline_reached:
+                    if client_exit == 0 and not timed_out:
                         try:
-                            flush_deadline = min(
-                                client_deadline,
-                                time.monotonic()
-                                + min(
-                                    RECORDER_DRAIN_SECONDS,
-                                    NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS,
-                                ),
+                            # The client deadline bounds client execution. Once a
+                            # normal exit is observed, allow a separate finite
+                            # window for recorder EOF drain and durable receipt
+                            # publication; clamping this to client_deadline can
+                            # leave no time for a client that exits at its bound.
+                            flush_deadline = time.monotonic() + min(
+                                RECORDER_DRAIN_SECONDS,
+                                NORMAL_EXIT_RECEIPT_DRAIN_MAX_SECONDS,
                             )
                             drain_group(
                                 active_client, flush_deadline, raise_if_sigint_pending

@@ -236,6 +236,11 @@
       "lane": "security",
       "purpose": "test security-lane refusal behavior and run configured operational scans"
     },
+    "docs/testing.md": {
+      "command": "python3 deploy/ci/test-runner.py",
+      "lane": "docs",
+      "purpose": "validate the test guide command inventory, declared coverage, and evidence handling"
+    },
     "docs/": {
       "command": "python3 deploy/ci/test-runner.py",
       "lane": "docs",

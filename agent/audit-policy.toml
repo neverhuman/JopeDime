@@ -40,6 +40,22 @@ extra_excluded_paths = [
   "research/flywheel_selfplay/h149_wd_dose/runtime.py",
   "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
   "research/flywheel_selfplay/h153_sam/runtime.py",
+  # P37: H154 runtime and executor are SHA-256 pinned; fused model and guard source identities are checked before execution.
+  "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py",
+  # P37: H155 runs only SHA-256-verified H153 Git blobs and pins this executor in its manifest.
+  "research/flywheel_selfplay/h155_rank_smoothing/runner.py",
+  # P37: H158 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+  "research/flywheel_selfplay/h158_distillation/runtime.py",
+  # P37: H159 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+  "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py",
+  # P37: H161 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+  "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
+  # P37: H164 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+  "research/flywheel_selfplay/h164_sam_retry/runtime.py",
+  # P37: H168 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+  "research/flywheel_selfplay/h168_selector_remedy/runtime.py",
+  # P37: H173 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
+  "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
   "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",

@@ -366,7 +366,7 @@ impl PairRegistry {
                 |row| row.get(0),
             )?;
             if prior == 0 {
-                bail!("stale retirement has no unstarted active attempts");
+                bail!("retirement receipt matches no unstarted attempts");
             }
             tx.commit()?;
             return Ok(prior as usize);
@@ -380,7 +380,7 @@ impl PairRegistry {
             params![now_ms(), manifest_sha256, job_id],
         )?;
         if changed_pairs != changed_attempts {
-            bail!("attempt/pair stale retirement count mismatch");
+            bail!("retirement attempt/pair count mismatch");
         }
         tx.commit()?;
         Ok(changed_pairs)
