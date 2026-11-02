@@ -1,5 +1,56 @@
 use super::*;
 
+// ---------------------------------------------------------------------------
+// cycle
+// ---------------------------------------------------------------------------
+
+pub(super) fn read_state(path: &Path) -> Result<Value> {
+    match fs::symlink_metadata(path) {
+        Ok(_) => read_json(path),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            Ok(json!({"schema": STATE_SCHEMA}))
+        }
+        Err(error) => Err(error).with_context(|| format!("inspect {}", path.display())),
+    }
+}
+
+pub(super) fn attempt_for(state: &Value, key: &str) -> u64 {
+    state
+        .get("attempts")
+        .and_then(|attempts| attempts.get(key))
+        .and_then(Value::as_u64)
+        .unwrap_or(1)
+        .max(1)
+}
+
+pub(super) fn record_attempt(state: &mut Value, key: &str, attempt: u64) {
+    let object = state.as_object_mut().expect("state is an object");
+    let attempts = object
+        .entry("attempts")
+        .or_insert_with(|| Value::Object(Map::new()));
+    if let Some(map) = attempts.as_object_mut() {
+        map.insert(key.to_owned(), json!(attempt));
+    }
+}
+
+/// Lanes this cycle drives, in priority order.
+///
+/// The combined whole-catalog lane is ALWAYS present and ALWAYS first. It is the
+/// lane that writes `proposals/current.json`, which is the pointer every
+/// consumer actually reads (`selfplay_runtime.rs:107`, `supply.rs:96`,
+/// `freshness.rs:409`, `alarms.rs:1166`, `trainer_watchdog.rs:1171`) and the
+/// only lane whose output the wave/queue path can publish today. Dropping it
+/// while the branches disagree would freeze the DL seed set at whatever catalog
+/// it was last bound to: this unit exists to "regenerate gen-0 DL seeds whenever
+/// the live catalog grows", and every dataset added after the first per-task
+/// promotion would silently never receive one. The per-task lanes are ADDITIVE
+/// and queue behind it.
+pub(super) fn ordered_lanes(combined: Lane, task_lanes: Option<Vec<Lane>>) -> Vec<Lane> {
+    let mut lanes = vec![combined];
+    lanes.extend(task_lanes.unwrap_or_default());
+    lanes
+}
+
 pub(super) fn cycle(args: &Args) -> Result<Value> {
     let root = args.root.as_path();
     let events = root.join("ops/propose-events.v1.jsonl");
@@ -95,7 +146,7 @@ pub(super) fn cycle(args: &Args) -> Result<Value> {
 /// One lane's cycle. Byte-for-byte the historical behaviour when
 /// `lane.task == None`; the per-task lanes differ only in job id, the `--task`
 /// argument, the publish directory, and which pointer is rewritten.
-fn run_lane(
+pub(super) fn run_lane(
     args: &Args,
     live: &LiveCatalog,
     binding: &ProposalBinding,
