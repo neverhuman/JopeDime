@@ -285,6 +285,7 @@ crates/jope-bench/src/load.rs
 crates/jope-bench/src/main.rs
 crates/jope-bench/src/methods.rs
 crates/jope-bench/src/panel/asm_campaign.rs
+crates/jope-bench/src/panel/asm_campaign/accounting.rs
 crates/jope-bench/src/panel/campaign.rs
 crates/jope-bench/src/panel/campaign_cli.rs
 crates/jope-bench/src/panel/cli.rs
