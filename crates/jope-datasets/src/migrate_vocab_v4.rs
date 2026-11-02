@@ -1,3 +1,4 @@
+// jankurai:allow repo-rot.path.fake-versioned-source reason=active-v4-migration-proof-lane-PYRS-t2250-and-module-tests-retire-entrypoint-after-v4-input-support-ends owner=jope-datasets expires=2027-04-01
 //! Migration of frozen multi-engine vocabularies to schema v4.
 //!
 //! The Python CLI remains the user-facing entry point. This module provides the same
