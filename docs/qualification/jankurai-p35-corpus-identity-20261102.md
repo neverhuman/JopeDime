@@ -9,11 +9,11 @@ before mapping it. `Records::get` uses safe slice bounds and preserves the parse
 therefore creates a new current evaluator identity. The identity-only `compat_freeze` rebaseline
 was first generated against source commit `66bf3b548de2f39aef8b26128cbf1331ee2bfb2a`; its retained
 receipt is `/home/ubuntu/jope_plan/master/audit/receipts/P35/identity-66bf3b5/identity-regenerate.log`.
-After rebasing onto `b4013519245206463e91404770eed7502e8e728d`, the same identity-only regeneration
-passed against source commit `6f2be6840e525c11f3f1e782c168db8128314839`; see
-`/home/ubuntu/jope_plan/master/audit/receipts/P35/identity-6f2be68/identity-regenerate.log`.
-The current fixture SHA-256 values are `96e2aa5782bee6837de6af759a3cc35ea8edd9fe30f61d7a57abaaaf0052293e`
-(`evaluator_identity.v1.json`) and `55c0a90893bcbb5531d5b00f326854a4c55f4d288bd90f41277008dabc2e9d5f`
+After rebasing onto `228c0f32f5fd7fa14afd1e9ad51b51c73151f091`, the same identity-only regeneration
+passed against source commit `0c3232528f45c05c1547c9763e6dd695bf7cdabc`; see
+`/home/ubuntu/jope_plan/master/audit/receipts/P35/identity-0c32325/identity-regenerate.log`.
+The current fixture SHA-256 values are `72a5da670dd4e92572952eed1e88b2edb4aac070f725306b9cb34a308dc345ab`
+(`evaluator_identity.v1.json`) and `bb1c0e80206215604c941fa8188e273d5b84194e7cdffbf814fad99aeb52e2e2`
 (`lineage_sources.v1.json`).
 
 | Field | Before | After |
