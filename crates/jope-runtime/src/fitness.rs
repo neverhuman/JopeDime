@@ -162,7 +162,7 @@ pub enum Fitness {
         name: String,
         direction: Direction,
         expression: Expression,
-        aggregation: Aggregation,
+        aggregation: RegressionAggregation,
     },
     /// Another specification with nonnegative per-row weights (an expression, usually a column).
     Weighted {
@@ -266,7 +266,7 @@ pub enum Expression {
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
-pub enum Aggregation {
+pub enum RegressionAggregation {
     Mean {},
     Sum {},
     Max {},
@@ -280,6 +280,9 @@ pub enum Aggregation {
     /// Square root of the mean, for RMSE-like custom losses.
     RootMean {},
 }
+
+/// Backwards-compatible name for regression-objective aggregation.
+pub type Aggregation = RegressionAggregation;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Score {
@@ -1030,7 +1033,9 @@ impl Fitness {
             | Self::Kge {}
             | Self::CaptureAt { .. }
             | Self::Weighted { .. } => false,
-            Self::Custom { aggregation, .. } => !matches!(aggregation, Aggregation::Max {}),
+            Self::Custom { aggregation, .. } => {
+                !matches!(aggregation, RegressionAggregation::Max {})
+            }
             Self::Composite { terms } => terms.iter().all(|t| t.fitness.supports_weights()),
             _ => true,
         }
@@ -1172,11 +1177,11 @@ impl Fitness {
                 );
                 expression.validate(0, expression_nodes)?;
                 match aggregation {
-                    Aggregation::Quantile { quantile } => ensure!(
+                    RegressionAggregation::Quantile { quantile } => ensure!(
                         quantile.is_finite() && (0.0..=1.0).contains(quantile),
                         "aggregation quantile must be in [0,1]"
                     ),
-                    Aggregation::TailMean { fraction } => ensure!(
+                    RegressionAggregation::TailMean { fraction } => ensure!(
                         fraction.is_finite() && *fraction > 0.0 && *fraction <= 1.0,
                         "tail_mean fraction must be in (0,1]"
                     ),
@@ -1598,15 +1603,17 @@ impl Fitness {
             } => {
                 let v = expression.rows(y, p, columns)?;
                 match aggregation {
-                    Aggregation::Mean {} => wmean(&v, w),
-                    Aggregation::Sum {} => match w {
+                    RegressionAggregation::Mean {} => wmean(&v, w),
+                    RegressionAggregation::Sum {} => match w {
                         None => v.iter().sum(),
                         Some(w) => v.iter().zip(w).map(|(v, w)| v * w).sum(),
                     },
-                    Aggregation::Max {} => v.iter().copied().fold(f64::NEG_INFINITY, f64::max),
-                    Aggregation::Quantile { quantile: q } => wquantile(&v, w, *q)?,
-                    Aggregation::TailMean { fraction } => tail_mean(&v, w, *fraction)?,
-                    Aggregation::RootMean {} => {
+                    RegressionAggregation::Max {} => {
+                        v.iter().copied().fold(f64::NEG_INFINITY, f64::max)
+                    }
+                    RegressionAggregation::Quantile { quantile: q } => wquantile(&v, w, *q)?,
+                    RegressionAggregation::TailMean { fraction } => tail_mean(&v, w, *fraction)?,
+                    RegressionAggregation::RootMean {} => {
                         let m = wmean(&v, w);
                         ensure!(m >= 0.0, "root_mean needs a nonnegative mean");
                         m.sqrt()
@@ -1675,6 +1682,15 @@ mod tests {
     fn value(f: &Fitness, y: &[f64], p: &[f64]) -> f64 {
         f.evaluate(y, p).unwrap().value
     }
+    #[test]
+    fn aggregation_compatibility_alias_keeps_the_wire_shape() {
+        let aggregation = Aggregation::Mean {};
+        assert_eq!(
+            serde_json::to_value(aggregation).unwrap(),
+            serde_json::json!({"kind": "mean"})
+        );
+    }
+
     #[test]
     fn standard_metrics_match_independent_hand_calculations() {
         for (spec, expected) in [
@@ -1932,7 +1948,7 @@ mod tests {
             name: "deep".into(),
             direction: Direction::Minimize,
             expression: expr,
-            aggregation: Aggregation::Mean {}
+            aggregation: RegressionAggregation::Mean {}
         }
         .validate()
         .is_err());
@@ -1952,7 +1968,7 @@ mod tests {
             name: "wide".into(),
             direction: Direction::Minimize,
             expression: chain(n),
-            aggregation: Aggregation::Mean {},
+            aggregation: RegressionAggregation::Mean {},
         };
         assert!(custom(7).validate().is_ok());
         let composite = |n: usize| Fitness::Composite {
@@ -1973,7 +1989,7 @@ mod tests {
                 left: Box::new(Expression::Y {}),
                 right: Box::new(Expression::Constant { value: 0.0 }),
             },
-            aggregation: Aggregation::Mean {},
+            aggregation: RegressionAggregation::Mean {},
         };
         assert!(f.evaluate(&[1.0], &[0.0]).is_err());
     }
@@ -1983,25 +1999,25 @@ mod tests {
             arg: Box::new(error_expr()),
         };
         for (aggregation, expected) in [
-            (Aggregation::Mean {}, 1.0),
-            (Aggregation::Sum {}, 3.0),
-            (Aggregation::Max {}, 2.0),
-            (Aggregation::Quantile { quantile: 0.75 }, 1.5),
+            (RegressionAggregation::Mean {}, 1.0),
+            (RegressionAggregation::Sum {}, 3.0),
+            (RegressionAggregation::Max {}, 2.0),
+            (RegressionAggregation::Quantile { quantile: 0.75 }, 1.5),
             // Largest 2 of 3 rows: (2 + 1) / 2.
             (
-                Aggregation::TailMean {
+                RegressionAggregation::TailMean {
                     fraction: 2.0 / 3.0,
                 },
                 1.5,
             ),
             // Half a row of mass: the largest value alone.
             (
-                Aggregation::TailMean {
+                RegressionAggregation::TailMean {
                     fraction: 1.0 / 6.0,
                 },
                 2.0,
             ),
-            (Aggregation::RootMean {}, 1.0),
+            (RegressionAggregation::RootMean {}, 1.0),
         ] {
             let f = Fitness::Custom {
                 name: "business_loss".into(),
@@ -2111,7 +2127,7 @@ mod tests {
                     right: Box::new(Expression::Pred {}),
                 }),
             },
-            aggregation: Aggregation::Quantile { quantile: 0.9 },
+            aggregation: RegressionAggregation::Quantile { quantile: 0.9 },
         };
         for f in [
             Fitness::Mae {},
