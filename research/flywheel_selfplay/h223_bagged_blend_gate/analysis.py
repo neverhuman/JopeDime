@@ -18,9 +18,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from h195_blend025_kernel_confirm.analysis_common import family_matrix as _shared_family_matrix
-from h195_blend025_kernel_confirm.analysis_common import contrast as _shared_contrast
-from h195_blend025_kernel_confirm.analysis_common import plateau as _shared_plateau
+from h195_blend025_kernel_confirm.analysis import family_matrix as _shared_family_matrix
+from h195_blend025_kernel_confirm.analysis import _contrast as _shared_contrast
+from h217_gated025_confirm.analysis import _plateau
 
 
 SEEDS = (223101, 223102, 223103)
@@ -75,16 +75,16 @@ PLATEAU_SEED = BOOT_SEED + 2
 
 
 def plateau(arm_values, ref_values, families, seed=PLATEAU_SEED):
-    return _shared_plateau(arm_values, ref_values, families, seed, DRAWS, PLATEAU_MARGIN)
+    return _plateau(arm_values, ref_values, families, seed, DRAWS, PLATEAU_MARGIN)
 
 
 def family_win_matrix(values_by_context, family_ids, tie_margin=TIE_MARGIN):
-    from h195_blend025_kernel_confirm.analysis_common import family_win_matrix as shared
+    from h195_blend025_kernel_confirm.analysis import family_win_matrix as shared
     return shared(values_by_context, family_ids, tie_margin)
 
 
 def contrast(panel, base, families, seed=BOOT_SEED):
-    from h195_blend025_kernel_confirm.analysis_common import contrast as shared
+    from h195_blend025_kernel_confirm.analysis import _contrast as shared
     return shared(panel, base, families, seed, DRAWS, LCB_MARGIN, HARM_DELTA)
 
 

@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
-from h195_blend025_kernel_confirm.analysis_common import family_matrix as _shared_family_matrix, contrast as _shared_contrast
+from h195_blend025_kernel_confirm.analysis import family_matrix as _shared_family_matrix, _contrast as _shared_contrast
 
 SEEDS = (224101, 224102, 224103)
 FOLD_SEEDS = {224101: 224141, 224102: 224142, 224103: 224143}
@@ -53,7 +53,7 @@ def contrast(panel, base, families, seed=BOOT_SEED):
 
 
 def family_win_matrix(values_by_context, family_ids, tie_margin=TIE_MARGIN):
-    from h195_blend025_kernel_confirm.analysis_common import family_win_matrix as shared
+    from h195_blend025_kernel_confirm.analysis import family_win_matrix as shared
     return shared(values_by_context, family_ids, tie_margin)
 
 

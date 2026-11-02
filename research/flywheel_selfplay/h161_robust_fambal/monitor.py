@@ -11,7 +11,7 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from h159_fail_logit_veto.monitor_common import run as _run_monitor
+from h159_fail_logit_veto.monitor import run_monitor as _run_monitor
 import psutil
 
 HERE = Path(__file__).resolve().parent

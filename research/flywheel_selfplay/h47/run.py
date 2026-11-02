@@ -25,7 +25,7 @@ import torch.nn.functional as F
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "research/flywheel_selfplay"))
 import run_fused_closed_loop as base  # noqa: E402
-from h46.make_tokens import make_tokens as _make_tokens  # noqa: E402
+from h46.run import make_tokens as _make_tokens  # noqa: E402
 
 DOPE_SHA = "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 BASE_UTILITY = 1.1375952947484103
@@ -57,7 +57,7 @@ def checkpoint_guard(guard, net, expected=DOPE_SHA):
 
 
 def make_tokens(net, tables, device):
-    return _make_tokens(net, tables, device, base, torch, np)
+    return _make_tokens(net, tables, device)
 
 def main():
     ap = argparse.ArgumentParser()
