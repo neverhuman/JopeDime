@@ -761,6 +761,8 @@ crates/jope-campaigns/src/jope_generalized_gp/pilot.rs
 crates/jope-campaigns/src/jope_generalized_gp/splits.rs
 crates/jope-campaigns/src/jope_generalized_gp/store.rs
 crates/jope-campaigns/src/lib.rs
+crates/jope-campaigns/src/loop_selection.rs
+crates/jope-campaigns/src/loop_selection/tests.rs
 crates/jope-campaigns/src/main.rs
 crates/jope-campaigns/src/main_app.rs
 crates/jope-campaigns/src/main_app/train_only_dispatch.rs
