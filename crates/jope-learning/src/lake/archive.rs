@@ -99,22 +99,25 @@ pub struct Elite {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-/// `Decision` is an enum for the decision contract in this module: Bounded quality-diversity proposal memory.
-pub enum Decision {
-    /// The `Inserted` case of `Decision`.
+/// `ArchiveDecision` is the decision contract for bounded quality-diversity proposal memory.
+pub enum ArchiveDecision {
+    /// The `Inserted` case of `ArchiveDecision`.
     Inserted,
-    /// The `Replaced` case of `Decision`.
+    /// The `Replaced` case of `ArchiveDecision`.
     Replaced {
         /// SHA-256 digest identifying the associated old observation.
         old_observation_sha256: String,
     },
-    /// The `RejectedLowerQuality` case of `Decision`.
+    /// The `RejectedLowerQuality` case of `ArchiveDecision`.
     RejectedLowerQuality,
-    /// The `RejectedCapacity` case of `Decision`.
+    /// The `RejectedCapacity` case of `ArchiveDecision`.
     RejectedCapacity,
-    /// The `RejectedByteLimit` case of `Decision`.
+    /// The `RejectedByteLimit` case of `ArchiveDecision`.
     RejectedByteLimit,
 }
+
+/// Compatibility name for the archive decision contract.
+pub type Decision = ArchiveDecision;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 /// `ArchiveEvent` is a record for the archive event contract in this module: Bounded quality-diversity proposal memory.
