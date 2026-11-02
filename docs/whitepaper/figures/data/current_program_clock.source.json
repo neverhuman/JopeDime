@@ -1,132 +1,152 @@
 {
   "schema": "whitepaper.current-program-clock-source/v1",
-  "csv_sha256": "3190503d23afbade74225cc54c1a3f2a2470e97f4cfa501b53dbc9583209ec74",
+  "csv_sha256": "0b13a289d84b8cb27e41db43c36f32d00782a419d42b8012950dcbe15a54f900",
   "capture": {
-    "at": "2026-11-02T10:56:41.157528+00:00",
+    "at": "2026-11-02T20:31:41.534576+00:00",
     "rows": 20,
     "round_window": [
-      3609,
-      3628
+      3853,
+      3872
     ],
     "sources": [
       {
         "name": "summary.jsonl",
-        "sha256": "5a96b626b4363aaba92dc4cac4c8d5d2401313e62d88d864bfc4a529ea4b94d0",
+        "sha256": "d3b47fcbc53599e20dc913c91a1be641844768586097e3c050e9656e2e6ab847",
         "source_prefix": {
-          "name": "summary.jsonl",
-          "at": "2026-11-02T10:56:40.704348+00:00",
-          "complete_prefix_bytes": 3358654,
-          "complete_prefix_sha256": "441d9fc7580801bacec6898ad8beef2fe4b3a1b18eef29f226a87ed35fd6a2a0",
-          "stable_prefix_reread_verified": true,
-          "rows": 20,
-          "trailing_incomplete_bytes_omitted": 0
+          "at": "2026-11-02T20:31:40.989232+00:00",
+          "complete_prefix_bytes": 3358632,
+          "complete_prefix_sha256": "49d40d1bd8465cd68bd8dc2c882d3fe13e01d2bd488287d7d9a258556a86c8b6",
+          "incomplete_trailing_bytes_omitted": 0,
+          "stable_prefix_reread": true
         },
-        "selection": "Latest20 consecutive complete summaries and kind=promotion journal events in their round range; zero-event rounds retained; whitelisted round-level scalars only, no programs/context identifiers/feature vectors/payloads"
+        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
+      },
+      {
+        "name": "admissions.jsonl",
+        "sha256": "ca77d6c35c3b80605b231436049c931a067f6a92eec213d89f72e7597e3558fc",
+        "source_prefix": {
+          "at": "2026-11-02T20:31:41.016687+00:00",
+          "complete_prefix_bytes": 1638742,
+          "complete_prefix_sha256": "9c72785105db049df43cf135890ad7a2d05f0988b45086aa30f51b5520b6114c",
+          "incomplete_trailing_bytes_omitted": 0,
+          "stable_prefix_reread": true
+        },
+        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
+      },
+      {
+        "name": "per-round.jsonl",
+        "sha256": "907f80f73d0de17a7b80f1be54b4afb718bfc93a7a1cd769490c12f7cfcdb688",
+        "source_prefix": {
+          "at": "2026-11-02T20:31:41.045416+00:00",
+          "complete_prefix_bytes": 2326648,
+          "complete_prefix_sha256": "f0c236b121bd2750107195f46eb7cd36d0aa72d6a15730f7d2578c929ca567e6",
+          "incomplete_trailing_bytes_omitted": 0,
+          "stable_prefix_reread": true
+        },
+        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
       },
       {
         "name": "promotions.jsonl",
-        "sha256": "a8057cbd3d867fed7848bc9560e38f67a656af82d3a6614e5953df26a9c92c35",
+        "sha256": "14bc84c28c55e107409f7cae7a84c45b5ddfab48a547a69f29aa14f419997715",
         "source_prefix": {
-          "name": "promotions.jsonl",
-          "at": "2026-11-02T10:56:41.121589+00:00",
-          "complete_prefix_bytes": 11335145,
-          "complete_prefix_sha256": "3e160e581a5cd23c5e416da5c6f61784a7913617e92116ee72e900dc9f375407",
-          "stable_prefix_reread_verified": true,
-          "rows": 3133,
-          "trailing_incomplete_bytes_omitted": 0
+          "at": "2026-11-02T20:31:41.094977+00:00",
+          "complete_prefix_bytes": 11721968,
+          "complete_prefix_sha256": "b70d04b45f779a923cfa146146c535d8a3d0abb06d93fdfc0e37f8d7d64520ae",
+          "incomplete_trailing_bytes_omitted": 0,
+          "stable_prefix_reread": true
         },
-        "selection": "Latest20 consecutive complete summaries and kind=promotion journal events in their round range; zero-event rounds retained; whitelisted round-level scalars only, no programs/context identifiers/feature vectors/payloads"
+        "selection": "Latest 20 rounds complete in summary, admission and per-round scalar journals at the capture cutoff; strict kind=promotion events in those rounds; zero-event rounds retained; whitelisted aggregate scalars only"
       }
     ],
     "journal_counts": [
       {
-        "round": 3609,
+        "round": 3853,
         "program_events": 0
       },
       {
-        "round": 3610,
+        "round": 3854,
         "program_events": 0
       },
       {
-        "round": 3611,
+        "round": 3855,
+        "program_events": 0
+      },
+      {
+        "round": 3856,
+        "program_events": 0
+      },
+      {
+        "round": 3857,
+        "program_events": 0
+      },
+      {
+        "round": 3858,
+        "program_events": 0
+      },
+      {
+        "round": 3859,
+        "program_events": 0
+      },
+      {
+        "round": 3860,
+        "program_events": 0
+      },
+      {
+        "round": 3861,
+        "program_events": 2
+      },
+      {
+        "round": 3862,
+        "program_events": 0
+      },
+      {
+        "round": 3863,
+        "program_events": 0
+      },
+      {
+        "round": 3864,
+        "program_events": 0
+      },
+      {
+        "round": 3865,
+        "program_events": 0
+      },
+      {
+        "round": 3866,
         "program_events": 1
       },
       {
-        "round": 3612,
+        "round": 3867,
         "program_events": 0
       },
       {
-        "round": 3613,
-        "program_events": 1
-      },
-      {
-        "round": 3614,
+        "round": 3868,
         "program_events": 0
       },
       {
-        "round": 3615,
-        "program_events": 1
-      },
-      {
-        "round": 3616,
+        "round": 3869,
         "program_events": 0
       },
       {
-        "round": 3617,
+        "round": 3870,
+        "program_events": 2
+      },
+      {
+        "round": 3871,
         "program_events": 0
       },
       {
-        "round": 3618,
-        "program_events": 1
-      },
-      {
-        "round": 3619,
-        "program_events": 0
-      },
-      {
-        "round": 3620,
-        "program_events": 1
-      },
-      {
-        "round": 3621,
-        "program_events": 0
-      },
-      {
-        "round": 3622,
-        "program_events": 0
-      },
-      {
-        "round": 3623,
-        "program_events": 0
-      },
-      {
-        "round": 3624,
-        "program_events": 0
-      },
-      {
-        "round": 3625,
-        "program_events": 0
-      },
-      {
-        "round": 3626,
-        "program_events": 1
-      },
-      {
-        "round": 3627,
-        "program_events": 1
-      },
-      {
-        "round": 3628,
+        "round": 3872,
         "program_events": 0
       }
     ],
     "all20_summary_counts_matched": true,
-    "all20_retained_round_JSON_matched": true,
-    "program_events": 7,
+    "all20_summary_admission_perround_matches": true,
+    "program_events": 5,
     "adapter_admissions": 0,
-    "CI_scope": {
-      "unavailable": 7
-    }
+    "retained_utility_values": [
+      "1.1389572403748425"
+    ]
   },
   "definitions": "Per-round rate=3600*kind=promotion journal count/full logged round seconds. Dashed window rate=3600*sum(counts)/sum(seconds), not mean of per-round rates; clock includes all within-round work/waits.",
   "source_binding": "Logged aggregate field interpretation only; installed source/adapter/evaluation population/normalization closure remains unqualified",
