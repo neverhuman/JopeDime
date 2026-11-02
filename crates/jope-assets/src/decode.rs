@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 /// Lossless storage codec recorded for each manifest entry.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Codec {
+pub enum AssetStorageCodec {
     /// Reorder safetensors tensor bytes into byte planes, then compress with zstd.
     #[serde(rename = "shuffle+zstd")]
     ShuffleZstd,
@@ -27,6 +27,9 @@ pub enum Codec {
     #[serde(rename = "raw")]
     Raw,
 }
+
+/// Backward-compatible name for the asset storage codec.
+pub type Codec = AssetStorageCodec;
 
 /// One tensor's data range and element width, from a safetensors header.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -177,15 +180,15 @@ pub fn check_zstd_header(stored: &[u8], raw_len: u64) -> Result<(), String> {
     Ok(())
 }
 
-fn decode_frame(codec: Codec, stored: &[u8], slot: &mut [u8]) -> Result<(), String> {
+fn decode_frame(codec: AssetStorageCodec, stored: &[u8], slot: &mut [u8]) -> Result<(), String> {
     match codec {
-        Codec::Raw => {
+        AssetStorageCodec::Raw => {
             if stored.len() != slot.len() {
                 return Err("raw frame length differs from its raw_len".into());
             }
             slot.copy_from_slice(stored);
         }
-        Codec::Zstd | Codec::ShuffleZstd => {
+        AssetStorageCodec::Zstd | AssetStorageCodec::ShuffleZstd => {
             use std::io::Read;
             check_zstd_header(stored, slot.len() as u64)?;
             let mut source = stored;
@@ -256,7 +259,7 @@ pub fn decode_entry(
         .try_for_each(|(bytes, slot)| decode_frame(entry.codec, bytes, slot))
         .map_err(fail)?;
     drop(stored);
-    if entry.codec == Codec::ShuffleZstd {
+    if entry.codec == AssetStorageCodec::ShuffleZstd {
         out = unshuffle_safetensors(&out).map_err(fail)?;
     }
     if sha256_hex(&out) != entry.sha256 {
@@ -276,17 +279,17 @@ pub type StoredFrames = Vec<(Vec<u8>, u64)>;
 /// form that is not smaller falls back to `raw`) and the stored frames in order.
 #[cfg(feature = "pack")]
 pub fn encode(
-    requested: Codec,
+    requested: AssetStorageCodec,
     bytes: &[u8],
     frame_bytes: usize,
     level: i32,
-) -> std::io::Result<(Codec, StoredFrames)> {
+) -> std::io::Result<(AssetStorageCodec, StoredFrames)> {
     use rayon::prelude::*;
     let frame_bytes = frame_bytes.clamp(1, limits::MAX_FRAME_RAW_BYTES as usize);
     let (codec, transformed) = match requested {
-        Codec::ShuffleZstd => match shuffle_safetensors(bytes) {
-            Some(shuffled) => (Codec::ShuffleZstd, shuffled),
-            None => (Codec::Zstd, bytes.to_vec()),
+        AssetStorageCodec::ShuffleZstd => match shuffle_safetensors(bytes) {
+            Some(shuffled) => (AssetStorageCodec::ShuffleZstd, shuffled),
+            None => (AssetStorageCodec::Zstd, bytes.to_vec()),
         },
         other => (other, bytes.to_vec()),
     };
@@ -295,8 +298,8 @@ pub fn encode(
         .par_iter()
         .map(|chunk| -> std::io::Result<(Vec<u8>, u64)> {
             let stored = match codec {
-                Codec::Raw => chunk.to_vec(),
-                Codec::Zstd | Codec::ShuffleZstd => {
+                AssetStorageCodec::Raw => chunk.to_vec(),
+                AssetStorageCodec::Zstd | AssetStorageCodec::ShuffleZstd => {
                     let mut compressor = zstd::bulk::Compressor::new(level)?;
                     compressor.include_checksum(true)?;
                     compressor.include_contentsize(true)?;
@@ -308,8 +311,8 @@ pub fn encode(
         })
         .collect::<std::io::Result<Vec<_>>>()?;
     let stored: usize = frames.iter().map(|(s, _)| s.len()).sum();
-    if codec != Codec::Raw && stored >= bytes.len() {
-        return encode(Codec::Raw, bytes, frame_bytes, level);
+    if codec != AssetStorageCodec::Raw && stored >= bytes.len() {
+        return encode(AssetStorageCodec::Raw, bytes, frame_bytes, level);
     }
     Ok((codec, frames))
 }
@@ -361,7 +364,7 @@ mod tests {
     }
 
     fn entry_for(
-        codec: Codec,
+        codec: AssetStorageCodec,
         frames: &crate::decode::StoredFrames,
         raw: &[u8],
     ) -> (Entry, Vec<u8>) {
@@ -403,7 +406,11 @@ mod tests {
     #[test]
     fn frames_decode_to_the_original_bytes() {
         let file = safetensors(&[("w", "F32", 4, 4000), ("b", "F16", 2, 300)]);
-        for codec in [Codec::ShuffleZstd, Codec::Zstd, Codec::Raw] {
+        for codec in [
+            AssetStorageCodec::ShuffleZstd,
+            AssetStorageCodec::Zstd,
+            AssetStorageCodec::Raw,
+        ] {
             let (used, frames) = encode(codec, &file, 1000, 3).unwrap();
             assert_eq!(used, codec);
             let (entry, blob) = entry_for(used, &frames, &file);
@@ -417,8 +424,8 @@ mod tests {
     fn json_asked_to_shuffle_falls_back_and_incompressible_bytes_stay_raw() {
         let json = br#"{"x": 1, "y": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}"#
             .repeat(40);
-        let (used, _) = encode(Codec::ShuffleZstd, &json, 1 << 20, 3).unwrap();
-        assert_eq!(used, Codec::Zstd);
+        let (used, _) = encode(AssetStorageCodec::ShuffleZstd, &json, 1 << 20, 3).unwrap();
+        assert_eq!(used, AssetStorageCodec::Zstd);
         let mut state = 0x9E37_79B9_7F4A_7C15u64;
         let noise: Vec<u8> = (0..5000)
             .map(|_| {
@@ -428,8 +435,8 @@ mod tests {
                 (state >> 32) as u8
             })
             .collect();
-        let (used, frames) = encode(Codec::Zstd, &noise, 1 << 20, 3).unwrap();
-        assert_eq!(used, Codec::Raw);
+        let (used, frames) = encode(AssetStorageCodec::Zstd, &noise, 1 << 20, 3).unwrap();
+        assert_eq!(used, AssetStorageCodec::Raw);
         assert_eq!(frames[0].0, noise);
     }
 
