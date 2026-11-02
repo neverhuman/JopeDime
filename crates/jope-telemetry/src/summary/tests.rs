@@ -1,4 +1,5 @@
 use super::*;
+use crate::flywheel::TaskType;
 use serde_json::json;
 
 #[test]

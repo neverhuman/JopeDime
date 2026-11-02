@@ -5,7 +5,7 @@
 //! data is reported as missing, with its reason when one was recorded; nothing is filled in.
 
 use crate::alarm::{Alarm, Severity};
-use crate::flywheel::{EloSnapshot, RoundRecord, TaskType, ELO_SCHEMA};
+use crate::flywheel::{EloSnapshot, RoundRecord, ELO_SCHEMA};
 use crate::gp::{GenSummary, GEN_SCHEMA};
 use crate::hooks::io::REASONING_KIND;
 use crate::import::{HwmConsistency, Retention, HWM_CONSISTENCY_SCHEMA, RETENTION_SCHEMA};

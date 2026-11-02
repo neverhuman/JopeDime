@@ -22,15 +22,26 @@ pub trait H2dRecorder {
     fn h2d_abandon(&mut self, source: usize);
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CudaEventError;
+
+impl std::fmt::Display for CudaEventError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("CUDA event operation failed")
+    }
+}
+
+impl std::error::Error for CudaEventError {}
+
 /// CUDA event operations bound to the trainer's current stream.
 pub trait CudaEventBackend {
     /// Create `slots` start/end event pairs for `device` and bind the trainer stream.
-    fn initialize(&mut self, device: &str, slots: usize) -> Result<(), ()>;
-    fn record_start(&mut self, slot: usize) -> Result<(), ()>;
-    fn record_end(&mut self, slot: usize) -> Result<(), ()>;
-    fn end_query(&mut self, slot: usize) -> Result<bool, ()>;
-    fn elapsed_time_ms(&mut self, slot: usize) -> Result<f64, ()>;
-    fn synchronize(&mut self) -> Result<(), ()>;
+    fn initialize(&mut self, device: &str, slots: usize) -> Result<(), CudaEventError>;
+    fn record_start(&mut self, slot: usize) -> Result<(), CudaEventError>;
+    fn record_end(&mut self, slot: usize) -> Result<(), CudaEventError>;
+    fn end_query(&mut self, slot: usize) -> Result<bool, CudaEventError>;
+    fn elapsed_time_ms(&mut self, slot: usize) -> Result<f64, CudaEventError>;
+    fn synchronize(&mut self) -> Result<(), CudaEventError>;
 }
 
 /// Records asynchronous host-to-device copy timings for one recorder source.
@@ -75,7 +86,7 @@ impl<'a, R: H2dRecorder, C: CudaEventBackend> CudaH2d<'a, R, C> {
                     self.recorder.h2d_complete(self.source, slot, elapsed_ms);
                 }
                 Ok(None) => {}
-                Err(()) => self.recorder.h2d_fail(self.source, Some(slot)),
+                Err(_) => self.recorder.h2d_fail(self.source, Some(slot)),
             }
         }
     }
@@ -121,7 +132,7 @@ impl<'a, R: H2dRecorder, C: CudaEventBackend> CudaH2d<'a, R, C> {
 
 #[cfg(test)]
 mod tests {
-    use super::{CudaEventBackend, CudaH2d, H2dRecorder};
+    use super::{CudaEventBackend, CudaEventError, CudaH2d, H2dRecorder};
 
     #[derive(Default)]
     struct Recorder {
@@ -144,7 +155,7 @@ mod tests {
             self.unavailable += 1;
         }
         fn h2d_will_sample(&self, _: usize, step: u64) -> bool {
-            step % 2 == 0
+            step.is_multiple_of(2)
         }
         fn h2d_pending(&self, _: usize) -> Vec<usize> {
             self.pending.clone()
@@ -181,38 +192,38 @@ mod tests {
     }
 
     impl CudaEventBackend for Backend {
-        fn initialize(&mut self, _: &str, _: usize) -> Result<(), ()> {
+        fn initialize(&mut self, _: &str, _: usize) -> Result<(), CudaEventError> {
             if self.initialize_fails {
-                Err(())
+                Err(CudaEventError)
             } else {
                 self.initialized = true;
                 Ok(())
             }
         }
-        fn record_start(&mut self, _: usize) -> Result<(), ()> {
+        fn record_start(&mut self, _: usize) -> Result<(), CudaEventError> {
             if self.record_fails {
-                Err(())
+                Err(CudaEventError)
             } else {
                 Ok(())
             }
         }
-        fn record_end(&mut self, _: usize) -> Result<(), ()> {
+        fn record_end(&mut self, _: usize) -> Result<(), CudaEventError> {
             if self.record_fails {
-                Err(())
+                Err(CudaEventError)
             } else {
                 Ok(())
             }
         }
-        fn end_query(&mut self, _: usize) -> Result<bool, ()> {
+        fn end_query(&mut self, _: usize) -> Result<bool, CudaEventError> {
             Ok(self.query_ready)
         }
-        fn elapsed_time_ms(&mut self, _: usize) -> Result<f64, ()> {
+        fn elapsed_time_ms(&mut self, _: usize) -> Result<f64, CudaEventError> {
             Ok(self.elapsed_ms)
         }
-        fn synchronize(&mut self) -> Result<(), ()> {
+        fn synchronize(&mut self) -> Result<(), CudaEventError> {
             self.syncs += 1;
             if self.sync_fails {
-                Err(())
+                Err(CudaEventError)
             } else {
                 Ok(())
             }
@@ -225,12 +236,13 @@ mod tests {
     fn cpu_only_round_does_not_initialize_or_synchronize_cuda() {
         let mut recorder = Recorder::default();
         let mut backend = Backend::default();
-        let mut events = CudaH2d::new(&mut backend, "cpu", &mut recorder, 1, 4);
-        assert!(!events.will_sample(1));
-        assert!(events.will_sample(2));
-        assert_eq!(events.begin(1, 100, Some(1.5)), -1);
-        assert!(!events.flush(true));
-        drop(events);
+        {
+            let mut events = CudaH2d::new(&mut backend, "cpu", &mut recorder, 1, 4);
+            assert!(!events.will_sample(1));
+            assert!(events.will_sample(2));
+            assert_eq!(events.begin(1, 100, Some(1.5)), -1);
+            assert!(!events.flush(true));
+        }
         assert!(!backend.initialized);
         assert_eq!(backend.syncs, 0);
     }
@@ -246,11 +258,12 @@ mod tests {
             elapsed_ms: 2.5,
             ..Backend::default()
         };
-        let mut events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
-        assert_eq!(events.begin(2, 2048, Some(0.5)), 0);
-        events.end(0);
-        events.flush(false);
-        drop(events);
+        {
+            let mut events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
+            assert_eq!(events.begin(2, 2048, Some(0.5)), 0);
+            events.end(0);
+            events.flush(false);
+        }
         assert!(backend.initialized);
         assert_eq!(recorder.recorded, vec![0]);
         assert_eq!(recorder.completed, vec![(0, 2.5)]);
@@ -267,8 +280,9 @@ mod tests {
             initialize_fails: true,
             ..Backend::default()
         };
-        let events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
-        drop(events);
+        {
+            let _events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
+        }
         assert!(!recorder.enabled);
         assert_eq!(recorder.unavailable, 1);
 
@@ -280,9 +294,10 @@ mod tests {
             record_fails: true,
             ..Backend::default()
         };
-        let mut events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
-        assert_eq!(events.begin(2, 10, None), -1);
-        drop(events);
+        {
+            let mut events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
+            assert_eq!(events.begin(2, 10, None), -1);
+        }
         assert_eq!(recorder.failed, vec![None]);
     }
 
@@ -297,9 +312,10 @@ mod tests {
             sync_fails: true,
             ..Backend::default()
         };
-        let mut events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
-        assert!(events.flush(true));
-        drop(events);
+        {
+            let mut events = CudaH2d::new(&mut backend, "cuda:0", &mut recorder, 1, 4);
+            assert!(events.flush(true));
+        }
         assert_eq!(recorder.abandoned, 1);
         assert_eq!(backend.syncs, 1);
     }

@@ -1,5 +1,6 @@
 use super::{num, read_bounded, SourceRef};
-use crate::flywheel::{Contrast, RoundRecord, ROUND_SCHEMA};
+use super::retention::round_record_from_metrics;
+use crate::flywheel::{Contrast, RoundRecord};
 use crate::gp::{
     self, Candidate, EditOp, EvalStatus, Genome, Interner, ProposalCounters, Provenance, Tracker,
 };

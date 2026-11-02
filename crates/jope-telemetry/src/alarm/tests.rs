@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 use crate::gp::test_gen_summary;
 
 fn gen(context: &str, g: u32, unique: f64) -> GenSummary {

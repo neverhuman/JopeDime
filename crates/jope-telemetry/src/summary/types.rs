@@ -1,3 +1,4 @@
+use crate::flywheel::TaskType;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
