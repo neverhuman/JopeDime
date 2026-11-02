@@ -1,4 +1,6 @@
-"""Fail-closed filtering for model and checkpoint training rows."""
+"""Fail-closed assignment and training-row boundaries."""
+
+from __future__ import annotations
 
 from collections.abc import Iterable
 from typing import Any
@@ -11,7 +13,16 @@ from .split_integrity import (
     TEMPORAL_AUDIT_SPLIT,
     TRAIN_SPLIT,
     SplitIntegrityError,
+    validate_split_manifest,
 )
+
+def assignment_for_dataset(manifest: dict[str, Any], dataset: str) -> dict[str, Any]:
+    validate_split_manifest(manifest)
+    record = manifest["assignments"].get(dataset)
+    if not isinstance(record, dict):
+        raise SplitIntegrityError(f"dataset {dataset!r} is absent from frozen split assignments")
+    return record
+
 
 def partition_training_rows(rows: Iterable[Any]) -> dict[str, Any]:
     """Fail-closed row boundary used before any model or checkpoint computation."""
