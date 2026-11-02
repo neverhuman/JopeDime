@@ -6,6 +6,7 @@ import datetime as dt
 import fcntl
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -18,7 +19,25 @@ PREFIX = "research/flywheel_selfplay/h227_pool_headroom/"
 DATA = Path.home() / "jope-data/h227"
 
 
+def validate_source(source):
+    if re.fullmatch(r"[0-9a-f]{40}", source) is None:
+        raise ValueError("source must be a full Git commit ID")
+    resolved = subprocess.check_output(
+        ["git", "rev-parse", "--verify", source + "^{commit}"],
+        cwd=REPO,
+        text=True,
+    ).strip()
+    if resolved != source:
+        raise ValueError("source did not resolve to the requested commit")
+    subprocess.run(
+        ["git", "merge-base", "--is-ancestor", source, "refs/agent/res08/h227/main"],
+        cwd=REPO,
+        check=True,
+    )
+
+
 def source_module(source, path, name):
+    validate_source(source)
     raw = subprocess.check_output(
         ["git", "show", source + ":" + PREFIX + path], cwd=REPO
     )
@@ -36,21 +55,11 @@ def main():
     args = parser.parse_args()
     os.nice(max(0, 19 - os.getpriority(os.PRIO_PROCESS, 0)))
     os.sched_setaffinity(0, sorted(os.sched_getaffinity(0))[:4])
+    validate_source(args.source)
     os.environ["H227_SOURCE"] = args.source
     b = source_module(args.source, "backend.py", "backend")
     protocol = source_module(args.source, "protocol.py", "h227_protocol")
     doc = b.registration()
-    subprocess.run(
-        [
-            "git",
-            "merge-base",
-            "--is-ancestor",
-            args.source,
-            "refs/agent/res08/h227/main",
-        ],
-        cwd=REPO,
-        check=True,
-    )
     DATA.mkdir(parents=True, exist_ok=True)
     owner_lock = (DATA / "H227.owner.lock").open("a+")
     fcntl.flock(owner_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -103,7 +112,7 @@ def main():
         PYTHONDONTWRITEBYTECODE="1",
         H227_SOURCE=args.source,
     )
-    bootstrap = "import subprocess,sys,types; s=sys.argv.pop(1); p='research/flywheel_selfplay/h227_pool_headroom/'; r='/home/ubuntu/JopeDime'; raw=subprocess.check_output(['git','show',s+':'+p+'backend.py'],cwd=r); m=types.ModuleType('backend');m.__file__=r+'/'+p+'backend.py';sys.modules['backend']=m;exec(compile(raw,m.__file__,'exec'),m.__dict__);raw=subprocess.check_output(['git','show',s+':'+p+'runner.py'],cwd=r);exec(compile(raw,r+'/'+p+'runner.py','exec'),{'__name__':'__main__','__file__':r+'/'+p+'runner.py'})"
+    bootstrap = "import re,subprocess,sys,types; s=sys.argv.pop(1); p='research/flywheel_selfplay/h227_pool_headroom/'; r='/home/ubuntu/JopeDime'; (re.fullmatch(r'[0-9a-f]{40}',s) or sys.exit('source must be a full Git commit ID')); (subprocess.check_output(['git','rev-parse','--verify',s+'^{commit}'],cwd=r,text=True).strip()==s or sys.exit('source did not resolve to the requested commit')); subprocess.run(['git','merge-base','--is-ancestor',s,'refs/agent/res08/h227/main'],cwd=r,check=True); raw=subprocess.check_output(['git','show',s+':'+p+'backend.py'],cwd=r); m=types.ModuleType('backend');m.__file__=r+'/'+p+'backend.py';sys.modules['backend']=m;exec(compile(raw,m.__file__,'exec'),m.__dict__);raw=subprocess.check_output(['git','show',s+':'+p+'runner.py'],cwd=r);exec(compile(raw,r+'/'+p+'runner.py','exec'),{'__name__':'__main__','__file__':r+'/'+p+'runner.py'})"
     argv = [
         sys.executable,
         "-B",

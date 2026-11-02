@@ -364,7 +364,7 @@ impl EncodingAdoptionReceiptV2 {
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Origin {
+pub enum SelfplayShadowOrigin {
     DlDirect,
     ShadowDlDirect,
     GpComparator,
@@ -373,7 +373,10 @@ pub enum Origin {
     Requalification,
 }
 
-impl Origin {
+/// Backward-compatible name for a selfplay shadow candidate's origin.
+pub type Origin = SelfplayShadowOrigin;
+
+impl SelfplayShadowOrigin {
     pub fn is_gp(self) -> bool {
         matches!(self, Self::GpComparator | Self::GpExploration)
     }

@@ -32,8 +32,10 @@ def blob(path, source=None):
 
 
 def module(path, name, source=None, expected=None):
+    if not expected or len(expected) != 64:
+        raise ValueError("source SHA-256 pin required: " + path)
     raw = blob(path, source)
-    if expected and hashlib.sha256(raw).hexdigest() != expected:
+    if hashlib.sha256(raw).hexdigest() != expected:
         raise ValueError("pinned source changed: " + path)
     m = types.ModuleType(name)
     m.__file__ = str(REPO / path)

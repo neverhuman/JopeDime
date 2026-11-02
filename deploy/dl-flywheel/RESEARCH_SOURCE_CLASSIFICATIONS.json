@@ -5959,8 +5959,8 @@
       }
     },
     "python:research/flywheel_selfplay/h227_pool_headroom/backend.py": {
-      "bytes": 8006,
-      "sha256": "cbd651babb62e4f3b15ea0436018129457035d5a52725ed54a60511e9b2b2a36",
+      "bytes": 8102,
+      "sha256": "5a38bf19195effe5a471c9dc209c26eefd8fe72762298105e1d35b55a9643eaf",
       "classification": {
         "role": "research",
         "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
@@ -5975,8 +5975,8 @@
       }
     },
     "python:research/flywheel_selfplay/h227_pool_headroom/launcher.py": {
-      "bytes": 7494,
-      "sha256": "9f5f1539dce8d7264bee4f4fb62ef6b0a975ad54019700a8f10e7d39a719f72f",
+      "bytes": 8248,
+      "sha256": "c5f68dfbc4069ba6399de759471bdbeeb54acac5eda84ee4d610ad0c2370ec4b",
       "classification": {
         "role": "research",
         "reason": "H227 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
@@ -6031,8 +6031,8 @@
       }
     },
     "python:research/flywheel_selfplay/h229_pool_headroom_replication/backend.py": {
-      "bytes": 8018,
-      "sha256": "88e3de0e9b36c5084c7572a890c5634c104fa426e08adf2e33c584d2144760d2",
+      "bytes": 8922,
+      "sha256": "0e1ff0504ff142796c7575245cf20e6627f2e54bf705ede4edfdecc9bcfa023e",
       "classification": {
         "role": "research",
         "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."
@@ -6047,8 +6047,8 @@
       }
     },
     "python:research/flywheel_selfplay/h229_pool_headroom_replication/launcher.py": {
-      "bytes": 8809,
-      "sha256": "f84b5c6b298e758d7574bb420f84df921a7dc2d0a160b972f56dcaf3d360802a",
+      "bytes": 9519,
+      "sha256": "4139c513efa321138ad3d9364b9754488137c20e7260455fb73f7e864e51dc79",
       "classification": {
         "role": "research",
         "reason": "H229 owner-authorized zero-update offline frozen-r882 candidate-generation headroom; real-S3 cohort, full-path TRAIN smoke before paired DL-Val91/19 measurement. Research implementation/data-free tests, not serving qualification."

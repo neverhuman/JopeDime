@@ -80,16 +80,20 @@ const SMART_V3_CPU_OWNERSHIP: [(&str, &str); DATASET_COUNT] = [
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum Arm {
+pub(crate) enum TrainOnlyRedteamArm {
     G20Extension,
     SmartV3,
 }
 
+pub(crate) type Arm = TrainOnlyRedteamArm;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum SelectionMode {
+pub(crate) enum TrainOnlyRedteamSelectionMode {
     Combined,
     SmartOnly,
 }
+
+pub(crate) type SelectionMode = TrainOnlyRedteamSelectionMode;
 
 #[derive(Clone, Debug)]
 pub(crate) struct PrepareArgs {

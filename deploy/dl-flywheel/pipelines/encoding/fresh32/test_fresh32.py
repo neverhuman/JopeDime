@@ -21,7 +21,7 @@ class QueueCase(unittest.TestCase):
    fields=list(rows[0]);self.db.execute('CREATE TABLE '+table+'('+','.join('"'+f+'" '+('INTEGER'if f in('sequence','ordinal')else 'REAL'if f=='created'else'TEXT')for f in fields)+')')
    self.db.executemany('INSERT INTO '+table+' VALUES('+','.join('?'for _ in fields)+')',[[r[f]for f in fields]for r in rows])
   self.deadline=time.time()+120
-  self.db.execute('INSERT INTO '+q.PACKETS+' VALUES(?,?,?,?,?,?,?)',('a'*64,'xbabe1',c.PIPELINE_SHA,1,2,'claimed','held failure untouched'))
+  self.db.execute('INSERT INTO flywheel_kumo_packets_v1 VALUES(?,?,?,?,?,?,?)',('a'*64,'xbabe1',c.PIPELINE_SHA,1,2,'claimed','held failure untouched'))
   self.db.execute('INSERT INTO '+q.ITEMS+' VALUES(?,?,?,?,?)',('b'*64,'a'*64,874,'old-row','old-publication'))
   self.db.execute('INSERT INTO '+q.STAGES+' VALUES(?,?,?,?,?)',('d'*64,q.STAGE,'old-receipt','e'*64,1))
  def tearDown(self):self.db.close()
@@ -35,7 +35,7 @@ class QueueCase(unittest.TestCase):
  def test_reinvoke_never_resets_campaign(self):
   self.claim();self.assertEqual(self.claim()['state'],'packet_already_exists');self.assertEqual(self.db.execute('SELECT count(*) FROM '+q.ITEMS).fetchone()[0],33)
  def test_other_xb3_claim_explicit_blocked(self):
-  self.db.execute('INSERT INTO '+q.PACKETS+' VALUES(?,?,?,?,?,?,NULL)',('f'*64,'xbabe3',c.PIPELINE_SHA,1,2,'claimed'))
+  self.db.execute('INSERT INTO flywheel_kumo_packets_v1 VALUES(?,?,?,?,?,?,NULL)',('f'*64,'xbabe3',c.PIPELINE_SHA,1,2,'claimed'))
   self.assertEqual(self.claim()['state'],'blocked_claim')
  def test_cross_host_item_blocks_no_partial_claim(self):
   r=self.rows[0];self.db.execute('INSERT INTO '+q.ITEMS+' VALUES(?,?,?,?,?)',(r['identity'],'a'*64,r['sequence'],'x','x'))
@@ -54,7 +54,7 @@ class QueueCase(unittest.TestCase):
   pub=self.pubs[0];b=json.loads(pub['publication_json']);b['publication_helper_sha256']='0'*64;raw=q.canonical(b).decode();self.db.execute('UPDATE '+q.PUB+' SET publication_json=?,publication_sha=? WHERE identity=?',(raw,q.sha(raw.encode()),pub['identity']))
   with self.assertRaisesRegex(ValueError,'qualified pipeline'):self.claim()
  def test_additional_all_history_safety_ceiling_includes_failures(self):
-  for i in range(127):self.db.execute('INSERT INTO '+q.PACKETS+' VALUES(?,?,?,?,?,?,NULL)',(hashlib.sha256(str(i).encode()).hexdigest(),'xbabe1',c.PIPELINE_SHA,1,2,'needs_reconcile'))
+  for i in range(127):self.db.execute('INSERT INTO flywheel_kumo_packets_v1 VALUES(?,?,?,?,?,?,NULL)',(hashlib.sha256(str(i).encode()).hexdigest(),'xbabe1',c.PIPELINE_SHA,1,2,'needs_reconcile'))
   with self.assertRaisesRegex(ValueError,'all-history'):self.claim()
  def test_expired_or_extended_window(self):
   for d in (time.time()-1,time.time()+1801,c.GLOBAL_DEADLINE+1):
@@ -184,7 +184,7 @@ class RemoteInvocationCases(unittest.TestCase):
   tree=ast.parse((HERE/'kumo_controller.py').read_text());scripts=[]
   for n in ast.walk(tree):
    if isinstance(n,ast.Assign)and any(isinstance(x,ast.Name)and x.id=='script'for x in n.targets)and isinstance(n.value,ast.Constant)and isinstance(n.value.value,str):
-    compile(n.value.value,'remote-python-c','exec');self.assertNotIn('from campaign import',n.value.value);scripts.append(n.value.value)
+    ast.parse(n.value.value, filename='remote-python-c');self.assertNotIn('from campaign import',n.value.value);scripts.append(n.value.value)
   self.assertEqual(len(scripts),3)
 
 class BoundaryCases(unittest.TestCase):

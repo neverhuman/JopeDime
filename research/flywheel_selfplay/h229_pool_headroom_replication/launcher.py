@@ -4,14 +4,16 @@ from pathlib import Path
 import argparse
 import datetime as dt
 import fcntl
+import importlib.util
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
-import types
 
 REPO = Path("/home/ubuntu/JopeDime")
 PREFIX = "research/flywheel_selfplay/h229_pool_headroom_replication/"
@@ -19,27 +21,48 @@ DATA = Path.home() / "jope-data/h229"
 
 
 def source_module(source, path, name):
+    if not re.fullmatch(r"[0-9a-f]{40}", source):
+        raise ValueError("source must be a full Git commit ID")
     raw = subprocess.check_output(
         ["git", "show", source + ":" + PREFIX + path], cwd=REPO
     )
-    m = types.ModuleType(name)
+    source_dir = tempfile.TemporaryDirectory(prefix="h229-source-")
+    source_path = Path(source_dir.name) / (Path(path).name or "module.py")
+    source_path.write_bytes(raw)
+    spec = importlib.util.spec_from_file_location(name, source_path)
+    if spec is None or spec.loader is None:
+        source_dir.cleanup()
+        raise ImportError("cannot import committed Python source: " + path)
+    m = importlib.util.module_from_spec(spec)
     m.__file__ = str(REPO / PREFIX / path)
     sys.modules[name] = m
-    exec(compile(raw, m.__file__, "exec"), m.__dict__)
+    try:
+        spec.loader.exec_module(m)
+    except BaseException:
+        sys.modules.pop(name, None)
+        source_dir.cleanup()
+        raise
+    m.__source_dir__ = source_dir
     return m
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--worker", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--source", required=True)
     parser.add_argument("--phase", choices=["smoke", "run"], required=True)
+    parser.add_argument("--root")
+    parser.add_argument("--smoke")
     args = parser.parse_args()
+    if args.worker:
+        if args.root is None:
+            parser.error("--root is required in worker mode")
+        b = source_module(args.source, "backend.py", "backend")
+        runner = source_module(args.source, "runner.py", "h229_runner")
+        return runner.run(Path(args.root), args.phase, args.smoke)
     os.nice(max(0, 19 - os.getpriority(os.PRIO_PROCESS, 0)))
     os.sched_setaffinity(0, sorted(os.sched_getaffinity(0))[:4])
     os.environ["H229_SOURCE"] = args.source
-    b = source_module(args.source, "backend.py", "backend")
-    protocol = source_module(args.source, "protocol.py", "h229_protocol")
-    doc = b.registration()
     subprocess.run(
         [
             "git",
@@ -51,6 +74,9 @@ def main():
         cwd=REPO,
         check=True,
     )
+    b = source_module(args.source, "backend.py", "backend")
+    protocol = source_module(args.source, "protocol.py", "h229_protocol")
+    doc = b.registration()
     DATA.mkdir(parents=True, exist_ok=True)
     owner_lock = (DATA / "H229.owner.lock").open("a+")
     fcntl.flock(owner_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -103,16 +129,18 @@ def main():
         PYTHONDONTWRITEBYTECODE="1",
         H229_SOURCE=args.source,
     )
-    bootstrap = "import subprocess,sys,types; s=sys.argv.pop(1); p='research/flywheel_selfplay/h229_pool_headroom_replication/'; r='/home/ubuntu/JopeDime'; raw=subprocess.check_output(['git','show',s+':'+p+'backend.py'],cwd=r); m=types.ModuleType('backend');m.__file__=r+'/'+p+'backend.py';sys.modules['backend']=m;exec(compile(raw,m.__file__,'exec'),m.__dict__);raw=subprocess.check_output(['git','show',s+':'+p+'runner.py'],cwd=r);exec(compile(raw,r+'/'+p+'runner.py','exec'),{'__name__':'__main__','__file__':r+'/'+p+'runner.py'})"
     argv = [
         sys.executable,
         "-B",
-        "-c",
-        bootstrap,
+        str(Path(__file__).resolve()),
+        "--worker",
+        "--source",
         args.source,
+        "--root",
         str(root),
+        "--phase",
         args.phase,
-    ] + ([str(smoke)] if smoke else [])
+    ] + (["--smoke", str(smoke)] if smoke else [])
     with (
         (root / "worker.stdout").open("x") as out,
         (root / "worker.stderr").open("x") as err,
