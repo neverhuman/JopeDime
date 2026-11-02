@@ -534,6 +534,9 @@ crates/jope-campaigns/src/commands/train_only_study.rs
 crates/jope-campaigns/src/core.rs
 crates/jope-campaigns/src/data.rs
 crates/jope-campaigns/src/dime_activation.rs
+crates/jope-campaigns/src/dime_activation/hash.rs
+crates/jope-campaigns/src/dime_activation/host.rs
+crates/jope-campaigns/src/dime_activation/tests.rs
 crates/jope-campaigns/src/dime_runtime_contracts.rs
 crates/jope-campaigns/src/encoder_v2_authority.rs
 crates/jope-campaigns/src/encoder_v2_capacity.rs
