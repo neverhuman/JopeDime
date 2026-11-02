@@ -16,12 +16,19 @@ Executes inside a single GPU worker process on xbabe1 cuda:0 alongside live flyw
 
 import argparse
 from datetime import datetime, timezone
+import gzip
 import hashlib
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
+import re
+import struct
+import subprocess
 import sys
+import tarfile
+import tempfile
 import time
 
 import numpy as np
@@ -859,11 +866,854 @@ def run_gpu_wave(out, launch, manifest, deadline_spec=None):
     return metrics
 
 
+def _dsl_feature_dict(dsl):
+    """Canonical 412D DSL feature dictionary matching `rank_prepare.features`."""
+    ops = re.findall(r"\(([^()]+)\)", dsl)
+    result = {"steps": float(len(ops)), "dsl_characters": float(len(dsl))}
+    for pos, content in enumerate(ops):
+        tokens = content.split()
+        op = tokens[0]
+        result["count." + op] = result.get("count." + op, 0) + 1
+        result[f"position{pos}.{op}"] = 1.0
+        if pos == len(ops) - 1:
+            result["estimator." + op] = 1.0
+        for token in tokens[1:]:
+            if "=" not in token:
+                continue
+            key, value = token.split("=", 1)
+            if key == "seed":
+                continue
+            try:
+                value = float(value)
+            except ValueError:
+                if value not in ("true", "false"):
+                    continue
+                value = float(value == "true")
+            value = float(np.sign(value) * np.log1p(abs(value)))
+            result[f"parameter.{op}.{key}.sum"] = (
+                result.get(f"parameter.{op}.{key}.sum", 0) + value
+            )
+            result[f"parameter.{op}.{key}.count"] = (
+                result.get(f"parameter.{op}.{key}.count", 0) + 1
+            )
+            result[f"position{pos}.{key}"] = value
+    return result
+
+
+def _w1_sign_projection_matrix():
+    cols = []
+    for k in range(16):
+        col = [
+            1
+            if (
+                hashlib.sha256(
+                    b"jope-context-cross-v1\0" + struct.pack("<II", i, k)
+                ).digest()[0]
+                & 1
+            )
+            else -1
+            for i in range(stat.PROGRAM_DIM)
+        ]
+        cols.append(col)
+    return np.asarray(cols, dtype=np.float64).T / math.sqrt(float(stat.PROGRAM_DIM))
+
+
+def featurize_dsl_412_and_proj16(dsl_list, feature_names=None, projection_mat=None):
+    """Featurize GP DSL strings into `(N, 412)` float32 `program` and `(N, 16)` float32 `proj16`."""
+    if feature_names is None:
+        if sha(stat.PROGRAM_FEATURE_NAMES_PATH) != stat.PROGRAM_FEATURE_NAMES_SHA256:
+            raise RuntimeError("program-feature-names.json SHA256 mismatch")
+        feature_names = json.loads(
+            stat.PROGRAM_FEATURE_NAMES_PATH.read_text(encoding="utf-8")
+        )
+    if len(feature_names) != stat.PROGRAM_DIM:
+        raise RuntimeError(
+            f"expected {stat.PROGRAM_DIM} program feature names, got {len(feature_names)}"
+        )
+    name_to_idx = {n: i for i, n in enumerate(feature_names)}
+    prog_mat = np.zeros((len(dsl_list), stat.PROGRAM_DIM), dtype=np.float32)
+    for row_i, dsl in enumerate(dsl_list):
+        for k, v in _dsl_feature_dict(dsl).items():
+            idx = name_to_idx.get(k)
+            if idx is not None:
+                prog_mat[row_i, idx] = float(v)
+    proj_mat = (
+        projection_mat if projection_mat is not None else _w1_sign_projection_matrix()
+    )
+    proj16 = (prog_mat.astype(np.float64) @ proj_mat).astype(np.float32)
+    return prog_mat, proj16
+
+
+def extract_frozen_dope_tokens_10x32(
+    net, ws, x_train_np, y_train_np, device=torch.device("cpu")
+):
+    """Extract frozen Stage-1A/1B `tokens_10x32`, `mask_10`, `dope629`, `lm48_z`, and `ctx_feat_584` on TRAIN rows only."""
+    sys.path.insert(0, str(ROOT / "research/flywheel_selfplay"))
+    import run_fused_closed_loop as base_loop  # noqa: E402
+
+    x_arr = np.asarray(x_train_np, dtype=np.float64)
+    y_arr = np.asarray(y_train_np, dtype=np.float64)
+    if x_arr.ndim != 2 or y_arr.ndim != 1 or x_arr.shape[0] != y_arr.shape[0]:
+        raise RuntimeError(
+            f"invalid training matrix/target shapes: X={x_arr.shape}, y={y_arr.shape}"
+        )
+    if not np.isfinite(y_arr).all():
+        raise RuntimeError(
+            "non-finite target values in extract_frozen_dope_tokens_10x32"
+        )
+
+    yn = ((y_arr - y_arr.mean()) / max(float(y_arr.std()), 1e-8)).astype(np.float32)
+    vec, cols, _ = ws.fit_transform_and_extract_bundle_high(
+        base_loop.landmark_float32(x_arr), np.ascontiguousarray(yn)
+    )
+    colbuf = np.zeros((64, 17), np.float32)
+    ncols = min(len(cols), 64)
+    colbuf[:ncols, : min(cols.shape[1], 17)] = cols[:ncols, :17]
+
+    with torch.no_grad():
+        d629, lm48 = net._run_dope_mlc_v3_and_lm48(
+            torch.as_tensor(vec, device=device).reshape(1, 256),
+            torch.as_tensor(colbuf, device=device).reshape(1, 64, 17),
+            use_landmarks=True,
+        )
+        tok, mask, lm48_z = net._project_stage1b_tokens_batched_gpu(lm48, d629)
+
+    d629_np = d629[0].detach().cpu().numpy().astype(np.float32)
+    lm48_z_np = lm48_z[0].detach().cpu().numpy().astype(np.float32)
+    tok_np = tok[0].detach().cpu().numpy().astype(np.float32)
+    mask_np = mask[0].detach().cpu().numpy().astype(bool)
+    ctx_584 = np.zeros((584,), dtype=np.float32)
+    ctx_584[88:200] = d629_np[:112]
+    ctx_584[536:584] = lm48_z_np
+    return dict(
+        tokens_10x32=tok_np,
+        mask_10=mask_np,
+        dope629=d629_np,
+        lm48_z=lm48_z_np,
+        ctx_feat_584=ctx_584,
+        outer_test_rows_decoded=0,
+    )
+
+
+def evaluate_slate24_live_s1main(
+    s1_input_jtt1_path,
+    candidate_records,
+    worker_bin=stat.EVALUATOR_BINARY_PATH,
+    max_workers=2,
+):
+    """Run live `bootstrap.s1main --fit-s1` on 24 candidate GP programs and verify bit-level inner-CV parity."""
+    bin_p = Path(worker_bin)
+    if sha(bin_p) != stat.EVALUATOR_BINARY_SHA256:
+        raise RuntimeError(
+            "bootstrap.s1main SHA256 mismatch in evaluate_slate24_live_s1main"
+        )
+    s1_p = Path(s1_input_jtt1_path)
+    if not s1_p.is_file():
+        raise RuntimeError(f"s1-input.jtt1 missing: {s1_p}")
+
+    if len(candidate_records) < stat.SLATE_CANDIDATES:
+        raise RuntimeError(
+            f"at least {stat.SLATE_CANDIDATES} candidates required for live s1main verification"
+        )
+
+    max_diffs = []
+    gate_matches = []
+    with tempfile.TemporaryDirectory(prefix="h205_live_s1_") as td:
+        td_path = Path(td)
+        env = {
+            "PATH": "/usr/bin:/bin",
+            "RAYON_NUM_THREADS": "1",
+            "OMP_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "TMPDIR": str(td_path),
+            "HOME": str(td_path),
+        }
+        for idx, rec in enumerate(candidate_records[: stat.SLATE_CANDIDATES]):
+            prog = rec["program"]
+            dsl = prog["dsl"]
+            cand_path = td_path / f"cand_{idx:02d}.json"
+            out_path = td_path / f"eval_{idx:02d}.json"
+            cand_path.write_text(json.dumps(prog, sort_keys=True), encoding="utf-8")
+            proc = subprocess.run(
+                [
+                    "nice",
+                    "-n",
+                    "19",
+                    str(bin_p),
+                    "--fit-s1",
+                    str(s1_p),
+                    str(cand_path),
+                    str(out_path),
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=90,
+                env=env,
+                check=False,
+            )
+            if proc.returncode != 0 or not out_path.is_file():
+                raise RuntimeError(
+                    f"live bootstrap.s1main --fit-s1 failed on candidate {idx}: rc={proc.returncode}, stderr={proc.stderr.strip()}"
+                )
+            ev = json.loads(out_path.read_text(encoding="utf-8"))
+            if (
+                ev.get("status") != "completed"
+                or ev.get("fold_protocol") != "jope.s1-two-fold/v1"
+                or "official_test" in ev
+            ):
+                raise RuntimeError(f"unexpected s1main record on candidate {idx}: {ev}")
+            inner_cv = ev.get("inner_cv", ())
+            if len(inner_cv) != 2:
+                raise RuntimeError(f"expected 2 inner_cv folds, got {len(inner_cv)}")
+            ratios = []
+            wins = 0
+            for fold_rec in inner_cv:
+                m_rmse = float(fold_rec["metrics"]["rmse"])
+                b_rmse = float(fold_rec["baseline_metrics"]["rmse"])
+                r = max(m_rmse / b_rmse, 1e-12)
+                ratios.append(r)
+                if r <= 1.0:
+                    wins += 1
+            lr0, lr1 = math.log(ratios[0]), math.log(ratios[1])
+            mean_lr = 0.5 * (lr0 + lr1)
+            tail_lr = max(lr0, lr1)
+            sd_lr = 0.5 * abs(lr0 - lr1)
+            geomean_ratio = math.exp(mean_lr)
+            comp = dsl.count("(")
+            gate = (wins == 2) and (geomean_ratio <= 0.90)
+            if gate:
+                fit_live = 0.8 * mean_lr + 0.1 * tail_lr + 0.1 * sd_lr + 0.0005 * comp
+            else:
+                fit_live = (
+                    100.0 + max(mean_lr, 0.0) + max(tail_lr, 0.0) + max(sd_lr, 0.0)
+                )
+            max_diffs.append(abs(float(fit_live) - float(rec["fitness"])))
+            gate_matches.append(bool(gate) == bool(rec["cv_gate_passed"]))
+
+    max_diff = float(max(max_diffs)) if max_diffs else 0.0
+    all_gate = bool(all(gate_matches))
+    if max_diff > 1e-9 or not all_gate:
+        raise RuntimeError(
+            f"live s1main parity check failed: max_diff={max_diff}, all_gate={all_gate}"
+        )
+    return dict(
+        status="PASS",
+        evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
+        evaluator_binary_sha256=stat.EVALUATOR_BINARY_SHA256,
+        evaluated_candidates=len(max_diffs),
+        max_abs_fitness_diff=max_diff,
+        gate_exact_match=all_gate,
+    )
+
+
+def consume_single_fresh_context_in_inherited_engine(
+    engine, net, rt, fresh_row, historical_cids
+):
+    """Ingest one verified fresh regression context into `engine` and execute 1 bounded AdamW step on `adapter_10tok`."""
+    ing = ingest_verified_fresh_rows_into_engine(
+        engine, [fresh_row], historical_cids=historical_cids
+    )
+    cid = fresh_row["context_sha256"]
+    if cid in set(historical_cids):
+        raise RuntimeError("fresh context collides with historical 1,310 cohort")
+
+    gt_order = np.argsort(
+        np.where(
+            engine.pools[cid]["gate"],
+            engine.pools[cid]["fitness"],
+            2.0,
+        ),
+        kind="mergesort",
+    )
+    slates = stat.h177_analysis.fit_slates(
+        [fresh_row], {cid: gt_order}, stat.SEEDS[0], 0
+    )
+    slate_ix = slates[cid]
+    if len(slate_ix) != stat.SLATE_CANDIDATES:
+        raise RuntimeError(f"expected 24-candidate slate, got {len(slate_ix)}")
+
+    initial_trainable = {
+        n: p.detach().cpu().clone()
+        for n, p in net.named_parameters()
+        if p.requires_grad
+    }
+    trainable_count = sum(p.numel() for p in initial_trainable.values())
+    if trainable_count != 29211:
+        raise RuntimeError(
+            f"expected 29,211 trainable adapter_10tok parameters, got {trainable_count}"
+        )
+    adapter_before = parameter_digest(initial_trainable)
+    rt.check_frozen(net, engine.guard, engine.names, engine.frozen)
+    dope_before = rt.DOPE
+
+    kwargs, tok, mask, fitness, gate = engine.batch([cid], [slate_ix])
+    anchor = engine.anchored(kwargs)
+    pred = engine.forward(kwargs, tok, mask, anchor)
+
+    params = [p for _, p in net.named_parameters() if p.requires_grad]
+    opt = torch.optim.AdamW(params, lr=3e-5, betas=(0.9, 0.999), weight_decay=0.01)
+    opt.zero_grad(set_to_none=True)
+    loss_val = rt.loss(pred, fitness, gate)
+    if not torch.isfinite(loss_val).all():
+        raise RuntimeError(f"non-finite loss on fresh context {cid}: {loss_val}")
+    loss_val.backward()
+    opt.step()
+
+    after_trainable = {
+        n: p.detach().cpu().clone()
+        for n, p in net.named_parameters()
+        if p.requires_grad
+    }
+    adapter_after = parameter_digest(after_trainable)
+    rt.check_frozen(net, engine.guard, engine.names, engine.frozen)
+    dope_after = rt.DOPE
+
+    # Restore initial adapter weights after recording the 1-step delta proof
+    with torch.no_grad():
+        for n, p in net.named_parameters():
+            if n in initial_trainable:
+                p.copy_(initial_trainable[n].to(p.device))
+
+    if adapter_before == adapter_after:
+        raise RuntimeError("adapter parameter digest did not change after 1 AdamW step")
+
+    return dict(
+        status="PASS",
+        ingested_context_sha256=cid,
+        dataset_id=fresh_row["dataset_id"],
+        family_id=fresh_row["family_id"],
+        used_old_1310_fallback=False,
+        historical_contexts_preserved=ing["historical_contexts_preserved"],
+        slate_candidates=int(len(slate_ix)),
+        revealed_indices=[int(x) for x in slate_ix[:4]],
+        unrevealed_indices=[int(x) for x in slate_ix[4:]],
+        loss_value=float(loss_val.detach().cpu().item()),
+        optimizer_steps=1,
+        trainable_parameters=int(trainable_count),
+        adapter_sha256_before=adapter_before,
+        adapter_sha256_after=adapter_after,
+        dope_sha256_before=dope_before,
+        dope_sha256_after=dope_after,
+    )
+
+
+def _s3_get_object_with_version(bucket, key, dest_path, aws_profile="veox-jepson-prod"):
+    dest_p = Path(dest_path)
+    dest_p.parent.mkdir(parents=True, exist_ok=True)
+    env = os.environ.copy()
+    env["AWS_PROFILE"] = aws_profile
+    cmd = [
+        "aws",
+        "s3api",
+        "get-object",
+        "--bucket",
+        bucket,
+        "--key",
+        key,
+        str(dest_p),
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True, env=env, check=True)
+    meta = json.loads(proc.stdout)
+    return dict(
+        bucket=bucket,
+        key=key,
+        version_id=str(meta.get("VersionId", "")),
+        size_bytes=int(dest_p.stat().st_size),
+        sha256=sha(dest_p),
+    )
+
+
+def _s3_put_create_only_and_verify(
+    bucket, key, src_path, aws_profile="veox-jepson-prod"
+):
+    src_p = Path(src_path)
+    local_sha = sha(src_p)
+    env = os.environ.copy()
+    env["AWS_PROFILE"] = aws_profile
+    put_cmd = [
+        "aws",
+        "s3api",
+        "put-object",
+        "--bucket",
+        bucket,
+        "--key",
+        key,
+        "--body",
+        str(src_p),
+        "--if-none-match",
+        "*",
+    ]
+    put_proc = subprocess.run(
+        put_cmd, capture_output=True, text=True, env=env, check=True
+    )
+    put_meta = json.loads(put_proc.stdout)
+    ver_id = str(put_meta.get("VersionId", "")).strip()
+    if not ver_id:
+        raise RuntimeError(
+            f"put-object returned empty VersionId for s3://{bucket}/{key}"
+        )
+
+    with tempfile.NamedTemporaryFile(prefix="h205_s3_verify_", delete=True) as tf:
+        get_cmd = [
+            "aws",
+            "s3api",
+            "get-object",
+            "--bucket",
+            bucket,
+            "--key",
+            key,
+            "--version-id",
+            ver_id,
+            tf.name,
+        ]
+        subprocess.run(get_cmd, capture_output=True, text=True, env=env, check=True)
+        dl_sha = sha(tf.name)
+        dl_size = int(Path(tf.name).stat().st_size)
+
+    if dl_sha != local_sha:
+        raise RuntimeError(
+            f"S3 exact-VersionId readback SHA256 mismatch for {key}: {dl_sha} != {local_sha}"
+        )
+    return dict(
+        name=src_p.name,
+        bucket=bucket,
+        key=key,
+        version_id=ver_id,
+        size_bytes=dl_size,
+        local_sha256=local_sha,
+        downloaded_version_sha256=dl_sha,
+    )
+
+
+def construct_and_consume_single_regression_context(
+    out, launch, manifest, deadline_spec=None
+):
+    """Execute the H205 single-context regression data construction + S3 custody + inherited-engine consumption milestone."""
+    t_start = time.monotonic()
+    if deadline_spec is None:
+        deadline_spec = validate_launch(
+            launch, sha(HERE / "manifest.json"), process_start_monotonic=t_start
+        )
+    mon.enforce_shared_process_deadline(
+        time.monotonic(), deadline_spec, stage="single_regression_context_entry"
+    )
+    if os.getpriority(os.PRIO_PROCESS, 0) < 10:
+        try:
+            os.nice(19 - os.getpriority(os.PRIO_PROCESS, 0))
+        except OSError:
+            pass
+
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    cid = stat.TARGET_REGRESSION_CONTEXT_SHA256
+    ds_id = stat.TARGET_REGRESSION_DATASET_ID
+    fam_id = stat.TARGET_REGRESSION_FAMILY_ID
+    fam_key = stat.TARGET_REGRESSION_FAMILY_KEY
+    bundle_dir = out / cid
+    bundle_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. Freeze source-bound allowed regression TRAIN roster and verify target candidate
+    roster = stat.build_allowed_regression_train_roster(verify_hashes=True)
+    roster_Serializable = dict(
+        status=roster["status"],
+        wave=roster["wave"],
+        allowed_datasets_count=roster["allowed_datasets_count"],
+        allowed_families_count=roster["allowed_families_count"],
+        skipped_missing_family_count=roster["skipped_missing_family_count"],
+        forbidden_datasets_count=roster["forbidden_datasets_count"],
+        forbidden_family_aliases_count=roster["forbidden_family_aliases_count"],
+        forbidden_cids_count=roster["forbidden_cids_count"],
+        roster_sha256=roster["roster_sha256"],
+        target_dataset_id=ds_id,
+        target_family_id=fam_id,
+        target_context_sha256=cid,
+        records=roster["records"],
+    )
+    save(out / "allowed_regression_train_roster.json", roster_Serializable)
+
+    cand_check = stat.verify_single_regression_train_candidate(
+        dict(
+            dataset_id=ds_id,
+            family_id=fam_id,
+            family_key=fam_key,
+            context_sha256=cid,
+            task="regression",
+            role="regression_train",
+            source_split="train",
+            dl_split="DL-Train",
+            has_meta_test=False,
+        ),
+        roster,
+    )
+
+    # 2. Fetch ONE permitted original S3 TRAIN object (never test.csv) & prove n_q=0 protocol behavior
+    raw_intake_dir = out / "raw_s3_intake" / ds_id
+    raw_intake_dir.mkdir(parents=True, exist_ok=True)
+    ds_manifest_s3 = _s3_get_object_with_version(
+        "veox-jopedime-datasets-use2",
+        f"datasets/{ds_id}/manifest.json",
+        raw_intake_dir / "manifest.json",
+    )
+    train_csv_s3 = _s3_get_object_with_version(
+        "veox-jopedime-datasets-use2",
+        f"blobs/sha256/{stat.TARGET_REGRESSION_TRAIN_SHA256}",
+        raw_intake_dir / "train.csv",
+    )
+    if train_csv_s3["sha256"] != stat.TARGET_REGRESSION_TRAIN_SHA256:
+        raise RuntimeError("downloaded S3 train.csv SHA256 mismatch")
+
+    nq0_jtt1_path = raw_intake_dir / f"{ds_id}_train_only_nq0.jtt1"
+    nq0_enc = stat.encode_train_only_jtt1_from_csv(
+        raw_intake_dir / "train.csv",
+        out_jtt1_path=nq0_jtt1_path,
+        expected_csv_sha256=stat.TARGET_REGRESSION_TRAIN_SHA256,
+    )
+    nq0_probe = stat.probe_s1main_nq0_protocol_blocker(nq0_jtt1_path)
+
+    # 3. Load frozen r882 + DOPE network and inherited h170.Engine on CPU
+    h170 = load_h170_parent()
+    rt = h170.runtime()
+    ckpt_path = Path(manifest["checkpoint"])
+    if sha(ckpt_path) != stat.R882_SHA256:
+        raise RuntimeError("r882 checkpoint SHA256 mismatch")
+    net, guard, names, frozen, fused = rt.build(ckpt_path)
+    rt.check_frozen(net, guard, names, frozen)
+
+    sys.path.insert(0, str(ROOT / "research/flywheel_selfplay"))
+    import run_fused_closed_loop as base_loop  # noqa: E402
+
+    ws = base_loop.FusedLandmarkWorkspace(
+        num_threads=int(launch.get("numeric_threads", 2))
+    )
+
+    # Extract frozen DOPE tokens on the 1,000-row S3 train.csv as well
+    raw_csv_tokens = extract_frozen_dope_tokens_10x32(
+        net, ws, nq0_enc["X_train"], nq0_enc["y_train"], device=torch.device("cpu")
+    )
+
+    # 4. Materialize & verify admitted s1-prod train_fit context fa480de30f3fba6f for 1db3750d4ceccab9
+    teacher_gz_path = Path(
+        f"/home/ubuntu/scratch/jopedime-dl-training-v1/build-v2/ROWSEL-RAW-v2-fill/shard-0/{stat.TARGET_REGRESSION_VIEW_ID}/teacher.jtt1.gz"
+    )
+    s1_ctx_dir = Path(
+        f"/home/ubuntu/scratch/jopedime-dl-training-v1/receipts/trainonly-v2/s1-prod/contexts/{cid}"
+    )
+    if sha(teacher_gz_path) != stat.TARGET_REGRESSION_TEACHER_GZ_SHA256:
+        raise RuntimeError("teacher.jtt1.gz SHA256 mismatch")
+    raw_jtt1 = gzip.decompress(teacher_gz_path.read_bytes())
+    if (
+        hashlib.sha256(raw_jtt1).hexdigest()
+        != stat.TARGET_REGRESSION_TEACHER_RAW_SHA256
+    ):
+        raise RuntimeError("teacher raw JTT1 SHA256 mismatch")
+
+    nt, nq, p_dim, k_folds = struct.unpack_from("<IIIB", raw_jtt1, 4)
+    row_bytes = (p_dim + 1) * 8
+    end_train = 17 + nt + nt * row_bytes
+    training_block = raw_jtt1[:end_train]
+    if (
+        hashlib.sha256(training_block).hexdigest()
+        != stat.TARGET_REGRESSION_TRAINING_BLOCK_SHA256
+    ):
+        raise RuntimeError("training_block_sha256 mismatch")
+
+    # Decode ONLY the nt training rows (outer-test rows are never decoded)
+    train_mat = (
+        np.frombuffer(raw_jtt1, dtype="<f8", count=nt * (p_dim + 1), offset=17 + nt)
+        .reshape(nt, p_dim + 1)
+        .copy()
+    )
+    X_ctx_train = train_mat[:, :p_dim]
+    y_ctx_train = train_mat[:, p_dim]
+
+    # Strip outer-test target cells to +0.0 without decoding them for s1-input.jtt1
+    s1_buf = bytearray(raw_jtt1)
+    for i in range(nq):
+        o = end_train + i * row_bytes + p_dim * 8
+        s1_buf[o : o + 8] = struct.pack("<d", 0.0)
+    s1_input_bytes = bytes(s1_buf)
+    if (
+        hashlib.sha256(s1_input_bytes).hexdigest()
+        != stat.TARGET_REGRESSION_S1_INPUT_SHA256
+    ):
+        raise RuntimeError("s1_input_sha256 mismatch")
+    s1_input_path = raw_intake_dir / f"{cid}_s1_input.jtt1"
+    s1_input_path.write_bytes(s1_input_bytes)
+
+    # Extract 1,152 unique completed inner-CV candidates from summary.tar.gz
+    summary_tar_path = s1_ctx_dir / "summary.tar.gz"
+    if sha(summary_tar_path) != stat.TARGET_REGRESSION_SUMMARY_TAR_GZ_SHA256:
+        raise RuntimeError("summary.tar.gz SHA256 mismatch")
+    cands_by_psha = {}
+    with tarfile.open(summary_tar_path, "r:gz") as tf:
+        digests = json.loads(tf.extractfile("digests.json").read().decode("utf-8"))
+        for g in range(18):
+            m_name = f"gen{g:02d}/accepts.jsonl"
+            m_bytes = tf.extractfile(m_name).read()
+            if hashlib.sha256(m_bytes).hexdigest() != digests[m_name]:
+                raise RuntimeError(f"digest mismatch for {m_name} in summary.tar.gz")
+            for line in m_bytes.splitlines():
+                r = json.loads(line)
+                if r.get("ok") and r["result"].get("status") == "completed":
+                    res = r["result"]
+                    if (
+                        res.get("test_rmse") is not None
+                        or res.get("test_rmse_ratio") is not None
+                    ):
+                        raise RuntimeError("unexpected non-null test_rmse in S1 record")
+                    p_obj = res["program"]
+                    cands_by_psha[p_obj["program_sha256"]] = res
+
+    ordered_pshas = sorted(cands_by_psha)
+    ordered_records = [cands_by_psha[psha] for psha in ordered_pshas]
+    dsl_list = [r["program"]["dsl"] for r in ordered_records]
+    prog_mat, proj16_mat = featurize_dsl_412_and_proj16(dsl_list)
+    fitness_arr = np.asarray(
+        [float(r["fitness"]) for r in ordered_records], dtype=np.float64
+    )
+    logratio_arr = np.asarray(
+        [
+            math.log(max(float(r["cv_geomean_rmse_ratio"]), 1e-12))
+            for r in ordered_records
+        ],
+        dtype=np.float64,
+    )
+    gate_arr = np.asarray(
+        [bool(r["cv_gate_passed"]) for r in ordered_records], dtype=bool
+    )
+
+    # Extract frozen Stage-1A/1B tokens on the 1,600 training rows of fa480de30f3fba6f
+    ctx_feats = extract_frozen_dope_tokens_10x32(
+        net, ws, X_ctx_train, y_ctx_train, device=torch.device("cpu")
+    )
+    tok_10x32 = ctx_feats["tokens_10x32"]
+    mask_10 = ctx_feats["mask_10"]
+
+    # Select the 24-candidate slate (`fit_slates`) and run live `bootstrap.s1main --fit-s1` verification on those 24 candidates
+    gt_order = np.argsort(np.where(gate_arr, fitness_arr, 2.0), kind="mergesort")
+    slate_24_ix = stat.h177_analysis.fit_slates(
+        [dict(context_sha256=cid, family_id=fam_id)],
+        {cid: gt_order},
+        stat.SEEDS[0],
+        0,
+    )[cid]
+    slate_24_records = [ordered_records[int(i)] for i in slate_24_ix]
+    live_s1_check = evaluate_slate24_live_s1main(
+        s1_input_path, slate_24_records, worker_bin=stat.EVALUATOR_BINARY_PATH
+    )
+
+    # Persist pool.npz and features.npz
+    pool_npz_path = bundle_dir / "pool.npz"
+    features_npz_path = bundle_dir / "features.npz"
+    np.savez(
+        pool_npz_path,
+        program=prog_mat,
+        proj16=proj16_mat,
+        fitness=fitness_arr,
+        logratio=logratio_arr,
+        gate=gate_arr,
+        program_sha256=np.asarray(ordered_pshas),
+        tokens_10x32=tok_10x32,
+        mask_10=mask_10,
+    )
+    np.savez(
+        features_npz_path,
+        cids=np.asarray([cid]),
+        tokens_10x32=tok_10x32,
+        mask_10=mask_10,
+        dope629=ctx_feats["dope629"],
+        lm48_z=ctx_feats["lm48_z"],
+        ctx_feat_584=ctx_feats["ctx_feat_584"],
+        raw_csv_tokens_10x32=raw_csv_tokens["tokens_10x32"],
+        raw_csv_mask_10=raw_csv_tokens["mask_10"],
+    )
+
+    labels_sha = hashlib.sha256(fitness_arr.tobytes() + gate_arr.tobytes()).hexdigest()
+    programs_sha = hashlib.sha256(prog_mat.tobytes()).hexdigest()
+    features_sha = hashlib.sha256(tok_10x32.tobytes() + mask_10.tobytes()).hexdigest()
+    pool_sha = sha(pool_npz_path)
+    feat_npz_sha = sha(features_npz_path)
+
+    native_eval_receipt = dict(
+        status="PASS",
+        evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
+        evaluator_binary_sha256=stat.EVALUATOR_BINARY_SHA256,
+        context_sha256=cid,
+        dataset_id=ds_id,
+        family_id=fam_id,
+        family_key=fam_key,
+        view_id=stat.TARGET_REGRESSION_VIEW_ID,
+        s1_input_sha256=stat.TARGET_REGRESSION_S1_INPUT_SHA256,
+        training_block_sha256=stat.TARGET_REGRESSION_TRAINING_BLOCK_SHA256,
+        summary_tar_gz_sha256=stat.TARGET_REGRESSION_SUMMARY_TAR_GZ_SHA256,
+        labels_sha256=labels_sha,
+        programs_sha256=programs_sha,
+        features_sha256=features_sha,
+        dope_sha256=stat.DOPE_SHA256,
+        r882_sha256=stat.R882_SHA256,
+        candidates_count=len(ordered_records),
+        outer_test_rows_decoded=0,
+        live_s1main_slate24_verification=live_s1_check,
+        pure_s3_train_csv_nq0_protocol_check=dict(
+            csv_sha256=nq0_enc["csv_sha256"],
+            jtt1_nq0_sha256=nq0_enc["jtt1_sha256"],
+            nt=nq0_enc["nt"],
+            nq=nq0_enc["nq"],
+            p=nq0_enc["p"],
+            k=nq0_enc["k"],
+            raw_csv_features_sha256=hashlib.sha256(
+                raw_csv_tokens["tokens_10x32"].tobytes()
+                + raw_csv_tokens["mask_10"].tobytes()
+            ).hexdigest(),
+            s1main_probe=nq0_probe,
+        ),
+        utc=datetime.now(timezone.utc).isoformat(),
+    )
+    save(bundle_dir / "native_evaluator_receipt.json", native_eval_receipt)
+
+    context_manifest = dict(
+        wave=stat.WAVE,
+        status="PASS",
+        dataset_id=ds_id,
+        family_id=fam_id,
+        family_key=fam_key,
+        family_aliases=sorted(
+            {fam_id, fam_key, f"dedupe:{fam_id}", f"dedupe:{fam_key}"}
+        ),
+        context_sha256=cid,
+        view_id=stat.TARGET_REGRESSION_VIEW_ID,
+        task="regression",
+        role="regression_train",
+        source_split="train",
+        dl_split="DL-Train",
+        has_meta_test=False,
+        outer_test_rows_decoded=0,
+        train_sha256=stat.TARGET_REGRESSION_TRAIN_SHA256,
+        s1_input_sha256=stat.TARGET_REGRESSION_S1_INPUT_SHA256,
+        training_block_sha256=stat.TARGET_REGRESSION_TRAINING_BLOCK_SHA256,
+        pool_sha256=pool_sha,
+        features_npz_sha256=feat_npz_sha,
+        labels_sha256=labels_sha,
+        programs_sha256=programs_sha,
+        features_sha256=features_sha,
+        roster_sha256=roster["roster_sha256"],
+        candidate_admission=cand_check,
+        utc=datetime.now(timezone.utc).isoformat(),
+    )
+    save(bundle_dir / "context_manifest.json", context_manifest)
+
+    # 5. Consume the constructed bundle in the real inherited h170.Engine (preserving all 1,310 historical contexts)
+    train_hist, val_hist = h170.cohorts(rt)
+    historical_cids = {r["context_sha256"] for r in (train_hist + val_hist)}
+    engine = h170.Engine(net, rt, names, frozen, guard, fused, train_hist + val_hist)
+    fresh_row = dict(
+        context_manifest,
+        pool_npz_path=str(pool_npz_path),
+        native_evaluator_receipt=native_eval_receipt,
+    )
+    eng_receipt = consume_single_fresh_context_in_inherited_engine(
+        engine, net, rt, fresh_row, historical_cids=historical_cids
+    )
+    save(bundle_dir / "engine_consumption_receipt.json", eng_receipt)
+
+    # 6. Upload create-only to s3://veox-jopedime-learning-use2 and verify exact-VersionId readback
+    s3_bucket = "veox-jopedime-learning-use2"
+    utc_tag = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    s3_prefix = (
+        f"experiments/rd_breakthrough_20261101/H205/regression-seam/{cid}-{utc_tag}"
+    )
+    uploaded_objects = []
+    for fname in (
+        "context_manifest.json",
+        "native_evaluator_receipt.json",
+        "pool.npz",
+        "features.npz",
+        "engine_consumption_receipt.json",
+    ):
+        uploaded_objects.append(
+            _s3_put_create_only_and_verify(
+                s3_bucket,
+                f"{s3_prefix}/{fname}",
+                bundle_dir / fname,
+            )
+        )
+
+    elapsed_wall = float(time.monotonic() - t_start)
+    s3_custody = dict(
+        status="PASS",
+        wave=stat.WAVE,
+        source_dataset_manifest=ds_manifest_s3,
+        source_train_object=train_csv_s3,
+        test_object_fetched=False,
+        learning_store_bucket=s3_bucket,
+        learning_store_prefix=s3_prefix,
+        uploaded_bundle_objects=uploaded_objects,
+        elapsed_wall_seconds=elapsed_wall,
+        prior_attempts_elapsed_seconds=deadline_spec["prior_elapsed_seconds"],
+        cumulative_elapsed_wall_seconds=deadline_spec["prior_elapsed_seconds"]
+        + elapsed_wall,
+        remaining_wall_budget_seconds=deadline_spec["remaining_budget_seconds"]
+        - elapsed_wall,
+        campaign_wall_budget_cap_seconds=deadline_spec["campaign_cap_seconds"],
+        utc=datetime.now(timezone.utc).isoformat(),
+    )
+    save(bundle_dir / "s3_custody_receipt.json", s3_custody)
+
+    # Also upload s3_custody_receipt.json create-only and record its VersionId
+    custody_upload = _s3_put_create_only_and_verify(
+        s3_bucket,
+        f"{s3_prefix}/s3_custody_receipt.json",
+        bundle_dir / "s3_custody_receipt.json",
+    )
+
+    # 7. Run end-to-end fail-closed bundle verification
+    verified_bundle = stat.verify_single_context_regression_seam_bundle(
+        bundle_dir,
+        forbidden_cids=roster["forbidden_cids"],
+        forbidden_families=roster["forbidden_families"],
+        forbidden_datasets=roster["forbidden_datasets"],
+    )
+    summary = dict(
+        status="PASS",
+        wave=stat.WAVE,
+        mode="construct_single_regression_context",
+        dataset_id=ds_id,
+        family_id=fam_id,
+        family_key=fam_key,
+        context_sha256=cid,
+        view_id=stat.TARGET_REGRESSION_VIEW_ID,
+        allowed_roster_datasets=roster["allowed_datasets_count"],
+        allowed_roster_families=roster["allowed_families_count"],
+        roster_sha256=roster["roster_sha256"],
+        source_train_s3=train_csv_s3,
+        source_manifest_s3=ds_manifest_s3,
+        pure_s3_train_csv_nq0_protocol_check=native_eval_receipt[
+            "pure_s3_train_csv_nq0_protocol_check"
+        ],
+        s1_prod_context_bundle=verified_bundle,
+        engine_consumption=eng_receipt,
+        s3_bundle_custody_upload=custody_upload,
+        uploaded_bundle_objects=uploaded_objects,
+        elapsed_wall_seconds=elapsed_wall,
+        cumulative_elapsed_wall_seconds=deadline_spec["prior_elapsed_seconds"]
+        + elapsed_wall,
+        remaining_wall_budget_seconds=deadline_spec["remaining_budget_seconds"]
+        - elapsed_wall,
+        utc=datetime.now(timezone.utc).isoformat(),
+    )
+    save(out / "single_regression_context_summary.json", summary)
+    print(json.dumps(summary), flush=True)
+    return summary
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--launch", type=Path, required=True)
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--construct-single-regression-context", action="store_true")
     args = ap.parse_args()
 
     manifest_path = HERE / "manifest.json"
@@ -894,6 +1744,12 @@ def main():
         )
         save(args.output / "smoke.json", smoke_payload)
         print(json.dumps(smoke_payload), flush=True)
+        return
+
+    if args.construct_single_regression_context:
+        construct_and_consume_single_regression_context(
+            args.output, launch, manifest, deadline_spec=deadline_spec
+        )
         return
 
     run_gpu_wave(args.output, launch, manifest, deadline_spec=deadline_spec)
