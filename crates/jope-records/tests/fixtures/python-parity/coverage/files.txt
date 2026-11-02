@@ -1705,6 +1705,11 @@ crates/jope-pipeline/src/prepare.rs
 crates/jope-pipeline/src/prepared_data.rs
 crates/jope-pipeline/src/receipt.rs
 crates/jope-pipeline/src/run.rs
+crates/jope-pipeline/src/run/tests/admission.rs
+crates/jope-pipeline/src/run/tests/behavior.rs
+crates/jope-pipeline/src/run/tests/boundaries.rs
+crates/jope-pipeline/src/run/tests/parallel.rs
+crates/jope-pipeline/src/run/tests/runs.rs
 crates/jope-pipeline/src/search.rs
 crates/jope-pipeline/src/search_context.rs
 crates/jope-pipeline/src/search_plan.rs
