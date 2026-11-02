@@ -122,9 +122,10 @@ struct Args {
 
 impl Args {
     fn state(&self) -> PathBuf {
-        self.state_file
-            .clone()
-            .unwrap_or_else(|| self.root.join("ops/utilization-supervisor-state.v1.json"))
+        match &self.state_file {
+            Some(path) => path.clone(),
+            None => self.root.join("ops/utilization-supervisor-state.v1.json"),
+        }
     }
     fn status(&self) -> PathBuf {
         self.status_file
