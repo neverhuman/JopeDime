@@ -44,7 +44,7 @@ use crate::canon::{canonical_sha256, sha256_hex};
 use crate::clover::expansion::{measured_tilt_leaf_log_probs, MeasuredTiltPolicyConfig};
 use crate::retention::distilled::{
     self, distill_selfplay_observations, distilled_rows_to_measurement_rows, score_direction,
-    Outcome, ScoreDirection, SelfPlayDistillObservation, SelfPlayDistillSpec, SplitRole,
+    DistilledOutcome, ScoreDirection, SelfPlayDistillObservation, SelfPlayDistillSpec, SplitRole,
 };
 use crate::support::decomposed_support_kl;
 use anyhow::{ensure, Context, Result};
@@ -228,7 +228,7 @@ pub fn known_scores() -> BTreeSet<String> {
 /// Builds per-outer-fold cross-family S3 `gp_distilled/v1` program prior statistics.
 ///
 /// A row from `s3_rows` is admitted into outer fold `k`'s prior if and only if:
-/// 1. `row.split_role == SplitRole::Train` and `row.outcome == Outcome::Ok`, and
+/// 1. `row.split_role == SplitRole::Train` and `row.outcome == DistilledOutcome::Ok`, and
 /// 2. Its `parent_id` can be resolved unambiguously from `pools` (either directly via
 ///    `row.context_sha256` matching a pool, or via `row.dataset` mapping to a unique `parent_id`
 ///    among `pools`) AND that `parent_id` belongs to outer training split `fold != k`.
@@ -266,7 +266,7 @@ pub fn build_fold_s3_priors(
     let mut priors = vec![ExternalProgramPrior::default(); cfg.folds];
     let mut counts = vec![0usize; cfg.folds];
     for r in s3_rows {
-        if r.split_role != SplitRole::Train || r.outcome != Outcome::Ok {
+        if r.split_role != SplitRole::Train || r.outcome != DistilledOutcome::Ok {
             continue;
         }
         let resolved: Option<(&str, usize)> = r
@@ -615,10 +615,10 @@ pub fn run_distilled_flywheel_with_s3_prior(
                                 }
                                 ScoreDirection::HigherIsBetter => q,
                             };
-                            (Outcome::Ok, Some(s))
+                            (DistilledOutcome::Ok, Some(s))
                         }
-                        (Status::Timeout, _) => (Outcome::Timeout, None),
-                        _ => (Outcome::Failed, None),
+                        (Status::Timeout, _) => (DistilledOutcome::Timeout, None),
+                        _ => (DistilledOutcome::Failed, None),
                     };
                     let key = format!(
                         "shadow-pools/round-{r:02}/fold-{k}/{}/{}.json",

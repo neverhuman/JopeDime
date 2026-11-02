@@ -61,34 +61,37 @@ impl SplitRole {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-/// `Outcome` is an enum for the outcome contract in this module: gpdistilled/v1: the permanent (T0) table that keeps every GP result's training signal after its raw bodies are packed and archived (strategy §8.3).
-pub enum Outcome {
-    /// The `Ok` case of `Outcome`.
+/// `DistilledOutcome` is an enum for the outcome contract in this module: gpdistilled/v1: the permanent (T0) table that keeps every GP result's training signal after its raw bodies are packed and archived (strategy §8.3).
+pub enum DistilledOutcome {
+    /// The `Ok` case of `DistilledOutcome`.
     Ok,
-    /// The `Failed` case of `Outcome`.
+    /// The `Failed` case of `DistilledOutcome`.
     Failed,
-    /// The `Timeout` case of `Outcome`.
+    /// The `Timeout` case of `DistilledOutcome`.
     Timeout,
     /// Only part of the outcome mass is supported by measured outcomes.
     Partial,
 }
 
-impl Outcome {
+/// Compatibility name for callers of the distilled outcome contract.
+pub type Outcome = DistilledOutcome;
+
+impl DistilledOutcome {
     /// Returns the stable string representation of this value.
     pub fn as_str(self) -> &'static str {
         match self {
-            Outcome::Ok => "ok",
-            Outcome::Failed => "failed",
-            Outcome::Timeout => "timeout",
-            Outcome::Partial => "partial",
+            DistilledOutcome::Ok => "ok",
+            DistilledOutcome::Failed => "failed",
+            DistilledOutcome::Timeout => "timeout",
+            DistilledOutcome::Partial => "partial",
         }
     }
-    fn parse(s: &str) -> Result<Outcome> {
+    fn parse(s: &str) -> Result<DistilledOutcome> {
         Ok(match s {
-            "ok" => Outcome::Ok,
-            "failed" => Outcome::Failed,
-            "timeout" => Outcome::Timeout,
-            "partial" => Outcome::Partial,
+            "ok" => DistilledOutcome::Ok,
+            "failed" => DistilledOutcome::Failed,
+            "timeout" => DistilledOutcome::Timeout,
+            "partial" => DistilledOutcome::Partial,
             _ => bail!("unknown outcome {s:?}"),
         })
     }
@@ -109,8 +112,8 @@ pub struct DistilledRow {
     pub fold: Option<i64>,
     /// Split role recorded for this distilled row.
     pub split_role: SplitRole,
-    /// Outcome recorded for this distilled row.
-    pub outcome: Outcome,
+    /// Distilled outcome recorded for this row.
+    pub outcome: DistilledOutcome,
     /// Measured score for this outcome; absence denotes a failed draw.
     pub score: Option<f64>,
     /// Optional score name value; `None` means it is not available.
@@ -221,7 +224,7 @@ pub fn validate(r: &DistilledRow, known_scores: &BTreeSet<String>) -> Result<()>
                 "unknown score identity {name:?}"
             );
             ensure!(
-                r.outcome == Outcome::Ok,
+                r.outcome == DistilledOutcome::Ok,
                 "a scored row must have outcome ok, not {}",
                 r.outcome.as_str()
             );
@@ -388,7 +391,7 @@ pub fn read(bytes: &[u8], known_scores: &BTreeSet<String>) -> Result<Vec<Distill
             context_sha256: st(3)?,
             fold: int(4)?,
             split_role: SplitRole::parse(&req(5)?)?,
-            outcome: Outcome::parse(&req(6)?)?,
+            outcome: DistilledOutcome::parse(&req(6)?)?,
             score: dbl(7)?,
             score_name: st(8)?,
             rank_ctx: int(9)?,
@@ -463,10 +466,10 @@ pub struct SelfPlayDistillObservation {
     pub program_sha: String,
     /// Optional program value; `None` means it is not available.
     pub program: Option<String>,
-    /// Outcome recorded for this self play distill observation.
-    pub outcome: Outcome,
+    /// Distilled outcome recorded for this self play distill observation.
+    pub outcome: DistilledOutcome,
     /// Measured score under `spec.score_name`, oriented according to
-    /// [`score_direction`]`(&spec.score_name)` (required iff `outcome == Outcome::Ok`).
+    /// [`score_direction`]`(&spec.score_name)` (required iff `outcome == DistilledOutcome::Ok`).
     pub score: Option<f64>,
     /// Seed provenance label (e.g. `"ordinary_gp"`, `"bootstrap_warm_start"`, `"selfplay_archive_r1"`).
     pub seed_packet: Option<String>,
@@ -537,11 +540,13 @@ pub fn distill_selfplay_observations(
     let mut ok_indices: Vec<usize> = Vec::new();
     for (idx, obs) in observations.iter().enumerate() {
         match (obs.outcome, obs.score) {
-            (Outcome::Ok, Some(s)) => {
+            (DistilledOutcome::Ok, Some(s)) => {
                 ensure!(s.is_finite(), "observation {idx}: non-finite score");
                 ok_indices.push(idx);
             }
-            (Outcome::Ok, None) => bail!("observation {idx}: outcome ok requires finite score"),
+            (DistilledOutcome::Ok, None) => {
+                bail!("observation {idx}: outcome ok requires finite score")
+            }
             (_, Some(_)) => {
                 bail!("observation {idx}: failed/timeout observation must not carry score")
             }
@@ -693,7 +698,7 @@ pub fn distilled_rows_to_measurement_rows(
             }
         };
         let (status, q) = match r.outcome {
-            Outcome::Ok => {
+            DistilledOutcome::Ok => {
                 let raw_score = r
                     .score
                     .with_context(|| format!("row {idx}: complete row missing score"))?;
@@ -709,8 +714,10 @@ pub fn distilled_rows_to_measurement_rows(
                 };
                 (crate::pools::pool::Status::Complete, Some(oriented_q))
             }
-            Outcome::Failed | Outcome::Partial => (crate::pools::pool::Status::ProgramFailed, None),
-            Outcome::Timeout => (crate::pools::pool::Status::Timeout, None),
+            DistilledOutcome::Failed | DistilledOutcome::Partial => {
+                (crate::pools::pool::Status::ProgramFailed, None)
+            }
+            DistilledOutcome::Timeout => (crate::pools::pool::Status::Timeout, None),
         };
         let tokens = r.program.as_deref().map(program_expr_tokens);
         out.push(crate::pools::pool::MeasurementRow {
@@ -878,7 +885,7 @@ pub fn distill_gp_results_index_with_stats(
             .push(SelfPlayDistillObservation {
                 program_sha: prog_sha.to_owned(),
                 program,
-                outcome: Outcome::Ok,
+                outcome: DistilledOutcome::Ok,
                 score: Some(score),
                 seed_packet: grain,
                 source_key: key.to_owned(),
