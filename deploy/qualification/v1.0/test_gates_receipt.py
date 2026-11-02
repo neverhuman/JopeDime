@@ -620,5 +620,210 @@ class M3WaiverTests(unittest.TestCase):
                 self.assemble()
 
 
+class CandidateVariantAssemblyTests(unittest.TestCase):
+    """Synthetic signed/sealed metadata controls; never candidate qualification."""
+
+    def setUp(self):
+        self.fixture = ScaffoldAssemblyTests()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        f = self.fixture
+        self.fused = f.root / "fused-fixture.bin"
+        self.fused.write_bytes(b"synthetic fused bytes, distinct from full")
+        self.fused_digest = hashlib.sha256(self.fused.read_bytes()).hexdigest()
+        rows = []
+        for identity, artifact, profile in [
+            ("full-linux-x86_64", f.artifact, "full"),
+            ("fused-cpu-linux-x86_64", self.fused, "fused-cpu"),
+        ]:
+            digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+            seal = f.root / (identity + "-seal.json")
+            seal.write_text(
+                json.dumps(
+                    {
+                        "schema": "jope.rel07.rc2-sealed-variant/v1",
+                        "id": identity,
+                        "source_sha": f.source,
+                        "sha256": digest,
+                        "verify": {"ok": True, "report": {"file_sha256": digest}},
+                    }
+                )
+            )
+            rows.append(
+                {
+                    "id": identity,
+                    "profile": profile,
+                    "path": str(artifact),
+                    "source_sha": f.source,
+                    "sha256": digest,
+                    "bytes": artifact.stat().st_size,
+                    "seal_verify_receipt": str(seal),
+                    "seal_verify_receipt_sha256": hashlib.sha256(
+                        seal.read_bytes()
+                    ).hexdigest(),
+                    "signature_receipts": [{"receipt": {"verify": "PASS"}}],
+                }
+            )
+        self.manifest = f.root / "candidate-manifest.json"
+        self.candidate = {
+            "schema": "jope.rel07.rc2-manifest/v1",
+            "source_sha": f.source,
+            "release_candidate": True,
+            "qualified": False,
+            "artifacts": rows,
+        }
+        self.save_manifest()
+        d2 = f.root / "D2.json"
+        result = json.loads(d2.read_text())
+        result["artifact_sha256"] = self.fused_digest
+        d2.write_text(json.dumps(result))
+
+    def save_manifest(self):
+        self.manifest.write_text(json.dumps(self.candidate))
+
+    def assemble(self):
+        return self.fixture.assemble(candidate_manifest=self.manifest)
+
+    def test_same_candidate_preserves_primary_and_raw_fused_digests(self):
+        result = self.assemble()
+        self.assertEqual(result["artifact_sha256"], self.fixture.digest)
+        for row in result["gates"]:
+            expected = self.fused_digest if row["id"] == "D2" else self.fixture.digest
+            self.assertEqual(row["artifact_sha256"], expected)
+        binding = result["gate_artifacts"]["D2"]
+        self.assertEqual(binding["sha256"], self.fused_digest)
+        self.assertEqual(
+            binding["candidate_manifest_sha256"],
+            hashlib.sha256(self.manifest.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(
+            binding["seal_receipt_sha256"],
+            self.candidate["artifacts"][1]["seal_verify_receipt_sha256"],
+        )
+
+    def test_fused_digest_without_explicit_candidate_manifest_is_refused(self):
+        with self.assertRaises(ValueError):
+            self.fixture.assemble()
+
+    def test_primary_digest_cannot_replace_d2_or_another_gate_use_fused(self):
+        for gate, digest in [("D2", self.fixture.digest), ("M1", self.fused_digest)]:
+            with self.subTest(gate=gate):
+                path = self.fixture.root / (gate + ".json")
+                before = path.read_bytes()
+                result = json.loads(before)
+                result["artifact_sha256"] = digest
+                path.write_text(json.dumps(result))
+                try:
+                    with self.assertRaises(ValueError):
+                        self.assemble()
+                finally:
+                    path.write_bytes(before)
+
+    def test_missing_duplicate_wrong_profile_or_source_variant_is_refused(self):
+        original = json.loads(json.dumps(self.candidate))
+        variants = []
+        missing = json.loads(json.dumps(original))
+        missing["artifacts"].pop()
+        variants.append(missing)
+        duplicate = json.loads(json.dumps(original))
+        duplicate["artifacts"].append(duplicate["artifacts"][1])
+        variants.append(duplicate)
+        wrong_profile = json.loads(json.dumps(original))
+        wrong_profile["artifacts"][1]["profile"] = "full"
+        variants.append(wrong_profile)
+        wrong_source = json.loads(json.dumps(original))
+        wrong_source["artifacts"][1]["source_sha"] = "b" * 40
+        variants.append(wrong_source)
+        for value in variants:
+            with self.subTest(value=value):
+                self.candidate = value
+                self.save_manifest()
+                with self.assertRaises(ValueError):
+                    self.assemble()
+        self.candidate = original
+        self.save_manifest()
+
+    def test_candidate_source_bytes_size_or_seal_pin_mismatch_is_refused(self):
+        changes = [
+            (None, "source_sha", "b" * 40),
+            (0, "sha256", "0" * 64),
+            (1, "bytes", 0),
+            (1, "seal_verify_receipt_sha256", "0" * 64),
+        ]
+        for index, key, value in changes:
+            with self.subTest(index=index, key=key):
+                target = (
+                    self.candidate
+                    if index is None
+                    else self.candidate["artifacts"][index]
+                )
+                before = target[key]
+                target[key] = value
+                self.save_manifest()
+                try:
+                    with self.assertRaises(ValueError):
+                        self.assemble()
+                finally:
+                    target[key] = before
+                    self.save_manifest()
+
+    def test_nonpassing_or_missing_signature_seal_is_refused(self):
+        row = self.candidate["artifacts"][1]
+        for signatures in [[], [{"receipt": {"verify": "FAIL"}}]]:
+            row["signature_receipts"] = signatures
+            self.save_manifest()
+            with self.assertRaises(ValueError):
+                self.assemble()
+        row["signature_receipts"] = [{"receipt": {"verify": "PASS"}}]
+        self.save_manifest()
+        seal = Path(row["seal_verify_receipt"])
+        value = json.loads(seal.read_text())
+        value["verify"]["ok"] = False
+        seal.write_text(json.dumps(value))
+        with self.assertRaises(ValueError):
+            self.assemble()
+
+    def test_binding_files_and_both_artifacts_cannot_change_during_assembly(self):
+        original_read = runner._assembly_json
+        for target in [
+            self.manifest,
+            Path(self.candidate["artifacts"][1]["seal_verify_receipt"]),
+            self.fixture.artifact,
+            self.fused,
+        ]:
+            before = target.read_bytes()
+            changed = False
+
+            def mutate(path):
+                nonlocal changed
+                value = original_read(path)
+                if path == self.fixture.paths[-1] and not changed:
+                    target.write_bytes(before + b" ")
+                    changed = True
+                return value
+
+            with (
+                self.subTest(target=target),
+                patch.object(runner, "_assembly_json", side_effect=mutate),
+            ):
+                try:
+                    with self.assertRaises(ValueError):
+                        self.assemble()
+                finally:
+                    target.write_bytes(before)
+
+    def test_cli_accepts_explicit_manifest_and_preserves_fused_hash(self):
+        argv = self.fixture.argv() + ["--candidate-manifest", str(self.manifest)]
+        result = subprocess.run(argv, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        receipt = json.loads(self.fixture.output.read_text())
+        self.assertEqual(
+            next(row for row in receipt["gates"] if row["id"] == "D2")[
+                "artifact_sha256"
+            ],
+            self.fused_digest,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

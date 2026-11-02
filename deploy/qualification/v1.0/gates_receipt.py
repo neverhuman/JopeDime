@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import re
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -239,6 +240,41 @@ def _m3_waiver(result: dict, ruling: Path, release_version: str) -> dict:
     }
 
 
+def _assembly_candidate(artifact: Path, manifest: Path, source_sha: str):
+    """Reuse the maintained controller's same-candidate full/fused admission."""
+    value, expected = _assembly_json(manifest)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        controller = runpy.run_path(str(Path(__file__).with_name("release-gates")))
+    finally:
+        sys.path.pop(0)
+    candidate = controller["_candidate_record"](artifact, manifest)
+    if (
+        candidate["source_sha"] != source_sha
+        or candidate["manifest_sha256"] != expected
+    ):
+        raise ValueError("candidate manifest source/content differs from assembly")
+    if candidate["d2_artifact"] is None:
+        raise ValueError(candidate["d2_blocked_reason"])
+    inputs = [(manifest, expected)]
+    for record, identity in [
+        (candidate, "full-linux-x86_64"),
+        (candidate["d2_artifact"], "fused-cpu-linux-x86_64"),
+    ]:
+        row = next(
+            item
+            for item in value["artifacts"]
+            if isinstance(item, dict) and item.get("id") == identity
+        )
+        if row.get("seal_verify_receipt_sha256") != record["seal_receipt_sha256"]:
+            raise ValueError("candidate manifest seal receipt pin differs: " + identity)
+        path = Path(record["seal_receipt_path"])
+        if _assembly_json(path)[1] != record["seal_receipt_sha256"]:
+            raise ValueError("candidate seal receipt changed during admission")
+        inputs.append((path, record["seal_receipt_sha256"]))
+    return candidate, controller["verify_candidate_variant"], inputs
+
+
 def from_scaffold(
     scaffold_path: Path,
     receipt_paths: list[Path],
@@ -247,6 +283,7 @@ def from_scaffold(
     *,
     m3_waiver_ruling: Path | None = None,
     release_version: str | None = None,
+    candidate_manifest: Path | None = None,
 ) -> dict:
     """Assemble existing PASS receipts; never execute the scaffold or sign bytes."""
     if not isinstance(source_sha, str) or not HEX_COMMIT.fullmatch(source_sha):
@@ -287,16 +324,27 @@ def from_scaffold(
     rows = {}
     waiver = None
     inputs = [(scaffold_path, scaffold_sha)]
+    candidate = None
+    if candidate_manifest is not None:
+        candidate, verify_variant, bindings = _assembly_candidate(
+            artifact, candidate_manifest, source_sha
+        )
+        inputs.extend(bindings)
     count_keys = {"collected", "executed", "passed", "failed", "skipped", "excluded"}
     for path in receipt_paths:
         result, receipt_sha = _assembly_json(path)
         gate = result.get("id")
         if not isinstance(gate, str) or gate not in ids or gate in rows:
             raise ValueError("unknown or duplicate receipt gate")
+        gate_digest = (
+            candidate["d2_artifact"]["sha256"]
+            if gate == "D2" and candidate is not None
+            else digest
+        )
         if (
             result.get("schema") != "jope.rel07.gate-execution/v1"
             or result.get("source_sha") != source_sha
-            or result.get("artifact_sha256") != digest
+            or result.get("artifact_sha256") != gate_digest
         ):
             raise ValueError("receipt schema/source/artifact does not match assembly")
         counts = result.get("counts")
@@ -317,7 +365,7 @@ def from_scaffold(
         rows[gate] = {
             "id": gate,
             "status": result["status"],
-            "artifact_sha256": digest,
+            "artifact_sha256": gate_digest,
             "evidence": (
                 f"receipt={path.absolute()}; receipt_sha256={receipt_sha}; "
                 f"source_sha={source_sha}; scaffold={scaffold_path.absolute()}; "
@@ -332,12 +380,26 @@ def from_scaffold(
             raise ValueError("assembly input changed: " + str(path))
     if _assembly_artifact(artifact) != digest:
         raise ValueError("artifact changed during assembly")
+    if candidate is not None:
+        verify_variant(candidate, source_sha)
+        verify_variant(candidate["d2_artifact"], source_sha)
     if waiver and _assembly_artifact(m3_waiver_ruling) != waiver["ruling_sha256"]:
         raise ValueError("M3 waiver ruling changed during assembly")
     assembled = {
         "artifact_sha256": digest,
         "gates": [rows[gate] for gate in RELEASE_GATE_IDS],
     }
+    if candidate is not None:
+        d2 = candidate["d2_artifact"]
+        assembled["gate_artifacts"] = {
+            "D2": {
+                "path": d2["path"],
+                "sha256": d2["sha256"],
+                "source_sha": source_sha,
+                "candidate_manifest_sha256": d2["manifest_sha256"],
+                "seal_receipt_sha256": d2["seal_receipt_sha256"],
+            }
+        }
     if waiver:
         assembled.update(release_version=release_version, waivers=[waiver])
     return assembled
@@ -358,6 +420,7 @@ def main() -> int:
         "--source-sha", help="exact source shared by all 28 gate receipts"
     )
     parser.add_argument("--artifact", type=Path)
+    parser.add_argument("--candidate-manifest", type=Path)
     parser.add_argument("--m3-waiver-ruling", type=Path)
     parser.add_argument("--release-version")
     parser.add_argument("--output", type=Path, required=True)
@@ -373,12 +436,14 @@ def main() -> int:
                 args.source_sha,
                 m3_waiver_ruling=args.m3_waiver_ruling,
                 release_version=args.release_version,
+                candidate_manifest=args.candidate_manifest,
             )
         else:
             if (
                 args.gate_receipt
                 or args.source_sha is not None
                 or args.m3_waiver_ruling
+                or args.candidate_manifest
                 or args.release_version
             ):
                 raise ValueError("--gate-receipt and --source-sha require --scaffold")
