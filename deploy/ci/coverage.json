@@ -1338,7 +1338,7 @@
       "lanes": [
         "paper"
       ],
-      "scope": "Call the reusable publication build through existing ci.yml admission; aggregate requires its successful current-source PDF/check evidence."
+      "scope": "Run archival, citation, derived-table and refusal source checks without TeX; retain exact-source receipt and check output. PDF typesetting is an explicit publication command, outside PR and full-main CI."
     },
     "job:.github/workflows/ci.yml/python": {
       "discovery": {
@@ -1480,7 +1480,7 @@
       "lanes": [
         "paper"
       ],
-      "scope": "Call the reusable publication build through existing full-main.yml admission; aggregate requires its successful current-source PDF/check evidence."
+      "scope": "Run archival, citation, derived-table and refusal source checks without TeX; retain exact-source receipt and check output. PDF typesetting is an explicit publication command, outside PR and full-main CI."
     },
     "job:.github/workflows/go.yml/go-parity": {
       "discovery": {
@@ -1540,7 +1540,7 @@
       "lanes": [
         "paper"
       ],
-      "scope": "Build three InnovationZero PDFs after archival/citation/import checks and negative controls; retain exact-source receipt, PDFs and logs using existing evidence transport. Execution through existing admitted ci.yml/full-main.yml callers; success requires retained current-source build evidence."
+      "scope": "Run archival, citation, derived-table and refusal source checks without TeX; retain exact-source receipt and check output. PDF typesetting is an explicit publication command, outside PR and full-main CI."
     },
     "job:.github/workflows/release.yml/release": {
       "discovery": {
@@ -14387,7 +14387,7 @@
       "lanes": [
         "paper"
       ],
-      "scope": "Reusable publication source checks and PDF build on all PR/manual CI and trusted-main full-main pushes/manual runs; does not execute model training, benchmark entrants, or production runtime."
+      "scope": "Reusable publication source/refusal checks without TeX or PDF rendering on PR/manual CI and trusted-main full-main runs; publication PDF generation remains an explicit local command."
     },
     "workflow:.github/workflows/release.yml": {
       "discovery": {
@@ -15844,26 +15844,20 @@
         "-C",
         "docs/paper/innovationzero",
         "check",
-        "self-test",
-        "pdf"
+        "self-test"
       ],
       "environment": {
-        "JOPE_LOCAL_EVIDENCE_ROOT": "runner temporary publication evidence; existing Actions cache transport is evictable",
-        "SOURCE_DATE_EPOCH": "paper build default or explicit reproducible override"
+        "JOPE_LOCAL_EVIDENCE_ROOT": "runner temporary publication evidence; existing Actions cache transport is evictable"
       },
       "evidence": [
         "source/check/refusal-case output in command.log",
-        "three PDFs with embedded fonts and resolved references",
-        "three TeX logs and build-environment.txt",
         "jope.ci-receipt/v1 with source/checkout SHA and per-file SHA256",
         "publication source/event/checkout identities and strict reviewed-source tree equality"
       ],
       "feature_selection": "not-applicable",
       "inputs": [
         "exact full Git source SHA",
-        "docs/paper/innovationzero source, bibliography, figures and hash-pinned archive",
-        "latexmk, pdfLaTeX, XeLaTeX, BibTeX and Poppler versions recorded by build",
-        "deploy/ci/publication-deps.lock.json; verified official Ubuntu packages, task-local XeLaTeX format"
+        "docs/paper/innovationzero source, bibliography, figures and hash-pinned archive"
       ],
       "path_applicability": "All ci.yml PR/manual and trusted-main full-main.yml runs through reusable paper.yml; native event checkout must have the same tree as the reviewed source head",
       "requires_nonzero_tests": false,
