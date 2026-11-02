@@ -294,7 +294,7 @@ pub fn compact_params(stage: &Stage) -> Result<(String, Vec<String>, Option<Stri
     }
     if let Some(v) = str_param(stage, "blend") {
         if v != "nnls" {
-            bail!("portfolio: blend must be nnls (caruana is not implemented in v1)");
+            bail!("portfolio: blend must be nnls (supported value: nnls)");
         }
     } else if stage.params.contains_key("blend") {
         bail!("portfolio: blend must be nnls");
