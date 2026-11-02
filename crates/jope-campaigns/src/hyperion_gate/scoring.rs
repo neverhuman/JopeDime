@@ -104,7 +104,7 @@ pub(super) fn encode_full_train(
     let sidecars = output_artifacts(&primary)?;
     for path in [&outputs[1].1, &outputs[3].1] {
         fs::remove_file(path)
-            .map_err(|error| format!("remove unused full-train shadow output: {error}"))?;
+            .map_err(|error| format!("remove unconsumed full-train shadow output: {error}"))?;
     }
     let receipt = FullTrainEncodingCacheV2 {
         schema: FullTrainEncodingCacheV2::SCHEMA.into(),
