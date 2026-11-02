@@ -88,9 +88,24 @@ def _isolate_recorder_session():
     owner_session = os.getsid(os.getppid())
     if os.getsid(0) == pid:
         return owner_session, None
-    if os.getpgrp() == pid:
+    if os.getsid(0) != pid:
         child = os.fork()
         if child:
+
+            def forward(number, _frame):
+                try:
+                    os.kill(child, number)
+                except ProcessLookupError:
+                    pass
+
+            signal.signal(signal.SIGINT, forward)
+            signal.signal(signal.SIGTERM, forward)
+            signal.signal(signal.SIGHUP, signal.SIG_IGN)
+            for fd in (0, 1):
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
             while True:
                 try:
                     _waited, status = os.waitpid(child, 0)
@@ -108,6 +123,23 @@ def _isolate_recorder_session():
         "recorder session isolation failed",
     )
     return owner_session, None
+
+
+def _process_group_has_live_members(group):
+    """Return whether /proc contains a non-zombie member of this process group."""
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            fields = (
+                (entry / "stat").read_text(encoding="ascii").rsplit(")", 1)[1].split()
+            )
+            state, process_group = fields[0], int(fields[2])
+        except (FileNotFoundError, PermissionError, ValueError, IndexError):
+            continue
+        if process_group == group and state not in {"Z", "X"}:
+            return True
+    return False
 
 
 def record(command, directory, seconds, max_bytes, env_allow=()):
@@ -207,6 +239,7 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
                 executable_pin = digest(executable)
             for sig in (signal.SIGINT, signal.SIGTERM):
                 old_handlers[sig] = signal.signal(sig, interrupt)
+            old_handlers[signal.SIGHUP] = signal.signal(signal.SIGHUP, signal.SIG_IGN)
             # Publish ownership before detaching, so timeout cleanup covers startup too.
             own_pid = os.getpid()
             start_ticks = int(
@@ -380,7 +413,9 @@ def record(command, directory, seconds, max_bytes, env_allow=()):
                         os.killpg(child.pid, sig)
                     except ProcessLookupError:
                         pass
-                    if sig == signal.SIGTERM:
+                    if sig == signal.SIGTERM and _process_group_has_live_members(
+                        child.pid
+                    ):
                         time.sleep(0.05)
                 try:
                     server_exit = child.wait(timeout=2)
@@ -484,6 +519,57 @@ def self_test():
         def receipt(self):
             return json.loads((self.out / "capture.json").read_text())
 
+        def test_non_session_leader_wrapper_sigkill_does_not_kill_recorder(self):
+            import selectors
+
+            code = (
+                f"import os,sys,time;sys.stdin.buffer.readline();os.write(1,{reply!r});"
+                "sys.stdin.buffer.read();time.sleep(0.3)"
+            )
+            args = [
+                sys.executable,
+                "-B",
+                __file__,
+                "--out-dir",
+                str(self.out),
+                "--seconds",
+                "2",
+                "--",
+                sys.executable,
+                "-B",
+                "-c",
+                code,
+            ]
+            process = subprocess.Popen(
+                args,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            self.addCleanup(lambda: process.poll() is None and process.kill())
+            process.stdin.write(request)
+            process.stdin.flush()
+            selector = selectors.DefaultSelector()
+            self.addCleanup(selector.close)
+            selector.register(process.stdout, selectors.EVENT_READ)
+            self.assertTrue(selector.select(2), "recorder did not relay server reply")
+            self.assertEqual(process.stdout.readline(), reply)
+            recorder = json.loads((self.out / "recorder.json").read_text())
+            self.assertNotEqual(recorder["pid"], process.pid)
+            process.stdin.close()
+            os.kill(process.pid, signal.SIGKILL)
+            process.wait(timeout=2)
+            deadline = time.monotonic() + 3
+            while (
+                not (self.out / "capture.json").exists() and time.monotonic() < deadline
+            ):
+                time.sleep(0.01)
+            self.assertTrue((self.out / "capture.json").exists())
+            receipt = self.receipt()
+            self.assertTrue(receipt["complete"])
+            self.assertEqual(receipt["server_exit_code"], 0)
+            self.assertEqual(receipt["relay_exit_code"], 0)
+
         def test_exact_bytes_stderr_private_files_and_pure_wire(self):
             code = (
                 f'import os,sys,time;sys.stdin.buffer.readline();os.write(2,b"diagnostic\\n");'
@@ -551,7 +637,7 @@ def self_test():
 
         def test_normal_exit_descendant_group_is_removed(self):
             code = 'import subprocess,sys; p=subprocess.Popen([sys.executable,"-c","import time;time.sleep(60)"]);print(p.pid,file=sys.stderr,flush=True)'
-            result = self.run_capture(code, b"", "--seconds", "0.2")
+            result = self.run_capture(code, b"", "--seconds", "2")
             pid = int((self.out / "server.stderr").read_text().strip())
             state = Path(f"/proc/{pid}/stat")
             self.assertTrue(not state.exists() or state.read_text().split()[2] == "Z")
