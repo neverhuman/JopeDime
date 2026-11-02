@@ -9,14 +9,17 @@ pub const MAX_CORPUS_BYTES: u64 = 10 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Task {
+pub enum CliTask {
     Binary,
     Regression,
     TimeSeries,
     Multiclass,
 }
 
-impl Task {
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Task = CliTask;
+
+impl CliTask {
     pub const ALL: [Self; 4] = [
         Self::Binary,
         Self::Regression,

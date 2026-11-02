@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 /// A benchmarked task. Spelled as the dataset catalog spells it.
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "snake_case")]
-pub enum Task {
+pub enum BenchmarkTask {
     /// Numeric target; the frozen kernel's heads.
     Regression,
     /// 0/1 target; the schema-bound v3 heads that produce probabilities.
@@ -18,7 +18,10 @@ pub enum Task {
     Multiclass,
 }
 
-impl Task {
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Task = BenchmarkTask;
+
+impl BenchmarkTask {
     /// Every benchmarked task.
     pub const ALL: [Task; 3] = [Task::Regression, Task::Binary, Task::Multiclass];
 

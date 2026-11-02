@@ -6,12 +6,15 @@ use std::path::PathBuf;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
 #[serde(rename_all = "lowercase")]
-pub enum LandmarkMode {
+pub enum RuntimeLandmarkMode {
     None,
     Fast,
     Progressive,
     Full,
 }
+
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type LandmarkMode = RuntimeLandmarkMode;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]

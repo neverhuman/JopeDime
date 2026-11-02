@@ -18,12 +18,15 @@ pub const TASK_SEMANTICS_SHA256: &str =
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Task {
+pub enum CampaignTask {
     Binary,
     Regression,
     Timeseries,
     Multiclass,
 }
+
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Task = CampaignTask;
 
 /// Compatibility name for frozen V1/V2 call sites. This is not a second enum.
 pub type TaskKind = Task;
@@ -213,7 +216,7 @@ pub const TASK_SEMANTICS: [TaskSemantics; 4] = [
     },
 ];
 
-impl Task {
+impl CampaignTask {
     /// Historical operational iteration order. It is deliberately frozen so
     /// introducing the canonical display order cannot alter V1/V2 replay.
     pub const ALL: [Task; 4] = [

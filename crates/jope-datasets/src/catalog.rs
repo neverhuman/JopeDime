@@ -20,7 +20,7 @@ pub const COLLECTION_SCHEMA_JSON: &str =
     Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
-pub enum Task {
+pub enum DatasetTask {
     Regression,
     Binary,
     Multiclass,
@@ -28,7 +28,10 @@ pub enum Task {
     Timeseries,
 }
 
-impl Task {
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Task = DatasetTask;
+
+impl DatasetTask {
     pub const ALL: [Task; 5] = [
         Task::Regression,
         Task::Binary,

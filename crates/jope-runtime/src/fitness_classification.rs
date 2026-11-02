@@ -37,7 +37,7 @@ type Result<T> = std::result::Result<T, FitnessError>;
 /// threshold metrics use the v1 default of 0.5. Cost-matrix loss accepts the top-level matrix.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Metric {
+pub enum ClassificationMetric {
     Logloss,
     Brier,
     RocAuc,
@@ -46,6 +46,9 @@ pub enum Metric {
     BalancedAccuracy,
     CostMatrixLoss,
 }
+
+/// Compatibility path; the concrete enum has a domain-specific name.
+pub type Metric = ClassificationMetric;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
