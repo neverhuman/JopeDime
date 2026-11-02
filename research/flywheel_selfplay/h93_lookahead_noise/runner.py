@@ -37,6 +37,12 @@ def load(name, path):
     return module
 
 
+_h97_runner = load(
+    "h93_shared_h97_runner", HERE.parent / "h97_reg_ema" / "runner.py"
+)
+_h97_runner.SEEDS = SEEDS
+pseudoreplication = _h97_runner.pseudoreplication
+
 science = load("h93_h76_science", HERE.parent / "h76_sam_steps/runner.py")
 h59, h55 = science.h59, science.h55
 batch_plan = science.batch_plan
@@ -169,36 +175,6 @@ def top4_overlap(candidate, reference):
             raise RuntimeError("H93 top-four diagnostic requires four unique indices")
         scores.append(len(set(chosen) & set(base)) / 4.0)
     return float(np.mean(scores))
-
-
-def pseudoreplication(contexts, families, scalars):
-    """Match H90's exact seed-vector grouping, including identical scalar utilities."""
-
-    def groups(values):
-        values = np.asarray(values, dtype=np.float64)
-        if values.shape[0] != len(SEEDS) or not np.isfinite(values).all():
-            raise ValueError("three complete finite seed vectors required")
-        result = []
-        for index, seed in enumerate(SEEDS):
-            for group in result:
-                if np.array_equal(values[index], values[SEEDS.index(group[0])]):
-                    group.append(seed)
-                    break
-            else:
-                result.append([seed])
-        return result
-
-    result = {
-        "context_utility_groups": groups(contexts),
-        "family_utility_groups": groups(families),
-        "scalar_utility_groups": groups(scalars),
-    }
-    result["identical_utility_flag"] = any(
-        len(group) > 1 for grouping in result.values() for group in grouping
-    )
-    result["independent_seed_replicates_claimed"] = 0
-    result["interval_unit"] = "19 paired dev families; complete seed vectors retained"
-    return result
 
 
 def atomic_json(path, value):
