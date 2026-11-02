@@ -1,0 +1,135 @@
+{
+  "schema": "whitepaper.current-program-clock-source/v1",
+  "csv_sha256": "3190503d23afbade74225cc54c1a3f2a2470e97f4cfa501b53dbc9583209ec74",
+  "capture": {
+    "at": "2026-11-02T10:56:41.157528+00:00",
+    "rows": 20,
+    "round_window": [
+      3609,
+      3628
+    ],
+    "sources": [
+      {
+        "name": "summary.jsonl",
+        "sha256": "5a96b626b4363aaba92dc4cac4c8d5d2401313e62d88d864bfc4a529ea4b94d0",
+        "source_prefix": {
+          "name": "summary.jsonl",
+          "at": "2026-11-02T10:56:40.704348+00:00",
+          "complete_prefix_bytes": 3358654,
+          "complete_prefix_sha256": "441d9fc7580801bacec6898ad8beef2fe4b3a1b18eef29f226a87ed35fd6a2a0",
+          "stable_prefix_reread_verified": true,
+          "rows": 20,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Latest20 consecutive complete summaries and kind=promotion journal events in their round range; zero-event rounds retained; whitelisted round-level scalars only, no programs/context identifiers/feature vectors/payloads"
+      },
+      {
+        "name": "promotions.jsonl",
+        "sha256": "a8057cbd3d867fed7848bc9560e38f67a656af82d3a6614e5953df26a9c92c35",
+        "source_prefix": {
+          "name": "promotions.jsonl",
+          "at": "2026-11-02T10:56:41.121589+00:00",
+          "complete_prefix_bytes": 11335145,
+          "complete_prefix_sha256": "3e160e581a5cd23c5e416da5c6f61784a7913617e92116ee72e900dc9f375407",
+          "stable_prefix_reread_verified": true,
+          "rows": 3133,
+          "trailing_incomplete_bytes_omitted": 0
+        },
+        "selection": "Latest20 consecutive complete summaries and kind=promotion journal events in their round range; zero-event rounds retained; whitelisted round-level scalars only, no programs/context identifiers/feature vectors/payloads"
+      }
+    ],
+    "journal_counts": [
+      {
+        "round": 3609,
+        "program_events": 0
+      },
+      {
+        "round": 3610,
+        "program_events": 0
+      },
+      {
+        "round": 3611,
+        "program_events": 1
+      },
+      {
+        "round": 3612,
+        "program_events": 0
+      },
+      {
+        "round": 3613,
+        "program_events": 1
+      },
+      {
+        "round": 3614,
+        "program_events": 0
+      },
+      {
+        "round": 3615,
+        "program_events": 1
+      },
+      {
+        "round": 3616,
+        "program_events": 0
+      },
+      {
+        "round": 3617,
+        "program_events": 0
+      },
+      {
+        "round": 3618,
+        "program_events": 1
+      },
+      {
+        "round": 3619,
+        "program_events": 0
+      },
+      {
+        "round": 3620,
+        "program_events": 1
+      },
+      {
+        "round": 3621,
+        "program_events": 0
+      },
+      {
+        "round": 3622,
+        "program_events": 0
+      },
+      {
+        "round": 3623,
+        "program_events": 0
+      },
+      {
+        "round": 3624,
+        "program_events": 0
+      },
+      {
+        "round": 3625,
+        "program_events": 0
+      },
+      {
+        "round": 3626,
+        "program_events": 1
+      },
+      {
+        "round": 3627,
+        "program_events": 1
+      },
+      {
+        "round": 3628,
+        "program_events": 0
+      }
+    ],
+    "all20_summary_counts_matched": true,
+    "all20_retained_round_JSON_matched": true,
+    "program_events": 7,
+    "adapter_admissions": 0,
+    "CI_scope": {
+      "unavailable": 7
+    }
+  },
+  "definitions": "Per-round rate=3600*kind=promotion journal count/full logged round seconds. Dashed window rate=3600*sum(counts)/sum(seconds), not mean of per-round rates; clock includes all within-round work/waits.",
+  "source_binding": "Logged aggregate field interpretation only; installed source/adapter/evaluation population/normalization closure remains unqualified",
+  "scope": "Adaptive training-side program-incumbent events, distinct from adapter admissions and independent first-proposal/serving performance",
+  "reproduce": "python3 figures/scripts/make_latest_event_rates_figure.py --current-program-clock"
+}

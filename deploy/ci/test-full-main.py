@@ -484,7 +484,7 @@ class CompilerCacheTests(unittest.TestCase):
         (ROOT / 'target/tmp').mkdir(parents=True, exist_ok=True)
         self.directory = tempfile.TemporaryDirectory(dir=ROOT / 'target/tmp')
         self.addCleanup(self.directory.cleanup)
-        self.root = Path(self.directory.name)
+        self.root = Path(self.directory.name).resolve()
         self.binary = b'pinned executable'
         self.env = dict(JOPE_RUNNER_LANE='full', GITHUB_REF='refs/heads/main',
                         CARGO_INCREMENTAL='0', CARGO_TARGET_DIR=str(self.root),
