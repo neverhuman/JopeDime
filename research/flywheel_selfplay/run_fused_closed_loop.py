@@ -66,8 +66,8 @@ from dev_incumbent import (  # noqa: E402
     project_score_margins,
     proposal_plan,
     publish_checkpoint_archive,
-    retain_checkpoint_payloads,
     restart_proposal_optimizer,
+    retain_checkpoint_payloads,
     validate_admission_options,
     warm_restart_adapter,
 )
