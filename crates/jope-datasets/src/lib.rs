@@ -22,6 +22,7 @@ pub mod repo;
 pub mod schema;
 mod split_integrity_manifest;
 pub mod split_integrity_partition;
+pub mod split_integrity_manifest_builder;
 pub mod staging_disposition;
 pub mod store;
 pub mod verified_object;
