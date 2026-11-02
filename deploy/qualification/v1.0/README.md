@@ -191,3 +191,12 @@ host signing watcher requires 28 literal PASS rows and will refuse it; only
 ENG may update or adjudicate that instrument. Never convert M3 to PASS to
 satisfy that watcher. Actual source/artifact qualification and release signing
 remain separate from successful receipt assembly.
+
+For candidate-mode D2 receipts, also pass `--candidate-manifest` to the scaffold
+assembler. It reuses the maintained controller admission for the full Linux and
+fused CPU variants, checks the manifest's seal receipt pins, and rechecks both
+artifacts and binding files after assembly. The top-level artifact remains the
+primary full package; the D2 row retains its actual fused package digest and
+`gate_artifacts.D2` records the same-candidate manifest/seal binding. A fused digest
+without this explicit binding is refused. M3 raw FAIL and the v1.0.0-only waiver
+remain separate; this option does not execute gates or sign a release.
