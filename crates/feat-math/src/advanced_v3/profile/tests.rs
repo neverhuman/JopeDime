@@ -1,5 +1,3 @@
-#[cfg(test)]
-mod tests {
     use super::super::schema::ColumnSpec;
     use super::super::types::Objective;
     use super::*;
@@ -245,4 +243,3 @@ mod tests {
         )
         .is_err());
     }
-}

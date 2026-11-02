@@ -19,7 +19,7 @@ pub fn fit_legacy_numeric_bound(
     }
     let schema = DataSchema {
         columns: (0..width)
-            .map(|index| super::schema::ColumnSpec::numeric(format!("c{index}")))
+            .map(|index| super::super::schema::ColumnSpec::numeric(format!("c{index}")))
             .collect(),
         row_semantics: RowSemantics::Iid,
     };
@@ -34,7 +34,7 @@ pub fn fit_legacy_numeric_bound(
             .map(|row| row.iter().map(|value| value.to_string()).collect())
             .collect(),
     };
-    let task = TaskSpec::regression(super::types::Objective::Rmse)?;
+    let task = TaskSpec::regression(super::super::types::Objective::Rmse)?;
     let config = InputConfig::compatibility();
     let (input, block) = FittedInput::fit_transform(config, &schema, &table, y, task.kind)?;
     let predictor = BoundPredictor::Legacy(crate::model::fit(genome, &block.values, y)?);
@@ -76,11 +76,11 @@ pub fn bound_from_retained_legacy_model(
     }
     let schema = DataSchema {
         columns: (0..width)
-            .map(|index| super::schema::ColumnSpec::numeric(format!("c{index}")))
+            .map(|index| super::super::schema::ColumnSpec::numeric(format!("c{index}")))
             .collect(),
         row_semantics: RowSemantics::Iid,
     };
-    let task = TaskSpec::regression(super::types::Objective::Rmse)?;
+    let task = TaskSpec::regression(super::super::types::Objective::Rmse)?;
     let input = FittedInput::compatibility_numeric(width);
     let predictor = BoundPredictor::Legacy(retained_model);
     Ok(BoundModel {
@@ -127,7 +127,7 @@ pub fn try_bound_pipeline_from_retained_legacy_model(
     if !schema
         .columns
         .iter()
-        .all(|c| c.kind == super::schema::ColumnKind::Numeric)
+        .all(|c| c.kind == super::super::schema::ColumnKind::Numeric)
     {
         return Ok(None);
     }

@@ -1,6 +1,6 @@
 use super::*;
 
-fn compute_landmarks(
+pub(super) fn compute_landmarks(
     table: &RawTable,
     schema: &DataSchema,
     task: &TaskSpec,

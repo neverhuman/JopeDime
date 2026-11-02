@@ -272,13 +272,13 @@ pub(crate) fn rust_group_tail(tail: &GroupTail) -> String {
     format!("histories.insert(vec![{key}], vec![{rows}]);\n    fitted_cutoffs.insert(vec![{key}], vec![{last_order}]);\n")
 }
 
-pub(crate) fn rust_key_vector(columns: &[(usize, super::schema::ColumnKind)]) -> String {
+pub(crate) fn rust_key_vector(columns: &[(usize, super::super::schema::ColumnKind)]) -> String {
     columns
         .iter()
         .map(|(index, kind)| {
             format!(
                 "semantic_key(&row[{index}], {})?",
-                matches!(kind, super::schema::ColumnKind::Numeric)
+                matches!(kind, super::super::schema::ColumnKind::Numeric)
             )
         })
         .collect::<Vec<_>>()

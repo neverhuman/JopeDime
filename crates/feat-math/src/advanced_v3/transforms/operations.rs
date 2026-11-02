@@ -1,4 +1,5 @@
 use super::*;
+use super::scalar::fit_yeo_lambda;
 
 fn stage_append(stage: &Stage) -> bool {
     matches!(stage.params.get("append"), Some(ParamValue::Bool(true)))

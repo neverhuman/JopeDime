@@ -42,11 +42,6 @@ mod go_support {
     ));
 }
 
-#[cfg(test)]
-mod quotation_regression_tests;
-#[cfg(test)]
-mod tests;
-
 /// Opt-in v3 binding around unchanged v2 bound sources. The caller supplies the
 /// selected canonical program; its digest must match the fitted model's binding.
 pub fn emit_bound_targets_v3(

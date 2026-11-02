@@ -1,6 +1,6 @@
 use super::*;
 
-fn compute_statistics<'a>(
+pub(super) fn compute_statistics<'a>(
     table: &'a RawTable,
     schema: &DataSchema,
     task: &TaskSpec,
@@ -195,7 +195,7 @@ fn compute_statistics<'a>(
     Ok((statistics, sketches))
 }
 
-fn deterministic_indices(total: usize, limit: usize) -> Vec<usize> {
+pub(super) fn deterministic_indices(total: usize, limit: usize) -> Vec<usize> {
     let selected = total.min(limit);
     if selected == total {
         return (0..total).collect();
@@ -205,7 +205,7 @@ fn deterministic_indices(total: usize, limit: usize) -> Vec<usize> {
         .collect()
 }
 
-fn deterministic_numeric_pairs(columns: &[usize], limit: usize) -> Vec<(usize, usize)> {
+pub(super) fn deterministic_numeric_pairs(columns: &[usize], limit: usize) -> Vec<(usize, usize)> {
     let mut all = Vec::new();
     for left in 0..columns.len() {
         for right in (left + 1)..columns.len() {
@@ -218,7 +218,7 @@ fn deterministic_numeric_pairs(columns: &[usize], limit: usize) -> Vec<(usize, u
         .collect()
 }
 
-fn subset_table(table: &RawTable, rows: &[usize], columns: &[usize]) -> Result<RawTable> {
+pub(super) fn subset_table(table: &RawTable, rows: &[usize], columns: &[usize]) -> Result<RawTable> {
     RawTable::new(
         columns
             .iter()
@@ -465,7 +465,7 @@ fn duplicate_raw_row_fraction(table: &RawTable) -> f64 {
     (table.rows.len() - unique.len()) as f64 / table.rows.len().max(1) as f64
 }
 
-fn finite_stat(value: f64) -> f64 {
+pub(super) fn finite_stat(value: f64) -> f64 {
     if value.is_finite() {
         value
     } else {

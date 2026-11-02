@@ -30,7 +30,7 @@ pub fn check_direct_bound_emission_support(
     if schema
         .columns
         .iter()
-        .all(|c| c.kind == super::schema::ColumnKind::Numeric)
+        .all(|c| c.kind == super::super::schema::ColumnKind::Numeric)
     {
         let mut cols = schema.columns.len();
         if parsed.input.is_some() {
@@ -43,7 +43,7 @@ pub fn check_direct_bound_emission_support(
             }
         }
         let mut generated_dense = 0usize;
-        let max_dense = super::feature_block::MAX_GENERATED_DENSE_WIDTH;
+        let max_dense = super::super::feature_block::MAX_GENERATED_DENSE_WIDTH;
         for stage in parsed.transforms {
             let append = matches!(stage.params.get("append"), Some(ParamValue::Bool(true)))
                 || stage.get_usize("append", 0) == 1;

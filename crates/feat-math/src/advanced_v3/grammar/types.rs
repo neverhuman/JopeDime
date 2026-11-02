@@ -139,13 +139,13 @@ pub(crate) struct TargetSupport {
 }
 
 impl TargetSupport {
-    const ALL: Self = Self {
+    pub(super) const ALL: Self = Self {
         runtime: true,
         python: true,
         rust: true,
     };
 
-    const RUNTIME_ONLY: Self = Self {
+    pub(super) const RUNTIME_ONLY: Self = Self {
         runtime: true,
         python: false,
         rust: false,
@@ -167,12 +167,12 @@ pub(crate) struct BackendSupport {
 }
 
 impl BackendSupport {
-    const ALL: Self = Self {
+    pub(super) const ALL: Self = Self {
         prototype: TargetSupport::ALL,
         production: TargetSupport::ALL,
     };
 
-    const PROTOTYPE_ONLY: Self = Self {
+    pub(super) const PROTOTYPE_ONLY: Self = Self {
         prototype: TargetSupport::ALL,
         production: TargetSupport {
             runtime: false,

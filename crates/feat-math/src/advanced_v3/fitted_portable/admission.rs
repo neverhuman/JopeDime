@@ -123,7 +123,7 @@ pub fn fitted_portable_templates() -> BTreeMap<String, String> {
         ("matrix.rs", include_str!("../fitted_portable.rs.txt")),
     ]
     .into_iter()
-    .map(|(name, text)| (name.to_owned(), super::types::text_hash(text)))
+    .map(|(name, text)| (name.to_owned(), super::super::types::text_hash(text)))
     .collect()
 }
 
@@ -173,7 +173,7 @@ pub fn lint_fitted_public_text(model: &BoundModel, classes: &[String], text: &st
     for mask in masks {
         masked = masked.replace(&mask, &"_".repeat(mask.len()));
     }
-    let mut hits = super::emit::lint_shipped_masked(&masked, &[], false);
+    let mut hits = super::super::emit::lint_shipped_masked(&masked, &[], false);
     for word in ["tree", "search"] {
         if masked.to_lowercase().contains(word) {
             hits.push(word.into());
@@ -187,14 +187,14 @@ pub fn lint_fitted_public_text(model: &BoundModel, classes: &[String], text: &st
 /// nonselected category strings are excluded. Original private emitter bytes stay fixed.
 pub fn emit_fitted_public_cpp17(
     model: &BoundModel,
-) -> Result<super::fitted_cpp::FittedCppArtifact> {
+) -> Result<super::super::fitted_cpp::FittedCppArtifact> {
     ensure!(
         fitted_public_cpp_unsupported(model)?.is_none(),
         "outside public C++ scalar subset"
     );
     // Validate all dimensions, indices and coefficients before invoking the native emitter.
     let _ = emit_fitted_portable(model)?;
-    let original = super::fitted_cpp::emit_fitted_cpp17(model)?;
+    let original = super::super::fitted_cpp::emit_fitted_cpp17(model)?;
     let source = original
         .source
         .replace(
@@ -217,9 +217,9 @@ pub fn emit_fitted_public_cpp17(
     let codec = serde_json::to_string(
         &serde_json::json!({"schema":"jope.fitted-public-typed-table/v1","columns":columns,"categorical_unknown":-1,"missing_bitmap":"one byte per raw cell; nonzero means missing"}),
     )?;
-    Ok(super::fitted_cpp::FittedCppArtifact {
-        source_sha256: super::types::text_hash(&source),
-        codec_sha256: super::types::text_hash(&codec),
+    Ok(super::super::fitted_cpp::FittedCppArtifact {
+        source_sha256: super::super::types::text_hash(&source),
+        codec_sha256: super::super::types::text_hash(&codec),
         source,
         codec,
     })
