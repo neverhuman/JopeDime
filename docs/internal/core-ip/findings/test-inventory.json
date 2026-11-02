@@ -1627,6 +1627,10 @@
       "reason": "REL-07 signer-compatible gate-receipt adapter proofs (exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, and artifact SHA256 binding); no Rust build, GPU, release or dataset job executes",
       "role": "infrastructure"
     },
+    "python:deploy/qualification/v1.0/test_qualification_receipt_draft.py": {
+      "reason": "REL-07 non-signable qualification receipt draft static controls (schema validation, 28-gate inventory, DRAFT_NOT_QUALIFIED status); no Rust build, GPU, release or dataset job executes",
+      "role": "infrastructure"
+    },
     "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
       "reason": "REL-07 PR1396 candidate-bound provider orchestration controls over synthetic child results; not actual release-gate execution.",
       "role": "infrastructure"
