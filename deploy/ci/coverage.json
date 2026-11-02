@@ -5141,6 +5141,17 @@
       ],
       "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
     },
+    "python:python/tests/test_training_campaign_execution.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-python"
+      ],
+      "scope": "Maintained CPU training/context contract family; actual optimizer/update/reload/proposal cases execute in isolated synthetic fixtures. Required cases are checked against current JUnit by training-proof.py; this does not qualify real-corpus or CUDA training."
+    },
     "python:python/tests/test_training_comparison.py": {
       "discovery": {
         "kind": "python-family"

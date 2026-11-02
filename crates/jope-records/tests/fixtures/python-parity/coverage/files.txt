@@ -4155,6 +4155,7 @@ python/tests/test_selfplay_controller.py
 python/tests/test_task_semantics.py
 python/tests/test_test_exact_campaign.py
 python/tests/test_training_campaign.py
+python/tests/test_training_campaign_execution.py
 python/tests/test_training_comparison.py
 python/tests/test_training_corpus_contract.py
 python/tests/test_training_input_closure.py
