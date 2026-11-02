@@ -346,7 +346,7 @@ impl Session {
             })?;
         let mut output = crate::terminal::line_mode::LineMode::new(io::stdout());
         output.transcript(&[format!(
-            "VEOX CLI · JopeDime {} · engine {}",
+            "VEOX CLI · {} · engine {}",
             self.version, self.engine_mode
         )])?;
         let width = terminal::size().map(|size| size.0).unwrap_or(80);

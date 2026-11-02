@@ -166,7 +166,7 @@ impl Screen {
         frame.render_widget(
             Paragraph::new(Line::from(vec![
                 Span::styled(" VEOX CLI ", accent.add_modifier(Modifier::BOLD)),
-                Span::styled(format!("/ CLI   ·   JopeDime {version}"), muted),
+                Span::styled(format!("· {version}"), muted),
             ])),
             rows[0],
         );
