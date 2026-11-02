@@ -748,8 +748,8 @@ def test_ns19_dope_freeze_storage_aliases_normalizers_and_anchor_guards(monkeypa
 def _ns20_gate():
     """Exercise the exact scalar gate AST without importing models or research runtimes."""
     import ast
-    from pathlib import Path
     from collections.abc import Mapping, Sequence
+    from pathlib import Path
 
     source = Path(__file__).parents[1] / "src/jope/north_star/elo_tracker.py"
     nodes = [
