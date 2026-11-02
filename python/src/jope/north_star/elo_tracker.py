@@ -303,7 +303,7 @@ def check_phase_d_elo_gate(
     """
     Verifies NORTH_STAR Phase D gate:
       - All requested round and baseline ratings are finite, non-boolean observations.
-      - `len(round_names) >= 3`
+      - `len(round_names) >= 3` (an empty history returns an unmet gate with empty trajectories)
       - Final flywheel Elo >= `h_baseline_name` Elo on overall, regression, and binary classification
       - Monotonically trending up over `>= 3` rounds on both task types.
     """
@@ -319,9 +319,12 @@ def check_phase_d_elo_gate(
 
     reg_rising = len(reg_seq) >= 3 and all(reg_seq[i] > reg_seq[i - 1] for i in range(1, len(reg_seq)))
     bin_rising = len(bin_seq) >= 3 and all(bin_seq[i] > bin_seq[i - 1] for i in range(1, len(bin_seq)))
-    beats_h_reg = reg_seq[-1] >= require_finite_score(regression_ratings, h_baseline_name)
-    beats_h_bin = bin_seq[-1] >= require_finite_score(binary_ratings, h_baseline_name)
-    beats_h_ovr = ovr_seq[-1] >= require_finite_score(overall_ratings, h_baseline_name)
+    baseline_reg = require_finite_score(regression_ratings, h_baseline_name)
+    baseline_bin = require_finite_score(binary_ratings, h_baseline_name)
+    baseline_ovr = require_finite_score(overall_ratings, h_baseline_name)
+    beats_h_reg = bool(reg_seq) and reg_seq[-1] >= baseline_reg
+    beats_h_bin = bool(bin_seq) and bin_seq[-1] >= baseline_bin
+    beats_h_ovr = bool(ovr_seq) and ovr_seq[-1] >= baseline_ovr
 
     gate_pass = bool(reg_rising and bin_rising and beats_h_reg and beats_h_bin and beats_h_ovr)
     return {
