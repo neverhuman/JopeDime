@@ -45,3 +45,4 @@ pub mod task_preflight;
 pub mod task_rating;
 pub mod timeseries;
 pub mod training_history;
+pub mod validation_gp_study_selection;
