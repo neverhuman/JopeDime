@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn apply_retirement_registry(
+pub(crate) fn apply_retirement_registry(
     pair_registry: &Path,
     backlog: &Path,
     candidates: &[HoldCandidate],

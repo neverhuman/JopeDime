@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) const H_SOFT_THRESHOLD: &str = r#"// Shrink v toward zero by t (the lasso proximal step).
+pub(crate) const H_SOFT_THRESHOLD: &str = r#"// Shrink v toward zero by t (the lasso proximal step).
 static double soft_threshold(double v, double t) {
     if (v > t) return v - t;
     if (v < -t) return v + t;
     return 0.0;
 }"#;
 
-pub(super) const HEAD_ELASTICNET: &str = r#"struct ElasticNet {
+pub(crate) const HEAD_ELASTICNET: &str = r#"struct ElasticNet {
     std::vector<double> means;
     std::vector<double> scales;
     double w0;
@@ -89,7 +89,7 @@ static std::vector<double> elastic_net_predict(const ElasticNet& state, const st
     return predictions;
 }"#;
 
-pub(super) const HEAD_RIDGE: &str = r#"struct RidgeRegression {
+pub(crate) const HEAD_RIDGE: &str = r#"struct RidgeRegression {
     std::vector<double> means;
     std::vector<double> scales;
     std::vector<double> w;

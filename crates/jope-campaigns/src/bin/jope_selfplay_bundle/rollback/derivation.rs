@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn derive_rollback_baseline(
+pub(crate) fn derive_rollback_baseline(
     source: &Path,
     output_root: &Path,
 ) -> Result<RollbackBaselineDerivationV1> {
@@ -117,7 +117,7 @@ pub(super) fn derive_rollback_baseline(
     result
 }
 
-pub(super) fn verify_rollback_derivation(
+pub(crate) fn verify_rollback_derivation(
     output_root: &Path,
     derived_bundle_sha256: &str,
 ) -> Result<()> {
@@ -215,7 +215,7 @@ pub(super) fn verify_rollback_derivation(
     Ok(())
 }
 
-pub(super) fn verify_rollback_candidate(
+pub(crate) fn verify_rollback_candidate(
     root: &Path,
     manifest: &Value,
     expected_sha256: &str,
@@ -269,7 +269,7 @@ pub(super) fn verify_rollback_candidate(
     Ok(())
 }
 
-pub(super) fn verify_rollback_capsule(
+pub(crate) fn verify_rollback_capsule(
     output_root: &Path,
     evidence_root: &Path,
     capsule: &RollbackCapsuleV2,

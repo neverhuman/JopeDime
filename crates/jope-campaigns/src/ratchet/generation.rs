@@ -216,7 +216,7 @@ impl Generation0ReceiptV3 {
         self.validate_roles(&semantics)
     }
 
-    pub(super) fn validate_roles(&self, semantics: &BTreeSet<&str>) -> Result<()> {
+    pub(crate) fn validate_roles(&self, semantics: &BTreeSet<&str>) -> Result<()> {
         require_unique(
             "generation role bindings",
             self.role_bindings

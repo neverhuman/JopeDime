@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) fn strict() -> bool {
+pub(crate) fn strict() -> bool {
     std::env::var_os("JOPE_PARITY_STRICT").is_some_and(|value| value == "1")
 }
 
 /// The lane's tool version, or `None` after a loud skip (a failure under `JOPE_PARITY_STRICT=1`)
 /// when the tool is missing or, for `cpp17-fitted`, is not the compiler the allowlist was recorded
 /// with ([`FITTED_CXX_VERSION`]).
-pub(super) fn toolchain(lane: Lane) -> Option<String> {
+pub(crate) fn toolchain(lane: Lane) -> Option<String> {
     let version = match lane {
         Lane::Cpp17Fitted => feat_math::cxx::version(),
         Lane::Rust | Lane::Python => {
@@ -69,7 +69,7 @@ pub(super) fn toolchain(lane: Lane) -> Option<String> {
 
 /// `TMPDIR` when it is set, otherwise Cargo's per-target temporary directory; never an implicit
 /// system default.
-pub(super) fn scratch_root() -> PathBuf {
+pub(crate) fn scratch_root() -> PathBuf {
     let root = match std::env::var_os("TMPDIR") {
         Some(dir) if !dir.is_empty() => PathBuf::from(dir),
         _ => PathBuf::from(env!("CARGO_TARGET_TMPDIR")),
@@ -78,7 +78,7 @@ pub(super) fn scratch_root() -> PathBuf {
     root
 }
 
-pub(super) fn run_checked(what: &str, command: &mut Command) -> Output {
+pub(crate) fn run_checked(what: &str, command: &mut Command) -> Output {
     let output = command
         .output()
         .unwrap_or_else(|error| panic!("{what}: cannot start: {error}"));
@@ -92,7 +92,7 @@ pub(super) fn run_checked(what: &str, command: &mut Command) -> Output {
     output
 }
 
-pub(super) fn parse_decimal_predictions(what: &str, text: &str) -> Vec<u64> {
+pub(crate) fn parse_decimal_predictions(what: &str, text: &str) -> Vec<u64> {
     text.lines()
         .map(|line| {
             line.trim()
@@ -102,7 +102,7 @@ pub(super) fn parse_decimal_predictions(what: &str, text: &str) -> Vec<u64> {
         })
         .collect()
 }
-pub(super) fn input_key(inputs: Inputs) -> &'static str {
+pub(crate) fn input_key(inputs: Inputs) -> &'static str {
     match inputs {
         Inputs::Finite => "finite",
         Inputs::All => "all",
@@ -110,7 +110,7 @@ pub(super) fn input_key(inputs: Inputs) -> &'static str {
     }
 }
 
-pub(super) fn assert_manifest_round_trip(manifest: &str, genome: &GenomeIr, what: &str) {
+pub(crate) fn assert_manifest_round_trip(manifest: &str, genome: &GenomeIr, what: &str) {
     let value: serde_json::Value = serde_json::from_str(manifest).unwrap();
     let source = value["program"]
         .as_str()
@@ -126,7 +126,7 @@ pub(super) fn assert_manifest_round_trip(manifest: &str, genome: &GenomeIr, what
 }
 
 /// One program's predictions in `lane`, as bit patterns in input-row order.
-pub(super) fn lane_predictions(
+pub(crate) fn lane_predictions(
     lane: Lane,
     program: &Program,
     genome: &GenomeIr,
@@ -232,7 +232,7 @@ pub(super) fn lane_predictions(
 }
 
 /// Run `work` over `items` on up to [`MAX_JOBS`] threads; results keep the items' order.
-pub(super) fn parallel_map<T: Sync, R: Send>(items: &[T], work: impl Fn(&T) -> R + Sync) -> Vec<R> {
+pub(crate) fn parallel_map<T: Sync, R: Send>(items: &[T], work: impl Fn(&T) -> R + Sync) -> Vec<R> {
     let jobs = std::thread::available_parallelism()
         .map_or(1, usize::from)
         .clamp(1, MAX_JOBS)

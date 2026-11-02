@@ -151,7 +151,7 @@ struct ClosureEntry {
     sha256: String,
 }
 
-pub(super) fn read_closure(
+pub(crate) fn read_closure(
     root: &Path,
     closure: &ClosureManifest,
 ) -> Result<BTreeMap<PathBuf, String>> {
@@ -305,15 +305,15 @@ impl Operation {
 /// Opaque process-local proof; only verified native allocation dispatch constructs it.
 pub struct VerifiedTask {
     #[cfg(feature = "neural")]
-    pub(super) attempt: FencedAttempt,
+    pub(crate) attempt: FencedAttempt,
     #[cfg(feature = "neural")]
-    pub(super) manifest: TaskManifest,
+    pub(crate) manifest: TaskManifest,
     #[cfg(feature = "neural")]
-    pub(super) root: PathBuf,
-    pub(super) operation: Operation,
-    pub(super) stop: Arc<AtomicBool>,
+    pub(crate) root: PathBuf,
+    pub(crate) operation: Operation,
+    pub(crate) stop: Arc<AtomicBool>,
     #[cfg(feature = "neural")]
-    pub(super) recovering: bool,
+    pub(crate) recovering: bool,
 }
 impl VerifiedTask {
     #[cfg(feature = "neural")]

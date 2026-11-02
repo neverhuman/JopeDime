@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn parse_bits(text: &str) -> Option<u64> {
+pub(crate) fn parse_bits(text: &str) -> Option<u64> {
     let digits = text.strip_prefix("0x")?;
     if digits.len() != 16 || !digits.bytes().all(|b| b.is_ascii_hexdigit()) {
         return None;
@@ -8,12 +8,12 @@ pub(super) fn parse_bits(text: &str) -> Option<u64> {
     u64::from_str_radix(digits, 16).ok()
 }
 
-pub(super) fn hex(bits: u64) -> String {
+pub(crate) fn hex(bits: u64) -> String {
     format!("0x{bits:016x}")
 }
 
 /// `(name, value)` for every corpus entry, in file order.
-pub(super) fn boundary_values() -> Vec<(String, f64)> {
+pub(crate) fn boundary_values() -> Vec<(String, f64)> {
     let corpus: Corpus = serde_json::from_str(BOUNDARY_V1).expect("boundary corpus parses");
     corpus
         .entries
@@ -25,7 +25,7 @@ pub(super) fn boundary_values() -> Vec<(String, f64)> {
         })
         .collect()
 }
-pub(super) fn ordinary_rows() -> Vec<InputRow> {
+pub(crate) fn ordinary_rows() -> Vec<InputRow> {
     let mut rng = Pcg32::new(20_260_930, 11);
     (0..ORDINARY_ROWS)
         .map(|index| InputRow {
@@ -36,7 +36,7 @@ pub(super) fn ordinary_rows() -> Vec<InputRow> {
 }
 
 /// The value in every column (`all:`), or in one column with [`FILL`] in the others (`c0:` ..).
-pub(super) fn shaped_rows(name: &str, value: f64) -> Vec<InputRow> {
+pub(crate) fn shaped_rows(name: &str, value: f64) -> Vec<InputRow> {
     let mut rows = vec![InputRow {
         id: format!("all:{name}"),
         values: vec![value; WIDTH],
@@ -54,7 +54,7 @@ pub(super) fn shaped_rows(name: &str, value: f64) -> Vec<InputRow> {
 
 /// Rows whose entries are all zeros of mixed sign: which zero a sum, a minimum or a maximum
 /// returns depends on the order its implementation visits them in.
-pub(super) fn mixed_zero_rows() -> Vec<InputRow> {
+pub(crate) fn mixed_zero_rows() -> Vec<InputRow> {
     let (p, n) = (0.0_f64, -0.0_f64);
     [
         ("zeros:pos_pos_neg", [p, p, n]),
@@ -70,7 +70,7 @@ pub(super) fn mixed_zero_rows() -> Vec<InputRow> {
     .collect()
 }
 
-pub(super) fn input_rows(inputs: Inputs) -> Vec<InputRow> {
+pub(crate) fn input_rows(inputs: Inputs) -> Vec<InputRow> {
     let corpus = boundary_values();
     let mut rows = ordinary_rows();
     match inputs {
@@ -98,7 +98,7 @@ pub(super) fn input_rows(inputs: Inputs) -> Vec<InputRow> {
 }
 
 /// Finite training rows (every lane fits on them; the fitted C++ binding requires finite data).
-pub(super) fn training_data() -> (Vec<Vec<f64>>, Vec<f64>) {
+pub(crate) fn training_data() -> (Vec<Vec<f64>>, Vec<f64>) {
     let mut rng = Pcg32::new(20_260_929, 7);
     let mut x = Vec::with_capacity(TRAIN_ROWS);
     let mut y = Vec::with_capacity(TRAIN_ROWS);
@@ -112,7 +112,7 @@ pub(super) fn training_data() -> (Vec<Vec<f64>>, Vec<f64>) {
     (x, y)
 }
 
-pub(super) fn csv_line(values: &[f64]) -> String {
+pub(crate) fn csv_line(values: &[f64]) -> String {
     values
         .iter()
         .map(|value| format!("{value:?}"))
@@ -120,7 +120,7 @@ pub(super) fn csv_line(values: &[f64]) -> String {
         .join(",")
 }
 
-pub(super) fn write_train_csv(path: &Path, x: &[Vec<f64>], y: &[f64]) {
+pub(crate) fn write_train_csv(path: &Path, x: &[Vec<f64>], y: &[f64]) {
     let mut text = String::new();
     for (row, target) in x.iter().zip(y) {
         let mut cells = row.clone();
@@ -131,7 +131,7 @@ pub(super) fn write_train_csv(path: &Path, x: &[Vec<f64>], y: &[f64]) {
     fs::write(path, text).unwrap();
 }
 
-pub(super) fn write_features_csv(path: &Path, rows: &[InputRow]) {
+pub(crate) fn write_features_csv(path: &Path, rows: &[InputRow]) {
     let mut text = String::new();
     for row in rows {
         text.push_str(&csv_line(&row.values));
@@ -140,7 +140,7 @@ pub(super) fn write_features_csv(path: &Path, rows: &[InputRow]) {
     fs::write(path, text).unwrap();
 }
 
-pub(super) fn write_features_bits(path: &Path, rows: &[InputRow]) {
+pub(crate) fn write_features_bits(path: &Path, rows: &[InputRow]) {
     let mut text = format!("{} {WIDTH}\n", rows.len());
     for row in rows {
         for value in &row.values {

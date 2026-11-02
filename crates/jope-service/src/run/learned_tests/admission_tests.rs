@@ -144,7 +144,7 @@ async fn signed_r782_live_plan_and_admission_use_the_instantiated_backend() {
     let forwards = ranker.execution_counter();
     let dir = tempfile::tempdir().unwrap();
     let engine = InProcessEngine::open_with_ranker(dir.path(), &worker, ranker).unwrap();
-    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
     assert_eq!(
         jope_runtime::sha256_hex(raw),
         "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"

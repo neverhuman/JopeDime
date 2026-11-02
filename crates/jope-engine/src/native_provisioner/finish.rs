@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn finish_acknowledged(
+pub(crate) fn finish_acknowledged(
     config: &Config,
     witness: &WitnessPolicy,
     intent: &Intent,

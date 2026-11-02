@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn legacy_append(op: &FittedOp) -> bool {
+pub(crate) fn legacy_append(op: &FittedOp) -> bool {
     match op {
         FittedOp::Standardize { append, .. }
         | FittedOp::RobustScale { append, .. }
@@ -41,7 +41,7 @@ pub(super) fn legacy_append(op: &FittedOp) -> bool {
     }
 }
 
-pub(super) fn legacy_generated_to_block(
+pub(crate) fn legacy_generated_to_block(
     op: &FittedOp,
     block: &FeatureBlock,
     generated: Rows,
@@ -83,7 +83,7 @@ pub(super) fn legacy_generated_to_block(
     }
 }
 
-pub(super) fn legacy_to_block(op: &FittedOp, block: &FeatureBlock) -> Result<FeatureBlock> {
+pub(crate) fn legacy_to_block(op: &FittedOp, block: &FeatureBlock) -> Result<FeatureBlock> {
     check_legacy_width(op, block)?;
     let generated = crate::ops::apply_op_generated(op, &block.values);
     legacy_generated_to_block(op, block, generated)
@@ -106,7 +106,7 @@ pub(super) fn legacy_to_block(op: &FittedOp, block: &FeatureBlock) -> Result<Fea
 /// allocated either, so there is no overflow to refuse. For state that
 /// `fit_op` produced, every other outcome without rows is what it was before
 /// these checks.
-pub(super) fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<()> {
+pub(crate) fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<()> {
     use crate::kernel::width;
     let name = width::stage_name(op);
     if let Err(reason) = width::check_fitted_state(op) {
@@ -146,7 +146,7 @@ pub(super) fn check_legacy_width(op: &FittedOp, block: &FeatureBlock) -> Result<
 
 /// `corr_screen` reads every row at its fitted column indices, and finishing
 /// the selection looks the block up at them, with rows or without.
-pub(super) fn check_corr_screen_width(indices: &[usize], block: &FeatureBlock) -> Result<()> {
+pub(crate) fn check_corr_screen_width(indices: &[usize], block: &FeatureBlock) -> Result<()> {
     let width = block.roles.len();
     if let Some(index) = indices.iter().find(|&&index| index >= width) {
         bail!("corr_screen reads column {index}, but the feature block has {width} columns");
@@ -157,7 +157,7 @@ pub(super) fn check_corr_screen_width(indices: &[usize], block: &FeatureBlock) -
 /// `pls_project` reads the row and the fitted means at every index of a weight.
 /// Without rows it reads nothing, and the block may be narrower than at fit
 /// time (see `check_legacy_width`), so there is nothing to check.
-pub(super) fn check_pls_project_width(
+pub(crate) fn check_pls_project_width(
     means: &[f64],
     weights: &[Vec<f64>],
     block: &FeatureBlock,
@@ -184,7 +184,7 @@ pub(super) fn check_pls_project_width(
 /// `piecewise_row` itself zips the row with the edge lists and reads nothing past either (kernel2
 /// X3, closing the gap WP-1.7 recorded). Without rows nothing is read or gathered, and the block
 /// may be narrower than at fit time (see `check_legacy_width`), so there is nothing to check.
-pub(super) fn check_piecewise_linear_width(edges: &[Vec<f64>], block: &FeatureBlock) -> Result<()> {
+pub(crate) fn check_piecewise_linear_width(edges: &[Vec<f64>], block: &FeatureBlock) -> Result<()> {
     if block.values.is_empty() {
         return Ok(());
     }

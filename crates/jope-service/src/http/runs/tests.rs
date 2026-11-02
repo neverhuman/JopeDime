@@ -17,7 +17,7 @@ fn fixture() -> (tempfile::TempDir, InProcessEngine, RunSpec) {
     std::fs::create_dir_all(&root).unwrap();
     let directory = tempfile::tempdir_in(root).unwrap();
     let engine = InProcessEngine::open(directory.path()).unwrap();
-    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
     assert_eq!(
         hash(raw),
         "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"

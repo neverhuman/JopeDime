@@ -1,7 +1,7 @@
 use super::*;
 
 impl DaemonActor {
-    pub(super) fn update_gpu_history(
+    pub(crate) fn update_gpu_history(
         &self,
         active: Option<&ActiveWorkload>,
         successful: bool,
@@ -45,7 +45,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn requeue(&mut self, job_id: JobId) -> Result<(), ActorError> {
+    pub(crate) fn requeue(&mut self, job_id: JobId) -> Result<(), ActorError> {
         // The old fenced allocation remains authoritative until every descendant drains.
         if self.active.contains_key(&job_id) {
             return Ok(());
@@ -61,7 +61,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn enforce_deadline(
+    pub(crate) fn enforce_deadline(
         &mut self,
         job_id: JobId,
         deadline: Timestamp,
@@ -112,7 +112,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn fail_output(
+    pub(crate) fn fail_output(
         &mut self,
         attempt: FencedAttempt,
         message: String,
@@ -138,7 +138,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn schedule_lease_renewal(&self) {
+    pub(crate) fn schedule_lease_renewal(&self) {
         let sender = self.sender.clone();
         tokio::spawn(async move {
             tokio::time::sleep(Duration::from_millis(ATTEMPT_LEASE_RENEW_MS)).await;
@@ -146,7 +146,7 @@ impl DaemonActor {
         });
     }
 
-    pub(super) fn renew_live_leases(&mut self) {
+    pub(crate) fn renew_live_leases(&mut self) {
         let now = now_timestamp();
         let mut fenced = Vec::new();
         for active in self.active.values() {
@@ -172,7 +172,7 @@ impl DaemonActor {
         }
     }
 
-    pub(super) fn schedule_deadline(&self, job: &JobRecord) {
+    pub(crate) fn schedule_deadline(&self, job: &JobRecord) {
         let Some(deadline) = job.spec.deadline else {
             return;
         };

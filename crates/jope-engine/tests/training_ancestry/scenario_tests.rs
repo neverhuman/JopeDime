@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn retained_numeric_steps_do_not_supply_versioned_committed_credit() {
+pub(crate) fn retained_numeric_steps_do_not_supply_versioned_committed_credit() {
     use jope_parallel::native_loop::lineage::{LineageBundle, LINEAGE_SCHEMA};
     let s = scenario();
     let g = s.genealogy();
@@ -19,7 +19,7 @@ pub(super) fn retained_numeric_steps_do_not_supply_versioned_committed_credit() 
     assert_eq!(g.nodes[&anchor.digest].step, anchor.step);
 }
 
-pub(super) fn the_genealogy_resolves_retained_edges_and_checks_independently() {
+pub(crate) fn the_genealogy_resolves_retained_edges_and_checks_independently() {
     let s = scenario();
     let g = s.genealogy();
     let edge = |dir: &Path| &g.edges[&digest(dir)];
@@ -70,7 +70,7 @@ pub(super) fn the_genealogy_resolves_retained_edges_and_checks_independently() {
     }
 }
 
-pub(super) fn exposure_counts_each_committed_segment_once_and_excludes_siblings() {
+pub(crate) fn exposure_counts_each_committed_segment_once_and_excludes_siblings() {
     let s = scenario();
     let g = s.genealogy();
     let b8 = digest(&s.b8);
@@ -116,7 +116,7 @@ pub(super) fn exposure_counts_each_committed_segment_once_and_excludes_siblings(
     assert_eq!(b6.corpus_sha256, CORPUS_B);
 }
 
-pub(super) fn unretained_or_journal_less_history_stays_unknown() {
+pub(crate) fn unretained_or_journal_less_history_stays_unknown() {
     // A removed middle checkpoint: B's claimed parent is unresolved, and A6
     // now spans a window its journal does not cover.
     let s = scenario();
@@ -221,7 +221,7 @@ pub(super) fn unretained_or_journal_less_history_stays_unknown() {
     assert!(o.segments[0].possible_presentations.is_none());
 }
 
-pub(super) fn unsupported_continuity_claims_and_altered_evidence_are_refused() {
+pub(crate) fn unsupported_continuity_claims_and_altered_evidence_are_refused() {
     let s = scenario();
     let nodes = || ancestry::load_runs(&s.runs()).unwrap();
     let a2: Value = read_json(&s.a2.join("state.json")).unwrap();

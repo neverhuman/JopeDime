@@ -1,7 +1,7 @@
 use super::*;
 use std::fs;
 
-pub(super) fn finish_qualification(
+pub(crate) fn finish_qualification(
     plan: &QualificationPlan,
     outcomes: &[WorkerOutcome],
 ) -> Result<CompletedQualification> {
@@ -83,16 +83,16 @@ fn artifact(path: &Path) -> Result<Artifact> {
     a.verify()?;
     Ok(a)
 }
-pub(super) fn policy_artifact(a: &Artifact) -> context_producer::AssetFile {
+pub(crate) fn policy_artifact(a: &Artifact) -> context_producer::AssetFile {
     context_producer::AssetFile {
         path: a.path.clone(),
         sha256: a.sha256.clone(),
     }
 }
-pub(super) fn read_artifact(a: &Artifact, maximum: u64) -> Result<Vec<u8>> {
+pub(crate) fn read_artifact(a: &Artifact, maximum: u64) -> Result<Vec<u8>> {
     policy_artifact(a).read(maximum)
 }
-pub(super) fn physical_directory(path: &Path) -> Result<()> {
+pub(crate) fn physical_directory(path: &Path) -> Result<()> {
     ensure!(
         path.is_absolute() && path.canonicalize()? == path && fs::symlink_metadata(path)?.is_dir(),
         "private custody directory must be physical and absolute"

@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) fn sql_quote(value: &str) -> String {
+pub(crate) fn sql_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', "''"))
 }
 
-pub(super) fn freshness_scoped_manifest(manifest: &Value) -> bool {
+pub(crate) fn freshness_scoped_manifest(manifest: &Value) -> bool {
     if manifest.get("schema").and_then(Value::as_str) != Some("JopeFlywheelCorpusEvalShard.v1")
         || !manifest.get("candidates").is_some_and(Value::is_array)
     {
@@ -18,7 +18,7 @@ pub(super) fn freshness_scoped_manifest(manifest: &Value) -> bool {
     !(lane.contains("gate") || lane.contains("sealed") || lane.contains("canary"))
 }
 
-pub(super) fn manifest_epoch(manifest: &Value) -> String {
+pub(crate) fn manifest_epoch(manifest: &Value) -> String {
     if let Some(epoch) = manifest
         .get("checkpoint_epoch")
         .and_then(Value::as_str)
@@ -37,28 +37,28 @@ pub(super) fn manifest_epoch(manifest: &Value) -> String {
     "legacy-jope-testonly".to_owned()
 }
 
-pub(super) fn epoch_for_checkpoint(checkpoint: &str) -> Result<String> {
+pub(crate) fn epoch_for_checkpoint(checkpoint: &str) -> Result<String> {
     if !is_sha256(checkpoint) {
         bail!("checkpoint epoch requires a SHA-256 checkpoint identity");
     }
     Ok(format!("checkpoint-{checkpoint}"))
 }
 
-pub(super) fn now_ms() -> i64 {
+pub(crate) fn now_ms() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis() as i64
 }
 
-pub(super) fn is_sha256(value: &str) -> bool {
+pub(crate) fn is_sha256(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
-pub(super) fn sha256_file(path: &Path) -> Result<String> {
+pub(crate) fn sha256_file(path: &Path) -> Result<String> {
     let mut file = File::open(path)?;
     let mut hasher = Sha256::new();
     let mut buffer = [0_u8; 1 << 20];
@@ -72,11 +72,11 @@ pub(super) fn sha256_file(path: &Path) -> Result<String> {
     Ok(hex::encode(hasher.finalize()))
 }
 
-pub(super) fn content_hash(value: &Value) -> Result<String> {
+pub(crate) fn content_hash(value: &Value) -> Result<String> {
     Ok(hex::encode(Sha256::digest(serde_json::to_vec(value)?)))
 }
 
-pub(super) fn auto_retirement_idempotency_key(epoch: &str, preview_sha256: &str) -> Result<String> {
+pub(crate) fn auto_retirement_idempotency_key(epoch: &str, preview_sha256: &str) -> Result<String> {
     if epoch.is_empty() || !is_sha256(preview_sha256) {
         bail!("automatic retirement lacks deterministic provenance");
     }
@@ -90,7 +90,7 @@ pub(super) fn auto_retirement_idempotency_key(epoch: &str, preview_sha256: &str)
     ))
 }
 
-pub(super) fn atomic_json(path: &Path, value: &Value) -> Result<()> {
+pub(crate) fn atomic_json(path: &Path, value: &Value) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -112,7 +112,7 @@ pub(super) fn atomic_json(path: &Path, value: &Value) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn null_if_empty(value: &str) -> Value {
+pub(crate) fn null_if_empty(value: &str) -> Value {
     if value.is_empty() {
         Value::Null
     } else {
@@ -120,7 +120,7 @@ pub(super) fn null_if_empty(value: &str) -> Value {
     }
 }
 
-pub(super) fn retirement_scoped_job(job: &InventoryJob) -> bool {
+pub(crate) fn retirement_scoped_job(job: &InventoryJob) -> bool {
     job.outside_scq
         || job
             .scheduler

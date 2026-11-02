@@ -104,7 +104,7 @@ fn forty_two_dataset_wave_overdecomposes_each_node() {
 #[test]
 fn generation_zero_expands_to_four_complete_unique_islands() {
     let mut seen = HashSet::new();
-    let base = include_str!("../../seeds/generation-zero.txt")
+    let base = include_str!("../../../seeds/generation-zero.txt")
         .lines()
         .filter(|line| !line.trim().is_empty())
         .filter_map(|line| canonicalize_for_features(line, 100).ok())

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) const OP_STANDARDIZE: &str = r#"struct StandardScaler {
+pub(crate) const OP_STANDARDIZE: &str = r#"struct StandardScaler {
     std::vector<double> means;
     std::vector<double> scales;
 };
@@ -26,7 +26,7 @@ static std::vector<std::vector<double>> standard_scaler_apply(const StandardScal
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_ROBUST_SCALE: &str = r#"struct RobustScaler {
+pub(crate) const OP_ROBUST_SCALE: &str = r#"struct RobustScaler {
     std::vector<double> medians;
     std::vector<double> scales;
 };
@@ -57,7 +57,7 @@ static std::vector<std::vector<double>> robust_scaler_apply(const RobustScaler& 
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_RANK: &str = r#"struct MidRankTransform {
+pub(crate) const OP_RANK: &str = r#"struct MidRankTransform {
     std::vector<std::vector<double>> sorted_cols;
 };
 
@@ -80,7 +80,7 @@ static std::vector<std::vector<double>> mid_rank_transform_apply(const MidRankTr
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_BLOM: &str = r#"struct BlomNormalScores {
+pub(crate) const OP_BLOM: &str = r#"struct BlomNormalScores {
     std::vector<std::vector<double>> sorted_cols;
 };
 
@@ -107,7 +107,7 @@ static std::vector<std::vector<double>> blom_normal_scores_apply(const BlomNorma
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_SIGMOID: &str = r#"// Applies the logistic squashing function to every value.
+pub(crate) const OP_SIGMOID: &str = r#"// Applies the logistic squashing function to every value.
 static std::vector<std::vector<double>> logistic_squash_apply(const std::vector<std::vector<double>>& x, bool append) {
     std::vector<std::vector<double>> out;
     out.reserve(x.size());
@@ -120,7 +120,7 @@ static std::vector<std::vector<double>> logistic_squash_apply(const std::vector<
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_STEP: &str = r#"// Per-column hard indicator: 1.0 where the value exceeds the threshold, else 0.0.
+pub(crate) const OP_STEP: &str = r#"// Per-column hard indicator: 1.0 where the value exceeds the threshold, else 0.0.
 static std::vector<std::vector<double>> step_indicator_apply(const std::vector<std::vector<double>>& x, double t, bool append) {
     std::vector<std::vector<double>> out;
     out.reserve(x.size());
@@ -133,7 +133,7 @@ static std::vector<std::vector<double>> step_indicator_apply(const std::vector<s
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_WINSOR: &str = r#"struct WinsorLimiter {
+pub(crate) const OP_WINSOR: &str = r#"struct WinsorLimiter {
     std::vector<double> lo;
     std::vector<double> hi;
 };
@@ -163,7 +163,7 @@ static std::vector<std::vector<double>> winsor_limiter_apply(const WinsorLimiter
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_NORM_ROW: &str = r#"// Scales each row to unit L2 norm.
+pub(crate) const OP_NORM_ROW: &str = r#"// Scales each row to unit L2 norm.
 static std::vector<std::vector<double>> unit_norm_rows_apply(const std::vector<std::vector<double>>& x, bool append) {
     std::vector<std::vector<double>> out;
     out.reserve(x.size());
@@ -179,7 +179,7 @@ static std::vector<std::vector<double>> unit_norm_rows_apply(const std::vector<s
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_RFF_COS: &str = r#"struct RandomFourierCosineFeatures {
+pub(crate) const OP_RFF_COS: &str = r#"struct RandomFourierCosineFeatures {
     std::vector<std::vector<double>> w;
     std::vector<double> b;
 };
@@ -225,7 +225,7 @@ static std::vector<std::vector<double>> random_fourier_cosine_features_apply(con
     return finish_stage(x, std::move(out), append);
 }"#;
 
-pub(super) const OP_RFF_SIN: &str = r#"struct RandomFourierSineFeatures {
+pub(crate) const OP_RFF_SIN: &str = r#"struct RandomFourierSineFeatures {
     std::vector<std::vector<double>> w;
     std::vector<double> b;
 };

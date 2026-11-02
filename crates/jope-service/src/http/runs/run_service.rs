@@ -1,7 +1,7 @@
 use super::*;
 
 impl RunService {
-    pub(super) fn start(
+    pub(crate) fn start(
         self: &Arc<Self>,
         spec: RunSpec,
         identity: RequestIdentity,
@@ -123,7 +123,7 @@ impl RunService {
         }
     }
 
-    pub(super) fn worker_sender(
+    pub(crate) fn worker_sender(
         self: &Arc<Self>,
         _pub06_values: Pub06Injection,
         explicit_continue: bool,
@@ -187,7 +187,7 @@ impl RunService {
         Ok(sender)
     }
 
-    pub(super) fn continue_run(
+    pub(crate) fn continue_run(
         self: &Arc<Self>,
         run: jope_api::ids::RunId,
         expected_revision: Option<u64>,
@@ -273,7 +273,7 @@ impl RunService {
         }
     }
 
-    pub(super) fn fail(&self, run: &jope_api::ids::RunId, detail: &str) {
+    pub(crate) fn fail(&self, run: &jope_api::ids::RunId, detail: &str) {
         let result = (|| -> anyhow::Result<()> {
             let record = self
                 .store

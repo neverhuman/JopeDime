@@ -151,10 +151,10 @@ pub struct DescendantLineagePolicy {
 /// descendant exposure separately; a legacy anchor's exposure can remain unknown.
 #[derive(Clone, Debug)]
 pub struct VerifiedLineage {
-    pub(super) lineage: PolicyLineage,
-    pub(super) edges: Vec<LineageEdge>,
-    pub(super) committed_updates: u64,
-    pub(super) cumulative_updates: Option<u64>,
+    pub(crate) lineage: PolicyLineage,
+    pub(crate) edges: Vec<LineageEdge>,
+    pub(crate) committed_updates: u64,
+    pub(crate) cumulative_updates: Option<u64>,
 }
 impl VerifiedLineage {
     pub fn lineage(&self) -> &PolicyLineage {

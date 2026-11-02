@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) const BOUNDARY_GOLDENS: &str = r#"[
+pub(crate) const BOUNDARY_GOLDENS: &str = r#"[
   {
     "dsl": "",
     "operations": [],

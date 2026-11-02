@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn domain_points(domain: &ParamDomain) -> Vec<Option<ParamValue>> {
+pub(crate) fn domain_points(domain: &ParamDomain) -> Vec<Option<ParamValue>> {
     let values = match domain {
         ParamDomain::IntRange { lo, hi } => vec![
             Some(ParamValue::Int(*lo)),
@@ -42,7 +42,7 @@ pub(super) fn domain_points(domain: &ParamDomain) -> Vec<Option<ParamValue>> {
     unique
 }
 
-pub(super) fn program_fixed_point(program: &GenomeIr) -> bool {
+pub(crate) fn program_fixed_point(program: &GenomeIr) -> bool {
     let Ok(reparsed) = GenomeIr::parse(&program.canonical()) else {
         return false;
     };
@@ -51,7 +51,7 @@ pub(super) fn program_fixed_point(program: &GenomeIr) -> bool {
     before.is_ok() && before == after
 }
 
-pub(super) fn stage_program(
+pub(crate) fn stage_program(
     name: &str,
     params: BTreeMap<String, ParamValue>,
     head: bool,
@@ -68,7 +68,7 @@ pub(super) fn stage_program(
     GenomeIr::Pipeline(DslExpr { stages })
 }
 
-pub(super) fn expression_program(source: &str, carrier: &str) -> GenomeIr {
+pub(crate) fn expression_program(source: &str, carrier: &str) -> GenomeIr {
     if carrier == "symbolic" {
         return GenomeIr::parse(&format!("(sym raw \"{source}\")")).unwrap();
     }
@@ -85,7 +85,7 @@ pub(super) fn expression_program(source: &str, carrier: &str) -> GenomeIr {
     })
 }
 
-pub(super) fn clause_d(
+pub(crate) fn clause_d(
     manifest: &Manifest,
     profile: &SearchProfile,
     report: &mut ClosureReport,

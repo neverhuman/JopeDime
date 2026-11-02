@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_supply_failure_streak(path: &Path) -> Result<(Option<String>, u32)> {
+pub(crate) fn load_supply_failure_streak(path: &Path) -> Result<(Option<String>, u32)> {
     if !path.is_file() {
         return Ok((None, 0));
     }
@@ -22,7 +22,7 @@ pub(super) fn load_supply_failure_streak(path: &Path) -> Result<(Option<String>,
     Ok((error, count))
 }
 
-pub(super) fn validate_args(args: &Args) -> Result<()> {
+pub(crate) fn validate_args(args: &Args) -> Result<()> {
     if args.queue_floor == 0
         || args.queue_floor > args.queued_target
         || args.queued_target > args.queued_hard_cap
@@ -60,7 +60,7 @@ pub(super) fn validate_args(args: &Args) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn performance_measurements(args: &Args) -> Result<PerformanceMeasurements> {
+pub(crate) fn performance_measurements(args: &Args) -> Result<PerformanceMeasurements> {
     let performance = args.root.join("ops/supply-performance.v1.json");
     let value: Value =
         serde_json::from_slice(&fs::read(&performance).context("supply performance unavailable")?)
@@ -131,7 +131,7 @@ pub(super) fn performance_measurements(args: &Args) -> Result<PerformanceMeasure
     })
 }
 
-pub(super) fn cycle(args: &Args) -> Result<CycleReport> {
+pub(crate) fn cycle(args: &Args) -> Result<CycleReport> {
     let status = load_queue_status(args)?;
     let measured = performance_measurements(args);
     if !status.admission_allowed {
@@ -353,7 +353,7 @@ pub(super) fn cycle(args: &Args) -> Result<CycleReport> {
     Ok(report)
 }
 
-pub(super) fn held_report(
+pub(crate) fn held_report(
     args: &Args,
     status: &QueueStatus,
     performance: Option<PerformanceMeasurements>,
@@ -444,7 +444,7 @@ pub(super) fn held_report(
     }
 }
 
-pub(super) fn load_queue_status(args: &Args) -> Result<QueueStatus> {
+pub(crate) fn load_queue_status(args: &Args) -> Result<QueueStatus> {
     let path = args.queue_status();
     let status: QueueStatus = serde_json::from_slice(&fs::read(&path)?)
         .with_context(|| format!("parse queue status {}", path.display()))?;
@@ -504,7 +504,7 @@ pub(super) fn load_queue_status(args: &Args) -> Result<QueueStatus> {
     Ok(status)
 }
 
-pub(super) fn load_pending_ack(root: &Path, checkpoint_sha256: &str) -> Result<Option<PendingAck>> {
+pub(crate) fn load_pending_ack(root: &Path, checkpoint_sha256: &str) -> Result<Option<PendingAck>> {
     let path = root.join("ops/micro-wave-supply-v2.json");
     if !path.is_file() {
         return Ok(None);
@@ -535,7 +535,7 @@ pub(super) fn load_pending_ack(root: &Path, checkpoint_sha256: &str) -> Result<O
     }))
 }
 
-pub(super) fn keeper_acknowledged(
+pub(crate) fn keeper_acknowledged(
     args: &Args,
     status: &QueueStatus,
     inputs: &CheckpointInputs,
@@ -568,7 +568,7 @@ pub(super) fn keeper_acknowledged(
     Ok(wave.unclaimed_manifests == 0)
 }
 
-pub(super) fn validate_keeper_admission(
+pub(crate) fn validate_keeper_admission(
     status: &QueueStatus,
     ready: &[ReadyWave],
     waves_root: &Path,
@@ -645,7 +645,7 @@ pub(super) fn validate_keeper_admission(
     Ok(())
 }
 
-pub(super) fn checkpoint_inputs(args: &Args, status: &QueueStatus) -> Result<CheckpointInputs> {
+pub(crate) fn checkpoint_inputs(args: &Args, status: &QueueStatus) -> Result<CheckpointInputs> {
     let active = status
         .active_checkpoint_sha256
         .as_deref()
@@ -694,7 +694,7 @@ pub(super) fn checkpoint_inputs(args: &Args, status: &QueueStatus) -> Result<Che
     })
 }
 
-pub(super) fn assert_checkpoint_unchanged(args: &Args, expected: &str) -> Result<()> {
+pub(crate) fn assert_checkpoint_unchanged(args: &Args, expected: &str) -> Result<()> {
     let status = load_queue_status(args)?;
     let inputs = checkpoint_inputs(args, &status)?;
     if inputs.checkpoint_sha256 != expected {
@@ -703,7 +703,7 @@ pub(super) fn assert_checkpoint_unchanged(args: &Args, expected: &str) -> Result
     Ok(())
 }
 
-pub(super) fn pointer_checkpoint(path: &Path) -> Result<String> {
+pub(crate) fn pointer_checkpoint(path: &Path) -> Result<String> {
     let value: Value = serde_json::from_slice(&fs::read(path)?)
         .with_context(|| format!("parse checkpoint pointer {}", path.display()))?;
     let digest = value
@@ -714,7 +714,7 @@ pub(super) fn pointer_checkpoint(path: &Path) -> Result<String> {
     Ok(digest.to_owned())
 }
 
-pub(super) fn validate_sha256(value: &str) -> Result<()> {
+pub(crate) fn validate_sha256(value: &str) -> Result<()> {
     if value.len() != 64
         || !value
             .bytes()
@@ -725,7 +725,7 @@ pub(super) fn validate_sha256(value: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn claimed_manifest_hashes(path: &Path) -> Result<BTreeSet<String>> {
+pub(crate) fn claimed_manifest_hashes(path: &Path) -> Result<BTreeSet<String>> {
     if !path.is_file() {
         return Ok(BTreeSet::new());
     }

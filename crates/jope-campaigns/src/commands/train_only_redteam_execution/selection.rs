@@ -1,6 +1,6 @@
 mod selection_finalize;
 mod selection_math;
-pub(super) use selection_finalize::finalize_selector;
+pub(crate) use selection_finalize::finalize_selector;
 
 fn arm_name(arm: Arm) -> &'static str {
     match arm {
@@ -9,7 +9,7 @@ fn arm_name(arm: Arm) -> &'static str {
     }
 }
 
-pub(super) fn run_arm(
+pub(crate) fn run_arm(
     manifest_path: &Path,
     arm: Arm,
     selection_mode: SelectionMode,

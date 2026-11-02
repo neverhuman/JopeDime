@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn built_wave_from_disk(args: &Args, state: &PersistedSupplyState) -> Result<BuiltWave> {
+pub(crate) fn built_wave_from_disk(args: &Args, state: &PersistedSupplyState) -> Result<BuiltWave> {
     let directory = args.root.join("waves").join(&state.wave);
     let summary: Value = serde_json::from_slice(&fs::read(directory.join("summary.json"))?)?;
     Ok(BuiltWave {
@@ -18,7 +18,7 @@ pub(super) fn built_wave_from_disk(args: &Args, state: &PersistedSupplyState) ->
     })
 }
 
-pub(super) fn create_supply_state(
+pub(crate) fn create_supply_state(
     args: &Args,
     inputs: &CheckpointInputs,
     waves_root: &Path,
@@ -113,7 +113,7 @@ pub(super) fn create_supply_state(
 /// Persist the live catalog pointer under its own digest so a cohort frozen
 /// against it stays resolvable after `catalog/current.json` rotates. Idempotent:
 /// an existing snapshot is verified rather than rewritten.
-pub(super) fn snapshot_frozen_catalog_pointer(args: &Args, catalog_sha256: &str) -> Result<()> {
+pub(crate) fn snapshot_frozen_catalog_pointer(args: &Args, catalog_sha256: &str) -> Result<()> {
     let pointer_directory = args.root.join("proposals/cohort-inputs");
     fs::create_dir_all(&pointer_directory)?;
     let pointer_snapshot = pointer_directory.join(format!("{catalog_sha256}.pointer.json"));
@@ -122,7 +122,7 @@ pub(super) fn snapshot_frozen_catalog_pointer(args: &Args, catalog_sha256: &str)
     Ok(())
 }
 
-pub(super) fn ensure_cohort_lookahead(
+pub(crate) fn ensure_cohort_lookahead(
     args: &Args,
     inputs: &CheckpointInputs,
     waves_root: &Path,
@@ -172,7 +172,7 @@ pub(super) fn ensure_cohort_lookahead(
     }
 }
 
-pub(super) fn build_next_wave(args: &Args, inputs: &CheckpointInputs) -> Result<Option<BuiltWave>> {
+pub(crate) fn build_next_wave(args: &Args, inputs: &CheckpointInputs) -> Result<Option<BuiltWave>> {
     let waves_root = args.root.join("waves");
     let wave = wave_to_build(&waves_root)?;
     let cohort = waves_root
@@ -430,7 +430,7 @@ pub(super) fn build_next_wave(args: &Args, inputs: &CheckpointInputs) -> Result<
     Ok(None)
 }
 
-pub(super) fn require_output_identity(output: &Value, wave: &str, checkpoint: &str) -> Result<()> {
+pub(crate) fn require_output_identity(output: &Value, wave: &str, checkpoint: &str) -> Result<()> {
     if output.get("wave").and_then(Value::as_str) != Some(wave)
         || output.get("checkpoint_sha256").and_then(Value::as_str) != Some(checkpoint)
     {
@@ -439,7 +439,7 @@ pub(super) fn require_output_identity(output: &Value, wave: &str, checkpoint: &s
     Ok(())
 }
 
-pub(super) fn require_sha(output: &Value, field: &str) -> Result<String> {
+pub(crate) fn require_sha(output: &Value, field: &str) -> Result<String> {
     let digest = output
         .get(field)
         .and_then(Value::as_str)
@@ -448,7 +448,7 @@ pub(super) fn require_sha(output: &Value, field: &str) -> Result<String> {
     Ok(digest.to_owned())
 }
 
-pub(super) fn ensure_native_wave_builder(binary: &Path) -> Result<()> {
+pub(crate) fn ensure_native_wave_builder(binary: &Path) -> Result<()> {
     let mut magic = [0_u8; 4];
     File::open(binary)
         .with_context(|| format!("open Rust wave builder {}", binary.display()))?
@@ -459,7 +459,7 @@ pub(super) fn ensure_native_wave_builder(binary: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn run_builder(binary: &Path, arguments: Vec<OsString>) -> Result<Value> {
+pub(crate) fn run_builder(binary: &Path, arguments: Vec<OsString>) -> Result<Value> {
     let output = Command::new(binary)
         .args(arguments)
         .env_remove("PYTHONPATH")
@@ -474,7 +474,7 @@ pub(super) fn run_builder(binary: &Path, arguments: Vec<OsString>) -> Result<Val
     serde_json::from_slice(&output.stdout).context("parse Rust wave builder JSON output")
 }
 
-pub(super) fn append_event(path: &Path, value: &Value) -> Result<()> {
+pub(crate) fn append_event(path: &Path, value: &Value) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }

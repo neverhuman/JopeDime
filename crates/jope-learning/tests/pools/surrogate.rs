@@ -25,7 +25,7 @@ impl Selector for Spy {
     }
 }
 
-pub(super) fn folds_keep_whole_parents_together_and_every_selector_scores_every_context_body() {
+pub(crate) fn folds_keep_whole_parents_together_and_every_selector_scores_every_context_body() {
     let (pools, manifest) = freeze(&synthetic_rows(10, 60, 12), &rule(), &h("input")).unwrap();
     let cfg = cfg();
     for p in &pools {
@@ -82,7 +82,7 @@ pub(super) fn folds_keep_whole_parents_together_and_every_selector_scores_every_
     assert_eq!(receipt.sha256().unwrap(), again.sha256().unwrap());
 }
 
-pub(super) fn contextual_surrogate_qhat_establishes_h2_on_interaction_pools_body() {
+pub(crate) fn contextual_surrogate_qhat_establishes_h2_on_interaction_pools_body() {
     // 16 parents, 32 contexts, 10 programs per context drawn from two context-disjoint cohorts
     // (cohort A vs cohort B) so kNN exact program-ID overlap across cohorts is zero, and equal
     // numbers of z=+1 and z=-1 contexts so marginal program_prior and context-blind ridge_program
@@ -186,7 +186,7 @@ pub(super) fn contextual_surrogate_qhat_establishes_h2_on_interaction_pools_body
     );
 }
 
-pub(super) fn missing_external_score_is_an_error_body() {
+pub(crate) fn missing_external_score_is_an_error_body() {
     let (pools, manifest) = freeze(&synthetic_rows(4, 8, 10), &rule(), &h("input")).unwrap();
     let partial = external("partial", Class::Candidate, &pools[..7], |_, _| 1.0);
     let inputs = Inputs {
@@ -199,7 +199,7 @@ pub(super) fn missing_external_score_is_an_error_body() {
     assert!(format!("{err:#}").contains("no score"), "{err:#}");
 }
 
-pub(super) fn pool_floor_reference_needs_no_incumbent_and_derives_token_features_body() {
+pub(crate) fn pool_floor_reference_needs_no_incumbent_and_derives_token_features_body() {
     let mut rows = synthetic_rows(8, 48, 14);
     for r in &mut rows {
         r.incumbent_q = None;
@@ -241,7 +241,7 @@ pub(super) fn pool_floor_reference_needs_no_incumbent_and_derives_token_features
     }
 }
 
-pub(super) fn exported_views_carry_no_outcomes_body() {
+pub(crate) fn exported_views_carry_no_outcomes_body() {
     let (pools, manifest) = freeze(&synthetic_rows(3, 6, 10), &rule(), &h("input")).unwrap();
     let views = export_views(&pools, &manifest).unwrap();
     assert_eq!(views.len(), pools.len());

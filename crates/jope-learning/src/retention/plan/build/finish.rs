@@ -2,7 +2,7 @@ use super::super::diff_previous;
 use super::state::{Analysis, Evaluated};
 use super::*;
 
-pub(super) fn finish(cfg: &Config, evaluated: Evaluated, analysis: Analysis) -> Result<Built> {
+pub(crate) fn finish(cfg: &Config, evaluated: Evaluated, analysis: Analysis) -> Result<Built> {
     let Evaluated {
         loaded,
         lifecycles,

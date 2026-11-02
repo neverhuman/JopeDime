@@ -2,7 +2,7 @@
 use super::*;
 
 /// v7 encode result: feature blocks (column-major) + the confidence surface + dataset vector.
-pub(super) struct V7Fit {
+pub(crate) struct V7Fit {
     train_block: Matrix,
     hold_block: Matrix,
     confidence: Matrix,
@@ -31,7 +31,7 @@ fn column_major_block(row_major: &[f32], h: usize, width: usize, keep: usize) ->
 /// train grid the UI is showing). `done_frac` is rescaled by each matrix's patch share.
 #[cfg(feature = "hyperion-cpu")]
 #[allow(clippy::too_many_arguments)]
-pub(super) fn fit_v7(
+pub(crate) fn fit_v7(
     train: &Matrix,
     hold: &Matrix,
     bounds: &[HyperionQuantileBounds],
@@ -402,7 +402,7 @@ impl V7DatasetEncoder {
 /// On → fail), mirroring the classic weight-loading semantics.
 #[cfg(not(feature = "hyperion-cpu"))]
 #[allow(clippy::too_many_arguments)]
-pub(super) fn fit_v7(
+pub(crate) fn fit_v7(
     _train: &Matrix,
     _hold: &Matrix,
     _bounds: &[HyperionQuantileBounds],

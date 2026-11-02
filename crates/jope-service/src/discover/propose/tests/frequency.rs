@@ -51,7 +51,7 @@ fn ten_thousand_train_parent_outputs_report_m3_frequency_comparison() {
     const MAX_ROUNDS: usize = 4_000;
 
     let source: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
+        "../../../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
     ))
     .unwrap();
     assert_eq!(source["schema"], "jope.proposer-frequencies/v1");
@@ -66,8 +66,10 @@ fn ten_thousand_train_parent_outputs_report_m3_frequency_comparison() {
         2688
     );
     let target_sha256 = digest(
-        include_str!("../../../../research/flywheel_selfplay/custody/proposer_frequencies.json")
-            .as_bytes(),
+        include_str!(
+            "../../../../../../research/flywheel_selfplay/custody/proposer_frequencies.json"
+        )
+        .as_bytes(),
     );
     let exploration_pattern: Vec<bool> = source["round_journals"]
         .as_array()

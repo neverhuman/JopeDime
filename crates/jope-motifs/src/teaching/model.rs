@@ -59,7 +59,7 @@ impl GuardFields {
 
     /// `GuardPolicy::improves` (eligibility.rs:191-195): both losses finite and the gain above
     /// the absolute plus relative margin.
-    pub(super) fn improves(&self, loss: f64, baseline: f64) -> bool {
+    pub(crate) fn improves(&self, loss: f64, baseline: f64) -> bool {
         loss.is_finite()
             && baseline.is_finite()
             && baseline - loss > self.absolute_gain + self.relative_gain * baseline.abs()

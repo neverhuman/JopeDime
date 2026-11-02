@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn complement(rows: usize, validation: &[usize]) -> Result<Vec<usize>> {
+pub(crate) fn complement(rows: usize, validation: &[usize]) -> Result<Vec<usize>> {
     let mut present = vec![false; rows];
     for row in validation {
         if *row >= rows || present[*row] {
@@ -15,14 +15,14 @@ pub(super) fn complement(rows: usize, validation: &[usize]) -> Result<Vec<usize>
         .collect())
 }
 
-pub(super) fn slice_rows(data: &RegressionData, indices: &[usize]) -> (Vec<Vec<f64>>, Vec<f64>) {
+pub(crate) fn slice_rows(data: &RegressionData, indices: &[usize]) -> (Vec<Vec<f64>>, Vec<f64>) {
     (
         indices.iter().map(|row| data.x[*row].clone()).collect(),
         indices.iter().map(|row| data.y[*row]).collect(),
     )
 }
 
-pub(super) fn squared_error(truth: &[f64], predictions: &[f64]) -> Result<f64> {
+pub(crate) fn squared_error(truth: &[f64], predictions: &[f64]) -> Result<f64> {
     if truth.len() != predictions.len()
         || truth.is_empty()
         || truth
@@ -39,7 +39,7 @@ pub(super) fn squared_error(truth: &[f64], predictions: &[f64]) -> Result<f64> {
         .sum())
 }
 
-pub(super) fn evaluation_path(
+pub(crate) fn evaluation_path(
     root: &Path,
     dataset_hash: &str,
     bank: &str,
@@ -59,7 +59,7 @@ pub(super) fn evaluation_path(
         .join(format!("{key}.v1.json")))
 }
 
-pub(super) fn evaluate_candidate(
+pub(crate) fn evaluate_candidate(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,
@@ -142,7 +142,7 @@ pub(super) fn evaluate_candidate(
 
 // Keep study identity, candidate pool, input folds and execution budget explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn evaluate_candidates(
+pub(crate) fn evaluate_candidates(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,
@@ -175,7 +175,7 @@ pub(super) fn evaluate_candidates(
     Ok(ranked)
 }
 
-pub(super) fn rank_loss(left: &RankedCandidate, right: &RankedCandidate) -> Ordering {
+pub(crate) fn rank_loss(left: &RankedCandidate, right: &RankedCandidate) -> Ordering {
     left.robust_loss
         .total_cmp(&right.robust_loss)
         .then_with(|| left.worst_fold_nrmse.total_cmp(&right.worst_fold_nrmse))

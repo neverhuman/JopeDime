@@ -44,7 +44,7 @@ fn standard_object_fit_reload_export_and_mcp_predict_agree() {
         jope_runtime::sha256_hex(&manifest_bytes)
     );
     let manifest_schema: serde_json::Value = serde_json::from_slice(include_bytes!(
-        "../../../schemas/jope.model-object.v1.schema.json"
+        "../../../../schemas/jope.model-object.v1.schema.json"
     ))
     .unwrap();
     let manifest_value: serde_json::Value = serde_json::from_slice(&manifest_bytes).unwrap();
@@ -261,7 +261,7 @@ fn standard_object_fit_reload_export_and_mcp_predict_agree() {
     )
     .unwrap();
     let event_schema: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../schemas/jope.model-session.v1.schema.json"
+        "../../../../schemas/jope.model-session.v1.schema.json"
     ))
     .unwrap();
     for event in rollback["versions"].as_array().unwrap() {

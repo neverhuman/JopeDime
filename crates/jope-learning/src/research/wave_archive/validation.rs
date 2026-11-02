@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate(input: &WaveInput) -> anyhow::Result<()> {
+pub(crate) fn validate(input: &WaveInput) -> anyhow::Result<()> {
     anyhow::ensure!(
         safe_segment(&input.wave_id) && !input.version.is_empty() && safe_segment(&input.version),
         "unsafe wave id/version"
@@ -68,7 +68,7 @@ pub(super) fn validate(input: &WaveInput) -> anyhow::Result<()> {
     validate_event_order(&sorted)
 }
 
-pub(super) fn validate_event_order(events: &[Event]) -> anyhow::Result<()> {
+pub(crate) fn validate_event_order(events: &[Event]) -> anyhow::Result<()> {
     let mut keys = BTreeSet::new();
     for event in events {
         anyhow::ensure!(
@@ -78,7 +78,7 @@ pub(super) fn validate_event_order(events: &[Event]) -> anyhow::Result<()> {
     }
     Ok(())
 }
-pub(super) fn estimated_event_bytes(event: &Event) -> usize {
+pub(crate) fn estimated_event_bytes(event: &Event) -> usize {
     let strings = event.kind.len()
         + event
             .fields
@@ -117,7 +117,7 @@ pub(super) fn estimated_event_bytes(event: &Event) -> usize {
     // JSON escaping can expand each control character to six bytes; use a conservative bound.
     strings.saturating_mul(6).saturating_add(256)
 }
-pub(super) fn safe_segment(s: &str) -> bool {
+pub(crate) fn safe_segment(s: &str) -> bool {
     !s.is_empty()
         && s.len() <= 128
         && s.bytes()

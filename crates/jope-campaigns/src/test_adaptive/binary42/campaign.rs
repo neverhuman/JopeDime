@@ -1,9 +1,9 @@
 use super::*;
 
 mod cohort_reports;
-pub(super) use cohort_reports::*;
+pub(crate) use cohort_reports::*;
 
-pub(super) fn run_impl(run_id: &str, dataset: &str, resume: bool) -> Result<()> {
+pub(crate) fn run_impl(run_id: &str, dataset: &str, resume: bool) -> Result<()> {
     let (root, campaign, staging) = initialize_campaign(run_id, dataset, resume)?;
     if root.join("RUN_COMPLETE").exists() {
         return validate(run_id, dataset);
@@ -12,7 +12,7 @@ pub(super) fn run_impl(run_id: &str, dataset: &str, resume: bool) -> Result<()> 
     validate(run_id, dataset)
 }
 
-pub(super) fn run_campaign_loop(
+pub(crate) fn run_campaign_loop(
     root: &Path,
     campaign: &CampaignManifest,
     staging: &StagingReceipt,
@@ -84,7 +84,7 @@ pub(super) fn run_campaign_loop(
     }
 }
 
-pub(super) fn record_cohort_event(
+pub(crate) fn record_cohort_event(
     cohort_root: &Path,
     event: &str,
     dataset: Option<&str>,
@@ -109,7 +109,7 @@ pub(super) fn record_cohort_event(
     )
 }
 
-pub(super) fn initialize_all_cohort(
+pub(crate) fn initialize_all_cohort(
     run_id: &str,
     resume: bool,
 ) -> Result<(
@@ -217,7 +217,7 @@ pub(super) fn initialize_all_cohort(
     Ok((cohort, cohort_sha256, manifest, staging, staging_sha256))
 }
 
-pub(super) fn run_all_impl(run_id: &str, resume: bool) -> Result<()> {
+pub(crate) fn run_all_impl(run_id: &str, resume: bool) -> Result<()> {
     let (cohort, cohort_sha256, manifest, staging, staging_sha256) =
         initialize_all_cohort(run_id, resume)?;
     let cohort_root = run_root(run_id).join("cohort");

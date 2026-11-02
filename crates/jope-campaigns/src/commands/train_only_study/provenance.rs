@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn sha256_f64(values: &[f64]) -> String {
+pub(crate) fn sha256_f64(values: &[f64]) -> String {
     let mut hash = Sha256::new();
     for value in values {
         hash.update(value.to_bits().to_le_bytes());
@@ -8,7 +8,7 @@ pub(super) fn sha256_f64(values: &[f64]) -> String {
     hex::encode(hash.finalize())
 }
 
-pub(super) fn resolve_pointer_path(pointer: &Path, target: &Path) -> PathBuf {
+pub(crate) fn resolve_pointer_path(pointer: &Path, target: &Path) -> PathBuf {
     if target.is_absolute() {
         target.to_path_buf()
     } else {
@@ -19,7 +19,7 @@ pub(super) fn resolve_pointer_path(pointer: &Path, target: &Path) -> PathBuf {
     }
 }
 
-pub(super) fn absolute_path(path: &Path) -> Result<PathBuf> {
+pub(crate) fn absolute_path(path: &Path) -> Result<PathBuf> {
     if path.is_absolute() {
         Ok(path.to_path_buf())
     } else {
@@ -27,7 +27,7 @@ pub(super) fn absolute_path(path: &Path) -> Result<PathBuf> {
     }
 }
 
-pub(super) fn resolve_checkpoint_provenance(args: &PrepareArgs) -> Result<CheckpointProvenance> {
+pub(crate) fn resolve_checkpoint_provenance(args: &PrepareArgs) -> Result<CheckpointProvenance> {
     let pointer_bytes = fs::read(&args.checkpoint_pointer).with_context(|| {
         format!(
             "read accepted regression checkpoint pointer {}",
@@ -118,7 +118,7 @@ pub(super) fn resolve_checkpoint_provenance(args: &PrepareArgs) -> Result<Checkp
     })
 }
 
-pub(super) fn extract_json_string_field(line: &[u8], field: &[u8]) -> Option<String> {
+pub(crate) fn extract_json_string_field(line: &[u8], field: &[u8]) -> Option<String> {
     let mut start = 0usize;
     while start + field.len() <= line.len() {
         let relative = line[start..]
@@ -149,7 +149,7 @@ pub(super) fn extract_json_string_field(line: &[u8], field: &[u8]) -> Option<Str
     None
 }
 
-pub(super) fn corpus_dataset_ids(paths: &[&Path]) -> Result<BTreeSet<String>> {
+pub(crate) fn corpus_dataset_ids(paths: &[&Path]) -> Result<BTreeSet<String>> {
     let mut result = BTreeSet::new();
     for path in paths {
         let mut reader = BufReader::with_capacity(1024 * 1024, File::open(path)?);
@@ -167,7 +167,7 @@ pub(super) fn corpus_dataset_ids(paths: &[&Path]) -> Result<BTreeSet<String>> {
     Ok(result)
 }
 
-pub(super) fn load_catalog(pointer_path: &Path) -> Result<(CatalogPointer, Catalog)> {
+pub(crate) fn load_catalog(pointer_path: &Path) -> Result<(CatalogPointer, Catalog)> {
     let pointer_bytes = fs::read(pointer_path)?;
     let pointer: CatalogPointer = serde_json::from_slice(&pointer_bytes)?;
     validate_sha256(&pointer.catalog_sha256, "catalog")?;
@@ -197,7 +197,7 @@ pub(super) fn load_catalog(pointer_path: &Path) -> Result<(CatalogPointer, Catal
     ))
 }
 
-pub(super) fn checkpoint_exclusions(
+pub(crate) fn checkpoint_exclusions(
     run_id: &str,
     registry: &Path,
     checkpoint: &CheckpointProvenance,
@@ -239,7 +239,7 @@ pub(super) fn checkpoint_exclusions(
     })
 }
 
-pub(super) fn validate_train_data(data: &RegressionData) -> Vec<String> {
+pub(crate) fn validate_train_data(data: &RegressionData) -> Vec<String> {
     let mut reasons = Vec::new();
     if data.y.len() < 100 {
         reasons.push("fewer_than_100_training_rows".to_string());
@@ -268,7 +268,7 @@ pub(super) fn validate_train_data(data: &RegressionData) -> Vec<String> {
     reasons
 }
 
-pub(super) fn completed_baseline_report(
+pub(crate) fn completed_baseline_report(
     path: &Path,
     dataset_hash: &str,
     algorithm: &str,
@@ -289,7 +289,7 @@ pub(super) fn completed_baseline_report(
     Ok(sha256_bytes(&bytes))
 }
 
-pub(super) fn sotarena_report_hashes(
+pub(crate) fn sotarena_report_hashes(
     sotarena_root: &Path,
     dataset_hash: &str,
 ) -> Result<SotarenaReportHashes> {

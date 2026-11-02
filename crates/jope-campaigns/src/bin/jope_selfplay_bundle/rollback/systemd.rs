@@ -1,12 +1,12 @@
 use super::*;
 
-pub(super) fn rollback_derivation_path(output_root: &Path, bundle_sha256: &str) -> PathBuf {
+pub(crate) fn rollback_derivation_path(output_root: &Path, bundle_sha256: &str) -> PathBuf {
     output_root
         .join("rollback-derivations")
         .join(format!("{bundle_sha256}.v1.json"))
 }
 
-pub(super) fn verify_intrinsic_existing(output_root: &Path, bundle_sha256: &str) -> Result<Value> {
+pub(crate) fn verify_intrinsic_existing(output_root: &Path, bundle_sha256: &str) -> Result<Value> {
     require_bundle_sha256(bundle_sha256)?;
     let root = output_root.join(bundle_sha256);
     let path = root.join("bundle.json");
@@ -41,7 +41,7 @@ pub(super) fn verify_intrinsic_existing(output_root: &Path, bundle_sha256: &str)
     Ok(manifest)
 }
 
-pub(super) fn rollback_bundle_files(manifest: &Value) -> Result<Vec<RollbackBundleFileV2>> {
+pub(crate) fn rollback_bundle_files(manifest: &Value) -> Result<Vec<RollbackBundleFileV2>> {
     let mut files = manifest
         .get("files")
         .and_then(Value::as_array)
@@ -74,7 +74,7 @@ pub(super) fn rollback_bundle_files(manifest: &Value) -> Result<Vec<RollbackBund
     Ok(files)
 }
 
-pub(super) fn parse_systemd_artifact(
+pub(crate) fn parse_systemd_artifact(
     root: &Path,
     target: &str,
     expected_sha256: &str,
@@ -126,7 +126,7 @@ pub(super) fn parse_systemd_artifact(
     Ok(artifact)
 }
 
-pub(super) fn systemd_closure(
+pub(crate) fn systemd_closure(
     root: &Path,
     manifest: &Value,
 ) -> Result<Vec<RollbackSystemdArtifactV2>> {
@@ -151,7 +151,7 @@ pub(super) fn systemd_closure(
     Ok(artifacts)
 }
 
-pub(super) fn unchanged_inventory_root(
+pub(crate) fn unchanged_inventory_root(
     rows: &[Value],
     changed: &BTreeSet<String>,
 ) -> Result<String> {
@@ -167,7 +167,7 @@ pub(super) fn unchanged_inventory_root(
     ))
 }
 
-pub(super) fn git_blob(source: &Path, commit: &str, path: &str) -> Result<Vec<u8>> {
+pub(crate) fn git_blob(source: &Path, commit: &str, path: &str) -> Result<Vec<u8>> {
     let output = std::process::Command::new("git")
         .arg("-C")
         .arg(source)
@@ -183,7 +183,7 @@ pub(super) fn git_blob(source: &Path, commit: &str, path: &str) -> Result<Vec<u8
     Ok(output.stdout)
 }
 
-pub(super) fn transform_rollback_unit(
+pub(crate) fn transform_rollback_unit(
     unit: &str,
     before: &[u8],
     reviewed: &[u8],

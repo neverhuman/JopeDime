@@ -4,7 +4,7 @@ use super::*;
 // plan
 // --------------------------------------------------------------------------
 
-pub(super) fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
     let tmp = path.with_extension("tmp");
     fs::write(&tmp, bytes)?;
     fs::rename(&tmp, path)?;
@@ -12,7 +12,7 @@ pub(super) fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn plan(
+pub(crate) fn plan(
     root: &Path,
     out: &Path,
     top_k: usize,

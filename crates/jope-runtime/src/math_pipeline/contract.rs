@@ -19,7 +19,7 @@ impl InputContract {
         Ok(input)
     }
 
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         let bad = |message: String| Err(Failure::integrity(format!("{INPUT_PART}: {message}")));
         if self.task != "regression" {
             return bad(format!("task {:?}; v1 decodes regression only", self.task));
@@ -65,7 +65,7 @@ impl InputContract {
 }
 
 impl TargetScale {
-    pub(super) fn inverse_legacy(&self, v: f32) -> f32 {
+    pub(crate) fn inverse_legacy(&self, v: f32) -> f32 {
         let min = self.min as f32;
         let scale = self.scale as f32;
         if scale <= 1e-12 {
@@ -75,7 +75,7 @@ impl TargetScale {
         }
     }
 
-    pub(super) fn inverse_f64(&self, v: f64) -> f64 {
+    pub(crate) fn inverse_f64(&self, v: f64) -> f64 {
         if self.scale <= 1e-12 {
             self.min
         } else {
@@ -84,7 +84,7 @@ impl TargetScale {
     }
 }
 
-pub(super) fn decode_input(bytes: &[u8]) -> Result<InputContract> {
+pub(crate) fn decode_input(bytes: &[u8]) -> Result<InputContract> {
     // Inspect only the section version, then run the existing strict complete decoder. A
     // streaming header avoids retaining a second full copy of a large column contract.
     #[derive(Deserialize)]
@@ -115,7 +115,7 @@ fn undefined(message: String) -> anyhow::Error {
     .into()
 }
 
-pub(super) fn encode_f64(cell: Option<&str>, column: &NumericColumn) -> Result<f64> {
+pub(crate) fn encode_f64(cell: Option<&str>, column: &NumericColumn) -> Result<f64> {
     let Some(v) = cell.and_then(parse_cell_f64) else {
         return Ok(0.0);
     };
@@ -135,7 +135,7 @@ pub(super) fn encode_f64(cell: Option<&str>, column: &NumericColumn) -> Result<f
 
 /// Encode one cell. Missing, non-finite, out-of-f32-range and unparseable cells encode as 0,
 /// the scaled column minimum; `true`/`yes` read as 1 and `false`/`no` as 0 before scaling.
-pub(super) fn encode(cell: Option<&str>, column: &NumericColumn) -> f32 {
+pub(crate) fn encode(cell: Option<&str>, column: &NumericColumn) -> f32 {
     let Some(v) = cell.and_then(parse_cell) else {
         return 0.0;
     };
@@ -164,13 +164,13 @@ fn parse_cell_f64(cell: &str) -> Option<f64> {
     v.is_finite().then_some(v)
 }
 
-pub(super) const JS_CONTRACT_HEADER: &str =
+pub(crate) const JS_CONTRACT_HEADER: &str =
     "\n// Input contract (org.jopedime/math-pipeline/v1). Arithmetic is f32, as in the decoder.\n";
 
 /// The decoder's `encode`/`parse_cell`/`inverse` in JavaScript. `Math.fround` after each f32
 /// operation reproduces Rust's f32 results exactly; `RUST_SPACE` is Rust's `char::is_whitespace`
 /// set, which differs from `String.prototype.trim` (that also strips U+FEFF).
-pub(super) const JS_CONTRACT: &str = r##"const RUST_SPACE="[\\t\\n\\v\\f\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]";
+pub(crate) const JS_CONTRACT: &str = r##"const RUST_SPACE="[\\t\\n\\v\\f\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]";
 const TRIM=new RegExp("^"+RUST_SPACE+"+|"+RUST_SPACE+"+$","g");
 const MISSING=new Set(["","na","n/a","null","none","nan","?","#n/a"]);
 const DECIMAL=/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
@@ -214,7 +214,7 @@ if(typeof module!=="undefined"&&module.exports)module.exports={MODEL_COLUMNS,pre
 "##;
 
 // Version 2 deliberately keeps its own contract: legacy f32 arithmetic above is frozen.
-pub(super) const JS_CONTRACT_F64: &str = r##"const RUST_SPACE="[\\t\\n\\v\\f\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]";
+pub(crate) const JS_CONTRACT_F64: &str = r##"const RUST_SPACE="[\\t\\n\\v\\f\\r \\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]";
 const TRIM=new RegExp("^"+RUST_SPACE+"+|"+RUST_SPACE+"+$","g");
 const MISSING=new Set(["","na","n/a","null","none","nan","?","#n/a"]);
 const DECIMAL=/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;

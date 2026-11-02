@@ -1,38 +1,38 @@
 use super::*;
 
-pub(super) fn is_expression(stage: &Stage) -> bool {
+pub(crate) fn is_expression(stage: &Stage) -> bool {
     matches!(stage.op.as_str(), "map" | "derive")
 }
-pub(super) fn expression_sites(pipe: &DslExpr) -> Vec<usize> {
+pub(crate) fn expression_sites(pipe: &DslExpr) -> Vec<usize> {
     (0..pipe.stages.len() - 1)
         .filter(|&i| is_expression(&pipe.stages[i]))
         .collect()
 }
-pub(super) fn expression(stage: &Stage) -> Result<MathExpr> {
+pub(crate) fn expression(stage: &Stage) -> Result<MathExpr> {
     let Some(ParamValue::Str(source)) = stage.params.get("expr") else {
         return Err(Error::Syntax("expression carrier needs expr".into()));
     };
     MathExpr::parse(source).map_err(expression_error)
 }
-pub(super) fn expression_error(error: anyhow::Error) -> Error {
+pub(crate) fn expression_error(error: anyhow::Error) -> Error {
     Error::Bounds(error.to_string())
 }
-pub(super) fn seed(rng: &mut Pcg32) -> u64 {
+pub(crate) fn seed(rng: &mut Pcg32) -> u64 {
     (u64::from(rng.next_u32()) << 32) | u64::from(rng.next_u32())
 }
-pub(super) fn index_of(rng: &mut Pcg32, size: usize) -> usize {
+pub(crate) fn index_of(rng: &mut Pcg32, size: usize) -> usize {
     (seed(rng) % size as u64) as usize
 }
-pub(super) fn check_ratio(n: u32, d: u32) -> Result<()> {
+pub(crate) fn check_ratio(n: u32, d: u32) -> Result<()> {
     if d == 0 || n > d {
         return Err(Error::Bounds("invalid profile probability".into()));
     }
     Ok(())
 }
-pub(super) fn chance(rng: &mut Pcg32, n: u32, d: u32) -> bool {
+pub(crate) fn chance(rng: &mut Pcg32, n: u32, d: u32) -> bool {
     seed(rng) % u64::from(d) < u64::from(n)
 }
-pub(super) fn check_weights(weights: &[PipelineArmWeight]) -> Result<()> {
+pub(crate) fn check_weights(weights: &[PipelineArmWeight]) -> Result<()> {
     let mut seen = BTreeSet::new();
     if weights.iter().any(|row| !seen.insert(row.arm))
         || weights.iter().map(|row| u64::from(row.weight)).sum::<u64>() == 0
@@ -43,7 +43,7 @@ pub(super) fn check_weights(weights: &[PipelineArmWeight]) -> Result<()> {
     }
     Ok(())
 }
-pub(super) fn draw_arm(weights: &[PipelineArmWeight], rng: &mut Pcg32) -> PipelineArm {
+pub(crate) fn draw_arm(weights: &[PipelineArmWeight], rng: &mut Pcg32) -> PipelineArm {
     let total: u64 = weights.iter().map(|row| u64::from(row.weight)).sum();
     let mut draw = seed(rng) % total;
     for row in weights {
@@ -55,7 +55,7 @@ pub(super) fn draw_arm(weights: &[PipelineArmWeight], rng: &mut Pcg32) -> Pipeli
     unreachable!("validated positive weights")
 }
 
-pub(super) fn draw_domain(domain: &ParamDomain, rng: &mut Pcg32) -> Result<Option<ParamValue>> {
+pub(crate) fn draw_domain(domain: &ParamDomain, rng: &mut Pcg32) -> Result<Option<ParamValue>> {
     let invalid = || Error::Bounds("invalid profile birth domain".into());
     let value = match domain {
         ParamDomain::IntRange { lo, hi } => {

@@ -4,7 +4,7 @@ use super::*;
 /// private protocol: it reads the pinned manifest, evaluates exactly one
 /// candidate, and writes one small JSON outcome.  The parent owns receipt
 /// publication and therefore never ingests a child-owned partial artifact.
-pub(super) fn spawn_eval_one(
+pub(crate) fn spawn_eval_one(
     manifest: &Path,
     candidate_index: usize,
     result: &Path,
@@ -47,7 +47,7 @@ pub(super) fn spawn_eval_one(
         .with_context(|| format!("spawn eval-one candidate {candidate_index}"))
 }
 
-pub(super) fn process_group_exists(pid: libc::pid_t) -> Result<bool> {
+pub(crate) fn process_group_exists(pid: libc::pid_t) -> Result<bool> {
     #[cfg(unix)]
     // SAFETY: kill with signal 0 sends nothing and reads no memory; every caller passes a
     // spawned child's PID (never 0 or 1), so -pid names one process group.
@@ -68,7 +68,7 @@ pub(super) fn process_group_exists(pid: libc::pid_t) -> Result<bool> {
     }
 }
 
-pub(super) fn wait_for_process_group_exit(pid: libc::pid_t, grace: Duration) -> Result<bool> {
+pub(crate) fn wait_for_process_group_exit(pid: libc::pid_t, grace: Duration) -> Result<bool> {
     let deadline = Instant::now() + grace;
     loop {
         if !process_group_exists(pid)? {
@@ -81,7 +81,7 @@ pub(super) fn wait_for_process_group_exit(pid: libc::pid_t, grace: Duration) -> 
     }
 }
 
-pub(super) fn terminate_process_group(
+pub(crate) fn terminate_process_group(
     child: &mut std::process::Child,
     grace: Duration,
 ) -> Result<()> {
@@ -124,7 +124,7 @@ pub(super) fn terminate_process_group(
     Ok(())
 }
 
-pub(super) fn run_with_timeout(
+pub(crate) fn run_with_timeout(
     manifest: &Path,
     candidate_index: usize,
     result: &Path,
@@ -201,7 +201,7 @@ pub(super) fn run_with_timeout(
     }
 }
 
-pub(super) fn evaluate_one_manifest(shard: &Shard, candidate_index: usize) -> Result<Outcome> {
+pub(crate) fn evaluate_one_manifest(shard: &Shard, candidate_index: usize) -> Result<Outcome> {
     let candidate = shard
         .candidates
         .get(candidate_index)
@@ -302,7 +302,7 @@ pub(super) fn evaluate_one_manifest(shard: &Shard, candidate_index: usize) -> Re
     })
 }
 
-pub(super) fn panic_message(panic: Box<dyn std::any::Any + Send>) -> String {
+pub(crate) fn panic_message(panic: Box<dyn std::any::Any + Send>) -> String {
     panic
         .downcast_ref::<&str>()
         .map(|value| (*value).to_owned())
@@ -310,7 +310,7 @@ pub(super) fn panic_message(panic: Box<dyn std::any::Any + Send>) -> String {
         .unwrap_or_else(|| "opaque panic payload".into())
 }
 
-pub(super) fn run_eval_one(manifest: &Path, candidate_index: usize, result: &Path) -> Result<()> {
+pub(crate) fn run_eval_one(manifest: &Path, candidate_index: usize, result: &Path) -> Result<()> {
     let bytes = fs::read(manifest).with_context(|| format!("read {}", manifest.display()))?;
     let shard: Shard = serde_json::from_slice(&bytes).context("parse shard manifest")?;
     if task_metric(&shard.task).is_none() {

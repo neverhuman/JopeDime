@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn sync_bundle_to_gpu_nodes(
+pub(crate) fn sync_bundle_to_gpu_nodes(
     output_root: &Path,
     bundle_sha256: &str,
     manifest: &Value,
@@ -94,7 +94,7 @@ pub(super) fn sync_bundle_to_gpu_nodes(
     }))
 }
 
-pub(super) fn node_command(
+pub(crate) fn node_command(
     node: &str,
     local_hostname: &str,
     program: &str,
@@ -115,7 +115,7 @@ pub(super) fn node_command(
 
 /// Repeat a challenged live probe during activation; each node hashes the
 /// complete bundle again. See `tests::fresh_live_probe_records_rechallenged_hashes_for_all_nodes`.
-pub(super) fn fresh_live_bundle_probe(
+pub(crate) fn fresh_live_bundle_probe(
     output_root: &Path,
     bundle_sha256: &str,
     manifest: &Value,
@@ -129,7 +129,7 @@ pub(super) fn fresh_live_bundle_probe(
     )
 }
 
-pub(super) fn fresh_live_bundle_probe_with<L, N>(
+pub(crate) fn fresh_live_bundle_probe_with<L, N>(
     output_root: &Path,
     bundle_sha256: &str,
     manifest: &Value,
@@ -301,7 +301,7 @@ where
     }))
 }
 
-pub(super) fn local_hostname() -> Result<String> {
+pub(crate) fn local_hostname() -> Result<String> {
     let output = std::process::Command::new("hostname")
         .output()
         .context("read local hostname for bundle synchronization")?;
@@ -318,11 +318,11 @@ pub(super) fn local_hostname() -> Result<String> {
     Ok(hostname)
 }
 
-pub(super) fn node_is_local(node: &str, hostname: &str) -> bool {
+pub(crate) fn node_is_local(node: &str, hostname: &str) -> bool {
     hostname.split('.').next() == Some(node)
 }
 
-pub(super) fn validate_no_python_runtime(contents: &str) -> Result<()> {
+pub(crate) fn validate_no_python_runtime(contents: &str) -> Result<()> {
     let normalized = contents.to_ascii_lowercase();
     if normalized.contains("python") || normalized.contains(".py") {
         bail!("Python runtime reference is forbidden outside the PyTorch boundary");
@@ -330,7 +330,7 @@ pub(super) fn validate_no_python_runtime(contents: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_encoding_runner(contents: &str) -> Result<()> {
+pub(crate) fn validate_encoding_runner(contents: &str) -> Result<()> {
     let normalized = contents.to_ascii_lowercase();
     ensure!(
         normalized.contains("jope_runtime_pythonpath")

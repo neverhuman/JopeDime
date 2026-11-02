@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn immutable_json(path: &Path, value: &Value) -> Result<()> {
+pub(crate) fn immutable_json(path: &Path, value: &Value) -> Result<()> {
     if path.exists() {
         ensure!(
             read_json::<Value>(path)? == *value,
@@ -13,7 +13,7 @@ pub(super) fn immutable_json(path: &Path, value: &Value) -> Result<()> {
     }
 }
 
-pub(super) fn load_transforms(path: &Path, device: Device) -> Result<BTreeMap<String, Tensor>> {
+pub(crate) fn load_transforms(path: &Path, device: Device) -> Result<BTreeMap<String, Tensor>> {
     let tensors: BTreeMap<_, _> = Tensor::load_multi_with_device(path, device)?
         .into_iter()
         .collect();
@@ -46,7 +46,7 @@ pub(super) fn load_transforms(path: &Path, device: Device) -> Result<BTreeMap<St
     Ok(tensors)
 }
 
-pub(super) fn normalize_frozen(
+pub(crate) fn normalize_frozen(
     h: &Tensor,
     f: &Tensor,
     t: &Tensor,
@@ -124,7 +124,7 @@ fn training_parity_rows<'a>(
     Ok(selected)
 }
 
-pub(super) fn verify_original_contexts(
+pub(crate) fn verify_original_contexts(
     root: &Path,
     original: &Value,
     rows: &[&Value],
@@ -203,7 +203,7 @@ pub(super) fn verify_original_contexts(
 
 /// A different component root is not evidence for the original saved vector.
 /// Validate all metadata before opening a selected component's numerical payload.
-pub(super) fn reference_component(
+pub(crate) fn reference_component(
     root: &Path,
     metadata: &Value,
     encoding: &Encoding,

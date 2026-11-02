@@ -1,15 +1,15 @@
 use super::*;
 
-pub(super) const PORTABLE_WARNING_BEGIN: &str = r#"#if defined(__GNUC__)
+pub(crate) const PORTABLE_WARNING_BEGIN: &str = r#"#if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif"#;
 
-pub(super) const PORTABLE_WARNING_END: &str = r#"#if defined(__GNUC__)
+pub(crate) const PORTABLE_WARNING_END: &str = r#"#if defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif"#;
 
-pub(super) const PORTABLE_MATH: &str = r####"static inline uint64_t to_bits(double x){ uint64_t b; std::memcpy(&b,&x,8); return b; }
+pub(crate) const PORTABLE_MATH: &str = r####"static inline uint64_t to_bits(double x){ uint64_t b; std::memcpy(&b,&x,8); return b; }
 static inline double from_bits(uint64_t b){ double x; std::memcpy(&x,&b,8); return x; }
 static inline uint32_t high_word(double x){ return (uint32_t)(to_bits(x) >> 32); }
 static inline uint32_t low_word(double x){ return (uint32_t)to_bits(x); }
@@ -303,7 +303,7 @@ static double xatan2(double y, double x){
 
 #[cfg(test)]
 pub(crate) fn portable_math_matches_verified_fixture() -> bool {
-    let fixture = include_str!("../tests/portable/full_ref.cpp");
+    let fixture = include_str!("../../tests/portable/full_ref.cpp");
     let Some((prefix, _)) = fixture.split_once("static std::vector<double> grid(){") else {
         return false;
     };

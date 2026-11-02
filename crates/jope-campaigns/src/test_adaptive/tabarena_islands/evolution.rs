@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn initial_population(
+pub(crate) fn initial_population(
     registry: &Path,
     root: &Path,
     spec: &DatasetSpec,
@@ -14,7 +14,7 @@ pub(super) fn initial_population(
     initial_population_from_seeds(&manifest.seeds, run_id, &spec.dataset_hash)
 }
 
-pub(super) fn initial_population_from_seeds(
+pub(crate) fn initial_population_from_seeds(
     seeds: &[SeedProvenance],
     run_id: &str,
     dataset_hash: &str,
@@ -90,7 +90,7 @@ fn is_fresh_novel_descendant(member: &Member) -> bool {
             .all(|parent| parent != &member.semantic_sha256)
 }
 
-pub(super) fn offspring_seed(
+pub(crate) fn offspring_seed(
     run_id: &str,
     dataset: &str,
     generation: usize,
@@ -105,7 +105,7 @@ pub(super) fn offspring_seed(
     u64::from_le_bytes(digest[..8].try_into().unwrap())
 }
 
-pub(super) fn next_population(
+pub(crate) fn next_population(
     run_id: &str,
     dataset: &str,
     generation: usize,
@@ -215,12 +215,12 @@ pub(super) fn next_population(
     Ok(next)
 }
 
-pub(super) fn checkpoint_path(root: &Path, generation: usize) -> PathBuf {
+pub(crate) fn checkpoint_path(root: &Path, generation: usize) -> PathBuf {
     root.join("checkpoints")
         .join(format!("generation-{generation:06}.v1.json"))
 }
 
-pub(super) fn load_checkpoints(
+pub(crate) fn load_checkpoints(
     root: &Path,
     identity: &CampaignIdentity,
 ) -> Result<Vec<(TabArenaCheckpoint, String)>> {
@@ -253,7 +253,7 @@ pub(super) fn load_checkpoints(
     Ok(checkpoints)
 }
 
-pub(super) fn load_cache(
+pub(crate) fn load_cache(
     root: &Path,
     checkpoints: &[(TabArenaCheckpoint, String)],
 ) -> Result<HashMap<String, CachedEvaluation>> {
@@ -284,7 +284,7 @@ pub(super) fn load_cache(
     Ok(cache)
 }
 
-pub(super) fn make_checkpoint(
+pub(crate) fn make_checkpoint(
     identity: &CampaignIdentity,
     generation: usize,
     previous: Option<String>,
@@ -346,7 +346,7 @@ pub(super) fn make_checkpoint(
     })
 }
 
-pub(super) fn discovery_winner(
+pub(crate) fn discovery_winner(
     ranked: &[SlotOutcome],
     generation: usize,
     leader_rmse: f64,
@@ -363,7 +363,7 @@ pub(super) fn discovery_winner(
         .flatten()
 }
 
-pub(super) fn replay_records(
+pub(crate) fn replay_records(
     campaign: &Path,
     registry: &Path,
     identity: &CampaignIdentity,

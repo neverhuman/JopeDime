@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn publication_status(event: &str, receipt: &Value) -> Result<Option<Value>> {
+pub(crate) fn publication_status(event: &str, receipt: &Value) -> Result<Option<Value>> {
     ensure!(
         receipt["schema"] == "jain.datasets_service_receipt.v1",
         "unsupported winner publication receipt"
@@ -127,7 +127,7 @@ pub(super) fn publication_status(event: &str, receipt: &Value) -> Result<Option<
         "remote_verified_recorded":verified,"capture_sequence":capture["sequence"]}),
     ))
 }
-pub(super) fn winners(id: &str, root: &Path, outbox: &Path, receipts: &[Artifact]) -> Result<Rows> {
+pub(crate) fn winners(id: &str, root: &Path, outbox: &Path, receipts: &[Artifact]) -> Result<Rows> {
     ensure!(outbox.starts_with(root), "winner outbox outside root");
     let all = bounded_files(&outbox.join("by-sequence"), 100000)?;
     ensure!(
@@ -192,7 +192,7 @@ pub(super) fn winners(id: &str, root: &Path, outbox: &Path, receipts: &[Artifact
     }
     Ok(rows)
 }
-pub(super) fn catalog() -> Result<Catalog> {
+pub(crate) fn catalog() -> Result<Catalog> {
     let bytes = crate::eval_registry::native_scq::policy::protected(Path::new(CATALOG))?;
     ensure!(bytes.len() <= 1 << 20, "science catalog exceeds1MiB");
     let catalog: Catalog = serde_json::from_slice(&bytes)?;

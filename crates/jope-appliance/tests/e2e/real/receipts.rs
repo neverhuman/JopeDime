@@ -1,7 +1,7 @@
 use super::*;
 use super::{setup::*, transport::*};
 
-pub(super) fn terminal(
+pub(crate) fn terminal(
     home: &Path,
     csv: &Path,
     id: &jope_api::ids::RunId,
@@ -108,7 +108,7 @@ pub(super) fn terminal(
 
 // A live SSE subscription remains open after completion. Batch must stop at
 // the committed terminal event, and a cursor already there must emit a receipt.
-pub(super) fn ndjson_receipt(
+pub(crate) fn ndjson_receipt(
     home: &Path,
     spec: &RunSpec,
     completed: &RunSnapshot,

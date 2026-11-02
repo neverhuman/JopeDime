@@ -86,7 +86,7 @@ pub struct ProducerPlan {
     pub qualification_execution_sha256: Option<Vec<String>>,
 }
 impl ProducerPlan {
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         let r = &self.release;
         ensure!(
             r.encoder.digests().iter().all(|d| is_hex64(d))
@@ -144,19 +144,19 @@ pub struct HandoffEvidence {
 /// serializes; anything else is refused.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct HandoffRecord {
-    pub(super) schema: String,
-    pub(super) consumer: String,
-    pub(super) release: HandoffRelease,
-    pub(super) transformations: Vec<String>,
-    pub(super) scope: HandoffScope,
-    pub(super) artifact_sha256: String,
-    pub(super) qualification_sha256: String,
-    pub(super) admission_pins_sha256: String,
-    pub(super) context_sha256: String,
+pub(crate) struct HandoffRecord {
+    pub(crate) schema: String,
+    pub(crate) consumer: String,
+    pub(crate) release: HandoffRelease,
+    pub(crate) transformations: Vec<String>,
+    pub(crate) scope: HandoffScope,
+    pub(crate) artifact_sha256: String,
+    pub(crate) qualification_sha256: String,
+    pub(crate) admission_pins_sha256: String,
+    pub(crate) context_sha256: String,
 }
 
-pub(super) fn parse_handoff(bytes: &[u8]) -> Result<HandoffRecord> {
+pub(crate) fn parse_handoff(bytes: &[u8]) -> Result<HandoffRecord> {
     serde_json::from_slice(bytes).context(
         "ContextHandoffMismatch: the retained handoff is not a jope.cpu-context-handoff/v1 record",
     )
@@ -164,11 +164,11 @@ pub(super) fn parse_handoff(bytes: &[u8]) -> Result<HandoffRecord> {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct HandoffScope {
-    pub(super) training: HandoffTraining,
-    pub(super) input_sha256: String,
-    pub(super) preprocessing_sha256: String,
-    pub(super) prepared_rows_sha256: String,
+pub(crate) struct HandoffScope {
+    pub(crate) training: HandoffTraining,
+    pub(crate) input_sha256: String,
+    pub(crate) preprocessing_sha256: String,
+    pub(crate) prepared_rows_sha256: String,
 }
 
 /// W2's training scope (`jope_policy::context_producer::TrainingIdentity`, field for field in its
@@ -176,68 +176,68 @@ pub(super) struct HandoffScope {
 /// the W3 receipt's row encoding, so only their form is checked here; the dataset is joined.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct HandoffTraining {
-    pub(super) dataset_sha256: String,
-    pub(super) prepared_sha256: String,
-    pub(super) training_sha256: String,
-    pub(super) fitting_rows_sha256: String,
-    pub(super) cut: u8,
+pub(crate) struct HandoffTraining {
+    pub(crate) dataset_sha256: String,
+    pub(crate) prepared_sha256: String,
+    pub(crate) training_sha256: String,
+    pub(crate) fitting_rows_sha256: String,
+    pub(crate) cut: u8,
 }
 
 /// The W2 context artifact (`jope_policy::context_producer::{SCHEMA, BACKEND}`).
-pub(super) const PRODUCED_ARTIFACT_SCHEMA: &str = "jope.cpu-context/v1";
-pub(super) const PRODUCED_ARTIFACT_BACKEND: &str = "Rust/Candle 0.11 CPU FP32; frozen accepted \
+pub(crate) const PRODUCED_ARTIFACT_SCHEMA: &str = "jope.cpu-context/v1";
+pub(crate) const PRODUCED_ARTIFACT_BACKEND: &str = "Rust/Candle 0.11 CPU FP32; frozen accepted \
                                                     transforms; native-component qualification \
                                                     required";
 /// `FinalContext::WIDTH` and the frozen clip `CpuContextArtifact::validate` holds it to.
-pub(super) const CONTEXT_WIDTH: usize = 2048;
-pub(super) const CONTEXT_CLIP: f32 = 32.0;
+pub(crate) const CONTEXT_WIDTH: usize = 2048;
+pub(crate) const CONTEXT_CLIP: f32 = 32.0;
 /// `verify_qualified`'s bound on the artifact bytes.
-pub(super) const MAX_ARTIFACT_BYTES: usize = 16 << 20;
+pub(crate) const MAX_ARTIFACT_BYTES: usize = 16 << 20;
 /// The W2 verification policy's eight native meta-train qualification cases.
 const QUALIFICATION_CASES: usize = 8;
 /// The controller's execution attestation (`jope_pipeline::cpu_context_bridge`).
-pub(super) const EXECUTION_ATTESTATION_SCHEMA: &str = "jope.cpu-context-execution/controller-v1";
+pub(crate) const EXECUTION_ATTESTATION_SCHEMA: &str = "jope.cpu-context-execution/controller-v1";
 
 /// The artifact a W2 producer job writes (`jope_policy::context_producer::CpuContextArtifact`),
 /// field for field; anything else is refused. The encoder products and the train-only
 /// preprocessing are carried, not interpreted: teacher admission consumes the final context.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct ProducedArtifact {
-    pub(super) schema: String,
-    pub(super) backend: String,
-    pub(super) qualification: String,
-    pub(super) source_sha256: String,
-    pub(super) producer_sha256: String,
-    pub(super) input_sha256: String,
-    pub(super) training: HandoffTraining,
-    pub(super) selected_training_rows_sha256: String,
-    pub(super) original_labels_sha256: String,
-    pub(super) preprocessing_sha256: String,
-    pub(super) prepared_rows_sha256: String,
-    pub(super) preprocessing: serde_json::Value,
-    pub(super) encoder: HandoffEncoder,
-    pub(super) components: serde_json::Value,
-    pub(super) vector: Vec<f32>,
-    pub(super) final_test_targets_used: bool,
+pub(crate) struct ProducedArtifact {
+    pub(crate) schema: String,
+    pub(crate) backend: String,
+    pub(crate) qualification: String,
+    pub(crate) source_sha256: String,
+    pub(crate) producer_sha256: String,
+    pub(crate) input_sha256: String,
+    pub(crate) training: HandoffTraining,
+    pub(crate) selected_training_rows_sha256: String,
+    pub(crate) original_labels_sha256: String,
+    pub(crate) preprocessing_sha256: String,
+    pub(crate) prepared_rows_sha256: String,
+    pub(crate) preprocessing: serde_json::Value,
+    pub(crate) encoder: HandoffEncoder,
+    pub(crate) components: serde_json::Value,
+    pub(crate) vector: Vec<f32>,
+    pub(crate) final_test_targets_used: bool,
 }
 
 /// `jope_policy::context_producer::AdmissionPins`, field for field in its serialization order:
 /// the sha256 of these bytes is the handoff's `admission_pins_sha256` (`AdmissionPins::sha256`).
 #[derive(Serialize)]
-pub(super) struct AdmissionPinsRecord<'a> {
-    pub(super) source_sha256: &'a str,
-    pub(super) producer_sha256: &'a str,
-    pub(super) artifact_sha256: &'a str,
-    pub(super) qualification_sha256: &'a str,
-    pub(super) reference_manifest_sha256: &'a str,
-    pub(super) context_execution_sha256: &'a str,
-    pub(super) qualification_execution_sha256: &'a [String],
-    pub(super) verification_policy_sha256: &'a str,
-    pub(super) training: &'a HandoffTraining,
-    pub(super) input_sha256: &'a str,
-    pub(super) preprocessing_sha256: &'a str,
+pub(crate) struct AdmissionPinsRecord<'a> {
+    pub(crate) source_sha256: &'a str,
+    pub(crate) producer_sha256: &'a str,
+    pub(crate) artifact_sha256: &'a str,
+    pub(crate) qualification_sha256: &'a str,
+    pub(crate) reference_manifest_sha256: &'a str,
+    pub(crate) context_execution_sha256: &'a str,
+    pub(crate) qualification_execution_sha256: &'a [String],
+    pub(crate) verification_policy_sha256: &'a str,
+    pub(crate) training: &'a HandoffTraining,
+    pub(crate) input_sha256: &'a str,
+    pub(crate) preprocessing_sha256: &'a str,
 }
 
 /// `jope_policy::context_producer::ExecutionAttestation`, field for field in its serialization
@@ -245,17 +245,17 @@ pub(super) struct AdmissionPinsRecord<'a> {
 /// (`jope_pipeline::cpu_context_bridge::ExecutionProof::attest`): the admission pins'
 /// `context_execution_sha256` is the sha256 of these bytes.
 #[derive(Serialize)]
-pub(super) struct ExecutionAttestationRecord<'a> {
-    pub(super) schema: &'a str,
-    pub(super) supervisor_receipt_sha256: &'a str,
-    pub(super) program_sha256: &'a str,
-    pub(super) input_sha256: &'a str,
-    pub(super) output_sha256: &'a str,
-    pub(super) completed: bool,
-    pub(super) cpu_limit: u32,
-    pub(super) memory_max: u64,
-    pub(super) swap_max: u64,
-    pub(super) threads: u32,
-    pub(super) elapsed_seconds: f64,
-    pub(super) deadline_seconds: f64,
+pub(crate) struct ExecutionAttestationRecord<'a> {
+    pub(crate) schema: &'a str,
+    pub(crate) supervisor_receipt_sha256: &'a str,
+    pub(crate) program_sha256: &'a str,
+    pub(crate) input_sha256: &'a str,
+    pub(crate) output_sha256: &'a str,
+    pub(crate) completed: bool,
+    pub(crate) cpu_limit: u32,
+    pub(crate) memory_max: u64,
+    pub(crate) swap_max: u64,
+    pub(crate) threads: u32,
+    pub(crate) elapsed_seconds: f64,
+    pub(crate) deadline_seconds: f64,
 }

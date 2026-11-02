@@ -1,7 +1,7 @@
 use super::*;
 
 /// `ka * a + kb * b` lane by lane, skipping a term whose coefficient is an exact zero.
-pub(super) fn comb(p: usize, ka: f64, a: &Lanes, kb: f64, b: &Lanes) -> Lanes {
+pub(crate) fn comb(p: usize, ka: f64, a: &Lanes, kb: f64, b: &Lanes) -> Lanes {
     let mut out = ZERO;
     if ka != 0.0 {
         for k in 0..p {
@@ -16,12 +16,12 @@ pub(super) fn comb(p: usize, ka: f64, a: &Lanes, kb: f64, b: &Lanes) -> Lanes {
     out
 }
 
-pub(super) fn scale(p: usize, k: f64, a: &Lanes) -> Lanes {
+pub(crate) fn scale(p: usize, k: f64, a: &Lanes) -> Lanes {
     comb(p, k, a, 0.0, &ZERO)
 }
 
 /// `a / denominator` lane by lane.
-pub(super) fn divide(p: usize, a: &Lanes, denominator: f64) -> Lanes {
+pub(crate) fn divide(p: usize, a: &Lanes, denominator: f64) -> Lanes {
     let mut out = ZERO;
     for k in 0..p {
         out[k] = a[k] / denominator;
@@ -31,7 +31,7 @@ pub(super) fn divide(p: usize, a: &Lanes, denominator: f64) -> Lanes {
 
 /// The slope factor of `value.clamp(lo, hi)`: 1 inside, 0 outside or NaN, and the tie mean 1/2
 /// on a bound.
-pub(super) fn clamp_factor(value: f64, lo: f64, hi: f64) -> f64 {
+pub(crate) fn clamp_factor(value: f64, lo: f64, hi: f64) -> f64 {
     if value > lo && value < hi {
         1.0
     } else if value == lo || value == hi {
@@ -42,7 +42,7 @@ pub(super) fn clamp_factor(value: f64, lo: f64, hi: f64) -> f64 {
 }
 
 /// The tangent of `value.clamp(lo, hi)` with constant bounds.
-pub(super) fn clamped(
+pub(crate) fn clamped(
     p: usize,
     value: f64,
     lo: f64,
@@ -59,7 +59,7 @@ pub(super) fn clamped(
 
 /// The mean tangent of the operands whose value equals the selected `result` (Rust `==`, so -0.0
 /// ties 0.0 and NaN never matches). Zero when nothing matches.
-pub(super) fn tie_mean(p: usize, result: f64, operands: &[&Dual], nonsmooth: &mut bool) -> Lanes {
+pub(crate) fn tie_mean(p: usize, result: f64, operands: &[&Dual], nonsmooth: &mut bool) -> Lanes {
     let mut out = ZERO;
     let mut tied = 0usize;
     for operand in operands {
@@ -80,7 +80,7 @@ pub(super) fn tie_mean(p: usize, result: f64, operands: &[&Dual], nonsmooth: &mu
     out
 }
 
-pub(super) fn binary_tangent(
+pub(crate) fn binary_tangent(
     p: usize,
     op: BinOp,
     a: &Dual,
@@ -123,7 +123,7 @@ pub(super) fn binary_tangent(
 }
 
 /// `v = a.powf(e)` with `e = b.clamp(-8, 8)`, both operands finite.
-pub(super) fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> Lanes {
+pub(crate) fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut bool) -> Lanes {
     let e = b.v.clamp(-8.0, 8.0);
     let exponent_factor = clamp_factor(b.v, -8.0, 8.0);
     if exponent_factor == 0.5 {
@@ -194,7 +194,7 @@ pub(super) fn pow_tangent(p: usize, a: &Dual, b: &Dual, v: f64, nonsmooth: &mut 
 }
 
 /// `value`, or 0 with the row marked nonsmooth when it is not finite.
-pub(super) fn finite_or_zero(value: f64, nonsmooth: &mut bool) -> f64 {
+pub(crate) fn finite_or_zero(value: f64, nonsmooth: &mut bool) -> f64 {
     if value.is_finite() {
         value
     } else {
@@ -211,7 +211,7 @@ pub(super) fn finite_or_zero(value: f64, nonsmooth: &mut bool) -> f64 {
 /// ([`product`]). Otherwise (both underflow for a tiny base and e > 1) it is taken in the log
 /// domain. A lane whose `a'_k` is 0 stays 0. A lane that is not finite is 0 and marks the row
 /// nonsmooth.
-pub(super) fn base_lanes(
+pub(crate) fn base_lanes(
     p: usize,
     by_base: f64,
     e: f64,
@@ -256,7 +256,7 @@ pub(super) fn base_lanes(
     out
 }
 
-pub(super) fn call_tangent(
+pub(crate) fn call_tangent(
     p: usize,
     func: Func,
     operands: &[&Dual],
@@ -327,7 +327,7 @@ pub(super) fn call_tangent(
 
 /// `c a'` lane by lane for a positive slope coefficient `c = exp(log_c)`: directly while `c` is a
 /// normal number, and in the log domain otherwise.
-pub(super) fn tail_lanes(p: usize, c: f64, log_c: f64, d: &Lanes) -> Lanes {
+pub(crate) fn tail_lanes(p: usize, c: f64, log_c: f64, d: &Lanes) -> Lanes {
     if c >= f64::MIN_POSITIVE {
         return scale(p, c, d);
     }
@@ -340,7 +340,7 @@ pub(super) fn tail_lanes(p: usize, c: f64, log_c: f64, d: &Lanes) -> Lanes {
 
 /// `sech²(x) a'` lane by lane, from the argument: `4 e / (1 + e)²` with `e = e^(-2|x|)`. Unlike
 /// `1 - tanh²`, it does not cancel to 0 once `tanh` rounds to ±1 (`|x|` above about 19.1).
-pub(super) fn sech_squared_lanes(p: usize, x: f64, d: &Lanes) -> Lanes {
+pub(crate) fn sech_squared_lanes(p: usize, x: f64, d: &Lanes) -> Lanes {
     let e = (-2.0 * x.abs()).exp();
     let c = 4.0 * e / ((1.0 + e) * (1.0 + e));
     tail_lanes(p, c, 4f64.ln() - 2.0 * x.abs() - 2.0 * e.ln_1p(), d)
@@ -353,7 +353,7 @@ pub(super) fn sech_squared_lanes(p: usize, x: f64, d: &Lanes) -> Lanes {
 /// slope ignores that step and does not mark the row nonsmooth for it. Where `E` leaves the normal
 /// range (`u` above about 26.5) the lanes are formed in the log domain; where `u²` overflows the
 /// slope is an exact 0.
-pub(super) fn erf_lanes(p: usize, v: f64, d: &Lanes) -> Lanes {
+pub(crate) fn erf_lanes(p: usize, v: f64, d: &Lanes) -> Lanes {
     let u = v.abs();
     if !(u * u).is_finite() {
         return ZERO;
@@ -364,7 +364,7 @@ pub(super) fn erf_lanes(p: usize, v: f64, d: &Lanes) -> Lanes {
 }
 
 /// `p t² P'(t) + 2 u P(t)` of [`erf_lanes`], positive for `u ≥ 0`.
-pub(super) fn erf_bracket(u: f64) -> f64 {
+pub(crate) fn erf_bracket(u: f64) -> f64 {
     let t = 1.0 / (1.0 + 0.3275911 * u);
     let poly = t
         * (0.254829592

@@ -31,7 +31,7 @@ fn legacy_offspring_seed(
     u64::from_le_bytes(digest[..8].try_into().unwrap())
 }
 
-pub(super) fn legacy_refill(
+pub(crate) fn legacy_refill(
     parent_run_id: &str,
     dataset_hash: &str,
     generation: usize,
@@ -145,7 +145,7 @@ pub(super) fn legacy_refill(
     Ok(next)
 }
 
-pub(super) fn load_parent_archive(
+pub(crate) fn load_parent_archive(
     dataset: &DatasetInput,
 ) -> Result<(Vec<Candidate>, Vec<Candidate>)> {
     let mut archive = Vec::new();

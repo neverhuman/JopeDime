@@ -175,4 +175,4 @@ fn snapshot_maxima_are_bound_to_the_manifest_hashes() {
     assert_eq!(jl(&state_dir, &["hwm", "verify"]).ok().json()["events"], 2);
 }
 
-const HEADER: &str = "track_id,dataset_id,method_id,protocol,metric,value,status,benchmark_valid,source_kind,source_revision,source_sha256,source_uri,notes\n";
+pub(crate) const HEADER: &str = "track_id,dataset_id,method_id,protocol,metric,value,status,benchmark_valid,source_kind,source_revision,source_sha256,source_uri,notes\n";

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn baseline_metric(path: &Path, dataset_hash: &str, algorithm: &str) -> Result<f64> {
+pub(crate) fn baseline_metric(path: &Path, dataset_hash: &str, algorithm: &str) -> Result<f64> {
     let report: Value = serde_json::from_slice(
         &fs::read(path).with_context(|| format!("read baseline {}", path.display()))?,
     )?;
@@ -20,7 +20,7 @@ pub(super) fn baseline_metric(path: &Path, dataset_hash: &str, algorithm: &str) 
     Ok(rmse)
 }
 
-pub(super) fn optional_baseline_metric(
+pub(crate) fn optional_baseline_metric(
     path: &Path,
     dataset_hash: &str,
     algorithm: &str,
@@ -40,7 +40,7 @@ pub(super) fn optional_baseline_metric(
     }
 }
 
-pub(super) fn prior_aspfm_metric(path: &Path, dataset_hash: &str) -> Result<f64> {
+pub(crate) fn prior_aspfm_metric(path: &Path, dataset_hash: &str) -> Result<f64> {
     let report: Value = serde_json::from_slice(
         &fs::read(path).with_context(|| format!("read prior ASPFM report {}", path.display()))?,
     )?;
@@ -78,7 +78,7 @@ pub(super) fn prior_aspfm_metric(path: &Path, dataset_hash: &str) -> Result<f64>
     Ok(rmse)
 }
 
-pub(super) fn stronger_tabfm(tabfm: Option<f64>, ensemble: f64) -> (&'static str, f64) {
+pub(crate) fn stronger_tabfm(tabfm: Option<f64>, ensemble: f64) -> (&'static str, f64) {
     if tabfm.is_some_and(|value| value <= ensemble) {
         ("tabfm_regressor", tabfm.unwrap())
     } else {
@@ -86,7 +86,7 @@ pub(super) fn stronger_tabfm(tabfm: Option<f64>, ensemble: f64) -> (&'static str
     }
 }
 
-pub(super) fn load_or_create_baselines(
+pub(crate) fn load_or_create_baselines(
     root: &Path,
     run_id: &str,
     datasets: &[DatasetStudyEntry],
@@ -184,7 +184,7 @@ pub(super) fn load_or_create_baselines(
     Ok((manifest, digest))
 }
 
-pub(super) fn score_frozen_champion(
+pub(crate) fn score_frozen_champion(
     member: &GenomeMember,
     train: &RegressionData,
     test: &RegressionData,
@@ -218,7 +218,7 @@ pub(super) fn score_frozen_champion(
     })
 }
 
-pub(super) fn load_or_create_final_cv_reranks(
+pub(crate) fn load_or_create_final_cv_reranks(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     validation: &TrainOnlyValidationReceipt,

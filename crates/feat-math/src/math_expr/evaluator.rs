@@ -1,11 +1,11 @@
 use super::*;
 
-pub(super) struct EvalContext<'a> {
-    pub(super) x: Option<f64>,
-    pub(super) row: &'a [f64],
+pub(crate) struct EvalContext<'a> {
+    pub(crate) x: Option<f64>,
+    pub(crate) row: &'a [f64],
 }
 
-pub(super) fn compute_expr(expr: &Expr, ctx: &EvalContext<'_>) -> Result<f64> {
+pub(crate) fn compute_expr(expr: &Expr, ctx: &EvalContext<'_>) -> Result<f64> {
     compute_expr_with(expr, ctx, &mut NoSink)
 }
 
@@ -274,7 +274,7 @@ fn mean(row: &[f64]) -> f64 {
     row.iter().copied().sum::<f64>() / row.len().max(1) as f64
 }
 
-pub(super) fn safe(value: f64) -> f64 {
+pub(crate) fn safe(value: f64) -> f64 {
     safe_with(value, &mut NoSink)
 }
 
@@ -290,7 +290,7 @@ fn safe_with<S: FaultSink>(value: f64, sink: &mut S) -> f64 {
     }
 }
 
-pub(super) fn count_nodes(expr: &Expr) -> usize {
+pub(crate) fn count_nodes(expr: &Expr) -> usize {
     match expr {
         Expr::Const(_) | Expr::Var(_) => 1,
         Expr::Unary(_, child) => 1 + count_nodes(child),
@@ -299,7 +299,7 @@ pub(super) fn count_nodes(expr: &Expr) -> usize {
     }
 }
 
-pub(super) fn depth(expr: &Expr) -> usize {
+pub(crate) fn depth(expr: &Expr) -> usize {
     match expr {
         Expr::Const(_) | Expr::Var(_) => 1,
         Expr::Unary(_, child) => 1 + depth(child),

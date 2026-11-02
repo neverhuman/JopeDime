@@ -1,31 +1,31 @@
 use super::*;
 
 #[derive(Debug)]
-pub(super) struct Unit {
-    pub(super) dataset: Value,
-    pub(super) seed: Value,
-    pub(super) outer: Value,
-    pub(super) gains: Option<[f64; 3]>,
+pub(crate) struct Unit {
+    pub(crate) dataset: Value,
+    pub(crate) seed: Value,
+    pub(crate) outer: Value,
+    pub(crate) gains: Option<[f64; 3]>,
 }
 
 #[derive(Debug)]
-pub(super) struct Score {
-    pub(super) complete: bool,
-    pub(super) kpi_percentage_points: Option<f64>,
-    pub(super) families: Vec<(String, [f64; 3])>,
-    pub(super) units: Vec<Unit>,
-    pub(super) reasons: Vec<String>,
-    pub(super) losses: Vec<((String, String), (f64, f64))>,
+pub(crate) struct Score {
+    pub(crate) complete: bool,
+    pub(crate) kpi_percentage_points: Option<f64>,
+    pub(crate) families: Vec<(String, [f64; 3])>,
+    pub(crate) units: Vec<Unit>,
+    pub(crate) reasons: Vec<String>,
+    pub(crate) losses: Vec<((String, String), (f64, f64))>,
 }
 
 impl Score {
-    pub(super) fn loss(&self, search: &str, arm: &str) -> Option<(f64, f64)> {
+    pub(crate) fn loss(&self, search: &str, arm: &str) -> Option<(f64, f64)> {
         self.losses
             .iter()
             .find(|((s, a), _)| s == search && a == arm)
             .map(|(_, loss)| *loss)
     }
-    pub(super) fn family(&self, name: &str) -> Option<[f64; 3]> {
+    pub(crate) fn family(&self, name: &str) -> Option<[f64; 3]> {
         self.families
             .iter()
             .find(|(family, _)| family == name)
@@ -33,7 +33,7 @@ impl Score {
     }
 }
 
-pub(super) fn score(plan: &Value, freeze: &Value) -> Oracle<Score> {
+pub(crate) fn score(plan: &Value, freeze: &Value) -> Oracle<Score> {
     let specification = field(plan, "specification")?;
     let arms: BTreeSet<&str> = array(specification, "arms")?
         .iter()

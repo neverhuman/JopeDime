@@ -126,7 +126,7 @@ pub fn sample_replay_fresh(
     }
     result
 }
-pub(super) fn validation_families(index: &Index) -> Result<BTreeMap<String, Vec<usize>>> {
+pub(crate) fn validation_families(index: &Index) -> Result<BTreeMap<String, Vec<usize>>> {
     let mut families = BTreeMap::<String, Vec<usize>>::new();
     for (i, group) in index.groups.iter().enumerate() {
         if group.partition == "meta_validation" {
@@ -154,7 +154,7 @@ pub fn validation_panel(index: &Index, world: usize, seed: u64) -> Result<Vec<Ve
 }
 
 /// The fixed validation panel of one attempt.
-pub(super) enum ValidationPanel {
+pub(crate) enum ValidationPanel {
     /// Partition v1: 256 rows per rank.
     V1(Vec<Vec<usize>>),
     /// Partition v2: every rank's microbatches of the fixed global panel,

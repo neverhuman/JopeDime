@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn genome_complexity(source: &str) -> Result<usize> {
+pub(crate) fn genome_complexity(source: &str) -> Result<usize> {
     let GenomeIr::Pipeline(pipeline) = GenomeIr::parse(source)? else {
         bail!("multiclass member must be a pipeline");
     };
@@ -11,7 +11,7 @@ pub(super) fn genome_complexity(source: &str) -> Result<usize> {
         .sum())
 }
 
-pub(super) fn slots_from_receipts(
+pub(crate) fn slots_from_receipts(
     dataset: &DatasetBinding,
     generation: usize,
     population: &[SeedMember],
@@ -133,7 +133,7 @@ pub(super) fn slots_from_receipts(
     Ok(slots)
 }
 
-pub(super) fn slot_rank_order(left: &LogicalSlot, right: &LogicalSlot) -> Ordering {
+pub(crate) fn slot_rank_order(left: &LogicalSlot, right: &LogicalSlot) -> Ordering {
     match (&left.score, &right.score) {
         (Some(left), Some(right)) => rank_order(left, right),
         (Some(_), None) => Ordering::Less,
@@ -145,7 +145,7 @@ pub(super) fn slot_rank_order(left: &LogicalSlot, right: &LogicalSlot) -> Orderi
     }
 }
 
-pub(super) fn evolution_seed(
+pub(crate) fn evolution_seed(
     dataset_hash: &str,
     generation: usize,
     slot: usize,
@@ -156,7 +156,7 @@ pub(super) fn evolution_seed(
     u64::from_le_bytes(digest[..8].try_into().expect("eight digest bytes"))
 }
 
-pub(super) fn regression_surrogate(source: &str) -> Result<String> {
+pub(crate) fn regression_surrogate(source: &str) -> Result<String> {
     let GenomeIr::Pipeline(mut pipeline) = GenomeIr::parse(source)? else {
         bail!("multiclass parent must be a pipeline");
     };
@@ -171,7 +171,7 @@ pub(super) fn regression_surrogate(source: &str) -> Result<String> {
     Ok(GenomeIr::Pipeline(pipeline).canonical())
 }
 
-pub(super) fn next_population(
+pub(crate) fn next_population(
     dataset: &DatasetBinding,
     ranked: &[LogicalSlot],
     generation: usize,
@@ -298,14 +298,14 @@ pub(super) fn next_population(
     Ok(next)
 }
 
-pub(super) fn checkpoint_path(root: &Path, dataset_hash: &str, generation: usize) -> PathBuf {
+pub(crate) fn checkpoint_path(root: &Path, dataset_hash: &str, generation: usize) -> PathBuf {
     root.join("datasets")
         .join(dataset_hash)
         .join("checkpoints")
         .join(format!("generation-{generation:03}.v1.json"))
 }
 
-pub(super) fn load_checkpoint(
+pub(crate) fn load_checkpoint(
     root: &Path,
     dataset: &DatasetBinding,
     generation: usize,

@@ -89,7 +89,7 @@ fn receipt_dir(runs: &Path, scq: &Path, cache: &Path, job_id: &str) -> Option<Pa
     Some(fetched)
 }
 
-pub(super) fn median(values: &mut [f64]) -> f64 {
+pub(crate) fn median(values: &mut [f64]) -> f64 {
     if values.is_empty() {
         return f64::NAN;
     }
@@ -102,7 +102,7 @@ pub(super) fn median(values: &mut [f64]) -> f64 {
     }
 }
 
-pub(super) fn report(plan_dir: &Path, runs: &Path, scq: &Path, out: &Path) -> Result<Value> {
+pub(crate) fn report(plan_dir: &Path, runs: &Path, scq: &Path, out: &Path) -> Result<Value> {
     let cache = plan_dir.join("fetched");
     fs::create_dir_all(&cache)?;
     let doc: Value = serde_json::from_str(&fs::read_to_string(plan_dir.join("portfolio.json"))?)?;

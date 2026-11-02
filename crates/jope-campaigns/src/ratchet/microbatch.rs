@@ -141,7 +141,7 @@ impl RolloutSwitchesV1 {
         Ok(())
     }
 
-    pub(super) fn require_wave_authority(&self) -> Result<()> {
+    pub(crate) fn require_wave_authority(&self) -> Result<()> {
         self.validate()?;
         if !self.wave_authority {
             bail!("serving-wave publication is disabled");

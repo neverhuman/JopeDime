@@ -1,7 +1,7 @@
 use super::*;
 
 impl DaemonActor {
-    pub(super) fn reject_before_attempt(
+    pub(crate) fn reject_before_attempt(
         &mut self,
         job: &JobRecord,
         message: String,
@@ -15,7 +15,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn install_running(
+    pub(crate) fn install_running(
         &mut self,
         parts: RunningParts,
         job: JobRecord,
@@ -70,7 +70,7 @@ impl DaemonActor {
         );
     }
 
-    pub(super) fn observe_process_exit(
+    pub(crate) fn observe_process_exit(
         &mut self,
         attempt: FencedAttempt,
         status: std::io::Result<ExitStatus>,
@@ -102,7 +102,7 @@ impl DaemonActor {
         self.finish_process_if_drained(attempt)
     }
 
-    pub(super) fn observe_output_drained(
+    pub(crate) fn observe_output_drained(
         &mut self,
         attempt: FencedAttempt,
     ) -> Result<(), ActorError> {
@@ -114,7 +114,7 @@ impl DaemonActor {
         self.finish_process_if_drained(attempt)
     }
 
-    pub(super) fn observe_process_group_drained(
+    pub(crate) fn observe_process_group_drained(
         &mut self,
         attempt: FencedAttempt,
     ) -> Result<(), ActorError> {
@@ -126,7 +126,7 @@ impl DaemonActor {
         self.finish_process_if_drained(attempt)
     }
 
-    pub(super) fn observe_fresh_cgroup_drained(
+    pub(crate) fn observe_fresh_cgroup_drained(
         &mut self,
         attempt: FencedAttempt,
         cgroup: &JobCgroup,
@@ -142,7 +142,7 @@ impl DaemonActor {
         self.finish_process_if_drained(attempt)
     }
 
-    pub(super) fn finish_process_if_drained(
+    pub(crate) fn finish_process_if_drained(
         &mut self,
         attempt: FencedAttempt,
     ) -> Result<(), ActorError> {
@@ -168,7 +168,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn launch_failed(
+    pub(crate) fn launch_failed(
         &mut self,
         job: &JobRecord,
         message: String,
@@ -216,7 +216,7 @@ impl DaemonActor {
         Ok(())
     }
 
-    pub(super) fn finish_process(
+    pub(crate) fn finish_process(
         &mut self,
         attempt: FencedAttempt,
         status: std::io::Result<ExitStatus>,

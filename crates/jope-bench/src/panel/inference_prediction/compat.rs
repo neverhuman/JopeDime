@@ -1,24 +1,24 @@
 use super::*;
 
-pub(super) const BACKENDS: [&str; 3] = ["python", "rust", "cpp17"];
-pub(super) const SIZES: [usize; 3] = [1, 32, 1024];
-pub(super) const NOTE: &str = "Public API timing includes return serialization; process residual also includes initialization, parsing, printing and teardown. Repeated first fitting-feature row; no scoring labels.";
+pub(crate) const BACKENDS: [&str; 3] = ["python", "rust", "cpp17"];
+pub(crate) const SIZES: [usize; 3] = [1, 32, 1024];
+pub(crate) const NOTE: &str = "Public API timing includes return serialization; process residual also includes initialization, parsing, printing and teardown. Repeated first fitting-feature row; no scoring labels.";
 
 /// A failure recorded in the receipt, spelled as Python's `str(exception)`.
-pub(super) type Attempt<T> = std::result::Result<T, String>;
+pub(crate) type Attempt<T> = std::result::Result<T, String>;
 
-pub(super) fn now_ms() -> f64 {
+pub(crate) fn now_ms() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0.0, |d| d.as_secs_f64() * 1000.0)
 }
 
-pub(super) fn load(path: &Path) -> Result<Json> {
+pub(crate) fn load(path: &Path) -> Result<Json> {
     let bytes = fs::read(path).with_context(|| format!("read {}", path.display()))?;
     serde_json::from_slice(&bytes).with_context(|| format!("parse {}", path.display()))
 }
 
-pub(super) fn text<'a>(value: &'a Json, what: &str) -> Result<&'a str> {
+pub(crate) fn text<'a>(value: &'a Json, what: &str) -> Result<&'a str> {
     match value {
         Json::Str(s) => Ok(s),
         other => bail!("TypeError: {what} is a JSON {}", py_type(other)),
@@ -26,7 +26,7 @@ pub(super) fn text<'a>(value: &'a Json, what: &str) -> Result<&'a str> {
 }
 
 /// `value[0]`: a failure stops the stage, as the uncaught exception did.
-pub(super) fn first(value: &Json) -> Result<Json> {
+pub(crate) fn first(value: &Json) -> Result<Json> {
     match value {
         Json::Array(items) => items
             .first()
@@ -46,7 +46,7 @@ pub(super) fn first(value: &Json) -> Result<Json> {
 }
 
 /// Python's type name of a JSON value.
-pub(super) fn py_type(value: &Json) -> &'static str {
+pub(crate) fn py_type(value: &Json) -> &'static str {
     match value {
         Json::Null => "NoneType",
         Json::Bool(_) => "bool",
@@ -59,7 +59,7 @@ pub(super) fn py_type(value: &Json) -> &'static str {
 }
 
 /// `str(pathlib.Path(path))`: empty and `.` components dropped.
-pub(super) fn python_path(path: &Path) -> String {
+pub(crate) fn python_path(path: &Path) -> String {
     let mut out = String::new();
     for component in path.components() {
         let part = match component {
@@ -84,7 +84,7 @@ pub(super) fn python_path(path: &Path) -> String {
 }
 
 /// `str(OSError)`: `[Errno N] strerror: 'filename'`.
-pub(super) fn os_error(error: &std::io::Error, filename: &str) -> String {
+pub(crate) fn os_error(error: &std::io::Error, filename: &str) -> String {
     match error.raw_os_error() {
         Some(code) => {
             let message = std::io::Error::from_raw_os_error(code).to_string();
@@ -97,12 +97,12 @@ pub(super) fn os_error(error: &std::io::Error, filename: &str) -> String {
     }
 }
 
-pub(super) fn write_file(path: &Path, bytes: &[u8]) -> Attempt<()> {
+pub(crate) fn write_file(path: &Path, bytes: &[u8]) -> Attempt<()> {
     fs::write(path, bytes).map_err(|error| os_error(&error, &python_path(path)))
 }
 
 /// Python's `repr(bytes)`.
-pub(super) fn bytes_repr(bytes: &[u8]) -> String {
+pub(crate) fn bytes_repr(bytes: &[u8]) -> String {
     let delimiter = if bytes.contains(&b'\'') && !bytes.contains(&b'"') {
         b'"'
     } else {
@@ -129,7 +129,7 @@ pub(super) fn bytes_repr(bytes: &[u8]) -> String {
 }
 
 /// `bytes.splitlines()`: `\n`, `\r` and `\r\n` end a line; no empty final line.
-pub(super) fn splitlines(bytes: &[u8]) -> Vec<&[u8]> {
+pub(crate) fn splitlines(bytes: &[u8]) -> Vec<&[u8]> {
     let (mut lines, mut start, mut i) = (Vec::new(), 0, 0);
     while i < bytes.len() {
         match bytes[i] {
@@ -158,7 +158,7 @@ pub(super) fn splitlines(bytes: &[u8]) -> Vec<&[u8]> {
 
 /// `float(line)` for a bytes line: ASCII whitespace trimmed and underscores allowed between
 /// digits; the error text is Python's.
-pub(super) fn python_float(line: &[u8]) -> Attempt<f64> {
+pub(crate) fn python_float(line: &[u8]) -> Attempt<f64> {
     let failure = || format!("could not convert string to float: {}", bytes_repr(line));
     let space = |b: &u8| matches!(b, b' ' | b'\t' | b'\n' | 0x0b | 0x0c | b'\r');
     let start = line.iter().position(|b| !space(b)).unwrap_or(line.len());
@@ -178,7 +178,7 @@ pub(super) fn python_float(line: &[u8]) -> Attempt<f64> {
 }
 
 /// Python 3.12's built-in `sum` of floats: compensated (Neumaier) summation.
-pub(super) fn python_sum(values: &[f64]) -> f64 {
+pub(crate) fn python_sum(values: &[f64]) -> f64 {
     let Some((head, rest)) = values.split_first() else {
         return 0.0;
     };
@@ -199,7 +199,7 @@ pub(super) fn python_sum(values: &[f64]) -> f64 {
 }
 
 /// `min(30, max(.001, seconds_to_cutoff))`, with its Python spelling.
-pub(super) fn timeout(cutoff_ms: u64) -> (Duration, String) {
+pub(crate) fn timeout(cutoff_ms: u64) -> (Duration, String) {
     let remaining = (cutoff_ms as f64 - now_ms()) / 1000.0;
     let bounded = if remaining > 0.001 { remaining } else { 0.001 };
     if bounded < 30.0 {

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn summary_line(command: &str, receipt: &Receipt) {
+pub(crate) fn summary_line(command: &str, receipt: &Receipt) {
     let method = receipt
         .method
         .as_ref()
@@ -42,7 +42,7 @@ pub(super) fn summary_line(command: &str, receipt: &Receipt) {
     );
 }
 
-pub(super) fn run_fit(
+pub(crate) fn run_fit(
     train: &TrainArgs,
     output: Option<&Path>,
     model_root: &Path,
@@ -88,7 +88,7 @@ pub(super) fn run_fit(
     run.finish(result)
 }
 
-pub(super) fn run_predict(
+pub(crate) fn run_predict(
     model: &str,
     input: &Path,
     output: &Path,
@@ -166,7 +166,7 @@ pub(super) fn run_predict(
 }
 
 #[cfg(feature = "mcp")]
-pub(super) fn run_predict_remote(
+pub(crate) fn run_predict_remote(
     run: &str,
     algorithm: Option<&str>,
     input: &Path,
@@ -237,7 +237,7 @@ enum ObjectRoute {
     Fitted,
 }
 
-pub(super) fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
+pub(crate) fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
     use jope_runtime::model_object::{
         calibration_platt, read_bounded, MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES,
     };
@@ -263,7 +263,7 @@ pub(super) fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
     })
 }
 
-pub(super) fn run_fit_predict(
+pub(crate) fn run_fit_predict(
     train: &TrainArgs,
     input: &Path,
     output: &Path,
@@ -284,7 +284,7 @@ pub(super) fn run_fit_predict(
     run.finish(result)
 }
 
-pub(super) fn report(result: anyhow::Result<()>) -> ExitCode {
+pub(crate) fn report(result: anyhow::Result<()>) -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
@@ -296,7 +296,7 @@ pub(super) fn report(result: anyhow::Result<()>) -> ExitCode {
     }
 }
 
-pub(super) fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::Fitness> {
+pub(crate) fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::Fitness> {
     let value = if let Some(path) = text.strip_prefix('@') {
         let mut file = std::fs::File::open(path)?;
         use std::io::Read;
@@ -311,7 +311,7 @@ pub(super) fn load_fitness(text: &str) -> anyhow::Result<jope_runtime::fitness::
     jope_runtime::fitness::Fitness::parse(&value)
 }
 
-pub(super) fn serve(mcp: bool) -> anyhow::Result<()> {
+pub(crate) fn serve(mcp: bool) -> anyhow::Result<()> {
     use std::io::{BufRead, Read, Write};
     let package = bootstrap::open()?;
     let mut server = jope_runtime::service::Server::new(CreatedBy {

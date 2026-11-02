@@ -35,7 +35,7 @@ fn assert_refused(pools: &[Pool], manifest: &Manifest, needle: &str) {
     }
 }
 
-pub(super) fn reloaded_valid_pools_pass_and_rehashed_invalid_pools_are_refused_body() {
+pub(crate) fn reloaded_valid_pools_pass_and_rehashed_invalid_pools_are_refused_body() {
     let (pools, manifest) = freeze(&synthetic_rows(6, 18, 12), &rule(), &h("input")).unwrap();
     // Valid freeze -> JSON -> reload path.
     let reload: Vec<Pool> = pools

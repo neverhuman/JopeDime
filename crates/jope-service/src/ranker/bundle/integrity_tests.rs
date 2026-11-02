@@ -319,7 +319,7 @@ impl Fixture {
     }
 }
 
-pub(super) fn test_verified_bundle() -> VerifiedBundle {
+pub(crate) fn test_verified_bundle() -> VerifiedBundle {
     Fixture::new().load(load_limits()).unwrap()
 }
 

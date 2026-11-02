@@ -2,7 +2,7 @@ use super::*;
 
 const GROUP_TAIL_STATE_VERSION: &str = "advanced-v3-group-tail-v1";
 
-pub(super) fn group_tail_hash(tail: &GroupTail) -> Result<String> {
+pub(crate) fn group_tail_hash(tail: &GroupTail) -> Result<String> {
     stable_hash(&(
         GROUP_TAIL_STATE_VERSION,
         &tail.key,
@@ -11,7 +11,7 @@ pub(super) fn group_tail_hash(tail: &GroupTail) -> Result<String> {
     ))
 }
 
-pub(super) fn validate_stored_key(key: &SemanticKey, kind: ColumnKind) -> bool {
+pub(crate) fn validate_stored_key(key: &SemanticKey, kind: ColumnKind) -> bool {
     match key {
         SemanticKey::Missing => true,
         SemanticKey::Numeric(value) => {
@@ -26,7 +26,7 @@ pub(super) fn validate_stored_key(key: &SemanticKey, kind: ColumnKind) -> bool {
     }
 }
 
-pub(super) fn validate_group_tail_keys(tail: &GroupTail, order: &FittedTableOrder) -> Result<()> {
+pub(crate) fn validate_group_tail_keys(tail: &GroupTail, order: &FittedTableOrder) -> Result<()> {
     if tail.key.len() != order.group_columns.len()
         || tail.last_order.len() != order.order_columns.len()
     {
@@ -51,7 +51,7 @@ pub(super) fn validate_group_tail_keys(tail: &GroupTail, order: &FittedTableOrde
     Ok(())
 }
 
-pub(super) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
+pub(crate) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
     let text = raw.trim();
     if text.is_empty()
         || text.eq_ignore_ascii_case("na")
@@ -66,12 +66,12 @@ pub(super) fn parse_numeric(raw: &str) -> Result<Option<f64>> {
     Ok(value.is_finite().then_some(value))
 }
 
-pub(super) fn category_is_missing(raw: &str) -> bool {
+pub(crate) fn category_is_missing(raw: &str) -> bool {
     let text = raw.trim();
     text.is_empty() || text.eq_ignore_ascii_case("na") || text.eq_ignore_ascii_case("null")
 }
 
-pub(super) fn semantic_key(raw: &str, kind: ColumnKind) -> Result<SemanticKey> {
+pub(crate) fn semantic_key(raw: &str, kind: ColumnKind) -> Result<SemanticKey> {
     match kind {
         ColumnKind::Numeric => Ok(match parse_numeric(raw)? {
             Some(value) => SemanticKey::Numeric(FiniteKey::new(value)),
@@ -85,7 +85,7 @@ pub(super) fn semantic_key(raw: &str, kind: ColumnKind) -> Result<SemanticKey> {
     }
 }
 
-pub(super) fn table_keys(
+pub(crate) fn table_keys(
     table: &RawTable,
     order: &FittedTableOrder,
 ) -> Result<(Vec<GroupKey>, Vec<Vec<SemanticKey>>)> {
@@ -118,7 +118,7 @@ pub(super) fn table_keys(
     Ok((groups, orders))
 }
 
-pub(super) fn finish_row_operation(
+pub(crate) fn finish_row_operation(
     block: &FeatureBlock,
     mut generated: Rows,
     masks: Vec<Vec<bool>>,
@@ -186,7 +186,7 @@ pub(super) fn finish_row_operation(
     )
 }
 
-pub(super) fn apply_row_operation(
+pub(crate) fn apply_row_operation(
     block: &FeatureBlock,
     table: &RawTable,
     order: &FittedTableOrder,

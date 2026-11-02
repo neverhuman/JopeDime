@@ -70,7 +70,7 @@ fn custom_fitness_cli_persists_the_objective_and_predicts_after_reload() {
     .unwrap();
     assert_eq!(model.header.metric, "pinball");
     let schema: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../schemas/jope.appliance-fitted.v1.schema.json"
+        "../../../../schemas/jope.appliance-fitted.v1.schema.json"
     ))
     .unwrap();
     assert!(jope_datasets::schema::validate(
@@ -308,7 +308,7 @@ fn calibrated_objective_with_a_cost_column_round_trips_through_the_model_file() 
     assert_eq!(model.header.auxiliary_columns, ["margin"]);
     let transform = model.header.output_transform.unwrap();
     let schema: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../schemas/jope.appliance-fitted.v1.schema.json"
+        "../../../../schemas/jope.appliance-fitted.v1.schema.json"
     ))
     .unwrap();
     assert!(jope_datasets::schema::validate(

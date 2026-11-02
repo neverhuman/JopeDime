@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn runtime_bundle() -> Result<PathBuf> {
+pub(crate) fn runtime_bundle() -> Result<PathBuf> {
     let executable = fs::canonicalize(std::env::current_exe()?)?;
     executable
         .parent()
@@ -10,7 +10,7 @@ pub(super) fn runtime_bundle() -> Result<PathBuf> {
         .context("canary executor is not running from a runtime bundle")
 }
 
-pub(super) fn toml_quote(value: &str) -> Result<String> {
+pub(crate) fn toml_quote(value: &str) -> Result<String> {
     ensure!(
         !value.contains(['"', '\\', '\n', '\r']),
         "unsafe generated TOML value"
@@ -18,7 +18,7 @@ pub(super) fn toml_quote(value: &str) -> Result<String> {
     Ok(format!("\"{value}\""))
 }
 
-pub(super) fn append_input(
+pub(crate) fn append_input(
     lines: &mut Vec<String>,
     name: &str,
     source: &Path,
@@ -35,7 +35,7 @@ pub(super) fn append_input(
     Ok(())
 }
 
-pub(super) fn write_immutable(path: &Path, body: &[u8]) -> Result<()> {
+pub(crate) fn write_immutable(path: &Path, body: &[u8]) -> Result<()> {
     if path.is_file() {
         ensure!(fs::read(path)? == body, "immutable canary artifact drift");
         return Ok(());
@@ -51,7 +51,7 @@ pub(super) fn write_immutable(path: &Path, body: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn canary_lane_ancestry(mode: CanaryMode, lane: &str) -> &'static str {
+pub(crate) fn canary_lane_ancestry(mode: CanaryMode, lane: &str) -> &'static str {
     match lane {
         "gp" => "none",
         "candidate" if mode == CanaryMode::Shadow => "shadow_dl",
@@ -59,7 +59,7 @@ pub(super) fn canary_lane_ancestry(mode: CanaryMode, lane: &str) -> &'static str
     }
 }
 
-pub(super) fn scq_jobs(args: &Args) -> Result<BTreeMap<String, String>> {
+pub(crate) fn scq_jobs(args: &Args) -> Result<BTreeMap<String, String>> {
     let output = Command::new(&args.scq).args(["--json", "ls"]).output()?;
     ensure!(output.status.success(), "SCQ list failed");
     let value: Value = serde_json::from_slice(&output.stdout)?;
@@ -77,7 +77,7 @@ pub(super) fn scq_jobs(args: &Args) -> Result<BTreeMap<String, String>> {
         .collect())
 }
 
-pub(super) fn submit_spec(args: &Args, spec: &Path) -> Result<()> {
+pub(crate) fn submit_spec(args: &Args, spec: &Path) -> Result<()> {
     let spec_text = spec.to_string_lossy();
     let check = Command::new(&args.scq)
         .args(["check", spec_text.as_ref()])
@@ -103,7 +103,7 @@ pub(super) fn submit_spec(args: &Args, spec: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn recursive_find(path: &Path, name: &str, output: &mut Vec<PathBuf>) {
+pub(crate) fn recursive_find(path: &Path, name: &str, output: &mut Vec<PathBuf>) {
     let Ok(entries) = fs::read_dir(path) else {
         return;
     };
@@ -117,7 +117,7 @@ pub(super) fn recursive_find(path: &Path, name: &str, output: &mut Vec<PathBuf>)
     }
 }
 
-pub(super) fn fetch(args: &Args, job_id: &str, output: &Path) -> Result<()> {
+pub(crate) fn fetch(args: &Args, job_id: &str, output: &Path) -> Result<()> {
     fs::create_dir_all(output)?;
     let result = Command::new(&args.scq)
         .args([
@@ -135,7 +135,7 @@ pub(super) fn fetch(args: &Args, job_id: &str, output: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn proposal_job_id(intent_hash: &str, worker_sha256: &str) -> String {
+pub(crate) fn proposal_job_id(intent_hash: &str, worker_sha256: &str) -> String {
     format!(
         "jope-canary-propose-{}-{}",
         &intent_hash[..12],

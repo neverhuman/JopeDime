@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_rank_plan(
+pub(crate) fn validate_rank_plan(
     assignment: Option<&topology::Assignment>,
     admitted: Option<&crate::native_loop::bounded::launch::AdmittedBootstrap>,
     rank: usize,

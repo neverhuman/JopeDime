@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub const TASK_HEAD_POLICY_SCHEMA: &str = "JopeTaskHeadPolicy.v1";
 pub const TASK_HEAD_POLICY_JSON: &str =
-    include_str!("../manifests/epoch6/JopeTaskHeadPolicy.v1.json");
+    include_str!("../../manifests/epoch6/JopeTaskHeadPolicy.v1.json");
 pub const TASK_HEAD_POLICY_SHA256: &str =
     "fa52320db524d316ef41d878a8c7dd2930cb1f8d989f05dda6a2c4e29a0927eb";
 
@@ -19,26 +19,26 @@ struct GeneratedRegistryDocument {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(super) struct GeneratedOperator {
+pub(crate) struct GeneratedOperator {
     id: u32,
-    pub(super) name: String,
-    pub(super) role: String,
+    pub(crate) name: String,
+    pub(crate) role: String,
     #[serde(default)]
-    pub(super) target_side: bool,
+    pub(crate) target_side: bool,
     #[serde(default)]
-    pub(super) regression: bool,
+    pub(crate) regression: bool,
     #[serde(default)]
-    pub(super) estimated_cost: u64,
-    pub(super) lifecycle: GeneratedOperatorLifecycle,
+    pub(crate) estimated_cost: u64,
+    pub(crate) lifecycle: GeneratedOperatorLifecycle,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(super) struct GeneratedOperatorLifecycle {
-    pub(super) parseable: bool,
+pub(crate) struct GeneratedOperatorLifecycle {
+    pub(crate) parseable: bool,
     #[serde(default)]
-    pub(super) quarantined: bool,
+    pub(crate) quarantined: bool,
     #[serde(default)]
-    pub(super) deprecated: bool,
+    pub(crate) deprecated: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -50,15 +50,15 @@ struct GeneratedTaskHeadPolicyDocument {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct GeneratedTaskHeadPolicy {
+pub(crate) struct GeneratedTaskHeadPolicy {
     operator: String,
-    pub(super) tasks: Vec<Task>,
-    pub(super) estimated_cost: u64,
+    pub(crate) tasks: Vec<Task>,
+    pub(crate) estimated_cost: u64,
 }
 
 #[derive(Clone, Debug)]
 pub struct GeneratedOperatorRegistry {
-    pub(super) sha256: String,
+    pub(crate) sha256: String,
     operators: BTreeMap<String, GeneratedOperator>,
     heads: BTreeMap<String, GeneratedTaskHeadPolicy>,
 }
@@ -130,11 +130,11 @@ impl GeneratedOperatorRegistry {
         &self.sha256
     }
 
-    pub(super) fn get(&self, name: &str) -> Option<&GeneratedOperator> {
+    pub(crate) fn get(&self, name: &str) -> Option<&GeneratedOperator> {
         self.operators.get(name)
     }
 
-    pub(super) fn head(&self, name: &str) -> Option<&GeneratedTaskHeadPolicy> {
+    pub(crate) fn head(&self, name: &str) -> Option<&GeneratedTaskHeadPolicy> {
         self.heads.get(name)
     }
 }

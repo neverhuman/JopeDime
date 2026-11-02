@@ -54,8 +54,9 @@ pub(crate) fn build_transfer_rankings(
             )
         })
         .collect::<BTreeMap<_, _>>();
-    let mut statement =
-        connection.prepare(include_str!("../../sql/train_only_transfer_rankings.sql"))?;
+    let mut statement = connection.prepare(include_str!(
+        "../../../../sql/train_only_transfer_rankings.sql"
+    ))?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
         let target_dataset_hash: String = row.get(0)?;

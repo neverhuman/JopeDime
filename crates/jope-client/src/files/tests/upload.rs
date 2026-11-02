@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn generic_csv_upload_preserves_name_key_and_bytes() {
+pub(crate) fn generic_csv_upload_preserves_name_key_and_bytes() {
     let transport = UploadCapture::default();
     upload_csv(
         &transport,
@@ -19,7 +19,7 @@ pub(super) fn generic_csv_upload_preserves_name_key_and_bytes() {
     );
 }
 
-pub(super) fn atomic_csv_write_publishes_complete_file_and_refuses_overwrite() {
+pub(crate) fn atomic_csv_write_publishes_complete_file_and_refuses_overwrite() {
     let temp = temp_dir();
     let out = temp.join("prediction.csv");
     assert_eq!(
@@ -35,7 +35,7 @@ pub(super) fn atomic_csv_write_publishes_complete_file_and_refuses_overwrite() {
     assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
 }
 
-pub(super) fn atomic_csv_retry_verifies_existing_bytes_without_replacing_the_file() {
+pub(crate) fn atomic_csv_retry_verifies_existing_bytes_without_replacing_the_file() {
     let temp = temp_dir();
     let out = temp.join("prediction.csv");
     let csv = b"prediction\n0.25\n0.5\n";
@@ -74,7 +74,7 @@ pub(super) fn atomic_csv_retry_verifies_existing_bytes_without_replacing_the_fil
     assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
 }
 
-pub(super) fn atomic_csv_retry_refuses_directories_and_symlinks_even_to_identical_bytes() {
+pub(crate) fn atomic_csv_retry_refuses_directories_and_symlinks_even_to_identical_bytes() {
     let temp = temp_dir();
     let out = temp.join("prediction.csv");
     fs::create_dir(&out).unwrap();
@@ -113,7 +113,7 @@ impl Read for FailsAfterPrefix {
     }
 }
 
-pub(super) fn atomic_csv_write_removes_partial_temporary_after_read_error() {
+pub(crate) fn atomic_csv_write_removes_partial_temporary_after_read_error() {
     let temp = temp_dir();
     let out = temp.join("prediction.csv");
     assert!(write_csv_atomic(&out, FailsAfterPrefix(false)).is_err());
@@ -121,7 +121,7 @@ pub(super) fn atomic_csv_write_removes_partial_temporary_after_read_error() {
     assert_eq!(fs::read_dir(&*temp).unwrap().count(), 0);
 }
 
-pub(super) fn atomic_csv_failed_retry_preserves_existing_file_and_removes_staging() {
+pub(crate) fn atomic_csv_failed_retry_preserves_existing_file_and_removes_staging() {
     let temp = temp_dir();
     let out = temp.join("prediction.csv");
     fs::write(&out, b"prediction\n0.25\n").unwrap();
@@ -133,7 +133,7 @@ pub(super) fn atomic_csv_failed_retry_preserves_existing_file_and_removes_stagin
     assert_eq!(fs::read_dir(&*temp).unwrap().count(), 1);
 }
 
-pub(super) fn atomic_csv_publication_verifies_a_concurrent_creator_without_overwriting() {
+pub(crate) fn atomic_csv_publication_verifies_a_concurrent_creator_without_overwriting() {
     struct PublishDuringRead<'a> {
         out: &'a Path,
         concurrent: Option<&'a [u8]>,
@@ -169,7 +169,7 @@ pub(super) fn atomic_csv_publication_verifies_a_concurrent_creator_without_overw
     }
 }
 
-pub(super) fn csv_upload_streams_to_dataset_route_with_auth_and_idempotency() {
+pub(crate) fn csv_upload_streams_to_dataset_route_with_auth_and_idempotency() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let endpoint = format!("http://{}", listener.local_addr().unwrap());
     let server = thread::spawn(move || {

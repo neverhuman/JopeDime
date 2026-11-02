@@ -1,8 +1,8 @@
-const COMMITTED_RELEASE: &[u8] = include_bytes!("../releases/regression-10-v1/release.json");
+const COMMITTED_RELEASE: &[u8] = include_bytes!("../../releases/regression-10-v1/release.json");
 const COMMITTED_REGISTRY: &[u8] =
-    include_bytes!("../releases/regression-10-v1/family-registry.json");
-const FROZEN_PANEL: &[u8] = include_bytes!("../../../benchmarks/panel.json");
-const PREPARATION_IMPLEMENTATION: &[u8] = include_bytes!("../../../benchmarks/prepare.py");
+    include_bytes!("../../releases/regression-10-v1/family-registry.json");
+const FROZEN_PANEL: &[u8] = include_bytes!("../../../../benchmarks/panel.json");
+const PREPARATION_IMPLEMENTATION: &[u8] = include_bytes!("../../../../benchmarks/prepare.py");
 
 /// W1-T01: receivers consume the release embedded in the library, which is
 /// exactly the committed document and binds the committed registry.

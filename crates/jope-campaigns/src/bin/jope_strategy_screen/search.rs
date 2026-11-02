@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn make_member(source: &str, origin: &str) -> Option<Member> {
+pub(crate) fn make_member(source: &str, origin: &str) -> Option<Member> {
     let canonical = canonicalize(source).ok()?;
     Some(Member {
         canonical: canonical.canonical,
@@ -12,7 +12,7 @@ pub(super) fn make_member(source: &str, origin: &str) -> Option<Member> {
     })
 }
 
-pub(super) fn tournament_pick(rng: &mut Pcg32, pool: usize) -> usize {
+pub(crate) fn tournament_pick(rng: &mut Pcg32, pool: usize) -> usize {
     let mut best = usize::MAX;
     for _ in 0..TOURNAMENT {
         let c = (rng.next_u32() as usize) % pool;
@@ -23,7 +23,7 @@ pub(super) fn tournament_pick(rng: &mut Pcg32, pool: usize) -> usize {
 
 /// Breed one child from the ranked pool (golden42 operators: tournament-3
 /// parents, 0.25 crossover, else mutate; 100 deterministic retries).
-pub(super) fn breed_child(
+pub(crate) fn breed_child(
     ranked: &[Member],
     pool: usize,
     features: usize,
@@ -70,7 +70,7 @@ pub(super) fn breed_child(
     None
 }
 
-pub(super) fn fill_population(
+pub(crate) fn fill_population(
     base: Vec<Member>,
     target: usize,
     features: usize,
@@ -97,7 +97,7 @@ pub(super) fn fill_population(
     population
 }
 
-pub(super) fn run_strategy(
+pub(crate) fn run_strategy(
     config: &Config,
     train_path: &str,
     x: &Rows,

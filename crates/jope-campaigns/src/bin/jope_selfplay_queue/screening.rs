@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_with_evaluator(evaluator: &Path, manifest: &Path) -> Result<()> {
+pub(crate) fn validate_with_evaluator(evaluator: &Path, manifest: &Path) -> Result<()> {
     let output = Command::new(evaluator)
         .args(["validate-manifest", "--manifest"])
         .arg(manifest)
@@ -21,7 +21,7 @@ pub(super) fn validate_with_evaluator(evaluator: &Path, manifest: &Path) -> Resu
     Ok(())
 }
 
-pub(super) fn bounded_regression_screening(evaluator: &Path, manifest: &Path) -> Result<()> {
+pub(crate) fn bounded_regression_screening(evaluator: &Path, manifest: &Path) -> Result<()> {
     let manifest_sha256 = sha256_file(manifest)?;
     let output_dir = std::env::temp_dir().join(format!(
         "jope-task-preflight-{}-{}-{}",
@@ -67,12 +67,12 @@ pub(super) fn bounded_regression_screening(evaluator: &Path, manifest: &Path) ->
 }
 
 #[derive(Deserialize)]
-pub(super) struct BoundedScreeningReceipt {
+pub(crate) struct BoundedScreeningReceipt {
     valid: bool,
     failure: Option<String>,
 }
 
-pub(super) fn validate_bounded_screening_receipts(output_dir: &Path) -> Result<()> {
+pub(crate) fn validate_bounded_screening_receipts(output_dir: &Path) -> Result<()> {
     let mut receipt_paths = fs::read_dir(output_dir)
         .with_context(|| format!("read bounded screening output {}", output_dir.display()))?
         .map(|entry| entry.map(|entry| entry.path()))
@@ -114,20 +114,20 @@ pub(super) fn validate_bounded_screening_receipts(output_dir: &Path) -> Result<(
     Ok(())
 }
 
-pub(super) fn evaluator_failure_is_permanent(error: &anyhow::Error) -> bool {
+pub(crate) fn evaluator_failure_is_permanent(error: &anyhow::Error) -> bool {
     format!("{error:#}").contains("Rust evaluator rejected")
 }
 
 /// The runner and evaluator binaries every spec of one cycle pins, with the digests taken
 /// once at the start of preparation.
-pub(super) struct PinnedTools<'a> {
-    pub(super) runner: (&'a Path, &'a String),
-    pub(super) evaluator: (&'a Path, &'a String),
+pub(crate) struct PinnedTools<'a> {
+    pub(crate) runner: (&'a Path, &'a String),
+    pub(crate) evaluator: (&'a Path, &'a String),
 }
 
 impl PinnedTools<'_> {
     /// Refuse the cycle if either binary changed while its specs were written.
-    pub(super) fn verify_unchanged(&self) -> Result<()> {
+    pub(crate) fn verify_unchanged(&self) -> Result<()> {
         for (source, digest) in [self.runner, self.evaluator] {
             if !source.is_file() || sha256_file(source)? != *digest {
                 bail!("spec input content pin drift: {}", source.display());
@@ -137,7 +137,7 @@ impl PinnedTools<'_> {
     }
 }
 
-pub(super) fn render_spec(
+pub(crate) fn render_spec(
     path: &Path,
     job_id: &str,
     manifest: &ValidManifest,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn required_sha256(value: &Value, field: &str) -> Result<String> {
+pub(crate) fn required_sha256(value: &Value, field: &str) -> Result<String> {
     let digest = value
         .get(field)
         .and_then(Value::as_str)
@@ -15,7 +15,7 @@ pub(super) fn required_sha256(value: &Value, field: &str) -> Result<String> {
     Ok(digest.to_owned())
 }
 
-pub(super) fn verified_path(value: &Value, path_field: &str, hash_field: &str) -> Result<PathBuf> {
+pub(crate) fn verified_path(value: &Value, path_field: &str, hash_field: &str) -> Result<PathBuf> {
     let path = PathBuf::from(
         value
             .get(path_field)
@@ -26,7 +26,7 @@ pub(super) fn verified_path(value: &Value, path_field: &str, hash_field: &str) -
     Ok(path)
 }
 
-pub(super) fn verify_file(path: &Path, digest: &str) -> Result<()> {
+pub(crate) fn verify_file(path: &Path, digest: &str) -> Result<()> {
     ensure!(
         path.is_file(),
         "required file is absent: {}",
@@ -40,7 +40,7 @@ pub(super) fn verify_file(path: &Path, digest: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn ensure_safe_filename(value: &str) -> Result<()> {
+pub(crate) fn ensure_safe_filename(value: &str) -> Result<()> {
     let path = Path::new(value);
     ensure!(
         path.components().count() == 1
@@ -50,7 +50,7 @@ pub(super) fn ensure_safe_filename(value: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn continuation_kind(watermark: u64, last_evidence: u64) -> ContinuationKind {
+pub(crate) fn continuation_kind(watermark: u64, last_evidence: u64) -> ContinuationKind {
     if watermark >= last_evidence.saturating_add(LABEL_STEP) {
         ContinuationKind::CoalescedLabels
     } else {
@@ -58,7 +58,7 @@ pub(super) fn continuation_kind(watermark: u64, last_evidence: u64) -> Continuat
     }
 }
 
-pub(super) fn observe_intent_checkpoint(
+pub(crate) fn observe_intent_checkpoint(
     intent: &mut SubmissionIntent,
     current_checkpoint_sha256: &str,
 ) -> IntentCheckpointDisposition {
@@ -75,11 +75,11 @@ pub(super) fn observe_intent_checkpoint(
     }
 }
 
-pub(super) fn trainer_job_id(watermark: u64, recipe: &str, sequence: u64) -> String {
+pub(crate) fn trainer_job_id(watermark: u64, recipe: &str, sequence: u64) -> String {
     format!("jope-selfplay-train-{watermark:09}-{recipe}-r{sequence:06}")
 }
 
-pub(super) fn validate_intent(
+pub(crate) fn validate_intent(
     intent: &SubmissionIntent,
     snapshot: &TrainingSnapshot,
     checkpoint: &Checkpoint,
@@ -99,7 +99,7 @@ pub(super) fn validate_intent(
     Ok(())
 }
 
-pub(super) fn render_spec(
+pub(crate) fn render_spec(
     args: &Args,
     job_id: &str,
     seed: u64,
@@ -206,7 +206,7 @@ pub(super) fn render_spec(
     Ok(text)
 }
 
-pub(super) fn spec_input(name: &str, source: &Path, target: &str) -> Result<SpecInput> {
+pub(crate) fn spec_input(name: &str, source: &Path, target: &str) -> Result<SpecInput> {
     ensure!(
         source.is_file(),
         "spec input is absent: {}",
@@ -220,11 +220,11 @@ pub(super) fn spec_input(name: &str, source: &Path, target: &str) -> Result<Spec
     })
 }
 
-pub(super) fn toml_string(value: &str) -> Result<String> {
+pub(crate) fn toml_string(value: &str) -> Result<String> {
     Ok(serde_json::to_string(value)?)
 }
 
-pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     if path.is_file() {
         ensure!(
             sha256_file(path)? == sha256_bytes(bytes),
@@ -251,7 +251,7 @@ pub(super) fn write_immutable(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn append_event(root: &Path, kind: &str, detail: Value) -> Result<()> {
+pub(crate) fn append_event(root: &Path, kind: &str, detail: Value) -> Result<()> {
     let path = root.join("ops/trainer-watchdog-events.v1.jsonl");
     let mut file = OpenOptions::new()
         .create(true)
@@ -272,7 +272,7 @@ pub(super) fn append_event(root: &Path, kind: &str, detail: Value) -> Result<()>
     Ok(())
 }
 
-pub(super) fn scq_check_submit(scq: &Path, spec: &Path) -> Result<()> {
+pub(crate) fn scq_check_submit(scq: &Path, spec: &Path) -> Result<()> {
     let check = Command::new(scq)
         .arg("check")
         .arg(spec)
@@ -302,12 +302,12 @@ pub(super) fn scq_check_submit(scq: &Path, spec: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
+pub(crate) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
     message.contains("dependency-unsatisfied")
         && message.contains("no eligible launch-ready node currently")
 }
 
-pub(super) fn intent_uses_stale_contract(intent: &SubmissionIntent) -> bool {
+pub(crate) fn intent_uses_stale_contract(intent: &SubmissionIntent) -> bool {
     fs::read_to_string(&intent.spec)
         .map(|text| {
             !text.contains(&format!(

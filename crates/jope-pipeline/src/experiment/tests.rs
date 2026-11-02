@@ -178,7 +178,7 @@ fn zero_nonfinite_incomplete_and_wrong_task_results_cannot_pass() {
 #[test]
 fn frozen_panel_has_ten_of_each_original_task_and_valid_identities() {
     let panel: Panel =
-        serde_json::from_str(include_str!("../../../benchmarks/panel.json")).unwrap();
+        serde_json::from_str(include_str!("../../../../benchmarks/panel.json")).unwrap();
     panel.validate().unwrap();
     let mut changed = panel.clone();
     changed.datasets[0].metric = Metric::Auroc;

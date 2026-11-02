@@ -26,7 +26,7 @@ fn stratum(c: &Candidate) -> (u8, u8) {
     };
     (rows, features)
 }
-pub(super) fn quotas() -> BTreeMap<String, usize> {
+pub(crate) fn quotas() -> BTreeMap<String, usize> {
     BTreeMap::from([
         ("meta_train".into(), 48),
         ("meta_validation".into(), 8),
@@ -34,7 +34,7 @@ pub(super) fn quotas() -> BTreeMap<String, usize> {
     ])
 }
 
-pub(super) fn select(candidates: &[Candidate]) -> Result<Vec<Candidate>> {
+pub(crate) fn select(candidates: &[Candidate]) -> Result<Vec<Candidate>> {
     let mut families: BTreeMap<&str, Vec<&Candidate>> = BTreeMap::new();
     let mut ids = BTreeSet::new();
     for c in candidates {

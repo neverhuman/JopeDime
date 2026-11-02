@@ -5,7 +5,7 @@ use super::*;
 /// tensor, and `<prefix>/data.pkl` carries the state-dict keys as plain ASCII
 /// pickle strings. Cost is the zip central directory plus a ~100 KiB pickle.
 
-pub(super) fn checkpoint_shape(path: &Path) -> Result<CheckpointShape> {
+pub(crate) fn checkpoint_shape(path: &Path) -> Result<CheckpointShape> {
     let file = File::open(path).with_context(|| format!("open checkpoint {}", path.display()))?;
     let mut archive = zip::ZipArchive::new(std::io::BufReader::new(file))
         .with_context(|| format!("checkpoint is not a torch archive: {}", path.display()))?;
@@ -58,7 +58,7 @@ pub(super) fn checkpoint_shape(path: &Path) -> Result<CheckpointShape> {
     })
 }
 
-pub(super) fn contains_subslice(haystack: &[u8], needle: &[u8]) -> bool {
+pub(crate) fn contains_subslice(haystack: &[u8], needle: &[u8]) -> bool {
     !needle.is_empty()
         && haystack.len() >= needle.len()
         && haystack
@@ -66,7 +66,7 @@ pub(super) fn contains_subslice(haystack: &[u8], needle: &[u8]) -> bool {
             .any(|window| window == needle)
 }
 
-pub(super) fn probe_checkpoint(
+pub(crate) fn probe_checkpoint(
     path: PathBuf,
     sha256: String,
     origin: String,
@@ -89,7 +89,7 @@ pub(super) fn probe_checkpoint(
     })
 }
 
-pub(super) fn mtime_ms(path: &Path) -> u128 {
+pub(crate) fn mtime_ms(path: &Path) -> u128 {
     path.metadata()
         .and_then(|meta| meta.modified())
         .ok()
@@ -103,7 +103,7 @@ pub(super) fn mtime_ms(path: &Path) -> u128 {
 /// A run is a candidate when its `train-result.json` names a checkpoint that is
 /// still present. Unreadable or vanished candidates are skipped rather than
 /// failing the scan: one corrupt historical run must not wedge admission.
-pub(super) fn scan_lineage(runs_root: &Path) -> Vec<LineageRun> {
+pub(crate) fn scan_lineage(runs_root: &Path) -> Vec<LineageRun> {
     let Ok(entries) = fs::read_dir(runs_root) else {
         return Vec::new();
     };
@@ -143,7 +143,7 @@ pub(super) fn scan_lineage(runs_root: &Path) -> Vec<LineageRun> {
     runs
 }
 
-pub(super) fn lineage_run(job_id: &str, result: &Path) -> Option<LineageRun> {
+pub(crate) fn lineage_run(job_id: &str, result: &Path) -> Option<LineageRun> {
     let value = read_json(result).ok()?;
     let sha256 = required_sha256(&value, "checkpoint_sha256").ok()?;
     // `checkpoint_path` is the digest-named artefact; `checkpoint` is the mutable
@@ -187,7 +187,7 @@ pub(super) fn lineage_run(job_id: &str, result: &Path) -> Option<LineageRun> {
 /// whenever `training/accepted.json` was absent, which is how successor
 /// `c-r000002` was auto-submitted warm-starting the 130-tensor fbcd5459 and
 /// silently re-randomising the binary branch.
-pub(super) fn checkpoint_candidates(root: &Path, lineage: &[LineageRun]) -> Vec<Checkpoint> {
+pub(crate) fn checkpoint_candidates(root: &Path, lineage: &[LineageRun]) -> Vec<Checkpoint> {
     let mut candidates = Vec::new();
     for relative in ["training/learning.json", "training/accepted.json"] {
         let pointer = root.join(relative);
@@ -239,7 +239,7 @@ pub(super) fn checkpoint_candidates(root: &Path, lineage: &[LineageRun]) -> Vec<
 ///
 /// Deficient candidates are never pinned, no matter how preferred they are: a
 /// short checkpoint would train a lobotomised model with no error anywhere.
-pub(super) fn select_checkpoint(candidates: &[Checkpoint]) -> Result<Checkpoint> {
+pub(crate) fn select_checkpoint(candidates: &[Checkpoint]) -> Result<Checkpoint> {
     ensure!(
         !candidates.is_empty(),
         "no warm-start checkpoint is present"
@@ -262,7 +262,7 @@ pub(super) fn select_checkpoint(candidates: &[Checkpoint]) -> Result<Checkpoint>
 
 /// Cheap resolution used while an active trainer already blocks admission: no
 /// 125 MiB rehash, and the lineage scan may be up to `LINEAGE_RESCAN_MS` stale.
-pub(super) fn load_checkpoint_reference(
+pub(crate) fn load_checkpoint_reference(
     root: &Path,
     runs_root: &Path,
     cache: &mut LineageCache,
@@ -276,7 +276,7 @@ pub(super) fn load_checkpoint_reference(
 
 /// Full resolution used immediately before rendering or retrying a submission:
 /// forces a fresh lineage scan and re-verifies the pinned bytes.
-pub(super) fn load_checkpoint(
+pub(crate) fn load_checkpoint(
     root: &Path,
     runs_root: &Path,
     cache: &mut LineageCache,
@@ -300,7 +300,7 @@ pub(super) fn load_checkpoint(
 /// Publish the warm-start guard verdict for `jope_selfplay_alarms` to lift into
 /// `ops/health-alarms.v1.json`. Written on every resolution so the alarm clears
 /// itself once a full checkpoint reappears. Never fails the cycle.
-pub(super) fn publish_warm_start_guard(
+pub(crate) fn publish_warm_start_guard(
     root: &Path,
     candidates: &[Checkpoint],
     selected: Option<&Checkpoint>,
@@ -337,7 +337,7 @@ pub(super) fn publish_warm_start_guard(
     let _ = atomic_json(&root.join("ops/trainer-warm-start-guard.v1.json"), &report);
 }
 
-pub(super) fn load_snapshot_watermark(pointer_path: &Path, labels: u64) -> Result<u64> {
+pub(crate) fn load_snapshot_watermark(pointer_path: &Path, labels: u64) -> Result<u64> {
     let pointer = read_json(pointer_path)?;
     let watermark = pointer
         .get("watermark")
@@ -350,7 +350,7 @@ pub(super) fn load_snapshot_watermark(pointer_path: &Path, labels: u64) -> Resul
     Ok(watermark)
 }
 
-pub(super) fn load_training_snapshot(pointer_path: &Path, labels: u64) -> Result<TrainingSnapshot> {
+pub(crate) fn load_training_snapshot(pointer_path: &Path, labels: u64) -> Result<TrainingSnapshot> {
     let pointer = read_json(pointer_path)?;
     let watermark = load_snapshot_watermark(pointer_path, labels)?;
     let manifest = PathBuf::from(

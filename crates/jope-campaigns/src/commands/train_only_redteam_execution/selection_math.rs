@@ -26,7 +26,7 @@ fn one_se_candidate(row: &RankedCandidate) -> Result<OneSeCandidate> {
     })
 }
 
-pub(super) fn select_one_se(
+pub(crate) fn select_one_se(
     ranked: &[RankedCandidate],
     keep: impl Fn(&Candidate) -> bool,
 ) -> Result<Candidate> {
@@ -46,7 +46,7 @@ pub(super) fn select_one_se(
         .clone())
 }
 
-pub(super) fn selector_evaluations(
+pub(crate) fn selector_evaluations(
     ranked: &[RankedCandidate],
 ) -> Result<HashMap<String, CandidateEvaluation>> {
     ranked
@@ -177,7 +177,7 @@ fn add_prediction(current: &[f64], candidate: &[f64], alpha: f64) -> Vec<f64> {
         .collect()
 }
 
-pub(super) fn ensemble_nrmse(
+pub(crate) fn ensemble_nrmse(
     evaluations: &HashMap<String, CandidateEvaluation>,
     candidates: &[Candidate],
     weights: &[f64],
@@ -203,7 +203,7 @@ pub(super) fn ensemble_nrmse(
         / repeats as f64)
 }
 
-pub(super) fn build_ensemble(
+pub(crate) fn build_ensemble(
     manifest: &TrainOnlyRedteamManifest,
     ranked: &[RankedCandidate],
     selected_single: &Candidate,

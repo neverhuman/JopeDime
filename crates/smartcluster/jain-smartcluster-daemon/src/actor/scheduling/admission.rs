@@ -1,7 +1,7 @@
 use super::*;
 
 impl DaemonActor {
-    pub(super) async fn schedule_one(&mut self) -> Result<(), ActorError> {
+    pub(crate) async fn schedule_one(&mut self) -> Result<(), ActorError> {
         if !self.shutdown_replies.is_empty() {
             return Ok(());
         }

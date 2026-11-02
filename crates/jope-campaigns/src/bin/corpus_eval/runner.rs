@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run_eval(
+pub(crate) fn run_eval(
     manifest: &Path,
     output_dir: &Path,
     threads: usize,
@@ -268,7 +268,7 @@ pub(super) fn run_eval(
     Ok(())
 }
 
-pub(super) fn validate_manifest(path: &Path) -> Result<()> {
+pub(crate) fn validate_manifest(path: &Path) -> Result<()> {
     let shard: Shard = serde_json::from_slice(
         &fs::read(path).with_context(|| format!("read {}", path.display()))?,
     )

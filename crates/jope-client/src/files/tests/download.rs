@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn digest_format_must_be_exact_lowercase_sha256() {
+pub(crate) fn digest_format_must_be_exact_lowercase_sha256() {
     assert!(matches!(
         parse_digest("sha256:ABC"),
         Err(FileError::InvalidDigest)
@@ -11,7 +11,7 @@ pub(super) fn digest_format_must_be_exact_lowercase_sha256() {
     ));
 }
 
-pub(super) fn export_retry_checks_every_existing_byte_and_refuses_tampering() {
+pub(crate) fn export_retry_checks_every_existing_byte_and_refuses_tampering() {
     let temp = temp_dir();
     let out = temp.join("export");
     fs::create_dir(&out).unwrap(); // Existing empty directories are valid destinations.
@@ -49,7 +49,7 @@ pub(super) fn export_retry_checks_every_existing_byte_and_refuses_tampering() {
     }
 }
 
-pub(super) fn download_collision_preserves_existing_directory() {
+pub(crate) fn download_collision_preserves_existing_directory() {
     const CHILD: &str = "JOPE_CLIENT_DOWNLOAD_COLLISION_CHILD";
     if std::env::var_os(CHILD).is_none() {
         // A fresh process isolates the staging counter from parallel tests.
@@ -97,7 +97,7 @@ pub(super) fn download_collision_preserves_existing_directory() {
     fs::remove_dir_all(root).unwrap();
 }
 
-pub(super) fn download_archive_is_cleaned_after_success_and_publish_refusal() {
+pub(crate) fn download_archive_is_cleaned_after_success_and_publish_refusal() {
     let root = temp_dir();
     let out = root.join("out");
     let bytes = zip(&[("new", b"downloaded data")]);
@@ -123,7 +123,7 @@ pub(super) fn download_archive_is_cleaned_after_success_and_publish_refusal() {
     fs::remove_dir_all(root).unwrap();
 }
 
-pub(super) fn verified_zip_is_extracted_and_force_backs_up_existing_output() {
+pub(crate) fn verified_zip_is_extracted_and_force_backs_up_existing_output() {
     let root = temp_dir();
     let out = root.join("out");
     fs::create_dir(&out).unwrap();
@@ -150,7 +150,7 @@ pub(super) fn verified_zip_is_extracted_and_force_backs_up_existing_output() {
     fs::remove_dir_all(root).unwrap();
 }
 
-pub(super) fn mismatch_existing_output_and_interrupted_archive_leave_output_untouched() {
+pub(crate) fn mismatch_existing_output_and_interrupted_archive_leave_output_untouched() {
     let root = temp_dir();
     let out = root.join("out");
     fs::create_dir(&out).unwrap();
@@ -197,7 +197,7 @@ pub(super) fn mismatch_existing_output_and_interrupted_archive_leave_output_unto
     fs::remove_dir_all(root).unwrap();
 }
 
-pub(super) fn refuses_parent_traversal_and_symlink_entries() {
+pub(crate) fn refuses_parent_traversal_and_symlink_entries() {
     let root = temp_dir();
     let dest = root.join("stage");
     fs::create_dir(&dest).unwrap();

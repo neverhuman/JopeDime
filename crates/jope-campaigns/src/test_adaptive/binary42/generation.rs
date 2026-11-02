@@ -1,12 +1,12 @@
 use super::*;
 
-pub(super) fn cache_path(root: &Path, semantic_sha256: &str) -> PathBuf {
+pub(crate) fn cache_path(root: &Path, semantic_sha256: &str) -> PathBuf {
     root.join("objects")
         .join("cache")
         .join(format!("{semantic_sha256}.v1.json"))
 }
 
-pub(super) fn load_cache(root: &Path) -> Result<HashMap<String, CacheEntry>> {
+pub(crate) fn load_cache(root: &Path) -> Result<HashMap<String, CacheEntry>> {
     let cache_root = root.join("objects").join("cache");
     if !cache_root.exists() {
         return Ok(HashMap::new());
@@ -33,7 +33,7 @@ pub(super) fn load_cache(root: &Path) -> Result<HashMap<String, CacheEntry>> {
     Ok(entries)
 }
 
-pub(super) fn store_genome(root: &Path, member: &MemberRecord) -> Result<()> {
+pub(crate) fn store_genome(root: &Path, member: &MemberRecord) -> Result<()> {
     if member.semantic_sha256 != sha256_bytes(member.canonical_genome.as_bytes()) {
         bail!("Binary42 member semantic hash mismatch");
     }
@@ -55,7 +55,7 @@ pub(super) fn store_genome(root: &Path, member: &MemberRecord) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_fresh_output(
+pub(crate) fn validate_fresh_output(
     output: &FreshOutput,
     test: &RegressionData,
 ) -> Result<Option<CandidateScore>> {
@@ -86,14 +86,14 @@ pub(super) fn validate_fresh_output(
     }
 }
 
-pub(super) fn logloss_replays(worker: f64, controller: f64) -> bool {
+pub(crate) fn logloss_replays(worker: f64, controller: f64) -> bool {
     worker.is_finite()
         && controller.is_finite()
         && (worker.to_bits().abs_diff(controller.to_bits()) <= LOGLOSS_REPLAY_MAX_ULPS
             || (worker - controller).abs() <= LOGLOSS_REPLAY_MAX_ABS)
 }
 
-pub(super) fn import_fresh_output(
+pub(crate) fn import_fresh_output(
     root: &Path,
     output: FreshOutput,
     test: &RegressionData,
@@ -136,7 +136,7 @@ pub(super) fn import_fresh_output(
     Ok(cache)
 }
 
-pub(super) fn record_infrastructure_failure(
+pub(crate) fn record_infrastructure_failure(
     root: &Path,
     manifest: &ShardManifest,
     error: &anyhow::Error,
@@ -162,7 +162,7 @@ pub(super) fn record_infrastructure_failure(
     Ok(())
 }
 
-pub(super) fn execute_generation_shards(
+pub(crate) fn execute_generation_shards(
     root: &Path,
     campaign: &CampaignManifest,
     staging: &StagingReceipt,
@@ -251,7 +251,7 @@ pub(super) fn execute_generation_shards(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(super) fn process_generation(
+pub(crate) fn process_generation(
     root: &Path,
     campaign: &CampaignManifest,
     staging: &StagingReceipt,

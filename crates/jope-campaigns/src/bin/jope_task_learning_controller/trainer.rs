@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn is_task_trainer_job_id(job_id: &str) -> bool {
+pub(crate) fn is_task_trainer_job_id(job_id: &str) -> bool {
     [
         "jope-selfplay-shadow-",
         "jope-selfplay-production-",
@@ -10,7 +10,7 @@ pub(super) fn is_task_trainer_job_id(job_id: &str) -> bool {
     .any(|prefix| job_id.starts_with(prefix))
 }
 
-pub(super) fn trainer_spec_inputs(spec: &Path) -> Result<Vec<DimeNamedDigestV1>> {
+pub(crate) fn trainer_spec_inputs(spec: &Path) -> Result<Vec<DimeNamedDigestV1>> {
     let body = fs::read_to_string(spec)?;
     let mut inputs = Vec::new();
     let mut name: Option<String> = None;
@@ -57,7 +57,7 @@ pub(super) fn trainer_spec_inputs(spec: &Path) -> Result<Vec<DimeNamedDigestV1>>
     Ok(inputs)
 }
 
-pub(super) fn trainer_scientific_payload(intent: &ActiveIntent) -> Result<DimeScientificPayloadV1> {
+pub(crate) fn trainer_scientific_payload(intent: &ActiveIntent) -> Result<DimeScientificPayloadV1> {
     let mut inputs = trainer_spec_inputs(&intent.spec_path)?;
     let binary_sha256 = inputs
         .iter()
@@ -110,7 +110,7 @@ pub(super) fn trainer_scientific_payload(intent: &ActiveIntent) -> Result<DimeSc
     Ok(payload)
 }
 
-pub(super) fn trainer_initial_job_identity(
+pub(crate) fn trainer_initial_job_identity(
     current_job_identity: &str,
     root: &Path,
     payload: &DimeScientificPayloadV1,
@@ -133,7 +133,7 @@ pub(super) fn trainer_initial_job_identity(
         .to_owned())
 }
 
-pub(super) fn trainer_terminal_state<'a>(
+pub(crate) fn trainer_terminal_state<'a>(
     intent: &ActiveIntent,
     jobs: &'a [SchedulerJob],
     observed_at_ms: u128,
@@ -158,7 +158,7 @@ pub(super) fn trainer_terminal_state<'a>(
     }
 }
 
-pub(super) fn trainer_scientific_failure_receipt(
+pub(crate) fn trainer_scientific_failure_receipt(
     root: &Path,
     intent: &ActiveIntent,
     payload: &DimeScientificPayloadV1,
@@ -190,12 +190,12 @@ pub(super) fn trainer_scientific_failure_receipt(
     Ok(Some(evidence.to_owned()))
 }
 
-pub(super) struct TrainerRecoveryDisposition {
-    pub(super) action: &'static str,
-    pub(super) note: Option<String>,
+pub(crate) struct TrainerRecoveryDisposition {
+    pub(crate) action: &'static str,
+    pub(crate) note: Option<String>,
 }
 
-pub(super) fn recover_trainer_intent(
+pub(crate) fn recover_trainer_intent(
     args: &Args,
     state: &mut ControllerState,
     intent: &ActiveIntent,
@@ -390,7 +390,7 @@ pub(super) fn recover_trainer_intent(
     })
 }
 
-pub(super) fn reconcile_trainer_projection(
+pub(crate) fn reconcile_trainer_projection(
     args: &Args,
     intent: &ActiveIntent,
     projection: &DimeRecoveryProjectionV1,
@@ -442,7 +442,7 @@ pub(super) fn reconcile_trainer_projection(
     Ok(next)
 }
 
-pub(super) fn shadow_canary_warm_start_eligible(
+pub(crate) fn shadow_canary_warm_start_eligible(
     root: &Path,
     task: Task,
     accepted_parent: &Sha256Digest,

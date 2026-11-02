@@ -16,14 +16,14 @@ fn hard_class_of(error: &anyhow::Error) -> FaultClass {
 
 /// Where a check is, for failure messages. It is formatted only when a check fails.
 #[derive(Clone, Copy)]
-pub(super) struct At<'a> {
+pub(crate) struct At<'a> {
     expr: &'a str,
     row: &'a str,
     element: Option<usize>,
 }
 
 impl<'a> At<'a> {
-    pub(super) fn new(expr: &'a str, row: &'a str) -> Self {
+    pub(crate) fn new(expr: &'a str, row: &'a str) -> Self {
         At {
             expr,
             row,
@@ -151,15 +151,15 @@ impl fmt::Display for Tally {
 
 /// The interpreter's faults in row context and in element context.
 #[derive(Default)]
-pub(super) struct Tallies {
-    pub(super) rows: Tally,
-    pub(super) elements: Tally,
+pub(crate) struct Tallies {
+    pub(crate) rows: Tally,
+    pub(crate) elements: Tally,
 }
 
 /// Every traced entry point on one row, against the legacy entry points and against each other:
 /// the interpreter in row context (compat shape and strict) and at each element, the compiled
 /// form in row context and at each element, and the compiled map of the row.
-pub(super) fn check_every_form(
+pub(crate) fn check_every_form(
     at: At<'_>,
     expr: &MathExpr,
     compiled: &CompiledMathExpr,

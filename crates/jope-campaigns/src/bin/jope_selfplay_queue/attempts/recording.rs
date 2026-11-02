@@ -1,12 +1,12 @@
 use super::*;
 
-pub(super) fn load_terminal_seen(connection: &Connection) -> Result<HashSet<String>> {
+pub(crate) fn load_terminal_seen(connection: &Connection) -> Result<HashSet<String>> {
     let mut statement = connection.prepare("SELECT job_id FROM terminal_jobs")?;
     let rows = statement.query_map([], |row| row.get::<_, String>(0))?;
     Ok(rows.collect::<rusqlite::Result<HashSet<_>>>()?)
 }
 
-pub(super) fn record_burn_rate(
+pub(crate) fn record_burn_rate(
     connection: &mut Connection,
     jobs: &[SchedulerJob],
     terminal_seen: &mut HashSet<String>,
@@ -59,7 +59,7 @@ pub(super) fn record_burn_rate(
     Ok(values)
 }
 
-pub(super) fn append_keeper_attempts(
+pub(crate) fn append_keeper_attempts(
     tx: &Transaction<'_>,
     manifest: &ValidManifest,
     owner: &str,
@@ -82,7 +82,7 @@ pub(super) fn append_keeper_attempts(
          AND state IN ('checked','submitting','submitted','deferred_horizon')",
     )?;
     let mut attempt_statement = tx.prepare_cached(include_str!(
-        "../../sql/jope_selfplay_queue_attempt_number.sql"
+        "../../../../sql/jope_selfplay_queue_attempt_number.sql"
     ))?;
     let mut insert_statement = tx.prepare_cached(
         "INSERT INTO keeper_attempts(task,dataset_hash,semantic_sha256,protocol_sha256,\
@@ -151,7 +151,7 @@ pub(super) fn append_keeper_attempts(
     Ok(())
 }
 
-pub(super) fn update_native_attempts_submitted(
+pub(crate) fn update_native_attempts_submitted(
     tx: &Transaction<'_>,
     schema: &PairSchema,
     manifest: &ValidManifest,

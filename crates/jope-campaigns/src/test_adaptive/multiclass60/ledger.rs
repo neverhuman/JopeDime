@@ -1,12 +1,12 @@
 use super::*;
 
-pub(super) fn ledger_path(root: &Path, dataset_hash: &str) -> PathBuf {
+pub(crate) fn ledger_path(root: &Path, dataset_hash: &str) -> PathBuf {
     root.join("datasets")
         .join(dataset_hash)
         .join("champion-ledger.v1.json")
 }
 
-pub(super) fn write_multiclass_terminal_report(
+pub(crate) fn write_multiclass_terminal_report(
     dataset: &DatasetBinding,
     checkpoint: &GenerationCheckpoint,
     ledger: &Value,
@@ -66,7 +66,7 @@ pub(super) fn write_multiclass_terminal_report(
     immutable_write(&path, &canonical_json(&report)?)
 }
 
-pub(super) fn dataset_terminal(root: &Path, dataset_hash: &str) -> bool {
+pub(crate) fn dataset_terminal(root: &Path, dataset_hash: &str) -> bool {
     let Ok(value) = read_value(&ledger_path(root, dataset_hash)) else {
         return false;
     };
@@ -76,7 +76,7 @@ pub(super) fn dataset_terminal(root: &Path, dataset_hash: &str) -> bool {
     )
 }
 
-pub(super) fn dataset_started_at(root: &Path, dataset_hash: &str) -> Option<u128> {
+pub(crate) fn dataset_started_at(root: &Path, dataset_hash: &str) -> Option<u128> {
     fs::metadata(
         root.join("datasets")
             .join(dataset_hash)
@@ -92,7 +92,7 @@ pub(super) fn dataset_started_at(root: &Path, dataset_hash: &str) -> Option<u128
 }
 
 #[cfg(test)]
-pub(super) fn next_generation_index(root: &Path, dataset_hash: &str) -> usize {
+pub(crate) fn next_generation_index(root: &Path, dataset_hash: &str) -> usize {
     let directory = root.join("datasets").join(dataset_hash).join("checkpoints");
     fs::read_dir(directory)
         .ok()
@@ -111,11 +111,11 @@ pub(super) fn next_generation_index(root: &Path, dataset_hash: &str) -> usize {
 }
 
 #[cfg(test)]
-pub(super) fn initial_budget_complete(root: &Path, dataset_hash: &str) -> bool {
+pub(crate) fn initial_budget_complete(root: &Path, dataset_hash: &str) -> bool {
     checkpoint_path(root, dataset_hash, MAX_GENERATIONS - 1).is_file()
 }
 
-pub(super) fn active_dataset_bindings<'a>(
+pub(crate) fn active_dataset_bindings<'a>(
     ready: &'a [DatasetBinding],
     root: &Path,
 ) -> Vec<&'a DatasetBinding> {
@@ -135,7 +135,7 @@ pub(super) fn active_dataset_bindings<'a>(
     bounded
 }
 
-pub(super) fn comparator_protocol_sha256(plan: &Plan, dataset_hash: &str) -> Result<String> {
+pub(crate) fn comparator_protocol_sha256(plan: &Plan, dataset_hash: &str) -> Result<String> {
     let path = Path::new(&plan.comparator_root)
         .join("multiclass")
         .join(dataset_hash)
@@ -144,7 +144,7 @@ pub(super) fn comparator_protocol_sha256(plan: &Plan, dataset_hash: &str) -> Res
     required_hash(&comparator, "/protocol_sha256")
 }
 
-pub(super) fn shard_manifest(
+pub(crate) fn shard_manifest(
     plan: &Plan,
     dataset: &DatasetBinding,
     shard: usize,
@@ -205,7 +205,7 @@ pub(super) fn shard_manifest(
 
 // Keep the worker specification inputs explicit without changing its published format.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn render_spec(
+pub(crate) fn render_spec(
     root: &Path,
     dataset: &DatasetBinding,
     shard: usize,
@@ -253,7 +253,7 @@ pub(super) fn render_spec(
     )
 }
 
-pub(super) fn scq_rows() -> Result<BTreeMap<String, Value>> {
+pub(crate) fn scq_rows() -> Result<BTreeMap<String, Value>> {
     let output = Command::new(scq_str()).arg("ls").arg("--json").output()?;
     if !output.status.success() {
         bail!(
@@ -273,7 +273,7 @@ pub(super) fn scq_rows() -> Result<BTreeMap<String, Value>> {
         .collect())
 }
 
-pub(super) fn spec_job_id(path: &Path) -> Result<String> {
+pub(crate) fn spec_job_id(path: &Path) -> Result<String> {
     let source = fs::read_to_string(path)?;
     let encoded = source
         .lines()
@@ -283,7 +283,7 @@ pub(super) fn spec_job_id(path: &Path) -> Result<String> {
         .with_context(|| format!("SCQ spec has invalid job id: {}", path.display()))
 }
 
-pub(super) fn shard_job_id(
+pub(crate) fn shard_job_id(
     dataset_hash: &str,
     generation: usize,
     shard: usize,
@@ -296,20 +296,20 @@ pub(super) fn shard_job_id(
     )
 }
 
-pub(super) fn terminal_infrastructure_state(state: &str) -> bool {
+pub(crate) fn terminal_infrastructure_state(state: &str) -> bool {
     matches!(
         state,
         "failed" | "cancelled" | "canceled" | "lost" | "preempted" | "timed_out"
     )
 }
 
-pub(super) fn scheduler_preemption(row: &Value) -> bool {
+pub(crate) fn scheduler_preemption(row: &Value) -> bool {
     row.get("state").and_then(Value::as_str) == Some("failed")
         && row.get("failure_class").and_then(Value::as_str) == Some("crash")
         && row.get("error_reason").and_then(Value::as_str) == Some("killed (no exit status)")
 }
 
-pub(super) fn find_named_file(root: &Path, file_name: &str) -> Result<Option<PathBuf>> {
+pub(crate) fn find_named_file(root: &Path, file_name: &str) -> Result<Option<PathBuf>> {
     if !root.is_dir() {
         return Ok(None);
     }
@@ -328,7 +328,7 @@ pub(super) fn find_named_file(root: &Path, file_name: &str) -> Result<Option<Pat
     Ok(None)
 }
 
-pub(super) fn fetch_shard_receipt(
+pub(crate) fn fetch_shard_receipt(
     generation_root: &Path,
     dataset_hash: &str,
     generation: usize,
@@ -372,7 +372,7 @@ pub(super) fn fetch_shard_receipt(
     Ok(destination)
 }
 
-pub(super) fn read_receipt_values(path: &Path) -> Result<Vec<Value>> {
+pub(crate) fn read_receipt_values(path: &Path) -> Result<Vec<Value>> {
     fs::read_to_string(path)?
         .lines()
         .filter(|line| !line.trim().is_empty())

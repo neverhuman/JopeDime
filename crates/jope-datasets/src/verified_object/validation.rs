@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_sha256_hex(sha: &str) -> Result<()> {
+pub(crate) fn validate_sha256_hex(sha: &str) -> Result<()> {
     ensure!(
         sha.len() == 64 && sha.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')),
         "invalid expected sha256 {sha:?}: must be 64 lowercase hex digits"
@@ -8,7 +8,7 @@ pub(super) fn validate_sha256_hex(sha: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn validate_key_and_expected_hash(rel: &str, expected_sha256: &str) -> Result<()> {
+pub(crate) fn validate_key_and_expected_hash(rel: &str, expected_sha256: &str) -> Result<()> {
     validate_sha256_hex(expected_sha256)?;
     ensure!(!rel.is_empty(), "object key must not be empty");
     ensure!(
@@ -25,7 +25,7 @@ pub(super) fn validate_key_and_expected_hash(rel: &str, expected_sha256: &str) -
     Ok(())
 }
 
-pub(super) fn backend_name(scheme: &ObjectStoreScheme) -> String {
+pub(crate) fn backend_name(scheme: &ObjectStoreScheme) -> String {
     match scheme {
         ObjectStoreScheme::Local => "local".to_owned(),
         ObjectStoreScheme::Memory => "memory".to_owned(),
@@ -37,7 +37,7 @@ pub(super) fn backend_name(scheme: &ObjectStoreScheme) -> String {
     }
 }
 
-pub(super) fn is_non_reconcilable_put_error(err: &anyhow::Error) -> bool {
+pub(crate) fn is_non_reconcilable_put_error(err: &anyhow::Error) -> bool {
     let msg = format!("{err:#}").to_ascii_lowercase();
     msg.contains("accessdenied")
         || msg.contains("access denied")

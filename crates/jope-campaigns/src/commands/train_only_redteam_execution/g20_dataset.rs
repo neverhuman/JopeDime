@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn run_g20_dataset(
+pub(crate) fn run_g20_dataset(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn cmd_runs(
+pub(crate) fn cmd_runs(
     node: &str,
     runs_root: &str,
     root: &Path,
@@ -29,7 +29,7 @@ pub(super) fn cmd_runs(
     Ok(())
 }
 
-pub(super) fn cmd_receipts(
+pub(crate) fn cmd_receipts(
     root: &Path,
     min_age_hours: u64,
     keep_newest: usize,

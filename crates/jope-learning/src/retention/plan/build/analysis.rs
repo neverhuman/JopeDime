@@ -1,7 +1,7 @@
 use super::state::{Analysis, Evaluated};
 use super::*;
 
-pub(super) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
+pub(crate) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
     let loaded = &evaluated.loaded;
     let rows = &evaluated.rows;
     let inv = &evaluated.inv;

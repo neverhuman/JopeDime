@@ -1,16 +1,16 @@
 use super::*;
 
 #[derive(Parser)]
-pub(super) struct Args {
+pub(crate) struct Args {
     #[command(flatten)]
-    pub(super) legacy: LegacyFlags,
+    pub(crate) legacy: LegacyFlags,
     #[command(subcommand)]
-    pub(super) command: Command,
+    pub(crate) command: Command,
 }
 /// Fixed-loop arguments: all required by bind/bind-parent-decision/tick/serve, and
 /// refused by the bounded-run operations.
 #[derive(ClapArgs)]
-pub(super) struct LegacyFlags {
+pub(crate) struct LegacyFlags {
     #[arg(long)]
     root: Option<PathBuf>,
     #[arg(long)]
@@ -30,19 +30,19 @@ pub(super) struct LegacyFlags {
     #[arg(long)]
     project: Option<String>,
 }
-pub(super) struct LegacyArgs {
-    pub(super) root: PathBuf,
-    pub(super) state: PathBuf,
-    pub(super) graph_state: PathBuf,
-    pub(super) worker_state: PathBuf,
-    pub(super) config: PathBuf,
-    pub(super) config_sha256: String,
-    pub(super) socket: PathBuf,
-    pub(super) tenant: String,
-    pub(super) project: String,
+pub(crate) struct LegacyArgs {
+    pub(crate) root: PathBuf,
+    pub(crate) state: PathBuf,
+    pub(crate) graph_state: PathBuf,
+    pub(crate) worker_state: PathBuf,
+    pub(crate) config: PathBuf,
+    pub(crate) config_sha256: String,
+    pub(crate) socket: PathBuf,
+    pub(crate) tenant: String,
+    pub(crate) project: String,
 }
 impl LegacyFlags {
-    pub(super) fn any(&self) -> bool {
+    pub(crate) fn any(&self) -> bool {
         self.root.is_some()
             || self.state.is_some()
             || self.graph_state.is_some()
@@ -53,7 +53,7 @@ impl LegacyFlags {
             || self.tenant.is_some()
             || self.project.is_some()
     }
-    pub(super) fn complete(self) -> Option<LegacyArgs> {
+    pub(crate) fn complete(self) -> Option<LegacyArgs> {
         Some(LegacyArgs {
             root: self.root?,
             state: self.state?,
@@ -68,7 +68,7 @@ impl LegacyFlags {
     }
 }
 #[derive(Subcommand)]
-pub(super) enum Command {
+pub(crate) enum Command {
     Bind {
         binding: PathBuf,
     },
@@ -211,7 +211,7 @@ pub(super) enum Command {
     },
 }
 #[derive(Subcommand)]
-pub(super) enum CensusCommand {
+pub(crate) enum CensusCommand {
     /// Observe this host only and write one `jope.native_host_census.v1` document.
     /// `CUDA_VISIBLE_DEVICES=""` records a CPU-only census; unset queries `nvidia-smi`.
     Collect {
@@ -256,7 +256,7 @@ pub(super) enum CensusCommand {
     },
 }
 #[derive(Subcommand)]
-pub(super) enum ContractCommand {
+pub(crate) enum ContractCommand {
     /// Write the unsigned contract (new file, never replaced) and print its grant review.
     Author {
         /// `jope.native_bounded_contract_request.v1` JSON.
@@ -273,7 +273,7 @@ pub(super) enum ContractCommand {
     },
 }
 #[derive(Subcommand)]
-pub(super) enum GrantCommand {
+pub(crate) enum GrantCommand {
     /// Sign every grant of an unsigned contract and write the signed contract (new file).
     Sign {
         #[arg(long)]

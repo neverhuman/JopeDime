@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_generation_zero(
+pub(crate) fn validate_generation_zero(
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
     ranking: &GlobalRankingReceipt,
@@ -60,7 +60,7 @@ pub(super) fn validate_generation_zero(
     Ok(generation_zero)
 }
 
-pub(super) fn validate_observation_link(
+pub(crate) fn validate_observation_link(
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
     evaluator: &StudyEvalContext,
@@ -116,7 +116,7 @@ pub(super) fn validate_observation_link(
     Ok(observation)
 }
 
-pub(super) fn validate_dataset_run(
+pub(crate) fn validate_dataset_run(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
@@ -387,7 +387,7 @@ pub(super) fn validate_dataset_run(
     Ok(selection_digest)
 }
 
-pub(super) fn validate_dataset_shard(
+pub(crate) fn validate_dataset_shard(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     manifest_digest: &str,
@@ -428,7 +428,7 @@ pub(super) fn validate_dataset_shard(
     Ok((selection_digest, digest))
 }
 
-pub(super) fn read_dataset_validation_shard(
+pub(crate) fn read_dataset_validation_shard(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     manifest_digest: &str,

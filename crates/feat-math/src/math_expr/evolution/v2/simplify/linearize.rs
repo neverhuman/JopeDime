@@ -13,7 +13,7 @@ pub(crate) fn linearize(
     expression: &MathExpr,
     profile: &SearchProfile,
     scope: ExpressionScope,
-    mut source: Source<'_>,
+    mut source: LinearizationSource<'_>,
 ) -> Result<Vec<SubtreeLinearization>> {
     expression
         .check_structure(MAX_NODES, MAX_DEPTH)
@@ -46,7 +46,7 @@ pub(crate) fn linearize(
         let mut unmeasured_in_range = false;
         // The fit, and how the line's own error over the samples is measured.
         let (fit, measured): (LinearFit, Measure) = match &mut source {
-            Source::Rows(rows) => {
+            LinearizationSource::Rows(rows) => {
                 let Some((_, points)) = samples(&record.subtree, rows) else {
                     record.refusal = Some(LINEARIZE_UNSAMPLED.into());
                     out.push(record);
@@ -78,7 +78,7 @@ pub(crate) fn linearize(
                     Box::new(move |coefficients: &[f64]| lowered_error(coefficients, &unique)),
                 )
             }
-            Source::Recorded(recorded) => {
+            LinearizationSource::Recorded(recorded) => {
                 let evidence = recorded(index)?;
                 shared.check(node, found[0], &evidence)?;
                 let Some(fit) = evidence.fit else {
@@ -336,7 +336,7 @@ impl MathExpr {
         scope: ExpressionScope,
         rows: &[Vec<f64>],
     ) -> Result<Vec<SubtreeLinearization>> {
-        linearize(self, profile, scope, Source::Rows(rows))
+        linearize(self, profile, scope, LinearizationSource::Rows(rows))
     }
 
     /// What [`MathExpr::linearize_v2`] returns, re-derived from a record of what it measured on
@@ -364,6 +364,11 @@ impl MathExpr {
         scope: ExpressionScope,
         recorded: &mut dyn FnMut(usize) -> Result<LinearizationEvidence>,
     ) -> Result<Vec<SubtreeLinearization>> {
-        linearize(self, profile, scope, Source::Recorded(recorded))
+        linearize(
+            self,
+            profile,
+            scope,
+            LinearizationSource::Recorded(recorded),
+        )
     }
 }

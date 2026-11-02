@@ -102,7 +102,7 @@ pub(crate) use compatibility::{
 pub(crate) use gate::{
     ArtifactReleaseV1, LearningWaveManifestV1, WaveGateKindV1, WaveGateReceiptV1,
 };
-pub(super) use inference::{descending_f64, seeded_temperature_score, select_ranked};
+pub(crate) use inference::{descending_f64, seeded_temperature_score, select_ranked};
 pub(crate) use inference::{
     read_seed_inference, LegacySeedInferenceV1, ModelProposalV2, ModelRetentionBucketV2,
     ModelRetentionReceiptV2, ReadableSeedInference, RetainedModelProposalV2,

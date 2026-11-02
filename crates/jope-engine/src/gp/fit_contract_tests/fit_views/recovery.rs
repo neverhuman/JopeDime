@@ -5,7 +5,7 @@ use super::*;
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits() {
+pub(crate) fn experiment_crashes_at_durable_boundaries_recover_without_repeating_committed_fits() {
     for boundary in [
         "candidate_intent",
         "candidate_metric",
@@ -147,7 +147,7 @@ pub(super) fn experiment_crashes_at_durable_boundaries_recover_without_repeating
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
+pub(crate) fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates() {
     let (temp, prepared) = view_fixture();
     let vocabulary = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/grammar/featmath.json");
     let vocab: crate::grammar::Vocab = read_json(&vocabulary).unwrap();
@@ -239,7 +239,7 @@ pub(super) fn one_evaluation_budget_runs_the_incumbent_before_neural_candidates(
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn deactivated_synthetic_namespace_refuses_a_configured_fit_before_any_start() {
+pub(crate) fn deactivated_synthetic_namespace_refuses_a_configured_fit_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
     let mut authority = Fixture::activated(tmp.path(), vec![training]);
@@ -257,7 +257,7 @@ pub(super) fn deactivated_synthetic_namespace_refuses_a_configured_fit_before_an
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn coverage_reimport_deactivates_the_synthetic_namespace_before_any_start() {
+pub(crate) fn coverage_reimport_deactivates_the_synthetic_namespace_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
     let mut authority = Fixture::activated(tmp.path(), vec![training]);
@@ -277,7 +277,7 @@ pub(super) fn coverage_reimport_deactivates_the_synthetic_namespace_before_any_s
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn out_of_scope_training_and_foreign_scope_are_refused_before_any_start() {
+pub(crate) fn out_of_scope_training_and_foreign_scope_are_refused_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
     let other = "a".repeat(64);
@@ -308,7 +308,7 @@ pub(super) fn out_of_scope_training_and_foreign_scope_are_refused_before_any_sta
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn recovery_epoch_change_invalidates_the_synthetic_activation_before_any_start() {
+pub(crate) fn recovery_epoch_change_invalidates_the_synthetic_activation_before_any_start() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
     let mut authority = Fixture::activated(tmp.path(), vec![training]);

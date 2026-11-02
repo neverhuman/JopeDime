@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn print_event(record: &jain_smartcluster::EventRecord, json: bool) -> Result<()> {
+pub(crate) fn print_event(record: &jain_smartcluster::EventRecord, json: bool) -> Result<()> {
     if json {
         println!("{}", serde_json::to_string(record)?);
         return Ok(());
@@ -19,7 +19,7 @@ pub(super) fn print_event(record: &jain_smartcluster::EventRecord, json: bool) -
     Ok(())
 }
 
-pub(super) fn print_job(job: &JobRecord, json: bool) -> Result<()> {
+pub(crate) fn print_job(job: &JobRecord, json: bool) -> Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(job)?);
     } else {
@@ -31,7 +31,7 @@ pub(super) fn print_job(job: &JobRecord, json: bool) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn print_jobs(page: &JobPage, json: bool) -> Result<()> {
+pub(crate) fn print_jobs(page: &JobPage, json: bool) -> Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(page)?);
     } else {
@@ -46,7 +46,7 @@ pub(super) fn print_jobs(page: &JobPage, json: bool) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn print_status(status: &DaemonStatus, json: bool) -> Result<()> {
+pub(crate) fn print_status(status: &DaemonStatus, json: bool) -> Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(status)?);
     } else {

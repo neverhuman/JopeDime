@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_receipt_chain(path: &Path) -> Result<Vec<Value>> {
+pub(crate) fn validate_receipt_chain(path: &Path) -> Result<Vec<Value>> {
     if !path.exists() {
         return Ok(Vec::new());
     }
@@ -51,7 +51,7 @@ pub(super) fn validate_receipt_chain(path: &Path) -> Result<Vec<Value>> {
     Ok(rows)
 }
 
-pub(super) fn durable_write(
+pub(crate) fn durable_write(
     action: &str,
     request: Value,
     summary: Value,
@@ -148,7 +148,7 @@ pub(super) fn durable_write(
     Ok(receipt)
 }
 
-pub(super) fn proposal_request(
+pub(crate) fn proposal_request(
     action: &str,
     args: &ProposalInputs,
     verified: &VerifiedProposals,

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn validate_ledger(
+pub(crate) fn validate_ledger(
     root: &Path,
     value: &Value,
     dataset: &DatasetBinding,
@@ -181,7 +181,7 @@ pub(super) fn validate_ledger(
         .context("champion ledger lacks terminal timestamp")
 }
 
-pub(super) fn validate_all(run_id: &str, campaign_root: &Path) -> Result<()> {
+pub(crate) fn validate_all(run_id: &str, campaign_root: &Path) -> Result<()> {
     let plan = read_plan(campaign_root, run_id)?;
     let root = run_root(campaign_root, run_id);
     let ready = ready_dataset_bindings(&plan, &root)?;

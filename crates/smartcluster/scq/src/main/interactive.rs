@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) async fn stream_events(
+pub(crate) async fn stream_events(
     client: &Client,
     request: SubscribeRequest,
     follow: bool,
@@ -22,7 +22,7 @@ pub(super) async fn stream_events(
     Ok(())
 }
 
-pub(super) async fn run_attach(
+pub(crate) async fn run_attach(
     client: &Client,
     job_id: JobId,
     offset: EventOffset,
@@ -80,7 +80,7 @@ impl Drop for TerminalGuard {
     }
 }
 
-pub(super) async fn run_tui(client: &Client) -> Result<()> {
+pub(crate) async fn run_tui(client: &Client) -> Result<()> {
     let _guard = TerminalGuard::enter()?;
     loop {
         let status = client.status().await?;

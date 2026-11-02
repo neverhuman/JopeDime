@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn render(
+pub(crate) fn render(
     f: &mut Frame,
     body: Rect,
     h: &Hardware,

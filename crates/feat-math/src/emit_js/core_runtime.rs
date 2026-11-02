@@ -1,4 +1,4 @@
-pub(super) const CORE: &str = r#"
+pub(crate) const CORE: &str = r#"
 function clampRange(x,lo,hi){if(x<lo)x=lo;if(x>hi)x=hi;return x;}
 function maxNum(a,b){if(Number.isNaN(a))return b;if(Number.isNaN(b))return a;return a<b?b:a;}
 function totalCompare(a,b){

@@ -4,7 +4,7 @@ use super::*;
 // replicate
 // ---------------------------------------------------------------------------
 
-pub(super) fn cmd_replicate(root: &Path) -> Result<Value> {
+pub(crate) fn cmd_replicate(root: &Path) -> Result<Value> {
     let archive = th::archive_root(root);
     if !archive.join(th::INDEX_FILE).exists() {
         bail!("no archive at {} — nothing to replicate", archive.display());
@@ -130,7 +130,7 @@ pub(super) fn cmd_replicate(root: &Path) -> Result<Value> {
 // verify
 // ---------------------------------------------------------------------------
 
-pub(super) fn cmd_verify(root: &Path) -> Result<Value> {
+pub(crate) fn cmd_verify(root: &Path) -> Result<Value> {
     let targets = targets_from_env()?;
     let rroot = remote_root();
     let local = fs::read(replica_dir(root).join("manifest-latest.v1.json")).ok();
@@ -219,7 +219,7 @@ fn epoch_probe(conn: &Connection, limit: usize) -> Result<Vec<EpochProbeRow>> {
     Ok(out)
 }
 
-pub(super) fn cmd_restore(
+pub(crate) fn cmd_restore(
     root: &Path,
     target_name: &str,
     into: &Path,
@@ -455,6 +455,6 @@ pub(super) fn cmd_restore(
 
 mod status;
 use status::previous_success;
-pub(super) use status::{append_event, load_status, write_status};
+pub(crate) use status::{append_event, load_status, write_status};
 #[cfg(test)]
 mod tests;

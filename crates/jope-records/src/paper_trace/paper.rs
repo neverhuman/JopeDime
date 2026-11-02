@@ -7,10 +7,10 @@ pub const README: &str = "README.md";
 pub const EXPERIMENTS_JSONL: &str = "docs/experiments/experiments.jsonl";
 pub const EXPERIMENTS_README: &str = "docs/experiments/README.md";
 pub const EXPERIMENTS_SYNTHESIS: &str = "docs/experiments/SYNTHESIS_AND_NEXT_EXPERIMENTS.md";
-pub(super) const REPLAY_JSON: &str =
+pub(crate) const REPLAY_JSON: &str =
     "docs/internal/clover/exp-008-quantile-parity-replay.20261017.json";
-pub(super) const SAMECUT_CSV: &str = "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv";
-pub(super) const SVG_PATHS: [&str; 4] = [
+pub(crate) const SAMECUT_CSV: &str = "assets/same-cut/v2/leaderboard-jope-same-cut-v1-deep.csv";
+pub(crate) const SVG_PATHS: [&str; 4] = [
     "docs/paper/figures/why-it-matters.svg",
     "docs/paper/figures/clover-why-it-matters-3panel.svg",
     "docs/paper/figures/parity-census-and-exp008-replay.svg",
@@ -19,7 +19,7 @@ pub(super) const SVG_PATHS: [&str; 4] = [
 
 const STATUSES: [&str; 4] = ["established", "preliminary", "non-qualifying", "pending"];
 
-pub(super) fn re(pattern: &str) -> Regex {
+pub(crate) fn re(pattern: &str) -> Regex {
     Regex::new(pattern).expect("static pattern")
 }
 
@@ -59,7 +59,7 @@ static NUMBER: LazyLock<Regex> = LazyLock::new(|| re(r"[-+]?\d+(?:\.\d+)?(?:e[-+
 
 /// Commas between digit groups, LaTeX thin spaces, Unicode minus and en dash, `a×10^{b}` (also
 /// `a{\times}10^{b}`) and `±a` are written one way on both sides of a comparison.
-pub(super) fn normalize(text: &str) -> String {
+pub(crate) fn normalize(text: &str) -> String {
     let mut text = text
         .replace("{,}", "")
         .replace("{\\times}", "\\times")
@@ -79,15 +79,15 @@ pub(super) fn normalize(text: &str) -> String {
 /// One printed number: its text, value and the half-width of the interval it rounds from (zero
 /// for an integer, which must match exactly).
 #[derive(Clone, Debug, PartialEq)]
-pub(super) struct Printed {
-    pub(super) text: String,
-    pub(super) value: f64,
-    pub(super) half_ulp: f64,
+pub(crate) struct Printed {
+    pub(crate) text: String,
+    pub(crate) value: f64,
+    pub(crate) half_ulp: f64,
 }
 
 /// The numbers in already-normalized text. A sign directly after a digit, letter, `.` or `)` is a
 /// range dash, not a sign; a number glued to a letter or `_` is part of an identifier.
-pub(super) fn numbers(text: &str) -> Vec<Printed> {
+pub(crate) fn numbers(text: &str) -> Vec<Printed> {
     let mut out = vec![];
     for m in NUMBER.find_iter(text) {
         let mut token = m.as_str();
@@ -132,7 +132,7 @@ pub(super) fn numbers(text: &str) -> Vec<Printed> {
 }
 
 /// The numbers a reader of the line sees, identifiers and references removed.
-pub(super) fn printed_numbers(line: &str) -> Vec<Printed> {
+pub(crate) fn printed_numbers(line: &str) -> Vec<Printed> {
     let line = normalize(line);
     let line = DATES.replace_all(&line, " ");
     numbers(&NOT_NUMBERS.replace_all(&line, " "))
@@ -140,7 +140,7 @@ pub(super) fn printed_numbers(line: &str) -> Vec<Printed> {
 
 /// Whether a printed number is one of the record's numbers, or that number at the precision
 /// printed.
-pub(super) fn accounted(printed: &Printed, record: &[Printed]) -> bool {
+pub(crate) fn accounted(printed: &Printed, record: &[Printed]) -> bool {
     record.iter().any(|r| {
         r.text == printed.text
             || (r.value - printed.value).abs() <= printed.half_ulp * (1.0 + 1e-9) + 1e-15
@@ -171,18 +171,18 @@ fn cited(line: &str) -> (BTreeSet<String>, BTreeSet<String>) {
 }
 
 #[derive(Debug)]
-pub(super) struct Claim {
-    pub(super) id: String,
-    pub(super) status: String,
-    pub(super) numbers: Vec<Printed>,
+pub(crate) struct Claim {
+    pub(crate) id: String,
+    pub(crate) status: String,
+    pub(crate) numbers: Vec<Printed>,
 }
 
-pub(super) fn field<'a>(claim: &'a Value, key: &str) -> &'a str {
+pub(crate) fn field<'a>(claim: &'a Value, key: &str) -> &'a str {
     claim.get(key).and_then(Value::as_str).unwrap_or("")
 }
 
 /// The ledger's claims, with the problems rule 1 finds.
-pub(super) fn ledger(text: &str, problems: &mut Vec<String>) -> Result<Vec<Claim>> {
+pub(crate) fn ledger(text: &str, problems: &mut Vec<String>) -> Result<Vec<Claim>> {
     let doc = pyjson::parse_str(text).map_err(|m| Error::parse(Path::new(LEDGER), m))?;
     let roots: BTreeSet<String> = doc
         .get("source_conventions")

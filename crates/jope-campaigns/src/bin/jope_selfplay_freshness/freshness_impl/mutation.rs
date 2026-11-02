@@ -3,7 +3,7 @@ use super::*;
 mod retirement;
 
 impl Supervisor {
-    pub(super) fn prior_mutation(
+    pub(crate) fn prior_mutation(
         &self,
         tool: &str,
         preview_sha256: &str,
@@ -22,7 +22,7 @@ impl Supervisor {
         Ok(None)
     }
 
-    pub(super) fn prior_auto_retirement_mutation(
+    pub(crate) fn prior_auto_retirement_mutation(
         &self,
         preview_sha256: &str,
         idempotency_key: &str,
@@ -51,7 +51,7 @@ impl Supervisor {
             .map(|(_, mutation)| mutation.result.clone()))
     }
 
-    pub(super) fn finish_mutation(
+    pub(crate) fn finish_mutation(
         &mut self,
         tool: &str,
         preview_sha256: &str,
@@ -71,7 +71,7 @@ impl Supervisor {
         Ok(result)
     }
 
-    pub(super) fn admission_mutation(
+    pub(crate) fn admission_mutation(
         &mut self,
         paused: bool,
         preview_sha256: &str,
@@ -124,7 +124,7 @@ impl Supervisor {
         self.finish_mutation(tool, preview_sha256, idempotency_key, result)
     }
 
-    pub(super) fn request_micro_wave(
+    pub(crate) fn request_micro_wave(
         &mut self,
         preview_sha256: &str,
         idempotency_key: &str,
@@ -160,7 +160,7 @@ impl Supervisor {
         )
     }
 
-    pub(super) fn hold_stale_queued_from_inventory(
+    pub(crate) fn hold_stale_queued_from_inventory(
         &self,
         inventory: &[InventoryJob],
     ) -> Result<u64> {
@@ -184,7 +184,7 @@ impl Supervisor {
         Ok(held)
     }
 
-    pub(super) fn auto_retire_stale(&mut self, preview: &Value) -> Result<Value> {
+    pub(crate) fn auto_retire_stale(&mut self, preview: &Value) -> Result<Value> {
         let preview_sha256 = preview
             .get("preview_receipt_sha256")
             .and_then(Value::as_str)
@@ -202,7 +202,7 @@ impl Supervisor {
         }))
     }
 
-    pub(super) fn cycle(&mut self, audit_only: bool, auto_retire_stale: bool) -> Result<Value> {
+    pub(crate) fn cycle(&mut self, audit_only: bool, auto_retire_stale: bool) -> Result<Value> {
         self.sync_checkpoint()?;
         let mut inventory = self.inventory()?;
         let automatically_held = if audit_only {
@@ -246,7 +246,7 @@ impl Supervisor {
         Ok(result)
     }
 
-    pub(super) fn dispatch(&mut self, method: &str, arguments: &Value) -> Result<Value> {
+    pub(crate) fn dispatch(&mut self, method: &str, arguments: &Value) -> Result<Value> {
         if !TOOL_NAMES.contains(&method) {
             bail!("unsupported freshness method {method}");
         }
@@ -289,7 +289,7 @@ impl Supervisor {
         }
     }
 
-    pub(super) fn prune_state(&mut self) {
+    pub(crate) fn prune_state(&mut self) {
         let cutoff = now_ms() - PREVIEW_MAX_AGE_MS;
         self.state
             .previews

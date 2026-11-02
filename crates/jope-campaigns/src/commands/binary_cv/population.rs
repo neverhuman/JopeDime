@@ -1,12 +1,12 @@
 use super::*;
 
 mod parser;
-pub(super) use parser::parse_binary_population;
+pub(crate) use parser::parse_binary_population;
 
 /// Deterministic preset head stage for offspring reattachment. Consumes a
 /// deterministic number of draws per head family, so the child is a pure
 /// function of (parents, offspring_seed).
-pub(super) fn binary_head_stage(rng: &mut DeterministicRng) -> String {
+pub(crate) fn binary_head_stage(rng: &mut DeterministicRng) -> String {
     let head = HEADS_BINARY[(rng.next_u64() as usize) % HEADS_BINARY.len()];
     match head {
         "logit_ridge" => {
@@ -39,7 +39,7 @@ pub(super) fn binary_head_stage(rng: &mut DeterministicRng) -> String {
 /// Detach the binary head so the frozen legacy operators can work on the
 /// transform body; a placeholder ridge head keeps the body a valid legacy
 /// pipeline for mutation/crossover.
-pub(super) fn legacy_body(canonical: &str) -> Result<String> {
+pub(crate) fn legacy_body(canonical: &str) -> Result<String> {
     let genome = GenomeIr::parse(canonical).context("parse binary parent")?;
     let GenomeIr::Pipeline(dsl) = genome else {
         bail!("binary parent is not a pipeline");
@@ -61,7 +61,7 @@ pub(super) fn legacy_body(canonical: &str) -> Result<String> {
 }
 
 /// Reattach a deterministically drawn binary head to a mutated legacy body.
-pub(super) fn with_binary_head(child_body: &str, head_stage: &str) -> Result<String> {
+pub(crate) fn with_binary_head(child_body: &str, head_stage: &str) -> Result<String> {
     let genome = GenomeIr::parse(child_body).context("parse mutated binary body")?;
     let GenomeIr::Pipeline(dsl) = genome else {
         bail!("mutated binary body is not a pipeline");
@@ -90,7 +90,7 @@ pub(super) fn with_binary_head(child_body: &str, head_stage: &str) -> Result<Str
 mod evaluation;
 mod refill;
 
-pub(super) use evaluation::{
+pub(crate) use evaluation::{
     evaluate_binary_unique, finish_test_adaptive_binary, fit_test_adaptive_binary, BinaryEvaluation,
 };
-pub(super) use refill::refill_binary_population;
+pub(crate) use refill::refill_binary_population;

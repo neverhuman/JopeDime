@@ -30,13 +30,13 @@ impl RunService {
         })
     }
 
-    pub(super) fn q1_evaluate(&self, raw: Value) -> Result<Vec<u8>> {
+    pub(crate) fn q1_evaluate(&self, raw: Value) -> Result<Vec<u8>> {
         self.q1_evaluate_using(raw, || {
             ProcessExecutor::new(&self.executable, 1, &self.home.join("worker-scratch"))
         })
     }
 
-    pub(super) fn q1_evaluate_using<E: crate::discover::r#loop::Executor>(
+    pub(crate) fn q1_evaluate_using<E: crate::discover::r#loop::Executor>(
         &self,
         raw: Value,
         make_executor: impl FnOnce() -> anyhow::Result<E>,

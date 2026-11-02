@@ -48,7 +48,7 @@ fn unknown_failure_reason_and_missing_status_never_become_labels() {
 fn scores_preserve_exact_binary64_identity_and_legacy_order() {
     let archive = import(INDEX);
     let bits: Vec<Value> = serde_json::from_str(include_str!(
-        "fixtures/observation-import-v2/score-bits.json"
+        "../fixtures/observation-import-v2/score-bits.json"
     ))
     .unwrap();
     for b in bits {

@@ -3,7 +3,7 @@ use super::*;
 /// `finish` in `ops.rs`, line for line, counting the non-finite values it replaces: the append
 /// merge, then per row the width cap, the replacement of non-finite values and the pad of an
 /// empty row.
-pub(super) fn finish_counted(
+pub(crate) fn finish_counted(
     op: &FittedOp,
     input: &Rows,
     mut out: Rows,
@@ -77,6 +77,6 @@ fn appends(op: &FittedOp) -> bool {
 }
 
 /// The non-finite cells of `x`: what `sanitize` replaces.
-pub(super) fn count_nonfinite(x: &Rows) -> u64 {
+pub(crate) fn count_nonfinite(x: &Rows) -> u64 {
     x.iter().flatten().filter(|v| !v.is_finite()).count() as u64
 }

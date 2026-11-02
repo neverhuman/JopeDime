@@ -9,9 +9,9 @@ pub const RECEIPT_SCHEMA: &str = "parallel.outer_score_receipt.v1";
 pub const LABEL_ROLE: &str = "sealed_final";
 /// The CLI `score` command finds its release authority here; nothing else does.
 pub const AUTHORITY_ENV: &str = "JOPE_OUTER_RELEASE_AUTHORITY";
-pub(super) const GENESIS: &str = "0000000000000000000000000000000000000000000000000000000000000000";
+pub(crate) const GENESIS: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
-pub(super) fn is_sha256(value: &str) -> bool {
+pub(crate) fn is_sha256(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
@@ -20,7 +20,7 @@ pub(super) fn is_sha256(value: &str) -> bool {
 
 /// A path under `root` as its root-relative form, refusing any symlink
 /// component (including the leaf) and anything outside the root.
-pub(super) fn rooted(root: &Path, path: &Path) -> Result<(PathBuf, PathBuf)> {
+pub(crate) fn rooted(root: &Path, path: &Path) -> Result<(PathBuf, PathBuf)> {
     let absolute = if path.is_absolute() {
         path.to_path_buf()
     } else {
@@ -35,7 +35,7 @@ pub(super) fn rooted(root: &Path, path: &Path) -> Result<(PathBuf, PathBuf)> {
 
 /// Read `path` once and record it as `relative_artifact` does (its path under
 /// the canonical `root` and the digest of exactly the bytes returned).
-pub(super) fn read_artifact(root: &Path, path: &Path) -> Result<(Value, Vec<u8>)> {
+pub(crate) fn read_artifact(root: &Path, path: &Path) -> Result<(Value, Vec<u8>)> {
     let absolute = path.canonicalize()?;
     let relative = absolute
         .strip_prefix(root)

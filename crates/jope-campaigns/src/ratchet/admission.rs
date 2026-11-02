@@ -102,7 +102,7 @@ impl AttemptAdmissionManifestV3 {
     }
 }
 
-pub(super) fn valid_attempt_id(value: &str) -> bool {
+pub(crate) fn valid_attempt_id(value: &str) -> bool {
     !value.is_empty()
         && value != "."
         && value != ".."

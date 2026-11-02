@@ -4,7 +4,7 @@ use super::*;
 // cycle
 // ---------------------------------------------------------------------------
 
-pub(super) fn read_state(path: &Path) -> Result<Value> {
+pub(crate) fn read_state(path: &Path) -> Result<Value> {
     match fs::symlink_metadata(path) {
         Ok(_) => read_json(path),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -14,7 +14,7 @@ pub(super) fn read_state(path: &Path) -> Result<Value> {
     }
 }
 
-pub(super) fn attempt_for(state: &Value, key: &str) -> u64 {
+pub(crate) fn attempt_for(state: &Value, key: &str) -> u64 {
     state
         .get("attempts")
         .and_then(|attempts| attempts.get(key))
@@ -23,7 +23,7 @@ pub(super) fn attempt_for(state: &Value, key: &str) -> u64 {
         .max(1)
 }
 
-pub(super) fn record_attempt(state: &mut Value, key: &str, attempt: u64) {
+pub(crate) fn record_attempt(state: &mut Value, key: &str, attempt: u64) {
     let object = state.as_object_mut().expect("state is an object");
     let attempts = object
         .entry("attempts")
@@ -45,13 +45,13 @@ pub(super) fn record_attempt(state: &mut Value, key: &str, attempt: u64) {
 /// the live catalog grows", and every dataset added after the first per-task
 /// promotion would silently never receive one. The per-task lanes are ADDITIVE
 /// and queue behind it.
-pub(super) fn ordered_lanes(combined: Lane, task_lanes: Option<Vec<Lane>>) -> Vec<Lane> {
+pub(crate) fn ordered_lanes(combined: Lane, task_lanes: Option<Vec<Lane>>) -> Vec<Lane> {
     let mut lanes = vec![combined];
     lanes.extend(task_lanes.unwrap_or_default());
     lanes
 }
 
-pub(super) fn cycle(args: &Args) -> Result<Value> {
+pub(crate) fn cycle(args: &Args) -> Result<Value> {
     let root = args.root.as_path();
     let events = root.join("ops/propose-events.v1.jsonl");
     let state_path = root.join("ops/propose-driver-v1.json");
@@ -146,7 +146,7 @@ pub(super) fn cycle(args: &Args) -> Result<Value> {
 /// One lane's cycle. Byte-for-byte the historical behaviour when
 /// `lane.task == None`; the per-task lanes differ only in job id, the `--task`
 /// argument, the publish directory, and which pointer is rewritten.
-pub(super) fn run_lane(
+pub(crate) fn run_lane(
     args: &Args,
     live: &LiveCatalog,
     binding: &ProposalBinding,

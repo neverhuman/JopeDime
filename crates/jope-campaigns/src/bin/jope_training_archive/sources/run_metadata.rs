@@ -1,15 +1,15 @@
 use super::*;
 
 #[derive(Default, Debug, Clone)]
-pub(super) struct ScqTiming {
-    pub(super) node: Option<String>,
-    pub(super) submit_ms: Option<i64>,
-    pub(super) running_ms: Option<i64>,
-    pub(super) end_ms: Option<i64>,
-    pub(super) state: Option<String>,
+pub(crate) struct ScqTiming {
+    pub(crate) node: Option<String>,
+    pub(crate) submit_ms: Option<i64>,
+    pub(crate) running_ms: Option<i64>,
+    pub(crate) end_ms: Option<i64>,
+    pub(crate) state: Option<String>,
 }
 
-pub(super) fn parse_ts_ms(ts: &str) -> Option<i64> {
+pub(crate) fn parse_ts_ms(ts: &str) -> Option<i64> {
     // "2026-07-28T00:19:58.123456789+00:00" -> epoch ms, UTC offsets only.
     let bytes = ts.as_bytes();
     if bytes.len() < 19 {
@@ -46,7 +46,7 @@ pub(super) fn parse_ts_ms(ts: &str) -> Option<i64> {
     Some(((days * 86400 + h * 3600 + mi * 60 + sec) * 1000) + frac)
 }
 
-pub(super) fn scq_timings() -> Result<BTreeMap<String, ScqTiming>> {
+pub(crate) fn scq_timings() -> Result<BTreeMap<String, ScqTiming>> {
     let mut out: BTreeMap<String, ScqTiming> = BTreeMap::new();
     let path = Path::new(scq_events_str());
     if !path.is_file() {
@@ -92,18 +92,18 @@ pub(super) fn scq_timings() -> Result<BTreeMap<String, ScqTiming>> {
 }
 
 #[derive(Default, Debug, Clone)]
-pub(super) struct SpecInfo {
-    pub(super) recipe: Option<String>,
-    pub(super) seed: Option<String>,
-    pub(super) corpus_snapshot: Option<String>,
-    pub(super) sampler: Option<String>,
-    pub(super) warm_start_sha256: Option<String>,
-    pub(super) trainer_source_sha256: Option<String>,
-    pub(super) train_script_sha256: Option<String>,
-    pub(super) path: Option<String>,
+pub(crate) struct SpecInfo {
+    pub(crate) recipe: Option<String>,
+    pub(crate) seed: Option<String>,
+    pub(crate) corpus_snapshot: Option<String>,
+    pub(crate) sampler: Option<String>,
+    pub(crate) warm_start_sha256: Option<String>,
+    pub(crate) trainer_source_sha256: Option<String>,
+    pub(crate) train_script_sha256: Option<String>,
+    pub(crate) path: Option<String>,
 }
 
-pub(super) fn read_spec(run_id: &str) -> SpecInfo {
+pub(crate) fn read_spec(run_id: &str) -> SpecInfo {
     let mut info = SpecInfo::default();
     let p = PathBuf::from(specs_dir_str()).join(format!("{run_id}.toml"));
     let txt = match fs::read_to_string(&p) {
@@ -156,7 +156,7 @@ pub(super) fn read_spec(run_id: &str) -> SpecInfo {
 }
 
 /// "warm-started 130/152 tensors from `<path>`"
-pub(super) fn read_warm_start(run_id: &str, attempt: i64) -> Option<(i64, i64, String)> {
+pub(crate) fn read_warm_start(run_id: &str, attempt: i64) -> Option<(i64, i64, String)> {
     let p = PathBuf::from(scq_runs_str())
         .join(run_id)
         .join("attempts")
@@ -177,7 +177,7 @@ pub(super) fn read_warm_start(run_id: &str, attempt: i64) -> Option<(i64, i64, S
     None
 }
 
-pub(super) fn find_train_result(spec: &SourceSpec) -> Option<PathBuf> {
+pub(crate) fn find_train_result(spec: &SourceSpec) -> Option<PathBuf> {
     if let Some(p) = &spec.sidecar_result {
         if p.is_file() {
             return Some(p.clone());
@@ -195,15 +195,15 @@ pub(super) fn find_train_result(spec: &SourceSpec) -> Option<PathBuf> {
 
 // ------------------------------------------------------------------ ingest
 
-pub(super) struct RowOut {
-    pub(super) epoch: i64,
-    pub(super) phase: String,
-    pub(super) row_ord: i64,
-    pub(super) obj: Map<String, Value>,
-    pub(super) raw: String,
+pub(crate) struct RowOut {
+    pub(crate) epoch: i64,
+    pub(crate) phase: String,
+    pub(crate) row_ord: i64,
+    pub(crate) obj: Map<String, Value>,
+    pub(crate) raw: String,
 }
 
-pub(super) fn parse_rows(text: &str, lane_kind: &str) -> (Vec<RowOut>, Vec<String>) {
+pub(crate) fn parse_rows(text: &str, lane_kind: &str) -> (Vec<RowOut>, Vec<String>) {
     let mut rows = vec![];
     let mut problems = vec![];
     let mut seen: BTreeSet<(i64, String)> = BTreeSet::new();

@@ -113,7 +113,7 @@ fn bundle_digest_requires_exact_lowercase_prefixed_identity() {
     }
 }
 
-pub(super) fn manifest() -> serde_json::Value {
+pub(crate) fn manifest() -> serde_json::Value {
     serde_json::json!({
         "schema": "jope.fused-bundle/v1", "architecture": "dope-fused-ranker/h40b",
         "bundle_digest": format!("sha256:{}", "ab".repeat(32)),

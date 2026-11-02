@@ -9,7 +9,7 @@ fn validation_error(data: &Prepared, predictions: &[f64]) -> f64 {
     loss / (data.n - data.fit_n) as f64
 }
 
-pub(super) fn choose(data: &Prepared, seed: u64) -> Choice {
+pub(crate) fn choose(data: &Prepared, seed: u64) -> Choice {
     let penalties = [0.0001, 0.01, 1.0, 100.0];
     let mut best_penalty = penalties[0];
     let mut best_loss = f64::INFINITY;
@@ -77,7 +77,7 @@ pub(super) fn choose(data: &Prepared, seed: u64) -> Choice {
     choice
 }
 
-pub(super) fn fit_final(data: Prepared, width: usize, choice: Choice, seed: u64) -> Fitted {
+pub(crate) fn fit_final(data: Prepared, width: usize, choice: Choice, seed: u64) -> Fitted {
     let linear = Linear::learn(&data, choice.penalty);
     let mut predictions = linear.prepared_predictions(&data);
     let mut residual = vec![0.0; data.fit_n];

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_activation_rollback_capsule(
+pub(crate) fn load_activation_rollback_capsule(
     args: &Args,
 ) -> Result<(RollbackCapsuleV2, PathBuf)> {
     let path = args
@@ -23,7 +23,7 @@ pub(super) fn load_activation_rollback_capsule(
     ))
 }
 
-pub(super) fn activate_manifest(
+pub(crate) fn activate_manifest(
     args: &Args,
     manifest: &Value,
     rollback_capsule: &RollbackCapsuleV2,
@@ -147,7 +147,7 @@ pub(super) fn activate_manifest(
     Ok(())
 }
 
-pub(super) fn verify_candidate_review_gate(
+pub(crate) fn verify_candidate_review_gate(
     args: &Args,
     manifest: &Value,
     now_unix_ms: u64,
@@ -192,7 +192,7 @@ pub(super) fn verify_candidate_review_gate(
     sha256_file(path)
 }
 
-pub(super) fn validate_activation_target(
+pub(crate) fn validate_activation_target(
     operation: ActivationOperationV1,
     bundle_sha256: &str,
 ) -> Result<()> {
@@ -210,7 +210,7 @@ pub(super) fn validate_activation_target(
     Ok(())
 }
 
-pub(super) fn collect_evaluator_digests(value: &Value, output: &mut BTreeSet<String>) {
+pub(crate) fn collect_evaluator_digests(value: &Value, output: &mut BTreeSet<String>) {
     match value {
         Value::Object(map) => {
             for (key, value) in map {
@@ -243,7 +243,7 @@ pub(super) fn collect_evaluator_digests(value: &Value, output: &mut BTreeSet<Str
     }
 }
 
-pub(super) fn collect_json_references(path: &Path, output: &mut BTreeSet<String>) -> Result<()> {
+pub(crate) fn collect_json_references(path: &Path, output: &mut BTreeSet<String>) -> Result<()> {
     if !path.is_file() {
         return Ok(());
     }
@@ -254,7 +254,7 @@ pub(super) fn collect_json_references(path: &Path, output: &mut BTreeSet<String>
     Ok(())
 }
 
-pub(super) fn evaluator_reference_index(root: &Path) -> Result<BTreeMap<String, BTreeSet<String>>> {
+pub(crate) fn evaluator_reference_index(root: &Path) -> Result<BTreeMap<String, BTreeSet<String>>> {
     let mut references = BTreeMap::<String, BTreeSet<String>>::new();
     for (class, path) in [
         (
@@ -291,7 +291,7 @@ pub(super) fn evaluator_reference_index(root: &Path) -> Result<BTreeMap<String, 
 /// Retain every evaluator still available in a content-addressed vault before
 /// advancing the active bundle pointer. Hard links make later bundle cleanup
 /// safe without copying or changing the evaluator bytes.
-pub(super) fn retain_evaluators(output_root: &Path, prepared_bundle_sha256: &str) -> Result<Value> {
+pub(crate) fn retain_evaluators(output_root: &Path, prepared_bundle_sha256: &str) -> Result<Value> {
     let root = output_root
         .parent()
         .context("runtime bundle root has no flywheel parent")?;

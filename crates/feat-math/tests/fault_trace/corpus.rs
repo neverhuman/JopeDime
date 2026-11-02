@@ -7,12 +7,12 @@ struct Row {
 }
 
 /// PR 01's corpus: every row and every expression source.
-pub(super) struct Corpus {
-    pub(super) rows: Vec<Row>,
-    pub(super) expressions: Vec<String>,
+pub(crate) struct Corpus {
+    pub(crate) rows: Vec<Row>,
+    pub(crate) expressions: Vec<String>,
 }
 
-pub(super) fn corpus() -> Corpus {
+pub(crate) fn corpus() -> Corpus {
     let path = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/tests/fixtures/compat_freeze/mathexpr_values.v1.json"

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn make_jobs(
+pub(crate) fn make_jobs(
     experiment: &Experiment,
     references: &MaterializedReferences,
     program: &Artifact,

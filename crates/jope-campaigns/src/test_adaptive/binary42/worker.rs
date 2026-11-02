@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn batch_worker_impl(manifest_path: &Path, output_dir: &Path) -> Result<()> {
+pub(crate) fn batch_worker_impl(manifest_path: &Path, output_dir: &Path) -> Result<()> {
     let manifest_bytes = fs::read(manifest_path)?;
     let manifest: ShardManifest = serde_json::from_slice(&manifest_bytes)?;
     if manifest_bytes != canonical_json(&manifest)? {

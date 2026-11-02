@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn missing_context_provenance_is_refused_at_real_teaching_ingress() {
+pub(crate) fn missing_context_provenance_is_refused_at_real_teaching_ingress() {
     let f = fixture(Task::Regression, 5);
     assert_eq!(
         authority(&f.state),
@@ -20,7 +20,7 @@ pub(super) fn missing_context_provenance_is_refused_at_real_teaching_ingress() {
     assert_positive_control(&f);
 }
 
-pub(super) fn wrong_scope_consumer_encoder_or_altered_context_is_refused_before_authority() {
+pub(crate) fn wrong_scope_consumer_encoder_or_altered_context_is_refused_before_authority() {
     let f = fixture(Task::Regression, 5);
     let comparison = &f.plan.comparison;
     let scope = || context_scope(comparison, &f.rows);
@@ -215,7 +215,7 @@ pub(super) fn wrong_scope_consumer_encoder_or_altered_context_is_refused_before_
     assert_positive_control(&f);
 }
 
-pub(super) fn freeze_without_preregistered_context_encoder_is_diagnostic_only() {
+pub(crate) fn freeze_without_preregistered_context_encoder_is_diagnostic_only() {
     let f = fixture_with(Task::Regression, 5, None);
     assert!(f.evidence.context.is_some());
     assert_refused(
@@ -232,7 +232,7 @@ pub(super) fn freeze_without_preregistered_context_encoder_is_diagnostic_only() 
     assert!(error.contains(REQUALIFY), "{error}");
 }
 
-pub(super) fn retained_context_is_revalidated_by_every_receiving_gate() {
+pub(crate) fn retained_context_is_revalidated_by_every_receiving_gate() {
     let f = fixture(Task::Regression, 5);
     let qualified = qualify(&f.state, &f.record, &f.evidence).unwrap();
     let output = f.state.blob_path(&valid(&f).output_sha256);
@@ -256,7 +256,7 @@ pub(super) fn retained_context_is_revalidated_by_every_receiving_gate() {
         .contains("retained context artifact"));
 }
 
-pub(super) fn legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded() {
+pub(crate) fn legacy_qualification_without_provenance_stays_quarantined_and_is_not_upgraded() {
     let f = fixture(Task::Regression, 5);
     let qualified = qualify(&f.state, &f.record, &f.evidence).unwrap();
     assert_eq!(ingest(&f).accepted, 1);
@@ -298,7 +298,7 @@ pub(super) fn legacy_qualification_without_provenance_stays_quarantined_and_is_n
     assert!(freeze_teaching(&f.state).unwrap().entries.is_empty());
 }
 
-pub(super) fn inner_partition_scope_forbids_outer_hold_rows() {
+pub(crate) fn inner_partition_scope_forbids_outer_hold_rows() {
     let f = fixture(Task::Regression, 5);
     let (plan, partition, freeze, _) = inner_fixture(&f);
     let policy = load_freeze(&f.state, &freeze).unwrap();
@@ -386,7 +386,7 @@ const REQUALIFY: &str = "new, fully provenanced qualification";
 /// new, fully provenanced qualification of a new record, which then competes against the
 /// quarantined tip's bar (the adopted HWM-bar decision, D1).
 
-pub(super) fn requalification_is_refused_in_place_and_happens_only_through_a_new_qualification() {
+pub(crate) fn requalification_is_refused_in_place_and_happens_only_through_a_new_qualification() {
     let f = fixture(Task::Regression, 4);
     let qualified = qualify(&f.state, &f.record, &f.evidence).unwrap();
     assert_eq!(ingest(&f).accepted, 1);

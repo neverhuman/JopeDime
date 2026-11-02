@@ -1,7 +1,7 @@
 use super::*;
 
 impl Keeper {
-    pub(super) fn adopt_scheduler_jobs(
+    pub(crate) fn adopt_scheduler_jobs(
         &mut self,
         claims: &HashMap<String, Claim>,
         scheduler: &HashMap<&str, &SchedulerJob>,
@@ -61,7 +61,7 @@ impl Keeper {
         Ok(rows.len())
     }
 
-    pub(super) fn record_submissions(
+    pub(crate) fn record_submissions(
         &mut self,
         submissions: &[(&ValidManifest, &str, &str)],
     ) -> Result<()> {
@@ -102,7 +102,7 @@ impl Keeper {
         Ok(())
     }
 
-    pub(super) fn submit_claims(&mut self, claims: &[ReadyClaim]) -> Result<(usize, usize, u64)> {
+    pub(crate) fn submit_claims(&mut self, claims: &[ReadyClaim]) -> Result<(usize, usize, u64)> {
         {
             let tx = self
                 .backlog
@@ -182,7 +182,7 @@ impl Keeper {
         Ok((submitted, failed, submitted_candidate_evaluations))
     }
 
-    pub(super) fn prepare_infrastructure_retries(
+    pub(crate) fn prepare_infrastructure_retries(
         &mut self,
         claims: &HashMap<String, Claim>,
         scheduler: &HashMap<&str, &SchedulerJob>,
@@ -243,7 +243,7 @@ impl Keeper {
         Ok(recovered)
     }
 
-    pub(super) fn mark_infrastructure_retry(
+    pub(crate) fn mark_infrastructure_retry(
         &mut self,
         manifest: &ValidManifest,
         failure: &str,

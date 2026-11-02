@@ -36,23 +36,23 @@ fn wrapping_preserves_wide_combining_and_long_transcript_text() {
 const FIXTURES: &[(&str, &str)] = &[
     (
         "success",
-        include_str!("../../tests/fixtures/events/success.jsonl"),
+        include_str!("../../../tests/fixtures/events/success.jsonl"),
     ),
     (
         "warnings",
-        include_str!("../../tests/fixtures/events/warnings.jsonl"),
+        include_str!("../../../tests/fixtures/events/warnings.jsonl"),
     ),
     (
         "failed",
-        include_str!("../../tests/fixtures/events/failed-candidate-burst.jsonl"),
+        include_str!("../../../tests/fixtures/events/failed-candidate-burst.jsonl"),
     ),
     (
         "paused",
-        include_str!("../../tests/fixtures/events/paused-continued.jsonl"),
+        include_str!("../../../tests/fixtures/events/paused-continued.jsonl"),
     ),
     (
         "cancelled",
-        include_str!("../../tests/fixtures/events/cancelled.jsonl"),
+        include_str!("../../../tests/fixtures/events/cancelled.jsonl"),
     ),
 ];
 

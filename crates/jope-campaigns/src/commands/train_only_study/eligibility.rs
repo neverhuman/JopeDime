@@ -1,14 +1,14 @@
 use super::*;
 
 mod context_slices;
-pub(super) use context_slices::copy_context_slices;
+pub(crate) use context_slices::copy_context_slices;
 
-pub(super) type EligibleDatasets = (
+pub(crate) type EligibleDatasets = (
     Vec<EligibilityRecord>,
     Vec<(CatalogEntry, RegressionData, String, SotarenaReportHashes)>,
 );
 
-pub(super) fn build_eligibility(
+pub(crate) fn build_eligibility(
     run_id: &str,
     sotarena_root: &Path,
     catalog: &Catalog,
@@ -159,7 +159,7 @@ pub(super) fn build_eligibility(
     Ok((records, selected))
 }
 
-pub(super) fn proposal_score(row: &ProposalRow) -> Result<f64> {
+pub(crate) fn proposal_score(row: &ProposalRow) -> Result<f64> {
     let score = row
         .selection_score
         .or(row.proposal_score)
@@ -175,7 +175,7 @@ pub(super) fn proposal_score(row: &ProposalRow) -> Result<f64> {
     Ok(score)
 }
 
-pub(super) fn load_dl_proposals(
+pub(crate) fn load_dl_proposals(
     path: &Path,
     dataset_hash: &str,
     checkpoint_sha256: &str,
@@ -218,11 +218,11 @@ pub(super) fn load_dl_proposals(
 }
 
 mod transfer;
-pub(super) use transfer::build_transfer_rankings;
+pub(crate) use transfer::build_transfer_rankings;
 
 // Keep initial population identity, folds and search budget explicit.
 #[allow(clippy::too_many_arguments)]
-pub(super) fn generation_zero(
+pub(crate) fn generation_zero(
     run_id: &str,
     entry: &CatalogEntry,
     data: &RegressionData,

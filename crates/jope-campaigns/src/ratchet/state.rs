@@ -1,7 +1,7 @@
 use super::*;
 
 mod validation;
-pub(super) use validation::{
+pub(crate) use validation::{
     canonical_json, require_unique, sha256_bytes, validate_hashes, validate_sha256,
     validate_track_history,
 };
@@ -14,16 +14,16 @@ pub(crate) const DATASETS_PER_MICRO_BATCH: usize = 8;
 pub(crate) const MIN_WAVE_LABELS: u64 = 25_000;
 pub(crate) const MIN_WAVE_AGE_SECONDS: u64 = 30 * 60;
 
-pub(super) const DATASET_STATE_SCHEMA: &str = "DatasetLearningState.v2";
-pub(super) const WAVE_SCHEMA: &str = "LearningWaveManifest.v1";
-pub(super) const SEED_REQUEST_V2_SCHEMA: &str = "SeedInferenceRequest.v2";
-pub(super) const SEED_RESPONSE_V2_SCHEMA: &str = "SeedInferenceResponse.v2";
-pub(super) const GENERATION_ZERO_V3_SCHEMA: &str = "Generation0Receipt.v3";
-pub(super) const ADMISSION_V3_SCHEMA: &str = "AttemptAdmissionManifest.v3";
-pub(super) const REPLAY_V2_SCHEMA: &str = "ReplayManifest.v2";
-pub(super) const MICRO_BATCH_SCHEMA: &str = "LearningMicroBatchManifest.v1";
-pub(super) const TRAINING_HEAD_SCHEMA: &str = "TrainingHeadManifest.v1";
-pub(super) const POINTER_SCHEMA: &str = "RatchetArtifactPointer.v1";
+pub(crate) const DATASET_STATE_SCHEMA: &str = "DatasetLearningState.v2";
+pub(crate) const WAVE_SCHEMA: &str = "LearningWaveManifest.v1";
+pub(crate) const SEED_REQUEST_V2_SCHEMA: &str = "SeedInferenceRequest.v2";
+pub(crate) const SEED_RESPONSE_V2_SCHEMA: &str = "SeedInferenceResponse.v2";
+pub(crate) const GENERATION_ZERO_V3_SCHEMA: &str = "Generation0Receipt.v3";
+pub(crate) const ADMISSION_V3_SCHEMA: &str = "AttemptAdmissionManifest.v3";
+pub(crate) const REPLAY_V2_SCHEMA: &str = "ReplayManifest.v2";
+pub(crate) const MICRO_BATCH_SCHEMA: &str = "LearningMicroBatchManifest.v1";
+pub(crate) const TRAINING_HEAD_SCHEMA: &str = "TrainingHeadManifest.v1";
+pub(crate) const POINTER_SCHEMA: &str = "RatchetArtifactPointer.v1";
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct CandidateIdentityV1 {
@@ -44,7 +44,7 @@ impl CandidateIdentityV1 {
         })
     }
 
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         validate_sha256("candidate semantic identity", &self.semantic_sha256)?;
         let parsed = GenomeIr::parse(&self.canonical_genome).context("parse candidate genome")?;
         if self.canonical_genome.trim() != self.canonical_genome
@@ -67,7 +67,7 @@ pub(crate) struct ObservationKeyV2 {
 }
 
 impl ObservationKeyV2 {
-    pub(super) fn validate(&self, dataset_sha256: &str) -> Result<()> {
+    pub(crate) fn validate(&self, dataset_sha256: &str) -> Result<()> {
         validate_hashes([
             ("observation dataset", self.dataset_sha256.as_str()),
             ("observation candidate", self.semantic_sha256.as_str()),
@@ -105,7 +105,7 @@ pub(crate) struct LabelValueV2 {
 }
 
 impl LabelValueV2 {
-    pub(super) fn validate(&self) -> Result<()> {
+    pub(crate) fn validate(&self) -> Result<()> {
         if self.robust_fitness.is_some_and(|value| !value.is_finite())
             || self
                 .wall_time_seconds
@@ -334,7 +334,7 @@ impl DatasetLearningStateV2 {
         Ok(())
     }
 
-    pub(super) fn validate_frontier_and_anchors(&self) -> Result<()> {
+    pub(crate) fn validate_frontier_and_anchors(&self) -> Result<()> {
         if self.global_cv_frontier.len() > 5 {
             bail!("Global-CV frontier exceeds five candidates");
         }
@@ -381,7 +381,7 @@ impl DatasetLearningStateV2 {
         Ok(())
     }
 
-    pub(super) fn validate_predictions(&self) -> Result<()> {
+    pub(crate) fn validate_predictions(&self) -> Result<()> {
         for prediction in [
             self.latest_model_prediction.as_ref(),
             self.latest_corrector_prediction.as_ref(),
@@ -398,7 +398,7 @@ impl DatasetLearningStateV2 {
         Ok(())
     }
 
-    pub(super) fn validate_counters(&self) -> Result<()> {
+    pub(crate) fn validate_counters(&self) -> Result<()> {
         let observations = self
             .observations
             .iter()
@@ -430,7 +430,7 @@ impl DatasetLearningStateV2 {
         Ok(())
     }
 
-    pub(super) fn validate_legacy_import(&self) -> Result<()> {
+    pub(crate) fn validate_legacy_import(&self) -> Result<()> {
         let Some(import) = &self.legacy_anchor_import else {
             return Ok(());
         };

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn sh(program: &Path, args: &[&str]) -> Result<(i32, String, String)> {
+pub(crate) fn sh(program: &Path, args: &[&str]) -> Result<(i32, String, String)> {
     let output = Command::new(program)
         .args(args)
         .output()
@@ -12,7 +12,7 @@ pub(super) fn sh(program: &Path, args: &[&str]) -> Result<(i32, String, String)>
     ))
 }
 
-pub(super) fn append_event(path: &Path, event: &Value) -> Result<()> {
+pub(crate) fn append_event(path: &Path, event: &Value) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -26,7 +26,7 @@ pub(super) fn append_event(path: &Path, event: &Value) -> Result<()> {
 /// Non-blocking exclusive lock; a held lock means a previous cycle is still
 /// fetching a multi-hundred-megabyte proposal file and this tick must be a
 /// no-op rather than a duplicate.
-pub(super) fn try_lock(path: &Path) -> Result<Option<File>> {
+pub(crate) fn try_lock(path: &Path) -> Result<Option<File>> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -45,7 +45,7 @@ pub(super) fn try_lock(path: &Path) -> Result<Option<File>> {
 // scq
 // ---------------------------------------------------------------------------
 
-pub(super) fn job_states(scq: &Path, prefix: &str) -> Result<Vec<(String, String)>> {
+pub(crate) fn job_states(scq: &Path, prefix: &str) -> Result<Vec<(String, String)>> {
     let (code, stdout, stderr) = sh(scq, &["ls", "--json"])?;
     if code != 0 {
         bail!("scq ls failed ({code}): {}", stderr.trim());
@@ -74,14 +74,17 @@ pub(super) fn job_states(scq: &Path, prefix: &str) -> Result<Vec<(String, String
     Ok(found)
 }
 
-pub(super) fn is_active(state: &str) -> bool {
+pub(crate) fn is_active(state: &str) -> bool {
     matches!(state, "queued" | "running" | "dispatching" | "held")
 }
 
 /// Completed generations worth installing, best first: a run aimed at the live
 /// catalog beats one aimed at an intermediate catalog, and both beat nothing.
 /// `install` still refuses anything that would not move the binding forward.
-pub(super) fn order_install_candidates<'a>(jobs: &'a [(String, String)], prefix: &str) -> Vec<&'a String> {
+pub(crate) fn order_install_candidates<'a>(
+    jobs: &'a [(String, String)],
+    prefix: &str,
+) -> Vec<&'a String> {
     let completed = || jobs.iter().filter(|(_, state)| state == "completed");
     let mut ordered: Vec<&String> = completed()
         .filter(|(id, _)| id.starts_with(prefix))
@@ -95,7 +98,7 @@ pub(super) fn order_install_candidates<'a>(jobs: &'a [(String, String)], prefix:
     ordered
 }
 
-pub(super) fn check_and_submit(scq: &Path, spec: &Path) -> Result<()> {
+pub(crate) fn check_and_submit(scq: &Path, spec: &Path) -> Result<()> {
     let spec_text = spec.to_string_lossy().into_owned();
     let (code, _, stderr) = sh(scq, &["check", &spec_text])?;
     if code != 0 {
@@ -117,15 +120,15 @@ pub(super) fn check_and_submit(scq: &Path, spec: &Path) -> Result<()> {
 // install
 // ---------------------------------------------------------------------------
 
-pub(super) struct Installed {
-    pub(super) catalog_sha256: String,
-    pub(super) proposals: PathBuf,
-    pub(super) proposals_sha256: String,
-    pub(super) summary: PathBuf,
-    pub(super) summary_sha256: String,
-    pub(super) counts: Value,
-    pub(super) validity: Value,
-    pub(super) datasets: u64,
+pub(crate) struct Installed {
+    pub(crate) catalog_sha256: String,
+    pub(crate) proposals: PathBuf,
+    pub(crate) proposals_sha256: String,
+    pub(crate) summary: PathBuf,
+    pub(crate) summary_sha256: String,
+    pub(crate) counts: Value,
+    pub(crate) validity: Value,
+    pub(crate) datasets: u64,
 }
 
 /// Publish a finished generation. `bound` is the catalog the *currently
@@ -135,7 +138,7 @@ pub(super) struct Installed {
 /// flips the catalog hourly, so demanding an exact match with the live pointer
 /// would throw away every completed run and never improve coverage at all.
 /// Returns `Ok(None)` when the artifact would not change the binding.
-pub(super) fn install(
+pub(crate) fn install(
     scq: &Path,
     root: &Path,
     job_id: &str,
@@ -244,7 +247,7 @@ pub(super) fn install(
     }))
 }
 
-pub(super) fn move_or_copy(source: &Path, destination: &Path) -> Result<()> {
+pub(crate) fn move_or_copy(source: &Path, destination: &Path) -> Result<()> {
     if fs::rename(source, destination).is_ok() {
         return Ok(());
     }
@@ -257,7 +260,7 @@ pub(super) fn move_or_copy(source: &Path, destination: &Path) -> Result<()> {
 /// consumers rely on (`legacy_adopted` resolves the checkpoint artifact in
 /// selfplay_runtime and the freshness authority) and swapping only the catalog
 /// binding.
-pub(super) fn rebind(binding: &ProposalBinding, installed: &Installed) -> Result<Value> {
+pub(crate) fn rebind(binding: &ProposalBinding, installed: &Installed) -> Result<Value> {
     let mut pointer: Map<String, Value> = binding
         .pointer
         .as_object()
@@ -315,7 +318,7 @@ pub(super) fn rebind(binding: &ProposalBinding, installed: &Installed) -> Result
 /// cohort plan's single `checkpoint_sha256`, and `jope_selfplay_queue.rs`
 /// filters micro-waves by a single `checkpoint_epoch`. Handing either of them a
 /// two-checkpoint pointer would fail the wave build, not improve it.
-pub(super) fn rebind_task(root: &Path, lane: &Lane, installed: &Installed) -> Result<Value> {
+pub(crate) fn rebind_task(root: &Path, lane: &Lane, installed: &Installed) -> Result<Value> {
     let pointer_path = root.join("proposals/current-by-task.json");
     let mut document = read_task_proposal_pointer(root)?;
     if document.get("tasks").and_then(Value::as_object).is_none() {

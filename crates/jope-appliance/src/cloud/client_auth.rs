@@ -39,7 +39,7 @@ impl Client {
     pub fn connected(c: &Connection) -> Result<Self> {
         Self::new(&c.origin, Some(c.token.clone()), c.gateway.clone())
     }
-    pub(super) fn wire(
+    pub(crate) fn wire(
         &self,
         method: &str,
         path: &str,
@@ -73,7 +73,7 @@ impl Client {
         }
         Ok(request)
     }
-    pub(super) fn call(
+    pub(crate) fn call(
         &self,
         method: &str,
         path: &str,

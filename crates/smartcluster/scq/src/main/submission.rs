@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) async fn submit_spec(args: SubmitArgs) -> Result<jain_smartcluster::JobSpec> {
+pub(crate) async fn submit_spec(args: SubmitArgs) -> Result<jain_smartcluster::JobSpec> {
     let uid = effective_uid();
     if let Some(file) = args.file {
         if !args.argv.is_empty() || args.project.is_some() || args.jain_template.is_some() {

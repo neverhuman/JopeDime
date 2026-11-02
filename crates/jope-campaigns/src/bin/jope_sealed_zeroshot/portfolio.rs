@@ -5,18 +5,18 @@ use super::*;
 // --------------------------------------------------------------------------
 
 #[derive(Clone, Serialize)]
-pub(super) struct PortfolioGenome {
-    pub(super) canonical_genome: String,
-    pub(super) semantic_sha256: String,
+pub(crate) struct PortfolioGenome {
+    pub(crate) canonical_genome: String,
+    pub(crate) semantic_sha256: String,
     /// Number of TRAINING datasets this genome is champion on.
-    pub(super) champion_datasets: u64,
+    pub(crate) champion_datasets: u64,
     /// Checkpoint that proposed it on the plurality of those datasets.
-    pub(super) model_checkpoint_sha256: String,
-    pub(super) candidate_source: String,
-    pub(super) arm: String,
+    pub(crate) model_checkpoint_sha256: String,
+    pub(crate) candidate_source: String,
+    pub(crate) arm: String,
 }
 
-pub(super) fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(bytes);
     hex::encode(hasher.finalize())
@@ -25,7 +25,7 @@ pub(super) fn sha256_hex(bytes: &[u8]) -> String {
 /// Baseline arm: the cheapest sane program for each task. Without it a lift
 /// number is unanchored — "best of 32 evolved genomes scores 0.81" means
 /// nothing until you know a bare linear model scores 0.79.
-pub(super) fn baseline_genomes(task: &str) -> Vec<(&'static str, &'static str)> {
+pub(crate) fn baseline_genomes(task: &str) -> Vec<(&'static str, &'static str)> {
     if task == "binary" {
         vec![
             ("(pipe X (logit_ridge))", "base_linear"),
@@ -41,7 +41,7 @@ pub(super) fn baseline_genomes(task: &str) -> Vec<(&'static str, &'static str)> 
 
 type PortfolioTally = HashMap<(String, String), (u64, HashMap<String, u64>, HashMap<String, u64>)>;
 
-pub(super) fn build_portfolio(
+pub(crate) fn build_portfolio(
     root: &Path,
     top_k: usize,
 ) -> Result<BTreeMap<String, Vec<PortfolioGenome>>> {

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn derive_corrected_generation_zero(
+pub(crate) fn derive_corrected_generation_zero(
     parent_seed: &SeedProvenance,
     run_id: &str,
     spec: &DatasetSpec,
@@ -80,7 +80,7 @@ pub(super) fn derive_corrected_generation_zero(
     Ok((population, candidates))
 }
 
-pub(super) fn golden46_generation_zero_population(
+pub(crate) fn golden46_generation_zero_population(
     _registry: &Path,
     run_id: &str,
     spec: &DatasetSpec,
@@ -161,7 +161,7 @@ pub(super) fn golden46_generation_zero_population(
     Ok(population)
 }
 
-pub(super) fn initial_population(
+pub(crate) fn initial_population(
     registry: &Path,
     run_id: &str,
     spec: &DatasetSpec,
@@ -179,7 +179,7 @@ pub(super) fn initial_population(
     expand_initial_population(&base, spec.features)
 }
 
-pub(super) fn expand_initial_population(base: &[Member], features: usize) -> Result<Vec<Member>> {
+pub(crate) fn expand_initial_population(base: &[Member], features: usize) -> Result<Vec<Member>> {
     if base.is_empty() || base.len() > ISLAND_POPULATION {
         bail!("aggressive seed baseline does not fit one island");
     }

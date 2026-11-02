@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_checkpoints(root: &Path) -> Result<Vec<GenerationCheckpoint>> {
+pub(crate) fn load_checkpoints(root: &Path) -> Result<Vec<GenerationCheckpoint>> {
     let generations_root = root.join("generations");
     if !generations_root.exists() {
         return Ok(Vec::new());
@@ -62,7 +62,7 @@ pub(super) fn load_checkpoints(root: &Path) -> Result<Vec<GenerationCheckpoint>>
     Ok(checkpoints)
 }
 
-pub(super) fn atomic_rebuild(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn atomic_rebuild(path: &Path, bytes: &[u8]) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -82,7 +82,7 @@ pub(super) fn atomic_rebuild(path: &Path, bytes: &[u8]) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn evaluation_records(
+pub(crate) fn evaluation_records(
     checkpoints: &[GenerationCheckpoint],
 ) -> Vec<EvaluationIndexRecord> {
     checkpoints
@@ -111,11 +111,11 @@ pub(super) fn evaluation_records(
         .collect()
 }
 
-pub(super) fn csv_field(value: &str) -> String {
+pub(crate) fn csv_field(value: &str) -> String {
     format!("\"{}\"", value.replace('"', "\"\""))
 }
 
-pub(super) fn rebuild_indexes(
+pub(crate) fn rebuild_indexes(
     root: &Path,
     checkpoints: &[GenerationCheckpoint],
     extended: bool,

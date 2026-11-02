@@ -37,7 +37,7 @@ fn smart_comparison_baselines(
     })
 }
 
-pub(super) fn regression_metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64, f64)> {
+pub(crate) fn regression_metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64, f64)> {
     let squared_error = sum_squared_error(truth, predictions)?;
     let mae = truth
         .iter()
@@ -71,7 +71,7 @@ fn rmse_comparison(smart: f64, baseline: f64, tie_relative_tolerance: f64) -> &'
     }
 }
 
-pub(super) fn smart_v3_aggregate(
+pub(crate) fn smart_v3_aggregate(
     comparisons: &[(f64, f64)],
     tie_relative_tolerance: f64,
     minimum_wins_required: usize,
@@ -89,7 +89,7 @@ pub(super) fn smart_v3_aggregate(
     })
 }
 
-pub(super) fn smart_v3_baseline_aggregate(
+pub(crate) fn smart_v3_baseline_aggregate(
     comparisons: &[(f64, f64)],
     tie_relative_tolerance: f64,
     minimum_wins_required: usize,
@@ -206,7 +206,7 @@ fn validate_smart_selectors(
     Ok(selectors)
 }
 
-pub(super) fn score_smart_v3_run(
+pub(crate) fn score_smart_v3_run(
     study_root: &Path,
     run_id: &str,
     sotarena_root: &Path,

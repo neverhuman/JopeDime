@@ -28,7 +28,7 @@ fn fixture() -> (
     let state = open_state(dir.path());
     let run = RunId::new();
     let mut input: Value = serde_json::from_slice(include_bytes!(
-        "../../../jope-runtime/tests/fixtures/math-pipeline/input.json"
+        "../../../../jope-runtime/tests/fixtures/math-pipeline/input.json"
     ))
     .unwrap();
     input["prediction_version"] = json!(2);

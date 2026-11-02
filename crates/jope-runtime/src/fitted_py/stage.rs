@@ -4,7 +4,7 @@ use feat_math::spec::{PlannedOp, PlannedStage};
 
 /// The state the recipe's `*_apply` reads for one fitted stage (None for a stateless kind), after
 /// checking it against the planned stage. Problems are pushed and the stage is skipped.
-pub(super) fn stage_state(
+pub(crate) fn stage_state(
     index: usize,
     planned: &PlannedStage,
     op: &FittedOp,

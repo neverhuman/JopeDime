@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn build(args: &Args) -> Result<Value> {
+pub(crate) fn build(args: &Args) -> Result<Value> {
     let integration_commit = clean_detached_commit(&args.source)?;
     let service_manifest_path = args
         .service_manifest
@@ -107,7 +107,7 @@ pub(super) fn build(args: &Args) -> Result<Value> {
     result
 }
 
-pub(super) fn git_output(source: &Path, arguments: &[&str]) -> Result<String> {
+pub(crate) fn git_output(source: &Path, arguments: &[&str]) -> Result<String> {
     let output = std::process::Command::new("git")
         .arg("-C")
         .arg(source)
@@ -123,7 +123,7 @@ pub(super) fn git_output(source: &Path, arguments: &[&str]) -> Result<String> {
     Ok(String::from_utf8(output.stdout)?.trim().to_owned())
 }
 
-pub(super) fn clean_detached_commit(source: &Path) -> Result<String> {
+pub(crate) fn clean_detached_commit(source: &Path) -> Result<String> {
     ensure!(
         git_output(source, &["status", "--porcelain"])?.is_empty(),
         "runtime bundle source worktree is dirty"
@@ -141,4 +141,4 @@ pub(super) fn clean_detached_commit(source: &Path) -> Result<String> {
 }
 
 mod inputs;
-pub(super) use inputs::*;
+pub(crate) use inputs::*;

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn load_plans(
+pub(crate) fn load_plans(
     root: &Path,
     protocol_sha256: &str,
 ) -> Result<BTreeMap<String, TrajectoryPlan>> {
@@ -25,7 +25,7 @@ pub(super) fn load_plans(
     Ok(plans)
 }
 
-pub(super) fn load_progress(
+pub(crate) fn load_progress(
     root: &Path,
     plans: &BTreeMap<String, TrajectoryPlan>,
     protocol_sha256: &str,
@@ -60,7 +60,7 @@ pub(super) fn load_progress(
     Ok(progress)
 }
 
-pub(super) fn scheduler_jobs(value: &Value) -> Vec<SchedulerJob> {
+pub(crate) fn scheduler_jobs(value: &Value) -> Vec<SchedulerJob> {
     value
         .pointer("/Jobs/jobs")
         .or_else(|| value.get("jobs"))
@@ -71,7 +71,7 @@ pub(super) fn scheduler_jobs(value: &Value) -> Vec<SchedulerJob> {
         .collect()
 }
 
-pub(super) fn launch_receipt_path(
+pub(crate) fn launch_receipt_path(
     campaign_root: &Path,
     trajectory_identity: &str,
     attempt_number: u64,
@@ -82,7 +82,7 @@ pub(super) fn launch_receipt_path(
         .join(format!("{attempt_number:08}.json"))
 }
 
-pub(super) fn read_launch_receipt(
+pub(crate) fn read_launch_receipt(
     campaign_root: &Path,
     trajectory_identity: &str,
     attempt_number: u64,
@@ -101,7 +101,7 @@ pub(super) fn read_launch_receipt(
     Ok(Some(receipt))
 }
 
-pub(super) fn materialize_attempt_spec(
+pub(crate) fn materialize_attempt_spec(
     campaign_root: &Path,
     plan: &TrajectoryPlan,
     attempt_number: u64,
@@ -165,7 +165,7 @@ pub(super) fn materialize_attempt_spec(
     Ok(path)
 }
 
-pub(super) fn submit_attempt(
+pub(crate) fn submit_attempt(
     args: &Args,
     campaign_root: &Path,
     plan: &TrajectoryPlan,
@@ -214,7 +214,7 @@ pub(super) fn submit_attempt(
     Ok(receipt)
 }
 
-pub(super) fn terminal_class(state: &str) -> Option<DimeTerminalClassV1> {
+pub(crate) fn terminal_class(state: &str) -> Option<DimeTerminalClassV1> {
     match state {
         "failed" | "cancelled" | "preempted" | "preempting" | "lost" | "vanished" => {
             Some(DimeTerminalClassV1::InfrastructureFailure)
@@ -224,6 +224,6 @@ pub(super) fn terminal_class(state: &str) -> Option<DimeTerminalClassV1> {
     }
 }
 
-pub(super) fn next_attempt_identity(plan: &TrajectoryPlan, attempt_number: u64) -> String {
+pub(crate) fn next_attempt_identity(plan: &TrajectoryPlan, attempt_number: u64) -> String {
     format!("{}-infra{attempt_number:06}", plan.job_identity)
 }

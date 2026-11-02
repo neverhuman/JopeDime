@@ -1,5 +1,5 @@
 #[cfg(test)]
-pub(super) fn gbm_parameter_keys(gbm: &crate::spec::GbmPlan) -> &'static [&'static str] {
+pub(crate) fn gbm_parameter_keys(gbm: &crate::spec::GbmPlan) -> &'static [&'static str] {
     let crate::spec::GbmPlan {
         rounds: _,
         depth: _,
@@ -21,7 +21,7 @@ pub(super) fn gbm_parameter_keys(gbm: &crate::spec::GbmPlan) -> &'static [&'stat
 }
 
 #[cfg(test)]
-pub(super) fn planned_head_parameter_keys(
+pub(crate) fn planned_head_parameter_keys(
     head: &crate::spec::PlannedHead,
 ) -> &'static [&'static str] {
     use crate::spec::PlannedHead;
@@ -102,7 +102,7 @@ pub(super) fn planned_head_parameter_keys(
 }
 
 #[cfg(test)]
-pub(super) fn evolve_config_parameter_keys(
+pub(crate) fn evolve_config_parameter_keys(
     config: &crate::evolve::EvolveConfig,
 ) -> &'static [&'static str] {
     // `seed_genomes` contains complete starter programs, not parameter fields.
@@ -142,7 +142,7 @@ pub(super) fn evolve_config_parameter_keys(
 }
 
 #[cfg(test)]
-pub(super) fn planned_target_parameter_keys(
+pub(crate) fn planned_target_parameter_keys(
     target: &crate::spec::PlannedTarget,
 ) -> &'static [&'static str] {
     let crate::spec::PlannedTarget { kind: _, q: _ } = target;
@@ -155,7 +155,7 @@ pub(super) fn planned_target_parameter_keys(
 /// settings. Context prefixes distinguish repeated names such as `k`, `gamma`,
 /// `seed`, and `bins` across operations and model heads.
 #[cfg(test)]
-pub(super) fn planned_op_parameter_keys(op: &crate::spec::PlannedOp) -> Vec<&'static str> {
+pub(crate) fn planned_op_parameter_keys(op: &crate::spec::PlannedOp) -> Vec<&'static str> {
     use crate::spec::PlannedOp;
 
     match op {
@@ -248,7 +248,7 @@ pub(super) fn planned_op_parameter_keys(op: &crate::spec::PlannedOp) -> Vec<&'st
 }
 
 #[cfg(test)]
-pub(super) fn planned_stage_parameter_keys(stage: &crate::spec::PlannedStage) -> Vec<&'static str> {
+pub(crate) fn planned_stage_parameter_keys(stage: &crate::spec::PlannedStage) -> Vec<&'static str> {
     let crate::spec::PlannedStage { op, append: _ } = stage;
     let mut keys = planned_op_parameter_keys(op);
     keys.push("stage.append");

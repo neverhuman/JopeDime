@@ -14,9 +14,9 @@ use std::collections::BTreeMap;
 fn positives() -> BTreeMap<&'static str, Vec<Value>> {
     let profile = json!({"dataset_id":"ds_00112233445566778899aabb","name":"training fixture","bytes":"42","rows":"3","columns":[],"target_suggestions":[],"warnings":[]});
     let snapshot: Value =
-        serde_json::from_str(include_str!("../tests/fixtures/run_snapshot.json")).unwrap();
+        serde_json::from_str(include_str!("../../tests/fixtures/run_snapshot.json")).unwrap();
     let event: Value =
-        serde_json::from_str(include_str!("../tests/fixtures/reasoning_event.json")).unwrap();
+        serde_json::from_str(include_str!("../../tests/fixtures/reasoning_event.json")).unwrap();
     let algorithm = json!({"algorithm_id":"alg_0001","summary":"Public fitted algorithm","metric":"rmse","cv_value":0.25,"model_artifact":null,"model_digest":"sha256:model","conditioning_digest":"sha256:conditioning","bundle_digest":"sha256:bundle","revision":"1","source":[]});
     let feedback = json!({"algorithm":"opt-in evaluation description","features":[0.5],"scores":{"rmse":0.25,"test":null},"failure":null,"conditioning_tokens":vec![vec![0.0;32];10],"conditioning_mask":vec![true;10]});
     BTreeMap::from([

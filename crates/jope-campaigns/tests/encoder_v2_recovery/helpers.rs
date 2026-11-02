@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) fn digest(byte: u8) -> String {
+pub(crate) fn digest(byte: u8) -> String {
     format!("{byte:02x}").repeat(32)
 }
 
-pub(super) fn artifact(path: &str, byte: u8) -> ArtifactIdentity {
+pub(crate) fn artifact(path: &str, byte: u8) -> ArtifactIdentity {
     ArtifactIdentity {
         path: path.to_owned(),
         sha256: digest(byte),
@@ -12,7 +12,7 @@ pub(super) fn artifact(path: &str, byte: u8) -> ArtifactIdentity {
     }
 }
 
-pub(super) fn encoder() -> FoundationEncoderIdentityV2 {
+pub(crate) fn encoder() -> FoundationEncoderIdentityV2 {
     FoundationEncoderIdentityV2 {
         schema: ENCODER_IDENTITY_SCHEMA.to_owned(),
         bundle_sha256: digest(1),
@@ -89,7 +89,7 @@ pub(super) fn encoder() -> FoundationEncoderIdentityV2 {
     }
 }
 
-pub(super) fn input() -> FoundationDatasetInputV2 {
+pub(crate) fn input() -> FoundationDatasetInputV2 {
     FoundationDatasetInputV2 {
         schema: DATASET_INPUT_SCHEMA.to_owned(),
         task: "multiclass".to_owned(),
@@ -112,13 +112,13 @@ pub(super) fn input() -> FoundationDatasetInputV2 {
     }
 }
 
-pub(super) fn output(value: f32) -> Vec<u8> {
+pub(crate) fn output(value: f32) -> Vec<u8> {
     (0..OUTPUT_FEATURES)
         .flat_map(|_| value.to_le_bytes())
         .collect()
 }
 
-pub(super) fn execution_and_attempt(
+pub(crate) fn execution_and_attempt(
     encoder: &FoundationEncoderIdentityV2,
     input: &FoundationDatasetInputV2,
     bytes: &[u8],
@@ -197,7 +197,7 @@ pub(super) fn execution_and_attempt(
     (execution, attempt)
 }
 
-pub(super) fn quarantine_tree(index: usize, state: &str) -> QuarantinedEncodingTree {
+pub(crate) fn quarantine_tree(index: usize, state: &str) -> QuarantinedEncodingTree {
     let file = QuarantineFileIdentity {
         path: "cache-manifest.v1.json".to_owned(),
         file_type: "regular".to_owned(),
@@ -217,7 +217,7 @@ pub(super) fn quarantine_tree(index: usize, state: &str) -> QuarantinedEncodingT
     tree
 }
 
-pub(super) fn quarantine() -> V1EncodingQuarantineV1 {
+pub(crate) fn quarantine() -> V1EncodingQuarantineV1 {
     let trees = (0..18)
         .map(|index| quarantine_tree(index, if index < 11 { "complete" } else { "partial" }))
         .collect();
@@ -288,7 +288,7 @@ pub(super) fn quarantine() -> V1EncodingQuarantineV1 {
     }
 }
 
-pub(super) fn filesystem_quarantine(root: &std::path::Path) -> V1EncodingQuarantineV1 {
+pub(crate) fn filesystem_quarantine(root: &std::path::Path) -> V1EncodingQuarantineV1 {
     let mut index = quarantine();
     fs::create_dir_all(root.join("incident-quarantine/complete")).unwrap();
     fs::create_dir_all(root.join("incident-quarantine/partial")).unwrap();
@@ -313,7 +313,7 @@ pub(super) fn filesystem_quarantine(root: &std::path::Path) -> V1EncodingQuarant
     index
 }
 
-pub(super) fn rollback_unit(name: &str, evaluator: bool, byte: u8) -> RollbackUnitIdentity {
+pub(crate) fn rollback_unit(name: &str, evaluator: bool, byte: u8) -> RollbackUnitIdentity {
     RollbackUnitIdentity {
         unit: format!("{name}.service"),
         unit_file_sha256: digest(byte),
@@ -328,7 +328,7 @@ pub(super) fn rollback_unit(name: &str, evaluator: bool, byte: u8) -> RollbackUn
     }
 }
 
-pub(super) fn rollback() -> RollbackCapsuleV1 {
+pub(crate) fn rollback() -> RollbackCapsuleV1 {
     let accepted = json!({"checkpoint_sha256": digest(230)});
     let cursors = json!({"ledger": 42, "observations": 99});
     let units = vec![
@@ -370,7 +370,7 @@ pub(super) fn rollback() -> RollbackCapsuleV1 {
     capsule
 }
 
-pub(super) fn readiness_row(task: &str, ready: bool) -> OptionalTaskRow {
+pub(crate) fn readiness_row(task: &str, ready: bool) -> OptionalTaskRow {
     let multiclass = task == "multiclass";
     OptionalTaskRow {
         task: task.to_owned(),
@@ -408,7 +408,7 @@ pub(super) fn readiness_row(task: &str, ready: bool) -> OptionalTaskRow {
     }
 }
 
-pub(super) fn lane(throughput: f64, p95: f64) -> BenchmarkLaneMetrics {
+pub(crate) fn lane(throughput: f64, p95: f64) -> BenchmarkLaneMetrics {
     BenchmarkLaneMetrics {
         samples: 384,
         p50_latency_ms: p95 / 2.0,
@@ -428,7 +428,7 @@ pub(super) fn lane(throughput: f64, p95: f64) -> BenchmarkLaneMetrics {
     }
 }
 
-pub(super) fn capacity() -> EncoderCapacityObservation {
+pub(crate) fn capacity() -> EncoderCapacityObservation {
     EncoderCapacityObservation {
         schema: CAPACITY_OBSERVATION_SCHEMA.to_owned(),
         generated_at_unix_ms: 1,

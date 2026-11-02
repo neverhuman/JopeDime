@@ -1,9 +1,9 @@
 use super::job_io::*;
 use super::*;
 
-pub(super) type CatalogEntries = BTreeMap<(Task, String), Value>;
+pub(crate) type CatalogEntries = BTreeMap<(Task, String), Value>;
 
-pub(super) fn catalog_entries(root: &Path) -> Result<(Value, CatalogEntries)> {
+pub(crate) fn catalog_entries(root: &Path) -> Result<(Value, CatalogEntries)> {
     let pointer = read_json(&root.join("catalog/current.json"))?;
     let catalog = read_json(Path::new(
         pointer
@@ -32,7 +32,7 @@ pub(super) fn catalog_entries(root: &Path) -> Result<(Value, CatalogEntries)> {
     Ok((pointer, entries))
 }
 
-pub(super) fn build_evaluations(
+pub(crate) fn build_evaluations(
     args: &Args,
     pending: &PendingIntent,
     work: &Path,
@@ -265,7 +265,7 @@ pub(super) fn build_evaluations(
     Ok(output)
 }
 
-pub(super) fn ensure_evaluations(
+pub(crate) fn ensure_evaluations(
     args: &Args,
     work: &Path,
     evaluations: &[(String, PathBuf)],

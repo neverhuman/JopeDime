@@ -100,7 +100,7 @@ impl RatchetStore {
         Ok(Some((pointer.artifact_sha256, head)))
     }
 
-    pub(super) fn historical_replay_sets(&self) -> Result<BTreeSet<Vec<String>>> {
+    pub(crate) fn historical_replay_sets(&self) -> Result<BTreeSet<Vec<String>>> {
         let root = self.root.join("training-head/objects");
         if !root.exists() {
             return Ok(BTreeSet::new());
@@ -145,7 +145,7 @@ impl RatchetStore {
         Ok(sets)
     }
 
-    pub(super) fn has_eligible_training_head(&self, wave: &LearningWaveManifestV1) -> Result<bool> {
+    pub(crate) fn has_eligible_training_head(&self, wave: &LearningWaveManifestV1) -> Result<bool> {
         let root = self.root.join("training-head/objects");
         if !root.exists() {
             return Ok(false);

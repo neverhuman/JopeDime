@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn human_bytes(b: u64) -> String {
+pub(crate) fn human_bytes(b: u64) -> String {
     let b = b as f64;
     if b >= 1e9 {
         format!("{:.1} GB", b / 1e9)
@@ -13,7 +13,7 @@ pub(super) fn human_bytes(b: u64) -> String {
     }
 }
 
-pub(super) fn roles_str(m: &BTreeMap<Role, u64>) -> String {
+pub(crate) fn roles_str(m: &BTreeMap<Role, u64>) -> String {
     if m.is_empty() {
         return "0".into();
     }
@@ -23,7 +23,7 @@ pub(super) fn roles_str(m: &BTreeMap<Role, u64>) -> String {
         .join(",")
 }
 
-pub(super) fn is_live(max_last_modified: Option<&str>, as_of: u64, window_h: u64) -> bool {
+pub(crate) fn is_live(max_last_modified: Option<&str>, as_of: u64, window_h: u64) -> bool {
     max_last_modified
         .and_then(crate::civil::parse_rfc3339)
         .is_some_and(|t| t + window_h * 3600 >= as_of)
@@ -39,7 +39,7 @@ fn exact_max<'a>(f: &Facts<'a>) -> Option<&'a str> {
 }
 
 /// $/month now: by the inventory's class mix (scaled to the ledger's bytes) when known.
-pub(super) fn storage_now(f: &Facts, p: &Policy) -> Result<f64> {
+pub(crate) fn storage_now(f: &Facts, p: &Policy) -> Result<f64> {
     let g = f.group;
     match f.inv.filter(|i| i.current_bytes > 0) {
         Some(i) => {
@@ -54,7 +54,7 @@ pub(super) fn storage_now(f: &Facts, p: &Policy) -> Result<f64> {
     }
 }
 
-pub(super) fn tv_for(f: &Facts, kind: Option<Kind>, t0: bool, p: &Policy) -> Tv {
+pub(crate) fn tv_for(f: &Facts, kind: Option<Kind>, t0: bool, p: &Policy) -> Tv {
     let mut uses = Vec::new();
     if t0 {
         uses.push("future-eval-input");
@@ -98,7 +98,7 @@ pub(super) fn tv_for(f: &Facts, kind: Option<Kind>, t0: bool, p: &Policy) -> Tv 
     }
 }
 
-pub(super) fn e_candidates(f: &Facts, kind: Option<Kind>, p: &Policy) -> Vec<String> {
+pub(crate) fn e_candidates(f: &Facts, kind: Option<Kind>, p: &Policy) -> Vec<String> {
     let g = f.group;
     let mut out = Vec::new();
     if let Some(c) = p.e1_candidate_for(&g.bucket, &g.prefix) {
@@ -148,7 +148,7 @@ pub(super) fn e_candidates(f: &Facts, kind: Option<Kind>, p: &Policy) -> Vec<Str
     out
 }
 
-pub(super) fn cost(f: &Facts, action: Action, p: &Policy) -> Result<Cost> {
+pub(crate) fn cost(f: &Facts, action: Action, p: &Policy) -> Result<Cost> {
     let g = f.group;
     let pr = &p.prices;
     let now = storage_now(f, p)?;

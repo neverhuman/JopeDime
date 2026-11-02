@@ -1,7 +1,7 @@
 use super::state::Loaded;
 use super::*;
 
-pub(super) fn load_inputs(cfg: &Config, as_of_unix: u64) -> Result<Loaded> {
+pub(crate) fn load_inputs(cfg: &Config, as_of_unix: u64) -> Result<Loaded> {
     // Policy.
     let (policy_bytes, policy_path) = match &cfg.policy {
         Some(p) => (

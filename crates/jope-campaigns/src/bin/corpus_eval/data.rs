@@ -1,13 +1,13 @@
 use super::*;
 
-pub(super) fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect()
 }
 
-pub(super) fn prediction_bytes(predictions: &[f64]) -> Vec<u8> {
+pub(crate) fn prediction_bytes(predictions: &[f64]) -> Vec<u8> {
     let mut bytes = Vec::with_capacity(predictions.len() * 8);
     for prediction in predictions {
         bytes.extend_from_slice(&prediction.to_le_bytes());
@@ -15,7 +15,7 @@ pub(super) fn prediction_bytes(predictions: &[f64]) -> Vec<u8> {
     bytes
 }
 
-pub(super) fn probability_bytes(probabilities: &[Vec<f64>]) -> Vec<u8> {
+pub(crate) fn probability_bytes(probabilities: &[Vec<f64>]) -> Vec<u8> {
     let values = probabilities.iter().map(Vec::len).sum::<usize>();
     let mut bytes = Vec::with_capacity(values * 8);
     for row in probabilities {
@@ -26,7 +26,7 @@ pub(super) fn probability_bytes(probabilities: &[Vec<f64>]) -> Vec<u8> {
     bytes
 }
 
-pub(super) fn balanced_accuracy(y: &[f64], predictions: &[f64]) -> f64 {
+pub(crate) fn balanced_accuracy(y: &[f64], predictions: &[f64]) -> f64 {
     let (mut true_positive, mut positive, mut true_negative, mut negative) =
         (0usize, 0usize, 0usize, 0usize);
     for (target, prediction) in y.iter().zip(predictions) {
@@ -41,14 +41,14 @@ pub(super) fn balanced_accuracy(y: &[f64], predictions: &[f64]) -> f64 {
     0.5 * (true_positive as f64 / positive as f64 + true_negative as f64 / negative as f64)
 }
 
-pub(super) fn unix_millis() -> u128 {
+pub(crate) fn unix_millis() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis()
 }
 
-pub(super) fn short_hostname() -> String {
+pub(crate) fn short_hostname() -> String {
     Command::new("hostname")
         .arg("-s")
         .output()
@@ -63,7 +63,7 @@ pub(super) fn short_hostname() -> String {
 /// `data::read_csv_text_core(IndicatorMode::None)` exactly: trimmed fields,
 /// `str::parse::<f64>`, non-finite features silently become 0.0, targets must
 /// be finite, constant width enforced.
-pub(super) fn read_numeric_csv(text: &str, source: &str) -> Result<Data> {
+pub(crate) fn read_numeric_csv(text: &str, source: &str) -> Result<Data> {
     let (mut x, mut y, mut features) = (Vec::new(), Vec::new(), None);
     let mut records_seen = 0usize;
     for (line_no, line) in text.lines().enumerate() {
@@ -119,7 +119,7 @@ pub(super) fn read_numeric_csv(text: &str, source: &str) -> Result<Data> {
     Ok(Data { x, y, features })
 }
 
-pub(super) fn load_pinned_csv(path: &str, pinned_sha256: &str, label: &str) -> Result<Data> {
+pub(crate) fn load_pinned_csv(path: &str, pinned_sha256: &str, label: &str) -> Result<Data> {
     let bytes = fs::read(path).with_context(|| format!("read {label} CSV {path}"))?;
     let actual = sha256_hex(&bytes);
     if actual != pinned_sha256 {
@@ -128,7 +128,7 @@ pub(super) fn load_pinned_csv(path: &str, pinned_sha256: &str, label: &str) -> R
     read_numeric_csv(std::str::from_utf8(&bytes)?, path)
 }
 
-pub(super) fn load_pinned_timeseries_csv(
+pub(crate) fn load_pinned_timeseries_csv(
     path: &str,
     pinned_sha256: &str,
     label: &str,
@@ -141,7 +141,7 @@ pub(super) fn load_pinned_timeseries_csv(
     read_timeseries_csv_bytes(&bytes, path)
 }
 
-pub(super) fn load_pinned_json(
+pub(crate) fn load_pinned_json(
     path: &str,
     pinned_sha256: &str,
     label: &str,
@@ -158,7 +158,7 @@ pub(super) fn load_pinned_json(
 /// must not carry a reduction pin (old binaries would ignore it silently);
 /// v2 timeseries manifests must carry one; the pin is meaningless for other
 /// tasks and is rejected there rather than ignored.
-pub(super) fn resolve_reduction(shard: &Shard) -> Result<ReductionVersion> {
+pub(crate) fn resolve_reduction(shard: &Shard) -> Result<ReductionVersion> {
     match shard.schema.as_str() {
         SHARD_SCHEMA => {
             if shard.reduction.is_some() {
@@ -185,7 +185,7 @@ pub(super) fn resolve_reduction(shard: &Shard) -> Result<ReductionVersion> {
     }
 }
 
-pub(super) fn timeseries_manifest_spec(shard: &Shard) -> Result<TimeSeriesManifestSpec> {
+pub(crate) fn timeseries_manifest_spec(shard: &Shard) -> Result<TimeSeriesManifestSpec> {
     Ok(TimeSeriesManifestSpec {
         horizon: shard
             .horizon
@@ -206,7 +206,7 @@ pub(super) fn timeseries_manifest_spec(shard: &Shard) -> Result<TimeSeriesManife
     })
 }
 
-pub(super) fn load_timeseries_shard_data(shard: &Shard) -> Result<TimeSeriesData> {
+pub(crate) fn load_timeseries_shard_data(shard: &Shard) -> Result<TimeSeriesData> {
     let meta_json = shard
         .meta_json
         .as_deref()
@@ -222,7 +222,7 @@ pub(super) fn load_timeseries_shard_data(shard: &Shard) -> Result<TimeSeriesData
     validate_timeseries_data(train, test, &meta, &spec)
 }
 
-pub(super) fn binary_schema(features: usize) -> DataSchema {
+pub(crate) fn binary_schema(features: usize) -> DataSchema {
     DataSchema {
         columns: (0..features)
             .map(|j| ColumnSpec::numeric(format!("c{j}")))
@@ -232,7 +232,7 @@ pub(super) fn binary_schema(features: usize) -> DataSchema {
 }
 
 /// Shortest-round-trip string table (mirrors binary_cv::raw_table).
-pub(super) fn raw_table(features: usize, rows: &Rows) -> Result<RawTable> {
+pub(crate) fn raw_table(features: usize, rows: &Rows) -> Result<RawTable> {
     let headers = (0..features).map(|j| format!("c{j}")).collect::<Vec<_>>();
     let cells = rows
         .iter()
@@ -241,7 +241,7 @@ pub(super) fn raw_table(features: usize, rows: &Rows) -> Result<RawTable> {
     RawTable::new(headers, cells)
 }
 
-pub(super) fn raw_table_named(headers: &[String], rows: &[Vec<f64>]) -> Result<RawTable> {
+pub(crate) fn raw_table_named(headers: &[String], rows: &[Vec<f64>]) -> Result<RawTable> {
     let cells = rows
         .iter()
         .map(|row| row.iter().map(|v| format!("{v:?}")).collect())
@@ -251,11 +251,11 @@ pub(super) fn raw_table_named(headers: &[String], rows: &[Vec<f64>]) -> Result<R
 
 /// Per-task authority metric (R1/D2); must agree with
 /// `jope_dime_regressor::task::TaskKind::primary_metric`.
-pub(super) fn task_metric(task: &str) -> Option<&'static str> {
+pub(crate) fn task_metric(task: &str) -> Option<&'static str> {
     Task::parse(task).map(Task::primary_metric)
 }
 
-pub(super) fn secondary_metric(task: &str) -> &'static str {
+pub(crate) fn secondary_metric(task: &str) -> &'static str {
     match task {
         "binary" => "logloss",
         "timeseries" => "mase",
@@ -264,24 +264,24 @@ pub(super) fn secondary_metric(task: &str) -> &'static str {
     }
 }
 
-pub(super) fn is_head_like(op: &str) -> bool {
+pub(crate) fn is_head_like(op: &str) -> bool {
     is_head_op(op) || V3_EXTRA_HEADS.contains(&op)
 }
 
-pub(super) fn is_sha256(value: &str) -> bool {
+pub(crate) fn is_sha256(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
 }
 
-pub(super) fn is_strict_wave(value: &str) -> bool {
+pub(crate) fn is_strict_wave(value: &str) -> bool {
     value
         .strip_prefix("strict-wave-")
         .is_some_and(|suffix| suffix.len() == 6 && suffix.bytes().all(|byte| byte.is_ascii_digit()))
 }
 
-pub(super) fn is_multiclass_generation(value: &str) -> bool {
+pub(crate) fn is_multiclass_generation(value: &str) -> bool {
     value
         .strip_prefix("multiclass-generation-")
         .is_some_and(|suffix| suffix.len() == 3 && suffix.bytes().all(|byte| byte.is_ascii_digit()))
@@ -291,7 +291,7 @@ pub(super) fn is_multiclass_generation(value: &str) -> bool {
 /// preserves the legacy adaptive lane. Corrected authority is fail-closed.
 /// Superseded generation-zero manifests are accepted only in their exact old
 /// form so already-queued jobs can drain without receiving stronger claims.
-pub(super) fn resolve_authority(shard: &Shard) -> Result<ResolvedAuthority> {
+pub(crate) fn resolve_authority(shard: &Shard) -> Result<ResolvedAuthority> {
     let expected_metric =
         task_metric(&shard.task).with_context(|| format!("unsupported task '{}'", shard.task))?;
     let Some(authority) = &shard.label_authority else {

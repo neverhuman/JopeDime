@@ -92,7 +92,7 @@ pub(crate) type Measure = Box<dyn FnOnce(&[f64]) -> Option<f64>>;
 
 /// Where a linearization's training measurements come from: the training rows themselves, or a
 /// record of what was measured on them, by subtree index.
-pub(crate) enum Source<'a> {
+pub(crate) enum LinearizationSource<'a> {
     Rows(&'a [Vec<f64>]),
     Recorded(&'a mut dyn FnMut(usize) -> Result<LinearizationEvidence>),
 }

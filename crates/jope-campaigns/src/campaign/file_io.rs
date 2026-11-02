@@ -1,17 +1,17 @@
 use super::*;
 
-pub(super) fn genome_complexity(genome: &GenomeIr) -> usize {
+pub(crate) fn genome_complexity(genome: &GenomeIr) -> usize {
     match genome {
         GenomeIr::Pipeline(pipeline) => pipeline.stages.len(),
         _ => 0,
     }
 }
 
-pub(super) fn genome_complexity_text(text: &str) -> usize {
+pub(crate) fn genome_complexity_text(text: &str) -> usize {
     GenomeIr::parse(text).map_or(0, |genome| genome_complexity(&genome))
 }
 
-pub(super) fn head_family(genome: &GenomeIr) -> String {
+pub(crate) fn head_family(genome: &GenomeIr) -> String {
     match genome {
         GenomeIr::Pipeline(pipeline) => pipeline
             .stages
@@ -21,11 +21,11 @@ pub(super) fn head_family(genome: &GenomeIr) -> String {
     }
 }
 
-pub(super) fn head_family_text(text: &str) -> String {
+pub(crate) fn head_family_text(text: &str) -> String {
     GenomeIr::parse(text).map_or_else(|_| "parse_error".to_string(), |genome| head_family(&genome))
 }
 
-pub(super) fn independent_metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64, f64)> {
+pub(crate) fn independent_metrics(truth: &[f64], predictions: &[f64]) -> Result<(f64, f64, f64)> {
     if truth.is_empty()
         || truth.len() != predictions.len()
         || truth
@@ -58,7 +58,7 @@ pub(super) fn independent_metrics(truth: &[f64], predictions: &[f64]) -> Result<
     Ok((rmse, r2, mae))
 }
 
-pub(super) fn write_predictions_atomic(path: &Path, predictions: &[f64]) -> Result<()> {
+pub(crate) fn write_predictions_atomic(path: &Path, predictions: &[f64]) -> Result<()> {
     let parent = path.parent().context("prediction path has no parent")?;
     fs::create_dir_all(parent)?;
     let staged = parent.join(format!(".predictions.{}.stage", std::process::id()));
@@ -78,7 +78,7 @@ pub(super) fn write_predictions_atomic(path: &Path, predictions: &[f64]) -> Resu
     sync_directory(parent)
 }
 
-pub(super) fn read_predictions(path: &Path) -> Result<Vec<f64>> {
+pub(crate) fn read_predictions(path: &Path) -> Result<Vec<f64>> {
     let file = File::open(path)?;
     let mut predictions = Vec::new();
     for (line_number, line) in BufReader::new(file).lines().enumerate() {
@@ -91,7 +91,7 @@ pub(super) fn read_predictions(path: &Path) -> Result<Vec<f64>> {
     Ok(predictions)
 }
 
-pub(super) fn require_fresh_artifact_root(path: &Path) -> Result<()> {
+pub(crate) fn require_fresh_artifact_root(path: &Path) -> Result<()> {
     if path.exists() {
         let mut entries = fs::read_dir(path)
             .with_context(|| format!("inspect exact-CV root {}", path.display()))?;
@@ -102,7 +102,7 @@ pub(super) fn require_fresh_artifact_root(path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     let parent = path.parent().context("immutable path has no parent")?;
     fs::create_dir_all(parent)?;
     if path.exists() {
@@ -142,7 +142,7 @@ pub(super) fn immutable_write(path: &Path, bytes: &[u8]) -> Result<()> {
     sync_directory(parent)
 }
 
-pub(super) fn make_readonly(path: &Path) -> Result<()> {
+pub(crate) fn make_readonly(path: &Path) -> Result<()> {
     let mut permissions = fs::metadata(path)
         .with_context(|| format!("inspect immutable artifact {}", path.display()))?
         .permissions();
@@ -151,23 +151,23 @@ pub(super) fn make_readonly(path: &Path) -> Result<()> {
         .with_context(|| format!("seal immutable artifact {}", path.display()))
 }
 
-pub(super) fn sync_directory(path: &Path) -> Result<()> {
+pub(crate) fn sync_directory(path: &Path) -> Result<()> {
     File::open(path)?.sync_all()?;
     Ok(())
 }
 
-pub(super) fn canonical_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
+pub(crate) fn canonical_json<T: Serialize>(value: &T) -> Result<Vec<u8>> {
     let mut bytes = serde_json::to_vec(value)?;
     bytes.push(b'\n');
     Ok(bytes)
 }
 
-pub(super) fn sha256_bytes(bytes: &[u8]) -> String {
+pub(crate) fn sha256_bytes(bytes: &[u8]) -> String {
     let digest = Sha256::digest(bytes);
     digest.iter().map(|byte| format!("{byte:02x}")).collect()
 }
 
-pub(super) fn sha256_file(path: &Path) -> Result<String> {
+pub(crate) fn sha256_file(path: &Path) -> Result<String> {
     let mut file =
         File::open(path).with_context(|| format!("open {} for SHA-256", path.display()))?;
     let mut hasher = Sha256::new();
@@ -186,14 +186,14 @@ pub(super) fn sha256_file(path: &Path) -> Result<String> {
         .collect())
 }
 
-pub(super) fn validate_file_hash(path: &Path, expected: &str, label: &str) -> Result<()> {
+pub(crate) fn validate_file_hash(path: &Path, expected: &str, label: &str) -> Result<()> {
     if sha256_file(path).with_context(|| format!("hash pinned {label}"))? != expected {
         bail!("{label} differs from pinned SHA-256 {expected}");
     }
     Ok(())
 }
 
-pub(super) fn validate_sha256(label: &str, value: &str) -> Result<()> {
+pub(crate) fn validate_sha256(label: &str, value: &str) -> Result<()> {
     if value.len() != 64
         || !value
             .bytes()
@@ -204,7 +204,7 @@ pub(super) fn validate_sha256(label: &str, value: &str) -> Result<()> {
     Ok(())
 }
 
-pub(super) fn panic_message(payload: &(dyn std::any::Any + Send)) -> &str {
+pub(crate) fn panic_message(payload: &(dyn std::any::Any + Send)) -> &str {
     payload
         .downcast_ref::<&str>()
         .copied()

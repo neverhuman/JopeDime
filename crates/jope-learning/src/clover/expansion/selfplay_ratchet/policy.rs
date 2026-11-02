@@ -1,18 +1,18 @@
 use super::*;
 use std::collections::BTreeMap;
 
-pub(super) struct PolicyEvaluation {
-    pub(super) archive_leaf_genomes: Vec<String>,
-    pub(super) active_support_leaves: usize,
-    pub(super) tilted_leaf_log_probs: Option<Vec<f64>>,
-    pub(super) kl_source: String,
-    pub(super) kl_malformed_reason: Option<String>,
-    pub(super) policy_archive_ce_loss: Option<f64>,
-    pub(super) decomposed_kl: Option<crate::support::DecomposedSupportKl>,
-    pub(super) seed_update_frozen_by_kl_guard: Option<bool>,
+pub(crate) struct PolicyEvaluation {
+    pub(crate) archive_leaf_genomes: Vec<String>,
+    pub(crate) active_support_leaves: usize,
+    pub(crate) tilted_leaf_log_probs: Option<Vec<f64>>,
+    pub(crate) kl_source: String,
+    pub(crate) kl_malformed_reason: Option<String>,
+    pub(crate) policy_archive_ce_loss: Option<f64>,
+    pub(crate) decomposed_kl: Option<crate::support::DecomposedSupportKl>,
+    pub(crate) seed_update_frozen_by_kl_guard: Option<bool>,
 }
 
-pub(super) fn evaluate_policy_guard(
+pub(crate) fn evaluate_policy_guard(
     round_idx: usize,
     round_leaf_log_prob_fn: Option<RoundLeafLogProbFn<'_>>,
     measured_tilt_policy: Option<&MeasuredTiltPolicyConfig>,

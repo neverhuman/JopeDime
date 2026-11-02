@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn input() -> Result<Vec<u8>> {
+pub(crate) fn input() -> Result<Vec<u8>> {
     if let Some(path) = std::env::var_os("JOPE_INT01_CSV") {
         let bytes = fs::read(path)?;
         ensure!(
@@ -35,7 +35,7 @@ pub(super) fn input() -> Result<Vec<u8>> {
         return Ok(bytes);
     }
     // Original-label rows from the existing public TRAIN fixture, no generated y.
-    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../../test-support/datasets/v1/d2-regression/train.csv");
     ensure!(
         jope_runtime::sha256_hex(raw) == SOURCE_SHA,
         "committed TRAIN hash changed"
@@ -50,12 +50,12 @@ pub(super) fn input() -> Result<Vec<u8>> {
     }
     Ok(csv.into_bytes())
 }
-pub(super) fn directory() -> Result<tempfile::TempDir> {
+pub(crate) fn directory() -> Result<tempfile::TempDir> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target/int01");
     fs::create_dir_all(&root)?;
     Ok(tempfile::tempdir_in(root)?)
 }
-pub(super) fn spec(dataset: jope_api::ids::DatasetId) -> RunSpec {
+pub(crate) fn spec(dataset: jope_api::ids::DatasetId) -> RunSpec {
     let mut spec = bounded_synthetic_spec();
     spec.dataset = dataset;
     spec.target = "target".into();
@@ -67,7 +67,7 @@ pub(super) fn spec(dataset: jope_api::ids::DatasetId) -> RunSpec {
     spec.budget.wall_seconds = Some(DecimalU64(120));
     spec
 }
-pub(super) fn initialize(home: &Path, bytes: &[u8]) -> Result<(Arc<InProcessEngine>, RunSpec)> {
+pub(crate) fn initialize(home: &Path, bytes: &[u8]) -> Result<(Arc<InProcessEngine>, RunSpec)> {
     // Other Cargo jobs share a build cache. Pin this executable before starting
     // a long-lived engine or spawning workers from it.
     let pinned = home.join("jopedime");
@@ -106,7 +106,7 @@ pub(super) fn initialize(home: &Path, bytes: &[u8]) -> Result<(Arc<InProcessEngi
     let dataset = register::register(engine.store(), bytes, &Default::default())?;
     Ok((engine, spec(dataset.id)))
 }
-pub(super) fn batch_command(home: &Path, spec: &RunSpec) -> Command {
+pub(crate) fn batch_command(home: &Path, spec: &RunSpec) -> Command {
     let mut command = Command::new(home.join("jopedime"));
     command
         .env("JOPEDIME_HOME", home)
@@ -149,7 +149,7 @@ pub(super) fn batch_command(home: &Path, spec: &RunSpec) -> Command {
     }
     command
 }
-pub(super) fn snapshot(output: std::process::Output) -> Result<RunSnapshot> {
+pub(crate) fn snapshot(output: std::process::Output) -> Result<RunSnapshot> {
     ensure!(
         output.status.success(),
         "batch failed: {}",
@@ -173,7 +173,7 @@ pub(super) fn snapshot(output: std::process::Output) -> Result<RunSnapshot> {
     Ok(snapshot)
 }
 
-pub(super) fn retain_execution(
+pub(crate) fn retain_execution(
     engine: &InProcessEngine,
     output: &std::process::Output,
     label: &str,

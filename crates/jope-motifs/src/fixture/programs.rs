@@ -14,7 +14,7 @@ pub(crate) const PORTFOLIO: &str =
     "(portfolio (member (pipe X (ridge_gcv))) (blend folds=5 guard=clip kind=nnls repeats=auto))";
 /// The emitter lane's four-language control program.
 pub(crate) const PORTABLE_4LANG: &str =
-    include_str!("../../feat-math/tests/fixtures/emitted/portable-4lang.dsl");
+    include_str!("../../../feat-math/tests/fixtures/emitted/portable-4lang.dsl");
 pub(crate) const FAMILY_A: &str = "canaryfamily01";
 pub(crate) const FAMILY_B: &str = "canaryfamily02";
 /// A distinctive, fixed 64-hex digest.

@@ -8,9 +8,9 @@ const EXPECTED_GLOBAL_INDICES: [usize; 80] = [
 
 #[cfg(test)]
 const PYTHON_ORACLE_GOLDENS: &str = concat!(
-    include_str!("oracle/rows-1.txt"),
-    include_str!("oracle/rows-2.txt"),
-    include_str!("oracle/rows-3.txt")
+    include_str!("tests/oracle/rows-1.txt"),
+    include_str!("tests/oracle/rows-2.txt"),
+    include_str!("tests/oracle/rows-3.txt")
 );
 
 use super::super::{parse, test_support};

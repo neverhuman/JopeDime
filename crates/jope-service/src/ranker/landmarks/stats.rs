@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn quantile(sorted: &[f64], q: f64) -> f64 {
+pub(crate) fn quantile(sorted: &[f64], q: f64) -> f64 {
     if sorted.len() <= 1 {
         return sorted.first().copied().unwrap_or(0.0);
     }
@@ -10,7 +10,7 @@ pub(super) fn quantile(sorted: &[f64], q: f64) -> f64 {
     sorted[lo] * (1.0 - (at - lo as f64)) + sorted[hi] * (at - lo as f64)
 }
 
-pub(super) fn mean(values: &[f64]) -> f64 {
+pub(crate) fn mean(values: &[f64]) -> f64 {
     if values.is_empty() {
         0.0
     } else {
@@ -18,12 +18,12 @@ pub(super) fn mean(values: &[f64]) -> f64 {
     }
 }
 
-pub(super) fn stddev(values: &[f64]) -> f64 {
+pub(crate) fn stddev(values: &[f64]) -> f64 {
     let m = mean(values);
     (mean(&values.iter().map(|v| (v - m) * (v - m)).collect::<Vec<_>>())).sqrt()
 }
 
-pub(super) fn squash(value: f64) -> f64 {
+pub(crate) fn squash(value: f64) -> f64 {
     if value.is_finite() {
         value / (1.0 + value.abs())
     } else {
@@ -31,7 +31,7 @@ pub(super) fn squash(value: f64) -> f64 {
     }
 }
 
-pub(super) fn gini(values: &[f64]) -> f64 {
+pub(crate) fn gini(values: &[f64]) -> f64 {
     let mut a: Vec<f64> = values
         .iter()
         .copied()
@@ -51,7 +51,7 @@ pub(super) fn gini(values: &[f64]) -> f64 {
     ((2.0 * weighted / (n * a.iter().sum::<f64>())) - (n + 1.0) / n).clamp(0.0, 1.0)
 }
 
-pub(super) fn corr(a: &[f64], b: &[f64]) -> f64 {
+pub(crate) fn corr(a: &[f64], b: &[f64]) -> f64 {
     if a.len() < 2 || a.len() != b.len() {
         return 0.0;
     }
@@ -75,7 +75,7 @@ pub(super) fn corr(a: &[f64], b: &[f64]) -> f64 {
     }
 }
 
-pub(super) fn abs_corr_with_y(values: &[f64], y_z: &[f64]) -> f64 {
+pub(crate) fn abs_corr_with_y(values: &[f64], y_z: &[f64]) -> f64 {
     if values.is_empty() || values.len() != y_z.len() {
         return 0.0;
     }
@@ -101,7 +101,7 @@ pub(super) fn abs_corr_with_y(values: &[f64], y_z: &[f64]) -> f64 {
 // NumPy 1.26's default indirect quicksort is intentionally unstable. The
 // source recipe uses np.argsort twice; matching its tie permutation is needed
 // for Chatterjee xi on quantized/clipped columns.
-pub(super) fn recipe_argsort(values: &[f64]) -> Vec<usize> {
+pub(crate) fn recipe_argsort(values: &[f64]) -> Vec<usize> {
     const SMALL_QUICKSORT: usize = 15;
     let n = values.len();
     let mut order: Vec<usize> = (0..n).collect();
@@ -181,7 +181,7 @@ pub(super) fn recipe_argsort(values: &[f64]) -> Vec<usize> {
     order
 }
 
-pub(super) fn scale_numeric_regression(
+pub(crate) fn scale_numeric_regression(
     x: &[f32],
     n: usize,
     p: usize,

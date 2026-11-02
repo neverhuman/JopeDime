@@ -44,7 +44,7 @@ fn nested_oof_rejects_leakage_and_preselection_full_train_predictions() {
 #[test]
 fn campaign_cohorts_are_exact_and_search_json_cannot_carry_test_material() {
     let input: serde_json::Value =
-        serde_json::from_str(include_str!("../manifests/input-manifest.v1.json")).unwrap();
+        serde_json::from_str(include_str!("../../manifests/input-manifest.v1.json")).unwrap();
     let by_id = input["datasets"]
         .as_array()
         .unwrap()
@@ -114,7 +114,7 @@ fn robust_win_is_strict_for_both_seeds_and_zero_target_is_unbeatable() {
 #[test]
 fn checked_in_protocol_matches_compiled_cohorts_and_budget() {
     let protocol: serde_json::Value = serde_json::from_str(include_str!(
-        "../manifests/dlgp-budget-first/protocol.v1.json"
+        "../../manifests/dlgp-budget-first/protocol.v1.json"
     ))
     .unwrap();
     let strings = |path: &serde_json::Value| {

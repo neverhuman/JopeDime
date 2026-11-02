@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn serve(
+pub(crate) fn serve(
     root: PathBuf,
     scq: PathBuf,
     socket_path: PathBuf,

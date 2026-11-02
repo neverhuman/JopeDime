@@ -226,5 +226,8 @@ fn genebank_rows_become_unbound_records() {
     assert_eq!(f["included"], 20);
 }
 
-mod snapshot;
-mod sotarena;
+#[path = "sources/snapshot.rs"]
+mod snapshot_cases;
+#[path = "sources/sotarena.rs"]
+mod sotarena_cases;
+pub(crate) use snapshot_cases::HEADER;

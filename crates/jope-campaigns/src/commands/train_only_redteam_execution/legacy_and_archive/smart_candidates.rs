@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn merge_candidate(
+pub(crate) fn merge_candidate(
     candidates: &mut HashMap<String, Candidate>,
     mut candidate: Candidate,
 ) {
@@ -15,7 +15,7 @@ pub(super) fn merge_candidate(
     }
 }
 
-pub(super) fn load_smart_candidates(
+pub(crate) fn load_smart_candidates(
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,
 ) -> Result<(Vec<Candidate>, Vec<Candidate>, Vec<Candidate>)> {
@@ -147,7 +147,7 @@ pub(super) fn load_smart_candidates(
     Ok((exact, jittered, transfer))
 }
 
-pub(super) fn select_with_head_cap(
+pub(crate) fn select_with_head_cap(
     ranked: &[RankedCandidate],
     count: usize,
     head_counts: &mut HashMap<String, usize>,
@@ -174,7 +174,7 @@ pub(super) fn select_with_head_cap(
     Ok(selected)
 }
 
-pub(super) fn validate_initial_populations(
+pub(crate) fn validate_initial_populations(
     populations: &BTreeMap<String, Vec<Candidate>>,
     island_size: usize,
     expected_islands: &[&str],
@@ -210,7 +210,7 @@ pub(super) fn validate_initial_populations(
     Ok(())
 }
 
-pub(super) fn mixed_seed(run_id: &str, dataset_hash: &str, slot: usize, retry: usize) -> u64 {
+pub(crate) fn mixed_seed(run_id: &str, dataset_hash: &str, slot: usize, retry: usize) -> u64 {
     let digest = Sha256::digest(
         format!("smart-v3-mixed-init-v1\0{run_id}\0{dataset_hash}\0{slot}\0{retry}").as_bytes(),
     );

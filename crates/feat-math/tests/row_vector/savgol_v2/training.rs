@@ -46,7 +46,7 @@ fn six_signal_datasets_five_seeds_equal_budget_derivative_ablation() {
     // worker, promotion, or broad search-lift claim. Both kernels evaluate the
     // same 64 rows per task/seed; the old reference is the two-neighbor stencil.
     let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../fixtures/math_boundary/v2/savgol_utility.json"
+        "../../fixtures/math_boundary/v2/savgol_utility.json"
     ))
     .unwrap();
     let width = fixture["width"].as_u64().unwrap() as usize;

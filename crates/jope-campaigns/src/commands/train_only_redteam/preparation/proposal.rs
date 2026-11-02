@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn compute_scaling_statistic(parent: &Value) -> Result<ScalingStatistic> {
+pub(crate) fn compute_scaling_statistic(parent: &Value) -> Result<ScalingStatistic> {
     let pointer_path = PathBuf::from(value_string(parent, "/catalog_pointer_path")?);
     let pointer: Value = serde_json::from_slice(&fs::read(&pointer_path)?)?;
     let catalog_path = PathBuf::from(value_string(&pointer, "/catalog")?);
@@ -71,7 +71,7 @@ pub(super) fn compute_scaling_statistic(parent: &Value) -> Result<ScalingStatist
     })
 }
 
-pub(super) fn proposal_manifest_from_parent(
+pub(crate) fn proposal_manifest_from_parent(
     parent: &Value,
     path: &Path,
     run_id: &str,
@@ -94,7 +94,7 @@ pub(super) fn proposal_manifest_from_parent(
     write_receipt(path, &receipt)
 }
 
-pub(super) fn parse_proposal_bundle(
+pub(crate) fn parse_proposal_bundle(
     path: &Path,
     config: &TrainOnlyRedteamConfig,
     scaling_sha256: &str,

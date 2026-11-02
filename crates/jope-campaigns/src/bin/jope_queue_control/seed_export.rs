@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn sqlite_table_exists(connection: &Connection, table: &str) -> Result<bool> {
+pub(crate) fn sqlite_table_exists(connection: &Connection, table: &str) -> Result<bool> {
     Ok(connection.query_row(
         "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1)",
         [table],
@@ -8,7 +8,7 @@ pub(super) fn sqlite_table_exists(connection: &Connection, table: &str) -> Resul
     )?)
 }
 
-pub(super) fn sqlite_column_exists(
+pub(crate) fn sqlite_column_exists(
     connection: &Connection,
     table: &str,
     column: &str,
@@ -21,7 +21,7 @@ pub(super) fn sqlite_column_exists(
     Ok(count != 0)
 }
 
-pub(super) fn write_content_addressed(
+pub(crate) fn write_content_addressed(
     directory: &Path,
     prefix: &str,
     value: &Value,
@@ -46,7 +46,7 @@ pub(super) fn write_content_addressed(
     Ok((path, digest))
 }
 
-pub(super) fn write_json_atomic(path: &Path, value: &Value) -> Result<()> {
+pub(crate) fn write_json_atomic(path: &Path, value: &Value) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -66,7 +66,7 @@ pub(super) fn write_json_atomic(path: &Path, value: &Value) -> Result<()> {
 /// DESC, worst_percentile DESC, strict_wins DESC, dataset_count DESC,
 /// semantic_sha256`). Both source pools are sorted by this key, so merging
 /// preserves the global merit order.
-pub(super) fn seed_rank_order(left: &SeedRow, right: &SeedRow) -> std::cmp::Ordering {
+pub(crate) fn seed_rank_order(left: &SeedRow, right: &SeedRow) -> std::cmp::Ordering {
     right
         .mean_within_dataset_percentile
         .total_cmp(&left.mean_within_dataset_percentile)
@@ -84,7 +84,7 @@ pub(super) fn seed_rank_order(left: &SeedRow, right: &SeedRow) -> std::cmp::Orde
 /// keeping global merit order, with DL-origin entries capped at `dl_cap`.
 /// A semantic present in both pools earned its slot without DL evidence and
 /// is kept as the non-DL entry only, so it never consumes DL cap.
-pub(super) fn merge_seed_pools(
+pub(crate) fn merge_seed_pools(
     non_dl: Vec<SeedRow>,
     dl: Vec<SeedRow>,
     limit: usize,
@@ -115,7 +115,7 @@ pub(super) fn merge_seed_pools(
     merged
 }
 
-pub(super) fn query_seed_rows(
+pub(crate) fn query_seed_rows(
     connection: &Connection,
     minimum_datasets: usize,
     limit: usize,
@@ -196,7 +196,7 @@ ORDER BY task,robust_rank
     Ok(seeds)
 }
 
-pub(super) fn export_seed_bank(
+pub(crate) fn export_seed_bank(
     path: &Path,
     limit: usize,
     minimum_datasets: usize,

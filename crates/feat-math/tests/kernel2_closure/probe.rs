@@ -1,13 +1,13 @@
 use super::*;
 
 #[derive(Clone, Debug, Default)]
-pub(super) struct ProbeEvidence {
-    pub(super) checked: usize,
-    pub(super) observed: FaultSet,
-    pub(super) errors: Vec<String>,
+pub(crate) struct ProbeEvidence {
+    pub(crate) checked: usize,
+    pub(crate) observed: FaultSet,
+    pub(crate) errors: Vec<String>,
 }
 
-pub(super) fn boundary_values() -> Vec<f64> {
+pub(crate) fn boundary_values() -> Vec<f64> {
     let data: Value = serde_json::from_str(BOUNDARY).unwrap();
     let values: Vec<_> = data["entries"]
         .as_array()
@@ -22,7 +22,7 @@ pub(super) fn boundary_values() -> Vec<f64> {
     values
 }
 
-pub(super) fn probe_source(row: &feat_math::kernel::capabilities::ElementRow) -> (String, usize) {
+pub(crate) fn probe_source(row: &feat_math::kernel::capabilities::ElementRow) -> (String, usize) {
     match row.kind {
         "function" => {
             let arity = match row.name {
@@ -49,7 +49,7 @@ pub(super) fn probe_source(row: &feat_math::kernel::capabilities::ElementRow) ->
     }
 }
 
-pub(super) fn each_tuple(
+pub(crate) fn each_tuple(
     values: &[f64],
     arity: usize,
     row: &mut Vec<f64>,
@@ -66,7 +66,7 @@ pub(super) fn each_tuple(
     }
 }
 
-pub(super) fn each_probe_row(kind: &str, name: &str, arity: usize, visit: &mut impl FnMut(&[f64])) {
+pub(crate) fn each_probe_row(kind: &str, name: &str, arity: usize, visit: &mut impl FnMut(&[f64])) {
     if kind != "variable" {
         each_tuple(&boundary_values(), arity, &mut Vec::new(), visit);
     } else if name == "x" {
@@ -87,7 +87,7 @@ pub(super) fn each_probe_row(kind: &str, name: &str, arity: usize, visit: &mut i
     }
 }
 
-pub(super) fn probe_evidence(row: &feat_math::kernel::capabilities::ElementRow) -> ProbeEvidence {
+pub(crate) fn probe_evidence(row: &feat_math::kernel::capabilities::ElementRow) -> ProbeEvidence {
     let (source, arity) = probe_source(row);
     let expression = MathExpr::parse(&source).unwrap_or_else(|error| panic!("{source}: {error:#}"));
     assert_eq!(expression.to_source().unwrap(), source);
@@ -135,7 +135,7 @@ pub(super) fn probe_evidence(row: &feat_math::kernel::capabilities::ElementRow) 
     out
 }
 
-pub(super) fn probes() -> &'static BTreeMap<(&'static str, &'static str), ProbeEvidence> {
+pub(crate) fn probes() -> &'static BTreeMap<(&'static str, &'static str), ProbeEvidence> {
     static PROBES: OnceLock<BTreeMap<(&'static str, &'static str), ProbeEvidence>> =
         OnceLock::new();
     PROBES.get_or_init(|| {
@@ -147,7 +147,7 @@ pub(super) fn probes() -> &'static BTreeMap<(&'static str, &'static str), ProbeE
     })
 }
 
-pub(super) fn fault_problem(declared: FaultSet, evidence: &ProbeEvidence) -> Option<String> {
+pub(crate) fn fault_problem(declared: FaultSet, evidence: &ProbeEvidence) -> Option<String> {
     let allowed = FaultSet::NONFINITE_SANITIZED
         .union(FaultSet::MAGNITUDE_CLAMPED)
         .union(FaultSet::NONFINITE_INPUT);
@@ -166,7 +166,7 @@ pub(super) fn fault_problem(declared: FaultSet, evidence: &ProbeEvidence) -> Opt
     }
 }
 
-pub(super) fn clause_c(
+pub(crate) fn clause_c(
     manifest: &Manifest,
     profile: &SearchProfile,
     report: &mut ClosureReport,
@@ -205,7 +205,7 @@ pub(super) fn clause_c(
     checked
 }
 
-pub(super) fn manifest_c(manifest: &Manifest, report: &mut ClosureReport) -> usize {
+pub(crate) fn manifest_c(manifest: &Manifest, report: &mut ClosureReport) -> usize {
     let mut checked = 0;
     for row in &manifest.expression {
         if let Some(evidence) = probes().get(&(row.kind, row.name)) {

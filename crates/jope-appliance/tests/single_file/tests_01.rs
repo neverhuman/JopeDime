@@ -189,7 +189,7 @@ fn packaged_run_reports_device_refusals_and_actual_cpu_plan() {
     let home = d.join("engine");
     let engine = InProcessEngine::open(&home).unwrap();
     // Original-label public TRAIN rows, shared with the run-route acceptance test.
-    let raw = include_bytes!("../../../test-support/datasets/v1/d2-regression/train.csv");
+    let raw = include_bytes!("../../../../test-support/datasets/v1/d2-regression/train.csv");
     assert_eq!(
         jope_runtime::sha256_hex(raw),
         "d9a0b97e91ff9d04bc87fefa4671a49c40cee21dfac05be58a7fc7ce08045931"

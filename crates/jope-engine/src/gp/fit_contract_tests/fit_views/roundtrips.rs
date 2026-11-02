@@ -5,7 +5,7 @@ use super::*;
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units() {
+pub(crate) fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_units() {
     let tmp = tempfile::tempdir().unwrap();
     let (train, training) = raw_training(tmp.path());
     let model = tmp.path().join("model.json");
@@ -95,7 +95,7 @@ pub(super) fn fitted_predictor_roundtrip_matches_native_gp_and_restores_target_u
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn sealed_memory_view_matches_file_evaluation_and_rejects_writes() {
+pub(crate) fn sealed_memory_view_matches_file_evaluation_and_rejects_writes() {
     use std::io::Write;
     use std::os::fd::AsRawFd;
     let tmp = tempfile::tempdir().unwrap();
@@ -160,7 +160,7 @@ pub(super) fn sealed_memory_view_matches_file_evaluation_and_rejects_writes() {
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn fitted_view_predictor_uses_the_exact_cut_and_original_target_units() {
+pub(crate) fn fitted_view_predictor_uses_the_exact_cut_and_original_target_units() {
     let (temp, prepared) = view_fixture();
     let output = temp.path().join("predictor.json");
     let mut authority = Fixture::activated(temp.path(), vec![cut_training_hash(&prepared)]);
@@ -202,7 +202,7 @@ pub(super) fn fitted_view_predictor_uses_the_exact_cut_and_original_target_units
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-pub(super) fn isolated_fitted_view_export_binds_success_and_preserves_worker_failures() {
+pub(crate) fn isolated_fitted_view_export_binds_success_and_preserves_worker_failures() {
     let (temp, prepared) = view_fixture();
     let executable = std::env::current_exe().unwrap();
     let mut authority = Fixture::activated(temp.path(), vec![cut_training_hash(&prepared)]);

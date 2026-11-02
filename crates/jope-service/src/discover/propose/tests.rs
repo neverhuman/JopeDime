@@ -1,10 +1,10 @@
 use super::*;
 
-pub(super) mod support {
+pub(crate) mod support {
     use super::*;
     use std::cell::RefCell;
 
-    pub(super) fn parents() -> Vec<Program> {
+    pub(crate) fn parents() -> Vec<Program> {
         vec![
             Program::from_dsl("(pipe X (standardize) (cheb degree=3) (ridge lambda_frac=0.1))"),
             Program::from_dsl(
@@ -13,7 +13,7 @@ pub(super) mod support {
         ]
     }
 
-    pub(super) fn request<'a>(
+    pub(crate) fn request<'a>(
         parents: &'a [Program],
         lm: &'a [f64; 48],
         exploring: bool,
@@ -28,14 +28,14 @@ pub(super) mod support {
         }
     }
 
-    pub(super) struct Bank {
-        pub(super) role: BankRole,
-        pub(super) records: Vec<Retrieved>,
-        pub(super) called: RefCell<Vec<([f64; 12], String, usize)>>,
+    pub(crate) struct Bank {
+        pub(crate) role: BankRole,
+        pub(crate) records: Vec<Retrieved>,
+        pub(crate) called: RefCell<Vec<([f64; 12], String, usize)>>,
     }
 
     impl Bank {
-        pub(super) fn new() -> Self {
+        pub(crate) fn new() -> Self {
             Self {
                 role: BankRole::Proposer,
                 records: vec![

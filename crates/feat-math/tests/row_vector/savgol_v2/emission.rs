@@ -3,7 +3,7 @@ fn three_language_boundary_values_and_faults_are_bit_equal() {
     let root = Path::new(env!("CARGO_TARGET_TMPDIR")).join("savgol-boundary-v2");
     fs::create_dir_all(&root).unwrap();
     let fixture: serde_json::Value =
-        serde_json::from_str(include_str!("../fixtures/math_boundary/v2/savgol.json")).unwrap();
+        serde_json::from_str(include_str!("../../fixtures/math_boundary/v2/savgol.json")).unwrap();
     let mut rs = format!("{}\nfn main(){{\n", emit::RUST_HELPER);
     let mut py = format!("import math\n{}\n", emit::PYTHON_HELPER);
     let mut cc=format!("#include <algorithm>\n#include <cmath>\n#include <cstring>\n#include <cstdint>\n#include <stdexcept>\n#include <vector>\n#include <utility>\n#include <iostream>\n#include <iomanip>\n{}\nint main(){{\n",emit::CPP_HELPER);

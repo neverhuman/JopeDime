@@ -3,7 +3,7 @@ use super::*;
 /// Every allowlist entry as a [`Divergence`], after checking the file's shape: known programs,
 /// lanes and input rows, exact bit patterns that differ (or involve a NaN), the one allowed
 /// status, a fix item, a reason, and no duplicate.
-pub(super) fn allowlist() -> Vec<Divergence> {
+pub(crate) fn allowlist() -> Vec<Divergence> {
     let list: Allowlist = serde_json::from_str(ALLOWLIST).expect("parity_allowlist.v1.json parses");
     assert_eq!(list.schema, ALLOWLIST_SCHEMA);
     assert!(!list.note.trim().is_empty(), "the allowlist needs its note");
@@ -64,7 +64,7 @@ pub(super) fn allowlist() -> Vec<Divergence> {
 
 /// Compare one lane against the runtime on every program and check the result against the
 /// allowlist entries of that lane.
-pub(super) fn check_lane(lane: Lane) {
+pub(crate) fn check_lane(lane: Lane) {
     let Some(version) = toolchain(lane) else {
         return;
     };
@@ -188,7 +188,7 @@ pub(super) fn check_lane(lane: Lane) {
 }
 
 /// Reparse canonical text and the typed envelope before any lane fits or emits a program.
-pub(super) fn round_tripped_genome(program: &Program) -> GenomeIr {
+pub(crate) fn round_tripped_genome(program: &Program) -> GenomeIr {
     let original = GenomeIr::parse(program.source)
         .unwrap_or_else(|error| panic!("{}: {error:#}", program.name));
     for expression in expressions(program) {
