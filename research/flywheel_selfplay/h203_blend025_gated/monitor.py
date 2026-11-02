@@ -4,7 +4,8 @@ scientific attempt and at most one preregistered resume.
 H203 differs from H192 in one guard: HistGBM needs OpenMP, whose runtimes start helper threads beyond the compute
 threads (measured: 7-8 OS threads at OMP_NUM_THREADS=2-3). The worker is given OMP_NUM_THREADS=4 (every other pool 1),
 and the guard caps the tree's measured CPU at 4.0 cores over a rolling 10 s window instead of the OS thread count,
-which is recorded in every sample. H203 admits xbabe1 only (PREREG); xbabe2 is excluded."""
+which is recorded in every sample. H203 admits xbabe1 (PREREG) and, by owner deviation n1918, xbabe2 under the
+lanes_t1615 disk guard (user-visible used < 93.8%)."""
 
 import argparse
 from collections import deque
@@ -22,10 +23,13 @@ import psutil
 HERE = Path(__file__).resolve().parent
 HOST_CORES = os.sysconf("SC_NPROCESSORS_ONLN")
 LOAD_LIMIT = 0.85 * HOST_CORES
+HOST = socket.gethostname().split(".")[0]
+MAX_USED = {"xbabe2": 0.938}  # owner deviation n1918: lanes_t1615 disk guard
 CORE_LIMIT = 4.0
 ALLOWED_HOSTS = (
     "xbabe1",
-)  # preregistered host boundary; checked before any output, claim or launch
+    "xbabe2",
+)  # host boundary (PREREG + n1918); checked before any output, claim or launch
 WINDOW = 10.0
 DEADLINE = 4 * 3600
 CLAIMS = (
@@ -33,7 +37,7 @@ CLAIMS = (
 )  # attempt claims live on the run host; mirrored to ns/receipts by the owner
 
 
-def violations(sample):
+def violations(sample, host=HOST):
     return [
         reason
         for bad, reason in [
@@ -41,6 +45,10 @@ def violations(sample):
             (sample["cpu"] > 85, "host CPU>85%"),
             (sample["available"] < 16 * 2**30, "MemAvailable<16GiB"),
             (sample["free"] < 40_000_000_000, "disk free<40GB"),
+            (
+                sample["disk_used_fraction"] >= MAX_USED.get(host, 1.0),
+                "disk used>=93.8% (xbabe2)",
+            ),
             (sample["rss"] >= 6_000_000_000, "aggregate RSS>=6GB"),
             (
                 sample["tree_cores"] > CORE_LIMIT,
@@ -108,7 +116,9 @@ def main():
     args = ap.parse_args()
     host = socket.gethostname().split(".")[0]
     if host not in ALLOWED_HOSTS or os.getpriority(os.PRIO_PROCESS, 0) != 19:
-        raise RuntimeError(f"H203 runs on xbabe1 at nice 19 only (host {host!r})")
+        raise RuntimeError(
+            f"H203 runs on xbabe1 or xbabe2 at nice 19 only (host {host!r})"
+        )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     resources = args.output.with_suffix(".resources.jsonl")
     if resources.exists() or args.output.with_suffix(".stdout").exists():
