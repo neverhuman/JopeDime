@@ -12,4 +12,13 @@ runs:
           ci|ci2|ci3|ci4|ci5|ci6|ci7|ci8|ci9|ci10|ci11|ci12|full) ;;
           *) echo "unsupported CPU runner lane: $lane" >&2; exit 1 ;;
         esac
-        echo "CARGO_TARGET_DIR=/var/cache/jope/target/$lane" >> "$GITHUB_ENV"
+        # Prefer the persistent per-lane volume. Some runner hosts leave its parent unwritable
+        # for the job user (cargo then fails creating its temp dir there), so fall back to a
+        # per-lane directory under the runner home instead of failing every lane.
+        target=/var/cache/jope/target/$lane
+        if ! { mkdir -p "$target" 2>/dev/null && [ -w "$target" ] && probe=$(mktemp -d "$target/.probe.XXXXXX" 2>/dev/null) && rmdir "$probe"; }; then
+          echo "::warning::$target is not writable on this runner; using a runner-home target"
+          target=${HOME:?}/.cache/jope/target/$lane
+          mkdir -p "$target"
+        fi
+        echo "CARGO_TARGET_DIR=$target" >> "$GITHUB_ENV"

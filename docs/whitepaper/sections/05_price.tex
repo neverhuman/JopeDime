@@ -160,7 +160,7 @@ hardware bill requires accounting for resident model memory alongside active
 compute. Mixture-of-experts writers use compute on active parameters but need memory
 for all parameters: Kimi~K2 has 32B active of 1T, while DeepSeek-V3 has 37B
 active of 671B \citep{kimiteam2025k2,deepseekv3}. Resident one-byte weights
-for 1T parameters alone require at least 13 H100 SXM GPUs with 80~GB each
+for 1T parameters alone require at least 13 H100 SXM GPUs with 80\,GB each
 \citep{nvidia2026h100}; runtime state needs additional memory. This memory
 floor is separate from the cost estimates omitted below.
 
@@ -178,6 +178,6 @@ Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves
 expected cost per win only if mean attempt cost stays fixed. Measuring that
 tradeoff requires a common task mix, incumbent and verification rule.
 
-\Cref{sec:method} specifies which component proposes programs and which
-learns from their scores, so that writer and adapter costs can be counted
-separately.
+\Cref{sec:method} separates the reference writer and ranking map from
+the later adapter record. Those routes need separate generation, training
+and validation accounts.

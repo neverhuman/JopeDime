@@ -1,0 +1,107 @@
+{
+  "wave": "H202",
+  "authority": "/home/ubuntu/nudges/hw_t1505_h202_gputokbenchcodex.md",
+  "checkpoint": "/home/ubuntu/jope-data/h202/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h202/inputs/r882-reference.json",
+  "catalog_copy": "/home/ubuntu/jope-data/h202/inputs/real-catalog.jsonl",
+  "baseline_cost_reference": "/home/ubuntu/jope-data/h170/attempt-001/baseline_costs.npz",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.json": "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba",
+    "/home/ubuntu/jope_plan/master/source/S3_DATASET_CATALOG.md": "bb3a1d20d3495b599f8dc392a12b858d03cdcdafa540531c5e5a4b94c250e8ee",
+    "/home/ubuntu/jope-data/h170/attempt-001/baseline_costs.npz": "a5109aff14e9aed679752f9884059adf9ce580f1a2d266c2d0a88fe42194ee38",
+    "/home/ubuntu/jope-data/h202/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h202/inputs/r882-reference.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h202/inputs/real-catalog.jsonl": "c5f5eb6db36d24daa9abc5c7808a49773a2b94c1765620d236e91a471fe2cb54"
+  },
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h189_swa_ema/h182_base.py": "18978b5a3975c395d30cf5ff2822f51c79417e185e6a211810c683d8d061f114",
+    "research/flywheel_selfplay/h189_swa_ema/analysis.py": "d0bcf6c38d411f981019644d35a25a56c9a64d3f104b98cbd2147071e36ae30e",
+    "research/flywheel_selfplay/h189_swa_ema/treatment.py": "534fa73c830a908d48508a383b7835c919ebdcc36d819dc9fdbc259ae259f67a",
+    "research/flywheel_selfplay/h189_swa_ema/h182_source_treatment.py": "fe0156ad79db3b70849963f86d4d78615000f36ead201e82d95e1c9b61766407",
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
+    "research/flywheel_selfplay/h197_pcgc/runner.py": "ca123ce220f76a625208e59e3997a72576715daddddb2ece9d16e5fc4f3ac1dd"
+  },
+  "source_sha256": {
+    "design.py": "a4505ad651f9aabb4ca21d0f7530d4fb50a5fc10614115dd31e1a39d5aa855f6",
+    "artifacts.py": "135028eb5571148f2a89ee555f34cdbcd5214080c504409786d7b76fbaab779f",
+    "test_h202.py": "e70c97e51d8140108322b85cc5dd7816e8ca224f9f026904473619c886f7d777",
+    "analysis.py": "64e1df8b3ae11ff8332e2e7ffa07f2d1f0bcf93484f542fc4e081af89adb0667",
+    "PREREG.md": "c50a2b7a84fb06057b8d0b2b3ad314954f7b2637f6ecb03a983e0a9e10bc649d",
+    "monitor.py": "a1182d142d62f251de0777f7d9fdae309009e45836be3b2f7492682b62338bdc",
+    "fold_manifest.json": "e9c92e1772d3871e78c85f5f911f70db6af0bc6f863e6827b52c22b37c77d6d3",
+    "objectives.py": "1d68987f555c2388c4af2eb1a75eb601f979060393f940ab25f602a5193c06f6",
+    "runner.py": "ebad7a2c0ed60a575234550ae4a05e76151d883440b045a06fa088ebb4ff7251"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "psutil": "7.1.0",
+    "torch": "2.7.0"
+  },
+  "arms": [
+    "R882",
+    "HNEG40",
+    "CTRL40",
+    "HNEG_SHUF"
+  ],
+  "seeds": [
+    202101,
+    202102,
+    202103
+  ],
+  "fold_seeds": [
+    202141,
+    202142,
+    202143
+  ],
+  "boot_seed": 202150,
+  "steps": [
+    0,
+    10,
+    20,
+    30,
+    40
+  ],
+  "updates": 1800,
+  "context_backwards": 7200,
+  "cells": 45,
+  "trainable_adapter_parameters": 29211,
+  "baseline": {
+    "contexts": 91,
+    "families": 19,
+    "mean": 1.1377941898164525,
+    "batch_size": 1
+  },
+  "codec": "lossless-xor-f32-against-r882/v1",
+  "resources": {
+    "host": "xbabe1",
+    "threads": 3,
+    "RSS_bytes": 5000000000,
+    "MemAvailable_bytes": 12884901888,
+    "free_bytes": 40000000000,
+    "output_bytes": 300000000,
+    "load": 108.8,
+    "wall_seconds": 14400
+  }
+}

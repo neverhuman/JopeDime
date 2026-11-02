@@ -3,7 +3,7 @@
   "qualification_handoff": "NOT_EXECUTABLE",
   "candidate_sha256": "${JOPE_REL07_ARTIFACT_SHA256}",
   "source_policy": "Pin the exact clean origin/main SHA when materializing a run manifest.",
-  "input_owner": "dsc01 supplies and verifies the named A5, D1, M2, and M5 inputs.",
+  "input_owner": "bat02 supplies the A5 transcript; svc08 supplies the D1 macOS receipt; dsc01 supplies M2; rnk11 supplies the R21 M5 default-off receipt.",
   "gates": [
     {
       "id": "M1",
@@ -55,10 +55,10 @@
         "python3",
         "-B",
         "deploy/qualification/v1.0/providers/m5.py",
-        "--golden-dir",
-        "${JOPE_GOLDEN_DIR}",
-        "--bundle-dir",
-        "${JOPE_PARITY_BUNDLE_DIR}"
+        "--default-off-receipt",
+        "${JOPE_REL07_M5_DEFAULT_OFF_RECEIPT}",
+        "--default-off-receipt-sha256",
+        "${JOPE_REL07_M5_DEFAULT_OFF_RECEIPT_SHA256}"
       ],
       "timeout_seconds": 3600
     },
@@ -178,7 +178,7 @@
         "JOPE_REL07_A5_MANIFEST_SHA256=${JOPE_REL07_A5_MANIFEST_SHA256}",
         "python3",
         "-B",
-        "deploy/qualification/v1.0/providers/a5.py"
+        "deploy/qualification/v1.0/a5_run.py"
       ],
       "timeout_seconds": 3600
     },
@@ -272,6 +272,9 @@
     {
       "id": "D2",
       "argv": [
+        "/usr/bin/env",
+        "JOPE_REL07_ARTIFACT=${JOPE_REL07_D2_ARTIFACT}",
+        "JOPE_REL07_ARTIFACT_SHA256=${JOPE_REL07_D2_ARTIFACT_SHA256}",
         "python3",
         "-B",
         "deploy/qualification/v1.0/providers/d2.py"

@@ -29,8 +29,15 @@ SCHEMA = "jope.joint-regbin/v1"
 PARTIAL_SCHEMA = "jope.joint-regbin.binary-panel-packet/v1"
 CATALOG_POOL_SCHEMA = "jope.joint-regbin.catalog-pools/v1"
 FAMILY_KEY_POOL_SCHEMA = "jope.joint-regbin.family-key-pools/v1"
+FAMILY_EXCLUSION_SCHEMA = "jope.jrb01.sealed-family-exclusion/v1"
 ROLE_CANDIDATE_SCHEMA = "jope.joint-regbin.task-role-candidates/v1"
 CATALOG_V246_SHA256 = "e5f732fd784bf67bfc16f4173c585b0861e6e8a6026808df857097a721bbf0ba"
+FAMILY_EXCLUSION_SHA256 = (
+    "ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651"
+)
+DEFAULT_FAMILY_EXCLUSION_PATH = (
+    Path.home() / "jope_plan/master/approved/JRB01_SEALED_FAMILY_EXCLUSION.json"
+)
 OWNER_ALIAS_RECEIPT_SHA256 = (
     "114c57bf328c3556315a4b69f2f230ee0987086bda5ee1043aa50016ad9147b4"
 )
@@ -56,6 +63,68 @@ def sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _load_family_exclusion(
+    artifact_path: Path | None,
+    artifact_sha256: str | None,
+    catalog_sha256: str,
+) -> dict:
+    """Load the owner-pinned identity-only exclusion artifact or fail closed."""
+    path = Path(artifact_path or DEFAULT_FAMILY_EXCLUSION_PATH)
+    expected_sha = artifact_sha256 or FAMILY_EXCLUSION_SHA256
+    if expected_sha != FAMILY_EXCLUSION_SHA256:
+        raise ValueError("sealed-family exclusion artifact pin mismatch")
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise ValueError(
+            "sealed-family exclusion artifact is missing or unreadable"
+        ) from exc
+    if hashlib.sha256(raw).hexdigest() != expected_sha:
+        raise ValueError("sealed-family exclusion artifact hash mismatch")
+    try:
+        artifact = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("sealed-family exclusion artifact is malformed") from exc
+    if (
+        not isinstance(artifact, dict)
+        or set(artifact)
+        != {
+            "schema",
+            "identity_manifest_sha256",
+            "catalog_sha256",
+            "family_keys",
+            "unkeyed_catalog_ids",
+        }
+        or artifact.get("schema") != FAMILY_EXCLUSION_SCHEMA
+        or artifact.get("identity_manifest_sha256") != PROTECTED_FAMILY_MANIFEST_SHA256
+        or artifact.get("catalog_sha256") != catalog_sha256
+        or not isinstance(artifact.get("family_keys"), list)
+        or not isinstance(artifact.get("unkeyed_catalog_ids"), list)
+    ):
+        raise ValueError("sealed-family exclusion artifact identity/schema mismatch")
+    keys = artifact["family_keys"]
+    ids = artifact["unkeyed_catalog_ids"]
+    if (
+        any(
+            not isinstance(key, dict)
+            or set(key) != {"kind", "value"}
+            or key.get("kind") not in {"dedupe_fingerprint", "source_file"}
+            or not isinstance(key.get("value"), str)
+            or not key["value"].strip()
+            for key in keys
+        )
+        or len({(key["kind"], key["value"]) for key in keys}) != len(keys)
+        or any(
+            not isinstance(dataset_id, str)
+            or not re.fullmatch(r"[0-9a-f]{16}", dataset_id)
+            for dataset_id in ids
+        )
+        or len(set(ids)) != len(ids)
+    ):
+        raise ValueError("sealed-family exclusion artifact identities are malformed")
+    return artifact
 
 
 def canonical_json_sha(value) -> str:
@@ -542,22 +611,48 @@ def build_catalog_pool_manifest_from_files(
     )
 
 
-def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
-    """Inventory family keys without assigning unproven train/validation roles.
+def build_family_key_pool_manifest(
+    catalog: dict,
+    catalog_sha256: str,
+    *,
+    family_exclusion_path: Path | None = None,
+    family_exclusion_sha256: str | None = None,
+) -> dict:
+    """Build catalog-eligible family-grouped folds without admitting a worker.
 
-    Family identity is exactly the union of keys emitted by the pinned
-    ``family_keys`` catalog projection. No local aliases or roster inputs are
-    consulted. The approved catalog does not establish nonsealed eligibility, so every
-    candidate family is withheld from role assignment.
+    Family components union the pinned family_keys projection, catalog
+    dedupe/source-file keys, and the owner-pinned identity-only exclusion. The
+    artifact supplies keys and unkeyed IDs only; worker admission and
+    qualification remain separate gates.
     """
     family_keys = _family_tool()
+    inventory = catalog.get("inventory", {})
+    datasets = catalog.get("datasets", [])
+    catalog_sealed_name_ids = inventory.get("sealed_name_matches_excluded")
+    dataset_ids = [row.get("id") for row in datasets if isinstance(row, dict)]
     if (
         catalog.get("inventory", {}).get("source_catalog", "").find("LATEST=v246") < 0
-        or catalog.get("inventory", {}).get("usable_records")
-        != len(catalog.get("datasets", []))
+        or inventory.get("usable_records") != len(datasets)
+        or type(inventory.get("catalog_records")) is not int
+        or not isinstance(catalog_sealed_name_ids, list)
+        or any(
+            not isinstance(dataset_id, str) for dataset_id in catalog_sealed_name_ids
+        )
+        or len(catalog_sealed_name_ids) != len(set(catalog_sealed_name_ids))
+        or inventory["catalog_records"]
+        != inventory["usable_records"] + len(catalog_sealed_name_ids)
+        or len(dataset_ids) != len(datasets)
+        or len(dataset_ids) != len(set(dataset_ids))
+        or set(dataset_ids).intersection(catalog_sealed_name_ids)
         or catalog_sha256 != CATALOG_V246_SHA256
     ):
-        raise ValueError("family-key pools require the pinned v246 catalog")
+        raise ValueError(
+            "family-key pools require consistent pinned v246 eligibility metadata"
+        )
+    exclusion = _load_family_exclusion(
+        family_exclusion_path, family_exclusion_sha256, catalog_sha256
+    )
+    owner_exclusion_ids = set(exclusion["unkeyed_catalog_ids"])
     repo = Path(__file__).resolve().parents[2]
     policy_path = (
         repo / "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/family_keys.py"
@@ -594,6 +689,26 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         ):
             raise ValueError(f"catalog train metadata is invalid: {dataset_id}")
         keys, _triggers = family_keys.derive(family_keys.attrs_from_catalog_row(row))
+        raw_family_key = row.get("family_key")
+        if raw_family_key:
+            if row.get("family_key_source") != "provenance.dedupe_fingerprint":
+                raise ValueError(
+                    f"catalog family-key source is not approved: {dataset_id}"
+                )
+            keys = sorted(set(keys) | {("dedupe_fingerprint", raw_family_key)})
+        derived_family_key = row.get("family_key_derived")
+        if derived_family_key:
+            source_file_key = (
+                derived_family_key.removeprefix("srcfile:")
+                if derived_family_key.startswith("srcfile:")
+                else ""
+            )
+            if not source_file_key and dataset_id in owner_exclusion_ids:
+                raise ValueError(
+                    f"catalog derived family key is malformed: {dataset_id}"
+                )
+            if source_file_key:
+                keys = sorted(set(keys) | {("source_file", source_file_key)})
         if not keys:
             raise ValueError(f"catalog row has no pinned family key: {dataset_id}")
         keys_by_id[dataset_id] = [list(key) for key in keys]
@@ -603,28 +718,85 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
             else:
                 key_owner[key] = dataset_id
 
+    exclusion_keys = {
+        (item["kind"], item["value"]) for item in exclusion["family_keys"]
+    }
+    exclusion_ids = owner_exclusion_ids
+    if not exclusion_keys <= key_owner.keys():
+        raise ValueError("sealed-family exclusion key is absent from pinned catalog")
+    if not exclusion_ids <= by_id.keys():
+        raise ValueError("sealed-family exclusion ID is absent from pinned catalog")
+    if any(by_id[dataset_id].get("family_key") for dataset_id in exclusion_ids):
+        raise ValueError("sealed-family exclusion marks a keyed catalog row unkeyed")
+    excluded_roots = {find(key_owner[key]) for key in exclusion_keys}
+    excluded_roots.update(find(dataset_id) for dataset_id in exclusion_ids)
+    excluded_dataset_ids = {
+        dataset_id for dataset_id in by_id if find(dataset_id) in excluded_roots
+    }
+    eligible_ids = set(by_id) - excluded_dataset_ids
+    eligible_by_id = {dataset_id: by_id[dataset_id] for dataset_id in eligible_ids}
+
     keys_by_root = defaultdict(set)
-    for dataset_id in sorted(by_id):
+    for dataset_id in sorted(eligible_by_id):
         root = find(dataset_id)
         keys_by_root[root].update(tuple(key) for key in keys_by_id[dataset_id])
     family_by_id = {}
-    for dataset_id in sorted(by_id):
+    for dataset_id in sorted(eligible_by_id):
         component = find(dataset_id)
         component_keys = sorted(keys_by_root[component])
         family_by_id[dataset_id] = canonical_json_sha(
             [list(key) for key in component_keys]
         )
-    # T1145/T1210 permits only the catalog and pinned family_keys inputs. The
-    # catalog supplies identity and TRAIN-file metadata, not reviewed nonsealed
-    # eligibility. Keep the inventory, but withhold every unverified family from
-    # train/validation roles without inspecting a protected roster or payload.
+    # T1350 permits catalog v246's usable records as nonsealed candidates.
+    # Its inventory records the name-matched sealed exclusions; validate that
+    # they are absent above. No protected roster or payload is consulted.
     family_count = len(set(family_by_id.values()))
+    fold_by_family = protocol.family_folds(
+        [
+            {
+                "dataset": dataset_id,
+                "family": family_by_id[dataset_id],
+                "task": row["task"],
+            }
+            for dataset_id, row in sorted(eligible_by_id.items())
+        ],
+        seed=136,
+    )
+    rows_for_folds = [
+        {
+            "dataset": dataset_id,
+            "family": family_by_id[dataset_id],
+            "task": row["task"],
+            "fold": fold_by_family[family_by_id[dataset_id]],
+        }
+        for dataset_id, row in sorted(eligible_by_id.items())
+    ]
+    fold_splits = {
+        str(fold): {
+            role: {
+                task: [
+                    row["dataset"]
+                    for row in rows_for_folds
+                    if row["task"] == task
+                    and ((row["fold"] == fold) == (role == "val"))
+                ]
+                for task in protocol.TASKS
+            }
+            for role in ("train", "val")
+        }
+        for fold in range(5)
+    }
     nonsealed_eligibility = {
-        "status": "UNVERIFIED_FROM_APPROVED_METADATA",
-        "ruling_reference": "ENG:watcher t2035; T1145 ADMISSION_INPUTS protected-data boundary",
-        "verified_family_count": 0,
-        "withheld_family_count": family_count,
-        "withheld_dataset_count": len(by_id),
+        "status": "CATALOG_USABLE_NONSEALED_MEMBERSHIP_VERIFIED",
+        "ruling_reference": "ENG:watcher t2035, t1350, and t1410 D4",
+        "eligibility_verified": True,
+        "basis": "pinned v246 usable rows after owner-pinned sealed-family closure",
+        "catalog_records": inventory["catalog_records"],
+        "usable_records": inventory["usable_records"],
+        "sealed_name_matches_excluded": len(catalog_sealed_name_ids),
+        "verified_family_count": family_count,
+        "excluded_family_count": len(excluded_roots),
+        "excluded_dataset_count": len(excluded_dataset_ids),
     }
     return {
         "schema": FAMILY_KEY_POOL_SCHEMA,
@@ -633,6 +805,7 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         "qualification_status": "NOT_QUALIFIED",
         "catalog_version": "v246",
         "catalog_sha256": catalog_sha256,
+        "family_exclusion_sha256": FAMILY_EXCLUSION_SHA256,
         "family_key_policy": family_keys.SCHEMA,
         "family_key_policy_sha256": family_keys.KEYS_POLICY_SHA256,
         "family_key_source_sha256": policy_sha,
@@ -640,46 +813,57 @@ def build_family_key_pool_manifest(catalog: dict, catalog_sha256: str) -> dict:
         "fold_seed": 136,
         "paired_campaign_seeds": [20261029, 20261030, 20261031],
         "candidate_count_by_task": {
-            task: sum(row["task"] == task for row in by_id.values())
+            task: sum(row["task"] == task for row in eligible_by_id.values())
             for task in protocol.TASKS
         },
         "family_by_dataset": dict(sorted(family_by_id.items())),
-        "family_keys_by_dataset": dict(sorted(keys_by_id.items())),
-        "fold_by_family": {},
-        "fold_splits": {},
+        "family_keys_by_dataset": {
+            dataset_id: keys_by_id[dataset_id] for dataset_id in sorted(eligible_by_id)
+        },
+        "fold_by_family": dict(sorted(fold_by_family.items())),
+        "fold_splits": fold_splits,
         "train_metadata_by_dataset": {
             dataset_id: {
                 "train_rows": by_id[dataset_id]["train_rows"],
                 "train_sha256": by_id[dataset_id]["train_sha256"],
                 "task": by_id[dataset_id]["task"],
             }
-            for dataset_id in sorted(by_id)
+            for dataset_id in sorted(eligible_by_id)
         },
         "nonsealed_eligibility": nonsealed_eligibility,
         "payloads_opened": 0,
         "blockers": [
-            "approved catalog has no reviewed nonsealed-family eligibility; all families withheld from roles",
             "catalog train hashes do not provide learner-compatible cached candidate tensors",
             "qualified two-task worker and R882 checkpoint proof are not present in this manifest",
         ],
     }
 
 
-def verify_family_key_pool_manifest(manifest: dict, catalog_path: Path) -> dict:
+def verify_family_key_pool_manifest(
+    manifest: dict,
+    catalog_path: Path,
+    *,
+    family_exclusion_path: Path | None = None,
+    family_exclusion_sha256: str | None = None,
+) -> dict:
     """Re-derive the metadata split from the pinned catalog without opening payloads."""
     catalog_path = Path(catalog_path)
     catalog_bytes = catalog_path.read_bytes()
     expected = build_family_key_pool_manifest(
-        json.loads(catalog_bytes), hashlib.sha256(catalog_bytes).hexdigest()
+        json.loads(catalog_bytes),
+        hashlib.sha256(catalog_bytes).hexdigest(),
+        family_exclusion_path=family_exclusion_path,
+        family_exclusion_sha256=family_exclusion_sha256,
     )
     if manifest != expected:
         raise ValueError("family-key pool manifest differs from pinned catalog split")
     return {
         "schema": "jope.joint-regbin.family-key-pool-preflight/v1",
-        "status": "METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED",
+        "status": "METADATA_SPLIT_VERIFIED",
         "eligibility_verified": False,
         "qualification_status": "NOT_QUALIFIED",
         "catalog_sha256": expected["catalog_sha256"],
+        "family_exclusion_sha256": expected["family_exclusion_sha256"],
         "family_key_policy_sha256": expected["family_key_policy_sha256"],
         "candidate_count_by_task": expected["candidate_count_by_task"],
         "family_count": len(set(expected["family_by_dataset"].values())),

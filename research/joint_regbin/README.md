@@ -116,38 +116,92 @@ appear in the usable catalog, and the task-specific worker qualification is
 still missing. It is a role-planning receipt for the worker lane, not a runnable
 study manifest or scientific result.
 
-### T1210 family-key candidate inventory and role guard
+### T1350 catalog-eligible family folds and role guard
 
-`admission.build_family_key_pool_manifest(...)` records catalog IDs and exactly
-those keys returned by the pinned `family_keys.attrs_from_catalog_row()` and
-`family_keys.derive()` calls. Family components preserve shared and transitive
-returned keys across both tasks. No source-file, URL-parent, owner-alias, or
-protected-roster inputs are added.
+`admission.build_family_key_pool_manifest(...)` builds family components from
+the pinned `family_keys` projection and catalog-recorded dedupe/source-file
+keys. Shared and transitive keys are unioned across regression and binary rows.
+The only protected input is an owner-pinned identity-only exclusion artifact;
+no roster columns or payloads are read.
 
-The frozen T1145/T1210 admission inputs require a family's nonsealed status to
-be established before assigning TRAIN or validation roles. The approved v246
-catalog supplies identities and TRAIN-file hashes, but no reviewed nonsealed
-eligibility evidence. Presence in the catalog, a task label, and self-reported
-flags cannot establish that permission. Every unverified family is therefore
-withheld: `fold_by_family` and `fold_splits` stay empty, while
-`nonsealed_eligibility` records the withheld family/dataset counts and ruling.
-The preflight re-derives this candidate inventory and reports
-`METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED`, zero folds, and
-`eligibility_verified:false`. Forged role assignments are rejected.
+ENG:watcher t2035/t1350/t1410 D4 authorizes the pinned v246 usable catalog after
+excluding every family component named by
+`JRB01_SEALED_FAMILY_EXCLUSION.json` (SHA-256
+`ca0eff866a87548803feb03e50f8e7e99b74993b2e1d0b8ce56e3ec1b184a651`). The
+artifact contains family keys and catalog IDs of unkeyed sealed-family members
+only. The builder fails closed if it is absent, unreadable, or does not match
+the code-pinned hash, then re-derives family closure across the catalog. P3
+heldout/dev families remain eligible. The analysis-only overlap receipt reports
+153 excluded dataset IDs, zero protected IDs or keys in the eligible pool,
+3,335 regression and 843 binary candidates, and five family-grouped folds.
+No protected roster columns or payloads are read. This is role planning, not
+worker admission or qualification: the pool remains
+`eligibility_verified:false`, and the catalog's train hashes do not provide
+candidate tensors or the qualified worker/checkpoint required for an
+executable study. No campaign starts.
 
-This withholds unknown eligibility; it does not classify P3 `heldout` or `dev`
-as forbidden. The t2035 holdout remains exactly `sealed_excluded` by family.
-Restoring five-fold assignments with fixed seed 136 requires approved,
-reviewed nonsealed-family evidence that respects the no-protected-roster input
-boundary. No role is inferred and no payload is opened in this metadata path.
-Catalog train hashes also do not provide the candidate tensors or qualified
-worker/checkpoint required for an executable learner packet. No campaign starts.
+### Train-only candidate tensor builder (ENG:watcher R22)
+
+`candidate_builder.py` supplies the train-only cache construction seam. It
+re-derives the artifact-pinned family folds and requires a separate ADMITTED
+role manifest that passes `admission.rederive_role_manifest`. Catalog folds
+alone cannot authorize payload reads. When a reviewed role admission exists,
+the builder reads only
+`datasets/<id>/manifest.json` and the exact
+`blobs/sha256/<catalog-train-sha256>` object from the approved dataset bucket.
+It never lists a bucket or reads another split. CSV rows are numeric and finite;
+binary labels are explicitly mapped to zero/one from their two observed class
+values. A deterministic seed builds two inner folds, and the source-pinned
+Flywheel Landmark-V2 proposer, DSL featurizer and native S1 evaluator build 16
+candidate rows.
+
+Regression worker targets are the existing S1 constrained fitness. Binary
+worker targets are the existing two-fold `cv_gate_passed` labels, because the
+task head is BCE-with-logits; this does not infer task from target cardinality
+or introduce a new threshold. The R882/DOPE token tensors are supplied by the
+caller after `runtime.initialize_r882_worker()` performs the read-only pinned
+initialization. Worker inputs have no revealed
+candidate labels, so target values cannot leak through conditioning slots.
+`make_worker_packer(...)` implements the callable expected by `WorkerCore`.
+The synthetic suite checks that catalog role candidates without a complete
+admitted manifest cannot authorize an S3 request. Building a tensor cache does
+not qualify a worker or admit a study packet.
+
+Every generated pool remains
+`CANDIDATE_TENSORS_NOT_ADMITTED` / `eligibility_verified:false`. This builder
+does not qualify a worker, admit role candidates, train, reserve the study lock,
+write checkpoints or mutate the score store. Use only role rows whose pinned
+metadata proves nonsealed TRAIN/VAL eligibility. Current owner evidence still
+does not provide an admitted complete role manifest or qualified two-task
+worker, so no real pool was built by this change.
+
+### Source-pinned R882 worker initialization
+
+`runtime.initialize_r882_worker()` verifies the H141 checkpoint custody receipt
+and R882 SHA, the pinned H144 initialization runtime/manifest, the fused model
+source, its declared model-code and asset closure, and Python/NumPy/PyTorch
+versions. It loads R882 read-only on CPU, verifies the frozen DOPE hash, and
+enables gradients only for the 47 non-anchor adapter tensors (29,211 parameters).
+`SourcePinnedWorker.make_candidate_packer()` binds the pool, token, and mask
+maps through the shared candidate builder to this checkpoint and DOPE identity.
+`build_core()` rejects packers without those pins and requires an explicit
+optimizer containing exactly the adapter and two-task head parameters. The
+guarded core rechecks frozen model state and DOPE around every train or predict
+call, including failed calls. It does not guess optimizer hyperparameters or
+start the driver.
+
+This is a real R882-backed initialization and source-pinned two-task core, not
+worker qualification or a study result. An admitted role manifest, prepared
+hash-pinned nonsealed candidate pools, and preregistered optimizer configuration
+remain prerequisites for any training request. The initializer opens no context
+payload.
 
 ## Learner integration contract (qualification still required)
 
 Supply a reviewed Python learner, pinned by its full file hash, accepting
 `--request FILE --response FILE --packet DIR --initial-checkpoint FILE`.
-This PR does **not** provide or qualify that two-task learner. It must use the
+The source-pinned initializer/core does not yet provide or qualify that complete
+request/response learner. It must use the
 frozen DOPE weights, train only the JopeDime adapter, enforce GPU memory≤90% and
 CPU≤85%, verify the inherited `JOPE_QUALIFICATION_LOCK_FD` identifies the real
 lock, and avoid shared/live bank or checkpoint writes. A regression-only worker

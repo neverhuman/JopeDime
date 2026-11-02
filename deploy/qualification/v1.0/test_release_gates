@@ -187,6 +187,363 @@ class ReleaseGates(unittest.TestCase):
         self.assertTrue(all(gate["status"] == "PASS" for gate in receipt["gates"]))
         self.assertEqual(receipt["artifact_sha256"], self.sha)
 
+    def test_candidate_mode_executes_all_28_and_writes_status_table(self):
+        qualification = self.repo / "deploy/qualification/v1.0"
+        wrapper = qualification / "a5_run.py"
+        wrapper.parent.mkdir(parents=True)
+        worker = (
+            "import json,os\nfrom pathlib import Path\n"
+            "p=Path(os.environ['JOPE_REL07_RESULT'])\n"
+            "counts=dict(collected=1,executed=1,passed=1,failed=0,skipped=0,excluded=0)\n"
+            "p.write_text(json.dumps(dict(schema='jope.rel07.gate-execution/v1',"
+            "id=os.environ['JOPE_REL07_GATE_ID'],status='PASS',"
+            "source_sha=os.environ['JOPE_REL07_SOURCE_SHA'],"
+            "artifact_sha256=os.environ['JOPE_REL07_ARTIFACT_SHA256'],counts=counts)))\n"
+        )
+        wrapper.write_text(worker)
+        self.commit_providers({gate: worker for gate in runner.RELEASE_GATE_IDS})
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        candidate_dir = self.root / "candidate-run"
+        candidate = candidate_dir / "full-linux-x86_64" / "jopedime"
+        candidate.parent.mkdir(parents=True)
+        candidate.write_bytes(self.artifact.read_bytes())
+        candidate_sha = runner.cpu.digest(candidate)
+        fused_candidate = (
+            candidate_dir / "fused-cpu-linux-x86_64" / "jopedime"
+        )
+        fused_candidate.parent.mkdir(parents=True)
+        fused_candidate.write_bytes(b"synthetic fused-cpu candidate fixture")
+        fused_sha = runner.cpu.digest(fused_candidate)
+        seal = self.root / "candidate-run-seal.json"
+        seal.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-sealed-variant/v1",
+                    "id": "full-linux-x86_64",
+                    "source_sha": source,
+                    "sha256": candidate_sha,
+                    "verify": {
+                        "ok": True,
+                        "report": {"file_sha256": candidate_sha},
+                    },
+                }
+            )
+        )
+        fused_seal = self.root / "candidate-run-fused-seal.json"
+        fused_seal.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-sealed-variant/v1",
+                    "id": "fused-cpu-linux-x86_64",
+                    "source_sha": source,
+                    "sha256": fused_sha,
+                    "verify": {
+                        "ok": True,
+                        "report": {"file_sha256": fused_sha},
+                    },
+                }
+            )
+        )
+        manifest = candidate_dir / "rc2-manifest.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-manifest/v1",
+                    "source_sha": source,
+                    "release_candidate": True,
+                    "qualified": False,
+                    "artifacts": [
+                        {
+                            "id": "full-linux-x86_64",
+                            "path": str(candidate),
+                            "source_sha": source,
+                            "sha256": candidate_sha,
+                            "bytes": candidate.stat().st_size,
+                            "seal_verify_receipt": str(seal),
+                            "signature_receipts": [
+                                {"receipt": {"verify": "PASS"}}
+                            ],
+                        },
+                        {
+                            "id": "fused-cpu-linux-x86_64",
+                            "path": str(fused_candidate),
+                            "profile": "fused-cpu",
+                            "source_sha": source,
+                            "sha256": fused_sha,
+                            "bytes": fused_candidate.stat().st_size,
+                            "seal_verify_receipt": str(fused_seal),
+                            "signature_receipts": [
+                                {"receipt": {"verify": "PASS"}}
+                            ],
+                        },
+                    ],
+                }
+            )
+        )
+        inputs_path, inputs_sha256 = self.candidate_input_file()
+        output = self.root / "candidate-run-output"
+        with (
+            mock.patch(
+                "sys.argv",
+                [
+                    "release-gates",
+                    "--candidate",
+                    str(candidate),
+                    "--repo",
+                    str(self.repo),
+                    "--inputs",
+                    str(inputs_path),
+                    "--inputs-sha256",
+                    inputs_sha256,
+                    "--output",
+                    str(output),
+                ],
+            ),
+            redirect_stdout(StringIO()) as stdout,
+        ):
+            self.assertEqual(runner.main(), 0)
+        summary = json.loads(stdout.getvalue())
+        table = json.loads((output / "status_table.json").read_text())
+        self.assertEqual(summary["gates"], 28)
+        self.assertTrue(summary["all_pass"])
+        self.assertEqual(len(table["gates"]), 28)
+        self.assertEqual({row["status"] for row in table["gates"]}, {"PASS"})
+        run = json.loads((output / "execution.json").read_text())
+        self.assertEqual(run["candidate_inputs_sha256"], inputs_sha256)
+        self.assertEqual(
+            run["gate_artifacts"]["D2"],
+            {
+                "path": str(fused_candidate),
+                "sha256": fused_sha,
+                "source_sha": source,
+                "candidate_manifest_sha256": runner.cpu.digest(manifest),
+                "seal_receipt_sha256": runner.cpu.digest(fused_seal),
+            },
+        )
+        d2_result = json.loads((output / "D2" / "result.json").read_text())
+        self.assertEqual(d2_result["artifact_sha256"], fused_sha)
+        self.assertEqual(
+            next(row for row in table["gates"] if row["id"] == "A5")["argv"][-1],
+            "deploy/qualification/v1.0/a5_run.py",
+        )
+        d2_command_manifest = json.loads(
+            output.with_name(output.name + ".gate-commands.json").read_text()
+        )
+        d2_command = next(
+            row for row in d2_command_manifest["gates"] if row["id"] == "D2"
+        )
+        self.assertIn(f"JOPE_REL07_ARTIFACT={fused_candidate}", d2_command["argv"])
+        self.assertIn(f"JOPE_REL07_ARTIFACT_SHA256={fused_sha}", d2_command["argv"])
+
+        original_manifest = manifest.read_text()
+        manifest_value = json.loads(original_manifest)
+        fused_row = next(
+            row
+            for row in manifest_value["artifacts"]
+            if row["id"] == "fused-cpu-linux-x86_64"
+        )
+        fused_row["source_sha"] = "0" * 40
+        manifest.write_text(json.dumps(manifest_value))
+        try:
+            rejected = runner._candidate_record(candidate)
+        finally:
+            manifest.write_text(original_manifest)
+        self.assertIsNone(rejected["d2_artifact"])
+        self.assertIn("source differs", rejected["d2_blocked_reason"])
+
+        fused_record = runner._candidate_record(candidate)["d2_artifact"]
+        original_fused = fused_candidate.read_bytes()
+        fused_candidate.write_bytes(b"changed after candidate binding")
+        try:
+            with self.assertRaisesRegex(ValueError, "D2 candidate bytes changed"):
+                runner.verify_candidate_variant(fused_record, source)
+        finally:
+            fused_candidate.write_bytes(original_fused)
+
+    def test_candidate_dry_run_writes_reasoned_28_row_status_without_execution(self):
+        qualification = self.repo / "deploy/qualification/v1.0"
+        wrapper = qualification / "a5_run.py"
+        wrapper.parent.mkdir(parents=True)
+        wrapper.write_text("raise SystemExit('dry-run invoked A5 wrapper')\n")
+        self.commit_providers(
+            {gate: "raise SystemExit('dry-run invoked provider')\n" for gate in runner.RELEASE_GATE_IDS}
+        )
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        candidate_dir = self.root / "candidate-cut"
+        candidate_path = candidate_dir / "full-linux-x86_64" / "jopedime"
+        candidate_path.parent.mkdir(parents=True)
+        candidate_path.write_bytes(b"synthetic signed envelope fixture")
+        candidate_sha = runner.cpu.digest(candidate_path)
+        seal = self.root / "sealed-variant.json"
+        seal.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-sealed-variant/v1",
+                    "id": "full-linux-x86_64",
+                    "source_sha": source,
+                    "sha256": candidate_sha,
+                    "verify": {"ok": True, "report": {"file_sha256": candidate_sha}},
+                }
+            )
+        )
+        signature_receipt = {"receipt": {"verify": "PASS"}}
+        rc2_manifest = candidate_dir / "rc2-manifest.json"
+        rc2_manifest.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.rc2-manifest/v1",
+                    "source_sha": source,
+                    "release_candidate": True,
+                    "qualified": False,
+                    "artifacts": [
+                        {
+                            "id": "full-linux-x86_64",
+                            "path": str(candidate_path),
+                            "source_sha": source,
+                            "sha256": candidate_sha,
+                            "bytes": candidate_path.stat().st_size,
+                            "seal_verify_receipt": str(seal),
+                            "signature_receipts": [signature_receipt],
+                        }
+                    ],
+                }
+            )
+        )
+        output = self.root / "candidate-dryrun-output"
+        rows = runner.dry_run_candidate(
+            self.repo, candidate_path, output, bindings={}
+        )
+        table = json.loads((output / "status_table.json").read_text())
+        run = json.loads((output / "execution.json").read_text())
+        self.assertEqual(len(rows), 28)
+        self.assertEqual(table["candidate"]["sha256"], candidate_sha)
+        self.assertEqual(run["gates_executed"], 0)
+        self.assertFalse(run["release_qualified"])
+        self.assertEqual(
+            {
+                row["status"]
+                for row in table["gates"]
+                if row["id"] in runner.INPUT_FIELDS
+            },
+            {"BLOCKED"},
+        )
+        self.assertEqual(
+            sum(row["status"] == "NOT_RUN" for row in table["gates"]), 22
+        )
+        d2_row = next(row for row in table["gates"] if row["id"] == "D2")
+        self.assertEqual(d2_row["status"], "BLOCKED")
+        self.assertIn("fused-cpu-linux-x86_64", d2_row["reason"])
+        self.assertTrue(all(row["reason"] for row in table["gates"]))
+
+    def test_candidate_input_file_is_sha_pinned_and_uses_established_schema(self):
+        path, digest = self.candidate_input_file()
+        bindings, observed = runner.candidate_input_bindings(
+            path, digest
+        )
+        self.assertEqual(set(bindings), set(runner.INPUT_FIELDS))
+        self.assertEqual(observed, digest)
+        with self.assertRaisesRegex(ValueError, "do not match"):
+            runner.candidate_input_bindings(
+                path,
+                "0" * 64,
+            )
+
+    def test_unbound_candidate_inputs_block_only_their_four_gate_rows(self):
+        worker = (
+            "import json,os\nfrom pathlib import Path\n"
+            "p=Path(os.environ['JOPE_REL07_RESULT'])\n"
+            "counts=dict(collected=1,executed=1,passed=1,failed=0,skipped=0,excluded=0)\n"
+            "p.write_text(json.dumps(dict(schema='jope.rel07.gate-execution/v1',"
+            "id=os.environ['JOPE_REL07_GATE_ID'],status='PASS',"
+            "source_sha=os.environ['JOPE_REL07_SOURCE_SHA'],"
+            "artifact_sha256=os.environ['JOPE_REL07_ARTIFACT_SHA256'],counts=counts)))\n"
+        )
+        self.commit_providers({gate: worker for gate in runner.RELEASE_GATE_IDS})
+        source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        bindings = {
+            "M3": {
+                "full_inputs": str(self.root / "full-inputs.json"),
+                "full_inputs_sha256": "c" * 64,
+            }
+        }
+        commands, missing = runner.provider_commands(self.repo, bindings)
+        self.assertEqual(missing, [])
+        for command in commands:
+            if command["id"] in runner.INPUT_FIELDS and command["id"] not in bindings:
+                command["blocked_reason"] = "required provider inputs are unbound: fixture"
+        manifest_path = self.root / "partial-input-manifest.json"
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.gate-commands/v1",
+                    "source_sha": source,
+                    "artifact_sha256": self.sha,
+                    "gates": commands,
+                }
+            )
+        )
+        output = self.root / "partial-input-run"
+        receipt, code = runner.execute(self.repo, self.artifact, manifest_path, output)
+        table = json.loads((output / "status_table.json").read_text())
+        self.assertEqual(code, 1)
+        self.assertEqual(len(receipt["gates"]), 28)
+        self.assertEqual(
+            sum(row["status"] == "BLOCKED" for row in table["gates"]), 4
+        )
+        self.assertEqual(sum(row["status"] == "PASS" for row in table["gates"]), 24)
+        self.assertEqual(len(json.loads((output / "execution.json").read_text())["checks"]), 24)
+
+    def test_source_ancestor_rule_rejects_non_ancestor_and_accepts_ancestor(self):
+        self.commit_providers(
+            {gate: "# ancestor fixture\n" for gate in runner.RELEASE_GATE_IDS}
+        )
+        head = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "--allow-empty",
+                "-qm",
+                "advance main after candidate source",
+            ],
+            check=True,
+        )
+        main = runner.cpu.git(self.repo, "rev-parse", "HEAD")
+        subprocess.run(
+            ["git", "-C", str(self.repo), "update-ref", "refs/remotes/origin/main", main],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(self.repo), "reset", "--hard", head], check=True
+        )
+        self.assertTrue(runner.source_is_ancestor(self.repo, head, main))
+        manifest = runner.provider_manifest(self.repo, self.artifact, self.bindings())
+        self.assertEqual(manifest["source_sha"], head)
+        tree = runner.cpu.git(self.repo, "rev-parse", "HEAD^{tree}")
+        unrelated = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(self.repo),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit-tree",
+                tree,
+                "-m",
+                "unrelated root fixture",
+            ],
+            text=True,
+        ).strip()
+        self.assertFalse(runner.source_is_ancestor(self.repo, unrelated, main))
+
     def test_provider_discovery_lists_merged_modules_and_refuses_incomplete_inventory(
         self,
     ):
@@ -195,6 +552,8 @@ class ReleaseGates(unittest.TestCase):
         expected = [gate for gate in runner.RELEASE_GATE_IDS if gate != "D2"]
         for gate in expected:
             (provider_dir / (gate.lower() + ".py")).write_text("# fixture provider\n")
+        wrapper = self.repo / "deploy/qualification/v1.0/a5_run.py"
+        wrapper.write_text("# fixture A5 wrapper\n")
         subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
         subprocess.run(
             [
@@ -365,8 +724,8 @@ class ReleaseGates(unittest.TestCase):
                 "full_inputs_sha256": "c" * 64,
             },
             "M5": {
-                "golden_dir": str(self.root / "golden fixture"),
-                "bundle_dir": str(self.root / "bundle"),
+                "default_off_receipt": str(self.root / "DEFAULT-OFF.json"),
+                "default_off_receipt_sha256": "f" * 64,
             },
             "A5": {
                 "manifest": str(self.root / "named client capture.json"),
@@ -397,11 +756,27 @@ class ReleaseGates(unittest.TestCase):
         )
         return path
 
+    def candidate_input_file(self, gates=None):
+        path = self.root / "candidate-inputs.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "schema": "jope.rel07.provider-inputs/v1",
+                    "gates": self.bindings() if gates is None else gates,
+                }
+            )
+        )
+        return path, hashlib.sha256(path.read_bytes()).hexdigest()
+
     def commit_providers(self, providers):
         folder = self.repo / "deploy/qualification/v1.0/providers"
         folder.mkdir(parents=True, exist_ok=True)
         for gate, content in providers.items():
             (folder / (gate.lower() + ".py")).write_text(content)
+        if "A5" in providers:
+            wrapper = self.repo / "deploy/qualification/v1.0/a5_run.py"
+            if not wrapper.exists():
+                wrapper.write_text(providers["A5"])
         subprocess.run(["git", "-C", str(self.repo), "add", "deploy"], check=True)
         subprocess.run(
             [
@@ -577,7 +952,7 @@ raise SystemExit(module.main())
     def test_declared_m5_arguments_reach_a_real_required_argument_parser(self):
         self.commit_providers(
             {
-                "M5": "import argparse,json\np=argparse.ArgumentParser();p.add_argument('--golden-dir',required=True);p.add_argument('--bundle-dir',required=True);print(json.dumps(vars(p.parse_args())))\n"
+                "M5": "import argparse,json\np=argparse.ArgumentParser();p.add_argument('--default-off-receipt',required=True);p.add_argument('--default-off-receipt-sha256',required=True);print(json.dumps(vars(p.parse_args())))\n"
             }
         )
         commands, _ = runner.provider_commands(self.repo)
@@ -592,6 +967,26 @@ raise SystemExit(module.main())
         )
         self.assertEqual(after.returncode, 0, after.stderr)
         self.assertEqual(json.loads(after.stdout), bindings["M5"])
+
+    def test_m5_legacy_fixture_binding_remains_accepted(self):
+        self.commit_providers({"M5": "# synthetic legacy provider\n"})
+        legacy = {
+            "M5": {
+                "golden_dir": str(self.root / "golden fixture"),
+                "bundle_dir": str(self.root / "bundle"),
+            }
+        }
+        accepted = runner.provider_inputs(self.input_file(legacy))
+        commands, _ = runner.provider_commands(self.repo, accepted)
+        self.assertEqual(
+            commands[0]["argv"][-4:],
+            [
+                "--golden-dir",
+                legacy["M5"]["golden_dir"],
+                "--bundle-dir",
+                legacy["M5"]["bundle_dir"],
+            ],
+        )
 
     def test_a5_explicit_bindings_survive_the_restricted_child_environment(self):
         self.commit_providers(
@@ -669,6 +1064,7 @@ raise SystemExit(module.main())
                 }
             },
             {"M5": {"golden_dir": "/golden", "bundle_dir": "/bundle", "argv": ["sh"]}},
+            {"M5": {"default_off_receipt": "/receipt.json"}},
             {
                 "M5": {
                     "golden_dir": "/golden",
@@ -677,6 +1073,12 @@ raise SystemExit(module.main())
                 }
             },
             {"M5": {"golden_dir": True, "bundle_dir": "/bundle"}},
+            {
+                "M5": {
+                    "default_off_receipt": "/receipt.json",
+                    "default_off_receipt_sha256": "F" * 64,
+                }
+            },
             {"M5": {"golden_dir": "/golden\0bad", "bundle_dir": "/bundle"}},
         ]
         for gates in bad:

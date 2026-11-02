@@ -1,5 +1,6 @@
 """Synthetic CPU protocol fixtures; no learner, GPU, dataset or score history."""
 
+import hashlib
 import json
 import math
 from collections import Counter
@@ -8,7 +9,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from research.joint_regbin import driver, worker
+from research.joint_regbin import candidate_builder, driver, runtime, worker
 from research.joint_regbin.admission import (
     PARTIAL_SCHEMA,
     _load_csv,
@@ -41,7 +42,32 @@ from research.joint_regbin.protocol import (
 from research.joint_regbin.report import comparison, decide, elo, paired_records, render
 
 
-def test_family_key_pool_manifest_preserves_identity_but_withholds_roles(monkeypatch):
+def _write_family_exclusion(
+    tmp_path, *, catalog_sha, keys=(), ids=(), monkeypatch=None
+):
+    from research.joint_regbin import admission
+
+    artifact = {
+        "schema": "jope.jrb01.sealed-family-exclusion/v1",
+        "identity_manifest_sha256": admission.PROTECTED_FAMILY_MANIFEST_SHA256,
+        "catalog_sha256": catalog_sha,
+        "family_keys": [{"kind": kind, "value": value} for kind, value in sorted(keys)],
+        "unkeyed_catalog_ids": sorted(ids),
+    }
+    path = tmp_path / "sealed-family-exclusion.json"
+    path.write_text(json.dumps(artifact, sort_keys=True, separators=(",", ":")) + "\n")
+    import hashlib
+
+    artifact_sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    if monkeypatch is not None:
+        monkeypatch.setattr(admission, "FAMILY_EXCLUSION_SHA256", artifact_sha)
+    return path, artifact_sha
+
+
+def test_family_key_pool_manifest_certifies_catalog_eligibility_and_assigns_roles(
+    tmp_path,
+    monkeypatch,
+):
     from research.joint_regbin import admission
 
     rows = []
@@ -58,36 +84,52 @@ def test_family_key_pool_manifest_preserves_identity_but_withholds_roles(monkeyp
                     "s3_bucket": "veox-jopedime-datasets-use2",
                     "train_rows": 12,
                     "train_sha256": f"{start + index + 300:064x}",
-                    # These are intentionally not family_keys inputs.
-                    "family_key_derived": "srcfile:must-not-be-used",
-                    "source_file": "must-not-be-used.csv",
                 }
             )
     catalog = {
         "inventory": {
             "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
             "usable_records": len(rows),
+            "catalog_records": len(rows),
+            "sealed_name_matches_excluded": [],
         },
         "datasets": rows,
     }
 
     monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
-    manifest = build_family_key_pool_manifest(catalog, "a" * 64)
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path, catalog_sha="a" * 64, monkeypatch=monkeypatch
+    )
+    manifest = build_family_key_pool_manifest(
+        catalog,
+        "a" * 64,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
 
     assert manifest["schema"] == "jope.joint-regbin.family-key-pools/v1"
-    assert manifest["eligibility_verified"] is False
+    assert (
+        manifest["eligibility_verified"] is False
+    )  # full worker admission remains separate
     assert manifest["payloads_opened"] == 0
     assert manifest["candidate_count_by_task"] == {"regression": 6, "binary": 6}
     assert manifest["family_by_dataset"]["r-0"] == manifest["family_by_dataset"]["b-0"]
     assert manifest["family_keys_by_dataset"]["r-0"] == [["canonical_sha256", "f" * 64]]
-    assert manifest["fold_by_family"] == {}
-    assert manifest["fold_splits"] == {}
+    assert len(manifest["fold_by_family"]) == 11
+    assert len(manifest["fold_splits"]) == 5
+    assert any(
+        split[role][task]
+        for split in manifest["fold_splits"].values()
+        for role in ("train", "val")
+        for task in ("regression", "binary")
+    )
     assert manifest["fold_seed"] == 136
     eligibility = manifest["nonsealed_eligibility"]
-    assert eligibility["status"] == "UNVERIFIED_FROM_APPROVED_METADATA"
-    assert eligibility["verified_family_count"] == 0
-    assert eligibility["withheld_family_count"] == 11
-    assert eligibility["withheld_dataset_count"] == 12
+    assert eligibility["status"] == "CATALOG_USABLE_NONSEALED_MEMBERSHIP_VERIFIED"
+    assert eligibility["eligibility_verified"] is True
+    assert eligibility["verified_family_count"] == 11
+    assert eligibility["excluded_family_count"] == 0
+    assert eligibility["excluded_dataset_count"] == 0
 
 
 def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
@@ -115,6 +157,8 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
                 "inventory": {
                     "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
                     "usable_records": len(rows),
+                    "catalog_records": len(rows),
+                    "sealed_name_matches_excluded": [],
                 },
                 "datasets": rows,
             }
@@ -124,23 +168,197 @@ def test_family_key_pool_preflight_rederives_and_stays_non_admitted(
 
     catalog_sha = sha256_file(catalog_path)
     monkeypatch.setattr(admission, "CATALOG_V246_SHA256", catalog_sha)
-    manifest = build_family_key_pool_manifest(
-        json.loads(catalog_path.read_text()), catalog_sha
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path, catalog_sha=catalog_sha, monkeypatch=monkeypatch
     )
-    receipt = verify_family_key_pool_manifest(manifest, catalog_path)
-    assert receipt["status"] == "METADATA_ONLY_NONSEALED_STATUS_UNVERIFIED"
+    manifest = build_family_key_pool_manifest(
+        json.loads(catalog_path.read_text()),
+        catalog_sha,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
+    receipt = verify_family_key_pool_manifest(
+        manifest,
+        catalog_path,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
+    assert receipt["status"] == "METADATA_SPLIT_VERIFIED"
     assert receipt["family_count"] == 40
-    assert receipt["fold_count"] == 0
+    assert receipt["fold_count"] == 5
     assert receipt["eligibility_verified"] is False
     assert receipt["payloads_opened"] == 0
     manifest["fold_splits"] = {"0": {"train": {"binary": ["b-0"]}}}
     with pytest.raises(ValueError, match="differs from pinned catalog split"):
-        verify_family_key_pool_manifest(manifest, catalog_path)
+        verify_family_key_pool_manifest(
+            manifest,
+            catalog_path,
+            family_exclusion_path=exclusion_path,
+            family_exclusion_sha256=exclusion_sha,
+        )
+
+
+def test_family_key_pool_rejects_reintroduced_sealed_name_exclusion(monkeypatch):
+    from research.joint_regbin import admission
+
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "catalog_records": 2,
+            "usable_records": 1,
+            "sealed_name_matches_excluded": ["d-0"],
+        },
+        "datasets": [
+            {
+                "id": "d-0",
+                "task": "regression",
+                "canonical_sha256": "a" * 64,
+                "s3_bucket": "veox-jopedime-datasets-use2",
+                "train_rows": 12,
+                "train_sha256": "b" * 64,
+            }
+        ],
+    }
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
+    with pytest.raises(ValueError, match="consistent pinned v246 eligibility metadata"):
+        build_family_key_pool_manifest(catalog, "a" * 64)
+
+
+def test_family_exclusion_artifact_is_pinned_and_closes_union_find_components(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import admission
+
+    rows = []
+    specifications = [
+        ("r-sealed", "regression", "r", "sealed-fp", None, None),
+        ("r-bridge", "regression", "r", "sealed-fp", "srcfile:sealed", None),
+        ("r-linked", "regression", "r", None, "srcfile:sealed", None),
+        ("r-heldout", "regression", "r", "heldout-fp", None, "heldout"),
+        ("r-dev", "regression", "r", "dev-fp", None, "dev"),
+        ("r-eligible-3", "regression", "r", "reg-fp-3", None, None),
+        ("r-eligible-4", "regression", "r", "reg-fp-4", None, None),
+        ("r-eligible-5", "regression", "r", "reg-fp-5", None, None),
+        ("r-eligible-6", "regression", "r", "reg-fp-6", None, None),
+        ("b" * 16, "binary", "b", None, None, None),
+        ("b-allowed", "binary", "b", "allowed-fp", None, None),
+        ("b-allowed-3", "binary", "b", "bin-fp-3", None, None),
+        ("b-allowed-4", "binary", "b", "bin-fp-4", None, None),
+        ("b-allowed-5", "binary", "b", "bin-fp-5", None, None),
+        ("b-allowed-6", "binary", "b", "bin-fp-6", None, None),
+    ]
+    for index, (dataset_id, task, _prefix, key, derived, p3_status) in enumerate(
+        specifications
+    ):
+        row = {
+            "id": dataset_id,
+            "task": task,
+            "canonical_sha256": f"{index + 1:064x}",
+            "s3_bucket": "veox-jopedime-datasets-use2",
+            "train_rows": 12,
+            "train_sha256": f"{index + 100:064x}",
+        }
+        if key:
+            row.update(
+                family_key=key, family_key_source="provenance.dedupe_fingerprint"
+            )
+        if derived:
+            row.update(family_key_derived=derived)
+        if p3_status:
+            row["p3_status_fixture_only"] = p3_status
+        rows.append(row)
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "usable_records": len(rows),
+            "catalog_records": len(rows),
+            "sealed_name_matches_excluded": [],
+        },
+        "datasets": rows,
+    }
+    catalog_path = tmp_path / "catalog.json"
+    catalog_path.write_text(json.dumps(catalog))
+    import hashlib
+
+    catalog_sha = hashlib.sha256(catalog_path.read_bytes()).hexdigest()
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", catalog_sha)
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path,
+        catalog_sha=catalog_sha,
+        keys=[("dedupe_fingerprint", "sealed-fp")],
+        ids=["b" * 16],
+        monkeypatch=monkeypatch,
+    )
+    manifest = build_family_key_pool_manifest(
+        catalog,
+        catalog_sha,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
+    eligible = set(manifest["family_by_dataset"])
+    assert {"r-heldout", "r-dev", "b-allowed"} <= eligible
+    assert not eligible.intersection({"r-sealed", "r-bridge", "r-linked", "b" * 16})
+    role_ids = {
+        dataset_id
+        for split in manifest["fold_splits"].values()
+        for role in ("train", "val")
+        for task in admission.protocol.TASKS
+        for dataset_id in split[role][task]
+    }
+    assert {"r-heldout", "r-dev", "b-allowed"} <= role_ids
+    assert manifest["nonsealed_eligibility"]["excluded_dataset_count"] == 4
+    assert manifest["nonsealed_eligibility"]["excluded_family_count"] == 2
+
+
+def test_family_exclusion_artifact_missing_or_hash_mismatched_fails_closed(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import admission
+
+    rows = [
+        {
+            "id": "r-0",
+            "task": "regression",
+            "canonical_sha256": "a" * 64,
+            "s3_bucket": "veox-jopedime-datasets-use2",
+            "train_rows": 12,
+            "train_sha256": "b" * 64,
+        }
+    ]
+    catalog = {
+        "inventory": {
+            "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
+            "usable_records": 1,
+            "catalog_records": 1,
+            "sealed_name_matches_excluded": [],
+        },
+        "datasets": rows,
+    }
+    catalog_sha = "a" * 64
+    monkeypatch.setattr(admission, "CATALOG_V246_SHA256", catalog_sha)
+    path, actual_sha = _write_family_exclusion(
+        tmp_path, catalog_sha=catalog_sha, monkeypatch=monkeypatch
+    )
+    with pytest.raises(ValueError, match="exclusion artifact"):
+        build_family_key_pool_manifest(
+            catalog,
+            catalog_sha,
+            family_exclusion_path=tmp_path / "missing.json",
+            family_exclusion_sha256=actual_sha,
+        )
+    path.write_text(path.read_text() + " ")
+    with pytest.raises(ValueError, match="exclusion artifact"):
+        build_family_key_pool_manifest(
+            catalog,
+            catalog_sha,
+            family_exclusion_path=path,
+            family_exclusion_sha256=actual_sha,
+        )
 
 
 @pytest.mark.parametrize("claimed_nonsealed", [None, False, True])
-def test_family_key_pools_withhold_unproven_families_and_transitive_members(
-    monkeypatch, claimed_nonsealed
+def test_family_key_pool_uses_owner_eligibility_not_self_reported_flags(
+    tmp_path, monkeypatch, claimed_nonsealed
 ):
     """Synthetic identity graph only; no protected roster or payload is an input."""
     from research.joint_regbin import admission
@@ -168,11 +386,21 @@ def test_family_key_pools_withhold_unproven_families_and_transitive_members(
         "inventory": {
             "source_catalog": "catalog/v246.jsonl (LATEST=v246)",
             "usable_records": len(rows),
+            "catalog_records": len(rows),
+            "sealed_name_matches_excluded": [],
         },
         "datasets": rows,
     }
     monkeypatch.setattr(admission, "CATALOG_V246_SHA256", "a" * 64)
-    result = build_family_key_pool_manifest(catalog, "a" * 64)
+    exclusion_path, exclusion_sha = _write_family_exclusion(
+        tmp_path, catalog_sha="a" * 64, monkeypatch=monkeypatch
+    )
+    result = build_family_key_pool_manifest(
+        catalog,
+        "a" * 64,
+        family_exclusion_path=exclusion_path,
+        family_exclusion_sha256=exclusion_sha,
+    )
     family = result["family_by_dataset"]
     assert family["r-0"] == family["b-0"] == family["r-1"]
     assigned = {
@@ -182,10 +410,10 @@ def test_family_key_pools_withhold_unproven_families_and_transitive_members(
         for task in ("regression", "binary")
         for dataset in split[role][task]
     }
-    assert not assigned, "unproven family was assigned a train/validation role"
-    assert result["fold_by_family"] == {}
-    assert result["nonsealed_eligibility"]["withheld_family_count"] == 22
-    assert result["nonsealed_eligibility"]["withheld_dataset_count"] == 24
+    assert assigned, "owner-approved usable catalog rows received no roles"
+    assert result["fold_by_family"]
+    assert result["nonsealed_eligibility"]["excluded_family_count"] == 0
+    assert result["nonsealed_eligibility"]["excluded_dataset_count"] == 0
     assert result["eligibility_verified"] is False
     assert result["payloads_opened"] == 0
 
@@ -1462,3 +1690,231 @@ def test_worker_regression_metric_nonfinite_computation_is_refused():
 def test_worker_regression_metric_bad_ridge_is_refused(ridge):
     with pytest.raises(ValueError, match="positive finite"):
         worker.regression_metrics(torch.ones(1), torch.zeros(1), ridge_rmse=ridge)
+
+
+def test_source_pinned_runtime_rejects_file_drift_and_symlink(tmp_path):
+    source = tmp_path / "runtime-source.py"
+    source.write_text("source pin fixture\n")
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
+    assert runtime.verify_file_pin(source, expected) == expected
+    with pytest.raises(runtime.SourcePinError, match="hash mismatch"):
+        runtime.verify_file_pin(source, "0" * 64)
+    alias = tmp_path / "runtime-alias.py"
+    alias.symlink_to(source)
+    with pytest.raises(runtime.SourcePinError, match="not regular"):
+        runtime.verify_file_pin(alias, expected)
+
+
+def test_h144_loader_refuses_hash_mismatch_before_execution(tmp_path, monkeypatch):
+    marker = tmp_path / "executed"
+    source = tmp_path / "h144-runtime.py"
+    source.write_text(f"from pathlib import Path\nPath({str(marker)!r}).touch()\n")
+    monkeypatch.setattr(runtime, "H144_RUNTIME", source)
+    monkeypatch.setattr(runtime, "H144_RUNTIME_SHA256", "0" * 64)
+
+    with pytest.raises(runtime.SourcePinError, match="hash mismatch"):
+        runtime._load_pinned_h144_runtime()
+
+    assert not marker.exists()
+
+
+def test_h144_loader_reads_the_pinned_file_once(tmp_path, monkeypatch):
+    source = tmp_path / "h144-runtime.py"
+    source.write_text("VALUE = 'verified'\n")
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
+    monkeypatch.setattr(runtime, "H144_RUNTIME", source)
+    monkeypatch.setattr(runtime, "H144_RUNTIME_SHA256", expected)
+    original_open, original_read_bytes = Path.open, Path.read_bytes
+    reads = []
+
+    def swap_after_first_read():
+        if len(reads) == 1:
+            import os
+
+            fd = os.open(source, os.O_WRONLY | os.O_TRUNC)
+            os.write(fd, b"VALUE = 'changed after verification'\n")
+            os.close(fd)
+
+    def counting_open(path, *args, **kwargs):
+        stream = original_open(path, *args, **kwargs)
+        mode = args[0] if args else kwargs.get("mode", "r")
+        if path == source and "r" in mode:
+            reads.append("open")
+            data = stream.read()
+            stream.close()
+            swap_after_first_read()
+            import io
+
+            return io.BytesIO(data)
+        return stream
+
+    def counting_read_bytes(path):
+        contents = original_read_bytes(path)
+        if path == source:
+            reads.append("read_bytes")
+            swap_after_first_read()
+        return contents
+
+    monkeypatch.setattr(Path, "open", counting_open)
+    monkeypatch.setattr(Path, "read_bytes", counting_read_bytes)
+
+    loaded = runtime._load_pinned_h144_runtime()
+
+    assert loaded.VALUE == "verified", reads
+
+
+def test_h144_fused_loader_rejects_source_replaced_after_wrapper_check(
+    tmp_path, monkeypatch
+):
+    marker = tmp_path / "fused-executed"
+    source = tmp_path / "cpu_exact_fused.py"
+    source.write_text(f"from pathlib import Path\nPath({str(marker)!r}).touch()\n")
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
+    monkeypatch.setattr(runtime, "FUSED_SOURCE", source)
+    monkeypatch.setattr(runtime, "FUSED_SOURCE_SHA256", expected)
+    h144_runtime = type("H144Runtime", (), {})()
+
+    def old_load_fused():
+        module = type("FusedModule", (), {})()
+        module.__file__ = str(source)
+        exec(compile(source.read_bytes(), str(source), "exec"), module.__dict__)
+        return module
+
+    h144_runtime.load_fused = old_load_fused
+    original_open, original_read_bytes = Path.open, Path.read_bytes
+    reads = []
+
+    def swap_after_first_read():
+        if len(reads) == 1:
+            import os
+
+            fd = os.open(source, os.O_WRONLY | os.O_TRUNC)
+            changed = (
+                f"from pathlib import Path\nPath({str(marker)!r}).touch()\n"
+                "VALUE = 'changed after verification'\n"
+            )
+            os.write(fd, changed.encode())
+            os.close(fd)
+
+    def counting_open(path, *args, **kwargs):
+        stream = original_open(path, *args, **kwargs)
+        mode = args[0] if args else kwargs.get("mode", "r")
+        if path == source and "r" in mode:
+            reads.append("open")
+            data = stream.read()
+            stream.close()
+            swap_after_first_read()
+            import io
+
+            return io.BytesIO(data)
+        return stream
+
+    def counting_read_bytes(path):
+        contents = original_read_bytes(path)
+        if path == source:
+            reads.append("read_bytes")
+            swap_after_first_read()
+        return contents
+
+    monkeypatch.setattr(Path, "open", counting_open)
+    monkeypatch.setattr(Path, "read_bytes", counting_read_bytes)
+    runtime.verify_file_pin(source, expected)
+    runtime._bind_pinned_fused_loader(h144_runtime)
+
+    with pytest.raises(runtime.SourcePinError, match="hash mismatch"):
+        h144_runtime.load_fused()
+
+    assert len(reads) >= 2
+    assert not marker.exists()
+
+
+def test_worker_adapter_fingerprint_supports_scalar_parameters():
+    class ScalarAdapter(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.scalar = torch.nn.Parameter(torch.tensor(0.25))
+
+    adapter = ScalarAdapter()
+    original = worker.adapter_fingerprint(adapter)
+    with torch.no_grad():
+        adapter.scalar.add_(0.5)
+    assert worker.adapter_fingerprint(adapter) != original
+
+
+def test_source_pinned_runtime_reads_h144_constructor_version_pins(
+    tmp_path, monkeypatch
+):
+    preflight = tmp_path / "preflight.json"
+    preflight.write_text(
+        json.dumps(
+            {
+                "constructor": {
+                    "packages": {
+                        "numpy": runtime.EXPECTED_NUMPY,
+                        "torch": runtime.EXPECTED_TORCH,
+                    },
+                    "python": f"{runtime.EXPECTED_PYTHON} (pinned build)",
+                }
+            }
+        )
+    )
+    monkeypatch.setattr(runtime, "H144_PREFLIGHT", preflight)
+    monkeypatch.setattr(runtime, "verify_file_pin", lambda *_: "pinned")
+    versions = runtime._verify_runtime_versions()
+    assert versions == {
+        "python": runtime.EXPECTED_PYTHON,
+        "numpy": runtime.EXPECTED_NUMPY,
+        "torch": runtime.EXPECTED_TORCH,
+    }
+
+
+def test_source_pinned_runtime_optimizer_is_exactly_adapter_and_heads():
+    adapter = torch.nn.Parameter(torch.zeros(3))
+    head = torch.nn.Parameter(torch.zeros(1))
+    optimizer = torch.optim.SGD([adapter, head], lr=0.1)
+    runtime._verify_optimizer_parameters(optimizer, [adapter, head])
+    with pytest.raises(ValueError, match="exactly"):
+        runtime._verify_optimizer_parameters(
+            torch.optim.SGD([adapter], lr=0.1), [adapter, head]
+        )
+    extra = torch.nn.Parameter(torch.zeros(1))
+    with pytest.raises(ValueError, match="exactly"):
+        runtime._verify_optimizer_parameters(
+            torch.optim.SGD([adapter, head, extra], lr=0.1), [adapter, head]
+        )
+
+
+def test_source_pinned_runtime_requires_candidate_builder_packer():
+    source_pins = {
+        "checkpoint_sha256": runtime.R882_CHECKPOINT_SHA256,
+        "dope_sha256": runtime.DOPE_SHA256,
+    }
+    packer = candidate_builder.make_worker_packer(
+        {},
+        {},
+        {},
+        checkpoint_sha256=source_pins["checkpoint_sha256"],
+        dope_sha256=source_pins["dope_sha256"],
+    )
+    runtime._verify_candidate_packer(packer, source_pins)
+    with pytest.raises(ValueError, match="not bound"):
+        runtime._verify_candidate_packer(lambda _row: None, source_pins)
+
+
+def test_frozen_worker_core_checks_state_when_synthetic_core_raises():
+    class RuntimeGuard:
+        def __init__(self):
+            self.checks = 0
+
+        def verify_frozen_state(self):
+            self.checks += 1
+
+    class FailingCore:
+        def train_batch(self, _rows):
+            raise RuntimeError("synthetic worker failure")
+
+    guard = RuntimeGuard()
+    core = runtime.FrozenWorkerCore(guard, FailingCore())
+    with pytest.raises(RuntimeError, match="synthetic worker failure"):
+        core.train_batch([])
+    assert guard.checks == 2

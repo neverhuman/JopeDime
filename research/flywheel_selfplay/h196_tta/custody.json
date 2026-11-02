@@ -1,27 +1,27 @@
 {
   "manifest": {
-    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/manifest.json",
-    "version_id": "wSC2Po2iqm0D4sjpQ7TouqfT07EBLAsr",
-    "sha256": "f10c5dcd7b595c87ebcb6d509c500bb2b438e0944b1bfb678da6a44e4dddd681",
-    "bytes": 592504,
-    "verified_utc": "2026-11-01T18:56:26.869472+00:00",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/attempt2/manifest.json",
+    "version_id": "ZofMy_Cmibz5ZuLwNoWYWiauGWDzI25v",
+    "sha256": "8da501333b141056db109492bd732c6106b1fb1576f45b99f2d44f0ac37830bb",
+    "bytes": 2143535,
+    "verified_utc": "2026-11-01T21:07:43.785857+00:00",
     "readback": "exact-version full payload SHA256; synchronous client"
   },
   "outputs": {
-    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/numerical-evidence.zip",
-    "version_id": "7vcZKGqQdp.g7B3.CmkDDp_rLRsz5rM7",
-    "sha256": "9a1c908d2207c5f9ba652ef9c524c14ca0d2999ea3a8657c74262a0d1a64115d",
-    "bytes": 261157,
-    "verified_utc": "2026-11-01T18:55:44.914861+00:00",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/attempt2/numerical-evidence.zip",
+    "version_id": "chjKaYs06yrjN4yQyhC6gJTL65ch0j.R",
+    "sha256": "214087ec76fd087870c0ca83f288f0d8aa33c9c109c1b0e735ffa021a7060f6d",
+    "bytes": 1856609,
+    "verified_utc": "2026-11-01T21:07:02.724716+00:00",
     "readback": "exact-version full payload and every member SHA256; memory archive, no duplicate disk output"
   },
   "inputs": {
-    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/exact-inputs.zip",
-    "version_id": "lFLrxqpIIAzlprVSr0lpZLVbej7WPz9v",
-    "sha256": "e8ba4d2ab76703a7369fd1aff693828cb938f35179a754bc630e14f876d4c6a5",
-    "bytes": 243253847,
-    "verified_utc": "2026-11-01T18:56:25.677087+00:00",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H196/astra-t1105/attempt2/exact-inputs.zip",
+    "version_id": "0e32TgvuISMpki_1xht80IAPxJ3DlRGc",
+    "sha256": "2736ef59eaec74a492ede00a9993a837b81188f756793e09ca9eb7c3a8b88b00",
+    "bytes": 243382846,
+    "verified_utc": "2026-11-01T21:07:41.831579+00:00",
     "readback": "exact-version full payload and every member SHA256; memory archive, no duplicate disk output"
   },
-  "verified_members": 1425
+  "verified_members": 1385
 }

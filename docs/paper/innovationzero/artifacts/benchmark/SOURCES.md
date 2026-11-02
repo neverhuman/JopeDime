@@ -13,9 +13,9 @@ on that cell's held-out rows only.
 | GPT6p1_Sol_Max | 1456 | 1414–1497 |
 | GPT6_Astra_Max | 1342 | 1289–1388 |
 
-- Figures: [`automl-elo.svg`](../../../../../assets/automl-elo/v1/figures/automl-elo.svg),
-  [`automl-pairwise.svg`](../../../../../assets/automl-elo/v1/figures/automl-pairwise.svg) and
-  [`algorithm-source-size.svg`](../../../../../assets/automl-elo/v1/figures/algorithm-source-size.svg), each with a PNG beside it.
+- Figures: [`figures/automl-elo.svg`](figures/automl-elo.svg),
+  [`figures/automl-pairwise.svg`](figures/automl-pairwise.svg) and
+  [`figures/algorithm-source-size.svg`](figures/algorithm-source-size.svg), each with a PNG beside it.
 - Numbers: [`RESULTS.json`](RESULTS.json) holds the ratings, intervals and six pairwise tests.
 
 ## Panel and protocol
@@ -47,11 +47,11 @@ Their 1,728 fits come from the three-entrant run
 `regression-flywheel-20261021`, `newonly-run` and `newonly-seeds73109`, on xbabe3:
 
 - archive `s3://veox-jopedime-learning-use2/staging/regression-flywheel-20261021/w000003/sha256/48065da046d63dcf8202299a6953731c994f35c11b94e96ca14c779dc5bc162e.tar.gz`;
-- summary: [`HISTORICAL_THREE_ENTRANT.json`](HISTORICAL_THREE_ENTRANT.json); pointer: [`HISTORICAL_ARCHIVE.json`](../../../../../assets/automl-elo/v1/HISTORICAL_ARCHIVE.json).
+- summary: [`HISTORICAL_THREE_ENTRANT.json`](HISTORICAL_THREE_ENTRANT.json); pointer: [`HISTORICAL_ARCHIVE.json`](HISTORICAL_ARCHIVE.json).
 
 Before any Gemini cell was used, the fitter recomputed all 10,001 historical three-entrant fits
 (the point estimate plus 10,000 bootstrap resamples). The largest absolute difference was 0.0
-([`ELO_FITTER_QUALIFICATION.json`](../../../../../assets/automl-elo/v1/ELO_FITTER_QUALIFICATION.json)).
+([`ELO_FITTER_QUALIFICATION.json`](ELO_FITTER_QUALIFICATION.json)).
 
 ### Gemini4_argon_high: 576 new fits
 
@@ -91,7 +91,7 @@ Run on xbabe2, 2026-10-22, 12 cells at a time.
   the 6 pairs, in sorted-name order).
 - The figures come from `render_gemini4.py` with matplotlib 3.10.8, using deterministic SVG
   metadata. Two renders were byte-identical. The pins are in
-  [`FIGURE_VALIDATION.json`](../../../../../assets/automl-elo/v1/FIGURE_VALIDATION.json).
+  [`FIGURE_VALIDATION.json`](FIGURE_VALIDATION.json).
 - Source sizes are counted with the same lexical counter as the earlier count, which reproduces the
   previous entrants' totals exactly ([`SOURCE_COUNTS.json`](SOURCE_COUNTS.json)).
 

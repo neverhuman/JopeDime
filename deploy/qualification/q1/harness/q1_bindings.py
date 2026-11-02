@@ -7,6 +7,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 PROTOCOL = HERE / "protocol-v1.json"
+EVALUATOR_PIN = HERE.parent / "evaluator-pin.json"
 VOCABULARY = ROOT / "crates/jope-engine/assets/grammar/featmath.json"
 ENGINE_VOCABULARY = ROOT / "crates/jope-engine/assets/grammar/featmath-jain-v1.json"
 EXECUTABLE_OPS = (
@@ -108,3 +109,18 @@ def validate_pins(pins):
     for name, digest in expected.items():
         if pins.get(name) != digest:
             raise ValueError(f"Q1 {name} does not match the reviewed source binding")
+
+
+def validate_evaluator_pin(evaluator_sha256):
+    """D5 binds full executable bytes; reproduction does not qualify runtime."""
+    pin = json.loads(EVALUATOR_PIN.read_text())
+    if (
+        pin.get("schema") != "jope.q1-evaluator-pin/v1"
+        or pin.get("status") != "BUILD_IDENTITY_ONLY_NOT_RUNTIME_QUALIFICATION"
+    ):
+        raise ValueError("unsupported Q1 evaluator build pin")
+    for reference in (pin["recipe"], *pin["reproductions"]):
+        if sha_file(EVALUATOR_PIN.parent / reference["path"]) != reference["sha256"]:
+            raise ValueError("Q1 evaluator reproduction/recipe hash mismatch")
+    if evaluator_sha256 != pin["sha256"]:
+        raise ValueError("Q1 evaluator_sha256 does not match the D5 full-binary pin")

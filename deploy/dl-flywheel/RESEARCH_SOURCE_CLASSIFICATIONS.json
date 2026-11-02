@@ -5232,7 +5232,7 @@
     },
     "python:research/flywheel_selfplay/h196_tta/monitor.py": {
       "bytes": 6157,
-      "sha256": "6d44503031df1f7a8684d8e13de3f86f7038880b423d8bcfee4bfbaf4c79e5c9",
+      "sha256": "d43990fb7b3482db34eb867eb04fede3455a666450e6b18f9b6b1e21f04303b2",
       "classification": {
         "role": "research",
         "reason": "H196 owner-directed zero-update test-time augmentation: frozen r882, FIT-only input noise, permutation placebo, immutable B lock, family bootstrap and exact-version S3 custody. Research only; no serving or protected qualification."
@@ -5301,6 +5301,126 @@
         "reason": "Single durable H197 JSON writer using json.dumps(allow_nan=False), used by every trace, receipt, summary, metrics, audit and failure record."
       },
       "sha256": "99135f2c304b6558c25291913484982e0a7f5cd10b37520d3cbd0e109cdf50a5"
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/analysis.py": {
+      "bytes": 9149,
+      "sha256": "57c40ae02b882e2840ab57c6f88121487b1604052d3d5536b5659a7753a54c73",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/monitor.py": {
+      "bytes": 7032,
+      "sha256": "9d8b23d03ae7eeb1571b3efa33d8daa30051439831316e8318495e4de9e77917",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/runner.py": {
+      "bytes": 26753,
+      "sha256": "59a4c0209f5b313b11cfbaa4e87bcf0f4b60cb512140d78560181394847fe41f",
+      "classification": {
+        "role": "research",
+        "reason": "H199 preregistered CPU-only diagnostic: H129/H195 BLEND_025 (r882 + 0.25*(calibrated HistGBM - r882), lambda fixed; 0.15/0.35 report-only) against r882 on the flywheel native first-argmin protocol, powered by the 205-family pooled cross-fit on fresh per-seed folds; GBM and calibration FIT-only, stage-1 lock before pooled-A scoring, m=1 CANDIDATE gate (LCB95>0, median>+0.001, 3/3 seeds, harm<=10%); 0 updates. No protected qualification, GPU/speed claim, product runtime, or serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/analysis.py": {
+      "bytes": 7619,
+      "classification": {
+        "role": "research",
+        "reason": "H200 pure-data-free fold, nested-lambda, rank-blend, family-bootstrap, Holm and Elo analysis primitives; no data access."
+      },
+      "sha256": "f59c934e0d8aa38d3ac3d83bb5ec36efd1620da32ba1371ccdfe917c354be8b2"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/runner.py": {
+      "bytes": 23364,
+      "classification": {
+        "role": "research",
+        "reason": "H200 xbabe1-only, single-attempt CPU runner for exact r882 regression, FIT-only nested calibration/lambda selection, native A scoring, source pins, and resource guards; no updates or promotion."
+      },
+      "sha256": "69addcb1c86ca87a231d44510674b89c64870d86590c56c33f734c47c964dbe1"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/monitor.py": {
+      "bytes": 6672,
+      "classification": {
+        "role": "research",
+        "reason": "H200 xbabe1-only supervisor enforcing nice 19, four-core, memory, RSS, load, disk, deadline and output guards for one attempt."
+      },
+      "sha256": "078c8d4221d51d6024e0e48a1429cf76c29d8aac3f6716c040d9664f9d5188d4"
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/analysis.py": {
+      "bytes": 8730,
+      "sha256": "51d54087125d824479e842705d3e1308a31e11a9e68fd0b041a3a0cb7c3cf292",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/monitor.py": {
+      "bytes": 4683,
+      "sha256": "55ccae8a383ccd0d02f1f4efa5b665cc629ba869dbc8b052d34c12e414a615b8",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/runner.py": {
+      "bytes": 13494,
+      "sha256": "0e7457d31dc2403e22ce43babf9348c3f87f735a0c0ecb4d142c84262d9c0c1b",
+      "classification": {
+        "role": "research",
+        "reason": "H201 zero-update frozen native replay, paired-family selection-noise audit and strict admission history counterfactual; offline research, no live policy changes."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/design.py": {
+      "bytes": 4475,
+      "sha256": "a4505ad651f9aabb4ca21d0f7530d4fb50a5fc10614115dd31e1a39d5aa855f6",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/artifacts.py": {
+      "bytes": 1786,
+      "sha256": "135028eb5571148f2a89ee555f34cdbcd5214080c504409786d7b76fbaab779f",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/analysis.py": {
+      "bytes": 4717,
+      "sha256": "64e1df8b3ae11ff8332e2e7ffa07f2d1f0bcf93484f542fc4e081af89adb0667",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/monitor.py": {
+      "bytes": 5550,
+      "sha256": "a1182d142d62f251de0777f7d9fdae309009e45836be3b2f7492682b62338bdc",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/objectives.py": {
+      "bytes": 2272,
+      "sha256": "1d68987f555c2388c4af2eb1a75eb601f979060393f940ab25f602a5193c06f6",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/runner.py": {
+      "bytes": 28616,
+      "sha256": "ebad7a2c0ed60a575234550ae4a05e76151d883440b045a06fa088ebb4ff7251",
+      "classification": {
+        "role": "research",
+        "reason": "H202 offline current-top5 hard-negative/ordinary/shuffled adapter continuation, paired fresh family folds, strict inference and lossless score evidence; no live model or admission change."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

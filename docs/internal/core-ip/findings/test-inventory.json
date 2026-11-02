@@ -449,6 +449,10 @@
         "preparation"
       ]
     },
+    "python:deploy/appliance/test_d1_macos_dev.py": {
+      "reason": "Synthetic D1 Darwin development-package identity and receipt controls; native DEV-BUILD execution is separately recorded and never qualifies the signed release gate.",
+      "role": "infrastructure"
+    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "reason": "CUDA qualification receipt integrity; collection and execution remain distinct from hardware qualification.",
       "role": "infrastructure"
@@ -2355,6 +2359,10 @@
     },
     "python:research/joint_regbin/test_binary_dataset.py": {
       "reason": "JRB-01 binary panel packet validation (schema, family coverage, sealed-id exclusion, deterministic rebuild); offline research analysis outside the reviewed product baseline.",
+      "role": "research"
+    },
+    "python:research/joint_regbin/test_candidate_builder.py": {
+      "reason": "JRB-01 synthetic train-only candidate tensor controls for rederived role admission, withheld unverified families, exact train-blob reads, Flywheel evaluation and worker tensor packing. No real S3 payload, checkpoint, training, score history or qualification.",
       "role": "research"
     },
     "python:research/joint_regbin/test_study.py": {
@@ -5533,6 +5541,22 @@
     "python:research/flywheel_selfplay/h198_ttt/test_h198.py": {
       "role": "research",
       "reason": "H198 data-free checks for per-context test-time training on revealed candidates only: leakage masking of unrevealed labels, per-context reset and trajectory-prefix equivalence, shuffle-control derangement, independent fold seeds with the stage-1 B-only lock, verdict gates with axis-0 bootstrap, and the launch contract; no corpus/checkpoint reads in fixtures."
+    },
+    "python:research/flywheel_selfplay/h199_blend025_native/test_h199.py": {
+      "reason": "Owner-requested H199 data-free controls for BLEND_025 on the flywheel native protocol (cells, minimal fit plan, H124 fold algorithm per fold seed, fold manifest, within-family SHUF, registered lambda dose, native gates incl. 3/3 seeds and exact ties as zero, harm gate, Elo orientation, monitor guards); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h200_nested_blend/test_h200.py": {
+      "role": "research",
+      "reason": "H200 data-free protocol checks: exact unused seeds and 20-model-per-seed exclusion plan; strict nested lambda margin/ties; average-tie rank orientation; deterministic within-context shuffle; xbabe1-only host guard that refuses xbabe0/2/3 before input reads; native ties and CPU resource limits. No cohort, checkpoint, or outcome data opened."
+    },
+    "python:research/flywheel_selfplay/h201_strict_admission/test_h201.py": {
+      "role": "research",
+      "reason": "H201 data-free host-before-input exclusion, paired family bootstrap and weighting, sequential SMA versus observed-incumbent screen, joint-null candidate dependence, family split exclusion, BT reference and strict verdict controls; no corpus/checkpoint reads, model passes or optimizer calls in fixtures."
+    },
+    "python:research/flywheel_selfplay/h202_hard_negative/test_h202.py": {
+      "role": "research",
+      "reason": "H202 data-free host-before-read/resource, stable current-top5 logistic inversion/gradient sign, zero-inversion loss, within-context shuffle, DOPE/anchor gradient masking and optimizer exclusion, fresh FIT/B/A folds, family-balanced paired sampling, durable B lock, lossless XOR and strict median/verdict controls; no corpus or model-checkpoint reads in fixtures."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

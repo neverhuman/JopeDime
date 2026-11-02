@@ -8,7 +8,7 @@
 % full-width float can reach the top of the page where it is cited.
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{figures/fig3_game_loop.pdf}
+  \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
   \caption{\textbf{Training plays the whole game; game day plays one move.}
   Reference loop (\cref{sub:method-selfplay}), separate from the adapter
   record (\cref{sec:method-status}). Blue: game day; dashed: proposed training.
@@ -221,6 +221,6 @@ frontier-designed regressors, with paired outcomes beside Elo summaries
 \citep{elo1978rating}. Non-transitive comparisons are one reason not to
 reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
 
-The referee decides whether an attempt is valid and better. The cost of a
-verified improvement also includes attempts that fail or lose; \cref{sec:price}
-accounts for that full budget.
+The referee judges each attempt; cost accounting must also include
+invalid programs and valid attempts that lose. \Cref{sec:price} prices
+the full sequence needed for a verified improvement.

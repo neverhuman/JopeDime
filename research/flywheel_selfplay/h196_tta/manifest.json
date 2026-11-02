@@ -96,15 +96,15 @@
     "NOISE1"
   ],
   "max_total_updates": 0,
-  "wall_budget_seconds": 10800,
+  "wall_budget_seconds": 25200,
   "output_budget_bytes": 300000000,
   "holm_multiplicity": 1,
   "source_sha256": {
-    "PREREG.md": "721370826d3f8a9c923f8f4f3c6ca1d2da23afd40c3694420841c819c1e9477f",
+    "PREREG.md": "2140d51205dd682235c92538f0d5a528649e7f8b10ecc9de0aed84f753d2a033",
     "analysis.py": "b7edc2b3dfd9b13bd31e24a8e33b939192736d906f3f2037e5b236daa0130101",
     "engine.py": "575881872e37567f4cbffb67bc7913d7b8e4bcf003926acb2d7c59899aa5f8e2",
     "fold_manifest.json": "f5983a8837b6a065a30b0ac45948e36c3d0d348183963de7b127245abbf3b3ad",
-    "monitor.py": "6d44503031df1f7a8684d8e13de3f86f7038880b423d8bcfee4bfbaf4c79e5c9",
+    "monitor.py": "d43990fb7b3482db34eb867eb04fede3455a666450e6b18f9b6b1e21f04303b2",
     "parents.py": "ca1a983c6bc13334e4e7ad691d3733dd49e52047f7de673e8726e23c9f39f01c",
     "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
     "runner.py": "f95df2ac87bed61fef4d811218fe7f9060e61e94d783d82f3101ba08cd81bd8d",

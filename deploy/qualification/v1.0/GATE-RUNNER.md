@@ -35,6 +35,34 @@ nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
   --providers --provider-inputs "$INPUT_BINDINGS" --output "$NEW_EVIDENCE"
 ```
 
+The one-command RC2 path uses `--candidate` to discover all providers, generate
+the source/artifact-bound command manifest, execute the 28 rows, and retain a
+28-row status table:
+
+```sh
+nice -n 10 python3 -B deploy/qualification/v1.0/release-gates \
+  --candidate "$SIGNED_BYTES" --repo "$CLEAN_PINNED_CHECKOUT" \
+  --inputs "$CANDIDATE_INPUTS" --inputs-sha256 "$CANDIDATE_INPUTS_SHA256" \
+  --output "$NEW_EVIDENCE"
+```
+
+`--inputs` is the established `jope.rel07.provider-inputs/v1` JSON file with
+`gates` bindings for whichever of A5, D1, M2, M3 and M5 have candidate-bound
+evidence. Pass its full lowercase SHA-256 separately. A missing binding marks
+that gate `BLOCKED` with its required fields; available gates can still execute.
+The source checkout must be clean, its HEAD must equal the candidate source SHA,
+and that commit must be an ancestor of `origin/main`. This permits an older
+candidate source after main advances while rejecting unrelated history.
+
+A candidate rehearsal can use `--candidate ... --dry-run --repo ... --output ...`
+without provider input bindings. It verifies the RC2 manifest, sealed-variant
+receipt and candidate hash, discovers the 28 command rows, invokes zero gates,
+and writes `status_table.json` with a reason for every `BLOCKED` or `NOT_RUN`
+row plus `execution.json` with `release_qualified: false`. The command manifest
+uses `a5_run.py` for A5 (the bat02 wrapper), `providers/u1.py` for U1, and
+`providers/d1.py` for D1. D1's macOS-arm64 leg remains a separate svc08-produced
+receipt; its path and artifact hash bind through `--provider-inputs`.
+
 For candidate-free inventory checks after provider merges, use dry discovery:
 
 ```sh
@@ -46,8 +74,8 @@ This reports the exact source SHA, found provider IDs, missing provider IDs, and
 counts. It accepts no artifact or output path, executes no provider, and writes
 no gate evidence. A successful inventory report may still be incomplete.
 
-Five providers require explicit external inputs. M5 needs frozen TRAIN fixture
-and bundle directories; A5 needs a candidate-bound named-client transcript
+Five providers require explicit external inputs. M5 binds the R21 RNK-10
+default-off receipt and its independently computed SHA-256; A5 needs a candidate-bound named-client transcript
 manifest and its independently pinned SHA-256. D1 needs the candidate-bound
 macOS receipt and its SHA-256. M2 needs its golden directory/index SHA-256,
 frozen bundle directory and a new external parity-report directory. M3 needs the
@@ -65,8 +93,8 @@ Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
       "full_inputs_sha256": "<replace with the independently pinned full-input manifest SHA-256>"
     },
     "M5": {
-      "golden_dir": "/absolute/path/to/qualified/golden",
-      "bundle_dir": "/absolute/path/to/frozen/bundle"
+      "default_off_receipt": "/absolute/path/to/RNK-10/DEFAULT-OFF.json",
+      "default_off_receipt_sha256": "<independently computed lowercase SHA-256>"
     },
     "A5": {
       "manifest": "/absolute/path/to/candidate/transcript-manifest.json",
@@ -87,10 +115,20 @@ Supply these through `--provider-inputs "$INPUT_BINDINGS"` with
 }
 ```
 
+The M5 receipt uses `jope.rnk10.default-off/v1` and binds the tested source SHA,
+the `PASS` result, SHA-256-pinned shipped config and bundle with heuristic
+default and learned guidance disabled, identical
+serving-admission hashes with the ranker absent and present-but-disabled, and
+identical hashes from two default-path S2 runs. M5 validates those three
+non-waived R21 checks and candidate identity; it does not execute the waived
+learned-guidance causal replay. The `release-command-scaffold.json` stays
+`NOT_EXECUTABLE`; RC2 materialization supplies the candidate and receipt paths
+and pins to the generated `jope.rel07.gate-commands/v1` manifest.
+
 Discovery reports `unbound_providers` and `unbound_provider_count` separately from
 missing modules. `complete` requires both inventories to be empty. Execution
 discovery refuses unbound providers before writing a runnable manifest. It adds
-M5's directory arguments; D1's receipt, receipt pin, and platform-artifact pin;
+M5's R21 receipt and hash pin; D1's receipt, receipt pin, and platform-artifact pin;
 M2's four input/report arguments; M3's full-input manifest/pin arguments; and A5's
 two explicit environment bindings to each provider's argv without a shell. The
 frozen command-manifest hash covers them. The restricted
@@ -121,6 +159,16 @@ the owner's size-budget policy: artifact size determines its PASS/FAIL status;
 speed or latency measurements may be reported as informational data, but never
 affect the verdict. An explicitly owner-supplied complete manifest remains
 supported through `--manifest`.
+
+In `--candidate` mode, the supplied full-Linux artifact remains the signed
+candidate identity for the complete 28-row run and aggregate receipt. D2 receives
+the `fused-cpu-linux-x86_64` artifact from that same RC2 candidate manifest,
+after the runner verifies its path, bytes, source SHA, seal receipt and passing
+signature receipt. The manifest SHA and fused artifact SHA/path are retained in
+the generated D2 command and execution record; the D2 child still verifies the
+fused package's embedded source against the clean checkout. If that exact variant
+is absent or invalid, D2 is recorded BLOCKED; the runner never falls back to the
+full-Linux artifact.
 
 The JSON manifest has schema `jope.rel07.gate-commands/v1`, a full 40-character
 `source_sha`, the exact file's `artifact_sha256`, and a `gates` array. Supply

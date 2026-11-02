@@ -58,6 +58,25 @@ impl AdmittedRanker {
             forwards: Arc::new(AtomicUsize::new(0)),
         })
     }
+
+    #[cfg(test)]
+    pub(crate) fn test_admitted() -> Self {
+        #[derive(serde::Deserialize)]
+        struct Metadata {
+            trained_objectives: Vec<String>,
+        }
+        let bundle = crate::ranker::bundle::test_verified_bundle();
+        let trained_objectives = serde_json::from_slice::<Metadata>(
+            bundle.asset("manifest.json").expect("fixture manifest"),
+        )
+        .expect("fixture objectives")
+        .trained_objectives;
+        Self {
+            bundle: Arc::new(bundle),
+            trained_objectives,
+            forwards: Arc::new(AtomicUsize::new(0)),
+        }
+    }
     pub(crate) fn digest(&self) -> String {
         self.bundle.digest().to_string()
     }

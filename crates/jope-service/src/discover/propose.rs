@@ -198,6 +198,23 @@ fn delete_stage(transforms: &mut Vec<Stage>, rng: &mut ChaCha12Rng) -> Option<us
     Some(removed)
 }
 
+// A cyclic successor would double its weight when the preceding head is
+// known. A uniform permutation preserves the preferred pool's conditional
+// weights. Give each typed slot a separate non-main stream; the shared RNG
+// position and first draw stay unchanged, without reusing future main bits.
+fn head_retry_order(first: usize, length: usize, step: usize, rng: &ChaCha12Rng) -> Vec<usize> {
+    let mut remaining: Vec<_> = (0..length).filter(|&i| i != first).collect();
+    let mut fork = rng.clone();
+    fork.set_stream(rng.get_stream().wrapping_add(step as u64 + 1));
+    for i in (1..remaining.len()).rev() {
+        let j = index(&mut fork, i + 1);
+        remaining.swap(i, j);
+    }
+    let mut order = vec![first];
+    order.extend(remaining);
+    order
+}
+
 fn uniform(rng: &mut ChaCha12Rng, low: f64, high: f64) -> f64 {
     let unit = (rng.next_u64() >> 11) as f64 / ((1_u64 << 53) as f64);
     low + (high - low) * unit
@@ -478,10 +495,39 @@ impl Proposer {
                         mutate_parameters(&mut head, &mut rng);
                         Some(assemble(parsed.stages, head))
                     }
-                    ProposalFamily::ReplaceHead => Some(assemble(
-                        parsed.stages,
-                        heads[index(&mut rng, heads.len())].clone(),
-                    )),
+                    ProposalFamily::ReplaceHead => {
+                        let first = index(&mut rng, heads.len());
+                        let before = batch.proposals.len();
+                        let first_dsl = assemble(parsed.stages.clone(), heads[first].clone());
+                        let collision = memo_key(&first_dsl)
+                            .is_ok_and(|key| seen.contains(&key) || memo.contains(&key));
+                        let order = if collision {
+                            head_retry_order(first, heads.len(), step, &rng)
+                        } else {
+                            vec![first]
+                        };
+                        // A repeated known key should not consume this typed
+                        // mutation slot while a legal, novel head is available.
+                        // Keep the initial weighted draw and RNG position; the
+                        // finite retry order preserves the pool's weights.
+                        for (offset, head_index) in order.into_iter().enumerate() {
+                            if offset > 0 {
+                                *batch.attempts.entry(family).or_default() += 1;
+                            }
+                            self.offer(
+                                assemble(parsed.stages.clone(), heads[head_index].clone()),
+                                family,
+                                provenance.clone(),
+                                memo,
+                                &mut seen,
+                                &mut batch,
+                            );
+                            if batch.proposals.len() > before {
+                                break;
+                            }
+                        }
+                        continue;
+                    }
                     ProposalFamily::Insert => {
                         let inserted = stages[index(&mut rng, stages.len())].clone();
                         let position = index(&mut rng, transforms.len() + 1);
@@ -631,6 +677,238 @@ mod tests {
         fn nearest(&self, raw: &[f64; 12], family: &str, limit: usize) -> Result<Vec<Retrieved>> {
             self.called.borrow_mut().push((*raw, family.into(), limit));
             Ok(self.records.iter().take(limit).cloned().collect())
+        }
+    }
+
+    #[test]
+    fn retry_head_order_preserves_uniform_weights_and_the_shared_rng() {
+        let mut counts = [0usize; 3];
+        for seed in 0..1024 {
+            let mut rng = round_rng(seed, 0);
+            let mut expected = rng.clone();
+            let order = head_retry_order(0, 3, 1, &rng);
+            assert_eq!(order[0], 0);
+            let mut sorted = order.clone();
+            sorted.sort_unstable();
+            assert_eq!(sorted, vec![0, 1, 2]);
+            assert_eq!(order, head_retry_order(0, 3, 1, &rng));
+            counts[*order.iter().find(|&&i| i != 0).unwrap()] += 1;
+            assert_eq!(rng.next_u64(), expected.next_u64());
+        }
+        // Conditional on the first head being known, B/C retain equal weights.
+        // A cyclic scan always chooses B and fails this data-free control.
+        assert!(
+            counts[1].abs_diff(counts[2]) < 256,
+            "biased retry weights: {counts:?}"
+        );
+        let rng = round_rng(42, 0);
+        assert_ne!(
+            head_retry_order(0, 13, 1, &rng),
+            head_retry_order(0, 13, 6, &rng)
+        );
+    }
+
+    #[test]
+    fn repeated_head_draw_keeps_a_novel_head_slot_when_the_pool_has_an_alternative() {
+        // Original TRAIN request130: round775/context2. This is a row-free
+        // generator regression, not a model/fitness or release qualification.
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let parents = [Program::from_dsl("(pipe X (poly_interact append=true) (cheb degree=4) (winsor_clip append=true q=0.15759416738534485) (sigmoid append=true) (ridge))")];
+        let lm = [
+            -7.822644233703613,
+            -3.335017681121826,
+            2.0916075706481934,
+            0.17733953893184662,
+            -0.23421242833137512,
+            -1.8542579412460327,
+            -0.39526352286338806,
+            1.5499933958053589,
+            0.3646467924118042,
+            -0.23557567596435547,
+            2.554443597793579,
+            -0.7511533498764038,
+            1.6888071298599243,
+            0.965538501739502,
+            -0.9864354729652405,
+            -1.153594970703125,
+            -1.8711278438568115,
+            -0.2296914905309677,
+            1.2335679531097412,
+            -0.15032795071601868,
+            1.465488314628601,
+            -1.6561437845230103,
+            -0.8125762939453125,
+            0.8135456442832947,
+            -0.35853514075279236,
+            -0.9137781858444214,
+            -0.4460272192955017,
+            0.6699191927909851,
+            0.8401845097541809,
+            0.07990206778049469,
+            -0.5336035490036011,
+            0.4456247091293335,
+            0.6210421323776245,
+            -0.6575910449028015,
+            -0.8605937361717224,
+            0.04108719900250435,
+            -0.318228542804718,
+            -1.1542876958847046,
+            0.020905081182718277,
+            -0.4025436341762543,
+            1.037981390953064,
+            0.8037648797035217,
+            0.1720881313085556,
+            -0.14072567224502563,
+            -0.21567422151565552,
+            0.2446334958076477,
+            -0.9094048738479614,
+            0.4294348657131195,
+        ];
+        let bank = Bank {
+            role: BankRole::Proposer,
+            records: vec![
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (cheb append=true degree=4) (winsor_clip q=0.12691538581586245) (histgbm depth=6 lr=0.14350417339409188 rounds=210))"),
+                        family_id: "other-0".into(),
+                        dl_train: true,
+                        distance_squared: 1.0,
+                    },
+                    Retrieved {
+                        program: Program::from_dsl("(pipe X (blom append=true) (sigmoid append=true) (pair_prod topk=13) (ridge_gcv))"),
+                        family_id: "other-1".into(),
+                        dl_train: true,
+                        distance_squared: 2.0,
+                    },
+            ],
+            called: RefCell::new(vec![]),
+        };
+        let req = Round {
+            seed: 20261031,
+            round: 775,
+            exploring: false,
+            target_family: "original-target",
+            raw_lm48: &lm,
+            parents: &parents,
+        };
+        let batch = proposer.propose(&req, &bank, &BTreeSet::new()).unwrap();
+        let heads: Vec<_> = batch
+            .proposals
+            .iter()
+            .filter(|p| p.family == ProposalFamily::ReplaceHead)
+            .collect();
+        assert_eq!(batch.proposals.len(), 8);
+        assert_eq!(
+            heads.len(),
+            2,
+            "a repeated head draw consumed a scheduled head slot"
+        );
+        assert_ne!(heads[0].memo_key, heads[1].memo_key);
+        assert_eq!(
+            heads[0].program.program_sha256,
+            "f5add21fc43bf261f379d1cda8de3500816025f6225458166871b03005baabdc"
+        );
+        assert!(batch.duplicates_or_memo > 0);
+        assert_eq!(
+            batch.attempts.values().sum::<usize>(),
+            batch.proposals.len() + batch.invalid_or_filtered + batch.duplicates_or_memo
+        );
+        assert_eq!(
+            batch,
+            proposer.propose(&req, &bank, &BTreeSet::new()).unwrap()
+        );
+
+        // The first preferred head is already measured, while other heads are
+        // novel. Preserve the scheduled head arms without admitting that key.
+        let measured = BTreeSet::from([heads[0].memo_key.clone()]);
+        let memo_collision = proposer.propose(&req, &bank, &measured).unwrap();
+        assert_eq!(memo_collision.proposals.len(), 8);
+        assert_eq!(
+            memo_collision
+                .proposals
+                .iter()
+                .filter(|p| p.family == ProposalFamily::ReplaceHead)
+                .count(),
+            2,
+            "a memoized first draw consumed a scheduled head slot"
+        );
+        assert!(memo_collision
+            .proposals
+            .iter()
+            .all(|p| !measured.contains(&p.memo_key)));
+        assert_eq!(
+            memo_collision.attempts.values().sum::<usize>(),
+            memo_collision.proposals.len()
+                + memo_collision.invalid_or_filtered
+                + memo_collision.duplicates_or_memo
+        );
+
+        // A collision does not authorize an existing memo entry or an unbounded
+        // retry when every other preferred head has already been measured.
+        let mut transforms = proposer.pipeline(&parents[0]).unwrap().stages;
+        transforms.pop();
+        let (_, templates) = select_landmark_preferred_pools(&lm);
+        let mut memo = BTreeSet::new();
+        for template in templates {
+            let mut parsed = parse_canonical_pipeline(&format!("(pipe X {template})")).unwrap();
+            let dsl = assemble(transforms.clone(), parsed.stages.pop().unwrap());
+            let key = memo_key(&dsl).unwrap();
+            if key != heads[0].memo_key {
+                memo.insert(key);
+            }
+        }
+        let exhausted = proposer.propose(&req, &bank, &memo).unwrap();
+        assert_eq!(exhausted.proposals.len(), 8);
+        assert_eq!(
+            exhausted
+                .proposals
+                .iter()
+                .filter(|p| p.family == ProposalFamily::ReplaceHead)
+                .count(),
+            1
+        );
+        assert!(exhausted
+            .proposals
+            .iter()
+            .all(|p| !memo.contains(&p.memo_key)));
+        assert_eq!(
+            exhausted.attempts.values().sum::<usize>(),
+            exhausted.proposals.len()
+                + exhausted.invalid_or_filtered
+                + exhausted.duplicates_or_memo
+        );
+    }
+
+    #[test]
+    fn oversized_head_alternative_is_filtered_without_aborting_the_round() {
+        let proposer = Proposer::new(&[Language::Rust]).unwrap();
+        let mut dsl = String::from("(pipe X ");
+        while dsl.len() + "(sigmoid) ".len() + "(ridge))".len() <= MAX_DSL_BYTES {
+            dsl.push_str("(sigmoid) ");
+        }
+        dsl.push_str("(ridge))");
+        let parents = [Program::from_dsl(dsl)];
+        proposer.pipeline(&parents[0]).unwrap();
+        let bank = Bank {
+            role: BankRole::Proposer,
+            records: vec![],
+            called: RefCell::new(vec![]),
+        };
+        for seed in 0..4 {
+            let round = Round {
+                seed,
+                round: 0,
+                exploring: false,
+                target_family: "byte-limit-control",
+                raw_lm48: &[0.0; 48],
+                parents: &parents,
+            };
+            let batch = proposer.propose(&round, &bank, &BTreeSet::new()).unwrap();
+            assert_eq!(batch.proposals.len(), 8);
+            assert!(batch.invalid_or_filtered > 0);
+            assert!(batch
+                .proposals
+                .iter()
+                .all(|p| p.program.dsl.len() <= MAX_DSL_BYTES));
         }
     }
 

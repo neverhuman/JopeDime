@@ -1,0 +1,37 @@
+{
+  "archive": {
+    "bytes": 192055903,
+    "create_only": true,
+    "member_count": 511,
+    "member_hashes_verified_from_versioned_readback": true,
+    "sha256": "dadde1d2f27023c8d8088d89b2d44dc0892aa56fe28b85559e559b7dd1893dde",
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H197/H197_attempt4_20261101T1932Z/H197-evidence.zip",
+    "version_id": "e5ZYMX2rB3mmb8161EU1gc34UXwg6nm3",
+    "versioned_get_sha256_verified": true
+  },
+  "attempt": 4,
+  "local_archive_path": "/home/ubuntu/jope_plan/ns/custody/H197_attempt4_20261101T1932Z.zip",
+  "manifest": {
+    "bytes": 104449,
+    "sha256": "b654a5d609ab4345b6ee7a17691877dc150ff7ff0bf330ebfe0d47929d013630",
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H197/H197_attempt4_20261101T1932Z/H197-manifest.json",
+    "version_id": "NFheC9_kkC1gZ41Ct7pEpWGfQenP3RB7",
+    "versioned_get_sha256_verified": true
+  },
+  "monitor": {
+    "elapsed_seconds": 5100.288803051924,
+    "exit_code": 0,
+    "host_online_cores": 128,
+    "load_limit": 108.8,
+    "reasons": [],
+    "status": "PASS"
+  },
+  "optimizer_updates": 2400,
+  "protected_reads": 0,
+  "refused_accesses": 0,
+  "source_commit": "47c7a43cefdbb9ea360d335d829d9381aa55b15b",
+  "source_tree": "a8a7293a49c97e84e63f15aa2702a359024030de",
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "wave": "H197"
+}

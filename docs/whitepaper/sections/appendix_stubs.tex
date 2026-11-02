@@ -129,8 +129,9 @@ in \cref{sec:method-status}:
   below. The Python
   ranking helpers group by dataset identifier. Native ranking groups by corpus context and the eight-row comparison index;
   separate comparisons from the same context do not pair with each other.
-  Native pairwise ranking skips non-finite targets and exact ties, $q_w=q_u$,
-  without an exclusion margin or logit rescaling.
+  The native ranking helper skips non-finite targets and exact ties, $q_w=q_u$,
+  without an exclusion margin or logit rescaling. The trainer refuses
+  non-finite supervision before constructing the loss.
   \Cref{eq:writerLoss,eq:mapLoss} show the list-level form.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
@@ -185,8 +186,8 @@ in \cref{sec:method-status}:
 
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
-The main text presents four views of admission and operating activity.
-This appendix supplies timing and event counts
+The main text gives four views of adapter decisions and program activity.
+This appendix adds their timing and event counts
 (\cref{app:development-time,app:event-counts}), later operating windows
 (\cref{app:subsequent-window,app:subsequent-utility,app:subsequent-rates,app:round-throughput}),
 and separate adapter-admission and program-promotion rates
@@ -205,11 +206,11 @@ The scope statement in \cref{sec:method-status} applies throughout this appendix
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_acceptance_over_rounds.pdf}
   \caption{\textbf{Adapter validation, cumulative acceptance rate, and candidate utility shortfalls across rounds 775--2663.}
   All three panels use the same \num{1889} consecutive admission evaluations (\cref{tab:admission-ledger}).
-  Left: candidate validation utility (grey) and post-decision recorded best (blue), with stars at
+  Left: candidate validation utility (logged scalar score; grey) and post-decision recorded best (blue), with stars at
   strict gains (rounds 785 and 859) and hollow diamonds at accepted ties (rounds 782 and 882).
   Center: cumulative accepted share of elapsed rounds (\%), peaking at 18.18\% at round 785 and
   declining across \num{1781} subsequent rejected rounds to 0.21\% ($4/\num{1889}$).
-  Right: empirical cumulative distribution of recorded-best minus candidate validation utility;
+  Right: empirical cumulative distribution (fraction of evaluations) of recorded-best minus candidate validation utility;
   zero marks the four accepted evaluations. Scope: \cref{sec:method-status}.}
   \label{fig:fw-validation}
   \label{fig:fw-acceptance-over-rounds}
