@@ -1262,6 +1262,9 @@ crates/jope-engine/tests/ablation_ranking.rs
 crates/jope-engine/tests/atomic_write.rs
 crates/jope-engine/tests/binary_preparation.rs
 crates/jope-engine/tests/bounded_assignment.rs
+crates/jope-engine/tests/bounded_assignment/assignment_tests.rs
+crates/jope-engine/tests/bounded_assignment/worker_tests.rs
+crates/jope-engine/tests/bounded_assignment/selection_tests.rs
 crates/jope-engine/tests/bounded_preflight_cli.rs
 crates/jope-engine/tests/bounded_run.rs
 crates/jope-engine/tests/bounded_run/cli.rs
