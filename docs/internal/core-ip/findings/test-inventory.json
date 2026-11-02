@@ -437,8 +437,16 @@
       "reason": "Owner-requested H232 data-free controls for the Lion vs AdamW r882 adapter continuation (arm settings, Lion reference update, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor limits and load-pause hysteresis, launch binding).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h233_stable_g025/test_h233.py": {
+      "reason": "H233 data-free controls (STABLE_G025 pick-stability vote gate). Classified by the H235 prereg PR to restore the inventory gates after #2068 made this test visible; owner may refine the reason.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h234_lambdaloss/test_h234.py": {
       "reason": "Owner-requested H234 data-free controls for the LambdaLoss vs CTRL-loss r882 adapter continuation (identical AdamW, LambdaLoss reference equality, loss composition, CTRL-already-ListNet pin, per-seed folds, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor limits and pause hysteresis).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h235_betanll/test_h235.py": {
+      "reason": "Owner-requested H235 data-free controls for the beta-NLL variance-head vs CTRL-loss r882 adapter continuation (identical AdamW, CTRL term split, beta-NLL reference and stop-gradient, zero/clamped head, loss composition, CTRL smooth-L1 pin, per-seed folds, selector, Holm m=2 with +0.002 margin, Elo, xbabe2 monitor limits and pause hysteresis).",
       "role": "research"
     },
     "python:benchmarks/test_prepare.py": {
