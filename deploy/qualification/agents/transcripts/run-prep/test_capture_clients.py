@@ -41,6 +41,7 @@ def _runner_fixture(
     drain_key=None,
     transport_key=None,
     flush_seconds=0.2,
+    recorder_seconds=2,
     async_recorder_key=None,
     recorder_group_key=None,
 ):
@@ -150,7 +151,7 @@ def _runner_fixture(
                     raise SystemExit('descendant did not start')
             if key == {transport_key!r}:
                 recorder_options = {{'process_group': 0}} if key == {recorder_group_key!r} else {{}}
-                recorder = subprocess.Popen([sys.executable, '-B', capture_stdio, '--out-dir', capture_dir, '--seconds', '2', '--max-bytes', '1048576', '--', candidate, 'mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, **recorder_options)
+                recorder = subprocess.Popen([sys.executable, '-B', capture_stdio, '--out-dir', capture_dir, '--seconds', {str(recorder_seconds)!r}, '--max-bytes', '1048576', '--', candidate, 'mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, **recorder_options)
                 recorder.stdin.write(b'{{"jsonrpc":"2.0","id":1,"method":"ping"}}\\n')
                 recorder.stdin.flush()
                 if not recorder.stdout.readline():
@@ -321,7 +322,9 @@ def test_normal_exit_waits_for_isolated_recorder_receipt(a5_tmp_path):
     assert result["clients"]["claude_code"]["capture_error"] is None
 
 
-def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
+def test_deadline_poll_allows_bounded_post_exit_recorder_drain(
+    monkeypatch, a5_tmp_path
+):
     args, plan, _candidate, client = _runner_fixture(
         a5_tmp_path, drain_key="claude_code"
     )
@@ -356,16 +359,14 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
             ShiftedTime.client_finished = True
         return process
 
-    drain_calls = []
-    real_drain = THREE_CLIENTS_MODULE.drain_group
+    drain_remaining = []
 
-    def drain_must_not_run(process, deadline, check_interrupted, *extra):
+    def record_drain_deadline(process, deadline, *_args, **_kwargs):
         if process.args[-1] == "claude_code":
-            drain_calls.append(True)
-            raise AssertionError(
-                "no recorder drain budget remains at the client deadline"
-            )
-        return real_drain(process, deadline, check_interrupted, *extra)
+            drain_remaining.append(deadline - ShiftedTime.monotonic())
+
+    def missing_receipt(*_args, **_kwargs):
+        raise THREE_CLIENTS_MODULE.CaptureError("synthetic delayed receipt")
 
     with monkeypatch.context() as patch:
         patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
@@ -374,19 +375,19 @@ def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
             "Popen",
             exit_client_before_deadline_poll,
         )
-        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", drain_must_not_run)
+        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", record_drain_deadline)
+        patch.setattr(THREE_CLIENTS_MODULE, "wait_for_recorder", missing_receipt)
         result = THREE_CLIENTS_MODULE.run_capture(args)
 
     assert result["status"] == "INCOMPLETE"
     assert result["clients"]["claude_code"]["client_exit"] == 0
     assert not result["clients"]["claude_code"]["timed_out"]
-    assert drain_calls == []
+    assert len(drain_remaining) == 1
+    assert 0 < drain_remaining[0] <= THREE_CLIENTS_MODULE.RECORDER_DRAIN_SECONDS
     assert not (args.out_dir / "clients/claude_code/transport/capture.json").exists()
 
 
-def test_normal_exit_drain_deadline_is_not_replaced_with_grace(
-    monkeypatch, a5_tmp_path
-):
+def test_normal_exit_drain_uses_bounded_post_exit_grace(monkeypatch, a5_tmp_path):
     args, plan, _candidate, client = _runner_fixture(
         a5_tmp_path, drain_key="claude_code"
     )
@@ -425,7 +426,10 @@ def test_normal_exit_drain_deadline_is_not_replaced_with_grace(
 
     def record_drain_deadline(process, deadline, *_args, **_kwargs):
         if process.args[-1] == "claude_code":
-            drain_deadlines.append(deadline)
+            drain_deadlines.append(deadline - ShiftedTime.monotonic())
+
+    def missing_receipt(*_args, **_kwargs):
+        raise THREE_CLIENTS_MODULE.CaptureError("synthetic delayed receipt")
 
     with monkeypatch.context() as patch:
         patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
@@ -435,13 +439,29 @@ def test_normal_exit_drain_deadline_is_not_replaced_with_grace(
             client_exits_after_deadline,
         )
         patch.setattr(THREE_CLIENTS_MODULE, "drain_group", record_drain_deadline)
+        patch.setattr(THREE_CLIENTS_MODULE, "wait_for_recorder", missing_receipt)
         result = THREE_CLIENTS_MODULE.run_capture(args)
 
     assert result["clients"]["claude_code"]["client_exit"] == 0
     assert not result["clients"]["claude_code"]["timed_out"]
-    assert all(deadline <= ShiftedTime.monotonic() for deadline in drain_deadlines), (
-        "recorder drain deadline must not extend beyond the client_deadline"
+    assert len(drain_deadlines) == 1
+    assert 0 < drain_deadlines[0] <= THREE_CLIENTS_MODULE.RECORDER_DRAIN_SECONDS
+
+
+def test_slow_eof_flush_fits_post_exit_recorder_budget(a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path,
+        transport_key="claude_code",
+        flush_seconds=6,
+        recorder_seconds=30,
     )
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    row = result["clients"]["claude_code"]
+    receipt = args.out_dir / "clients/claude_code/transport/capture.json"
+    assert result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+    assert row["client_exit"] == 0
+    assert row["capture_error"] is None
+    assert json.loads(receipt.read_text())["complete"] is True
 
 
 def test_normal_exit_drain_is_bounded_before_forced_cleanup(monkeypatch, a5_tmp_path):
