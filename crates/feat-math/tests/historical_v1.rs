@@ -1354,6 +1354,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         )
         .expect("capacity Tokio history joins the release0.4.1 security identity");
@@ -1427,6 +1428,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         )
         .expect("published Go fixtures join the combined C17/TypeScript/Go identity");
@@ -1493,6 +1495,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         )
         .expect("published feature history joins shared capacity and release fixes");
@@ -1590,6 +1593,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         ),
         (
@@ -1647,6 +1651,7 @@ fn historical_source_manifest_and_old_fixtures_are_pinned() {
                 res09_candle.clone(),
                 gov03_axum.clone(),
                 gov04_portable_pty.clone(),
+                rustmem_cpu_affinity.clone(),
             ],
         ),
     ] {
