@@ -7,7 +7,6 @@ use std::{
     os::{
         fd::{AsRawFd, FromRawFd, OwnedFd},
         unix::{
-            ffi::OsStrExt,
             fs::{FileExt, MetadataExt},
             net::UnixStream,
         },
@@ -20,20 +19,9 @@ pub fn connect_bounded(path: &Path, window: std::time::Duration) -> std::io::Res
     let end = std::time::Instant::now()
         .checked_add(window)
         .ok_or_else(|| std::io::Error::other("socket deadline overflow"))?;
-    // SAFETY: the all-zero bit pattern is valid for sockaddr_un: sun_family and
-    // every sun_path element are integers. The family and bounded path are set below.
-    let mut address: libc::sockaddr_un = unsafe { std::mem::zeroed() };
-    address.sun_family = libc::AF_UNIX as libc::sa_family_t;
-    let bytes = path.as_os_str().as_bytes();
-    if bytes.len() >= address.sun_path.len() || bytes.contains(&0) {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "invalid Unix socket path",
-        ));
-    }
-    for (target, byte) in address.sun_path.iter_mut().zip(bytes) {
-        *target = *byte as libc::c_char;
-    }
+    let address = nix::sys::socket::UnixAddr::new(path).map_err(|_| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "invalid Unix socket path")
+    })?;
     loop {
         if std::time::Instant::now() >= end {
             return Err(std::io::Error::new(
@@ -56,23 +44,18 @@ pub fn connect_bounded(path: &Path, window: std::time::Duration) -> std::io::Res
         // SAFETY: socket returned this fresh, nonnegative stream descriptor;
         // no other Rust owner exists, and stream closes it on every exit path.
         let stream = unsafe { UnixStream::from_raw_fd(fd) };
-        // SAFETY: address lives through connect; its length includes the fixed
-        // prefix and validated path plus terminator, within sockaddr_un.
-        let rc = unsafe {
-            libc::connect(
-                fd,
-                (&address as *const libc::sockaddr_un).cast(),
-                (std::mem::offset_of!(libc::sockaddr_un, sun_path) + bytes.len() + 1)
-                    as libc::socklen_t,
-            )
-        };
-        if rc == 0 {
-            stream.set_nonblocking(false)?;
-            return Ok(stream);
-        }
-        let error = std::io::Error::last_os_error();
-        if error.kind() != std::io::ErrorKind::WouldBlock {
-            return Err(error);
+        // The validated socket address remains live for the connect call.
+        match nix::sys::socket::connect(fd, &address) {
+            Ok(()) => {
+                stream.set_nonblocking(false)?;
+                return Ok(stream);
+            }
+            Err(errno) => {
+                let error = std::io::Error::from(errno);
+                if error.kind() != std::io::ErrorKind::WouldBlock {
+                    return Err(error);
+                }
+            }
         }
         drop(stream);
         std::thread::sleep(
@@ -90,12 +73,15 @@ pub(crate) fn send_fd(stream: &UnixStream, fd: i32) -> Result<()> {
         iov_len: 1,
     };
     let mut control = [0usize; 8];
-    // SAFETY: the all-zero bit pattern is valid for msghdr: its fields are raw
-    // pointers (null is valid) and integers (zero is valid), populated below.
-    let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
-    msg.msg_iov = &mut iov;
-    msg.msg_iovlen = 1;
-    msg.msg_control = control.as_mut_ptr().cast();
+    let mut msg = libc::msghdr {
+        msg_name: std::ptr::null_mut(),
+        msg_namelen: 0,
+        msg_iov: &mut iov,
+        msg_iovlen: 1,
+        msg_control: control.as_mut_ptr().cast(),
+        msg_controllen: 0,
+        msg_flags: 0,
+    };
     // SAFETY: CMSG_SPACE performs size arithmetic for one descriptor only.
     msg.msg_controllen = unsafe { libc::CMSG_SPACE(std::mem::size_of::<i32>() as u32) } as usize;
     // SAFETY: control is cmsghdr-aligned and holds CMSG_SPACE(sizeof(i32));
@@ -121,13 +107,15 @@ pub(crate) fn receive_fd(stream: &UnixStream) -> Result<OwnedFd> {
         iov_len: 1,
     };
     let mut control = [0usize; 8];
-    // SAFETY: the all-zero bit pattern is valid for msghdr: its fields are raw
-    // pointers (null is valid) and integers (zero is valid), populated below.
-    let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
-    msg.msg_iov = &mut iov;
-    msg.msg_iovlen = 1;
-    msg.msg_control = control.as_mut_ptr().cast();
-    msg.msg_controllen = std::mem::size_of_val(&control);
+    let mut msg = libc::msghdr {
+        msg_name: std::ptr::null_mut(),
+        msg_namelen: 0,
+        msg_iov: &mut iov,
+        msg_iovlen: 1,
+        msg_control: control.as_mut_ptr().cast(),
+        msg_controllen: std::mem::size_of_val(&control),
+        msg_flags: 0,
+    };
     // recvmsg writes to live, bounded iov and aligned control buffers; the kernel creates the
     // traversed headers and fresh SCM_RIGHTS descriptors. read_unaligned handles data alignment;
     // each descriptor gets one OwnedFd before validation, so every refusal closes the installed

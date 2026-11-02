@@ -2831,6 +2831,7 @@ name = "jope-parallel"
 version = "0.4.1"
 dependencies = [
  "anyhow",
+ "bytemuck",
  "cc",
  "clap",
  "crossterm 0.28.1",
