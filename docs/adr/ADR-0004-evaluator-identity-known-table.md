@@ -151,7 +151,7 @@ advances from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d`
 `f09606a184af4e783ebaf750c6d3e21d0ec442f01f578436cac873c3186388e4`. The DSL ABI remains
 `c8b4babfa7dc5b65bf614ffc4c9cdb3a8ed08f42ce1b7087481bbdcce92a8389`, and the Cargo.lock hash
 remains `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`. The compatibility
-identity fixtures were regenerated at source commit `a60d765014d6efaba9836030823ceac43d280d2c`
+identity fixtures were regenerated at source commit `c6c46d5783a83276c6b8f953dbff770191b4ce19`
 using the announced identity-only procedure; the transition is recorded in
 `p45_feat_math_race_budget_identity_rebaseline.v1.json`. No known-identity row is added because
 this work has no shipped receipt proving the new identity existed.
