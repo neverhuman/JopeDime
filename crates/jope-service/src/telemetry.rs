@@ -704,6 +704,8 @@ fn cgroup_allowed_cpus(
 
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
+#[cfg(target_os = "linux")]
+#[allow(unsafe_code)]
 mod platform {
     use nix::{
         sched::{sched_getaffinity, CpuSet},
