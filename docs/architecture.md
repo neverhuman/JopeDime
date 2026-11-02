@@ -43,7 +43,7 @@ passed by shared memory between stages, which is what makes each stage replayabl
 flowchart TB
   subgraph product["product crates (workspace version)"]
     numpy[numpy-pcg64<br/>bit-exact numpy 1.26 RNG, 0 deps, no in-workspace consumer]
-    fm[feat-math<br/>DSL · search · heads · registry · emitters · fitted C++ runtime]
+    fm[feat-math<br/>DSL · search · heads · registry · emitters · Rust fitted-model runtime]
     bg[battle-gpu<br/>raw dlopen CUDA screening, feature gpu]
     enc[jope-encoders<br/>lib name starforge: foundation, target, chimera, policy decoder]
     hyp[hyperion<br/>candle v5/v7 inference, router, GPU lease]
@@ -130,7 +130,7 @@ crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-eng
 
 | Crate (directory) | Package name | Status on `main` today | What it owns |
 |---|---|---|---|
-| `crates/feat-math` | `feat-math` | landed (WP2) | Program DSL (`dsl.rs`, `genome.rs`, `spec.rs`), interpreter (`model.rs`, `heads.rs`, `gpr.rs`, `krr.rs`, `boost2.rs`, `portfolio.rs`), in-process search (`evolve.rs`), the op authority `registry.rs`, all emitters (`emit_py.rs`, `emit_rs.rs`, `emit_cpp.rs`, `emit_js.rs`, `transpile.rs`), the fitted C++ runtime (`advanced_v3/`, `cpp/fitted_runtime.cpp`), the one compiler helper `cxx.rs`. Crate-local `assets/champions/8944cbdf.dsl` (`include_str!`). |
+| `crates/feat-math` | `feat-math` | landed (WP2) | Program DSL (`dsl.rs`, `genome.rs`, `spec.rs`), interpreter (`model.rs`, `heads.rs`, `gpr.rs`, `krr.rs`, `boost2.rs`, `portfolio.rs`), in-process search (`evolve.rs`), the op authority `registry.rs`, all emitters (`emit_py.rs`, `emit_rs.rs`, `emit_cpp.rs`, `emit_js.rs`, `transpile.rs`), the Rust fitted-model host runtime (`advanced_v3/`), and a test-only frozen C++ parity oracle (`tests/fixtures/fitted_runtime_oracle.cpp`). Crate-local `assets/champions/8944cbdf.dsl` (`include_str!`). |
 | `crates/numpy-pcg64` | `numpy-pcg64` | landed (WP3) | Bit-exact numpy 1.26.4 `SeedSequence`/PCG64/`Generator` integer sampling and the frozen sampling recipes. |
 | `crates/jope-encoders` | `starforge` (lib name kept so no source edit was needed) | landed (WP3) | Foundation encoder (Starlight / TabPFN-v3-reg, TabICL), target encoder, chimera fusion, hash-verified bundle loader. Weight-bound tests are env-gated. |
 | `crates/battle-gpu` | `battle-gpu` | landed | Raw `dlopen("libcuda.so.1")` GPU screening for rung-0 ridge; feature `gpu`. No cudarc, so it never conflicts with candle. |
@@ -149,7 +149,7 @@ crate's `[dependencies]` change. No crate depends on `jope-campaigns`, `jope-eng
 | `crates/jope-motifs` | `jope-motifs` | landed | Reusable program fragments: private tables, exact expansion and compatibility checks; `jope motifs`, hidden from the default help until the capability is published (owner decision, 2026-09-24). |
 | `crates/jope-records` | `jope-records` | landed | Verifiers and renderers of the committed records (core-IP findings, dispositions, claims, test inventory, task status, progress view, historical Elo replay) and the repository hygiene guards `coverage`, `rust-scope-check`, `parity-check`, `readme-benchmarks` and `repo-layout`; Rust ports of the retired Python verifiers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
 | `crates/jope-ci` | `jope-ci` | landed | CI and host-maintenance tooling: `cargo-artifact` (Cargo artifact selection) and the build-directory report; Rust ports of `deploy/ci` and `deploy/maintenance` Python helpers ([ADR-0006](adr/ADR-0006-rust-only-stack.md)). |
-| `crates/jope-runtime` | `jope-runtime` | landed | The appliance runtime: the native method roster, raw-cell encoding and bound prediction shared with `jope-bench` and `jope-pipeline` (which re-export them), CSV ingress, bounded automatic selection (`jope.runtime-select/v1` defaults; opt-in v2 regression objectives, forward validation and cross-fitted output calibration), JSON-RPC/MCP adapters, the `model.jope` fitted-state file and run receipts. Depends on `feat-math` without its C++ runtime. |
+| `crates/jope-runtime` | `jope-runtime` | landed | The appliance runtime: the native method roster, raw-cell encoding and bound prediction shared with `jope-bench` and `jope-pipeline` (which re-export them), CSV ingress, bounded automatic selection (`jope.runtime-select/v1` defaults; opt-in v2 regression objectives, forward validation and cross-fitted output calibration), JSON-RPC/MCP adapters, the `model.jope` fitted-state file and run receipts. Depends on `feat-math` without its fitted-C++ feature. |
 | `crates/jope-assets` | `jope-assets` | landed | The signed single-file package: 128-byte footer, canonical manifest, P-256 signature over the footer, per-asset authentication before decompression, bounded decoding; the writer behind feature `pack`. |
 | `crates/jope-appliance` | `jope-appliance` (binary `jopedime`) | landed; not published | The signed single-file executable: `version`, `doctor`, `methods`, `fit`, `predict`, `fit-predict`, `fitness`, `mcp`, `api`, `verify-self`, `licenses`. [deploy/appliance](../deploy/appliance/README.md). |
 | `crates/jope-dist` | `jope-dist` | landed | Build-time only: model lock with rights blockers, deterministic pack, release stage and seal, independent verify, dependency audit, notices, size, SBOM and provenance. |
