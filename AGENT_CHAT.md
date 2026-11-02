@@ -2456,3 +2456,10 @@ intent=mechanical behavior-preserving splits to <500 LOC per file; syntax-only c
 
 2026-11-02T23:10Z | CLAIM FASTLANE SPARE t2250 luna_jk_shape_16_x2 | checkout=/home/ubuntu/jk_wide/lanes/shape_16_x2_t2040/JopeDime branch=fast/luna_jk_shape_16_x2 HEAD=ad6749c043534c40680f29226ba9dc99dddbf41d origin/v1/fastlane. COORD locked claim 23:09Z: crates/jope-learning/src/progress/outbox.rs (951 LOC); current SHA256 04076832965c13e7f64cd017fa7ece86e71806491c1e0231df873dc68074936d, not pinned. Split cohesive Rust units under 500 LOC; add module paths to coverage source inventory; rustfmt + diff-check only, no builds/tests/audits; publish jk_fastpush.
 [2026-11-02T22:57:57+00:00] CLAIM luna_jk_ownermap COORDINATOR t2250 | checkout=/home/ubuntu/JopeDime/.agent/worktrees/jk-cap-ownermap branch=fast/luna_jk_ownermap_t2250 HEAD=c1de662a9f0bf84d96012d4968b4797656a831a9 (fresh origin/v1/fastlane). Own only the narrow `.jankurai/` prefix route in agent/owner-map.json and agent/test-map.json for j_8ca6100e8 HLT-003/HLT-004 `.jankurai/score-history.jsonl`; test route reuses the existing jankurai audit lane command from `.jankurai/repo-score.md`. JSON-valid and diff-check only, no cargo/tests/audits; fastpush, then follow PYRS_t2250. Existing untracked luna_jk_ownermap.txt is retained and not part of this change.
+[2026-11-02T22:56:53Z] CLAIM luna_jk_shape_5_x1 SPARE t2250
+checkout=/mnt/jope-build-native/jk_wide/shape_5_x1_t2040/JopeDime
+branch=fast/luna_jk_shape_5_x1_t2250
+HEAD=938e774ca633fb5c82173b66f8defd062506d823 (fresh origin/v1/fastlane)
+owner=Codex; direct coordinator/user assignment transfers exact-file ownership from stale historical W1600-variety/HLT-046 mentions, which are preserved
+path=crates/feat-math/src/kernel/profile.rs; current_sha256=d63c8fbc4c7b4b3fb8539ca0fb77272f7f55694811bc5d8c79553fe57826998c; current_LOC=990; no current hash pin or active t2250 competing claim found
+intent=mechanical behavior-preserving split into cohesive Rust modules under 500 LOC; rustfmt --edition 2021 --check and git diff --check only; no cargo/build/tests/audits; publish with jk_fastpush.sh
