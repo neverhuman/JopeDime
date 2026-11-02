@@ -123,6 +123,7 @@ pub mod grammar;
 mod hashing;
 pub mod jope_embed;
 pub mod model;
+pub mod model_v3_checkpoint;
 pub mod producer;
 pub mod proposal_ledger;
 pub mod ranking;
