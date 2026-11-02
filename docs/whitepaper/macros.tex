@@ -87,3 +87,20 @@
 \NewCommandCopy\EZ@citep\citep
 \DeclareRobustCommand{\citep}{\ifhmode\ifdim\lastskip>\z@\unskip\penalty500\ \fi\fi\EZ@citep}
 \makeatother
+% A \FloatBarrier that flushes figure* floats onto a float-only page can leave
+% the next column with the previous page's reduced text room, so that column
+% stops after a few lines (the Section 7 opening after the Section 6.8 figures).
+% When the barrier leaves an empty column holding no column floats, give it the
+% full column height again.
+\makeatletter
+\let\fb@plainbarrier\FloatBarrier
+\renewcommand{\FloatBarrier}{\fb@plainbarrier\fb@freshcolumn}
+\newcommand{\fb@freshcolumn}{%
+  \ifdim\pagegoal=\maxdimen
+    \ifx\@toplist\@empty\ifx\@botlist\@empty
+      \ifdim\@colroom<\@colht
+        \global\@colroom\@colht\global\vsize\@colht
+      \fi
+    \fi\fi
+  \fi}
+\makeatother
