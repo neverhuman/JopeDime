@@ -153,6 +153,6 @@ The implementation hash advances from
 remains `e0f1d2f90337bf2df4930b051cf6b3115ee0b27bc5533c56de4b8a927678a401`; the identity
 digest advances from `6ff84deb38b32b725960d9b18a1a7775ea7df6593fc4eb575f54a6611e22fd1d` to
 `41befe853ef6d31972f3126a29d501b7d97c84c6025a4b9497bf1ca628651709`. The rebaseline commit
-is `0a734502661a5e653960bb7623f4ee0bf3a14206`. No evaluator behavior is intentionally changed.
+is `73fd8e357ca39c9ca97620017e1acab14a402d3c`. No evaluator behavior is intentionally changed.
 The known-identity table remains unchanged; this lane had no qualifying shipped-receipt path to
 append for the prior current identity.

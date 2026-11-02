@@ -1,6 +1,6 @@
 {
   "schema": "feat-math.compat-freeze.evaluator-identity.v1",
-  "generated_at_sha": "0a734502661a5e653960bb7623f4ee0bf3a14206",
+  "generated_at_sha": "73fd8e357ca39c9ca97620017e1acab14a402d3c",
   "note": "A replica of campaign_evaluator.rs compute_implementation_sha256 (the hashed list is read from that function) and EvaluatorIdentityV1::digest. Planned changes move this fixture: the change that mints the identity announces it and rebaselines it with JOPE_COMPAT_FREEZE_REGENERATE=identity.",
   "domain": "jope-dime/evaluator-implementation/v1",
   "inputs": [
