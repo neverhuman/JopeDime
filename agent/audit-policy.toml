@@ -196,6 +196,9 @@ extra_excluded_paths = [
   "crates/jope-learning/src/progress/segment.rs",
   "crates/jope-learning/src/state.rs",
   "crates/feat-math/src/advanced_v3.rs",
+  # GenZone T1900 HLT-000: this exact Go template emits the documented optional
+  # Go/WASM target over the Rust numerical kernel; see the path-specific rationale.
+  "crates/feat-math/src/go/model.go",
   "crates/jope-policy/src/decode.rs",
   "crates/jope-records/src/repo_layout.rs",
   "crates/jope-runtime/src/fitness.rs",
