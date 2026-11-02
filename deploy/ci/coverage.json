@@ -15243,6 +15243,36 @@
       ],
       "scope": "Direct stdlib unittest execution of CPU runner admission/resources or independent family failure retention."
     },
+    "python:deploy/ci/_runner_case_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Shared imports and repository helpers for runner case modules; not a directly discovered test file."
+    },
+    "python:deploy/ci/_runner_case_mac.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Mac runner admission, registration, transport, and repository custody contract cases."
+    },
+    "python:deploy/ci/_runner_case_trim.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Runner target trimming and idle-lane launcher contract cases."
+    },
     "python:python/src/jope/north_star/dope_freeze_guard_self_test.py": {
       "discovery": {
         "kind": "python-family"
