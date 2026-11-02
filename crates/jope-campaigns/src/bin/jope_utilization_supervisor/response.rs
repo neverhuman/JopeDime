@@ -5,7 +5,7 @@ use super::*;
 // ---------------------------------------------------------------------------
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum Verdict {
+pub(super) enum SupervisorVerdict {
     /// Busy and every producer is producing.
     Ok,
     /// Not busy, and there is genuinely nothing left to run. Not an alarm.
@@ -20,13 +20,13 @@ pub(super) enum Verdict {
     Idle,
 }
 
-impl Verdict {
+impl SupervisorVerdict {
     pub(super) fn as_str(self) -> &'static str {
         match self {
-            Verdict::Ok => "ok",
-            Verdict::IdleNoWork => "idle_no_work",
-            Verdict::Degraded => "degraded",
-            Verdict::Idle => "idle",
+            SupervisorVerdict::Ok => "ok",
+            SupervisorVerdict::IdleNoWork => "idle_no_work",
+            SupervisorVerdict::Degraded => "degraded",
+            SupervisorVerdict::Idle => "idle",
         }
     }
 }
@@ -36,7 +36,7 @@ pub(super) fn judge(
     util: &Utilization,
     work: &WorkOnDisk,
     stages: &[Stage],
-) -> Verdict {
+) -> SupervisorVerdict {
     let busy = if args.simulate_idle {
         false
     } else {
@@ -46,20 +46,20 @@ pub(super) fn judge(
     let under_supplied = util.queue_depth() < effective_queue_target(args, util);
     if !busy {
         return if work.total() > 0 {
-            Verdict::Idle
+            SupervisorVerdict::Idle
         } else {
-            Verdict::IdleNoWork
+            SupervisorVerdict::IdleNoWork
         };
     }
     if !producers_ok && under_supplied {
-        return Verdict::Degraded;
+        return SupervisorVerdict::Degraded;
     }
     if !producers_ok {
         // Busy AND deeply queued: a broken producer has not bitten yet, but it
         // is still a defect worth counting toward escalation.
-        return Verdict::Degraded;
+        return SupervisorVerdict::Degraded;
     }
-    Verdict::Ok
+    SupervisorVerdict::Ok
 }
 
 pub(super) fn effective_queue_target(args: &Args, util: &Utilization) -> u64 {
@@ -156,12 +156,15 @@ pub(super) fn backoff_ms(args: &Args, attempts: u32) -> u64 {
 /// backoff, and `--max-actions-per-hour` clamps it to 6 after.
 pub(super) fn plan_repair<'a>(
     args: &Args,
-    verdict: Verdict,
+    verdict: SupervisorVerdict,
     stages: &'a [Stage],
     state: &State,
     now: u64,
 ) -> (Option<&'a Stage>, Option<String>) {
-    if matches!(verdict, Verdict::Ok | Verdict::IdleNoWork) {
+    if matches!(
+        verdict,
+        SupervisorVerdict::Ok | SupervisorVerdict::IdleNoWork
+    ) {
         return (None, Some("objective met; no repair considered".into()));
     }
     let recent = state
@@ -190,7 +193,7 @@ pub(super) fn plan_repair<'a>(
         // Re-triggering expansion is only worth an action when the cluster is
         // actually idle. While work is flowing, a guardrail block is a policy
         // decision, not an outage.
-        if stage.name == "expansion" && verdict != Verdict::Idle {
+        if stage.name == "expansion" && verdict != SupervisorVerdict::Idle {
             deferred.push("expansion: blocked but cluster is not idle".into());
             continue;
         }
@@ -359,7 +362,7 @@ pub(super) fn escalate(args: &Args, summary: &str, detail: &str) -> Vec<Value> {
 
 pub(super) fn write_alarms(
     args: &Args,
-    verdict: Verdict,
+    verdict: SupervisorVerdict,
     escalated: bool,
     summary: &str,
     detail: &str,
@@ -378,7 +381,7 @@ pub(super) fn write_alarms(
             "detail": detail,
             "at_ms": now_ms(),
         })]
-    } else if verdict == Verdict::Degraded {
+    } else if verdict == SupervisorVerdict::Degraded {
         vec![json!({
             "alarm": "cluster_supply_degraded",
             "severity": "warning",

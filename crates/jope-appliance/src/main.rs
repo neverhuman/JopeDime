@@ -37,7 +37,7 @@ pub mod terminal;
 mod worker;
 
 use clap::Parser;
-use cli::{Cli, Command, CommonArgs, TrainArgs};
+use cli::{ApplianceCommand, Cli, CommonArgs, TrainArgs};
 use jope_assets::Package;
 use jope_runtime::api::{self, FitOptions};
 use jope_runtime::backend::{self, DeviceRequest};
@@ -735,10 +735,10 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
     match cli.command {
         #[cfg(feature = "research")]
-        Command::Research(args) => report(research::run(args)),
+        ApplianceCommand::Research(args) => report(research::run(args)),
         #[cfg(feature = "engine")]
-        Command::Worker { protocol } => report(worker::run(protocol)),
-        Command::Version(flag) => {
+        ApplianceCommand::Worker { protocol } => report(worker::run(protocol)),
+        ApplianceCommand::Version(flag) => {
             if flag.json {
                 print_json(&version_value());
             } else {
@@ -746,7 +746,7 @@ fn main() -> ExitCode {
             }
             ExitCode::SUCCESS
         }
-        Command::Doctor(flag) => match doctor() {
+        ApplianceCommand::Doctor(flag) => match doctor() {
             Ok((value, ok)) => {
                 let code = if ok {
                     0
@@ -779,42 +779,44 @@ fn main() -> ExitCode {
             Err(error) => report(Err(error)),
         },
         #[cfg(feature = "client")]
-        Command::Auth { command } => report(cloud::auth_command(command)),
+        ApplianceCommand::Auth { command } => report(cloud::auth_command(command)),
         #[cfg(feature = "client")]
-        Command::Cloud { command } => report(cloud::cloud_command(command)),
-        Command::Methods { task, json } => report(methods_value(task.as_deref()).map(|value| {
-            if json.json {
-                print_json(&value);
-            } else {
-                for m in value["methods"].as_array().into_iter().flatten() {
-                    out(&format!(
-                        "{:<36} {:<11} {:<7} {}
+        ApplianceCommand::Cloud { command } => report(cloud::cloud_command(command)),
+        ApplianceCommand::Methods { task, json } => {
+            report(methods_value(task.as_deref()).map(|value| {
+                if json.json {
+                    print_json(&value);
+                } else {
+                    for m in value["methods"].as_array().into_iter().flatten() {
+                        out(&format!(
+                            "{:<36} {:<11} {:<7} {}
 ",
-                        m["id"].as_str().unwrap_or(""),
-                        m["task"].as_str().unwrap_or(""),
-                        m["kind"].as_str().unwrap_or(""),
-                        if m["executable"] == true {
-                            "executable"
-                        } else {
-                            "not executable"
-                        }
+                            m["id"].as_str().unwrap_or(""),
+                            m["task"].as_str().unwrap_or(""),
+                            m["kind"].as_str().unwrap_or(""),
+                            if m["executable"] == true {
+                                "executable"
+                            } else {
+                                "not executable"
+                            }
+                        ));
+                    }
+                    out(&format!(
+                        "auto: bounded selection ({})\n",
+                        jope_runtime::automl::SELECTION_POLICY
                     ));
                 }
-                out(&format!(
-                    "auto: bounded selection ({})\n",
-                    jope_runtime::automl::SELECTION_POLICY
-                ));
-            }
-        })),
-        Command::Fit {
+            }))
+        }
+        ApplianceCommand::Fit {
             train,
             output,
             model_root,
             common,
         } => run_fit(&train, output.as_deref(), &model_root, &common),
-        Command::Model(args) => report(model::run(args)),
+        ApplianceCommand::Model(args) => report(model::run(args)),
         #[cfg(feature = "mcp")]
-        Command::Run(args) => match cmd::run::dispatch(args) {
+        ApplianceCommand::Run(args) => match cmd::run::dispatch(args) {
             Err(error) => match cmd::run::dispatch_exit_code(&error) {
                 Some(code) => {
                     if code != 130 {
@@ -827,24 +829,24 @@ fn main() -> ExitCode {
             result => report(result),
         },
         #[cfg(feature = "mcp")]
-        Command::Status(args) => report((|| {
+        ApplianceCommand::Status(args) => report((|| {
             let client = cmd::client()?;
             cmd::status::run(args, &client)
         })()),
         #[cfg(feature = "mcp")]
-        Command::Events(args) => report((|| {
+        ApplianceCommand::Events(args) => report((|| {
             let client = cmd::client()?;
             cmd::events::run(args, &client)
         })()),
         #[cfg(feature = "client")]
-        Command::Control {
+        ApplianceCommand::Control {
             run,
             action,
             body,
             idempotency_key,
         } => report(cmd::control::run(run, action, body, idempotency_key)),
         #[cfg(feature = "client")]
-        Command::Restart {
+        ApplianceCommand::Restart {
             run,
             new_seed,
             warm,
@@ -858,11 +860,11 @@ fn main() -> ExitCode {
             idempotency_key,
         )),
         #[cfg(feature = "client")]
-        Command::Runs { command } => report(cmd::runs::run(command)),
+        ApplianceCommand::Runs { command } => report(cmd::runs::run(command)),
         #[cfg(feature = "client")]
-        Command::Code { run, alg, lang } => report(cmd::code::run(run, alg, lang)),
+        ApplianceCommand::Code { run, alg, lang } => report(cmd::code::run(run, alg, lang)),
         #[cfg(feature = "mcp")]
-        Command::Export {
+        ApplianceCommand::Export {
             run,
             alg,
             kind,
@@ -882,30 +884,30 @@ fn main() -> ExitCode {
             json_out: json,
         })),
         #[cfg(feature = "mcp")]
-        Command::Dataset { command } => cmd::dataset::report(cmd::dataset::run(command)),
+        ApplianceCommand::Dataset { command } => cmd::dataset::report(cmd::dataset::run(command)),
         #[cfg(feature = "mcp")]
-        Command::Objective {
+        ApplianceCommand::Objective {
             command: cli::ObjectiveCommand::Validate { spec, json },
         } => cmd::dataset::report(cmd::objective::run(&spec, json)),
         #[cfg(feature = "mcp")]
-        Command::Gc {
+        ApplianceCommand::Gc {
             dry_run,
             idempotency_key,
             json,
         } => cmd::dataset::report(cmd::gc::run(dry_run, idempotency_key.as_deref(), json)),
-        Command::Predict {
+        ApplianceCommand::Predict {
             model,
             input,
             output,
             common,
         } => run_predict(&model, &input, &output, &common),
-        Command::FitPredict {
+        ApplianceCommand::FitPredict {
             train,
             input,
             output,
             common,
         } => run_fit_predict(&train, &input, &output, &common),
-        Command::Fitness { command } => report(match command {
+        ApplianceCommand::Fitness { command } => report(match command {
             cli::FitnessCommand::List => {
                 print_json(&jope_runtime::service::catalog());
                 Ok(())
@@ -936,17 +938,17 @@ fn main() -> ExitCode {
             })(),
         }),
         #[cfg(feature = "mcp")]
-        Command::Mcp => report(cmd::mcp_entry::run()),
+        ApplianceCommand::Mcp => report(cmd::mcp_entry::run()),
         // Without the shared client there is no discovery: serve in process, as before #656.
         #[cfg(not(feature = "mcp"))]
-        Command::Mcp => report(serve(true)),
-        Command::Api => report(serve(false)),
-        Command::Serve {
+        ApplianceCommand::Mcp => report(serve(true)),
+        ApplianceCommand::Api => report(serve(false)),
+        ApplianceCommand::Serve {
             status,
             stop,
             idle_exit,
         } => ExitCode::from(cmd::serve::run(status, stop, idle_exit.as_deref())),
-        Command::VerifySelf(flag) => report(verify_self(flag.json)),
-        Command::Licenses(flag) => report(licenses(flag.json)),
+        ApplianceCommand::VerifySelf(flag) => report(verify_self(flag.json)),
+        ApplianceCommand::Licenses(flag) => report(licenses(flag.json)),
     }
 }

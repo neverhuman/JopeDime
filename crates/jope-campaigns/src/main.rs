@@ -276,32 +276,32 @@ fn main() -> Result<()> {
                 bail!("run-train-only-redteam is pinned to the legacy-v2 evaluator");
             }
             let selection_mode = match selection_mode {
-                TrainOnlyRedteamSelectionMode::Combined => {
+                CliTrainOnlyRedteamSelectionMode::Combined => {
                     commands::train_only_redteam::SelectionMode::Combined
                 }
-                TrainOnlyRedteamSelectionMode::SmartOnly => {
+                CliTrainOnlyRedteamSelectionMode::SmartOnly => {
                     commands::train_only_redteam::SelectionMode::SmartOnly
                 }
             };
             let arm = match (selection_mode, arm) {
                 (
                     commands::train_only_redteam::SelectionMode::Combined,
-                    Some(TrainOnlyRedteamArm::G20Extension),
+                    Some(CliTrainOnlyRedteamArm::G20Extension),
                 ) => commands::train_only_redteam::Arm::G20Extension,
                 (
                     commands::train_only_redteam::SelectionMode::Combined,
-                    Some(TrainOnlyRedteamArm::SmartV3),
+                    Some(CliTrainOnlyRedteamArm::SmartV3),
                 )
                 | (
                     commands::train_only_redteam::SelectionMode::SmartOnly,
-                    None | Some(TrainOnlyRedteamArm::SmartV3),
+                    None | Some(CliTrainOnlyRedteamArm::SmartV3),
                 ) => commands::train_only_redteam::Arm::SmartV3,
                 (commands::train_only_redteam::SelectionMode::Combined, None) => {
                     bail!("combined selection mode requires --arm")
                 }
                 (
                     commands::train_only_redteam::SelectionMode::SmartOnly,
-                    Some(TrainOnlyRedteamArm::G20Extension),
+                    Some(CliTrainOnlyRedteamArm::G20Extension),
                 ) => bail!("smart-only selection mode runs only the Smart-v3 arm"),
             };
             let manifest = study_root.join(run_id).join("manifest.redteam.v1.json");

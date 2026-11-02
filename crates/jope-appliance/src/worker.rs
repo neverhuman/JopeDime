@@ -61,7 +61,7 @@ mod tests {
             crate::cli::Cli::try_parse_from(["jopedime", "__worker", "--protocol", "1"]).unwrap();
         assert!(matches!(
             parsed.command,
-            crate::cli::Command::Worker { protocol: 1 }
+            crate::cli::ApplianceCommand::Worker { protocol: 1 }
         ));
         let help = crate::cli::Cli::command().render_help().to_string();
         assert!(!help.contains("__worker"));

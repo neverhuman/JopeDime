@@ -55,10 +55,13 @@ mod tests {
             wave_manifests: 7040,
             ..WorkOnDisk::default()
         };
-        assert_eq!(judge(&a, &util, &with_work, &stages), Verdict::Idle);
+        assert_eq!(
+            judge(&a, &util, &with_work, &stages),
+            SupervisorVerdict::Idle
+        );
         assert_eq!(
             judge(&a, &util, &WorkOnDisk::default(), &stages),
-            Verdict::IdleNoWork
+            SupervisorVerdict::IdleNoWork
         );
     }
 
@@ -84,7 +87,10 @@ mod tests {
             wave_manifests: 7040,
             ..WorkOnDisk::default()
         };
-        assert_eq!(judge(&a, &util, &work, &stages), Verdict::Degraded);
+        assert_eq!(
+            judge(&a, &util, &work, &stages),
+            SupervisorVerdict::Degraded
+        );
     }
 
     #[test]
@@ -111,7 +117,7 @@ mod tests {
                 },
                 &stages
             ),
-            Verdict::Ok
+            SupervisorVerdict::Ok
         );
     }
 
@@ -135,7 +141,7 @@ mod tests {
             ..State::default()
         };
         let stages = vec![stage("keeper", Health::Erroring)];
-        let (chosen, note) = plan_repair(&a, Verdict::Idle, &stages, &state, now);
+        let (chosen, note) = plan_repair(&a, SupervisorVerdict::Idle, &stages, &state, now);
         assert!(chosen.is_none());
         assert!(note.unwrap().contains("max-actions-per-hour"));
     }
@@ -148,7 +154,7 @@ mod tests {
         let mut state = State::default();
         let key = stages[0].repair.as_ref().unwrap().key.clone();
         state.attempts.insert(key, (1, now - 10_000));
-        let (chosen, note) = plan_repair(&a, Verdict::Idle, &stages, &state, now);
+        let (chosen, note) = plan_repair(&a, SupervisorVerdict::Idle, &stages, &state, now);
         assert!(chosen.is_none());
         assert!(note.unwrap().contains("backoff"));
     }
@@ -161,7 +167,13 @@ mod tests {
             stage("keeper", Health::Erroring),
             stage("supply", Health::Erroring),
         ];
-        let (chosen, _) = plan_repair(&a, Verdict::Idle, &stages, &State::default(), now_ms());
+        let (chosen, _) = plan_repair(
+            &a,
+            SupervisorVerdict::Idle,
+            &stages,
+            &State::default(),
+            now_ms(),
+        );
         assert_eq!(chosen.map(|stage| stage.name), Some("keeper"));
     }
 
@@ -169,11 +181,22 @@ mod tests {
     fn expansion_retrigger_waits_until_the_cluster_is_actually_idle() {
         let a = args();
         let stages = vec![stage("expansion", Health::Blocked)];
-        let (chosen, note) =
-            plan_repair(&a, Verdict::Degraded, &stages, &State::default(), now_ms());
+        let (chosen, note) = plan_repair(
+            &a,
+            SupervisorVerdict::Degraded,
+            &stages,
+            &State::default(),
+            now_ms(),
+        );
         assert!(chosen.is_none());
         assert!(note.unwrap().contains("not idle"));
-        let (chosen, _) = plan_repair(&a, Verdict::Idle, &stages, &State::default(), now_ms());
+        let (chosen, _) = plan_repair(
+            &a,
+            SupervisorVerdict::Idle,
+            &stages,
+            &State::default(),
+            now_ms(),
+        );
         assert_eq!(chosen.map(|stage| stage.name), Some("expansion"));
     }
 
@@ -187,7 +210,13 @@ mod tests {
             receipt: String::new(),
             repair: None,
         }];
-        let (chosen, note) = plan_repair(&a, Verdict::Idle, &stages, &State::default(), now_ms());
+        let (chosen, note) = plan_repair(
+            &a,
+            SupervisorVerdict::Idle,
+            &stages,
+            &State::default(),
+            now_ms(),
+        );
         assert!(chosen.is_none());
         assert!(note.unwrap().contains("no safe automatic repair"));
     }
@@ -196,7 +225,7 @@ mod tests {
     fn healthy_verdicts_never_plan_a_repair() {
         let a = args();
         let stages = vec![stage("keeper", Health::Erroring)];
-        for verdict in [Verdict::Ok, Verdict::IdleNoWork] {
+        for verdict in [SupervisorVerdict::Ok, SupervisorVerdict::IdleNoWork] {
             assert!(
                 plan_repair(&a, verdict, &stages, &State::default(), now_ms())
                     .0
@@ -220,6 +249,6 @@ mod tests {
             wave_manifests: 7040,
             ..WorkOnDisk::default()
         };
-        assert_eq!(judge(&a, &util, &work, &stages), Verdict::Idle);
+        assert_eq!(judge(&a, &util, &work, &stages), SupervisorVerdict::Idle);
     }
 }

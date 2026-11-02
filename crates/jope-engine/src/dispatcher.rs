@@ -1,4 +1,4 @@
-use crate::command::{Cli, Cmd};
+use crate::command::{Cli, EngineCmd};
 use anyhow::Result;
 use jope_parallel::{audit, operations, prepare, snapshot, transport};
 use std::path::{Path, PathBuf};

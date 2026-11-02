@@ -1,21 +1,23 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
+pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
         #[cfg(feature = "neural")]
-        Cmd::GpuWorker { pool, rank } => jope_parallel::gpu_worker::serve(&root, &pool, rank)?,
-        Cmd::Fit {
+        EngineCmd::GpuWorker { pool, rank } => {
+            jope_parallel::gpu_worker::serve(&root, &pool, rank)?
+        }
+        EngineCmd::Fit {
             train,
             genome,
             output,
         } => jope_parallel::gp::fit(&train, &genome, &output)?,
-        Cmd::FitView {
+        EngineCmd::FitView {
             prepared,
             cut,
             genome,
             output,
         } => jope_parallel::gp::fit_view_in_root(&root, &prepared, cut, &genome, &output)?,
-        Cmd::FitMemory {
+        EngineCmd::FitMemory {
             fd,
             training_sha256,
             preprocessing_sha256,
@@ -28,21 +30,21 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             &genome,
             &output,
         )?,
-        Cmd::Predict {
+        EngineCmd::Predict {
             model,
             features,
             output,
         } => jope_parallel::gp::predict(&model, &features, &output)?,
-        Cmd::Score {
+        EngineCmd::Score {
             model,
             test,
             receipt,
             output,
         } => jope_parallel::gp::score(&model, &test, &receipt, &output)?,
-        Cmd::OuterRelease { command } => {
+        EngineCmd::OuterRelease { command } => {
             println!("{}", jope_parallel::gp::outer_release_cli::run(command)?)
         }
-        Cmd::Bootstrap {
+        EngineCmd::Bootstrap {
             prepared,
             cut,
             output,
@@ -60,7 +62,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             },
             jope_parallel::manifest::SEED,
         )?,
-        Cmd::Search {
+        EngineCmd::Search {
             prepared,
             cut,
             output,
@@ -84,7 +86,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             },
             rng_seed,
         )?,
-        Cmd::GpService {
+        EngineCmd::GpService {
             wait_for_work,
             manifest,
             workers,
@@ -96,13 +98,13 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             threads,
             wait_for_work,
         )?,
-        Cmd::EvaluateWorker {
+        EngineCmd::EvaluateWorker {
             train,
             validation,
             genome,
             output,
         } => jope_parallel::gp::evaluate(&train, &validation, &genome, &output)?,
-        Cmd::Snapshot {
+        EngineCmd::Snapshot {
             source,
             label,
             include,
@@ -111,7 +113,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             let m = snapshot::create(&source, &label, &include, &output)?;
             println!("snapshotted {} source files", m.files.len());
         }
-        Cmd::FreezeFamilies {
+        EngineCmd::FreezeFamilies {
             audit,
             prepared,
             review,
@@ -132,7 +134,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 serde_json::to_string_pretty(&registry.quota_report())?
             );
         }
-        Cmd::Audit {
+        EngineCmd::Audit {
             source,
             decisions,
             output,
@@ -143,7 +145,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 serde_json::json!({"datasets":r.datasets.len(),"artifacts":r.artifact_counts,"complete":r.complete,"missing_roots":r.missing_roots})
             );
         }
-        Cmd::Prepare {
+        EngineCmd::Prepare {
             audit,
             dataset,
             output,
@@ -170,18 +172,18 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 serde_json::json!({"dataset":p.dataset,"rows":p.rows_total,"cuts":p.cuts.len(),"clean_evaluation":p.clean_evaluation,"family_partition_frozen":p.family_partition_frozen,"manifest":output.join("prepared.json")})
             );
         }
-        Cmd::Stage {
+        EngineCmd::Stage {
             manifest,
             destination,
         } => transport::stage(&manifest, &destination)?,
-        Cmd::Transfer {
+        EngineCmd::Transfer {
             manifest,
             stage,
             host,
             identity,
             destination,
         } => transport::transfer(&manifest, &stage, &host, &identity, &destination)?,
-        Cmd::Verify {
+        EngineCmd::Verify {
             manifest,
             destination,
         } => println!(

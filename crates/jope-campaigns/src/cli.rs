@@ -24,13 +24,13 @@ pub(super) enum KernelVersion {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
-pub(super) enum TrainOnlyRedteamArm {
+pub(super) enum CliTrainOnlyRedteamArm {
     G20Extension,
     SmartV3,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, ValueEnum)]
-pub(super) enum TrainOnlyRedteamSelectionMode {
+pub(super) enum CliTrainOnlyRedteamSelectionMode {
     Combined,
     SmartOnly,
 }
@@ -187,9 +187,9 @@ pub(super) enum Command {
         )]
         sotarena_root: PathBuf,
         #[arg(long, value_enum)]
-        arm: Option<TrainOnlyRedteamArm>,
+        arm: Option<CliTrainOnlyRedteamArm>,
         #[arg(long, value_enum, default_value = "combined")]
-        selection_mode: TrainOnlyRedteamSelectionMode,
+        selection_mode: CliTrainOnlyRedteamSelectionMode,
         #[arg(long)]
         resume: bool,
         #[arg(long, default_value_t = 8)]

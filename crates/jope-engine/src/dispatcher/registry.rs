@@ -1,8 +1,8 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
+pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
-        Cmd::VerifyFitCompletion {
+        EngineCmd::VerifyFitCompletion {
             authority,
             witness,
             completion_sha256,
@@ -16,8 +16,8 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             );
             println!("{}", serde_json::to_string(&completion)?);
         }
-        Cmd::RegistryFit { fd, output } => jope_parallel::fit_boundary::execute(fd, &output)?,
-        Cmd::RegistryInitializeNative {
+        EngineCmd::RegistryFit { fd, output } => jope_parallel::fit_boundary::execute(fd, &output)?,
+        EngineCmd::RegistryInitializeNative {
             authority,
             witness,
             scopes,
@@ -28,7 +28,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 &authority, &witness, scopes,
             )?;
         }
-        Cmd::RegistryWitnessInitialize {
+        EngineCmd::RegistryWitnessInitialize {
             witness_root,
             policy,
         } => {
@@ -43,7 +43,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 &policy,
             )?;
         }
-        Cmd::RegistryInspectRuntime => {
+        EngineCmd::RegistryInspectRuntime => {
             anyhow::ensure!(
                 !cfg!(feature = "neural"),
                 "fit authority runtime inspection requires the CPU-only executable"
@@ -75,7 +75,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 }))?
             );
         }
-        Cmd::RegistryAuthority {
+        EngineCmd::RegistryAuthority {
             authority,
             witness,
             socket,
@@ -96,7 +96,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 native_fit_policy: native_fit_policy.as_deref(),
             },
         )?,
-        Cmd::FundingRequest { config } => {
+        EngineCmd::FundingRequest { config } => {
             use std::io::Read;
             let mut bytes = Vec::new();
             std::io::stdin()
@@ -111,7 +111,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             let reply = jope_parallel::eval_registry::service::funding_request(&config, &request)?;
             println!("{}", serde_json::to_string(&reply)?);
         }
-        Cmd::QueryEvaluate {
+        EngineCmd::QueryEvaluate {
             authority,
             witness,
             socket,
@@ -126,7 +126,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             write_query_result(&output, &result)?;
             println!("{}", serde_json::to_string(&result)?);
         }
-        Cmd::QueryRetrieve {
+        EngineCmd::QueryRetrieve {
             authority,
             witness,
             socket,
@@ -146,7 +146,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             write_query_result(&output, &result)?;
             println!("{}", serde_json::to_string(&result)?);
         }
-        Cmd::RegistryWitnessInspect {
+        EngineCmd::RegistryWitnessInspect {
             root,
             policy,
             policy_sha256,
@@ -174,23 +174,23 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 )?;
             println!("{}", serde_json::to_string(&result)?);
         }
-        Cmd::RegistryWitnessRequest { root, policy, key } => {
+        EngineCmd::RegistryWitnessRequest { root, policy, key } => {
             jope_parallel::eval_registry::witness::serve_stdio(&root, &policy, &key)?
         }
-        Cmd::RegistryWitnessAddNativeGrant { root, policy, key } => {
+        EngineCmd::RegistryWitnessAddNativeGrant { root, policy, key } => {
             jope_parallel::eval_registry::witness::serve_stdio_add_native_grant(
                 &root, &policy, &key,
             )?
         }
-        Cmd::RegistryWitnessEpochTransition { root, policy, key } => {
+        EngineCmd::RegistryWitnessEpochTransition { root, policy, key } => {
             jope_parallel::eval_registry::witness::serve_stdio_epoch_transition(
                 &root, &policy, &key,
             )?
         }
-        Cmd::RegistryWitnessGetAck { root, policy, key } => {
+        EngineCmd::RegistryWitnessGetAck { root, policy, key } => {
             jope_parallel::eval_registry::witness::serve_stdio_get_ack(&root, &policy, &key)?
         }
-        Cmd::HistoryStage {
+        EngineCmd::HistoryStage {
             authority,
             witness,
             inventory,
@@ -199,7 +199,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.history_stage(&inventory)?);
         }
-        Cmd::HistoryImportBatch {
+        EngineCmd::HistoryImportBatch {
             authority,
             witness,
             batch,
@@ -208,7 +208,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.history_import_batch(&batch)?);
         }
-        Cmd::HistoryCommitCoverage {
+        EngineCmd::HistoryCommitCoverage {
             authority,
             witness,
             stage_sha256,
@@ -216,11 +216,11 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.history_commit_coverage(&stage_sha256)?);
         }
-        Cmd::HistoryPrepareLookupIndex { authority, witness } => {
+        EngineCmd::HistoryPrepareLookupIndex { authority, witness } => {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.prepare_history_lookup_index()?);
         }
-        Cmd::NativeScopeInspect {
+        EngineCmd::NativeScopeInspect {
             authority,
             witness,
             root,
@@ -241,7 +241,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 )?
             );
         }
-        Cmd::NativeScopeRegister {
+        EngineCmd::NativeScopeRegister {
             authority,
             witness,
             registration,
@@ -268,7 +268,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.register_native_scope(&signed)?);
         }
-        Cmd::HistoryCommitAggregateCoverage {
+        EngineCmd::HistoryCommitAggregateCoverage {
             authority,
             witness,
             aggregate,
@@ -297,23 +297,23 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 registry.history_commit_aggregate_coverage(&aggregate)?
             );
         }
-        Cmd::RecoveryInspect { authority, witness } => {
+        EngineCmd::RecoveryInspect { authority, witness } => {
             let report =
                 jope_parallel::eval_registry::Authority::recovery_inspect(&authority, &witness)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
         }
-        Cmd::RecoveryReplay { authority, witness } => {
+        EngineCmd::RecoveryReplay { authority, witness } => {
             let report =
                 jope_parallel::eval_registry::Authority::recovery_replay(&authority, &witness)?;
             println!("{}", serde_json::to_string_pretty(&report)?);
         }
-        Cmd::RecoveryReconcile { authority, witness } => {
+        EngineCmd::RecoveryReconcile { authority, witness } => {
             println!(
                 "{}",
                 jope_parallel::eval_registry::Authority::recovery_reconcile(&authority, &witness)?
             );
         }
-        Cmd::RecoveryCommitEpoch {
+        EngineCmd::RecoveryCommitEpoch {
             authority,
             witness,
             report_sha256,
@@ -327,7 +327,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                 )?
             );
         }
-        Cmd::NamespaceActivate {
+        EngineCmd::NamespaceActivate {
             authority,
             witness,
             scope,
@@ -336,7 +336,7 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             let mut registry = jope_parallel::eval_registry::Authority::open(&authority, &witness)?;
             println!("{}", registry.namespace_activate(&scope, &capability)?);
         }
-        Cmd::NamespaceDeactivate {
+        EngineCmd::NamespaceDeactivate {
             authority,
             witness,
             scope,
@@ -344,9 +344,11 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
             jope_parallel::eval_registry::Authority::open(&authority, &witness)?
                 .namespace_deactivate(&scope)?;
         }
-        Cmd::RegistryServiceFit => jope_parallel::fit_boundary::execute_service()?,
-        Cmd::RegistryServiceQuery => jope_parallel::eval_registry::service::execute_query_worker()?,
-        Cmd::CompareSeeds {
+        EngineCmd::RegistryServiceFit => jope_parallel::fit_boundary::execute_service()?,
+        EngineCmd::RegistryServiceQuery => {
+            jope_parallel::eval_registry::service::execute_query_worker()?
+        }
+        EngineCmd::CompareSeeds {
             manifest,
             workers,
             prefix,

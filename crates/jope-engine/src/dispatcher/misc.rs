@@ -1,15 +1,15 @@
 use super::*;
 
-pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
+pub(super) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
-        Cmd::Status => println!(
+        EngineCmd::Status => println!(
             "{}",
             serde_json::to_string_pretty(&operations::status(&root)?)?
         ),
-        Cmd::Tui {
+        EngineCmd::Tui {
             experiment_manifest,
         } => jope_parallel::dashboard::run_with_manifest(&root, experiment_manifest.as_deref())?,
-        Cmd::LearningHistory => println!(
+        EngineCmd::LearningHistory => println!(
             "{}",
             serde_json::to_string_pretty(
                 &jope_parallel::learning_history::Cache::default()
@@ -17,12 +17,12 @@ pub(super) fn handle(root: &Path, command: Cmd) -> Result<Option<Cmd>> {
                     .report()
             )?
         ),
-        Cmd::Monitor => jope_parallel::telemetry::monitor(&root)?,
-        Cmd::PilotGate => operations::pilot_gate(&root)?,
+        EngineCmd::Monitor => jope_parallel::telemetry::monitor(&root)?,
+        EngineCmd::PilotGate => operations::pilot_gate(&root)?,
         #[cfg(feature = "neural")]
-        Cmd::Campaign { spec } => jope_parallel::campaign::run(&root, &spec)?,
+        EngineCmd::Campaign { spec } => jope_parallel::campaign::run(&root, &spec)?,
         #[cfg(feature = "neural")]
-        Cmd::Cycle {
+        EngineCmd::Cycle {
             corpus,
             output,
             steps,

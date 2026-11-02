@@ -152,43 +152,43 @@ pub(super) fn kind(value: &Json) -> &'static str {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub(super) enum Number {
+pub(super) enum JsonNumber {
     Int(i128),
     Float(f64),
 }
 
-impl Number {
+impl JsonNumber {
     pub(super) fn to_f64(self) -> f64 {
         match self {
-            Number::Int(i) => i as f64,
-            Number::Float(f) => f,
+            JsonNumber::Int(i) => i as f64,
+            JsonNumber::Float(f) => f,
         }
     }
     pub(super) fn is_finite(self) -> bool {
         match self {
-            Number::Int(_) => true,
-            Number::Float(f) => f.is_finite(),
+            JsonNumber::Int(_) => true,
+            JsonNumber::Float(f) => f.is_finite(),
         }
     }
 }
 
 /// `isinstance(value, (int, float))`; a bool is an int.
-pub(super) fn number(value: &Json) -> Option<Number> {
+pub(super) fn number(value: &Json) -> Option<JsonNumber> {
     match value {
-        Json::Bool(b) => Some(Number::Int(i128::from(*b))),
-        Json::Int(i) => Some(Number::Int(*i)),
-        Json::Float(f) => Some(Number::Float(*f)),
+        Json::Bool(b) => Some(JsonNumber::Int(i128::from(*b))),
+        Json::Int(i) => Some(JsonNumber::Int(*i)),
+        Json::Float(f) => Some(JsonNumber::Float(*f)),
         _ => None,
     }
 }
 
 /// Exact numeric comparison across ints and floats, as Python compares them.
-pub(super) fn compare(a: Number, b: Number) -> Option<Ordering> {
+pub(super) fn compare(a: JsonNumber, b: JsonNumber) -> Option<Ordering> {
     match (a, b) {
-        (Number::Int(x), Number::Int(y)) => Some(x.cmp(&y)),
-        (Number::Float(x), Number::Float(y)) => x.partial_cmp(&y),
-        (Number::Int(x), Number::Float(y)) => int_float(x, y),
-        (Number::Float(x), Number::Int(y)) => int_float(y, x).map(Ordering::reverse),
+        (JsonNumber::Int(x), JsonNumber::Int(y)) => Some(x.cmp(&y)),
+        (JsonNumber::Float(x), JsonNumber::Float(y)) => x.partial_cmp(&y),
+        (JsonNumber::Int(x), JsonNumber::Float(y)) => int_float(x, y),
+        (JsonNumber::Float(x), JsonNumber::Int(y)) => int_float(y, x).map(Ordering::reverse),
     }
 }
 pub(super) fn int_float(i: i128, f: f64) -> Option<Ordering> {
@@ -209,11 +209,11 @@ pub(super) fn int_float(i: i128, f: f64) -> Option<Ordering> {
         other => other,
     })
 }
-pub(super) fn at_least_zero(n: Number) -> bool {
-    compare(n, Number::Int(0)).is_some_and(Ordering::is_ge)
+pub(super) fn at_least_zero(n: JsonNumber) -> bool {
+    compare(n, JsonNumber::Int(0)).is_some_and(Ordering::is_ge)
 }
-pub(super) fn above_zero(n: Number) -> bool {
-    compare(n, Number::Int(0)).is_some_and(Ordering::is_gt)
+pub(super) fn above_zero(n: JsonNumber) -> bool {
+    compare(n, JsonNumber::Int(0)).is_some_and(Ordering::is_gt)
 }
 
 /// Python `==` between JSON values: numbers (and bools) by value, containers structurally,
@@ -415,8 +415,8 @@ pub(super) fn pinned(owner: &Json, key: &str) -> Result<Json> {
 /// `struct.pack('>d', value)`: the IEEE-754 bits of a number; anything else fails the report.
 pub(super) fn pack(value: &Json) -> Result<u64> {
     match number(value) {
-        Some(Number::Int(i)) => Ok((i as f64).to_bits()),
-        Some(Number::Float(f)) => Ok(f.to_bits()),
+        Some(JsonNumber::Int(i)) => Ok((i as f64).to_bits()),
+        Some(JsonNumber::Float(f)) => Ok(f.to_bits()),
         None => bail!(
             "struct.error: required argument is not a float (JSON {})",
             kind(value)
