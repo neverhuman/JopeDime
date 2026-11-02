@@ -1298,6 +1298,7 @@
   "crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/cycle.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_propose_driver/tests.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_queue.rs": true,
+  "crates/jope-campaigns/src/bin/jope_selfplay_queue/scheduler_json.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_queue/attempts.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_queue/database.rs": true,
   "crates/jope-campaigns/src/bin/jope_selfplay_queue/dispatch.rs": true,
