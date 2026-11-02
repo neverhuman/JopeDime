@@ -30,6 +30,18 @@ def sha256(value):
     return value
 
 
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def validate_name(value):
+    require(isinstance(value, str) and 0 < len(value) <= 256 and value.strip() == value
+            and not any(ord(char) < 32 for char in value),
+            'invalid column/identity name')
+    return value
+
+
 def finite(value, *, nonnegative=False):
     if type(value) not in (int, float) or not math.isfinite(value) or (nonnegative and value < 0):
         raise ValueError('finite numeric value required')
