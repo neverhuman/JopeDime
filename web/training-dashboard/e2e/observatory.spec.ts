@@ -83,6 +83,12 @@ test("all six sections retain bounded layout, screenshots and accessible semanti
   });
   expect(tokens.every((token) => token.length > 0), "Shared design tokens must load in the rendered app").toBe(true);
   expect(await cumulativeLayoutShift(page), "Initial rendered state must stay below the 0.1 CLS budget").toBeLessThanOrEqual(0.1);
+  await expect(page).toHaveScreenshot("overview.png", {
+    fullPage: true,
+    animations: "disabled",
+    caret: "hide",
+    maxDiffPixelRatio: 0.002,
+  });
   for (const section of ["Overview", "Training", "Fleet", "Storage & datasets", "GP library", "Results & lineage"]) {
     const button = page.getByRole("navigation").getByRole("button", { name: section, exact: true });
     await button.click();
