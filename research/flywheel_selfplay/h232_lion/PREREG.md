@@ -113,3 +113,16 @@ incumbent AdamW continuation, find adapter updates that lift DL-Val91 utility ov
 The run root and logs go create-only to
 `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H232/<run_id>/`, with a manifest. No large
 objects go into git.
+
+## Amendment A1 (pre-outcome): parent-source pins after the #2006 refactor
+
+- **When and who.** Recorded 2026-11-02T21:35:33Z by the H-wave owner (rd_opus), after PR #2059 merged (`cf1e5788`). The
+  constructor smoke (`smoke-001`, no claim) stopped in `verify(pins)` 2.2 s after start, before any input read,
+  model build, Native91 or TRAIN outcome: the manifest still carried H170's pin for
+  `h146_lookahead_exec/runtime.py`.
+- **Why.** PR #2006 moved H146's `Audit` class into `research/flywheel_selfplay/runtime_audit.py` and imports it
+  from there. The moved class is identical to H170's, apart from two trailing blank lines, and the rest of
+  `runtime.py` changed only in imports.
+- **Change.** In `manifest.json` only, the pin for `h146_lookahead_exec/runtime.py` is updated to main's bytes, and
+  `runtime_audit.py` is pinned as a parent source. No Python file changes, and no change to science, seeds, folds,
+  arms, guards or decision rules. The single attempt has not started.
