@@ -552,6 +552,16 @@ crates/jope-campaigns/src/freshness_protocol.rs
 crates/jope-campaigns/src/genome_boost.rs
 crates/jope-campaigns/src/golden42_v3.rs
 crates/jope-campaigns/src/hyperion_gate.rs
+crates/jope-campaigns/src/hyperion_gate/cache_registry.rs
+crates/jope-campaigns/src/hyperion_gate/cache_types.rs
+crates/jope-campaigns/src/hyperion_gate/encoder_process.rs
+crates/jope-campaigns/src/hyperion_gate/encoding.rs
+crates/jope-campaigns/src/hyperion_gate/feature_ops.rs
+crates/jope-campaigns/src/hyperion_gate/folds.rs
+crates/jope-campaigns/src/hyperion_gate/model.rs
+crates/jope-campaigns/src/hyperion_gate/precomputed.rs
+crates/jope-campaigns/src/hyperion_gate/scoring.rs
+crates/jope-campaigns/src/hyperion_gate/tests.rs
 crates/jope-campaigns/src/hyperion_router.rs
 crates/jope-campaigns/src/hyperion_router/activation.rs
 crates/jope-campaigns/src/hyperion_router/contracts.rs
