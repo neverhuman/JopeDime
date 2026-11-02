@@ -3,12 +3,15 @@
 Executes inside a single GPU worker process on xbabe1 cuda:0 alongside live flywheel PID 2297929:
 - Stage 0: Native r882 parity 91/91 exact (1.1377941898164525) on DL-Val before any candidate forward.
 - Stage 1: STATIC-DATA (50 rounds from r882 on fixed 1,219 contexts / 205 families with lockstep H178
-  per-round 205-family pooled cross-fit selector admission) + frozen-r882 teacher identity snapshot,
-  flushed to stage1_static_data_panels.npz before Stage 2.
+  per-round 205-family pooled cross-fit B-fold selector admission) + frozen-r882 teacher identity snapshot,
+  flushed to stage1_static_data_b_panel.npz before Stage 2.
 - Stage 2: Gated on luna_v1_tel's JRB-01 ADMISSION PASS receipt and verified fresh D4 regression pool
-  with native-Rust-CV (`bootstrap.s1main --fit-s1`) label receipts; executes STATIC-TEACHER and FRESH
-  on the identical fresh-family schedule (50 rounds each from r882 under equal compute and lockstep
-  H178 per-round 205-family pooled selector admission).
+  with native-Rust-CV (`bootstrap.s1main --fit-s1`) label/program/feature receipts; ingests verified
+  disjoint fresh tokens, masks, programs, and labels into the engine via `ingest_verified_fresh_rows_into_engine`,
+  then executes STATIC-TEACHER and FRESH on the identical fresh-family schedule (50 rounds each from r882
+  under equal compute and lockstep H178 per-round 205-family pooled B-fold selector admission).
+- Stage 3: Writes and fsyncs `pooled_b_selection_lock.json` (including per-cell checkpoint parameter digests)
+  BEFORE any held-out A-fold evaluation (`evaluate_heldout_a_panel` enforces `verify_b_lock_persisted_before_a_eval`).
 """
 
 import argparse
@@ -71,6 +74,139 @@ def parameter_digest(named_tensors):
         arr = tensor.detach().cpu().numpy()
         h.update(arr.tobytes())
     return h.hexdigest()
+
+
+def ingest_verified_fresh_rows_into_engine(engine, fresh_rows, historical_cids):
+    """Ingest verified disjoint fresh D4 rows (`tokens_10x32`, `mask_10`, `program`, `fitness`, `gate`) into `engine`.
+
+    Enforces:
+    1. Historical cache closure on `historical_cids` (`1,310` contexts) is intact before ingestion.
+    2. Every fresh CID is strictly disjoint from `historical_cids` and existing `engine.pools`.
+    3. `stat.extract_and_verify_fresh_row_payload(row)` validates inline and/or `pool_npz_path` arrays
+       against `native_evaluator_receipt` digests (`labels_sha256`, `programs_sha256`, `features_sha256`).
+    4. Populates `engine.tokens[cid]`, `engine.masks[cid]`, and `engine.pools[cid]`, then executes a
+       24-candidate `engine.batch([cid], [np.arange(24)])` probe to prove batching succeeds without
+       `KeyError` and returns bit-identical `fitness`, `gate`, `tokens`, and `masks` tensors.
+    """
+    hist_set = set(historical_cids)
+    if not hist_set.issubset(set(engine.tokens)) or not hist_set.issubset(
+        set(engine.masks)
+    ):
+        raise RuntimeError(
+            "historical feature cache closure violated prior to fresh ingestion"
+        )
+    if not fresh_rows:
+        raise RuntimeError(
+            "ingest_verified_fresh_rows_into_engine requires non-empty fresh_rows"
+        )
+
+    ingested = {}
+    slate_ix = np.arange(stat.SLATE_CANDIDATES, dtype=np.int64)
+    for row in fresh_rows:
+        payload = stat.extract_and_verify_fresh_row_payload(row)
+        cid = payload["context_sha256"]
+        if cid in hist_set:
+            raise RuntimeError(f"fresh row {cid} collides with historical cohort cache")
+        if cid in ingested:
+            raise RuntimeError(f"duplicate fresh row {cid} in ingestion batch")
+
+        prog = payload["program"]
+        proj16 = (prog.astype(np.float64) @ engine.projection).astype(np.float32)
+        tok_t = torch.as_tensor(payload["tokens_10x32"], dtype=torch.float32)
+        mask_t = torch.as_tensor(payload["mask_10"], dtype=torch.bool)
+
+        engine.tokens[cid] = tok_t
+        engine.masks[cid] = mask_t
+        engine.pools[cid] = dict(
+            program=prog,
+            proj16=proj16,
+            fitness=payload["fitness"],
+            gate=payload["gate"],
+            labels_sha256=payload["labels_sha256"],
+            programs_sha256=payload["programs_sha256"],
+            features_sha256=payload["features_sha256"],
+        )
+
+        kwargs, b_tok, b_mask, b_fit, b_gate = engine.batch([cid], [slate_ix])
+        expected_fit_f32 = payload["fitness"][slate_ix].astype(np.float32)
+        expected_gate = payload["gate"][slate_ix]
+        if (
+            b_tok.shape != (1, stat.TOKEN_STEPS, stat.TOKEN_DIM)
+            or b_mask.shape != (1, stat.TOKEN_STEPS)
+            or b_fit.detach().cpu().numpy().tobytes() != expected_fit_f32.tobytes()
+            or b_gate.detach().cpu().numpy().tobytes() != expected_gate.tobytes()
+            or kwargs["prog_412"].detach().cpu().numpy().tobytes()
+            != prog[slate_ix].tobytes()
+        ):
+            raise RuntimeError(
+                f"fresh engine.batch verification failed for {cid}: consumed batch differs from verified receipt"
+            )
+        ingested[cid] = dict(
+            dataset_id=payload["dataset_id"],
+            labels_sha256=payload["labels_sha256"],
+            programs_sha256=payload["programs_sha256"],
+            features_sha256=payload["features_sha256"],
+        )
+
+    return dict(
+        status="PASS",
+        ingested_contexts=len(ingested),
+        historical_contexts_preserved=len(hist_set),
+        digests_by_cid=ingested,
+    )
+
+
+def verify_b_lock_persisted_before_a_eval(lock_path, expected_checkpoint_digests):
+    """Enforce that `pooled_b_selection_lock.json` is durably persisted on disk and binds every cell checkpoint BEFORE A-fold scoring."""
+    p = Path(lock_path)
+    if not p.is_file():
+        raise RuntimeError(
+            f"stage-order violation: held-out A evaluation requires persisted {p}"
+        )
+    lock_obj = json.loads(p.read_text())
+    if lock_obj.get("wave") != stat.WAVE or "decisions" not in lock_obj:
+        raise RuntimeError(
+            "stage-order violation: pooled_b_selection_lock.json missing wave/decisions"
+        )
+    persisted_digests = lock_obj.get("selected_checkpoint_digests")
+    if (
+        not isinstance(persisted_digests, dict)
+        or persisted_digests != expected_checkpoint_digests
+    ):
+        raise RuntimeError(
+            "stage-order violation: persisted selected_checkpoint_digests mismatch"
+        )
+    return lock_obj
+
+
+def evaluate_heldout_a_panel(
+    engine,
+    restore_adapter,
+    cells,
+    r882_train_values,
+    lock_path,
+    expected_checkpoint_digests,
+    arm_name,
+):
+    """Evaluate held-out A_0..A_4 folds ONLY AFTER verifying `pooled_b_selection_lock.json` on disk."""
+    lock_obj = verify_b_lock_persisted_before_a_eval(
+        lock_path, expected_checkpoint_digests
+    )
+    arm_digests = lock_obj["selected_checkpoint_digests"].get(arm_name, {})
+    a_panel = np.broadcast_to(
+        r882_train_values[None, :], (len(stat.SEEDS), len(r882_train_values))
+    ).copy()
+    for (si, outer), cell in sorted(cells.items()):
+        cell_key = f"seed_{cell['seed']}_outer_{outer}"
+        actual_digest = parameter_digest(cell["incumbent_state"])
+        if arm_digests.get(cell_key) != actual_digest:
+            raise RuntimeError(
+                f"stage-order violation: cell {arm_name}/{cell_key} incumbent digest differs from persisted B lock"
+            )
+        restore_adapter(cell["incumbent_state"])
+        a_eval, _ = engine.evaluate(cell["a_rows"], native=False)
+        a_panel[si, cell["a_indices"]] = np.asarray(a_eval["values"], dtype=np.float64)
+    return a_panel
 
 
 def load_h170_parent():
@@ -181,6 +317,7 @@ def run_gpu_wave(out, launch, manifest):
     print("GPU DEVICE", json.dumps(device_receipt), flush=True)
 
     train, val = h170.cohorts(rt)
+    historical_cids = {r["context_sha256"] for r in (train + val)}
 
     class GPUEngine(h170.Engine):
         def anchored(self, kwargs):
@@ -278,7 +415,11 @@ def run_gpu_wave(out, launch, manifest):
         fresh_rows_for_arm=None,
         teacher_cost_by_cid=None,
     ):
-        """Run 50 rounds across all 3 seeds x 5 outer folds in lockstep with H178 pooled 205-family checkpoint selection."""
+        """Run 50 rounds across all 3 seeds x 5 outer folds in lockstep with H178 pooled 205-family B-fold selection.
+
+        Does NOT evaluate held-out A_0..A_4 folds; held-out A evaluation is deferred until after all
+        three arms complete B-fold selection and `pooled_b_selection_lock.json` is written and fsynced.
+        """
         nonlocal updates
         incumbent_b_panel = np.broadcast_to(
             r882_train_values[None, :], (len(stat.SEEDS), len(train))
@@ -436,25 +577,21 @@ def run_gpu_wave(out, launch, manifest):
                 ),
             )
 
-        a_panel = np.broadcast_to(
-            r882_train_values[None, :], (len(stat.SEEDS), len(train))
-        ).copy()
-        for (si, outer), cell in cells.items():
-            restore_adapter(cell["incumbent_state"])
-            a_eval, _ = engine.evaluate(cell["a_rows"], native=False)
-            a_panel[si, cell["a_indices"]] = np.asarray(
-                a_eval["values"], dtype=np.float64
+        cell_digests = {
+            f"seed_{cell['seed']}_outer_{outer}": parameter_digest(
+                cell["incumbent_state"]
             )
-        return incumbent_b_panel, a_panel, admitted_rounds
+            for (si, outer), cell in sorted(cells.items())
+        }
+        return incumbent_b_panel, cells, admitted_rounds, cell_digests
 
-    # Execute Stage 1: STATIC-DATA and durably flush panels before Stage 2 wait
-    static_b_panel, static_a_panel, static_adm = run_arm_lockstep_pooled(
+    # Execute Stage 1: STATIC-DATA B-fold selection and durably flush B panel before Stage 2 wait
+    static_b_panel, static_cells, static_adm, static_digests = run_arm_lockstep_pooled(
         "STATIC-DATA", gt_orders
     )
     np.savez_compressed(
-        out / "stage1_static_data_panels.npz",
+        out / "stage1_static_data_b_panel.npz",
         static_b_panel=static_b_panel,
-        static_a_panel=static_a_panel,
         r882_train_values=r882_train_values,
     )
 
@@ -490,7 +627,7 @@ def run_gpu_wave(out, launch, manifest):
                     jrb01_receipt_path=str(jrb_receipt_path),
                     reason=str(exc),
                     r882_parity_verified=True,
-                    stage1_static_data_flushed=True,
+                    stage1_static_data_b_panel_flushed=True,
                     static_data_admitted_rounds=static_adm,
                     utc=datetime.now(timezone.utc).isoformat(),
                 ),
@@ -503,7 +640,11 @@ def run_gpu_wave(out, launch, manifest):
         )
 
     fresh_rows = fresh_bundle["records"]
-    engine.load(fresh_rows)
+    ingestion_receipt = ingest_verified_fresh_rows_into_engine(
+        engine, fresh_rows, historical_cids=historical_cids
+    )
+    save(out / "fresh_engine_ingestion.json", ingestion_receipt)
+
     restore_adapter(initial_state)
     stat.verify_frozen_teacher_identity(
         teacher_checkpoint_sha256=stat.R882_SHA256,
@@ -534,18 +675,26 @@ def run_gpu_wave(out, launch, manifest):
         for r in fresh_rows
     }
 
-    teacher_b_panel, teacher_a_panel, teacher_adm = run_arm_lockstep_pooled(
-        "STATIC-TEACHER",
-        fresh_teacher_orders,
-        fresh_rows_for_arm=fresh_rows,
-        teacher_cost_by_cid=fresh_teacher_raw,
+    teacher_b_panel, teacher_cells, teacher_adm, teacher_digests = (
+        run_arm_lockstep_pooled(
+            "STATIC-TEACHER",
+            fresh_teacher_orders,
+            fresh_rows_for_arm=fresh_rows,
+            teacher_cost_by_cid=fresh_teacher_raw,
+        )
     )
-    fresh_b_panel, fresh_a_panel, fresh_adm = run_arm_lockstep_pooled(
+    fresh_b_panel, fresh_cells, fresh_adm, fresh_digests = run_arm_lockstep_pooled(
         "FRESH",
         fresh_gt_orders,
         fresh_rows_for_arm=fresh_rows,
     )
 
+    # Stage 3: Write and fsync pooled_b_selection_lock.json BEFORE any held-out A-fold evaluation
+    selected_checkpoint_digests = {
+        "STATIC-DATA": static_digests,
+        "STATIC-TEACHER": teacher_digests,
+        "FRESH": fresh_digests,
+    }
     b_lock = stat.h178_round_select(
         train,
         r882_train_values,
@@ -555,7 +704,37 @@ def run_gpu_wave(out, launch, manifest):
             "FRESH": fresh_b_panel,
         },
     )
-    save(out / "pooled_b_selection_lock.json", b_lock)
+    b_lock["selected_checkpoint_digests"] = selected_checkpoint_digests
+    lock_path = out / "pooled_b_selection_lock.json"
+    save(lock_path, b_lock)
+
+    static_a_panel = evaluate_heldout_a_panel(
+        engine,
+        restore_adapter,
+        static_cells,
+        r882_train_values,
+        lock_path,
+        selected_checkpoint_digests,
+        "STATIC-DATA",
+    )
+    teacher_a_panel = evaluate_heldout_a_panel(
+        engine,
+        restore_adapter,
+        teacher_cells,
+        r882_train_values,
+        lock_path,
+        selected_checkpoint_digests,
+        "STATIC-TEACHER",
+    )
+    fresh_a_panel = evaluate_heldout_a_panel(
+        engine,
+        restore_adapter,
+        fresh_cells,
+        r882_train_values,
+        lock_path,
+        selected_checkpoint_digests,
+        "FRESH",
+    )
 
     gate_summary = stat.evaluate_h205_common_gate(
         val_eval["values"],
@@ -579,6 +758,13 @@ def run_gpu_wave(out, launch, manifest):
             admitted_rows=fresh_bundle["admitted_rows"],
             admitted_families=fresh_bundle["admitted_families"],
             manifest_sha256=fresh_bundle["manifest_sha256"],
+        ),
+        fresh_engine_ingestion=dict(
+            status=ingestion_receipt["status"],
+            ingested_contexts=ingestion_receipt["ingested_contexts"],
+            historical_contexts_preserved=ingestion_receipt[
+                "historical_contexts_preserved"
+            ],
         ),
         r882_parity=parity,
         pooled_b_selection=b_lock["decisions"],

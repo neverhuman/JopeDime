@@ -9,6 +9,7 @@ import sys
 
 import numpy as np
 import pytest
+import torch
 
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
@@ -46,9 +47,28 @@ def _synthetic_valid_fresh_rows(n_rows=40, n_families=20):
         ds_id = f"fresh_reg_ds_{i:04d}"
         cid = hashlib.sha256(f"fresh_ctx_{i}".encode()).hexdigest()
         train_sha = hashlib.sha256(f"fresh_train_{i}".encode()).hexdigest()
-        fitness = np.linspace(0.8, 1.4, stat.SLATE_CANDIDATES, dtype=np.float64)
+        fitness = np.linspace(
+            0.8 + 0.001 * i, 1.4 + 0.001 * i, stat.SLATE_CANDIDATES, dtype=np.float64
+        )
         gate = np.ones(stat.SLATE_CANDIDATES, dtype=bool)
+        program = np.full(
+            (stat.SLATE_CANDIDATES, stat.PROGRAM_DIM),
+            fill_value=0.01 * (i + 1),
+            dtype=np.float32,
+        )
+        tokens_10x32 = np.full(
+            (stat.TOKEN_STEPS, stat.TOKEN_DIM),
+            fill_value=0.05 * (i + 1),
+            dtype=np.float32,
+        )
+        mask_10 = np.ones(stat.TOKEN_STEPS, dtype=bool)
+
         labels_sha = hashlib.sha256(fitness.tobytes() + gate.tobytes()).hexdigest()
+        programs_sha = hashlib.sha256(program.tobytes()).hexdigest()
+        features_sha = hashlib.sha256(
+            tokens_10x32.tobytes() + mask_10.tobytes()
+        ).hexdigest()
+
         rows.append(
             dict(
                 dataset_id=ds_id,
@@ -62,17 +82,84 @@ def _synthetic_valid_fresh_rows(n_rows=40, n_families=20):
                 train_sha256=train_sha,
                 fitness=fitness.tolist(),
                 gate=gate.tolist(),
+                program=program.tolist(),
+                tokens_10x32=tokens_10x32.tolist(),
+                mask_10=mask_10.tolist(),
                 native_evaluator_receipt=dict(
                     status="PASS",
                     evaluator=stat.NATIVE_RUST_EVALUATOR_ID,
                     evaluator_binary_sha256=eval_bin_sha,
                     labels_sha256=labels_sha,
+                    programs_sha256=programs_sha,
+                    features_sha256=features_sha,
                     dataset_id=ds_id,
                     context_sha256=cid,
                 ),
             )
         )
     return rows
+
+
+class _MockInheritedEngine:
+    """Reproduces inherited h170 Engine.batch / tokens / masks / pools structure on CPU."""
+
+    def __init__(self, historical_cids):
+        self.projection = np.eye(stat.PROGRAM_DIM, 16, dtype=np.float64) / np.sqrt(
+            float(stat.PROGRAM_DIM)
+        )
+        self.pools = {}
+        self.tokens = {
+            c: torch.zeros((stat.TOKEN_STEPS, stat.TOKEN_DIM), dtype=torch.float32)
+            for c in historical_cids
+        }
+        self.masks = {
+            c: torch.ones((stat.TOKEN_STEPS,), dtype=torch.bool)
+            for c in historical_cids
+        }
+
+    def batch(self, cids, indexes):
+        b, k = len(cids), len(indexes[0])
+
+        def stack(key):
+            return np.stack(
+                [self.pools[c][key][ix] for c, ix in zip(cids, indexes, strict=True)]
+            )
+
+        prog = torch.as_tensor(stack("program"), dtype=torch.float32)
+        proj = torch.as_tensor(stack("proj16"), dtype=torch.float32)
+        fitness = torch.as_tensor(stack("fitness"), dtype=torch.float32)
+        gate = torch.as_tensor(stack("gate"), dtype=torch.bool)
+        kwargs = dict(
+            ctx_feat=torch.zeros((b, 584)),
+            prog_412=prog,
+            proj_16=proj,
+            base_prior_cost=torch.zeros((b, k)),
+            scale=torch.full((b,), 0.4208),
+            sos_prior=torch.zeros((b, k, 2)),
+            revealed_indices=torch.arange(min(4, k)).reshape(1, -1).expand(b, -1),
+            revealed_raw_f=fitness[:, : min(4, k)],
+            revealed_gate=gate[:, : min(4, k)].float(),
+        )
+        return (
+            kwargs,
+            torch.stack([self.tokens[c] for c in cids]),
+            torch.stack([self.masks[c] for c in cids]),
+            fitness,
+            gate,
+        )
+
+    def evaluate(self, rows, native=False):
+        vals = np.array(
+            [float(np.mean(self.pools[r["context_sha256"]]["fitness"])) for r in rows],
+            dtype=np.float64,
+        )
+        raw = {
+            r["context_sha256"]: -np.asarray(
+                self.pools[r["context_sha256"]]["fitness"], dtype=np.float64
+            )
+            for r in rows
+        }
+        return dict(values=vals), raw
 
 
 def test_prereg_and_manifest_authority_and_wave_separation():
@@ -362,7 +449,6 @@ def test_counterexample_invalid_fresh_receipt_or_native_labels_rejected(tmp_path
         )
     )
 
-    # Wrong task (binary instead of regression)
     bad_task = copy.deepcopy(base_fresh)
     bad_task[0]["task"] = "binary"
     with pytest.raises(RuntimeError, match="invalid task"):
@@ -370,7 +456,6 @@ def test_counterexample_invalid_fresh_receipt_or_native_labels_rejected(tmp_path
             receipt, static_rows, fresh_rows_override=bad_task
         )
 
-    # Missing dataset_id
     bad_ds = copy.deepcopy(base_fresh)
     bad_ds[0]["dataset_id"] = ""
     with pytest.raises(RuntimeError, match="missing dataset_id"):
@@ -378,7 +463,6 @@ def test_counterexample_invalid_fresh_receipt_or_native_labels_rejected(tmp_path
             receipt, static_rows, fresh_rows_override=bad_ds
         )
 
-    # Wrong cut / meta-test flag
     bad_cut = copy.deepcopy(base_fresh)
     bad_cut[0]["has_meta_test"] = True
     with pytest.raises(RuntimeError, match="invalid cut/split"):
@@ -386,7 +470,6 @@ def test_counterexample_invalid_fresh_receipt_or_native_labels_rejected(tmp_path
             receipt, static_rows, fresh_rows_override=bad_cut
         )
 
-    # Invalid hash
     bad_hash = copy.deepcopy(base_fresh)
     bad_hash[0]["train_sha256"] = "not_a_64_hex_sha"
     with pytest.raises(RuntimeError, match="missing 64-hex"):
@@ -394,7 +477,6 @@ def test_counterexample_invalid_fresh_receipt_or_native_labels_rejected(tmp_path
             receipt, static_rows, fresh_rows_override=bad_hash
         )
 
-    # Wrong native evaluator identifier
     bad_eval = copy.deepcopy(base_fresh)
     bad_eval[0]["native_evaluator_receipt"]["evaluator"] = "synthetic_mock"
     with pytest.raises(RuntimeError, match="invalid native evaluator"):
@@ -402,12 +484,25 @@ def test_counterexample_invalid_fresh_receipt_or_native_labels_rejected(tmp_path
             receipt, static_rows, fresh_rows_override=bad_eval
         )
 
-    # Tampered labels_sha256
     bad_label_sha = copy.deepcopy(base_fresh)
     bad_label_sha[0]["fitness"][0] += 0.125
     with pytest.raises(RuntimeError, match="native labels_sha256 mismatch"):
         stat.verify_and_load_fresh_d4_pool(
             receipt, static_rows, fresh_rows_override=bad_label_sha
+        )
+
+    bad_prog_sha = copy.deepcopy(base_fresh)
+    bad_prog_sha[0]["program"][0][0] += 1.0
+    with pytest.raises(RuntimeError, match="native programs_sha256 mismatch"):
+        stat.verify_and_load_fresh_d4_pool(
+            receipt, static_rows, fresh_rows_override=bad_prog_sha
+        )
+
+    bad_feat_sha = copy.deepcopy(base_fresh)
+    bad_feat_sha[0]["tokens_10x32"][0][0] += 1.0
+    with pytest.raises(RuntimeError, match="native features_sha256 mismatch"):
+        stat.verify_and_load_fresh_d4_pool(
+            receipt, static_rows, fresh_rows_override=bad_feat_sha
         )
 
 
@@ -540,6 +635,207 @@ def test_counterexample_frozen_teacher_identity_and_shared_fresh_schedule():
             digest_a,
             digest_a,
             any_requires_grad=True,
+        )
+
+
+def test_fresh_engine_ingestion_and_disconnected_npz_rejection(tmp_path):
+    """Counterexample 6 (review-a004012ce P1-1 & P1-2):
+    - Disjoint fresh contexts ingested into engine succeed through batch, fit_slates, teacher ordering, and treatment.
+    - A hash-valid NPZ whose fitness/program differs from the verified receipt/row is rejected.
+    - Historical cohort cache closure (1,310 contexts) is preserved and collisions are rejected.
+    """
+    static_rows = _synthetic_205_rows()
+    val_cids = [hashlib.sha256(f"val_{i}".encode()).hexdigest() for i in range(91)]
+    historical_cids = [r["context_sha256"] for r in static_rows] + val_cids
+
+    engine = _MockInheritedEngine(historical_cids)
+    fresh_rows = _synthetic_valid_fresh_rows(n_rows=40, n_families=20)
+    first_cid = fresh_rows[0]["context_sha256"]
+
+    # Before ingestion, disjoint fresh CID raises KeyError in engine.batch
+    with pytest.raises(KeyError):
+        engine.batch([first_cid], [np.arange(stat.SLATE_CANDIDATES)])
+
+    # Write a valid NPZ for row 0 and bind pool_npz_path + pool_sha256
+    valid_npz = tmp_path / f"{first_cid}.npz"
+    np.savez(
+        valid_npz,
+        program=np.asarray(fresh_rows[0]["program"], dtype=np.float32),
+        fitness=np.asarray(fresh_rows[0]["fitness"], dtype=np.float64),
+        gate=np.asarray(fresh_rows[0]["gate"], dtype=bool),
+        tokens_10x32=np.asarray(fresh_rows[0]["tokens_10x32"], dtype=np.float32),
+        mask_10=np.asarray(fresh_rows[0]["mask_10"], dtype=bool),
+    )
+    fresh_rows[0]["pool_npz_path"] = str(valid_npz)
+    fresh_rows[0]["pool_sha256"] = run_mod.sha(valid_npz)
+
+    ing = run_mod.ingest_verified_fresh_rows_into_engine(
+        engine, fresh_rows, historical_cids=historical_cids
+    )
+    assert ing["status"] == "PASS"
+    assert ing["ingested_contexts"] == 40
+    assert ing["historical_contexts_preserved"] == 1310
+
+    # Exercise fresh teacher ordering, fit_slates, and treatment batching on ingested fresh rows
+    _, fresh_teacher_raw = engine.evaluate(fresh_rows, native=False)
+    fresh_teacher_orders = {
+        cid: np.argsort(cost, kind="mergesort")
+        for cid, cost in fresh_teacher_raw.items()
+    }
+    fresh_gt_orders = {
+        r["context_sha256"]: np.argsort(
+            np.where(
+                engine.pools[r["context_sha256"]]["gate"],
+                engine.pools[r["context_sha256"]]["fitness"],
+                2.0,
+            ),
+            kind="mergesort",
+        )
+        for r in fresh_rows
+    }
+    fresh_fit = stat.partition_fresh_rows(fresh_rows, 0)
+    slates_t = stat.h177_analysis.fit_slates(fresh_fit, fresh_teacher_orders, 205101, 0)
+    slates_f = stat.h177_analysis.fit_slates(fresh_fit, fresh_gt_orders, 205101, 0)
+    sample_cids = sorted(slates_f.keys())[:8]
+    kwargs, tok, mask, fit_t, gate_t = engine.batch(
+        sample_cids, [slates_f[c] for c in sample_cids]
+    )
+    assert tok.shape == (8, stat.TOKEN_STEPS, stat.TOKEN_DIM)
+    assert mask.shape == (8, stat.TOKEN_STEPS)
+    assert fit_t.shape == (8, stat.SLATE_CANDIDATES)
+    assert gate_t.shape == (8, stat.SLATE_CANDIDATES)
+    assert set(slates_t.keys()) == set(slates_f.keys())
+
+    # Counterexample: NPZ with valid file hash but disconnected fitness ([0, -1, ...] vs verified row) is rejected
+    bad_rows = copy.deepcopy(fresh_rows)
+    bad_npz = tmp_path / "disconnected.npz"
+    disconnected_fitness = np.asarray(bad_rows[1]["fitness"], dtype=np.float64)
+    disconnected_fitness[0] = 0.0
+    disconnected_fitness[1] = -1.0
+    np.savez(
+        bad_npz,
+        program=np.asarray(bad_rows[1]["program"], dtype=np.float32),
+        fitness=disconnected_fitness,
+        gate=np.asarray(bad_rows[1]["gate"], dtype=bool),
+        tokens_10x32=np.asarray(bad_rows[1]["tokens_10x32"], dtype=np.float32),
+        mask_10=np.asarray(bad_rows[1]["mask_10"], dtype=bool),
+    )
+    bad_rows[1]["pool_npz_path"] = str(bad_npz)
+    bad_rows[1]["pool_sha256"] = run_mod.sha(bad_npz)
+    with pytest.raises(RuntimeError, match="mismatch between receipt/row"):
+        run_mod.ingest_verified_fresh_rows_into_engine(
+            _MockInheritedEngine(historical_cids),
+            bad_rows,
+            historical_cids=historical_cids,
+        )
+
+    # Also test NPZ-only row (inline fitness omitted) where NPZ fitness disagrees with receipt labels_sha256
+    bad_npz_only = copy.deepcopy(bad_rows)
+    del bad_npz_only[1]["fitness"]
+    with pytest.raises(RuntimeError, match="native labels_sha256 mismatch"):
+        run_mod.ingest_verified_fresh_rows_into_engine(
+            _MockInheritedEngine(historical_cids),
+            bad_npz_only,
+            historical_cids=historical_cids,
+        )
+
+
+def test_stage_order_b_lock_persisted_before_heldout_a_evaluation(tmp_path):
+    """Counterexample 7 (review-a004012ce P2): held-out A evaluation is refused unless pooled_b_selection_lock.json
+    is persisted on disk with matching per-cell checkpoint parameter digests.
+    """
+    static_rows = _synthetic_205_rows()
+    historical_cids = [r["context_sha256"] for r in static_rows]
+    engine = _MockInheritedEngine(historical_cids)
+    for i, r in enumerate(static_rows):
+        cid = r["context_sha256"]
+        engine.pools[cid] = dict(
+            program=np.zeros(
+                (stat.SLATE_CANDIDATES, stat.PROGRAM_DIM), dtype=np.float32
+            ),
+            proj16=np.zeros((stat.SLATE_CANDIDATES, 16), dtype=np.float32),
+            fitness=np.full(
+                stat.SLATE_CANDIDATES, 1.0 + 0.001 * (i % 7), dtype=np.float64
+            ),
+            gate=np.ones(stat.SLATE_CANDIDATES, dtype=bool),
+        )
+
+    cid_to_idx = {r["context_sha256"]: i for i, r in enumerate(static_rows)}
+    r882_train_values = np.ones(len(static_rows), dtype=np.float64)
+    cells = {}
+    arm_digests = {}
+    for si, seed in enumerate(stat.SEEDS):
+        for outer in range(5):
+            _, _, a_rows = stat.partition(static_rows, outer)
+            state = {
+                "w": torch.tensor(
+                    [float(si + 1), float(outer + 1)], dtype=torch.float32
+                )
+            }
+            cells[(si, outer)] = dict(
+                seed=seed,
+                outer=outer,
+                a_rows=a_rows,
+                a_indices=[cid_to_idx[r["context_sha256"]] for r in a_rows],
+                incumbent_state=state,
+            )
+            arm_digests[f"seed_{seed}_outer_{outer}"] = run_mod.parameter_digest(state)
+
+    expected_digests = {
+        "STATIC-DATA": arm_digests,
+        "STATIC-TEACHER": arm_digests,
+        "FRESH": arm_digests,
+    }
+    lock_path = tmp_path / "pooled_b_selection_lock.json"
+
+    # Calling evaluate_heldout_a_panel BEFORE pooled_b_selection_lock.json exists on disk is refused
+    with pytest.raises(RuntimeError, match="stage-order violation"):
+        run_mod.evaluate_heldout_a_panel(
+            engine,
+            lambda _s: None,
+            cells,
+            r882_train_values,
+            lock_path,
+            expected_digests,
+            "FRESH",
+        )
+
+    # Persist pooled_b_selection_lock.json and verify held-out A evaluation succeeds
+    run_mod.save(
+        lock_path,
+        dict(
+            wave="H205",
+            decisions={"FRESH": {"admit": False}},
+            selected_checkpoint_digests=expected_digests,
+        ),
+    )
+    a_panel = run_mod.evaluate_heldout_a_panel(
+        engine,
+        lambda _s: None,
+        cells,
+        r882_train_values,
+        lock_path,
+        expected_digests,
+        "FRESH",
+    )
+    assert a_panel.shape == (3, len(static_rows))
+    assert np.isfinite(a_panel).all()
+
+    # Mutating a cell's incumbent_state after the lock is persisted is refused
+    cells[(0, 0)]["incumbent_state"]["w"] = torch.tensor(
+        [99.0, 99.0], dtype=torch.float32
+    )
+    with pytest.raises(
+        RuntimeError, match="incumbent digest differs from persisted B lock"
+    ):
+        run_mod.evaluate_heldout_a_panel(
+            engine,
+            lambda _s: None,
+            cells,
+            r882_train_values,
+            lock_path,
+            expected_digests,
+            "FRESH",
         )
 
 

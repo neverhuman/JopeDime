@@ -35,6 +35,9 @@ MIN_GAIN_MARGIN = 0.001
 DRAWS = 10000
 EPS = 1e-12
 SLATE_CANDIDATES = 24
+PROGRAM_DIM = 412
+TOKEN_STEPS = 10
+TOKEN_DIM = 32
 NATIVE_RUST_EVALUATOR_ID = "bootstrap.s1main --fit-s1"
 
 # Cumulative campaign budget ledger (preserved across attempts; never reset)
@@ -81,6 +84,14 @@ def _is_hex64(value):
     except ValueError:
         return False
     return True
+
+
+def _file_sha256(path):
+    h = hashlib.sha256()
+    with Path(path).open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _row_family_aliases(row):
@@ -335,6 +346,119 @@ def verify_fresh_admission_gate(receipt_path):
     )
 
 
+def extract_and_verify_fresh_row_payload(row):
+    """Extract and hash-verify a fresh row's program, fitness, gate, tokens_10x32, and mask_10 arrays.
+
+    If `pool_npz_path` is present on the row, loads the NPZ, verifies `pool_sha256`, and enforces
+    that the NPZ's `fitness`, `gate`, `program`, `tokens_10x32`, and `mask_10` are byte-identical
+    to both the row arrays (if inline arrays are also supplied) and the receipt digests
+    (`labels_sha256`, `programs_sha256`, `features_sha256`).
+    """
+    ds_id = str(row.get("dataset_id") or row.get("dataset") or "").strip()
+    cid = str(row.get("context_sha256", "")).strip()
+    receipt = row.get("native_evaluator_receipt")
+    if not isinstance(receipt, dict):
+        raise RuntimeError(f"fresh row ({ds_id}) missing native_evaluator_receipt")
+
+    npz_data = None
+    pool_npz_path = row.get("pool_npz_path")
+    if pool_npz_path is not None:
+        p = Path(pool_npz_path)
+        if not p.is_file():
+            raise RuntimeError(f"fresh row ({ds_id}) pool_npz_path missing: {p}")
+        expected_pool_sha = str(row.get("pool_sha256", "")).strip()
+        if not _is_hex64(expected_pool_sha) or _file_sha256(p) != expected_pool_sha:
+            raise RuntimeError(f"fresh row ({ds_id}) pool_sha256 mismatch for {p}")
+        with np.load(p, allow_pickle=False) as z:
+            npz_data = {k: z[k].copy() for k in z.files}
+
+    def _resolve_array(field_name, npz_key, dtype):
+        inline_val = row.get(field_name)
+        npz_val = npz_data.get(npz_key) if npz_data is not None else None
+        if inline_val is None and npz_val is None:
+            raise RuntimeError(
+                f"fresh row ({ds_id}) missing required payload array {field_name!r}"
+            )
+        if inline_val is not None and npz_val is not None:
+            a_in = np.asarray(inline_val, dtype=dtype)
+            a_npz = np.asarray(npz_val, dtype=dtype)
+            if a_in.shape != a_npz.shape or a_in.tobytes() != a_npz.tobytes():
+                raise RuntimeError(
+                    f"fresh row ({ds_id}) mismatch between receipt/row {field_name!r} and loaded NPZ {npz_key!r}"
+                )
+            return a_npz
+        return np.asarray(
+            inline_val if inline_val is not None else npz_val, dtype=dtype
+        )
+
+    fitness = _resolve_array("fitness", "fitness", np.float64)
+    gate_arr = _resolve_array("gate", "gate", bool)
+    program = _resolve_array("program", "program", np.float32)
+    tokens_10x32 = _resolve_array("tokens_10x32", "tokens_10x32", np.float32)
+    mask_10 = _resolve_array("mask_10", "mask_10", bool)
+
+    n_cand = fitness.shape[0] if fitness.ndim == 1 else -1
+    if (
+        n_cand < SLATE_CANDIDATES
+        or gate_arr.shape != (n_cand,)
+        or not np.isfinite(fitness).all()
+        or not bool(gate_arr.any())
+    ):
+        raise RuntimeError(f"fresh row ({ds_id}) invalid native fitness/gate arrays")
+    if (
+        program.ndim != 2
+        or program.shape != (n_cand, PROGRAM_DIM)
+        or not np.isfinite(program).all()
+    ):
+        raise RuntimeError(
+            f"fresh row ({ds_id}) invalid program array shape {program.shape}; expected ({n_cand}, {PROGRAM_DIM})"
+        )
+    if (
+        tokens_10x32.shape != (TOKEN_STEPS, TOKEN_DIM)
+        or not np.isfinite(tokens_10x32).all()
+        or mask_10.shape != (TOKEN_STEPS,)
+        or not bool(mask_10.any())
+    ):
+        raise RuntimeError(f"fresh row ({ds_id}) invalid tokens_10x32 / mask_10 arrays")
+
+    expected_label_sha = hashlib.sha256(
+        fitness.tobytes() + gate_arr.tobytes()
+    ).hexdigest()
+    if receipt.get("labels_sha256") != expected_label_sha:
+        raise RuntimeError(
+            f"fresh row ({ds_id}) native labels_sha256 mismatch against fitness/gate payload"
+        )
+
+    expected_prog_sha = hashlib.sha256(program.tobytes()).hexdigest()
+    rec_prog_sha = receipt.get("programs_sha256")
+    if not _is_hex64(rec_prog_sha) or rec_prog_sha != expected_prog_sha:
+        raise RuntimeError(
+            f"fresh row ({ds_id}) native programs_sha256 mismatch against candidate program payload"
+        )
+
+    expected_feat_sha = hashlib.sha256(
+        tokens_10x32.tobytes() + mask_10.tobytes()
+    ).hexdigest()
+    rec_feat_sha = receipt.get("features_sha256")
+    if not _is_hex64(rec_feat_sha) or rec_feat_sha != expected_feat_sha:
+        raise RuntimeError(
+            f"fresh row ({ds_id}) native features_sha256 mismatch against tokens_10x32/mask_10 payload"
+        )
+
+    return dict(
+        context_sha256=cid,
+        dataset_id=ds_id,
+        program=program,
+        fitness=fitness,
+        gate=gate_arr,
+        tokens_10x32=tokens_10x32,
+        mask_10=mask_10,
+        labels_sha256=expected_label_sha,
+        programs_sha256=expected_prog_sha,
+        features_sha256=expected_feat_sha,
+    )
+
+
 def verify_and_load_fresh_d4_pool(
     receipt_path,
     static_train_rows,
@@ -349,7 +473,8 @@ def verify_and_load_fresh_d4_pool(
     2. Every fresh row has task=='regression', valid dataset_id, source_split=='train',
        dl_split=='DL-Train', has_meta_test==False, 64-hex context_sha256 and train_sha256,
        and a verified native-Rust-CV label receipt (`bootstrap.s1main --fit-s1`, status=='PASS',
-       64-hex evaluator_binary_sha256 & labels_sha256, 24 finite fitness values, boolean gate with >=1 True).
+       64-hex evaluator_binary_sha256, labels_sha256, programs_sha256, and features_sha256 matching
+       the row/NPZ `fitness`, `gate`, `program`, `tokens_10x32`, and `mask_10` arrays).
     3. Zero family/alias or context_sha256 overlap with the static 205-family roster (`static_train_rows`).
        Fake-fresh rows drawn from the old 205 families are unconditionally rejected.
     4. Zero family/alias or context_sha256 overlap with any evaluation (`B_k`, `A_k`, `DL-Val`) or sealed family.
@@ -463,25 +588,10 @@ def verify_and_load_fresh_d4_pool(
                 f"fresh row {idx} ({ds_id}) native_evaluator_receipt dataset/context mismatch"
             )
 
-        fitness = np.asarray(row.get("fitness", ()), dtype=np.float64)
-        gate_arr = np.asarray(row.get("gate", ()), dtype=bool)
-        if (
-            fitness.shape != (SLATE_CANDIDATES,)
-            or gate_arr.shape != (SLATE_CANDIDATES,)
-            or not np.isfinite(fitness).all()
-            or not bool(gate_arr.any())
-        ):
-            raise RuntimeError(
-                f"fresh row {idx} ({ds_id}) invalid 24-candidate native fitness/gate arrays"
-            )
-        expected_label_sha = hashlib.sha256(
-            fitness.tobytes() + gate_arr.tobytes()
-        ).hexdigest()
-        if receipt.get("labels_sha256") != expected_label_sha:
-            raise RuntimeError(
-                f"fresh row {idx} ({ds_id}) native labels_sha256 mismatch against fitness/gate payload"
-            )
-        validated_rows.append(row)
+        verified_payload = extract_and_verify_fresh_row_payload(row)
+        enriched = dict(row)
+        enriched["_verified_payload"] = verified_payload
+        validated_rows.append(enriched)
 
     distinct_fresh_fams = {r["family_id"] for r in validated_rows}
     if len(distinct_fresh_fams) < FAMILIES_PER_MICROBATCH * 2:
@@ -597,6 +707,8 @@ def admit_round_checkpoint_pooled(
         p_raw=p_raw,
         harm_count=harm_count,
         harm_rate=harm_rate,
+        improved_families=int(np.sum(fam_diff > EPS)),
+        degraded_families=int(np.sum(fam_diff < -EPS)),
         admit=admit,
         decision="ADMIT" if admit else "REJECT_RETAIN_INCUMBENT",
     )

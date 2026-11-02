@@ -32,15 +32,19 @@ All three active arms start from the exact `r882` checkpoint (`0084479aa0703667a
 | `STATIC-TEACHER` | Admitted fresh nonsealed D4 `TRAIN` families (shared schedule with `FRESH`, strictly disjoint from static `205` families and all evaluation/sealed families) | Frozen `r882` teacher cost rankings (`verify_frozen_teacher_identity` enforced) on the shared fresh D4 schedule | `50` rounds $\times$ `16` microbatches | Control 2 (fresh covariate support, frozen `r882` teacher labels) |
 | `FRESH` | Admitted fresh nonsealed D4 `TRAIN` families (shared schedule with `STATIC-TEACHER`, strictly disjoint from static `205` families and all evaluation/sealed families) | Newly verified native-Rust-CV (`bootstrap.s1main --fit-s1`) fitness + gate receipts (`verify_and_load_fresh_d4_pool`) | `50` rounds $\times$ `16` microbatches | **Primary treatment** (Holm $m = 2$ vs `STATIC-DATA` and `STATIC-TEACHER`) |
 
-### Prospective P1 Guards (`verify_and_load_fresh_d4_pool` & `verify_frozen_teacher_identity`)
-1. **Disjoint Fresh-Family & Native-Label Admission (`verify_and_load_fresh_d4_pool`):**
+### Prospective P1/P2 Guards (`verify_and_load_fresh_d4_pool`, `ingest_verified_fresh_rows_into_engine`, `verify_frozen_teacher_identity`, & `verify_b_lock_persisted_before_a_eval`)
+1. **Disjoint Fresh-Family & Native-Label Admission + Engine Ingestion (`verify_and_load_fresh_d4_pool` & `ingest_verified_fresh_rows_into_engine`):**
    - Requires `JRB-01` `status == "PASS"` receipt plus admitted fresh D4 regression records (`task == "regression"`, `source_split == "train"`, `dl_split == "DL-Train"`, `has_meta_test == False`, 64-hex `context_sha256` and `train_sha256`).
-   - Requires each fresh record to carry a verified `native_evaluator_receipt` (`status == "PASS"`, `evaluator == "bootstrap.s1main --fit-s1"`, 64-hex `evaluator_binary_sha256`, and 64-hex `labels_sha256` matching the 24-candidate `fitness` and `gate` payload).
+   - Requires each fresh record to carry a verified `native_evaluator_receipt` (`status == "PASS"`, `evaluator == "bootstrap.s1main --fit-s1"`, 64-hex `evaluator_binary_sha256`, `labels_sha256` matching the 24-candidate `fitness` and `gate` payload, `programs_sha256` matching `24 x 63` candidate programs, and `features_sha256` matching `tokens_10x32` + `mask_10`).
+   - **Verified Engine Ingestion:** `extract_and_verify_fresh_row_payload` and `ingest_verified_fresh_rows_into_engine` verify NPZ/inline payload byte identity against `labels_sha256`, `programs_sha256`, `features_sha256`, and `pool_sha256`, ingest `tokens_10x32`, `mask_10`, and `(program, fitness, gate)` into `engine.tokens`, `engine.masks`, and `engine.pools` while preserving historical `1,310`-context cache closure, and probe `engine.batch([cid], [np.arange(24)])` before any fresh round executes.
    - **Fake-fresh rejection:** Any fresh family ID, alias, or `context_sha256` present in the static `205`-family roster (`1,219` `DL-Train` contexts) is rejected (`RuntimeError`).
    - **Evaluation/sealed leakage rejection:** Any fresh family ID, alias, or `context_sha256` intersecting `B_k`, `A_k`, `DL-Val`, or sealed D4 confirmation families is rejected (`RuntimeError`).
    - **Identical Fresh Schedule:** `STATIC-TEACHER` and `FRESH` share the exact same `(round, microbatch, families, cids)` fresh schedule (`stream_tag="FRESH_SHARED"` in `build_equal_compute_round_plan(..., fresh_fit_rows=...)`).
 2. **Frozen Teacher Identity (`verify_frozen_teacher_identity`):**
    - Verifies that the teacher checkpoint SHA256 (`0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64`), `DOPE` SHA256 (`c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`), and initial `r882` parameter digest remain immutable, with `training=False` and `requires_grad=False`.
+3. **Strict Stage-Order Enforcement (`verify_b_lock_persisted_before_a_eval` & `evaluate_heldout_a_panel`):**
+   - `run_arm_lockstep_pooled` evaluates only inner-selection $B_k$ folds (`b_rows`) during round loop and locks each arm's `selected_checkpoints` + `selected_checkpoint_digests` (`a_panel_evaluated_during_b_selection == False`).
+   - `pooled_b_selection_lock.json` is written and `fsync`ed to disk **before** `evaluate_heldout_a_panel` is invoked for any arm, and `evaluate_heldout_a_panel` verifies both `verify_b_lock_persisted_before_a_eval(b_lock_path, required_arms=...)` and per-cell parameter SHA256 equality before scoring $A_0 \cup \dots \cup A_4$.
 
 ## Per-Round Admission (`H178` Lockstep Calibrated Pooled Selector)
 

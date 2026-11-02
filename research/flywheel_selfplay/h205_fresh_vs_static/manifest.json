@@ -1,70 +1,54 @@
 {
-  "wave": "H205",
-  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
-  "assignment": "/home/ubuntu/nudges/n2022_rd_argon_h205.md",
-  "plan": "/home/ubuntu/nudges/hwave_t2022_plan.md",
-  "claim": "/home/ubuntu/jope_plan/ns/receipts/H205_claim.txt",
   "arms": [
     "R882",
     "STATIC-DATA",
     "STATIC-TEACHER",
     "FRESH"
   ],
-  "primary": "FRESH",
-  "holm_m": 2,
-  "rounds": 50,
-  "microbatches_per_round": 16,
-  "families_per_microbatch": 8,
-  "seeds": [
-    205101,
-    205102,
-    205103
-  ],
-  "fold_seed": 205140,
+  "assignment": "/home/ubuntu/nudges/n2022_rd_argon_h205.md",
+  "authority": "\"Jepson via Grok Bot, card answer 8:22 PM MT\" (2026-11-01, t11s3): \"Start H205 and H204 now with those unblocks; H206 after xbabe3 disk is cleared.\"",
   "boot_seed": 205141,
-  "selector": "H178_calibrated_pooled_205_family",
   "checkpoint": "/home/ubuntu/jope-data/h196/inputs/round-882.pt",
-  "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
-  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
-  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
-  "regression": {
-    "dl_val_contexts": 91,
-    "r882_native_mean": 1.1377941898164525
-  },
+  "claim": "/home/ubuntu/jope_plan/ns/receipts/H205_claim.txt",
   "common_gate": {
-    "native_r882_parity_91_exact": 1.1377941898164525,
-    "pooled_families": 205,
     "lcb95_min": 0.0,
     "max_harm_fraction": 0.1,
+    "native_r882_parity_91_exact": 1.1377941898164525,
+    "pooled_families": 205,
     "sealed_d4_confirmation_excluded_from_training": true
   },
-  "host": "xbabe1",
-  "device": "cuda:0",
-  "gpu": "NVIDIA GeForce RTX 4090",
-  "live_flywheel_pid_untouched": 2297929,
-  "numeric_threads_max": 4,
   "cuda_runtime_threads_exempt": true,
-  "inputs": {
-    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
-    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
-    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
-    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
-    "/home/ubuntu/jope-data/h196/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
-    "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
-  },
-  "source_sha256": {
-    "PREREG.md": "495312b9e51f28728990ed5a473fe1c0278849e18a108f83343588b1317c503f",
-    "README.md": "a25961b865d97dd777a71dd96c870d323828f539c9d4896dd55758087063ff41",
-    "analysis.py": "45dfbdef48b2c8daa1249ef3177cbacb4a28e6b67aeb4ea40fdb7a5682559105",
-    "monitor.py": "3e973a997bc3578cd6362b712eba580d033302082e5cdf221348c9b6d2e03d1e",
-    "runner.py": "d11c55a48226a72c5913e7062cf35545f8f855f4bd7a282d45494a0f27da0433",
-    "test_h205.py": "d7b2332c48c426ac315fd3a63cfb970c46670d10fd5acbbe6961d6d0649ba3af"
+  "cumulative_budget_ledger": {
+    "attempt_1_elapsed_seconds": 11.552287836093456,
+    "attempt_2_elapsed_seconds": 1959.3849376700819,
+    "budget_reset": false,
+    "campaign_wall_budget_cap_seconds": 25200.0,
+    "remaining_wall_budget_seconds": 23229.062774493825,
+    "total_elapsed_wall_seconds": 1970.9372255061753
   },
   "custody": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261101/H205/",
+  "device": "cuda:0",
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "families_per_microbatch": 8,
+  "fold_seed": 205140,
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "holm_m": 2,
+  "host": "xbabe1",
+  "inputs": {
+    "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h196/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+  },
+  "live_flywheel_pid_untouched": 2297929,
+  "microbatches_per_round": 16,
+  "numeric_threads_max": 4,
+  "plan": "/home/ubuntu/nudges/hwave_t2022_plan.md",
+  "primary": "FRESH",
   "prior_attempt_2_source_pins": {
     "attempt_id": "run-20261102T0358Z",
-    "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
-    "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING",
     "original_manifest_sha256": "aef78c471ebde5bbbb93d3be998bac929b3b5ebfd43e6706eb827b451d6d54a9",
     "original_source_sha256": {
       "PREREG.md": "7b2b042b4a40dbb9ecc04e587d51647f9431527e7ff74a277f5ead4bd605c18d",
@@ -75,15 +59,31 @@
       "test_h205.py": "fad9b4772dff9c4e064a03971de35d0fe9bd80bdadcef6e762d0573a3c6a9795"
     },
     "s3_terminal_custody_manifest_key": "experiments/rd_breakthrough_20261101/H205/run-20261102T0358Z/terminal_custody_manifest_20261102T0502Z.json",
+    "s3_terminal_custody_manifest_sha256": "f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186",
     "s3_terminal_custody_manifest_version_id": "BInrGnjKhZOFhuK5qS9ZOA.EcIsGFwAS",
-    "s3_terminal_custody_manifest_sha256": "f0860933a6f6a49051a755bf0260a5b59187f08717ccaf241ff4c78cce8e3186"
+    "source_commit": "812ec1ee78cc32a70bb275c109b0c2138d0fb3b8",
+    "status": "INCOMPLETE_EXPLORATORY_NONCONFORMING"
   },
-  "cumulative_budget_ledger": {
-    "attempt_1_elapsed_seconds": 11.552287836093456,
-    "attempt_2_elapsed_seconds": 1959.3849376700819,
-    "total_elapsed_wall_seconds": 1970.9372255061753,
-    "campaign_wall_budget_cap_seconds": 25200.0,
-    "remaining_wall_budget_seconds": 23229.062774493825,
-    "budget_reset": false
-  }
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "reference": "/home/ubuntu/jope-data/h196/inputs/best_dev_checkpoint.json",
+  "regression": {
+    "dl_val_contexts": 91,
+    "r882_native_mean": 1.1377941898164525
+  },
+  "rounds": 50,
+  "seeds": [
+    205101,
+    205102,
+    205103
+  ],
+  "selector": "H178_calibrated_pooled_205_family",
+  "source_sha256": {
+    "PREREG.md": "13c1f4adba1c86f45257a445c7af63a05ffc6b183cb54de4c8bc4862baf92a55",
+    "README.md": "c6b1600739fe70f08314d53e842c46c87d523d8ae8022cee6923e59932f53979",
+    "analysis.py": "a3f1b2c680d4327021947d40ea6ce13ade73f6c5d34ef2534460372bfb5162c5",
+    "monitor.py": "3e973a997bc3578cd6362b712eba580d033302082e5cdf221348c9b6d2e03d1e",
+    "runner.py": "6c021dbdfe33c6becd652d5555699ec8ac4ddf045c557f52d6e036e0a851d997",
+    "test_h205.py": "3e0af6a43d75af1ff8c5fa3c72bb499ff0d7fbb4f05c5ddfb0d184b9f6bdf358"
+  },
+  "wave": "H205"
 }
