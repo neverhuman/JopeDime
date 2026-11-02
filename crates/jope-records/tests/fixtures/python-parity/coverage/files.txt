@@ -303,6 +303,8 @@ crates/jope-bench/src/panel/inference_boundary.rs.txt
 crates/jope-bench/src/panel/inference_contract_tests.rs
 crates/jope-bench/src/panel/inference_cpp_boundary.py
 crates/jope-bench/src/panel/inference_cuda.rs
+crates/jope-bench/src/panel/inference_cuda/runner.rs
+crates/jope-bench/src/panel/inference_cuda/tests.rs
 crates/jope-bench/src/panel/inference_export.rs
 crates/jope-bench/src/panel/inference_gp.rs
 crates/jope-bench/src/panel/inference_inputs.rs
