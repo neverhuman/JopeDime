@@ -925,9 +925,8 @@ fn cycle(args: &Args) -> Result<JopeDlgpBudgetCampaignStatusV1> {
             (0, "unavailable".to_owned())
         }
         Err(error) => {
-            return Err(error).with_context(|| {
-                format!("inspect robust wins receipt {}", wins_path.display())
-            });
+            return Err(error)
+                .with_context(|| format!("inspect robust wins receipt {}", wins_path.display()));
         }
     };
     let last_advanced_at_ms = progress
