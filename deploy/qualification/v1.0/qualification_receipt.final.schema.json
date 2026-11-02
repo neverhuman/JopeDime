@@ -555,11 +555,19 @@
         "outcome",
         "guidance_default",
         "owner_decision",
-        "record"
+        "record",
+        "qualification",
+        "post_execution_receipt",
+        "delegated_owner_guidance_receipt",
+        "independent_source_review",
+        "independent_governance_handoff",
+        "report_source_commit",
+        "report_sha256",
+        "summary"
       ],
       "properties": {
         "outcome": {
-          "const": "NOT_RECORDED_IN_THIS_RECEIPT"
+          "const": "INCOMPLETE"
         },
         "guidance_default": {
           "const": "OFF"
@@ -569,6 +577,91 @@
         },
         "record": {
           "$ref": "#/$defs/evidence"
+        },
+        "qualification": {
+          "const": "NOT_QUALIFIED"
+        },
+        "post_execution_receipt": {
+          "$ref": "#/$defs/evidence"
+        },
+        "delegated_owner_guidance_receipt": {
+          "$ref": "#/$defs/evidence"
+        },
+        "independent_source_review": {
+          "$ref": "#/$defs/evidence"
+        },
+        "independent_governance_handoff": {
+          "$ref": "#/$defs/evidence"
+        },
+        "report_source_commit": {
+          "const": "211fd341db45431e6db8af82c1a0ec3a691baba4"
+        },
+        "report_sha256": {
+          "const": "c1c4adc032c56351cc7eeff8a3a8a526d6ab6fa39c3a259538ed82a975ee8f81"
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "signed_units",
+            "terminal_units",
+            "valid_units",
+            "invalid_units",
+            "analyzer_exit_code",
+            "scientific_decision",
+            "effect_estimate",
+            "confidence_interval",
+            "partial_statistics_computed",
+            "known_returned_charges",
+            "unknown_failed_unit_charges",
+            "total_physical_charges",
+            "prior_started_only_work_unknown",
+            "qualification_signature"
+          ],
+          "properties": {
+            "signed_units": {
+              "const": 582
+            },
+            "terminal_units": {
+              "const": 582
+            },
+            "valid_units": {
+              "const": 60
+            },
+            "invalid_units": {
+              "const": 522
+            },
+            "analyzer_exit_code": {
+              "const": 1
+            },
+            "scientific_decision": {
+              "const": null
+            },
+            "effect_estimate": {
+              "const": null
+            },
+            "confidence_interval": {
+              "const": null
+            },
+            "partial_statistics_computed": {
+              "const": false
+            },
+            "known_returned_charges": {
+              "const": 1440
+            },
+            "unknown_failed_unit_charges": {
+              "const": 522
+            },
+            "total_physical_charges": {
+              "const": null
+            },
+            "prior_started_only_work_unknown": {
+              "const": true
+            },
+            "qualification_signature": {
+              "const": null
+            }
+          }
         }
       }
     },

@@ -42,9 +42,19 @@ No verdict was relabelled to satisfy that instrument.
 The guidance default is **OFF** under **OWNER-R21**. The earlier preregistered
 one-shot A/B recorded no lift and the landmark-only M5 result was negative;
 this release does not claim a learned-quality or Elo improvement. The fresh
-M5 gate binds the reviewed default-off requirement. A Q1 outcome is not recorded
-in this receipt; the default decision is an owner scope decision, not a new Q1
-result. No successful Q1 outcome is claimed.
+M5 gate binds the reviewed default-off requirement. The final **Q1 outcome is
+INCOMPLETE / NOT_QUALIFIED**: all 582 logical identities are terminal, with 60
+valid complete responses and 522 invalid backend failures. The unchanged signed
+analyzer exited 1 on invalid response fields/schema; no effect estimate,
+confidence interval or partial statistical aggregate was produced. This does
+not establish a scientific superiority PASS or FAIL.
+
+The receipt binds QLT02's final receipt and REPORT at fastlane commit
+`211fd341db45431e6db8af82c1a0ec3a691baba4`, API01's independent exact-head review
+and delegated OWNER-R21 disposition, and GOV03's independent handoff. Known
+returned charges are 1,440; the 522 failed-unit charges, prior interrupted work
+and total physical charges remain unknown. No retry, budget reset, learned
+promotion, successful Q1 signature or aggregate release approval is inferred.
 
 ## Candidate artifacts and limits
 
