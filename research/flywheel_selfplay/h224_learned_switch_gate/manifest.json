@@ -79,14 +79,23 @@
   "selected_sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
   "best_match_jaccard": 0.1927922014576975,
   "source_sha256": {
-    "PREREG.md": "dc1dd5279cb395e45a70fcf3f3903509bd5d51cf87671315d96feb2bc24317db",
+    "PREREG.md": "e83236758788e0798868707adb28086cabc2e814fec84ae6cfe2e7103419f974",
     "README.md": "3946387a13f37b67ee3af80a637682ade9052f8c9d68fe820841e4d31fc1d021",
     "analysis.py": "9aecc0fc3a03bf63d5a1e37f6b98098d9787dd7e7e4e77f8499a8d549ee5f434",
     "fold_manifest.json": "eee7551b3bc87140ece979b93fab865be71e383fc63d93e4a303b9e5bc6d2e9e",
     "gate.py": "b6da8ad57f940aeef3a504439f4848df2e06344d14652e768adf32858637ebc3",
-    "monitor.py": "49637aa31d8972131baf5bc105e89fe893f1050d8ced66c59f937802379fb435",
+    "monitor.py": "73ddfd335c6de76c78222ad711b09fddf3dd7bf3369a9fe156e9e9f54df120f7",
     "provenance.json": "2a9a583133f7fe119563586f8ee7263c55f9f088451ec6a16642859439046ed9",
     "runner.py": "ca3a8aee72a6158e600671a07e9870ac4db1b219c9a915cec95b5ecc2d11e64d",
-    "test_h224.py": "6a9d827d4026221aaaf2901e17037b34fcf73462a98df54b5962d8d311d3627c"
-  }
+    "test_h224.py": "c7d284f79df6dc41063063bc0cc6a95ce2df26a9f9e594a8ed51f573a8e90ee5"
+  },
+  "amendments": [
+    {
+      "id": "A1",
+      "pre_launch": true,
+      "reason": "Ignore already-exited short-lived children during RSS/thread sampling; retain all live resource failures.",
+      "science_unchanged": true,
+      "attempt_consumed": false
+    }
+  ]
 }

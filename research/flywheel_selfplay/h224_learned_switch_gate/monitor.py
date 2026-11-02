@@ -21,7 +21,12 @@ def resources(process=None, output=None):
     mem = psutil.virtual_memory()
     load = os.getloadavg()[1]
     tree = [] if process is None else [process] + process.children(recursive=True)
-    rss = sum(p.memory_info().rss for p in tree if p.is_running())
+    rss = 0
+    for child in tree:
+        try:
+            rss += child.memory_info().rss
+        except psutil.NoSuchProcess:
+            continue
     sample = dict(
         epoch=time.time(),
         load5=load,
@@ -41,8 +46,12 @@ def resources(process=None, output=None):
         allowed = set(os.sched_getaffinity(process.pid))
         if len(allowed) > 4:
             raise RuntimeError("four-core kernel affinity missing")
-        for p in tree:
-            for thread in p.threads():
+        for child in tree:
+            try:
+                threads = child.threads()
+            except psutil.NoSuchProcess:
+                continue
+            for thread in threads:
                 try:
                     affinity = set(os.sched_getaffinity(thread.id))
                 except ProcessLookupError:
@@ -94,7 +103,8 @@ def main(args):
     if (
         pr["state"] != "MERGED"
         or pr["mergeCommit"]["oid"] != args.commit
-        or pr["headRefName"] != "rd/h224-learned-switch"
+        or pr["headRefName"]
+        not in ("rd/h224-learned-switch", "rd/h224-prelaunch-lifecycle")
         or pr["baseRefName"] != "main"
         or pr["isDraft"]
     ):

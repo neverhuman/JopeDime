@@ -159,3 +159,12 @@ All run artifacts use create-only S3 PUT and exact VersionId GET/SHA256 recovery
 under the H224 prefix in [manifest.json](manifest.json). Bulk stays outside Git.
 Closeout preserves partial failures as INCOMPLETE, without zero-filled outcomes,
 and publishes README, small metrics, both index rows, custody and reviewed PR.
+
+## Prelaunch amendment A1 — transient child sampling
+
+Before any H224 launch or claim, a negative mock reproduced psutil.NoSuchProcess
+when a short-lived Git child exits between process-tree discovery and RSS/thread
+sampling. Ignore only those already-exited children/threads; retain all live
+RSS/affinity/host/deadline stops. No scientific source, inputs, seeds, choices or
+budget changes. Execute the exact merged prelaunch-amendment source. The failure
+and corrected control are retained in custody. No attempt has been consumed.
