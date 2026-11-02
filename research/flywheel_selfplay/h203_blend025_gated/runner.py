@@ -46,6 +46,9 @@ BOUND_FILES = (
 )
 HOST_RULES = {
     "xbabe1": dict(min_free=40_000_000_000, max_used=None),
+    "xbabe2": dict(
+        min_free=40_000_000_000, max_used=0.938
+    ),  # owner deviation n1918 (lanes_t1615 disk guard)
 }
 MEM_MIN = 16 * 2**30
 SCRATCH_MAX = 500_000_000
@@ -137,15 +140,18 @@ def tree_bytes(path):
 
 
 def admit_host():
-    """Preregistered host boundary: xbabe1 only, at nice 19. Called before any read, write or launch."""
+    """Host boundary: xbabe1 (PREREG) or xbabe2 (owner deviation n1918), at nice 19. Called before any read, write or
+    launch."""
     host = socket.gethostname().split(".")[0]
     if host not in HOST_RULES or os.getpriority(os.PRIO_PROCESS, 0) < 19:
-        raise RuntimeError(f"H203 runs on xbabe1 at nice 19 only (host {host!r})")
+        raise RuntimeError(
+            f"H203 runs on xbabe1 or xbabe2 at nice 19 only (host {host!r})"
+        )
     return host
 
 
 def guards(root):
-    """xbabe1 disk rule (free >= 40 GB), MemAvailable >= 16 GiB, load1 <= 85% of cores, nice 19, own root < 500 MB.
+    """Disk rule (free >= 40 GB; on xbabe2 also used < 93.8%), MemAvailable >= 16 GiB, load1 <= 85% of cores, nice 19, own root < 500 MB.
     Checked before every fit and stage."""
     host = admit_host()
     rule = HOST_RULES[host]

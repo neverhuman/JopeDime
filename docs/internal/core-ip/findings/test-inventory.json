@@ -5577,7 +5577,15 @@
       "reason": "H202 data-free host-before-read/resource, stable current-top5 logistic inversion/gradient sign, zero-inversion loss, within-context shuffle, DOPE/anchor gradient masking and optimizer exclusion, fresh FIT/B/A folds, family-balanced paired sampling, durable B lock, lossless XOR and strict median/verdict controls; no corpus or model-checkpoint reads in fixtures."
     },
     "python:research/flywheel_selfplay/h203_blend025_gated/test_h203.py": {
-      "reason": "Owner-requested H203 data-free controls for the outcome-free gated BLEND_025 (cells, minimal 45-fit plan, H124 folds per fold seed, fold manifest, fixed-lambda blend, zgap and disagreement gate statistics, tau grid, FIT-only tau selection with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB/p/harm verdict, Elo orientation, xbabe1-only host admission); no checkpoint/corpus reads or model passes in the fixtures",
+      "reason": "Owner-requested H203 data-free controls for the outcome-free gated BLEND_025 (cells, minimal 45-fit plan, H124 folds per fold seed, fold manifest, fixed-lambda blend, zgap and disagreement gate statistics, tau grid, FIT-only tau selection with r882 fallback and conservative ties, gated arm costs, inf-safe JSON, LCB/p/harm verdict, Elo orientation, xbabe1 + xbabe2 (owner deviation n1918, disk used < 93.8%) host admission); no checkpoint/corpus reads or model passes in the fixtures",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h209_gpu_delta_calibration/test_h209.py": {
+      "role": "research",
+      "reason": "H209 data-free CPU fixtures: actual optimizer/forward change, zero-reference/tie semantics, B harm and strict-gain boundary, role refusal before reads, limited reveal decoding, current-load/disk guards, independent family folds, exact native vector, pooled primary gate, create-only versioned S3 corruption refusal and unmerged-launch refusal. No real cohort or GPU opened."
+    },
+    "python:research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py": {
+      "reason": "H205 fresh vs static data and static teacher 50-round r882 study: data-free equal-compute schedule, shared fresh schedule, frozen-teacher identity, H178 per-round 205-family pooled cross-fit selector, native r882 91/91 parity gate, JRB-01 fresh D4 regression admission/label validator, and thread-rule-(b) monitor controls. Research only; no product or sealed qualification.",
       "role": "research"
     }
   },

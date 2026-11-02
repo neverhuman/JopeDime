@@ -1,7 +1,25 @@
 {
   "wave": "H203",
-  "status": "PREREGISTERED_NOT_EXECUTED",
-  "optimizer_updates": 0,
+  "status": "INCOMPLETE",
+  "verdict": null,
+  "reason": "both preregistered attempts (the run and its single resume) were stopped by the monitor's load guard (load1 > 85% of 128 cores) from other jobs on xbabe2",
+  "run_id": "run-20261102T0224Z",
+  "host": "xbabe2",
+  "host_deviation": "owner n1918: xbabe2 instead of preregistered xbabe1",
+  "run_commit": "f41b2f8ddb2ce1b2781ffc5f1a3318254703ac41",
+  "prereg_merge": "272877f4edd8144e31154f18d6cb11c22585f755",
+  "fits_completed": 15,
+  "fits_planned": 45,
+  "stage1_lock_written": false,
+  "outcomes_computed": false,
   "scored_contexts": 0,
-  "verdict": null
+  "dlval_r882_regression": "PASS 91/91 bit-exact (both attempts)",
+  "stops": [
+    {"utc": "2026-11-02T02:43:37Z", "attempt": "run", "load1": 120.93, "load_limit": 108.8, "elapsed_s": 1168.6, "fits_done": 4},
+    {"utc": "2026-11-02T06:10:17Z", "attempt": "resume", "load1": 154.57, "load_limit": 108.8, "elapsed_s": 1941.7, "fits_done": 15}
+  ],
+  "peak": {"tree_cores": 3.943, "rss_bytes": 3831771136, "disk_used_fraction": 0.93754, "root_bytes": 91729875},
+  "optimizer_updates": 0,
+  "gpu_used": false,
+  "sealed_or_holdout_read": false
 }
