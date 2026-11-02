@@ -1243,6 +1243,15 @@ crates/jope-engine/tests/data_contracts.rs
 crates/jope-engine/tests/experiment_cli.rs
 crates/jope-engine/tests/experiment_isolation.rs
 crates/jope-engine/tests/families.rs
+crates/jope-engine/tests/families/admission.rs
+crates/jope-engine/tests/families/custody.rs
+crates/jope-engine/tests/families/growth.rs
+crates/jope-engine/tests/families/growth_support.rs
+crates/jope-engine/tests/families/growth_support/assignment.rs
+crates/jope-engine/tests/families/growth_support/cases.rs
+crates/jope-engine/tests/families/growth_support/fixture.rs
+crates/jope-engine/tests/families/growth_support/scenarios.rs
+crates/jope-engine/tests/families/growth_support/serialization.rs
 crates/jope-engine/tests/fit_boundary.rs
 crates/jope-engine/tests/fixtures/family-growth/python-verify-outputs.jsonl
 crates/jope-engine/tests/frozen_inputs.rs
