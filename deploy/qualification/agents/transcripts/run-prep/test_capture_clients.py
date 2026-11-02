@@ -39,6 +39,8 @@ def _runner_fixture(
     sleep_key=None,
     descendant_key=None,
     drain_key=None,
+    transport_key=None,
+    flush_seconds=0.2,
     async_recorder_key=None,
 ):
     repo = tmp_path / "source"
@@ -47,7 +49,17 @@ def _runner_fixture(
         repo / "deploy/qualification/agents/transcripts/run-prep/capture_stdio.py"
     )
     capture_script.parent.mkdir(parents=True)
-    capture_script.write_text("# committed synthetic fixture stub\n", encoding="utf-8")
+    if transport_key is None:
+        capture_script.write_text(
+            "# recorder identity fixture for packaging controls\n", encoding="utf-8"
+        )
+    else:
+        capture_script.write_bytes(
+            Path(__file__).with_name("capture_stdio.py").read_bytes()
+        )
+        capture_script.with_name("verify_capture.py").write_bytes(
+            Path(__file__).with_name("verify_capture.py").read_bytes()
+        )
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
     subprocess.run(
         ["git", "-C", str(repo), "config", "user.name", "fixture"], check=True
@@ -90,6 +102,10 @@ def _runner_fixture(
                     os.kill(int((home / 'pid').read_text()), signal.SIGTERM)
                 except (OSError, ValueError):
                     raise SystemExit(1)
+            elif args == ['mcp']:
+                for line in sys.stdin:
+                    request = json.loads(line)
+                    print(json.dumps({{'jsonrpc': '2.0', 'id': request['id'], 'result': {{}}}}), flush=True)
             else:
                 raise SystemExit(2)
             """
@@ -108,8 +124,8 @@ def _runner_fixture(
             _, capture_stdio, capture_dir, candidate, engine_home, key = sys.argv
             Path('client.pid').write_text(str(os.getpid()))
             if key == {drain_key!r}:
-                child_code = "import hashlib, json, os, signal, sys, time; from pathlib import Path; signal.signal(signal.SIGTERM, lambda *_: sys.exit(0)); Path('drain-child.pid').write_text(str(os.getpid())); Path('drain-child.ready').write_text('ready'); deadline=time.monotonic()+5\\nwhile not Path('drain-child.release').exists() and time.monotonic()<deadline: time.sleep(0.01)\\nif Path('drain-child.release').exists():\\n output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
-                subprocess.Popen([sys.executable, '-c', child_code, capture_dir, candidate])
+                child_code = "import hashlib, json, os, signal, sys, time; from pathlib import Path; signal.signal(signal.SIGTERM, lambda *_: sys.exit(0)); Path('drain-child.pid').write_text(str(os.getpid())); Path('drain-child.ready').write_text('ready'); deadline=time.monotonic()+5\\nwhile not Path('drain-child.release').exists() and time.monotonic()<deadline: time.sleep(0.01)\\nif Path('drain-child.release').exists():\\n output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,producer_sha256=hashlib.sha256(Path(sys.argv[3]).read_bytes()).hexdigest(),argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
+                subprocess.Popen([sys.executable, '-c', child_code, capture_dir, candidate, capture_stdio])
                 deadline = time.monotonic() + 5
                 while not Path('drain-child.ready').exists() and time.monotonic() < deadline:
                     time.sleep(0.01)
@@ -117,9 +133,9 @@ def _runner_fixture(
                     raise SystemExit('drain descendant did not start')
                 raise SystemExit(0)
             if key == {async_recorder_key!r}:
-                child_code = "import hashlib, json, os, sys, time; from pathlib import Path; Path('async-recorder.pid').write_text(str(os.getpid())); time.sleep(0.4); output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
+                child_code = "import hashlib, json, os, sys, time; from pathlib import Path; Path('async-recorder.pid').write_text(str(os.getpid())); time.sleep(0.4); output=Path(sys.argv[1]); candidate=Path(sys.argv[2]); output.mkdir(parents=True, exist_ok=True); (output/'wire.jsonl').write_text(json.dumps(dict(inventory_counts=[0,1,1]))); receipt=dict(complete=True,producer_sha256=hashlib.sha256(Path(sys.argv[3]).read_bytes()).hexdigest(),argv=[str(candidate),'mcp'],executable_sha256=hashlib.sha256(candidate.read_bytes()).hexdigest(),server_exit_code=0,relay_exit_code=0,limits=dict(seconds=120,stream_bytes=16777216,frame_bytes=1048576),extra_environment_names=[]); (output/'capture.json').write_text(json.dumps(receipt))"
                 subprocess.Popen(
-                    [sys.executable, '-c', child_code, capture_dir, candidate],
+                    [sys.executable, '-c', child_code, capture_dir, candidate, capture_stdio],
                     start_new_session=True,
                 )
                 raise SystemExit(0)
@@ -131,6 +147,18 @@ def _runner_fixture(
                     time.sleep(0.01)
                 if not Path('descendant.pid').exists():
                     raise SystemExit('descendant did not start')
+            if key == {transport_key!r}:
+                recorder = subprocess.Popen([sys.executable, '-B', capture_stdio, '--out-dir', capture_dir, '--seconds', '2', '--max-bytes', '1048576', '--', candidate, 'mcp'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                recorder.stdin.write(b'{{"jsonrpc":"2.0","id":1,"method":"ping"}}\\n')
+                recorder.stdin.flush()
+                if not recorder.stdout.readline():
+                    raise SystemExit('recorder produced no response')
+                Path('recorder.pid').write_text(str(recorder.pid))
+                if key == {sleep_key!r}:
+                    time.sleep(30)
+                flush_code = "import os,time;from pathlib import Path;time.sleep({flush_seconds!r});Path('recorder-flushed').write_text('yes');os.close(" + str(recorder.stdin.fileno()) + ")"
+                subprocess.Popen([sys.executable, '-B', '-c', flush_code], pass_fds=(recorder.stdin.fileno(),), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                raise SystemExit(0)
             if key == {sleep_key!r}:
                 time.sleep(30)
             home = Path(engine_home)
@@ -142,7 +170,7 @@ def _runner_fixture(
             output = Path(capture_dir)
             output.mkdir(parents=True)
             (output / 'wire.jsonl').write_text(json.dumps({{'inventory_counts': [before, len(runs), len(runs)]}}) + '\\n')
-            receipt = {{'complete': True, 'argv': [candidate, 'mcp'],
+            receipt = {{'complete': True, 'argv': [candidate, 'mcp'], 'producer_sha256': hashlib.sha256(Path(capture_stdio).read_bytes()).hexdigest(),
                 'executable_sha256': hashlib.sha256(Path(candidate).read_bytes()).hexdigest(),
                 'server_exit_code': 0, 'relay_exit_code': 0,
                 'limits': {{'seconds': 120, 'stream_bytes': 16777216, 'frame_bytes': 1048576}},
@@ -256,6 +284,67 @@ def test_normal_exit_waits_for_isolated_recorder_receipt(a5_tmp_path):
     assert result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
     assert result["clients"]["claude_code"]["client_exit"] == 0
     assert result["clients"]["claude_code"]["capture_error"] is None
+
+
+def test_deadline_poll_does_not_extend_recorder_drain(monkeypatch, a5_tmp_path):
+    args, plan, _candidate, client = _runner_fixture(
+        a5_tmp_path, drain_key="claude_code"
+    )
+    plan["clients"]["claude_code"]["timeout_seconds"] = 1
+    args.client_plan.write_text(json.dumps(plan), encoding="utf-8")
+
+    class ShiftedTime:
+        client_finished = False
+        phase = 0
+
+        @staticmethod
+        def monotonic():
+            now = time.monotonic()
+            if not ShiftedTime.client_finished:
+                return now
+            if ShiftedTime.phase == 0:
+                ShiftedTime.phase = 1
+                return now - 2
+            ShiftedTime.phase = 2
+            return now + 2
+
+        @staticmethod
+        def sleep(seconds):
+            return time.sleep(seconds)
+
+    original_popen = THREE_CLIENTS_MODULE.subprocess.Popen
+
+    def exit_client_before_deadline_poll(command, *positional, **kwargs):
+        process = original_popen(command, *positional, **kwargs)
+        if command[0] == str(client):
+            assert process.wait(timeout=5) == 0
+            ShiftedTime.client_finished = True
+        return process
+
+    drain_calls = []
+    real_drain = THREE_CLIENTS_MODULE.drain_group
+
+    def drain_must_not_run(process, deadline, check_interrupted, *extra):
+        if process.args[-1] == "claude_code":
+            drain_calls.append(True)
+            raise AssertionError("no recorder drain budget remains at the client deadline")
+        return real_drain(process, deadline, check_interrupted, *extra)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(THREE_CLIENTS_MODULE, "time", ShiftedTime)
+        patch.setattr(
+            THREE_CLIENTS_MODULE.subprocess,
+            "Popen",
+            exit_client_before_deadline_poll,
+        )
+        patch.setattr(THREE_CLIENTS_MODULE, "drain_group", drain_must_not_run)
+        result = THREE_CLIENTS_MODULE.run_capture(args)
+
+    assert result["status"] == "INCOMPLETE"
+    assert result["clients"]["claude_code"]["client_exit"] == 0
+    assert not result["clients"]["claude_code"]["timed_out"]
+    assert drain_calls == []
+    assert not (args.out_dir / "clients/claude_code/transport/capture.json").exists()
 
 
 def test_normal_exit_drain_is_bounded_before_forced_cleanup(monkeypatch, a5_tmp_path):
@@ -431,45 +520,31 @@ def test_client_process_group_descendant_is_gone_after_teardown(timed_out, a5_tm
 
 
 def test_interrupt_kills_client_process_group_descendant(monkeypatch, a5_tmp_path):
-    args, _plan, _candidate, client = _runner_fixture(
+    args, _plan, _candidate, _client = _runner_fixture(
         a5_tmp_path, descendant_key="claude_code"
     )
-    case = args.out_dir / "clients" / "claude_code"
-    original_popen = subprocess.Popen
+    case = args.out_dir / "clients/claude_code"
+    original = THREE_CLIENTS_MODULE.observe_client_exit
+    interrupted = []
 
-    class InterruptAfterDescendant:
-        def __init__(self, process):
-            self.process = process
-            self.interrupted = False
+    def interrupt_after_descendant(process):
+        deadline = time.monotonic() + 5
+        marker = case / "descendant.pid"
+        while not marker.exists() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert marker.exists(), "fixture descendant did not start"
+        if not interrupted:
+            interrupted.append(process)
+            raise KeyboardInterrupt
+        return original(process)
 
-        def __getattr__(self, name):
-            return getattr(self.process, name)
-
-        def wait(self, *positional, **kwargs):
-            deadline = time.monotonic() + 5
-            marker = case / "descendant.pid"
-            while not marker.exists() and time.monotonic() < deadline:
-                time.sleep(0.01)
-            assert marker.exists(), "fixture descendant did not start"
-            if not self.interrupted:
-                self.interrupted = True
-                raise KeyboardInterrupt
-            return self.process.wait(*positional, **kwargs)
-
-    def interrupt_client(command, *positional, **kwargs):
-        process = original_popen(command, *positional, **kwargs)
-        if command[0] == str(client) and command[-1] == "claude_code":
-            return InterruptAfterDescendant(process)
-        return process
-
-    monkeypatch.setattr(THREE_CLIENTS_MODULE.subprocess, "Popen", interrupt_client)
+    monkeypatch.setattr(
+        THREE_CLIENTS_MODULE, "observe_client_exit", interrupt_after_descendant
+    )
     try:
         with pytest.raises(KeyboardInterrupt):
             THREE_CLIENTS_MODULE.run_capture(args)
-        child_pid = int((case / "descendant.pid").read_text())
-        assert not _pid_is_live(child_pid), (
-            f"same-group descendant {child_pid} survived interrupt teardown"
-        )
+        assert not _pid_is_live(int((case / "descendant.pid").read_text()))
         assert _processes_with_paths_under(a5_tmp_path) == []
     finally:
         _kill_fixture_processes(a5_tmp_path)
@@ -500,48 +575,32 @@ def test_launch_failure_stops_engine_and_records_incomplete_client(
 
 
 def test_interrupt_terminates_and_reaps_client_and_engine(monkeypatch, a5_tmp_path):
-    args, _plan, _candidate, client = _runner_fixture(
+    args, _plan, _candidate, _client = _runner_fixture(
         a5_tmp_path, sleep_key="claude_code", descendant_key="claude_code"
     )
-    case = args.out_dir / "clients" / "claude_code"
-    original_popen = subprocess.Popen
-    started_clients = []
+    case = args.out_dir / "clients/claude_code"
+    original = THREE_CLIENTS_MODULE.observe_client_exit
+    observed = []
 
-    class InterruptOnce:
-        def __init__(self, process):
-            self.process = process
-            self.interrupted = False
-
-        def __getattr__(self, name):
-            return getattr(self.process, name)
-
-        def wait(self, *positional, **kwargs):
-            deadline = time.monotonic() + 5
-            marker = case / "descendant.pid"
-            while not marker.exists() and time.monotonic() < deadline:
-                time.sleep(0.01)
-            assert marker.exists(), "fixture descendant did not start"
-            if not self.interrupted:
-                self.interrupted = True
-                raise KeyboardInterrupt
-            return self.process.wait(*positional, **kwargs)
-
-    def interrupt_first_client(command, *positional, **kwargs):
-        process = original_popen(command, *positional, **kwargs)
-        if command[0] == str(client) and command[-1] == "claude_code":
-            wrapper = InterruptOnce(process)
-            started_clients.append(wrapper)
-            return wrapper
-        return process
+    def interrupt_first_client(process):
+        deadline = time.monotonic() + 5
+        marker = case / "descendant.pid"
+        while not marker.exists() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert marker.exists(), "fixture descendant did not start"
+        if not observed:
+            observed.append(process)
+            raise KeyboardInterrupt
+        return original(process)
 
     monkeypatch.setattr(
-        THREE_CLIENTS_MODULE.subprocess, "Popen", interrupt_first_client
+        THREE_CLIENTS_MODULE, "observe_client_exit", interrupt_first_client
     )
     try:
         with pytest.raises(KeyboardInterrupt):
             THREE_CLIENTS_MODULE.run_capture(args)
-        assert started_clients and started_clients[0].poll() is not None
-        assert (args.engine_home / "claude_code" / "stopped").is_file()
+        assert observed and observed[0].poll() is not None
+        assert (args.engine_home / "claude_code/stopped").is_file()
         assert _processes_with_paths_under(a5_tmp_path) == []
     finally:
         _kill_fixture_processes(a5_tmp_path)
@@ -1058,3 +1117,177 @@ def test_run_capture_honors_interrupt_deferred_during_engine_launch(
         assert _processes_with_paths_under(a5_tmp_path) == []
     finally:
         _kill_fixture_processes(a5_tmp_path)
+
+
+def test_normal_cli_exit_preserves_real_claude_recorder_flush(a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path, transport_key="claude_code"
+    )
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    case = args.out_dir / "clients/claude_code"
+    assert (case / "recorder-flushed").is_file(), (
+        "normal CLI exit killed the pending recorder flush"
+    )
+    assert result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+    receipt_path = case / "transport/capture.json"
+    assert receipt_path.is_file() and not receipt_path.is_symlink()
+    receipt = json.loads(receipt_path.read_text())
+    assert receipt["complete"] is True
+    assert receipt["relay_exit_code"] == receipt["server_exit_code"] == 0
+    assert result["clients"]["claude_code"]["client_exit"] == 0
+    assert _processes_with_paths_under(a5_tmp_path) == []
+
+
+def test_timeout_cleans_isolated_recorder_and_server(monkeypatch, a5_tmp_path):
+    args, plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path, transport_key="claude_code", sleep_key="claude_code"
+    )
+    plan["clients"]["claude_code"]["timeout_seconds"] = 1
+    args.client_plan.write_text(json.dumps(plan))
+    original = THREE_CLIENTS_MODULE.RecorderSession.groups
+    isolated = []
+
+    def observe_groups(recorder):
+        groups = original(recorder)
+        if recorder.identity is not None:
+            current = THREE_CLIENTS_MODULE._process_info(recorder.identity["pid"])
+            if current is not None:
+                isolated.append((current, recorder.client_pid))
+        return groups
+
+    monkeypatch.setattr(THREE_CLIENTS_MODULE.RecorderSession, "groups", observe_groups)
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    assert result["status"] == "INCOMPLETE"
+    assert result["clients"]["claude_code"]["timed_out"] is True
+    assert any(
+        p["pid"] == p["session"] == p["group"] and p["pid"] != client
+        for p, client in isolated
+    )
+    assert _processes_with_paths_under(a5_tmp_path) == []
+
+
+def test_drain_timeout_preserves_client_exit_and_refuses_success(
+    monkeypatch, a5_tmp_path
+):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path, transport_key="claude_code", flush_seconds=1
+    )
+    monkeypatch.setattr(THREE_CLIENTS_MODULE, "RECORDER_DRAIN_SECONDS", 0.1)
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    row = result["clients"]["claude_code"]
+    assert result["status"] == "INCOMPLETE"
+    assert row["client_exit"] == 0
+    assert "drain deadline" in row["capture_error"]
+    assert row["timed_out"] is False
+    assert _processes_with_paths_under(a5_tmp_path) == []
+
+
+def test_foreign_recorder_and_reused_pid_are_never_signaled(monkeypatch, a5_tmp_path):
+    args, _plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    producer = (
+        args.repo / "deploy/qualification/agents/transcripts/run-prep/capture_stdio.py"
+    )
+    directory = a5_tmp_path / "foreign-lease"
+    directory.mkdir()
+    foreign = subprocess.Popen(
+        [
+            sys.executable,
+            "-B",
+            "-c",
+            "import time;time.sleep(30)",
+            str(producer),
+            "--out-dir",
+            str(directory),
+        ],
+        start_new_session=True,
+    )
+    info = THREE_CLIENTS_MODULE._process_info(foreign.pid)
+    lease = dict(
+        schema="jopedime.mcp-recorder-session/v1",
+        pid=foreign.pid,
+        owner_pgid=12345,
+        start_ticks=info["start_ticks"],
+        producer_sha256=hashlib.sha256(producer.read_bytes()).hexdigest(),
+        argv=[str(args.candidate), "mcp"],
+    )
+    (directory / "recorder.json").write_text(json.dumps(lease))
+    recorder = THREE_CLIENTS_MODULE.RecorderSession(
+        directory, 12345, producer, args.candidate
+    )
+    signals = []
+    monkeypatch.setattr(
+        THREE_CLIENTS_MODULE.os, "killpg", lambda *args: signals.append(args)
+    )
+    try:
+        with pytest.raises(
+            THREE_CLIENTS_MODULE.CaptureError, match="outside the owned capture"
+        ):
+            recorder.stop()
+        assert signals == [] and foreign.poll() is None
+        recorder.identity = dict(lease, start_ticks=lease["start_ticks"] - 1)
+        with pytest.raises(THREE_CLIENTS_MODULE.CaptureError, match="PID was reused"):
+            recorder.stop()
+        assert signals == [] and foreign.poll() is None
+    finally:
+        foreign.kill()
+        foreign.wait(timeout=3)
+
+
+@pytest.mark.parametrize(
+    "pin_plan", [False, True], ids=["missing-pin-refused", "matching-pin-admitted"]
+)
+def test_capture_tool_source_is_separate_from_frozen_candidate(pin_plan, a5_tmp_path):
+    args, plan, _candidate, _client = _runner_fixture(a5_tmp_path)
+    frozen = args.source_sha
+    (args.repo / "tool-version.txt").write_text("new reviewed tools")
+    subprocess.run(["git", "-C", str(args.repo), "add", "."], check=True)
+    subprocess.run(
+        ["git", "-C", str(args.repo), "commit", "-qm", "tool metadata source"],
+        check=True,
+    )
+    tools = subprocess.check_output(
+        ["git", "-C", str(args.repo), "rev-parse", "HEAD"], text=True
+    ).strip()
+    args.capture_source_sha = tools
+    args.preflight_only = True
+    if pin_plan:
+        plan["capture_source_sha"] = tools
+        args.client_plan.write_text(json.dumps(plan))
+        result = THREE_CLIENTS_MODULE.run_capture(args)
+        assert result["status"] == "PREFLIGHT_READY_NO_CLIENTS_LAUNCHED"
+        assert result["source_sha"] == frozen
+        assert result["capture_source_sha"] == tools != frozen
+    else:
+        with pytest.raises(
+            THREE_CLIENTS_MODULE.CaptureError, match="capture-tool source SHA mismatch"
+        ):
+            THREE_CLIENTS_MODULE.run_capture(args)
+    assert not args.out_dir.exists() and not args.engine_home.exists()
+
+
+def test_recorder_can_finish_during_process_identity_observation(
+    monkeypatch, a5_tmp_path
+):
+    args, _plan, _candidate, _client = _runner_fixture(
+        a5_tmp_path, transport_key="claude_code"
+    )
+    original = Path.read_bytes
+    observed = []
+
+    def finish_before_command_read(path):
+        if not observed and path.name == "cmdline" and path.parent.name.isdecimal():
+            pid = int(path.parent.name)
+            observed.append(pid)
+            deadline = time.monotonic() + 3
+            while _pid_is_live(pid) and time.monotonic() < deadline:
+                time.sleep(0.01)
+            assert not _pid_is_live(pid), "recorder did not finish its delayed EOF"
+            return b""  # Linux exposes empty cmdline for the now-zombie recorder.
+        return original(path)
+
+    monkeypatch.setattr(Path, "read_bytes", finish_before_command_read)
+    result = THREE_CLIENTS_MODULE.run_capture(args)
+    assert observed, "ownership transition was not exercised"
+    assert result["status"] == "CAPTURES_COMPLETE_PENDING_SEMANTIC_REVIEW"
+    assert (args.out_dir / "clients/claude_code/transport/capture.json").is_file()
+    assert _processes_with_paths_under(a5_tmp_path) == []
