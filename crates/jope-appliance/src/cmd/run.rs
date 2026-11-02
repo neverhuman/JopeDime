@@ -165,13 +165,8 @@ fn parse_value<T: DeserializeOwned>(raw: &str) -> anyhow::Result<T> {
     match syntax {
         ValueSyntax::Json(value) => serde_json::from_value(value).map_err(Into::into),
         ValueSyntax::BareText { value, json_error } => {
-            serde_json::from_value(Value::String(value.clone())).map_err(|source| {
-                anyhow::Error::new(BareTextValueError {
-                    value,
-                    json_error,
-                    source,
-                })
-            })
+            serde_json::from_value(Value::String(value.clone()))
+                .map_err(|source| anyhow::Error::new(BareTextValueError { json_error, source }))
         }
     }
 }
@@ -186,7 +181,6 @@ enum ValueSyntax {
 
 #[derive(Debug)]
 struct BareTextValueError {
-    value: String,
     json_error: serde_json::Error,
     source: serde_json::Error,
 }
@@ -195,8 +189,8 @@ impl std::fmt::Display for BareTextValueError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             formatter,
-            "input {:?} is neither valid JSON ({}) nor a valid plain-text value ({})",
-            self.value, self.json_error, self.source
+            "input is neither valid JSON ({}) nor a valid plain-text value ({})",
+            self.json_error, self.source
         )
     }
 }
@@ -806,7 +800,6 @@ mod tests {
         let typed = error
             .downcast_ref::<BareTextValueError>()
             .expect("plain-text parse failure has its typed error");
-        assert_eq!(typed.value, "not a boolean");
         assert!(typed.json_error.is_syntax());
         assert!(typed.source.to_string().contains("invalid type"));
 
