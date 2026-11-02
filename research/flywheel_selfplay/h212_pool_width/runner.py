@@ -15,6 +15,7 @@ import socket
 import subprocess
 import sys
 import time
+import traceback
 
 import numpy as np
 
@@ -244,10 +245,9 @@ def verify_inputs() -> dict:
     return doc
 
 
-def predict_dynamic(net, h124, context_row, pool, projection, proposals, generator):
+def predict_dynamic(net, h124, cid, context_row, pool, projection, proposals, generator):
     import torch
 
-    cid = context_row["context_sha256"]
     if not proposals:
         return np.empty(0, dtype=np.float64)
     pairs = [generator.featurize_dsl_412(item["dsl"]) for item in proposals]
@@ -275,6 +275,83 @@ def predict_dynamic(net, h124, context_row, pool, projection, proposals, generat
         )
     values = out["total_cost"][0].detach().cpu().numpy().astype(np.float64)
     return values
+
+
+def validate_smoke_receipt(receipt: dict) -> None:
+    if receipt.get("status") != "PASS":
+        raise RuntimeError("H212 end-to-end smoke did not pass")
+    if receipt.get("widths") != list(stat.WIDTHS):
+        raise RuntimeError("H212 smoke did not cover all registered widths")
+    if not receipt.get("rust_evaluation_completed") or not receipt.get("analysis_row_written"):
+        raise RuntimeError("H212 smoke omitted Rust evaluation or analysis output")
+    if receipt.get("pool_record_count") != len(stat.WIDTHS):
+        raise RuntimeError("H212 smoke pool record count mismatch")
+
+
+def end_to_end_smoke(root, row, fold, context, projection, pool, champion, bank,
+                     net, h124, generator):
+    """Run one TRAIN context through all widths, Rust, selection, and analysis."""
+    scratch = Path(root)
+    if scratch.exists():
+        raise RuntimeError("H212 smoke scratch must be fresh")
+    scratch.mkdir(parents=True)
+    generator.EVAL_SCRATCH_ROOT = scratch / "rust_eval"
+    generator.EVAL_SCRATCH_ROOT.mkdir()
+    try:
+        cid = row["context_sha256"]
+        with np.load(pool["path"], allow_pickle=False) as archive:
+            known = {x.decode("ascii") if isinstance(x, bytes) else str(x)
+                     for x in archive["program_sha256"].tolist()}
+        by_width, union = {}, {}
+        for width in stat.WIDTHS:
+            proposals = generator.propose_flywheel_candidates(
+                [champion], context[cid]["lm48_z"], bank, row["family_id"],
+                n_proposals=width, seed=stat.stream_seed(stat.SEEDS[0], cid),
+            )
+            stat.validate_width_proposals(proposals, width)
+            by_width[width] = proposals
+            for item in proposals:
+                if hashlib.sha256(item["dsl"].encode()).hexdigest() != item["program_sha256"]:
+                    raise RuntimeError("H212 smoke proposal hash mismatch")
+                if item["program_sha256"] not in known:
+                    union.setdefault(item["program_sha256"], item)
+        novel = list(union.values())
+        results = generator.evaluate_gp_batch_rust(
+            str(CACHE / "jtt1_gz" / f"{cid}.jtt1.gz"), novel,
+            run_outer_test=False, max_workers=4, timeout_s=25.0,
+        )
+        if len(results) != len(novel) or any(r.get("status") != "completed" for r in results):
+            raise RuntimeError("H212 smoke Rust evaluation incomplete")
+        if [r["program_sha256"] for r in results] != [p["program_sha256"] for p in novel]:
+            raise RuntimeError("H212 smoke result order/hash mismatch")
+        costs = predict_dynamic(net, h124, cid, context[cid], pool, projection, novel, generator)
+        if len(costs) != len(novel) + 4 or not np.isfinite(costs).all():
+            raise RuntimeError("H212 smoke prediction output malformed")
+        result_ix = {r["program_sha256"]: i for i, r in enumerate(results)}
+        records = []
+        for width in stat.WIDTHS:
+            selected = [p for p in by_width[width] if p["program_sha256"] not in known]
+            keep = [result_ix[p["program_sha256"]] for p in selected]
+            fit = np.concatenate((pool["fitness"][:4], [results[i]["fitness"] for i in keep]))
+            gate = np.concatenate((pool["gate"][:4], [results[i]["cv_gate_passed"] for i in keep]))
+            utility, selected_ix = stat.first_argmin_utility(
+                np.concatenate((costs[:4], costs[4:][keep])), fit, gate
+            )
+            records.append({"width": width, "utility": float(utility),
+                            "selected_index": int(selected_ix), "family_id": row["family_id"],
+                            "fold": fold, "candidate_count": len(keep)})
+        analysis_row = {"context_sha256": cid, "family_id": row["family_id"],
+                        "utility_by_width": {str(r["width"]): r["utility"] for r in records}}
+        write_json(scratch / "pool-records.json", {"records": records})
+        write_json(scratch / "analysis-row.json", analysis_row)
+        receipt = {"status": "PASS", "context_sha256": cid, "widths": list(stat.WIDTHS),
+                   "rust_evaluation_completed": True, "analysis_row_written": True,
+                   "pool_record_count": len(records)}
+        validate_smoke_receipt(receipt)
+        write_json(scratch / "smoke-receipt.json", receipt)
+        return receipt
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
 
 
 def eval_family_elo(h124, train, utilities_by_width, seed: int):
@@ -329,8 +406,8 @@ def run(root: Path, launch_path: Path) -> dict:
         raise RuntimeError("owned r882 checkpoint copy does not match the frozen SHA")
     root = Path(root)
     expected_parent = Path.home() / "jope-data/h212"
-    if root.parent != expected_parent or root.name != "attempt-002" or root.exists():
-        raise RuntimeError("owner-authorized D1 requires one fresh attempt-002 under ~/jope-data/h212")
+    if root.parent != expected_parent or root.name != "attempt-003" or root.exists():
+        raise RuntimeError("owner-authorized D3 requires one fresh attempt-003 under ~/jope-data/h212")
     launch_guard = guard(None)
     root.mkdir(parents=True)
     started = time.monotonic()
@@ -413,6 +490,18 @@ def run(root: Path, launch_path: Path) -> dict:
                for fold, bank in bank_by_fold.items()):
             raise RuntimeError("family-excluded champion bank count mismatch")
 
+        smoke_row = train[0]
+        smoke_cid = smoke_row["context_sha256"]
+        smoke_fold = fold_by_family[smoke_row["family_id"]]
+        smoke_receipt = end_to_end_smoke(
+            expected_parent / "smoke-attempt-003", smoke_row, smoke_fold, context,
+            projection, train_pools[smoke_cid], champion_by_cid[smoke_cid],
+            bank_by_fold[smoke_fold], net, h124, generator,
+        )
+        generator.EVAL_SCRATCH_ROOT = root / "rust_eval"
+        generator.EVAL_SCRATCH_ROOT.mkdir(parents=True)
+        metrics["prelaunch_smoke"] = smoke_receipt
+
         utility_panels = {seed: {width: np.empty(len(train), dtype=np.float64) for width in stat.WIDTHS}
                           for seed in stat.SEEDS}
         oracle_panels = {seed: {width: np.empty(len(train), dtype=np.float64) for width in stat.WIDTHS}
@@ -476,7 +565,7 @@ def run(root: Path, launch_path: Path) -> dict:
                         raise RuntimeError(f"candidate evaluation incomplete for {cid}")
                     if [r["program_sha256"] for r in results] != [p["program_sha256"] for p in novel]:
                         raise RuntimeError(f"candidate result order/hash mismatch for {cid}")
-                    costs = predict_dynamic(net, h124, context[cid], pool, projection, novel, generator)
+                    costs = predict_dynamic(net, h124, cid, context[cid], pool, projection, novel, generator)
                     if len(costs) != 4 + len(novel) or not np.isfinite(costs).all():
                         raise RuntimeError(f"r882 prediction panel malformed for {cid}")
                     if not np.allclose(costs[:4], static_costs[cid][:4], rtol=0, atol=1e-6):
@@ -636,7 +725,9 @@ def run(root: Path, launch_path: Path) -> dict:
         print(json.dumps({"status": metrics["status"], "verdict": metrics["verdict"]}), flush=True)
         return metrics
     except Exception as exc:
-        metrics.update({"error": f"{type(exc).__name__}: {exc}", "elapsed_seconds": time.monotonic() - started})
+        metrics.update({"error": f"{type(exc).__name__}: {exc}",
+                        "traceback": traceback.format_exc(), "outcomes_reported": 0,
+                        "elapsed_seconds": time.monotonic() - started})
         write_json(root / "metrics.json", metrics)
         raise
 

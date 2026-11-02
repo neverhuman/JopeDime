@@ -8,6 +8,30 @@
     "source_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
     "started_utc": "2026-11-02T08:19:00Z"
   },
+  "attempts": [
+    {
+      "deviation": "D0 runner false-positive identity check",
+      "id": "attempt-001",
+      "outcomes": 0,
+      "root": "/home/ubuntu/jope-data/h212/attempt-001",
+      "root_mutated_after_closeout": false,
+      "source_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
+      "status": "INCOMPLETE"
+    },
+    {
+      "baseline_parity": "PASS 91/91 exact mean 1.1377941898164525 max error 0.0",
+      "deviation": "D2 runner KeyError while accessing first TRAIN context features",
+      "elapsed_seconds": 390.38535721902736,
+      "id": "attempt-002",
+      "outcomes": 0,
+      "root": "/home/ubuntu/jope-data/h212/attempt-002",
+      "root_mutated_after_closeout": false,
+      "rust_eval_context_directories": 67,
+      "source_commit": "9f4eee0fad5b71581280ed4a52efe47ed270df9e",
+      "status": "INCOMPLETE",
+      "traceback": "predict_dynamic -> runner.py:250 -> cid = context_row['context_sha256'] -> KeyError: context_sha256; H124 feature dict fields: dope629, lm48_z, mask_10, tokens_10x32. Reproduced using the first TRAIN context."
+    }
+  ],
   "baseline_parity": {
     "contexts_matched": 91,
     "exact_mean": 1.1377941898164525,
@@ -58,13 +82,43 @@
     "online_cores": 128,
     "swap_free_bytes": 26611712
   },
-  "next_step": "Merge the envelope identity fix and attempt-001 correction, then launch owner-authorized D1 attempt-002 from the exact merged commit by 09:30Z.",
+  "next_step": "Merge explicit-context identity fix and all-width end-to-end TRAIN smoke gate; launch only attempt-003 from exact merged head before 10:15Z.",
   "owner_deviation_D1": {
     "attempt": "attempt-002",
     "authorized_at_utc": "2026-11-02T08:30:00Z",
     "authorized_by": "ENG H-wave loop owner nudge hw_t0125_luna.md",
     "scope": "same preregistered design and guards; fresh attempt root; no attempt-001 receipt mutation",
     "status": "AUTHORIZED; AWAITING FIX MERGE"
+  },
+  "owner_deviation_D2": {
+    "attempt": "attempt-002",
+    "authorized_by": "ENG H-wave loop owner nudge hw_t0200_luna.md",
+    "status": "CLOSED INCOMPLETE; zero outcomes"
+  },
+  "owner_deviation_D3": {
+    "attempt": "attempt-003",
+    "authorized_by": "ENG H-wave loop owner nudge hw_t0200_luna.md",
+    "scope": "same preregistered seeds and widths; fresh root; merged-head smoke gate required",
+    "status": "AUTHORIZED; last attempt"
+  },
+  "prelaunch_smoke_development": {
+    "analysis_row_written": true,
+    "baseline_parity": "91/91 exact; mean 1.1377941898164525; max error 0.0",
+    "context_sha256": "002f7ead64684eb07b68e9a3fdd4c1e667224edc3af728a3d213050693a18031",
+    "dynamic_prediction_completed": true,
+    "limitation": "Development smoke passed before merge; attempt-003 runner repeats this smoke after exact merged-head launch verification.",
+    "pool_record_count": 3,
+    "rust_evaluation_completed": true,
+    "scratch_path": "/home/ubuntu/jope-data/h212/smoke-attempt-003",
+    "scratch_removed": true,
+    "smoke_source": "research/flywheel_selfplay/h212_pool_width/runner.py on research/h212-attempt3-fix before PR merge",
+    "status": "PASS",
+    "used_train_only_feature_and_pool_inputs": true,
+    "widths": [
+      16,
+      32,
+      64
+    ]
   },
   "preregistration": {
     "merged_commit": "b5519c31df3601858ccd9b7ba83fba3a929fa7c3",
@@ -82,7 +136,7 @@
     "train_treatment_utility_scored": 0,
     "validation_baseline_contexts": 91
   },
-  "reason": "Attempt 001 stopped on a runner false-positive: it compared H58 CV-envelope bytes to the selected raw TRAIN table SHA instead of verifying raw-table identity and envelope equality.",
+  "reason": "Attempts 001 and 002 stopped on runner defects before any utility outcomes. Attempt 002 reached proposal generation and Rust evaluation but failed when predict_dynamic expected context identity inside a feature-only dict. Both attempt roots are retained unchanged.",
   "schema": "jope.h212.pool-width-closeout/v1",
   "status": "INCOMPLETE",
   "treatment": {
