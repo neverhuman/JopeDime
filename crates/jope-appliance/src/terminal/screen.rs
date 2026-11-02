@@ -1,5 +1,8 @@
 //! Full-screen landing, bounded transcript, and a composer independent of scrolling.
-use std::collections::VecDeque;
+use std::{collections::VecDeque, time::Instant};
+
+#[path = "monument.rs"]
+mod monument;
 
 use ratatui::{
     crossterm::event::{Event, KeyCode, KeyEventKind, MouseEventKind},
@@ -14,17 +17,9 @@ use super::{composer::Composer, sanitize_user_string, ColorLevel, Theme, ThemeMo
 
 const MAX_LINES: usize = 2000;
 const MAX_BYTES: usize = 1024 * 1024;
-// Seven-cell ASCII glyphs; stretch the strokes to the available terminal width.
-const LOGO: [&str; 7] = [
-    "##   ##  #######   #####   ##   ##",
-    "##   ##  ##       ##   ##  ##   ##",
-    "##   ##  ##       ##   ##   ## ## ",
-    "##   ##  #####    ##   ##    ###  ",
-    " ## ##   ##       ##   ##   ## ## ",
-    "  ###    ##       ##   ##  ##   ##",
-    "   #     #######   #####   ##   ##",
-];
-const TAGLINE: &str = "your data. your models. your next discover.";
+const TAGLINE: &str = "Your data. Your models. Your next discovery.";
+const LANDING_HINT: &str =
+    "Type /help to explore commands, or /open <csv> to start with your data.";
 
 #[derive(Default)]
 pub struct Screen {
@@ -38,9 +33,21 @@ pub struct Screen {
     top: Option<usize>,
     unread: usize,
     page_height: usize,
+    opened: Option<Instant>,
+    monument: monument::Monument,
 }
 
 impl Screen {
+    pub fn animation_active(&self) -> bool {
+        self.browser.is_none()
+            && self.lines.is_empty()
+            && matches!(
+                Theme::from_env(ThemeMode::Auto).color_level(),
+                ColorLevel::TrueColor | ColorLevel::Ansi256
+            )
+            && std::env::var_os("JOPEDIME_REDUCED_MOTION").is_none()
+    }
+
     pub fn push(&mut self, text: &str) {
         let clean = sanitize_user_string(text);
         for line in clean.lines() {
@@ -142,11 +149,16 @@ impl Screen {
             .len() as u16
             + 2;
         let is_landing = self.browser.is_none() && self.lines.is_empty();
+        let hint_lines = word_lines(LANDING_HINT, area.width.saturating_sub(2));
         let rows = Layout::vertical([
             Constraint::Length(1),
             Constraint::Min(1),
             Constraint::Length(1),
-            Constraint::Length(if is_landing && area.width < 55 { 2 } else { 1 }),
+            Constraint::Length(if is_landing {
+                hint_lines.len() as u16
+            } else {
+                1
+            }),
             Constraint::Length(input_height),
             Constraint::Length(1),
         ])
@@ -168,7 +180,13 @@ impl Screen {
         if let Some(browser) = &mut self.browser {
             browser.draw(frame, body, accent);
         } else if self.lines.is_empty() {
-            landing(frame, rows[1], accent);
+            let seconds = self
+                .opened
+                .get_or_insert_with(Instant::now)
+                .elapsed()
+                .as_secs_f32();
+            let animated = self.animation_active();
+            landing(frame, rows[1], theme, seconds, animated, &mut self.monument);
         } else {
             let max = self.wrapped.len().saturating_sub(self.page_height);
             let start = self.top.map(|top| top.min(max)).unwrap_or(max);
@@ -192,13 +210,12 @@ impl Screen {
         );
         frame.render_widget(
             Paragraph::new(if is_landing {
-                if area.width < 55 {
-                    " /help  Commands\n /open <csv>  Start locally".to_owned()
-                } else {
-                    " /help  Commands     /open <csv>  Start locally".to_owned()
-                }
+                hint_lines
+                    .into_iter()
+                    .map(|line| Line::raw(format!(" {line}")))
+                    .collect::<Vec<_>>()
             } else {
-                sanitize_user_string(activity)
+                vec![Line::raw(sanitize_user_string(activity))]
             })
             .style(muted),
             rows[3],
@@ -231,54 +248,46 @@ impl Screen {
     }
 }
 
-fn landing(frame: &mut Frame<'_>, area: Rect, accent: Style) {
-    let tagline_lines = if usize::from(area.width) >= TAGLINE.len() {
-        vec![TAGLINE.to_owned()]
-    } else {
-        TAGLINE
-            .split_inclusive(". ")
-            .flat_map(|sentence| wrap(sentence.trim(), area.width))
-            .collect()
-    };
-    let compact = area.height < LOGO.len() as u16 + 1 + tagline_lines.len() as u16;
-    let logo_height = if compact {
-        1
-    } else {
-        area.height
-            .saturating_sub(tagline_lines.len() as u16 + 2)
-            .min(14)
-    };
-    let crop = 2;
-    // The wordmark fills roughly 70% of the width; centering OX shifts V off-screen.
-    let logo_width = (area.width.saturating_mul(7) / 10 + crop).max(LOGO[0].len() as u16);
-    let height = logo_height + 1 + tagline_lines.len() as u16;
+fn landing(
+    frame: &mut Frame<'_>,
+    area: Rect,
+    theme: Theme,
+    seconds: f32,
+    animated: bool,
+    monument: &mut monument::Monument,
+) {
+    let tagline_lines = word_lines(TAGLINE, area.width.saturating_sub(4));
+    let available = area.height.saturating_sub(tagline_lines.len() as u16 + 3);
+    let compact = available < 4 || area.width < 36;
+    let width = area
+        .width
+        .saturating_sub(10)
+        .min(104)
+        .min(available.saturating_mul(8));
+    let logo_height = if compact { 1 } else { width.div_ceil(8) };
+    let height = logo_height + 2 + tagline_lines.len() as u16;
     let top = area.y + area.height.saturating_sub(height) / 2;
-    // Render into the full-width body, cropping the V at the actual screen edge.
-    // The O/X midpoint lands near the screen center, rather than centering VEOX.
-    let mut lines = Vec::new();
-    for y in 0..logo_height {
-        let logo = LOGO[usize::from(y) * LOGO.len() / usize::from(logo_height)];
-        let stretched: String = (crop..logo_width)
-            .map(|x| logo.as_bytes()[usize::from(x) * logo.len() / usize::from(logo_width)] as char)
-            .collect();
-        lines.push(Line::styled(stretched, accent.add_modifier(Modifier::BOLD)));
+    let logo_area = Rect {
+        x: area.x + area.width.saturating_sub(width) / 2,
+        y: top,
+        width,
+        height: logo_height,
     }
-    let logo = if compact {
-        Paragraph::new("VEOX").style(accent.add_modifier(Modifier::BOLD))
+    .intersection(area);
+    if compact {
+        frame.render_widget(
+            Paragraph::new("VEOX").alignment(Alignment::Center),
+            Rect {
+                y: top,
+                height: 1.min(area.height),
+                ..area
+            },
+        );
     } else {
-        Paragraph::new(lines)
-    };
-    frame.render_widget(
-        logo,
-        Rect {
-            y: top,
-            height: logo_height.min(area.height),
-            ..area
-        },
-    );
-    let tagline_y = top + logo_height + 1;
+        monument.draw(frame, logo_area, theme, seconds, animated);
+    }
     let tagline = Rect {
-        y: tagline_y,
+        y: top + logo_height + 2,
         height: tagline_lines.len() as u16,
         ..area
     }
@@ -288,6 +297,30 @@ fn landing(frame: &mut Frame<'_>, area: Rect, accent: Style) {
             .alignment(Alignment::Center),
         tagline,
     );
+}
+
+fn word_lines(text: &str, width: u16) -> Vec<String> {
+    let width = usize::from(width.max(1));
+    let mut lines = vec![String::new()];
+    for word in text.split_whitespace() {
+        if !lines.last().unwrap().is_empty() && lines.last().unwrap().len() + 1 + word.len() > width
+        {
+            lines.push(String::new());
+        }
+        if word.len() > width {
+            let parts = wrap(word, width as u16);
+            let last = lines.last_mut().unwrap();
+            last.push_str(&parts[0]);
+            lines.extend(parts.into_iter().skip(1));
+        } else {
+            let last = lines.last_mut().unwrap();
+            if !last.is_empty() {
+                last.push(' ');
+            }
+            last.push_str(word);
+        }
+    }
+    lines
 }
 
 fn wrap(text: &str, width: u16) -> Vec<String> {
@@ -342,11 +375,12 @@ mod tests {
             };
             let output = (0..height).map(row).collect::<Vec<_>>().join("\n");
             assert!(output.contains("JAIN by VEOX"));
-            assert!(output.contains("your data."));
-            assert!(output.contains("your models."));
-            assert!(output.contains("your next"));
-            assert!(output.contains("discover."));
-            assert!(row(height - 5).contains("/open <csv>"));
+            assert!(output.contains("Your data."));
+            assert!(output.contains("Your models."));
+            assert!(output.contains("Your next"));
+            assert!(output.contains("discovery."));
+            assert!(output.contains("/open <csv>"));
+            assert!(output.contains("Type /help to explore commands,"));
             assert!(row(height - 3).contains("my pending draft"));
             if width >= 80 {
                 let tagline_y = (1..height - 5).find(|&y| row(y).contains(TAGLINE)).unwrap();
@@ -354,11 +388,24 @@ mod tests {
                     row(tagline_y).find(TAGLINE),
                     Some((usize::from(width) - TAGLINE.len()).div_ceil(2))
                 );
-                let logo_top = (1..tagline_y).find(|&y| row(y).contains('#')).unwrap();
-                assert_eq!(
-                    buffer[(0, logo_top)].symbol(),
-                    "#",
-                    "V must be cropped at left edge"
+                let occupied: Vec<_> = (1..tagline_y)
+                    .flat_map(|y| {
+                        let buffer = terminal.backend().buffer();
+                        (0..width).filter(move |&x| {
+                            buffer[(x, y)]
+                                .symbol()
+                                .chars()
+                                .any(|c| "▘▝▀▖▌▞▛▗▚▐▜▄▙▟█".contains(c))
+                        })
+                    })
+                    .collect();
+                assert!(!occupied.is_empty());
+                let left = *occupied.iter().min().unwrap();
+                let right = *occupied.iter().max().unwrap();
+                assert!(left >= 4, "centered logo needs a left margin");
+                assert!(
+                    (i32::from(left) - i32::from(width - 1 - right)).abs() <= 3,
+                    "logo margins must match"
                 );
                 assert!(
                     (1..tagline_y).all(|y| !row(y).contains("/help") && !row(y).contains("/open"))

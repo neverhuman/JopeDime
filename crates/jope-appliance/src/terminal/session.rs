@@ -301,10 +301,11 @@ impl Session {
                 }
             }
             let now = Instant::now();
-            let period = if self
-                .snapshot
-                .as_ref()
-                .is_some_and(|snapshot| snapshot.state == RunState::Running)
+            let period = if self.screen.animation_active()
+                || self
+                    .snapshot
+                    .as_ref()
+                    .is_some_and(|snapshot| snapshot.state == RunState::Running)
             {
                 Duration::from_millis(50)
             } else {
