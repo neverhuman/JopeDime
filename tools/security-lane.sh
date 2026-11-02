@@ -2,11 +2,12 @@
 # Fail closed: security tools are required for the same local and CI entry point.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-for tool in actionlint gitleaks cargo npm; do
+for tool in actionlint gitleaks cargo npm python3; do
   command -v "$tool" >/dev/null || { printf 'security lane requires %s\n' "$tool" >&2; exit 127; }
 done
 bash deploy/ci/actionlint-workflows.sh "$(pwd -P)"
 bash deploy/ci/secret-scan.sh
+python3 -B deploy/ci/verify-vendor-security.py --root "$(pwd -P)"
 set -euo pipefail
 # Was EmbarkStudios/cargo-deny-action, a Docker container action: the ci lane is
 # deliberately given no docker socket, and the binary is in the image anyway.

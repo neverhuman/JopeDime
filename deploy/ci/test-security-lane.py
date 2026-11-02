@@ -17,7 +17,7 @@ class SecurityLane(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory(prefix="security-controls-", dir=scratch)
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name).resolve()
-        for name in ("tools/security-lane.sh", "deploy/ci/secret-scan.sh", "deploy/ci/actionlint-workflows.sh", ".gitleaks.toml"):
+        for name in ("tools/security-lane.sh", "deploy/ci/secret-scan.sh", "deploy/ci/actionlint-workflows.sh", "deploy/ci/verify-vendor-security.py", ".gitleaks.toml"):
             destination = self.root / name
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, destination)
@@ -29,6 +29,7 @@ class SecurityLane(unittest.TestCase):
         for command in ("bash", "dirname", "realpath", "find", "sort", "grep", "wc"):
             (self.bin / command).symlink_to(shutil.which(command))
         self.fake("git", 'case "$*" in *--is-shallow-repository*) echo false ;; *--verify*) printf "%040d\\n" 1 ;; *--count*) echo 7 ;; *) exit 92 ;; esac')
+        self.fake("python3", '[[ "$*" == "-B deploy/ci/verify-vendor-security.py --root "* ]] || exit 96; exit "${FAIL_PROVENANCE:-0}"')
         self.fake("actionlint", 'exit "${FAIL_ACTIONLINT:-0}"')
         self.fake("gitleaks", '[[ "$*" == *"--redact"* && "$*" == *"--log-opts=HEAD"* ]] || exit 93; exit "${FAIL_GITLEAKS:-0}"')
         self.fake("npm", '[[ "$*" == "--prefix web/training-dashboard audit --package-lock-only --audit-level=high" ]] || exit 95; exit "${FAIL_NPM:-0}"')
@@ -47,6 +48,9 @@ class SecurityLane(unittest.TestCase):
         result = self.run_lane()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("optional-feature deps present", result.stdout)
+
+    def test_provenance_failure_propagates(self):
+        self.assertEqual(self.run_lane(FAIL_PROVENANCE="21").returncode, 21)
 
     def test_workflow_failure_propagates(self):
         self.assertEqual(self.run_lane(FAIL_ACTIONLINT="17").returncode, 17)
