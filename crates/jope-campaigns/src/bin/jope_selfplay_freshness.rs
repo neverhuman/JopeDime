@@ -2367,11 +2367,9 @@ INSERT INTO attempts VALUES(
             .preview_stale_retirement_from_inventory(&inventory)
             .unwrap();
         let preview_sha256 = preview["preview_receipt_sha256"].as_str().unwrap();
-        let key = auto_retirement_idempotency_key(
-            &fixture.supervisor.state.active_epoch,
-            preview_sha256,
-        )
-        .unwrap();
+        let key =
+            auto_retirement_idempotency_key(&fixture.supervisor.state.active_epoch, preview_sha256)
+                .unwrap();
         let digest = key.rsplit_once('-').unwrap().1;
         let prior_result = json!({"retired": 1, "replayed": true});
         fixture
