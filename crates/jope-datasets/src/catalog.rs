@@ -20,6 +20,7 @@ pub const COLLECTION_SCHEMA_JSON: &str =
     Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "Task")]
 pub enum DatasetTask {
     Regression,
     Binary,
