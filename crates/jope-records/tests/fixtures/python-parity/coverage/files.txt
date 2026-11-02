@@ -1180,6 +1180,7 @@ crates/jope-encoders/tests/foundation_parity.rs
 crates/jope-encoders/tests/golden_parity.rs
 crates/jope-encoders/tests/jope_policy_parity.rs
 crates/jope-encoders/tests/novel_input_differential.rs
+crates/jope-encoders/tests/novel_input_differential/runtime_differential.rs
 crates/jope-encoders/tests/support/models_root.rs
 crates/jope-encoders/tests/target_encoder_parity.rs
 crates/jope-engine/Cargo.toml
