@@ -43,7 +43,7 @@ React, with live tools ported under differential tests and unused code archived.
    - the grammar files `featmath.py`, `tokens.py` and `automaton.py`, which are sha-pinned in
      assets, until phase P3 decides whether they are G or are ported.
    - the fitted portable JavaScript template at
-     `crates/feat-math/contracts/fitted_portable_v3.js`: the Rust emitter validates the model,
+     `crates/feat-math/contracts/fitted_portable_v3.template`: the Rust emitter validates the model,
      serializes inference state, and renders this versioned downstream artifact; JopeDime never
      executes the JavaScript. The template SHA is pinned by
      `fitted_portable_template_bytes_are_pinned_for_version_three`, and moving the source file

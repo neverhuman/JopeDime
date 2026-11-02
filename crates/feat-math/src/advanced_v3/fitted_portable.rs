@@ -125,7 +125,7 @@ pub fn fitted_portable_templates() -> BTreeMap<String, String> {
         ("matrix.py", include_str!("fitted_portable.py")),
         (
             "matrix.js",
-            include_str!("../../contracts/fitted_portable_v3.js"),
+            include_str!("../../contracts/fitted_portable_v3.template"),
         ),
         ("matrix.rs", include_str!("fitted_portable.rs.txt")),
     ]
@@ -468,7 +468,7 @@ pub fn emit_fitted_portable(model: &BoundModel) -> Result<FittedPortableSources>
     );
     let javascript = if fitted_javascript_unsupported(model)?.is_none() {
         Some(render(
-            include_str!("../../contracts/fitted_portable_v3.js"),
+            include_str!("../../contracts/fitted_portable_v3.template"),
             &[("__STATE_JSON__", serialized)],
         ))
     } else {
