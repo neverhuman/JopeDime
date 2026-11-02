@@ -72,15 +72,6 @@ struct Gpu {
     info: GpuInfo,
 }
 
-// SAFETY: `Gpu` is private and has one construction site, `init_backend`, which
-// immediately places it in the process-wide `BACKEND` mutex. No handle or
-// reference to a handle escapes that mutex. `gpu_ridge_score_batch` holds the
-// guard for every API call and makes this context current on that calling
-// thread; `Drop` receives exclusive access and makes it current before cleanup.
-// The `_lib` field outlives all handles and closes only after `Drop` finishes.
-// Thus moving the mutex-protected value between threads cannot cause concurrent
-// use, stale thread-local current-context assumptions, or premature unload.
-unsafe impl Send for Gpu {}
 impl Drop for Gpu {
     fn drop(&mut self) {
         // Release the stream before its owning context, while the driver library

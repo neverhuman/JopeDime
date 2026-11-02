@@ -885,6 +885,8 @@ fn cgroup_allowed_cpus(
 
 #[cfg(target_os = "linux")]
 #[allow(unsafe_code)]
+#[cfg(target_os = "linux")]
+#[allow(unsafe_code)]
 mod platform {
     use std::{ffi::CString, fs, os::unix::ffi::OsStrExt, path::Path};
 
