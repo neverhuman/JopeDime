@@ -1266,6 +1266,8 @@ crates/jope-engine/tests/checkpoint_commit/loading.rs
 crates/jope-engine/tests/checkpoint_commit/publication.rs
 crates/jope-engine/tests/committed_updates.rs
 crates/jope-engine/tests/continuation_modes.rs
+crates/jope-engine/tests/continuation_modes/identity.rs
+crates/jope-engine/tests/continuation_modes/transitions.rs
 crates/jope-engine/tests/corpus.rs
 crates/jope-engine/tests/corpus_incremental.rs
 crates/jope-engine/tests/corpus_progress.rs
