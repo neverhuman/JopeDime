@@ -85,10 +85,11 @@
   "guards": {
     "effective_cores": "len(os.sched_getaffinity) = 102 of 128 online on xbabe2",
     "threads": "OMP 7, other pools 1, torch 1",
-    "admission": "load1/load5 <= 51, host CPU <= 50%, MemAvailable >= 24 GiB, disk free >= 320 GB; refusal = no claim",
+    "admission": "load1 <= 60 and load5 <= 55 (A1), host CPU <= 50%, MemAvailable >= 24 GiB, disk free >= 320 GB; refusal = no claim",
     "source_check": "runner.py --check-launch before the claim",
-    "runtime": "stop on load5 > 60, MemAvailable < 20 GiB, disk free < 300 GB, process-tree RSS >= 4 GiB, worker tree > 8.0 cores over 30 s, load1 or host CPU > 85% of effective cores for 300 s",
-    "deadline": "absolute: min(claim + 4 h, 2026-11-02T17:25:00Z); resume inherits it"
+    "runtime": "hard stop on MemAvailable < 20 GiB, disk free < 300 GB, process-tree RSS >= 4 GiB, worker tree > 8.0 cores over 30 s",
+    "deadline": "absolute: min(claim + 4 h, 2026-11-02T17:25:00Z); resume inherits it",
+    "load_pause": "A1: SIGSTOP own worker group when load5 > 60 or load1/host CPU > 85% for 300 s; SIGCONT when load5 <= 55 and both < 85%; runner waits between units while load5 > 60 until <= 55 (60 s polls)"
   },
   "budget": {
     "fits": 135,
@@ -119,5 +120,14 @@
       "H218": 0.17541104003790572
     },
     "bound": 0.20
-  }
+  },
+  "amendments": [
+    {
+      "id": "A1",
+      "utc": "2026-11-02T14:00:27Z",
+      "authority": "hw_t1400_loadguard.md",
+      "pre_outcome": true,
+      "change": "host load guard converted from abort to pause (load5 > 60 pause, <= 55 resume; sustained load1/CPU > 85% pauses); admission load1 <= 60, load5 <= 55; RSS, memory, disk, core cap and deadline remain hard aborts"
+    }
+  ]
 }

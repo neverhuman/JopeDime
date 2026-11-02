@@ -9,9 +9,11 @@ CPU as the mean busy share of the allowed CPUs, the source binding checked BEFOR
 recorded in the attempt claim and inherited by the resume (H223_DEADLINE_EPOCH to the worker). The deadline is the
 earlier of claim + 4 h and 2026-11-02T17:25:00Z, which leaves the closeout time before hw_t1325's 18:00Z.
 
-Resources (hw_t1325): stop when load5 > 60, MemAvailable < 20 GiB (swap is full), disk free < 300 GB, process-tree
-RSS >= 4 GiB, or tree CPU > 8.0 cores; host load1 / CPU > 85% continuously for 300 s also stops (host rule).
-Admission needs load1 and load5 <= 50% of effective cores, host CPU <= 50%, MemAvailable >= 24 GiB and free >= 320 GB."""
+Resources (hw_t1325): stop when MemAvailable < 20 GiB (swap is full), disk free < 300 GB, process-tree RSS >= 4 GiB,
+or tree CPU > 8.0 cores. Amendment A1 (hw_t1400, pre-outcome): host load PAUSES the worker instead of stopping it.
+The monitor sends SIGSTOP to the worker's own process group when load5 > 60 or load1 / host CPU has been > 85% for
+300 s, and SIGCONT when load5 <= 55 and both are back under 85%; the deadline still ends a paused attempt.
+Admission needs load1 <= 60 and load5 <= 55 (amendment A1), host CPU <= 50%, MemAvailable >= 24 GiB and free >= 320 GB."""
 
 import argparse
 from collections import deque
@@ -30,12 +32,14 @@ HERE = Path(__file__).resolve().parent
 AFFINITY = sorted(os.sched_getaffinity(0))
 HOST_CORES = len(AFFINITY)  # effective allocation, not SC_NPROCESSORS_ONLN
 LOAD_LIMIT = 0.85 * HOST_CORES
-ADMIT_LOAD = 0.50 * HOST_CORES
+ADMIT_LOAD = 60.0  # amendment A1: admission load1 <= 60 ...
+ADMIT_LOAD5 = 55.0  # ... and load5 <= 55, the resume threshold, so a launch does not pause at once
 ADMIT_CPU = 50.0
 ADMIT_FREE = 320_000_000_000  # 20 GB margin above the stop
 ADMIT_MEM = 24 * 2**30
 MEM_MIN = 20 * 2**30  # hw_t1325: stop if available memory < 20 GiB (xbabe2 swap full)
-LOAD5_MAX = 60.0  # hw_t1325: stop if load5 > 60
+LOAD5_MAX = 60.0  # amendment A1 (hw_t1400): pause the worker if load5 > 60
+LOAD5_RESUME = 55.0  # ... and resume it when load5 <= 55
 RSS_MAX = 4 * 2**30  # hw_t1325: process-tree RSS < 4 GiB
 MIN_FREE = 300_000_000_000  # hw_t1325: stop if free disk < 300 GB
 SUSTAIN = 300.0
@@ -54,15 +58,10 @@ CLAIMS = Path.home() / "jope-data/h223"  # attempt claims live on the run host
 
 
 def violations(sample):
+    """Hard aborts (amendment A1, hw_t1400): memory, disk, RSS and the worker core cap. Host load is a pause."""
     return [
         reason
         for bad, reason in [
-            (sample["load5"] > LOAD5_MAX, "load5>60"),
-            (
-                sample["load_over_s"] >= SUSTAIN,
-                "load1>85% of effective cores for 300 s",
-            ),
-            (sample["cpu_over_s"] >= SUSTAIN, "host CPU>85% for 300 s"),
             (sample["available"] < MEM_MIN, "MemAvailable<20GiB"),
             (sample["free"] < MIN_FREE, "disk free<300GB"),
             (sample["rss"] >= RSS_MAX, "aggregate RSS>=4GiB"),
@@ -80,14 +79,31 @@ def admission_refusals(sample):
     return violations(sample) + [
         reason
         for bad, reason in [
-            (sample["load"] > ADMIT_LOAD, "admission: load1>50% of cores"),
-            (sample["load5"] > ADMIT_LOAD, "admission: load5>50% of cores"),
+            (sample["load"] > ADMIT_LOAD, "admission: load1>60"),
+            (sample["load5"] > ADMIT_LOAD5, "admission: load5>55"),
             (sample["cpu"] > ADMIT_CPU, "admission: host CPU>50%"),
             (sample["available"] < ADMIT_MEM, "admission: MemAvailable<24GiB"),
             (sample["free"] < ADMIT_FREE, "admission: disk free<320GB"),
         ]
         if bad
     ]
+
+
+def overloaded(sample, paused):
+    """Amendment A1 (hw_t1400): host load pauses the worker instead of ending the attempt. Pause when load5 > 60 or
+    load1 / host CPU has been over 85% of the effective cores for 300 s; resume only when load5 <= 55 and load1 and
+    host CPU are back under their 85% limits (hysteresis, so the worker does not flap)."""
+    if not paused:
+        return (
+            sample["load5"] > LOAD5_MAX
+            or sample["load_over_s"] >= SUSTAIN
+            or sample["cpu_over_s"] >= SUSTAIN
+        )
+    return not (
+        sample["load5"] <= LOAD5_RESUME
+        and sample["load"] <= LOAD_LIMIT
+        and sample["cpu"] <= 85
+    )
 
 
 def track_overload(sample, since, now):
@@ -262,6 +278,7 @@ def main():
     history = deque()
     since = {}
     peak = dict(rss=0, threads=0, tree_cores=0.0)
+    paused, pauses, paused_seconds, paused_at = False, [], 0.0, None
     with (
         args.output.with_suffix(".stdout").open("x") as log,
         resources.open("x") as samples,
@@ -284,8 +301,31 @@ def main():
             reasons = violations(sample)
             if sample["utc"] >= end:
                 reasons.append("absolute deadline from the attempt claim")
+            if not reasons and overloaded(sample, paused) != paused:
+                # Amendment A1 (hw_t1400): stop or continue only this worker's own process group.
+                paused = not paused
+                os.killpg(child.pid, signal.SIGSTOP if paused else signal.SIGCONT)
+                now = time.monotonic()
+                if paused:
+                    paused_at = now
+                else:
+                    paused_seconds += now - paused_at
+                pauses.append(
+                    dict(
+                        utc=sample["utc"],
+                        action="pause" if paused else "resume",
+                        load=sample["load"],
+                        load5=sample["load5"],
+                        cpu=sample["cpu"],
+                    )
+                )
+                print(json.dumps(pauses[-1]), flush=True)
             if reasons:
                 os.killpg(child.pid, signal.SIGTERM)
+                if paused:
+                    os.killpg(
+                        child.pid, signal.SIGCONT
+                    )  # a stopped worker must run to receive SIGTERM
                 try:
                     child.wait(timeout=10)
                 except subprocess.TimeoutExpired:
@@ -304,6 +344,9 @@ def main():
         effective_cores=HOST_CORES,
         load_limit=LOAD_LIMIT,
         core_limit=CORE_LIMIT,
+        load_pauses=pauses,
+        paused_seconds=paused_seconds
+        + (time.monotonic() - paused_at if paused else 0.0),
     )
     args.output.with_suffix(".resource_summary.json").write_text(
         json.dumps(result, indent=2) + "\n"

@@ -23,8 +23,10 @@
   - **Co-primary.** PLATEAU_WIN iff the DL-Val flywheel91 gain over r882 (1.1377942) is > +0.002 with a
     family-bootstrap LCB95 > 0. A tie is not a win.
   - Elo and utility only.
-- **Host and guards (hw_t1325).** xbabe2 CPU, nice 19, OMP 7. Stops: worker tree > 8 cores, RSS ≥ 4 GiB, load5 > 60,
+- **Host and guards (hw_t1325).** xbabe2 CPU, nice 19, OMP 7. Stops: worker tree > 8 cores, RSS ≥ 4 GiB,
   MemAvailable < 20 GiB or free disk < 300 GB. One absolute deadline: the earlier of claim + 4 h and 17:25Z.
+- **Amendment A1 (hw_t1400, pre-outcome).** Host load pauses the worker (load5 > 60) and resumes it (load5 ≤ 55); it
+  never ends the attempt.
 - **Budget.** 135 HistGBM fits, about 3 h. Closeout by 18:00Z, or INCOMPLETE with evidence.
 - **Code.** [runner.py](runner.py), [analysis.py](analysis.py), [monitor.py](monitor.py) and
-  [test_h223.py](test_h223.py) (37 data-free tests).
+  [test_h223.py](test_h223.py) (39 data-free tests).

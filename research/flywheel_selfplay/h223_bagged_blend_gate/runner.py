@@ -36,7 +36,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 DATA = Path.home() / "jope-data/h223"
 INPUTS = DATA / "inputs"
-PREREG_SHA = "4961880d0cfd9d8c8cb9c84aa669baf5874bd984f164295b62d8485ea079352f"
+PREREG_SHA = "dd7538a62e9c06c6853400640fd631cabf83a5d935e375ebfd09c01f518f4186"
 H139_PATH = REPO / "research/flywheel_selfplay/h139_selection_audit/runner.py"
 H139_SHA = "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686"
 BOUND_FILES = (
@@ -52,7 +52,9 @@ HOST_RULES = {
     "xbabe2": dict(min_free=300_000_000_000, max_used=None),  # hw_t1325: free >= 300 GB
 }
 MEM_MIN = 20 * 2**30  # hw_t1325: xbabe2 swap is full; stop below 20 GiB available
-LOAD5_MAX = 60.0  # hw_t1325: stop if xbabe2 load5 > 60
+LOAD5_MAX = 60.0  # amendment A1 (hw_t1400): pause before a unit while load5 > 60
+LOAD5_RESUME = 55.0  # ... until load5 <= 55 (rechecked every 60 s)
+LOAD_POLL = 60.0
 CORES = len(
     os.sched_getaffinity(0)
 )  # effective allocation (H210 E1), not the online count
@@ -176,9 +178,9 @@ def deadline():
 
 
 def guards(root):
-    """xbabe2 disk rule (hw_t1325: free >= 300 GB), MemAvailable >= 20 GiB, load5 <= 60 (hw_t1325),
-    nice 19, own root < 1 GB, and the absolute deadline. The 5-minute load is used here, so a one-minute
-    spike from other jobs does not end the attempt (H203). Checked before every fit and stage."""
+    """xbabe2 disk rule (hw_t1325: free >= 300 GB), MemAvailable >= 20 GiB, nice 19, own root < 1 GB, and the
+    absolute deadline: hard aborts, checked before every unit and stage. Host load is not an abort here (amendment
+    A1, hw_t1400): see wait_for_load."""
     host = admit_host()
     rule = HOST_RULES[host]
     end = deadline()
@@ -201,7 +203,7 @@ def guards(root):
         * 1024
     )
     load1, load5, _ = os.getloadavg()
-    if mem < MEM_MIN or load5 > LOAD5_MAX:
+    if mem < MEM_MIN:
         raise RuntimeError(f"host guard: MemAvailable {mem} B, load5 {load5}")
     scratch = tree_bytes(root) if Path(root).exists() else 0
     if scratch >= SCRATCH_MAX:
@@ -217,6 +219,24 @@ def guards(root):
         load5=load5,
         scratch=scratch,
     )
+
+
+def wait_for_load():
+    """Amendment A1 (hw_t1400): before a unit, if load5 > 60, wait and recheck every 60 s until load5 <= 55. The
+    absolute deadline still ends the attempt while it waits. Returns the seconds waited."""
+    load5 = os.getloadavg()[1]
+    if load5 <= LOAD5_MAX:
+        return 0.0
+    t0 = time.monotonic()
+    print("LOAD PAUSE load5", round(load5, 1), flush=True)
+    while os.getloadavg()[1] > LOAD5_RESUME:
+        end = deadline()
+        if end is not None and time.time() >= end:
+            raise RuntimeError(f"absolute deadline {end} passed while paused for load")
+        time.sleep(LOAD_POLL)
+    waited = time.monotonic() - t0
+    print("LOAD RESUME after", round(waited), "s", flush=True)
+    return waited
 
 
 def bind_source(launch):
@@ -511,8 +531,10 @@ def run(root, launch_path, resume=False):
     # 3. Fits (15 units per seed x 3 members = 135; no SHUF), checkpointed per unit; DL-Val predicted by the outer units.
     outers, inners = stat.fit_plan()
     fits = {}
+    load_wait = 0.0
     for seed in stat.FIT_SEEDS["BLEND"]:
         for ex in outers + inners:
+            load_wait += wait_for_load()
             guards(root)
             receipts = verified_unit(root, "BLEND", seed, ex) if resume else None
             if receipts is None:
@@ -851,6 +873,7 @@ def run(root, launch_path, resume=False):
             scratch_bytes=tree_bytes(root),
             effective_cores=CORES,
             deadline_epoch=deadline(),
+            runner_load_wait_seconds=load_wait,
         ),
         versions=dict(
             numpy=np.__version__,
