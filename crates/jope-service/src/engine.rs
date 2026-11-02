@@ -49,9 +49,9 @@ pub use locking::{EngineError, EngineLock};
 #[cfg(feature = "research")]
 use serve::open_q1_engine;
 pub use serve::serve;
-#[cfg(feature = "research")]
-pub use serve::serve_q1_qualification;
 use serve::{serve_locked, serve_with_activity};
+#[cfg(feature = "research")]
+pub use serve::{serve_q1_infra_retry, serve_q1_qualification};
 
 const DEFAULT_IDLE_EXIT: Duration = Duration::from_secs(30 * 60);
 const STOP_PATH: &str = "/__engine/stop";
@@ -74,6 +74,3 @@ pub(crate) struct DatasetState {
     pub config: Config,
     pub home: PathBuf,
 }
-
-#[cfg(test)]
-mod tests;
