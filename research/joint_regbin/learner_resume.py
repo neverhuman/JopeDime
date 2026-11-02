@@ -53,6 +53,7 @@ RESOURCE_QUALIFICATION_SHA = (
     "796f2a80a537ae06b61f52f41c3770743775c43954af56e18fdec1708571df32"
 )
 RESERVATION_SHA = "f59cc7e6e8ec2639c723a21db1f0225a0b304c099d63cf332190dcbe7b870242"
+OWNER_EXTENSION_SHA = "48d45b3a0188d07fac037a2f30cfd216d9f8693006fc137654cea070ac7acd31"
 STORE_MODULE = Path("/home/ubuntu/jope_plan/scores/score_store.py")
 STORE = Path("/home/ubuntu/jope_plan/scores/history.jsonl")
 sys.dont_write_bytecode = True
@@ -326,6 +327,30 @@ def usage():
     )
 
 
+def owner_deadline_extension():
+    path = os.environ.get("JOPE_JRB_DEADLINE_EXTENSION")
+    sha = os.environ.get("JOPE_JRB_DEADLINE_EXTENSION_SHA256")
+    if path is None and sha is None:
+        return None
+    if (
+        not path
+        or sha != OWNER_EXTENSION_SHA
+        or Path(path).is_symlink()
+        or protocol.file_sha(Path(path)) != OWNER_EXTENSION_SHA
+    ):
+        raise ValueError("owner deadline extension hash differs")
+    approval = read(Path(path))
+    if (
+        approval.get("kind") != "OWNER_DEADLINE_EXTENSION_APPROVAL"
+        or approval.get("approval_ref") != "t188s1838"
+        or approval.get("plan_sha256") != PLAN_SHA
+        or approval.get("reservation_sha256") != RESERVATION_SHA
+        or approval.get("computation", {}).get("window_seconds") != 22658
+    ):
+        raise ValueError("owner deadline extension scope differs")
+    return approval
+
+
 def amended_deadline(campaign, prior_execution_seconds, resumed_at):
     """T0430 permits bounded infrastructure extension; prior work stays charged."""
     original = campaign["deadline_unix"]
@@ -337,6 +362,14 @@ def amended_deadline(campaign, prior_execution_seconds, resumed_at):
         or resumed_at < campaign["started_unix"] + prior_execution_seconds
     ):
         raise ValueError("original reservation/execution charge differs")
+    extension = owner_deadline_extension()
+    if extension is not None:
+        latest = extension["new_deadline"]["resume_must_occur_before_utc"].split()[0]
+        if resumed_at >= datetime.datetime.fromisoformat(latest).timestamp():
+            raise ValueError(
+                "owner deadline extension requires a fresh receipt after17:30"
+            )
+        return resumed_at + extension["computation"]["window_seconds"]
     return min(original + 7200, resumed_at + 21600 - prior_execution_seconds)
 
 
@@ -414,6 +447,16 @@ def main():
     audit = recovery_baseline(plan)
     prior_execution_seconds = audit["prior_execution_seconds"]
     deadline = amended_deadline(campaign, prior_execution_seconds, resumed_at)
+    extension = owner_deadline_extension()
+    extension_fields = (
+        {}
+        if extension is None
+        else dict(
+            owner_extension_sha256=OWNER_EXTENSION_SHA,
+            owner_extension_receipt=os.environ["JOPE_JRB_DEADLINE_EXTENSION"],
+            owner_extension_window_seconds=extension["computation"]["window_seconds"],
+        )
+    )
     monotonic_deadline = time.monotonic() + max(0, deadline - time.time())
     preflight = driver.preflight(plan, PACKET, WORKER, CHECKPOINT)
     if args.audit_only:
@@ -427,6 +470,7 @@ def main():
                     effective_deadline_unix=deadline,
                     accounting={k: v for k, v in audit.items() if k != "files"},
                     preflight=preflight,
+                    **extension_fields,
                 ),
                 indent=2,
             ),
@@ -454,6 +498,7 @@ def main():
             admission_sha256=protocol.file_sha(OUT.parent / "ADMISSION-PASS.json"),
             readmission_sha256=readmission_sha,
             authority_sha256=RULE_SHA,
+            **extension_fields,
         ),
     )
     write(
@@ -476,7 +521,9 @@ def main():
             original_deadline_unix=campaign["deadline_unix"],
             effective_deadline_unix=deadline,
             deadline_amendment_seconds=deadline - campaign["deadline_unix"],
-            maximum_deadline_extension_seconds=7200,
+            maximum_deadline_extension_seconds=(
+                7200 if extension is None else deadline - campaign["deadline_unix"]
+            ),
             prior_execution_seconds=prior_execution_seconds,
             resumed_started_unix=resumed_at,
             physical_updates_spent=physical_updates,
@@ -486,9 +533,15 @@ def main():
             qualified_results=str(QUALIFIED),
             readmission_sha256=readmission_sha,
             recovery_baseline_sha256=BASELINE_SHA,
-            maximum_total_execution_seconds=21600,
+            maximum_total_execution_seconds=(
+                21600
+                if extension is None
+                else prior_execution_seconds
+                + extension["computation"]["window_seconds"]
+            ),
             original_started_unix=campaign["started_unix"],
             budget_reset=False,
+            **extension_fields,
         ),
     )
     gate = LoadGate()
@@ -540,6 +593,7 @@ def main():
             effective_deadline_unix=deadline,
             completed_frozen_jobs=finished,
             fifo_ticket=str(ticket),
+            **extension_fields,
         )
         write(
             OUT / "LOCK-ACQUIRED.json",
@@ -548,6 +602,7 @@ def main():
                 utc=now(),
                 authority_sha256=RULE_SHA,
                 deadline_unix=deadline,
+                **extension_fields,
             ),
         )
         ATTEMPTS.mkdir()
@@ -759,6 +814,7 @@ def main():
                     jobs=len(plan["jobs"]),
                     resume_authority_sha256=RULE_SHA,
                     budget_reset=False,
+                    **extension_fields,
                 ),
             )
             event(
