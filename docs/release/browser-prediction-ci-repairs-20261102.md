@@ -83,3 +83,7 @@ follows the already-merged CPU-affinity and authority-lineage identity transitio
 two metadata fixtures regenerated at b794bf1026c11441fe17495f41249c0fccd234cd. All13 behavioral
 compatibility cases and three historical joins pass; numerical fixtures and known identities
 remain unchanged. The app's original source-pinned runtime artifact is unchanged.
+
+## Optional classifier ancestor status
+
+Main split PR and manual source classification into two optional jobs and an always-run fan-in. In PR41450376934 the real path plan selected every lane, but all dependent jobs were skipped because their implicit success guard inherited the skipped alternate classifier. Give each of the nine direct changes dependents an explicit !cancelled() status guard plus successful-classifier condition, preserving every original path expression. The regression checks both event routes against the real job graph, reproducing skipped selected jobs before the fix and retaining failure/cancellation refusals afterward. No selected lane is accepted as skipped-by-path. Manual runs use the existing native runner option and default source provenance binding; no admission check is removed.

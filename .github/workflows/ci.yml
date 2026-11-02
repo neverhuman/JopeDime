@@ -210,7 +210,7 @@ jobs:
 
   rust-check:
     needs: changes
-    if: needs.changes.outputs.rust == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.rust == 'true') }}
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 45
     steps:
@@ -237,7 +237,7 @@ jobs:
 
   rust-test:
     needs: changes
-    if: needs.changes.outputs.rust == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.rust == 'true') }}
     # Rust subprocess/timeout contracts need native x86-64; Rosetta returns exit 127
     # for a missing executable instead of ENOENT. Keep both complete test slices on
     # existing native Linux slots, preserving every test and timeout.
@@ -283,7 +283,7 @@ jobs:
 
   emitters:
     needs: changes
-    if: needs.changes.outputs.emitters == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.emitters == 'true') }}
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 30
     env:
@@ -312,7 +312,7 @@ jobs:
 
   inputs:
     needs: changes
-    if: needs.changes.outputs.inputs == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.inputs == 'true') }}
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 20
     steps:
@@ -339,7 +339,7 @@ jobs:
 
   python:
     needs: changes
-    if: needs.changes.outputs.python == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.python == 'true') }}
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
@@ -366,7 +366,7 @@ jobs:
 
   e2e-smoke:
     needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.e2e == 'true') }}
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     steps:
@@ -393,6 +393,7 @@ jobs:
 
   observatory-ui:
     needs: changes
+    if: ${{ !cancelled() && needs.changes.result == 'success' }}
     runs-on: [self-hosted, linux, x64, "${{ needs.changes.outputs.runner_pool || 'jope-ci' }}"]
     timeout-minutes: 25
     env:
@@ -460,7 +461,7 @@ jobs:
 
   typescript:
     needs: changes
-    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true') }}
     uses: ./.github/workflows/typescript.yml
 
   paper:
@@ -468,7 +469,7 @@ jobs:
 
   go:
     needs: changes
-    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true'
+    if: ${{ !cancelled() && needs.changes.result == 'success' && (needs.changes.outputs.rust == 'true' || needs.changes.outputs.emitters == 'true') }}
     uses: ./.github/workflows/go.yml
 
   export-parity:

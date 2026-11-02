@@ -27,6 +27,25 @@ container = load('verify-container')
 
 class RunnerTests(unittest.TestCase):
 
+    def test_selected_jobs_survive_the_optional_classifier_ancestor(self):
+        workflow = (ROOT / '.github/workflows/ci.yml').read_text()
+        blocks = dict(re.findall(r'^  ([a-z][a-z0-9-]*):\n(.*?)(?=^  [a-z][a-z0-9-]*:|\Z)', workflow, re.M | re.S))
+        downstream = {name: block for name, block in blocks.items() if re.search(r'^    needs: changes$', block, re.M)}
+        self.assertTrue(downstream)
+        # Both real event routes skip one ancestor. Actions implicitly adds
+        # success() unless a job condition contains an explicit status function.
+        for event in ('pull_request', 'workflow_dispatch'):
+            for name, block in downstream.items():
+                with self.subTest(event=event, job=name):
+                    condition = re.search(r'^    if: (.+)$', block, re.M)
+                    expression = condition.group(1) if condition else ''
+                    has_status = bool(re.search(r'\b(?:always|cancelled|success|failure)\(', expression))
+                    self.assertTrue(has_status, 'selected job inherits a skipped classifier ancestor and never runs')
+                    self.assertIn("needs.changes.result == 'success'", expression,
+                                  'failed classifier must never authorize execution')
+                    self.assertIn('!cancelled()', expression, 'canceled cohorts must stop selected work')
+
+
     def test_reusable_concurrency_cannot_cancel_its_caller(self):
         workflows = ROOT / '.github/workflows'
         for caller in ('ci.yml', 'full-main.yml'):
