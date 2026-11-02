@@ -1115,6 +1115,7 @@ crates/jope-engine/src/native_loop.rs
 crates/jope-engine/src/native_loop/bounded.rs
 crates/jope-engine/src/native_loop/bounded/assignment.rs
 crates/jope-engine/src/native_loop/bounded/census.rs
+crates/jope-engine/src/native_loop/bounded/census/admission.rs
 crates/jope-engine/src/native_loop/bounded/contract.rs
 crates/jope-engine/src/native_loop/bounded/controller.rs
 crates/jope-engine/src/native_loop/bounded/rendezvous.rs
