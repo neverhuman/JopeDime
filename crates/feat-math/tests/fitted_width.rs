@@ -135,7 +135,11 @@ fn claimed_width(op: &FittedOp) -> usize {
 }
 
 // ---------------------------------------------------------------------------------------------
+#[path = "fitted_width/compat_corpus.rs"]
 mod compat_corpus;
+#[path = "fitted_width/input_prediction.rs"]
 mod input_prediction;
+#[path = "fitted_width/schema_boundary.rs"]
 mod schema_boundary;
+#[path = "fitted_width/width_contract.rs"]
 mod width_contract;

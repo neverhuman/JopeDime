@@ -6,14 +6,14 @@
       "fingerprint": "sha256:f19b9afde2f6d8a61b0d4c70e2ad77533c4bc3b8a2fd170c44317a2fa1f2939d",
       "line": 50,
       "participants": {
-        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc",
-        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4",
-        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6",
-        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b",
-        "research/flywheel_selfplay/h153_sam/runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a",
-        "research/flywheel_selfplay/h158_distillation/runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4",
-        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b",
-        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "426dbf23a3343fdefcfdf4c9d7591bed387cd2ba5a2158d58fa115eb36147a82",
+        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
+        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "c4a7f15ca73c51c2024d8bca622fdef312dface655dc888dd25da2a7a6f232b9",
+        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "9b8fea3e714947a69753524485a68c70226c9df05514306f563f4db35853e3af",
+        "research/flywheel_selfplay/h153_sam/runtime.py": "334b8e4968b42da9a054656ca17bc960db6e476239b5dcaf74a2658e4ecd43ae",
+        "research/flywheel_selfplay/h158_distillation/runtime.py": "9c4f07b473a252f62a7cb65590c2f884c8da4a66466ad132a1b90654d9b888e7",
+        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "dc34737eb6ebe47cfe617f7893cf45566d52f8c7b755cf27b41032304a3245fa",
+        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "f10fdb163f214d6e7cdb5d95504d0d61a96cf6acc3cd08c54c807080142e7318"
       },
       "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
       "raw_identity": {
@@ -51,7 +51,7 @@
       "fingerprint": "sha256:854cf7c51e988d40546adf6fef1fa4a88c3f4e4ae3d8bec06112d8b674cacf9f",
       "line": 187,
       "participants": {
-        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
+        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "818d197efc6e619114636c56c7660abae381adc0a359e61cd9dc9baad0ed48d1"
       },
       "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
       "raw_identity": {
@@ -381,7 +381,7 @@
       "fingerprint": "sha256:cf09edd872cfb6a38060707813a48d96226d333cf45868d2926e41f4da51ee81",
       "line": 119,
       "participants": {
-        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc"
+        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "426dbf23a3343fdefcfdf4c9d7591bed387cd2ba5a2158d58fa115eb36147a82"
       },
       "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
       "raw_identity": {
@@ -411,7 +411,7 @@
       "fingerprint": "sha256:f05f5138423fe55ebe20a7e6222b3ae71d26f439af9e561538e71279ccebb924",
       "line": 99,
       "participants": {
-        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc"
+        "research/flywheel_selfplay/h144_reg_sweep/runtime.py": "426dbf23a3343fdefcfdf4c9d7591bed387cd2ba5a2158d58fa115eb36147a82"
       },
       "path": "research/flywheel_selfplay/h144_reg_sweep/runtime.py",
       "raw_identity": {
@@ -441,7 +441,7 @@
       "fingerprint": "sha256:716a3cf6e578cebd7050e1df3652fc33c42fef12cefbc1ceb93ef371f9cceeed",
       "line": 100,
       "participants": {
-        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4"
+        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d"
       },
       "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
       "raw_identity": {
@@ -471,7 +471,7 @@
       "fingerprint": "sha256:4fdf30569cc73bfd5502abf25b21037b87df93aa8d49ffca5cf1efffd6580f2c",
       "line": 120,
       "participants": {
-        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4"
+        "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d"
       },
       "path": "research/flywheel_selfplay/h146_lookahead_exec/runtime.py",
       "raw_identity": {
@@ -501,7 +501,7 @@
       "fingerprint": "sha256:c52ff8a891e8d1d5eb71d82ef4ac808160cb134414f3bee299e7e16b64da359a",
       "line": 227,
       "participants": {
-        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "5c5dbfa5c0c7df2828989193dab7c9505c53c1c7da1667495aa62836cac12c3b"
       },
       "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
       "raw_identity": {
@@ -531,7 +531,7 @@
       "fingerprint": "sha256:aa45f70317f190b992be2f00d416f4f82c7978e2d04fcc7327b78f00d7e59bc3",
       "line": 248,
       "participants": {
-        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "5c5dbfa5c0c7df2828989193dab7c9505c53c1c7da1667495aa62836cac12c3b"
       },
       "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
       "raw_identity": {
@@ -561,7 +561,7 @@
       "fingerprint": "sha256:7ef660c7e89936069173811a8598c80ecead60b743c155f3c6c5082f9d0a8119",
       "line": 344,
       "participants": {
-        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "5c5dbfa5c0c7df2828989193dab7c9505c53c1c7da1667495aa62836cac12c3b"
       },
       "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
       "raw_identity": {
@@ -591,7 +591,7 @@
       "fingerprint": "sha256:ebda579bdf66b8879b5a9a59ff16cdfbf2b934f34d60ceb04f0e5591a6ed95d4",
       "line": 119,
       "participants": {
-        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6"
+        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "c4a7f15ca73c51c2024d8bca622fdef312dface655dc888dd25da2a7a6f232b9"
       },
       "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
       "raw_identity": {
@@ -621,7 +621,7 @@
       "fingerprint": "sha256:c2a0ebfaeb38f4b7d0214d7b656b7e11bfe313a881c24b6858203422830531fd",
       "line": 99,
       "participants": {
-        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6"
+        "research/flywheel_selfplay/h149_wd_dose/runtime.py": "c4a7f15ca73c51c2024d8bca622fdef312dface655dc888dd25da2a7a6f232b9"
       },
       "path": "research/flywheel_selfplay/h149_wd_dose/runtime.py",
       "raw_identity": {
@@ -651,7 +651,7 @@
       "fingerprint": "sha256:40e88b1f9da3ae1b0856afb5dcb3cdbbf3bd82a97cd852e1742debd982cd256c",
       "line": 127,
       "participants": {
-        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b"
+        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "9b8fea3e714947a69753524485a68c70226c9df05514306f563f4db35853e3af"
       },
       "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
       "raw_identity": {
@@ -681,7 +681,7 @@
       "fingerprint": "sha256:59b7f8db14933ca7fc18dff34783ae0f06f620a0b5a0dfa8298c20e76e8f6a91",
       "line": 99,
       "participants": {
-        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b"
+        "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": "9b8fea3e714947a69753524485a68c70226c9df05514306f563f4db35853e3af"
       },
       "path": "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py",
       "raw_identity": {
@@ -711,7 +711,7 @@
       "fingerprint": "sha256:0740000c26014b08d7f1b00262049a09724393c014a46738a8ca015a6145aff3",
       "line": 119,
       "participants": {
-        "research/flywheel_selfplay/h153_sam/runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a"
+        "research/flywheel_selfplay/h153_sam/runtime.py": "334b8e4968b42da9a054656ca17bc960db6e476239b5dcaf74a2658e4ecd43ae"
       },
       "path": "research/flywheel_selfplay/h153_sam/runtime.py",
       "raw_identity": {
@@ -741,7 +741,7 @@
       "fingerprint": "sha256:06a85304cd21ef186279ebe7009e77554435bf9042d92a8a98bab84aaa9fbe74",
       "line": 99,
       "participants": {
-        "research/flywheel_selfplay/h153_sam/runtime.py": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a"
+        "research/flywheel_selfplay/h153_sam/runtime.py": "334b8e4968b42da9a054656ca17bc960db6e476239b5dcaf74a2658e4ecd43ae"
       },
       "path": "research/flywheel_selfplay/h153_sam/runtime.py",
       "raw_identity": {
@@ -921,7 +921,7 @@
       "fingerprint": "sha256:ede0bae6b48f01f7d6de1266ebbb01a347e427384247c514347d30e8eb403a70",
       "line": 127,
       "participants": {
-        "research/flywheel_selfplay/h158_distillation/runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4"
+        "research/flywheel_selfplay/h158_distillation/runtime.py": "9c4f07b473a252f62a7cb65590c2f884c8da4a66466ad132a1b90654d9b888e7"
       },
       "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
       "raw_identity": {
@@ -951,7 +951,7 @@
       "fingerprint": "sha256:ad8ce6079eb3726cacb7855cc36e6fe3aad1a5e6c357102e1275baa0bd065501",
       "line": 99,
       "participants": {
-        "research/flywheel_selfplay/h158_distillation/runtime.py": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4"
+        "research/flywheel_selfplay/h158_distillation/runtime.py": "9c4f07b473a252f62a7cb65590c2f884c8da4a66466ad132a1b90654d9b888e7"
       },
       "path": "research/flywheel_selfplay/h158_distillation/runtime.py",
       "raw_identity": {
@@ -1041,7 +1041,7 @@
       "fingerprint": "sha256:60062364e40ba304450b8ceeff58180b95e2960681e63d90ed89ac731224e475",
       "line": 127,
       "participants": {
-        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b"
+        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "dc34737eb6ebe47cfe617f7893cf45566d52f8c7b755cf27b41032304a3245fa"
       },
       "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
       "raw_identity": {
@@ -1071,7 +1071,7 @@
       "fingerprint": "sha256:b10a2ee9efc76750ac3b5736fbc2fcb2e370dc9ba0d751ad1530cf023f2806ae",
       "line": 99,
       "participants": {
-        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b"
+        "research/flywheel_selfplay/h161_robust_fambal/runtime.py": "dc34737eb6ebe47cfe617f7893cf45566d52f8c7b755cf27b41032304a3245fa"
       },
       "path": "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
       "raw_identity": {
@@ -1101,7 +1101,7 @@
       "fingerprint": "sha256:a2e29ec7b5fd9c2d547e422852ff2aa950349c0d4d00fca865965fe0367c9100",
       "line": 119,
       "participants": {
-        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "f10fdb163f214d6e7cdb5d95504d0d61a96cf6acc3cd08c54c807080142e7318"
       },
       "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
       "raw_identity": {
@@ -1131,7 +1131,7 @@
       "fingerprint": "sha256:90a52d05faf137e21ca69907f784e970751fd0d1fd7bde7293fe89de27d89124",
       "line": 99,
       "participants": {
-        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+        "research/flywheel_selfplay/h164_sam_retry/runtime.py": "f10fdb163f214d6e7cdb5d95504d0d61a96cf6acc3cd08c54c807080142e7318"
       },
       "path": "research/flywheel_selfplay/h164_sam_retry/runtime.py",
       "raw_identity": {
@@ -1281,7 +1281,7 @@
       "fingerprint": "sha256:ab8cc443bcb57b13f9c615f83837a3d854f9a80e24325c32dc6cb8e1799da26e",
       "line": 38,
       "participants": {
-        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
+        "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": "818d197efc6e619114636c56c7660abae381adc0a359e61cd9dc9baad0ed48d1"
       },
       "path": "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py",
       "raw_identity": {
@@ -1344,7 +1344,7 @@
       "fingerprint": "sha256:37e1089a881f4af6ce92fd570df3613d44540b5d9c52b4b4482461366f4d4a4b",
       "line": 252,
       "participants": {
-        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836",
+        "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": "5c5dbfa5c0c7df2828989193dab7c9505c53c1c7da1667495aa62836cac12c3b",
         "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": "345ef71cd4c894e48818741df75a8c21b62fbfc9325398bdaf8d361e434031f5"
       },
       "path": "research/flywheel_selfplay/h147_reveal_alignment/runtime.py",
@@ -1380,35 +1380,14 @@
     "deploy/dl-flywheel/pipelines/encoding/fresh32/test_fresh32.py": {
       "findings": [
         {
-          "fingerprint": "sha256:43a3619ff38b6ef609ec69763289f07639825ebbd5678701517f2e6feae65477",
-          "line": null,
-          "problem": "runtime code uses a language outside the chosen optimal stack",
-          "reason": null,
-          "rule_id": "HLT-000-SCORE-DIMENSION:stack"
-        },
-        {
           "fingerprint": "sha256:ae2e6c6309a5e93001be6645bc47b3c1d4fe0a129ff71cfe2a9d25c98fec7d1c",
           "line": 33,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
-        },
-        {
-          "fingerprint": "sha256:ab8cc443bcb57b13f9c615f83837a3d854f9a80e24325c32dc6cb8e1799da26e",
-          "line": 38,
-          "problem": "string-built SQL reaches a database sink without parameter binding",
-          "reason": "the SQL text is assembled inline before the execute/query call",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
-          "fingerprint": "sha256:854cf7c51e988d40546adf6fef1fa4a88c3f4e4ae3d8bec06112d8b674cacf9f",
-          "line": 187,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "92be7f561c286e42cafebf77aa3f3b442e124fe15b8e7caa731ee1d99e002b05"
+      "sha256": "818d197efc6e619114636c56c7660abae381adc0a359e61cd9dc9baad0ed48d1"
     },
     "deploy/dl-flywheel/pipelines/generated_target_admission_v1/common.py": {
       "findings": [
@@ -1661,28 +1640,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:f05f5138423fe55ebe20a7e6222b3ae71d26f439af9e561538e71279ccebb924",
-          "line": 99,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:0127c3db2681d4fe41c31187f505694448649b577fa64264f5c4144fb6a20fbf",
-          "line": 100,
+          "line": 60,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:cf09edd872cfb6a38060707813a48d96226d333cf45868d2926e41f4da51ee81",
-          "line": 119,
+          "fingerprint": "sha256:c1fde10f4463ec794893cec6948fb3ccae5cdd96a6d870713ba49fe828db3ddd",
+          "line": 79,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:f9a8fdbfe288151b5b59babe44b35cfc54e00bfa6a2d6221fab9c05d40ec5796",
+          "line": 59,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "24d4eac98da23791f706341fd6c7c3f54cc5f693b0b435852049b319dd996ecc"
+      "sha256": "426dbf23a3343fdefcfdf4c9d7591bed387cd2ba5a2158d58fa115eb36147a82"
     },
     "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": {
       "findings": [
@@ -1694,28 +1673,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:716a3cf6e578cebd7050e1df3652fc33c42fef12cefbc1ceb93ef371f9cceeed",
-          "line": 100,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:e8d42c91801ac8d5d18c9e42986345bc727725579c00849260ac90a1868bc676",
-          "line": 101,
+          "line": 61,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:4fdf30569cc73bfd5502abf25b21037b87df93aa8d49ffca5cf1efffd6580f2c",
-          "line": 120,
+          "fingerprint": "sha256:52635b09d3d97d4d118a86f54eec4a1c2824dc0f1a5f4f6ef9f64dce55705453",
+          "line": 80,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:ed81da8224bf4bbe8b5bb08869c915a82cd714ff9ab64b4182c7b9038d9b62b7",
+          "line": 60,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "1fbb2c89222efb22001ce7fdc785e5d7dc8cee1c3be3b754ba7c4eb057fbcbc4"
+      "sha256": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d"
     },
     "research/flywheel_selfplay/h147_reveal_alignment/runtime.py": {
       "findings": [
@@ -1727,35 +1706,35 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:c52ff8a891e8d1d5eb71d82ef4ac808160cb134414f3bee299e7e16b64da359a",
-          "line": 227,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:5a08dd2ff4840ff5e5b404f87f22f41fbb2e8aebc3b14416d60d09e7c7e99db4",
-          "line": 228,
+          "line": 230,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:aa45f70317f190b992be2f00d416f4f82c7978e2d04fcc7327b78f00d7e59bc3",
-          "line": 248,
+          "fingerprint": "sha256:1abc83acd93be810d9726a6126889395bebfb0a80bb52e4983738bcf0d9c52f7",
+          "line": 229,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         },
         {
-          "fingerprint": "sha256:7ef660c7e89936069173811a8598c80ecead60b743c155f3c6c5082f9d0a8119",
-          "line": 344,
+          "fingerprint": "sha256:5eef3b2ba7cd3319c41f7521be6a95fb5d26900418970baafeff7636977c60be",
+          "line": 346,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:96ed4ffbdee4adbca67c7e12da96a037b400551ae2ccd0c720965bb47f8ecdb0",
+          "line": 250,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "aae23339e4c01c5f628356eabc95df989aae7f1114fe34f7f860d3a757b61836"
+      "sha256": "5c5dbfa5c0c7df2828989193dab7c9505c53c1c7da1667495aa62836cac12c3b"
     },
     "research/flywheel_selfplay/h149_wd_dose/runtime.py": {
       "findings": [
@@ -1767,28 +1746,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:c2a0ebfaeb38f4b7d0214d7b656b7e11bfe313a881c24b6858203422830531fd",
-          "line": 99,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:9a1743264d9e145bb6cc71ad9bc908eca4b8a6d5421c569230cd1911a06d3f6a",
-          "line": 100,
+          "line": 60,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:ebda579bdf66b8879b5a9a59ff16cdfbf2b934f34d60ceb04f0e5591a6ed95d4",
-          "line": 119,
+          "fingerprint": "sha256:76e879034160d9dafd7610a3aa9c99e153d2d74b7f8fbf91f5e468a59302044f",
+          "line": 79,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:80b57e6ad57e00eb8043e4f8082cbb85c1bb93cb6630d6b3a55af95e44382600",
+          "line": 59,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "ab50da32a19751d1f8b2d75e85b272eb77821c2d0ab3817a5ef6dcd8358e48d6"
+      "sha256": "c4a7f15ca73c51c2024d8bca622fdef312dface655dc888dd25da2a7a6f232b9"
     },
     "research/flywheel_selfplay/h151_lookahead_drift_control/runtime.py": {
       "findings": [
@@ -1800,28 +1779,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:59b7f8db14933ca7fc18dff34783ae0f06f620a0b5a0dfa8298c20e76e8f6a91",
-          "line": 99,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:3435e11cc15a58b04fb9115c1857df23f19f26c0314296c2fe72e81438eb51c0",
-          "line": 100,
+          "line": 60,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:40e88b1f9da3ae1b0856afb5dcb3cdbbf3bd82a97cd852e1742debd982cd256c",
-          "line": 127,
+          "fingerprint": "sha256:7ea4858dfeb475a8205e4c8fa446184734c9b0df0c2122841278f7cfb4fb54a4",
+          "line": 59,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:eaf767d6f56d31d3ef13d754c472509e706ce4a0bf7feb8acc497c155b048039",
+          "line": 87,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "2fb2a351de2d58da3ff985fab7870c6e56783c685d30800d4b625b8543d0456b"
+      "sha256": "9b8fea3e714947a69753524485a68c70226c9df05514306f563f4db35853e3af"
     },
     "research/flywheel_selfplay/h153_sam/runtime.py": {
       "findings": [
@@ -1833,28 +1812,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:06a85304cd21ef186279ebe7009e77554435bf9042d92a8a98bab84aaa9fbe74",
-          "line": 99,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:714270c5904ecf4d08c9069c1900e0a3d57411b074cf7fc3520e65e72dfc97b9",
-          "line": 100,
+          "line": 60,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:0740000c26014b08d7f1b00262049a09724393c014a46738a8ca015a6145aff3",
-          "line": 119,
+          "fingerprint": "sha256:39a5b26835ace81da660285d2765cbed87e6a210807b9ba692e1561c56fc6de8",
+          "line": 79,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:629bb5999f9e62d7183e8941edeb2841a2621bc98269bb5dbcc6d3e59981d302",
+          "line": 59,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "2b223fb4fd520db3b41753b7e0633a8191a7b0fa597f050774d3cd3a41fc6a2a"
+      "sha256": "334b8e4968b42da9a054656ca17bc960db6e476239b5dcaf74a2658e4ecd43ae"
     },
     "research/flywheel_selfplay/h154_trajectory_ema_swa/runtime.py": {
       "findings": [
@@ -1939,28 +1918,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:ad8ce6079eb3726cacb7855cc36e6fe3aad1a5e6c357102e1275baa0bd065501",
-          "line": 99,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:32568e545251ab033e2fd4f7efd1e60622573f26d71ebf1a631c8bab3562a85c",
-          "line": 100,
+          "line": 60,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:ede0bae6b48f01f7d6de1266ebbb01a347e427384247c514347d30e8eb403a70",
-          "line": 127,
+          "fingerprint": "sha256:4cb1c3b1857eb17556ff3029525dec5cd3c5e4c1e75783c0aa26e35abc773706",
+          "line": 59,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:50e182fa8921ef89d9cce9cc843db5225bad60d39cc44709b691f89a0b039838",
+          "line": 87,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "7399d1f62e6ee11a00dda435d6048222c5bb4f29cb401fe66ed1082c326022b4"
+      "sha256": "9c4f07b473a252f62a7cb65590c2f884c8da4a66466ad132a1b90654d9b888e7"
     },
     "research/flywheel_selfplay/h159_fail_logit_veto/runtime.py": {
       "findings": [
@@ -2005,28 +1984,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:b10a2ee9efc76750ac3b5736fbc2fcb2e370dc9ba0d751ad1530cf023f2806ae",
-          "line": 99,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:c470cbc05ce5ac44a47940ab97476327738ee04d4a8aa104f914c9030f775470",
-          "line": 100,
+          "line": 60,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:60062364e40ba304450b8ceeff58180b95e2960681e63d90ed89ac731224e475",
-          "line": 127,
+          "fingerprint": "sha256:2c65630cb34fde567179178a3783d85b437e3f4d8992cc33bceec8b998e39502",
+          "line": 87,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:d334497631fce354ee911fd32eca398e777753f55b62f55736c03f307b950b92",
+          "line": 59,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "b281cbdc2912d734aba956346d1ec2c40eeed2736af22c738e65023ac092496b"
+      "sha256": "dc34737eb6ebe47cfe617f7893cf45566d52f8c7b755cf27b41032304a3245fa"
     },
     "research/flywheel_selfplay/h164_sam_retry/runtime.py": {
       "findings": [
@@ -2038,28 +2017,28 @@
           "rule_id": "HLT-000-SCORE-DIMENSION:stack"
         },
         {
-          "fingerprint": "sha256:90a52d05faf137e21ca69907f784e970751fd0d1fd7bde7293fe89de27d89124",
-          "line": 99,
-          "problem": "dynamic code execution runs attacker-controlled source directly",
-          "reason": "the line executes text as code instead of keeping it as data",
-          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
-        },
-        {
           "fingerprint": "sha256:26f4e0521e4059338a2302f6a0f499ec59a5cf30cbf015e7bacbf597d2b8a8d4",
-          "line": 100,
+          "line": 60,
           "problem": "unsafe or unvalidated input boundary marker appears in product code",
           "reason": "input handling risk needs deterministic negative tests",
           "rule_id": "HLT-023-INPUT-BOUNDARY-GAP"
         },
         {
-          "fingerprint": "sha256:a2e29ec7b5fd9c2d547e422852ff2aa950349c0d4d00fca865965fe0367c9100",
-          "line": 119,
+          "fingerprint": "sha256:16af4c765bcc2a19fdac4e620f6a4050435643519cde809c5aa0129adbd3b14c",
+          "line": 59,
+          "problem": "dynamic code execution runs attacker-controlled source directly",
+          "reason": "the line executes text as code instead of keeping it as data",
+          "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
+        },
+        {
+          "fingerprint": "sha256:1a48212a79e3b9728721e202deb5429c0da440fb6999c3c8cb0b04b893cd97c0",
+          "line": 79,
           "problem": "dynamic code execution runs attacker-controlled source directly",
           "reason": "the line executes text as code instead of keeping it as data",
           "rule_id": "HLT-033-PYTHON-BAD-BEHAVIOR"
         }
       ],
-      "sha256": "e621d7918d5d8d1ad856daaef48b39dcb67342a58003884cbd645574e8c417a7"
+      "sha256": "f10fdb163f214d6e7cdb5d95504d0d61a96cf6acc3cd08c54c807080142e7318"
     },
     "research/flywheel_selfplay/h168_selector_remedy/runtime.py": {
       "findings": [
