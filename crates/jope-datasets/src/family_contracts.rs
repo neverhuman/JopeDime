@@ -11,6 +11,82 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Assign source families to train/development while covering every requested
+/// task on both sides. Selection is seeded by family identity only; labels,
+/// scores, dataset hashes, and row counts do not influence the assignment.
+pub fn build_training_family_partition(
+    families_by_task: &BTreeMap<String, BTreeSet<String>>,
+    seed: u64,
+) -> Result<BTreeMap<String, String>> {
+    ensure!(
+        !families_by_task.is_empty() && families_by_task.len() <= 3,
+        "unsupported requested task inventory"
+    );
+    ensure!(
+        families_by_task
+            .values()
+            .all(|families| families.len() >= 2),
+        "real training requires at least two independently evidenced families per category"
+    );
+    let mut all = families_by_task
+        .values()
+        .flat_map(|families| families.iter().cloned())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+    ensure!(
+        all.len() <= 30,
+        "family registry exceeds bounded panel scope"
+    );
+    all.sort_by_key(|name| {
+        sha256_hex(format!("jope.family-partition/v1\0{seed}\0{name}").as_bytes())
+    });
+    let acceptable = |selected: &BTreeSet<String>| {
+        families_by_task
+            .values()
+            .all(|set| !set.is_disjoint(selected) && !set.is_subset(selected))
+    };
+    let mut selected = None;
+    'outer: for a in 0..all.len() {
+        for b in a..all.len() {
+            for c in b..all.len() {
+                let set = [all[a].clone(), all[b].clone(), all[c].clone()]
+                    .into_iter()
+                    .collect();
+                if acceptable(&set) {
+                    selected = Some(set);
+                    break 'outer;
+                }
+            }
+        }
+    }
+    let mut selected = selected.ok_or_else(|| {
+        anyhow::anyhow!("no family-disjoint partition covers every requested category")
+    })?;
+    let target = all.len().div_ceil(5);
+    for name in &all {
+        if selected.len() >= target {
+            break;
+        }
+        let mut trial = selected.clone();
+        trial.insert(name.clone());
+        if acceptable(&trial) {
+            selected = trial;
+        }
+    }
+    Ok(all
+        .into_iter()
+        .map(|family| {
+            let side = if selected.contains(&family) {
+                "development"
+            } else {
+                "train"
+            };
+            (family, side.to_owned())
+        })
+        .collect())
+}
+
 /// A deterministic family-disjoint holdout split with exact requested counts.
 pub fn freeze_source_family_split(
     dataset_families: &BTreeMap<String, String>,
