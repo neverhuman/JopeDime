@@ -272,19 +272,29 @@ def test_monitor_admission_needs_a_quiet_host_and_margins():
     assert monitor.SUSTAIN == 300.0
 
 
-def test_attempt_deadline_is_absolute_and_inherited_by_the_resume(tmp_path):
+def test_attempt_deadline_is_absolute_and_the_continuation_has_one_fixed_deadline(
+    tmp_path,
+):
     # H210 E1: one deadline in the attempt claim; H223 also caps it at 17:25Z for the 18:00Z closeout.
     assert monitor.attempt_deadline(tmp_path, False, 1000.0) == 1000.0 + 4 * 3600
     late = monitor.RUN_END - 3600
     assert monitor.attempt_deadline(tmp_path, False, late) == monitor.RUN_END
     with pytest.raises(RuntimeError, match="attempt claim"):
-        monitor.attempt_deadline(tmp_path, True, 2000.0)
+        monitor.attempt_deadline(tmp_path, True, monitor.RUN_END + 60)
     (tmp_path / "H223_attempt.claim").write_text(
-        json.dumps({"deadline_epoch": 15400.0})
+        json.dumps({"deadline_epoch": monitor.RUN_END})
     )
-    assert monitor.attempt_deadline(tmp_path, True, 9000.0) == 15400.0
-    with pytest.raises(RuntimeError, match="passed"):
-        monitor.attempt_deadline(tmp_path, True, 15400.0)
+    # Amendment A2 (hw_t1500): the continuation after the 17:25Z stop runs to the fixed 21:30Z deadline
+    assert monitor.CONTINUATION_END == 1793655000.0  # 2026-11-02T21:30:00Z
+    assert monitor.CONTINUATION_END - monitor.RUN_END == 4 * 3600 + 5 * 60
+    for now in (
+        monitor.RUN_END - 600,
+        monitor.RUN_END + 60,
+        monitor.CONTINUATION_END - 1,
+    ):
+        assert monitor.attempt_deadline(tmp_path, True, now) == monitor.CONTINUATION_END
+    with pytest.raises(RuntimeError, match="continuation deadline"):
+        monitor.attempt_deadline(tmp_path, True, monitor.CONTINUATION_END)
 
 
 def monitor_argv(tmp_path):
@@ -870,3 +880,39 @@ def test_runner_waits_for_load_between_units_with_hysteresis(monkeypatch):
     monkeypatch.setenv(runner.DEADLINE_ENV, "1.0")
     with pytest.raises(RuntimeError, match="deadline"):
         runner.wait_for_load()
+
+
+def test_continuation_claim_is_single_and_fit_code_is_unchanged(tmp_path, monkeypatch):
+    """Amendment A2: one continuation only (exclusive resume claim); it reuses units through the same fit_unit and
+    verified_unit, whose bodies are pinned here so an amendment cannot change what a reused unit means."""
+    import hashlib
+
+    import runner
+
+    body = "".join(
+        __import__("inspect").getsource(f)
+        for f in (runner.fit_unit, runner.verified_unit, runner.unit_name)
+    )
+    assert (
+        hashlib.sha256(body.encode()).hexdigest()
+        == "32176bd9e6fd7c02d9ac75483ea534e113eb92e2c46598e8ff5341cd91fbbc9b"
+    )
+    claims = tmp_path / "claims"
+    claims.mkdir()
+    (claims / "H223_attempt.claim").write_text(json.dumps({"deadline_epoch": 1.0}))
+    (claims / "H223_resume.claim").write_text("{}")
+    monkeypatch.setattr(monitor, "CLAIMS", claims)
+    monkeypatch.setattr(monitor.socket, "gethostname", lambda: "xbabe2")
+    monkeypatch.setattr(monitor.os, "getpriority", lambda *a: 19)
+    monkeypatch.setattr(monitor, "check_source", lambda launch: None)
+    monkeypatch.setattr(monitor.time, "sleep", lambda s: None)
+    monkeypatch.setattr(monitor.time, "time", lambda: monitor.RUN_END + 60)
+    monkeypatch.setattr(
+        monitor, "snapshot", lambda child=None, history=None: ok_sample()
+    )
+    launched = []
+    monkeypatch.setattr(monitor.subprocess, "Popen", lambda *a, **k: launched.append(a))
+    monkeypatch.setattr(monitor.sys, "argv", monitor_argv(tmp_path) + ["--resume"])
+    with pytest.raises(FileExistsError):
+        monitor.main()
+    assert not launched
