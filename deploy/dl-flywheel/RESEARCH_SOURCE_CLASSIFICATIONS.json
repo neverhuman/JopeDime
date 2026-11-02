@@ -5625,12 +5625,12 @@
       "sha256": "b6da8ad57f940aeef3a504439f4848df2e06344d14652e768adf32858637ebc3"
     },
     "python:research/flywheel_selfplay/h224_learned_switch_gate/monitor.py": {
-      "bytes": 7192,
+      "bytes": 7444,
       "classification": {
         "reason": "H224 owner-authorized CPU learned FIT-only switch gate with nested OOF HistGBM features/labels, FIT-only logistic C and threshold, unchanged H217 reference gate, native91 first, global lock and strict CPU/S3/deadline guards; no serving promotion.",
         "role": "research"
       },
-      "sha256": "49637aa31d8972131baf5bc105e89fe893f1050d8ced66c59f937802379fb435"
+      "sha256": "73ddfd335c6de76c78222ad711b09fddf3dd7bf3369a9fe156e9e9f54df120f7"
     },
     "python:research/flywheel_selfplay/h224_learned_switch_gate/runner.py": {
       "bytes": 20750,

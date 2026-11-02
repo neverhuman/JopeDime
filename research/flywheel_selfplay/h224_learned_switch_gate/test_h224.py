@@ -361,3 +361,33 @@ def test_s3_exact_version_and_bytes(tmp_path, valid):
         with pytest.raises(RuntimeError, match="recovery mismatch"):
             store.put(path)
         assert not store.receipts
+
+
+def test_exited_short_lived_child_does_not_abort_resource_sample(monkeypatch):
+    monkeypatch.setattr(monitor.os, "getloadavg", lambda: (0, 0, 0))
+    monkeypatch.setattr(monitor.os, "sched_getaffinity", lambda pid: {1, 2, 3, 4})
+    monkeypatch.setattr(
+        monitor.psutil,
+        "disk_usage",
+        lambda path: types.SimpleNamespace(free=400_000_000_000),
+    )
+    monkeypatch.setattr(
+        monitor.psutil,
+        "virtual_memory",
+        lambda: types.SimpleNamespace(available=30 * 2**30),
+    )
+
+    def exited():
+        raise monitor.psutil.NoSuchProcess(12)
+
+    child = types.SimpleNamespace(
+        pid=12, is_running=lambda: True, memory_info=exited, threads=exited
+    )
+    parent = types.SimpleNamespace(
+        pid=11,
+        children=lambda recursive: [child],
+        is_running=lambda: True,
+        memory_info=lambda: types.SimpleNamespace(rss=1000),
+        threads=lambda: [],
+    )
+    assert monitor.resources(parent)["tree_rss"] == 1000
