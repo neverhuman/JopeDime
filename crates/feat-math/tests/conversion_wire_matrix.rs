@@ -16,7 +16,7 @@ use std::process::Command;
 const TRAINING_ROWS: usize = 64;
 
 const HISTORICAL: &str = include_str!(
-    "fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json"
+    "../fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json"
 );
 const EMITTED: &str = include_str!("fixtures/compat_freeze/emitted_bytes.v1.json");
 const MODELS: &str = include_str!("fixtures/compat_freeze/model_serde.v1.json");

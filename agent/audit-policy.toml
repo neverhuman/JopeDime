@@ -16,7 +16,6 @@ extra_excluded_paths = [
   "target", ".venv", ".pytest_cache", ".ruff_cache", ".mypy_cache",
   "research/flywheel_selfplay/custody/files",
   "deploy/ci/test-gitleaks-config.py",
-  "crates/feat-math/tests/fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json",
   "deploy/release/test-release.sh",
   "crates/battle-gpu/src/driver.rs",
   "crates/battle-gpu/src/lib.rs",

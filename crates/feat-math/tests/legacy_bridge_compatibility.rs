@@ -115,10 +115,15 @@ fn legacy_program_v1_exact_parity() {
 
 #[test]
 fn opaque_legacy_node_zero_silent_drop() {
-    let corpus: Json = serde_json::from_str(include_str!(
-        "fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json"
-    ))
-    .unwrap();
+    let corpus_bytes = include_bytes!(
+        "../fixtures/compat_freeze/historical_v1/objects/sha256/b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3.json"
+    );
+    assert_eq!(
+        feat_math::artifact_manifest::sha256(corpus_bytes),
+        "b5e66d14bdde73e4ff7d69ad65d6e7a8b0772ebc7c532f6a60bb775f4c2ef5c3",
+        "historical compatibility corpus must retain its content address"
+    );
+    let corpus: Json = serde_json::from_slice(corpus_bytes).unwrap();
     fn collect<'a>(v: &'a Json, out: &mut Vec<&'a str>) {
         match v {
             Json::Object(m) => {

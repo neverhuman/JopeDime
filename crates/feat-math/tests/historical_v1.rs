@@ -322,8 +322,8 @@ fn historical_v1_golden_matches() {
     let manifest: Value =
         serde_json::from_slice(&std::fs::read(root().join("manifest.json")).unwrap()).unwrap();
     let golden_sha = manifest["golden_sha256"].as_str().unwrap();
-    let path = root()
-        .join("objects/sha256")
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/compat_freeze/historical_v1/objects/sha256")
         .join(format!("{golden_sha}.json"));
     let bytes = std::fs::read(path).unwrap();
     assert_eq!(
