@@ -1630,6 +1630,16 @@
       ],
       "scope": "Main-only manual operational qualification after reviewed merged deployment. All twelve exact xbabe4 roles must execute the runner and provenance contracts and verify actual kernel limits and installed-file identity. Source discovery, registration and skipped jobs do not qualify live capacity."
     },
+    "job:.github/workflows/typescript.yml/trust-admission": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [
+        "typescript-admission"
+      ],
+      "scope": "Metadata-only repository/caller admission before self-hosted scheduling. No checkout, parity or test execution in this job; a refusal is not qualification. Configuration is not a passing run."
+    },
     "job:.github/workflows/typescript.yml/typescript-parity": {
       "discovery": {
         "kind": "workflow-job"
@@ -6111,6 +6121,16 @@
       ],
       "lanes": [],
       "scope": "H220 Within-family input/target mixup invariants, singleton identity and partner closure; native91 before training, actual40x4 CONTROL/MIX, strict Holm1/harm/3seeds, full30-fit lock order, feature-row exclusion, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification."
+    },
+    "python:research/flywheel_selfplay/h221_bagged_delta_head/test_h221.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H221 actual128-update separate heads, family-bootstrap multiplicities, paired real/shuffle init and plans, immutable feature/role cache, prediction mean before B gate,165-fit45-gate global lock, strict owner Holm1/point-margin/harm/two-seed criteria, merged-source/FIFO/S3/reentry/resource guards; synthetic CPU checks, no GPU/scientific qualification."
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
@@ -16290,6 +16310,35 @@
       "requires_nonzero_tests": false,
       "result_backend": "none",
       "stage": "execution"
+    },
+    "typescript-admission": {
+      "checks": [
+        "Fixed Bash admission step in .github/workflows/typescript.yml (immutable repository/head/base identity, ci.yml caller and PR/manual event checks)"
+      ],
+      "command": [
+        "GitHub Actions",
+        ".github/workflows/typescript.yml",
+        "trust-admission"
+      ],
+      "environment": {
+        "permissions": "none",
+        "runner": "GitHub-hosted ubuntu-24.04",
+        "shell": "bash"
+      },
+      "evidence": [
+        "run/attempt and GitHub caller identity",
+        "admitted=true only after all admission checks; refusal has no parity evidence"
+      ],
+      "feature_selection": "not-applicable",
+      "inputs": [
+        "immutable repository ID",
+        "GitHub workflow_ref/event_name",
+        "pull request head/base repository identities"
+      ],
+      "path_applicability": "Every invocation of reusable TypeScript workflow; only admitted ci.yml PR/manual contexts may schedule parity. Refused contexts are not test passes.",
+      "requires_nonzero_tests": false,
+      "result_backend": "none",
+      "stage": "static"
     },
     "typescript-parity": {
       "checks": [

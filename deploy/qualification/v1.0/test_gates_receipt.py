@@ -548,6 +548,20 @@ class M3WaiverTests(unittest.TestCase):
         kwargs.update(changes)
         return self.fixture.assemble(**kwargs)
 
+    def test_frozen_rc4_witnesses_keep_the_authorized_waiver(self):
+        payload = copy.deepcopy(self.payload)
+        payload["source_sha"] = "ccaf14b210b3b55a350218e60f6b49ef76524cf3"
+        payload["clauses"]["r0_proposer"]["native_witness_sha256"] = {
+            "native_candidates": "94eb53cddd796c98b077d2142dd4b60e679a8d768d38fafa070ba4ee935c0bf2",
+            "native_admission": "2ad84b8525a5ecbcf7895e9cb56e417a21f8689e7ac11e7d7fa62c5b65fc3e6d",
+        }
+        before = copy.deepcopy(payload)
+        waiver = runner._m3_waiver(payload, self.ruling, "v1.0.0")
+        self.assertEqual(waiver["disposition"], "WAIVED_V1_0_0")
+        self.assertEqual(waiver["expires_at"], "v1.0.1")
+        self.assertEqual(waiver["raw_status"], "FAIL")
+        self.assertEqual(payload, before)
+
     def test_authorized_waiver_preserves_raw_fail_and_counts(self):
         receipt = self.assemble()
         row = next(x for x in receipt["gates"] if x["id"] == "M3")

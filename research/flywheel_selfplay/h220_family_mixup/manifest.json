@@ -39,7 +39,7 @@
   "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
   "schema": "jope.h220-family-mixup/v1",
   "wave": "H220",
-  "status": "PREREGISTERED_NOT_RUN",
+  "status": "COMPLETE",
   "owner": "rd_astra",
   "source_base": "0e66c2590bf727f9fc98a39c6d8d521df2288d5d",
   "selected": "/home/ubuntu/jope-data/h50/input/selected.json",
@@ -147,5 +147,17 @@
     "contexts": 91,
     "families": 19,
     "mean": 1.1377941898164525
+  },
+  "execution_source_commit": "98f5ff06746d38c95690932b42c44276bb1389f4",
+  "source_sha256_scope": "Immutable execution commit; README updated for closeout; runtime/science/tests/folds unchanged.",
+  "closeout": {
+    "verdict": "NO_ADVANCE",
+    "s3": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261102/H220/astra-t0500/closeout/manifest.json",
+      "version_id": "jVUv47WHJrdkms9HA3H_8AVwf_KEJkc.",
+      "sha256": "3380ba762638a4798563144d045d8a208cfc769ac54acb7cc48d93f997481a89",
+      "bytes": 70240
+    },
+    "retry_allowed": false
   }
 }
