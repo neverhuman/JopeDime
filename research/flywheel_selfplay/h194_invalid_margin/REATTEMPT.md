@@ -1,56 +1,44 @@
-> **Authorization exercised.** Attempt2 stopped on the registered sustained-host-load guard
-> after1246completed optimizer calls, with no pooled-B selection or candidate A/Val.
-> This ruling authorized one fresh repeat; no third scientific attempt was launched.
+# H194 infrastructure repeats: exercised and closed
 
-# H194 infrastructure reattempt authority
+A1 stopped on the shared xbabe2 disk93.8% guard, after1080updates and no B selection or
+candidate A/Val. Owner t1200 (`hwave_t1200_reattempt_h194.md`,SHA256
+`8e415dff378fa81d882d63d7b57c615a50d9b952a6dff68dbb90ac8e9930cb83`) authorized one fresh A2
+after A1closeout#1627 merged97ce7c95e9d573eb9b7c5518953b64bc9937e41c.
+A2 stopped on load131.8555>108.8 across3independent5s windows after1246optimizer calls,
+with no B lock or candidate A/Val. Its closeout#1674 merged55dda298f6d2f9ac536f34c4260ca66fea13ca68
+at reviewed12d7ea4c3266a473718abfefce924113ed1cb1e3;22controls/Ruff/5records passed.
+A2's zero-model prebinding abort and31-state zero-forward checksum closure remain preserved.
 
-The owner authorized **one fresh attempt 2** on 2026-11-01 in
-`~/nudges/hwave_t1200_reattempt_h194.md` (SHA256
-`8e415dff378fa81d882d63d7b57c615a50d9b952a6dff68dbb90ac8e9930cb83`).
-Attempt 1 stopped on the shared xbabe2 disk guard. The owner freed approximately85GB
-of rebuildable Cargo caches. Complete this INCOMPLETE closeout first, using targeted
-local checks and squash/admin merge without waiting for remote CI.
+Owner t1423 (`hwave_t1423_reattempt_h194_a3.md`,SHA256
+`c822c821f6177a5a4171385d5f012f66235860e1e4f3a14d19eda1830754bdd7`) authorized ONE FINAL A3
+only after A2closeout. No A4 was authorized. A3 completed all45trajectories/1800updates,
+all45candidate A/45Val panels in169.22minutes, ending NO_ADVANCE. No A1/A2 trajectory or
+B-selection reuse occurred; the earlier infrastructure stops supplied no candidate A/Val
+result to choose among. All4126optimizer calls across the three attempts are reported.
 
-Then run exactly one fresh attempt from original merged preregistration#1601,
-source`9686429f7e89fb34da3e797afbb2855c93e02fb1`. Seeds194101–194103,
-independent fold seeds194141–194143, bootstrap194150, three40-update treatment arms,
-all five folds and1800 optimizer calls remain fixed. Retain the active r882 kernel,
-frozen DOPE and47-tensor/29,211-parameter adapter-only updates.
+The scientific source remains #1601/9686429f7e89fb34da3e797afbb2855c93e02fb1, unchanged active
+kernel/frozen DOPE c51a56d0/47adapter tensors29211parameters. Seeds194101–194103,independent
+fold seeds194141–194143,bootstrap194150,and40updates per arm/cell remained fixed.
 
-Attempt2 uses a separate output directory and exclusive`H194_attempt2.claim`.
-Start every trajectory from original r882; reuse no interrupted trajectory or B selection.
-No A/Val outcomes were available or inspected in attempt1, and no pooled-B selection
-was made. This is an owner-authorized infrastructure rerun, with no scientific tuning.
-CPU only, nice19, math threads1, aggregate threads<=3, RSS<6GB,4h cap,
-MemAvailable>=16GiB, disk93.8% stop and output<500MB remain enforced.
+Actual preferred host xbabe1 qualified with1336SHA-identical inputs; only4files/14386305bytes
+were copied. Byte hashing staged opaque TRAIN files; native91 exact utility/cost replay preceded
+numeric TRAIN decoding. External runner wrapper changed exactly the in-memory actual-host
+admission predicate from xbabe2-only to xbabe1/xbabe2, without changing the original file,
+math, function bodies, or hostname. Original runnerSHA1af8e2b1cb2c375566feca1248a291b2f593ec01191a8f9e276770a0c77d00bd,
+in-memory host-amendedSHA6b2f73d8a43b7369528a1111f9bd1b04f67171a674b0007cce3dc410b92ecef6,
+wrapperSHA1d787715965e41d2565c8d119c301716b7df7ff7f77a209955014637acd7c563;
+external monitorSHAf33f1229d8b7c012e9b69005e4dc3d566aed521bd7fa2e400355785bb285f627.
+Diffs, launch binding, and boundary controls are archived.
 
-The external operational supervisor changes only its source-directory binding,
-exclusive claim filename and tightening of the original four-thread cap to three.
-Original in-tree scientific sources/preregistration/manifests remain byte-identical
-to#1601. The launch receipt binds the external supervisor SHA. Append progress to
-`~/jope_plan/ns/receipts/H194_claim.txt` about every10minutes. Do not ask Jepson.
+A3 guards: CPU-only,nice19,math1,aggregate<=3threads,RSS<6GB,MemAvailable>=12GiB,
+free disk>=40GB,output<500MB,CPU<=85%,load108.8/3independent5s windows,and4h wall.
+The4h A3 cap is the owner budget-only amendment. xbabe1 has no93.8% disk-fraction stop;
+that threshold applies to fallback xbabe2. No guard triggered. Claims are H194_attempt3.claim
+and H194_claim.txt, with approximately10-minute progress under flock. Protected flywheelPID2297929
+and H199/H200/H201 files/processes were untouched. Never GPU,xbabe0,or xbabe3.
 
-
-## Final attempt3 authority (2026-11-01)
-
-The owner authorized ONE FINAL fresh attempt3 in
-`~/nudges/hwave_t1423_reattempt_h194_a3.md`, SHA256
-`c822c821f6177a5a4171385d5f012f66235860e1e4f3a14d19eda1830754bdd7`.
-First merge the A2 INCOMPLETE closeout with22tests, Ruff and five records; rebase on
-origin/main atda5a4dd13 or later. Root README census drift belongs to main and is not
-edited in this H194 PR; an identical clean-main failure is recorded and owner-waived.
-
-Then use exact original#1601/source9686429f7, seeds194101–194103, independent folds194141–194143,
-bootstrap194150,45x40=1800updates, unchanged kernel/frozen DOPE c51a56d0/adapter-only.
-Start from original r882, with no A1/A2 trajectory or B-selection reuse. No B lock or
-candidate A/Val outcome was observed in earlier attempts; this is an infrastructure repeat.
-
-Prefer xbabe1 via SSH only if every input SHA256 matches without large copies. On xbabe1:
-nice19,aggregate<=3threads,RSS<6GB,MemAvailable>=12GiB,free disk>=40GB,
-output<500MB under`~/jope-data/h194/attempt-003`, same108.8 sustained-load guard.
-The operational host-guard binding may admit actual xbabe1 without changing scientific
-functions or disguising its hostname. Otherwise use xbabe2 with its93.8% disk stop.
-The **4h wall cap for A3 is a budget-only amendment**; all scientific settings remain fixed.
-Never touch flywheelPID2297929 or h199-run/h200/h201 files/processes.
-Claim`H194_attempt3.claim`, append H194 receipts about every10minutes, then close out normally.
-This is the final authorized attempt: no A4.
+The numerical audit's sorted-index representation correction and archive live-log exclusion
+are zero-update validation/packaging repairs; original science and saved arrays were unchanged.
+Both failed auxiliary records are retained. Final native/numerical audits and actual-version
+S3all-member checks pass. No scientific retry follows these audits. Root README census remains
+outside H194; only an identical clean-main census failure may use the owner's explicit waiver.

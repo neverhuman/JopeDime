@@ -235,8 +235,8 @@ class _MmapCollator:
 
     def __call__(self, indexes: list[int]) -> dict[str, torch.Tensor]:
         if self._corpus is None:
-            # The parent verified both immutable artifacts before workers started.
-            self._corpus = TokenizedCorpus(self.corpus_root, verify=False)
+            # Revalidate the corpus when each worker opens its own lazy file handles.
+            self._corpus = TokenizedCorpus(self.corpus_root, verify=True)
             self._embeddings = np.load(self.embeddings_path, mmap_mode="r", allow_pickle=False)
         assert self._embeddings is not None
         return _collate_cpu(

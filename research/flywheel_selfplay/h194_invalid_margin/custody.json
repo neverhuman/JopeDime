@@ -1,7 +1,7 @@
 {
   "wave": "H194",
   "status": "PASS",
-  "scope": "Artifact/source integrity only; both scientific attempts INCOMPLETE",
+  "scope": "Artifact/source integrity for A1/A2 INCOMPLETE and final A3 COMPLETE NO_ADVANCE",
   "attempts": [
     {
       "attempt": 1,
@@ -54,7 +54,80 @@
         "incremental_bundle": true,
         "no_original_object_alternates": true
       }
+    },
+    {
+      "attempt": 3,
+      "scientific_status": "COMPLETE_NO_ADVANCE",
+      "archive": {
+        "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H194/gpu_fused_redteam_codex-20261101/627303a93ad1c26b/evidence.tar.gz",
+        "version_id": "CcJjAoDKYGKgb.5JneGp73eMZRqxubmT",
+        "sha256": "627303a93ad1c26bf6bdf335e09b95547cd6bdaedeb98830b00007e4d53ef918",
+        "bytes": 216938435,
+        "archive_members": 404,
+        "manifest_sha256": "881247560284d8f969f05a81adcfe2867c4e0e779f97a64ca6bd32238acbf227",
+        "all_members_actual_versioned_GET_hash_verified": true,
+        "restored_npz_decoded": 184,
+        "restored_torch_weights_only_decoded": 47
+      },
+      "source_restore": {
+        "status": "PASS",
+        "source_commit": "9686429f7e89fb34da3e797afbb2855c93e02fb1",
+        "actual_versioned_S3_restored_bundle": true,
+        "archive_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H194/gpu_fused_redteam_codex-20261101/627303a93ad1c26b/evidence.tar.gz",
+        "archive_version_id": "CcJjAoDKYGKgb.5JneGp73eMZRqxubmT",
+        "bundle_sha256": "a05b9828ebee80b1a251f62a18d8fc933d35e54a64662c79768e0ed300aad6d4",
+        "historical_role_commits_verified": {
+          "original": "7094634e215bcf0a2a3f7f02d3c3541faad007f8",
+          "review": "4d8a3571c875f835caa59e298323826b39b92607",
+          "prereg": "9686429f7e89fb34da3e797afbb2855c93e02fb1",
+          "attempt1-review": "fc75b26186a62fdfd8f51ae9f84ac2810c7e119e",
+          "attempt1-merge": "97ce7c95e9d573eb9b7c5518953b64bc9937e41c",
+          "attempt2-review": "12d7ea4c3266a473718abfefce924113ed1cb1e3",
+          "attempt2-merge": "55dda298f6d2f9ac536f34c4260ca66fea13ca68"
+        },
+        "role_tree_hashes": {
+          "original": "40be42228e2a26456f05d6815e5886586eeb17ff",
+          "review": "ef8e9327534a3295987973d9993a74bcb704817f",
+          "prereg": "ef8e9327534a3295987973d9993a74bcb704817f",
+          "attempt1-review": "78d9de08c20a086a917704b8fca4a92a5a2ca59f",
+          "attempt1-merge": "047651f2cbced19e459e894f1cf7f7d0b80af4be",
+          "attempt2-review": "16bdee2e46d0935c11e6e6806b4b4def85c596c2",
+          "attempt2-merge": "721251673f7a6d7db397793bea2f86f9a9e1746d"
+        },
+        "source_and_parent_files_verified": 36,
+        "additional_manifest_SHA_verified": true,
+        "historical_report_files_verified": 16,
+        "prerequisite_base": "c859f11c4106d425ca0f8d0befc56532d5a227cc",
+        "incremental_bundle": true,
+        "verification_bare": "/home/ubuntu/jope_plan/custody/verification/JopeDime.git",
+        "no_original_object_alternates": true,
+        "utc": "2026-11-02T00:57:08.907957+00:00"
+      }
     }
   ],
-  "publication": "Final merged-source/history restoration is recorded in external H194 publication custody before owned-lane cleanup"
+  "publication": "Final reviewed/merged Git and report custody is recorded externally under H194 before owned-lane cleanup; incremental bundles require the declared c859 prerequisite.",
+  "failed_packaging_version": {
+    "status": "PACKAGING_FAILURE_DIAGNOSED",
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H194/gpu_fused_redteam_codex-20261101/55484ba054906c59/evidence.tar.gz",
+    "version_id": "Gkp6N2QrQKIeqrue57EUDf3JAiMm1zM.",
+    "sha256": "55484ba054906c593b8138095124ae63414bdae30dc4ced322eab56468e8c6ae",
+    "bytes": 216907588,
+    "all_scientific_source_and_data_members_match_manifest": true,
+    "members": 395,
+    "mismatches": [
+      {
+        "member": "evidence/final-scientific-custody.resources.jsonl",
+        "recorded": {
+          "sha256": "078bac376dc7f1551b607bb2aaccb5bf4a0df25c1857a31a7f3108db6e773a6e",
+          "bytes": 1182
+        },
+        "actual": {
+          "bytes": 3541,
+          "sha256": "8ea149d7bab7dc7ffb8c6618a40592f8cea3ca06129520175f4fadf4e6749a4c"
+        }
+      }
+    ],
+    "scope": "Only the then-active guardian sampling log changed between source hashing and tar read. Retain failed object unchanged; fresh archive excludes its own active runtime prefix.",
+    "optimizer_calls": 0
+  }
 }
