@@ -3757,7 +3757,8 @@
       "origin": "work/heartbeat-20261009-0616/native-v4/verified_cache.py",
       "origin_sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288",
       "path": "deploy/dl-flywheel/pipelines/hpc_verified_v4/verified_cache.py",
-      "sha256": "12db22fe3ce78efd60419fd5e7f1d0e816c9d0e08b24e162d36507d973d6e288"
+      "sha256": "653959be6efe60a802dc260ddb5c921d5d0589559c2439339f57e63a2ff66716",
+      "normalization": "Import CachedS3Library and CachedNativeTools from the unpinned canonical pipelines/hpc implementation; preserve hpc_verified_v5 and prepared evidence-pinned copies."
     },
     {
       "normalization": "New48 isolated CPU fixtures after prior492; exact production source bytes. Scope is source qualification only, no queue replay or launch. Fixed fixture wallclock only in isolated new test runner.",
