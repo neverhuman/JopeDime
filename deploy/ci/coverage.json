@@ -1462,6 +1462,14 @@
       ],
       "scope": "Push/main-manual diagnostic CPU families in independent matrix groups (deploy/ci/full-main.py GROUPS), independent outcomes within the declared 145-minute CPU job deadline; no merge gate or qualification claim."
     },
+    "job:.github/workflows/full-main.yml/macos-arm64": {
+      "discovery": {
+        "kind": "workflow-job"
+      },
+      "dispositions": [],
+      "lanes": [],
+      "scope": "Trusted-main manual native macOS arm64 clean-host D1 (ops/ci/clean-host.sh macos) on the self-hosted xbabe4 Mac runner (labels self-hosted, macOS, ARM64, jope-macos); independent of the Linux cpu groups and outside the cpu aggregate; diagnostic, no merge gate or qualification claim."
+    },
     "job:.github/workflows/full-main.yml/paper": {
       "discovery": {
         "kind": "workflow-job"

@@ -5,6 +5,9 @@ self-hosted-runner:
     # Fixed CPU host roles are enforced in deploy/runner/common.sh.
     - jope-ci
     - jope-mac-ci
+    # Native macOS arm64 launchd runner on xbabe4 (full-main.yml macos-arm64).
+    - jope-macos
+    - xbabe4-native
     - xbabe1-ci
     - jope-full-cpu
     - jope-main-guard
