@@ -125,7 +125,7 @@ pub struct RuntimeRestoreProof {
 }
 
 impl RuntimeRestoreProof {
-    fn validates_for(
+    pub(super) fn validates_for(
         &self,
         kind: PromiseKind,
         source: &StrongPhysicalRef,
