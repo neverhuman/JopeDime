@@ -40,7 +40,7 @@ pub(crate) fn evaluate_policy_guard(
         decomposed_kl,
         seed_update_frozen_by_kl_guard,
     ) = if let Some(eval_fn) = round_leaf_log_prob_fn {
-        let (pol_lp, ref_lp) = eval_fn(round_idx, &base_catalog_ordered, &archive_leaf_genomes);
+        let (pol_lp, ref_lp) = eval_fn(round_idx, base_catalog_ordered, &archive_leaf_genomes);
         if pol_lp.len() == active_support_leaves && ref_lp.len() == active_support_leaves {
             match crate::support::decomposed_support_kl(
                 &pol_lp,
@@ -81,7 +81,7 @@ pub(crate) fn evaluate_policy_guard(
                 Some(true),
             )
         }
-    } else if let Some(ref tilt_cfg) = measured_tilt_policy {
+    } else if let Some(tilt_cfg) = measured_tilt_policy {
         let base_q_vec: Vec<f64> = base_catalog_ordered
             .iter()
             .map(|g| base_best_q.get(g).copied().unwrap_or(bootstrap_q))
