@@ -22,7 +22,7 @@ pub struct ResidualTargetsV1 {
 /// partition. The callback receives fit row IDs and prediction row IDs; each
 /// outer-validation prediction is made by a base fitted on outer training only.
 pub fn cross_fitted_residual_targets<F>(
-    rows: &[super::TargetRowV1],
+    rows: &[super::super::TargetRowV1],
     outer_train_row_ids: &[String],
     outer_validation_row_ids: &[String],
     seed: u64,
