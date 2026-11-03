@@ -1,0 +1,13 @@
+{
+  "h272_ref_commit": "6562a9b2746b99b91b74cac5910f387fc6b4ed66",
+  "h276_cluster_commit": "f709f8d01fe7036241114f4728eb1d91cd16ed40",
+  "files": {
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "cluster_protocol.py": "456b516b8769fa2a2caca5c85c5277a176da2d0b9314cce5e31a0009024a6000",
+    "h276-clusters.json": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2"
+  },
+  "h273_source_sha256": "24606a84b2402c59eebb40ebed6e09ee4b8a51f8d43c27779ec3b25a8b0b15f2",
+  "h273_veto_change": "n_jobs2->1 resource constraint only; exact chosen-pick veto p>tau, slot0 retained",
+  "no_h276_outcomes_read": true
+}
