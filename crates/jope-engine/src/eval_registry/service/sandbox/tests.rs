@@ -11,7 +11,7 @@ use std::{
     process::{Child, ChildStdin, ChildStdout, Stdio},
 };
 pub(crate) use violations::violations;
-pub(super) use violations::{socket, spawn_violations, PROBE_ENV, PROBE_TEST, REPORT};
+use violations::{socket, spawn_violations, PROBE_ENV, PROBE_TEST, REPORT};
 
 #[test]
 #[ignore = "sandbox probe child, launched only by the confinement tests"]
