@@ -101,5 +101,24 @@
     "max_process_resumes": 0
   },
   "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H244/astra-t0440/",
-  "perturbations_sha256": "9f1ca6b78c63fae61bd7462eb9f898d9cf0b8a790b0040a0e094ef7bffff521d"
+  "perturbations_sha256": "9f1ca6b78c63fae61bd7462eb9f898d9cf0b8a790b0040a0e094ef7bffff521d",
+  "execution_source_commit": "e61adfe566e784ca3182c248df428eb717fe2a3a",
+  "closeout": {
+    "status": "COMPLETE",
+    "verdict": "NO_ADVANCE",
+    "metrics_sha256": "736fe7f21ad8dcef549dd7b7ede7475bc3a6132decc6c20c153cffb84c971e6c",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H244/astra-t0440/closeout/runtime.tar.gz",
+      "version_id": "whrTeDWe_ODgu2iff1qOgyb_kZY0vw4L",
+      "sha256": "df6009425a69d6957f889b40230237499179867db72364a91d00dc0593bb153d",
+      "bytes": 128606914
+    },
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H244/astra-t0440/closeout/manifest.json",
+      "version_id": "DRo.DdUIdzVLpU0RETyvG5.urO1f5QAT",
+      "sha256": "f5dd1ca65fb933e25a3b27a0907a6e51aea1584b854732b67df04af2ec69d3f0",
+      "bytes": 18398
+    },
+    "audit_sha256": "5ebf88e1c38ecd93299dc93c6965caf0a70cca39fc4d1cb621bae505ac9314a7"
+  }
 }
