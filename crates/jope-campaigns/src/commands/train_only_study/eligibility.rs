@@ -218,7 +218,7 @@ pub(crate) fn load_dl_proposals(
 }
 
 mod transfer;
-pub(crate) use transfer::build_transfer_rankings;
+pub(super) use transfer::build_transfer_rankings;
 
 // Keep initial population identity, folds and search budget explicit.
 #[allow(clippy::too_many_arguments)]
