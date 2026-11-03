@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) fn explain_checkpoint(args: &Args) -> Result<()> {
+pub(super) fn explain_checkpoint(args: &Args) -> Result<()> {
     let lineage = scan_lineage(&args.runs_root);
     let candidates = checkpoint_candidates(&args.root, &lineage);
     let selected = select_checkpoint(&candidates);
@@ -29,7 +29,7 @@ pub(crate) fn explain_checkpoint(args: &Args) -> Result<()> {
     selected.map(|_| ())
 }
 
-pub(crate) fn cycle(args: &Args, lineage: &mut LineageCache) -> Result<CycleReport> {
+pub(super) fn cycle(args: &Args, lineage: &mut LineageCache) -> Result<CycleReport> {
     let state_path = args.root.join("ops/trainer-watchdog-state.v1.json");
     let mut state = load_state(&state_path)?;
     let labels = load_label_watermark(&args.label_pointer())?;

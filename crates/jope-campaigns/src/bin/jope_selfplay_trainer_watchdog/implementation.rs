@@ -417,7 +417,7 @@ pub(crate) use daemon::run;
 /// writes nothing, so it can be exercised against the live root while the daemon
 /// is running.
 mod cycle;
-pub(crate) use cycle::*;
+use cycle::*;
 mod lineage;
 pub(crate) use lineage::*;
 mod state;
