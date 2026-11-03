@@ -173,7 +173,7 @@ async fn failed_controller_position_commit_terminalizes_prepared_without_ack_or_
         Arc::new(FixedClock(2)),
     )
     .unwrap();
-    fs::set_permissions(protocol_root.path(), fs::Permissions::from_mode(0o500)).unwrap();
+    fs::remove_dir_all(protocol_root.path()).unwrap();
 
     assert!(matches!(
         handler.handle(infer_frame(1)).await,
@@ -184,5 +184,4 @@ async fn failed_controller_position_commit_terminalizes_prepared_without_ack_or_
     let recovery = journal.recover(&identity(), 3).unwrap();
     assert!(recovery.replayable.is_empty());
     assert!(recovery.quarantined.is_empty());
-    fs::set_permissions(protocol_root.path(), fs::Permissions::from_mode(0o700)).unwrap();
 }
