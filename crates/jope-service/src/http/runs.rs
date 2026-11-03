@@ -816,7 +816,7 @@ fn response(error: &Problem) -> Response {
 mod q1_service;
 mod routes;
 mod run_service;
-pub(super) use routes::{control, list, q1_evaluate, start, ListQuery};
+pub(super) use routes::{control, list, q1_evaluate, start};
 
 #[cfg(test)]
 mod tests;
