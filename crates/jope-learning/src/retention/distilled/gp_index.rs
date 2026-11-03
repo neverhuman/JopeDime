@@ -1,6 +1,6 @@
 use super::*;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Accounting summary for [`distill_gp_results_index_with_stats`].
