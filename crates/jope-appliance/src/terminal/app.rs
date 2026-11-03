@@ -374,5 +374,5 @@ mod tests;
 
 mod input;
 mod screen;
-pub(super) use input::*;
+use input::*;
 use screen::Screen;
