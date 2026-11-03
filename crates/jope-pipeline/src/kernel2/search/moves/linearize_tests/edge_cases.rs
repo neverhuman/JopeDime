@@ -4,7 +4,6 @@ use super::*;
 /// training and 15 test rows, the target cycling through 0 to 6), with the pmlb-229-pwlinear
 /// fixture's metadata rewritten for it. Every line fitted on these subnormal values has a slope
 /// past the finite range. The review's fixture.
-
 pub(super) fn subnormal_dataset(dir: &Path) -> String {
     let csv = |rows: std::ops::Range<usize>| -> String {
         rows.map(|i| format!("{},{}\n", ["-1e-310", "0", "1e-310"][i % 3], i % 7))
