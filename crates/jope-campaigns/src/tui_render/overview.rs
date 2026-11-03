@@ -132,7 +132,6 @@ pub(crate) fn trend_arrow(prior: f64, last: f64) -> &'static str {
 
 /// Training arms in a stable display order: real trainers first (so a proposal
 /// or encoder GPU job never steals arm 0), each keeping its collector ordering.
-
 pub(crate) fn training_arms(dashboard: &Dashboard) -> Vec<&TrainerDetail> {
     let mut arms: Vec<&TrainerDetail> =
         dashboard.trainers.iter().filter(|t| t.is_trainer).collect();
@@ -142,7 +141,6 @@ pub(crate) fn training_arms(dashboard: &Dashboard) -> Vec<&TrainerDetail> {
 
 /// Newest metric row for an arm, or None while its metrics file is still empty.
 /// Callers must render "warming up" rather than borrowing another arm's numbers.
-
 pub(crate) fn arm_latest(trainer: &TrainerDetail) -> Option<&TrainerMetricPoint> {
     trainer.history.last()
 }
