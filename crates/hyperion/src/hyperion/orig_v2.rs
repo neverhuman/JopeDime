@@ -43,7 +43,25 @@ mod types;
 
 pub use encoding::encode_pair;
 #[cfg(feature = "hyperion-cpu")]
-pub(super) use encoding::validate_authority;
+pub(super) fn validate_authority(path: &Path, expected: &str, label: &str) -> Result<String> {
+    encoding::validate_authority(path, expected, label)
+}
 #[cfg(any(feature = "hyperion-cpu", test))]
-pub(super) use encoding::{rank_replay_grid, row_major_cells};
+pub(super) fn rank_replay_grid(
+    x: &Matrix,
+    sorted_train: &[Vec<f32>],
+    q_low: f32,
+    q_high: f32,
+) -> Result<U8Grid> {
+    encoding::rank_replay_grid(x, sorted_train, q_low, q_high)
+}
+#[cfg(any(feature = "hyperion-cpu", test))]
+pub(super) fn row_major_cells(
+    values: &[f32],
+    row_start: usize,
+    rows: usize,
+    width: usize,
+) -> Matrix {
+    encoding::row_major_cells(values, row_start, rows, width)
+}
 pub use types::*;
