@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 use tempfile::TempDir;
 
 fn digest(byte: u8) -> String {
