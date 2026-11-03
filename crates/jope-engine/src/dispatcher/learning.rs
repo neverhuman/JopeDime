@@ -252,7 +252,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
         } => {
             let receipt = jope_parallel::corpus_projection::project(
                 &root,
-                source_root.as_deref().unwrap_or(root.as_path()),
+                source_root.as_deref().unwrap_or(root),
                 &corpus,
                 &output,
             )?;
