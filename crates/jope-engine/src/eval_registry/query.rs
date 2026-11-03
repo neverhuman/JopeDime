@@ -15,7 +15,6 @@ mod preparation;
 pub(super) use preparation::load_retained_model;
 use preparation::{
     execution_query_key, matrix_sha256, metrics, prepare_query, receipt_digest, valid_sha,
-    PreparedQuery,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
