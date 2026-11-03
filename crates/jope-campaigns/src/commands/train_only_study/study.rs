@@ -32,7 +32,7 @@ pub(crate) struct Catalog {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub(super) struct CatalogEntry {
+pub(crate) struct CatalogEntry {
     pub(super) dataset_hash: String,
     pub(super) task: String,
     pub(super) train_csv: PathBuf,
@@ -70,7 +70,7 @@ pub(super) struct CheckpointOverlapDisclosure {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct SotarenaReportHashes {
+pub(crate) struct SotarenaReportHashes {
     pub(super) tabpfn_v3_path: PathBuf,
     pub(super) tabpfn_v3_sha256: String,
     pub(super) tabfm_path: PathBuf,
@@ -99,7 +99,7 @@ pub(super) struct EligibilityRecord {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct EncodingSlice {
+pub(crate) struct EncodingSlice {
     pub(super) blob_path: PathBuf,
     pub(super) blob_sha256: String,
     pub(super) offset_bytes: usize,
