@@ -1,0 +1,29 @@
+{
+  "schema": "whitepaper.program-journal-rates-figure/v1",
+  "bins_csv_sha256": "4afeb053a2d1a348ff165974a40a78dcca6227419e022245e36e851c65098c85",
+  "events_csv_sha256": "11ccd9a0c286aa0fbe97cd9a0214e08f110bdcaef1f83d604741f52f4da8df29",
+  "source_receipt_sha256": "5fca8321d69b3c15996e48754a6b06dbd411fd956e94fe88e8c9aca8644d0306",
+  "generator_sha256": "d4e323995091f5c7d2ce2026811a1262811f67f6000aa14c71089f76c8f28a09",
+  "figure_sha256": "1da7e96cfc76bc13bf0853bac1b14abb4e841e6ae779297f1d74220816521b7f",
+  "source_prefix_sha256": "574ee75abb612245c33f9500c84e576fdd69a9243090c58e0a7d79ede2f7ad96",
+  "source_records": 3490,
+  "plotted_bins": 21,
+  "full_bins": 20,
+  "partial_bins": 1,
+  "ordinary_promotions": 3405,
+  "historical_admissions": 85,
+  "unrecorded_protocol_ids": 90,
+  "scope": "Adaptive training-side program-pool journal additions, ordinary promotions distinguished from historical admissions. Clock exposure includes work, waits and gaps; zero bins mean no journal additions. Not attempted proposals, adapter admissions, model updates, serving throughput, stable-population comparisons or learning gains. Exact loop/population/normalization qualification remains separate.",
+  "matplotlib_version": "3.10.8",
+  "font_family": "Liberation Serif",
+  "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+  "figure_inches": [
+    6.75,
+    1.7
+  ],
+  "minimum_text_size_pt": 8.5,
+  "vertical_scale": "linear",
+  "bar_width_tracks_observed_exposure": true,
+  "fixed_canvas_no_tight_crop": true,
+  "reproduce": "python3 figures/scripts/make_program_journal_rates.py"
+}

@@ -1,0 +1,42 @@
+{
+  "schema": "whitepaper.program-journal-rates-source/v1",
+  "source_file": "promotions.jsonl",
+  "captured_at_utc": "2026-11-03T15:49:59.231234+00:00",
+  "complete_prefix_bytes": 12628911,
+  "complete_prefix_records": 3490,
+  "complete_prefix_sha256": "574ee75abb612245c33f9500c84e576fdd69a9243090c58e0a7d79ede2f7ad96",
+  "source_line_window": [
+    1,
+    3490
+  ],
+  "round_window": [
+    0,
+    4406
+  ],
+  "first_timestamp_utc": "2026-10-29T15:06:59.195314+00:00",
+  "last_event_timestamp_utc": "2026-11-03T15:48:43.539464+00:00",
+  "observation_end_utc": "2026-11-03T15:49:59.231234+00:00",
+  "selection": "All complete promotion-journal records at one frozen read-only prefix, no kind/outcome/score filtering. Plot counts per wall-clock hour in fixed six-hour bins anchored at earliest logged event timestamp, ending at capture time; distinguish ordinary promotion and historical admission kinds, retain zero-count bins, expose/mark partial final bin and its exact duration. Preserve every event timestamp/round/kind/source-line SHA in public identity-free lineage CSV; raw records private. State journal-record coverage and source populations, not proposal success, writer learning or serving throughput.",
+  "bin_duration_us": 21600000000,
+  "bin_count": 21,
+  "full_bins": 20,
+  "partial_bins": 1,
+  "last_bin_exposure_us": 2580035920,
+  "zero_record_bins": 0,
+  "ordinary_promotions": 3405,
+  "historical_admissions": 85,
+  "events_csv_sha256": "11ccd9a0c286aa0fbe97cd9a0214e08f110bdcaef1f83d604741f52f4da8df29",
+  "bins_csv_sha256": "4afeb053a2d1a348ff165974a40a78dcca6227419e022245e36e851c65098c85",
+  "derivation": "All timestamps parsed to integer UTC microseconds. Fixed six-hour left-closed bins anchored at minimum event timestamp; final right edge is capture time and inclusive. Counts include every complete source record exactly once. Rates are count*3600000000/exposure_us using Decimal precision28; float conversion only for rendering.",
+  "all_cv_gates_passed": true,
+  "all_evaluation_scope": "full_train_cv",
+  "protocol_counts": {
+    "UNRECORDED": 90,
+    "jope.s1-two-fold/v1": 3400
+  },
+  "unrecorded_protocol_ids": 90,
+  "missing_protocol_is_a_pass": false,
+  "stable_prefix_reread": true,
+  "source_read_only": true,
+  "scope": "Adaptive training-side program-pool journal additions, ordinary promotions distinguished from historical admissions. Clock exposure includes work, waits and gaps; zero bins mean no journal additions. Not attempted proposals, adapter admissions, model updates, serving throughput, stable-population comparisons or learning gains. Exact loop/population/normalization qualification remains separate."
+}
