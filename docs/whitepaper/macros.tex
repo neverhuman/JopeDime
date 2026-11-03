@@ -16,6 +16,10 @@
 \setlength{\intextsep}{10pt plus 6pt minus 2pt}
 \setlength{\dbltextfloatsep}{20pt plus 10pt minus 4pt}% article's 20pt default: full-width floats get more room than column floats
 \setlength{\dblfloatsep}{10pt plus 6pt minus 2pt}
+\makeatletter% float pages and float columns start at the top, with the text-page float gaps, instead of spreading each float over the column
+\setlength{\@fptop}{0pt}\setlength{\@fpsep}{10pt}\setlength{\@fpbot}{0pt plus 1fil}
+\setlength{\@dblfptop}{0pt}\setlength{\@dblfpsep}{10pt}\setlength{\@dblfpbot}{0pt plus 1fil}
+\makeatother
 \setlength{\parskip}{0pt plus 3pt}
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
 \raggedbottom
@@ -93,9 +97,12 @@
 % stops after a few lines (the Section 7 opening after the Section 6.8 figures).
 % When the barrier leaves an empty column holding no column floats, give it the
 % full column height again.
+% It also breaks the column first (\penalty0): otherwise, when the paragraph
+% before the barrier spills into the next column while floats are held,
+% placeins' \newpage lands after the spilled line and ejects that column too.
 \makeatletter
 \let\fb@plainbarrier\FloatBarrier
-\renewcommand{\FloatBarrier}{\fb@plainbarrier\fb@freshcolumn}
+\renewcommand{\FloatBarrier}{\par\penalty\z@\fb@plainbarrier\fb@freshcolumn}
 \newcommand{\fb@freshcolumn}{%
   \ifdim\pagegoal=\maxdimen
     \ifx\@toplist\@empty\ifx\@botlist\@empty
