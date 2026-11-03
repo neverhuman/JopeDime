@@ -150,12 +150,12 @@ struct TabArenaLane {
 
 // Preserve the validated local/remote artifact payload layout without changing execution.
 #[allow(clippy::large_enum_variant)]
-enum PreparedTabArenaLane {
+pub(super) enum PreparedTabArenaLane {
     Finished(usize, TabArenaResult),
     Active(TabArenaLane),
 }
 
-fn prepare_tabarena_lane(
+pub(super) fn prepare_tabarena_lane(
     campaign: &Path,
     registry: &Path,
     manifest: &TabArenaManifest,

@@ -1,3 +1,4 @@
+use super::execution::{prepare_tabarena_lane, PreparedTabArenaLane};
 use super::*;
 
 fn expected_manifest(
