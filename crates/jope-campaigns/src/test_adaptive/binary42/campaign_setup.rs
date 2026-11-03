@@ -14,12 +14,11 @@ pub(crate) use population::{
 };
 pub(crate) use scheduling::{
     assigned_node_for_slot, binary_prediction_bytes, binary_prediction_roundtrip_bytes,
-    campaign_shard_sizes, candidate_file, cohort_win, failover_node, generation_cap_reached,
-    parse_prediction_bytes, physical_hostname, policy_win, prediction_file, qualifying_winner,
-    qualifying_winner_for_policy, rank_slots, shard_members, shard_members_with_sizes, shard_start,
-    strict_win,
+    campaign_shard_sizes, candidate_file, failover_node, generation_cap_reached,
+    parse_prediction_bytes, physical_hostname, policy_win, prediction_file,
+    qualifying_winner_for_policy, rank_slots, shard_members_with_sizes, shard_start,
 };
 pub(crate) use worker::{
-    cpp17_toolchain, evaluate_worker_candidate, expected_job_id, failed_candidate_receipt,
-    is_sha256_hex, validate_candidate_backend, validate_shard_manifest,
+    cpp17_toolchain, evaluate_worker_candidate, expected_job_id, validate_candidate_backend,
+    validate_shard_manifest,
 };
