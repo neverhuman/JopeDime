@@ -135,8 +135,13 @@ fn eligible() -> (Vec<u8>, Vec<u8>) {
 
 // ---- the flag ----------------------------------------------------------------------------------
 
+#[path = "qualify_gate/confirmation.rs"]
 mod confirmation;
+#[path = "qualify_gate/evidence_bounds.rs"]
 mod evidence_bounds;
+#[path = "qualify_gate/flags_and_admission.rs"]
 mod flags_and_admission;
+#[path = "qualify_gate/promotion_decisions.rs"]
 mod promotion_decisions;
+#[path = "qualify_gate/proposal_validation.rs"]
 mod proposal_validation;
