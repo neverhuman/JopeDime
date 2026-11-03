@@ -1,4 +1,6 @@
 use super::*;
+use super::validation::{batch_ranges, checked_chunk, original_source};
+
 fn artifact(root: &Path, name: &str, bytes: &[u8]) -> HistoryArtifact {
     let path = root.join(name);
     fs::write(&path, bytes).unwrap();
