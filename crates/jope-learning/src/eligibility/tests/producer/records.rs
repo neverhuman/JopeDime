@@ -1,11 +1,11 @@
 use super::*;
 
 /// `AdmissionPins`, as the handoff's `admission_pins_sha256` hashes them, with placeholder values.
-const ADMISSION_PINS_LAYOUT: &str = r#"{"source_sha256":"s","producer_sha256":"p","artifact_sha256":"a","qualification_sha256":"q","reference_manifest_sha256":"m","context_execution_sha256":"x","qualification_execution_sha256":["c0","c1"],"verification_policy_sha256":"v","training":{"dataset_sha256":"d","prepared_sha256":"r","training_sha256":"t","fitting_rows_sha256":"f","cut":2},"input_sha256":"i","preprocessing_sha256":"e"}"#;
+pub(super) const ADMISSION_PINS_LAYOUT: &str = r#"{"source_sha256":"s","producer_sha256":"p","artifact_sha256":"a","qualification_sha256":"q","reference_manifest_sha256":"m","context_execution_sha256":"x","qualification_execution_sha256":["c0","c1"],"verification_policy_sha256":"v","training":{"dataset_sha256":"d","prepared_sha256":"r","training_sha256":"t","fitting_rows_sha256":"f","cut":2},"input_sha256":"i","preprocessing_sha256":"e"}"#;
 /// `ExecutionAttestation`, as the pins' `context_execution_sha256` hashes it.
-const EXECUTION_ATTESTATION_LAYOUT: &str = r#"{"schema":"jope.cpu-context-execution/controller-v1","supervisor_receipt_sha256":"o","program_sha256":"p","input_sha256":"i","output_sha256":"a","completed":true,"cpu_limit":1,"memory_max":4096,"swap_max":0,"threads":1,"elapsed_seconds":0.25,"deadline_seconds":30.0}"#;
+pub(super) const EXECUTION_ATTESTATION_LAYOUT: &str = r#"{"schema":"jope.cpu-context-execution/controller-v1","supervisor_receipt_sha256":"o","program_sha256":"p","input_sha256":"i","output_sha256":"a","completed":true,"cpu_limit":1,"memory_max":4096,"swap_max":0,"threads":1,"elapsed_seconds":0.25,"deadline_seconds":30.0}"#;
 /// `CpuContextArtifact`'s fields, sorted.
-const ARTIFACT_FIELDS: [&str; 16] = [
+pub(super) const ARTIFACT_FIELDS: [&str; 16] = [
     "backend",
     "components",
     "encoder",

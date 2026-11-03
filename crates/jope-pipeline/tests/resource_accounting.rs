@@ -138,5 +138,7 @@ fn finish(
         .unwrap();
 }
 
+#[path = "resource_accounting/ledger.rs"]
 mod ledger;
+#[path = "resource_accounting/worker.rs"]
 mod worker;

@@ -20,7 +20,7 @@ fn context_bytes(f: &Fixture) -> (Vec<u8>, Vec<u8>) {
 
 /// A claims record pinning the parent receipt, the context receipt that descends from it, and an
 /// unrelated node; `revoked` names the nodes revoked.
-fn claims(f: &Fixture, repo: &Path, revoked: &[&str]) -> std::path::PathBuf {
+pub(super) fn claims(f: &Fixture, repo: &Path, revoked: &[&str]) -> std::path::PathBuf {
     let (parent, receipt) = context_bytes(f);
     testing::claims(
         repo,
@@ -33,7 +33,7 @@ fn claims(f: &Fixture, repo: &Path, revoked: &[&str]) -> std::path::PathBuf {
     )
 }
 
-fn revoke(f: &Fixture, repo: &Path, revoked: &[&str]) {
+pub(super) fn revoke(f: &Fixture, repo: &Path, revoked: &[&str]) {
     let (parent, receipt) = context_bytes(f);
     testing::revoke(
         &f.state,

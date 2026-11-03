@@ -2,7 +2,7 @@
 //! improvements are distinct outcomes. Synthetic fixture; not a live search.
 use super::*;
 
-fn transitions(state: &State) -> Vec<serde_json::Value> {
+pub(super) fn transitions(state: &State) -> Vec<serde_json::Value> {
     Ledger::open(state.root(), "hwm")
         .events()
         .unwrap()

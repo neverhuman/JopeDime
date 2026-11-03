@@ -228,5 +228,7 @@ fn v2_fixture() -> Value {
     value
 }
 
+#[path = "schema_agreement/generated_schema.rs"]
 mod generated_schema;
+#[path = "schema_agreement/receipts.rs"]
 mod receipts;

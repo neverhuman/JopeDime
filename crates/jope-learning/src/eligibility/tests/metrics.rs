@@ -32,7 +32,7 @@ pub(super) fn rebind(
     evidence
 }
 
-fn values(f: &Fixture, fold: usize) -> Vec<f64> {
+pub(super) fn values(f: &Fixture, fold: usize) -> Vec<f64> {
     let prediction: FoldPredictions = stored(f, &f.evidence.fold_predictions_sha256[fold]);
     match stored(f, &prediction.predictions_sha256) {
         Predictions::Values(values) => values,
@@ -40,7 +40,7 @@ fn values(f: &Fixture, fold: usize) -> Vec<f64> {
     }
 }
 
-fn independent_rmse(pairs: &[(f64, f64)]) -> f64 {
+pub(super) fn independent_rmse(pairs: &[(f64, f64)]) -> f64 {
     let mut squared = 0.0;
     for (target, prediction) in pairs {
         squared += (target - prediction) * (target - prediction);
@@ -48,11 +48,11 @@ fn independent_rmse(pairs: &[(f64, f64)]) -> f64 {
     (squared / pairs.len() as f64).sqrt()
 }
 
-fn close(a: f64, b: f64) -> bool {
+pub(super) fn close(a: f64, b: f64) -> bool {
     (a - b).abs() <= 1e-12 * a.abs().max(b.abs()).max(1.0)
 }
 
-fn uneven() -> Fixture {
+pub(super) fn uneven() -> Fixture {
     let folds = [
         vec!["-1.5", "2.0"],
         vec!["0.25", "3.5", "-2.75", "1.0"],

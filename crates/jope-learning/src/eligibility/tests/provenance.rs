@@ -50,11 +50,14 @@ pub(super) fn authority(state: &State) -> Authority {
     }
 }
 
-fn submit(f: &Fixture, evidence: &OofEvidence) -> (Result<Qualification>, hwm::IngestReport) {
+pub(super) fn submit(
+    f: &Fixture,
+    evidence: &OofEvidence,
+) -> (Result<Qualification>, hwm::IngestReport) {
     submit_record(f, &f.record, evidence)
 }
 
-fn submit_record(
+pub(super) fn submit_record(
     f: &Fixture,
     record: &HwmRecord,
     evidence: &OofEvidence,
@@ -63,11 +66,11 @@ fn submit_record(
     (qualified, ingest_record(f, record))
 }
 
-fn ingest(f: &Fixture) -> hwm::IngestReport {
+pub(super) fn ingest(f: &Fixture) -> hwm::IngestReport {
     ingest_record(f, &f.record)
 }
 
-fn ingest_record(f: &Fixture, record: &HwmRecord) -> hwm::IngestReport {
+pub(super) fn ingest_record(f: &Fixture, record: &HwmRecord) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,
@@ -91,13 +94,13 @@ pub(super) fn rejected_decisions(state: &State) -> Vec<String> {
         .collect()
 }
 
-fn with_context(f: &Fixture, context: Option<ContextEvidence>) -> OofEvidence {
+pub(super) fn with_context(f: &Fixture, context: Option<ContextEvidence>) -> OofEvidence {
     let mut evidence = f.evidence.clone();
     evidence.context = context;
     evidence
 }
 
-fn valid(f: &Fixture) -> ContextEvidence {
+pub(super) fn valid(f: &Fixture) -> ContextEvidence {
     f.evidence.context.clone().unwrap()
 }
 
@@ -151,6 +154,8 @@ pub(super) fn assert_refused_record(
 
 #[path = "provenance/cases.rs"]
 mod cases;
+#[allow(unused_imports)]
+use cases::*;
 
 #[test]
 fn missing_context_provenance_is_refused_at_real_teaching_ingress() {

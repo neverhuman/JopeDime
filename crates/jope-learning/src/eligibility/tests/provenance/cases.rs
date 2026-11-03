@@ -380,7 +380,7 @@ pub(crate) fn inner_partition_scope_forbids_outer_hold_rows() {
 }
 
 /// The rule every pre-provenance refusal and `RequalificationRefused` end with.
-const REQUALIFY: &str = "new, fully provenanced qualification";
+pub(super) const REQUALIFY: &str = "new, fully provenanced qualification";
 
 /// Owner decision D4, 2026-09-26: a pre-provenance qualification stays quarantined, and
 /// requalification is a refusal with a clear message, not a procedure. The only route back is a

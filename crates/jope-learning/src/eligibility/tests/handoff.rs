@@ -10,11 +10,11 @@ use super::*;
 use crate::revocation::testing;
 
 /// A submission whose handoff was rebuilt from `f`'s context after `tamper`.
-fn tampered(f: &Fixture, tamper: impl FnOnce(&mut HandoffParts)) -> OofEvidence {
+pub(super) fn tampered(f: &Fixture, tamper: impl FnOnce(&mut HandoffParts)) -> OofEvidence {
     tampered_in(f, &f.window, tamper)
 }
 
-fn tampered_in(
+pub(super) fn tampered_in(
     f: &Fixture,
     window: &ExecutionWindow,
     tamper: impl FnOnce(&mut HandoffParts),
@@ -39,7 +39,11 @@ fn tampered_in(
 // Collect independent security cases separately. Each still creates its own durable five-fold
 // fixture and uses the unchanged nextest deadline; filesystem contention must not accumulate
 // nineteen fixtures into one test's wall-clock budget.
-fn assert_handoff_refusal(label: &str, expected: &str, tamper: impl FnOnce(&mut HandoffParts)) {
+pub(super) fn assert_handoff_refusal(
+    label: &str,
+    expected: &str,
+    tamper: impl FnOnce(&mut HandoffParts),
+) {
     let f = fixture(Task::Regression, 5);
     assert_refused(&f, &tampered(&f, tamper), expected, label);
 }
@@ -213,7 +217,7 @@ fn teacher_handoff_refuses_revoked_handoff() {
     assert_refused(&f, &f.evidence, "RevokedEvidence", "revoked handoff");
 }
 
-fn assert_authenticated_handoff_admits(task: Task) {
+pub(super) fn assert_authenticated_handoff_admits(task: Task) {
     let f = fixture(task, 5);
     assert_positive_control(&f);
     let qualification = revalidate_qualification(&f.state, &f.record).unwrap();
@@ -322,7 +326,7 @@ fn pre_handoff_formats_keep_their_meaning_and_stay_quarantined() {
     assert!(freeze_teaching(&f.state).unwrap().entries.is_empty());
 }
 
-fn ingest(f: &Fixture) -> hwm::IngestReport {
+pub(super) fn ingest(f: &Fixture) -> hwm::IngestReport {
     hwm::ingest(
         &f.state,
         None,
