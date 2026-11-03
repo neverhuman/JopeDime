@@ -1,0 +1,31 @@
+{
+  "schema": "whitepaper.event-counters-source/v1",
+  "input_commit": "2799e5ddbabb27bf38204961b77c6c3b25cf10c2",
+  "input_sha256": {
+    "data/adapter_validation_trace.csv": "c26909c75ac70eab87b9796a7792807f53e6086deb611e29445a624a440a0839",
+    "data/adapter_validation_trace.source.json": "62a46711bb1243c8588df6abb7ca6d76ad6015d772c51b066354b5b7e06cb91a",
+    "data/pool_insertion_cadence.csv": "d6612181d46760e20ab006c44b9eb73ccbbb1b71a4fafdbcc563832c67f6ce14",
+    "data/pool_insertion_cadence.source.json": "5d5a8bf0496652576bd431f6f8911b5bccee10413b954a8d689aa5c53fd1a487"
+  },
+  "csv_sha256": "aefbdd5fdb3e31c420132a3055717083203380bdbcd3d7c5cf7778fc6ba03878",
+  "round_window": [
+    4064,
+    4263
+  ],
+  "rows": 200,
+  "reconstructed_insertion_events": 101,
+  "insertion_history_round_bounds": [
+    4051,
+    4280
+  ],
+  "insertion_source_line_window": [
+    3332,
+    3432
+  ],
+  "window_insertions": 89,
+  "window_adapter_admissions": 0,
+  "derivation": "Reconstruct unique insertion endpoints from consecutive committed interval rows, requiring identical duplicate endpoints and101 consecutive source lines strictly bracketing the200-round admission window. Count every matching program/context insertion and every adapter accepted flag by round; cumulative values are exact prefix sums starting at the window boundary.",
+  "zero_count_basis": "The complete consecutive insertion history has events on both sides of the chosen window; rounds with no matched insertion therefore contribute zero recorded events. Every adapter decision has an explicit accepted flag.",
+  "join_scope": "Logged round identifiers only; no assertion of joined evaluator/population/normalization or source/runtime qualification. The two event counts have distinct meanings and do not measure independent learning, proposal quality or speed.",
+  "new_live_data": false
+}
