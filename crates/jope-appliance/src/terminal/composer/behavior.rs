@@ -144,12 +144,12 @@ impl Composer {
         let Some(history) = &self.history else {
             return;
         };
-        if history.entries.is_empty() {
+        if history.entries().is_empty() {
             return;
         }
         let next = match self.navigation.take() {
             None if older => HistoryNavigation {
-                index: history.entries.len() - 1,
+                index: history.entries().len() - 1,
                 saved: self.text.clone(),
                 cursor: self.cursor,
             },
@@ -157,7 +157,7 @@ impl Composer {
                 nav.index = nav.index.saturating_sub(1);
                 nav
             }
-            Some(mut nav) if nav.index + 1 < history.entries.len() => {
+            Some(mut nav) if nav.index + 1 < history.entries().len() => {
                 nav.index += 1;
                 nav
             }
@@ -168,7 +168,7 @@ impl Composer {
             }
             None => return,
         };
-        self.text = history.entries[next.index].clone();
+        self.text = history.entries()[next.index].clone();
         self.cursor = self.text.len();
         self.navigation = Some(next);
         self.menu = None;
@@ -180,7 +180,7 @@ impl Composer {
         let entries = self
             .history
             .as_ref()
-            .map(|h| h.entries.as_slice())
+            .map(|h| h.entries())
             .unwrap_or(&[]);
         let limit = if older {
             search.found.unwrap_or(entries.len())
