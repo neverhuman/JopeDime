@@ -179,8 +179,6 @@ pub(super) use eligibility::{
     build_eligibility, copy_context_slices, generation_zero, load_dl_proposals,
 };
 use eligibility::build_transfer_rankings;
-#[cfg(test)]
-pub(super) use eligibility::proposal_score;
 use evaluation::StudyEvalContext;
 pub(super) use evaluation::{
     evaluate_member_split, refill_population, score_population,
