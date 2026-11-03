@@ -2,8 +2,7 @@ use super::{
     mc_coverage_manifest_str, mc_coverage_receipt_str, sha256_bytes, ts_baseline_receipt_str,
     ts_coverage_manifest_str, ts_coverage_receipt_str, validate_receipt_report_files, CoverageGate,
     SeedMember, COMPARATOR_SET_FILE, COMPARATOR_SET_SCHEMA, CORPUS_SCHEMA, FEATURE_BUDGETS,
-    MAX_GENERATIONS, MC_COVERAGE_MANIFEST_SHA256, MULTICLASS_HEADS, POPULATION,
-    TS_COVERAGE_MANIFEST_SHA256,
+    MC_COVERAGE_MANIFEST_SHA256, MULTICLASS_HEADS, POPULATION, TS_COVERAGE_MANIFEST_SHA256,
 };
 use anyhow::{bail, Context, Result};
 use feat_math::advanced_v3::validate_v3_genome;
