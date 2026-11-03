@@ -16,7 +16,9 @@ use crate::{
     require_accepted_vocabulary, sha256_hex, CHECKPOINT_VOCABULARY_SHA256,
 };
 
-use super::population::{assemble_population, check_population, PopulationFields, SeedBinding, SeedPopulation};
+use super::population::{
+    assemble_population, check_population, PopulationFields, SeedBinding, SeedPopulation,
+};
 
 /// Everything a proposal run produced, for the caller's receipt. Fields are private: only
 /// [`propose`] and [`propose_challenger`] (and `propose_unbound` with the `testing` feature)
