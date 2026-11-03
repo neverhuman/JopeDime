@@ -1,3 +1,4 @@
+use super::super::member_models::CandidateReceipt;
 use super::*;
 
 pub(crate) fn expected_job_id(manifest: &ShardManifest) -> Result<String> {
