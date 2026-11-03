@@ -25,6 +25,18 @@ fn run(args: &[&str], cwd: &Path) -> Output {
         .expect("run jope-records")
 }
 
+fn has_git_checkout(repo: &Path) -> bool {
+    Command::new("git")
+        .args(["-C"])
+        .arg(repo)
+        .args(["rev-parse", "--show-toplevel"])
+        .env("GIT_CONFIG_COUNT", "1")
+        .env("GIT_CONFIG_KEY_0", "safe.directory")
+        .env("GIT_CONFIG_VALUE_0", repo)
+        .output()
+        .is_ok_and(|output| output.status.success())
+}
+
 /// `print(json.dumps(summary, sort_keys=True))`.
 fn printed(summary: &Value) -> String {
     format!("{}\n", pyjson::dumps(summary, true, None))
@@ -93,9 +105,9 @@ fn committed_records_print_the_python_summaries() {
         ),
     ];
     for (args, summary) in expected {
-        // Exercise git-root discovery when this checkout includes Git metadata. Some CI
-        // harnesses copy sources to /src without the .git directory.
-        if repo.join(".git").exists() {
+        // Exercise git-root discovery when Git can resolve this checkout. Some CI harnesses
+        // copy sources to /src with absent or unusable Git metadata.
+        if has_git_checkout(&repo) {
             let from_git = run(&args, &repo.join("docs"));
             assert_eq!(succeeds(&from_git), summary, "{args:?}");
         }
