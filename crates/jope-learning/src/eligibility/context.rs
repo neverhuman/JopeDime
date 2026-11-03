@@ -379,13 +379,13 @@ pub fn retain_handed_off_context(
 mod handoff;
 mod handoff_verify;
 
+#[cfg(test)]
+pub(super) use handoff::HandoffTraining;
 pub(super) use handoff::{
     parse_handoff, AdmissionPinsRecord, ExecutionAttestationRecord, HandoffRecord,
     ProducedArtifact, CONTEXT_CLIP, CONTEXT_WIDTH, EXECUTION_ATTESTATION_SCHEMA,
     MAX_ARTIFACT_BYTES, PRODUCED_ARTIFACT_BACKEND, PRODUCED_ARTIFACT_SCHEMA,
 };
-#[cfg(test)]
-pub(super) use handoff::HandoffTraining;
 pub use handoff::{
     ContextExecution, HandoffEncoder, HandoffEvidence, HandoffRelease, ProducerPlan,
     HANDOFF_SCHEMA, TEACHER_ADMISSION,
