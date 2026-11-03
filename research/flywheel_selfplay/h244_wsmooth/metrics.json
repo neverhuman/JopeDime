@@ -1,7 +1,1033 @@
 {
   "wave": "H244",
-  "status": "PREREGISTERED",
+  "status": "COMPLETE",
   "optimizer_updates": 0,
-  "complete_cells": 0,
-  "verdict": null
+  "complete_cells": 15,
+  "arms": [
+    "r882",
+    "CONTROL",
+    "WSMOOTH_SELECT",
+    "WSINGLE"
+  ],
+  "seeds": [
+    244101,
+    244102,
+    244103
+  ],
+  "primary_dlval": {
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [],
+          [],
+          []
+        ]
+      },
+      "WSMOOTH_SELECT_minus_r882": {
+        "per_seed_gain": [
+          -0.0004432097567940309,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [],
+          []
+        ],
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "WSINGLE_minus_r882": {
+        "per_seed_gain": [
+          -0.0006410142689527969,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [],
+          []
+        ]
+      },
+      "WSMOOTH_SELECT_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.0004432097567940309,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [],
+          []
+        ]
+      },
+      "WSINGLE_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.0006410142689527969,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [],
+          []
+        ]
+      },
+      "WSINGLE_minus_WSMOOTH_SELECT": {
+        "per_seed_gain": [
+          -0.00019780451215876594,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [],
+          []
+        ]
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.1531720672344512,
+        1.1529742627222925
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.137331498312107,
+        1.1371249990961172
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0016257016878928887,
+        -0.001832200903882697
+      ],
+      [
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0011630101835473639
+      ],
+      [
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0011630101835473639,
+        -0.0011630101835473639
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1494.5194889290449,
+        1494.5194889290447
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "secondary_oof": {
+    "contexts": 1219,
+    "families": 205,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [],
+          [],
+          []
+        ]
+      },
+      "WSMOOTH_SELECT_minus_r882": {
+        "per_seed_gain": [
+          -0.0006521715340419104,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-080d0150fe9b57e7f0dd910275d2e0fb297455bacac55b2e7b0bfb1fafe2139c",
+            "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+            "fam-645e6b8f8cc8ad1b46823b9d7eb6b13fc92a9536a9197482f0ff7c9f052e0c03",
+            "fam-b188b0edb66def92838f07aaa04802592b660f5450c4268d5ad0288ce8437652",
+            "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+            "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d"
+          ],
+          [],
+          []
+        ],
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "WSINGLE_minus_r882": {
+        "per_seed_gain": [
+          -0.0063176516548695185,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+            "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+            "fam-7f54a8ff301ec074e88082b63daab74585b3d33f7229894b138402a780c5e174",
+            "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d",
+            "fam-a76de6dbef8706c562230c8cc49322acb2b22033b557a5cd113190361901c941",
+            "fam-a7b99e5abe33901e5f8734e084c3ba4d26799a227f3da87a55f46f8a6992d70e",
+            "fam-ccf8d821cf801986c51ed3707c8d0c0049632990996dbaf1fe379aedef8d1c68",
+            "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+            "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d"
+          ],
+          [],
+          []
+        ]
+      },
+      "WSMOOTH_SELECT_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.0006521715340419104,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-080d0150fe9b57e7f0dd910275d2e0fb297455bacac55b2e7b0bfb1fafe2139c",
+            "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+            "fam-645e6b8f8cc8ad1b46823b9d7eb6b13fc92a9536a9197482f0ff7c9f052e0c03",
+            "fam-b188b0edb66def92838f07aaa04802592b660f5450c4268d5ad0288ce8437652",
+            "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619",
+            "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d"
+          ],
+          [],
+          []
+        ]
+      },
+      "WSINGLE_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.0063176516548695185,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+            "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+            "fam-7f54a8ff301ec074e88082b63daab74585b3d33f7229894b138402a780c5e174",
+            "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d",
+            "fam-a76de6dbef8706c562230c8cc49322acb2b22033b557a5cd113190361901c941",
+            "fam-a7b99e5abe33901e5f8734e084c3ba4d26799a227f3da87a55f46f8a6992d70e",
+            "fam-ccf8d821cf801986c51ed3707c8d0c0049632990996dbaf1fe379aedef8d1c68",
+            "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+            "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d"
+          ],
+          [],
+          []
+        ]
+      },
+      "WSINGLE_minus_WSMOOTH_SELECT": {
+        "per_seed_gain": [
+          -0.005665480120827607,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [
+            "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7",
+            "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071",
+            "fam-7f54a8ff301ec074e88082b63daab74585b3d33f7229894b138402a780c5e174",
+            "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d",
+            "fam-a76de6dbef8706c562230c8cc49322acb2b22033b557a5cd113190361901c941",
+            "fam-a7b99e5abe33901e5f8734e084c3ba4d26799a227f3da87a55f46f8a6992d70e",
+            "fam-ccf8d821cf801986c51ed3707c8d0c0049632990996dbaf1fe379aedef8d1c68",
+            "fam-dd54715b0bb4a21e2eab98623c1062286cce926a8040be9a2290b7ca442c9aea",
+            "fam-deb6e0130b2407e54c15051e037c031b3ca786da7f02a66f7fc88f066396418d"
+          ],
+          [],
+          []
+        ]
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3847032614591415,
+        1.3790377813383141
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.4218585502599794,
+        1.4185529777290533
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ]
+    ],
+    "vs_plateau_best_by_seed": [
+      [
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28290135025997953,
+        0.2795957777290534
+      ],
+      [
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28411623455229806
+      ],
+      [
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28411623455229806,
+        0.28411623455229806
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1499.4068647930058,
+        1496.8648362499728
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "selection_sha256": "748cb5bc09b84fa4be328424ccc4053140141190e24a567464a8d954e1c1f313",
+  "selected_counts": {
+    "CONTROL": {
+      "r882": 15
+    },
+    "WSMOOTH_SELECT": {
+      "SM10": 1,
+      "r882": 14
+    },
+    "WSINGLE": {
+      "ONE10": 1,
+      "r882": 14
+    }
+  },
+  "context27": {
+    "index_zero_based": 27,
+    "context_sha256": "43022ae6a8bc83e9e25ea4a2882389152856226f5b2bdd4668db07f2f510ae91",
+    "family_id": "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+    "baseline": {
+      "values": 1.1226949552792034,
+      "choices": 803,
+      "invalid": false
+    },
+    "selected": [
+      {
+        "seed": 244101,
+        "outer_fold": 0,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.128496258392441,
+            "choices": 996,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244101,
+        "outer_fold": 1,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244101,
+        "outer_fold": 2,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244101,
+        "outer_fold": 3,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244101,
+        "outer_fold": 4,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244102,
+        "outer_fold": 0,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244102,
+        "outer_fold": 1,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244102,
+        "outer_fold": 2,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244102,
+        "outer_fold": 3,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244102,
+        "outer_fold": 4,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244103,
+        "outer_fold": 0,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244103,
+        "outer_fold": 1,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244103,
+        "outer_fold": 2,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244103,
+        "outer_fold": 3,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      },
+      {
+        "seed": 244103,
+        "outer_fold": 4,
+        "policies": {
+          "CONTROL": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSMOOTH_SELECT": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          },
+          "WSINGLE": {
+            "values": 1.1226949552792034,
+            "choices": 803,
+            "invalid": false
+          }
+        }
+      }
+    ],
+    "fixed": {
+      "r882": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244101-SM01": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244101-ONE01": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244101-SM03": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244101-ONE03": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244101-SM10": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244101-ONE10": {
+        "values": 1.128496258392441,
+        "choices": 996,
+        "invalid": false
+      },
+      "244102-SM01": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244102-ONE01": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244102-SM03": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244102-ONE03": {
+        "values": -2.0,
+        "choices": 190,
+        "invalid": true
+      },
+      "244102-SM10": {
+        "values": -2.0,
+        "choices": 1010,
+        "invalid": true
+      },
+      "244102-ONE10": {
+        "values": 1.128496258392441,
+        "choices": 996,
+        "invalid": false
+      },
+      "244103-SM01": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244103-ONE01": {
+        "values": -2.0,
+        "choices": 1010,
+        "invalid": true
+      },
+      "244103-SM03": {
+        "values": 1.1226949552792034,
+        "choices": 803,
+        "invalid": false
+      },
+      "244103-ONE03": {
+        "values": -2.0,
+        "choices": 1010,
+        "invalid": true
+      },
+      "244103-SM10": {
+        "values": -2.0,
+        "choices": 190,
+        "invalid": true
+      },
+      "244103-ONE10": {
+        "values": -2.0,
+        "choices": 1010,
+        "invalid": true
+      }
+    }
+  },
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "frozen_sha256": "8d1070faf574ee1cd2a4e630887e1662b43189b3f89b04982143ef2704818aae",
+  "initial_adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+  "source_commit": "e61adfe566e784ca3182c248df428eb717fe2a3a",
+  "manifest_sha256": "2264e236137c9be2c6b6b0417dc96a39e16459d2df329403c6358622480229c9",
+  "serving_promotion": false,
+  "audit": {
+    "refused": [],
+    "protected_reads": 0,
+    "opened_count": 1328,
+    "opened_sha256": "0393899c5e2af0972b91ed350ee159cd6697daba7c076ce8cc7fbcd55dbabc1e",
+    "full_receipt_archive_member": "attempts/attempt1/metrics.json"
+  },
+  "elapsed_seconds": 3641.391481668001,
+  "verdict": "NO_ADVANCE",
+  "terminal_resources": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "final_sample": {
+      "utc": 1793684436.8864524,
+      "load5": 48.52783203125,
+      "available": 54389530624,
+      "free": 788889272320,
+      "rss": 16072704,
+      "threads": 2,
+      "affinity": [
+        48,
+        49,
+        50,
+        51
+      ],
+      "elapsed": 3644.1168935089954,
+      "pause_requested": false
+    },
+    "admission": {
+      "utc": 1793680792.769162,
+      "load5": 37.29296875,
+      "available": 87184097280,
+      "free": 827984482304,
+      "rss": 15781888,
+      "threads": 1,
+      "affinity": [
+        48,
+        49,
+        50,
+        51
+      ]
+    },
+    "elapsed_seconds": 3644.6174481049966,
+    "peak": {
+      "rss": 3273158656,
+      "threads": 2
+    },
+    "pause_requested_seconds": 0.0,
+    "compute_stop": 1793691000.0,
+    "resume_number": 0,
+    "transition_count": 0
+  }
 }
