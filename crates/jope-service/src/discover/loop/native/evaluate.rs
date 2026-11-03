@@ -180,13 +180,13 @@ pub(super) fn numeric_rows<B: AsRef<[u8]>>(
 /// format. Every preprocessing parameter is fitted inside the training fold.
 #[derive(Serialize, Deserialize)]
 pub(crate) struct NativeModel {
-    version: u32,
-    features: Vec<String>,
-    dsl: String,
-    min: Vec<f64>,
-    max: Vec<f64>,
-    fill: Vec<f64>,
-    target_min: f64,
-    target_scale: f64,
-    model: feat_math::Model,
+    pub(super) version: u32,
+    pub(super) features: Vec<String>,
+    pub(super) dsl: String,
+    pub(super) min: Vec<f64>,
+    pub(super) max: Vec<f64>,
+    pub(super) fill: Vec<f64>,
+    pub(super) target_min: f64,
+    pub(super) target_scale: f64,
+    pub(super) model: feat_math::Model,
 }

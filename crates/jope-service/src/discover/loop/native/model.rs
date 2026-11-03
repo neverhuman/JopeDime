@@ -1,6 +1,15 @@
 use super::evaluate::{numeric_rows, UndefinedFitness};
 use super::*;
 
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RefitEnvelope {
+    attempt: Attempt,
+    model_json: String,
+    model_digest: String,
+    predictions_digest: String,
+}
+
 impl NativeModel {
     pub(crate) fn fit(
         features: &[String],
