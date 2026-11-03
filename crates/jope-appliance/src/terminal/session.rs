@@ -333,6 +333,7 @@ impl Session {
                 .snapshot
                 .as_ref()
                 .is_some_and(|snapshot| snapshot.state == RunState::Running)
+                || self.screen.animating()
             {
                 Duration::from_millis(50)
             } else {
@@ -533,7 +534,7 @@ impl Session {
             (
                 self.message
                     .clone()
-                    .unwrap_or_else(|| "ready · no active run".into()),
+                    .unwrap_or_else(|| crate::terminal::screen::IDLE_STATUS.into()),
                 self.activity.clone(),
             )
         }
