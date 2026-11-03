@@ -10,7 +10,9 @@ fn shards_account_for_exactly_sixty_slots_and_resume_ignores_partial_tail() {
 
     let directory = tempdir().unwrap();
     fs::create_dir_all(generation_root(directory.path(), 0)).unwrap();
-    assert!(load_checkpoints(directory.path()).unwrap().is_empty());
+    assert!(super::indexes::load_checkpoints(directory.path())
+        .unwrap()
+        .is_empty());
 }
 
 #[test]
