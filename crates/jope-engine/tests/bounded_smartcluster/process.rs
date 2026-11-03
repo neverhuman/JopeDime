@@ -22,14 +22,45 @@ impl CommandRunner for NoGpu {
     }
 }
 
-/// The `scqd` binary of this target directory. The test never builds it (W7-D5): a test must
-/// not spend a time-budgeted CI lane on a nested `cargo build`. The workspace test build that
+fn scqd_binary_for_profile(profile_dir: &Path) -> PathBuf {
+    let local_binary = profile_dir.join("scqd");
+    if local_binary.is_file() {
+        return local_binary;
+    }
+    let target_dir = profile_dir
+        .ancestors()
+        .find(|directory| directory.file_name().is_some_and(|name| name == "target"));
+    target_dir
+        .map(|directory| directory.join("debug/scqd"))
+        .unwrap_or(local_binary)
+}
+
+#[test]
+fn scqd_binary_uses_shared_target_when_test_artifacts_are_ledger_scoped() {
+    let temp = tempfile::tempdir().unwrap();
+    let target = temp.path().join("target");
+    let profile_dir = target.join("ledger_x2_1/debug");
+    let shared_binary = target.join("debug/scqd");
+    fs::create_dir_all(&profile_dir).unwrap();
+    fs::create_dir_all(shared_binary.parent().unwrap()).unwrap();
+    fs::write(&shared_binary, b"workspace scqd").unwrap();
+    assert_eq!(scqd_binary_for_profile(&profile_dir), shared_binary);
+
+    let local_binary = profile_dir.join("scqd");
+    fs::write(&local_binary, b"ledger scqd").unwrap();
+    assert_eq!(scqd_binary_for_profile(&profile_dir), local_binary);
+}
+
+/// The workspace target's `scqd` binary, including when Cargo nests test artifacts under a
+/// ledger-specific target directory. The test never builds it (W7-D5): a test must not spend a
+/// time-budgeted CI lane on a nested `cargo build`. The workspace test build that
 /// runs this test already produces it (`jain-smartcluster-daemon`'s integration tests make
 /// Cargo build its `scqd` binary), and `deploy/ci/full-lane.sh` refuses to run the tests
 /// without it. Locally: `cargo build --locked -p jain-smartcluster-daemon --bin scqd`.
 pub(crate) fn scqd_binary() -> PathBuf {
     let exe = std::env::current_exe().unwrap();
-    let binary = exe.parent().unwrap().parent().unwrap().join("scqd");
+    let profile_dir = exe.parent().unwrap().parent().unwrap();
+    let binary = scqd_binary_for_profile(profile_dir);
     assert!(
         binary.is_file(),
         "{} is absent: this fixture runs the workspace's own scqd and never builds it; build it \
