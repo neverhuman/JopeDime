@@ -2,8 +2,8 @@ use super::*;
 
 mod cohort;
 mod population;
-mod scheduling;
-mod worker;
+pub(super) mod scheduling;
+pub(super) mod worker;
 
 pub(crate) use cohort::{
     admission_order, campaign_root, cohort_dataset, generation_root, immutable_or_equal, load_json,
@@ -18,10 +18,6 @@ pub(crate) use scheduling::{
     parse_prediction_bytes, physical_hostname, policy_win, prediction_file,
     qualifying_winner_for_policy, rank_slots, shard_members_with_sizes, shard_start,
 };
-#[cfg(test)]
-pub(super) use scheduling::{cohort_win, qualifying_winner, shard_members, strict_win};
-#[cfg(test)]
-pub(super) use worker::is_sha256_hex;
 pub(crate) use worker::{
     cpp17_toolchain, evaluate_worker_candidate, expected_job_id, validate_candidate_backend,
     validate_shard_manifest,
