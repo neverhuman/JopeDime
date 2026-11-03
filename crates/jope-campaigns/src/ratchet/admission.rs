@@ -1,7 +1,6 @@
 use super::*;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-
 pub(crate) enum ProofSlateLaneV3 {
     Selectable,
     CvOnlyCalibration,
