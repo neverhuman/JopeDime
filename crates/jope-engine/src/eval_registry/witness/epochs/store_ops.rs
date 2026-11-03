@@ -9,7 +9,7 @@ impl WitnessStore {
     pub fn epoch_proofs(&self) -> &[WitnessEpochProof] {
         &self.epoch_proofs
     }
-    pub(super) fn check_epoch_next(
+    pub(in crate::eval_registry::witness) fn check_epoch_next(
         &self,
         request: &SignedWitnessEpochTransition,
         when: u64,
@@ -43,7 +43,7 @@ impl WitnessStore {
         );
         Ok(())
     }
-    pub(super) fn replay_epoch_transition(
+    pub(in crate::eval_registry::witness) fn replay_epoch_transition(
         &mut self,
         proof: WitnessEpochProof,
         digest: String,
