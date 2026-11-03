@@ -1,11 +1,5 @@
-use crate::context::PolicyContext;
-use anyhow::{ensure, Context, Result};
-use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, BTreeSet};
-use std::io::Write;
-use std::path::Path;
-
 use crate::config::{ChallengerIdentity, CheckpointBinding};
+use crate::context::PolicyContext;
 use crate::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
 use crate::grammar::BoundVocabulary;
 use crate::model::PolicyModel;
@@ -15,6 +9,7 @@ use crate::{
     context_sha256, is_sha256_hex, refuse_rejected_checkpoint, require_accepted_policy,
     require_accepted_vocabulary, sha256_hex, CHECKPOINT_VOCABULARY_SHA256,
 };
+use anyhow::{ensure, Context, Result};
 
 use super::population::{
     assemble_population, check_population, PopulationFields, SeedBinding, SeedPopulation,
