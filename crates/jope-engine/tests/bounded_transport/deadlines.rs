@@ -1,4 +1,21 @@
 use super::*;
+use jope_parallel::native_loop::bounded::rendezvous as rendezvous_api;
+
+/// The fixture plan with each host's certificate digest set to an in-test certificate.
+fn planned_hosts(k: &Keys) -> (BoundedRunContract, Vec<TestCertificate>) {
+    let certs: Vec<_> = (0..3)
+        .map(|i| current(&format!("fixture-host-{i}"), 21 + i as u8))
+        .collect();
+    let mut c = contract(now_ms(), 3, k);
+    let unique = format!("w7-transport-{}", certs[0].sha256.get(..8).unwrap());
+    c.run = unique;
+    for (p, cert) in c.participants.iter_mut().zip(&certs) {
+        p.host.certificate_sha256 = cert.sha256.clone();
+    }
+    resign(&mut c, k);
+    c.validate_structure().unwrap();
+    (c, certs)
+}
 
 fn quick(ms: u64) -> Timeouts {
     let t = Duration::from_millis(ms);
@@ -102,24 +119,24 @@ fn quick_join(k: &Keys) -> (BoundedRunContract, Vec<TestCertificate>, Duration) 
 fn gather_until_refused(
     c: &BoundedRunContract,
     k: &Keys,
-    acceptor: &mut dyn rendezvous::Acceptor,
-) -> (rendezvous::GroupRefusal, Duration) {
+    acceptor: &mut dyn rendezvous_api::Acceptor,
+) -> (rendezvous_api::GroupRefusal, Duration) {
     let opened = Instant::now();
-    let mut rv = rendezvous::Rendezvous::open(
+    let mut rv = rendezvous_api::Rendezvous::open(
         c,
         &sha(&bytes(c)),
         &k.coordinator,
         "fixture-coordinator-boot",
-        &rendezvous::fresh_nonce().unwrap(),
+        &rendezvous_api::fresh_nonce().unwrap(),
         now_ms(),
     )
     .unwrap();
-    let refusal = rendezvous::gather(acceptor, &mut rv, &k.coordinator, &now_ms)
+    let refusal = rendezvous_api::gather(acceptor, &mut rv, &k.coordinator, &now_ms)
         .err()
         .expect("a group was admitted");
     (refusal, opened.elapsed())
 }
-fn assert_join_timeout(refusal: &rendezvous::GroupRefusal) {
+fn assert_join_timeout(refusal: &rendezvous_api::GroupRefusal) {
     assert!(
         matches!(refusal.cause, RefusalCause::JoinTimeout { .. }),
         "{refusal}"
@@ -192,7 +209,8 @@ fn a_trickled_hello_cannot_hold_the_fixture_rendezvous_past_its_join_deadline() 
         read_frame(&mut s, limit).unwrap();
         trickle(s, &1_000u32.to_be_bytes());
     });
-    let (refusal, elapsed) = gather_until_refused(&c, &k, &mut rendezvous::UnixAcceptor(&listener));
+    let (refusal, elapsed) =
+        gather_until_refused(&c, &k, &mut rendezvous_api::UnixAcceptor(&listener));
     assert_join_timeout(&refusal);
     ended_at_deadline(
         elapsed,
@@ -209,7 +227,7 @@ fn join_against_a_trickling_coordinator(admission: bool) {
     let k = keys(3);
     let (c, certs, join) = quick_join(&k);
     let sha = sha(&bytes(&c));
-    let closure = rendezvous::closure_digest(&c.artifact_closure).unwrap();
+    let closure = rendezvous_api::closure_digest(&c.artifact_closure).unwrap();
     let limit = c.rendezvous.max_message_bytes;
     let acceptor = TlsAcceptor::bind(
         loopback(),
@@ -219,12 +237,12 @@ fn join_against_a_trickling_coordinator(admission: bool) {
     )
     .unwrap();
     let addr = acceptor.local_addr().unwrap();
-    let rv = rendezvous::Rendezvous::open(
+    let rv = rendezvous_api::Rendezvous::open(
         &c,
         &sha,
         &k.coordinator,
         "fixture-coordinator-boot",
-        &rendezvous::fresh_nonce().unwrap(),
+        &rendezvous_api::fresh_nonce().unwrap(),
         now_ms(),
     )
     .unwrap();
@@ -245,7 +263,7 @@ fn join_against_a_trickling_coordinator(admission: bool) {
     )
     .unwrap();
     let start = Instant::now();
-    let joined = rendezvous::join(
+    let joined = rendezvous_api::join(
         &mut s,
         &c,
         &sha,
@@ -272,7 +290,7 @@ fn an_exchange_deadline_bounds_trickled_frames_and_stalled_writes() {
     let (mut server, client) = tls_pair(&a, &b);
     let peer = thread::spawn(move || trickle(client, &1_000u32.to_be_bytes()));
     let start = Instant::now();
-    assert!(rendezvous::read_frame_by(&mut server, 1024, Instant::now() + deadline).is_err());
+    assert!(rendezvous_api::read_frame_by(&mut server, 1024, Instant::now() + deadline).is_err());
     ended_at_deadline(start.elapsed(), deadline, "a trickled frame");
     drop(server);
     peer.join().unwrap();
@@ -282,14 +300,15 @@ fn an_exchange_deadline_bounds_trickled_frames_and_stalled_writes() {
     write_frame(&mut client, b"intact", 1024).unwrap();
     thread::sleep(Duration::from_millis(50));
     let start = Instant::now();
-    assert!(rendezvous::read_frame_by(&mut server, 1024, Instant::now()).is_err());
+    assert!(rendezvous_api::read_frame_by(&mut server, 1024, Instant::now()).is_err());
     assert!(start.elapsed() < Duration::from_millis(100));
     assert_eq!(read_frame(&mut server, 1024).unwrap(), b"intact");
     // A peer that stops reading: the write fills the socket buffers and ends at the deadline.
     let big = vec![0u8; 64 << 20];
     let start = Instant::now();
     assert!(
-        rendezvous::write_frame_by(&mut server, &big, u32::MAX, Instant::now() + deadline).is_err()
+        rendezvous_api::write_frame_by(&mut server, &big, u32::MAX, Instant::now() + deadline)
+            .is_err()
     );
     ended_at_deadline(
         start.elapsed(),
