@@ -22,7 +22,7 @@ impl OrigV2Encoder {
             seed: config.base_seed,
             ..HyperionConfig::default()
         };
-        let runtime = load_runtime(&base, super::DEFAULT_OUTPUT_DIM)?;
+        let runtime = load_runtime(&base, crate::hyperion::DEFAULT_OUTPUT_DIM)?;
         let model = V7Model::load(&config.weights_path, &runtime.settings)?;
         let device = model.device_label().to_string();
         if config.require_gpu && !device.starts_with("cuda") && !device.starts_with("gpu") {
