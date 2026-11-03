@@ -1,3 +1,5 @@
+use selection_math::{build_ensemble, ensemble_nrmse, select_one_se, selector_evaluations};
+
 pub(crate) fn validate_dataset_selection(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,

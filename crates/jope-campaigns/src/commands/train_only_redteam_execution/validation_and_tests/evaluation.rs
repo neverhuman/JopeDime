@@ -1,3 +1,5 @@
+use selection_math::load_ranked_evaluation;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct DatasetValidationReplay {
     pub dataset_hash: String,

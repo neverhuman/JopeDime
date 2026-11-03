@@ -1,6 +1,6 @@
 use super::*;
 
-fn load_ranked_evaluation(row: &RankedCandidate) -> Result<CandidateEvaluation> {
+pub(super) fn load_ranked_evaluation(row: &RankedCandidate) -> Result<CandidateEvaluation> {
     let (evaluation, digest): (CandidateEvaluation, _) =
         read_receipt(&relocated_input_path(&row.evaluation_path))?;
     if digest != row.evaluation_sha256
@@ -148,7 +148,11 @@ fn prediction_nrmse(targets: &[f64], predictions: &[f64], target_sd: f64) -> Res
     Ok((squared_error(targets, predictions)? / targets.len() as f64).sqrt() / target_sd)
 }
 
-fn optimal_convex_alpha(targets: &[f64], current: &[f64], candidate: &[f64]) -> Result<f64> {
+pub(super) fn optimal_convex_alpha(
+    targets: &[f64],
+    current: &[f64],
+    candidate: &[f64],
+) -> Result<f64> {
     if targets.len() != current.len() || targets.len() != candidate.len() || targets.is_empty() {
         bail!("convex mixing inputs have different shapes");
     }
@@ -169,7 +173,7 @@ fn optimal_convex_alpha(targets: &[f64], current: &[f64], candidate: &[f64]) -> 
     Ok((numerator / denominator).clamp(0.0, 1.0))
 }
 
-fn add_prediction(current: &[f64], candidate: &[f64], alpha: f64) -> Vec<f64> {
+pub(super) fn add_prediction(current: &[f64], candidate: &[f64], alpha: f64) -> Vec<f64> {
     current
         .iter()
         .zip(candidate)

@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::{
+        selection_finalize::finalize_smart_only_selector,
+        selection_math::{add_prediction, optimal_convex_alpha},
+    };
 
     fn candidate(id: char, loss: f64, complexity: usize) -> RankedCandidate {
         RankedCandidate {
