@@ -116,6 +116,7 @@ fn child_main() -> Result<i32> {
     }
 }
 
+#[path = "bounded_run_recovery/process_supervisor.rs"]
 mod process_supervisor;
 use process_supervisor::{proc_stat, ProcessRecord, ProcessSupervisor};
 
@@ -368,4 +369,5 @@ fn exited(pid: i32) -> bool {
 }
 
 #[cfg(test)]
+#[path = "bounded_run_recovery/scenarios.rs"]
 mod scenarios;
