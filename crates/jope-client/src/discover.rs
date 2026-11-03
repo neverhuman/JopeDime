@@ -254,9 +254,10 @@ fn discover_with(
 }
 
 mod local;
+#[cfg(test)]
+use local::{alive, detached, record};
 use local::{
-    alive, attached, detached, private_file, private_home, private_options, record, start_engine,
-    store_owner, Reaper,
+    attached, private_file, private_home, private_options, start_engine, store_owner, Reaper,
 };
 
 #[cfg(test)]
