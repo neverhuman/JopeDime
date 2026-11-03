@@ -1,5 +1,4 @@
 use super::*;
-use super::*;
 fn experiment() -> Experiment {
     Experiment {
         schema: EXPERIMENT_SCHEMA.into(),
