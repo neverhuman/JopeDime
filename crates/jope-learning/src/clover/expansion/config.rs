@@ -34,6 +34,8 @@ fn string_array(source: &str, declaration: &str, count: usize) -> Result<Vec<Str
 /// Reading these fixed source paths never executes the engine or touches data.
 /// A receipt binds actual bytes, not proposed operator defaults or a historical PASS.
 pub fn audit(root: &Path) -> Result<Value> {
+    let root = root.canonicalize()?;
+    let safe_directory = format!("safe.directory={}", root.display());
     let paths = [
         "crates/jope-engine/src/gp.rs",
         "crates/jope-engine/src/gp/search_api.rs",
@@ -54,10 +56,16 @@ pub fn audit(root: &Path) -> Result<Value> {
     ];
     let git = Command::new("git")
         .args(["-C"])
-        .arg(root)
+        .arg(&root)
+        .arg("-c")
+        .arg(&safe_directory)
         .args(["rev-parse", "HEAD"])
         .output()?;
-    ensure!(git.status.success(), "GP source commit unavailable");
+    ensure!(
+        git.status.success(),
+        "GP source commit unavailable: {}",
+        String::from_utf8_lossy(&git.stderr)
+    );
     let commit = String::from_utf8(git.stdout)?.trim().to_owned();
     ensure!(commit.len() == 40, "full GP source SHA required");
     let mut sources = BTreeMap::new();
@@ -66,7 +74,9 @@ pub fn audit(root: &Path) -> Result<Value> {
         let bytes = fs::read(root.join(path)).with_context(|| format!("GP source {path}"))?;
         let committed = Command::new("git")
             .args(["-C"])
-            .arg(root)
+            .arg(&root)
+            .arg("-c")
+            .arg(&safe_directory)
             .args(["show", &format!("{commit}:{path}")])
             .output()?;
         ensure!(
