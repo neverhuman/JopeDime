@@ -5,7 +5,7 @@ fn rejects_invalid_ratchet_provenance() {
     let fixture = prereg_fixture();
     let PreregFixture {
         identity,
-        plan,
+        plan: _,
         parent_map,
         ratchets,
         scores,
