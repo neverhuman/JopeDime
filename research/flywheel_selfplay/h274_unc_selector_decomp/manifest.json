@@ -1,0 +1,118 @@
+{
+  "schema": "jope.h274.manifest/v1",
+  "wave_id": "h274-unc-selector-decomp-20261103",
+  "parent_commit": "cf9575160409423cc821b47d534dbb9e5a6ef7de",
+  "h265_source_sha256": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+  "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "fold_seeds": [
+    274140,
+    274141,
+    274142
+  ],
+  "model_seeds": [
+    274101,
+    274102,
+    274103
+  ],
+  "boot_seed": 274150,
+  "arms": [
+    "CONTROL",
+    "RERANK4",
+    "CTXNORM",
+    "CTXNORM_SHUF",
+    "CTXNORM_FSHUF",
+    "RERANK4_UNC",
+    "CTXNORM_UNC",
+    "CTXNORM_SHUF_UNC",
+    "CTXNORM_FSHUF_UNC"
+  ],
+  "n_cells": 180,
+  "neural_updates": 0,
+  "resource_limits": {
+    "host": "xbabe2",
+    "affinity": [
+      48,
+      50,
+      51,
+      52
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "aggregate_threads": 4,
+    "rss_bytes": 4294967296,
+    "disk_free_min": 300000000000,
+    "load5_admit": 100,
+    "load5_pause": 108,
+    "A1": true,
+    "compute_stop": "2026-11-03T22:30:00Z",
+    "closeout_deadline": "2026-11-03T23:15:00Z",
+    "single_run": true,
+    "swap_full_pause": {
+      "free_lte_max_bytes": 1048576,
+      "free_lte_total_fraction": 0.001,
+      "resume_free_gte_bytes": 67108864,
+      "hard_abort": false
+    }
+  },
+  "input_sha256": {
+    "inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "inputs/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "inputs/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "inputs/r882/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "inputs/r882/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "inputs/fold_manifest.json": "0e7399c6d2cf842e589410b8794da4b3494cd9208971437f32e42395858d7739"
+  },
+  "source_sha256": {
+    "audit.py": "826a3959219c804dc186fe283aa00dc697a42df42330edb9a075a34bf88e0656",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "test_h274.py": "d0da2d786202a328a11721562651d74699738f934a4a41d5433d5f35057f6257",
+    "metrics.schema.json": "e9353b752702ff4fc30496e36069571ef9b15eadb990184f9384840a260ffe4d",
+    "dependencies.py": "a8712878ab85bdd84df1ea68893f94925c9ff091118ba72c6cbaa675343440c9",
+    "dependency-pins.json": "8e884fc1b8cc92300ebafb4c5e7fa2dd310cc27399a83e0aa198d6b9a66b8211",
+    "folds.json": "c793710b2ef07555ac2c3266b0f47218aa6cbfd7fbe975a3617ad02ae20b7841",
+    "monitor.py": "2058f2d8a0a35eea12f9c7a4c546270ed1577e3498a9fe72dd76b746b9aaaeb4",
+    "runner.py": "677fbe16ab8128e8699f5c1e5f1c4c1f4cf077dc043d38c1024ad2e989f13d82"
+  },
+  "scientific_parent_commit": "68f517d63ab22c31902cfa0c0e0f837a49aeb255",
+  "fold_manifest": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H274/astra-t1955/prereg/fold_manifest.json",
+    "version_id": "B7Q19cSUqS2smyY_vzw3bCspM_D2mLe9",
+    "sha256": "0e7399c6d2cf842e589410b8794da4b3494cd9208971437f32e42395858d7739",
+    "bytes": 337690,
+    "exact_version_get_verified": true,
+    "created_epoch": 1793736059.8146734,
+    "algorithm": "Sorted205families -> default_rng(foldseed).permutation -> array_split5; preserve selected.json context order within fold",
+    "fold_seeds": [
+      274140,
+      274141,
+      274142
+    ],
+    "model_seeds": [
+      274101,
+      274102,
+      274103
+    ],
+    "contexts": 1219,
+    "families": 205,
+    "cells": 180,
+    "outcomes_read": 0
+  },
+  "dependency_pins": {
+    "source_commit": "ee85f557b4050bb696ac857e93b5ef3a383331ea",
+    "source_prefix": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/",
+    "files": {
+      "common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+      "baseline.py": "36e44f2942532a0b9fa5f7aa4aabdc198e34d1696fa8a2e5aef13875eb26683e",
+      "h268_frozen.py": "79c29ed161c99b0ad4da5f5edc488735648fc51e6b7f55102a9eb257778d17f2",
+      "h265_frozen.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76"
+    },
+    "source_files": {
+      "common_h252.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/common_h252.py",
+      "baseline.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/baseline.py",
+      "h268_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/runner.py",
+      "h265_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/h265_frozen.py"
+    }
+  }
+}
