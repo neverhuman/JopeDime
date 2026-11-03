@@ -1,0 +1,15 @@
+{
+  "wave": "H283",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "verdict": null,
+  "cohort_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+  "schema_on_completion": {
+    "verdict": "FRESH_TRANSFER_PASS / NOT_TRANSFERRED_FRESH / INSUFFICIENT_FRESH / BLOCKED_GPU_LOCK",
+    "build": "families built / unbuilt (pool < 8)",
+    "gpu": "r3175 DL-Val91 regression (A_EXACT), fresh contexts scored, DOPE before/after, writer state, peak VRAM",
+    "frozen": "per seed family mean/median gain, CI95, W/T/L, harmed share and families, Elo, invalid, changed; median + pooled CI over seeds; criteria",
+    "null": "same for SEEDED_RANDOM_VALID_SLOT",
+    "slot0_fresh_utility_mean": "report only"
+  }
+}
