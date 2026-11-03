@@ -280,10 +280,10 @@ pub(super) fn forge_qualification(
     evidence: &OofEvidence,
     claim: &Qualification,
 ) -> String {
-    let bytes = canonical_json(&StoredQualification {
-        evidence: evidence.clone(),
-        qualification: claim.clone(),
-    })
+    let bytes = canonical_json(&serde_json::json!({
+        "evidence": evidence,
+        "qualification": claim,
+    }))
     .unwrap();
     let path = qualification_path(&f.state, record);
     fs::create_dir_all(path.parent().unwrap()).unwrap();
