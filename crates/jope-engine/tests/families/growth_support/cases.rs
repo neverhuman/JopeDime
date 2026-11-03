@@ -1,4 +1,6 @@
 use super::*;
+use serde_json::Map;
+use std::collections::BTreeMap;
 
 /// SplitMix64, for a scenario set that is the same on every host.
 struct Rng(u64);
@@ -342,7 +344,7 @@ pub(crate) fn random_case(
         }
         let rel = format!("decisions/{cid}.json");
         let mut reference = w.put(&rel, &decision);
-        sign(&signer, &mut reference);
+        super::fixture::sign(&signer, &mut reference);
         match fault {
             "bad-signature" => reference["signature"] = json!("0".repeat(64)),
             "upper-signature" => {

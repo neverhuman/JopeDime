@@ -1,6 +1,6 @@
 use super::*;
 
-fn sign(key: &[u8], reference: &mut Value) {
+pub(super) fn sign(key: &[u8], reference: &mut Value) {
     let message = format!(
         "{}{}",
         family_growth::SIGNATURE_DOMAIN,
