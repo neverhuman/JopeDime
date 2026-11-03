@@ -1,6 +1,6 @@
 //! Bounded serial outbox consumer. `provision` remains the only signer/transaction path.
-use super::*;
 use super::finish::provision;
+use super::*;
 use std::{
     collections::BTreeMap,
     ffi::CString,
