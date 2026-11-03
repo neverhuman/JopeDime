@@ -11,6 +11,7 @@ fn rejects_invalid_prereg_mutations() {
         ratchets,
         scores,
         parity,
+        pinned_prereg,
         pinned_bytes,
         pinned_plan,
         ..
