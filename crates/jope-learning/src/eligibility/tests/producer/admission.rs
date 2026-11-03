@@ -26,7 +26,7 @@ fn a_teacher_is_admitted_through_the_product_path() {
     let receipt: crate::encoder_receipt::EncoderReceipt =
         blob(&f.state, &context.receipt_sha256).unwrap();
     let handed: serde_json::Value = serde_json::from_slice(&run.handoff).unwrap();
-    assert_eq!(receipt.encoder, context_plan().encoder);
+    assert_eq!(receipt.encoder, f.plan.context.as_ref().unwrap().encoder);
     assert_eq!(
         receipt.inputs.features_sha256,
         handed["scope"]["input_sha256"]
@@ -118,7 +118,9 @@ fn the_product_path_refuses_an_unauthenticated_or_unproven_context() {
     // A substituted context: the teacher claims other context bytes than the producer handed off.
     let f = fixture_with(Task::Regression, 5, Some(preregistered()));
     let mut run = producer_run(&f, &teaching_context(), &f.window, |_| {});
-    run.context = context_output(2048, 0.75);
+    let mut substituted_context = run.context.clone();
+    substituted_context[..std::mem::size_of::<f32>()].copy_from_slice(&0.75f32.to_le_bytes());
+    run.context = substituted_context;
     assert_refused(
         &f,
         &submission(&f, &run),
