@@ -7,13 +7,23 @@ mod store_ops;
 mod transition;
 
 pub use store_ops::{serve_stdio_epoch_transition, validate_native_grant_request_for_epoch};
-pub(super) use transition::{
-    validate_effective_shape, validate_transition, verify_epoch_chain_checked,
-};
+#[cfg(test)]
+use transition::verify_epoch_chain_checked;
+pub(super) fn validate_effective_shape(policy: &WitnessPolicy) -> Result<()> {
+    transition::validate_effective_shape(policy)
+}
+pub(super) fn validate_transition(
+    base: &WitnessPolicy,
+    previous: &WitnessPolicy,
+    request: &SignedWitnessEpochTransition,
+    when: u64,
+) -> Result<()> {
+    transition::validate_transition(base, previous, request, when)
+}
 pub use transition::{
     verify_epoch_chain, EpochTransitionMode, HistoricalBudgetAccounting,
     SignedWitnessEpochTransition, SignedWitnessEpochTransitionAck, WitnessEpochProof,
-    WitnessEpochTransitionAckBody, WitnessEpochTransitionBody, MAX_EPOCH_TRANSITIONS,
+    WitnessEpochTransitionAckBody, WitnessEpochTransitionBody,
 };
 
 #[cfg(test)]
