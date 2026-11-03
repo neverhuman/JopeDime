@@ -44,7 +44,7 @@ pub const PREREG_CALLER_ASSERTED_REASON: &str =
 /// Multiplicity adjustment disclosure string emitted on every report in this build.
 pub const MULTIPLICITY_ADJUSTMENT_STATUS: &str = "unimplemented_single_endpoint_alpha_cap_0_025";
 
-fn default_alpha() -> f64 {
+pub(super) fn default_alpha() -> f64 {
     MAX_SINGLE_ENDPOINT_ALPHA
 }
 

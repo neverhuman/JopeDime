@@ -1,6 +1,7 @@
 use super::*;
 
 mod prereg;
+use prereg::default_alpha;
 pub use prereg::*;
 
 /// Caller-asserted provenance grade of the candidate and reference runs.
