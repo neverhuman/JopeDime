@@ -249,7 +249,12 @@ pub(crate) fn run_strategy(
                         .iter()
                         .filter_map(|result| result.as_ref().err())
                     {
-                        failures.record(*failure);
+                        match failure {
+                            EvalFailure::Spawn => failures.spawn += 1,
+                            EvalFailure::Timeout => failures.timeout += 1,
+                            EvalFailure::Crashed => failures.crashed += 1,
+                            EvalFailure::Unparseable => failures.unparseable += 1,
+                        }
                     }
                     let prediction_views: Vec<Option<&[f64]>> = predictions
                         .iter()
