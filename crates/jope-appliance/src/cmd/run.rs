@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::io::Write;
 
 mod args;
+use args::parse_value;
 pub use args::RunArgs;
 
 #[cfg(not(windows))]
