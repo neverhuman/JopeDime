@@ -26,10 +26,10 @@ expected cost per win is mean cost per attempt divided by that probability
   \Cwin = \frac{\Cattempt}{\winprob}.
   \label{eq:bill}
 \end{equation}
-$\Cattempt$ is the mean incurred cost per candidate attempt, including
-failures. A repair that emits a revised candidate is another
-attempt; charge its work once. $\winprob$ is the probability that an
-attempt beats the incumbent.
+Here $\Cattempt$ is the mean incurred cost per candidate attempt, including
+failures, and $\winprob$ is the probability that an attempt beats the
+incumbent. A repair that emits a revised candidate is another attempt;
+charge its work once.
 
 Write $\winprob = q_{\text{run}}\,q_{\text{beat}}$, where $q_{\text{run}}$
 is the share of protocol-valid attempts and $q_{\text{beat}}$ the win rate
@@ -87,7 +87,7 @@ writer can tolerate a win rate about 190 times lower before that
 component's cost per win matches. \Cref{sub:price-run} separates active
 compute from resident model memory.
 
-If it needs three times the tokens per
+If the smaller writer needs three times the tokens per
 attempt, the generation-only ratio falls to about 60. Repair turns also
 re-read a growing context. Encoding and referee costs change the full-cost
 ratio; a threshold for the complete bill in \cref{eq:bill} requires
@@ -103,11 +103,11 @@ measurement decides where, and whether, the minimum sits.
 A familiar solution can be a useful prior. Matching the incumbent's score
 earns a tie; promotion requires improvement under the same protocol. A
 \emph{useful hallucination} here is an unfamiliar proposal whose value the
-referee verifies (\cref{box:hallucination}). Possible exploration controls include temperature
-and entropy schedules, a curriculum past known solutions and
-quality-diversity archives \citep{lehman2011novelty,mouret2015mapelites}.
-Any novelty bonus must preserve the reward ordering in \cref{sec:game}.
-These are design options.
+referee verifies (\cref{box:hallucination}). Possible design options for
+exploration include temperature and entropy schedules, a curriculum past
+known solutions and quality-diversity archives
+\citep{lehman2011novelty,mouret2015mapelites}; any novelty bonus must
+preserve the reward ordering in \cref{sub:game-referee}.
 
 The reference training routes combine policy draws with grammar-based
 fallback and random exploration to seed verified search
