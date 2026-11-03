@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use super::super::{MotifDef, TaskLabel};
     use super::super::*;
+    use super::super::{MotifDef, TaskLabel};
     use crate::code_of;
     use crate::fixture;
     use crate::source::QualifiedProgram;
