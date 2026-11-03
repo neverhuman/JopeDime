@@ -4,7 +4,11 @@ use feat_math::kernel::Program;
 use feat_math::math_expr::{BinOp, Expr, MathExpr, Var};
 use feat_math::transpile::{emit, EmitOptions};
 use feat_math::{fit_predict, GenomeIr};
-use std::{fs, path::Path, process::Command};
+use std::{
+    fs,
+    path::Path,
+    process::{Command, Stdio},
+};
 
 fn binary(op: BinOp, a: Expr, b: Expr) -> Expr {
     Expr::Binary(op, Box::new(a), Box::new(b))
@@ -71,12 +75,34 @@ fn every_nested_binary_operator_shape_preserves_tree_values_and_faults() {
 }
 
 fn run(command: &mut Command) {
-    let output = command.output().expect("required export toolchain");
+    let output = command
+        .output()
+        .unwrap_or_else(|error| panic!("required export command {command:?}: {error}"));
     assert!(
         output.status.success(),
         "{command:?}: {}",
         String::from_utf8_lossy(&output.stderr)
     );
+}
+
+fn resolve_export_compiler(compiler: &str) -> String {
+    let versioned = match compiler {
+        "g++" => "g++-13",
+        "clang++" => "clang++-18",
+        other => other,
+    };
+    for candidate in [compiler, versioned] {
+        if Command::new(candidate)
+            .arg("--version")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok_and(|status| status.success())
+        {
+            return candidate.to_owned();
+        }
+    }
+    panic!("required export compiler {compiler} (also tried {versioned}) is unavailable");
 }
 
 fn bits(path: &Path) -> Vec<u64> {
@@ -160,8 +186,9 @@ fn executed_three_language_recipes_match_independent_conversion_witnesses() {
         )
         .unwrap();
         for compiler in ["g++", "clang++"] {
+            let executable = resolve_export_compiler(compiler);
             let binary = dir.join(format!("case_{compiler}"));
-            run(Command::new(compiler)
+            run(Command::new(&executable)
                 .args([
                     "-std=c++17",
                     "-Wall",
