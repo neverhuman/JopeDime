@@ -14,7 +14,7 @@ pub(crate) fn selfplay_unit_templates_in(source: &Path) -> PathBuf {
 /// `git checkout 8a55c4fef -- <path>`, docs/archive/python-archive-manifest.json);
 /// the names stay excluded so a restored copy is still not bundled
 /// (`host_installed_units_are_optional_and_never_rendered_into_the_bundle`).
-const HOST_INSTALLED_UNITS: [&str; 2] =
+pub(crate) const HOST_INSTALLED_UNITS: [&str; 2] =
     ["jope-workspace-sync.service", "jope-workspace-sync.timer"];
 
 pub(crate) fn is_host_installed_unit(path: &Path) -> bool {
