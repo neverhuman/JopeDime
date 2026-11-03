@@ -14,10 +14,7 @@ const PYTHON_ORACLE_GOLDENS: &str = concat!(
 );
 
 use super::super::{parse, test_support};
-use super::{
-    extract, numeric_parameter_token, EXPECTED_GLOBAL_INDICES, PARAMETER_KEYS,
-    PYTHON_ORACLE_GOLDENS,
-};
+use super::{extract, numeric_parameter_token, PARAMETER_KEYS};
 
 #[test]
 fn numeric_parameter_tokens_follow_python_float_boolean_and_seed_rules() {
