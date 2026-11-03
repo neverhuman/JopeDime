@@ -129,7 +129,7 @@ pub fn attempt_outcome(dir: &Path, plan_sha256: &str) -> Result<AttemptOutcome> 
     })
 }
 
-fn append(
+pub(super) fn append(
     dir: &Path,
     records: &mut Vec<(JournalRecord, String)>,
     plan_sha256: &str,
