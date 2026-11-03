@@ -287,14 +287,91 @@ impl Fitness {
                 Self::CaptureAt { fraction: 0.1 },
                 "Share of total target in the top-ranked fraction (maximize).",
             ),
+            entry(
+                "train_time_seconds",
+                Self::TrainTimeSeconds {},
+                "Wall-clock time in seconds spent fitting the candidate model.",
+            ),
+            entry(
+                "inference_time_seconds",
+                Self::InferenceTimeSeconds {},
+                "Wall-clock time in seconds spent running candidate inference.",
+            ),
+            entry(
+                "total_time_seconds",
+                Self::TotalTimeSeconds {},
+                "Combined training and inference wall-clock time in seconds.",
+            ),
+            entry(
+                "inference_us_per_row",
+                Self::InferenceUsPerRow {},
+                "Per-row inference latency in microseconds.",
+            ),
+            entry(
+                "train_rows_per_second",
+                Self::TrainRowsPerSecond {},
+                "Training throughput in rows per second (maximize for faster training).",
+            ),
+            entry(
+                "inference_rows_per_second",
+                Self::InferenceRowsPerSecond {},
+                "Inference throughput in rows per second (maximize for faster inference).",
+            ),
+            entry(
+                "train_memory_bytes",
+                Self::TrainMemoryBytes {},
+                "Peak/working heap memory in bytes used during candidate training.",
+            ),
+            entry(
+                "inference_memory_bytes",
+                Self::InferenceMemoryBytes {},
+                "Peak/working heap memory in bytes used during candidate inference.",
+            ),
+            entry(
+                "total_memory_bytes",
+                Self::TotalMemoryBytes {},
+                "Combined training and inference memory footprint in bytes.",
+            ),
+            entry(
+                "model_bytes",
+                Self::ModelBytes {},
+                "Fitted model artifact footprint in bytes.",
+            ),
+            entry(
+                "complexity_stages",
+                Self::ComplexityStages {},
+                "Pipeline stage count of the candidate.",
+            ),
+            entry(
+                "complexity_parameters",
+                Self::ComplexityParameters {},
+                "Fitted scalar parameter/node count of the candidate.",
+            ),
+            entry(
+                "feature_count",
+                Self::FeatureCount {},
+                "Active input feature count consumed by the candidate.",
+            ),
+            entry(
+                "fold_std",
+                Self::FoldStd {},
+                "Standard deviation of loss across cross-validation folds or regime cuts.",
+            ),
+            entry(
+                "prediction_turnover",
+                Self::PredictionTurnover {},
+                "Mean absolute sequential change mean(|pred[t] - pred[t-1]|).",
+            ),
         ]
     }
 
     pub fn name(&self) -> String {
         match self {
+            Self::Resource { name } => format!("resource_{name}"),
             Self::Custom { name, .. } => name.clone(),
             Self::Weighted { fitness, .. } => format!("weighted_{}", fitness.name()),
             Self::Composite { .. } => "composite".to_owned(),
+            Self::Constrained { fitness, .. } => format!("constrained_{}", fitness.name()),
             other => serde_json::to_value(other)
                 .ok()
                 .and_then(|v| v["metric"].as_str().map(str::to_owned))
@@ -315,9 +392,14 @@ impl Fitness {
             | Self::HitRate {}
             | Self::NormalizedGini {}
             | Self::Kge {}
-            | Self::CaptureAt { .. } => Direction::Maximize,
+            | Self::CaptureAt { .. }
+            | Self::TrainRowsPerSecond {}
+            | Self::InferenceRowsPerSecond {} => Direction::Maximize,
+            Self::Resource { name } if name.maximized() => Direction::Maximize,
             Self::Custom { direction, .. } => *direction,
-            Self::Weighted { fitness, .. } => fitness.direction(),
+            Self::Weighted { fitness, .. } | Self::Constrained { fitness, .. } => {
+                fitness.direction()
+            }
             _ => Direction::Minimize,
         }
     }
@@ -332,7 +414,9 @@ impl Fitness {
             | Self::Omega { .. }
             | Self::ExpectedShortfall { .. }
             | Self::Mase { .. } => true,
-            Self::Weighted { fitness, .. } => fitness.requires_order(),
+            Self::Weighted { fitness, .. } | Self::Constrained { fitness, .. } => {
+                fitness.requires_order()
+            }
             Self::Composite { terms } => terms.iter().any(|t| t.fitness.requires_order()),
             _ => false,
         }
@@ -355,7 +439,18 @@ impl Fitness {
                     term.fitness.collect_columns(out);
                 }
             }
+            Self::Constrained { fitness, .. } => fitness.collect_columns(out),
             _ => (),
         }
+    }
+    /// Resource variables the specification reads (as metrics, expression leaves or limits).
+    pub fn resources(&self) -> BTreeSet<ResourceVar> {
+        let mut out = BTreeSet::new();
+        self.collect_resources(&mut out);
+        out
+    }
+    /// Whether the specification reads any non-structural resource (wall/CPU time, latency, heap).
+    pub fn requires_measured_resources(&self) -> bool {
+        self.resources().into_iter().any(ResourceVar::is_measured)
     }
 }

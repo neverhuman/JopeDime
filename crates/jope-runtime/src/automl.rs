@@ -25,7 +25,7 @@
 //! is learned on all of its out-of-fold predictions and stored with the fitted model.
 use crate::budget::Budget;
 use crate::calibration::{self, Calibration, OutputTransform};
-use crate::fitness::{Columns, Direction, Fitness};
+use crate::fitness::{Columns, Direction, ExecutionTelemetry, Fitness};
 use crate::methods::native::{fit_native, predict_bound, Predictions};
 use crate::methods::RustMethod;
 use crate::table::Training;
@@ -130,7 +130,7 @@ fn subset(table: &RawTable, rows: &[usize]) -> Result<RawTable> {
     )
 }
 
-/// Out-of-fold predictions of one candidate, assembled in row order.
+/// Out-of-fold predictions and execution telemetry of one candidate, assembled in row order.
 fn out_of_fold(
     method: &RustMethod,
     training: &Training,
@@ -139,9 +139,14 @@ fn out_of_fold(
     budget: &Budget,
     completed: &mut usize,
     validation: &Validation,
-) -> Result<(Predictions, Vec<usize>)> {
+) -> Result<(Predictions, Vec<usize>, ExecutionTelemetry)> {
     let n = training.targets.len();
     let mut values: Vec<Option<Vec<f64>>> = vec![None; n];
+    let mut telemetry = ExecutionTelemetry {
+        feature_count: training.schema.columns.len(),
+        ..ExecutionTelemetry::default()
+    };
+    let mut fold_rmses = Vec::with_capacity(k);
     for fold in 0..k {
         budget.check(&format!("fold {fold} of {}", method.id))?;
         let valid_rows: Vec<usize> = (0..n).filter(|r| assignment[*r] == fold).collect();
@@ -155,6 +160,7 @@ fn out_of_fold(
         );
         let train = subset(&training.table, &train_rows)?;
         let targets: Vec<f64> = train_rows.iter().map(|r| training.targets[*r]).collect();
+        let fit_started = Instant::now();
         let model = fit_native(
             method,
             training.kind,
@@ -164,13 +170,42 @@ fn out_of_fold(
             &targets,
         )
         .with_context(|| format!("fold {fold}"))?;
-        let predicted = predict_bound(
-            &model,
-            &subset(&training.table, &valid_rows)?,
-            &training.classes,
-        )?;
+        let model_bytes = serde_json::to_vec(&model)
+            .map(|b| b.len() as u64)
+            .unwrap_or(0);
+        let stages = method.dsl.matches('(').count().saturating_sub(1).max(1);
+        let cols = model.schema.columns.len().max(1) as u64;
+        let t_rows = train_rows.len().max(1) as u64;
+        let v_rows = valid_rows.len().max(1) as u64;
+        let train_mem = model_bytes
+            .saturating_add(t_rows.saturating_mul(cols).saturating_mul(8).saturating_mul((stages as u64).saturating_add(1)))
+            .saturating_add(t_rows.saturating_mul(16));
+        let infer_mem = model_bytes
+            .saturating_add(v_rows.saturating_mul(cols).saturating_mul(8).saturating_mul(stages as u64))
+            .saturating_add(v_rows.saturating_mul(8));
+        telemetry.train_time_seconds += fit_started.elapsed().as_secs_f64();
+        telemetry.train_rows += train_rows.len();
+        telemetry.train_memory_bytes = telemetry.train_memory_bytes.max(train_mem);
+        telemetry.model_bytes = telemetry.model_bytes.max(model_bytes);
+        telemetry.complexity_stages = stages;
+        telemetry.complexity_parameters = ((model_bytes as usize) / 16).max(cols as usize);
+        let valid_subset = subset(&training.table, &valid_rows)?;
+        let infer_started = Instant::now();
+        let predicted = predict_bound(&model, &valid_subset, &training.classes)?;
+        telemetry.inference_time_seconds += infer_started.elapsed().as_secs_f64();
+        telemetry.inference_rows += valid_rows.len();
+        telemetry.inference_memory_bytes = telemetry.inference_memory_bytes.max(infer_mem);
         match predicted {
             Predictions::Values(v) => {
+                if !v.is_empty() {
+                    let mse: f64 = valid_rows
+                        .iter()
+                        .zip(&v)
+                        .map(|(&r, &p)| (training.targets[r] - p).powi(2))
+                        .sum::<f64>()
+                        / (v.len() as f64);
+                    fold_rmses.push(mse.sqrt());
+                }
                 for (row, value) in valid_rows.iter().zip(v) {
                     values[*row] = Some(vec![value]);
                 }
@@ -182,6 +217,15 @@ fn out_of_fold(
             }
         }
         *completed += 1;
+    }
+    if fold_rmses.len() >= 2 {
+        let m = fold_rmses.iter().sum::<f64>() / (fold_rmses.len() as f64);
+        let var = fold_rmses
+            .iter()
+            .map(|x| (x - m).powi(2))
+            .sum::<f64>()
+            / (fold_rmses.len() as f64);
+        telemetry.fold_std = var.max(0.0).sqrt();
     }
     let mut scored = Vec::new();
     let mut rows = Vec::new();
@@ -202,6 +246,7 @@ fn out_of_fold(
             }
         },
         scored,
+        telemetry,
     ))
 }
 

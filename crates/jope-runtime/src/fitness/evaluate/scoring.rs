@@ -8,8 +8,39 @@ impl Fitness {
     /// Score predictions; `columns` holds every auxiliary column the specification reads,
     /// aligned with `y`.
     pub fn evaluate_with(&self, y: &[f64], pred: &[f64], columns: &Columns) -> Result<Score> {
+        self.evaluate_with_resources(y, pred, columns, &Resources::new())
+    }
+    /// Score predictions with auxiliary columns and candidate resource readings.
+    pub fn evaluate_with_resources(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+    ) -> Result<Score> {
+        self.eval_score(y, pred, columns, resources, &ExecutionTelemetry::default())
+    }
+    /// Score predictions with aligned auxiliary columns and candidate execution telemetry.
+    pub fn evaluate_with_telemetry(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<Score> {
+        let resources = telemetry.to_resources(y.len());
+        self.eval_score(y, pred, columns, &resources, telemetry)
+    }
+    fn eval_score(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<Score> {
         self.validate()?;
-        let value = self.checked_value(y, pred, columns)?;
+        let value = self.checked_value(y, pred, columns, resources, telemetry)?;
         let direction = self.direction();
         Ok(Score {
             value,
@@ -22,17 +53,54 @@ impl Fitness {
             fitness_sha256: self.identity()?,
         })
     }
-    /// The minimization loss of an already validated specification, without hashing it. The
-    /// calibration search calls this many times on one validated objective.
+    /// The minimization loss of an already validated specification, without hashing it.
     pub fn loss_unhashed(&self, y: &[f64], pred: &[f64], columns: &Columns) -> Result<f64> {
-        let value = self.checked_value(y, pred, columns)?;
+        self.loss_with_resources(y, pred, columns, &Resources::new())
+    }
+    /// The minimization loss of an already validated specification, with resource readings.
+    pub fn loss_with_resources(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+    ) -> Result<f64> {
+        self.eval_loss(y, pred, columns, resources, &ExecutionTelemetry::default())
+    }
+    /// The minimization loss with execution telemetry, without hashing the specification.
+    pub fn loss_unhashed_with_telemetry(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<f64> {
+        let resources = telemetry.to_resources(y.len());
+        self.eval_loss(y, pred, columns, &resources, telemetry)
+    }
+    fn eval_loss(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<f64> {
+        let value = self.checked_value(y, pred, columns, resources, telemetry)?;
         Ok(if self.direction() == Direction::Maximize {
             -value
         } else {
             value
         })
     }
-    fn checked_value(&self, y: &[f64], pred: &[f64], columns: &Columns) -> Result<f64> {
+    fn checked_value(
+        &self,
+        y: &[f64],
+        pred: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<f64> {
         ensure!(
             !y.is_empty() && y.len() == pred.len(),
             "fitness needs equal, nonempty target and prediction vectors"
@@ -50,9 +118,17 @@ impl Fitness {
                 "fitness column {name:?} needs one finite value per scored row"
             );
         }
-        finite(self.value(y, pred, columns, None)?)
+        finite(self.value(y, pred, columns, resources, None, telemetry)?)
     }
-    fn value(&self, y: &[f64], p: &[f64], columns: &Columns, w: Option<&[f64]>) -> Result<f64> {
+    fn value(
+        &self,
+        y: &[f64],
+        p: &[f64],
+        columns: &Columns,
+        resources: &Resources,
+        w: Option<&[f64]>,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<f64> {
         if w.is_some() {
             ensure!(
                 self.supports_weights(),
@@ -66,6 +142,8 @@ impl Fitness {
             Self::Custom { .. }
                 | Self::Weighted { .. }
                 | Self::Composite { .. }
+                | Self::Constrained { .. }
+                | Self::Resource { .. }
                 | Self::MeanReturn { .. }
                 | Self::Sharpe { .. }
                 | Self::Sortino { .. }
@@ -79,6 +157,21 @@ impl Fitness {
                 | Self::NormalizedGini {}
                 | Self::Kge {}
                 | Self::CaptureAt { .. }
+                | Self::TrainTimeSeconds {}
+                | Self::InferenceTimeSeconds {}
+                | Self::TotalTimeSeconds {}
+                | Self::InferenceUsPerRow {}
+                | Self::TrainRowsPerSecond {}
+                | Self::InferenceRowsPerSecond {}
+                | Self::TrainMemoryBytes {}
+                | Self::InferenceMemoryBytes {}
+                | Self::TotalMemoryBytes {}
+                | Self::ModelBytes {}
+                | Self::ComplexityStages {}
+                | Self::ComplexityParameters {}
+                | Self::FeatureCount {}
+                | Self::FoldStd {}
+                | Self::PredictionTurnover {}
         ) {
             ensure!(
                 errors.iter().all(|e| e.is_finite()),
@@ -103,8 +196,6 @@ impl Fitness {
             Self::MaxError {} => abs.iter().copied().fold(0.0, f64::max),
             Self::Mape { epsilon } => row_loss(&|y, p| (y - p).abs() / y.abs().max(*epsilon)),
             Self::Smape { epsilon } => row_loss(&|y, p| {
-                // Normalize before adding or doubling: finite same-sign inputs
-                // can overflow the unscaled denominator and hide real error.
                 let scale = y.abs().max(p.abs()).max(*epsilon);
                 let denominator = (y.abs() / scale + p.abs() / scale).max(epsilon / scale);
                 ((y - p).abs() / scale) * (2.0 / denominator)
@@ -123,11 +214,7 @@ impl Fitness {
                     "log error needs nonnegative targets and predictions"
                 );
                 let v = row_loss(&|y, p| (y.ln_1p() - p.ln_1p()).powi(2));
-                if matches!(self, Self::Rmsle {}) {
-                    v.sqrt()
-                } else {
-                    v
-                }
+                if matches!(self, Self::Rmsle {}) { v.sqrt() } else { v }
             }
             Self::R2 {} | Self::ExplainedVariance {} => {
                 let den = wvariance(y, w);
@@ -149,11 +236,7 @@ impl Fitness {
             Self::Spearman {} => correlation(&ranks(y), &ranks(p), None)?,
             Self::Huber { delta } => error_loss(&|e| {
                 let e = e.abs();
-                if e <= *delta {
-                    0.5 * e * e
-                } else {
-                    delta * (e - 0.5 * delta)
-                }
+                if e <= *delta { 0.5 * e * e } else { delta * (e - 0.5 * delta) }
             }),
             Self::PseudoHuber { delta } => {
                 error_loss(&|e| delta * delta * ((1.0 + (e / delta).powi(2)).sqrt() - 1.0))
@@ -163,52 +246,24 @@ impl Fitness {
                 e + (-2.0 * e).exp().ln_1p() - std::f64::consts::LN_2
             }),
             Self::Pinball { quantile } => error_loss(&|e| {
-                if e >= 0.0 {
-                    quantile * e
-                } else {
-                    (quantile - 1.0) * e
-                }
+                if e >= 0.0 { quantile * e } else { (quantile - 1.0) * e }
             }),
             Self::Expectile { quantile } => error_loss(&|e| {
-                if e >= 0.0 {
-                    quantile * e * e
-                } else {
-                    (1.0 - quantile) * e * e
-                }
+                if e >= 0.0 { quantile * e * e } else { (1.0 - quantile) * e * e }
             }),
             Self::Linex { a } => error_loss(&|e| (a * e).exp_m1() - a * e),
-            Self::AsymmetricAbsolute {
-                under_cost,
-                over_cost,
-            } => error_loss(&|e| {
-                if e >= 0.0 {
-                    under_cost * e
-                } else {
-                    -over_cost * e
-                }
+            Self::AsymmetricAbsolute { under_cost, over_cost } => error_loss(&|e| {
+                if e >= 0.0 { under_cost * e } else { -over_cost * e }
             }),
-            Self::AsymmetricSquared {
-                under_cost,
-                over_cost,
-            } => error_loss(&|e| {
-                if e >= 0.0 {
-                    under_cost * e * e
-                } else {
-                    over_cost * e * e
-                }
+            Self::AsymmetricSquared { under_cost, over_cost } => error_loss(&|e| {
+                if e >= 0.0 { under_cost * e * e } else { over_cost * e * e }
             }),
             Self::PoissonDeviance {} => {
                 ensure!(
                     y.iter().all(|x| *x >= 0.0) && p.iter().all(|x| *x > 0.0),
                     "Poisson requires y>=0 and pred>0"
                 );
-                row_loss(&|y, p| {
-                    2.0 * (if y == 0.0 {
-                        p
-                    } else {
-                        y * (y / p).ln() - y + p
-                    })
-                })
+                row_loss(&|y, p| 2.0 * (if y == 0.0 { p } else { y * (y / p).ln() - y + p }))
             }
             Self::GammaDeviance {} => {
                 ensure!(
@@ -230,45 +285,23 @@ impl Fitness {
                 })
             }
             Self::Mase { season } => {
-                ensure!(
-                    y.len() > *season,
-                    "MASE needs more scored rows than its season"
-                );
+                ensure!(y.len() > *season, "MASE needs more scored rows than its season");
                 let naive = mean(
                     &y.windows(season + 1)
                         .map(|w| (w[*season] - w[0]).abs())
                         .collect::<Vec<_>>(),
                 );
-                ensure!(
-                    naive > 0.0,
-                    "MASE undefined when the seasonal naive forecast is exact"
-                );
+                ensure!(naive > 0.0, "MASE undefined when the seasonal naive forecast is exact");
                 mean(&abs) / naive
             }
             Self::MeanReturn { max_position, cost } => {
                 mean(&strategy_returns(y, p, *max_position, *cost)?)
             }
-            Self::Sharpe {
-                max_position,
-                cost,
-                target,
-                periods_per_year,
-            }
-            | Self::Sortino {
-                max_position,
-                cost,
-                target,
-                periods_per_year,
-            } => {
+            Self::Sharpe { max_position, cost, target, periods_per_year }
+            | Self::Sortino { max_position, cost, target, periods_per_year } => {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
                 let den = if matches!(self, Self::Sortino { .. }) {
-                    mean(
-                        &returns
-                            .iter()
-                            .map(|r| (r - target).min(0.0).powi(2))
-                            .collect::<Vec<_>>(),
-                    )
-                    .sqrt()
+                    mean(&returns.iter().map(|r| (r - target).min(0.0).powi(2)).collect::<Vec<_>>()).sqrt()
                 } else {
                     variance(&returns).sqrt()
                 };
@@ -281,11 +314,7 @@ impl Fitness {
             Self::MaxDrawdown { max_position, cost } => {
                 max_drawdown(&strategy_returns(y, p, *max_position, *cost)?)?
             }
-            Self::Calmar {
-                max_position,
-                cost,
-                periods_per_year,
-            } => {
+            Self::Calmar { max_position, cost, periods_per_year } => {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
                 let drawdown = max_drawdown(&returns)?;
                 ensure!(drawdown > 0.0, "Calmar undefined without a drawdown");
@@ -293,11 +322,7 @@ impl Fitness {
                 let growth = end.powf(periods_per_year / returns.len() as f64) - 1.0;
                 growth / drawdown
             }
-            Self::Omega {
-                max_position,
-                cost,
-                threshold,
-            } => {
+            Self::Omega { max_position, cost, threshold } => {
                 let returns = strategy_returns(y, p, *max_position, *cost)?;
                 let gains: f64 = returns.iter().map(|r| (r - threshold).max(0.0)).sum();
                 let losses: f64 = returns.iter().map(|r| (threshold - r).max(0.0)).sum();
@@ -305,11 +330,7 @@ impl Fitness {
                 ensure!(losses > 0.0, "Omega undefined without a shortfall");
                 gains / losses
             }
-            Self::ExpectedShortfall {
-                max_position,
-                cost,
-                alpha,
-            } => {
+            Self::ExpectedShortfall { max_position, cost, alpha } => {
                 let losses: Vec<f64> = strategy_returns(y, p, *max_position, *cost)?
                     .iter()
                     .map(|r| -r)
@@ -331,10 +352,7 @@ impl Fitness {
             Self::NormalizedGini {} => {
                 let model = lorenz_gini(&ranked(y, p, w))?;
                 let perfect = lorenz_gini(&ranked(y, y, w))?;
-                ensure!(
-                    perfect != 0.0,
-                    "normalized Gini undefined for constant targets"
-                );
+                ensure!(perfect != 0.0, "normalized Gini undefined for constant targets");
                 model / perfect
             }
             Self::Kge {} => {
@@ -348,37 +366,73 @@ impl Fitness {
             }
             Self::CaptureAt { fraction } => {
                 let total: f64 = y.iter().sum();
-                ensure!(
-                    total > 0.0 && total.is_finite(),
-                    "capture needs a positive target total"
-                );
+                ensure!(total > 0.0 && total.is_finite(), "capture needs a positive target total");
                 let mass = fraction * y.len() as f64;
                 let (mut taken, mut captured) = (0.0f64, 0.0);
                 for (_, target) in ranked(y, p, None) {
                     let take = (mass - taken).min(1.0);
-                    if take <= 0.0 {
-                        break;
-                    }
+                    if take <= 0.0 { break; }
                     captured += take * target;
                     taken += take;
                 }
                 finite(captured / total)?
             }
-            Self::Custom {
-                expression,
-                aggregation,
-                ..
-            } => {
-                let v = expression.rows(y, p, columns)?;
+            Self::Resource { name } => read_resource(resources, *name)?,
+            Self::TrainTimeSeconds {} => resources
+                .get(&ResourceVar::FitSeconds)
+                .copied()
+                .unwrap_or_else(|| telemetry.train_time_seconds.max(0.0)),
+            Self::InferenceTimeSeconds {} => resources
+                .get(&ResourceVar::PredictSeconds)
+                .copied()
+                .unwrap_or_else(|| telemetry.inference_time_seconds.max(0.0)),
+            Self::TotalTimeSeconds {} => telemetry.total_time_seconds(),
+            Self::InferenceUsPerRow {} => resources
+                .get(&ResourceVar::PredictUsPerRow)
+                .copied()
+                .unwrap_or_else(|| telemetry.inference_us_per_row(y.len())),
+            Self::TrainRowsPerSecond {} => telemetry.train_rows_per_second(y.len()),
+            Self::InferenceRowsPerSecond {} => resources
+                .get(&ResourceVar::PredictRowsPerSecond)
+                .copied()
+                .unwrap_or_else(|| telemetry.inference_rows_per_second(y.len())),
+            Self::TrainMemoryBytes {} => resources
+                .get(&ResourceVar::FitPeakHeapBytes)
+                .copied()
+                .unwrap_or(telemetry.train_memory_bytes as f64),
+            Self::InferenceMemoryBytes {} => resources
+                .get(&ResourceVar::PredictPeakHeapBytes)
+                .copied()
+                .unwrap_or(telemetry.inference_memory_bytes as f64),
+            Self::TotalMemoryBytes {} => telemetry.total_memory_bytes() as f64,
+            Self::ModelBytes {} => resources
+                .get(&ResourceVar::ModelBytes)
+                .copied()
+                .unwrap_or(telemetry.model_bytes as f64),
+            Self::ComplexityStages {} => resources
+                .get(&ResourceVar::StageCount)
+                .copied()
+                .unwrap_or(telemetry.complexity_stages as f64),
+            Self::ComplexityParameters {} => resources
+                .get(&ResourceVar::ProgramNodes)
+                .copied()
+                .unwrap_or(telemetry.complexity_parameters as f64),
+            Self::FeatureCount {} => telemetry.feature_count as f64,
+            Self::FoldStd {} => telemetry.fold_std.max(0.0),
+            Self::PredictionTurnover {} => prediction_turnover(p),
+            Self::Custom { expression, aggregation, .. } => {
+                let v = expression.rows_with_context(y, p, columns, resources, telemetry)?;
                 match aggregation {
                     RegressionAggregation::Mean {} => wmean(&v, w),
                     RegressionAggregation::Sum {} => match w {
                         None => v.iter().sum(),
                         Some(w) => v.iter().zip(w).map(|(v, w)| v * w).sum(),
                     },
-                    RegressionAggregation::Max {} => {
-                        v.iter().copied().fold(f64::NEG_INFINITY, f64::max)
-                    }
+                    RegressionAggregation::Min {} => v.iter().copied().fold(f64::INFINITY, f64::min),
+                    RegressionAggregation::Max {} => v.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+                    RegressionAggregation::Median {} => wquantile(&v, w, 0.5)?,
+                    RegressionAggregation::Std {} => wvariance(&v, w).max(0.0).sqrt(),
+                    RegressionAggregation::Variance {} => wvariance(&v, w).max(0.0),
                     RegressionAggregation::Quantile { quantile: q } => wquantile(&v, w, *q)?,
                     RegressionAggregation::TailMean { fraction } => tail_mean(&v, w, *fraction)?,
                     RegressionAggregation::RootMean {} => {
@@ -390,26 +444,34 @@ impl Fitness {
             }
             Self::Weighted { weights, fitness } => {
                 ensure!(w.is_none(), "weighting cannot be nested");
-                let weights = weights.rows(y, p, columns)?;
+                let weights = weights.rows_with_context(y, p, columns, resources, telemetry)?;
                 let total: f64 = weights.iter().sum();
                 ensure!(
                     weights.iter().all(|w| *w >= 0.0) && total.is_finite() && total > 0.0,
                     "weights must be nonnegative with a positive finite total"
                 );
-                fitness.value(y, p, columns, Some(&weights))?
+                fitness.value(y, p, columns, resources, Some(&weights), telemetry)?
             }
             Self::Composite { terms } => {
                 let mut sum = 0.0;
                 for t in terms {
-                    let natural = finite(t.fitness.value(y, p, columns, w)?)?;
-                    let loss = if t.fitness.direction() == Direction::Maximize {
-                        -natural
-                    } else {
-                        natural
-                    };
+                    let natural = finite(t.fitness.value(y, p, columns, resources, w, telemetry)?)?;
+                    let loss = if t.fitness.direction() == Direction::Maximize { -natural } else { natural };
                     sum += t.weight * loss / t.scale;
                 }
                 sum
+            }
+            Self::Constrained { fitness, limits } => {
+                for l in limits {
+                    let value = read_resource(resources, l.resource)?;
+                    if let Some(max) = l.max.filter(|&max| value > max) {
+                        bail!(Infeasible { resource: l.resource, value, limit: max, bound: "max" });
+                    }
+                    if let Some(min) = l.min.filter(|&min| value < min) {
+                        bail!(Infeasible { resource: l.resource, value, limit: min, bound: "min" });
+                    }
+                }
+                fitness.value(y, p, columns, resources, w, telemetry)?
             }
         })
     }

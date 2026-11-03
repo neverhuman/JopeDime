@@ -147,11 +147,36 @@ pub(super) fn native_refit<B: AsRef<[u8]>>(
         &spec.features,
         &(0..matrix.rows()).collect::<Vec<_>>(),
     )?;
+    let train_t0 = std::time::Instant::now();
     let fitted =
         NativeModel::fit(&spec.features, &request.dsl, &x, &y).map_err(|_| UndefinedFitness)?;
+    let train_secs = train_t0.elapsed().as_secs_f64();
+    let infer_t0 = std::time::Instant::now();
     let predictions = fitted.predict(&x).map_err(|_| UndefinedFitness)?;
+    let infer_secs = infer_t0.elapsed().as_secs_f64();
+    let model_json = serde_json::to_string(&fitted)?;
+    let model_bytes = model_json.len() as u64;
+    let feat_w = spec.features.len().max(1);
+    let telemetry = jope_runtime::fitness::ExecutionTelemetry {
+        train_time_seconds: train_secs,
+        inference_time_seconds: infer_secs,
+        train_memory_bytes: model_bytes + (x.len() * feat_w * 16) as u64,
+        inference_memory_bytes: model_bytes + (x.len() * feat_w * 16) as u64,
+        model_bytes,
+        complexity_stages: 1,
+        complexity_parameters: (model_bytes as usize / 8).max(feat_w),
+        feature_count: spec.features.len(),
+        fold_std: 0.0,
+        train_rows: x.len(),
+        inference_rows: x.len(),
+    };
     let score = objective
-        .evaluate(&y, &predictions)
+        .evaluate_with_telemetry(
+            &y,
+            &predictions,
+            &jope_runtime::fitness::Columns::new(),
+            &telemetry,
+        )
         .map_err(|_| UndefinedFitness)?;
     let surrogate = RegressionObjective::parse("rmse")?
         .evaluate(&y, &predictions)
@@ -162,7 +187,6 @@ pub(super) fn native_refit<B: AsRef<[u8]>>(
         measured.extend(prediction.to_le_bytes());
     }
     let predictions_digest = digest(&measured);
-    let model_json = serde_json::to_string(&fitted)?;
     let _: NativeModel = serde_json::from_str(&model_json).map_err(|_| UndefinedFitness)?;
     let envelope = RefitEnvelope {
         attempt: request.attempt.clone(),

@@ -17,3 +17,5 @@ mod custom_expressions;
 mod financial_catalog;
 #[path = "metric_semantics.rs"]
 mod metric_semantics;
+#[path = "resource_objectives.rs"]
+mod resource_objectives;

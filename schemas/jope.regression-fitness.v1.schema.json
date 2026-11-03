@@ -724,6 +724,201 @@
         },
         {
           "type": "object",
+          "description": "Wall-clock time in seconds spent fitting the candidate model. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "train_time_seconds"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Wall-clock time in seconds spent running candidate inference. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "inference_time_seconds"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Combined training and inference wall-clock time in seconds. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "total_time_seconds"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Per-row inference latency in microseconds. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "inference_us_per_row"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Training throughput in rows per second. Maximize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "train_rows_per_second"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Inference throughput in rows per second. Maximize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "inference_rows_per_second"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Peak/working heap memory in bytes used during candidate training. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "train_memory_bytes"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Peak/working heap memory in bytes used during candidate inference. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "inference_memory_bytes"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Combined training and inference memory footprint in bytes. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "total_memory_bytes"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Fitted model artifact footprint in bytes. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "model_bytes"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Pipeline stage count of the candidate. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "complexity_stages"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Fitted scalar parameter/node count of the candidate. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "complexity_parameters"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Active input feature count consumed by the candidate. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "feature_count"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Standard deviation of loss across cross-validation folds or regime cuts. Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "fold_std"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Mean absolute sequential change mean(|pred[t] - pred[t-1]|). Minimize.",
+          "required": [
+            "metric"
+          ],
+          "properties": {
+            "metric": {
+              "const": "prediction_turnover"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "description": "A row expression over y, pred and numeric training columns, aggregated over scored rows.",
           "required": [
             "metric",
@@ -816,8 +1011,104 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "One resource reading of the candidate (training seconds, prediction latency, peak heap, model bytes). Throughput is maximized; every other resource is minimized.",
+          "required": [
+            "metric",
+            "name"
+          ],
+          "properties": {
+            "metric": {
+              "const": "resource"
+            },
+            "name": {
+              "$ref": "#/$defs/resource_name"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Scores by `fitness` when every resource limit is met; fails the candidate as `resource_infeasible` otherwise.",
+          "required": [
+            "metric",
+            "fitness",
+            "limits"
+          ],
+          "properties": {
+            "metric": {
+              "const": "constrained"
+            },
+            "fitness": {
+              "$ref": "#/$defs/fitness"
+            },
+            "limits": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "items": {
+                "$ref": "#/$defs/resource_limit"
+              }
+            }
+          },
+          "additionalProperties": false
         }
       ]
+    },
+    "resource_name": {
+      "type": "string",
+      "description": "A candidate resource variable. Measured variables are machine readings recorded in the observation; structural variables are functions of the program and the data.",
+      "enum": [
+        "fit_seconds",
+        "fit_cpu_seconds",
+        "predict_seconds",
+        "predict_us_per_row",
+        "predict_rows_per_second",
+        "row_latency_p50_us",
+        "row_latency_p99_us",
+        "fit_peak_heap_bytes",
+        "predict_peak_heap_bytes",
+        "model_bytes",
+        "program_nodes",
+        "stage_count",
+        "train_rows",
+        "hold_rows"
+      ]
+    },
+    "resource_limit": {
+      "type": "object",
+      "description": "An inclusive resource bound; at least one of min or max must be set.",
+      "required": [
+        "resource"
+      ],
+      "properties": {
+        "resource": {
+          "$ref": "#/$defs/resource_name"
+        },
+        "min": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "min"
+          ]
+        },
+        {
+          "required": [
+            "max"
+          ]
+        }
+      ],
+      "additionalProperties": false
     },
     "expression": {
       "oneOf": [
@@ -879,6 +1170,23 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 256
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "A scalar resource reading of the candidate, broadcast to every scored row.",
+          "required": [
+            "op",
+            "name"
+          ],
+          "properties": {
+            "op": {
+              "const": "resource"
+            },
+            "name": {
+              "$ref": "#/$defs/resource_name"
             }
           },
           "additionalProperties": false
@@ -1168,6 +1476,73 @@
         },
         {
           "type": "object",
+          "description": "Candidate execution, resource, complexity or row-level statistical terminal.",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "enum": [
+                "train_time_seconds",
+                "train_time",
+                "inference_time_seconds",
+                "inference_time",
+                "total_time_seconds",
+                "total_time",
+                "inference_us_per_row",
+                "train_rows_per_second",
+                "inference_rows_per_second",
+                "train_memory_bytes",
+                "train_memory",
+                "inference_memory_bytes",
+                "inference_memory",
+                "total_memory_bytes",
+                "total_memory",
+                "model_bytes",
+                "complexity_stages",
+                "complexity_parameters",
+                "feature_count",
+                "fold_std",
+                "prediction_turnover",
+                "row_index",
+                "row_fraction",
+                "row_count",
+                "residual",
+                "abs_error",
+                "squared_error",
+                "y_mean",
+                "y_std",
+                "pred_mean",
+                "pred_std"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Additional unary math operator (sign, tanh, sigmoid, cbrt).",
+          "required": [
+            "op",
+            "arg"
+          ],
+          "properties": {
+            "op": {
+              "enum": [
+                "sign",
+                "tanh",
+                "sigmoid",
+                "cbrt"
+              ]
+            },
+            "arg": {
+              "$ref": "#/$defs/expression"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "description": "arg limited to [min, max].",
           "required": [
             "op",
@@ -1248,6 +1623,19 @@
         },
         {
           "type": "object",
+          "description": "Minimum.",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "min"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
           "description": "Maximum.",
           "required": [
             "kind"
@@ -1255,6 +1643,45 @@
           "properties": {
             "kind": {
               "const": "max"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Median.",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "median"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Standard deviation.",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "std"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Variance.",
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "const": "variance"
             }
           },
           "additionalProperties": false

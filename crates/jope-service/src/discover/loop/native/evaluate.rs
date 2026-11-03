@@ -68,7 +68,14 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
             .as_str()
             .context("objective must be a specification string")?,
     )?;
-    feat_math::GenomeIr::parse(&request.dsl)?;
+    let parsed_genome = feat_math::GenomeIr::parse(&request.dsl)?;
+    let complexity_stages = match &parsed_genome {
+        feat_math::GenomeIr::Pipeline(expr) => expr.stages.len() + 1,
+        feat_math::GenomeIr::Symbolic { .. } => 1,
+        feat_math::GenomeIr::Portfolio(p) => {
+            p.members.iter().map(|m| m.stages.len() + 1).sum::<usize>() + 1
+        }
+    };
     match (&spec.refit_output, spec.refit_max_bytes) {
         (Some(path), Some(maximum)) => {
             return super::model::native_refit(request, matrix, &spec, &objective, path, maximum)
@@ -83,6 +90,7 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     let mut values = vec![];
     let mut surrogate = vec![];
     let mut fold_scores = vec![];
+    let empty_cols = jope_runtime::fitness::Columns::new();
     for fold in spec.folds {
         let train: BTreeSet<_> = fold.train.iter().copied().collect();
         ensure!(
@@ -96,20 +104,51 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
             "overlapping fold rows"
         );
         let (x, y) = numeric_rows(matrix, &spec.target, &spec.features, &fold.train)?;
+        let train_t0 = std::time::Instant::now();
         let fitted =
             NativeModel::fit(&spec.features, &request.dsl, &x, &y).map_err(|_| UndefinedFitness)?;
+        let train_secs = train_t0.elapsed().as_secs_f64();
         let (vx, vy) = numeric_rows(matrix, &spec.target, &spec.features, &fold.validation)?;
+        let infer_t0 = std::time::Instant::now();
         let prediction = fitted.predict(&vx).map_err(|_| UndefinedFitness)?;
-        let score = objective
-            .evaluate(&vy, &prediction)
-            .map_err(|_| UndefinedFitness)?;
+        let infer_secs = infer_t0.elapsed().as_secs_f64();
         let rmse = RegressionObjective::parse("rmse")?
             .evaluate(&vy, &prediction)
             .map_err(|_| UndefinedFitness)?;
-        losses.push(score.loss);
-        values.push(score.value);
         surrogate.push(rmse.loss);
         fold_scores.push(rmse.loss);
+        let model_bytes = serde_json::to_vec(&fitted)
+            .map(|b| b.len() as u64)
+            .unwrap_or(0);
+        let feat_w = spec.features.len().max(1);
+        let fold_mean = fold_scores.iter().sum::<f64>() / fold_scores.len() as f64;
+        let fold_std = (fold_scores
+            .iter()
+            .map(|s| {
+                let d = *s - fold_mean;
+                d * d
+            })
+            .sum::<f64>()
+            / fold_scores.len() as f64)
+            .sqrt();
+        let telemetry = jope_runtime::fitness::ExecutionTelemetry {
+            train_time_seconds: train_secs,
+            inference_time_seconds: infer_secs,
+            train_memory_bytes: model_bytes + (fold.train.len() * feat_w * 16) as u64,
+            inference_memory_bytes: model_bytes + (fold.validation.len() * feat_w * 16) as u64,
+            model_bytes,
+            complexity_stages,
+            complexity_parameters: (model_bytes as usize / 8).max(feat_w),
+            feature_count: spec.features.len(),
+            fold_std,
+            train_rows: fold.train.len(),
+            inference_rows: fold.validation.len(),
+        };
+        let score = objective
+            .evaluate_with_telemetry(&vy, &prediction, &empty_cols, &telemetry)
+            .map_err(|_| UndefinedFitness)?;
+        losses.push(score.loss);
+        values.push(score.value);
         targets.extend(vy);
         predictions.extend(prediction);
     }
