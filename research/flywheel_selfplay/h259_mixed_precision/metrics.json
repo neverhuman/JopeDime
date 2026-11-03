@@ -1,0 +1,12 @@
+{
+  "schema": "jope.h259.metrics/v1",
+  "wave": "H259",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "optimizer_updates": 0,
+  "smoke_optimizer_updates": 0,
+  "complete_cells": 0,
+  "scientific_execution": "NOT_STARTED",
+  "primary_dlval": null,
+  "source_commit": null
+}
