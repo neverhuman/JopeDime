@@ -1,7 +1,7 @@
-use super::super::super::state::{
+use super::super::state::{
     LabelRevisionV2, LabelStatusV2, LabelValueV2, ObservationKeyV2, PhysicalObservationV2,
 };
-use super::super::super::wave::{ReadableAdmission, ReadableGeneration0, ReadableTelemetry};
+use super::super::wave::{ReadableAdmission, ReadableGeneration0, ReadableTelemetry};
 use super::*;
 
 #[test]

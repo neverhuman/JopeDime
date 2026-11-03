@@ -1,7 +1,7 @@
-use super::super::super::admission::{
+use super::super::admission::{
     ProofSlateCandidateV3, ProofSlateLaneV3, ReplayLabelRevisionV2, ReplayStepV2,
 };
-use super::super::super::store::RatchetArtifactPointerV1;
+use super::super::store::RatchetArtifactPointerV1;
 use super::*;
 
 fn replay_manifest() -> ReplayManifestV2 {
