@@ -218,7 +218,7 @@ pub(crate) fn flywheel_isolates_outer_folds_enforces_kl_freeze_and_ingests_s3_pr
         }
     }
     let mut perturbed_manifest = manifest.clone();
-    rehash(&perturbed_pools, &mut perturbed_manifest);
+    super::validation::rehash(&perturbed_pools, &mut perturbed_manifest);
 
     let shards_a = temp_a.path().join("shards");
     let shards_b = temp_b.path().join("shards");
