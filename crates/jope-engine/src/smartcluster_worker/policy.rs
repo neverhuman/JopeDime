@@ -83,8 +83,10 @@ mod storage_measurement_tests {
     }
 }
 
+#[path = "execution.rs"]
 mod execution;
 pub use execution::{freeze_dispatch_intent, serve};
 
 #[cfg(test)]
+#[path = "tests.rs"]
 mod tests;
