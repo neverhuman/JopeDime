@@ -6,10 +6,9 @@ import hashlib
 import json
 import random
 from pathlib import Path
-from typing import Any
 
-from .prime_label_to_corpus_identity import _sha256_file
-from .prime_label_to_corpus_identity import DUAL_EMBEDDING_DIM, TARGET_SUMMARY_DIM
+from .prime_label_to_corpus_identity import DUAL_EMBEDDING_DIM, TARGET_SUMMARY_DIM, _sha256_file
+
 
 # --------------------------------------------------------------------------- #
 # Dataset conditioning embedders                                              #
@@ -31,7 +30,6 @@ class SignatureEmbedder:
         signature_root: str | Path | None = None,
         require_hashes: bool = False,
     ) -> None:
-        import json
 
         self._manifest_path = Path(manifest).resolve()
         data = json.loads(self._manifest_path.read_text(encoding="utf-8"))

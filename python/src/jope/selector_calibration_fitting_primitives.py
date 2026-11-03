@@ -79,6 +79,7 @@ _META_NUMERIC_FEATURES = (
     "pattern_penalty",
 )
 
+
 def pattern_flags(actions: dict[str, Any] | None) -> list[str]:
     actions = actions or {}
     transforms = [stage for stage in actions.get("transforms") or [] if isinstance(stage, dict)]
@@ -142,6 +143,7 @@ def _stats(deltas: list[float]) -> dict[str, Any]:
         "score": float(score),
     }
 
+
 def _engine_head_key(engine: str, head: str) -> str:
     return f"{engine or _DEFAULT_ENGINE}::{head or 'unknown'}"
 
@@ -149,7 +151,7 @@ def _engine_head_key(engine: str, head: str) -> str:
 def _parse_actions(genome: str) -> dict[str, Any] | None:
     try:
         return parse_pipeline_actions(genome)
-    except (Exception,):
+    except Exception:
         return None
 
 
