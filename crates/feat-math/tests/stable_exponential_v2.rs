@@ -224,6 +224,24 @@ fn run(command: &mut Command) -> Vec<u8> {
     output.stdout
 }
 
+fn available_cpp_compilers() -> Vec<&'static str> {
+    let mut available = Vec::new();
+    for compiler in ["g++", "clang++"] {
+        match Command::new(compiler).arg("--version").output() {
+            Ok(_) => available.push(compiler),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                eprintln!("{compiler} unavailable; skipping its C++ parity variants");
+            }
+            Err(error) => panic!("cannot start {compiler}: {error}"),
+        }
+    }
+    assert!(
+        !available.is_empty(),
+        "at least one C++ compiler is required for emitted parity"
+    );
+    available
+}
+
 fn compile_cpp(
     root: &Path,
     compiler: &str,
@@ -337,7 +355,7 @@ int main(int argc,char** argv) {
             .arg(root.join("cases.txt"))),
         expected.as_bytes()
     );
-    for compiler in ["g++", "clang++"] {
+    for compiler in available_cpp_compilers() {
         for (standard, opt) in [
             ("-std=c++17", "-O2"),
             ("-std=c++17", "-O3"),
