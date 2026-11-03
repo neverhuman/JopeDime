@@ -144,9 +144,10 @@ mod tests;
 pub(crate) use artifacts::{
     recover_tabarena_lite_result, run_tabarena_lite_islands, validate_tabarena_lite_islands,
 };
-pub(super) use data::{campaign_root, identity, prepare_datasets, select_datasets};
+pub(super) use data::{campaign_root, identity};
 #[cfg(test)]
 pub(super) use data::{collect_canonical_leaders, update_leader};
+use data::{prepare_datasets, select_datasets};
 pub(super) use evolution::{checkpoint_path, initial_population, replay_records};
 #[cfg(test)]
 pub(super) use evolution::{
