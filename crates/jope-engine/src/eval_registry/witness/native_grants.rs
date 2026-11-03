@@ -359,7 +359,7 @@ impl NativeGrantState {
             "numerical work already witnessed; grant changes cannot authorize replay"
         );
         let effective = verify_epoch_chain(policy, &request.body.epoch_proofs)?;
-        let native = event.payload.get("native_fit");
+        let native = event["payload"].get("native_fit");
         if effective.native_grant_delegation.is_some() {
             ensure!(
                 native.is_some_and(|v| !v.is_null()),
