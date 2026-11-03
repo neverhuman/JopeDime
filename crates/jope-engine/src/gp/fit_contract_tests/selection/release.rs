@@ -11,7 +11,6 @@ use super::*;
     feature = "neural",
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
-
 pub(crate) fn search_proposals_fits_and_scores_depend_only_on_their_permitted_rows() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().canonicalize().unwrap();
@@ -173,7 +172,7 @@ pub(crate) fn search_proposals_fits_and_scores_depend_only_on_their_permitted_ro
 pub(crate) const SEALED_TEST: &str = "12,136\n13,139\n14,142.5\n";
 
 /// A completed search of the view fixture and its exported selected predictor.
-pub(crate) fn exported_subject(
+pub(super) fn exported_subject(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
