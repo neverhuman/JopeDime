@@ -1,4 +1,4 @@
-use super::evaluate::{numeric_rows, UndefinedFitness};
+use super::evaluate::{numeric_rows, NativeFolds, UndefinedFitness};
 use super::*;
 
 #[derive(Serialize, Deserialize)]
