@@ -292,7 +292,7 @@ pub fn pack(
 ) -> Result<()> {
     let started = Instant::now();
     let rehearsal = matches!(output, Output::Rehearsal { .. });
-    let (staged, code, key, profile) = stage_for(request, rehearsal)?;
+    let (staged, code, key, profile) = stage::stage_for(request, rehearsal)?;
     match output {
         Output::Rehearsal { dir } => {
             // Deliberately not a release stage. In particular there is nothing for a signer

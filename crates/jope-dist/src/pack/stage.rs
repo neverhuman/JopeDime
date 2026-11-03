@@ -4,7 +4,7 @@ pub fn stage(request: &PackRequest<'_>) -> Result<(Staged, Vec<u8>, TrustedKey, 
     stage_for(request, false)
 }
 
-fn stage_for(
+pub(super) fn stage_for(
     request: &PackRequest<'_>,
     rehearsal: bool,
 ) -> Result<(Staged, Vec<u8>, TrustedKey, Profile)> {
