@@ -1,10 +1,8 @@
-use super::*;
-
 #[test]
 fn refuses_nonfinite_inputs_noncanonical_constants_masks_and_reveals() {
-    let model = synthetic_adapter();
+    let model = super::synthetic_adapter();
     for case in 0..16 {
-        let mut f = synthetic_fixture(8);
+        let mut f = super::synthetic_fixture(8);
         match case {
             0 => f.prog_412[0] = f32::NAN,
             1 => f.proj_16[0] = f32::INFINITY,
@@ -38,7 +36,7 @@ fn refuses_nonfinite_inputs_noncanonical_constants_masks_and_reveals() {
 #[test]
 fn loader_refuses_missing_misshaped_nonfinite_and_bad_scaler_parameters() {
     for case in 0..5 {
-        let bytes = synthetic_weights(|p| match case {
+        let bytes = super::synthetic_weights(|p| match case {
             0 => {
                 p.remove("anchor.alpha_attn");
             }
@@ -49,27 +47,27 @@ fn loader_refuses_missing_misshaped_nonfinite_and_bad_scaler_parameters() {
             _ => unreachable!(),
         });
         assert!(
-            CpuAdapter::from_bytes(&bytes).is_err(),
+            super::CpuAdapter::from_bytes(&bytes).is_err(),
             "accepted invalid parameter case {case}"
         );
     }
-    let mut bytes = synthetic_weights(|_| {});
+    let mut bytes = super::synthetic_weights(|_| {});
     let header_len = u64::from_le_bytes(bytes[..8].try_into().unwrap()) as usize;
     let header = String::from_utf8(bytes[8..8 + header_len].to_vec())
         .unwrap()
         .replace("F32", "I32");
     bytes[8..8 + header_len].copy_from_slice(header.as_bytes());
-    assert!(CpuAdapter::from_bytes(&bytes).is_err());
-    assert!(CpuAdapter::from_bytes(&u64::MAX.to_le_bytes()).is_err());
+    assert!(super::CpuAdapter::from_bytes(&bytes).is_err());
+    assert!(super::CpuAdapter::from_bytes(&u64::MAX.to_le_bytes()).is_err());
 }
 
 #[test]
 fn kl_readout_has_a_known_zero_and_flags_large_proposal_shift() {
-    assert_eq!(proposal_kl(&[0.0, 0.0], &[0.0, 0.0]), 0.0);
-    let shifted = proposal_kl(&[0.0, 10.0], &[10.0, 0.0]);
+    assert_eq!(super::proposal_kl(&[0.0, 0.0], &[0.0, 0.0]), 0.0);
+    let shifted = super::proposal_kl(&[0.0, 10.0], &[10.0, 0.0]);
     assert!((shifted - 9.9990920426).abs() < 1e-8);
     assert!(shifted > 0.35);
-    assert!(proposal_kl(&[f32::MAX, -f32::MAX], &[-f32::MAX, f32::MAX]).is_finite());
+    assert!(super::proposal_kl(&[f32::MAX, -f32::MAX], &[-f32::MAX, f32::MAX]).is_finite());
 }
 
 #[test]
@@ -77,7 +75,7 @@ fn kl_readout_has_a_known_zero_and_flags_large_proposal_shift() {
 fn real_serving_slate_cost_and_admitted_set_m2_parity() {
     use rand_chacha::{rand_core::SeedableRng, ChaCha12Rng};
     let fixtures = super::real_cpu_parity::Fixtures::open();
-    let adapter = CpuAdapter::from_bytes(&fixtures.weights()).unwrap();
+    let adapter = super::CpuAdapter::from_bytes(&fixtures.weights()).unwrap();
     let mut stats = super::real_cpu_parity::Stats::default();
     let (mut decisive, mut ties, mut admission_failures) = (0, 0, 0);
     let mut max_kl = 0.0_f64;
@@ -96,7 +94,7 @@ fn real_serving_slate_cost_and_admitted_set_m2_parity() {
             let sos = f.f32("input.sos_prior");
             let scale = f.f32("input.scale");
             let actual = adapter
-                .predict_costs(PredictCostsInputs {
+                .predict_costs(super::PredictCostsInputs {
                     batch: 1,
                     candidates: width,
                     prog_412: &prog,
