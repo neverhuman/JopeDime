@@ -38,6 +38,8 @@
 //! Corpora and checkpoints become reusable only through [`reusable`]. It verifies the pointer,
 //! the commit it names and that commit's whole closure before returning anything.
 
+use crate::canon::sha256_hex;
+use crate::ledger::Ledger;
 use crate::progress::inventory::{
     decode_as, head_key, object_key, BlobRef, CandidateEvidence, Checkpoint, Commit, Decoded,
     Dependency, Encoded, Event, EventBody, Exposure, Head, HwmDecision, Inventoried, Kind,
@@ -48,8 +50,6 @@ use crate::progress::remote::Remote;
 use crate::revocation::Revocations;
 use anyhow::{bail, ensure, Context, Result};
 use jope_datasets::store::ObservedObject;
-use crate::canon::sha256_hex;
-use crate::ledger::Ledger;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
