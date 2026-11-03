@@ -17,7 +17,7 @@ pub(super) struct BinaryFoldSlices {
 /// Campaign-lifetime cache of stratified fold slices keyed by
 /// (fold-plan size, fold); string tables are built once per fold instead of
 /// once per genome evaluation.
-pub(super) struct BinaryFoldCache<'a> {
+pub(crate) struct BinaryFoldCache<'a> {
     train: &'a RegressionData,
     dataset: &'a str,
     slices: Mutex<HashMap<(usize, usize), Arc<BinaryFoldSlices>>>,
