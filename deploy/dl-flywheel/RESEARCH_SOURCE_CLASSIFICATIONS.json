@@ -1,37 +1,37 @@
 {
   "items": {
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/analysis.py": {
-        "bytes": 2167,
-        "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
-        "classification": {
-          "role": "research",
-          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h231_coswr_gated025_retest/gate.py": {
-        "bytes": 11854,
-        "sha256": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e",
-        "classification": {
-          "role": "research",
-          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h231_coswr_gated025_retest/runner.py": {
-        "bytes": 21390,
-        "sha256": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e",
-        "classification": {
-          "role": "research",
-          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-        }
-      },
-      "python:research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py": {
-        "bytes": 9203,
-        "sha256": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
-        "classification": {
-          "role": "research",
-          "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
-        }
-      },
+      "bytes": 2167,
+      "sha256": "b149080d604df9cd7d532c5404d90e066ef5ff33ba6e4a02190074ed7e26ab0d",
+      "classification": {
+        "role": "research",
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/gate.py": {
+      "bytes": 11854,
+      "sha256": "8b286e66a5b0dcf70c1ee8d4c3259a70db46959fd33853d37abd3ba68061878e",
+      "classification": {
+        "role": "research",
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/runner.py": {
+      "bytes": 21390,
+      "sha256": "30b4916cb98dc5d53b6603d7be20b0810240a6de416b9455f1b1eb27dad4f04e",
+      "classification": {
+        "role": "research",
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+      }
+    },
+    "python:research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py": {
+      "bytes": 9203,
+      "sha256": "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546",
+      "classification": {
+        "role": "research",
+        "reason": "H231 owner-authorized CPU COSWR adapter and frozen GATED_025 stack; immutable H136/H217 recipes, FIT-only tau, native91/global lock, one boot-bound attempt and hard CPU/S3/deadline guards; no serving promotion."
+      }
+    },
     "python:deploy/dl-flywheel/_successor_fixture_runner.py": {
       "bytes": 7749,
       "classification": {
@@ -6221,6 +6221,38 @@
         "role": "research"
       },
       "sha256": "c019274392f744fd105d832f5765f40bcbe5bdb94aecb99c3bfbe482dbcb371b"
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/analysis.py": {
+      "bytes": 9936,
+      "sha256": "eb843c035dd28a1c719adc3be606ee8698f6d9f948e53353049c37c351165909",
+      "classification": {
+        "role": "research",
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/treatment.py": {
+      "bytes": 6120,
+      "sha256": "ad447c6947c0c1d49224e06f205c439599a17eaaf26a96c5ffd4dce2382b0457",
+      "classification": {
+        "role": "research",
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/monitor.py": {
+      "bytes": 7703,
+      "sha256": "b046df8b3caed817c97af13801719c69cca987635c2fa3e5a43f163d8a7a6463",
+      "classification": {
+        "role": "research",
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/runner.py": {
+      "bytes": 33354,
+      "sha256": "b3a4450ab7f4b56e987066588e0c37ce2e856a0012bbb1234846b059de2bb698",
+      "classification": {
+        "role": "research",
+        "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",

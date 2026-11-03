@@ -161,15 +161,15 @@
   },
   "items": {
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
-        "discovery": {
-          "kind": "python-family"
-        },
-        "dispositions": [
-          "research"
-        ],
-        "lanes": [],
-        "scope": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
+      "discovery": {
+        "kind": "python-family"
       },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification."
+    },
     "benchmark:crates/feat-math/examples/expression_benchmark.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -5131,17 +5131,6 @@
         "full-python"
       ],
       "scope": "Tiny CPU fixtures for explicit optimizer-preserving corpus transitions and equal-update siblings; no real-corpus quality or serving qualification."
-    },
-    "python:python/tests/test_dime_score_worker_validation.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "python",
-        "full-python"
-      ],
-      "scope": "Synthetic worker reopen control: the mmap collator repeats corpus integrity verification in a spawned worker; no live corpus or model evaluation."
     },
     "python:python/tests/test_training_corpus_contract.py": {
       "discovery": {
@@ -15237,6 +15226,16 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/test_h236.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
     }
   },
   "lanes": {
