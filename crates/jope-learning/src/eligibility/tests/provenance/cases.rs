@@ -386,7 +386,6 @@ pub(super) const REQUALIFY: &str = "new, fully provenanced qualification";
 /// requalification is a refusal with a clear message, not a procedure. The only route back is a
 /// new, fully provenanced qualification of a new record, which then competes against the
 /// quarantined tip's bar (the adopted HWM-bar decision, D1).
-
 pub(crate) fn requalification_is_refused_in_place_and_happens_only_through_a_new_qualification() {
     let f = fixture(Task::Regression, 4);
     let qualified = qualify(&f.state, &f.record, &f.evidence).unwrap();
