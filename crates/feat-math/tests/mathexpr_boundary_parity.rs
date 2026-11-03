@@ -121,6 +121,10 @@ fn execute(program: &str, compiler: &str, standard: &str, optimization: &str, sa
     let binary = scratch.path().join("recipe");
     fs::write(&source, recipe.source + DRIVER).unwrap();
     let mut build = Command::new(compiler);
+    if compiler == "clang" {
+        // Use Clang's C++ driver mode without relying on a separate clang++ wrapper.
+        build.arg("--driver-mode=g++");
+    }
     build.args([
         standard,
         optimization,
@@ -319,8 +323,8 @@ fn expression_training_recipes_pass_compiler_and_sanitizer_matrix() {
             ("g++", "-std=c++17", "-O2", false),
             ("g++", "-std=c++17", "-O3", false),
             ("g++", "-std=c++20", "-O2", false),
-            ("clang++", "-std=c++17", "-O2", false),
-            ("clang++", "-std=c++20", "-O2", false),
+            ("clang", "-std=c++17", "-O2", false),
+            ("clang", "-std=c++20", "-O2", false),
             ("g++", "-std=c++17", "-O2", true),
         ] {
             execute(program, compiler, standard, optimization, sanitize);
