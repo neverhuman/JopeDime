@@ -179,11 +179,11 @@ pub(super) use eligibility::{
     build_eligibility, build_transfer_rankings, copy_context_slices, generation_zero,
     load_dl_proposals, proposal_score, EligibleDatasets,
 };
+use evaluation::StudyEvalContext;
 pub(super) use evaluation::{
     evaluate_member_split, offspring_seed, refill_population, score_population, slice_data,
     tournament,
 };
-use evaluation::StudyEvalContext;
 pub(crate) use fitness::paired_robust_fitness;
 pub(super) use fitness::{
     canonical_json_bytes, canonicalize_json, expression_column_indices, genome_compatible,
