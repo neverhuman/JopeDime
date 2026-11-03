@@ -1,14 +1,1181 @@
 {
   "wave": "H286",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "COMPLETE",
+  "verdict": "NOT_TRANSFERRED_FRESH",
+  "arm_verdicts": {
+    "RERANK8_VETO": "NOT_TRANSFERRED_FRESH",
+    "BAG_SWITCH": "NOT_TRANSFERRED_FRESH",
+    "BAG_SWITCH_NESTED": "NOT_TRANSFERRED_FRESH"
+  },
   "optimizer_updates": 0,
-  "verdict": null,
-  "cohort_sha256": "0de1b3839cb3201d6c8a05aafec134e28e119ae6c233588b41d6169adb3e7b11",
-  "schema_on_completion": {
-    "verdict": "FRESH_TRANSFER_PASS / NOT_TRANSFERRED_FRESH / INSUFFICIENT_FRESH / BLOCKED_GPU_LOCK (RERANK8_VETO); per-arm verdicts for BAG_SWITCH, BAG_SWITCH_NESTED",
-    "frozen": "per seed gains, CI, W/T/L, harmed, Elo, invalid, changed; median + pooled CI; criteria",
-    "secondary": "sign test p per seed; normalized gain median + CI",
-    "pooled": "H283 + H286 (H283 portion already seen)",
-    "descriptive": "r782/r785 pools"
+  "cohort": {
+    "sha256": "0de1b3839cb3201d6c8a05aafec134e28e119ae6c233588b41d6169adb3e7b11",
+    "version_id": "S7duiC8OFJoMp9Bhs8cnGc6E3.K3IhWW",
+    "families": 200,
+    "built": 200,
+    "receipts": {
+      "scanned_even": 480,
+      "h283_assigned": 60,
+      "no_buildable_context": 154,
+      "fewer_than_2_accepts": 126
+    }
+  },
+  "gpu": [
+    {
+      "round": 3175,
+      "outcome": "A_EXACT",
+      "gpu_mean": 1.1389572403748425,
+      "stored_mean": 1.1389572403748425,
+      "abs_mean_residual": 0.0,
+      "per_context_equal": 91,
+      "picks_equal": 91,
+      "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "ckpt_sha256_after": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+      "peak_gpu": {
+        "allocated": 28773888,
+        "reserved": 54525952
+      },
+      "writer_before": true,
+      "writer_after": true,
+      "fresh": {
+        "status": "COMPLETE",
+        "contexts": 200,
+        "slot0_mean": 1.3386470888122088,
+        "costs_sha256": "7a4373b982576c25b4ef15c9f8178cf1b801f07aaec48c5be6999cb05634ed10"
+      }
+    },
+    {
+      "round": 782,
+      "outcome": "A_EXACT",
+      "gpu_mean": 1.1073772627425549,
+      "stored_mean": 1.1073772627425547,
+      "abs_mean_residual": 2.220446049250313E-16,
+      "per_context_equal": 91,
+      "picks_equal": 91,
+      "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "ckpt_sha256_after": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c",
+      "peak_gpu": {
+        "allocated": 28773888,
+        "reserved": 54525952
+      },
+      "writer_before": true,
+      "writer_after": true,
+      "fresh": {
+        "status": "COMPLETE",
+        "contexts": 200,
+        "slot0_mean": 1.3444176255797806,
+        "costs_sha256": "452963dc40b27ba2fb6cbb32577e9eebdcd42e2f3cd75275e0945ee558523ebd"
+      }
+    },
+    {
+      "round": 785,
+      "outcome": "A_EXACT",
+      "gpu_mean": 1.1375952947484103,
+      "stored_mean": 1.1375952947484103,
+      "abs_mean_residual": 0.0,
+      "per_context_equal": 91,
+      "picks_equal": 91,
+      "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "ckpt_sha256_after": "ef6696f6369122a162d58b9b522fd83cae110a5576ef3760e3b43ba85d129e0a",
+      "peak_gpu": {
+        "allocated": 28773888,
+        "reserved": 54525952
+      },
+      "writer_before": true,
+      "writer_after": true,
+      "fresh": {
+        "status": "COMPLETE",
+        "contexts": 200,
+        "slot0_mean": 1.3388369546374528,
+        "costs_sha256": "37af3d41ba5dfa2f151368ef5e773ef83d358ce7fd724a6a0b0662ffe4395ad0"
+      }
+    }
+  ],
+  "regression_h281_panel_exact": true,
+  "slot0_fresh_utility_mean": 1.3386470888122088,
+  "oracle_top8_mean": 1.561810189632974,
+  "RERANK8_VETO": {
+    "families": 200,
+    "per_seed_family_mean_gain": [
+      0.045135917043803674,
+      0.038099640909236905,
+      0.05945263419155152
+    ],
+    "per_seed_family_median_gain": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "per_seed_ci95": [
+      [
+        -0.0074560294454616115,
+        0.10144999117894449
+      ],
+      [
+        -0.012628367298315875,
+        0.09318608658356507
+      ],
+      [
+        0.007003933664663647,
+        0.11570972602282291
+      ]
+    ],
+    "median_gain_across_seeds": 0.045135917043803674,
+    "pooled_ci95": [
+      -0.005118186742172091,
+      0.10180414031526094
+    ],
+    "wtl_by_seed": [
+      [
+        64,
+        88,
+        48
+      ],
+      [
+        41,
+        127,
+        32
+      ],
+      [
+        75,
+        87,
+        38
+      ]
+    ],
+    "elo_by_seed": [
+      1549.9664484906498,
+      1543.041638057341,
+      1618.0885183437858
+    ],
+    "harmed_share_by_seed": [
+      0.19,
+      0.12,
+      0.16
+    ],
+    "invalid_by_seed": [
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        3
+      ],
+      [
+        4,
+        3
+      ]
+    ],
+    "changed_picks_by_seed": [
+      114,
+      75,
+      116
+    ],
+    "slot0_context_mean": 1.3386470888122088,
+    "challenger_context_mean_by_seed": [
+      1.3837830058560123,
+      1.3767467297214457,
+      1.3980997230037604
+    ],
+    "criteria": {
+      "lcb_positive_3of3": false,
+      "median_above_min": true,
+      "harmed_share_ok": true,
+      "invalid_ok": true
+    },
+    "passes": false
+  },
+  "RERANK8_VETO_harmed_families_by_seed": [
+    [
+      "fresh:175c5cb6a9a42ee0bc54958cd94216b4a20e17b8",
+      "fresh:501ca019a594404457af4293f871b26306e92193",
+      "fresh:51e391ae95b73947bb96d46f761c2bdcd342be2d",
+      "fresh:551b707321fcf566d2ca6f974a0aa347917b33ad",
+      "fresh:594046482cbfb0d244829ceb4836afc0075136c7",
+      "fresh:67fa755baef50fb10465b773c3dd8ff96667a284",
+      "fresh:68ebd878b40785f0b4537a404d497653598fe878",
+      "fresh:6c6d506c2a07ae1e2e57b05ad605d27f79b5ceb7",
+      "fresh:6fde0a4710b9270c1508caf13a0b7226536c12b2",
+      "fresh:75732354a3359653daecc50d548c12ce60efe11f",
+      "fresh:79b16b7ca789f4ea6a93396ed8fb398e96eb49fa",
+      "fresh:9a678a263d2cd70ff9315888ac6a58aebcf17da5",
+      "fresh:9e3ec68e568732025b843aa247ebd12bdd99289d",
+      "fresh:a208bceace06dc26aa206ed2df2fc96f851143d6",
+      "fresh:a68f27bef81cca699af194392933ad1bed15ba1a",
+      "fresh:a94e9b9b36ca43ed46f48543617cf09d31066e0d",
+      "fresh:b2fcc1044d92f0ded1cce8efefa84105a3a12acd",
+      "fresh:b31b83dd925d94409f407e8116c9ac51f410079b",
+      "fresh:be6df05846da610aa0540e0bac06b85454a65399",
+      "fresh:cdaa89298919c67d9d156046857bcbba6dc08247",
+      "fresh:e22cdcc1b60f28b731d0701b432fd4c9a63b9f7c",
+      "fresh:e4be2bf4e634f89ccc9ade5aa6e58f1213db3f95",
+      "fresh:e7d962fe7aaead194a9d8bbea961e3523362d314",
+      "fresh:eba193b79fa3d32e903a5d9946bab63ba3b26a2e",
+      "fresh:f2bb03add85ea1a3d6aaee745a6b1563c9152902",
+      "fresh:f37947fad4d39a9e6b1c11b083afe3aaca1d49a4",
+      "fresh:f49214eb4f32900f4868d4b59f684588b960de93",
+      "fresh:legacy:ab21f46544e14786fc781b403f8e5ed6fbe217899d3e8d07bac1024dbb835711:openml-1414-7393-count",
+      "fresh:srcfile:analcatdata-michiganacc",
+      "fresh:srcfile:house-sales-reduced",
+      "fresh:srcfile:letter",
+      "fresh:srcfile:rdatasets-agridat-miguez-biomass",
+      "fresh:srcfile:rdatasets-neurodatasets-oasis-cross-tbl-df",
+      "fresh:srcfile:rdatasets-openintro-nyc-marathon",
+      "fresh:srcfile:rdatasets-stat2data-metabolicrate",
+      "fresh:srcfile:rdatasets-stevedata-rok-unga",
+      "fresh:srcfile:rdatasets-wooldridge-discrim",
+      "fresh:srcfile:treasury"
+    ],
+    [
+      "fresh:51e391ae95b73947bb96d46f761c2bdcd342be2d",
+      "fresh:67fa755baef50fb10465b773c3dd8ff96667a284",
+      "fresh:6c6d506c2a07ae1e2e57b05ad605d27f79b5ceb7",
+      "fresh:9a678a263d2cd70ff9315888ac6a58aebcf17da5",
+      "fresh:9e3ec68e568732025b843aa247ebd12bdd99289d",
+      "fresh:a208bceace06dc26aa206ed2df2fc96f851143d6",
+      "fresh:a94e9b9b36ca43ed46f48543617cf09d31066e0d",
+      "fresh:b31b83dd925d94409f407e8116c9ac51f410079b",
+      "fresh:b6a013fa71bd49ca129d31cd78405b965a5efdf6",
+      "fresh:be6df05846da610aa0540e0bac06b85454a65399",
+      "fresh:cdaa89298919c67d9d156046857bcbba6dc08247",
+      "fresh:e7d962fe7aaead194a9d8bbea961e3523362d314",
+      "fresh:eba193b79fa3d32e903a5d9946bab63ba3b26a2e",
+      "fresh:f2bb03add85ea1a3d6aaee745a6b1563c9152902",
+      "fresh:f49214eb4f32900f4868d4b59f684588b960de93",
+      "fresh:fb78972ea9ee80efe4cf9a8902d61dcd12d80e84",
+      "fresh:fdebaaba788281b1e4f56c0af465410655827f50",
+      "fresh:legacy:ab21f46544e14786fc781b403f8e5ed6fbe217899d3e8d07bac1024dbb835711:openml-1414-7393-count",
+      "fresh:srcfile:house-sales-reduced",
+      "fresh:srcfile:rdatasets-agridat-miguez-biomass",
+      "fresh:srcfile:rdatasets-openintro-nyc-marathon",
+      "fresh:srcfile:rdatasets-stat2data-metabolicrate",
+      "fresh:srcfile:rdatasets-wooldridge-discrim",
+      "fresh:srcfile:treasury"
+    ],
+    [
+      "fresh:417296d8cc4321bfefe1483a405d99f8b00e1529",
+      "fresh:501ca019a594404457af4293f871b26306e92193",
+      "fresh:51e391ae95b73947bb96d46f761c2bdcd342be2d",
+      "fresh:594046482cbfb0d244829ceb4836afc0075136c7",
+      "fresh:67fa755baef50fb10465b773c3dd8ff96667a284",
+      "fresh:6c6d506c2a07ae1e2e57b05ad605d27f79b5ceb7",
+      "fresh:75732354a3359653daecc50d548c12ce60efe11f",
+      "fresh:9a678a263d2cd70ff9315888ac6a58aebcf17da5",
+      "fresh:9e3ec68e568732025b843aa247ebd12bdd99289d",
+      "fresh:a208bceace06dc26aa206ed2df2fc96f851143d6",
+      "fresh:a68f27bef81cca699af194392933ad1bed15ba1a",
+      "fresh:a94e9b9b36ca43ed46f48543617cf09d31066e0d",
+      "fresh:b31b83dd925d94409f407e8116c9ac51f410079b",
+      "fresh:be6df05846da610aa0540e0bac06b85454a65399",
+      "fresh:c0935d177b9885f920bba0b1c468dc333efb04d9",
+      "fresh:cd65586c2c197a032c2216b99f74118d24308ca6",
+      "fresh:d8afdcf62d11eef8224a2ea424060ff9da9e2a29",
+      "fresh:e22cdcc1b60f28b731d0701b432fd4c9a63b9f7c",
+      "fresh:e4be2bf4e634f89ccc9ade5aa6e58f1213db3f95",
+      "fresh:e7d962fe7aaead194a9d8bbea961e3523362d314",
+      "fresh:e9b4619248604706864863ddf26d89ef28565a39",
+      "fresh:f2bb03add85ea1a3d6aaee745a6b1563c9152902",
+      "fresh:f49214eb4f32900f4868d4b59f684588b960de93",
+      "fresh:legacy:ab21f46544e14786fc781b403f8e5ed6fbe217899d3e8d07bac1024dbb835711:openml-1414-7393-count",
+      "fresh:srcfile:analcatdata-michiganacc",
+      "fresh:srcfile:auto",
+      "fresh:srcfile:house-sales-reduced",
+      "fresh:srcfile:rdatasets-agridat-miguez-biomass",
+      "fresh:srcfile:rdatasets-openintro-nyc-marathon",
+      "fresh:srcfile:rdatasets-wooldridge-discrim",
+      "fresh:srcfile:treasury",
+      "fresh:srcfile:uci-555-apartment-rent"
+    ]
+  ],
+  "RERANK8_VETO_secondary": {
+    "sign_test": [
+      {
+        "wins": 64,
+        "losses": 48,
+        "ties": 88,
+        "p_one_sided": 0.07803315099688364
+      },
+      {
+        "wins": 41,
+        "losses": 32,
+        "ties": 127,
+        "p_one_sided": 0.17459091908529414
+      },
+      {
+        "wins": 75,
+        "losses": 38,
+        "ties": 87,
+        "p_one_sided": 0.0003203840941740436
+      }
+    ],
+    "sign_test_pass_3of3": false,
+    "normalized_gain": [
+      {
+        "kept": 167,
+        "dropped": 33,
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "kept": 167,
+        "dropped": 33,
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "kept": 167,
+        "dropped": 33,
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.18442948474494492
+        ]
+      }
+    ]
+  },
+  "BAG_SWITCH": {
+    "summary": {
+      "families": 200,
+      "per_seed_family_mean_gain": [
+        0.06917362020686675,
+        0.06299527974306188,
+        0.03555532770001218
+      ],
+      "per_seed_family_median_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "per_seed_ci95": [
+        [
+          0.022734653864913114,
+          0.12598730721958645
+        ],
+        [
+          0.019235555335663367,
+          0.11696297562415824
+        ],
+        [
+          -0.027410423672281012,
+          0.09978082745750019
+        ]
+      ],
+      "median_gain_across_seeds": 0.06299527974306188,
+      "pooled_ci95": [
+        0.01856345716211195,
+        0.11696297562415824
+      ],
+      "wtl_by_seed": [
+        [
+          44,
+          124,
+          32
+        ],
+        [
+          27,
+          163,
+          10
+        ],
+        [
+          32,
+          144,
+          24
+        ]
+      ],
+      "elo_by_seed": [
+        1555.306277767525,
+        1672.4362026832528,
+        1549.957405634842
+      ],
+      "harmed_share_by_seed": [
+        0.105,
+        0.035,
+        0.085
+      ],
+      "invalid_by_seed": [
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "changed_picks_by_seed": [
+        77,
+        37,
+        58
+      ],
+      "slot0_context_mean": 1.3386470888122088,
+      "challenger_context_mean_by_seed": [
+        1.4078207090190755,
+        1.4016423685552706,
+        1.374202416512221
+      ],
+      "criteria": {
+        "lcb_positive_3of3": false,
+        "median_above_min": true,
+        "harmed_share_ok": true,
+        "invalid_ok": true
+      },
+      "passes": false
+    },
+    "harmed_counts": [
+      21,
+      7,
+      17
+    ],
+    "secondary": {
+      "sign_test": [
+        {
+          "wins": 44,
+          "losses": 32,
+          "ties": 124,
+          "p_one_sided": 0.10336842090419616
+        },
+        {
+          "wins": 27,
+          "losses": 10,
+          "ties": 163,
+          "p_one_sided": 0.003816039301455021
+        },
+        {
+          "wins": 32,
+          "losses": 24,
+          "ties": 144,
+          "p_one_sided": 0.17484097649184244
+        }
+      ],
+      "sign_test_pass_3of3": false,
+      "normalized_gain": [
+        {
+          "kept": 167,
+          "dropped": 33,
+          "median": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "kept": 167,
+          "dropped": 33,
+          "median": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "kept": 167,
+          "dropped": 33,
+          "median": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    "seeds": [
+      279101,
+      279102,
+      279103
+    ]
+  },
+  "BAG_SWITCH_NESTED": {
+    "summary": {
+      "families": 200,
+      "per_seed_family_mean_gain": [
+        0.06917362020686675,
+        0.05144888638058269,
+        0.03555532770001218
+      ],
+      "per_seed_family_median_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "per_seed_ci95": [
+        [
+          0.022734653864913114,
+          0.12598730721958645
+        ],
+        [
+          -0.008720893318705085,
+          0.11389093077862755
+        ],
+        [
+          -0.027410423672281012,
+          0.09978082745750019
+        ]
+      ],
+      "median_gain_across_seeds": 0.05144888638058269,
+      "pooled_ci95": [
+        0.0029360214508072783,
+        0.11389315775992226
+      ],
+      "wtl_by_seed": [
+        [
+          44,
+          124,
+          32
+        ],
+        [
+          33,
+          153,
+          14
+        ],
+        [
+          32,
+          144,
+          24
+        ]
+      ],
+      "elo_by_seed": [
+        1555.306277767525,
+        1648.8829556178148,
+        1549.957405634842
+      ],
+      "harmed_share_by_seed": [
+        0.105,
+        0.05,
+        0.085
+      ],
+      "invalid_by_seed": [
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "changed_picks_by_seed": [
+        77,
+        47,
+        58
+      ],
+      "slot0_context_mean": 1.3386470888122088,
+      "challenger_context_mean_by_seed": [
+        1.4078207090190755,
+        1.3900959751927915,
+        1.374202416512221
+      ],
+      "criteria": {
+        "lcb_positive_3of3": false,
+        "median_above_min": true,
+        "harmed_share_ok": true,
+        "invalid_ok": true
+      },
+      "passes": false
+    },
+    "harmed_counts": [
+      21,
+      10,
+      17
+    ],
+    "secondary": {
+      "sign_test": [
+        {
+          "wins": 44,
+          "losses": 32,
+          "ties": 124,
+          "p_one_sided": 0.10336842090419616
+        },
+        {
+          "wins": 33,
+          "losses": 14,
+          "ties": 153,
+          "p_one_sided": 0.003971363254741789
+        },
+        {
+          "wins": 32,
+          "losses": 24,
+          "ties": 144,
+          "p_one_sided": 0.17484097649184244
+        }
+      ],
+      "sign_test_pass_3of3": false,
+      "normalized_gain": [
+        {
+          "kept": 167,
+          "dropped": 33,
+          "median": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "kept": 167,
+          "dropped": 33,
+          "median": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "kept": 167,
+          "dropped": 33,
+          "median": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    "seeds": [
+      279101,
+      279102,
+      279103
+    ]
+  },
+  "null_random_valid_slot": {
+    "families": 200,
+    "per_seed_family_mean_gain": [
+      0.015539157468874852,
+      0.008210788061917117,
+      0.05374854815258393
+    ],
+    "per_seed_family_median_gain": [
+      -1.0703006059209486E-7,
+      1.1102230246251565E-16,
+      -0.000013095685442832128
+    ],
+    "per_seed_ci95": [
+      [
+        -0.060050201408169405,
+        0.09689260237667985
+      ],
+      [
+        -0.05983828240245997,
+        0.08128021018771234
+      ],
+      [
+        -0.024666205987187793,
+        0.14551634608898334
+      ]
+    ],
+    "median_gain_across_seeds": 0.015539157468874852,
+    "pooled_ci95": [
+      -0.04131318741005512,
+      0.09833988835800488
+    ],
+    "wtl_by_seed": [
+      [
+        94,
+        12,
+        94
+      ],
+      [
+        94,
+        11,
+        95
+      ],
+      [
+        93,
+        8,
+        99
+      ]
+    ],
+    "elo_by_seed": [
+      1500.0,
+      1498.161893836559,
+      1489.140233545287
+    ],
+    "harmed_share_by_seed": [
+      0.355,
+      0.39,
+      0.4
+    ],
+    "invalid_by_seed": [
+      [
+        4,
+        0
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        4,
+        0
+      ]
+    ],
+    "changed_picks_by_seed": [
+      200,
+      200,
+      200
+    ],
+    "slot0_context_mean": 1.3386470888122088,
+    "challenger_context_mean_by_seed": [
+      1.3541862462810839,
+      1.346857876874126,
+      1.3923956369647925
+    ],
+    "criteria": {
+      "lcb_positive_3of3": false,
+      "median_above_min": true,
+      "harmed_share_ok": false,
+      "invalid_ok": true
+    },
+    "passes": false
+  },
+  "pooled_h283_h286": {
+    "label": "pooled, H283 portion already seen (descriptive; H283 null seeds 283101-3, H286 null seeds 286101-3)",
+    "families": 229,
+    "rule_verdict": "NOT_TRANSFERRED_FRESH",
+    "frozen": {
+      "families": 229,
+      "per_seed_family_mean_gain": [
+        0.04160361130499547,
+        0.03491260538683489,
+        0.05197101667898537
+      ],
+      "per_seed_family_median_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "per_seed_ci95": [
+        [
+          -0.007378275575682258,
+          0.09298648883768464
+        ],
+        [
+          -0.013196046807903804,
+          0.08501044165802077
+        ],
+        [
+          0.0009279102113693086,
+          0.10524903021749211
+        ]
+      ],
+      "median_gain_across_seeds": 0.04160361130499547,
+      "pooled_ci95": [
+        -0.005624250710236679,
+        0.0936889442075244
+      ],
+      "wtl_by_seed": [
+        [
+          79,
+          96,
+          54
+        ],
+        [
+          53,
+          142,
+          34
+        ],
+        [
+          89,
+          97,
+          43
+        ]
+      ],
+      "elo_by_seed": [
+        1566.0831538060906,
+        1577.1004689174817,
+        1626.347743392965
+      ],
+      "harmed_share_by_seed": [
+        0.19213973799126638,
+        0.11353711790393013,
+        0.1615720524017467
+      ],
+      "invalid_by_seed": [
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          3
+        ]
+      ],
+      "changed_picks_by_seed": [
+        0,
+        0,
+        0
+      ],
+      "slot0_context_mean": 1.357279678370193,
+      "challenger_context_mean_by_seed": [
+        1.3988832896751886,
+        1.3921922837570282,
+        1.4092506950491788
+      ],
+      "criteria": {
+        "lcb_positive_3of3": false,
+        "median_above_min": true,
+        "harmed_share_ok": true,
+        "invalid_ok": true
+      },
+      "passes": false
+    },
+    "null": {
+      "families": 229,
+      "per_seed_family_mean_gain": [
+        0.0192172577083293,
+        -0.007214260131492349,
+        0.02989306725313725
+      ],
+      "per_seed_family_median_gain": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "per_seed_ci95": [
+        [
+          -0.05018253713518293,
+          0.0909570268708338
+        ],
+        [
+          -0.07138070286564281,
+          0.05929815052598273
+        ],
+        [
+          -0.046075201393745,
+          0.11388966644681336
+        ]
+      ],
+      "median_gain_across_seeds": 0.0192172577083293,
+      "pooled_ci95": [
+        -0.048389496311564105,
+        0.0851491840015472
+      ],
+      "wtl_by_seed": [
+        [
+          110,
+          15,
+          104
+        ],
+        [
+          108,
+          14,
+          107
+        ],
+        [
+          107,
+          10,
+          112
+        ]
+      ],
+      "elo_by_seed": [
+        1509.7428273216824,
+        1501.6158408077554,
+        1492.0670267303158
+      ],
+      "harmed_share_by_seed": [
+        0.3537117903930131,
+        0.3930131004366812,
+        0.4017467248908297
+      ],
+      "invalid_by_seed": [
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          0
+        ]
+      ],
+      "changed_picks_by_seed": [
+        0,
+        0,
+        0
+      ],
+      "slot0_context_mean": 1.357279678370193,
+      "challenger_context_mean_by_seed": [
+        1.3764969360785224,
+        1.3500654182387006,
+        1.3871727456233303
+      ],
+      "criteria": {
+        "lcb_positive_3of3": false,
+        "median_above_min": true,
+        "harmed_share_ok": false,
+        "invalid_ok": true
+      },
+      "passes": false
+    }
+  },
+  "descriptive_distinct_pools": {
+    "r782": {
+      "label": "DESCRIPTIVE (not part of the verdict): frozen VETO vs this checkpoint's own slot 0",
+      "dl_val91_regression": {
+        "gpu_mean": 1.1073772627425549,
+        "stored_mean": 1.1073772627425547
+      },
+      "slot0_mean": 1.3444176255797806,
+      "frozen": {
+        "families": 200,
+        "per_seed_family_mean_gain": [
+          0.08480680179500645,
+          0.05944595200665541,
+          0.059905168169048055
+        ],
+        "per_seed_family_median_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_ci95": [
+          [
+            0.024353944045370973,
+            0.15837242532275791
+          ],
+          [
+            -0.005121925788374723,
+            0.13550029024175778
+          ],
+          [
+            0.011251677425545753,
+            0.11440522582063135
+          ]
+        ],
+        "median_gain_across_seeds": 0.059905168169048055,
+        "pooled_ci95": [
+          0.016113954849772356,
+          0.1364844229249243
+        ],
+        "wtl_by_seed": [
+          [
+            62,
+            92,
+            46
+          ],
+          [
+            42,
+            121,
+            37
+          ],
+          [
+            61,
+            93,
+            46
+          ]
+        ],
+        "elo_by_seed": [
+          1551.8437992328618,
+          1522.013438577152,
+          1549.0195166910364
+        ],
+        "harmed_share_by_seed": [
+          0.195,
+          0.17,
+          0.2
+        ],
+        "invalid_by_seed": [
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "changed_picks_by_seed": [
+          110,
+          81,
+          110
+        ],
+        "slot0_context_mean": 1.3444176255797806,
+        "challenger_context_mean_by_seed": [
+          1.429224427374787,
+          1.403863577586436,
+          1.4043227937488285
+        ],
+        "criteria": {
+          "lcb_positive_3of3": false,
+          "median_above_min": true,
+          "harmed_share_ok": true,
+          "invalid_ok": true
+        },
+        "passes": false
+      }
+    },
+    "r785": {
+      "label": "DESCRIPTIVE (not part of the verdict): frozen VETO vs this checkpoint's own slot 0",
+      "dl_val91_regression": {
+        "gpu_mean": 1.1375952947484103,
+        "stored_mean": 1.1375952947484103
+      },
+      "slot0_mean": 1.3388369546374528,
+      "frozen": {
+        "families": 200,
+        "per_seed_family_mean_gain": [
+          0.059355769786201475,
+          0.02909551651857423,
+          0.05951314603932669
+        ],
+        "per_seed_family_median_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_ci95": [
+          [
+            0.009600355939923243,
+            0.11771601223343879
+          ],
+          [
+            -0.021397934655516933,
+            0.08360294789646924
+          ],
+          [
+            0.013130706475209981,
+            0.11182130855663892
+          ]
+        ],
+        "median_gain_across_seeds": 0.059355769786201475,
+        "pooled_ci95": [
+          0.007095756752465729,
+          0.10587049204441053
+        ],
+        "wtl_by_seed": [
+          [
+            57,
+            96,
+            47
+          ],
+          [
+            38,
+            125,
+            37
+          ],
+          [
+            65,
+            92,
+            43
+          ]
+        ],
+        "elo_by_seed": [
+          1533.5043159263516,
+          1504.6315138031966,
+          1571.7642893941554
+        ],
+        "harmed_share_by_seed": [
+          0.19,
+          0.15,
+          0.185
+        ],
+        "invalid_by_seed": [
+          [
+            4,
+            2
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            4,
+            2
+          ]
+        ],
+        "changed_picks_by_seed": [
+          106,
+          77,
+          111
+        ],
+        "slot0_context_mean": 1.3388369546374528,
+        "challenger_context_mean_by_seed": [
+          1.3981927244236545,
+          1.3679324711560272,
+          1.3983501006767796
+        ],
+        "criteria": {
+          "lcb_positive_3of3": false,
+          "median_above_min": true,
+          "harmed_share_ok": true,
+          "invalid_ok": true
+        },
+        "passes": false
+      }
+    }
+  },
+  "fresh_pools": {
+    "receipt": "~/jope_plan/ns/receipts/fresh_pools_H286.json",
+    "objects": [
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/fresh_pools/fresh-build.tar.gz",
+        "sha256": "dd8bd46b3a2aa05a0833ac031b5d351b5cb9bc8706e04258ba215a2eafcb69ba",
+        "version_id": "lMjbphymFwfaWBSNooabX5qAUPYHEC0T"
+      },
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/fresh_pools/fresh_top8_packets.npz",
+        "sha256": "3dec3a1813e1c36d44eada4f394dd46b6088cd384aa99d470f165d7b68640759",
+        "version_id": "nD5IvNS52AMyOSaMkkmbMMnzV5ifmSyS"
+      },
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/fresh_pools/fresh-r3175-gpu-costs.npz",
+        "sha256": "7a4373b982576c25b4ef15c9f8178cf1b801f07aaec48c5be6999cb05634ed10",
+        "version_id": "hY_CtcLjg4erQyW68XdyiNd0z0QOczpI"
+      },
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/fresh_pools/fresh-r782-gpu-costs.npz",
+        "sha256": "452963dc40b27ba2fb6cbb32577e9eebdcd42e2f3cd75275e0945ee558523ebd",
+        "version_id": "crnLX4zFYRe0HpYLGFjQ743jUATiRRfo"
+      },
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/fresh_pools/fresh-r785-gpu-costs.npz",
+        "sha256": "37af3d41ba5dfa2f151368ef5e773ef83d358ce7fd724a6a0b0662ffe4395ad0",
+        "version_id": "vigRSX5W6kQr7ULjQXQoMyfXXHaTSFgR"
+      }
+    ]
+  },
+  "prereg": {
+    "publication_ref": "v1/next",
+    "commit": "1e3585c34da8498746e8deb5c6457519c1d37db0",
+    "review_receipt_sha256": "54f21350bcdb2101064ce6fdb8e877532b96a83c001275ace1136eaf021832a1"
+  },
+  "frozen_models": {
+    "h278_export_manifest_version_id": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+    "h284_export_manifest_sha256": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc",
+    "h284_export_commit": "972d3011e9f9655c9180e075012477084420ce85",
+    "refit": false
+  },
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "s3_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H286/attempt-001/s3_manifest.json",
+    "sha256": "9f116762526b34ad1b053533d54f8f94c528b60270bb0fa2d5d39d5a1dca2e23",
+    "version_id": "7PC3uKHGeqaVxmh9b5KimOuoPncuLTaO"
   }
 }
