@@ -108,7 +108,7 @@ class PanelTests(unittest.TestCase):
             create.assert_not_called()
             allocate.assert_not_called()
         with patch.object(_panel, "MAX_TRANSFORMED_CELLS", 63, create=True):
-            with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+            with patch("pickle.loads", side_effect=AssertionError("pickle must not be loaded")):
                 result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
             self.assertEqual(result, {"kind": "values", "data": [6.0, 6.0, 6.0]})
             self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
@@ -151,7 +151,7 @@ class PanelTests(unittest.TestCase):
     def test_probability_columns_match_declared_original_class_order_without_pickle_reload(self):
         for task in ("binary", "multiclass"):
             data = request(task)
-            with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+            with patch("pickle.loads", side_effect=AssertionError("pickle must not be loaded")):
                 result, artifact, checksum = _panel.fit(data, lambda _: ReversedClassifier(), "toy 1")
             self.assertEqual(result["data"]["classes"], data["classes"])
             expected = np.arange(1, len(data["classes"]) + 1, dtype=float)
@@ -161,7 +161,7 @@ class PanelTests(unittest.TestCase):
 
     def test_regression_fit_preserves_predictions_without_pickle_reload(self):
         data = request("regression")
-        with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+        with patch("pickle.loads", side_effect=AssertionError("pickle must not be loaded")):
             result, artifact, checksum = _panel.fit(data, lambda _: ToyRegressor(), "toy 1")
         self.assertEqual(result, {"kind": "values", "data": [6.0, 6.0, 6.0]})
         self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
@@ -217,7 +217,7 @@ class PanelTests(unittest.TestCase):
                 for task in ("regression", "binary", "multiclass"):
                     with self.subTest(engine=engine_version, task=task):
                         data = request(task)  # Six synthetic training rows, null/unseen predictions.
-                        with patch.object(pickle, "loads", side_effect=AssertionError("pickle must not be loaded")):
+                        with patch("pickle.loads", side_effect=AssertionError("pickle must not be loaded")):
                             output, artifact, checksum = _panel.fit(
                                 data, adapter.create_panel_model, engine_version)
                         self.assertEqual(hashlib.sha256(artifact).hexdigest(), checksum)
