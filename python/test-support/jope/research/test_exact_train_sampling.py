@@ -110,7 +110,9 @@ def equal_quota_draw(pool: list, quota: int, rng: random.Random) -> list:
     return [pool[index] for index in sorted(order[:quota])]
 
 
-def complete_causal_members(connection: sqlite3.Connection) -> tuple[dict, dict]:
+def complete_causal_members(
+    connection: sqlite3.Connection, *, root: Path = ROOT
+) -> tuple[dict, dict]:
     """Return receipt-exact pair metadata without consulting deduplicated source tags."""
 
     exists = connection.execute(
@@ -125,7 +127,7 @@ def complete_causal_members(connection: sqlite3.Connection) -> tuple[dict, dict]
             "source": "CausalEvaluationReceipt.v2 table absent",
         }
     completed_waves: dict[int, str] = {}
-    waves_root = ROOT / "waves"
+    waves_root = root / "waves"
     if waves_root.is_dir():
         for directory in waves_root.glob("strict-wave-*"):
             try:

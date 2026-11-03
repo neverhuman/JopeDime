@@ -35,8 +35,28 @@ from test_exact_packed_corpus_storage import (
     _write_causal_pair_index,
     _write_recipe_e_evidence_index,
 )
-from test_exact_packed_corpus_materialize import materialize
+from test_exact_packed_corpus_materialize import materialize as _materialize
 from test_exact_packed_corpus_reader import Float32View, load_training_rows, verify
+
+
+def materialize(
+    manifest_path: Path,
+    output_root: Path,
+    *,
+    tokenizer: Callable[[dict], list[int]] = _default_tokenizer,
+    catalog_pointer_path: Path = Path(
+        "/home/ubuntu/jope-flywheel/test_exact_gen0/catalog/current.json"
+    ),
+    catalog_binding_path: Path | None = None,
+) -> dict:
+    return _materialize(
+        manifest_path,
+        output_root,
+        tokenizer=tokenizer,
+        catalog_pointer_path=catalog_pointer_path,
+        catalog_binding_path=catalog_binding_path,
+        label_shard_rows=LABEL_SHARD_ROWS,
+    )
 
 
 def main() -> None:
