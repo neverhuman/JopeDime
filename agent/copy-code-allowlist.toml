@@ -188,3 +188,87 @@ expires = "2026-12-31"
 fingerprint = "c0813d5961edbc6b"
 reason = "Shared Elo ranking summary block across pinned research wave analysis scripts"
 expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "518dd7a3812d5b4b"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen per-study flywheel selfplay analysis scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "61323ea86834a0bd"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen per-study flywheel selfplay runner scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "1e829320bee20abb"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen per-study flywheel selfplay monitor scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "14b2fa727424ac29"
+scope = "research/flywheel_selfplay/h245_gated_lambda_nest/runner.py"
+reason = "Frozen H245 runner implementation pinned by study manifest."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "a3d87f48580a3f94"
+scope = "research/flywheel_selfplay/h243_modsoup..h245_gated_lambda_nest"
+reason = "Frozen H243/H245 runner and launcher scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "1745017aa29ebe4c"
+scope = "research/flywheel_selfplay/h242_laser..h244_wsmooth"
+reason = "Frozen H242/H244 test suite helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "12465fe603a24f2a"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen H242..H246 monitor CLI entrypoint scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "fe1bb876ad88f1b7"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen H242..H246 runner CLI argument scaffolding pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "9de4f6c7cf778369"
+scope = "research/flywheel_selfplay/h242_laser..h244_wsmooth"
+reason = "Frozen H242..H244 test suite assertion helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "c08f288e99453e7b"
+scope = "research/flywheel_selfplay/h242_laser..h244_wsmooth"
+reason = "Frozen H242..H244 runner execution helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "993a42c8dff9955f"
+scope = "research/flywheel_selfplay/h242_laser..h246_stable_g025_rerun"
+reason = "Frozen H242..H246 analysis summary helpers pinned by study manifests."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "5061c4e397b62eb6"
+scope = "research/flywheel_selfplay/h247_muon_grokfast/analysis.py"
+reason = "Frozen H247 preregistered analysis scaffolding pinned by study manifest."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "ee3b2ebf189f7941"
+scope = "research/flywheel_selfplay/h247_muon_grokfast/monitor.py"
+reason = "Frozen H247 preregistered monitor scaffolding pinned by study manifest."
+expires = "2026-12-31"
+
+[[allow]]
+fingerprint = "a91e1f2f82268333"
+scope = "research/flywheel_selfplay/h247_muon_grokfast/runner.py"
+reason = "Frozen H247 preregistered runner scaffolding pinned by study manifest."
+expires = "2026-12-31"

@@ -710,7 +710,7 @@ class Controller(unittest.TestCase):
         self.assertFalse(evidence["qualifies_signed_bytes"])
         self.assertEqual(report["checks"], [])
 
-    def test_missing_status_note_is_not_fabricated_or_qualified(self):
+    def test_missing_status_note_is_not_fabricated_or_qualified(self): # jankurai:allow HLT-027-HUMAN-REVIEW-EVIDENCE-GAP reason=test-assertion expires=2026-12-31
         report = cpu.release_inventory(self.plan_metadata(status=False))
         note = report["release_gates"]["T1"]["evidence"][0]["status_note"]
         self.assertFalse(note["exists"])
@@ -773,7 +773,7 @@ class Controller(unittest.TestCase):
                     "import subprocess,sys,time; from pathlib import Path; "
                     f"subprocess.Popen([sys.executable,'-c',{child!r},sys.argv[1]]); "
                     "deadline=time.monotonic()+5; "
-                    'exec("while not Path(sys.argv[1]).exists():\\n'
+                    'exec("while not Path(sys.argv[1]).exists():\\n' # jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=test-fixture expires=2026-12-31
                     " if time.monotonic()>deadline: raise RuntimeError('child readiness')\\n"
                     ' time.sleep(0.01)"); '
                     # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31

@@ -142,23 +142,23 @@ import sys
 registry = json.loads(pathlib.Path(sys.argv[1]).read_text())
 workers = registry.get("workers", [])
 if len(workers) != 80:
-    raise SystemExit(1)
+    raise SystemExit(1) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 for worker in workers:
     pid = int(worker["pid"])
     cpu = str(worker["cpu"])
     status = pathlib.Path(f"/proc/{pid}/status")
     if not status.exists():
-        raise SystemExit(1)
+        raise SystemExit(1) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
     allowed = next(
         line.split(":", 1)[1].strip()
         for line in status.read_text().splitlines()
         if line.startswith("Cpus_allowed_list:")
     )
     if allowed != cpu:
-        raise SystemExit(1)
+        raise SystemExit(1) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 receipt_root = pathlib.Path(sys.argv[2]) / "receipts"
 if not any(receipt_root.rglob("slot-*.v1.json")):
-    raise SystemExit(1)
+    raise SystemExit(1) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 PY
     then
       echo "Golden42 V3 is live with 80 pinned workers and candidate telemetry."

@@ -30,8 +30,8 @@ gate = os.environ['JOPE_REL07_GATE_ID']
 mode = sys.argv[1] if gate == sys.argv[2] else 'pass'
 path = Path(os.environ['JOPE_REL07_RESULT'])
 if mode == 'timeout': time.sleep(3)
-if mode == 'exit': sys.exit(7)
-if mode == 'missing': sys.exit(0)
+if mode == 'exit': sys.exit(7) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
+if mode == 'missing': sys.exit(0) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 counts = dict(collected=1, executed=1, passed=1, failed=0, skipped=0, excluded=0)
 if mode == 'zero': counts.update(collected=0, executed=0, passed=0)
 if mode == 'skipped': counts.update(collected=2, skipped=1)
@@ -364,9 +364,9 @@ class ReleaseGates(unittest.TestCase):
         qualification = self.repo / "deploy/qualification/v1.0"
         wrapper = qualification / "a5_run.py"
         wrapper.parent.mkdir(parents=True)
-        wrapper.write_text("raise SystemExit('dry-run invoked A5 wrapper')\n")
+        wrapper.write_text("raise SystemExit('dry-run invoked A5 wrapper')\n") # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         self.commit_providers(
-            {gate: "raise SystemExit('dry-run invoked provider')\n" for gate in runner.RELEASE_GATE_IDS}
+            {gate: "raise SystemExit('dry-run invoked provider')\n" for gate in runner.RELEASE_GATE_IDS} # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
         )
         source = runner.cpu.git(self.repo, "rev-parse", "HEAD")
         candidate_dir = self.root / "candidate-cut"
@@ -829,7 +829,7 @@ def observe(ctx,*args,**kwargs):
     print(json.dumps(dict(synthetic=True,fields=fields,identity=identity,jobs=os.environ['CARGO_BUILD_JOBS'])))
     return 0
 module.qualify=observe
-raise SystemExit(module.main())
+raise SystemExit(module.main()) # jankurai:allow HLT-008-FALSE-GREEN-RISK reason=verified-exit-behavior expires=2026-12-31
 """
 
     def test_d1_m2_and_m3_flags_cross_the_real_restricted_environment_boundary(self):
