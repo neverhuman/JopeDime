@@ -219,7 +219,7 @@ fn concept_card(genome: &str, oof: f64, robust: Option<f64>, task_family: &str) 
 }
 
 fn candidate(genome: &str, oof: f64, concept_id: &str, acq_base: f64, acq_scale: f64) -> Value {
-    let clipped = oof.max(0.0).min(1.0);
+    let clipped = oof.clamp(0.0, 1.0);
     json!({
         "candidate_id": format!("jope-{}", &sha(genome)[..12]),
         "dsl_expr": genome,
