@@ -14,8 +14,6 @@ fn rustc(directory: &Path, args: &[&str]) {
             "codegen-units=1",
             "-C",
             "panic=abort",
-            "-C",
-            "link-arg=-Wl,--threads=1",
         ])
         .args(args)
         .output()
