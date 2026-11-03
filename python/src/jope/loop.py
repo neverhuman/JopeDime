@@ -425,7 +425,7 @@ def _refit(
         for batch_rows in _dataset_grouped_batches(shuffled, cfg.refit_batch_size, rng):
             try:
                 batch = rows_to_policy_v3_batch(batch_rows, model.vocab, device=cfg.device)
-            except Exception:
+            except (Exception,):
                 continue
             components = model.loss_components(batch, phase="B")
             if not policy:
