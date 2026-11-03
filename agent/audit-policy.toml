@@ -115,7 +115,7 @@ extra_excluded_paths = [
   # P37: H173 runtime and executor are manifest-pinned; input and guard SHA-256 identities are checked before execution.
   "research/flywheel_selfplay/h173_hard_context_reweight/runtime.py",
   "deploy/release/test-release.sh",
-"research/flywheel_selfplay/h158_distillation/runtime.py",
+  "research/flywheel_selfplay/h158_distillation/runtime.py",
   "research/flywheel_selfplay/h161_robust_fambal/runtime.py",
   "research/flywheel_selfplay/h164_sam_retry/runtime.py",
   # H230 closed INCOMPLETE wave; exact manifest-pinned files and HLT-033 dispositions are recorded in docs/release/jankurai-ciaudit-frozen-exceptions-20261102.md.
