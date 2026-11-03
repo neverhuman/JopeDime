@@ -179,10 +179,10 @@ use eligibility::build_transfer_rankings;
 pub(super) use eligibility::{
     build_eligibility, copy_context_slices, generation_zero, load_dl_proposals,
 };
+use evaluation::evaluate_member_split;
 #[cfg(test)]
 pub(super) use evaluation::slice_data;
 use evaluation::StudyEvalContext;
-use evaluation::evaluate_member_split;
 pub(super) use evaluation::{refill_population, score_population};
 pub(crate) use fitness::paired_robust_fitness;
 pub(super) use fitness::{
