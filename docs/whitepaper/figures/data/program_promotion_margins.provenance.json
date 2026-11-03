@@ -1,19 +1,19 @@
 {
   "schema": "whitepaper.program-promotion-margins-figure/v1",
-  "input_csv_sha256": "da21230b758146eecd797f7d14bf0e75e4e1080ac792fa66ba1539cb0c4d1890",
-  "source_receipt_sha256": "a105df7cba39ae1d48e9c9b43e84a972fae4c5e59cab7a5ca1feeaf585b1e7ba",
+  "input_csv_sha256": "cb477058ca7d41d1a44ede9778ce74c03f990fd35bcb18e21d9f77b96bbcc888",
+  "source_receipt_sha256": "f19535c8b5870d0e001e5207177eed77b3af6e0d08127b7a4990a28e407f7e66",
   "generator_sha256": "3f487a4330ff348357cc7aa953181deba2e57ee270137388083652e7e02828f8",
-  "figure_sha256": "87a4e7508b0826798ccc3f648ccf94b170a14929208344e62f819b2292a783b4",
-  "source_window_sha256": "3405595e244e409e7a0209be953f0ee3d92655205b21e8d209c7696f89865915",
+  "figure_sha256": "0f4b184a873f15d3d56c9e39dae79b2befd21bc91087392f1548d991baa48fca",
+  "source_window_sha256": "966a3237d0df1211da4302a6845032e728a2f8154d263d056fcfa1168e6d5237",
   "rows": 101,
   "plotted_points": 101,
   "round_window": [
-    4097,
-    4335
+    4188,
+    4379
   ],
   "source_line_window": [
-    3352,
-    3452
+    3379,
+    3479
   ],
   "derivation": "Parse JSON numeric lexemes as Decimal; subtract old_utility from new_utility within each source record. Keep exact decimal values and every source-line identity; float conversion only for rendering.",
   "scope": "Adaptive training-side admitted program/context records only. Positivity is required by admission and cannot estimate proposal-level success, adapter improvement or neural writer learning. Utility/source population closure remains separate.",

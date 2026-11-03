@@ -1,23 +1,23 @@
 {
   "schema": "whitepaper.program-promotion-margins-source/v1",
   "source_file": "promotions.jsonl",
-  "captured_at_utc": "2026-11-03T13:30:54.412422+00:00",
-  "source_prefix_sha256": "6bf7f6def0516c82851cf5813a7a0e1b6e3824f80f1b9481a6653a731b941171",
-  "source_prefix_bytes": 12492331,
-  "source_prefix_records": 3452,
-  "source_window_sha256": "3405595e244e409e7a0209be953f0ee3d92655205b21e8d209c7696f89865915",
-  "source_window_byte_offset": 12125106,
-  "source_window_bytes": 367225,
+  "captured_at_utc": "2026-11-03T14:53:01.817307+00:00",
+  "source_prefix_sha256": "29f9d3dde446a409b5f2cd51257270d882ecd5e540fc71e30cc8aad9eb293bdb",
+  "source_prefix_bytes": 12589422,
+  "source_prefix_records": 3479,
+  "source_window_sha256": "966a3237d0df1211da4302a6845032e728a2f8154d263d056fcfa1168e6d5237",
+  "source_window_byte_offset": 12223023,
+  "source_window_bytes": 366399,
   "source_line_window": [
-    3352,
-    3452
+    3379,
+    3479
   ],
   "rows": 101,
   "round_window": [
-    4097,
-    4335
+    4188,
+    4379
   ],
-  "csv_sha256": "da21230b758146eecd797f7d14bf0e75e4e1080ac792fa66ba1539cb0c4d1890",
+  "csv_sha256": "cb477058ca7d41d1a44ede9778ce74c03f990fd35bcb18e21d9f77b96bbcc888",
   "selection": "Last101 complete journal records at the frozen capture prefix, without kind/outcome/score filtering; all ordinary-promotion kinds, CV gates and finite utility fields validated after selection.",
   "derivation": "Parse JSON numeric lexemes as Decimal; subtract old_utility from new_utility within each source record. Keep exact decimal values and every source-line identity; float conversion only for rendering.",
   "program_gate_utility_margin": "0.000001",
