@@ -78,7 +78,7 @@ impl ConfirmedArchiveV1 {
                 first_confirmed_generation: generation,
                 candidate: candidate.candidate.clone(),
                 complete_evidence_bitmap: complete_folds.iter().copied().collect(),
-                aggregate_fitness: aggregate(candidate, &complete_folds)?,
+                aggregate_fitness: schedule::aggregate(candidate, &complete_folds)?,
                 evidence_root_sha256: canonical_sha256(candidate)?,
             };
             match merged.get(&candidate.candidate.semantic_sha256) {
