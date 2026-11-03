@@ -2514,3 +2514,5 @@ checkout=/mnt/jope-build-native/cifix/records/JopeDime
 branch=fast/cifix_records; HEAD=53fb66dc45c0d4be93b1b1b7dc7858b79958f718 (origin/v1/fastlane)
 exclusive_paths=crates/jope-records/ (preclaimed in COORD)
 intent=fix compile/clippy issues from CIFIX records extract using visibility and module re-exports; restore modules only if deleted from git history; cargo check -p jope-records --all-targets and cargo clippy -p jope-records --all-targets -- -D warnings using /mnt/jope-build-native/cifix/records/target; no workspace builds/full tests/audits
+
+[2026-11-03T00:18Z] CLAIM RED R0036 luna_jk_shape_14_x2 | checkout=/home/ubuntu/cifix/pool/luna_jk_shape_14_x2/JopeDime branch=fast/red_R0036 HEAD=60820bd73ee783068d372eab027e55d58b11614b (fresh origin/v1/fastlane); open PR #2071 targets v1/fastlane. Exclusive paths from red tracker: crates/jope-engine/src/corpus/build.rs and crates/jope-engine/src/corpus/ledger.rs. Intent: fix only assigned compile errors; restore a missing module file only after red_claim confirms ownership; scoped cargo check -p jope-parallel --all-targets + gated jk_fastpush. No workspace/full test/audit.
