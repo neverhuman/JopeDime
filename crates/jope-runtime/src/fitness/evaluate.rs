@@ -101,10 +101,7 @@ impl ExecutionTelemetry {
             self.inference_memory_bytes as f64,
         );
         r.insert(ResourceVar::ModelBytes, self.model_bytes as f64);
-        r.insert(
-            ResourceVar::ProgramNodes,
-            self.complexity_parameters as f64,
-        );
+        r.insert(ResourceVar::ProgramNodes, self.complexity_parameters as f64);
         r.insert(ResourceVar::StageCount, self.complexity_stages as f64);
         r.insert(
             ResourceVar::TrainRows,
@@ -155,18 +152,29 @@ impl BatchStats {
     }
 }
 
+#[derive(Clone, Copy)]
+struct EvalContext<'a> {
+    y: f64,
+    p: f64,
+    row: usize,
+    columns: &'a Columns,
+    resources: &'a Resources,
+    stats: &'a BatchStats,
+    telemetry: &'a ExecutionTelemetry,
+}
+
 impl Expression {
-    fn eval(
-        &self,
-        y: f64,
-        p: f64,
-        row: usize,
-        columns: &Columns,
-        resources: &Resources,
-        stats: &BatchStats,
-        telemetry: &ExecutionTelemetry,
-    ) -> Result<f64> {
-        let e = |x: &Self| x.eval(y, p, row, columns, resources, stats, telemetry);
+    fn eval(&self, context: EvalContext<'_>) -> Result<f64> {
+        let EvalContext {
+            y,
+            p,
+            row,
+            columns,
+            resources,
+            stats,
+            telemetry,
+        } = context;
+        let e = |x: &Self| x.eval(context);
         finite(match self {
             Self::Y {} => y,
             Self::Pred {} => p,
@@ -315,7 +323,17 @@ impl Expression {
         y.iter()
             .zip(p)
             .enumerate()
-            .map(|(row, (&y, &p))| self.eval(y, p, row, columns, resources, &stats, telemetry))
+            .map(|(row, (&y, &p))| {
+                self.eval(EvalContext {
+                    y,
+                    p,
+                    row,
+                    columns,
+                    resources,
+                    stats: &stats,
+                    telemetry,
+                })
+            })
             .collect()
     }
 }
