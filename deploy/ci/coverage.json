@@ -161,15 +161,15 @@
   },
   "items": {
     "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
-        "discovery": {
-          "kind": "python-family"
-        },
-        "dispositions": [
-          "research"
-        ],
-        "lanes": [],
-        "scope": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+      "discovery": {
+        "kind": "python-family"
       },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification."
+    },
     "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
       "discovery": {
         "kind": "python-family"
@@ -15386,6 +15386,16 @@
       ],
       "lanes": [],
       "scope": "H249 data-free controls: frozen arms and hyperparameters, schedule table identity, zero-init low-rank residual side branch (SIDE4 rank 4, SIDE16 rank 16) step-0 bit-identity and Kaiming-uniform A / zero B init, applied forward training with frozen r882 weights untouched and exact equivalence to merged weights, CONTROL equal to torch AdamW, CTRL loss and drift, shared fold-seed 249140 partition and fold manifest, strict selector, four-gate advance rule with Holm m=2, launch binding, H239 A1 memory guard and 15:00Z stop, manifest pins."
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
     }
   },
   "lanes": {
