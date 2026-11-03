@@ -142,7 +142,7 @@ fn validate_broad_receipt(receipt: &Value) -> Result<()> {
     }
     if receipt["selection_channel"]
         .as_str()
-        .map_or(true, |value| value.trim().is_empty())
+        .is_none_or(|value| value.trim().is_empty())
     {
         bail!("selection_channel must be nonempty");
     }
@@ -286,7 +286,7 @@ fn robust_score(oof: f64, folds: &[f64]) -> f64 {
 fn median(mut values: Vec<f64>) -> f64 {
     values.sort_by(f64::total_cmp);
     let middle = values.len() / 2;
-    if values.len() % 2 == 0 {
+    if values.len().is_multiple_of(2) {
         (values[middle - 1] + values[middle]) / 2.0
     } else {
         values[middle]
@@ -373,7 +373,7 @@ mod tests {
         fields.insert("selection_channel".to_owned(), json!("anchor"));
         fields.insert("recorded_at_ms".to_owned(), json!(1));
         let receipt = build_hashed(RECEIPT_SCHEMA, "receipt_sha256", fields).unwrap();
-        let grouped = group_receipts_for_ranking(&[receipt.clone()]).unwrap();
+        let grouped = group_receipts_for_ranking(std::slice::from_ref(&receipt)).unwrap();
         assert_eq!(grouped.len(), 1);
         assert_eq!(grouped.values().next().unwrap(), &vec![receipt]);
     }
