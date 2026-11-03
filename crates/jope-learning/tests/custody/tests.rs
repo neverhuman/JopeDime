@@ -299,18 +299,7 @@ fn cli_dry_run_requires_input_body_pins_and_outside_checkout_output() {
     let raw=canonical_json(&json!({"rows":[row("v1")],"facts":[],"budgets":{"new_version_bytes":0,"raw_hot_bytes":0,"puts":0},
         "members":[{"row":row("v1"),"body_path":"body","body_sha256":sha256_hex(b"same bytes")}]})).unwrap();
     fs::write(&input, &raw).unwrap();
-    let checkout = temp.path().join("checkout");
-    fs::create_dir(&checkout).unwrap();
-    let initialized = Command::new("git")
-        .args(["init", "--quiet"])
-        .current_dir(&checkout)
-        .output()
-        .unwrap();
-    assert!(
-        initialized.status.success(),
-        "could not initialize checkout fixture: {}",
-        String::from_utf8_lossy(&initialized.stderr)
-    );
+    let checkout = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let execute = |sha: &str, out: &Path| {
         Command::new(env!("CARGO_BIN_EXE_jope_custody"))
             .args(["dry-run", "--input"])
@@ -318,13 +307,16 @@ fn cli_dry_run_requires_input_body_pins_and_outside_checkout_output() {
             .args(["--input-sha", sha, "--output"])
             .arg(out)
             .current_dir(&checkout)
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .env_remove("GIT_COMMON_DIR")
             .output()
             .unwrap()
     };
     let bad = temp.path().join("bad");
     assert!(!execute(&"a".repeat(64), &bad).status.success());
     assert!(!bad.exists());
-    let inside = checkout.join("target-forbidden-custody-output");
+    let inside = Path::new(env!("CARGO_MANIFEST_DIR")).join("target-forbidden-custody-output");
     let refused = execute(&sha256_hex(&raw), &inside);
     assert!(!refused.status.success());
     assert!(!inside.exists());
