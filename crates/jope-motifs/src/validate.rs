@@ -101,7 +101,5 @@ pub fn validate(table: &MotifTable, options: &ValidateOptions) -> Result<Validat
     })
 }
 
-/// One emitted artifact and its kind.
-#[derive(Clone, Debug)]
 #[cfg(test)]
 mod tests;
