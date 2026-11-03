@@ -104,3 +104,22 @@
     \fi\fi
   \fi}
 \makeatother
+% Before the References, end columns one at a time until no float is held.
+% Each held figure* then reaches the top of a fresh page above the References
+% heading, instead of the float-only page that \FloatBarrier's \clearpage gives
+% a single held figure*. Falls back to \clearpage after 12 columns.
+\makeatletter
+\newif\iffb@held
+\newcount\fb@flushcount
+\newcommand{\FlushFloatsInPlace}{\global\fb@flushcount\z@\fb@flushstep}
+\newcommand{\fb@flushstep}{%
+  \begingroup\let\@elt\relax
+  \edef\@tempa{\@botlist\@deferlist\@dbldeferlist}%
+  \ifx\@tempa\@empty\global\fb@heldfalse\else\global\fb@heldtrue\fi
+  \endgroup
+  \iffb@held
+    \global\advance\fb@flushcount\@ne
+    \ifnum\fb@flushcount>12 \clearpage\else\null\newpage\fi
+    \expandafter\fb@flushstep
+  \fi}
+\makeatother
