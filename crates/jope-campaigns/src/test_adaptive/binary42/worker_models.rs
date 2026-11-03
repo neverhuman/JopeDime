@@ -69,7 +69,7 @@ pub(super) struct JobReceipt {
 
 #[derive(Clone, Debug)]
 pub(super) struct FreshOutput {
-    pub(super) receipt: CandidateReceipt,
+    pub(super) receipt: super::member_models::CandidateReceipt,
     pub(super) receipt_bytes: Vec<u8>,
     pub(super) prediction_bytes: Vec<u8>,
 }
