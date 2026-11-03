@@ -3,6 +3,28 @@ use super::*;
 use crate::advanced_v3::{fit_table, ColumnSpec, DataSchema, RowSemantics};
 use crate::{GenomeIr, Objective, TaskSpec};
 
+// Fitted artifact expectations are pinned to g++ 13.3; CI images may default to another g++.
+fn select_pinned_gpp_for_runtime_tests() {
+    static SELECT_COMPILER: std::sync::Once = std::sync::Once::new();
+    SELECT_COMPILER.call_once(|| {
+        if crate::cxx::version().is_ok_and(|version| version.contains("13.3")) {
+            return;
+        }
+        let Ok(candidate) = Command::new("g++-13").arg("--version").output() else {
+            return;
+        };
+        let version = String::from_utf8_lossy(&candidate.stdout);
+        if candidate.status.success()
+            && version
+                .lines()
+                .next()
+                .is_some_and(|line| line.contains("13.3"))
+        {
+            std::env::set_var("CXX", "g++-13");
+        }
+    });
+}
+
 #[test]
 fn embedded_runtime_loads_with_good_pin_and_rejects_mismatch() {
     let image_bytes = b"pinned fitted model image";
@@ -35,6 +57,7 @@ fn fixture() -> (BoundModel, RawTable) {
 
 #[test]
 fn codec_rejects_every_truncation_and_corruption() {
+    select_pinned_gpp_for_runtime_tests();
     let (model, _) = fixture();
     let codec = encode_fitted_cpp17(&model).unwrap();
     assert!(decode(&codec.bytes).is_ok());
@@ -50,6 +73,7 @@ fn codec_rejects_every_truncation_and_corruption() {
 
 #[test]
 fn historical_unsafe_expression_library_is_regenerated_before_loading() {
+    select_pinned_gpp_for_runtime_tests();
     let genome = GenomeIr::parse("(sym raw \"c9+1\")").unwrap();
     let model =
         crate::fit_legacy_numeric_bound(&genome, &[vec![1., 2.], vec![2., 3.]], &[0., 1.]).unwrap();
@@ -105,6 +129,7 @@ fn historical_unsafe_expression_library_is_regenerated_before_loading() {
 
 #[test]
 fn safe_runtime_matches_bound_predictions() {
+    select_pinned_gpp_for_runtime_tests();
     let (model, test) = fixture();
     let codec = encode_fitted_cpp17(&model).unwrap();
     let repeated = encode_fitted_cpp17(&model).unwrap();
@@ -137,6 +162,7 @@ fn safe_runtime_matches_bound_predictions() {
 
 #[test]
 fn runtime_rejects_malformed_shapes_without_entering_model_code() {
+    select_pinned_gpp_for_runtime_tests();
     let (model, test) = fixture();
     let codec = encode_fitted_cpp17(&model).unwrap();
     let scratch = tempfile::Builder::new()
@@ -321,6 +347,7 @@ fn metadata_of(bytes: &[u8]) -> serde_json::Value {
 
 #[test]
 fn stored_revision_two_container_validates_and_load_regenerates_it() {
+    select_pinned_gpp_for_runtime_tests();
     let (model, test) = fixture();
     let encoded = EncodedTable::from_bound_model(&model, &test).unwrap();
     let bits = |values: &[f64]| {
