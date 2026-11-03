@@ -1,8 +1,11 @@
-use anyhow::{ensure, Context, Result};
-use feat_math::advanced_v3::{
-    fitted_portable_templates, ColumnSpec, PortableUnsupported, FITTED_PORTABLE_EMITTER,
-    FITTED_PUBLIC_CPP_EMITTER, NUMERICAL_POLICY,
+use super::super::{
+    data::RAW_CELL_ENCODING,
+    methods::{digest, INPUT_POLICY},
+    score::NUMERICAL_POLICY,
 };
+use super::{templates, FITTED_INPUT_POLICY};
+use anyhow::{ensure, Context, Result};
+use feat_math::advanced_v3::{ColumnSpec, FITTED_PORTABLE_EMITTER, FITTED_PUBLIC_CPP_EMITTER};
 use jope_datasets::catalog::Task;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
