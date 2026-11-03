@@ -85,6 +85,7 @@ pub(super) fn trainer_v3_pins(
     Ok((runtime_bundle, runtime_sha, binding_path, binding_sha))
 }
 
+#[path = "execution/recipe.rs"]
 mod recipe;
 pub(crate) use recipe::trainer_recipe;
 
