@@ -413,7 +413,7 @@ fn a_participant_proves_its_smartcluster_job_before_any_work() {
     assert!(refused(&attempt, &genuine, &expected).contains("not live"));
     // Another tenant, another service or other arguments.
     let other_tenant = ExpectedJob {
-        tenant: "unix:0".into(),
+        tenant: format!("{}:other", expected.tenant),
         ..expected.clone()
     };
     assert!(refused(&attempt, &live, &other_tenant).contains("tenant"));
