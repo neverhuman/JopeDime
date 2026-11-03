@@ -390,8 +390,8 @@ limits and client examples](docs/program-source-stream.md).
 | --- | --- |
 | `jope` with no arguments | prints `jope 1.0.0` <sup>1</sup> |
 | Workspace | 37 members: 30 crates at 1.0.0 and 7 vendored SmartCluster crates at 8.0.0; 9 are `default-members` <sup>2</sup> |
-| Coverage map | 1,203 items over 35 lanes |
-| Python still tracked | 3,349 `.py` files, 307 of them under `python/` |
+| Coverage map | 1,209 items over 35 lanes |
+| Python still tracked | 3,379 `.py` files, 307 of them under `python/` |
 | `jope` subcommands | 17 in `jope --help` on Linux, plus the hidden `motifs` <sup>3</sup> |
 | Emit targets | 10: `python`, `rust`, `cpp17`, `cpp17-recipe-v2`, `cpp20` (the C++17 source compiled as C++20), `javascript`, `typescript` (TypeScript/WebAssembly), `c17` (native C17 bindings) opt-in [`go`](docs/go.md) and local/manual `cuda` (CUDA C++ with a native core) <sup>4</sup> |
 | Rust tests | 6,135 listed in 35 packages, 84 of them ignored; a listing, not a run <sup>5</sup> |

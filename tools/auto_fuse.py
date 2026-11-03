@@ -319,7 +319,7 @@ def main() -> int:
                 phase2.run_shard(0, host, eval_dir, num_shards=1)
             finally:
                 fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
-    except Exception as exc:
+    except (Exception,) as exc:
         eval_reason = f"{type(exc).__name__}: {exc}"
 
     dope_checksum_main_after = dope_sha(model)

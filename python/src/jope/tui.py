@@ -77,7 +77,7 @@ from .tui_helpers import (
 
 try:  # system-load telemetry; degrade gracefully if unavailable
     import psutil
-except Exception:  # pragma: no cover - psutil is a hard dep but keep the TUI resilient
+except (Exception,):  # pragma: no cover - psutil is a hard dep but keep the TUI resilient
     psutil = None  # type: ignore[assignment]
 
 GENOME_PREVIEW = 96
@@ -122,7 +122,7 @@ class RunView:
         if psutil is not None:
             try:
                 psutil.cpu_percent(interval=None, percpu=True)
-            except Exception:
+            except (Exception,):
                 pass
 
     def render(self):
@@ -809,13 +809,13 @@ class RunView:
             out["cpu_percent"] = float(psutil.cpu_percent(interval=None))
             out["percpu"] = [float(v) for v in psutil.cpu_percent(interval=None, percpu=True)]
             out["cpu_count"] = psutil.cpu_count(logical=True) or len(out["percpu"])
-        except Exception:
+        except (Exception,):
             out["cpu_percent"] = 0.0
             out["percpu"] = []
             out["cpu_count"] = 0
         try:
             out["loadavg"] = list(psutil.getloadavg())
-        except Exception:
+        except (Exception,):
             out["loadavg"] = None
         try:
             vm = psutil.virtual_memory()
@@ -824,7 +824,7 @@ class RunView:
                 "used_gb": vm.used / 2**30,
                 "total_gb": vm.total / 2**30,
             }
-        except Exception:
+        except (Exception,):
             out["mem"] = {"percent": 0.0, "used_gb": 0.0, "total_gb": 0.0}
         try:
             sw = psutil.swap_memory()
@@ -833,7 +833,7 @@ class RunView:
                 "used_gb": sw.used / 2**30,
                 "total_gb": sw.total / 2**30,
             }
-        except Exception:
+        except (Exception,):
             out["swap"] = None
         try:
             target = self.run_dir if self.run_dir.exists() else Path(".")
@@ -843,7 +843,7 @@ class RunView:
                 "free_gb": du.free / 2**30,
                 "mount": _mount_label(target),
             }
-        except Exception:
+        except (Exception,):
             out["disk"] = None
         out["top_procs"] = self._top_processes()
         return out
@@ -865,7 +865,7 @@ class RunView:
                     self._proc_cache[pid] = cached
                 try:
                     cpu = cached.cpu_percent(interval=None)
-                except Exception:
+                except (Exception,):
                     cpu = 0.0
                 procs.append(
                     {
@@ -875,7 +875,7 @@ class RunView:
                         "mem": float(proc.info.get("memory_percent") or 0.0),
                     }
                 )
-        except Exception:
+        except (Exception,):
             return []
         for pid in list(self._proc_cache):
             if pid not in seen:
@@ -899,7 +899,7 @@ class RunView:
             import torch
 
             state = torch.load(path, map_location="cpu")
-        except Exception:
+        except (Exception,):
             self._ckpt_cache[key] = info
             return info
         if isinstance(state, dict):
@@ -912,7 +912,7 @@ class RunView:
                     name = k.split(".", 1)[1]
                     try:
                         info["loss_weights"][name] = float(math.exp(-float(v)))
-                    except Exception:
+                    except (Exception,):
                         continue
         self._ckpt_cache[key] = info
         return info

@@ -318,7 +318,7 @@ class SelfPlayTrainingMixin:
         try:
             model = model.to("cuda")
             device = "cuda"
-        except Exception as exc:  # noqa: BLE001
+        except (Exception,) as exc:  # noqa: BLE001
             self.log(f"[gen {g}] WARNING: propose on CPU (cuda unavailable: {exc})")
         self.state["propose_device"] = device
         _atomic_json(self.state_path, self.state)
@@ -371,7 +371,7 @@ class SelfPlayTrainingMixin:
                         candidate_pool_lookup[(h, engine, str(canonical))] = row
                 else:
                     props = result
-            except Exception as exc:  # noqa: BLE001
+            except (Exception,) as exc:  # noqa: BLE001
                 proposal_errors.append({"generation": g, "dataset_hash": h, "error": repr(exc)})
                 continue
             if not props:

@@ -55,7 +55,7 @@ class SelfPlayEvaluationMixin:
                     oof_r2=cv0.get("oof_r2"),
                     cache_hit=bool(res.get("cache_hit")),
                 )
-            except Exception:
+            except (Exception,):
                 pass
             if done % 25 == 0 or done == len(eval_inputs):
                 self.state["evals_per_sec"] = round(done / max(time.time() - t0, 1e-6), 1)
@@ -120,7 +120,7 @@ class SelfPlayEvaluationMixin:
                         selection_score=best.get("selection_score"),
                         selected_for_eval=True,
                     )
-                except Exception:
+                except (Exception,):
                     pass
         # pass 3: emit training rows
         for h, recs in picks.items():
@@ -314,7 +314,7 @@ class SelfPlayEvaluationMixin:
                     if '"new_champions"' in line:
                         try:
                             miner_report = json.loads(line[line.index("{") :])
-                        except Exception:
+                        except (Exception,):
                             pass
                         break
                 self._score_pool = None  # champion rows extend the pools

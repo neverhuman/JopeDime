@@ -166,6 +166,6 @@ def count_rust_tokens_out_of_loop(
             disallowed_special=(),
         )
         return [len(t) for t in tok_lists]
-    except Exception:
+    except (Exception,):
         # Deterministic byte/whitespace token fallback when tiktoken is not installed
         return [len(s.split()) for s in src_list]

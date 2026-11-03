@@ -341,7 +341,7 @@ class EngineRouter:
                     if idx is not None:
                         r.setdefault("engine", engine)
                         results.put((int(idx), r))
-            except Exception as exc:
+            except (Exception,) as exc:
                 results.put(exc)
             finally:
                 results.put(None)
@@ -420,7 +420,7 @@ class EngineRouter:
                     )
                 ):
                     results.put((indices[local_idx], out))
-            except Exception as exc:  # surface lane failures instead of hanging
+            except (Exception,) as exc:  # surface lane failures instead of hanging
                 results.put(exc)
             finally:
                 results.put(None)

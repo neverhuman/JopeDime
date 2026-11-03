@@ -304,7 +304,7 @@ class ValidationGpStudy(_StudyExecution, _StudySelection, _StudyReporting):
                 dataset = futures[future]
                 try:
                     results.append(future.result())
-                except Exception as exc:  # noqa: BLE001
+                except (Exception,) as exc:  # noqa: BLE001
                     row = {"dataset": dataset, "status": "error", "error": repr(exc)}
                     self._append_jsonl(self.per_dataset_path, row)
                     self.event_log.emit(dataset, "pipeline", "error", error=repr(exc))

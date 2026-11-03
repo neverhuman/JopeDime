@@ -98,9 +98,9 @@ sha256 = "2e2352f8ac7087076ef60e0408dfee5319a8d7aa8aaac8d657bc67f07f755834"
 
 [[evidence_exclusion]]
 path = "crates/jope-bench/src/panel/demo.rs"
-reason = "docs/internal/asm-manual/data/product-language-source-pins.json records SHA-256 00751a3094b42c6f742cffed5f7804803977f47d9f2837b161421e884f7efdfc for crates/jope-bench/src/panel/demo.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+reason = "docs/internal/asm-manual/data/product-language-source-pins.json records SHA-256 cb4e3027407d993a48137a82428575905907b30442beb3fb8b90fa5aab941766 for crates/jope-bench/src/panel/demo.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
 receipt = "docs/internal/asm-manual/data/product-language-source-pins.json"
-sha256 = "00751a3094b42c6f742cffed5f7804803977f47d9f2837b161421e884f7efdfc"
+sha256 = "cb4e3027407d993a48137a82428575905907b30442beb3fb8b90fa5aab941766"
 
 [[evidence_exclusion]]
 path = "crates/jope-campaigns/manifests/advanced-v3/recovery-evidence/portable-xlang/ref.cpp"
@@ -2333,3 +2333,273 @@ path = "vendor/security/torch-sys-0.26.0/src/c_generated.rs"
 reason = "vendor/security/PROVENANCE.json records the exact candidate and upstream SHA-256 for vendor/security/torch-sys-0.26.0/src/c_generated.rs; bytes remain frozen to preserve upstream provenance and reproducibility."
 receipt = "vendor/security/PROVENANCE.json"
 sha256 = "db7b1ab88fd6c57fd79efa42847438e58c6269695358e155b5b63278697a88fe"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h234_lambdaloss/analysis.py"
+sha256 = "7ea925baece47d79db8e57b1f1888e8c6fa3eac638012cdf380326bdee5aa0e1"
+receipt = "research/flywheel_selfplay/h234_lambdaloss/manifest.json"
+reason = "Frozen h234_lambdaloss selfplay packet file pinned by research/flywheel_selfplay/h234_lambdaloss/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h234_lambdaloss/monitor.py"
+sha256 = "62947186e8e120eac841343ef0e05234a934b84eee90279306566f18d3a7ce5a"
+receipt = "research/flywheel_selfplay/h234_lambdaloss/manifest.json"
+reason = "Frozen h234_lambdaloss selfplay packet file pinned by research/flywheel_selfplay/h234_lambdaloss/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h234_lambdaloss/runner.py"
+sha256 = "573ffae88dd282a381a9800dab11e725c95a6c2200dad1396785e9f44c3fa289"
+receipt = "research/flywheel_selfplay/h234_lambdaloss/manifest.json"
+reason = "Frozen h234_lambdaloss selfplay packet file pinned by research/flywheel_selfplay/h234_lambdaloss/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h234_lambdaloss/test_h234.py"
+sha256 = "8f0256d6c7a768aca0e102e0173aff4cc2ca3e1cd30097b6cb2a9ebb99de2095"
+receipt = "research/flywheel_selfplay/h234_lambdaloss/manifest.json"
+reason = "Frozen h234_lambdaloss selfplay packet file pinned by research/flywheel_selfplay/h234_lambdaloss/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h234_lambdaloss/treatment.py"
+sha256 = "e4e8aab640e2d7c6118f60809c601a1876ff2d836dc2c30b6c294f4ce77777e3"
+receipt = "research/flywheel_selfplay/h234_lambdaloss/manifest.json"
+reason = "Frozen h234_lambdaloss selfplay packet file pinned by research/flywheel_selfplay/h234_lambdaloss/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h235_betanll/analysis.py"
+sha256 = "1b7e85d36352043aa447f3767a974b3f6bc5c4d05d3e0e0241ce01d20c06586c"
+receipt = "research/flywheel_selfplay/h235_betanll/manifest.json"
+reason = "Frozen h235_betanll selfplay packet file pinned by research/flywheel_selfplay/h235_betanll/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h235_betanll/monitor.py"
+sha256 = "29860ca244025e0b4b3bb4805f63dd4c6d1f79e39b7779ba472eee45fc1e6a2a"
+receipt = "research/flywheel_selfplay/h235_betanll/manifest.json"
+reason = "Frozen h235_betanll selfplay packet file pinned by research/flywheel_selfplay/h235_betanll/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h235_betanll/runner.py"
+sha256 = "20596c411bb9e9dab7838dcaa5cff9e9e0228f6b6ac4574ce13a617a5e585755"
+receipt = "research/flywheel_selfplay/h235_betanll/manifest.json"
+reason = "Frozen h235_betanll selfplay packet file pinned by research/flywheel_selfplay/h235_betanll/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h235_betanll/test_h235.py"
+sha256 = "ebf08fec0c93eebff3a2f00fb11be4418b82381ae5653d6420f675fff3847699"
+receipt = "research/flywheel_selfplay/h235_betanll/manifest.json"
+reason = "Frozen h235_betanll selfplay packet file pinned by research/flywheel_selfplay/h235_betanll/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h235_betanll/treatment.py"
+sha256 = "dd2fcc3011c3714bc967e010edd5b70de5b8969b45396720c66f8f42a02bd9ba"
+receipt = "research/flywheel_selfplay/h235_betanll/manifest.json"
+reason = "Frozen h235_betanll selfplay packet file pinned by research/flywheel_selfplay/h235_betanll/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h236_sfadamw/analysis.py"
+sha256 = "eb843c035dd28a1c719adc3be606ee8698f6d9f948e53353049c37c351165909"
+receipt = "research/flywheel_selfplay/h236_sfadamw/manifest.json"
+reason = "Frozen h236_sfadamw selfplay packet file pinned by research/flywheel_selfplay/h236_sfadamw/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h236_sfadamw/monitor.py"
+sha256 = "b046df8b3caed817c97af13801719c69cca987635c2fa3e5a43f163d8a7a6463"
+receipt = "research/flywheel_selfplay/h236_sfadamw/manifest.json"
+reason = "Frozen h236_sfadamw selfplay packet file pinned by research/flywheel_selfplay/h236_sfadamw/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h236_sfadamw/test_h236.py"
+sha256 = "edd94518699991a3233eb06fcad16dffb0b3fcf7d43e1a79caf35070bf5bc2b6"
+receipt = "research/flywheel_selfplay/h236_sfadamw/manifest.json"
+reason = "Frozen h236_sfadamw selfplay packet file pinned by research/flywheel_selfplay/h236_sfadamw/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h237_adabelief/analysis.py"
+sha256 = "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909"
+receipt = "research/flywheel_selfplay/h237_adabelief/manifest.json"
+reason = "Frozen h237_adabelief selfplay packet file pinned by research/flywheel_selfplay/h237_adabelief/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h237_adabelief/monitor.py"
+sha256 = "953812050cfc84872a58dc22f6560558795161922493081ba85e9e713f9419c3"
+receipt = "research/flywheel_selfplay/h237_adabelief/manifest.json"
+reason = "Frozen h237_adabelief selfplay packet file pinned by research/flywheel_selfplay/h237_adabelief/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h237_adabelief/runner.py"
+sha256 = "7a6b25ada4427c5835734df49b979d1fe620c4da73ada3980870579059323d31"
+receipt = "research/flywheel_selfplay/h237_adabelief/manifest.json"
+reason = "Frozen h237_adabelief selfplay packet file pinned by research/flywheel_selfplay/h237_adabelief/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h237_adabelief/test_h237.py"
+sha256 = "810dbc2085fb5edc5885233611bced3f6976660fd6000af69b53d228fabc5c86"
+receipt = "research/flywheel_selfplay/h237_adabelief/manifest.json"
+reason = "Frozen h237_adabelief selfplay packet file pinned by research/flywheel_selfplay/h237_adabelief/manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h237_adabelief/treatment.py"
+sha256 = "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226"
+receipt = "research/flywheel_selfplay/h237_adabelief/manifest.json"
+reason = "Frozen h237_adabelief selfplay packet file pinned by research/flywheel_selfplay/h237_adabelief/manifest.json."
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/fresh_gp_v2/v1/validation.json"
+sha256 = "e61f36cc773d5f30a4506fc2360914fac8f0234ca1b29a1e82d3b323fa9fb0c2"
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+reason = "Frozen fresh_gp_v2 validation artifact pinned by SOURCE_MANIFEST.json."
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/provenance/independent/protocol-review.json"
+sha256 = "0dfb19afccccd5953a01551b999a688b390341cf22a14b78a64c92030b105133"
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+reason = "Frozen protocol review receipt pinned by SOURCE_MANIFEST.json."
+
+[[evidence_exclusion]]
+path = "deploy/qualification/agents/transcripts/20261031T015221Z/claude-code.client.jsonl"
+sha256 = "e5347f10e4727870af92e67baa65545c4b550dc6750c6de70b595a2e5341d476"
+receipt = "deploy/qualification/agents/transcripts/20261031T015221Z/manifest.json"
+reason = "Frozen qualification transcript pinned by transcript manifest.json."
+
+[[evidence_exclusion]]
+path = "deploy/qualification/agents/transcripts/20261031T015221Z/claude-code.command.json"
+sha256 = "b0df0f0144e77812dacb94efbac737a1a1820a52a6609d97190fed93c9af8c17"
+receipt = "deploy/qualification/agents/transcripts/20261031T015221Z/manifest.json"
+reason = "Frozen qualification command receipt pinned by transcript manifest.json."
+
+[[evidence_exclusion]]
+path = "deploy/qualification/agents/transcripts/20261031T015221Z/codex-cli.command.json"
+sha256 = "3897c00ae91f59b83b1ddfdcf1f6694cb78724c951ec71c0c2e95142474f8961"
+receipt = "deploy/qualification/agents/transcripts/20261031T015221Z/manifest.json"
+reason = "Frozen qualification command receipt pinned by transcript manifest.json."
+
+[[evidence_exclusion]]
+path = "deploy/qualification/q1/cut_manifests/fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987.json"
+sha256 = "fdc243193d9436449cf74aa92b05ff7842c6c88bf4dce0b29ef7edf453b74987"
+receipt = "deploy/qualification/q1/PREREGISTRATION.md"
+reason = "Frozen Q1 cut manifest pinned by PREREGISTRATION.md."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/custody/MANIFEST.json"
+sha256 = "4ac42eec12599fbff46deec185b4d16bc838288876ca2e67af727e5891b2c94f"
+receipt = "deploy/qualification/q1/cohort.json"
+reason = "Frozen custody manifest pinned by Q1 cohort.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/research_restore_20261101/history/research-history-index.json"
+sha256 = "ecdabd8533cc82acef4036be98a9456bff71477ce0c6f40dba758b246d3af312"
+receipt = "research/flywheel_selfplay/research_restore_20261101/history/HISTORY_AUDIT_RECEIPT.json"
+reason = "Frozen research history index pinned by HISTORY_AUDIT_RECEIPT.json."
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision1/package/vendor/evergreen.py"
+sha256 = "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+reason = "Frozen revision1 vendor evergreen snapshot pinned by SOURCE_MANIFEST.json."
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision2/package/vendor/evergreen.py"
+sha256 = "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+reason = "Frozen revision2 vendor evergreen snapshot pinned by SOURCE_MANIFEST.json."
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/generated_target_callbacks_v1/revision3/package/vendor/evergreen.py"
+sha256 = "334f76b27e959230ae5f1b0a9b693d5c830734bb669d54c50fa1199759662dbe"
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+reason = "Frozen revision3 vendor evergreen snapshot pinned by SOURCE_MANIFEST.json."
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/prepared/baseline_runner.py"
+sha256 = "add98aa1ebcb66868b1594eb47f859f457be75627289f1548d9f7772320c1ab0"
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+reason = "Frozen prepared baseline_runner snapshot pinned by SOURCE_MANIFEST.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h160_trajectory_subspace/run.py"
+sha256 = "390ac2e8047178f3851c8b1d79b57cbb4d2a6af20e285d38aa3f202cad0408b7"
+receipt = "research/flywheel_selfplay/h160_trajectory_subspace/manifest.json"
+reason = "Frozen h160 packet script pinned by h160 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h167_input_noise/runner.py"
+sha256 = "52697b71220c57bef2e7b718a27a5ea451570512e0da921211019ffd374f7f6f"
+receipt = "research/flywheel_selfplay/h167_input_noise/manifest.json"
+reason = "Frozen h167 packet script pinned by h167 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h168_selector_remedy/runner.py"
+sha256 = "9c35e10456cee9c0f5c3d2eea6b2b75a6e311848a5534c8b18130a7519ee3249"
+receipt = "research/flywheel_selfplay/h168_selector_remedy/manifest.json"
+reason = "Frozen h168 packet script pinned by h168 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h168_selector_remedy/science.py"
+sha256 = "805d7f23188217e252e50a611421c065e69e2d25a09fa61f74a47de8f38b8ba7"
+receipt = "research/flywheel_selfplay/h168_selector_remedy/manifest.json"
+reason = "Frozen h168 science script pinned by h168 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h171_grad_accum/runner.py"
+sha256 = "3c07b93e5ad0c34cadfdab1a7e072275f00069202da46740799aee6469d68512"
+receipt = "research/flywheel_selfplay/h171_grad_accum/manifest.json"
+reason = "Frozen h171 packet script pinned by h171 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h173_hard_context_reweight/science.py"
+sha256 = "ea469183ebf623ed19e7d859630b89c32c663eed5f68a69e49b1d0f07a84eb6a"
+receipt = "research/flywheel_selfplay/h173_hard_context_reweight/manifest.json"
+reason = "Frozen h173 science script pinned by h173 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/h148/run.py"
+sha256 = "48e1ca28c4c66fa9c56e82a19622ab04aebba7fbf51ec56889c7703d05851e54"
+receipt = "research/h148/manifest.json"
+reason = "Frozen h148 packet script pinned by h148 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/h156/analysis.py"
+sha256 = "e30f09dece8bd0379180c6d5a2f5620b5084216f24b77f565009c21cd7df466f"
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+reason = "Classified h156 analysis script pinned by RESEARCH_SOURCE_CLASSIFICATIONS.json."
+
+[[evidence_exclusion]]
+path = "research/h156/monitor.py"
+sha256 = "69687c1758de927c325615acd2fda02e9a96df022ef83d9dc7d636e9ed71c670"
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+reason = "Classified h156 monitor script pinned by RESEARCH_SOURCE_CLASSIFICATIONS.json."
+
+[[evidence_exclusion]]
+path = "research/h156/run.py"
+sha256 = "bbed2addf40b35ccb50622f1e3e55b7539fe2b80bff4141524edbee0456c2b3c"
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+reason = "Classified h156 run script pinned by RESEARCH_SOURCE_CLASSIFICATIONS.json."
+
+[[evidence_exclusion]]
+path = "research/h162/run.py"
+sha256 = "8e80c842774f0e1bb0fa1f7e21fa09dff16f8ee4d8458dc1b26941d269cc3f96"
+receipt = "research/h162/manifest.json"
+reason = "Frozen h162 packet script pinned by h162 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/h166/analysis.py"
+sha256 = "aeecc30b1fbff9479b568dd54a140825d00b16a53bf4dc928a6cf0fe32195918"
+receipt = "research/h166/manifest.json"
+reason = "Frozen h166 analysis script pinned by h166 manifest.json."
+
+[[evidence_exclusion]]
+path = "research/h166/run.py"
+sha256 = "d928439ea5994da64be7244da3443ec3b9829ec3481bde159d4a8a908dd96200"
+receipt = "research/h166/manifest.json"
+reason = "Frozen h166 run script pinned by h166 manifest.json."
+
+[[evidence_exclusion]]
+path = "vendor/security/tch-0.26.0/src/vision/rust_image.rs"
+sha256 = "2b13844118406c0de90c44d0e0d989a53481a5f919d328269366c7debfdea46a"
+receipt = "vendor/security/PROVENANCE.json"
+reason = "Vendored tch 0.26.0 rust_image source pinned by vendor/security/PROVENANCE.json."
+
+[[evidence_exclusion]]
+path = "vendor/security/torch-sys-0.26.0/libtch/torch_api.cpp"
+sha256 = "3b416a34ff5a6dda9ec6e88ef8e6e8735228e2501ec3c2a01919d93217eaccea"
+receipt = "vendor/security/PROVENANCE.json"
+reason = "Vendored torch-sys 0.26.0 torch_api.cpp pinned by vendor/security/PROVENANCE.json."
