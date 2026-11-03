@@ -15,7 +15,6 @@ struct Fixture {
 }
 struct Running {
     stop: Arc<AtomicBool>,
-    state: Arc<State>,
     thread: Option<std::thread::JoinHandle<Result<ServiceStats>>>,
 }
 impl Running {
@@ -68,12 +67,10 @@ impl Fixture {
     }
     fn launch(&self) -> Running {
         let service = Service::bind(self.config.clone()).unwrap();
-        let state = service.state.clone();
         let stop = Arc::new(AtomicBool::new(false));
         let signal = stop.clone();
         Running {
             stop,
-            state,
             thread: Some(std::thread::spawn(move || service.run(signal))),
         }
     }

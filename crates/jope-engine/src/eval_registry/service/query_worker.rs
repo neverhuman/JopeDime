@@ -163,7 +163,7 @@ pub(crate) fn predict(
             return Err(error);
         }
     };
-    let mut original = OriginalChild {
+    let mut original = super::worker::OriginalChild {
         child,
         process: process.clone(),
         reaped: false,
