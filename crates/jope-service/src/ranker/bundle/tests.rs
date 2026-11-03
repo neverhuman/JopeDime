@@ -1,9 +1,6 @@
 use super::*;
 use std::{cell::Cell, io::Cursor};
 
-use super::*;
-use std::{cell::Cell, io::Cursor};
-
 fn identity(bytes: &[u8]) -> AssetIdentity {
     AssetIdentity {
         bytes: bytes.len() as u64,

@@ -1,5 +1,5 @@
 const SIGNING_DOMAIN: &[u8] = b"jope.singlefile.manifest-signature.v1\0";
-const RELEASE_KEY: &str = include_str!("../../../../docs/release/signing.pub");
+const RELEASE_KEY: &str = include_str!("../../../../../docs/release/signing.pub");
 /// Logical parameter/buffer identity. This is deliberately not a weight-file SHA.
 pub const FROZEN_DOPE_COMPOSITE: &str =
     "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814";
