@@ -1,3 +1,4 @@
+use super::super::super::*;
 use super::*;
 
 /// Pull outputs of completed encode chunks into the per-task fetch dirs.
