@@ -1,4 +1,12 @@
-use super::*;
+#[cfg(test)]
+use super::{
+    flat, synthetic_adapter, synthetic_fixture, CpuAdapter, PredictCostsInputs, ANCHOR_12,
+    ANCHOR_20, SCALE, TOTAL_12, TOTAL_20,
+};
+#[cfg(test)]
+use candle_core_0_11_0::{Device, Tensor};
+#[cfg(test)]
+use std::collections::BTreeMap;
 
 #[test]
 fn cpu_norm_preserves_translation_of_wide_offset_rows() {
