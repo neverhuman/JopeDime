@@ -35,7 +35,7 @@ use std::{
 mod cli;
 mod support;
 
-pub(super) use support::*;
+use support::*;
 
 const SCOPE: &str = "synthetic";
 const PROGRAM: &str = "(pipe X (ridge))";
@@ -472,7 +472,6 @@ impl Drop for Fixture {
 }
 
 mod fit_views;
-pub(super) use fit_views::*;
 mod search_trials;
 pub(super) use search_trials::*;
 mod search_lineage;
@@ -484,6 +483,4 @@ pub(super) use selection::*;
 mod outer_release;
 pub(super) use outer_release::*;
 mod view_exports;
-pub(super) use view_exports::*;
 mod outer_grants;
-pub(super) use outer_grants::*;
