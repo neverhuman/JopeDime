@@ -12,6 +12,12 @@ use std::{
 };
 use tempfile::TempDir;
 
+fn hash(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+
+    hex::encode(Sha256::digest(bytes))
+}
+
 struct Fixture {
     dir: TempDir,
     audit: PathBuf,
