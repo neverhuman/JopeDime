@@ -1,8 +1,8 @@
 use super::{
     build_hyperion_preview, dump_hyperion_block, emit_hyperion, encode_with_projection,
     fit_quantile_bounds, fit_v7, hyperion_device_label, load_runtime, mix64, place_columns,
-    place_names, HyperionAugment, HyperionConfig, HyperionEngine, HyperionFeaturePlacement,
-    HyperionMode, HyperionState, Matrix, Result, Sink, V7Fit, DEFAULT_OUTPUT_DIM,
+    place_names, HyperionAugment, HyperionConfig, HyperionEngine, HyperionMode, HyperionState,
+    Matrix, Result, Sink, V7Fit, DEFAULT_OUTPUT_DIM,
 };
 use anyhow::bail;
 use std::time::Instant;
