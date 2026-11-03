@@ -83,11 +83,12 @@ companion operating-rate views for separate retained windows.
 \paragraph{A later admission window.}
 \Cref{fig:adapter-validation-trace} records 200 consecutive rejections
 at a later capture. The plot pairs each candidate utility with the
-post-decision retained utility on reused development contexts.
+post-decision retained utility on reused \mbox{development} contexts.
 
 \begin{figure}[tb]
+  \setlength{\abovecaptionskip}{4pt}
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_adapter_validation_trace.pdf}
+  \includegraphics[width=\linewidth,height=1.95in,keepaspectratio]{figures/fig_adapter_validation_trace.pdf}
   \caption{\textbf{Candidate utility varies while the retained adapter holds.}
   All 200 consecutive admission decisions in rounds 4064--4263, captured
   at 10:19 UTC on 3 November 2026. Grey: candidate validation-pool utility;
@@ -105,8 +106,9 @@ logged training-pool insertions (distinct from adapter admissions),
 including intervening work and \mbox{waits rather than} single-proposal runtime.
 
 \begin{figure}[tb]
+  \setlength{\abovecaptionskip}{4pt}
   \centering
-  \includegraphics[width=\linewidth]{figures/fig_pool_insertion_cadence.pdf}
+  \includegraphics[width=\linewidth,height=1.95in,keepaspectratio]{figures/fig_pool_insertion_cadence.pdf}
   \caption{\textbf{Pool-insertion timestamps are unevenly spaced.}
   The latest 101 complete insertion records at 10:51 UTC on 3 November
   2026 span rounds 4051--4280 and yield all 100 adjacent timestamp gaps.
