@@ -46,7 +46,7 @@ struct TabArenaSourceBinding {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-struct TabArenaManifest {
+pub(super) struct TabArenaManifest {
     schema: String,
     benchmark_valid: bool,
     run_id: String,
@@ -89,7 +89,7 @@ struct TabArenaCheckpoint {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
-struct TabArenaResult {
+pub(super) struct TabArenaResult {
     schema: String,
     benchmark_valid: bool,
     run_id: String,
@@ -129,7 +129,7 @@ struct TabArenaSummary {
 }
 
 #[derive(Clone, Debug)]
-struct EncodedDataset {
+pub(super) struct EncodedDataset {
     binding: TabArenaSourceBinding,
     spec: DatasetSpec,
 }
