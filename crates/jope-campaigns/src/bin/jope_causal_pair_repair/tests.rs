@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 fn digest(byte: char) -> Sha256Digest {
     Sha256Digest::parse(byte.to_string().repeat(64)).unwrap()
 }
