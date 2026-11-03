@@ -1,9 +1,598 @@
 {
   "wave": "H262",
-  "status": "PREREGISTERED",
-  "verdict": null,
-  "source_commit": null,
-  "optimizer_updates": 0,
-  "smoke_updates": 0,
-  "outcomes_read": false
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "finding": "no qualifying acceptance-rule or checkpoint lift",
+  "primary_verdict": "NO_ADVANCE",
+  "secondary_verdict": "NO_ADVANCE",
+  "source_commit": "533530e21c5b141be8b4e460c7e9a2bcd45867b8",
+  "manifest_sha256": "3cd657d5224f1ebfe8419bd66287def21286553c9f66b298b254c178bc9981de",
+  "seeds": [
+    262101,
+    262102,
+    262103
+  ],
+  "arms": [
+    "NEVER",
+    "CURRENT",
+    "STRICT_LCB"
+  ],
+  "optimizer_updates": 2400,
+  "smoke_updates": 2,
+  "complete_rounds": 60,
+  "baseline_mean": 1.1377941898164525,
+  "baseline_top4_mean": 1.2403601682250796,
+  "primary_dlval": {
+    "arms": [
+      "NEVER",
+      "CURRENT",
+      "STRICT_LCB"
+    ],
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "STRICT_LCB_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [],
+          [],
+          []
+        ],
+        "family_wtl_by_seed": [
+          [
+            0,
+            19,
+            0
+          ],
+          [
+            0,
+            19,
+            0
+          ],
+          [
+            0,
+            19,
+            0
+          ]
+        ],
+        "holm_p": 1.0,
+        "holm_lcb_quantile": 0.0125,
+        "holm_lcb95": 0.0,
+        "advance": false
+      },
+      "STRICT_LCB_minus_CURRENT": {
+        "per_seed_gain": [
+          0.017407991417616255,
+          0.019120823313765804,
+          0.0
+        ],
+        "median_gain": 0.017407991417616255,
+        "ci95": [
+          0.0,
+          0.044587230007909345
+        ],
+        "positive_seeds": 2,
+        "p_one_sided": 0.10628937106289371,
+        "harm_families_by_seed": [
+          [
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345"
+          ],
+          [
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345"
+          ],
+          []
+        ],
+        "family_wtl_by_seed": [
+          [
+            6,
+            9,
+            4
+          ],
+          [
+            6,
+            10,
+            3
+          ],
+          [
+            0,
+            19,
+            0
+          ]
+        ],
+        "holm_p": 0.21257874212578742,
+        "holm_lcb_quantile": 0.0125,
+        "holm_lcb95": -0.00014680453627310017,
+        "advance": false
+      },
+      "CURRENT_minus_r882": {
+        "per_seed_gain": [
+          -0.017407991417616255,
+          -0.019120823313765804,
+          0.0
+        ],
+        "median_gain": -0.017407991417616255,
+        "ci95": [
+          -0.044587230007909345,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9861013898610139,
+        "harm_families_by_seed": [
+          [
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          ],
+          [
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          ],
+          []
+        ],
+        "family_wtl_by_seed": [
+          [
+            4,
+            9,
+            6
+          ],
+          [
+            3,
+            10,
+            6
+          ],
+          [
+            0,
+            19,
+            0
+          ]
+        ]
+      }
+    },
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1196210119628967,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1178328907526307,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ]
+    ],
+    "family_utility_by_seed": [
+      [
+        1.153615276991245,
+        1.1362072855736287,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.1344944536774793,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1485.3778889950893,
+        1500.0
+      ],
+      [
+        1500.0,
+        1489.0362491267601,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1489.0362491267601,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1463.3307376225382,
+        1507.3078195706648
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 262150,
+    "elo_bootstrap_draws": 1000
+  },
+  "top4_dlval": {
+    "arms": [
+      "NEVER",
+      "CURRENT",
+      "STRICT_LCB"
+    ],
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "STRICT_LCB_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "harm_families_by_seed": [
+          [],
+          [],
+          []
+        ],
+        "family_wtl_by_seed": [
+          [
+            0,
+            19,
+            0
+          ],
+          [
+            0,
+            19,
+            0
+          ],
+          [
+            0,
+            19,
+            0
+          ]
+        ],
+        "holm_p": 1.0,
+        "holm_lcb_quantile": 0.025,
+        "holm_lcb95": 0.0,
+        "advance": false
+      },
+      "STRICT_LCB_minus_CURRENT": {
+        "per_seed_gain": [
+          0.010758360935359604,
+          0.010081952062527608,
+          0.0
+        ],
+        "median_gain": 0.010081952062527608,
+        "ci95": [
+          0.0021726763227135804,
+          0.020448036031804943
+        ],
+        "positive_seeds": 2,
+        "p_one_sided": 0.001999800019998,
+        "harm_families_by_seed": [
+          [
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f"
+          ],
+          [
+            "fam-94f2455bd049dc8fd80a311445ae104f4d5bff163877f0f7ffa12758465eac1f",
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+            "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4"
+          ],
+          []
+        ],
+        "family_wtl_by_seed": [
+          [
+            14,
+            4,
+            1
+          ],
+          [
+            12,
+            4,
+            3
+          ],
+          [
+            0,
+            19,
+            0
+          ]
+        ],
+        "holm_p": 0.003999600039996,
+        "holm_lcb_quantile": 0.0125,
+        "holm_lcb95": 0.001548163851304588,
+        "advance": false
+      },
+      "CURRENT_minus_r882": {
+        "per_seed_gain": [
+          -0.010758360935359604,
+          -0.010081952062527608,
+          0.0
+        ],
+        "median_gain": -0.010081952062527608,
+        "ci95": [
+          -0.020448036031804943,
+          -0.0021726763227135812
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9998000199980002,
+        "harm_families_by_seed": [
+          [
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+            "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103",
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+            "fam-9f67f1449b77152cbf20a6c82926f90496dacd7f05a222376edf0fdfb45f667f",
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+            "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345",
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          ],
+          [
+            "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7",
+            "fam-3a6cda83e147f955254920279f65461f01a0d30b2018d2bfe9b0d75aae0beae4",
+            "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119",
+            "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279",
+            "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426",
+            "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564",
+            "fam-60b608db8305b163224dd10e6315f3fb581dfce53c762d1ce7f60810bc854f99",
+            "fam-7d4e2dc9f16cc0145caf3ff803564a61818542d6ab30dfe68270c4fe24b542e8",
+            "fam-90a5867659543698a6a54af592526ea3e481b6c78722ba1092f3a33786c5917d",
+            "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9",
+            "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f",
+            "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          ],
+          []
+        ],
+        "family_wtl_by_seed": [
+          [
+            1,
+            4,
+            14
+          ],
+          [
+            3,
+            4,
+            12
+          ],
+          [
+            0,
+            19,
+            0
+          ]
+        ]
+      }
+    },
+    "context_utility_by_seed": [
+      [
+        1.240360168225079,
+        1.22912891230355,
+        1.240360168225079
+      ],
+      [
+        1.240360168225079,
+        1.2298350534345284,
+        1.240360168225079
+      ],
+      [
+        1.240360168225079,
+        1.240360168225079,
+        1.240360168225079
+      ]
+    ],
+    "family_utility_by_seed": [
+      [
+        1.2519997168684855,
+        1.2412413559331255,
+        1.2519997168684855
+      ],
+      [
+        1.2519997168684855,
+        1.2419177648059576,
+        1.2519997168684855
+      ],
+      [
+        1.2519997168684855,
+        1.2519997168684855,
+        1.2519997168684855
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1444.7380788449943,
+        1500.0
+      ],
+      [
+        1500.0,
+        1452.2069852664522,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1452.2069852664522,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1429.6396049409432,
+        1485.3778889950893
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 262150,
+    "elo_bootstrap_draws": 1000
+  },
+  "top4_role": "descriptive test-time four-reveal search, not checkpoint lift",
+  "accept_counts": {
+    "262101-CURRENT": 1,
+    "262101-STRICT_LCB": 0,
+    "262102-CURRENT": 1,
+    "262102-STRICT_LCB": 0,
+    "262103-CURRENT": 0,
+    "262103-STRICT_LCB": 0
+  },
+  "finals": {
+    "262101-CURRENT": {
+      "file": "262101-CURRENT-final.npz",
+      "adapter_sha256": "a0b0c0f9166cb0ecd6668daad97bd6bc3a6bd02a48d1531447481e2e8968b55f",
+      "drift": 0.3686466590760606
+    },
+    "262101-STRICT_LCB": {
+      "file": "262101-STRICT_LCB-final.npz",
+      "adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+      "drift": 0.0
+    },
+    "262102-CURRENT": {
+      "file": "262102-CURRENT-final.npz",
+      "adapter_sha256": "9f9884fef17b9238b1c06991233e43f782498cc34f6c19a635f982aede1f1eab",
+      "drift": 0.3758963906155574
+    },
+    "262102-STRICT_LCB": {
+      "file": "262102-STRICT_LCB-final.npz",
+      "adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+      "drift": 0.0
+    },
+    "262103-CURRENT": {
+      "file": "262103-CURRENT-final.npz",
+      "adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+      "drift": 0.0
+    },
+    "262103-STRICT_LCB": {
+      "file": "262103-STRICT_LCB-final.npz",
+      "adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+      "drift": 0.0
+    }
+  },
+  "accept_then_worse": {
+    "CURRENT": {
+      "trajectories_with_accepts": 2,
+      "final_family_worse_count": 2,
+      "accept_then_final_DLVal_worse_rate": 1.0,
+      "per_round_DLVal_worse_rate": null,
+      "limitation": "No intermediate DL-Val scoring permitted; trajectory-level final harm only, not per-accept harm."
+    },
+    "STRICT_LCB": {
+      "trajectories_with_accepts": 0,
+      "final_family_worse_count": 0,
+      "accept_then_final_DLVal_worse_rate": null,
+      "per_round_DLVal_worse_rate": null,
+      "limitation": "No intermediate DL-Val scoring permitted; trajectory-level final harm only, not per-accept harm."
+    }
+  },
+  "trained_DLVal_evaluations": 6,
+  "intermediate_DLVal_evaluations": 0,
+  "final_lock_sha256": "46c898cde368b2c64558ad98b7fc110c6e3975c5d252aefe9ccc0eafc8ed0abe",
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "initial_adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+  "trainable_parameters": 29211,
+  "serving_promotion": false,
+  "elapsed_seconds": 998.3496947560052,
+  "terminal_resources": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "final_sample": {
+      "utc": 1793723069.2791517,
+      "load5": 38.009765625,
+      "available": 63967789056,
+      "free": 730856361984,
+      "rss": 16261120,
+      "threads": 2,
+      "affinity": [
+        48,
+        50,
+        51,
+        52
+      ],
+      "elapsed": 1003.5425794030016,
+      "pause_requested": false
+    },
+    "admission": {
+      "utc": 1793722065.7359855,
+      "load5": 48.06787109375,
+      "available": 77787336704,
+      "free": 678331080704,
+      "rss": 15757312,
+      "threads": 1,
+      "affinity": [
+        48,
+        50,
+        51,
+        52
+      ]
+    },
+    "elapsed_seconds": 1004.0428594200057,
+    "peak": {
+      "rss": 3333926912,
+      "threads": 3
+    },
+    "pause_requested_seconds": 0.0,
+    "compute_stop": 1793729700.0,
+    "resume_number": 0
+  },
+  "pause_transition_count": 0,
+  "audit_summary": {
+    "opened_count": 1328,
+    "protected_reads": 0,
+    "refused": [],
+    "full_receipt_archive_member": "attempts/attempt1/metrics.json"
+  }
 }

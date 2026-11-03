@@ -138,5 +138,27 @@
     "read_only": true,
     "process_command": "/home/ubuntu/.venvs/flywheel-gp-fused/bin/python -u research/flywheel_selfplay/run_fused_closed_loop.py --input /home/ubuntu/jope-data/flywheel-full-20261030/input --output /home/ubuntu/jope-data/flywheel-full-20261030/run-20261030 --continuous --steps 2 --batch-size 8192 --resume /home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-4330.pt --campaign-prior-output /home/ubuntu/jope-data/flywheel-gp-fused/run-20261029 --retain-checkpoint round-785.pt --retain-checkpoint round-882.pt"
   },
-  "harness_source_commit": "2fe50b3131b2ff610e6e2ff9bc1de60a1134f80a"
+  "harness_source_commit": "2fe50b3131b2ff610e6e2ff9bc1de60a1134f80a",
+  "execution_source_commit": "533530e21c5b141be8b4e460c7e9a2bcd45867b8",
+  "closeout": {
+    "status": "COMPLETE",
+    "verdict": "NO_ADVANCE",
+    "primary_verdict": "NO_ADVANCE",
+    "secondary_verdict": "NO_ADVANCE",
+    "finding": "no qualifying acceptance-rule or checkpoint lift",
+    "metrics_sha256": "cf6fe7811aa79bea5eec50b795bd68cf278a292d29ed5d5f4c0844eeaca8a6de",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H262/astra-t1558/closeout/runtime.tar.gz",
+      "version_id": "FLwhbQpUAXjTYkqUlRcgGHJ.jVx0QTit",
+      "sha256": "101cd2b805d93130f92f43d7839eb8c53fa202c16125a41028572b8a3ca10d01",
+      "bytes": 106014503
+    },
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H262/astra-t1558/closeout/manifest.json",
+      "version_id": "JQF0JzGi4oHnBGutT3r.1G9.gYxs8FLM",
+      "sha256": "fa4f19b98b29ac2094759bcaabd4299970fffacc682bbc8665ebbe399dabefac",
+      "bytes": 54801
+    },
+    "audit_sha256": "3f78bff2ae01c4f5cbb558c4d1ce868fb5444816d64b2b0ce2595a9622775f67"
+  }
 }
