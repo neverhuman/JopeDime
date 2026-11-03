@@ -350,4 +350,4 @@ mod chart;
 pub use chart::{column_line, envelope, latest_summary, moving_average, render, trend_row};
 
 mod discovery;
-pub(super) use discovery::*;
+use discovery::*;
