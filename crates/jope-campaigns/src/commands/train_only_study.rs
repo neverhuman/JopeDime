@@ -205,8 +205,8 @@ pub(super) use run::{
 };
 pub(crate) use scoring::score;
 pub(super) use splits::{build_final_cv_splits, build_splits, rank_final_cv};
-pub(super) use validation::require_validated_score_gate;
 pub(crate) use validation::validate;
+use validation::require_validated_score_gate;
 
 #[cfg(test)]
 mod tests;
