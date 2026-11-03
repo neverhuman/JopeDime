@@ -83,6 +83,11 @@ impl Scqd {
         let binary = scqd_binary();
         let uid = unsafe { libc::geteuid() };
         let gid = unsafe { libc::getegid() };
+        let worker_identity = if uid == 0 {
+            format!("worker_uid = {uid}\nworker_gid = {gid}\n")
+        } else {
+            String::new()
+        };
         let socket = dir.join("run/scqd.sock");
         let config = format!(
             r#"socket_path = "{socket}"
@@ -114,8 +119,7 @@ jain_worker = "{scqd}"
 checkpoint_timeout_ms = 200
 terminate_grace_ms = 1000
 kill_grace_ms = 500
-worker_uid = {uid}
-worker_gid = {gid}
+{worker_identity}
 "#,
             socket = socket.display(),
             dir = dir.display(),
