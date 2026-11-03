@@ -11,6 +11,8 @@ use jope_cli::{
 };
 use std::{path::PathBuf, process::ExitCode};
 
+mod heap_meter;
+
 #[cfg(target_os = "linux")]
 mod train;
 

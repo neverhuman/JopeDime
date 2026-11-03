@@ -295,6 +295,7 @@ mod tests {
             status: MEASURED,
             failure: None,
             island: None,
+            resources: None,
         }
     }
 

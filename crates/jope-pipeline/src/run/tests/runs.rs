@@ -107,3 +107,113 @@ fn an_objective_run_ranks_programs_by_it_records_it_and_reverifies() {
         assert!(!temp.path().join("refused").exists());
     }
 }
+
+#[test]
+fn a_resource_objective_records_every_reading_and_reverifies_from_them() {
+    use jope_runtime::fitness::{Fitness, ResourceVar};
+    let temp = tempfile::tempdir().unwrap();
+    // Structural, so reproducible: RMSE plus a price per program node.
+    let objective = Fitness::parse(
+        r#"{"metric":"composite","terms":[
+            {"weight":1.0,"scale":1.0,"fitness":{"metric":"rmse"}},
+            {"weight":0.5,"scale":1.0,"fitness":{"metric":"resource","name":"program_nodes"}}]}"#,
+    )
+    .unwrap();
+    assert!(!objective.requires_measured_resources());
+    let output = temp.path().join("resources");
+    let receipt = run(&RunOptions {
+        objective: Some(objective.clone()),
+        ..small(&output, 28)
+    })
+    .unwrap();
+    let verified = crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+    let measured: Vec<_> = verified
+        .cuts
+        .iter()
+        .flat_map(|(_, o)| o)
+        .filter(|o| o.measured())
+        .collect();
+    assert!(!measured.is_empty());
+    for o in &measured {
+        let r = o.resources.as_ref().expect("every candidate records its readings");
+        for var in [
+            ResourceVar::FitSeconds,
+            ResourceVar::PredictSeconds,
+            ResourceVar::ModelBytes,
+            ResourceVar::ProgramNodes,
+            ResourceVar::StageCount,
+            ResourceVar::TrainRows,
+            ResourceVar::HoldRows,
+        ] {
+            assert!(r.contains_key(&var), "{var} missing from {r:?}");
+        }
+        assert!(r[&ResourceVar::ModelBytes] > 0.0);
+        // The recorded loss is exactly RMSE plus the price of the recorded node count.
+        let expected = o.rmse.unwrap() + 0.5 * r[&ResourceVar::ProgramNodes];
+        assert!((o.objective_loss.unwrap() - expected).abs() < 1e-9);
+    }
+    // The champion is the lowest recorded objective, re-derived from the recorded readings.
+    let ranking = verified.ranking().unwrap();
+    assert_eq!(ranking[0].genome, receipt.search.selected_genome);
+}
+
+#[test]
+fn measured_resource_objectives_need_one_candidate_at_a_time() {
+    let temp = tempfile::tempdir().unwrap();
+    let objective = jope_runtime::fitness::Fitness::parse(
+        r#"{"metric":"constrained","fitness":{"metric":"rmse"},
+            "limits":[{"resource":"fit_seconds","max":30.0}]}"#,
+    )
+    .unwrap();
+    let parallel = RunOptions {
+        threads: 2,
+        objective: Some(objective.clone()),
+        ..small(&temp.path().join("parallel"), 16)
+    };
+    let error = format!("{:#}", run(&parallel).unwrap_err());
+    assert!(error.contains("--threads 1"), "{error}");
+    assert!(!temp.path().join("parallel").exists());
+    // Quantities this search cannot supply are refused by name, never scored as zero.
+    for unsuppliable in [
+        r#"{"metric":"fold_std"}"#,
+        r#"{"metric":"composite","terms":[{"weight":1.0,"scale":1.0,"fitness":{"metric":"rmse"}},
+            {"weight":1.0,"scale":1.0,"fitness":{"metric":"feature_count"}}]}"#,
+        r#"{"metric":"custom","name":"late","direction":"minimize","expression":{"op":"mul",
+            "left":{"op":"row_fraction"},"right":{"op":"abs_error"}},"aggregation":{"kind":"mean"}}"#,
+    ] {
+        let objective = jope_runtime::fitness::Fitness::parse(unsuppliable).unwrap();
+        let error = format!("{:#}", crate::run::check_objective(&objective).unwrap_err());
+        assert!(error.contains("cannot supply"), "{unsuppliable}: {error}");
+    }
+    // Serially it runs, and every candidate records the reading its limit reads.
+    let output = temp.path().join("serial");
+    run(&RunOptions {
+        objective: Some(objective),
+        ..small(&output, 16)
+    })
+    .unwrap();
+    let verified = crate::evidence::verify_run(&output.join("receipt.json")).unwrap();
+    assert!(verified
+        .cuts
+        .iter()
+        .flat_map(|(_, o)| o)
+        .filter(|o| o.measured())
+        .all(|o| o.resources.as_ref().unwrap()[&jope_runtime::fitness::ResourceVar::FitSeconds]
+            >= 0.0));
+}
+
+#[test]
+fn a_seed_limit_admits_more_seeds_into_generation_zero() {
+    let offered: Vec<(String, &'static str)> = (1..=8)
+        .map(|k| {
+            (
+                format!("(pipe X (rff_cos gamma=1.0 n={} seed={k}) (ridge_gcv))", 8 * k),
+                crate::seeds::FROM_SEEDS_FILE,
+            )
+        })
+        .collect();
+    assert_eq!(crate::seeds::admit(&offered).unwrap().seeds.len(), search::ELITES);
+    assert_eq!(crate::seeds::admit_up_to(&offered, 8).unwrap().seeds.len(), 8);
+    assert!(crate::seeds::admit_up_to(&offered, 0).is_err());
+    assert!(crate::seeds::admit_up_to(&offered, crate::seeds::MAX_SEED_LIMIT + 1).is_err());
+}

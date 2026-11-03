@@ -127,6 +127,11 @@ pub enum Cmd {
         /// (canonicalised, deduplicated, at most 4) and are re-measured on this run's cuts.
         #[arg(long)]
         seed_genomes: Option<PathBuf>,
+        /// How many --seed-genomes (after canonicalising and deduplicating) generation 0 admits,
+        /// 1..=32 (default 4). Seeds join generation 0 on top of its random draws, so a larger
+        /// limit lets more proposals, such as a neural policy's, compete there.
+        #[arg(long, default_value_t = crate::search::ELITES)]
+        seed_limit: usize,
         /// A parent receipt: verified against its run's evidence, its selected genome is seeded
         /// first and its sha256 recorded as this run's parent.
         #[arg(long)]

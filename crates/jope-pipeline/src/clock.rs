@@ -53,6 +53,11 @@ impl Clock {
     }
 
     /// RFC 3339 UTC, to the second.
+    /// Whether readings are real measurements of this machine; test clocks freeze them.
+    pub fn measures(self) -> bool {
+        matches!(self, Clock::Wall)
+    }
+
     pub fn now_rfc3339(self) -> String {
         match self {
             Clock::Wall => jope_datasets::paths::now_rfc3339(),

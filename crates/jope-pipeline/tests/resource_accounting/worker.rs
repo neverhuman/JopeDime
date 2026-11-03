@@ -28,6 +28,7 @@ fn search_adapters_preserve_legacy_budget_and_explicit_unknowns() {
         status: FIT_FAILED,
         failure: Some("fit failed".into()),
         island: None,
+        resources: None,
     };
     let mut ledger = ResourceLedger::new(policy()).unwrap();
     let r = reserve(&mut ledger, request("observation", Stage::Fit), 100);

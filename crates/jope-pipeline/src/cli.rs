@@ -51,6 +51,7 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
             profile,
             output,
             seed_genomes,
+            seed_limit,
             incumbent,
             fitness,
             json,
@@ -63,11 +64,13 @@ pub fn run(cli: Cli) -> Result<ExitCode> {
                     profile.search_profile
                 );
                 options.run.seed_genomes = seed_genomes;
+                options.run.seed_limit = seed_limit;
                 options.run.incumbent = incumbent;
                 return crate::kernel2::cli::print_run(&options, json);
             }
             let options = RunOptions {
                 seed_genomes,
+                seed_limit,
                 incumbent,
                 objective,
                 ..search.options(output, true)?
