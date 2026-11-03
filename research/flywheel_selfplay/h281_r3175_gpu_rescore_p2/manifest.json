@@ -1,0 +1,47 @@
+{
+  "wave": "H281",
+  "authority": "/home/ubuntu/nudges/hw_t2205_opus_h281.md",
+  "fixed_rule_source": "research/flywheel_selfplay/h278_rerank8_veto_frozen_export_transfer/PREREG.md at 4c2caaa0a216ce33b61dbf5b0cd9b3a92d5a8e62",
+  "h278_sources": {
+    "runner.py": "5f5b3de8b34f797df6acfbab890568a5abf6041e4ecc5c519d77dda5c60d7234",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "freeze.py": "b352c488aaf53d2132621c5b5771917892af7924d4c2555d998b5931bbd643ab",
+    "analysis.py": "0151b35374bed298e6841cf9de1f0f27c42248bcd387428653dc178fa1d67208",
+    "manifest.json": "1d43bc10d3245891178bd3043a03ed4e4e34e79bad90cbddea3ae8744536fc0d"
+  },
+  "source_sha256": {
+    "PREREG.md": "62e56003f7f11a274b98f0e169f72d0e14fb4082d41f0b11bc35fd87e43bf439",
+    "gpu_rescore.py": "1ce3d54d287be660779158ed3a74dbb3d5c1bb2cd8888d2a0eb2cede227cd866",
+    "p2.py": "776644cfbbdbc005f44824cedbbe97f0b7ae362500bcf92839118aba49fd4811",
+    "device_pool_cache.py": "bb4426ead00f92436e4104155e3671336752c33833cabb7831baf6ff1939e29e",
+    "dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2",
+    "test_h281.py": "2f4664081dc0f69defdf1556bb22d9d8ca6cbd774560bfe9f329ddc7e17bf503"
+  },
+  "export_manifest_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H278/export/export_manifest.json",
+  "export_manifest_version_id": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+  "export_manifest_sha256": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+  "r3175": {
+    "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "stored_dev_mean": 1.1389572403748425
+  },
+  "writer_scoring_source": {
+    "commit": "486b709c3",
+    "file": "research/flywheel_selfplay/run_fused_closed_loop.py",
+    "sha256": "716c7e449efe6893",
+    "cpu_exact_fused_sha256": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "python": "/home/ubuntu/.venvs/flywheel-gp-fused (torch 2.6.0+cu124)"
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "total_updates": 0,
+  "vram": {
+    "need_gib": 1.5,
+    "headroom_gib": 3,
+    "allocator_cap_gib": 2
+  },
+  "parent_commit": "aecf7f5a133ca53195bc5d6e2bf6f1d68804348d",
+  "publication_ref": "v1/next",
+  "compute_stop": "2026-11-04T00:30:00Z"
+}

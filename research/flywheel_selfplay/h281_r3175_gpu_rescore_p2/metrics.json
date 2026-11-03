@@ -1,0 +1,13 @@
+{
+  "wave": "H281",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "verdict": "ADOPT_SHADOW_PASS / NOT_TRANSFERRED / P2_UNRESOLVABLE / BLOCKED_GPU_LOCK",
+    "gpu_rescore": "outcome A_EXACT/B_NOT_EXACT, gpu mean, stored mean, abs residual, per-context and pick equality, differing contexts, DOPE before/after, peak VRAM, writer state before/after",
+    "p2": "per-seed family mean/median gain, pooled CI95, W/T/L (ties not wins), Elo (r3175 = 1500), invalid picks, harmed families, fam-769243ee; top-8 pool diff vs CPU",
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0..."
+  }
+}
