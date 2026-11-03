@@ -2,7 +2,7 @@ use super::campaign::{goal_phase, gpu_reason, milestone_lines};
 use super::details::{
     comparison_lines, decimal_count, neural_lines, teacher_evolution_lines, teacher_lines,
 };
-use super::evidence::{completed, decimal, number, panel, phase, rmse, status_age};
+use super::evidence::{decimal, number, phase, rmse, status_age};
 use super::prelude::*;
 use super::tasks::{policy_task_state, workflow_rows};
 
