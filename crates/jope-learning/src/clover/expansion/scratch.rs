@@ -22,7 +22,11 @@ pub struct RetrievalSeeds {
 }
 
 impl RetrievalSeeds {
-    fn pipeline_seeds(&self, roster: &TrainingRoster, dataset: &str) -> Result<seeds::SeedsFile> {
+    pub(super) fn pipeline_seeds(
+        &self,
+        roster: &TrainingRoster,
+        dataset: &str,
+    ) -> Result<seeds::SeedsFile> {
         roster.validate()?;
         ensure!(
             !self.seeds.is_empty() && self.seeds.len() <= 1024,
