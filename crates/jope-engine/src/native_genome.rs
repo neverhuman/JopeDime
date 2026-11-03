@@ -22,11 +22,11 @@ mod validation;
 mod verification;
 
 #[cfg(test)]
-pub(super) use execution::summarize_outcomes;
+use execution::summarize_outcomes;
 pub use execution::target;
 pub(crate) use execution::{execute, training_admission};
 #[cfg(test)]
-pub(super) use verification::{artifact_closure, prepared_closure};
+use verification::{artifact_closure, prepared_closure};
 pub(crate) use verification::{direct_parent, required_inputs, verified_rows, verify_result};
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]

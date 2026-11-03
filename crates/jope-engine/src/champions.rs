@@ -82,7 +82,7 @@ impl Champion {
             self.schema == "parallel.cut_champion.v1"
                 && Identity::observation(&self.observation)?.as_ref() == Some(&self.identity)
                 && hash(&serde_json::to_vec(&self.observation)?) == self.observation_sha256
-                && score(&self.observation)? == Some(self.rmse_original_units),
+                && outbox::score(&self.observation)? == Some(self.rmse_original_units),
             "champion evidence changed"
         );
         Ok(())
