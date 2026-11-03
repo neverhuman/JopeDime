@@ -87,6 +87,8 @@ case_study/bin/final_test.sh <case>       # the single pre-declared test look (a
 
 - `extend_case.sh` chains rounds of up to 1000 evaluations or 600 s each. Round r+1 starts from
   the 11 best feasible programs found so far, and every round is a verified receipt.
+- `extend_case.sh --cuts 5` ranks every program by its mean over the 5 folds of `train.csv` (the
+  pipeline's cross-cut selection): a train-only cross-validated KPI. `test.csv` is never read.
 - Arm **E** seeds generation 0 with [`seeds.bestpractice.json`](seeds.bestpractice.json): our
   grammar's equivalents of the XGBoost, LightGBM and scikit-learn defaults, the same for every case.
 - The alternatives (CatBoost, LightGBM, XGBoost, HistGB, AutoGluon, TabPFN v2, Kumo Tabular,
