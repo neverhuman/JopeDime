@@ -314,7 +314,6 @@ pub(crate) fn render_learning(frame: &mut Frame<'_>, dashboard: &Dashboard, area
 
 /// The per-wave cohort is a rotating sample, not the population — the label
 /// must make that impossible to misread.
-
 pub(crate) fn cohort_label(funnel_active_total: u64, wave: &WaveSummary) -> String {
     let population = if funnel_active_total > 0 {
         funnel_active_total
