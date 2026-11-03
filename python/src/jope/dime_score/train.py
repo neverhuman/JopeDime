@@ -575,7 +575,7 @@ def train_dime_score(config: TrainConfig) -> dict[str, Any]:
 
     try:
         return _train_dime_score(config)
-    except Exception as error:
+    except (Exception, ArithmeticError) as error:
         config.run_dir.mkdir(parents=True, exist_ok=True)
         failure = {
             "schema": "jope-prime.dime-score-error.v1",

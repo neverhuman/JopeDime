@@ -190,7 +190,7 @@ def mine_slice(
         spec = grammar_for(champ["engine"])
         try:
             actions = parse_pipeline_actions(champ["genome"], spec)
-        except Exception:
+        except (Exception, ArithmeticError):
             continue
         muts = _mutate_actions(actions, spec, rng)
         rng.shuffle(muts)
@@ -199,7 +199,7 @@ def mine_slice(
         for m in muts:
             try:
                 g = format_pipeline_actions(m)
-            except Exception:
+            except (Exception, ArithmeticError):
                 continue
             if g not in seen:
                 seen.add(g)
@@ -213,7 +213,7 @@ def mine_slice(
                 grammar_for(other), cross_engine, seed=rng.randrange(1 << 30), max_cost_class="medium"
             )
             genomes.extend((other, g) for g in fresh[:cross_engine])
-        except Exception:
+        except (Exception, ArithmeticError):
             pass
         for eng, g in genomes:
             eval_inputs.append(
@@ -281,7 +281,7 @@ def mine_slice(
                     oof_r2=cv0.get("oof_r2"),
                     cache_hit=bool(res.get("cache_hit")),
                 )
-            except Exception:
+            except (Exception, ArithmeticError):
                 pass
         if raced % 25 == 0 or raced == len(eval_inputs):
             _write_progress(raced, champs_live)
@@ -314,7 +314,7 @@ def mine_slice(
                     canonical=m["genome"],
                     selection_slot=f"champion_g{generation}",
                 )
-            except Exception:
+            except (Exception, ArithmeticError):
                 pass
         entry = datasets[m["h"]]
         row = TrainingRow(

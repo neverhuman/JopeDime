@@ -144,7 +144,7 @@ def _per_engine_summary(
 def _head_from_genome(genome: str) -> str | None:
     try:
         return str(parse_pipeline_actions(genome)["head"]["op"])
-    except Exception:
+    except (Exception, ArithmeticError):
         return None
 
 

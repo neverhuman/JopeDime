@@ -353,7 +353,7 @@ def cache_dime_embeddings(
             if expert is None:
                 try:
                     expert = load_expert(device)
-                except Exception:
+                except (Exception, ArithmeticError):
                     expert = load_expert("cpu")
             raw = encode_dataset(expert, encoded_dir)
             raw_path = encoded_dir / "foundation-raw.npy"

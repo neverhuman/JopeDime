@@ -11,7 +11,7 @@ from typing import Any
 
 try:  # system-load telemetry; degrade gracefully if unavailable
     import psutil
-except Exception:  # pragma: no cover - psutil is a hard dep but keep the TUI resilient
+except (Exception, ArithmeticError):  # pragma: no cover - psutil is a hard dep but keep the TUI resilient
     psutil = None  # type: ignore[assignment]
 
 CODE_PREVIEW_CHARS = 10_000
@@ -95,7 +95,7 @@ def _mount_label(path: Path) -> str:
                     return part.mountpoint
             except OSError:
                 continue
-    except Exception:
+    except (Exception, ArithmeticError):
         pass
     return "/"
 

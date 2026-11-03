@@ -140,7 +140,7 @@ def propose_and_eval(
                     candidate_pool_lookup[(h, engine, str(canonical))] = row
             else:
                 props = result
-        except Exception as exc:  # noqa: BLE001
+        except (Exception, ArithmeticError) as exc:  # noqa: BLE001
             proposal_errors.append({"dataset_hash": h, "error": repr(exc)})
             continue
         if not props:

@@ -281,7 +281,7 @@ class GpFactory:
         if missing:
             try:
                 model = self._fresh_policy_model()
-            except Exception as exc:  # noqa: BLE001
+            except (Exception, ArithmeticError) as exc:  # noqa: BLE001
                 self.log(f"[factory] WARNING: --fresh-proposals disabled — cannot load {ckpt}: {exc!r}")
                 self.fresh_proposals_ckpt = None
                 return {}
@@ -310,7 +310,7 @@ class GpFactory:
                         if g and g not in genomes:
                             genomes.append(g)
                     cache[(batch, h)] = genomes
-                except Exception as exc:  # noqa: BLE001
+                except (Exception, ArithmeticError) as exc:  # noqa: BLE001
                     self.log(f"[factory] WARNING: fresh proposal failed for {h}: {exc!r}")
                     cache[(batch, h)] = []
         return {h: cache[(batch, h)] for h in hashes if cache.get((batch, h))}
