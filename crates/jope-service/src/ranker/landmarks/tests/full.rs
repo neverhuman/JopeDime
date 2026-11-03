@@ -23,7 +23,7 @@ fn matches_res07_full_recipe_outputs_and_measures_rust_latency() {
         }
     }
 
-    let fixtures = super::super::adapter::real_cpu_parity::Fixtures::open();
+    let fixtures = super::super::super::adapter::real_cpu_parity::Fixtures::open();
     assert_eq!(fixtures.contexts.len(), 50);
     let mut elapsed = Vec::with_capacity(fixtures.contexts.len());
     let mut v_compared = 0;

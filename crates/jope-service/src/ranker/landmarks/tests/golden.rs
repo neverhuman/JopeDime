@@ -3,7 +3,7 @@ use super::*;
 #[test]
 #[ignore = "requires externally staged, hash-pinned RES-07 CPU fixtures and bundle"]
 fn matches_res07_real_landmark_output_assembly() {
-    use super::super::adapter::real_cpu_parity::Fixtures;
+    use super::super::super::adapter::real_cpu_parity::Fixtures;
 
     // PROVISIONAL, WATCHER-SET; owner may override. This reuses the frozen
     // RES-07/RNK-12 CPU parity arithmetic, not an owner-approved RNK-05 rule.
