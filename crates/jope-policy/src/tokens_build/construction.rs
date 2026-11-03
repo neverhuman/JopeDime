@@ -1,7 +1,10 @@
 use anyhow::Result;
 use std::collections::BTreeMap;
 
-use super::spec::{append_token, ActionVocab, ExprSpec, GrammarSpec, OpSpec, ABSENT, SPECIALS};
+use super::spec::{
+    append_token, append_unique, format_param_token, ActionVocab, ExprSpec, GrammarSpec, OpSpec,
+    ABSENT, SPECIALS,
+};
 use crate::grammar::{Expr, Op, Slot};
 
 fn build_expr(
