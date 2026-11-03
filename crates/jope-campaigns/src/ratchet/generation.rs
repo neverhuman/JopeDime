@@ -381,8 +381,4 @@ mod pools;
 #[cfg(test)]
 pub(crate) use pools::{
     assemble_generation_zero_v3, build_bounded_offspring_pools, deterministic_archive_32,
-    OffspringPoolsV3,
 };
-
-#[cfg(test)]
-pub(in crate::ratchet) use pools::{derived_seed, push_generation_candidate, push_unique_identity};
