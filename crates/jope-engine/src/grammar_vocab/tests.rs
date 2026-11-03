@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 #[test]
 fn learned_bins_union_respects_expression_skip_and_cap() {
     let spec = json!({"engine":"featmath","transforms":{"scale":{"params":[
@@ -41,7 +39,7 @@ fn observed_tokens_filter_engine_and_invalid_genomes_and_rank_by_frequency() {
 #[test]
 fn artifact_contains_family_list_and_engine_snapshots() {
     let spec = json!({"engine":"featmath","transforms":{},"heads":{}});
-    let artifact = build_active_vocab_v3(&[], &[spec.clone()]);
+    let artifact = build_active_vocab_v3(&[], std::slice::from_ref(&spec));
     assert_eq!(artifact["syntax"], "active_multi_engine_v3");
     assert_eq!(artifact["families"].as_array().unwrap().len(), 21);
     assert_eq!(artifact["engines"]["featmath"], spec);
