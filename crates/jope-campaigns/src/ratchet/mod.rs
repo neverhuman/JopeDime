@@ -43,12 +43,17 @@ pub(crate) use api::{
     admit_attempt_from_files, commit_dataset_state_from_file, publish_serving_wave_from_files,
     publish_training_head_from_files, retain_model_seeds_from_files, validate_artifact_file,
 };
+#[cfg(test)]
 pub(crate) use generation::{
     assemble_generation_zero_v3, build_bounded_offspring_pools, deterministic_archive_32,
-    CandidateProvenanceV3, Generation0ReceiptV3, GenerationCandidateV3, GenerationRoleBindingV3,
-    GenerationRoleV3, GprKernelFamilyV3, OffspringPoolsV3,
+    OffspringPoolsV3,
 };
+#[cfg(test)]
 use generation::{derived_seed, push_generation_candidate, push_unique_identity};
+pub(crate) use generation::{
+    CandidateProvenanceV3, Generation0ReceiptV3, GenerationCandidateV3, GenerationRoleBindingV3,
+    GenerationRoleV3, GprKernelFamilyV3,
+};
 pub(crate) use microbatch::{
     LearningMicroBatchManifestV1, RolloutSwitchesV1, TrainingHeadManifestV1,
 };
@@ -78,7 +83,10 @@ use wave::{descending_f64, seeded_temperature_score, select_ranked};
 pub(crate) use wave::{
     read_admission, read_generation_zero, read_seed_inference, read_telemetry, ArtifactReleaseV1,
     LearningWaveManifestV1, LegacySeedInferenceV1, ModelProposalV2, ModelRetentionBucketV2,
-    ModelRetentionReceiptV2, NativeFitnessFeaturesV1, ReadableAdmission, ReadableGeneration0,
-    ReadableSeedInference, ReadableTelemetry, RetainedModelProposalV2, SeedInferenceRequestV2,
-    SeedInferenceResponseV2, WaveGateKindV1, WaveGateReceiptV1,
+    ModelRetentionReceiptV2, ReadableAdmission, ReadableGeneration0, ReadableSeedInference,
+    ReadableTelemetry, RetainedModelProposalV2, SeedInferenceRequestV2, SeedInferenceResponseV2,
+    WaveGateKindV1, WaveGateReceiptV1,
 };
+
+#[cfg(test)]
+pub(crate) use wave::NativeFitnessFeaturesV1;
