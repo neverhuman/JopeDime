@@ -452,6 +452,6 @@ fn enforce_bit_parity(
 mod artifacts;
 pub(crate) use artifacts::validate_features;
 use artifacts::{
-    feature_csv_bytes, numeric_raw_table, sha256_bytes, unix_ms,
-    validate_dataset_hash, write_immutable,
+    feature_csv_bytes, numeric_raw_table, sha256_bytes, unix_ms, validate_dataset_hash,
+    write_immutable,
 };
