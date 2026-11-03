@@ -63,7 +63,8 @@ pub(crate) fn load_inputs(cfg: &Config, as_of_unix: u64) -> Result<Loaded> {
     let mut ref_counts: BTreeMap<String, u64> = BTreeMap::new();
     for spec in &cfg.refs {
         let role = Role::parse(&spec.role)?;
-        let mut loaded = super::load(&spec.role, &spec.path, spec.expect_prefix.as_deref())?;
+        let mut loaded =
+            crate::retention::inputs::load(&spec.role, &spec.path, spec.expect_prefix.as_deref())?;
         if let Some((dir, map)) = &members {
             if spec.path.parent() == Some(dir.as_path()) {
                 let name = spec
