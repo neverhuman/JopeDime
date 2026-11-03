@@ -96,5 +96,5 @@ pub(crate) use evaluation::{
 pub(crate) use refill::{
     binary_genome_complexity, evaluate_test_adaptive_binary, evaluate_test_adaptive_binary_cpp17,
     refill_binary_population, test_adaptive_next_population, test_adaptive_seed_population,
-    BinaryAdaptiveCpp17Evaluation, BinaryAdaptiveEvaluation, BinaryAdaptiveRanked,
+    BinaryAdaptiveEvaluation, BinaryAdaptiveRanked,
 };
