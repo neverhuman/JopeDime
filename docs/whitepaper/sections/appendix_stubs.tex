@@ -85,7 +85,8 @@ are inventoried below, separately from the adapter record in
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
   encoding jobs, within the 30\,s cap.
   \item \textbf{Comparison construction (\cref{sub:method-map,sub:method-selfplay}).}
-  Lists $G_p$ require at least eight valid scored programs per problem, with
+  Lists $G_p$ require at least eight valid scored programs per problem (excluding
+  stillborn draws), with
   percentile $\rho_w = 1 - \mathrm{rank}/\allowbreak{(|G_p|-1)}$ and writer $\writer$ sequence weight
   $0.05 + \rho_w^4$. The base native sampler balances families and takes
   the best program plus one draw from each of seven rank bands of the rest.
@@ -131,10 +132,10 @@ are inventoried below, separately from the adapter record in
   The registered total also
   includes zero-weight stability and loss-scale terms, so it does not
   measure learned or exercised capacity. Approximately 6.90 million parameters lie outside the writer's token
-  generation path. Game-day decoding bypasses them, but the native checkpoint loader
-  still requires all of them.
+  generation path. They share no weights with the writer and game-day decoding
+  bypasses them, though the native loader still requires all of them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
-  The records describe AdamW training (learning rate $10^{-4}$,
+  The records describe offline AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
   80 training datasets (\num{7877} lists; \num{8894} contexts). Global batch size
