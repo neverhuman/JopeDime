@@ -30,3 +30,4 @@ pub(crate) use alerts::why_idle_chain;
 
 #[path = "tui_render.rs"]
 mod tui_render;
+pub(super) use tui_render::render;
