@@ -4,7 +4,7 @@ use super::*;
 // fold slices
 // ---------------------------------------------------------------------------
 
-struct BinaryFoldSlices {
+pub(super) struct BinaryFoldSlices {
     train_table: RawTable,
     train_y: Vec<f64>,
     valid_table: RawTable,
