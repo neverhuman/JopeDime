@@ -175,16 +175,14 @@ mod run;
 mod scoring;
 mod splits;
 mod validation;
+use eligibility::build_transfer_rankings;
 pub(super) use eligibility::{
     build_eligibility, copy_context_slices, generation_zero, load_dl_proposals,
 };
-use eligibility::build_transfer_rankings;
-use evaluation::StudyEvalContext;
-pub(super) use evaluation::{
-    evaluate_member_split, refill_population, score_population,
-};
 #[cfg(test)]
 pub(super) use evaluation::slice_data;
+use evaluation::StudyEvalContext;
+pub(super) use evaluation::{evaluate_member_split, refill_population, score_population};
 pub(crate) use fitness::paired_robust_fitness;
 pub(super) use fitness::{
     canonical_json_bytes, genome_compatible, genome_complexity, immutable_write, metrics,
@@ -197,8 +195,8 @@ pub(super) use prepare::{
     cache_key, validate_execution_inputs, validate_manifest_contract, validate_prepared_inputs,
 };
 pub(super) use provenance::{
-    absolute_path, checkpoint_exclusions, load_catalog, resolve_checkpoint_provenance,
-    sha256_f64, sotarena_report_hashes, validate_train_data,
+    absolute_path, checkpoint_exclusions, load_catalog, resolve_checkpoint_provenance, sha256_f64,
+    sotarena_report_hashes, validate_train_data,
 };
 pub(crate) use report::report;
 pub(crate) use run::run;
@@ -207,10 +205,8 @@ pub(super) use run::{
 };
 pub(crate) use scoring::score;
 pub(super) use splits::{build_final_cv_splits, build_splits, rank_final_cv};
+pub(super) use validation::require_validated_score_gate;
 pub(crate) use validation::validate;
-pub(super) use validation::{
-    require_validated_score_gate,
-};
 
 #[cfg(test)]
 mod tests;
