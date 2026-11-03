@@ -6,8 +6,9 @@
 - **Verdict**: **`NO_ADVANCE`** (`winning_arm = null`)
 - **Preregistration commit (`origin/v1/next`)**: `ff9c177a6ddbfa18d644a46089f2792e6dc19609` (`outcomes_read = 0`)
 - **S3 preregistration snapshot**: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/prereg-ff9c177a6ddb/prereg_s3_manifest.json` (`VersionId = J5QjR19h0fAZ5lTLgi8IVb3szLVLFZT.`)
-- **S3 primary evidence bundle (`attempt-001`)**: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/s3_manifest.json` (`VersionId = .XPgSnC.y.fPK1SqCMs6L3gfFXKU9iI2`)
-- **Zero post-prereg code/protocol edits**: `runner.py`, `PREREG.md`, `fold_manifest.json`, `monitor.py`, and `test_h269.py` are byte-identical to preregistration commit `ff9c177a6ddbfa18d644a46089f2792e6dc19609`. Full outputs (`metrics_full.json` `62,910 B`, `VersionId = FDeKBSZUh1jhQQkpsEEtYt280ilk8Ul1`; `details.json` `406,827 B`, `VersionId = hy3ayOqeLTC1CZqJJ6LtIAyde6LJdeEa`; `panels.npz` `384,223 B`, `VersionId = Gc9eN7aA9bQEDR5gDrwzjSBuKychN9tA`; `fit_selections_lock.json` `125,064 B`, `VersionId = MJq1YH.FdweFSHUSs_d0ssYtuKHjINCE`) were uploaded to S3 first, and the `<= 50 KB` Git `metrics.json` (`50,922 B`, `VersionId = pfINOavnvqHwZ2XjRzvhTSucVZwwQBl2`, `100%` lossless JSON round-trip) was derived as a packaging step.
+- **S3 primary evidence bundle (`attempt-001`)**: `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/s3_manifest.json` (`VersionId = 6GNLvng6YI_5sdidn4ifc4QxMv.IloJV`)
+- **Fold manifest S3 pointer**: `fold_manifest.s3.json` points to `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/fold_manifest.json` (`347,608 B`, `sha256 = e6267c4b85fd1c22b80a4e3952ca26cffa397826acbf2623d68a0a1f9ca0e97c`, `VersionId = 2sI5lN8AUomGGvsGbZvceTrTUup2Cgpz`).
+- **Zero post-prereg code/protocol edits**: `runner.py`, `PREREG.md`, `monitor.py`, `test_h269.py`, and `metrics.json` (`50,922 B <= 50 KB`, `VersionId = pfINOavnvqHwZ2XjRzvhTSucVZwwQBl2`, `100%` lossless JSON round-trip of `metrics_full.json` `62,910 B`, `VersionId = FDeKBSZUh1jhQQkpsEEtYt280ilk8Ul1`) are unchanged.
 
 ---
 
@@ -31,8 +32,8 @@
    - On `fold_seed = 269140`, `NOSG_VETO - CONTROL = +0.009521` (`CI95 = [+0.004580, +0.025024]`, `Holm3 CI = [+0.003219, +0.027924]`, `raw_p = 0.0001`, `Holm m=3 adjusted p = 0.0003`, `3/3` seeds positive, `0` families harmed `> 0.01`, `0` `-2.0` invalid picks).
    - `NOSG - CONTROL = +0.014889` (`CI95 = [+0.004320, +0.026271]`, `raw_p = 0.0014`, `3/3` seeds positive).
    - `RERANK4 - CONTROL = +0.012465` (`CI95 = [+0.005029, +0.019926]`, `raw_p = 0.0001`, `3/3` seeds positive).
-4. **Within-family label shuffle placebo (`NOSG_SHUF`) confirmed zero leakage**:
-   - `NOSG_SHUF` admitted `0/45` cells (`0.0%`), abstained to `r882` `slot 0` everywhere, and achieved `0.000000` gain (`p = 1.0000`) on both `DL-Train` and `DL-Val91`.
+4. **Placebo limitation (`NOSG_SHUF`)**:
+   - `NOSG_SHUF` admitted `0/45` cells (`0.0%`) under the strict `H257` inner-`FIT` selector and therefore fell back to `r882` `slot 0` everywhere (`0.000000` delta vs `CONTROL`). As in `H268`, this shows only that the **inner-`FIT` selector rejects shuffled-label noise**; because fallback was active, `NOSG_SHUF` is a weak placebo and does not by itself test unconditional ranker predictions under shuffled labels (addressed in `H273` by adding an unconditional shuffle arm `RERANK8_CR_SHUF_UNC` with fallback disabled).
 
 | Gate Criterion | Preregistered Requirement | `NOSG` (`528` cols) | `NOSG_VETO` (`528` cols + Veto) | Pass? |
 | --- | --- | --- | --- | --- |
@@ -102,7 +103,22 @@
 
 ---
 
-## 4. Diagnostic Audit: Feature Importance (`528` Cols) & Context `27`
+## 4. MM Bradley-Terry Elo (`CONTROL = r882 = 1500.0`)
+
+| Arm | `DL-Train` (`205` Families) Median Elo | `DL-Train` Per-Seed Elo (`269101–269103`) | `DL-Train` `95%` Bootstrap CI | `DL-Val91` (`19` Families) Median Elo | `DL-Val91` Per-Seed Elo (`269101–269103`) | `DL-Val91` `95%` Bootstrap CI |
+| --- | --- | --- | --- | --- | --- | --- |
+| `CONTROL` (`r882` `slot 0`) | `1500.00` | `[1500.00, 1500.00, 1500.00]` | `[1500.00, 1500.00]` | `1500.00` | `[1500.00, 1500.00, 1500.00]` | `[1500.00, 1500.00]` |
+| `NOSG` (`528` cols) | `1512.44` | `[1511.65, 1512.44, 1523.38]` | `[1505.15, 1521.08]` | `1525.78` | `[1524.36, 1525.78, 1533.55]` | `[1504.55, 1550.21]` |
+| `NOSG_VETO` (`528` cols + Veto) | `1509.70` | `[1507.47, 1509.70, 1510.66]` | `[1501.63, 1512.72]` | `1517.07` | `[1510.91, 1528.13, 1517.07]` | `[1506.76, 1536.89]` |
+| `RERANK4` (`560` cols) | `1521.50` | `[1511.89, 1521.50, 1525.68]` | `[1509.14, 1528.10]` | `1517.31` | `[1515.37, 1536.77, 1517.31]` | `[1501.71, 1540.64]` |
+| `NOSG_SHUF` (`528` cols placebo) | `1500.00` | `[1500.00, 1500.00, 1500.00]` | `[1500.00, 1500.00]` | `1500.00` | `[1500.00, 1500.00, 1500.00]` | `[1500.00, 1500.00]` |
+| `NOSG_UNC` (`528` cols, diag) | `1534.27` | `[1530.30, 1534.52, 1534.27]` | `[1520.64, 1546.77]` | `1539.11` | `[1534.62, 1551.69, 1539.11]` | `[1503.33, 1578.20]` |
+| `NOSG_VETO_UNC_SAFE` (diag) | `1509.70` | `[1508.83, 1509.70, 1510.66]` | `[1502.69, 1514.22]` | `1517.07` | `[1515.45, 1528.13, 1517.07]` | `[1507.67, 1541.79]` |
+| `TOP4_PICK_ORACLE` | `1812.57` | `[1813.57, 1812.57, 1812.08]` | `[1799.20, 1832.93]` | `1842.93` | `[1845.58, 1842.93, 1839.46]` | `[1805.95, 1907.46]` |
+
+---
+
+## 5. Diagnostic Audit: Feature Importance (`528` Cols) & Context `27`
 
 - **528-Col Block Gain Split (`NOSG`, `fold_seed = 269140`, `model_seed = 269101`, `fold 0`)**:
   - `sem24_z_24` (cols `412..435`): **`42.04%`** (`4,135.27` gain)
@@ -115,12 +131,23 @@
 
 ---
 
-## 5. Resource Usage & S3 Custody Receipts
+## 6. Next Step
 
-- **Smoke run (`smoke-001`)**: `status = PASS`, `exit_code = 0`, `elapsed = 4.98 s`, `peak_rss = 593.8 MB`, `peak_threads = 2`, `affinity = [57, 58, 59, 60]`.
-- **Primary run (`attempt-001`)**: `status = PASS`, `exit_code = 0`, `elapsed = 1,079.47 s` (`17.99 min`), `peak_rss = 869.1 MB` (`<= 4 GiB` cap), `peak_threads = 2` (`<= 4` cap), `affinity = [57, 58, 59, 60]`, `pause_requested_seconds = 0.0`.
+1. **Do not pursue `NOSG` (`K=4`, `528`-column score-geometry drop) further as a standalone candidate**: `NOSG` and `NOSG_VETO` on `K=4` candidates did not clear the cross-fold-seed context-median `Holm` gate (`NO_ADVANCE`).
+2. **Transfer the outcome-free inner-`FIT` `LGBMClassifier` `-2.0` invalid-gate veto (`tau = 0.10`, `class_weight = {0: 1.0, 1: 10.0}`) into `H273` (`h273_rerank8_cleanroom_veto`)**:
+   - In `H270`, expanding the `r882` candidate pool from `K=4` to `K=8` (`RERANK8`) yielded a large gain (`+0.0523`), but incurred extra `-2.0` invalid gate picks.
+   - `H269` proved that the outcome-free `LGBMClassifier` invalid-gate veto increased inner-`FIT` cell admission from `29/45` (`64.4%`) to `45/45` (`100.0%`) and cut harmed families (`> 0.01`) from `22` to `9`.
+   - `H273` therefore evaluates a clean-room independent-lane implementation of `RERANK8` (`RERANK8_CR`), an unconditional shuffle placebo (`RERANK8_CR_SHUF_UNC`, fallback disabled so the placebo has teeth), and `RERANK8_CR_VETO` (`RERANK8_CR` + frozen `H269` `LGBMClassifier` invalid-gate veto at `tau = 0.10`).
+
+---
+
+## 7. Resource Usage & S3 Custody Receipts
+
+- **Smoke run (`smoke-001`)**: `status = PASS`, `exit_code = 0`, `peak_rss = 593.8 MB`, `peak_threads = 2`, `affinity = [57, 58, 59, 60]`.
+- **Primary run (`attempt-001`)**: `status = PASS`, `exit_code = 0`, `peak_rss = 869.1 MB` (`<= 4 GiB` cap), `peak_threads = 2` (`<= 4` cap), `affinity = [57, 58, 59, 60]`, `pause_requested_seconds = 0.0`.
 - **S3 Custody (`s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H269/attempt-001/`)**:
-  - `s3_manifest.json`: `VersionId = .XPgSnC.y.fPK1SqCMs6L3gfFXKU9iI2`
+  - `s3_manifest.json`: `VersionId = 6GNLvng6YI_5sdidn4ifc4QxMv.IloJV`
+  - `fold_manifest.json` (referenced in Git via `fold_manifest.s3.json`): `347,608` bytes, `sha256 = e6267c4b85fd1c22b80a4e3952ca26cffa397826acbf2623d68a0a1f9ca0e97c`, `VersionId = 2sI5lN8AUomGGvsGbZvceTrTUup2Cgpz`
   - `metrics_full.json`: `62,910` bytes, `sha256 = 29018b3733801e8df9e257021c970f4dc87cc7e89b37028f7eb55ebfbbe5925d`, `VersionId = FDeKBSZUh1jhQQkpsEEtYt280ilk8Ul1`
   - `metrics.json` (Git `<= 50 KB`, `100%` lossless): `50,922` bytes, `sha256 = e4957e23d4ae5069324a5e446cb7241dc3a464893909b91bb044cf7bf27b10ab`, `VersionId = pfINOavnvqHwZ2XjRzvhTSucVZwwQBl2`
   - `details.json`: `406,827` bytes, `sha256 = 8e76f75a7fe743eedc733b4b3b0dc925bec65e3d07b327fd4ef37c285e9ecd1e`, `VersionId = hy3ayOqeLTC1CZqJJ6LtIAyde6LJdeEa`
