@@ -1,5 +1,6 @@
 """Execution, checkpoint continuation, and recovery contracts for training campaigns."""
 
+import copy
 from pathlib import Path
 
 import pytest
