@@ -1,0 +1,37 @@
+{
+  "wave": "H267",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H267",
+    "status": "COMPLETE",
+    "arms": [
+      "r882",
+      "RERANK4",
+      "BAG_MED",
+      "BAG_SHUF"
+    ],
+    "seeds": [
+      267101,
+      267102,
+      267103
+    ],
+    "fold_seeds": {
+      "267101": 267140,
+      "267102": 267141,
+      "267103": 267142
+    },
+    "n_bags": 25,
+    "optimizer_updates": 0,
+    "baseline": "Native91 1.1377941898164525 (91/91) and TOP4_PICK@r882 1.2403601682250796 / 1.2519997168684853",
+    "primary_train_oof": "1,219-context/205-family OOF single-pick panel: contrasts {RERANK4_minus_r882, BAG_MED_minus_r882, BAG_MED_minus_RERANK4, BAG_MED_minus_BAG_SHUF, BAG_SHUF_minus_r882} with per-seed gains, median, ci95, ci_holm_m2, p, W/T/L, harm families; Elo (r882 = 1500)",
+    "secondary_dlval": "same on DL-Val91 (91 contexts, 19 families), per-seed 5-cell mixtures",
+    "decision": "Holm m=2 over PRIMARY and SECONDARY; gates: primary median > +0.002, primary Holm LCB > 0, primary 3/3, beats BAG_SHUF, secondary 3/3",
+    "cells": "per-cell RERANK4 receipt, bag (lr, n_est), OOB admissions, invalid and changed counts",
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0...",
+    "full_metrics": "sha256 + S3 key of the full metrics.json"
+  }
+}
