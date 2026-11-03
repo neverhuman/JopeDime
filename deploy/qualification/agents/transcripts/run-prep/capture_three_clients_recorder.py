@@ -4,6 +4,12 @@ from __future__ import annotations
 
 import signal
 import time
+from typing import Callable
+
+from capture_three_clients_contract import require
+
+# Bound by capture_three_clients.py before recorder draining starts.
+_live_processes: Callable[[], list[dict]] | None = None
 
 def _current_sigmask() -> tuple[set[signal.Signals], BaseException | None]:
     pending_error = None
@@ -46,6 +52,8 @@ def wait_for_recorder(
             time.monotonic() < deadline, "recorder flush/EOF drain deadline exceeded"
         )
         groups = recorder.groups()
+        if _live_processes is None:
+            raise RuntimeError("live-process callback is unavailable")
         client_members = any(p["group"] == process.pid for p in _live_processes())
         receipt = capture_dir / "capture.json"
         require(

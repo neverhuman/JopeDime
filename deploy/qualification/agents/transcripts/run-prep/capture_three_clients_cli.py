@@ -6,6 +6,13 @@ import argparse
 import json
 import subprocess
 import sys
+from pathlib import Path
+from typing import Callable
+
+from capture_three_clients_contract import CLIENTS, CaptureError, self_test
+
+# Bound by capture_three_clients.py after loading this CLI module.
+run_capture: Callable[[argparse.Namespace], dict] | None = None
 
 
 def main() -> int:
@@ -62,6 +69,8 @@ def main() -> int:
             "pass --preflight-only or explicitly authorize --execute-named-clients"
         )
     try:
+        if run_capture is None:
+            raise RuntimeError("capture runner binding is unavailable")
         result = run_capture(args)
         print(json.dumps(result, sort_keys=True))
         return (
