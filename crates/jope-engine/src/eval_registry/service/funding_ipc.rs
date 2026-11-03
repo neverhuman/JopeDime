@@ -14,6 +14,9 @@ mod server;
 
 pub use client::funding_request;
 pub(super) use client::funding_request_installed;
+#[cfg(test)]
 pub(super) use protocol::funding_admission_installed;
 pub use protocol::{funding_admission, FundingRequest, VerifiedFundingAdmission};
-pub(super) use server::{lock_with_deadline, serve_request};
+#[cfg(test)]
+pub(super) use server::lock_with_deadline;
+pub(super) use server::serve_request;
