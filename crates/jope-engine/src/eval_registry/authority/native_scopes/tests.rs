@@ -1,6 +1,4 @@
 use super::*;
-
-use super::*;
 use ed25519_dalek::{Signer, SigningKey};
 fn signed() -> SignedNativeScopeRegistration {
     let key = SigningKey::from_bytes(&[94; 32]);
