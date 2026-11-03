@@ -185,18 +185,18 @@ for settings, expected in [
  os.path.join(os.environ['HOME'], '.local/state/jope')
  if os.environ.get('HOME', '').startswith('/') else '/source/state'),
 ]:
-with patch.dict(os.environ, settings):
-    assert p._state_root() == expected, (settings, p._state_root(), expected)
+    with patch.dict(os.environ, settings):
+        assert p._state_root() == expected, (settings, p._state_root(), expected)
 for invalid in ({'unknown': 'x'}, {'literal': 3}, {'under_flywheel_root': '../x'},
             {'under_flywheel_root': '/x'}, {'literal': 'x', 'extra': 'y'}):
-try:
-    p._render_arg(invalid)
-except p.SpecPolicyError:
-    pass
-else:
-    raise AssertionError(f'accepted invalid argument: {invalid}')
+    try:
+        p._render_arg(invalid)
+    except p.SpecPolicyError:
+        pass
+    else:
+        raise AssertionError(f'accepted invalid argument: {invalid}')
 for family in p.FAMILIES:
-print(p.render_resource_block(family) + p.render_placement_block(family), end='')
+    print(p.render_resource_block(family) + p.render_placement_block(family), end='')
 "#,
         )
         .arg(repo_root().join("python/test-support/jope/research"))

@@ -85,72 +85,6 @@ impl RenderSite {
 /// appear here; anything else fails as `UnregisteredSite`.
 pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     (
-        "crates/jope-campaigns/src/bin/jope_canary_executor.rs",
-        "ensure_proposals",
-        Some(Family::Propose),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_canary_executor.rs",
-        "build_evaluations",
-        Some(Family::Eval),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_causal_pair_repair.rs",
-        "render_spec",
-        Some(Family::Eval),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_task_learning_controller.rs",
-        "render_spec",
-        Some(Family::Trainer),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_selfplay_promotion.rs",
-        "render_checkpoint_proposal_spec",
-        Some(Family::Propose),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_selfplay_promotion.rs",
-        "render_trainer_spec",
-        Some(Family::Trainer),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_selfplay_propose_driver.rs",
-        "render_spec",
-        Some(Family::Propose),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_selfplay_supply.rs",
-        "render_cohort_proposer_spec",
-        Some(Family::Propose),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_selfplay_expansion_driver.rs",
-        "submit_encode_chunk",
-        Some(Family::Encode),
-    ),
-    // Codex-owned (do not edit; propose changes in FLYWHEEL_CHAT.md). Scanned
-    // read-only so its drift is still visible here.
-    (
-        "crates/jope-campaigns/src/bin/jope_selfplay_queue/screening.rs",
-        "render_spec",
-        Some(Family::Eval),
-    ),
-    (
-        "crates/jope-campaigns/src/bin/jope_selfplay_trainer_watchdog.rs",
-        "render_spec",
-        Some(Family::Trainer),
-    ),
-    // Sealed-holdout zero-shot evaluation. Appeared 2026-07-28 23:34Z and was
-    // caught by the UnregisteredSite check within minutes of being written --
-    // which is the whole point of that check. CPU eval shape (0 GPU, 1 core,
-    // 512 MB), so it is the Eval family.
-    (
-        "crates/jope-campaigns/src/bin/jope_sealed_zeroshot.rs",
-        "plan",
-        Some(Family::Eval),
-    ),
-    (
         "python/test-support/jope/research/test_exact_backlog.py",
         "render_spec",
         Some(Family::Eval),
@@ -170,11 +104,6 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
         "render_spec",
         Some(Family::Trainer),
     ),
-    (
-        "python/test-support/jope/research/test_exact_train.py",
-        "render_resource_block",
-        Some(Family::Trainer),
-    ),
     // The offline train-only red-team renderer (train_only_redteam_scq.py) and the
     // genome-boost campaign (genome_boost_cluster_campaign.py) were registered here
     // until the Python removal P1 (ADR-0006) archived both; restore with
@@ -183,37 +112,18 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     // Smart-v3 CPU study dispatcher. It is a frozen, development-only
     // campaign renderer outside the flywheel families, but it still belongs
     // in the registry so its SCQ syntax is audited by the repository test.
+    // The shared spec renderers replaced duplicated inline blocks.
     (
-        "python/test-support/jope/research/smart_v3_cpu_scq.py",
+        "python/test-support/jope/research/test_exact_train_config.py",
+        "render_resource_block",
+        Some(Family::Trainer),
+    ),
+    (
+        "python/test-support/jope/research/smart_v3_cpu_scq_specs.py",
         "render_spec",
         None,
     ),
-    // Binary42 / adaptive-panel campaign submitters. Compiled code, reachable
-    // from `src/main.rs` CLI subcommands (`run_binary42`, `binary42_batch_worker`,
-    // ...), NOT daemons -- so they are out of the flywheel families and their
-    // reservations are not compared against trainer/propose/eval/encode.
-    //
-    // They were invisible to this scanner until 2026-07-29 because `SCAN_DIRS`
-    // omitted `crates/jope-campaigns/src/test_adaptive`. All five pin `[resource] node`, which scq
-    // refuses outright ("node is controller-only"), so these campaign
-    // subcommands cannot submit as written. Registered here so the pin is
-    // REPORTED rather than merely unseen; fixing them is a separate change owned
-    // by whoever runs those campaigns.
-    (
-        "crates/jope-campaigns/src/test_adaptive/binary42/staging.rs",
-        "submit_canary",
-        None,
-    ),
-    (
-        "crates/jope-campaigns/src/test_adaptive/binary42/staging.rs",
-        "submit_canary_at",
-        None,
-    ),
-    (
-        "crates/jope-campaigns/src/test_adaptive/binary42/execution.rs",
-        "scq_spec",
-        None,
-    ),
+    // Offline adaptive-panel submitters, outside the flywheel families.
     (
         "crates/jope-campaigns/src/test_adaptive/scq_batch.rs",
         "submit_true",
@@ -222,21 +132,6 @@ pub const REGISTRY: &[(&str, &str, Option<Family>)] = &[
     (
         "crates/jope-campaigns/src/test_adaptive/scq_batch.rs",
         "run_batch_flavored",
-        None,
-    ),
-    (
-        "crates/jope-campaigns/src/test_adaptive/timeseries42/scq_jobs.rs",
-        "scq_spec",
-        None,
-    ),
-    (
-        "crates/jope-campaigns/src/test_adaptive/multiclass60.rs",
-        "render_spec",
-        None,
-    ),
-    (
-        "crates/jope-campaigns/src/test_adaptive/multiclass60.rs",
-        "render_replay_spec",
         None,
     ),
 ];
