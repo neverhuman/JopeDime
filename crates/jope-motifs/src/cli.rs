@@ -13,13 +13,13 @@
 
 use crate::export::{self, PublicChecks, PublicExport, StageCounts};
 use crate::mine::{input_manifest, mine};
-use crate::private_io::{create_private_dir, write_private_file, write_public_file, Policy};
+use crate::private_io::{Policy, create_private_dir, write_private_file, write_public_file};
 use crate::source::{FamilyMap, QualifiedSet, QualifiedSource};
 use crate::table::{Lifecycle, MineParameters, MotifTable};
 use crate::teaching::{StateOpener, StateTeaching};
 use crate::validate::{self, ValidateOptions, Validation};
-use crate::{code_of, Code, Coded};
-use anyhow::{ensure, Result};
+use crate::{Code, Coded, code_of};
+use anyhow::{Result, ensure};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use std::collections::BTreeSet;
@@ -300,6 +300,13 @@ pub(crate) fn run_with(
     }
 }
 
+#[derive(Serialize)]
+struct FailureJson {
+    schema: &'static str,
+    ok: bool,
+    error: &'static str,
+}
+
 /// Report an error: its fixed code on stderr, or the failure document on stdout with `--json`.
 /// The full chain goes only to the private log. A refused or failing log never changes the
 /// code, but it is reported. Returns exit status 2.
@@ -341,8 +348,8 @@ fn read_state(env: &Env, state: Option<&Path>) -> Result<QualifiedSet> {
 
 mod mining_command;
 mod validate_command;
-use mining_command::{mine_verb, render_mine, MineArgs};
-use validate_command::{render_validate, validate_verb, Outcome, ValidateArgs};
+use mining_command::{MineArgs, mine_verb, render_mine};
+use validate_command::{Outcome, ValidateArgs, render_validate, validate_verb};
 
 #[cfg(test)]
 mod tests;
