@@ -96,7 +96,7 @@ enum BackendRequest {
 
 enum BackendState {
     Uninitialized,
-    Ready(Gpu),
+    Ready(Box<Gpu>),
     Failed(String),
 }
 
@@ -136,12 +136,12 @@ fn backend_worker(receiver: mpsc::Receiver<BackendRequest>) {
 fn ready_backend(state: &mut BackendState) -> Result<&mut Gpu, String> {
     if matches!(state, BackendState::Uninitialized) {
         *state = match init_backend() {
-            Ok(gpu) => BackendState::Ready(gpu),
+            Ok(gpu) => BackendState::Ready(Box::new(gpu)),
             Err(error) => BackendState::Failed(error),
         };
     }
     match state {
-        BackendState::Ready(gpu) => Ok(gpu),
+        BackendState::Ready(gpu) => Ok(gpu.as_mut()),
         BackendState::Failed(error) => Err(error.clone()),
         BackendState::Uninitialized => Err("battle-gpu backend initialization failed".to_string()),
     }
@@ -520,7 +520,7 @@ fn prepare_batch(problems: Vec<GpuRidgeScoreProblem>) -> Result<PreparedBatch, S
         })
         .collect::<Result<Vec<_>, String>>()?;
     let mut scores = vec![0.0f64; problems.len()];
-    let mut fold_bytes = vec![GpuRidgeScoreFoldBytes::default(); problems.len()];
+    let fold_bytes = vec![GpuRidgeScoreFoldBytes::default(); problems.len()];
     let mut timings = GpuRidgeScoreTimings::default();
 
     // Eligibility was checked before backend setup; CUDA dimensions must fit signed int.
