@@ -212,7 +212,7 @@ impl OwnedSetupOrphan {
         );
         Ok(pid)
     }
-    fn reaped_after_recovery(&self) -> Result<u32> {
+    pub(super) fn reaped_after_recovery(&self) -> Result<u32> {
         let mut slot = self.0.lock().unwrap();
         let child = slot.as_mut().context("no owned orphan was injected")?;
         let deadline = Instant::now() + Duration::from_millis(DRAIN_MS);
