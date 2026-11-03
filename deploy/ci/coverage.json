@@ -160,6 +160,16 @@
     }
   },
   "items": {
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
+        "discovery": {
+          "kind": "python-family"
+        },
+        "dispositions": [
+          "research"
+        ],
+        "lanes": [],
+        "scope": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification."
+      },
     "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
       "discovery": {
         "kind": "python-family"

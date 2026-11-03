@@ -1,5 +1,29 @@
 {
   "items": {
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/analysis.py": {
+        "bytes": 25013,
+        "sha256": "5cea1f820cdc3095a45178966bd566aac4b661ba74f405defc09377080848eb1",
+        "classification": {
+          "role": "research",
+          "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h246_stable_g025_rerun/runner.py": {
+        "bytes": 45651,
+        "sha256": "1e4c9a56e0292f634c845de1254a1fedc7cb68d5b838177245959c8c8e7ebd9f",
+        "classification": {
+          "role": "research",
+          "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
+        }
+      },
+      "python:research/flywheel_selfplay/h246_stable_g025_rerun/monitor.py": {
+        "bytes": 11442,
+        "sha256": "3e46072116794f76d93ed7291188a37abe897563af18c5a0f53e3a317f53b880",
+        "classification": {
+          "role": "research",
+          "reason": "H246 fresh-seed STABLE_G025 pick-stability unanimity vote gate rerun inside frozen H217 GATED_025 recipe; 0 optimizer updates, frozen DOPE, sequential HistGBM member fits, and cooperative H239 A1 memory/load pause guard; no serving promotion."
+        }
+      },
     "python:research/flywheel_selfplay/h244_wsmooth/analysis.py": {
       "bytes": 8529,
       "sha256": "0ccd25b414ffceb7955151f875378c97b74a44f397ba4fea1000c65e18103d65",

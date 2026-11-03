@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "H246 STABLE_G025 Rerun Metrics",
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "verdict",
+    "optimizer_updates"
+  ],
+  "properties": {
+    "schema": {
+      "const": "jope.h246.stable-g025-rerun/v1"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "INCOMPLETE"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        null,
+        "CANDIDATE: STABLE_G025",
+        "NO_ADVANCE",
+        "INCOMPLETE"
+      ]
+    },
+    "optimizer_updates": {
+      "const": 0
+    }
+  }
+}
