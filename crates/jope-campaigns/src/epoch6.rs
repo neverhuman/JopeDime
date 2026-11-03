@@ -76,8 +76,6 @@ pub use replay::{
     CandidateSlotArithmeticV2, DlSlotPolicyV2, OperatorModulusV2, ReplayProtocolV2, RngAlgorithmV2,
 };
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case")]
 mod pipeline_intents;
 pub use pipeline_intents::{
     ConsumerHeartbeatV1, JopePipelineStatusV2, PipelineEdgeV1, PipelineStageStateV2,

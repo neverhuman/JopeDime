@@ -62,12 +62,12 @@ pub fn normalize_score_within_dataset(values: &[f64]) -> Result<Vec<f64>> {
     if values.is_empty() {
         return Ok(Vec::new());
     }
-    let median = median(values.to_vec());
-    let deviations = values.iter().map(|value| (value - median).abs()).collect();
+    let center = median(values.to_vec());
+    let deviations: Vec<f64> = values.iter().map(|value| (value - center).abs()).collect();
     let scale = (1.4826 * median(deviations)).max(1e-6);
     Ok(values
         .iter()
-        .map(|value| (value - median) / scale)
+        .map(|value| (value - center) / scale)
         .collect())
 }
 

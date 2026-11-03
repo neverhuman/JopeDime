@@ -95,7 +95,11 @@ pub(crate) fn publish_file_exclusive(staged: &Path, target: &Path, digest: &str)
     }
 }
 
-fn publish_json_exclusive<T: Serialize>(staging: &Path, target: &Path, value: &T) -> Result<()> {
+pub(crate) fn publish_json_exclusive<T: Serialize>(
+    staging: &Path,
+    target: &Path,
+    value: &T,
+) -> Result<()> {
     ensure_parent(target)?;
     let digest = canonical_json_sha256(&serde_json::to_value(value)?)?;
     let staged = staging.join(format!("json-{digest}"));
@@ -107,7 +111,7 @@ fn publish_json_exclusive<T: Serialize>(staging: &Path, target: &Path, value: &T
     sync_directory(target.parent().context("JSON target has no parent")?)
 }
 
-fn publish_json_convergent<T>(staging: &Path, target: &Path, value: &T) -> Result<()>
+pub(crate) fn publish_json_convergent<T>(staging: &Path, target: &Path, value: &T) -> Result<()>
 where
     T: Serialize + DeserializeOwned + PartialEq,
 {
@@ -130,7 +134,7 @@ where
     }
 }
 
-fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T> {
+pub(crate) fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T> {
     serde_json::from_reader(std::io::BufReader::new(File::open(path)?))
         .with_context(|| format!("decode {}", path.display()))
 }

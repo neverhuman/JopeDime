@@ -228,7 +228,7 @@ fn positive_integer(value: &Value, name: &str, allow_zero: bool) -> Result<u64> 
     Ok(number)
 }
 
-fn sha256(value: &Value, name: &str) -> Result<&str> {
+fn sha256<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
     let text = value
         .as_str()
         .filter(|text| valid_hex(text, 64))
@@ -236,7 +236,7 @@ fn sha256(value: &Value, name: &str) -> Result<&str> {
     Ok(text)
 }
 
-fn dataset_hash(value: &Value) -> Result<&str> {
+fn dataset_hash<'a>(value: &'a Value) -> Result<&'a str> {
     let text = value
         .as_str()
         .filter(|text| (text.len() == 16 || text.len() == 64) && valid_hex(text, text.len()))
