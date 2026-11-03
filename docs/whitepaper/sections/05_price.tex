@@ -88,9 +88,9 @@ component's cost per win matches. \Cref{sub:price-run} separates active
 compute from resident model memory.
 
 If the smaller writer needs three times the tokens per
-attempt, the generation-only ratio falls to about 60. Repair turns also
-re-read a growing context. Encoding and referee costs change the full-cost
-ratio; a threshold for the complete bill in \cref{eq:bill} requires
+attempt, the generation-only ratio falls to about 60. Repair turns, unused in
+our routes, also re-read a growing context. Encoding and referee costs change
+the full-cost ratio; a threshold for the bill in \cref{eq:bill} requires
 counting every component.
 
 Reasoning is the second dial. Reasoning tokens may cut stillborn moves, but
@@ -109,8 +109,8 @@ known solutions and quality-diversity archives
 \citep{lehman2011novelty,mouret2015mapelites}; any novelty bonus must
 preserve the reward ordering in \cref{sub:game-referee}.
 
-The reference training routes combine policy draws with grammar-based
-fallback and random exploration to seed verified search
+Without a novelty bonus, the reference routes combine policy draws,
+grammar-based fallback and random exploration to seed search
 (\cref{sub:method-selfplay}). An exploration study must declare those
 controls and their budget shares, including unsuccessful attempts;
 \cref{sec:results} reserves the quality--cost comparison.
