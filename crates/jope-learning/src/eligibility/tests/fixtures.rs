@@ -141,18 +141,18 @@ pub(super) struct HandoffParts {
 /// its serialization order, written out here independently of the receiver.
 #[derive(Serialize)]
 pub(super) struct FixtureAttestation {
-    schema: &'static str,
-    supervisor_receipt_sha256: String,
-    program_sha256: String,
-    input_sha256: String,
-    output_sha256: String,
-    completed: bool,
-    cpu_limit: u32,
-    memory_max: u64,
-    swap_max: u64,
-    threads: u32,
-    elapsed_seconds: f64,
-    deadline_seconds: f64,
+    pub(super) schema: &'static str,
+    pub(super) supervisor_receipt_sha256: String,
+    pub(super) program_sha256: String,
+    pub(super) input_sha256: String,
+    pub(super) output_sha256: String,
+    pub(super) completed: bool,
+    pub(super) cpu_limit: u32,
+    pub(super) memory_max: u64,
+    pub(super) swap_max: u64,
+    pub(super) threads: u32,
+    pub(super) elapsed_seconds: f64,
+    pub(super) deadline_seconds: f64,
 }
 
 /// `jope_policy::context_producer::TrainingIdentity`, in its serialization order.
@@ -168,15 +168,15 @@ pub(super) struct FixtureTraining {
 /// `jope_policy::context_producer::AdmissionPins`, in its serialization order.
 #[derive(Serialize)]
 pub(super) struct FixturePins {
-    source_sha256: String,
-    producer_sha256: String,
-    artifact_sha256: String,
-    qualification_sha256: String,
-    reference_manifest_sha256: String,
-    context_execution_sha256: String,
-    qualification_execution_sha256: Vec<String>,
-    verification_policy_sha256: String,
-    training: FixtureTraining,
-    input_sha256: String,
-    preprocessing_sha256: String,
+    pub(super) source_sha256: String,
+    pub(super) producer_sha256: String,
+    pub(super) artifact_sha256: String,
+    pub(super) qualification_sha256: String,
+    pub(super) reference_manifest_sha256: String,
+    pub(super) context_execution_sha256: String,
+    pub(super) qualification_execution_sha256: Vec<String>,
+    pub(super) verification_policy_sha256: String,
+    pub(super) training: FixtureTraining,
+    pub(super) input_sha256: String,
+    pub(super) preprocessing_sha256: String,
 }
