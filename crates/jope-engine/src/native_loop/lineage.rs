@@ -24,7 +24,7 @@ mod types;
 pub use types::{
     CommittedUpdateCredit, DescendantLineagePolicy, LineageBundle, LineageEdge,
     LineageSuccessorEvidence, OptimizerEpoch, PolicyAnchor, PolicyLineage, ProtocolIdentity,
-    TrainingEligibility, TrainingIntent, VerifiedLineage,
+    TrainingEligibility, TrainingIntent, VerifiedLineage, SUCCESSOR_EVIDENCE_SCHEMA,
 };
 
 fn digest(d: &str) -> Result<()> {

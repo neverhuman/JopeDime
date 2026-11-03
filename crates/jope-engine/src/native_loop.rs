@@ -437,7 +437,8 @@ mod offers;
 mod open;
 mod tick;
 use decisions::{
-    matched_comparisons, verify_parent_decision, verify_result_binding, ParentEvidence,
+    comparison_outcomes, matched_comparisons, verify_parent_decision, verify_result_binding,
+    ParentEvidence,
 };
 pub use decisions::{replenish, ProposalParentDecision};
 
