@@ -94,7 +94,7 @@ pub(super) struct PublishOutcome {
 #[derive(Default)]
 pub(super) struct Progress {
     pub(super) uploaded: usize,
-    bytes: u64,
+    pub(super) bytes: u64,
 }
 
 // Keep replica content, manifest identity and progress state explicit at publication.
