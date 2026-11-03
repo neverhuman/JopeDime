@@ -118,7 +118,7 @@ impl Drop for TlsStream {
     fn drop(&mut self) {
         // A courtesy close: never past the stream's deadline, and at most CLOSE_TIMEOUT from now.
         let socket = self.socket();
-        let write = socket.limits().write;
+        let write = socket.write_timeout();
         let wait = write.map_or(CLOSE_TIMEOUT, |w| w.min(CLOSE_TIMEOUT));
         socket.cap_deadline(Instant::now() + wait);
         match &mut self.inner {
