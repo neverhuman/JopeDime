@@ -1,3 +1,4 @@
+#[cfg(all(feature = "failpoints", debug_assertions))]
 use super::*;
 
 #[cfg(all(feature = "failpoints", debug_assertions))]
