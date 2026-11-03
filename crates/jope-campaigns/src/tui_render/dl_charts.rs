@@ -67,7 +67,6 @@ pub(crate) fn render_dl_tab(
 
 /// Wrap the raw key-press counter onto the live arm count. Kept separate so the
 /// tests can pin the wrap behaviour when arms appear or exit mid-run.
-
 pub(crate) fn selected_arm(arm: usize, count: usize) -> usize {
     if count == 0 {
         0
@@ -78,7 +77,6 @@ pub(crate) fn selected_arm(arm: usize, count: usize) -> usize {
 
 /// One line per arm: the at-a-glance comparison across every GPU. Shown only
 /// when more than one arm is live.
-
 pub(crate) fn render_arm_strip(
     frame: &mut Frame<'_>,
     dashboard: &Dashboard,
@@ -162,7 +160,6 @@ pub(crate) fn render_arm_strip(
 
 /// Cross-generation loss chart. Takes the flattened history rather than a live
 /// trainer so it renders whether or not a job is currently running.
-
 pub(crate) fn render_loss_chart(
     frame: &mut Frame<'_>,
     dashboard: &Dashboard,
@@ -293,7 +290,6 @@ pub(crate) fn render_loss_chart(
 /// Generation ruler drawn directly under the loss chart: one tick per trainer
 /// generation, positioned proportionally, so the boundaries are readable rather
 /// than merely visible. The live generation is highlighted.
-
 pub(crate) fn generation_ruler(series: &DlSeries, width: u16) -> Line<'static> {
     if series.marks.is_empty() || width < 8 {
         return Line::from(Span::styled(
@@ -330,7 +326,6 @@ pub(crate) fn generation_ruler(series: &DlSeries, width: u16) -> Line<'static> {
 }
 
 /// Cross-generation pairwise-win chart (the "should climb" curve).
-
 pub(crate) fn render_pairwise_chart(frame: &mut Frame<'_>, series: &DlSeries, area: Rect) {
     let points = series.pairwise.clone();
     let ablation = series.ablation.clone();
