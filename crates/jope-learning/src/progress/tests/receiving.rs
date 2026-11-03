@@ -16,8 +16,9 @@ use crate::progress::inventory::*;
 use crate::progress::outbox::Outbox;
 use crate::progress::publish::{publish, Publication};
 use crate::progress::rebuild::restore;
-use crate::state::State;
 use serde_json::json;
+use sha2::{Digest, Sha256};
+use std::path::Path;
 
 fn checkpoint(
     o: &mut Outbox,
@@ -192,7 +193,7 @@ fn a_forked_or_repeated_update_index_never_reaches_the_pointer() {
 
 /// An HWM decision link for `completion`, built from a real `hwm::ingest` batch of `state`.
 fn ingest_and_link(
-    state: &State,
+    ingest: impl FnOnce(Vec<Candidate>, serde_json::Value) -> anyhow::Result<hwm::IngestReport>,
     r: &Run,
     completion: &Decoded<Event>,
     cut: &str,
@@ -200,9 +201,7 @@ fn ingest_and_link(
     transition: Transition,
 ) -> (HwmDecision, Vec<u8>) {
     let (record, blob) = hwm_record(cut, value);
-    let report = hwm::ingest(
-        state,
-        None,
+    let report = ingest(
         vec![Candidate {
             record: record.clone(),
             blob: blob.clone(),
@@ -257,7 +256,14 @@ fn hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication() {
             },
         ),
         ("an initialization claimed as an improvement", |e, r, c| {
-            let (d, blob) = ingest_and_link(&e.state, r, c, "cut-a", 0.5, Transition::Initialized);
+            let (d, blob) = ingest_and_link(
+                |candidates, source| hwm::ingest(&e.state, None, candidates, source),
+                r,
+                c,
+                "cut-a",
+                0.5,
+                Transition::Initialized,
+            );
             (
                 HwmDecision {
                     transition: Transition::Improved,
@@ -267,9 +273,9 @@ fn hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication() {
             )
         }),
         ("a decision another host's ledger holds", |_, r, c| {
-            let elsewhere = tempfile::tempdir().unwrap();
+            let elsewhere = env();
             ingest_and_link(
-                &State::at(elsewhere.path()),
+                |candidates, source| hwm::ingest(&elsewhere.state, None, candidates, source),
                 r,
                 c,
                 "cut-b",
@@ -304,7 +310,7 @@ fn hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication() {
     let e = env();
     let (mut o, _, c0) = published(&e, &r);
     let (decision, blob) = ingest_and_link(
-        &e.state,
+        |candidates, source| hwm::ingest(&e.state, None, candidates, source),
         &r,
         &completed,
         "cut-a",
@@ -320,8 +326,8 @@ fn hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication() {
 
     // A fresh host that restored the committed state publishes on top of it without re-deciding
     // the committed decision; a new decision it cannot back against its own ledger is refused.
-    let fresh = tempfile::tempdir().unwrap();
-    let mut b = Outbox::open(&State::at(fresh.path()), BIG).unwrap();
+    let fresh = env();
+    let mut b = Outbox::open(&fresh.state, BIG).unwrap();
     restore(&e.remote, r.id(), &mut b).unwrap().unwrap();
     let more: Vec<_> = producer(&r)[5..8].to_vec();
     let objects = append(&mut b, &more);
@@ -331,7 +337,7 @@ fn hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication() {
         Publication::Advanced { height: 2, .. }
     ));
     let (foreign, blob) = ingest_and_link(
-        &e.state,
+        |candidates, source| hwm::ingest(&e.state, None, candidates, source),
         &r,
         &completed,
         "cut-c",
@@ -350,7 +356,46 @@ fn hwm_decisions_are_checked_against_the_local_hwm_ledger_at_publication() {
 
 #[test]
 fn a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer() {
-    use crate::revocation::testing::revoke;
+    // Use the public importer: this module is compiled under both the library and CLI test roots.
+    let revoke = |state, root: &Path, name: &str, bytes: &[u8]| {
+        let evidence_path = format!("evidence/{name}");
+        std::fs::create_dir_all(root.join("evidence")).unwrap();
+        std::fs::write(root.join(&evidence_path), bytes).unwrap();
+        let claims_path = root.join("docs/internal/core-ip/claims/claims.json");
+        std::fs::create_dir_all(claims_path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &claims_path,
+            serde_json::to_vec_pretty(&json!({
+                "schema": "jope.core-ip-claims/v1",
+                "evidence": {
+                    name: {
+                        "kind": "synthetic-fixture",
+                        "location": "repository",
+                        "path": evidence_path,
+                        "sha256": hex::encode(Sha256::digest(bytes)),
+                        "source_commit": "a".repeat(40),
+                        "subject": "fixture subject",
+                        "scope": "fixture",
+                        "depends_on": []
+                    }
+                },
+                "revocations": [{
+                    "node": name,
+                    "issuer": "reviewer",
+                    "cause": "fixture cause",
+                    "effective_utc": "2026-09-26T12:00:00Z",
+                    "sequence": 1
+                }],
+                "claims": []
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+        let plan = crate::revocation::import(state, &claims_path, Some(root), false).unwrap();
+        assert!(!plan.applied && plan.batch.is_none());
+        crate::revocation::import(state, &claims_path, Some(root), true).unwrap();
+    };
+
     let r = run("run-w8-revoked", 3, 3);
 
     // A new commit naming a revoked blob (a corpus member) is refused before any delivery.
@@ -358,12 +403,7 @@ fn a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer() {
     let (mut o, _, c0) = published(&e, &r);
     let (corpus, exposure0, members) = training(&mut o, &r, 0, None, 3);
     let repo = tempfile::tempdir().unwrap();
-    revoke(
-        &e.state,
-        repo.path(),
-        &[("member-0", &members[0], &[])],
-        &["member-0"],
-    );
+    revoke(&e.state, repo.path(), "member-0", &members[0]);
     let c1 = commit(&r, Some(&c0), &[&corpus, &exposure0]);
     let (head, remote) = (head_bytes(&e.remote, &r).unwrap(), snapshot(&e.remote_dir));
     match publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c1).unwrap() {
@@ -390,12 +430,7 @@ fn a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer() {
         Publication::Advanced { height: 1, .. }
     ));
     let repo = tempfile::tempdir().unwrap();
-    revoke(
-        &e.state,
-        repo.path(),
-        &[("member-1", &members[1], &[])],
-        &["member-1"],
-    );
+    revoke(&e.state, repo.path(), "member-1", &members[1]);
     let scheduled = r.scheduled(1).encoded().unwrap();
     o.append_object(&scheduled).unwrap();
     let c2 = commit(&r, Some(&c1), &[&scheduled]);
@@ -415,12 +450,7 @@ fn a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer() {
     let scheduled = r.scheduled(1).encoded().unwrap();
     o.append_object(&scheduled).unwrap();
     let repo = tempfile::tempdir().unwrap();
-    revoke(
-        &e.state,
-        repo.path(),
-        &[("event", &scheduled.bytes, &[])],
-        &["event"],
-    );
+    revoke(&e.state, repo.path(), "event", &scheduled.bytes);
     let c1 = commit(&r, Some(&c0), &[&scheduled]);
     assert!(matches!(
         publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c1).unwrap(),
@@ -432,12 +462,7 @@ fn a_commit_whose_closure_names_revoked_evidence_never_moves_the_pointer() {
     let (mut o, _, c0) = published(&e, &r);
     let (corpus, exposure0, _) = training(&mut o, &r, 0, None, 3);
     let repo = tempfile::tempdir().unwrap();
-    revoke(
-        &e.state,
-        repo.path(),
-        &[("unrelated", b"unrelated evidence", &[])],
-        &["unrelated"],
-    );
+    revoke(&e.state, repo.path(), "unrelated", b"unrelated evidence");
     let c1 = commit(&r, Some(&c0), &[&corpus, &exposure0]);
     assert!(matches!(
         publish(&mut o, &e.remote, PUBLISHER, &r.manifest, &c1).unwrap(),
