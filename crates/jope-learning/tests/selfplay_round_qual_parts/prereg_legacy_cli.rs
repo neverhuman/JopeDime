@@ -13,7 +13,6 @@ fn preserves_legacy_unpinned_behavior() {
         scores,
         parity,
         pinned_bytes,
-        pinned_plan: _,
         ..
     } = fixture;
     // 7. Verify R3 A-M3 & R2 P3-3 backward compatibility on legacy no-`--prereg` calls:
