@@ -212,7 +212,20 @@ int main(int argc,char** argv) {
             .arg(root.join("bits.txt"))),
         expected.as_bytes()
     );
-    for compiler in ["g++", "clang++"] {
+    let cpp_compilers: Vec<_> = ["g++", "clang++"]
+        .into_iter()
+        .filter(|compiler| {
+            Command::new(*compiler)
+                .arg("--version")
+                .output()
+                .is_ok_and(|output| output.status.success())
+        })
+        .collect();
+    assert!(
+        !cpp_compilers.is_empty(),
+        "the emitted matrix needs at least one C++ compiler"
+    );
+    for &compiler in &cpp_compilers {
         for (standard, optimization) in [
             ("-std=c++17", "-O2"),
             ("-std=c++17", "-O3"),
@@ -225,7 +238,7 @@ int main(int argc,char** argv) {
         }
     }
     assert_eq!(
-        compile_cpp(&root, "g++", "-std=c++17", "-O1", true),
+        compile_cpp(&root, cpp_compilers[0], "-std=c++17", "-O1", true),
         expected.as_bytes()
     );
 }
