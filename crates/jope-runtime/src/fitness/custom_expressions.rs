@@ -1,4 +1,5 @@
 use super::*;
+use crate::fitness::evaluate::columns_from_pairs;
 
 #[test]
 fn configuration_parameters_and_expression_limits_are_enforced() {
