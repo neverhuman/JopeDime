@@ -43,4 +43,4 @@ mod events;
 mod text;
 
 pub use text::safe;
-use text::{append_boundary_note, edit_text, evidence_refs, hypothesis, short, stage_text, value};
+use text::{append_boundary_note, edit_text, evidence_refs, hypothesis, short};
