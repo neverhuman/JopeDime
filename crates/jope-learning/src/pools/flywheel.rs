@@ -62,7 +62,7 @@ mod types;
 
 pub use execution::{run_distilled_flywheel, run_distilled_flywheel_with_s3_prior};
 pub use priors::{build_fold_s3_priors, known_scores};
-pub(super) use priors::{paired_metrics, paired_scalars, summarize_metrics};
+use priors::{paired_metrics, paired_scalars, summarize_metrics};
 pub use types::{
     FlywheelConfig, FlywheelFoldCv, FlywheelReceipt, FlywheelRoundSummary, RoundLiftComparison,
     FLYWHEEL_RECEIPT_SCHEMA,
