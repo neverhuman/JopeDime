@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) fn load_state(path: &Path) -> Result<DurableState> {
+pub(super) fn load_state(path: &Path) -> Result<DurableState> {
     if !path.is_file() {
         return Ok(DurableState::new());
     }
@@ -13,7 +13,7 @@ pub(crate) fn load_state(path: &Path) -> Result<DurableState> {
     Ok(state)
 }
 
-pub(crate) fn save_state(path: &Path, state: &DurableState) -> Result<()> {
+pub(super) fn save_state(path: &Path, state: &DurableState) -> Result<()> {
     atomic_json(path, &serde_json::to_value(state)?)
 }
 
@@ -55,7 +55,7 @@ pub(crate) fn priority_is_ready(value: f64) -> bool {
     value.is_finite() && (value - REQUIRED_PRIORITY).abs() < 1e-9
 }
 
-pub(crate) fn parse_trainer_job(value: &Value) -> Option<Result<TrainerJob>> {
+pub(super) fn parse_trainer_job(value: &Value) -> Option<Result<TrainerJob>> {
     let id = value.get("id").and_then(Value::as_str)?;
     if !id.starts_with("jope-selfplay-train-") && !id.starts_with("jope-testonly-train-") {
         return None;
@@ -89,7 +89,7 @@ pub(crate) fn parse_trainer_job(value: &Value) -> Option<Result<TrainerJob>> {
     })())
 }
 
-pub(crate) fn active_trainers(trainers: &[TrainerJob]) -> Result<Vec<&TrainerJob>> {
+pub(super) fn active_trainers(trainers: &[TrainerJob]) -> Result<Vec<&TrainerJob>> {
     let active = trainers
         .iter()
         .filter(|job| LIVE_STATES.contains(&job.state.as_str()))
@@ -121,7 +121,7 @@ pub(crate) fn parse_trainer_id(id: &str) -> Option<(u64, u64)> {
     Some((watermark, sequence))
 }
 
-pub(crate) fn validate_active_trainer(job: &TrainerJob) -> Result<()> {
+pub(super) fn validate_active_trainer(job: &TrainerJob) -> Result<()> {
     ensure!(
         matches!(job.project.as_str(), PROJECT | "jope-testonly"),
         "active trainer {} has unexpected project {}",
