@@ -3,6 +3,7 @@ mod equal_attempt;
 mod seed_validation;
 
 use super::*;
+use serde_json::json;
 
 fn pin(label: &str) -> String {
     jope_pipeline::sha256_hex(label.as_bytes())
