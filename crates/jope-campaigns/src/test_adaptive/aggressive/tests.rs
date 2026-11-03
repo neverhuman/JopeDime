@@ -1,3 +1,4 @@
+use super::population::seed::{derive_corrected_generation_zero, expand_initial_population};
 use super::*;
 
 #[test]
