@@ -1,0 +1,17 @@
+{
+  "boot_seed": 258150,
+  "fold_seed": 258140,
+  "holm_m": 2,
+  "outcomes_read": 0,
+  "primary_contrast": "ACTIVE_2PLUS2_HURDLE - TOP4_PICK",
+  "schema": "jope.h258.metrics/v1",
+  "secondary_contrast": "TOP4_PICK - GATED_025",
+  "seeds": [
+    258101,
+    258102,
+    258103
+  ],
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "wave_id": "h258-top4-reveal-baseline-20261103"
+}

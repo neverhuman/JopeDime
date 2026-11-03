@@ -1,0 +1,113 @@
+{
+  "arms_r3175_secondary": [
+    "R3175",
+    "GATED_025@r3175",
+    "ACTIVE_2PLUS2_HURDLE@r3175",
+    "TOP4_PICK@r3175",
+    "TOP2_RAND2_PICK@r3175",
+    "TOP4_PICK_UNGATED@r3175",
+    "ACTIVE_2PLUS2_PICK@r3175"
+  ],
+  "arms_r882": [
+    "R882",
+    "GATED_025",
+    "ACTIVE_2PLUS2_HURDLE",
+    "TOP4_PICK",
+    "TOP2_RAND2_PICK",
+    "TOP4_PICK_UNGATED",
+    "ACTIVE_2PLUS2_PICK"
+  ],
+  "boot_draws": 10000,
+  "boot_seed": 258150,
+  "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "fold_seed": 258140,
+  "gate_threshold_top_zgap": 0.25,
+  "holm_m": 2,
+  "owner": "rd_argon",
+  "primary_contrast": "ACTIVE_2PLUS2_HURDLE - TOP4_PICK",
+  "r882_native91_reference": 1.1377941898164525,
+  "reveal_budget_on_gated_contexts": 4,
+  "reveal_budget_on_ungated_contexts": 0,
+  "schema": "jope.h258.manifest/v1",
+  "secondary_contrast": "TOP4_PICK - GATED_025",
+  "seeds": [
+    258101,
+    258102,
+    258103
+  ],
+  "slot": "slot-7 (xbabe2 cores 57-60, nice 19, <=4 threads, RSS<=4GiB, 0 GPU)",
+  "snapshot_inputs": {
+    "inputs/promotions.jsonl": {
+      "bytes": 12481124,
+      "sha256": "c9afe08ed4d76f59aa807102423b502b57f8c6bddcfedb6a3ae89f8b85821550",
+      "source": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/promotions.jsonl"
+    },
+    "inputs/r3175-secondary-costs.npz": {
+      "bytes": 484045,
+      "sha256": "dd50b71d4fe74b0928951bdd80a07bf4335999219b124ad3d189c014bc988424",
+      "source": "/home/ubuntu/jope-data/h226/smoke-20261102/regression-r3175/r882-secondary-costs.npz"
+    },
+    "inputs/r3175-train-costs.npz": {
+      "bytes": 6427757,
+      "sha256": "f99bc7a05a0830a9b75610f04819a6f08716953d610886537825b2045a752cfa",
+      "source": "/home/ubuntu/jope-data/h226/smoke-20261102/train-r3175/r882-train-costs.npz"
+    },
+    "inputs/r3175/checkpoint-load.json": {
+      "bytes": 131,
+      "sha256": "74f6002c208c315fdf80a16980aeb0df89e93ccef7ada7e7d9a8aa590c47a349",
+      "source": "/home/ubuntu/jope-data/h226/smoke-20261102/regression-r3175/checkpoint-load.json"
+    },
+    "inputs/r3175/dope-secondary.json": {
+      "bytes": 236,
+      "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+      "source": "/home/ubuntu/jope-data/h226/smoke-20261102/regression-r3175/dope-secondary.json"
+    },
+    "inputs/r3175/dope-train.json": {
+      "bytes": 236,
+      "sha256": "fb7ec681db921774c3c5ac4f7183690ac46e8f6f2db3dd71d60ffc44893975b2",
+      "source": "/home/ubuntu/jope-data/h226/smoke-20261102/train-r3175/dope-train.json"
+    },
+    "inputs/r3175/round-3175.json": {
+      "bytes": 194665,
+      "sha256": "7565576d267f83400fee14e369e461d0a177fee097329b41c093420ceb0b6bbc",
+      "source": "/home/ubuntu/jope-data/flywheel-redteam-dsc08-t1410/checkpoints/round-3175.json"
+    },
+    "inputs/r3175/round-3175.pt": {
+      "bytes": 7493874,
+      "sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+      "source": "/home/ubuntu/jope-data/h226/ckpt/round-3175.pt"
+    },
+    "inputs/r882-secondary-costs.npz": {
+      "bytes": 484115,
+      "sha256": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+      "source": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882-secondary-costs.npz"
+    },
+    "inputs/r882-train-costs.npz": {
+      "bytes": 6427826,
+      "sha256": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+      "source": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882-train-costs.npz"
+    },
+    "inputs/r882/best_dev_checkpoint.json": {
+      "bytes": 38703,
+      "sha256": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+      "source": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882/best_dev_checkpoint.json"
+    },
+    "inputs/r882/round-882.pt": {
+      "bytes": 7493476,
+      "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+      "source": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/inputs/r882/round-882.pt"
+    },
+    "snapshot/common_h252.py": {
+      "bytes": 19432,
+      "sha256": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+      "source": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/snapshot/common_h252.py"
+    },
+    "snapshot/stage1_hurdle_sos_critic.py": {
+      "bytes": 27649,
+      "sha256": "fc0dd0e2fa543f0540d677609989c1785ef33b07f6cf7e54f4f8bedbd0e5e797",
+      "source": "/home/ubuntu/jope_plan/evidence/H254/argon-t1305/snapshot/stage1_hurdle_sos_critic.py"
+    }
+  },
+  "study_path": "research/flywheel_selfplay/h258_top4_reveal_baseline",
+  "wave_id": "h258-top4-reveal-baseline-20261103"
+}
