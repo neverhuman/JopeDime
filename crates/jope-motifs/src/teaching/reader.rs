@@ -1,5 +1,6 @@
 use super::*;
 
+/// Read-only adapter that loads qualified training records from a state source.
 pub struct StateTeaching<'a> {
     state: &'a dyn EligibleState,
 }
