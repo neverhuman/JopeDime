@@ -6852,6 +6852,16 @@
       "lanes": [],
       "scope": "H237 data-free controls: identical lr/betas/decoupled wd for every arm (schedules.json), optimizer classes (AdamW CONTROL, inline AdaBelief ABEL with eps 1e-16, torch RAdam with decoupled wd), AdaBelief equal to the Zhuang et al. 2020 reference update over 30 steps with None-gradient skipping, larger-than-Adam steps on consistent gradients, every arm moves parameters with the inherited CTRL loss, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor per amendment A1 (hard: MemAvailable 12 GiB, RSS 4 GiB, free 300 GB, 4 threads, 06:30Z; pause: load5 108/100 and MemAvailable 20/22 GiB hysteresis), launch binding, research-namespace release"
     },
+    "python:research/flywheel_selfplay/h241_expo/test_h241.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H241 data-free controls: frozen arms/alphas/directions/fixed grid points, alpha=0 bit-exact r882, extrapolation formula in float64 and L2 = alpha*||r882 - r_prev||, refusal of negative alpha/mismatched/nonfinite tensors, non-adapter identity check, strict alpha selector (ties and noise keep r882, smallest tied alpha), fresh per-seed family folds and FIT/ASSESS disjointness, fold manifest, zero-gain never advances and the four-gate advance rule (+0.002 margin, LCB95, Holm m=2, >=2/3 seeds), harm families and plateau gap, fixed-point readout, Holm, launch binding, H239 A1 memory guard (pause <20, resume >=25 sustained 30s, hard <12 sustained 30s or <6), load pause/admission and the 07:00Z compute stop, manifest pins of r882/r782/r859."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"

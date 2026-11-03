@@ -457,6 +457,10 @@
       "reason": "Owner-requested H237 data-free controls for the AdaBelief/RAdam vs AdamW r882 adapter continuation (optimizer classes and settings, AdaBelief reference update and belief property, per-seed folds, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor hard limits and load/memory pause hysteresis).",
       "role": "research"
     },
+    "python:research/flywheel_selfplay/h241_expo/test_h241.py": {
+      "reason": "Owner-requested H241 data-free controls for zero-update adapter extrapolation along the accepted trajectory (alpha=0 bit-exactness, extrapolation formula and distance, strict alpha selector, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, harm/plateau readouts, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
     "python:benchmarks/test_prepare.py": {
       "role": "regression",
       "subsystems": [

@@ -4408,6 +4408,38 @@
         "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU (amendment A1), taskset cores 48-51, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
       }
     },
+    "python:research/flywheel_selfplay/h241_expo/analysis.py": {
+      "bytes": 8359,
+      "sha256": "29ce76010c7aeef153934592300709a3ff77b2aef4e28dd0199a8fdf625f19f7",
+      "classification": {
+        "role": "research",
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h241_expo/expo.py": {
+      "bytes": 2636,
+      "sha256": "bfa2671e8db01af79e03d6a3e8d35e06baa160440cf230962295d7d68942cd27",
+      "classification": {
+        "role": "research",
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h241_expo/monitor.py": {
+      "bytes": 8541,
+      "sha256": "b58e86efe3f05bfc2db00c0ae531cc3506e00c60d145379ff961380a972e12a9",
+      "classification": {
+        "role": "research",
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h241_expo/runner.py": {
+      "bytes": 26791,
+      "sha256": "b0381b21bc2c34759896a084b67b19a5808bf7691cf72311b36a1dcb4fce3127",
+      "classification": {
+        "role": "research",
+        "reason": "H241 preregistered CPU-only diagnostic: zero-update ExPO-style adapter extrapolation along the accepted flywheel trajectory, theta(alpha) = r882 + alpha*(r882 - r_prev), r_prev r782 (primary) / r859 (secondary), alpha in {0.25, 0.5, 1.0} plus CONTROL alpha=0 (r882 exact), adapter tensors only (47/29,211), DOPE c51a56d0 frozen; alpha selected per (seed, outer) cell on DL-Train FIT folds (fresh folds 241141-241143) with the strict H237 selector and locked before one DL-Val91 scoring; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 over 2 directions and >= 2/3 seeds positive; merged H237 engine, H239 A1 memory guard on xbabe2 CPU 44-47."
+      }
+    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {
