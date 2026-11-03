@@ -1,4 +1,5 @@
 use super::*;
+use super::{member_models::StagingReceipt, worker_models::GenerationCheckpoint};
 
 pub(crate) fn cache_path(root: &Path, semantic_sha256: &str) -> PathBuf {
     root.join("objects")
