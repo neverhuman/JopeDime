@@ -10,17 +10,24 @@ fn medium_real_qlt05_regression_beats_ridge_cv() {
     let store = Arc::new(Store::open(directory.path().join("quality")).unwrap());
     let mut d = Discovery::open(store, p.clone()).unwrap();
     let ridge = NativeSpace.canonical("(pipe X (ridge))").unwrap();
-    let request = d
-        .request(
-            999,
-            0,
-            1,
-            &Candidate {
-                algorithm_id: "alg_9999".into(),
-                dsl: ridge,
-            },
-        )
-        .unwrap();
+    d.attempt += 1;
+    let request = Request {
+        attempt: Attempt {
+            run: p.run_id.clone(),
+            round: 999,
+            slot: 1 << 16,
+            attempt: (u64::from(d.checkpoint.epoch) << 32) | u64::from(d.attempt),
+        },
+        matrix_path: p.matrix_path.clone(),
+        fold_spec: p.fold_spec(1).unwrap(),
+        dsl: ridge,
+        objective: json!(p.objective),
+        seed: evaluation_seed(p.seed, 999, 0, 1),
+        limits: worker::Limits {
+            wall_ms: p.evaluation_wall_ms,
+            rss_bytes: p.evaluation_rss_bytes,
+        },
+    };
     let baseline = workers.evaluate(&request);
     assert_eq!(baseline.failure, None);
     finish(&mut d, &NativeSpace, &workers, 8);
