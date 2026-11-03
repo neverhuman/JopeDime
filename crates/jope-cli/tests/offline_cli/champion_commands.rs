@@ -9,8 +9,10 @@ fn champions_pull_and_push_fail_closed() {
         assert_eq!(report["ok"], false);
         assert_eq!(report["schema"], "jope.champions.v1");
         let diagnostic = report.to_string();
-        assert!(diagnostic
-            .contains("live S3 champion access is unavailable in this command; use --local"));
+        assert!(
+            diagnostic
+                .contains("live S3 champion access is unavailable in this command; use --local")
+        );
         assert!(!diagnostic.contains("no AWS credentials"));
     }
 }
