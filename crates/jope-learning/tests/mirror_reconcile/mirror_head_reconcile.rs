@@ -60,7 +60,7 @@ pub(super) fn candidate(value: f64, ts: u64) -> Candidate {
     }
 }
 
-fn pointer_key() -> PointerKey {
+pub(super) fn pointer_key() -> PointerKey {
     PointerKey::of(&candidate(1.0, 1).record)
 }
 
