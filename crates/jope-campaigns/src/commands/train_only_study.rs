@@ -176,9 +176,7 @@ mod scoring;
 mod splits;
 mod validation;
 use eligibility::build_transfer_rankings;
-use eligibility::{
-    build_eligibility, copy_context_slices, generation_zero, load_dl_proposals,
-};
+use eligibility::{build_eligibility, copy_context_slices, generation_zero, load_dl_proposals};
 use evaluation::evaluate_member_split;
 #[cfg(test)]
 pub(super) use evaluation::slice_data;
