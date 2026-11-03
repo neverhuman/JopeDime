@@ -14,13 +14,7 @@ use super::{composer::Composer, sanitize_user_string, ColorLevel, Theme, ThemeMo
 
 const MAX_LINES: usize = 2000;
 const MAX_BYTES: usize = 1024 * 1024;
-const LOGO: [&str; 5] = [
-    "       __      ___      ____   _   __",
-    "      / /     /   |    /  _/  / | / /",
-    " __  / /     / /| |    / /   /  |/ / ",
-    "/ /_/ /     / ___ |  _/ /   / /|  /  ",
-    "\\____/     /_/  |_| /___/  /_/ |_/   ",
-];
+const TAGLINE: &str = "Your data. Your models. Your next discovery.";
 
 #[derive(Default)]
 pub struct Screen {
@@ -34,6 +28,7 @@ pub struct Screen {
     top: Option<usize>,
     unread: usize,
     page_height: usize,
+    started: Option<std::time::Instant>,
 }
 
 impl Screen {
@@ -69,6 +64,20 @@ impl Screen {
                 .collect();
             self.dirty = false;
         }
+    }
+
+    /// The landing shows until the first transcript line or the runs panel.
+    pub fn is_landing(&self) -> bool {
+        self.browser.is_none() && self.lines.is_empty()
+    }
+
+    /// Whether the landing logo needs frequent redraws.
+    pub fn animating(&self) -> bool {
+        self.is_landing()
+            && super::splash::animated()
+            && self
+                .started
+                .is_none_or(|started| super::splash::running(started.elapsed()))
     }
 
     pub fn transcript(&self) -> Vec<String> {
@@ -163,7 +172,15 @@ impl Screen {
         if let Some(browser) = &mut self.browser {
             browser.draw(frame, body, accent);
         } else if self.lines.is_empty() {
-            landing(frame, body, accent, muted);
+            let started = *self.started.get_or_insert_with(std::time::Instant::now);
+            let elapsed = if super::splash::animated() {
+                started.elapsed()
+            } else {
+                // Reduced motion uses the finished blue logo.
+                super::splash::still()
+            };
+            let palette = super::splash::Palette::new(theme.color_level(), theme.mode());
+            landing(frame, body, elapsed, &palette, muted);
         } else {
             let max = self.wrapped.len().saturating_sub(self.page_height);
             let start = self.top.map(|top| top.min(max)).unwrap_or(max);
@@ -181,20 +198,36 @@ impl Screen {
                 body,
             );
         }
-        frame.render_widget(
-            Paragraph::new(sanitize_user_string(status)).style(accent),
-            rows[2],
-        );
-        frame.render_widget(
-            Paragraph::new(sanitize_user_string(activity)).style(muted),
-            rows[3],
-        );
+        let landing_view = self.is_landing() && status == IDLE_STATUS;
+        if landing_view {
+            let connected = !self.cloud_label.is_empty();
+            frame.render_widget(
+                Paragraph::new(guidance(usize::from(rows[3].width), connected)).style(muted),
+                rows[3],
+            );
+        } else {
+            frame.render_widget(
+                Paragraph::new(sanitize_user_string(status)).style(accent),
+                rows[2],
+            );
+            frame.render_widget(
+                Paragraph::new(sanitize_user_string(activity)).style(muted),
+                rows[3],
+            );
+        }
         let block = Block::bordered().title(" Command ").border_style(accent);
         let input = block.inner(rows[4]);
         frame.render_widget(block, rows[4]);
         composer.draw(frame, input);
         let footer = if self.browser.is_some() {
             " Up/Down choose · Enter attach/open · o cloud · d download · r refresh · Esc/right back · Ctrl-C exit".into()
+        } else if landing_view {
+            // Instructions live in the guidance sentence; keep only account state here.
+            if self.cloud_label.is_empty() {
+                String::new()
+            } else {
+                format!(" {}", self.cloud_label)
+            }
         } else if self.top.is_some() {
             format!(
                 " {} new lines · PgUp/PgDn scroll · End follows live · Ctrl-C exits",
@@ -217,31 +250,48 @@ impl Screen {
     }
 }
 
-fn landing(frame: &mut Frame<'_>, area: Rect, accent: Style, muted: Style) {
-    let mut lines = Vec::new();
-    if area.width >= 38 && area.height >= 13 {
-        for (row, logo) in LOGO.iter().enumerate() {
-            let style = if row < 3 {
-                accent
-            } else {
-                accent.add_modifier(Modifier::BOLD)
-            };
-            lines.push(Line::styled(*logo, style));
-        }
-        lines.push(Line::raw(""));
+/// Status text shown before any run or message; the landing replaces it with guidance.
+pub const IDLE_STATUS: &str = "ready · no active run";
+
+/// All landing instructions as one sentence, shortened to fit narrow terminals.
+fn guidance(width: usize, connected: bool) -> String {
+    let login = if connected {
+        ""
+    } else {
+        ", /login to connect your VEOX account"
+    };
+    let full = format!(
+        " Type /open <file.csv> to start a run, press Left to browse your runs{login}, /help for every command, or Ctrl-C to exit."
+    );
+    if full.chars().count() <= width {
+        return full;
     }
-    lines.push(Line::styled(
-        "JAIN by VEOX",
-        accent.add_modifier(Modifier::BOLD),
-    ));
-    lines.push(Line::styled("Powered by JopeDime", muted));
+    let short = " Type /open <file.csv> to start, /help for commands, or Ctrl-C to exit.";
+    if short.chars().count() <= width {
+        short.into()
+    } else {
+        " /open <file.csv> · /help · Ctrl-C".into()
+    }
+}
+
+fn landing(
+    frame: &mut Frame<'_>,
+    area: Rect,
+    elapsed: std::time::Duration,
+    palette: &super::splash::Palette,
+    muted: Style,
+) {
+    let mut lines = match super::splash::fit(area.width, area.height) {
+        Some((columns, rows_per_px)) => {
+            super::splash::frame(elapsed, columns, rows_per_px, palette)
+        }
+        None => vec![Line::styled(
+            "J A I N",
+            Style::default().add_modifier(Modifier::BOLD),
+        )],
+    };
     lines.push(Line::raw(""));
-    lines.push(Line::raw("Your data. Your models. Your next discovery."));
-    lines.push(Line::raw(""));
-    lines.push(Line::styled(
-        "/help  Commands     /open <csv>  Start locally",
-        muted,
-    ));
+    lines.push(Line::styled(TAGLINE, muted));
     let height = (lines.len() as u16).min(area.height);
     let centered = Rect {
         y: area.y + area.height.saturating_sub(height) / 2,
@@ -293,7 +343,7 @@ mod tests {
             let mut composer = Composer::default();
             composer.set_text("my pending draft").unwrap();
             terminal
-                .draw(|frame| screen.draw(frame, &composer, "test", "ready", ""))
+                .draw(|frame| screen.draw(frame, &composer, "test", IDLE_STATUS, ""))
                 .unwrap();
             let buffer = terminal.backend().buffer();
             let row = |y| {
@@ -302,8 +352,11 @@ mod tests {
                     .collect::<String>()
             };
             let output = (0..height).map(row).collect::<Vec<_>>().join("\n");
-            assert!(output.contains("JAIN by VEOX"));
-            assert!(output.contains("Powered by JopeDime"));
+            if width >= 60 {
+                assert!(output.contains(TAGLINE));
+            }
+            assert!(!output.contains("Powered by JopeDime"));
+            assert!(output.contains("/open <file.csv>"));
             assert!(row(height - 3).contains("my pending draft"));
         }
     }

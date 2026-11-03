@@ -1023,7 +1023,7 @@ mod tests {
                 if line.starts_with('✓') {
                     line.replacen('✓', "\x1b[32m✓\x1b[0m", 1)
                 } else if line.starts_with('⚠') {
-                    line.replacen('⚠', "\x1b[33m⚠\x1b[0m", 1)
+                    line.replacen('⚠', "\x1b[34m⚠\x1b[0m", 1)
                 } else if line.starts_with('·') {
                     line.replacen('·', "\x1b[90m·\x1b[0m", 1)
                 } else {
