@@ -13,5 +13,5 @@ cargo test --locked -p feat-math --features go-parity-tests --test go_golden -- 
 cargo test --locked -p feat-math --lib advanced_v3::emit -- --nocapture --test-threads=1 2>&1 | tee "$out/fitted.log"
 cargo test --locked -p feat-math --test artifact_target_binding -- --nocapture 2>&1 | tee "$out/bindings.log"
 cargo test --locked -p jope-pipeline --test artifact_target_binding -- --nocapture 2>&1 | tee "$out/pipeline.log"
-cargo test --locked -p jope-cli --lib kernel::artifact_v3_tests -- --nocapture 2>&1 | tee "$out/cli.log"
+cargo test --locked -p jope-cli --lib kernel::numeric_emit::artifact_v3_tests -- --nocapture 2>&1 | tee "$out/cli.log"
 python3 deploy/ci/go/verify.py
