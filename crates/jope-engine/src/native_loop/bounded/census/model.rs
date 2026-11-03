@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
 use super::*;
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RuntimeIdentity {
     pub runtime_sha256: String,
     pub compiler_sha256: String,
