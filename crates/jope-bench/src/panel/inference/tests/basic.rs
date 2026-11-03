@@ -145,7 +145,7 @@ fn public_files_are_allowlisted_and_never_contain_private_recipe_or_envelope() {
 
 #[test]
 fn generated_winners_preserve_raw_boundary_and_private_provenance_on_export() {
-    use super::super::synthesized::{fit_synthesized, SynthesizedFitRequest};
+    use super::super::super::synthesized::{fit_synthesized, SynthesizedFitRequest};
     use jope_pipeline::synthesized_recipe::SynthesizedRecipe;
     let scratch = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../target/fitted-inference-tests");
