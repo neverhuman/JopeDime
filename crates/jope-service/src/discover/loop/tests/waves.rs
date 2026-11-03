@@ -248,8 +248,6 @@ fn numerical_artifact_refit_failure_fails_only_the_candidate() {
 fn ultra_evaluates_both_cv_repeats_without_treating_repeated_validation_as_leakage() {
     let directory = tempfile::tempdir().unwrap();
     let p = plan(directory.path(), 30, Effort::Ultra, 9);
-    let store = Arc::new(Store::open(directory.path().join("store")).unwrap());
-    let mut d = Discovery::open(store, p.clone()).unwrap();
     let candidate = Candidate {
         algorithm_id: "alg_0000".into(),
         dsl: NativeSpace.canonical("(pipe X (ridge))").unwrap(),
