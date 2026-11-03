@@ -1,0 +1,50 @@
+{
+  "dataset_hash": "ca8b2f30cf07dd87",
+  "genomes": [
+    {
+      "genome": "(pipe X (winsor_moments append=true q=0.02) (sigmoid append=false) (robust_scale) (robust_scale) (standardize) (hinge knots=6) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "program_sha256": "d6117c7343e6024f4492bd70ea6e3333e53676e855cf3411177af20aa76ee881"
+    },
+    {
+      "genome": "(pipe X (bin_onehot bins=4) (robust_scale append=true) (ridge))",
+      "program_sha256": "86cce6c4c6cbbde491e0d70237d35c899719f1bd87a6be5119f89ccfed8a9025"
+    },
+    {
+      "genome": "(pipe X (target_bin_encode append=true bins=8 prior=10) (gbm depth=4 lr=0.05 rounds=240))",
+      "program_sha256": "be8fac9211f21f13b4fb5d2850efb62cd16cf33d538c046862c4f1b421185af5"
+    },
+    {
+      "genome": "(pipe X (bin_onehot bins=4) (target_bin_encode append=true bins=8) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "program_sha256": "af923e254ee53b149245d9b8e73afa452c685db0400221f42c18879151c77b6a"
+    },
+    {
+      "genome": "(pipe X (bin_onehot bins=4) (target_bin_encode bins=8) (elasticnet alpha=0.01 l1_ratio=0.5))",
+      "program_sha256": "602e7ba3714f78303fa80cbb2be93da92c7e17a506141e63ea260680b65dd443"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=8) (sigmoid append=false) (sigmoid) (quantile_bins append=true bins=16) (robust_scale) (elasticnet alpha=0.01 l1_ratio=0.2))",
+      "program_sha256": "47f1d93de41b0e233ef0fc9cf9741cb9c04456ba338de6530715e1d47b29e4a0"
+    },
+    {
+      "genome": "(pipe X (cheb append=true degree=2) (rank) (norm_features append=false) (ensemble))",
+      "program_sha256": "191eb808f58d878c3222326d0155343004cb0ac0b0866adcce2d92d3ffddc975"
+    },
+    {
+      "genome": "(pipe X (sigmoid append=true) (hinge knots=6) (bin_onehot bins=4) (robust_scale append=true) (histgbm depth=4 lr=0.15 rounds=180))",
+      "program_sha256": "a1cb988805b024101af1a4989444f0e337cb2a11c086921ec484e593618afd7c"
+    },
+    {
+      "genome": "(pipe X (blom append=false) (ensemble_ridge_gbm))",
+      "program_sha256": "a0c7c907673dc5096b0d90e31c1d3cbc46a09da848e977480f5ca881c6128116"
+    },
+    {
+      "genome": "(pipe X (winsor_clip q=0.05) (sigmoid append=true) (winsor_clip append=true q=0.05) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "d95b62c13b382d7aec5702d36d3047aff61f62360227c9955089ff24f573299d"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (gpr m=400 steps=30))",
+      "program_sha256": "34f76d78ec5f496cc1e375772cb3f307e4311baf6859b70d3d5aacd96b16e490"
+    }
+  ],
+  "schema": "jope.pipeline-seeds/v1"
+}

@@ -1,0 +1,50 @@
+{
+  "dataset_hash": "6ce1759b1a18e332",
+  "genomes": [
+    {
+      "genome": "(pipe X (pair_prod append=true topk=4) (standardize append=true) (robust_scale append=true) (elasticnet alpha=0.0005 l1_ratio=0.5))",
+      "program_sha256": "477b76907488ad84a4e42195564beeb2e0ff13176e08d13387193280555d6fbd"
+    },
+    {
+      "genome": "(pipe X (gpr kernel=periodic+linear m=400 steps=30))",
+      "program_sha256": "4ad71796211089ec316bba9afd5040030be57b460dff76cba0a0ed9e102a1653"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=8) (stack))",
+      "program_sha256": "0743589115e4c86d28d95bf7fc47510b803885c8416dbf6939365697b2f33356"
+    },
+    {
+      "genome": "(pipe X (standardize) (poly_interact append=true) (poly_interact append=true) (standardize) (stack))",
+      "program_sha256": "3e42df0d5546b14b4e49872eadb109b4c2e7337d1484df2b4e974190b8e314a7"
+    },
+    {
+      "genome": "(pipe X (robust_scale) (rank append=true) (gpr kernel=periodic+linear m=400 steps=30))",
+      "program_sha256": "262d87f1626b183b2bac701f22fa16b65654da13fef3c58ff92a3d7a320cb9a8"
+    },
+    {
+      "genome": "(pipe X (oblique_hinge n=32 seed=19) (robust_scale append=true) (robust_scale) (gpr kernel=rbf+linear m=300 steps=40))",
+      "program_sha256": "e184260c381fae615603611400e33234c43fb88b2fb7a4e4c30ec1c69e4e323b"
+    },
+    {
+      "genome": "(pipe X (standardize) (norm_row) (norm_features append=false) (gpr kernel=periodic+linear m=400 steps=40))",
+      "program_sha256": "91a9fc41b963f55b8687c134c59f2ed788e1f7903c11f94b66689c088fc06fea"
+    },
+    {
+      "genome": "(pipe X (standardize) (standardize) (rand_proj k=64 seed=31) (standardize) (standardize) (robust_scale) (krr m=600))",
+      "program_sha256": "6ddb13e51360c39e9b2c12a423c29e730ebd3e25fb856cbe77a5955515e79abc"
+    },
+    {
+      "genome": "(pipe X (standardize) (pair_prod append=true topk=4) (robust_scale) (pair_prod append=true topk=4) (robust_scale append=true) (quantile_bins append=true bins=8) (gpr kernel=rbf+linear m=300 steps=40))",
+      "program_sha256": "53149dffcf40fca81072e9f67ea20862a499f80d0a7e92a5eb65ed8a50ea1fb0"
+    },
+    {
+      "genome": "(pipe X (rank append=true) (gpr kernel=rq m=300 steps=40))",
+      "program_sha256": "1579ba80e51a6685d0f0b33e922c0836b1bd9bd3de2907888c84248fdce339c3"
+    },
+    {
+      "genome": "(pipe X (standardize) (robust_scale) (gpr m=400 steps=40))",
+      "program_sha256": "5e18037a2383bb20c46fcd37293f4ad01c38c13ee86f48cbaff2df2fce2ea10a"
+    }
+  ],
+  "schema": "jope.pipeline-seeds/v1"
+}

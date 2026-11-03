@@ -1,0 +1,50 @@
+{
+  "dataset_hash": "2056a3aad9468d87",
+  "genomes": [
+    {
+      "genome": "(pipe X (sigmoid append=true) (hinge append=true knots=4) (bin_onehot append=true bins=12) (bin_onehot append=true bins=12) (histgbm2 bags=3 leaves=15 lr=0.08 rounds=500))",
+      "program_sha256": "bdd6ac8a32586963faeddb7c685c037940525f898feae94087245af2b42ceb18"
+    },
+    {
+      "genome": "(pipe X (sigmoid) (robust_scale append=true) (sigmoid append=true) (quantile_bins append=true bins=16) (robust_scale) (bin_onehot append=true bins=4) (histgbm depth=4 lr=0.15 rounds=180))",
+      "program_sha256": "619df17265d1173517dbf09c43c311455a9d598f1bc6dd6e6c63794ff574d414"
+    },
+    {
+      "genome": "(pipe X (robust_scale) (robust_scale append=true) (quantile_bins append=true bins=16) (bin_onehot append=true bins=4) (quantile_bins bins=32) (sigmoid) (histgbm depth=4 lr=0.15 rounds=180))",
+      "program_sha256": "1d5ed40e2b65b51bfdbd3e8c5e7eba22e993196d2bc7afc91d8f00949efee2be"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=16) (robust_scale) (quantile_bins bins=16) (robust_scale) (winsor_moments append=true q=0.02) (winsor_clip append=true q=0.05) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "ec8e6ae45cb78206051576251cff8edfc41f825965551d24a3e7dfcd3ee1df03"
+    },
+    {
+      "genome": "(pipe X (oblique_hinge append=true n=32 seed=19) (oblique_hinge append=true n=32 seed=19) (oblique_hinge append=true n=32 seed=19) (pair_prod append=true topk=12) (rand_proj append=true k=32 seed=31) (oblique_hinge append=true n=32 seed=19) (histgbm depth=4 lr=0.05 rounds=180))",
+      "program_sha256": "7165c611f67a79c8adf6f6b5bfa9e3198a8d6cbbb3c3926203f913924556d7e9"
+    },
+    {
+      "genome": "(pipe X (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "5c1c80088d85c084e2bd65462f928f5d4ad88e947c68dfab7773af2e722abda5"
+    },
+    {
+      "genome": "(pipe X (quantile_bins append=true bins=16) (robust_scale append=true) (quantile_bins append=true bins=8) (oblique_hinge n=32 seed=19) (blom append=true) (quantile_bins append=true bins=16) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "244d822918a3a8de77740832838c87bd0895ae6830abac366fb80f017cade046"
+    },
+    {
+      "genome": "(pipe X (quantile_bins bins=32) (sigmoid append=true) (robust_scale) (target_bin_encode append=true bins=16) (rank) (histgbm2 bags=3 leaves=15 lr=0.03 rounds=500))",
+      "program_sha256": "4f1037483d65c653a811099e211f61a31945a46a624619fa34486b7a41b82a71"
+    },
+    {
+      "genome": "(pipe X (winsor_clip append=true q=0.05) (histgbm2 bags=5 leaves=63 lr=0.03 rounds=500))",
+      "program_sha256": "2565a43ccf08ed77d4fd8300df4174bed39179e3f712be7ace8304dbd2008653"
+    },
+    {
+      "genome": "(pipe X (stack))",
+      "program_sha256": "fcb8436b3be696a848b1c4bf48ad09dcba6575e483413da9637c03e4378d1a9a"
+    },
+    {
+      "genome": "(pipe X (bin_onehot append=true bins=4) (robust_scale append=true) (quantile_bins append=true bins=16) (quantile_bins append=true bins=16) (histgbm depth=4 lr=0.15 rounds=180))",
+      "program_sha256": "cca07348779d56b693cc4aea8b248f011d84e6f06e650f2f75bbd89e3defc79e"
+    }
+  ],
+  "schema": "jope.pipeline-seeds/v1"
+}
