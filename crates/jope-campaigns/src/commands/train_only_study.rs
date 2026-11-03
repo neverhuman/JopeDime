@@ -176,9 +176,9 @@ mod scoring;
 mod splits;
 mod validation;
 pub(super) use eligibility::{
-    build_eligibility, build_transfer_rankings, copy_context_slices, generation_zero,
-    load_dl_proposals,
+    build_eligibility, copy_context_slices, generation_zero, load_dl_proposals,
 };
+use eligibility::build_transfer_rankings;
 #[cfg(test)]
 pub(super) use eligibility::proposal_score;
 use evaluation::StudyEvalContext;
