@@ -344,7 +344,7 @@ pub(crate) fn random_case(
         }
         let rel = format!("decisions/{cid}.json");
         let mut reference = w.put(&rel, &decision);
-        super::fixture::sign(&signer, &mut reference);
+        fixture::sign(&signer, &mut reference);
         match fault {
             "bad-signature" => reference["signature"] = json!("0".repeat(64)),
             "upper-signature" => {
