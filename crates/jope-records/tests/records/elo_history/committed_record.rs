@@ -184,8 +184,7 @@ fn without_a_zstd_decoder_golden45_is_not_replayed_and_require_all_fails() {
         summary.require_all(),
         r"^not replayed here: \['H-sotarena-golden45-benchmark-valid', 'H-sotarena-golden45-published'\]$",
     );
-    copy
-        .verify()
+    copy.verify()
         .expect("fixture verifies with the built-in decoder")
         .require_all()
         .expect("the retained histories replay with the built-in decoder");
