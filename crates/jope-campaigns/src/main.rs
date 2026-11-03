@@ -130,7 +130,7 @@ fn main() -> Result<()> {
     main_app::main()
 }
 
-fn command_starts_campaign(command: &Command) -> bool {
+fn command_starts_campaign(command: &CampaignCommand) -> bool {
     matches!(
         command,
         CampaignCommand::SelectPanel
