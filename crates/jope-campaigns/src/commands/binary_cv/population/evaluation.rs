@@ -1,3 +1,4 @@
+use super::super::fold_cache::binary_cv_on_slices;
 use super::*;
 
 pub(crate) fn fit_test_adaptive_binary(
