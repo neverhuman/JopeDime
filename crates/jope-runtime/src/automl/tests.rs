@@ -1,50 +1,45 @@
 use super::*;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn folds_are_stratified_and_deterministic() {
-        let targets = [0.0, 1.0, 0.0, 0.0, 1.0, 2.0, 2.0, 1.0];
-        let a = folds(TaskKind::Multiclass, &targets, 2);
-        assert_eq!(a, folds(TaskKind::Multiclass, &targets, 2));
-        for class in [0.0, 1.0, 2.0] {
-            let per_fold: Vec<usize> = (0..2)
-                .map(|f| {
-                    targets
-                        .iter()
-                        .zip(&a)
-                        .filter(|(t, k)| **t == class && **k == f)
-                        .count()
-                })
-                .collect();
-            assert!(per_fold.iter().all(|c| *c >= 1), "{class}: {per_fold:?}");
-        }
-        assert_eq!(folds(TaskKind::Regression, &[1.0; 5], 2), [0, 1, 0, 1, 0]);
+#[test]
+fn folds_are_stratified_and_deterministic() {
+    let targets = [0.0, 1.0, 0.0, 0.0, 1.0, 2.0, 2.0, 1.0];
+    let a = folds(TaskKind::Multiclass, &targets, 2);
+    assert_eq!(a, folds(TaskKind::Multiclass, &targets, 2));
+    for class in [0.0, 1.0, 2.0] {
+        let per_fold: Vec<usize> = (0..2)
+            .map(|f| {
+                targets
+                    .iter()
+                    .zip(&a)
+                    .filter(|(t, k)| **t == class && **k == f)
+                    .count()
+            })
+            .collect();
+        assert!(per_fold.iter().all(|c| *c >= 1), "{class}: {per_fold:?}");
     }
+    assert_eq!(folds(TaskKind::Regression, &[1.0; 5], 2), [0, 1, 0, 1, 0]);
+}
 
-    #[test]
-    fn losses_match_the_panel_metrics() {
-        let rmse = loss(
-            TaskKind::Regression,
-            &[1.0, 3.0],
-            &Predictions::Values(vec![2.0, 2.0]),
-        )
-        .unwrap();
-        assert!((rmse - 1.0).abs() < 1e-12);
-        let p = Predictions::Probabilities {
-            classes: vec!["a".into(), "b".into()],
-            values: vec![vec![0.9, 0.1], vec![0.2, 0.8]],
-        };
-        assert_eq!(loss(TaskKind::Binary, &[0.0, 1.0], &p).unwrap(), 0.0);
-        let p = Predictions::Probabilities {
-            classes: vec!["a".into(), "b".into(), "c".into()],
-            values: vec![vec![1.0, 0.0, 0.0], vec![0.0, 0.0, 1.0]],
-        };
-        let ll = loss(TaskKind::Multiclass, &[0.0, 1.0], &p).unwrap();
-        assert!((ll - (-(1e-15f64).ln() / 2.0)).abs() < 1e-9);
-    }
+#[test]
+fn losses_match_the_panel_metrics() {
+    let rmse = loss(
+        TaskKind::Regression,
+        &[1.0, 3.0],
+        &Predictions::Values(vec![2.0, 2.0]),
+    )
+    .unwrap();
+    assert!((rmse - 1.0).abs() < 1e-12);
+    let p = Predictions::Probabilities {
+        classes: vec!["a".into(), "b".into()],
+        values: vec![vec![0.9, 0.1], vec![0.2, 0.8]],
+    };
+    assert_eq!(loss(TaskKind::Binary, &[0.0, 1.0], &p).unwrap(), 0.0);
+    let p = Predictions::Probabilities {
+        classes: vec!["a".into(), "b".into(), "c".into()],
+        values: vec![vec![1.0, 0.0, 0.0], vec![0.0, 0.0, 1.0]],
+    };
+    let ll = loss(TaskKind::Multiclass, &[0.0, 1.0], &p).unwrap();
+    assert!((ll - (-(1e-15f64).ln() / 2.0)).abs() < 1e-9);
 }
 
 #[cfg(test)]
