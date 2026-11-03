@@ -155,13 +155,26 @@ pub struct Admitted {
 /// genome that does not parse as a pipeline fails the whole admission rather than being
 /// silently skipped.
 pub fn admit(offered: &[(String, &'static str)]) -> Result<Admitted> {
+    admit_up_to(offered, search::ELITES)
+}
+
+/// The most seeds `--seed-limit` may admit. Seeds join generation 0 on top of its random draws,
+/// so a larger limit lets more proposals (for example a neural policy's) compete there.
+pub const MAX_SEED_LIMIT: usize = 32;
+
+/// [`admit`] with an explicit cap in `1..=MAX_SEED_LIMIT` instead of [`search::ELITES`].
+pub fn admit_up_to(offered: &[(String, &'static str)], limit: usize) -> Result<Admitted> {
+    ensure!(
+        (1..=MAX_SEED_LIMIT).contains(&limit),
+        "the seed limit must be 1..={MAX_SEED_LIMIT}, got {limit}"
+    );
     let mut seeds: Vec<Seed> = Vec::new();
     for (genome, source) in offered {
         let canonical = canonical_pipeline(genome)?;
         if canonical == search::BOOTSTRAP_GENOME || seeds.iter().any(|s| s.genome == canonical) {
             continue;
         }
-        if seeds.len() == search::ELITES {
+        if seeds.len() == limit {
             break;
         }
         seeds.push(Seed {

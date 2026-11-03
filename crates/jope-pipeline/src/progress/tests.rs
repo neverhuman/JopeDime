@@ -46,6 +46,7 @@ fn observation(rmse: Option<f64>) -> Observation {
         },
         failure: rmse.is_none().then(|| "boom".into()),
         island: None,
+        resources: None,
     }
 }
 

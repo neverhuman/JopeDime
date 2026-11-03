@@ -186,6 +186,7 @@ impl Measurement {
                 seconds: r.seconds,
                 failure: r.failure.clone(),
                 island: None,
+                resources: None,
             },
             faults,
             domain_fault_rate: self.domain_fault_rate,

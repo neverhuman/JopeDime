@@ -80,6 +80,9 @@ pub struct RunOptions {
     pub policy: Policy,
     /// A `jope.pipeline-seeds/v1` file whose genomes enter generation 0 after the bootstrap.
     pub seed_genomes: Option<PathBuf>,
+    /// How many offered seeds generation 0 admits (default [`search::ELITES`], at most
+    /// [`seeds::MAX_SEED_LIMIT`]). Admitted seeds join generation 0 on top of its random draws.
+    pub seed_limit: usize,
     /// A parent receipt: re-derived from its run's evidence, then its selected genome is seeded
     /// first and its sha256 recorded as this run's parent.
     pub incumbent: Option<PathBuf>,
@@ -121,6 +124,7 @@ impl RunOptions {
                 .expect("the default emit list parses"),
             policy: Policy::Auto,
             seed_genomes: None,
+            seed_limit: search::ELITES,
             incumbent: None,
             threads: 1,
             islands: 1,
@@ -184,6 +188,14 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
     }
     if let Some(objective) = &options.objective {
         check_objective(objective)?;
+        ensure!(
+            !objective.requires_measured_resources()
+                || (options.threads == 1 && options.islands <= 1),
+            "{} reads measured resources (seconds, latency, heap); they are per-candidate \
+             readings only while one candidate runs at a time. Re-run with --threads 1 and one \
+             island",
+            objective.name()
+        );
     }
     let workers = crate::parallel::admit(
         options.threads,
@@ -206,12 +218,24 @@ pub fn preflight(options: &RunOptions) -> Result<usize> {
     Ok(workers)
 }
 
-/// The objectives a program search can rank by: valid, scored from targets and predictions
-/// alone (the prepared cuts carry features only), and independent of row order (the cuts are
-/// the dataset's fold partition, not a chronological split).
+/// The objectives a program search can rank by: valid, scored from targets, predictions and the
+/// candidate's own resource readings (the prepared cuts carry features only, so no auxiliary
+/// column), and independent of row order (the cuts are the dataset's fold partition, not a
+/// chronological split).
 pub fn check_objective(objective: &jope_runtime::fitness::Fitness) -> Result<()> {
     objective.validate()?;
     jope_runtime::fitness::require_no_columns(objective, "a program search")?;
+    // Quantities this search cannot supply: cross-fold spread and input-width telemetry (one cut,
+    // one fixed feature table), training throughput (not measured here), and row-order readings
+    // (its cuts are an unordered fold partition). Refused by name, never scored as zero.
+    let refused = unsuppliable_terms(&serde_json::to_value(objective)?);
+    ensure!(
+        refused.is_empty(),
+        "{} reads {} that a program search cannot supply; rank by resource readings \
+         (`{{\"metric\":\"resource\",\"name\":…}}`) or use jopedime",
+        objective.name(),
+        refused.into_iter().collect::<Vec<_>>().join(", ")
+    );
     ensure!(
         !objective.requires_order(),
         "{} depends on row order; the search's cuts are an unordered fold partition. Use \
@@ -219,6 +243,38 @@ pub fn check_objective(objective: &jope_runtime::fitness::Fitness) -> Result<()>
         objective.name()
     );
     Ok(())
+}
+
+/// Metric and expression-leaf names of `spec` whose values the legacy program search cannot
+/// measure or that depend on row order.
+fn unsuppliable_terms(spec: &serde_json::Value) -> std::collections::BTreeSet<String> {
+    const UNSUPPLIABLE: [&str; 6] = [
+        "fold_std",
+        "feature_count",
+        "train_rows_per_second",
+        "prediction_turnover",
+        "row_index",
+        "row_fraction",
+    ];
+    let mut found = std::collections::BTreeSet::new();
+    let mut pending = vec![spec];
+    while let Some(value) = pending.pop() {
+        match value {
+            serde_json::Value::Object(map) => {
+                for key in ["metric", "op"] {
+                    if let Some(name) = map.get(key).and_then(serde_json::Value::as_str) {
+                        if UNSUPPLIABLE.contains(&name) {
+                            found.insert(name.to_owned());
+                        }
+                    }
+                }
+                pending.extend(map.values());
+            }
+            serde_json::Value::Array(items) => pending.extend(items),
+            _ => (),
+        }
+    }
+    found
 }
 
 /// A catalog row this regression-only path can fit, resolved and byte-verified, or the refusal.
@@ -276,7 +332,7 @@ pub(crate) fn resolve_seeding(options: &RunOptions) -> Result<(Vec<String>, rece
         );
         seeds_file_sha256 = Some(sha);
     }
-    let admitted = seeds::admit(&offered)?;
+    let admitted = seeds::admit_up_to(&offered, options.seed_limit)?;
     let limit = search::exploration_limit(options.budget, options.cuts);
     ensure!(
         admitted.seeds.len() < limit || admitted.seeds.is_empty(),

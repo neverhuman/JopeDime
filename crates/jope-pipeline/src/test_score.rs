@@ -288,11 +288,43 @@ fn score_observed(options: &ScoreOptions, observe: &dyn Fn(Stage)) -> Result<(Te
     let (train_x, train_y) = split_rows(&train);
     let (test_x, test_y) = split_rows(&test);
     let parsed = GenomeIr::parse(&receipt.search.selected_genome)?;
+    let recorded = receipt
+        .search
+        .objective
+        .as_ref()
+        .map(crate::receipt::Objective::fitness)
+        .transpose()?;
+    // An objective that reads resources is scored with readings of this refit and these test
+    // rows, measured the way the search measured its candidates.
+    let wanted = options
+        .objective
+        .as_ref()
+        .or(recorded.as_ref())
+        .map(jope_runtime::fitness::Fitness::resources)
+        .unwrap_or_default();
     // On the stack the search fitted this genome with, not whatever the caller's thread has.
-    let predictions = crate::parallel::on_evaluation_stack(|| {
+    let (predictions, resources) = crate::parallel::on_evaluation_stack(|| {
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            let model = feat_math::fit(&parsed, &train_x, &train_y)?;
-            anyhow::Ok(model.predict(&test_x)?)
+            if wanted.is_empty() {
+                let model = feat_math::fit(&parsed, &train_x, &train_y)?;
+                return anyhow::Ok((model.predict(&test_x)?, Default::default()));
+            }
+            let cut = crate::prepare::Cut {
+                index: 0,
+                train_x: train_x.clone(),
+                train_y: train_y.clone(),
+                hold_x: test_x.clone(),
+                hold_y: test_y.clone(),
+                hold_indices: (0..test_y.len()).collect(),
+            };
+            let measured = crate::resource_measure::fit_and_measure(
+                &parsed,
+                &cut,
+                &wanted,
+                options.clock,
+                options.clock.start(),
+            )?;
+            anyhow::Ok((measured.hold, measured.resources))
         }))
         .map_err(|_| anyhow::anyhow!("the fit panicked"))
     })???;
@@ -306,19 +338,19 @@ fn score_observed(options: &ScoreOptions, observe: &dyn Fn(Stage)) -> Result<(Te
     if !test_rmse.is_finite() || !test_r2.is_finite() {
         bail!("nonfinite test score: rmse {test_rmse}, r2 {test_r2}");
     }
-    let recorded = receipt
-        .search
-        .objective
-        .as_ref()
-        .map(crate::receipt::Objective::fitness)
-        .transpose()?;
     let objective = match options.objective.clone().or_else(|| recorded.clone()) {
         None => None,
         Some(fitness) => {
             jope_runtime::fitness::require_no_columns(&fitness, "a test score")?;
             let fitness_sha256 = fitness.identity()?;
             // Whatever the objective makes of the test rows, the look below is recorded.
-            let (test_value, test_loss, undefined) = match fitness.evaluate(&test_y, &predictions) {
+            let scored = fitness.evaluate_with_resources(
+                &test_y,
+                &predictions,
+                &Default::default(),
+                &resources,
+            );
+            let (test_value, test_loss, undefined) = match scored {
                 Ok(score) => (Some(score.value), Some(score.loss), None),
                 Err(error) => (None, None, Some(format!("{error:#}"))),
             };

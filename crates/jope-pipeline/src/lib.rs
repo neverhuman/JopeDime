@@ -57,6 +57,7 @@ pub mod prepared_data;
 pub mod progress;
 pub mod receipt;
 pub mod resource_ledger;
+mod resource_measure;
 pub mod run;
 pub mod search;
 pub mod search_cache;
