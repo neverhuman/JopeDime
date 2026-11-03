@@ -29,7 +29,7 @@ impl std::fmt::Display for RefitWorkerError {
 impl std::error::Error for RefitWorkerError {}
 
 #[derive(Debug)]
-pub(super) struct RefitIoError(std::io::Error);
+pub(super) struct RefitIoError(pub(super) std::io::Error);
 impl std::fmt::Display for RefitIoError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "private fit handoff: {}", self.0)
