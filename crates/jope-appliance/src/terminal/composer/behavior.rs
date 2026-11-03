@@ -177,11 +177,7 @@ impl Composer {
         let Some(search) = &mut self.search else {
             return;
         };
-        let entries = self
-            .history
-            .as_ref()
-            .map(|h| h.entries())
-            .unwrap_or(&[]);
+        let entries = self.history.as_ref().map(|h| h.entries()).unwrap_or(&[]);
         let limit = if older {
             search.found.unwrap_or(entries.len())
         } else {
