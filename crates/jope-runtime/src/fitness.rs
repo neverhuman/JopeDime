@@ -427,8 +427,8 @@ pub struct CatalogEntry {
 mod catalog;
 mod evaluate;
 mod math;
-use math::*;
 pub use evaluate::{require_no_columns, require_no_resources, ExecutionTelemetry};
+use math::*;
 
 #[cfg(test)]
 mod tests;
