@@ -117,6 +117,9 @@ fn refused(result: anyhow::Result<ReplayAdmission>, expected: &str) {
     );
 }
 
+#[path = "replay_admission/ancestry.rs"]
 mod ancestry;
+#[path = "replay_admission/revision.rs"]
 mod revision;
+#[path = "replay_admission/train.rs"]
 mod train;
