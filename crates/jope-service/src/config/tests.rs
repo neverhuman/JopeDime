@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 fn map(entries: &[(&str, &str)]) -> BTreeMap<String, String> {
     entries
         .iter()
