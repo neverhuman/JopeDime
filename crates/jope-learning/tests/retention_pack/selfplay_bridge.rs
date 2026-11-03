@@ -7,8 +7,9 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
     use jope_learning::pools::pool::{freeze, FreezeRule, Reference};
     use jope_learning::pools::selectors::Features;
     use jope_learning::retention::distilled::{
-        distill_selfplay_observations, distilled_rows_to_measurement_rows, score_direction,
-        ScoreDirection, SelfPlayDistillObservation, SelfPlayDistillSpec,
+        self as retention_distilled, distill_selfplay_observations,
+        distilled_rows_to_measurement_rows, score_direction, ScoreDirection,
+        SelfPlayDistillObservation, SelfPlayDistillSpec,
     };
 
     let scores = known();
@@ -106,8 +107,8 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
     }
 
     // Round-trip through gp_distilled/v1 Parquet.
-    let parquet_bytes = distilled::write(&all_distilled, &scores, &[]).unwrap();
-    let reloaded = distilled::read(&parquet_bytes, &scores).unwrap();
+    let parquet_bytes = retention_distilled::write(&all_distilled, &scores, &[]).unwrap();
+    let reloaded = retention_distilled::read(&parquet_bytes, &scores).unwrap();
     assert_eq!(reloaded.len(), all_distilled.len());
 
     // Convert into MeasurementRows and verify lower-is-better RMSE is negated into higher-is-better q.
@@ -245,9 +246,12 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
             }
         ]
     });
-    let (idx_rows, idx_keys, stats) =
-        distilled::distill_gp_results_index_with_stats(&fake_index, SplitRole::Train, &scores)
-            .unwrap();
+    let (idx_rows, idx_keys, stats) = retention_distilled::distill_gp_results_index_with_stats(
+        &fake_index,
+        SplitRole::Train,
+        &scores,
+    )
+    .unwrap();
     assert_eq!(stats.total_index_runs, 3);
     assert_eq!(stats.distilled_rows, 1);
     assert_eq!(stats.skipped_unscored_runs, 1);
@@ -255,7 +259,7 @@ fn selfplay_observations_distill_to_parquet_and_bridge_into_frozen_pools() {
     assert_eq!(stats.reconciled_s3_keys, 1);
     assert_eq!(idx_rows.len(), 1);
     assert_eq!(idx_keys.len(), 1);
-    let idx_parquet = distilled::write(&idx_rows, &scores, &[]).unwrap();
-    let idx_readback = distilled::read(&idx_parquet, &scores).unwrap();
-    distilled::reconcile(&idx_readback, &idx_keys).unwrap();
+    let idx_parquet = retention_distilled::write(&idx_rows, &scores, &[]).unwrap();
+    let idx_readback = retention_distilled::read(&idx_parquet, &scores).unwrap();
+    retention_distilled::reconcile(&idx_readback, &idx_keys).unwrap();
 }
