@@ -152,8 +152,8 @@ pub(super) fn validate_v2_request(plan: &Plan, spec: &V2FoldSpec) -> Result<()> 
 pub(in crate::research) fn evaluator_sha256() -> String {
     let mut hash = Sha256::new();
     hash.update(b"jope.research.r782-v2-evaluator/v1\0");
-    hash.update(include_bytes!("../worker/evaluate.rs"));
-    hash.update(include_bytes!("../run/surrogate.rs"));
+    hash.update(include_bytes!("../../worker/evaluate.rs"));
+    hash.update(include_bytes!("../../run/surrogate.rs"));
     hash.update(GATE_RULE.as_bytes());
     format!("{:x}", hash.finalize())
 }
@@ -162,7 +162,7 @@ pub(in crate::research) fn seed_protocol_sha256() -> String {
     let mut hash = Sha256::new();
     hash.update(b"jope.research.evaluation-seed/v1\0");
     hash.update(SEED_PROTOCOL);
-    hash.update(include_bytes!("../discover/loop.rs"));
+    hash.update(include_bytes!("../../discover/loop.rs"));
     format!("{:x}", hash.finalize())
 }
 
