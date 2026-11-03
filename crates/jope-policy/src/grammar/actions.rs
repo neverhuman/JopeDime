@@ -23,11 +23,11 @@ pub fn encode_actions(
         *vocab
             .engine_ids
             .get(engine)
-            .with_context(|| format!("{engine}"))?,
+            .with_context(|| engine.to_string())?,
         *vocab
             .task_ids
             .get(task)
-            .with_context(|| format!("{task}"))?,
+            .with_context(|| task.to_string())?,
     ];
     let mut stages = actions
         .get("transforms")
