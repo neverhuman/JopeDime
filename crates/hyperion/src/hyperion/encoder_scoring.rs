@@ -1,3 +1,4 @@
+use super::encoder_v7::column_major_block;
 use super::*;
 
 pub fn transform_scoring_matrix(
