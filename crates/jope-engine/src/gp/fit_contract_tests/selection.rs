@@ -1,5 +1,5 @@
 mod release;
-pub(crate) use release::*;
+pub(super) use release::*;
 
 use super::*;
 
