@@ -4,7 +4,7 @@
 % Historical reference specifications come from the supplied source notes.
 % Checkpoint acceptance and reference runtime receipts remain required.
 % Historical source notes are archived outside the paper tree.
-\section{EurekaZero: Learning Taste}\label{sec:method}
+\section{\texorpdfstring{\EZ{}}{EurekaZero}: Learning Taste}\label{sec:method}
 
 The reference design specifies training a writer and separate ranking map
 on search-scored lists, then deploying the frozen writer for one proposal.
@@ -113,7 +113,7 @@ groups of at least three with finite percentile targets
 a target concentrated on the best
 \citep{cao2007listnet}:
 \begin{equation}
-  \mathcal{L}_{\text{map}}(p)=-\sum_{w\in G_p}
+  \mathcal{L}_{\mathrm{map}}(p)=-\sum_{w\in G_p}
   \frac{e^{\rho_w/\tau}}{\sum_{u\in G_p}e^{\rho_u/\tau}}\,
   \log\frac{e^{\mapv(z_p,z_w)}}{\sum_{u\in G_p}e^{\mapv(z_p,z_u)}},
   \label{eq:mapLoss}
@@ -130,7 +130,7 @@ objective covers only programs that run.
 
 The program-only head controls for ranking without problem context
 (\cref{sub:results-ablation}). Ranking valid scored programs alone does not
-test the validity rate $q_{\text{run}}$ in \cref{sub:price-bill}.
+test the validity rate $q_{\mathrm{run}}$ in \cref{sub:price-bill}.
 
 \begin{keyidea}
 The reference game-day protocol omits the ranking map. Matched first
@@ -195,11 +195,11 @@ The writer term weights sampled programs from $G_p$ by referee rank;
 it joins the map and auxiliary terms in the combined objective
 (\cref{app:training}):
 \begin{align}
-  \mathcal{L}_{\text{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
+  \mathcal{L}_{\mathrm{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
   \label{eq:writerLoss}\\
-  \mathcal{L} &= \mathcal{L}_{\text{writer}} + 0.1\,\mathcal{L}_{\text{map}}
-  + 0.25\,\mathcal{L}_{\text{BT}} \nonumber\\
-  &\quad + 0.1\,\mathcal{L}_{\text{runtime}} + 0.05\,\mathcal{L}_{\text{prog}}.
+  \mathcal{L} &= \mathcal{L}_{\mathrm{writer}} + 0.1\,\mathcal{L}_{\mathrm{map}}
+  + 0.25\,\mathcal{L}_{\mathrm{BT}} \nonumber\\
+  &\quad + 0.1\,\mathcal{L}_{\mathrm{runtime}} + 0.05\,\mathcal{L}_{\mathrm{prog}}.
   \label{eq:totalLoss}
 \end{align}
 The writer loss in \cref{eq:writerLoss} is schematic: it displays the rank
@@ -207,11 +207,11 @@ weights. The native implementation also smooths grammar-legal targets,
 averages token losses within each program and normalizes by the sum of
 program weights (\cref{app:training}).
 
-Here $\mathcal{L}_{\text{BT}}$ is a Bradley--Terry loss on the same lists,
-$\mathcal{L}_{\text{runtime}}$ a Huber loss between $\ln(1+s)$ and
+Here $\mathcal{L}_{\mathrm{BT}}$ is a Bradley--Terry loss on the same lists,
+$\mathcal{L}_{\mathrm{runtime}}$ a Huber loss between $\ln(1+s)$ and
 $\ln(1+\operatorname{softplus}(h))$, where $s$ is nonnegative measured
 seconds and $h$ is the raw runtime-head output, and
-$\mathcal{L}_{\text{prog}}$ the Bradley--Terry loss of the program-only control head.
+$\mathcal{L}_{\mathrm{prog}}$ the Bradley--Terry loss of the program-only control head.
 A median-ranked program carries about a tenth of the top-ranked program's
 weight in the writer loss. Its referee score also contributes to the map's
 ranking targets.
@@ -259,7 +259,7 @@ using seccomp and Landlock, with memory, swap and time limits. A
 planted label leak and a sealed canary must both be caught. Every reported
 winner must be re-run from its emitted code, with native and emitted
 predictions agreeing within
-$10^{-9}\max(1,|\hat y|)$.
+$10^{-9}\max(1,|\hat{y}|)$.
 
 One earlier leaderboard entry for our search selected each dataset's best
 test-scored outcome from a ledger of \num{63108} evaluations; we exclude it as test selection (\cref{app:incidents}).
@@ -276,7 +276,7 @@ draw with a frozen reference under matched conditions.
 \begin{algorithmic}[1]
 \Require new regression problem $p$ with training rows and metric; frozen $\encP$ and $\writer$
 \State $z_p \gets \encP(p)$ \Comment{read the board}
-\State $w \sim \writer(\cdot \mid z_p)$, one draw at $T=1$ \Comment{one move; no retry}
+\State $w \sim \writer(\cdot\mid z_p)$, one draw at $T=1$ \Comment{one move; no retry}
 \State $f \gets \textsc{Fit}(w,\ \text{training rows})$ \Comment{as any algorithm is fit}
 \State $\hat{y} \gets f(\text{new rows})$ \Comment{a stillborn $w$ scores as a loss}
 \State \Return $w,\ \hat{y}$

@@ -77,7 +77,7 @@ This appendix records the historical reference specifications from
   rows (the external CPU path first subsamples to at most \num{1000} training
   rows; third-party provenance pending; restricted; redistribution prohibited); and (iii)~512 values from two
   frozen seed-17 target-summary windows. Each block is normalized before
-  concatenation and clipping to $\pm32$. Non-finite contexts are refused. Encoding records
+  concatenation and clipping to $[-32,32]$. Non-finite contexts are refused. Encoding records
   report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
   encoding jobs, within the 30\,s cap.
   \item \textbf{Comparison construction (\cref{sub:method-map,sub:method-selfplay}).}
@@ -110,7 +110,7 @@ This appendix records the historical reference specifications from
   the corpus list's median RMSE. For microbatch normalization,
   Bradley--Terry weights use $|q_w-q_u|$, doubled when either member is at
   or above the 90th percentile. Weights are mean-scaled and cast to
-  \texttt{float32}; weighted losses average non-tied within-comparison pairs
+  float32; weighted losses average non-tied within-comparison pairs
   in the rank-local microbatch. Listwise losses average eligible groups.
   The global-batch route uses separate reductions.
   \item \textbf{Registered parameter inventory (\cref{sub:method-map}).}
@@ -136,9 +136,9 @@ This appendix records the historical reference specifications from
   held-out promotion receipt remain required inputs to the evaluation contract
   (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
-  The final evaluation protocol requires candidate isolation with \texttt{seccomp}
-  and Landlock, \texttt{cgroup} memory limits with swap disabled and native versus
-  emitted-code agreement within $10^{-9}\max(1, |\hat{y}|)$. Isolation and
+  The final evaluation protocol requires candidate isolation with seccomp
+  and Landlock, cgroup memory limits with swap disabled and native versus
+  emitted-code agreement within $10^{-9}\max(1,|\hat{y}|)$. Isolation and
   parity receipts from the final evaluator belong to the same evaluation
   record.
 \end{itemize}
