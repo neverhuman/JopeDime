@@ -430,9 +430,9 @@
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
     "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
-        "reason": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification.",
-        "role": "research"
-      },
+      "reason": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
       "reason": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification.",
       "role": "research"
@@ -5976,6 +5976,10 @@
     "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
       "role": "research",
       "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/test_h245.py": {
+      "role": "research",
+      "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
