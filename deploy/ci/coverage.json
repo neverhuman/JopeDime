@@ -6810,7 +6810,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
+      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
     },
     "python:research/flywheel_selfplay/h234_lambdaloss/test_h234.py": {
       "discovery": {
@@ -15815,6 +15815,16 @@
       ],
       "lanes": [],
       "scope": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification."
     }
   },
   "lanes": {

@@ -1,0 +1,791 @@
+{
+  "tensors": [
+    {
+      "name": "adapter_10tok.modality_type_emb",
+      "shape": [
+        10,
+        32
+      ],
+      "numel": 320,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.modality_gate_logits",
+      "shape": [
+        10
+      ],
+      "numel": 10,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_prior_scale",
+      "shape": [],
+      "numel": 1,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.null_kernel_w0_raw",
+      "shape": [],
+      "numel": 1,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.sem_kernel_scale_raw",
+      "shape": [],
+      "numel": 1,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.emb_kernel_scale_raw",
+      "shape": [],
+      "numel": 1,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_kernel_blend",
+      "shape": [],
+      "numel": 1,
+      "llrd_depth": 0,
+      "llrd_multiplier": 1.0,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.null_hist_token",
+      "shape": [
+        1,
+        1,
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_attn_scale",
+      "shape": [],
+      "numel": 1,
+      "llrd_depth": 0,
+      "llrd_multiplier": 1.0,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.modality_norm.weight",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.modality_norm.bias",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.0.weight",
+      "shape": [
+        16,
+        412
+      ],
+      "numel": 6592,
+      "llrd_depth": 5,
+      "llrd_multiplier": 0.03125,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.0.bias",
+      "shape": [
+        16
+      ],
+      "numel": 16,
+      "llrd_depth": 5,
+      "llrd_multiplier": 0.03125,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.1.weight",
+      "shape": [
+        16
+      ],
+      "numel": 16,
+      "llrd_depth": 5,
+      "llrd_multiplier": 0.03125,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.1.bias",
+      "shape": [
+        16
+      ],
+      "numel": 16,
+      "llrd_depth": 5,
+      "llrd_multiplier": 0.03125,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.0.weight",
+      "shape": [
+        32,
+        66
+      ],
+      "numel": 2112,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.0.bias",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.1.weight",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.1.bias",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 4,
+      "llrd_multiplier": 0.0625,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.in_proj_weight",
+      "shape": [
+        96,
+        32
+      ],
+      "numel": 3072,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.in_proj_bias",
+      "shape": [
+        96
+      ],
+      "numel": 96,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.out_proj.weight",
+      "shape": [
+        32,
+        32
+      ],
+      "numel": 1024,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.out_proj.bias",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.ctx_bilinear_u.weight",
+      "shape": [
+        16,
+        32
+      ],
+      "numel": 512,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.prog_bilinear_v.weight",
+      "shape": [
+        16,
+        24
+      ],
+      "numel": 384,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.0.weight",
+      "shape": [
+        24,
+        50
+      ],
+      "numel": 1200,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.0.bias",
+      "shape": [
+        24
+      ],
+      "numel": 24,
+      "llrd_depth": 3,
+      "llrd_multiplier": 0.125,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.2.weight",
+      "shape": [
+        1,
+        24
+      ],
+      "numel": 24,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.2.bias",
+      "shape": [
+        1
+      ],
+      "numel": 1,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.0.weight",
+      "shape": [
+        32,
+        60
+      ],
+      "numel": 1920,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.0.bias",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.1.weight",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.1.bias",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 2,
+      "llrd_multiplier": 0.25,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.in_proj_weight",
+      "shape": [
+        96,
+        32
+      ],
+      "numel": 3072,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.in_proj_bias",
+      "shape": [
+        96
+      ],
+      "numel": 96,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.out_proj.weight",
+      "shape": [
+        32,
+        32
+      ],
+      "numel": 1024,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.out_proj.bias",
+      "shape": [
+        32
+      ],
+      "numel": 32,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.0.weight",
+      "shape": [
+        24,
+        67
+      ],
+      "numel": 1608,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.0.bias",
+      "shape": [
+        24
+      ],
+      "numel": 24,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.2.weight",
+      "shape": [
+        1,
+        24
+      ],
+      "numel": 24,
+      "llrd_depth": 0,
+      "llrd_multiplier": 1.0,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "HEAD_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.2.bias",
+      "shape": [
+        1
+      ],
+      "numel": 1,
+      "llrd_depth": 0,
+      "llrd_multiplier": 1.0,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY",
+        "HEAD_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.0.weight",
+      "shape": [
+        48,
+        114
+      ],
+      "numel": 5472,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.0.bias",
+      "shape": [
+        48
+      ],
+      "numel": 48,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.1.weight",
+      "shape": [
+        48
+      ],
+      "numel": 48,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.1.bias",
+      "shape": [
+        48
+      ],
+      "numel": 48,
+      "llrd_depth": 1,
+      "llrd_multiplier": 0.5,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.3.weight",
+      "shape": [
+        1,
+        48
+      ],
+      "numel": 48,
+      "llrd_depth": 0,
+      "llrd_multiplier": 1.0,
+      "arms": [
+        "CONTROL",
+        "LLRD"
+      ]
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.3.bias",
+      "shape": [
+        1
+      ],
+      "numel": 1,
+      "llrd_depth": 0,
+      "llrd_multiplier": 1.0,
+      "arms": [
+        "CONTROL",
+        "LLRD",
+        "BIAS_ONLY"
+      ]
+    }
+  ],
+  "arms": {
+    "CONTROL": {
+      "names": [
+        "adapter_10tok.modality_type_emb",
+        "adapter_10tok.modality_gate_logits",
+        "adapter_10tok.mm_prior_scale",
+        "adapter_10tok.null_kernel_w0_raw",
+        "adapter_10tok.sem_kernel_scale_raw",
+        "adapter_10tok.emb_kernel_scale_raw",
+        "adapter_10tok.traj_kernel_blend",
+        "adapter_10tok.null_hist_token",
+        "adapter_10tok.traj_attn_scale",
+        "adapter_10tok.modality_norm.weight",
+        "adapter_10tok.modality_norm.bias",
+        "adapter_10tok.prog_412_bottleneck.0.weight",
+        "adapter_10tok.prog_412_bottleneck.0.bias",
+        "adapter_10tok.prog_412_bottleneck.1.weight",
+        "adapter_10tok.prog_412_bottleneck.1.bias",
+        "adapter_10tok.cand_query_proj.0.weight",
+        "adapter_10tok.cand_query_proj.0.bias",
+        "adapter_10tok.cand_query_proj.1.weight",
+        "adapter_10tok.cand_query_proj.1.bias",
+        "adapter_10tok.mm_cross_attn.in_proj_weight",
+        "adapter_10tok.mm_cross_attn.in_proj_bias",
+        "adapter_10tok.mm_cross_attn.out_proj.weight",
+        "adapter_10tok.mm_cross_attn.out_proj.bias",
+        "adapter_10tok.ctx_bilinear_u.weight",
+        "adapter_10tok.prog_bilinear_v.weight",
+        "adapter_10tok.mm_prior_out.0.weight",
+        "adapter_10tok.mm_prior_out.0.bias",
+        "adapter_10tok.mm_prior_out.2.weight",
+        "adapter_10tok.mm_prior_out.2.bias",
+        "adapter_10tok.hist_token_proj.0.weight",
+        "adapter_10tok.hist_token_proj.0.bias",
+        "adapter_10tok.hist_token_proj.1.weight",
+        "adapter_10tok.hist_token_proj.1.bias",
+        "adapter_10tok.traj_cross_attn.in_proj_weight",
+        "adapter_10tok.traj_cross_attn.in_proj_bias",
+        "adapter_10tok.traj_cross_attn.out_proj.weight",
+        "adapter_10tok.traj_cross_attn.out_proj.bias",
+        "adapter_10tok.traj_delta_head.0.weight",
+        "adapter_10tok.traj_delta_head.0.bias",
+        "adapter_10tok.traj_delta_head.2.weight",
+        "adapter_10tok.traj_delta_head.2.bias",
+        "adapter_10tok.parent_delta_net.0.weight",
+        "adapter_10tok.parent_delta_net.0.bias",
+        "adapter_10tok.parent_delta_net.1.weight",
+        "adapter_10tok.parent_delta_net.1.bias",
+        "adapter_10tok.parent_delta_net.3.weight",
+        "adapter_10tok.parent_delta_net.3.bias"
+      ],
+      "tensors": 47,
+      "parameters": 29211
+    },
+    "BIAS_ONLY": {
+      "names": [
+        "adapter_10tok.modality_norm.weight",
+        "adapter_10tok.modality_norm.bias",
+        "adapter_10tok.prog_412_bottleneck.0.bias",
+        "adapter_10tok.prog_412_bottleneck.1.weight",
+        "adapter_10tok.prog_412_bottleneck.1.bias",
+        "adapter_10tok.cand_query_proj.0.bias",
+        "adapter_10tok.cand_query_proj.1.weight",
+        "adapter_10tok.cand_query_proj.1.bias",
+        "adapter_10tok.mm_cross_attn.in_proj_bias",
+        "adapter_10tok.mm_cross_attn.out_proj.bias",
+        "adapter_10tok.mm_prior_out.0.bias",
+        "adapter_10tok.mm_prior_out.2.bias",
+        "adapter_10tok.hist_token_proj.0.bias",
+        "adapter_10tok.hist_token_proj.1.weight",
+        "adapter_10tok.hist_token_proj.1.bias",
+        "adapter_10tok.traj_cross_attn.in_proj_bias",
+        "adapter_10tok.traj_cross_attn.out_proj.bias",
+        "adapter_10tok.traj_delta_head.0.bias",
+        "adapter_10tok.traj_delta_head.2.bias",
+        "adapter_10tok.parent_delta_net.0.bias",
+        "adapter_10tok.parent_delta_net.1.weight",
+        "adapter_10tok.parent_delta_net.1.bias",
+        "adapter_10tok.parent_delta_net.3.bias"
+      ],
+      "tensors": 23,
+      "parameters": 755
+    },
+    "HEAD_ONLY": {
+      "names": [
+        "adapter_10tok.traj_delta_head.2.weight",
+        "adapter_10tok.traj_delta_head.2.bias"
+      ],
+      "tensors": 2,
+      "parameters": 25
+    },
+    "LLRD": {
+      "names": [
+        "adapter_10tok.modality_type_emb",
+        "adapter_10tok.modality_gate_logits",
+        "adapter_10tok.mm_prior_scale",
+        "adapter_10tok.null_kernel_w0_raw",
+        "adapter_10tok.sem_kernel_scale_raw",
+        "adapter_10tok.emb_kernel_scale_raw",
+        "adapter_10tok.traj_kernel_blend",
+        "adapter_10tok.null_hist_token",
+        "adapter_10tok.traj_attn_scale",
+        "adapter_10tok.modality_norm.weight",
+        "adapter_10tok.modality_norm.bias",
+        "adapter_10tok.prog_412_bottleneck.0.weight",
+        "adapter_10tok.prog_412_bottleneck.0.bias",
+        "adapter_10tok.prog_412_bottleneck.1.weight",
+        "adapter_10tok.prog_412_bottleneck.1.bias",
+        "adapter_10tok.cand_query_proj.0.weight",
+        "adapter_10tok.cand_query_proj.0.bias",
+        "adapter_10tok.cand_query_proj.1.weight",
+        "adapter_10tok.cand_query_proj.1.bias",
+        "adapter_10tok.mm_cross_attn.in_proj_weight",
+        "adapter_10tok.mm_cross_attn.in_proj_bias",
+        "adapter_10tok.mm_cross_attn.out_proj.weight",
+        "adapter_10tok.mm_cross_attn.out_proj.bias",
+        "adapter_10tok.ctx_bilinear_u.weight",
+        "adapter_10tok.prog_bilinear_v.weight",
+        "adapter_10tok.mm_prior_out.0.weight",
+        "adapter_10tok.mm_prior_out.0.bias",
+        "adapter_10tok.mm_prior_out.2.weight",
+        "adapter_10tok.mm_prior_out.2.bias",
+        "adapter_10tok.hist_token_proj.0.weight",
+        "adapter_10tok.hist_token_proj.0.bias",
+        "adapter_10tok.hist_token_proj.1.weight",
+        "adapter_10tok.hist_token_proj.1.bias",
+        "adapter_10tok.traj_cross_attn.in_proj_weight",
+        "adapter_10tok.traj_cross_attn.in_proj_bias",
+        "adapter_10tok.traj_cross_attn.out_proj.weight",
+        "adapter_10tok.traj_cross_attn.out_proj.bias",
+        "adapter_10tok.traj_delta_head.0.weight",
+        "adapter_10tok.traj_delta_head.0.bias",
+        "adapter_10tok.traj_delta_head.2.weight",
+        "adapter_10tok.traj_delta_head.2.bias",
+        "adapter_10tok.parent_delta_net.0.weight",
+        "adapter_10tok.parent_delta_net.0.bias",
+        "adapter_10tok.parent_delta_net.1.weight",
+        "adapter_10tok.parent_delta_net.1.bias",
+        "adapter_10tok.parent_delta_net.3.weight",
+        "adapter_10tok.parent_delta_net.3.bias"
+      ],
+      "tensors": 47,
+      "parameters": 29211
+    }
+  }
+}

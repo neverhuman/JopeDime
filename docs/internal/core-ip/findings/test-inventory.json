@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
+        "reason": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification.",
+        "role": "research"
+      },
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
       "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
       "role": "research"

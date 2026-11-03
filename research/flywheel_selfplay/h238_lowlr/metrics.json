@@ -1,14 +1,160 @@
 {
+  "schema": "jope.h238.compact-metrics/v1",
   "wave": "H238",
-  "status": "PREREGISTERED",
-  "verdict": null,
+  "status": "CLOSED_INCOMPLETE",
+  "verdict": "CLOSED_INCOMPLETE",
   "primary_verdict": null,
-  "optimizer_updates": 0,
-  "complete_cells": 0,
-  "scientific_execution": "NOT_STARTED",
-  "dope_before": null,
+  "optimizer_updates": null,
+  "complete_cells": 3,
+  "known_complete_cell_trace_updates": 600,
+  "source_commit": "8c75d0d0dc54d4d89cf4b3f8153f7b74366da252",
+  "execution_source_commit": "8c75d0d0dc54d4d89cf4b3f8153f7b74366da252",
+  "prereg_pr": 2079,
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
   "dope_after": null,
+  "baseline_mean": 1.1377941898164525,
+  "eval_forward_bit_exact": true,
   "primary_dlval": null,
   "secondary_oof": null,
-  "source_commit": null
+  "trainable_parameters": 29211,
+  "smoke_optimizer_updates": 3,
+  "arm_updates": {
+    "CONTROL": 40,
+    "LR3E5": 40,
+    "LR1E5_120": 120
+  },
+  "candidate_steps": null,
+  "terminal_drift": null,
+  "pseudoreplication": null,
+  "plateau_best_context_utility": 1.1389572,
+  "context_mean_minus_plateau_by_seed": null,
+  "resource": {
+    "status": "INCOMPLETE",
+    "exit_code": -15,
+    "reasons": [
+      "MemAvailable<12GiB"
+    ],
+    "final_sample": {
+      "utc": 1793673083.9655316,
+      "load": 73.91455078125,
+      "load5": 52.5029296875,
+      "cpu": 41.9,
+      "available": 12778967040,
+      "free": 789492039680,
+      "rss": 3129614336,
+      "threads": 3,
+      "affinity": [
+        40,
+        41,
+        42,
+        43
+      ],
+      "elapsed": 994.611205215002,
+      "paused": true
+    },
+    "admission": {
+      "utc": 1793672089.3531992,
+      "load": 52.00830078125,
+      "load5": 70.27099609375,
+      "cpu": 50.6,
+      "available": 67577479168,
+      "free": 800012201984,
+      "rss": 15970304,
+      "threads": 1,
+      "affinity": [
+        40,
+        41,
+        42,
+        43
+      ]
+    },
+    "elapsed_seconds": 995.2778817729995,
+    "peak": {
+      "rss": 3392147456,
+      "threads": 3
+    },
+    "load_pauses": [
+      {
+        "utc": 1793673073.7348483,
+        "action": "pause",
+        "load5": 51.17236328125,
+        "available": 21429633024
+      }
+    ],
+    "paused_seconds": 10.896823597999173,
+    "compute_stop": 1793689200.0
+  },
+  "resource_extrema": {},
+  "red_team_checks": {},
+  "metric_direction": "Higher utility=-fitness is better; failed gates have utility -2. Baseline matches all91 pinned native utility values.",
+  "failure": null,
+  "terminal_custody": {
+    "schema": "jope.h238.custody-receipt/v1",
+    "verified_utc": "2026-11-03T02:37:26.040834+00:00",
+    "source_commit": "8c75d0d0dc54d4d89cf4b3f8153f7b74366da252",
+    "status": "EXACT_VERSION_OBJECT_AND_MEMBER_REPLAY_PASS",
+    "scientific_status": "CLOSED_INCOMPLETE",
+    "scientific_verdict": "CLOSED_INCOMPLETE",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H238/res08-t0205/terminal-8c75d0d0dc54-0732a177296ab32d/H238-execution-output.zip",
+      "version_id": "42qhj0ABLcgcvhW.ZgRAEK8FmOVwBfEI",
+      "sha256": "0732a177296ab32d0bab9694ad0fec502142d52c8cf149fd9c7478bc096f6fc1",
+      "bytes": 10616448
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261103/H238/res08-t0205/terminal-8c75d0d0dc54-0732a177296ab32d/H238-terminal-manifest.json",
+      "version_id": "MDw8.q2MS0DEphKo4.f9jMubMeorFg2v",
+      "sha256": "35fcf2e414fcd408bb1bc67df3b6d861ae458024af8874f61890d286c1eeaa17",
+      "bytes": 15618
+    },
+    "verified_members": 93,
+    "create_only_if_none_match": "*",
+    "exact_version_archive_and_manifest_bytes_verified": true,
+    "archive_member_sha256s_verified": true,
+    "raw_roots_retained": true,
+    "scientific_retry": false
+  },
+  "full_metrics_sha256": null,
+  "scientific_retry": false,
+  "serving_promotion": false,
+  "raw_roots_retained": true,
+  "hosted_ci": "NOT_RUN/NOT_A_GATE per explicit H238 assignment",
+  "publication_utc": "2026-11-03T02:38:28.071741+00:00",
+  "completed_gates": {
+    "native91_exact": true,
+    "train_smoke_pass": true
+  },
+  "last_recorded_DOPE_observation": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "partial_update_audit": {
+    "utc": "2026-11-03T02:36:02.051258+00:00",
+    "status": "PARTIAL_EVIDENCE_ONLY",
+    "actual_primary_updates": null,
+    "known_complete_cell_trace_updates": 600,
+    "known_primary_update_lower_bound_from_valid_snapshots": 640,
+    "max_saved_step_by_trajectory": {
+      "A0-238101:CONTROL": 40,
+      "A0-238101:LR1E5_120": 120,
+      "A0-238101:LR3E5": 40,
+      "A0-238102:CONTROL": 40,
+      "A0-238102:LR1E5_120": 120,
+      "A0-238102:LR3E5": 40,
+      "A0-238103:CONTROL": 40,
+      "A0-238103:LR1E5_120": 120,
+      "A0-238103:LR3E5": 40,
+      "A1-238101:CONTROL": 40
+    },
+    "valid_snapshot_count": 40,
+    "invalid_snapshots": [],
+    "source_commit": "8c75d0d0dc54d4d89cf4b3f8153f7b74366da252",
+    "primary_effect": null,
+    "CI95": null,
+    "Elo": null,
+    "final_DOPE_observation": null,
+    "scientific_retry": false
+  },
+  "elo_lifts": null,
+  "harm_families": null,
+  "selection_summary": null,
+  "descriptive_unconstrained_val": null,
+  "descriptive_unconstrained_oof": null
 }
