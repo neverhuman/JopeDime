@@ -22,22 +22,21 @@ pub fn scan_tree(root: &Path) -> Result<Tree> {
     scan_rest(root, clap)
 }
 
-/// The `jope-parallel` subcommands in `command.rs`, declared by the engine binary's `main.rs`.
-/// A missing entry point retains the old empty-command behavior; missing source files refuse.
+/// The `jope-parallel` subcommands declared by the engine binary. The current binary keeps
+/// `EngineCmd` in `command.rs`; older and synthetic trees declare `Cmd` inline in `main.rs`.
+/// A missing entry point retains the empty-command behavior; missing declared sources refuse.
 pub(super) fn clap_names(root: &Path) -> Result<Vec<String>> {
     let main_rs = root.join("crates/jope-engine/src/main.rs");
     Ok(if exists(&main_rs, "clap subcommands")? {
         let source = py::read_text_replace(&main_rs)?;
-        if !py::regex(r"(?m)^\s*mod\s+command\s*;").is_match(&source) {
-            return Err(Error::Shape(format!(
-                "{}: module command not found",
-                py::os_display(main_rs.as_os_str())
-            )));
+        if py::regex(r"(?m)^\s*mod\s+command\s*;").is_match(&source) {
+            parse_clap_enum(&root.join("crates/jope-engine/src/command.rs"), "EngineCmd")?
+        } else {
+            parse_clap_enum(&main_rs, "Cmd")?
         }
-        parse_clap_enum(&root.join("crates/jope-engine/src/command.rs"), "EngineCmd")?
-            .into_iter()
-            .map(|c| c.name)
-            .collect()
+        .into_iter()
+        .map(|c| c.name)
+        .collect()
     } else {
         vec![]
     })

@@ -45,7 +45,8 @@ pub fn parse_clap_enum(path: &Path, enum_name: &str) -> Result<Vec<Variant>> {
     })?[1]
         .to_owned();
     let attr = py::regex(r"^    #\[");
-    let variant = py::regex(r"^    ([A-Z][A-Za-z0-9]*)\s*(\{|,|\()");
+    // Python treats U+001C through U+001F as whitespace; Rust's Unicode `\s` class does not.
+    let variant = py::regex(r"^    ([A-Z][A-Za-z0-9]*)[\s\x1c-\x1f]*(\{|,|\()");
     let named = py::regex(r#"name\s*=\s*"([^"]+)""#);
     let mut rows = vec![];
     let mut attrs: Vec<String> = vec![];
