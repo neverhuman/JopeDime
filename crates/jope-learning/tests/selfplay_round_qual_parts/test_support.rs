@@ -2,9 +2,11 @@
 
 use std::collections::BTreeMap;
 
-use jope_learning::canon::sha256_hex;
+use jope_learning::canon::{canonical_sha256, sha256_hex};
 use jope_learning::clover::round_qual::{
-    Endpoint, ParityRecord, QualTestScore, RoundQualPlan, SourceGrade, RATCHET_SCHEMA,
+    Endpoint, ParityRecord, QualTestScore, RoundQualPlan, SelfPlayPrereg, SourceGrade, UnpinnedOr,
+    PREREG_PINNED_BINDING_STATUS, PREREG_SCHEMA, PREREG_SECONDARY_STATUS,
+    PREREG_UNPINNED_BINDING_STATUS, RATCHET_SCHEMA,
 };
 use jope_learning::clover::{Budget, ExperimentIdentity, InitialState, SourceIdentity, SCHEMA};
 use jope_pipeline::test_score::{ScoredDataset, TEST_SCORE_SCHEMA_ID};
