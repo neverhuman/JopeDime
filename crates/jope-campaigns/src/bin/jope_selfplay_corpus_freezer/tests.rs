@@ -2,7 +2,6 @@ use super::*;
 use tempfile::TempDir;
 
 use super::*;
-use tempfile::TempDir;
 
 fn root_with(pointer: Option<u64>, labels: u64) -> TempDir {
     let dir = TempDir::new().unwrap();
