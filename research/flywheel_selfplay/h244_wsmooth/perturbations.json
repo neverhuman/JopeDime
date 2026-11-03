@@ -1,0 +1,475 @@
+{
+  "K": 8,
+  "sigmas": [
+    0.0,
+    0.01,
+    0.03,
+    0.1
+  ],
+  "member_seeds": {
+    "244101": [
+      24410101,
+      24410102,
+      24410103,
+      24410104,
+      24410105,
+      24410106,
+      24410107,
+      24410108
+    ],
+    "244102": [
+      24410201,
+      24410202,
+      24410203,
+      24410204,
+      24410205,
+      24410206,
+      24410207,
+      24410208
+    ],
+    "244103": [
+      24410301,
+      24410302,
+      24410303,
+      24410304,
+      24410305,
+      24410306,
+      24410307,
+      24410308
+    ]
+  },
+  "tensor_order": [
+    "adapter_10tok.modality_type_emb",
+    "adapter_10tok.modality_gate_logits",
+    "adapter_10tok.mm_prior_scale",
+    "adapter_10tok.null_kernel_w0_raw",
+    "adapter_10tok.sem_kernel_scale_raw",
+    "adapter_10tok.emb_kernel_scale_raw",
+    "adapter_10tok.traj_kernel_blend",
+    "adapter_10tok.null_hist_token",
+    "adapter_10tok.traj_attn_scale",
+    "adapter_10tok.modality_norm.weight",
+    "adapter_10tok.modality_norm.bias",
+    "adapter_10tok.prog_412_bottleneck.0.weight",
+    "adapter_10tok.prog_412_bottleneck.0.bias",
+    "adapter_10tok.prog_412_bottleneck.1.weight",
+    "adapter_10tok.prog_412_bottleneck.1.bias",
+    "adapter_10tok.cand_query_proj.0.weight",
+    "adapter_10tok.cand_query_proj.0.bias",
+    "adapter_10tok.cand_query_proj.1.weight",
+    "adapter_10tok.cand_query_proj.1.bias",
+    "adapter_10tok.mm_cross_attn.in_proj_weight",
+    "adapter_10tok.mm_cross_attn.in_proj_bias",
+    "adapter_10tok.mm_cross_attn.out_proj.weight",
+    "adapter_10tok.mm_cross_attn.out_proj.bias",
+    "adapter_10tok.ctx_bilinear_u.weight",
+    "adapter_10tok.prog_bilinear_v.weight",
+    "adapter_10tok.mm_prior_out.0.weight",
+    "adapter_10tok.mm_prior_out.0.bias",
+    "adapter_10tok.mm_prior_out.2.weight",
+    "adapter_10tok.mm_prior_out.2.bias",
+    "adapter_10tok.hist_token_proj.0.weight",
+    "adapter_10tok.hist_token_proj.0.bias",
+    "adapter_10tok.hist_token_proj.1.weight",
+    "adapter_10tok.hist_token_proj.1.bias",
+    "adapter_10tok.traj_cross_attn.in_proj_weight",
+    "adapter_10tok.traj_cross_attn.in_proj_bias",
+    "adapter_10tok.traj_cross_attn.out_proj.weight",
+    "adapter_10tok.traj_cross_attn.out_proj.bias",
+    "adapter_10tok.traj_delta_head.0.weight",
+    "adapter_10tok.traj_delta_head.0.bias",
+    "adapter_10tok.traj_delta_head.2.weight",
+    "adapter_10tok.traj_delta_head.2.bias",
+    "adapter_10tok.parent_delta_net.0.weight",
+    "adapter_10tok.parent_delta_net.0.bias",
+    "adapter_10tok.parent_delta_net.1.weight",
+    "adapter_10tok.parent_delta_net.1.bias",
+    "adapter_10tok.parent_delta_net.3.weight",
+    "adapter_10tok.parent_delta_net.3.bias"
+  ],
+  "tensors": [
+    {
+      "name": "adapter_10tok.modality_type_emb",
+      "shape": [
+        10,
+        32
+      ],
+      "parameters": 320,
+      "rms": 0.029870668787684667
+    },
+    {
+      "name": "adapter_10tok.modality_gate_logits",
+      "shape": [
+        10
+      ],
+      "parameters": 10,
+      "rms": 0.03373851444697106
+    },
+    {
+      "name": "adapter_10tok.mm_prior_scale",
+      "shape": [],
+      "parameters": 1,
+      "rms": 0.11864123493432999
+    },
+    {
+      "name": "adapter_10tok.null_kernel_w0_raw",
+      "shape": [],
+      "parameters": 1,
+      "rms": 0.4733186960220337
+    },
+    {
+      "name": "adapter_10tok.sem_kernel_scale_raw",
+      "shape": [],
+      "parameters": 1,
+      "rms": 1.2261335849761963
+    },
+    {
+      "name": "adapter_10tok.emb_kernel_scale_raw",
+      "shape": [],
+      "parameters": 1,
+      "rms": 0.823076605796814
+    },
+    {
+      "name": "adapter_10tok.traj_kernel_blend",
+      "shape": [],
+      "parameters": 1,
+      "rms": 0.22899949550628662
+    },
+    {
+      "name": "adapter_10tok.null_hist_token",
+      "shape": [
+        1,
+        1,
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.052842873982667835
+    },
+    {
+      "name": "adapter_10tok.traj_attn_scale",
+      "shape": [],
+      "parameters": 1,
+      "rms": 0.14827615022659302
+    },
+    {
+      "name": "adapter_10tok.modality_norm.weight",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 1.0335442060432543
+    },
+    {
+      "name": "adapter_10tok.modality_norm.bias",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.029750308744464733
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.0.weight",
+      "shape": [
+        16,
+        412
+      ],
+      "parameters": 6592,
+      "rms": 0.029329567880580006
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.0.bias",
+      "shape": [
+        16
+      ],
+      "parameters": 16,
+      "rms": 0.033545294743060006
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.1.weight",
+      "shape": [
+        16
+      ],
+      "parameters": 16,
+      "rms": 1.0062243674088758
+    },
+    {
+      "name": "adapter_10tok.prog_412_bottleneck.1.bias",
+      "shape": [
+        16
+      ],
+      "parameters": 16,
+      "rms": 0.009129757004809122
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.0.weight",
+      "shape": [
+        32,
+        66
+      ],
+      "parameters": 2112,
+      "rms": 0.07125422916085361
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.0.bias",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.05826105462533893
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.1.weight",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.9988313900471241
+    },
+    {
+      "name": "adapter_10tok.cand_query_proj.1.bias",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.017978915814330223
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.in_proj_weight",
+      "shape": [
+        96,
+        32
+      ],
+      "parameters": 3072,
+      "rms": 0.1330432848697895
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.in_proj_bias",
+      "shape": [
+        96
+      ],
+      "parameters": 96,
+      "rms": 0.025249349869527014
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.out_proj.weight",
+      "shape": [
+        32,
+        32
+      ],
+      "parameters": 1024,
+      "rms": 0.10946342130861374
+    },
+    {
+      "name": "adapter_10tok.mm_cross_attn.out_proj.bias",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.03212889015336211
+    },
+    {
+      "name": "adapter_10tok.ctx_bilinear_u.weight",
+      "shape": [
+        16,
+        32
+      ],
+      "parameters": 512,
+      "rms": 0.10365433316951028
+    },
+    {
+      "name": "adapter_10tok.prog_bilinear_v.weight",
+      "shape": [
+        16,
+        24
+      ],
+      "parameters": 384,
+      "rms": 0.12238217199912929
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.0.weight",
+      "shape": [
+        24,
+        50
+      ],
+      "parameters": 1200,
+      "rms": 0.09132155860472667
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.0.bias",
+      "shape": [
+        24
+      ],
+      "parameters": 24,
+      "rms": 0.08749848042744733
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.2.weight",
+      "shape": [
+        1,
+        24
+      ],
+      "parameters": 24,
+      "rms": 0.035395759075349725
+    },
+    {
+      "name": "adapter_10tok.mm_prior_out.2.bias",
+      "shape": [
+        1
+      ],
+      "parameters": 1,
+      "rms": 0.0023435347247868776
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.0.weight",
+      "shape": [
+        32,
+        60
+      ],
+      "parameters": 1920,
+      "rms": 0.07434743682942714
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.0.bias",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.08213906304903953
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.1.weight",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 1.0277537028609327
+    },
+    {
+      "name": "adapter_10tok.hist_token_proj.1.bias",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.042357311433721095
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.in_proj_weight",
+      "shape": [
+        96,
+        32
+      ],
+      "parameters": 3072,
+      "rms": 0.13078098602612015
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.in_proj_bias",
+      "shape": [
+        96
+      ],
+      "parameters": 96,
+      "rms": 0.027682570294590113
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.out_proj.weight",
+      "shape": [
+        32,
+        32
+      ],
+      "parameters": 1024,
+      "rms": 0.11386225608527105
+    },
+    {
+      "name": "adapter_10tok.traj_cross_attn.out_proj.bias",
+      "shape": [
+        32
+      ],
+      "parameters": 32,
+      "rms": 0.0350286783397721
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.0.weight",
+      "shape": [
+        24,
+        67
+      ],
+      "parameters": 1608,
+      "rms": 0.07715877461828577
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.0.bias",
+      "shape": [
+        24
+      ],
+      "parameters": 24,
+      "rms": 0.07274007657298538
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.2.weight",
+      "shape": [
+        1,
+        24
+      ],
+      "parameters": 24,
+      "rms": 0.04386207038525423
+    },
+    {
+      "name": "adapter_10tok.traj_delta_head.2.bias",
+      "shape": [
+        1
+      ],
+      "parameters": 1,
+      "rms": 0.005262463353574276
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.0.weight",
+      "shape": [
+        48,
+        114
+      ],
+      "parameters": 5472,
+      "rms": 0.0541482015056888
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.0.bias",
+      "shape": [
+        48
+      ],
+      "parameters": 48,
+      "rms": 0.05086419524352078
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.1.weight",
+      "shape": [
+        48
+      ],
+      "parameters": 48,
+      "rms": 0.9999760931900582
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.1.bias",
+      "shape": [
+        48
+      ],
+      "parameters": 48,
+      "rms": 0.00038627080200026814
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.3.weight",
+      "shape": [
+        1,
+        48
+      ],
+      "parameters": 48,
+      "rms": 0.0011297465251031286
+    },
+    {
+      "name": "adapter_10tok.parent_delta_net.3.bias",
+      "shape": [
+        1
+      ],
+      "parameters": 1,
+      "rms": 0.0003140389744658023
+    }
+  ],
+  "noise": "numpy PCG64 default_rng; standard_normal float64 in explicit tensor order; same member seed shared across sigma; theta+sigma*rms64*noise cast to original dtype; zero-RMS unchanged"
+}
