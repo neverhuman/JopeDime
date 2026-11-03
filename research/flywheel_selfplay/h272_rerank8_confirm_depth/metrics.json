@@ -1,0 +1,41 @@
+{
+  "wave": "H272",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H272",
+    "status": "COMPLETE",
+    "verdict": "CONFIRMED or NOT_CONFIRMED",
+    "arms": [
+      "r882",
+      "RERANK4",
+      "RERANK8",
+      "RERANK8_SHUF"
+    ],
+    "depth_arms": [
+      "RERANK8",
+      "RERANK12",
+      "RERANK16"
+    ],
+    "seeds": [
+      272101,
+      272102,
+      272103
+    ],
+    "fold_seeds": [
+      272140,
+      272141,
+      272142
+    ],
+    "decision": "Holm m=2 over PRIMARY and SECONDARY; six gates",
+    "primary_train_oof": "45-cell OOF panel (per-seed medians over fold seeds), contrasts with ci95, ci_holm_m2, p, W/T/L, harm; Elo (r882 = 1500)",
+    "secondary_dlval": "DL-Val91, fold seed 272140 cells",
+    "tertiary_cluster_holdout": "41 least-similar families held out (descriptive)",
+    "depth_train_oof": "RERANK12/16 vs r882 and vs RERANK8 (descriptive)",
+    "invalid_picks": "-2.0 picks per arm (DL-Train ASSESS, DL-Val91)",
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0..."
+  }
+}
