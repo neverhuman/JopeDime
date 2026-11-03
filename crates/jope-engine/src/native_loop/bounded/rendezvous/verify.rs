@@ -1,7 +1,6 @@
 use super::*;
 
 /// Participant-side check of the coordinator's signed challenge.
-
 pub fn verify_challenge(
     contract: &BoundedRunContract,
     plan_sha256: &str,
