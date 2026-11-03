@@ -397,4 +397,10 @@ pub fn result(
 
 #[path = "bounded_fixture/fake_supervisor.rs"]
 mod fake_supervisor;
-pub use fake_supervisor::{tree, FakeState, FakeSupervisor, RetainedWork};
+pub type FakeState = fake_supervisor::FakeState;
+pub type FakeSupervisor = fake_supervisor::FakeSupervisor;
+pub type RetainedWork = fake_supervisor::RetainedWork;
+
+pub fn tree(root: &Path) -> BTreeMap<PathBuf, String> {
+    fake_supervisor::tree(root)
+}
