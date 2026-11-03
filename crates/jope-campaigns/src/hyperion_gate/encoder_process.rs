@@ -1,9 +1,9 @@
 use super::*;
 
 #[derive(Debug)]
-struct EncoderRun {
-    status: ExitStatus,
-    proof: EncoderExecutionProofV2,
+pub(super) struct EncoderRun {
+    pub(super) status: ExitStatus,
+    pub(super) proof: EncoderExecutionProofV2,
 }
 
 fn encoder_process_group_exists(pid: libc::pid_t) -> Result<bool, String> {
