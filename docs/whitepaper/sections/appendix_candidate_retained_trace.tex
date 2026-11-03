@@ -11,20 +11,3 @@ The last accepted decision, at round 3100, is an exact tie, followed by
 programs or a stationary admission probability. Stable log-prefix hashes bind
 this separate capture. This trace retains its own capture cutoff;
 the field-binding limits in \cref{sec:method-status} still apply.
-
-\begin{figure*}[!t]
-  \setlength{\abovecaptionskip}{4pt}
-  \centering
-  \includegraphics[width=\linewidth,height=1.55in,keepaspectratio]{figures/fig_fw_admission_block_rates.pdf}
-  \caption{\textbf{Nineteen of 24 observed-round blocks record zero adapter admissions.}
-  All \num{2391} complete journal decisions in rounds 775--3165, captured at 20:17 UTC
-  on 1 November 2026. Blocks contain 100 consecutive observed rounds; the final
-  3075--3165 block contains 91. Left: accepted strict gains (blue) and exact ties
-  (orange), stacked percentages. Right: rejected decisions (\%; axis starts
-  at 96\%). Each denominator is that block's observed rounds; hatching and a
-  diamond mark the partial block. Totals: three strict gains, four ties and
-  \num{2384} rejections. These adaptive adapter decisions are distinct from
-  program-incumbent events and independent first-proposal game-day performance.
-  Scope: \cref{sec:method-status}.}
-  \label{fig:fw-candidate-retained-trace}
-\end{figure*}
