@@ -37,7 +37,10 @@ pub(crate) fn ablation_kernel2_a_equals_a_replays_byte_for_byte() {
     assert_eq!(settings.revision, shipped.revision);
     assert_eq!(settings.fault_policy, PolicyRecord::RejectHard);
     assert_eq!(settings.refinement, SMALL_REFINEMENT);
-    assert_eq!(settings.selection, jope_pipeline::kernel2::receipt::SELECTION);
+    assert_eq!(
+        settings.selection,
+        jope_pipeline::kernel2::receipt::SELECTION
+    );
     assert_eq!(body.protocol.profile_a, body.protocol.profile_b);
 
     assert_eq!(body.runs.len(), 2 * 2);
