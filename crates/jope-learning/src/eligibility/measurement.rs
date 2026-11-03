@@ -1,3 +1,5 @@
+use super::decisions::retain_artifact;
+use super::freeze::fold_fitting_input;
 use super::*;
 
 pub(super) fn measured(
