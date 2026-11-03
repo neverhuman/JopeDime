@@ -42,6 +42,7 @@ pub(super) fn dump_dl_json(args: &Args) -> Result<()> {
                 "pct": trainer.pct,
                 "running_loss": trainer.running_loss,
                 "history_points": trainer.history.len(),
+                "early_stopped": trainer.early_stopped,
                 "progress_at_ms": trainer.progress_at_ms as u64,
             })
         })
@@ -76,7 +77,10 @@ pub(super) fn dump_dl_json(args: &Args) -> Result<()> {
             "util_pct": gpu.util_pct,
             "mem_used_mb": gpu.mem_used_mb,
             "mem_total_mb": gpu.mem_total_mb,
+            "temp_c": gpu.temp_c,
             "power_w": gpu.power_w,
+            "power_limit_w": gpu.power_limit_w,
+            "throttled": gpu.throttled,
         })).collect::<Vec<_>>(),
         "accepted_task_fronts": dashboard.accepted_tasks.iter().map(|front| json!({
             "task": front.task,
@@ -90,6 +94,7 @@ pub(super) fn dump_dl_json(args: &Args) -> Result<()> {
             "snapshot_watermark": watchdog.snapshot_watermark,
             "labels": watchdog.labels,
             "pending_unfrozen_labels": watchdog.pending_unfrozen_labels,
+            "last_evidence_watermark": watchdog.last_evidence_watermark,
             "active_trainers": watchdog.active_trainers,
             "generated_at_ms": watchdog.generated_at_ms as u64,
         })),
@@ -174,6 +179,10 @@ pub(super) fn dump_unified_json(args: &Args) -> Result<()> {
                 "owner": gpu.owner_job,
                 "attempt": (gpu.attempt > 0).then_some(gpu.attempt),
                 "util_pct": gpu.util_pct,
+                "temp_c": gpu.temp_c,
+                "power_w": gpu.power_w,
+                "power_limit_w": gpu.power_limit_w,
+                "throttled": gpu.throttled,
                 "status": gpu.status,
                 "reason": if gpu.admission_reason.is_empty() {
                     gpu.owner_job.is_none().then_some(dashboard.why_idle.as_str())
