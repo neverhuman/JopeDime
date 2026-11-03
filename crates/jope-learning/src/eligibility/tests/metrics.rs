@@ -74,9 +74,10 @@ pub(super) fn uneven() -> Fixture {
             baseline.iter().map(|value| value + 0.75).collect()
         })
     };
+    let context = fixture(Task::Regression, 0).plan.context;
     fixture_spec(
         Task::Regression,
-        Some(context_plan()),
+        context,
         Some(
             folds
                 .iter()
