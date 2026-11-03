@@ -1,0 +1,257 @@
+{
+  "schema": "jain.first-render-review-receipt/v1",
+  "created_utc": "2026-11-03T17:17:10.971261+00:00",
+  "status": "STILLS_READY_FOR_DESIGN_REVIEW",
+  "native_source_commit": "f035969e68f4ab37d692d15972d60a900d2049b9",
+  "native_source_scope": "committed service capture and optimized emitter at f035969; offline renderer pinned by file hashes below",
+  "trace_sha256": "feecd6dad32608000a4a6beb07d65c5e3413517e3d757796f11b2a86e4c749b8",
+  "source_files": [
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/README.md",
+      "sha256": "4c55c95c7d974d1517dcdecbc1acd60fc7596aaeb67c217f306c78d82f6e8f2a",
+      "bytes": 4827
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/board.py",
+      "sha256": "dad571f8e48a2be400e36cc7a60d98880a49dd65a5652f757108c7d0ca92bdb0",
+      "bytes": 19425
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/build_scene.py",
+      "sha256": "381afe95ab05c46d5fbf89b0ec3425151490565816d250d54a9d04e1c12ca409",
+      "bytes": 18741
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/cinematic.py",
+      "sha256": "98824ef64cfefbd786d29a35447274aa2bebfeb6abc3e7764e0fc30843aa9048",
+      "bytes": 29045
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/network_graph.py",
+      "sha256": "851d33bf105f5005e0ee39f9133b9cea3cd9ada5a688f4c8ea0c26270f2513ae",
+      "bytes": 23819
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/blender/render_frames.py",
+      "sha256": "7b8cc9aec2b0df47534991534ed15b3a7b8c8a910c43e4204bac9b0049f2f756",
+      "bytes": 612
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/code_pages.py",
+      "sha256": "3b5488daa299b62a327e1ac814aa245cf198c9f39a9ca12c95fbe268479cef55",
+      "bytes": 16222
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/select_examples.py",
+      "sha256": "399f53f4c990286922e7a66ec7f5765fd269d71850d690f8449cca2586089895",
+      "bytes": 15281
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/tests/test_actual_trace.py",
+      "sha256": "3cd81a6f6d4881518729d45e5e84189c62e90c05b371e18ba22de5deb0b812b2",
+      "bytes": 9719
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/tests/test_code_pages.py",
+      "sha256": "28405575cb824475fba3bc10314815a5259f5e4c2bc5076ff1fa5f3dbbfdc374",
+      "bytes": 3983
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/tests/test_trace.py",
+      "sha256": "a37cc20c5d352bc00c693ef37f3248b2e67e7c93b5fbacbc483f1fbbeca1151e",
+      "bytes": 4460
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-source/.agent/worktrees/blender-fused-first-render/tools/visualization/validate_trace.py",
+      "sha256": "2f956c5a0d98f3bfcdc1a1525cd273188f0d5517c4b2f7ec890a88a2786e8c14",
+      "bytes": 27220
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/single-run-final/trace.json",
+      "sha256": "feecd6dad32608000a4a6beb07d65c5e3413517e3d757796f11b2a86e4c749b8",
+      "bytes": 191748384
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/single-run-final/full-validation.json",
+      "sha256": "c82887e707da9ecdc21103c874225f7693731581e2ffdde2d6f437c752791097",
+      "bytes": 3323
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/single-run-final/invocation-receipt.json",
+      "sha256": "006673f4f1cbdc036a881e90be6b9b457198c6b4d564127f9fe675d73f7c496c",
+      "bytes": 2118
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/single-run-final/release-metrics.receipt.json",
+      "sha256": "a0dd08ba8aed41c1fa588d6588624e97f6d94b7ab324d3681a3b5c88fed51c73",
+      "bytes": 11740
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/embedding-selection/selection.json",
+      "sha256": "41233ba248a10332130bde4379ab9123627a4a03e55696b498fd3bd252c3b525",
+      "bytes": 35927
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/full-code-final/independent-code-pages.receipt.json",
+      "sha256": "db58550d39080bf2203f980f49830e70ea22b672101f5619cf18bd52a42fa40e",
+      "bytes": 3175
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/review-final-board-v3/preview.blend",
+      "sha256": "93ad68e122a0c5979a55448659a182969b5f09f3331702b122f46dfcd626ee64",
+      "bytes": 98451024
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/review-final-board-v3/preview.receipt.json",
+      "sha256": "bb6f540cd686033b50b49955a0f7cd11baafd839f22eb2bc2f445d717f58a236",
+      "bytes": 544231
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/reopen-check/receipt.json",
+      "sha256": "430529d0ccf9b9a749ec7b47ab92541af29e65e04491d08b049202351719ee98",
+      "bytes": 926
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/final-python-tests.log",
+      "sha256": "c09b3c673a8b217a5cb400856f12a3de40adae3938c3a48658558cbf19d1878c",
+      "bytes": 3826
+    }
+  ],
+  "stills": [
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/review-final-board-v3/review-000271.png",
+      "sha256": "71ac005bb7d0bd2174a3bb838964352c415b66f37e1a9f24663aee4895366c4e",
+      "bytes": 7722898,
+      "frame": 271,
+      "case_id": "case-a",
+      "cue": "training",
+      "dimensions": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/review-final-board-v3/review-001063.png",
+      "sha256": "69f657a80198ee39e10d32624b305170013891b831d5911ad57e561633113de5",
+      "bytes": 7755021,
+      "frame": 1063,
+      "case_id": "case-c",
+      "cue": "training",
+      "dimensions": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "path": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/review-final-board-v3/review-007165.png",
+      "sha256": "1d53ebf79802542f2740b98af58b8a098dce0a6c0e0ac0fb1e8fff8b0ceb03ff",
+      "bytes": 7579620,
+      "frame": 7165,
+      "case_id": "case-f",
+      "cue": "prediction",
+      "dimensions": [
+        3840,
+        2160
+      ]
+    }
+  ],
+  "runtime": {
+    "blender": "5.2.3 LTS",
+    "blender_build": "e13b728c6880",
+    "os": "macOS-15.7.5-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M4 Max"
+  },
+  "scope": {
+    "synthetic_regression_datasets": 6,
+    "measured_affine_operations": 43,
+    "selected_real_neurons": 318,
+    "selected_weight_edges": 408,
+    "actual_admission_activation_states": 15,
+    "complete_source_pages": 1181,
+    "inspection_frames": 7338,
+    "fps": 12,
+    "inspection_seconds": 611.5,
+    "all_native_admission_rounds_replayed": true,
+    "recorded_time_expanded": true,
+    "fixed_weights": true,
+    "full_parameter_visualization": false,
+    "video_rendered": false,
+    "gp_tree_view": "actual operator parent/child projection and parameter counts; full literal native tree in private evidence",
+    "code": "whole native GP-to-Rust files, all original bytes preserved incl helpers, training, fitted state, prediction, selfchecks",
+    "rates": "optimized release warm repeated identical-file Rust lexical tokens/s; includes allocation and loop overhead; not neural decoding or product end-to-end throughput"
+  },
+  "validation": {
+    "python_tests": {
+      "command": "rtk proxy python3 -m unittest discover -s tools/visualization/tests -v",
+      "executed": 28,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "native_observer_tests": {
+      "passed": 3,
+      "scope": "source f035969, invocation-receipt"
+    },
+    "native_catalog_tests": {
+      "passed": 2,
+      "scope": "bounded catalog sorting/refusal"
+    },
+    "default_feature_lib_check": "PASS at native capture source",
+    "full_semantics": "PASS all six actual journals, native GP champion/export identities, both original artifacts executed, emitted Rust training executed",
+    "max_prediction_abs_error": 6.938893903907228e-18,
+    "saved_scene_reopen": "PASS exact decoded RGBA byte equality at nonsequential frames7165 then271",
+    "source_reconstruction": "PASS all six whole emitted byte streams and1181PNGhashes",
+    "hosted_ci": "NOT_RUN",
+    "predictive_quality": "NOT_QUALIFIED"
+  },
+  "commands": {
+    "build_scene": [
+      "rtk",
+      "proxy",
+      "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-runtime/Blender.app/Contents/MacOS/Blender",
+      "--background",
+      "--factory-startup",
+      "--python",
+      "tools/visualization/blender/build_scene.py",
+      "--",
+      "--layout",
+      "board",
+      "--trace",
+      "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/single-run-final/trace.json",
+      "--engine-proof",
+      "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/single-run-final",
+      "--emit-metrics",
+      "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/single-run-final/release-metrics",
+      "--code-pages",
+      "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/full-code-final",
+      "--selection",
+      "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/embedding-selection/selection.json",
+      "--output",
+      "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/review-final-board-v3/preview.blend",
+      "--width",
+      "3840",
+      "--height",
+      "2160",
+      "--frames",
+      "288",
+      "--fps",
+      "12",
+      "--code-hold-frames",
+      "6",
+      "--show-gp-tree",
+      "--render-frame",
+      "271",
+      "--render-frame",
+      "1063",
+      "--render-frame",
+      "7165"
+    ],
+    "build_log": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/render-final-board-v3.log",
+    "exit_code": 0,
+    "reopen_log": "/Users/bentaylor/Documents/ChatGPT/JopeDime/blender-render-20261103/reopen-check.log",
+    "reopen_exit_code": 0,
+    "build_scene_command_scope": "Reproducible equivalent invocation from saved receipt; native exact build/run argv is retained in the capture and release receipts."
+  },
+  "publication": "source-only PR; no raw trace, weights, Blender assets, source pages or images in Git; protected PR2071 untouched; video pending user design feedback"
+}
