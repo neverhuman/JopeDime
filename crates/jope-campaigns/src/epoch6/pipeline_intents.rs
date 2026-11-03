@@ -1,5 +1,7 @@
 use super::*;
 
+#[derive(Clone, Copy, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum SupplyIntentStateV2 {
     Planned,
     Proposing,
@@ -43,7 +45,7 @@ impl SupplyIntentStateV2 {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SupplyIntentV2 {
     pub schema: String,
@@ -115,7 +117,7 @@ impl SupplyIntentV2 {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct PipelineEdgeV1 {
     pub schema: String,
@@ -161,7 +163,7 @@ impl PipelineEdgeV1 {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkIntentV1 {
     pub schema: String,
@@ -192,7 +194,7 @@ impl WorkIntentV1 {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(tag = "state", rename_all = "snake_case", deny_unknown_fields)]
 pub enum PipelineStageStateV2 {
     Running,
@@ -213,7 +215,7 @@ pub enum PipelineStageStateV2 {
     FailedPermanent,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ConsumerHeartbeatV1 {
     pub schema: String,
@@ -312,7 +314,7 @@ impl ConsumerHeartbeatV1 {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct JopePipelineStatusV2 {
     pub schema: String,
