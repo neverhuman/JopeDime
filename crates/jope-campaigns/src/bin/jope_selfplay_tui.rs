@@ -34,6 +34,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 #[path = "../tui_dashboard.rs"]
 mod tui_dashboard;
+#[path = "../tui_render.rs"]
+mod tui_render;
 
 jope_paths::once_str!(
     fn default_root_str => paths::flywheel_root()
