@@ -384,7 +384,7 @@ struct BinaryCampaignIdentity<'a> {
     fold_authority: &'static str,
 }
 
-mod fold_cache;
+pub(crate) mod fold_cache;
 #[cfg(test)]
 pub(crate) use fold_cache::exact_cv_on_folds_binary;
 pub(crate) use fold_cache::BinaryCvResult;
