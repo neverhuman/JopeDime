@@ -1,4 +1,5 @@
 use super::*;
+use jope_learning::retention::parquet as retention_parquet;
 
 #[test]
 fn parquet_subset_round_trips_every_type_and_null() {
@@ -58,25 +59,29 @@ fn parquet_subset_round_trips_every_type_and_null() {
         metadata: vec![("k".into(), "v".into())],
     };
     for zstd in [false, true] {
-        let bytes = parquet::write(&table, zstd, "test").unwrap();
-        assert_eq!(parquet::read(&bytes).unwrap(), table);
+        let bytes = retention_parquet::write(&table, zstd, "test").unwrap();
+        assert_eq!(retention_parquet::read(&bytes).unwrap(), table);
     }
     let empty = Table {
         rows: vec![],
         ..table.clone()
     };
     assert_eq!(
-        parquet::read(&parquet::write(&empty, true, "test").unwrap()).unwrap(),
+        retention_parquet::read(&retention_parquet::write(&empty, true, "test").unwrap()).unwrap(),
         empty
     );
-    let mut bad = parquet::write(&table, true, "test").unwrap();
+    let mut bad = retention_parquet::write(&table, true, "test").unwrap();
     bad[0] = b'X';
-    assert!(parquet::read(&bad).is_err());
+    assert!(retention_parquet::read(&bad).is_err());
     let mut null_in_required = table.clone();
     null_in_required.rows[0][0] = Cell::Null;
-    assert!(parquet::write(&null_in_required, true, "test").is_err());
+    assert!(retention_parquet::write(&null_in_required, true, "test").is_err());
     // Optional external cross-check: write a sample for an independent reader (pyarrow).
     if let Some(out) = std::env::var_os("JOPE_RETENTION_PARQUET_SAMPLE") {
-        std::fs::write(&out, parquet::write(&table, true, "test").unwrap()).unwrap();
+        std::fs::write(
+            &out,
+            retention_parquet::write(&table, true, "test").unwrap(),
+        )
+        .unwrap();
     }
 }
