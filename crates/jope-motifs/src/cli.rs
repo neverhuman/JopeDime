@@ -349,7 +349,7 @@ fn read_state(env: &Env, state: Option<&Path>) -> Result<QualifiedSet> {
 mod mining_command;
 mod validate_command;
 use mining_command::{mine_verb, render_mine, MineArgs};
-use validate_command::{render_validate, validate_verb, Outcome, ValidateArgs};
+use validate_command::{render_validate, validate_verb, ValidateArgs};
 
 #[cfg(test)]
 mod tests;
