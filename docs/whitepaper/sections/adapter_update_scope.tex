@@ -2,7 +2,7 @@ Typed program edits, cross-family retrieval and grammar synthesis supply
 candidates in the inspected implementation. The inspected loop freezes every
 network parameter, then enables updates only for non-anchor cost-adapter
 parameters (its parent-delta head receives no loss gradient). This loop
-has no neural program writer; its cost adapter is separate from the
+has no neural program writer; its adapter is separate from the
 reference writer and ranking map. Its pool-utility calculation uses the
 recorded scores and gate outcomes of the first four stored pool entries as
 revealed history, then selects the lowest predicted cost from the pool,
