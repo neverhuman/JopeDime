@@ -30,8 +30,10 @@ fn selection_uses_robust_then_oof_and_keeps_first_full_tie() {
 
 #[test]
 fn gate_counts_ties_half_and_updates_best_monotonically() {
-    let mut state = GateState::default();
-    state.last_shipped_deployed = Some(BTreeMap::from([("a".into(), 0.5), ("b".into(), 0.2)]));
+    let mut state = GateState {
+        last_shipped_deployed: Some(BTreeMap::from([("a".into(), 0.5), ("b".into(), 0.2)])),
+        ..GateState::default()
+    };
     let deployed = BTreeMap::from([("a".into(), 0.5), ("b".into(), 0.4)]);
     let summary = gate_generation(&mut state, 3, &deployed, 0.7, &BTreeMap::new());
     assert_eq!(summary.beat_rate_vs_prev, Some(0.75));
@@ -121,8 +123,10 @@ fn evaluation_updates_candidate_scores_and_writes_training_rows() {
     assert_eq!(summary.deployed_scores["dataset-a"], 0.775);
     assert_eq!(summary.rows_out[0]["score"], 0.8);
     assert_eq!(summary.rows_out[0]["metadata"]["rank_pct"], 1.0);
-    assert_eq!(summary.candidate_pool_rows[0]["deployed"], true);
-    assert_eq!(summary.scored_events[0].cache_hit, true);
+    assert!(summary.candidate_pool_rows[0]["deployed"]
+        .as_bool()
+        .unwrap());
+    assert!(summary.scored_events[0].cache_hit);
     assert!(Path::new(&summary.self_rows_path).exists());
     assert!(summary
         .candidate_pool_path
