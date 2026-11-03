@@ -1,6 +1,6 @@
 use super::{
-    canonical_genome, measured_tilt_leaf_log_probs, MeasuredTiltPolicyConfig,
-    PolicySeeds, RetrievalSeeds, ScratchBudget, TrainingRoster,
+    MeasuredTiltPolicyConfig, PolicySeeds, RetrievalSeeds, ScratchBudget, TrainingRoster,
+    canonical_genome, measured_tilt_leaf_log_probs,
 };
 
 mod policy;
