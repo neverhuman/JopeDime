@@ -1,0 +1,86 @@
+{
+ "arms": [
+  "R882",
+  "G025",
+  "STABLE_G025",
+  "STABLE_SHUF",
+  "BAG_VOTE_UNGATED"
+ ],
+ "authority": "/home/ubuntu/nudges/hw_t0505_argon_h246.md",
+ "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "fold_manifest_sha256": "3be3efbb8f107061849b09e0565cc03656472bea45958aedabe26f7ae522d60e",
+ "fold_seeds": {
+  "246101": 246141,
+  "246102": 246142,
+  "246103": 246143
+ },
+ "holm_m": 1,
+ "max_best_match_jaccard_vs_h203_h245": 0.19280141569144127,
+ "metrics_sha256": "14d924f4fbd30a6be5100db959e0fd80cb451b2039fd23ef1943965a55632bdc",
+ "optimizer_updates": 0,
+ "owner": "rd_argon",
+ "parent_commit": "796f737ecbfeb8e98cfdc32848cc7c38fe0ee0cc",
+ "parent_sources": {
+  "python/src/jope/north_star/dope_freeze_guard.py": "38cbed30f8361a5e95e05d768e16051437b22a629ec56c9ac5938654685b4ea2",
+  "research/flywheel_selfplay/h124_gbm_shrink_blend/runner.py": "9ebce9652a7caadc7e50896a9c1b667de5aea53f1e3cf4f8797f815d8a16285a",
+  "research/flywheel_selfplay/h139_selection_audit/runner.py": "7a37821db82c89ddf8e48266383c681b20535ff31b95504e259c74dbe5a9c686",
+  "research/flywheel_selfplay/h217_gated025_confirm/analysis.py": "87b57d9797030d6e72b473fa75b3710f489511c1aced3d6edf63857c4454134f",
+  "research/flywheel_selfplay/h217_gated025_confirm/runner.py": "0d8bbbd39460fe5bb729e5c1f0beadff52b9dcb63224bb62b4b18d52daffe136",
+  "research/flywheel_selfplay/h233_stable_g025/analysis.py": "d08501747192812edd6fa6228fb32508df9dceabed4e004b05a07c1bea0c2582",
+  "research/flywheel_selfplay/h233_stable_g025/monitor.py": "ca3a4c413efe799d5d8fab18c0b413fa9d868387dc66085593059b25bcddf4df",
+  "research/flywheel_selfplay/h233_stable_g025/runner.py": "343fb3eac3da2196960b14a7deb62de87f810ccf38438b9458f185895e0eb59d"
+ },
+ "planned_fits": 75,
+ "planned_units": 45,
+ "prereg_sha256": "d733f8c1c1d7bf50f73bbbdb92daf8b1d7b424ed35071dfeda5c311fee684531",
+ "primary_arm": "STABLE_G025",
+ "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+ "resource_limits": {
+  "affinity": [
+   52,
+   53,
+   54,
+   55
+  ],
+  "closeout_utc": "2026-11-03T10:45:00Z",
+  "compute_stop_epoch": 1793700000.0,
+  "compute_stop_utc": "2026-11-03T10:00:00Z",
+  "host": "xbabe2",
+  "load5_admit_max": 100.0,
+  "load5_pause_above": 108.0,
+  "load5_resume_at_or_below": 100.0,
+  "mem_admit_min_bytes": 32212254720,
+  "mem_hard_stop_instant_below_bytes": 6442450944,
+  "mem_hard_stop_sustained_below_bytes": 12884901888,
+  "mem_hard_stop_sustained_seconds": 30.0,
+  "mem_pause_below_bytes": 21474836480,
+  "mem_resume_at_or_above_bytes": 26843545600,
+  "mem_resume_sustained_seconds": 30.0,
+  "min_free_bytes": 300000000000,
+  "nice": 19,
+  "omp_threads_max": 4,
+  "rss_max_bytes": 4294967296
+ },
+ "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H246/",
+ "schema": "jope.h246.manifest/v1",
+ "seeds": [
+  246101,
+  246102,
+  246103
+ ],
+ "source_commit": null,
+ "source_sha256": {
+  "PREREG.md": "d733f8c1c1d7bf50f73bbbdb92daf8b1d7b424ed35071dfeda5c311fee684531",
+  "analysis.py": "5cea1f820cdc3095a45178966bd566aac4b661ba74f405defc09377080848eb1",
+  "fold_manifest.json": "3be3efbb8f107061849b09e0565cc03656472bea45958aedabe26f7ae522d60e",
+  "metrics.schema.json": "5a22c6e34e2c2bba6f57885fb3191d6a86e0886f5e71739aa54bd3eb56dc3017",
+  "monitor.py": "3e46072116794f76d93ed7291188a37abe897563af18c5a0f53e3a317f53b880",
+  "runner.py": "1e4c9a56e0292f634c845de1254a1fedc7cb68d5b838177245959c8c8e7ebd9f",
+  "test_h246.py": "e6fc4afc8d29edeae6db107063b522025a1bd985dd3aba742ffbc8d40599458b"
+ },
+ "status": "PREREGISTERED",
+ "study_path": "research/flywheel_selfplay/h246_stable_g025_rerun",
+ "verdict": null,
+ "wave": "H246",
+ "wave_id": "h246-stable-g025-rerun-20261103"
+}

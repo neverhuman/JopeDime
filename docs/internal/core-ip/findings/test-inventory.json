@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
+        "reason": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification.",
+        "role": "research"
+      },
     "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
       "reason": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification.",
       "role": "research"
