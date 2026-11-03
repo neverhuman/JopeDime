@@ -1,5 +1,5 @@
 use super::{
-    canonical_genome, measured_tilt_leaf_log_probs, rows_digest, MeasuredTiltPolicyConfig,
+    canonical_genome, measured_tilt_leaf_log_probs, MeasuredTiltPolicyConfig,
     PolicySeeds, RetrievalSeeds, ScratchBudget, TrainingRoster,
 };
 
