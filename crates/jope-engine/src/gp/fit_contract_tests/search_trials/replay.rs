@@ -3,6 +3,20 @@ use super::*;
 /// A deterministic numerical failure that parses but has no fitted operator.
 pub(crate) const UNFITTABLE: &str = "(pipe X (unknown))";
 
+fn directory_snapshot(directory: &Path) -> std::collections::BTreeMap<PathBuf, Vec<u8>> {
+    let mut files = std::collections::BTreeMap::new();
+    for entry in walkdir::WalkDir::new(directory).follow_links(false) {
+        let entry = entry.unwrap();
+        assert!(!entry.file_type().is_symlink());
+        if entry.file_type().is_file() {
+            let relative = entry.path().strip_prefix(directory).unwrap().to_owned();
+            files.insert(relative, fs::read(entry.path()).unwrap());
+        }
+    }
+    assert!(!files.is_empty());
+    files
+}
+
 /// An 80-slot seed population for the view fixture's cut 0. The first slots are
 /// `leading`; every slot carries the given critic rank weight (never a score).
 pub(crate) fn seed_population(
@@ -126,13 +140,10 @@ pub(crate) fn independent_replay_reproduces_real_search_winners_and_refuses_tamp
         outputs.push(output);
     }
     let output = &outputs[0];
-    let before = crate::smartcluster_worker::hash_directory(output).unwrap();
+    let before = directory_snapshot(output);
     let replayed = verify_search(root, output).unwrap();
     // Replay is read-only: no authority-bearing or published byte changed.
-    assert_eq!(
-        crate::smartcluster_worker::hash_directory(output).unwrap(),
-        before
-    );
+    assert_eq!(directory_snapshot(output), before);
     let rows: Vec<Value> = read_json(&output.join("observations.json")).unwrap();
     let search: Value = read_json(&output.join("search.json")).unwrap();
     let replay = &replayed.replay;
