@@ -97,16 +97,16 @@ pub fn run_distilled_flywheel_with_s3_prior(
         None => (None, vec![0usize; cfg.eval.folds]),
     };
 
-    let round_results = rounds::run_rounds(
+    let round_results = rounds::run_rounds(rounds::RoundInput {
         pools,
         context_features,
         pf,
-        &scores_set,
+        scores_set: &scores_set,
         direction,
         cfg,
         parquet_dir,
-        fold_s3_priors.as_deref(),
-    )?;
+        fold_s3_priors: fold_s3_priors.as_deref(),
+    })?;
     let rounds::RoundResults {
         round_summaries,
         round_metrics_by_budget,
