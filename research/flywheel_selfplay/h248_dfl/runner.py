@@ -338,6 +338,7 @@ def main():
     if (
         os.uname().nodename.split(".")[0] != "xbabe2"
         or os.getpriority(os.PRIO_PROCESS, 0) != 19
+        or sorted(os.sched_getaffinity(0)) != [48, 49, 50, 51]
         or torch.cuda.is_initialized()
     ):
         raise RuntimeError("CPU xbabe2 nice19 required")
