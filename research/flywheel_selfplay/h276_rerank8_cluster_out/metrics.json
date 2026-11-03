@@ -1,0 +1,36 @@
+{
+  "wave": "H276",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H276",
+    "status": "COMPLETE",
+    "verdict": "PASS or NO_ADVANCE",
+    "arms": [
+      "r882",
+      "RERANK4",
+      "RERANK8",
+      "RERANK8_VETO",
+      "RERANK8_SHUF_UNC"
+    ],
+    "seeds": [
+      276101,
+      276102,
+      276103
+    ],
+    "partitions": [
+      "KM276140",
+      "KM276141",
+      "KM276142",
+      "WARD"
+    ],
+    "decision": "per gated arm: median > +0.010, Holm-level LCB > 0 (cluster bootstrap, Holm m=2), 3/3 seeds, >=4/5 clusters non-negative in every partition, -2.0 picks <= r882, placebo <= +0.005",
+    "primary_cluster_out": "OOF-by-cluster panel: per-seed medians over partitions, per-cluster gains, W/T/L, harm, Elo",
+    "secondary_dlval": "supporting only",
+    "invalid_picks": "-2.0 picks per arm",
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0..."
+  }
+}
