@@ -53,6 +53,9 @@ markers. An existing retry marker is a refusal, not permission to resume or
 reset anything. The 522 failed identities are selected from the immutable
 original terminal panel `f874cae1…`; the 60 valid identities are never dispatched.
 Original failures and unknown physical charges stay in custody.
+Dispatch order is reconstructed from the signed plan, including reversed policy
+order on odd seeds. The archived logical panel's sorted order is not a dispatch
+schedule.
 
 Only after all 522 new responses are durably returned does the controller
 assemble a separate logical panel. It copies historical valid rows verbatim,

@@ -58,6 +58,25 @@ def key(row):
     return row["dataset"]["id"], row["seed"], row["guidance"]
 
 
+def ordered_retry_rows(plan, failed):
+    by_key = {key(row): row for row in failed}
+    ordered = []
+    for dataset in plan["datasets"]:
+        for seed in plan["seeds"]:
+            policies = ["heuristic", "learned"]
+            if seed % 2:
+                policies.reverse()
+            for policy in policies:
+                row = by_key.get((dataset["id"], seed, policy))
+                if row is not None:
+                    ordered.append(row)
+    q1.require(
+        len(ordered) == len(failed) == len(by_key),
+        "retry order lost or duplicated a unit",
+    )
+    return ordered
+
+
 def preflight(config):
     q1.require(
         config["schema"] == "jope.q1-attempt10-runtime-amendment/v1", "amendment schema"
@@ -139,7 +158,7 @@ def preflight(config):
         time.time() + plan["timeout_seconds"] + 5 < config["fixed_deadline_unix"],
         "insufficient admitted deadline remains",
     )
-    return plan, original, failed
+    return plan, original, ordered_retry_rows(plan, failed)
 
 
 def requests(plan, failed, config, samples):
@@ -279,7 +298,7 @@ def run(config, config_path):
                         and cleanup["daemon_pid"] == engine["pid"]
                         and cleanup["completed_unix"] >= requested
                         and cleanup["daemon_exited"] is True
-                                and q1.integer(cleanup["workers_remaining"])
+                        and q1.integer(cleanup["workers_remaining"])
                         and cleanup["workers_remaining"] == 0
                         and cleanup["tunnel_exited"] is True
                     ):
@@ -299,7 +318,10 @@ def run(config, config_path):
                 plan["pins"]["bundle_sha256"] + ".attempt10.started.json"
             )
             with marker.open("x") as stream:
-                q1.append_receipt(stream, {**state, "status": "started_outcome_unknown", "attempt": 10})
+                q1.append_receipt(
+                    stream,
+                    {**state, "status": "started_outcome_unknown", "attempt": 10},
+                )
             state["status"] = "RUNNING"
             try:
                 with (
@@ -328,9 +350,13 @@ def run(config, config_path):
                     q1.append_receipt(stream, row)
             state["status"] = "TERMINAL_UNANALYZED"
             state["new_terminal_units"] = len(new)
-            state["new_complete_units"] = sum(row["response"]["status"] == "complete" for row in new.values())
+            state["new_complete_units"] = sum(
+                row["response"]["status"] == "complete" for row in new.values()
+            )
             state["logical_panel_sha256"] = q1.sha_file(output / "logical-panel.jsonl")
-            finish = marker.with_name(marker.name.replace(".started.json", ".finished.json"))
+            finish = marker.with_name(
+                marker.name.replace(".started.json", ".finished.json")
+            )
             with finish.open("x") as stream:
                 q1.append_receipt(stream, state)
     except q1_dispatch.BackendFatal as error:
