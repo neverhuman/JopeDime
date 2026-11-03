@@ -4560,6 +4560,38 @@
         "reason": "H243 preregistered CPU-only diagnostic: zero-update module-wise soup of r882 and r782 (427b0d46): the 47 adapter tensors partitioned into 11 frozen module groups (groups.json); candidates replace one group g by (1-beta) r882_g + beta r782_g, beta in {0.5, 1.0}; MODSWAP_SELECT (best single (g, beta) per FIT cell) primary and GREEDY_SOUP (Wortsman 2022 greedy forward add on FIT, at most 5 ingredients, +0.001 strict improvement) exploratory, Holm m=2; PLACEBO matched-L2 random move of the selected group report-only; CONTROL r882 exact; DOPE c51a56d0 frozen; fresh folds 243141-243143, strict selector locked before one DL-Val91 scoring; H152 cliff context #27 reported separately, never excluded; ADVANCE needs median > +0.002, LCB95 > 0, Holm p < .05 and >= 2/3 seeds positive; merged H242/H241 zero-update harness and H239 A1 memory guard on xbabe2 CPU 44-47."
       }
     },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/analysis.py": {
+      "bytes": 10410,
+      "sha256": "dc66994350a9b027b8555cf94dcf2581c6d045e6f83ed9df75a60cd9e6b75396",
+      "classification": {
+        "role": "research",
+        "reason": "H247 preregistered CPU-only diagnostic: Muon (Jordan et al. 2024; Nesterov momentum .95, quintic Newton-Schulz-5 orthogonalization, lr 2e-4, sqrt(max(1,rows/cols)) scaling, on all 16 2-D adapter matrices; CTRL AdamW on other tensors) and Grokfast-EMA (Lee et al. 2024; alpha .98, lambda 2.0, after backward and before the global clip, on CTRL AdamW) vs the exact H170 CTRL AdamW recipe for the 40-update r882 adapter continuation, co-primary with Holm m=2; identical CTRL loss, batches and data order; one fresh fold seed 247140, seeds 247101-247103, 15 cells/arm, 1,800 updates; strict inner selector locked before assessment; unconstrained step-40 diagnostic; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H237/H232/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/monitor.py": {
+      "bytes": 8541,
+      "sha256": "305ac610811ad85118ef1a51e4470dbc19734b9c48c0786ec253ae83c39caa8e",
+      "classification": {
+        "role": "research",
+        "reason": "H247 preregistered CPU-only diagnostic: Muon (Jordan et al. 2024; Nesterov momentum .95, quintic Newton-Schulz-5 orthogonalization, lr 2e-4, sqrt(max(1,rows/cols)) scaling, on all 16 2-D adapter matrices; CTRL AdamW on other tensors) and Grokfast-EMA (Lee et al. 2024; alpha .98, lambda 2.0, after backward and before the global clip, on CTRL AdamW) vs the exact H170 CTRL AdamW recipe for the 40-update r882 adapter continuation, co-primary with Holm m=2; identical CTRL loss, batches and data order; one fresh fold seed 247140, seeds 247101-247103, 15 cells/arm, 1,800 updates; strict inner selector locked before assessment; unconstrained step-40 diagnostic; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H237/H232/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/runner.py": {
+      "bytes": 36214,
+      "sha256": "4af46a634fec6b0836680eedb863a1044de0d9c6a5339d16b611318f9d1fcccc",
+      "classification": {
+        "role": "research",
+        "reason": "H247 preregistered CPU-only diagnostic: Muon (Jordan et al. 2024; Nesterov momentum .95, quintic Newton-Schulz-5 orthogonalization, lr 2e-4, sqrt(max(1,rows/cols)) scaling, on all 16 2-D adapter matrices; CTRL AdamW on other tensors) and Grokfast-EMA (Lee et al. 2024; alpha .98, lambda 2.0, after backward and before the global clip, on CTRL AdamW) vs the exact H170 CTRL AdamW recipe for the 40-update r882 adapter continuation, co-primary with Holm m=2; identical CTRL loss, batches and data order; one fresh fold seed 247140, seeds 247101-247103, 15 cells/arm, 1,800 updates; strict inner selector locked before assessment; unconstrained step-40 diagnostic; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H237/H232/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/treatment.py": {
+      "bytes": 8662,
+      "sha256": "56c27da85ced0a96cc32b2a40640cde203722123d99999bb664928ca03b89003",
+      "classification": {
+        "role": "research",
+        "reason": "H247 preregistered CPU-only diagnostic: Muon (Jordan et al. 2024; Nesterov momentum .95, quintic Newton-Schulz-5 orthogonalization, lr 2e-4, sqrt(max(1,rows/cols)) scaling, on all 16 2-D adapter matrices; CTRL AdamW on other tensors) and Grokfast-EMA (Lee et al. 2024; alpha .98, lambda 2.0, after backward and before the global clip, on CTRL AdamW) vs the exact H170 CTRL AdamW recipe for the 40-update r882 adapter continuation, co-primary with Holm m=2; identical CTRL loss, batches and data order; one fresh fold seed 247140, seeds 247101-247103, 15 cells/arm, 1,800 updates; strict inner selector locked before assessment; unconstrained step-40 diagnostic; cliff context #27 reported separately; DOPE c51a56d0 frozen; merged H237/H232/H170 machinery with H239 A1 cooperative pauses and per-cell resume on xbabe2 CPU 44-47."
+      }
+    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {
