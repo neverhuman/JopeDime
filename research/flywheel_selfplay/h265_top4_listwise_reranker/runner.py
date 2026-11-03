@@ -367,6 +367,17 @@ def shuffle_labels_within_family(
     return out
 
 
+def compute_sem24_numpy(prog_412: np.ndarray) -> np.ndarray:
+    """Fast vectorized 24D structural semantic signature matching compute_semantic_struct_sig_24d."""
+    x = np.asarray(prog_412, dtype=np.float32)
+    orig_shape = x.shape[:-1]
+    flat = x.reshape(-1, 412)
+    padded = np.pad(flat, ((0, 0), (0, 20)), mode="constant").reshape(-1, 18, 24)
+    sig = padded.mean(axis=1) + 0.5 * padded.max(axis=1)
+    norms = np.maximum(np.linalg.norm(sig, axis=-1, keepdims=True), 1e-6)
+    return (sig / norms).reshape(*orig_shape, 24).astype(np.float32)
+
+
 def load_cohort_top4_packets(
     rows: list[dict[str, Any]],
     costs_by_cid: dict[str, np.ndarray],
@@ -391,7 +402,7 @@ def load_cohort_top4_packets(
                 fitness = z["fitness"].astype(np.float64)
                 gate = z["gate"].astype(np.bool_)
                 prog = z["program"].astype(np.float32)
-                sem24 = z["sem24"].astype(np.float32)
+            sem24 = compute_sem24_numpy(prog)
 
             utility = np.where(gate, -fitness, -2.0)
             rcost = costs_by_cid[cid]

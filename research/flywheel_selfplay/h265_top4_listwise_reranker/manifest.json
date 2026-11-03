@@ -1,67 +1,39 @@
 {
-  "wave_id": "h265-top4-listwise-reranker-20261103",
-  "slug": "h265_top4_listwise_reranker",
-  "title": "Zero-Update Listwise LambdaMART Re-Ranker of r882 Top-4 (0 Test-Time Reveals, Single-Pick)",
-  "owner": "Argon",
-  "status": "PREREGISTERED",
-  "created_at": "2026-11-03T17:05:00Z",
-  "prereg_locked": true,
-  "outcomes_read": 0,
-  "claim_scope": "zero-update FIT-only listwise LambdaMART re-ranker of r882 top-4 with 0 test-time reveals (single-pick evaluation)",
-  "fold_seed": 265140,
-  "seeds": [
-    265101,
-    265102,
-    265103
-  ],
-  "boot_seed": 265150,
   "boot_draws": 10000,
-  "holm_m": 2,
-  "primary_contrast": "RERANK4 - CONTROL",
-  "secondary_contrast": "RERANK4_SHUF - CONTROL",
-  "inputs": {
-    "round_882_pt": {
-      "path": "/home/ubuntu/jope_plan/evidence/H265/argon-t1658/inputs/r882/round-882.pt",
-      "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
-    },
-    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
-    "selected_json": {
-      "path": "/home/ubuntu/jope-data/h50/input/selected.json",
-      "sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
-    },
-    "source_manifest_json": {
-      "path": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
-      "sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
-    },
-    "context_features_npz": {
-      "path": "/home/ubuntu/jope-data/h58/cache/context_features.npz",
-      "sha256": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
-    },
-    "pool_priors_npz": {
-      "path": "/home/ubuntu/jope-data/h58/cache/pool_priors.npz",
-      "sha256": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
-    },
-    "fold_manifest": {
-      "path": "research/flywheel_selfplay/h265_top4_listwise_reranker/fold_manifest.json",
-      "fold_seed": 265140,
-      "n_folds": 5,
-      "n_cells": 15
-    }
+  "boot_seed": 265150,
+  "bound_commit_sha": "ad5ff5c9cd25817126fca7c1d0253d1bf155ddfd",
+  "claim_scope": "zero-update FIT-only listwise LambdaMART re-ranker of r882 top-4 with 0 test-time reveals (single-pick evaluation)",
+  "completed_utc": "2026-11-03T17:23:59Z",
+  "created_at": "2026-11-03T17:05:00Z",
+  "file_checksums_sha256": {
+    "PREREG.md": "37b8e137f5a84de279a48cb377683596bc53251341eee4f52c3f8fc47fbab8ce",
+    "README.md": "68db2bc25c8f043e1c320b04295ae2bdf3fe52a66078aec39488e381c102bf3b",
+    "fold_manifest.json": "e3ff8da781fddaceb2bef305dc330dfd4274834bae38700796cfc2cc4b8d0d1b",
+    "metrics.json": "b02f6c7c97b25275bab8836cf33cbbeb95750934766f2937ecc96f03973c261f",
+    "monitor.py": "17551dd073d14d3a971ae15bd86bbeefae71eaa1b316efe2b28335e0074581a2",
+    "runner.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "test_h265.py": "35eb19251ea92f1c59855cec872cdc5c7aee101d82aa18f51238a0a7eee30307"
   },
+  "files": [
+    "PREREG.md",
+    "README.md",
+    "fold_manifest.json",
+    "manifest.json",
+    "metrics.json",
+    "monitor.py",
+    "runner.py",
+    "test_h265.py"
+  ],
+  "fold_seed": 265140,
+  "holm_m": 2,
   "hyperparameters": {
-    "ranker_objective": "lambdarank",
-    "max_depth": 3,
-    "num_leaves": 7,
-    "min_child_samples": 20,
+    "advance_min_gain": 0.002,
+    "elo_anchor_arm": "CONTROL",
+    "elo_anchor_value": 1500.0,
     "lr_grid": [
       0.03,
       0.05,
       0.1
-    ],
-    "n_estimators_grid": [
-      50,
-      100,
-      200
     ],
     "margin_grid": [
       0.0,
@@ -75,29 +47,71 @@
       1.0,
       "inf"
     ],
-    "strict_fit_min_gain": 0.001,
-    "advance_min_gain": 0.002,
-    "elo_anchor_arm": "CONTROL",
-    "elo_anchor_value": 1500.0
+    "max_depth": 3,
+    "min_child_samples": 20,
+    "n_estimators_grid": [
+      50,
+      100,
+      200
+    ],
+    "num_leaves": 7,
+    "ranker_objective": "lambdarank",
+    "strict_fit_min_gain": 0.001
   },
-  "files": [
-    "PREREG.md",
-    "README.md",
-    "fold_manifest.json",
-    "manifest.json",
-    "metrics.json",
-    "monitor.py",
-    "runner.py",
-    "test_h265.py"
-  ],
+  "inputs": {
+    "context_features_npz": {
+      "path": "/home/ubuntu/jope-data/h58/cache/context_features.npz",
+      "sha256": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf"
+    },
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "fold_manifest": {
+      "fold_seed": 265140,
+      "n_cells": 15,
+      "n_folds": 5,
+      "path": "research/flywheel_selfplay/h265_top4_listwise_reranker/fold_manifest.json"
+    },
+    "pool_priors_npz": {
+      "path": "/home/ubuntu/jope-data/h58/cache/pool_priors.npz",
+      "sha256": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
+    },
+    "round_882_pt": {
+      "path": "/home/ubuntu/jope_plan/evidence/H265/argon-t1658/inputs/r882/round-882.pt",
+      "sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+    },
+    "selected_json": {
+      "path": "/home/ubuntu/jope-data/h50/input/selected.json",
+      "sha256": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1"
+    },
+    "source_manifest_json": {
+      "path": "/home/ubuntu/jope-data/h50/input/source_manifest.json",
+      "sha256": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+    }
+  },
+  "outcomes_read": 0,
+  "owner": "Argon",
   "prereg_commit_sha": "11d8b1f1895f823476a7d9a4f6b9099518cf835d",
-  "file_checksums_sha256": {
-    "PREREG.md": "37b8e137f5a84de279a48cb377683596bc53251341eee4f52c3f8fc47fbab8ce",
-    "README.md": "d23e491b2b03c49888b6871799ddf4ba7c6ddf8e2a899bb0174ec106a09b0d39",
-    "fold_manifest.json": "e3ff8da781fddaceb2bef305dc330dfd4274834bae38700796cfc2cc4b8d0d1b",
-    "metrics.json": "0e8803e26984a19f360e946b645e54e660568f3246072318c7ac6465cc7f42d6",
-    "monitor.py": "17551dd073d14d3a971ae15bd86bbeefae71eaa1b316efe2b28335e0074581a2",
-    "runner.py": "a46e110542480e453382106c8a320dbbdbff508d3fad3cc0f0a7bf8e32b6f198",
-    "test_h265.py": "35eb19251ea92f1c59855cec872cdc5c7aee101d82aa18f51238a0a7eee30307"
-  }
+  "prereg_locked": true,
+  "primary_contrast": "RERANK4 - CONTROL",
+  "s3_attempt_002_manifest": {
+    "bytes": 4120,
+    "sha256": "b1a866b841f5f17a14ae38ce62f4a7deedcafaf5a25eb92daa51557d7af064ad",
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H265/attempt-002/s3_manifest.json",
+    "version_id": "1LEMA3bIwPFe4tyT7tWB_l9jltEhlo7F"
+  },
+  "s3_prereg_manifest": {
+    "sha256": "5a7544d4e8b2e3096275081fbf7a47783747afdb92249d87b225eec56259b868",
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H265/prereg-11d8b1f1895f/prereg_s3_manifest.json",
+    "version_id": "JwX9Xt8.yDtbUTrtY3H_GhFg7gS1j1.H"
+  },
+  "secondary_contrast": "RERANK4_SHUF - CONTROL",
+  "seeds": [
+    265101,
+    265102,
+    265103
+  ],
+  "slug": "h265_top4_listwise_reranker",
+  "status": "COMPLETE",
+  "title": "Zero-Update Listwise LambdaMART Re-Ranker of r882 Top-4 (0 Test-Time Reveals, Single-Pick)",
+  "verdict": "ADVANCE",
+  "wave_id": "h265-top4-listwise-reranker-20261103"
 }
