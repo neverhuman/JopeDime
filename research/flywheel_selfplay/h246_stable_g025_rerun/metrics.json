@@ -1,0 +1,30 @@
+{
+ "arms": [
+  "R882",
+  "G025",
+  "STABLE_G025",
+  "STABLE_SHUF",
+  "BAG_VOTE_UNGATED"
+ ],
+ "combined_verdict": null,
+ "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+ "fold_seeds": {
+  "246101": 246141,
+  "246102": 246142,
+  "246103": 246143
+ },
+ "holm_m": 1,
+ "max_best_match_jaccard_vs_h203_h245": 0.19280141569144127,
+ "optimizer_updates": 0,
+ "planned_fits": 75,
+ "primary_arm": "STABLE_G025",
+ "schema": "jope.h246.stable-g025-rerun/v1",
+ "seeds": [
+  246101,
+  246102,
+  246103
+ ],
+ "status": "PREREGISTERED",
+ "verdict": null,
+ "wave_id": "h246-stable-g025-rerun-20261103"
+}
