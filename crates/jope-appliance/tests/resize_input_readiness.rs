@@ -92,11 +92,7 @@ fn readiness_child() {
     let pid = std::process::id().to_string();
     println!("READINESS_READY {pid}");
     std::io::stdout().flush().unwrap();
-    assert!(Command::new("/bin/kill")
-        .args(["-STOP", &pid])
-        .status()
-        .unwrap()
-        .success());
+    signal_hook::low_level::raise(signal_hook::consts::SIGSTOP).unwrap();
     let (mut resize, mut enter) = (false, false);
     // Signal delivery and TTY readiness can be observed in either order.
     for _ in 0..2 {
