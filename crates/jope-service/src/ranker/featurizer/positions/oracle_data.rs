@@ -23,4 +23,5 @@ mod goldens_a;
 #[path = "oracle_goldens_b.rs"]
 mod goldens_b;
 
-pub(crate) const PYTHON_ORACLE_GOLDENS: &str = concat!(goldens_a::PART, goldens_b::PART);
+pub(crate) static PYTHON_ORACLE_GOLDENS: std::sync::LazyLock<String> =
+    std::sync::LazyLock::new(|| format!("{}{}", goldens_a::PART, goldens_b::PART));
