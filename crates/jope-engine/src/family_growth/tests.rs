@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 /// RFC 4231 test cases 1, 2 and 6 (short key, short ASCII key, key longer than a block).
 #[test]
 fn hmac_matches_rfc_4231() {
