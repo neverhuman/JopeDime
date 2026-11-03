@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct NativeFolds {
+pub(in crate::discover::r#loop) struct NativeFolds {
     pub(super) version: u32,
     pub(super) matrix_sha256: String,
     pub(super) target: String,
