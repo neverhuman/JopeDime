@@ -1,7 +1,8 @@
+use super::executor::{RefitIoError, RefitWorkerError};
 use super::*;
 
 impl Discovery {
-    fn commit_control(&mut self, next: Checkpoint, state: RunState) -> Result<()> {
+    pub(super) fn commit_control(&mut self, next: Checkpoint, state: RunState) -> Result<()> {
         ensure!(!self.poisoned, "commit outcome unknown: reopen the run");
         let mut snapshot = self.snapshot.clone();
         snapshot.state = state;
@@ -362,29 +363,58 @@ impl Discovery {
             .transpose()?;
         let run = next.plan.run_id.clone();
         let round = next.next_round - 1;
-        let champion = next.champion.clone();
+        let champion_model = next
+            .champion
+            .as_ref()
+            .map(|champion| champion.model.clone());
         self.poisoned = true;
-        let committed = self.log.commit(RunUpdate {
-            expected_revision: Some(self.snapshot.revision.0), snapshot,
-            checkpoint: serde_json::to_value(&next)?, blobs: checkpoint_blobs(&next)?,
-        }, events, |tx| {
-            if let Some(champion) = champion {
-                let key = RecordKey::Artifact(format!("art_{}", &hex_blob(&champion.model)[..24]).parse()
-                    .map_err(|_| StoreError::Invalid("artifact identity invalid"))?);
-                if let Some(old) = tx.get(&key)? {
-                    if old.blobs != [champion.model] { return Err(StoreError::Integrity("artifact identity collision")); }
-                } else {
-                    tx.put(&key, &Record::metadata(json!({"kind":"m1-native-fit", "model_digest":hex_blob(&champion.model)}), vec![champion.model]))?;
+        let committed = self.log.commit(
+            RunUpdate {
+                expected_revision: Some(self.snapshot.revision.0),
+                snapshot,
+                checkpoint: serde_json::to_value(&next)?,
+                blobs: checkpoint_blobs(&next)?,
+            },
+            events,
+            |tx| {
+                if let Some(model) = champion_model {
+                    let model_digest = hex_blob(&model);
+                    let key = RecordKey::Artifact(
+                        format!("art_{}", &model_digest[..24])
+                            .parse()
+                            .map_err(|_| StoreError::Invalid("artifact identity invalid"))?,
+                    );
+                    if let Some(old) = tx.get(&key)? {
+                        if old.blobs != [model.clone()] {
+                            return Err(StoreError::Integrity("artifact identity collision"));
+                        }
+                    } else {
+                        tx.put(
+                            &key,
+                            &Record::metadata(
+                                json!({"kind":"m1-native-fit", "model_digest":model_digest}),
+                                vec![model],
+                            ),
+                        )?;
+                    }
                 }
-            }
-            for (slot, data) in records.into_iter().enumerate() {
-                let number = round.checked_mul(65_536).and_then(|n| n.checked_add(slot as u64)).ok_or(StoreError::Invalid("evaluation key exhausted"))?;
-                let key = RecordKey::Evaluation { run: run.clone(), number };
-                if tx.get(&key)?.is_some() { return Err(StoreError::Integrity("round evaluation already committed")); }
-                tx.put(&key, &Record::metadata(data, vec![]))?;
-            }
-            Ok(())
-        })?;
+                for (slot, data) in records.into_iter().enumerate() {
+                    let number = round
+                        .checked_mul(65_536)
+                        .and_then(|n| n.checked_add(slot as u64))
+                        .ok_or(StoreError::Invalid("evaluation key exhausted"))?;
+                    let key = RecordKey::Evaluation {
+                        run: run.clone(),
+                        number,
+                    };
+                    if tx.get(&key)?.is_some() {
+                        return Err(StoreError::Integrity("round evaluation already committed"));
+                    }
+                    tx.put(&key, &Record::metadata(data, vec![]))?;
+                }
+                Ok(())
+            },
+        )?;
         self.snapshot = committed.snapshot;
         self.checkpoint = next;
         self.poisoned = false;
