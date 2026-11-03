@@ -170,6 +170,16 @@
       "lanes": [],
       "scope": "Benchmark script/example source; not a collected test or performance proof."
     },
+    "benchmark:crates/feat-math/src/kernel/ridge_fast/bench.rs": {
+      "discovery": {
+        "kind": "benchmark-source"
+      },
+      "dispositions": [
+        "benchmark"
+      ],
+      "lanes": [],
+      "scope": "Ignored benchmark measurements; not a collected test or performance proof."
+    },
     "benchmark:crates/feat-math/tests/bench.rs": {
       "discovery": {
         "kind": "benchmark-source"
@@ -2203,36 +2213,6 @@
       ],
       "scope": "Synthetic D1 Darwin development-package identity and receipt controls; native DEV-BUILD execution is separately recorded and never qualifies the signed release gate."
     },
-    "python:deploy/ci/_runner_case_mac.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Mac runner admission, registration, transport, and repository custody contract cases."
-    },
-    "python:deploy/ci/_runner_case_support.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Shared imports and repository helpers for runner case modules; not a directly discovered test file."
-    },
-    "python:deploy/ci/_runner_case_trim.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [],
-      "lanes": [
-        "hygiene"
-      ],
-      "scope": "Runner target trimming and idle-lane launcher contract cases."
-    },
     "python:deploy/ci/cuda/test_evidence.py": {
       "discovery": {
         "kind": "python-family"
@@ -2423,6 +2403,36 @@
         "hygiene"
       ],
       "scope": "Descriptor-anchored exact reviewed vendor inventory/hash/size checks and 28 fail-closed tamper controls; no substitute for Git review of provenance or numerical qualification."
+    },
+    "python:deploy/ci/test_provenance_binding.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_provenance_manual.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
+    },
+    "python:deploy/ci/test_provenance_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of runner provenance controls; synthetic fixtures validate binding and failure handling, not a live CI run."
     },
     "python:deploy/ci/test_runner_cases.py": {
       "discovery": {
@@ -2893,6 +2903,26 @@
         "python"
       ],
       "scope": "Fixture-only Lane B seal and judge-evaluator tests via run_rlfw_offline.py. Temporary seals only; no real seal is released, and no Kumo weights, corpus, or live evaluator are loaded."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_curve.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only Lane B judge tests via run_rlfw_offline.py. Temporary fixtures only; no real seal, Kumo weights, corpus, or live evaluator."
+    },
+    "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_judge_lane_quarantine.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python"
+      ],
+      "scope": "Fixture-only Lane B judge tests via run_rlfw_offline.py. Temporary fixtures only; no real seal, Kumo weights, corpus, or live evaluator."
     },
     "python:deploy/dl-flywheel/pipelines/rlfw/judge/tests/test_kumo_canaries.py": {
       "discovery": {
@@ -4288,6 +4318,26 @@
       ],
       "scope": "Direct stdlib unittest execution of GPU budget reservations and train-only output manifest custody; synthetic CPU controls, no compute or S3 qualification."
     },
+    "python:deploy/dl-trainonly/test_contracts_budget.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of GPU budget reservation and train-only output custody controls; synthetic CPU fixtures, no compute or S3 qualification."
+    },
+    "python:deploy/dl-trainonly/test_contracts_output.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "hygiene"
+      ],
+      "scope": "Direct stdlib unittest execution of GPU budget reservation and train-only output custody controls; synthetic CPU fixtures, no compute or S3 qualification."
+    },
     "python:deploy/dl-trainonly/test_feature_reduction.py": {
       "discovery": {
         "kind": "python-family"
@@ -4398,6 +4448,16 @@
       "lanes": [],
       "scope": "REL-07 synthetic capture-client process-group, timeout, interrupt, and recorder drain controls."
     },
+    "python:deploy/qualification/agents/transcripts/run-prep/test_capture_clients_support.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
     "python:deploy/qualification/agents/transcripts/run-prep/test_codex_capture_drain.py": {
       "discovery": {
         "kind": "python-family"
@@ -4407,36 +4467,6 @@
       ],
       "lanes": [],
       "scope": "REL-07 Codex normal-exit recorder drain regression. Synthetic same-process-group recorder fixture only; no named client or candidate execution."
-    },
-    "python:deploy/qualification/q1/harness/fifo_launch_admission.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "QLT-04 FIFO launcher admission and signed-input test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
-    },
-    "python:deploy/qualification/q1/harness/fifo_launch_process.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "QLT-04 FIFO launcher process cleanup test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
-    },
-    "python:deploy/qualification/q1/harness/fifo_launch_queue.py": {
-      "discovery": {
-        "kind": "python-family"
-      },
-      "dispositions": [
-        "research"
-      ],
-      "lanes": [],
-      "scope": "QLT-04 FIFO launcher queue/lease test mixin; collected through FIFOTests in test_fifo_launch.py, not a separate CI lane."
     },
     "python:deploy/qualification/q1/harness/test_fifo_launch.py": {
       "discovery": {
@@ -4498,6 +4528,36 @@
       "lanes": [],
       "scope": "QLT-04 synthetic infrastructure retry controls: redacted structured/legacy stderr, actual return codes, fatal-first dispatch stop, timeout handling and strict response-schema refusal. No model, evaluator or dataset inputs; source controls only until explicitly executed, not live Q1 qualification."
     },
+    "python:deploy/qualification/q1/harness/test_q1_metadata_source.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_owner_selection.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/q1/harness/test_q1_statistics.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
     "python:deploy/qualification/v1.0/test_cpu_gates.py": {
       "discovery": {
         "kind": "python-family"
@@ -4517,6 +4577,26 @@
       ],
       "lanes": [],
       "scope": "REL-07 signer-compatible gate-receipt adapter controls; exact 28-gate M1-D2 inventory, CPU-prestage NOT_RUN projection, artifact SHA256 binding, and missing/duplicate/malformed gate refusals."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_scaffold.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
+    },
+    "python:deploy/qualification/v1.0/test_gates_receipt_variants.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "cpu-qualification"
+      ],
+      "lanes": [],
+      "scope": "Synthetic qualification tooling controls only; validates metadata, ownership, statistics, or receipt structure and does not execute a live qualification."
     },
     "python:deploy/qualification/v1.0/test_provider_a1/test_a1.py": {
       "discovery": {
@@ -5415,6 +5495,30 @@
         "full-python"
       ],
       "scope": "Maintained North Star guard and metric fixtures for DOPE freeze, binary metrics, Rust fitness and grouped Elo; CPU synthetic fixtures do not qualify live training or overhead."
+    },
+    "python:python/tests/test_north_star_flywheel_history.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained CPU synthetic North Star history and metric controls; does not qualify live training or overhead."
+    },
+    "python:python/tests/test_north_star_flywheel_metrics.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [],
+      "lanes": [
+        "python",
+        "full-default",
+        "full-python"
+      ],
+      "scope": "Maintained CPU synthetic North Star history and metric controls; does not qualify live training or overhead."
     },
     "python:python/tests/test_optional_task_readiness.py": {
       "discovery": {
@@ -8715,7 +8819,7 @@
         "rust-test",
         "full-default"
       ],
-      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at \u00b11e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
+      "scope": "B16 opt-in causal realized path summaries: wire64, explicit window2..129, fixed-five output (RV, bipower, jump, positive and negative semivariances), increments protected at ±1e6 with saturation faults, lossless per-group checkpoints, native program/model/fit routing, Rust/Python/C++17 recipes and fitted export, Experimental profile GP create/change/remove, independent rational/Decimal boundary references and six equal-budget synthetic utility cohorts. Formal fixed-cohort Baseline promotion remains held."
     },
     "target:feat-math/test/registry_agreement": {
       "discovery": {
@@ -15182,6 +15286,22 @@
         "full-default"
       ],
       "scope": "Focused narration contracts execute in rust-check and the product/main test selections; static discovery is separate from execution."
+    },
+    "target:jope-service/example/q1_infra_retry": {
+      "discovery": {
+        "doctest": false,
+        "kind": "target",
+        "required_features": [
+          "research"
+        ],
+        "source": "crates/jope-service/examples/q1_infra_retry.rs",
+        "test": false
+      },
+      "dispositions": [
+        "runtime-tools"
+      ],
+      "lanes": [],
+      "scope": "Research-feature-gated Q1 infrastructure retry example; not default execution or live qualification."
     },
     "target:jope-service/lib/jope_service": {
       "discovery": {
