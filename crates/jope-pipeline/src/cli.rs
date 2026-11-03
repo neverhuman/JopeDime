@@ -2,7 +2,7 @@
 //! subcommand crates expose, so the umbrella delegates to it in process.
 
 use anyhow::Result;
-use std::{path::PathBuf, process::ExitCode};
+use std::process::ExitCode;
 
 use crate::{receipt, run::RunOptions, search::Budget};
 
