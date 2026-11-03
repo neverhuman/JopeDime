@@ -6810,7 +6810,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
+      "scope": "H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only); preregistered unit tests, family folds and bootstrap verification with strict advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification. | H233 data-free controls: STABLE_G025 pick-stability unanimity vote gate across three HistGBM members inside the frozen H217 GATED_025 recipe (0 optimizer updates, DOPE c51a56d0 and r882 read-only), family folds, strict bootstrap decision with advance margin (ties fail), xbabe2 CPU monitor hard limits and launch binding; research implementation, not serving qualification."
     },
     "python:research/flywheel_selfplay/h234_lambdaloss/test_h234.py": {
       "discovery": {
@@ -15805,6 +15805,16 @@
         "typescript-parity"
       ],
       "scope": "Required exact-source TypeScript/Wasm qualification: Node 24/26, strict CJS/ESM, complete registry census, golden/fitted parity, 100% facade coverage, ABI faults and Chromium/Firefox/WebKit workers. Configuration is not a passing run."
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/test_h238.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
     }
   },
   "lanes": {

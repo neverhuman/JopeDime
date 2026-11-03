@@ -6285,6 +6285,38 @@
         "role": "research",
         "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
       }
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/analysis.py": {
+      "bytes": 10473,
+      "sha256": "aec88c0c6aca2386673ddd56c7c80de9c5ad255495b3330e20d344a01b59e46a",
+      "classification": {
+        "role": "research",
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/treatment.py": {
+      "bytes": 3318,
+      "sha256": "88aff929e0c5c4401faf61e27cf7332bd72e2f07e7a7d10f1719972eb434ed86",
+      "classification": {
+        "role": "research",
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/monitor.py": {
+      "bytes": 7782,
+      "sha256": "3719cd3f3fb1adaba8ee09e16f23888dde4f70bbfb5950ceec060de526549f31",
+      "classification": {
+        "role": "research",
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+      }
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/runner.py": {
+      "bytes": 33899,
+      "sha256": "1984efab61d59fd23d10fee704c6964a2d119666890e510e0b6bb2e5953c97fb",
+      "classification": {
+        "role": "research",
+        "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+      }
     }
   },
   "schema": "jope.flywheel-research-source-classification/v1",
