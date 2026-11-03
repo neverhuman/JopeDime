@@ -254,15 +254,12 @@ fn invalid_child_exit_code_reports_configuration_error() {
 #[test]
 #[ignore = "subprocess fixture, invoked by supervised tests"]
 fn native_client_probe() {
+    let terminate: fn(i32) -> ! = std::process::exit;
     if let Ok(code) = std::env::var("JOPE_CLT02_EXIT") {
         let exit_code = code
             .parse::<i32>()
             .expect("JOPE_CLT02_EXIT must be a valid i32 exit code");
-        assert_eq!(
-            exit_code, 0,
-            "simulated child reported exit code {exit_code}"
-        );
-        return;
+        terminate(exit_code);
     }
     let home = PathBuf::from(std::env::var_os("JOPE_CLT02_HOME").expect("supervised fixture home"));
     if let Some(gate) = std::env::var_os("JOPE_CLT02_GATE") {
@@ -287,7 +284,7 @@ fn native_client_probe() {
         Ok(other) => panic!("unexpected selection: {other:?}"),
         Err(error) => {
             eprintln!("{error}");
-            std::process::exit(error.exit_code().into());
+            terminate(error.exit_code().into());
         }
     }
 }

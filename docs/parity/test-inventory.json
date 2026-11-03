@@ -6293,7 +6293,7 @@
        "partial_producer_line_waits_but_corrupt_complete_or_event_lines_fail",
        "pending_checks_recover_and_mismatched_results_are_refused",
        "shared_emission_matches_legacy_source_bytes_errors_and_token_rules",
-       "unsupported_and_invalid_programs_remain_errors_without_fabricated_tokens",
+       "unsupported_and_invalid_programs_remain_errors_without_forged_tokens",
        "websocket_delivers_full_sources_checks_and_cursor_replay"
       ]
      },

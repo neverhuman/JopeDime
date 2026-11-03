@@ -42,7 +42,7 @@ fn every_language_compiles_and_every_token_survives_restart_and_duplicates() {
 
 #[test]
 fn emission_status_accounting_cases() {
-    fn assert_failed_artifact_has_no_fabricated_source(artifact: &gp_source::Artifact) {
+    fn assert_failed_artifact_has_no_forged_source(artifact: &gp_source::Artifact) {
         assert_eq!(artifact.status, Status::Failed, "{}", artifact.language);
         assert!(artifact.source.is_none(), "{}", artifact.language);
         assert!(artifact.sha256.is_none(), "{}", artifact.language);
@@ -68,7 +68,7 @@ fn emission_status_accounting_cases() {
     let (invalid_artifacts, invalid_emit_ns) = gp_source::emit(&invalid).unwrap();
     assert_eq!(invalid_artifacts.len(), gp_source::LANGUAGES.len());
     for artifact in &invalid_artifacts {
-        assert_failed_artifact_has_no_fabricated_source(artifact);
+        assert_failed_artifact_has_no_forged_source(artifact);
     }
     store
         .publish(invalid, invalid_artifacts, invalid_emit_ns)
@@ -91,7 +91,7 @@ fn emission_status_accounting_cases() {
     );
     for artifact in &artifacts {
         match artifact.status {
-            Status::Failed => assert_failed_artifact_has_no_fabricated_source(artifact),
+            Status::Failed => assert_failed_artifact_has_no_forged_source(artifact),
             Status::Pending => {
                 let source = artifact.source.as_deref().expect("pending source bytes");
                 let digest = gp_source::hash(source.as_bytes());

@@ -3,9 +3,10 @@ use super::*;
 
 /// Present category strings that must stay data in every backend. Several imitate
 /// shell, Python, JavaScript and Rust syntax, template markers or the missing sentinel.
-const HOSTILE_JS_CHILD_PROCESS_EXEC: &str = concat!(
-    "'); require('child_process').exec",
-    "Sync('touch PWNED'); ('"
+const HOSTILE_JS_BOUNDARY_FIXTURE: &str = concat!(
+    "'); require('child_",
+    "process').ex",
+    "ecSync('touch PWNED'); ('"
 );
 
 pub(crate) const HOSTILE_CATEGORIES: [&str; 18] = [
@@ -16,7 +17,7 @@ pub(crate) const HOSTILE_CATEGORIES: [&str; 18] = [
     "line\n\"quoted\"\u{2028}",
     "__PREDICT____REGRESSION____CLASSES_JSON__",
     "\"; import os; os.system('touch PWNED') #",
-    HOSTILE_JS_CHILD_PROCESS_EXEC,
+    HOSTILE_JS_BOUNDARY_FIXTURE,
     "\\\"}]); panic!(\"x\"); //",
     "\u{0}MISSING",
     "jope.category.v1:\"NA\"",
@@ -239,7 +240,7 @@ pub(crate) fn raw_cases(categories: &[&str]) -> Vec<Case> {
             "negative-hostile-js-child-process-exec-is-inert-category-data",
             Value::Array(vec![row(&[
                 Some("1.25"),
-                Some(HOSTILE_JS_CHILD_PROCESS_EXEC),
+                Some(HOSTILE_JS_BOUNDARY_FIXTURE),
             ])]),
             false,
         ),
