@@ -16,7 +16,7 @@ use std::{
 
 mod languages;
 mod parity;
-pub(super) use languages::usage_readme;
+use languages::usage_readme;
 pub use languages::LanguageKey;
 pub(crate) use parity::verified_model_parity;
 pub use parity::{record_model_parity, MeasuredModelParity};
