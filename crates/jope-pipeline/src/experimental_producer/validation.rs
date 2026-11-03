@@ -13,7 +13,6 @@ use feat_math::{
 };
 use jope_datasets::catalog::Task;
 use serde::Deserialize;
-use serde_json::Value;
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
