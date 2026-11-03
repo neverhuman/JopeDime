@@ -17,7 +17,7 @@ mod execution;
 mod output;
 mod raw_vector;
 
-pub use execution::{run_composite_embedding_sweep, run_composite_sweep};
+pub use execution::{run_composite_embedding_sweep, run_composite_sweep, PatchInput};
 pub(super) use output::sigmoid;
-pub use output::{ChunkReport, EmbeddingSweepOutput, PatchInput, SweepAccum, SweepOutput};
+pub use output::{ChunkReport, EmbeddingSweepOutput, SweepAccum, SweepOutput};
 pub use raw_vector::run_raw_dataset_vector_sweep;
