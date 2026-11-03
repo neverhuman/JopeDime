@@ -7,7 +7,6 @@
 use anyhow::{ensure, Result};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
-use std::collections::BTreeSet;
 
 #[path = "edit_policy/context.rs"]
 mod context;
