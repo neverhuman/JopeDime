@@ -1,0 +1,32 @@
+{
+  "boot_seed": 275150,
+  "fold_seeds": [
+    275140,
+    275141,
+    275142
+  ],
+  "holm_m": 3,
+  "model_seeds": [
+    275101,
+    275102,
+    275103
+  ],
+  "outcomes_read": 0,
+  "owner": "Argon",
+  "schema": "jope.h275.metrics/v1",
+  "secondary_fold_seed": 275140,
+  "soft_lambda_grid": [
+    0.0,
+    0.5,
+    1.0,
+    2.0,
+    4.0,
+    8.0
+  ],
+  "status": "PREREGISTERED",
+  "study_path": "research/flywheel_selfplay/h275_rerank8_soft_risk",
+  "verdict": null,
+  "wave": "H275",
+  "wave_id": "h275-rerank8-soft-risk-20261103",
+  "winning_arm": null
+}

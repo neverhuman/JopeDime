@@ -1,0 +1,32 @@
+{
+  "ETag": "\"dfce31e837a3830a0155821a13e1f330\"",
+  "VersionId": "SuUQLfyvQvJ_u07AyESxvQIOTR6wYPkG",
+  "boot_seed": 275150,
+  "fold_seeds": [
+    275140,
+    275141,
+    275142
+  ],
+  "h272_cluster_source": {
+    "VersionId": "6NAoV3LWmW0.ZY5lbGs8fawZ_hUE47bP",
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H272/prereg-f629cb79/fold_manifest.json",
+    "sha256": "1cfdb1b510e74c3cce2d7977ad6bd78dfa458bb50a7c0faa2334c0813ef00115"
+  },
+  "model_seeds": [
+    275101,
+    275102,
+    275103
+  ],
+  "outcomes_read": 0,
+  "s3_bucket": "veox-jopedime-learning-use2",
+  "s3_key": "experiments/rd_breakthrough_20261030/H275/prereg/fold_manifest.json",
+  "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H275/prereg/fold_manifest.json",
+  "schema": "jope.h275.fold_manifest_s3_pointer/v1",
+  "secondary_fold_seed": 275140,
+  "sha256": "92d2b3b2d0a1a2d37c595c75e68a0feb1414df5e3e02461f6325740fbdcdbf80",
+  "size_bytes": 579610,
+  "tertiary_held_out_contexts_count": 201,
+  "tertiary_held_out_families_count": 41,
+  "wave": "H275",
+  "wave_id": "h275-rerank8-soft-risk-20261103"
+}
