@@ -304,8 +304,12 @@ mod tests {
 
     impl Fixture {
         fn new() -> Self {
-            let fixture_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../target/jope-policy-training-closure-tests")
+            let target_dir = std::env::var_os("CARGO_TARGET_DIR")
+                .map(PathBuf::from)
+                .filter(|path| !path.starts_with("/tmp"))
+                .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target"));
+            let fixture_dir = target_dir
+                .join("jope-policy-training-closure-tests")
                 .join(format!(
                     "{}-{}-{}",
                     std::process::id(),
