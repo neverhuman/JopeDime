@@ -4,9 +4,9 @@ use super::details::{
     teacher_evolution_lines, teacher_lines,
 };
 use super::evidence::{age, completed, decimal, duration, number, panel, phase, rmse, status_age};
-use super::layout::{DashboardData, History, compact_layout, render_compact};
+use super::layout::{compact_layout, render_compact, DashboardData, History};
 use super::prelude::*;
-use super::tasks::{TaskRow, label, policy_task_state, workflow_rows};
+use super::tasks::{label, policy_task_state, workflow_rows, TaskRow};
 
 mod gp_search;
 mod hardware;
