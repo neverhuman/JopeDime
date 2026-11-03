@@ -200,8 +200,8 @@ pub struct ExecutionClaim {
 
 #[derive(Clone, Debug)]
 pub struct VerifiedReservation {
-    authorization: SignedAuthorization,
-    reservation: SignedReservation,
+    pub(super) authorization: SignedAuthorization,
+    pub(super) reservation: SignedReservation,
 }
 
 impl VerifiedReservation {
