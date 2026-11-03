@@ -1,10 +1,11 @@
 {
+  "completed_utc": "2026-11-03T20:06:22Z",
   "created_utc": "2026-11-03T19:43:00Z",
   "file_checksums_sha256": {
     "PREREG.md": "4e7d78c8bd970a4e4c229dbf0ecba8ef27d6f597486a02f9ccd6684beb7511d6",
-    "README.md": "5ac7b739729ba13641f59a6bdb12aa6175bd258d3d8178e68df59d36ee968d44",
+    "README.md": "fb09b693a25f4197850cfa5c95df3615eb2f1604b6eb81b873f190e053d655e1",
     "fold_manifest.s3.json": "8e282ea8a957a5c5cd35eef7d79d1ce7acf5bffeb6437c4585afcc2cd5334334",
-    "metrics.json": "452f4b8f0b5b18730b2266fda19af75f289403d2f8b3edd9fe960419642b26d9",
+    "metrics.json": "7f7daede969872f9a646ce65e538098a336a9d035cae744a91cc77b2732fbaa9",
     "monitor.py": "08dc269db2ca25d45e95c55ba73e893c78f5d0d8e8169c506b81b0e46e355d66",
     "runner.py": "24606a84b2402c59eebb40ebed6e09ee4b8a51f8d43c27779ec3b25a8b0b15f2",
     "test_h273.py": "6f7c0f93e6ddbde66be9ac7623b18fe6bcacfa94e44819b474a0f15d17e2a955"
@@ -20,6 +21,7 @@
   },
   "outcomes_read": 0,
   "owner": "Argon",
+  "prereg_sha": "81dc6738b2b113d8895425f3bd148176054077c3",
   "schema": "jope.h273.manifest/v1",
   "stage1_boot_seed": 270150,
   "stage1_fold_seeds": [
@@ -43,10 +45,10 @@
     273102,
     273103
   ],
-  "status": "PREREGISTERED",
+  "status": "COMPLETED",
   "study_path": "research/flywheel_selfplay/h273_rerank8_cleanroom_veto",
-  "verdict": null,
+  "verdict": "REPLICATED",
   "wave": "H273",
   "wave_id": "h273-rerank8-cleanroom-veto-20261103",
-  "winning_arm": null
+  "winning_arm": "RERANK8_CR"
 }
