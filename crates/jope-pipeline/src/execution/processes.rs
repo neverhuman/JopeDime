@@ -58,9 +58,6 @@ impl Running {
             stop,
         })
     }
-    pub(super) fn request_stop(&self) {
-        self.stop.store(true, Ordering::Release);
-    }
     pub(super) fn is_done(&self) -> bool {
         self.watcher.as_ref().is_some_and(|h| h.is_finished())
     }
