@@ -133,6 +133,24 @@ with decimal.localcontext() as c:
             (ScalarLanguage::Cpp17, Some("g++")),
             (ScalarLanguage::Cpp17, Some("clang++")),
         ] {
+            if let Some(compiler) = compiler {
+                match Command::new(compiler).arg("--version").output() {
+                    Ok(output) => assert!(
+                        output.status.success(),
+                        "{compiler} --version failed: {}",
+                        String::from_utf8_lossy(&output.stderr)
+                    ),
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                        backends.push(json!({
+                            "language": format!("{language:?}"),
+                            "compiler": compiler,
+                            "status": "SKIPPED_COMPILER_UNAVAILABLE"
+                        }));
+                        continue;
+                    }
+                    Err(error) => panic!("failed to start {compiler}: {error}"),
+                }
+            }
             let words = check_backend(&program, language, compiler, &rows, &dir)
                 .unwrap_or_else(|e| panic!("{name}/{language:?}/{compiler:?}: {e}"));
             assert_eq!(words, expected_words, "{name}/{language:?}/{compiler:?}");
