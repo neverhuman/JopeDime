@@ -15,7 +15,7 @@ use std::{
     sync::Arc,
 };
 
-/// Configured upper or lower bound for max manifest.
+// Configured bounds and classification helpers.
 include!("classification.rs");
 include!("verification.rs");
 include!("packing.rs");
