@@ -253,6 +253,7 @@ mod representative_pipelines;
 #[path = "clover_quantile/transition.rs"]
 mod transition;
 
+#[test]
 fn numeric_v2_near_tie_edges_are_monotone_and_use_first_equal() {
     use feat_math::numeric_v2::{NumericModelV2, NumericProfileV2, TransformV2};
     let a = 0.10000000000000002_f64;
