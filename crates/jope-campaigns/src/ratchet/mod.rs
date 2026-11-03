@@ -35,24 +35,15 @@ mod wave;
 mod tests;
 
 use admission::valid_attempt_id;
-pub(crate) use admission::{
-    AttemptAdmissionManifestV3, ProofSlateCandidateV3, ProofSlateLaneV3, ReplayLabelRevisionV2,
-    ReplayManifestV2, ReplayStepV2,
-};
+pub(crate) use admission::{AttemptAdmissionManifestV3, ReplayManifestV2};
 pub(crate) use api::{
     admit_attempt_from_files, commit_dataset_state_from_file, publish_serving_wave_from_files,
     publish_training_head_from_files, retain_model_seeds_from_files, validate_artifact_file,
 };
+pub(crate) use generation::Generation0ReceiptV3;
 #[cfg(test)]
 pub(crate) use generation::{
     assemble_generation_zero_v3, build_bounded_offspring_pools, deterministic_archive_32,
-    OffspringPoolsV3,
-};
-#[cfg(test)]
-use generation::{derived_seed, push_generation_candidate, push_unique_identity};
-pub(crate) use generation::{
-    CandidateProvenanceV3, Generation0ReceiptV3, GenerationCandidateV3, GenerationRoleBindingV3,
-    GenerationRoleV3, GprKernelFamilyV3,
 };
 pub(crate) use microbatch::{
     LearningMicroBatchManifestV1, RolloutSwitchesV1, TrainingHeadManifestV1,
@@ -61,31 +52,25 @@ use scheduler::validate_dataset_set;
 pub(crate) use scheduler::{SchedulerDrawV4, SchedulerLaneV4, SchedulerStateV4};
 use state::{
     canonical_json, require_unique, sha256_bytes, validate_hashes, validate_sha256,
-    validate_track_history, ADMISSION_V3_SCHEMA, DATASET_STATE_SCHEMA, GENERATION_ZERO_V3_SCHEMA,
-    MICRO_BATCH_SCHEMA, POINTER_SCHEMA, REPLAY_V2_SCHEMA, SEED_REQUEST_V2_SCHEMA,
-    SEED_RESPONSE_V2_SCHEMA, TRAINING_HEAD_SCHEMA, WAVE_SCHEMA,
+    ADMISSION_V3_SCHEMA, DATASET_STATE_SCHEMA, GENERATION_ZERO_V3_SCHEMA, MICRO_BATCH_SCHEMA,
+    POINTER_SCHEMA, REPLAY_V2_SCHEMA, SEED_REQUEST_V2_SCHEMA, SEED_RESPONSE_V2_SCHEMA,
+    TRAINING_HEAD_SCHEMA, WAVE_SCHEMA,
 };
 pub(crate) use state::{
-    CandidateIdentityV1, CurrentLabelV2, DatasetLearningStateV2, GlobalCvFrontierMemberV2,
-    LabelRevisionV2, LabelStatusV2, LabelValueV2, LearningCountersV2, LegacyAnchorImportV2,
-    ObservationKeyV2, PhysicalObservationV2, PredictionSnapshotV2, SchedulingMetadataV2,
-    SelectionAuthorityV2, StruggleStateV2, TrackHistoryEntryV2, DATASETS_PER_MICRO_BATCH,
-    GENERATION_ZERO_SIZE, MIN_WAVE_AGE_SECONDS, MIN_WAVE_LABELS, MODEL_PROPOSAL_COUNT,
-    MODEL_RETAINED_COUNT, REPLAY_STEPS,
+    CandidateIdentityV1, DatasetLearningStateV2, DATASETS_PER_MICRO_BATCH, GENERATION_ZERO_SIZE,
+    MIN_WAVE_AGE_SECONDS, MIN_WAVE_LABELS, MODEL_PROPOSAL_COUNT, MODEL_RETAINED_COUNT,
+    REPLAY_STEPS,
 };
-use store::{atomic_bytes_write, atomic_pointer_write, immutable_write, WriterGuard};
-pub(crate) use store::{RatchetArtifactPointerV1, RatchetStore};
+use store::immutable_write;
+pub(crate) use store::RatchetStore;
 pub(crate) use telemetry::{
     BroadShadowPilotManifestV1, FrozenRealSplitsV1, RatchetLiveTelemetryV2,
     TrainingExperimentManifestV1,
 };
-use wave::{descending_f64, seeded_temperature_score, select_ranked};
 pub(crate) use wave::{
-    read_admission, read_generation_zero, read_seed_inference, read_telemetry, ArtifactReleaseV1,
-    LearningWaveManifestV1, LegacySeedInferenceV1, ModelProposalV2, ModelRetentionBucketV2,
-    ModelRetentionReceiptV2, ReadableAdmission, ReadableGeneration0, ReadableSeedInference,
-    ReadableTelemetry, RetainedModelProposalV2, SeedInferenceRequestV2, SeedInferenceResponseV2,
-    WaveGateKindV1, WaveGateReceiptV1,
+    read_admission, read_generation_zero, read_seed_inference, read_telemetry,
+    LearningWaveManifestV1, ModelRetentionBucketV2, ModelRetentionReceiptV2, ReadableSeedInference,
+    SeedInferenceRequestV2, SeedInferenceResponseV2,
 };
 
 #[cfg(test)]
