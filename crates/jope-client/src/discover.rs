@@ -6,9 +6,10 @@ use crate::{http::Credentials, transport::Response, Http, Request};
 use serde::Deserialize;
 use std::{
     ffi::OsString,
-    fmt, io,
+    fmt, fs, io,
     path::PathBuf,
     process::Child,
+    thread,
     time::{Duration, Instant},
 };
 
