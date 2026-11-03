@@ -37,7 +37,7 @@ pub type Metric = LearningMetric;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
-#[schemars(rename = "MetricDirection")]
+#[schemars(rename = "Direction")]
 #[cfg_attr(
     doc,
     doc = "`LearningMetricDirection` is an enum for the direction contract in this module: The metric-direction table (jopetaskelo.rs:31-36, 8a55c4fef:python/src/jope/tools/promotiongate.py:22-27, archived): r2, auc, macrof1 and negativemase improve upwards; rmse, logloss and mase improve downwards. oofr2."

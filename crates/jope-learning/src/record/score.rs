@@ -1,5 +1,6 @@
 use super::*;
 
+/// Where a score row came from (kept open: benchmark trackers add their own keys).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ScoreSource {
