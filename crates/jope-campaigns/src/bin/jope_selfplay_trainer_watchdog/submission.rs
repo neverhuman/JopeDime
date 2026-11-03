@@ -50,7 +50,7 @@ pub(crate) fn ensure_safe_filename(value: &str) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn continuation_kind(watermark: u64, last_evidence: u64) -> ContinuationKind {
+pub(super) fn continuation_kind(watermark: u64, last_evidence: u64) -> ContinuationKind {
     if watermark >= last_evidence.saturating_add(LABEL_STEP) {
         ContinuationKind::CoalescedLabels
     } else {
@@ -58,7 +58,7 @@ pub(crate) fn continuation_kind(watermark: u64, last_evidence: u64) -> Continuat
     }
 }
 
-pub(crate) fn observe_intent_checkpoint(
+pub(super) fn observe_intent_checkpoint(
     intent: &mut SubmissionIntent,
     current_checkpoint_sha256: &str,
 ) -> IntentCheckpointDisposition {
@@ -79,7 +79,7 @@ pub(crate) fn trainer_job_id(watermark: u64, recipe: &str, sequence: u64) -> Str
     format!("jope-selfplay-train-{watermark:09}-{recipe}-r{sequence:06}")
 }
 
-pub(crate) fn validate_intent(
+pub(super) fn validate_intent(
     intent: &SubmissionIntent,
     snapshot: &TrainingSnapshot,
     checkpoint: &Checkpoint,
@@ -99,7 +99,7 @@ pub(crate) fn validate_intent(
     Ok(())
 }
 
-pub(crate) fn render_spec(
+pub(super) fn render_spec(
     args: &Args,
     job_id: &str,
     seed: u64,
@@ -206,7 +206,7 @@ pub(crate) fn render_spec(
     Ok(text)
 }
 
-pub(crate) fn spec_input(name: &str, source: &Path, target: &str) -> Result<SpecInput> {
+pub(super) fn spec_input(name: &str, source: &Path, target: &str) -> Result<SpecInput> {
     ensure!(
         source.is_file(),
         "spec input is absent: {}",
@@ -307,7 +307,7 @@ pub(crate) fn temporarily_lacks_launch_capacity(message: &str) -> bool {
         && message.contains("no eligible launch-ready node currently")
 }
 
-pub(crate) fn intent_uses_stale_contract(intent: &SubmissionIntent) -> bool {
+pub(super) fn intent_uses_stale_contract(intent: &SubmissionIntent) -> bool {
     fs::read_to_string(&intent.spec)
         .map(|text| {
             !text.contains(&format!(
