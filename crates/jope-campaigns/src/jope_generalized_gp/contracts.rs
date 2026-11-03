@@ -56,11 +56,11 @@ pub use contract_pilot::{
 pub use evaluation::{
     sample_sd, AnchorBaselineV1, AnchorSkillV1, ArchiveCheckpointV1, ArchiveMemberV1,
     CandidateSplitEvaluationV1, Cv7CandidateEvidenceV1, Cv7PlanV1, Cv7SelectionFreezeV1,
-    GenerationCheckpointV1, GlobalGeneRankV1, PredictionCacheKeyV1, RankedCandidateV1,
-    RotatingSplitPlanV1, RowSplitV1, RuntimeObservationV1, SplitRowV1,
+    GenerationCheckpointV1, PredictionCacheKeyV1, RankedCandidateV1, RotatingSplitPlanV1,
+    RowSplitV1, RuntimeObservationV1, SplitRowV1,
 };
 pub use genome::{
     raw_sha256, task_head_valid, GenerationZeroV1, GenomeAncestryV1, GenomeOriginV1, GenomeV1,
-    GlobalGeneObservationV1, InferenceLedgerEntryV1, InferenceLedgerV1, PopulationMemberV1,
-    ProposalFreezeV1,
+    GlobalGeneObservationV1, GlobalGeneRankV1, InferenceLedgerEntryV1, InferenceLedgerV1,
+    PopulationMemberV1, ProposalFreezeV1,
 };
