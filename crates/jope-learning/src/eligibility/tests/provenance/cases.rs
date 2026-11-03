@@ -1,5 +1,5 @@
-use super::*;
 use super::super::{context_output, context_plan, context_scope, produce_context};
+use super::*;
 
 pub(crate) fn missing_context_provenance_is_refused_at_real_teaching_ingress() {
     let f = fixture(Task::Regression, 5);
