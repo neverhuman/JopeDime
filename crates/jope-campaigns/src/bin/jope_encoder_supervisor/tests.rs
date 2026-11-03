@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::*;
 
     #[test]
     fn output_names_cannot_escape_the_job_directory() {
