@@ -4,7 +4,9 @@
 //! Keep one `Finalizer` per store and share `journal()` with its subscribers. HTTP,
 //! CLI and constrained-split preparation remain adapters; this API never searches.
 mod model;
-pub(super) use model::{load, predict, publish, put_frozen_model, refit, score};
+pub(super) use model::{load, publish, put_frozen_model, refit, score};
+#[cfg(test)]
+pub(super) use model::predict;
 
 use super::{
     audit::{AuditRowId, RowAudit, RowAuditPhase},
