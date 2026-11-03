@@ -144,6 +144,11 @@ pub(super) fn apply_modes(case: &Value, root: &Path, restore: bool) -> bool {
             u32::from_str_radix(s(entry.get("mode").unwrap()), 8).unwrap()
         };
         fs::set_permissions(&path, fs::Permissions::from_mode(mode)).unwrap();
+        if !restore && mode & 0o444 == 0 && path.is_file() && fs::File::open(&path).is_ok() {
+            // A privileged test process can read a mode-000 file that the captured Python user
+            // could not. This case cannot reproduce the captured PermissionError here.
+            effective = false;
+        }
         if !restore && mode & 0o500 != 0o500 && path.is_dir() {
             // A mode without read and search: would this user still list the directory, or reach
             // an entry of it?
