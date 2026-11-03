@@ -1,0 +1,89 @@
+{
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "wave": "H243",
+  "authority": "/home/ubuntu/nudges/hw_t0435_opus_h243.md",
+  "checkpoint": "/home/ubuntu/jope-data/h243/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h243/inputs/best_dev_checkpoint.json",
+  "seeds": [
+    243101,
+    243102,
+    243103
+  ],
+  "fold_seed": null,
+  "boot_seed": 243150,
+  "arms": [
+    "CONTROL",
+    "MODSWAP_SELECT",
+    "GREEDY_SOUP",
+    "PLACEBO"
+  ],
+  "total_updates": 0,
+  "parent_commit": "7384013bd0db4a3bd7425c82e08b4a0431198c85",
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h243/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h243/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h243/inputs/round-782.pt": "427b0d4608e94f60f5f97d79b5c1c4ce9a7efd59d17e7853f714e901f3a4af0c"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
+    "research/flywheel_selfplay/runtime_audit.py": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4",
+    "research/flywheel_selfplay/h237_adabelief/treatment.py": "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226",
+    "research/flywheel_selfplay/h237_adabelief/runner.py": "7a6b25ada4427c5835734df49b979d1fe620c4da73ada3980870579059323d31",
+    "research/flywheel_selfplay/h237_adabelief/analysis.py": "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909",
+    "research/flywheel_selfplay/h239_subset/monitor.py": "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a",
+    "research/flywheel_selfplay/h242_laser/runner.py": "e517729aaa355cb2654d7d32b4ac452642586c4b82458fa534199c7ab8db6352",
+    "research/flywheel_selfplay/h242_laser/monitor.py": "a4b5b9d1a874f8e78c898750008836d5502892b95f3931418d3b094ff3e6edb0"
+  },
+  "source_sha256": {
+    "test_h243.py": "43b58c4c6ee9c7a94c59add074330ebc4e6710c8f200b56dd67dff5527d02366",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "analysis.py": "bb7b4f78ff99c6a17b6fe30d65ad165ccd9aca5e89a0eb2e769c74a17ec70c56",
+    "soup.py": "4745aa4dcfdc580b08b1d34094b1cbe82f9e27fda1e8f1d3963c0c0db704cc57",
+    "groups.json": "09c8ab23eea37fc4d7e1fbecccab984eee0f56ddc40f06a6223783f057ef1b5a",
+    "PREREG.md": "658f8141e73a335c5c1789a309fe10cdbded93db07b5f31be48f91280c2308de",
+    "monitor.py": "fe5ec9ec56f98786330aa1ec146c3a02a256a4f5e2ebf9c0293a9b285fad190a",
+    "fold_manifest.json": "f029f4c0845b5b80fd0336df477eedd41e85a01f9cb963f4ed34c3d9fa2d759e",
+    "runner.py": "093e88eb9165bb6d3a2abf8cf10ee31a5c9864570d486a84fe372a6bb58ccd1b"
+  },
+  "host": "xbabe2 CPU (taskset cores 44-47, nice 19, 1 math thread; H239 A1 memory guard)",
+  "compute_stop": "2026-11-03T07:30:00Z",
+  "fold_seeds": {
+    "243101": 243141,
+    "243102": 243142,
+    "243103": 243143
+  },
+  "betas": [
+    0.5,
+    1.0
+  ],
+  "placebo_seed": 243160,
+  "greedy_max_ingredients": 5,
+  "previous": "/home/ubuntu/jope-data/h243/inputs/round-782.pt"
+}
