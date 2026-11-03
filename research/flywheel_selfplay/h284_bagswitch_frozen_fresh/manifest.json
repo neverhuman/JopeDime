@@ -1,0 +1,85 @@
+{
+  "wave": "H284",
+  "slug": "h284_bagswitch_frozen_fresh",
+  "authority": "/home/ubuntu/nudges/hw_t2305_argon_h284.md",
+  "arms": [
+    "slot0",
+    "RERANK8_VETO",
+    "H278_RERANK8_VETO",
+    "BAG_SWITCH",
+    "BAG_SWITCH_NESTED"
+  ],
+  "seeds": [
+    279101,
+    279102,
+    279103
+  ],
+  "h278_seeds": [
+    278101,
+    278102,
+    278103
+  ],
+  "k_deep": 8,
+  "bagged": {
+    "n_bags": 8,
+    "q_fixed": 6,
+    "q_grid": [
+      5,
+      6,
+      7
+    ],
+    "resampling": "family-level bootstrap of all 205 DL-Train families (1,219 contexts)"
+  },
+  "veto": {
+    "tau": 0.1,
+    "features": "H272 K=8 per-candidate rows (568 features)"
+  },
+  "regression_cell": "H279 KM276140-S279101-C0 reproduced bit-exactly in smoke and before export",
+  "checkpoint": "/home/ubuntu/jope_plan/evidence/H284/argon-t2305/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h276/inputs/best_dev_checkpoint.json",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "fresh_cohort_v1_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+  "h278_export_manifest_version_id": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+  "total_updates": 0,
+  "inputs": {
+    "/home/ubuntu/jope_plan/evidence/H284/argon-t2305/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h276/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h276/inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "/home/ubuntu/jope-data/h276/inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "/home/ubuntu/jope-data/h284/inputs/h279-KM276140-S279101-C0.json": "8d603c1962d1d696574175b017c2d60f434c193955f80ab6aac15691c078a994",
+    "/home/ubuntu/jope-data/h284/h278_export/export_manifest.json": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+    "/home/ubuntu/jope_plan/ns/receipts/fresh_cohort_v1.json": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
+  },
+  "parent_sources": {},
+  "source_sha256": {
+    "PREREG.md": "5be55a7b792477d992d432b94e99bd4d03dce1f2d6b9e2c580e9705fae849f83",
+    "analysis_h279.py": "763ad41d0e35fbf97dce4ca46deab5557e414d2c93ed46f729cdabfce30752d6",
+    "analysis_h284.py": "17b79658eece7c7924c26e0471330157901cdf74b3ea3408ac8f2b03ca6692d2",
+    "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
+    "fold_manifest.json": "e89f9aa130cf1529a684c83c2dc8bd1658dbae69a5c1e0af87760ed8d92208f2",
+    "freeze_bagged.py": "50d8ea9d1af560820dad819184f5bf70cc480bd741a68f236ac80ee837b52cba",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "monitor.py": "e86d5d3ca4b77f48b4923564a38ef48f03c1070997e33f0033af27b3b52f5bd9",
+    "provenance.json": "9f80dc4d469b365e34d3804c76799c60442fda860f5e63f6f10334f1e8650a00",
+    "runner.py": "9a022f7ef2258c7f5bf7f237048806c61e7091e53645dd89195bb57e4b27d4b1",
+    "test_h284.py": "2143a10b30ef4cab98f08636f6470233d595e437f652b8ff1b440b2019ca972b",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "export_manifest.json": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc"
+  },
+  "packages": {
+    "lightgbm": "4.6.0",
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "scikit-learn": "1.7.2"
+  },
+  "parent_commit": "2affd94cfeb3824f4a64009a52ea9b8ea5b69f24",
+  "publication_ref": "v1/next",
+  "host": "xbabe2 CPU (taskset cores 57-60, nice 19, LightGBM n_jobs 1)",
+  "compute_stop": "2026-11-04T02:30:00Z",
+  "h284_export_manifest_version_id": "AHFLVzBwd_fOfBAFGwHd.ABmkbgIbUu3",
+  "h284_fit_lock_version_id": "4DfJg9U5rybBD2b4UFNTyLnnnmpUb._b"
+}

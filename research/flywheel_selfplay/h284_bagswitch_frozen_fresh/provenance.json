@@ -1,0 +1,32 @@
+{
+  "wave": "H284",
+  "slug": "h284_bagswitch_frozen_fresh",
+  "owner": "rd_argon",
+  "authority": "/home/ubuntu/nudges/hw_t2305_argon_h284.md",
+  "parent_wave": "H279",
+  "parent_commit_h279": "0b733a590c9cda3a67fa66ede4ded883ca83c5c2",
+  "h284_export_manifest_s3": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261030/H284/export/export_manifest.json",
+    "VersionId": "AHFLVzBwd_fOfBAFGwHd.ABmkbgIbUu3",
+    "sha256": "b570d3af860dfa69ec4b779315bb2b9924515c40a9e58e2a24e9b92f98a8febc"
+  },
+  "h284_fit_lock_s3": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261030/H284/export/fit_lock.json",
+    "VersionId": "4DfJg9U5rybBD2b4UFNTyLnnnmpUb._b",
+    "sha256": "7a65a6c41f04a42510773a57f35e5d01fed7ddaeee78b76926884aa0c9d2257f"
+  },
+  "h278_export_manifest_s3": {
+    "bucket": "veox-jopedime-learning-use2",
+    "key": "experiments/rd_breakthrough_20261030/H278/export/export_manifest.json",
+    "VersionId": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+    "sha256": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643"
+  },
+  "fresh_cohort_v1": {
+    "path": "/home/ubuntu/jope_plan/ns/receipts/fresh_cohort_v1.json",
+    "sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c"
+  },
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "optimizer_updates": 0
+}
