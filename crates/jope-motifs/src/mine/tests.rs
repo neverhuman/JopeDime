@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod tests {
+mod cases {
     use super::super::*;
     use super::super::{MotifDef, TaskLabel};
     use crate::code_of;
