@@ -4344,6 +4344,38 @@
         "reason": "H235 preregistered CPU-only diagnostic: heteroscedastic beta-NLL (beta 0.5, Seitzer et al. 2022) with one zero-initialised Linear(32,1) log-variance head on the adapter query embedding for the r882 adapter continuation; scoring uses the mean only; BNLL_MIX (CTRL smooth-L1 term replaced by beta-NLL, KL kept) primary, BNLL_ADD (CTRL + 0.5 beta-NLL) secondary, Holm m=2; identical H170 CTRL AdamW; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 235101-235103, 1,800 updates; DL-Val91 decision panel; xbabe2 CPU, taskset cores 40-43, nice 19; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
       }
     },
+    "python:research/flywheel_selfplay/h237_adabelief/analysis.py": {
+      "bytes": 9937,
+      "sha256": "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909",
+      "classification": {
+        "role": "research",
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset cores 44-47, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/monitor.py": {
+      "bytes": 8189,
+      "sha256": "7887533e37c83b0030c3949469627ca470ba1e907cf1bd602e78b3ec0733c30a",
+      "classification": {
+        "role": "research",
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset cores 44-47, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/runner.py": {
+      "bytes": 29570,
+      "sha256": "d8b5b1fe9bf3b89e049096acdbc467e29331aba6b6c588a109a83ed2b8b9b877",
+      "classification": {
+        "role": "research",
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset cores 44-47, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
+    "python:research/flywheel_selfplay/h237_adabelief/treatment.py": {
+      "bytes": 6133,
+      "sha256": "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226",
+      "classification": {
+        "role": "research",
+        "reason": "H237 preregistered CPU-only diagnostic: AdaBelief (Zhuang et al. 2020; inline, eps 1e-16, bias-corrected, decoupled wd, no rectification) primary and RAdam (Liu et al. 2020, torch, decoupled wd) secondary vs the exact H170 CTRL AdamW recipe for the r882 adapter continuation, identical CTRL loss and lr/betas/wd, Holm m=2; merged H234/H232 machinery with A1/A2 fixes, fresh per-seed family folds, seeds 237101-237103, 1,800 updates; DL-Val91 decision panel; xbabe1 CPU, taskset cores 44-47, nice 19, memory/load pause guard; read-only r882 copy; DOPE frozen; no sealed/holdout reads."
+      }
+    },
     "python:research/flywheel_selfplay/h171_grad_accum/analysis.py": {
       "bytes": 12151,
       "classification": {
