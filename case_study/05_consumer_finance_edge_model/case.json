@@ -1,0 +1,90 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "05_consumer_finance_edge_model",
+  "dataset": {
+    "id": "9721aa73ef1df237",
+    "display_name": "2022 Survey of Consumer Finances — Summary Extract",
+    "task": "regression",
+    "rows": 10000,
+    "features": 346,
+    "categorical_features": 0,
+    "train_rows": 8000,
+    "test_rows": 2000,
+    "source": {
+      "platform": "federal reserve board",
+      "id": "SCFP2022",
+      "url": "https://www.federalreserve.gov/econres/files/scfp2022excel.zip",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target distribution plus high-variance feature quantile bins",
+    "time_column": null
+  },
+  "business_question": "Which program is most accurate while fitting in an on-device model budget? (structural, reproducible)",
+  "constraint": "model_bytes max",
+  "objective_kind": "constrained",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "model_bytes",
+    "program_nodes"
+  ],
+  "accuracy": {
+    "metric": "rmse"
+  },
+  "why": "An on-device financial-advice app ships the model inside the app bundle, so the model's serialized size is a hard limit. model_bytes is structural, so this case reproduces bit-for-bit on any host.",
+  "caveats": [
+    "model_bytes is the canonical JSON serialization of the fitted model, a size proxy rather than the exact size of a native artifact."
+  ],
+  "objective_template": {
+    "metric": "constrained",
+    "fitness": {
+      "metric": "rmse"
+    },
+    "limits": [
+      {
+        "resource": "model_bytes",
+        "max": {
+          "$median": "model_bytes"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "metric": "constrained",
+  "fitness": {
+    "metric": "mae"
+  },
+  "limits": [
+    {
+      "resource": "predict_rows_per_second",
+      "min": 0
+    },
+    {
+      "resource": "predict_us_per_row",
+      "max": 1000000000000000.0
+    }
+  ]
+}

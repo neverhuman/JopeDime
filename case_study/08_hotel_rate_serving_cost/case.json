@@ -1,0 +1,115 @@
+{
+  "schema": "jope.case-study/v1",
+  "name": "08_hotel_rate_serving_cost",
+  "dataset": {
+    "id": "78dc8d077285ce09",
+    "display_name": "modeldata hotel_rates, avg_price_per_room",
+    "task": "regression",
+    "rows": 15402,
+    "features": 26,
+    "categorical_features": 9,
+    "train_rows": 12321,
+    "test_rows": 3081,
+    "source": {
+      "platform": "rdatasets",
+      "id": "modeldata/hotel_rates",
+      "url": "https://vincentarelbundock.github.io/Rdatasets/csv/modeldata/hotel_rates.csv",
+      "license": "unknown"
+    },
+    "split": "quota stratified by target / grouped / native split",
+    "time_column": null
+  },
+  "business_question": "Which room-rate model minimizes absolute error plus the serving cost of each prediction?",
+  "constraint": "serving cost per row",
+  "objective_kind": "custom",
+  "objective": "objective.json",
+  "baseline": "baseline.json",
+  "seeds": {
+    "file": "seeds.dl.json",
+    "provenance": "seeds.provenance.json",
+    "limit": 11
+  },
+  "budget": {
+    "evaluations": 96,
+    "seconds": 3600,
+    "smoke_evaluations": 28
+  },
+  "calibration": {
+    "rng_seed": 1,
+    "arm": "D",
+    "status": "pending"
+  },
+  "rng_seeds": [
+    7,
+    11,
+    13
+  ],
+  "arms": {
+    "A": {
+      "seeds": true,
+      "fitness": "objective"
+    },
+    "B": {
+      "seeds": false,
+      "fitness": "objective"
+    },
+    "C": {
+      "seeds": true,
+      "fitness": "baseline"
+    },
+    "D": {
+      "seeds": false,
+      "fitness": "baseline"
+    }
+  },
+  "readout": [
+    "predict_us_per_row"
+  ],
+  "accuracy": {
+    "metric": "mae"
+  },
+  "why": "A revenue-management API is billed per call and per compute, so each prediction's cost is its absolute error plus a price per microsecond of serving time, written directly as a custom row expression.",
+  "caveats": [
+    "Price per microsecond is illustrative."
+  ],
+  "objective_template": {
+    "metric": "custom",
+    "name": "error_plus_serving_cost",
+    "direction": "minimize",
+    "expression": {
+      "op": "add",
+      "left": {
+        "op": "abs",
+        "arg": {
+          "op": "sub",
+          "left": {
+            "op": "y"
+          },
+          "right": {
+            "op": "pred"
+          }
+        }
+      },
+      "right": {
+        "op": "mul",
+        "left": {
+          "op": "constant",
+          "value": {
+            "$price": {
+              "accuracy": "mae",
+              "resource": "predict_us_per_row",
+              "share": 0.1
+            }
+          }
+        },
+        "right": {
+          "op": "resource",
+          "name": "predict_us_per_row"
+        }
+      }
+    },
+    "aggregation": {
+      "kind": "mean"
+    }
+  }
+}
