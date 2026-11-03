@@ -283,7 +283,10 @@ fn run_dataset_operation(
     Ok(())
 }
 
-fn validate_dataset_packer(approved: &BTreeMap<PathBuf, String>, request: &Value) -> Result<()> {
+pub(in crate::smartcluster_worker::policy) fn validate_dataset_packer(
+    approved: &BTreeMap<PathBuf, String>,
+    request: &Value,
+) -> Result<()> {
     let kind = request["operation"]["kind"]
         .as_str()
         .context("dataset operation absent")?;

@@ -1,3 +1,7 @@
+use super::execution::{
+    create_immutable, read_frame, record_control_stop, scratch_usage, stop_control_with,
+    within_allocation, ControlStopReason, ScratchUsage,
+};
 use super::*;
 
 #[test]
@@ -149,12 +153,12 @@ fn dataset_manifest_cannot_select_an_unapproved_cpu_packer() {
         "a".repeat(64),
     )]);
     let mut request = serde_json::json!({"operation":{"kind":"pack_continuation_and_publish","packer":{"path":"/fixed/packer","sha256":"a".repeat(64)}}});
-    assert!(super::validate_dataset_packer(&approved, &request).is_ok());
+    assert!(super::execution::validate_dataset_packer(&approved, &request).is_ok());
     request["operation"]["packer"]["path"] = serde_json::json!("/tmp/unreviewed");
-    assert!(super::validate_dataset_packer(&approved, &request).is_err());
+    assert!(super::execution::validate_dataset_packer(&approved, &request).is_err());
     request["operation"]["packer"]["path"] = serde_json::json!("/fixed/packer");
     request["operation"]["packer"]["sha256"] = serde_json::json!("b".repeat(64));
-    assert!(super::validate_dataset_packer(&approved, &request).is_err());
+    assert!(super::execution::validate_dataset_packer(&approved, &request).is_err());
 }
 
 use super::*;
