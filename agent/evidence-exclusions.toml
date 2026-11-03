@@ -187,16 +187,10 @@ receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
 sha256 = "36728ba2d84287e908c278439bdd9660694149e125b7ac3933a4625e231abd9c"
 
 [[evidence_exclusion]]
-path = "deploy/dl-flywheel/jope_flywheel/evidence_core.py"
-reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 e5ca4edccd49533715000cbec48364a6dcee5fe2f4fac05207fa0e01390d13d0 for deploy/dl-flywheel/jope_flywheel/evidence_core.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
-receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
-sha256 = "e5ca4edccd49533715000cbec48364a6dcee5fe2f4fac05207fa0e01390d13d0"
-
-[[evidence_exclusion]]
 path = "deploy/dl-flywheel/jope_flywheel/queue.py"
-reason = "deploy/maintenance/main-audit-deletions.json records SHA-256 1bdd813757e29c5a3ae46b014a85622f2e4ebf8160b47cffd82db6483718c9af for deploy/dl-flywheel/jope_flywheel/queue.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
-receipt = "deploy/maintenance/main-audit-deletions.json"
-sha256 = "1bdd813757e29c5a3ae46b014a85622f2e4ebf8160b47cffd82db6483718c9af"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40 for deploy/dl-flywheel/jope_flywheel/queue.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "9ee38ef4d9f9eb4f42f893359e62ce39852ab9084bab8d238e8b6858d7cdab40"
 
 [[evidence_exclusion]]
 path = "deploy/dl-flywheel/jope_flywheel/training_snapshot_core.py"
@@ -2807,3 +2801,33 @@ path = "research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py"
 reason = "H253 V-REx family invariance study script pinned by source_sha256 in manifest.json."
 receipt = "research/flywheel_selfplay/h253_vrex_family_invariance/manifest.json"
 sha256 = "a0c4a0f5748dcb7fd3e8c776e18485e37d5ffc65046f8fe605e1bdfacb580b63"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/jope_flywheel/evidence.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9 for deploy/dl-flywheel/jope_flywheel/evidence.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "e4bd1d1e92455bd9b4a210d4e46cddf392cc565d7bcc7c1b6bea3e48a6a070a9"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712 for deploy/dl-flywheel/pipelines/continuous/consumer/dltrain/model.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "d942fd6cd0798ceca1cf8677eae0cbd060e402cfceeca6c3aeb648b351947712"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264 for deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c for deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/rlfw/analytics/operational.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 bb530b51c9ee9961a201cc3c7aa8dfdc38a110939122a36e1d5cea19c7f685ec for deploy/dl-flywheel/pipelines/rlfw/analytics/operational.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "bb530b51c9ee9961a201cc3c7aa8dfdc38a110939122a36e1d5cea19c7f685ec"

@@ -100,13 +100,13 @@
       "sha256": "dab86bf0a66124e657d19e52b698c760a6823970c23fbc16f5767ac1b168f8ca"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/kl_guard.py": {
-      "bytes": 21942,
+      "bytes": 21929,
       "classification": {
         "reason": "Research v2.0.0 continual-learner source, build r3.1 (runner_v6, genesis, resume, custody, parity probe, CLI, R23 anchored step, T12 KL guard) with 83 isolated CPU fixtures via run_v2_offline.py, additive to prior812. Source import only; a live launch needs a fresh owner approval (R19) and separate operational receipts.",
         "role": "research"
       },
       "migration": "New supporting research source; actual test families are classified separately.",
-      "sha256": "4b7e329df7aa1056acb96127db9d20975eb96460295bd4bfbceb4803a36726cc"
+      "sha256": "5f2fecb274c0df8425e875fc983749ff727459734cec2ab54937221eaaab3264"
     },
     "python:deploy/dl-flywheel/pipelines/continuous_v6/parity_probe.py": {
       "bytes": 18310,
@@ -2777,13 +2777,13 @@
       "sha256": "4288808ff82fee80f9c59c9233e8c7315c83cfd67fbeb51bac8ad0fc7eeabfeb"
     },
     "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/readonly_snapshot.py": {
-      "bytes": 4309,
+      "bytes": 4220,
       "classification": {
         "reason": "Research native-v5 source/custody and48 isolated CPU contracts. Additive to prior492 identities; historical fixed1e-9 parity/S3 closure unchanged. Actual collection, native scoring, physical host closure and deployment require separate reviewed current-source operational receipts.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "de6e08b1b288b2c7fdc1a46c9907f255df20b714a8008aa72e354a9cd8fc55a1"
+      "sha256": "45ea1fac6e9ab3e8393e6aa48bc5270487ff991bee29f5a9890e868b79f82f0c"
     },
     "python:deploy/dl-flywheel/pipelines/hpc_verified_v5/timing.py": {
       "bytes": 4321,
@@ -3457,13 +3457,13 @@
       "sha256": "f98ad746a4c1efdfdcaa360ec6486e1e900b398640de4a905d0001fcc6400dd6"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_archive.py": {
-      "bytes": 17342,
+      "bytes": 17273,
       "classification": {
         "reason": "Telemetry archive recovery source/custody20 offline CPU fixtures; no GP or optimizer changes. New fixture runner invoked additively by run_offline.py. Live read-only reconciliation and fresh exact-version S3 acceptance are separate bounded receipts.",
         "role": "research"
       },
       "migration": "Moved unchanged role/reason from test-only inventory; not a test-bearing coverage family. No source or test removed.",
-      "sha256": "cfb027f9b638458e4eea1c2267cfe49412e9e8711c262332fbd3cd690e683f0c"
+      "sha256": "ddb8d577fad316e39785d3d556f754376cb5577f988abb207d912e4f12e7bbb8"
     },
     "python:deploy/dl-flywheel/pipelines/telemetry/trace_recovery_v2/launch_v2.py": {
       "bytes": 5352,

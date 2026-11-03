@@ -398,7 +398,7 @@ limits and client examples](docs/program-source-stream.md).
 | Coverage map | 1,216 items over 35 lanes |
 | Capability matrix | 841 rows: 353 moved, 78 new, 1 pending, 402 dropped, 7 lost |
 | Datasets in Git | 40 synthetic fixtures (10 each of binary, multiclass, regression and time series) and 10 test datasets <sup>9</sup> |
-| Python still tracked | 3,410 `.py` files, 307 of them under `python/` |
+| Python still tracked | 3,412 `.py` files, 307 of them under `python/` |
 | Architecture decision records | 6 <sup>10</sup> |
 
 1. `cargo run --locked --bin jope`
