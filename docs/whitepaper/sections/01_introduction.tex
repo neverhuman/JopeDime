@@ -59,12 +59,12 @@ can execution feedback help a proposer depart usefully from familiar ideas?
 Tests can select a better candidate without teaching the next proposer.
 Automated research systems already couple proposals to tests
 \citep{lu2024aiscientist,gottweis2025coscientist,novikov2025alphaevolve,karpathy2026autoresearch,socher2026bookbite,socher2026eureka}.
-\Cref{sub:anatomy-where,sec:road} distinguish retained candidate solutions from
+\Cref{sub:anatomy-where,sec:road} distinguish retained candidate \mbox{solutions} from
 learned proposer updates.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{keyidea}
-Can judgment bought during training improve the first proposal at deployment?
+Can judgment bought during training improve the first algorithm proposal at deployment?
 \end{keyidea}
 \end{figure}
 
@@ -135,13 +135,13 @@ and retained state are specified for audit. Pretrained components still supply p
 \begin{itemize}[leftmargin=*,nosep]
   \item \textbf{One inference, one candidate.} For each new problem, the program
     writer emits one complete program ($\budget = 1$), with no retries, repairs,
-    best-of-$N$ selection, reranking or parameter weight updates.
+    best-of-$N$ selection, reranking or model parameter weight updates.
   \item \textbf{Everything is counted.} This includes reasoning tokens and
-    problem encoding. One inference is one generation, not one forward pass.
+    problem encoding. One inference is one \mbox{generation, not} a single forward pass.
   \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
     to training rows is allowed. Any internal model or hyperparameter
     selection must be disclosed and counted in its compute budget. One
-    outer proposal does not establish the absence of internal search.
+    outer \mbox{proposal} does not establish the absence of internal search.
     \mbox{Training} search is priced separately in \cref{sec:price}.
 \end{itemize}
 \textbf{A single candidate, with prior knowledge:} human-designed program
@@ -157,11 +157,11 @@ reference whose moves are typed programs of learning primitives.
   \item \textbf{The anatomy of innovation:} four pillars (aim, variation,
     judgment and retention), with an idealized relation between proposal
     quality and the number of attempts (\cref{sec:anatomy}).
-  \item \textbf{The innovation game:} a board, move, referee and opponent,
+  \item \textbf{The innovation game:} a board, move, referee and \mbox{opponent},
     with a reward ordering and two reference admission rules; each task
-    type requires a qualified board encoding and referee (\cref{sec:game}).
+    type requires a qualified board encoding and task referee (\cref{sec:game}).
   \item \textbf{The economics of algorithmic self-play:} a cost model for
-    self-play training and for the expected cost per verified improvement (\cref{sec:price}).
+    self-play training and for the expected compute cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,
     a grammar-constrained program writer and a problem--program ranking map,
     plus an expert-\hspace{0pt}iteration training procedure and audit safeguards against referee reward hacking
@@ -177,7 +177,7 @@ reference whose moves are typed programs of learning primitives.
 The adapter records in \cref{sec:method-status} establish neither neural
 writer updates nor a training gain in the separate ranking map. Independent
 first-proposal comparisons remain pending; \cref{sec:method,sec:results}
-specify the full reference design and its evaluation tests.
+specify the full reference design and its planned evaluation tests.
 
 \Cref{sec:anatomy,sec:road} identify the roles and components;
 \cref{sec:game} defines an attempt. \Cref{sec:price,sec:method} account
