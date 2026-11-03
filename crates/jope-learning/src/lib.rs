@@ -17,6 +17,9 @@
 
 #![cfg_attr(doc, deny(missing_docs))]
 
+#[cfg(test)]
+extern crate self as jope_learning;
+
 pub mod arena_exact;
 pub mod bank;
 pub mod canon;
