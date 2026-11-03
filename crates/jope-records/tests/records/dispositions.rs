@@ -218,7 +218,7 @@ fn open_honest_dispositions_are_accepted() {
     assert_eq!(fixture.verify().expect("open dispositions").closed, 0);
 }
 
-type Mutate = Box<dyn Fn(&Fixture, &mut Value)>;
+type Mutate = Box<dyn Fn(&Fixture, &mut Value) -> bool>;
 
 fn pop_stage(name: &'static str) -> Mutate {
     Box::new(move |_, record| {
@@ -226,6 +226,7 @@ fn pop_stage(name: &'static str) -> Mutate {
             .as_list_mut()
             .expect("attestations")
             .retain(|a| a.get("stage") != Some(&Value::from(name)));
+        true
     })
 }
 
@@ -241,11 +242,15 @@ fn edit_evidence(name: &'static str, changes: Vec<(&'static str, Value)>) -> Mut
         }
         dump(&path, &body);
         set(reference, "sha256", digest(&path).into());
+        true
     })
 }
 
 fn update_reference(name: &'static str, key: &'static str, value: Value) -> Mutate {
-    Box::new(move |_, record| set(first_reference(record, name), key, value.clone()))
+    Box::new(move |_, record| {
+        set(first_reference(record, name), key, value.clone());
+        true
+    })
 }
 
 fn update_record(changes: Vec<(&'static str, Value)>) -> Mutate {
@@ -253,15 +258,27 @@ fn update_record(changes: Vec<(&'static str, Value)>) -> Mutate {
         for (key, value) in &changes {
             set(record, key, value.clone());
         }
+        true
     })
 }
 
-fn symlink_evidence(fixture: &Fixture, record: &mut Value) {
+fn symlink_evidence(fixture: &Fixture, record: &mut Value) -> bool {
     let reference = first_reference(record, "hosted_ci");
     let path = fixture
         .root
         .join(reference.get("path").and_then(Value::as_str).expect("path"));
     let target = path.with_file_name("real.json");
     std::fs::rename(&path, &target).expect("rename");
-    std::os::unix::fs::symlink("real.json", &path).expect("symlink");
+    match std::os::unix::fs::symlink("real.json", &path) {
+        Ok(()) => true,
+        Err(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::Unsupported
+            ) =>
+        {
+            false
+        }
+        Err(error) => panic!("symlink: {error}"),
+    }
 }
