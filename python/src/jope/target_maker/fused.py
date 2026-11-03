@@ -4,11 +4,12 @@ import json
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+from importlib import import_module
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .fused_meta import _meta_features, _meta_features_for_two, _meta_retrieval
@@ -601,152 +602,55 @@ def _fused_retrieval(
 
 
 def _export_split_functions() -> None:
-    from .fused_meta import (
-        _fit_meta_candidates as _fit_meta_candidates,
-    )
-    from .fused_meta import (
-        _fit_meta_model as _fit_meta_model,
-    )
-    from .fused_meta import (
-        _flatten_retrieval_pairs as _flatten_retrieval_pairs,
-    )
-    from .fused_meta import (
-        _meta_feature_names as _meta_feature_names,
-    )
-    from .fused_meta import (
-        _meta_features as _meta_features,
-    )
-    from .fused_meta import (
-        _meta_features_for_two as _meta_features_for_two,
-    )
-    from .fused_meta import (
-        _meta_retrieval as _meta_retrieval,
-    )
-    from .fused_meta import (
-        _meta_retrieval_from_flat as _meta_retrieval_from_flat,
-    )
-    from .fused_meta import (
-        _weight_grid as _weight_grid,
-    )
-    from .fused_scoring import (
-        _classical_retrieval_from_features as _classical_retrieval_from_features,
-    )
-    from .fused_scoring import (
-        _cosine_scores as _cosine_scores,
-    )
-    from .fused_scoring import (
-        _fit_classical_models as _fit_classical_models,
-    )
-    from .fused_scoring import (
-        _fit_classical_models_all as _fit_classical_models_all,
-    )
-    from .fused_scoring import (
-        _model_pair_scores_for_batch as _model_pair_scores_for_batch,
-    )
-    from .fused_scoring import (
-        _model_retrieval_for_batch as _model_retrieval_for_batch,
-    )
-    from .fused_scoring import (
-        _pair_features_matrix as _pair_features_matrix,
-    )
-    from .fused_scoring import (
-        _pair_matrix_from_feature_matrix as _pair_matrix_from_feature_matrix,
-    )
-    from .fused_scoring import (
-        _retrieval_from_vectors as _retrieval_from_vectors,
-    )
-    from .fused_scoring import (
-        _score_pairs_from_feature_matrix as _score_pairs_from_feature_matrix,
-    )
-    from .fused_training import (
-        _copy_checkpoints as _copy_checkpoints,
-    )
-    from .fused_training import (
-        _relative_artifact as _relative_artifact,
-    )
-    from .fused_training import (
-        _train_best_bundle as _train_best_bundle,
-    )
-    from .fused_training import (
-        _train_final_bundle as _train_final_bundle,
-    )
-    from .fused_training import (
-        _write_bundle_manifest as _write_bundle_manifest,
-    )
-    from .fused_training import (
-        train_fusion as train_fusion,
-    )
-    from .fused_windows import (
-        _batch_from_components as _batch_from_components,
-    )
-    from .fused_windows import (
-        _encode_neural_windows as _encode_neural_windows,
-    )
-    from .fused_windows import (
-        _fit_signature_vectorizer as _fit_signature_vectorizer,
-    )
-    from .fused_windows import (
-        _raw_signature_from_values as _raw_signature_from_values,
-    )
-    from .fused_windows import (
-        _record_signatures as _record_signatures,
-    )
-    from .fused_windows import (
-        _sample_windows as _sample_windows,
-    )
-    from .fused_windows import (
-        _signature_from_feature_stack as _signature_from_feature_stack,
-    )
-    from .fused_windows import (
-        _transform_signatures as _transform_signatures,
-    )
-    from .fused_windows import (
-        _values_from_npz as _values_from_npz,
-    )
-    from .fused_windows import (
-        _window_features as _window_features,
-    )
+    split_exports = {
+        "fused_windows": (
+            "_batch_from_components",
+            "_encode_neural_windows",
+            "_fit_signature_vectorizer",
+            "_raw_signature_from_values",
+            "_record_signatures",
+            "_sample_windows",
+            "_signature_from_feature_stack",
+            "_transform_signatures",
+            "_values_from_npz",
+            "_window_features",
+        ),
+        "fused_scoring": (
+            "_classical_retrieval_from_features",
+            "_cosine_scores",
+            "_fit_classical_models",
+            "_fit_classical_models_all",
+            "_model_pair_scores_for_batch",
+            "_model_retrieval_for_batch",
+            "_pair_features_matrix",
+            "_pair_matrix_from_feature_matrix",
+            "_retrieval_from_vectors",
+            "_score_pairs_from_feature_matrix",
+        ),
+        "fused_meta": (
+            "_fit_meta_candidates",
+            "_fit_meta_model",
+            "_flatten_retrieval_pairs",
+            "_meta_feature_names",
+            "_meta_features",
+            "_meta_features_for_two",
+            "_meta_retrieval",
+            "_meta_retrieval_from_flat",
+            "_weight_grid",
+        ),
+        "fused_training": (
+            "_copy_checkpoints",
+            "_relative_artifact",
+            "_train_best_bundle",
+            "_train_final_bundle",
+            "_write_bundle_manifest",
+            "train_fusion",
+        ),
+    }
+    for module_name, names in split_exports.items():
+        module = import_module(f"{__package__}.{module_name}")
+        globals().update({name: getattr(module, name) for name in names})
 
-    globals().update({name: value for name, value in locals().copy().items() if name in _SPLIT_EXPORTS})
-
-
-_SPLIT_EXPORTS = {
-    "_batch_from_components",
-    "_classical_retrieval_from_features",
-    "_copy_checkpoints",
-    "_cosine_scores",
-    "_encode_neural_windows",
-    "_fit_classical_models",
-    "_fit_classical_models_all",
-    "_fit_meta_candidates",
-    "_fit_meta_model",
-    "_fit_signature_vectorizer",
-    "_flatten_retrieval_pairs",
-    "_meta_feature_names",
-    "_meta_features",
-    "_meta_features_for_two",
-    "_meta_retrieval",
-    "_meta_retrieval_from_flat",
-    "_model_pair_scores_for_batch",
-    "_model_retrieval_for_batch",
-    "_pair_features_matrix",
-    "_pair_matrix_from_feature_matrix",
-    "_raw_signature_from_values",
-    "_record_signatures",
-    "_relative_artifact",
-    "_retrieval_from_vectors",
-    "_sample_windows",
-    "_score_pairs_from_feature_matrix",
-    "_signature_from_feature_stack",
-    "_train_best_bundle",
-    "_train_final_bundle",
-    "_transform_signatures",
-    "_values_from_npz",
-    "_weight_grid",
-    "_window_features",
-    "_write_bundle_manifest",
-    "train_fusion",
-}
 
 _export_split_functions()
 del _export_split_functions
