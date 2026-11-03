@@ -19,7 +19,7 @@ pub(crate) fn summary<'a>(runs: impl Iterator<Item = &'a RunRecord> + Clone) -> 
     }
 }
 
-pub(crate) fn aggregate(
+pub(super) fn aggregate(
     slot: &'static str,
     profile: Profile,
     datasets: &[Dataset],
