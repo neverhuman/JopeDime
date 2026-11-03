@@ -64,7 +64,9 @@ fn journal(path: &std::path::Path, run: &str, facts: Vec<LineageFact>) -> Vec<En
         .collect()
 }
 
+#[path = "core/journal.rs"]
 mod journal;
+#[path = "core/snapshot.rs"]
 mod snapshot;
 
 #[path = "support/golden_v1.rs"]
