@@ -14,7 +14,7 @@ PYTHON = [
     (f"tests.{module}", f"{test}[{task}]")
     for module, test in (
         ("test_policy_training_contract", "test_real_synthetic_update_reload_and_continuation"),
-        ("test_training_campaign", "test_real_cpu_optimizer_reload_continuation_and_export"),
+        ("test_training_campaign_execution", "test_real_cpu_optimizer_reload_continuation_and_export"),
     )
     for task in ("regression", "binary", "multiclass")
 ]
