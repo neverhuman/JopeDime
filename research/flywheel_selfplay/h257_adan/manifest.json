@@ -154,5 +154,26 @@
       "sha256": "6b71fdfe0278809dd37297b67456155baba098716fbcd38f7285416966eb27e2",
       "role": "official reference for data-free optimizer tests; not imported by study"
     }
+  },
+  "execution_source_commit": "2fe50b3131b2ff610e6e2ff9bc1de60a1134f80a",
+  "closeout": {
+    "status": "COMPLETE",
+    "verdict": "NO_ADVANCE",
+    "primary_verdict": "NO_ADVANCE",
+    "secondary_verdict": "NO_ADVANCE",
+    "metrics_sha256": "2a8e81e582a33e7556ea9b51c07d30d660296981f807fe90ed9786df94810bc1",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H257/astra-t1335/closeout-v2/runtime.tar.gz",
+      "version_id": "uwk4UHTAfuPGXZpk5e7Ri1GoliBjDcRh",
+      "sha256": "c9cf4aa81fcc8a89ee04dc089c1bca7fd022765c81327057b2c9363f05f3a68d",
+      "bytes": 314615127
+    },
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H257/astra-t1335/closeout-v2/manifest.json",
+      "version_id": "_4jKy179e52ROROPMRcIlYRJsHCOV_aj",
+      "sha256": "c3dac7eb11831ccaf3ee3dc684a660607a32e3c78d9f43944fd6eabc401f1683",
+      "bytes": 102873
+    },
+    "audit_sha256": "fdfd7c9d506a8146813365eea323eb2aa1b6329dee97446686190b7ee11b49be"
   }
 }
