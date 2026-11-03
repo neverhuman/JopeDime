@@ -72,7 +72,7 @@
     "analysis.py": "763ad41d0e35fbf97dce4ca46deab5557e414d2c93ed46f729cdabfce30752d6",
     "analysis_h272.py": "dbf988cf367dbe9181eb025ceeb7cf26c7be12a90143e239c0ee74a9722f8e77",
     "bagged.py": "3ff0119d9b69367cce0eac5a82ba94fd7e44738ad5fe2a8f43867c2216bcac9a",
-    "runner.py": "34908b76e5ee8a4964eee56478a4913a87add38f54cd5a5f630e943c99dcfadd",
+    "runner.py": "2be5f2269b351347596feb11d10e6ab42b8242fb1835ce02b953d7d6779a1952",
     "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
     "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
     "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
@@ -86,7 +86,7 @@
     "torch": "2.7.0",
     "scikit-learn": "1.7.2"
   },
-  "parent_commit": "1778728833a001c99729d3b218c2895d1604a752",
+  "parent_commit": "ea8aa652a1b402a25c79273016928a78bc8f4a9c",
   "publication_ref": "v1/next",
   "host": "xbabe2 CPU (taskset cores 57-60, nice 19, LightGBM n_jobs 1; H239 A1 guard with swap-in-rate pause)",
   "compute_stop": "2026-11-04T00:30:00Z"

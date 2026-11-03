@@ -294,15 +294,20 @@ def main():
     pins = json.loads((HERE / "manifest.json").read_text())
     verify(pins)
     launch = json.loads(args.launch.read_text())
-    head = subprocess.check_output(
-        [
-            "git",
-            "--git-dir=/home/ubuntu/JopeDime/.git",
-            "rev-parse",
-            "refs/remotes/origin/v1/next",
-        ],
-        text=True,
-    ).strip()
+    src_commit = str(launch.get("source_commit", ""))
+    if not args.smoke:
+        subprocess.run(
+            [
+                "git",
+                "--git-dir=/home/ubuntu/JopeDime/.git",
+                "merge-base",
+                "--is-ancestor",
+                src_commit,
+                "refs/remotes/origin/v1/next",
+            ],
+            check=True,
+        )
+    head = src_commit
     validate_launch(
         launch,
         head,
