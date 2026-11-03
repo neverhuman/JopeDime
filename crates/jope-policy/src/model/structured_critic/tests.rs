@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 fn digest(byte: u8) -> String {
     format!("{byte:02x}").repeat(32)
 }
