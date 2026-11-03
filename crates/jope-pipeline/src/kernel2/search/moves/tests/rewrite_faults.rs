@@ -1,3 +1,4 @@
+use super::super::{pool_count, simplify_round};
 use super::*;
 
 // Fix round 01: parents that raise faults, inputs the rewrite cannot read, the pool refusal
@@ -39,10 +40,11 @@ pub(super) fn faulting_cut() -> Cut {
 fn rewritten_children_keep_fault_counts_and_signed_zeros_bit_for_bit() {
     use feat_math::math_expr::FaultClass;
     let cut = faulting_cut();
-    assert!(cut
-        .train_x
-        .iter()
-        .any(|r| r[0] == 0.0 && r[0].is_sign_negative()));
+    assert!(
+        cut.train_x
+            .iter()
+            .any(|r| r[0] == 0.0 && r[0].is_sign_negative())
+    );
     // Each parent, the expression its rewrite gives, and the fault class its own expression
     // raises on a training row (none checked for the elementwise carrier, whose cells the
     // row-summary evaluator reads).
