@@ -1,5 +1,5 @@
-use super::*;
 use super::screen::wrap_line;
+use super::*;
 
 #[test]
 fn redraw_caps_cover_bursts_idle_and_activity_transitions() {
