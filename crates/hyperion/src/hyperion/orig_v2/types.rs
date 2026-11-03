@@ -98,7 +98,10 @@ pub struct OrigV2Receipt {
 }
 
 impl OrigV2Receipt {
-    pub(super) fn validate_frozen(&self, required_semantics: OrigV2PairSemantics) -> Result<()> {
+    pub(in crate::hyperion) fn validate_frozen(
+        &self,
+        required_semantics: OrigV2PairSemantics,
+    ) -> Result<()> {
         if self.profile != ORIG_V2_PROFILE_ID
             || self.pair_semantics != required_semantics
             || self.sweeps != ORIG_V2_SWEEPS
