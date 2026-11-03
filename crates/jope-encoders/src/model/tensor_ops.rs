@@ -302,6 +302,6 @@ mod stable_feature_tests {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
 mod feature_views;
+use feature_views::missing_indicator;
 pub(super) use feature_views::{apply_feature_view, FeatureView};
