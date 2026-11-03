@@ -35,8 +35,8 @@ pub(super) fn verify_symbol_inventory_with_snapshot(
         ),
         (
             "RoundQualReport",
-            "crates/jope-learning/src/clover/round_qual/model.rs",
-            600,
+            "crates/jope-learning/src/clover/round_qual.rs",
+            537,
             "pub struct RoundQualReport",
         ),
     ];
