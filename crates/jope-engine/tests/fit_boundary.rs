@@ -193,7 +193,7 @@ fn verification_command(fixture: &Fixture, sha: &str, instance: &str) -> Command
 }
 
 fn assert_every_entry_refused_without_verified_activation(data: &Data, label: &str) {
-    for entry in ENTRIES {
+    for entry in verification::ENTRIES {
         let output = data.root.join(format!("{label}-{entry}.json"));
         let result = data.command(entry, &output).output().unwrap();
         let error = String::from_utf8_lossy(&result.stderr);
