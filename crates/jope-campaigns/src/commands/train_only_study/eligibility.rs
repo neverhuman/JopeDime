@@ -159,7 +159,7 @@ pub(super) fn build_eligibility(
     Ok((records, selected))
 }
 
-pub(crate) fn proposal_score(row: &ProposalRow) -> Result<f64> {
+pub(super) fn proposal_score(row: &ProposalRow) -> Result<f64> {
     let score = row
         .selection_score
         .or(row.proposal_score)
