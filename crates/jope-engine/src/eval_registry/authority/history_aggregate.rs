@@ -173,5 +173,3 @@ use artifact::*;
 mod tests;
 #[path = "history_aggregate/validation.rs"]
 mod validation;
-#[cfg(test)]
-use validation::{batch_ranges, checked_chunk, original_source};
