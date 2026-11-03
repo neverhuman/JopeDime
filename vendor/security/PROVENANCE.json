@@ -1,5 +1,5 @@
 {
-  "bytes": 13212501,
+  "bytes": 13212525,
   "crates": [
     {
       "archive_sha256": "5ecb245093b0f791b89d3420c3df9c6d49c60ab63ba54db896bf8a3baf486706",
@@ -27,7 +27,7 @@
       "manifest_upstream_sha256": "7f4ae4f6ce523c485f2e9e4a2fc37abd76e88438bfc1b74ed0e89c6808893b3b",
       "name": "crossterm",
       "repository": "https://github.com/crossterm-rs/crossterm",
-      "retained_bytes": 461421,
+      "retained_bytes": 461445,
       "retained_files": 73,
       "upstream_vcs": {
         "git": {
@@ -1625,8 +1625,8 @@
       "upstream_sha256": "9cd606b7ca3ebb39f85b7f7821aace5ab36245647f54c0f4dc150356ac1bc8ef"
     },
     {
-      "bytes": 3664,
-      "candidate_sha256": "b0a03035eacfd0afab05b5a2fdc49cce91338a0a5a6a070acb0c53fbec18edce",
+      "bytes": 3690,
+      "candidate_sha256": "4a8cf3e8286e8ad1a411bc52dbf92a4afca9a9ebc2a008176c44d85aecc361eb",
       "changed": true,
       "path": "vendor/security/crossterm-0.28.1/src/event/filter.rs",
       "upstream_sha256": "1f490e7d41fdc68cb83ba572dfceb0743778e253c1d2e34530a98d8950f81729"
@@ -1877,8 +1877,8 @@
       "upstream_sha256": "d215ff60394ec2150c2df6340343d84a3922570c1feba813663742d0eb85d13f"
     },
     {
-      "bytes": 9767,
-      "candidate_sha256": "a96da6325edc3a8f0136e25184d464aaba10f850c591a6eb37281a4c28716c1b",
+      "bytes": 9765,
+      "candidate_sha256": "dfaff691775e93409ed4649b0c4aa5e186f86663ea3ab8b3c3a487f48ff8fac5",
       "changed": true,
       "path": "vendor/security/crossterm-0.28.1/src/terminal/sys/unix.rs",
       "upstream_sha256": "972f68814571a2ed6f6a741565bef98437d2493d90fcc189fd713de0a6ac3552"
