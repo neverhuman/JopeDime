@@ -1,3 +1,4 @@
+use super::setup_lifecycle::{HostSetupCallback, HostSetupStage};
 use super::*;
 
 pub(super) fn qualify_setup_faults(pool: &mut ExecutionPool, physical: &Path, case: &str) {
