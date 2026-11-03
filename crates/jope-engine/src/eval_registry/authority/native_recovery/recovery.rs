@@ -191,7 +191,7 @@ impl Authority {
                 "recovery epoch was already used in original history"
             );
         }
-        let witness_policy: super::super::witness::WitnessPolicy =
+        let witness_policy: crate::eval_registry::witness::WitnessPolicy =
             serde_json::from_slice(&artifact(&body.independent_witness.policy)?)?;
         ensure!(
             witness_policy.authority_instance == body.authority_instance,
@@ -209,21 +209,22 @@ impl Authority {
                     required_acks.len() < 100_000,
                     "public ACK membership bound exceeded"
                 );
-                let ack: super::super::witness::SignedAck =
+                let ack: crate::eval_registry::witness::SignedAck =
                     serde_json::from_slice(&authority.read_blob(&row?)?)?;
                 required_acks.push(ack);
             }
         }
         let independent_witness_verification =
-            super::super::witness::WitnessStore::verify_public_history_with_acks(
+            crate::eval_registry::witness::WitnessStore::verify_public_history_with_acks(
                 &body.independent_witness.root,
                 &witness_policy,
                 &required_acks,
             )?;
-        let epochs: Vec<super::super::witness::WitnessEpochProof> =
+        let epochs: Vec<crate::eval_registry::witness::WitnessEpochProof> =
             serde_json::from_value(independent_witness_verification["epoch_proofs"].clone())?;
         ensure!(
-            super::super::witness::verify_epoch_chain(&witness_policy, &epochs)?.authority_epoch
+            crate::eval_registry::witness::verify_epoch_chain(&witness_policy, &epochs)?
+                .authority_epoch
                 == body.parent_epoch,
             "public witness effective original epoch differs"
         );
