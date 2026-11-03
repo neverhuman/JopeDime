@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::*;
 
     fn checkpoint() -> String {
         "a".repeat(64)
