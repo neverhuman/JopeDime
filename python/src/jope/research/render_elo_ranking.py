@@ -12,10 +12,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import FancyBboxPatch
 
+
 ROOT = Path(__file__).resolve().parents[1]
 PANEL = ROOT / "manifests/panel-analysis.v1.json"
 BEST = (
-    ROOT / "runs/test-adaptive-golden42-v1-extension-g20-g29-islands4x30" / "golden42-best-solutions.v1.json"
+    ROOT
+    / "runs/test-adaptive-golden42-v1-extension-g20-g29-islands4x30"
+    / "golden42-best-solutions.v1.json"
 )
 OUTPUT_WITH_JOPE = ROOT / "artifacts/jope-dime-elo-ranking-16x9-600dpi.png"
 OUTPUT_BASELINES = ROOT / "artifacts/regression-elo-ranking-baselines-16x9-600dpi.png"
@@ -99,7 +102,9 @@ def batch_elo(
         for left_index, left in enumerate(models):
             for right in models[left_index + 1 :]:
                 actual = sum(score(row[left], row[right]) for row in rows) / len(rows)
-                expected = 1.0 / (1.0 + 10.0 ** ((snapshot[right] - snapshot[left]) / 400.0))
+                expected = 1.0 / (
+                    1.0 + 10.0 ** ((snapshot[right] - snapshot[left]) / 400.0)
+                )
                 delta = k * (actual - expected) / divisor
                 deltas[left] += delta
                 deltas[right] -= delta
@@ -111,7 +116,10 @@ def batch_elo(
 def evolved_jope_row() -> tuple[dict, float]:
     panel = json.loads(PANEL.read_text())
     best = json.loads(BEST.read_text())
-    selected = {solution["dataset_hash"]: float(solution["selected_rmse"]) for solution in best["solutions"]}
+    selected = {
+        solution["dataset_hash"]: float(solution["selected_rmse"])
+        for solution in best["solutions"]
+    }
     baseline_models = [row["label"] for row in panel["model_rows"]]
     panel_rows = []
     for dataset in panel["datasets"]:
@@ -126,7 +134,9 @@ def evolved_jope_row() -> tuple[dict, float]:
     ]
     baseline_ratings = min(
         variants,
-        key=lambda ratings: sum((ratings[model] - target[model]) ** 2 for model in baseline_models),
+        key=lambda ratings: sum(
+            (ratings[model] - target[model]) ** 2 for model in baseline_models
+        ),
     )
     baseline_error = math.sqrt(
         sum((baseline_ratings[model] - target[model]) ** 2 for model in baseline_models)
@@ -135,11 +145,14 @@ def evolved_jope_row() -> tuple[dict, float]:
 
     expanded = batch_elo(panel_rows, baseline_models + ["jope-dime"], normalize=True)
     full = {row["model"]: row["elo"] for row in BASELINES}
-    offset = sum(full[model] - expanded[model] for model in baseline_models) / len(baseline_models)
+    offset = sum(full[model] - expanded[model] for model in baseline_models) / len(
+        baseline_models
+    )
     estimate = expanded["jope-dime"] + offset
     values = np.array(list(selected.values()), dtype=float)
     wins = sum(
-        solution["benchmark_status"] == "surpassed_external_benchmark" for solution in best["solutions"]
+        solution["benchmark_status"] == "surpassed_external_benchmark"
+        for solution in best["solutions"]
     )
     jope = {
         "model": "jope-dime",
@@ -311,8 +324,8 @@ def render_variant(
             zorder=7,
             clip_on=True,
         )
-        coverage = f"{row['coverage']:,}"
-        common = f"{row['common']:,}"
+        coverage = f'{row["coverage"]:,}'
+        common = f'{row["common"]:,}'
         detail = (
             f"COVERAGE  {coverage}    COMMON  {common}    "
             f"MEAN  {row['mean']:.6f}    MEDIAN  {row['median']:.6f}    "
@@ -330,11 +343,9 @@ def render_variant(
             clip_on=True,
         )
 
-        baseline_index = (
-            next(index for index, baseline in enumerate(BASELINES) if baseline["model"] == row["model"])
-            if not is_jope
-            else None
-        )
+        baseline_index = next(
+            index for index, baseline in enumerate(BASELINES) if baseline["model"] == row["model"]
+        ) if not is_jope else None
         add_round_bar(
             bar_ax,
             floor,
@@ -347,7 +358,7 @@ def render_variant(
         bar_ax.text(
             row["elo"] + 18,
             y,
-            f"{row['elo']:,.2f}",
+            f'{row["elo"]:,.2f}',
             fontsize=16.7 if is_jope else 14.5,
             fontweight="bold",
             color="#5df2d6" if is_jope else "#f0f5fb",
