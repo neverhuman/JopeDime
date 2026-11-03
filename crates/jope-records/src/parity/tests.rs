@@ -21,6 +21,24 @@ fn kebab_matches_clap_naming() {
 }
 
 #[test]
+fn clap_subcommands_follow_the_module_declared_by_main() {
+    let temp = tempfile::tempdir().unwrap();
+    let engine = temp.path().join("crates/jope-engine/src");
+    std::fs::create_dir_all(&engine).unwrap();
+    std::fs::write(engine.join("main.rs"), "mod command;\n").unwrap();
+    std::fs::write(
+        engine.join("command.rs"),
+        "#[derive(Subcommand)]\nenum EngineCmd {\n    Doctor,\n    CompareSeeds,\n}\n",
+    )
+    .unwrap();
+
+    assert_eq!(
+        scan::clap_names(temp.path()).unwrap(),
+        ["doctor", "compare-seeds"]
+    );
+}
+
+#[test]
 fn rows_read_escaped_bars() {
     assert_eq!(split_row("| a | b \\| c | d |"), ["a", "b | c", "d"]);
     assert!(split_row("no bars").is_empty());
