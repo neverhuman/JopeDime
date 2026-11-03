@@ -44,6 +44,7 @@ mod parser;
 mod registry;
 mod scan;
 
+use audit::policy_value;
 pub use audit::{audit, SMALLEST_GPU_NODE_FREE_MB};
 pub use registry::{DepForm, Finding, RenderSite, EXEMPT_FILES, REGISTRY, SCAN_DIRS, SHARED_KEYS};
 pub use scan::{scan_repo, scan_targets};

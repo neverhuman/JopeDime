@@ -1,7 +1,7 @@
 use super::*;
 
 /// The policy value for a family/key, as it should appear in a rendered spec.
-fn policy_value(family: Family, key: &str) -> Option<String> {
+pub(super) fn policy_value(family: Family, key: &str) -> Option<String> {
     let p = spec_policy::policy(family);
     Some(match key {
         "gpus_per_task" => p.gpus_per_task.to_string(),
