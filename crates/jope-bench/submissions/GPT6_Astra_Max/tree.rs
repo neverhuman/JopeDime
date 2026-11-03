@@ -138,7 +138,7 @@ fn depth_for(n: usize) -> usize {
     }
 }
 
-fn round_limit(n: usize, p: usize) -> usize {
+pub(super) fn round_limit(n: usize, p: usize) -> usize {
     let depth = depth_for(n);
     let columns = p.min(48);
     let sample = n.min(8192);

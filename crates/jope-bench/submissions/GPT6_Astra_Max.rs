@@ -22,6 +22,7 @@ mod prep;
 mod tree;
 
 pub(super) use prep::{choose_features, encode, linear_predictions, prepare, ridge};
+use tree::round_limit;
 pub(super) use tree::{Booster, Tree};
 
 const MAX_ROWS: usize = 32_768;
