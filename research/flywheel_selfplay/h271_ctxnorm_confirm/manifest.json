@@ -106,5 +106,34 @@
       "h268_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/runner.py",
       "h265_frozen.py": "research/flywheel_selfplay/h268_rerank4_ctxnorm_labels/h265_frozen.py"
     }
+  },
+  "closeout": {
+    "source_commit": "68f517d63ab22c31902cfa0c0e0f837a49aeb255",
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H271/astra-t1905/closeout/manifest.json",
+      "version_id": "9P5u78wuphD1C53oMvfiZ7LBmuCsbcz2",
+      "sha256": "8cf8dcdeb841ad49613b8bf0290d08b99a6321aa2edc3528b659b982f9d1e4d7",
+      "bytes": 104818,
+      "exact_version_get_verified": true
+    },
+    "runtime_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H271/astra-t1905/closeout/runtime.tar.gz",
+      "version_id": "PfchBITqRoJVxP24ZAWM1JFnesBX05hE",
+      "sha256": "95af6f62c4653bebaae2ebc3a09fefbf7c03b310b70a0ecbeac766f20e9c171e",
+      "bytes": 63246123,
+      "members_verified": 571,
+      "exact_version_get_verified": true
+    },
+    "metrics_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H271/astra-t1905/closeout/metrics.json",
+      "version_id": "9b0nyESWyyZXMDahvcHIT45eit1yM3mW",
+      "sha256": "1ea56208953504fe4d758865d6921bb21c5e6e3a3d78bbcde238d493618a37ef",
+      "bytes": 39759,
+      "exact_version_get_verified": true
+    },
+    "verdict": "NO_ADVANCE",
+    "confirmation_status": "NOT_CONFIRMED",
+    "audit_status": "PASS",
+    "inference_audit_status": "PASS"
   }
 }
