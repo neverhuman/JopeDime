@@ -104,7 +104,7 @@ pub(crate) fn evaluate_policy_guard(
             Ok((pol_lp, ce_loss, report)) => {
                 let frozen = !report.admissible;
                 if report.admissible {
-                    measured_tilt_rounds_admissible += 1;
+                    *measured_tilt_rounds_admissible += 1;
                     tilted_leaf_log_probs = Some(pol_lp);
                 }
                 (
