@@ -31,3 +31,63 @@ fingerprint = "922e52d554228be9"
 owner = "research"
 reason = "Immutable preregistered research harness unit `bind_source` across h195_blend025_kernel_confirm/runner.py and h233_stable_g025/runner.py (metrics/manifest-pinned SHA-256)."
 expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "89f76ddd92bb97a0"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness Engine class shared across h235 and h236."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "eed5836797c0baec"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness Engine class shared across h234 and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "cc4edef68b59c69f"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness pseudoreplication helper shared across h165, h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "6d3e7844b73c59df"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness summarize helper shared across h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "eb33d2d45f1493f8"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness cohorts helper shared across h165, h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "5ba43bc9220a277a"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness choose helper shared across h165, h234, h235, h236, and h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "3cd57ea9bec4b3e9"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness pseudoreplication helper pre-h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "f9a4ea05ed2ca947"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness summarize helper pre-h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "31688ef487197e32"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness cohorts helper pre-h237."
+expires = "2027-02-01"
+
+[[entries]]
+fingerprint = "cd778134122c220f"
+owner = "research"
+reason = "Pinned research flywheel selfplay harness choose helper pre-h237."
+expires = "2027-02-01"

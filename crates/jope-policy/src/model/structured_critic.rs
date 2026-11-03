@@ -259,7 +259,7 @@ impl StructuredRankV1 {
         Ok(out)
     }
 
-    /// Inference-only Candle CPU scoring. The return contains no fabricated uncertainty.
+    /// Inference-only Candle CPU scoring. The return contains no forged uncertainty.
     pub fn score(&self, tokens: &[u32]) -> Result<f32> {
         let features = self.features(tokens)?;
         let device = Device::Cpu;

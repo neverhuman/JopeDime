@@ -86,7 +86,7 @@ impl RoundCapture {
         &self.round.dispatched
     }
 
-    /// Only actual returned measurements; unknown attempts have no fabricated row.
+    /// Only actual returned measurements; unknown attempts have no forged row.
     pub fn outcomes(&self) -> &[RecordedOutcome] {
         &self.round.outcomes
     }
