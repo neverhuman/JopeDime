@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot the committed development snapshot; re-extract with --logs SNAPSHOT_DIR."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 import argparse
 import csv
 import hashlib
@@ -241,6 +242,7 @@ else:
                       framealpha=0.88, edgecolor="none", handlelength=1.1,
                       handletextpad=0.25, borderpad=0.2)
     fig.tight_layout(pad=0.35, w_pad=0.45, h_pad=0.5)
+style_figure(fig, OUTPUT)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 if PROVENANCE.exists():
@@ -259,3 +261,5 @@ if PROVENANCE.exists():
         }
     PROVENANCE.write_text(json.dumps(provenance, indent=2) + "\n")
 print(f"{len(rows)} summary rounds; {sum(counts)} strict program promotions")
+
+finalize_typography_receipts(__file__)

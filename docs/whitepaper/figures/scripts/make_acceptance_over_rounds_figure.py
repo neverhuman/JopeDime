@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot the consolidated 3-panel earlier admission prefix (rounds 775-2663): trajectory, cumulative acceptance rate, and shortfall ECDF."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import csv
 import hashlib
@@ -208,6 +209,7 @@ axes[2].text(
 )
 
 fig.tight_layout(pad=0.35, w_pad=0.85)
+style_figure(fig, OUTPUT)
 fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
 plt.close(fig)
 
@@ -240,3 +242,5 @@ print(
     f"Plotted {len(rows)} rounds ({rounds[0]}..{rounds[-1]}); "
     f"peak acceptance {max(cum_rate_pct):.2f}%, final {cum_rate_pct[-1]:.2f}%"
 )
+
+finalize_typography_receipts(__file__)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot trailing candidate-margin quantiles and cumulative near-tie rejections."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import csv
 import hashlib
@@ -200,6 +201,7 @@ def main() -> None:
     for ax in (ax0, ax1):
         ax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
     fig.tight_layout(pad=0.6, w_pad=1)
+    style_figure(fig, OUTPUT)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
 
@@ -260,3 +262,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+finalize_typography_receipts(__file__)

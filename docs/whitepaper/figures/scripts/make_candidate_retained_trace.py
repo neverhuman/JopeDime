@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot the committed, source-bound adapter admission trace."""
+from flywheel_typography import style_figure, finalize_typography_receipts
 
 import argparse
 import csv
@@ -209,6 +210,7 @@ def main():
             edgecolor="none",
         )
     fig.tight_layout(pad=0.45)
+    style_figure(fig, OUTPUT)
     fig.savefig(OUTPUT, metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     provenance = {
@@ -238,3 +240,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+finalize_typography_receipts(__file__)

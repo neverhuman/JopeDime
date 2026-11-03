@@ -1,0 +1,21 @@
+{
+  "schema": "whitepaper.telemetry-figure/v1",
+  "input_csv_sha256": {
+    "rounds.csv": "8ef84b67c0af0e80ebe924cf8cdcfcada63859676d3f27b929bdcb9b41c69f9c",
+    "admissions.csv": "fd64a540f48127f4475b9eda8adeba6ecdcc767757cfdbba118ede332995bf9e"
+  },
+  "figure_sha256": "97577b6fbeb990726da573aed00dd396142eefd6ab59cad98c8f387de6777bc2",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      7.0,
+      1.5
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
+}

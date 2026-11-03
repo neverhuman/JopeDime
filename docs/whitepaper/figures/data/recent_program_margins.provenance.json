@@ -2,8 +2,8 @@
   "schema": "whitepaper.recent-program-margins-figure/v1",
   "csv_sha256": "4f7fa9a4a9e279a93332c782459aa984daebd09073571a1c54daa715921dd769",
   "source_receipt_sha256": "dc6a1090283495265a604ce0b83390af3d1b70afd7a0665c92438be25719cef2",
-  "generator_sha256": "ceabfb2556f3633a867322d753887a02f683a49909707657e04806b80a43db14",
-  "figure_sha256": "d12209e255368cfe5e3196c388f3b10c84fef4c131f8d9c5ba4d770712e8d1e0",
+  "generator_sha256": "88b9601c7c45533430e2943c3f049bf87d83d6f5702931c436419915dfe31f9e",
+  "figure_sha256": "f0509799ab017ac14feddf8e7496aa14352e8a35fefcbc19ecbf5f6210ef6781",
   "program_window_sha256": "5e63b6b30a477debed4c176554ac324fa4cbdcc8934acbe738de9521ba8016eb",
   "records": 92,
   "minimum_gain": 2.6780298055806284e-06,
@@ -15,12 +15,25 @@
   "font_family": "Liberation Serif",
   "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
   "figure_inches": [
-    6.75,
-    1.3
+    7.0,
+    1.25
   ],
-  "minimum_text_size_pt": 8.5,
+  "minimum_text_size_pt": 7.0,
   "gain_axes": "logarithmic",
   "ecdf_denominator": 92,
   "fixed_canvas_no_tight_crop": true,
-  "reproduce": "python3 figures/scripts/make_recent_program_margins.py"
+  "reproduce": "python3 figures/scripts/make_recent_program_margins.py",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      7.0,
+      1.25
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
 }

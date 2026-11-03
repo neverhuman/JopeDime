@@ -51,9 +51,9 @@
   "source_binding": "Field interpretation only; installed run source/checkpoint qualification remains required",
   "scope": "Development telemetry only; no sealed data or independent first-proposal comparison",
   "csv_sha256": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
-  "extraction_script_sha256": "58971778295df3ff6be7f61b74b595c625fcb1e486befc333e3709f073053f2f",
+  "extraction_script_sha256": "65603a7d88158f2d9deeea17eb5be5b6c72ae9ae64f88d13bb612ffae07d97f4",
   "reproduce": "python3 figures/scripts/make_recent_development_figure.py --logs SNAPSHOT_DIR",
-  "figure_sha256": "ad5ebccaa63b6ccc4923593da5250c6f1dccddca730e22018b7fb4f2ea20933f",
+  "figure_sha256": "f440683d146e394410d93aeebc9e1c6a0ee3b14ecc7bd0c6d19fb8fefd07b73b",
   "matplotlib_version": "3.10.8",
   "figure_input_sha256": {
     "recent_development.csv": "86330546dae0f686132c422a4066f74ace1404287a372548e85f9b4609b2839a",
@@ -72,5 +72,18 @@
     "bottom": "Candidate and recorded-best adapter validation pool utility",
     "selection": "Four separate complete 20-round windows; no interpolation across gaps",
     "omitted_duplicate": "Rounds 2644\u20132663 are shown only in the main-text rate/utility figure"
+  },
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      7.0,
+      2.1
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
   }
 }

@@ -31,8 +31,21 @@
   "definition": "Consolidated 3-panel view of the 1,889-round prefix (775-2663): (a) candidate and post-decision recorded-best utility, (b) cumulative acceptance rate 100 * sum_{j<=k} accepted_j / k, (c) empirical CDF of utility_shortfall = best_val - candidate_val.",
   "scope": "Consolidated view of the 1,889 retained admission rounds (775-2663); adds no observations and makes no independent first-proposal or deployment claim.",
   "source_binding": "Aggregate field interpretation only; installed loop/adapter/checkpoint qualification remains required",
-  "generator_sha256": "cbab19706221568f81b43e4e77c72c998782c022f42eb5c654846bb4453b70c6",
-  "figure_sha256": "8220c7468c4aeb1f9aa191a97eb044ecd91177675e19f3a4b30fb51ef6b1540d",
+  "generator_sha256": "f6c45ad482aa200cf0df9eeba5288d43ba6ed09b390c11f6e6ebc71848077506",
+  "figure_sha256": "63a69921268011a501dcdc8144a93eeb027b3b04c3d0ecc8fa0620f5853479b5",
   "matplotlib_version": "3.10.8",
-  "reproduce": "python3 figures/scripts/make_acceptance_over_rounds_figure.py"
+  "reproduce": "python3 figures/scripts/make_acceptance_over_rounds_figure.py",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      7.0,
+      1.5
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
 }

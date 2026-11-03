@@ -3,12 +3,12 @@
   "source_csv": "figures/data/latest_admissions.csv",
   "source_csv_sha256": "5246d4176a6f97e4bb94aba8905bbbfbb98eb9767eff300a8babb8ef49f11f64",
   "source_receipt_sha256": "dc7dcb9bca24c04b992d5f9285253b69859d4e1ac5d1b800685a834dd164a00d",
-  "generator_sha256": "6af19064eaea2a600d2ed46ac694473bad411e5d5e8cfab769cf293aec95c304",
+  "generator_sha256": "eb2732e16ef69f7ade40cd047e541ce53fdf549e4cc36067649e99d0bd1dcd97",
   "rolling_csv_sha256": "ce4799eb0952121c08b622fb591145fdf97ec66228ade8769c9a156062061128",
   "quantile_window": 50,
   "quantiles": "Linear interpolation at p*(n-1), all50 candidate margins, Decimal precision50; no partial windows",
   "near_tie_counts": "Cumulative rejected rows in two exclusive bands; no acceptance trials inferred",
-  "figure_sha256": "d509eccee1fd07c5904421d4759fc696105a5e63a6b0ddcfb037d4cf7e3b250a",
+  "figure_sha256": "c40c94e3b0098cbe8a441fb4eda7a998600c200a14589ca008f1d367584054f9",
   "round_window": [
     775,
     3950
@@ -54,5 +54,18 @@
   "scope": "Development admission telemetry over rounds 775-3950 (3,176 records); not an independent first-proposal or deployment comparison.",
   "source_binding": "Aggregate field interpretation only; exact installed source, adapter and evaluation population remain unjoined",
   "matplotlib_version": "3.10.8",
-  "reproduce": "python3 figures/scripts/make_admission_margins_figure.py"
+  "reproduce": "python3 figures/scripts/make_admission_margins_figure.py",
+  "rendering": {
+    "font_family": "Liberation Serif",
+    "font_file_sha256": "705903ae1382f0150f115d6f10a30f5b2f3d6ade649c474afe6366c39174fb65",
+    "style_helper_sha256": "cfe19fc8ac2e6f552227bb80f5017ea8a30f213470f678d007b15a399e8cb9b7",
+    "style_manifest_sha256": "0b0850a3d74435a67d692cac3eecaa01ebc9c819bea980e310537f60f9e217b2",
+    "canvas_inches": [
+      7.0,
+      1.8
+    ],
+    "minimum_print_target_pt": 7.0,
+    "tick_values_and_strings": "Preserved from the pre-refresh committed generator rendering.",
+    "scientific_inputs_unchanged": true
+  }
 }
