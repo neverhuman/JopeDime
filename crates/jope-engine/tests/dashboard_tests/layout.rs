@@ -2,12 +2,12 @@ use super::*;
 
 /// Inputs kept together for rendered lines; no serialized contract changes.
 #[derive(Clone, Copy)]
-struct TerminalSize {
-    width: u16,
-    height: u16,
+pub(super) struct TerminalSize {
+    pub(super) width: u16,
+    pub(super) height: u16,
 }
 
-fn rendered_lines(
+pub(super) fn rendered_lines(
     size: TerminalSize,
     view: usize,
     hardware: &Hardware,
