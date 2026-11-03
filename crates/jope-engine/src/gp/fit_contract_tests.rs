@@ -178,7 +178,7 @@ fn service_worker_entry() {
 }
 
 /// Synthetic authority, service host and configured CLI clients.
-struct Fixture {
+pub(crate) struct Fixture {
     root: PathBuf,
     authority: PathBuf,
     witness: PathBuf,
