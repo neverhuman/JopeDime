@@ -134,7 +134,11 @@ with decimal.localcontext() as c:
             (ScalarLanguage::Cpp17, Some("clang++")),
         ] {
             if let Some(compiler) = compiler {
-                match Command::new(compiler).arg("--version").output() {
+                match Command::new(compiler)
+                    .current_dir(&dir)
+                    .arg("--version")
+                    .output()
+                {
                     Ok(output) => assert!(
                         output.status.success(),
                         "{compiler} --version failed: {}",
