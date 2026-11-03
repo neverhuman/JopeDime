@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-import json
 import math
-import os
-import re
-import subprocess
 import time
 from collections import Counter
 from pathlib import Path
@@ -21,63 +17,94 @@ from rich.table import Table
 from rich.text import Text
 
 from .status import artifact_freshness
-
 from .tui_helpers import (
-    _read_json,
-    _first_existing,
-    _read_jsonl,
-    _json_objects_from_log,
-    _tail_lines,
-    _file_age,
-    _mount_label,
-    _gpu_states,
-    _metric_values,
-    _latest_rank_status,
-    _spark,
-    _trend_arrow,
-    _meter,
+    _HEAD_OPS as _HEAD_OPS,
+)
+from .tui_helpers import (
+    CODE_PREVIEW_CHARS as CODE_PREVIEW_CHARS,
+)
+from .tui_helpers import (
     _bar,
-    _row_genome,
-    _candidate_key,
-    _evaluation_maps,
-    _matching_eval,
-    _gene_stream_entries,
-    _eval_delta,
-    _code_token_total,
-    _freshest_age,
-    _latest_algorithm_row,
     _code_for_row,
-    _inline_code,
-    _code_path,
-    _read_code,
-    _clip_code,
-    _genome_stages,
-    _stage_params,
-    _split_transforms_head,
-    _python_algorithm_preview,
-    _rust_algorithm_preview,
-    _head_from_genome,
-    _load_style,
-    _temp_style,
-    _ranking_style,
-    _win_style,
-    _freshness_style,
-    _fmt_age,
-    _fmt_int,
-    _fmt_float,
-    _fmt_plain_float,
-    _fmt_pct,
-    _to_float,
-    _to_int,
-    _truncate,
+    _code_token_total,
     _dir_size,
-    CODE_PREVIEW_CHARS,
-    _HEAD_OPS,
+    _eval_delta,
+    _file_age,
+    _first_existing,
+    _fmt_age,
+    _fmt_float,
+    _fmt_int,
+    _fmt_pct,
+    _fmt_plain_float,
+    _freshest_age,
+    _freshness_style,
+    _gene_stream_entries,
+    _gpu_states,
+    _head_from_genome,
+    _json_objects_from_log,
+    _latest_algorithm_row,
+    _latest_rank_status,
+    _load_style,
+    _meter,
+    _metric_values,
+    _mount_label,
+    _ranking_style,
+    _read_json,
+    _read_jsonl,
+    _row_genome,
+    _spark,
+    _tail_lines,
+    _temp_style,
+    _trend_arrow,
+    _truncate,
+    _win_style,
+)
+from .tui_helpers import (
+    _candidate_key as _candidate_key,
+)
+from .tui_helpers import (
+    _clip_code as _clip_code,
+)
+from .tui_helpers import (
+    _code_path as _code_path,
+)
+from .tui_helpers import (
+    _evaluation_maps as _evaluation_maps,
+)
+from .tui_helpers import (
+    _genome_stages as _genome_stages,
+)
+from .tui_helpers import (
+    _inline_code as _inline_code,
+)
+from .tui_helpers import (
+    _matching_eval as _matching_eval,
+)
+from .tui_helpers import (
+    _python_algorithm_preview as _python_algorithm_preview,
+)
+from .tui_helpers import (
+    _read_code as _read_code,
+)
+from .tui_helpers import (
+    _rust_algorithm_preview as _rust_algorithm_preview,
+)
+from .tui_helpers import (
+    _split_transforms_head as _split_transforms_head,
+)
+from .tui_helpers import (
+    _stage_params as _stage_params,
+)
+from .tui_helpers import (
+    _to_float as _to_float,
+)
+from .tui_helpers import (
+    _to_int as _to_int,
 )
 
 try:  # system-load telemetry; degrade gracefully if unavailable
     import psutil
-except (Exception,):  # pragma: no cover - psutil is a hard dep but keep the TUI resilient
+except Exception:  # pragma: no cover - psutil is a hard dep but keep the TUI resilient
     psutil = None  # type: ignore[assignment]
 
 GENOME_PREVIEW = 96
@@ -122,7 +149,7 @@ class RunView:
         if psutil is not None:
             try:
                 psutil.cpu_percent(interval=None, percpu=True)
-            except (Exception,):
+            except Exception:
                 pass
 
     def render(self):
@@ -809,13 +836,13 @@ class RunView:
             out["cpu_percent"] = float(psutil.cpu_percent(interval=None))
             out["percpu"] = [float(v) for v in psutil.cpu_percent(interval=None, percpu=True)]
             out["cpu_count"] = psutil.cpu_count(logical=True) or len(out["percpu"])
-        except (Exception,):
+        except Exception:
             out["cpu_percent"] = 0.0
             out["percpu"] = []
             out["cpu_count"] = 0
         try:
             out["loadavg"] = list(psutil.getloadavg())
-        except (Exception,):
+        except Exception:
             out["loadavg"] = None
         try:
             vm = psutil.virtual_memory()
@@ -824,7 +851,7 @@ class RunView:
                 "used_gb": vm.used / 2**30,
                 "total_gb": vm.total / 2**30,
             }
-        except (Exception,):
+        except Exception:
             out["mem"] = {"percent": 0.0, "used_gb": 0.0, "total_gb": 0.0}
         try:
             sw = psutil.swap_memory()
@@ -833,7 +860,7 @@ class RunView:
                 "used_gb": sw.used / 2**30,
                 "total_gb": sw.total / 2**30,
             }
-        except (Exception,):
+        except Exception:
             out["swap"] = None
         try:
             target = self.run_dir if self.run_dir.exists() else Path(".")
@@ -843,7 +870,7 @@ class RunView:
                 "free_gb": du.free / 2**30,
                 "mount": _mount_label(target),
             }
-        except (Exception,):
+        except Exception:
             out["disk"] = None
         out["top_procs"] = self._top_processes()
         return out
@@ -865,7 +892,7 @@ class RunView:
                     self._proc_cache[pid] = cached
                 try:
                     cpu = cached.cpu_percent(interval=None)
-                except (Exception,):
+                except Exception:
                     cpu = 0.0
                 procs.append(
                     {
@@ -875,7 +902,7 @@ class RunView:
                         "mem": float(proc.info.get("memory_percent") or 0.0),
                     }
                 )
-        except (Exception,):
+        except Exception:
             return []
         for pid in list(self._proc_cache):
             if pid not in seen:
@@ -899,7 +926,7 @@ class RunView:
             import torch
 
             state = torch.load(path, map_location="cpu")
-        except (Exception,):
+        except Exception:
             self._ckpt_cache[key] = info
             return info
         if isinstance(state, dict):
@@ -912,7 +939,7 @@ class RunView:
                     name = k.split(".", 1)[1]
                     try:
                         info["loss_weights"][name] = float(math.exp(-float(v)))
-                    except (Exception,):
+                    except Exception:
                         continue
         self._ckpt_cache[key] = info
         return info

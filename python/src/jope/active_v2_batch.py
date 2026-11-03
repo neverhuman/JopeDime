@@ -23,9 +23,11 @@ from .active_v2_vocab import (
     genome_features_from_actions,
     normalize_active_v2_vocab,
 )
-from .data.active import ACTIVE_MAX_TRANSFORMS, format_pipeline_actions
-from .model import FAMILY_LIST, HEAD_LIST, NONE_TOKEN
+from .data.active import ACTIVE_MAX_TRANSFORMS, format_param_token, format_pipeline_actions
+from .model import FAMILY_LIST, NONE_TOKEN
+from .model import HEAD_LIST as HEAD_LIST
 from .schema import EMBEDDING_DIM
+
 
 def rows_to_active_v2_batch(
     rows: list,
@@ -259,5 +261,3 @@ def active_v2_validation_metrics(
         "reward_value_correlation": _pearson(reward_preds, values),
         "value_correlation": _pearson(value_preds, values),
     }
-
-

@@ -2,17 +2,28 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
 import json
 import math
 import time
+from pathlib import Path
+from typing import Any
 
 from .self_play import (
-    EngineRouter, TrainingRow, _atomic_json, _choose_deployed_candidate,
-    _finite_float, _resolve_ship_decision, deployment_elo, embedding_from_vs,
-    iter_eval_regression_with_ledger, robust_score, target_summary_from_vs,
+    EngineRouter,
+    TrainingRow,
+    _choose_deployed_candidate,
+    _finite_float,
+    _resolve_ship_decision,
+    deployment_elo,
+    embedding_from_vs,
+    iter_eval_regression_with_ledger,
+    robust_score,
+    target_summary_from_vs,
 )
+from .self_play import (
+    _atomic_json as _atomic_json,
+)
+
 
 class SelfPlayEvaluationMixin:
     def evaluate_and_append(
@@ -55,7 +66,7 @@ class SelfPlayEvaluationMixin:
                     oof_r2=cv0.get("oof_r2"),
                     cache_hit=bool(res.get("cache_hit")),
                 )
-            except (Exception,):
+            except Exception:
                 pass
             if done % 25 == 0 or done == len(eval_inputs):
                 self.state["evals_per_sec"] = round(done / max(time.time() - t0, 1e-6), 1)
@@ -120,7 +131,7 @@ class SelfPlayEvaluationMixin:
                         selection_score=best.get("selection_score"),
                         selected_for_eval=True,
                     )
-                except (Exception,):
+                except Exception:
                     pass
         # pass 3: emit training rows
         for h, recs in picks.items():
@@ -314,7 +325,7 @@ class SelfPlayEvaluationMixin:
                     if '"new_champions"' in line:
                         try:
                             miner_report = json.loads(line[line.index("{") :])
-                        except (Exception,):
+                        except Exception:
                             pass
                         break
                 self._score_pool = None  # champion rows extend the pools
@@ -393,5 +404,3 @@ class SelfPlayEvaluationMixin:
                 fh.write(json.dumps(row) + "\n")
             self._set_phase("DONE", last_gen_summary=row)
             self.log(json.dumps(row, indent=2), flush=True)
-
-

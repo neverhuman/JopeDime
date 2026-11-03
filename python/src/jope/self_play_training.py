@@ -2,20 +2,34 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
-from collections import defaultdict
 import json
 import math
 import subprocess
 import time
+from collections import defaultdict
+from pathlib import Path
+from typing import Any
+
 import torch
 
 from .self_play import (
-    EngineRouter, MASTER_ADDR, NCCL_ENV, PROJ, TrainingRow, _atomic_json,
-    _candidate_pool_id, _candidate_pool_record, _proposal_failure_exceeded,
-    deployment_elo, embedding_from_vs, read_jsonl, target_summary_from_vs,
+    MASTER_ADDR,
+    NCCL_ENV,
+    PROJ,
+    EngineRouter,
+    _atomic_json,
+    _candidate_pool_id,
+    _candidate_pool_record,
+    _proposal_failure_exceeded,
+    deployment_elo,
+    embedding_from_vs,
+    read_jsonl,
+    target_summary_from_vs,
 )
+from .self_play import (
+    TrainingRow as TrainingRow,
+)
+
 
 class SelfPlayTrainingMixin:
     def __init__(
@@ -318,7 +332,7 @@ class SelfPlayTrainingMixin:
         try:
             model = model.to("cuda")
             device = "cuda"
-        except (Exception,) as exc:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
             self.log(f"[gen {g}] WARNING: propose on CPU (cuda unavailable: {exc})")
         self.state["propose_device"] = device
         _atomic_json(self.state_path, self.state)
@@ -371,7 +385,7 @@ class SelfPlayTrainingMixin:
                         candidate_pool_lookup[(h, engine, str(canonical))] = row
                 else:
                     props = result
-            except (Exception,) as exc:  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001
                 proposal_errors.append({"generation": g, "dataset_hash": h, "error": repr(exc)})
                 continue
             if not props:
@@ -434,4 +448,3 @@ class SelfPlayTrainingMixin:
                 f"threshold={self.proposal_failure_threshold}"
             )
         return picks, eval_inputs, candidate_pool_rows, stats
-
