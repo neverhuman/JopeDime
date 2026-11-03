@@ -1,8 +1,9 @@
-# LaTeX build leftovers and per-build working files; brief.pdf and data/ are kept.
-brief.aux
-brief.log
-brief.fls
-brief.fdb_latexmk
-brief.out
+# LaTeX build leftovers and per-build working files; the PDFs, data/ and winners-data/ are kept.
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.out
 data/evo/*.long.csv
 data/evo/best.txt
+winners-data/work/

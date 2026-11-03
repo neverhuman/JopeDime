@@ -1,0 +1,82 @@
+\newcommand{\WinTwoChainCols}{A7,A11,A13,E7,E11,E13}
+\newcommand{\WinTwoBetter}{24}
+\newcommand{\WinTwoBestBetter}{27}
+\newcommand{\WinTwoOursMedianRmse}{0.01324}
+\newcommand{\WinTwoArmEnds}{E: 0.445, 0.438, 0.437; A: 0.518, 0.494, 0.472}
+\newcommand{\WinTwoArmStarts}{E: 0.492, 0.493, 0.491; A: 0.778, 0.758, 0.687}
+\newcommand{\WinTwoName}{Hourly Day-Ahead Electricity Prices with Exogenous Variables}
+\newcommand{\WinTwoRows}{6720}
+\newcommand{\WinTwoFeatures}{11}
+\newcommand{\WinTwoOurs}{0.458532}
+\newcommand{\WinTwoOursBest}{0.43698}
+\newcommand{\WinTwoChains}{6}
+\newcommand{\WinTwoStart}{0.589897}
+\newcommand{\WinTwoAlt}{0.600557}
+\newcommand{\WinTwoAltModel}{xgboost\_default}
+\newcommand{\WinTwoAltCount}{14}
+\newcommand{\WinTwoMargin}{-23.6}
+\newcommand{\WinTwoAltAcc}{0.013226}
+\newcommand{\WinTwoAltCpu}{0.383}
+\newcommand{\WinTwoAltFull}{14}
+\newcommand{\WinTwoAltPartial}{3}
+\newcommand{\WinTwoGens}{112}
+\newcommand{\WinTwoEvals}{20802}
+\newcommand{\WinTwoStartPlain}{boosted decision trees}
+\newcommand{\WinTwoStartProgram}{(pipe X (histgbm bins=255 depth=6 lambda=1 lr=0.3 min\_leaf=1 rounds=100))}
+\newcommand{\WinTwoStartObj}{0.491238}
+\newcommand{\WinTwoStartRmse}{0.014172}
+\newcommand{\WinTwoStartFitCpuSeconds}{0.07499291380003412}
+\newcommand{\WinTwoStartFitSeconds}{0.0752334622}
+\newcommand{\WinTwoStartRowLatencyPninetynineUs}{n/a}
+\newcommand{\WinTwoStartModelBytes}{441716.2}
+\newcommand{\WinTwoStartProgramNodes}{1}
+\newcommand{\WinTwoStartPredictUsPerRow}{1.987201122522362}
+\newcommand{\WinTwoStartGen}{0}
+\newcommand{\WinTwoStartModelKB}{442}
+\newcommand{\WinTwoEndPlain}{boosted decision trees}
+\newcommand{\WinTwoEndProgram}{(pipe X (histgbm bins=256 depth=4 lambda=1 lr=0.3 min\_leaf=1 rounds=100))}
+\newcommand{\WinTwoEndObj}{0.43698}
+\newcommand{\WinTwoEndRmse}{0.012873}
+\newcommand{\WinTwoEndFitCpuSeconds}{0.04779845899997515}
+\newcommand{\WinTwoEndFitSeconds}{0.047974075600000006}
+\newcommand{\WinTwoEndRowLatencyPninetynineUs}{n/a}
+\newcommand{\WinTwoEndModelBytes}{139062.2}
+\newcommand{\WinTwoEndProgramNodes}{1}
+\newcommand{\WinTwoEndPredictUsPerRow}{1.0751693641099809}
+\newcommand{\WinTwoEndGen}{26}
+\newcommand{\WinTwoEndModelKB}{139}
+\newcommand{\WinTwoBestChain}{E13}
+\newcommand{\WinTwoChanges}{the same kind of model (boosted decision trees) with new settings: histogram bins 255 $\to$ 256, tree depth 6 $\to$ 4}
+\newcommand{\WinTwoCpuRatio}{8}
+\newcommand{\WinTwoFoldWins}{5}
+\newcommand{\WinTwoPartialNote}{AutoGluon (fold 1): 379.3 against our 0.2869 on the same fold; Kumo-Tabular (fold 1): 0.8951 against our 0.2869 on the same fold; TabPFN-v2 (fold 1): 0.3921 against our 0.2869 on the same fold}
+\newcommand{\WinTwoPartialList}{AutoGluon 379, Kumo-Tabular 0.895, TabPFN-v2 0.392}
+\newcommand{\WinTwoOursFoldOneRmse}{0.008191}
+\newcommand{\WinTwoOursFoldOneObj}{0.2869}
+\newcommand{\WinTwoAutoGluonFoldOneAcc}{0.007457}
+\newcommand{\WinTwoAutoGluonFoldOneCpu}{833.9}
+\newcommand{\WinTwoAutoGluonFoldOneObj}{379.3}
+\newcommand{\WinTwoAutoGluonMean}{}
+\newcommand{\WinTwoTabPFNFoldOneAcc}{0.009076}
+\newcommand{\WinTwoTabPFNFoldOneCpu}{0.2186}
+\newcommand{\WinTwoTabPFNFoldOneObj}{0.3921}
+\newcommand{\WinTwoTabPFNMean}{}
+\newcommand{\WinTwoKumoFoldOneAcc}{0.02457}
+\newcommand{\WinTwoKumoFoldOneCpu}{0.2253}
+\newcommand{\WinTwoKumoFoldOneObj}{0.8951}
+\newcommand{\WinTwoKumoMean}{}
+\newcommand{\WinTwoXGBTunedFoldOneAcc}{0.0119}
+\newcommand{\WinTwoXGBTunedFoldOneCpu}{0.7002}
+\newcommand{\WinTwoXGBTunedFoldOneObj}{0.7022}
+\newcommand{\WinTwoXGBTunedMean}{1.296}
+\newcommand{\WinTwoLGBTunedFoldOneAcc}{0.01151}
+\newcommand{\WinTwoLGBTunedFoldOneCpu}{1.364}
+\newcommand{\WinTwoLGBTunedFoldOneObj}{0.9911}
+\newcommand{\WinTwoLGBTunedMean}{1.269}
+\newcommand{\WinTwoBenchMax}{1.621}
+\newcommand{\WinTwoBenchRows}{17}
+\newcommand{\WinTwoBenchLast}{16}
+\newcommand{\BriefCvStamp}{20261103T170155Z-cv5}
+\newcommand{\BriefDataStamp}{2026-11-03T19:20:45Z}
+\newcommand{\BriefInputCount}{225}
+\newcommand{\BriefInputsSha}{e5504c3944eafd88}
