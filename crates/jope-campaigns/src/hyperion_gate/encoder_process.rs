@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug)]
-pub(super) pub(super) struct EncoderRun {
+pub(super) struct EncoderRun {
     pub(super) status: ExitStatus,
     pub(super) proof: EncoderExecutionProofV2,
 }
