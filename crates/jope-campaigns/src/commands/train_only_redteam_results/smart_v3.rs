@@ -75,7 +75,7 @@ fn rmse_comparison(smart: f64, baseline: f64, tie_relative_tolerance: f64) -> &'
     }
 }
 
-pub(crate) fn smart_v3_aggregate(
+pub(super) fn smart_v3_aggregate(
     comparisons: &[(f64, f64)],
     tie_relative_tolerance: f64,
     minimum_wins_required: usize,
@@ -93,7 +93,7 @@ pub(crate) fn smart_v3_aggregate(
     })
 }
 
-pub(crate) fn smart_v3_baseline_aggregate(
+pub(super) fn smart_v3_baseline_aggregate(
     comparisons: &[(f64, f64)],
     tie_relative_tolerance: f64,
     minimum_wins_required: usize,
