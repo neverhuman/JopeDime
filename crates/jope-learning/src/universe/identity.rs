@@ -54,7 +54,7 @@ impl MeasurementScope {
             && self.policy_sha256 == other.policy_sha256
     }
 
-    fn mismatches(&self, other: &Self) -> Vec<String> {
+    pub(super) fn mismatches(&self, other: &Self) -> Vec<String> {
         let mut out = Vec::new();
         macro_rules! mismatch {
             ($field:ident) => {
@@ -90,7 +90,7 @@ pub struct OutcomeKey {
 }
 
 impl OutcomeKey {
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         self.scope.validate()?;
         ensure!(
             is_hex64(&self.program_sha256),
@@ -102,7 +102,7 @@ impl OutcomeKey {
         Ok(())
     }
 
-    fn same_subject(&self, other: &Self) -> bool {
+    pub(super) fn same_subject(&self, other: &Self) -> bool {
         self.scope.same_subject(&other.scope) && self.program_sha256 == other.program_sha256
     }
 }
@@ -140,7 +140,7 @@ pub struct ObservedOutcome {
 }
 
 impl ObservedOutcome {
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         self.key.validate()?;
         ensure!(
             is_hex64(&self.evidence_receipt_sha256)
@@ -193,7 +193,7 @@ impl ImmutableSourceView {
         Ok(())
     }
 
-    fn validate(&self) -> Result<()> {
+    pub(super) fn validate(&self) -> Result<()> {
         ensure!(
             self.schema == SOURCE_VIEW_SCHEMA,
             "unsupported source view schema"
