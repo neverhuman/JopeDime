@@ -467,6 +467,9 @@ fn semantic_signature(prog: &[f32]) -> Vec<f32> {
     result
 }
 
+#[path = "adapter/predict.rs"]
+mod predict_impl;
+
 fn proposal_kl(costs: &[f32], anchor: &[f32]) -> f64 {
     fn log_probabilities(costs: &[f32]) -> Vec<f64> {
         let min = costs.iter().copied().fold(f32::INFINITY, f32::min) as f64;
