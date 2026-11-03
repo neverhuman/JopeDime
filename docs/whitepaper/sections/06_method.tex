@@ -160,6 +160,9 @@ proposals requires the matched ablation in \cref{sub:results-ablation}.
 The historical diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
 do not supply that comparison.
 
+In the proposed offline loop, referee-scored search outcomes supply
+training targets.
+
 \subsection{The self-play loop}\label{sub:method-selfplay}
 % Algorithm 1 is defined at the start of the subsection so that the full-width
 % float can reach the top of the next page.
@@ -188,9 +191,7 @@ pipelines and projects them through the grammar. It refuses an incomplete
 pool. These are training-search budgets, separate from the one-draw
 protocol in \cref{sub:method-gameday}.
 
-The reference training rule is expert iteration
-\citep{anthony2017expert}: in the proposed offline loop, search-scored
-programs train the writer.
+The reference rule is expert iteration \citep{anthony2017expert}.
 The writer term weights sampled programs from $G_p$ by referee rank;
 it joins the map and auxiliary terms in the combined objective
 (\cref{app:training}):
@@ -245,8 +246,8 @@ and uniform-token fallback differ.
 
 \subsection{Keeping the referee honest}\label{sub:method-referee}
 
-Search supplies training targets only as reliably as its referee.
-A learner rewarded by a referee can exploit its flaws. In February 2025 Sakana AI walked back
+Reliable training targets require a referee that resists exploitation.
+In February 2025 Sakana AI walked back
 claims after its AI CUDA Engineer exploited the evaluation code \citep{sakana2025walkback}. In June
 2025 METR reported frontier models patching their scorers \citep{metr2025rewardhacking}, and 16\% of
 \num{1968} agent-benchmark tasks can be passed without being solved \citep{zhong2026hackerfixer}.
