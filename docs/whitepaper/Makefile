@@ -44,5 +44,6 @@ figs:
 	python3 figures/scripts/make_recent_program_margins.py
 	python3 figures/scripts/make_round_phase_budget.py
 	python3 figures/scripts/make_program_24h.py
+	python3 figures/scripts/make_adapter_admission_rates.py
 clean:
 	latexmk -C
