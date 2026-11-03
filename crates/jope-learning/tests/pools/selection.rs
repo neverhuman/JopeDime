@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use super::*;
 
 pub(crate) fn freeze_is_deterministic_and_verifiable_body() {
