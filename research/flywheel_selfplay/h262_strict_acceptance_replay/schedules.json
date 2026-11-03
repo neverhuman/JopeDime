@@ -1,0 +1,20 @@
+{
+  "arms": [
+    "CURRENT",
+    "STRICT_LCB"
+  ],
+  "rounds": 10,
+  "updates_each": 40,
+  "total_updates": 2400,
+  "lr": 0.0001,
+  "betas": [
+    0.9,
+    0.999
+  ],
+  "weight_decay": 0.0001,
+  "epsilon": 1e-08,
+  "clip": 1.0,
+  "smoke_updates": 2,
+  "optimizer_continuity": "fresh at r882 per trajectory; admitted model and AdamW state retained; both restored on rejection",
+  "batch_seed": "stream_seed(seed, round), then exact H170 batch_plan; no arm in stream identity"
+}

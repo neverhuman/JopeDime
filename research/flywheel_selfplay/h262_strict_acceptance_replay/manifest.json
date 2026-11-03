@@ -1,0 +1,142 @@
+{
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "wave": "H262",
+  "authority": "/home/ubuntu/jope-rescue-20260921/h262-astra/authority.md",
+  "checkpoint": "/home/ubuntu/jope-rescue-20260921/h262-astra/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-rescue-20260921/h262-astra/inputs/best_dev_checkpoint.json",
+  "seeds": [
+    262101,
+    262102,
+    262103
+  ],
+  "fold_seed": 262140,
+  "boot_seed": 262150,
+  "arms": [
+    "CURRENT",
+    "STRICT_LCB",
+    "NEVER"
+  ],
+  "total_updates": 2400,
+  "parent_commit": "855639a54a563dbb7f6cef8a17ac2c10265f3c1c",
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-rescue-20260921/h262-astra/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-rescue-20260921/h262-astra/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/runtime_audit.py": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4",
+    "research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
+    "research/flywheel_selfplay/h247_muon_grokfast/runner.py": "4af46a634fec6b0836680eedb863a1044de0d9c6a5339d16b611318f9d1fcccc",
+    "research/flywheel_selfplay/h247_muon_grokfast/treatment.py": "56c27da85ced0a96cc32b2a40640cde203722123d99999bb664928ca03b89003",
+    "research/flywheel_selfplay/h247_muon_grokfast/analysis.py": "dc66994350a9b027b8555cf94dcf2581c6d045e6f83ed9df75a60cd9e6b75396",
+    "research/flywheel_selfplay/h247_muon_grokfast/monitor.py": "305ac610811ad85118ef1a51e4470dbc19734b9c48c0786ec253ae83c39caa8e",
+    "research/flywheel_selfplay/h251_reptile/runner.py": "84d203e561a043925ae1de1620dcc85e38d439044154de92754c1a0cc2bba5c0",
+    "research/flywheel_selfplay/h251_reptile/treatment.py": "7ae109d80451176ed98ab968967e3d61af1082860d204763440106270138612b",
+    "research/flywheel_selfplay/h251_reptile/analysis.py": "b69bb0c5f3022e963f7758cda1db915318745a38f2870f4c87afcd15deefa822",
+    "research/flywheel_selfplay/h251_reptile/monitor.py": "c82a5550042ff188bc1715923019a80002f1933f9a5666a1877c8b8b54230dea",
+    "research/flywheel_selfplay/h250_ctxz/runner.py": "68f20a0462e1014c21d2e44823f33c1b174a4cf5a6acb43a463c8053e5ddceab",
+    "research/flywheel_selfplay/h250_ctxz/treatment.py": "9543f049c04cd8f1cdf4dc9e4477d94e1c1e7e8f5465a7bab2ea55985437c4ad",
+    "research/flywheel_selfplay/h250_ctxz/analysis.py": "6524260889bd5b5ca2523f9a8a050ee352791727d8a409b88fbaf8d4c353c4e4",
+    "research/flywheel_selfplay/h250_ctxz/monitor.py": "c4ed72d705993722eba2723c6970fc2ef04dcecd56e3922ba91de8e7e11ebf3b"
+  },
+  "source_sha256": {
+    "PREREG.md": "9d89e352bd0c8dee99f460089427ffa7084f2766391da16ce71353447c25e782",
+    "analysis.py": "a197977f7f661875e7cdcb1ed7f69b159f53d90cb04ed08a644c1214994681ed",
+    "current_rule_source.json": "24be627feb726041a5bbacf1d89528f7beffc49f3a131c08b8457e542b28dab8",
+    "engine.py": "5bdb6182587e3cd9d863ef90c191fa87225e622c98d48f9fb0c6385afeab7d97",
+    "fold_manifest.json": "e2dd15a89ff97d687eba7010b429305f01abb1d7b84128c895f5a86a88cdf213",
+    "metrics.schema.json": "95907a5fcc1ffd78216ad9cc0a1e85b191fb72ce2e808ba576a8efa4f02d5c10",
+    "monitor.py": "7f3a3e4f7a6860ba342d96783f19a970765a0160671892bf1f4e19f36d20a231",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "runner.py": "a687de8eeef91bba5cda89770916d0e7f161148ec6a4d9f5532d49edfae74824",
+    "schedules.json": "dffff43f589bf5bb8e54aea5c1473db095e1d0ef86482c288d6dec4473a2ff5a",
+    "test_h262.py": "fa897c2691ed96c9b483109660312ff92b041bd07a90987655affa93be93f38a",
+    "treatment.py": "8bf773e9c3bc8b72832f5bc588de80626d61187cd6177b68e42d3df6318cead3"
+  },
+  "host": "xbabe2 CPU48,50-52 nice19 numeric1 aggregate<=4 RSS4GiB H239A1",
+  "compute_stop": "2026-11-03T18:15:00Z",
+  "s3_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H262/astra-t1558/",
+  "smoke_updates": 2,
+  "resource_limits": {
+    "affinity": [
+      48,
+      50,
+      51,
+      52
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "aggregate_threads": 4,
+    "rss_bytes": 4294967296,
+    "free_disk_bytes": 300000000000,
+    "admit_ram_GiB": 30,
+    "pause_ram_GiB": 20,
+    "resume_ram_GiB": 25,
+    "resume_sustained_seconds": 30,
+    "hard_ram_GiB": 12,
+    "hard_sustained_seconds": 30,
+    "immediate_ram_GiB": 6,
+    "admit_load5": 100,
+    "pause_load5": 108,
+    "resume_load5": 100,
+    "max_process_resumes": 0
+  },
+  "publication": "origin/v1/next nonforce push before Native91/smoke/training; no PR2071/main/fastlane mutation",
+  "decision": {
+    "median_margin": 0.002,
+    "epsilon": 1e-12,
+    "LCB95_gt": 0,
+    "holm_m": 2,
+    "holm_p_lt": 0.05,
+    "positive_seeds": 3,
+    "holm_lcb": "Step-down percentile interval; first ordered p uses q=.0125, next q=.025 only if preceding Holm p<.05; equal p rank deterministic primary first"
+  },
+  "rounds": 10,
+  "steps_per_round": 40,
+  "current_rule_source": {
+    "host": "xbabe1",
+    "cwd": "/home/ubuntu/JopeDime/.agent/worktrees/flywheel-gp-fused",
+    "pid": 1402163,
+    "commit": "486b709c3ee84a351a2cd7b55ef0290017e6ecd0",
+    "utc": "2026-11-03T15:57:54.666290+00:00",
+    "files": {
+      "research/flywheel_selfplay/dev_incumbent.py": {
+        "sha256": "cb98158a0599395ce9e446f029e46abe1556e16b5fed578a9bd1f041f5271d22",
+        "matches_commit": true
+      },
+      "research/flywheel_selfplay/run_fused_closed_loop.py": {
+        "sha256": "716c7e449efe6893c4d69d524833c6234a6c55a780191d560d479b608c38e880",
+        "matches_commit": true
+      }
+    },
+    "read_only": true,
+    "process_command": "/home/ubuntu/.venvs/flywheel-gp-fused/bin/python -u research/flywheel_selfplay/run_fused_closed_loop.py --input /home/ubuntu/jope-data/flywheel-full-20261030/input --output /home/ubuntu/jope-data/flywheel-full-20261030/run-20261030 --continuous --steps 2 --batch-size 8192 --resume /home/ubuntu/jope-data/flywheel-full-20261030/run-20261030/round-4330.pt --campaign-prior-output /home/ubuntu/jope-data/flywheel-gp-fused/run-20261029 --retain-checkpoint round-785.pt --retain-checkpoint round-882.pt"
+  },
+  "harness_source_commit": "2fe50b3131b2ff610e6e2ff9bc1de60a1134f80a"
+}
