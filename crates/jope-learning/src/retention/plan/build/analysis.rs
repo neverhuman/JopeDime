@@ -8,7 +8,6 @@ pub(crate) fn analyze(evaluated: &Evaluated) -> Result<Analysis> {
     let policy = &loaded.policy;
     let ledger = &loaded.ledger;
     let agg = &loaded.agg;
-    let refs = &loaded.refs;
     let pins = &loaded.pins;
     let pin_sources = &loaded.pin_sources;
     let known_buckets: BTreeSet<&str> = ledger.groups.iter().map(|g| g.bucket.as_str()).collect();
