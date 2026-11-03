@@ -143,8 +143,19 @@ fn without_a_zstd_decoder_golden45_is_not_replayed_and_require_all_fails() {
     // Addition: the Python replay's behaviour on a host without `zstd`, recorded in the
     // slice-2 baseline (`elo_history_nozstd.out`): the Golden45 ladders are listed, never
     // counted, and `--require-all` refuses.
-    let repo = repo();
-    let summary = elo_history::verify(&repo.join(elo_history::RECORD), &repo, Zstd::Unavailable)
+    // Keep only the six reproducible histories involved in this assertion. Other historical
+    // dispositions include retained files that are intentionally no longer present in-tree.
+    let mut document = record();
+    at(&mut document, "histories")
+        .as_list_mut()
+        .expect("histories")
+        .retain(|history| {
+            let id = history.get("id").map(Value::py_str).unwrap_or_default();
+            FAST.contains(&id.as_str()) || GOLDEN45.contains(&id.as_str())
+        });
+    let copy = Copy::new(document);
+    dump(&copy.path, &copy.document);
+    let summary = elo_history::verify(&copy.path, &copy.root, Zstd::Unavailable)
         .expect("verifies without zstd");
     assert_eq!(summary.replayed, FAST);
     let reason = "assets/regression/sotarena-tabular-regression-v2/results/tabular-regression-v2/\
@@ -173,7 +184,9 @@ fn without_a_zstd_decoder_golden45_is_not_replayed_and_require_all_fails() {
         summary.require_all(),
         r"^not replayed here: \['H-sotarena-golden45-benchmark-valid', 'H-sotarena-golden45-published'\]$",
     );
-    committed()
+    copy
+        .verify()
+        .expect("fixture verifies with the built-in decoder")
         .require_all()
-        .expect("every history replays with the built-in decoder");
+        .expect("the retained histories replay with the built-in decoder");
 }
