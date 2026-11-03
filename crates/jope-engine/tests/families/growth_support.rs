@@ -27,7 +27,7 @@ pub(crate) use scenarios::{agrees, build_scenario, scenario_digest, scenario_nam
 pub(crate) use serialization::{py_compact, World};
 
 const TEST_KEY: &[u8] = b"test-only-key-never-production!!!";
-const PARITY_FIXTURE: &str = "tests/fixtures/family-growth/python-verify-outputs.jsonl";
+pub(crate) const PARITY_FIXTURE: &str = "tests/fixtures/family-growth/python-verify-outputs.jsonl";
 const RANDOM_SEED: u64 = 20_260_926;
 const RANDOM_SCENARIOS: usize = 128;
 const EXISTING: [&str; 14] = [
