@@ -27,7 +27,7 @@ fn average_rank_ties_singletons_and_missing_scores_match_python_labels() {
         ],
     );
 
-    let report = prep_v31_labels(&path, false).unwrap();
+    let report = prep_v31_labels(&path, true).unwrap();
     assert_eq!(
         report,
         PrepV31Report {
@@ -42,8 +42,8 @@ fn average_rank_ties_singletons_and_missing_scores_match_python_labels() {
         .lines()
         .map(|line| serde_json::from_str::<Value>(line).unwrap())
         .collect::<Vec<_>>();
-    assert_eq!(rows[0]["metadata"]["rank_pct"], json!(0.166667));
-    assert_eq!(rows[1]["metadata"]["rank_pct"], json!(0.166667));
+    assert_eq!(rows[0]["metadata"]["rank_pct"], json!(0.25));
+    assert_eq!(rows[1]["metadata"]["rank_pct"], json!(0.25));
     assert_eq!(rows[2]["metadata"]["rank_pct"], json!(1.0));
     assert_eq!(rows[3]["metadata"]["rank_pct"], json!(0.5));
     assert_eq!(rows[4]["metadata"]["rank_pct"], Value::Null);
