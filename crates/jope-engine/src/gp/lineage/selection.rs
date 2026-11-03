@@ -40,7 +40,7 @@ pub fn verify_search(
 }
 
 /// W5-T01: [`verify_search`] against the seed population and vocabulary the search
-/// froze beside its request ([`super::SEARCH_INPUTS`]), so the verifier needs no
+/// froze beside its request ([`crate::gp::SEARCH_INPUTS`]), so the verifier needs no
 /// caller paths. An input the request does not pin is not read. A search written
 /// before its inputs were frozen still needs [`verify_search`] with the original files.
 pub fn verify_search_recorded(root: &Path, output: &Path) -> Result<SelectedLineage> {
@@ -49,13 +49,13 @@ pub fn verify_search_recorded(root: &Path, output: &Path) -> Result<SelectedLine
         if request[key].is_null() {
             return Ok(None);
         }
-        let path = output.join(super::SEARCH_INPUTS).join(name);
+        let path = output.join(crate::gp::SEARCH_INPUTS).join(name);
         std::fs::read(&path)
             .map(Some)
             .with_context(|| format!("frozen search input {} is absent", path.display()))
     };
-    let seeds = frozen("seeds_sha256", super::SEARCH_SEEDS)?;
-    let vocabulary = frozen("vocabulary_sha256", super::SEARCH_VOCABULARY)?;
+    let seeds = frozen("seeds_sha256", crate::gp::SEARCH_SEEDS)?;
+    let vocabulary = frozen("vocabulary_sha256", crate::gp::SEARCH_VOCABULARY)?;
     verify_search_inputs(root, output, seeds.as_deref(), vocabulary.as_deref())
 }
 
