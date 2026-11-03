@@ -1,8 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useState } from "react";
 import { bytes, count, number, text, when } from "./types";
 import type { GP, Run } from "./types";
-import { Badge, Hash, Metric, Empty, Details, LossChart } from "./shared";
+import {
+  Badge,
+  Hash,
+  Metric,
+  Empty,
+  Details,
+  LossChart,
+  Dialog,
+} from "./shared";
 
 export function Training({
   run,
@@ -241,77 +248,5 @@ export function Training({
         </Dialog>
       )}
     </>
-  );
-}
-function Dialog({
-  title,
-  close,
-  children,
-}: {
-  title: string;
-  close: () => void;
-  children: ReactNode;
-}) {
-  const container = useRef<HTMLElement>(null);
-  // Capture before React commits autoFocus to the close button. An effect runs
-  // after that commit and would otherwise remember a soon-detached dialog node.
-  const opener = useRef(document.activeElement as HTMLElement | null);
-  const closeRef = useRef(close);
-  closeRef.current = close;
-  useEffect(() => {
-    const previous = opener.current;
-    // Focus on each effect setup, including React StrictMode's setup/cleanup
-    // probe. Restoring the opener in that probe must not leave focus outside.
-    container.current?.querySelector<HTMLElement>("button")?.focus();
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeRef.current();
-      if (e.key === "Tab") {
-        const items = container.current?.querySelectorAll<HTMLElement>(
-          'button:not([disabled]),a[href],input,select,[tabindex="0"]',
-        );
-        if (!items?.length) return;
-        const first = items[0],
-          last = items[items.length - 1];
-        if (!container.current?.contains(document.activeElement)) {
-          e.preventDefault();
-          (e.shiftKey ? last : first).focus();
-        } else if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    window.addEventListener("keydown", key);
-    return () => {
-      window.removeEventListener("keydown", key);
-      previous?.focus();
-    };
-  }, []);
-  return (
-    <div
-      className="modal-backdrop"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) close();
-      }}
-    >
-      <section
-        ref={container}
-        className="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <div className="panel-heading">
-          <h2>{title}</h2>
-          <button autoFocus onClick={close} aria-label="Close details">
-            Close ×
-          </button>
-        </div>
-        {children}
-      </section>
-    </div>
   );
 }

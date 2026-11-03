@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { count, short, text } from "./types";
 import type { GP, Program } from "./types";
-import { Badge, Hash, Empty, Details } from "./shared";
+import { Badge, Hash, Empty, Details, Dialog } from "./shared";
 
-export export function GpLibrary({ summary }: { summary: GP }) {
+export function GpLibrary({ summary }: { summary: GP }) {
   const [library, setLibrary] = useState<GP | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -101,11 +101,11 @@ export export function GpLibrary({ summary }: { summary: GP }) {
           <Empty>Loading hash-pinned program records…</Empty>
         )}
         <div
-              className="table-wrap"
-              tabIndex={0}
-              role="region"
-              aria-label="Program library records"
-            >
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label="Program library records"
+        >
           <table>
             <thead>
               <tr>

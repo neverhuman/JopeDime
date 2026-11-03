@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { count, number, text } from "./types";
 import type { Snapshot } from "./types";
-import { Badge, Hash, Details } from "./shared";
+import { Badge, Hash, Details, Dialog } from "./shared";
 
 export function Results({ snapshot: s }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -21,11 +21,11 @@ export function Results({ snapshot: s }: { snapshot: Snapshot }) {
           restoration proofs are distinct preservation milestones.
         </p>
         <div
-              className="table-wrap"
-              tabIndex={0}
-              role="region"
-              aria-label="Research wave records"
-            >
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label="Research wave records"
+        >
           <table>
             <thead>
               <tr>
@@ -101,11 +101,11 @@ export function Results({ snapshot: s }: { snapshot: Snapshot }) {
             }}
           />
           <div
-              className="table-wrap"
-              tabIndex={0}
-              role="region"
-              aria-label="Research measurements"
-            >
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label="Research measurements"
+          >
             <table>
               <thead>
                 <tr>
