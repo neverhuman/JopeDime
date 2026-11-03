@@ -3,13 +3,13 @@
 //! from moving and prevents reuse; the pointer only ever moves from its expected predecessor.
 
 use super::fixture::{
-    BIG, Fault, Faulty, PUBLISHER, Run, append, commit, env, head, head_bytes, producer, published,
-    run, snapshot, training,
+    append, commit, env, head, head_bytes, producer, published, run, snapshot, training, Fault,
+    Faulty, Run, BIG, PUBLISHER,
 };
 use crate::hwm::Transition;
 use crate::progress::inventory::*;
 use crate::progress::outbox::Outbox;
-use crate::progress::publish::{Plan, Prepared, Publication, advance, prepare, publish, reusable};
+use crate::progress::publish::{advance, prepare, publish, reusable, Plan, Prepared, Publication};
 use crate::progress::remote::Remote;
 use jope_learning::mirror::Mirror;
 use jope_learning::state::State;
