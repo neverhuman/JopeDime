@@ -1,0 +1,14 @@
+{
+  "wave": "H236",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "primary_verdict": null,
+  "optimizer_updates": 0,
+  "complete_cells": 0,
+  "scientific_execution": "NOT_STARTED",
+  "dope_before": null,
+  "dope_after": null,
+  "primary_dlval": null,
+  "secondary_oof": null,
+  "source_commit": null
+}

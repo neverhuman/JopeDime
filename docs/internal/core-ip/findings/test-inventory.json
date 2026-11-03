@@ -430,9 +430,9 @@
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
-        "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
-        "role": "research"
-      },
+      "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h232_lion/test_h232.py": {
       "reason": "Owner-requested H232 data-free controls for the Lion vs AdamW r882 adapter continuation (arm settings, Lion reference update, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor limits and load-pause hysteresis, launch binding).",
       "role": "research"
@@ -1984,10 +1984,6 @@
       "subsystems": [
         "training"
       ]
-    },
-    "python:python/tests/test_dime_score_worker_validation.py": {
-      "role": "regression",
-      "subsystems": ["training"]
     },
     "python:python/tests/test_training_corpus_contract.py": {
       "role": "regression",
@@ -5745,6 +5741,10 @@
       "subsystems": [
         "encoders"
       ]
+    },
+    "python:research/flywheel_selfplay/h236_sfadamw/test_h236.py": {
+      "role": "research",
+      "reason": "H236 owner-authorized offline r882 optimizer continuation: Schedule-Free AdamW vs exact H170 CTRL; unchanged H235 loss/batches/strict cross-fit selector; data-free optimizer reference, state/mode/None-gradient, bootstrap/Elo/guard tests; not serving qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",
