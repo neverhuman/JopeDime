@@ -75,6 +75,9 @@ impl Rendezvous {
     pub fn challenge(&self) -> &Challenge {
         &self.challenge
     }
+    pub(super) fn contract(&self) -> &BoundedRunContract {
+        &self.contract
+    }
     pub fn rendezvous_id(&self) -> &str {
         &self.challenge.body.rendezvous_id
     }
@@ -84,7 +87,7 @@ impl Rendezvous {
     pub fn joined(&self) -> Vec<u32> {
         self.hellos.keys().copied().collect()
     }
-    fn refuse(&mut self, cause: RefusalCause) -> GroupRefusal {
+    pub(super) fn refuse(&mut self, cause: RefusalCause) -> GroupRefusal {
         let refusal = self.refused.get_or_insert_with(|| GroupRefusal {
             run: self.contract.run.clone(),
             attempt: self.contract.attempt,

@@ -19,7 +19,7 @@ pub fn gather(
     coordinator: &SigningKey,
     now: &dyn Fn() -> u64,
 ) -> Result<(GroupAdmission, Vec<Connected>), GroupRefusal> {
-    let limit = rendezvous.contract.rendezvous.max_message_bytes;
+    let limit = rendezvous.contract().rendezvous.max_message_bytes;
     let challenge =
         serde_json::to_vec(rendezvous.challenge()).expect("rendezvous challenge is serializable");
     let mut connected = Vec::new();
@@ -31,7 +31,7 @@ pub fn gather(
         let join_deadline = Instant::now()
             + Duration::from_millis(
                 rendezvous
-                    .challenge
+                    .challenge()
                     .body
                     .join_deadline_unix_ms
                     .saturating_sub(now()),
