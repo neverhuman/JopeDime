@@ -181,8 +181,9 @@ pub(super) use eligibility::{
 };
 pub(super) use evaluation::{
     evaluate_member_split, offspring_seed, refill_population, score_population, slice_data,
-    tournament, StudyEvalContext,
+    tournament,
 };
+use evaluation::StudyEvalContext;
 pub(crate) use fitness::paired_robust_fitness;
 pub(super) use fitness::{
     canonical_json_bytes, canonicalize_json, expression_column_indices, genome_compatible,
