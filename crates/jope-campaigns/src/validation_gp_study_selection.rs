@@ -337,7 +337,7 @@ impl<R: SelectionRuntime> StudySelection<R> {
                 continue;
             };
             let current = best.get("rmse").and_then(value_f64);
-            if current.map_or(true, |current| rmse < current) {
+            if current.is_none_or(|current| rmse < current) {
                 best = json!({
                         "model": stem,
                 "report": path.display().to_string(),
