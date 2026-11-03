@@ -13,7 +13,6 @@ use super::index::IndexSummary;
 use super::inputs::{InputRecord, InputSpec};
 use super::inventory::{DataFile, E1Overlap, GroupInv, ReadStats};
 use super::lifecycle::Coverage;
-use super::policy::Policy;
 use super::refs::{Role, ScanStats};
 use super::{round4, Action, PLAN_ROW_SCHEMA};
 use anyhow::{ensure, Context, Result};
