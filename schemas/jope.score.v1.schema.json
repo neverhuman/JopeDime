@@ -1,8 +1,4 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://veox.ai/schemas/jope.score.v1.schema.json",
-  "title": "jope.score/v1",
-  "description": "One evaluation result, appended once to scores/ledger/<yyyy>/<mm>/<ulid>.jsonl and never edited. row_sha256 = sha256 of the canonical JSON of the row with row_sha256 set to the empty string. benchmark_valid is true only for rows measured under a published benchmark protocol (SOTArena).",
   "$defs": {
     "Cost": {
       "additionalProperties": false,
@@ -28,13 +24,6 @@
       },
       "type": "object"
     },
-    "Direction": {
-      "enum": [
-        "higher",
-        "lower"
-      ],
-      "type": "string"
-    },
     "Metric": {
       "enum": [
         "r2",
@@ -48,9 +37,15 @@
       ],
       "type": "string"
     },
+    "MetricDirection": {
+      "enum": [
+        "higher",
+        "lower"
+      ],
+      "type": "string"
+    },
     "ScoreSource": {
       "additionalProperties": false,
-      "description": "Where a score row came from (kept open: benchmark trackers add their own keys).",
       "properties": {
         "kind": {
           "description": "`sotarena`, `campaign`, `arena`, ...",
@@ -108,7 +103,9 @@
       "type": "object"
     }
   },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "description": "One evaluation result, appended once to scores/ledger/<yyyy>/<mm>/<ulid>.jsonl and never edited. row_sha256 = sha256 of the canonical JSON of the row with row_sha256 set to the empty string. benchmark_valid is true only for rows measured under a published benchmark protocol (SOTArena).",
   "properties": {
     "benchmark_valid": {
       "type": "boolean"
@@ -132,7 +129,7 @@
       "type": "string"
     },
     "direction": {
-      "$ref": "#/$defs/Direction"
+      "$ref": "#/$defs/MetricDirection"
     },
     "evaluator_sha256": {
       "pattern": "^(unbound|[0-9a-f]{64})$",
@@ -198,5 +195,7 @@
     "source",
     "row_sha256"
   ],
-  "type": "object"
+  "title": "jope.score/v1",
+  "type": "object",
+  "$id": "https://veox.ai/schemas/jope.score.v1.schema.json"
 }
