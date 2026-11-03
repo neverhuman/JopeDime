@@ -5,12 +5,12 @@ pub(super) struct Run {
     command: &'static str,
     started: Instant,
     common: CommonArgs,
-    receipt: Receipt,
+    pub(super) receipt: Receipt,
     encoding_package: Option<Package>,
     /// The run's budget once prepared, so a failed run still records what it consumed.
     budget: Option<Budget>,
     /// Whether `--receipt` names no input or output (checked before any work).
-    receipt_allowed: bool,
+    pub(super) receipt_allowed: bool,
 }
 
 impl Run {
