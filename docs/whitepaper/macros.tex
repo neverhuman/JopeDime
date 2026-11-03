@@ -116,6 +116,9 @@
 % Each held figure* then reaches the top of a fresh page above the References
 % heading, instead of the float-only page that \FloatBarrier's \clearpage gives
 % a single held figure*. Falls back to \clearpage after 12 columns.
+% \null (which lets \newpage end an empty column) is added only to an empty
+% column: after a full column it spilled into the next one, which \newpage
+% then ejected empty (p27 col0 before the References).
 \makeatletter
 \newif\iffb@held
 \newcount\fb@flushcount
@@ -127,7 +130,7 @@
   \endgroup
   \iffb@held
     \global\advance\fb@flushcount\@ne
-    \ifnum\fb@flushcount>12 \clearpage\else\null\newpage\fi
+    \ifnum\fb@flushcount>12 \clearpage\else\ifdim\pagegoal=\maxdimen\null\fi\newpage\fi
     \expandafter\fb@flushstep
   \fi}
 \makeatother
