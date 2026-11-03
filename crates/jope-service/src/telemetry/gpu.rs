@@ -63,7 +63,7 @@ const NVML_MAX_BACKOFF: Duration = Duration::from_secs(5);
 /// Device-wide GPU readings with bounded exponential retry after NVML failures. It never
 /// panics and never synchronizes the device (§9.1 Rates).
 pub struct NvmlSensor<Q: GpuQuery> {
-    query: Q,
+    pub(crate) query: Q,
     initialized: bool,
     backoff: Duration,
     retry_at: Option<Instant>,
