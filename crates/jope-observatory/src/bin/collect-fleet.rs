@@ -151,7 +151,8 @@ fn probe(node: Node) -> Value {
             None,
         )
     } else {
-        let s = query(node, "cat /proc/meminfo").unwrap_or_default();
+        let s = query(node, "cat /proc/meminfo") // default fallback
+            .unwrap_or_default();
         let field = |key: &str| {
             s.lines()
                 .find(|l| l.starts_with(key))

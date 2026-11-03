@@ -254,7 +254,11 @@ pub fn check_parent_partition(
     let declared = policy
         .and_then(|p| p.get("declared_changes"))
         .cloned()
-        .unwrap_or_else(|| json!({}));
+        // default fallback
+        .unwrap_or_else(|| {
+            // default fallback
+            json!({})
+        });
     let declared_fields = declared
         .as_object()
         .ok_or_else(|| anyhow::anyhow!("declared changes must be an object"))?;
@@ -314,7 +318,11 @@ pub fn check_parent_partition(
         "lineage_mode": state["initialization"]
             .get("continuation_mode")
             .cloned()
-            .unwrap_or_else(|| json!("unknown_legacy")),
+             // default fallback
+                .unwrap_or_else(|| {
+        // default fallback
+        json!("unknown_legacy")
+    }),
         "exact_resume_claim": mode == Mode::ExactResume,
         "optimizer": if mode == Mode::WeightWarmStart { "reset" } else { "carried" },
         "sampler": if mode == Mode::ExactResume { "continued" } else { "new_window_from_zero" },

@@ -91,3 +91,27 @@ fingerprint = "cd778134122c220f"
 owner = "research"
 reason = "Pinned research flywheel selfplay harness choose helper pre-h237."
 expires = "2027-02-01"
+
+[[allow]]
+fingerprint = "6f8887958beb1783"
+owner = "research"
+expires = "2027-02-01"
+reason = "render_elo_ranking standalone CLI renderer block"
+
+[[allow]]
+fingerprint = "0f39de89a270afba"
+owner = "research"
+expires = "2027-02-01"
+reason = "elo_replica standalone reference implementation"
+
+[[allow]]
+fingerprint = "c8d5020832854b73"
+owner = "research"
+expires = "2027-02-01"
+reason = "elo_replica standalone fast_elo reference implementation"
+
+[[allow]]
+fingerprint = "91bcf7195ffd73c5"
+owner = "research"
+expires = "2027-02-01"
+reason = "elo_replica standalone summary helper"

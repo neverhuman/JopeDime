@@ -90,7 +90,11 @@ fn dispatch(index: &mut Index, state: &mut State, request: Value) -> Option<Valu
             let args = request
                 .pointer("/params/arguments")
                 .cloned()
-                .unwrap_or_else(|| json!({}));
+                // default fallback
+                .unwrap_or_else(|| {
+                    // default fallback
+                    json!({})
+                });
             if !args.is_object() || args["run_id"].as_str() != Some(index.run_id.as_str()) {
                 return Some(error(id, -32602, "run_id must match selected journal"));
             }

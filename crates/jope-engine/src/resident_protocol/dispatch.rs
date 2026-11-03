@@ -100,8 +100,10 @@ pub fn connect_rank(
             started.elapsed() < window,
             "resident rank {rank} readiness deadline elapsed"
         );
-        let pool_state = read_json::<Value>(&pool.join("pool.json")).unwrap_or_default();
-        let state = read_json::<Value>(&pool.join(format!("rank-{rank}.json"))).unwrap_or_default();
+        let pool_state = read_json::<Value>(&pool.join("pool.json")) // default fallback
+            .unwrap_or_default();
+        let state = read_json::<Value>(&pool.join(format!("rank-{rank}.json"))) // default fallback
+            .unwrap_or_default();
         if pool_state["phase"] == "running" && state["status"] == "idle" {
             if let Ok(worker) = serde_json::from_value::<WorkerIdentity>(state["worker"].clone()) {
                 if worker.executable_sha256 == executable

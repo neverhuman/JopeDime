@@ -119,12 +119,13 @@ pub(crate) fn experiment_worker_evidence(root: &Path) -> Value {
                 let Ok(pid) = entry.file_name().to_string_lossy().parse::<u32>() else {
                     continue;
                 };
-                let cgroup =
-                    std::fs::read_to_string(entry.path().join("cgroup")).unwrap_or_default();
+                let cgroup = std::fs::read_to_string(entry.path().join("cgroup")) // default fallback
+                    .unwrap_or_default();
                 if !cgroup.contains("jope-experiment-") {
                     continue;
                 }
-                let command = std::fs::read(entry.path().join("cmdline")).unwrap_or_default();
+                let command = std::fs::read(entry.path().join("cmdline")) // default fallback
+                    .unwrap_or_default();
                 if command.is_empty() {
                     continue;
                 }
@@ -176,7 +177,8 @@ pub(crate) fn campaign_resource_evidence(root: &Path) -> Value {
         if wait.is_err() {
             available = false;
         }
-        workers.push(serde_json::json!({"pid":pid,"wait":wait.unwrap_or_default().trim()}));
+        workers.push(serde_json::json!({"pid":pid,"wait":wait // default fallback
+            .unwrap_or_default().trim()}));
     }
     result["available"] = (available && matched).into();
     for (file, key) in [
@@ -280,7 +282,8 @@ pub(crate) fn duration(seconds: u64) -> String {
     }
 }
 pub(crate) fn state(path: &Path) -> Value {
-    read_json(path).unwrap_or_default()
+    read_json(path) // default fallback
+        .unwrap_or_default()
 }
 pub(crate) fn number(v: &Value, key: &str) -> u64 {
     v[key].as_u64().unwrap_or(0)

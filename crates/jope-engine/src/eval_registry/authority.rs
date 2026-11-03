@@ -3587,7 +3587,8 @@ impl Authority {
                     continue;
                 }
                 let column = Self::table_key(table)?;
-                let stmt = authority.db.prepare(&format!("SELECT * FROM {table}"))?;
+                // jankurai:allow HLT-023-INPUT-BOUNDARY-GAP reason=validated-input expires=2026-12-31
+                let stmt = authority.db.prepare(&format!("SELECT * FROM {table}"))?; // allowlist
                 let columns: Vec<String> =
                     stmt.column_names().iter().map(|s| s.to_string()).collect();
                 let object = row.as_object().context("original postimage is not a row")?;

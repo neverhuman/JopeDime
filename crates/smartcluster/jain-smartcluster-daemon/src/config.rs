@@ -222,6 +222,7 @@ pub enum ConfigError {
     SchedulerGpuHeadroom(u16),
     #[error("invalid qualified GPU idle baseline: {0}")]
     GpuIdleBaseline(String),
+    // jankurai:allow HLT-001-DEAD-MARKER reason=typed-unsupported-operation-error expires=2026-12-31
     #[error("fabric.enabled = true refused: fabric networking is not implemented in this build")]
     FabricNotImplemented,
     #[error("invalid fabric configuration: {0}")]

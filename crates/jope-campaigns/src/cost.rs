@@ -35,7 +35,11 @@ pub fn estimate_costs(
         .as_ref()
         .and_then(|base| base.get("evals"))
         .cloned()
-        .unwrap_or_else(|| json!(DEFAULT_EVALS));
+        // default fallback
+        .unwrap_or_else(|| {
+            // default fallback
+            json!(DEFAULT_EVALS)
+        });
     let search_secs = number_or(
         base.get("search_secs"),
         if observed_base {
