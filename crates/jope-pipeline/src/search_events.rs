@@ -1,5 +1,7 @@
 //! Observational draw/request/physical-attempt joins. No replay or fitting authority.
 
+use std::collections::BTreeMap;
+
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
 
