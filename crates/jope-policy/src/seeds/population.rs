@@ -5,13 +5,13 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::path::Path;
 
-use super::config::{ChallengerIdentity, CheckpointBinding};
-use super::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
-use super::grammar::BoundVocabulary;
-use super::model::PolicyModel;
-use super::proposal_ledger::{self, ProposalLedger};
-use super::ranking::{self, Bindings, Ranking, SELECTION_ID};
-use super::{
+use crate::config::{ChallengerIdentity, CheckpointBinding};
+use crate::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
+use crate::grammar::BoundVocabulary;
+use crate::model::PolicyModel;
+use crate::proposal_ledger::{self, ProposalLedger};
+use crate::ranking::{self, Bindings, Ranking, SELECTION_ID};
+use crate::{
     context_sha256, is_sha256_hex, refuse_rejected_checkpoint, require_accepted_policy,
     require_accepted_vocabulary, sha256_hex, CHECKPOINT_VOCABULARY_SHA256,
 };
@@ -330,8 +330,8 @@ pub fn assemble_for_testing(
     exploration: &[SeedCandidate],
 ) -> Result<SeedPopulation> {
     ensure!(
-        !super::is_accepted_state(checkpoint_sha256)
-            && !super::is_accepted_state(ranking.bindings().checkpoint_sha256()),
+        !crate::is_accepted_state(checkpoint_sha256)
+            && !crate::is_accepted_state(ranking.bindings().checkpoint_sha256()),
         "refused: the test assembler never stamps the accepted state"
     );
     assemble_population(binding, checkpoint_sha256, ranking, pool, exploration)
