@@ -94,7 +94,7 @@ as is, $z_w\odot\tanh(W_\gamma r_z+b_\gamma)$ and
 $|z_w-(W_{\mathrm{proj}}r_z+b_{\mathrm{proj}})|$.
 Four two-layer heads receive this same \num{1536}-value interaction vector;
 their mean gives the ranking logit $\mapv(z_p,z_w)$.
-Native ranking losses supervise that mean jointly, without separate
+The reference ranking losses supervise that mean jointly, without separate
 targets or bootstrap samples. Training applies dropout of 0.05 in each
 ranking head. The runtime head instead reads $[r_z,z_w]$, while the
 program-only control reads $z_w$.
@@ -137,7 +137,7 @@ The reference game-day protocol omits the ranking map. Matched first
 proposals test whether training improved the writer.
 \end{keyidea}
 
-In the native implementation, the writer and map use separate context
+In the reference native implementation, the writer and map use separate context
 networks and token embeddings. The map ranks drafts without dropping them
 or screening the writer. One native GP route matches map-derived weights
 by program identity to ranked survivors for parent selection. The bounded
@@ -230,7 +230,7 @@ averages across cuts. Negative values favor the challenger. This admission
 comparison is separate from the single-program comparison in
 \cref{sub:results-learning}.
 
-\paragraph{The historical reference.} The decoder-only writer has separate
+\paragraph{The historical reference.} The reference model combines a decoder-only writer with separate
 ranking and auxiliary heads. \Cref{app:training} records the architecture,
 registered capacity, token allocation and training corpus in one inventory.
 
