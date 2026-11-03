@@ -237,7 +237,7 @@ enum ObjectRoute {
     Fitted,
 }
 
-pub(crate) fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
+fn object_route(object_dir: &Path) -> anyhow::Result<ObjectRoute> {
     use jope_runtime::model_object::{
         calibration_platt, read_bounded, MANIFEST, MATH_PIPELINE, MAX_MANIFEST_BYTES,
     };
