@@ -1,3 +1,7 @@
+use super::outbox::{
+    finish_publication, immutable_bytes, publish_winner, record_inner, PendingChampion,
+    PendingPublication,
+};
 use super::*;
 fn observation(rmse: f64) -> Value {
     let genome = "(pipe X (ridge))";
