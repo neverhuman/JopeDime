@@ -149,7 +149,8 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
         s.budget
             .reserved_usd
             .map(|x| format!("\u{24}{:.2}", (s.budget.cap_usd - x).max(0.0)))
-            .unwrap_or_else(|| "UNKNOWN".into()),
+            .unwrap_or_else
+            (|| "UNKNOWN".into()),
         format!("\u{24}{:.0} cap · reservations", s.budget.cap_usd),
         if s.budget.reserved_usd.is_some_and(|x| x > s.budget.cap_usd) {
             RED
@@ -196,7 +197,8 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
             let score = v
                 .score
                 .map(|x| format!("{x:.5}"))
-                .unwrap_or_else(|| "—".into());
+                .unwrap_or_else
+                (|| "—".into());
             Row::new(vec![
                 clean(&v.name),
                 clean(&v.fold),
@@ -204,9 +206,11 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
                     .map(|n| {
                         v.target_generation
                             .map(|target| format!("{n}/{target}"))
-                            .unwrap_or_else(|| format!("g{n}"))
+                            .unwrap_or_else
+                            (|| format!("g{n}"))
                     })
-                    .unwrap_or_else(|| "—".into()),
+                    .unwrap_or_else
+                    (|| "—".into()),
                 clean(&v.metric),
                 score,
                 clean(&v.status),
@@ -378,7 +382,8 @@ pub fn draw(f: &mut Frame, s: &Snapshot, u: &mut Ui, error: Option<&str>, now: i
     } else {
         format!(
             " q quit  ↑/↓ select  / filter  f failures  Space freeze  ? help  │ {}",
-            error.map(clean).unwrap_or_else(|| format!(
+            error.map(clean).unwrap_or_else
+            (|| format!(
                 "{} · seq {}",
                 clean(&s.status),
                 s.sequence

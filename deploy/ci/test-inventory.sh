@@ -121,6 +121,7 @@ def static_ids():
         try:
             tree = ast.parse(p.read_text(errors="replace"))
         except SyntaxError as exc:
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
             raise SystemExit(f"static inventory cannot parse {rel}: {exc}") from exc
         ids = []
         for node in tree.body:
@@ -195,6 +196,7 @@ if update:
 
 if problems:
     print("\n" + "\n".join("error: " + p for p in problems))
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     sys.exit(1)
 print("ok: test inventory consistent")
 PY

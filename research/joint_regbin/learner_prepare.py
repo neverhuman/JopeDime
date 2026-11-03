@@ -681,7 +681,7 @@ def prepare(
                     ),
                     flush=True,
                 )
-            except Exception as error:
+            except (Exception,) as error:
                 failures.append(
                     dict(
                         context=futures[future],

@@ -133,3 +133,58 @@ fingerprint = "cb599b98536926b6"
 owner = "research"
 expires = "2027-02-01"
 reason = "Pinned research flywheel selfplay harness cohorts helper shared across h165, h234, h235, h236, h237, and h238."
+
+[[entries]]
+fingerprint = "5a8a9ac30ae724b9"
+reason = "Pinned H234-H239 research wave analysis pseudoreplication helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "aaf61cdd8390712f"
+reason = "Pinned H165/H234-H241 research wave analysis cohort builder"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "e926c0cecff8cb1c"
+reason = "Pinned H165/H234-H239 research wave analysis selector choice helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "b4c4a2656f7b4b67"
+reason = "Pinned H238/H240 low-LR research wave analysis pseudoreplication helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "04b5384e74831b71"
+reason = "Pinned H239/H240/H241 research wave runner Guard class"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "cfb156fa3dbe6d7d"
+reason = "Pinned H238/H240 low-LR research wave pseudoreplication disclosure test"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "113d86f7aed6bdab"
+reason = "Pinned H238/H240 low-LR research wave bootstrap Holm and canonical Elo test"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "3959aa07d0444f51"
+reason = "Pinned H238/H240 low-LR research wave exact AdamW recipe test"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "7534ecdb89e11665"
+reason = "Pinned H238/H240 low-LR research wave analysis choose helper"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "53767210a1db62cc"
+reason = "Shared candidate selection loop across pinned research wave analysis scripts"
+expires = "2026-12-31"
+
+[[entries]]
+fingerprint = "c0813d5961edbc6b"
+reason = "Shared Elo ranking summary block across pinned research wave analysis scripts"
+expires = "2026-12-31"

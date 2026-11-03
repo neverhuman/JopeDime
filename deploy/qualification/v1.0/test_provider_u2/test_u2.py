@@ -139,6 +139,7 @@ class U2Tests(unittest.TestCase):
                 self.assertFalse(self.ctx.result.exists())
                 self.tests.clear()
 
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     def test_failed_child_stops_and_preserves_nonzero_exit(self):
         self.returncode = 23
         self.assertEqual(self.invoke(), 23)

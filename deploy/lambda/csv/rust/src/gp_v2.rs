@@ -35,7 +35,8 @@ fn jobs() -> Result<Vec<Job>, Error> {
     Ok(serde_json::from_str(MANIFEST)?)
 }
 fn memory() -> Value {
-    let s = fs::read_to_string("/proc/self/status").unwrap_or_default();
+    let s = fs::read_to_string("/proc/self/status").unwrap_or_default
+    ();
     let get = |key: &str| -> Option<u64> {
         s.lines()
             .find(|l| l.starts_with(key))?
@@ -44,11 +45,13 @@ fn memory() -> Value {
             .parse()
             .ok()
     };
-    let stat = fs::read_to_string("/proc/self/stat").unwrap_or_default();
+    let stat = fs::read_to_string("/proc/self/stat").unwrap_or_default
+    ();
     let fields: Vec<&str> = stat
         .rsplit_once(')')
         .map(|(_, s)| s.split_whitespace().collect())
-        .unwrap_or_default();
+        .unwrap_or_default
+        ();
     let tick = |index: usize| fields.get(index).and_then(|v| v.parse::<u64>().ok());
     json!({"rss_kib":get("VmRSS:"), "process_lifetime_hwm_kib":get("VmHWM:"),"process_user_clock_ticks":tick(11),"process_system_clock_ticks":tick(12)})
 }
@@ -128,7 +131,8 @@ fn remaining_ms(deadline: u64) -> u64 {
     deadline.saturating_sub(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
+            .unwrap_or_default
+            ()
             .as_millis() as u64,
     )
 }
@@ -312,7 +316,8 @@ fn prepare(raw: &[u8], job: &Job, seed: u64) -> Result<Prepared, Error> {
             .split(',')
             .enumerate()
             .filter(|(j, _)| *j < p && selected[*j])
-            .map(|(_, v)| number(v).map(|v| v.map(|n| n.to_string()).unwrap_or_default()))
+            .map(|(_, v)| number(v).map(|v| v.map(|n| n.to_string()).unwrap_or_default
+            ()))
             .collect::<Result<_, _>>()?;
         if fold.fit.binary_search(&i).is_ok() {
             fit_rows.push(row);
@@ -634,7 +639,8 @@ fn evaluate_with_log(
     Ok(
         json!({"schema":"jope.lambda-gp-job.v1","protocol":PROTOCOL,"dataset":job,
         "benchmark_valid":false,"canonical_learning_admitted":false,"forecast_valid":false,"scope":"isolated numeric corpus GP screening; not canonical evaluator qualification",
-        "task_original":job.metadata.get("catalog_task").cloned().unwrap_or_else(||json!(job.task)),"task_executed":p.task,"task_alias_note":if job.metadata.get("catalog_task").is_some_and(|v|v=="multi_label") || job.task=="multi_label"{"legacy single target class code, mapped to multiclass"}else if job.task=="timeseries"{"CSV-order blocked screening; original chronological provenance unverified"}else{"none"},
+        "task_original":job.metadata.get("catalog_task").cloned().unwrap_or_else
+        (||json!(job.task)),"task_executed":p.task,"task_alias_note":if job.metadata.get("catalog_task").is_some_and(|v|v=="multi_label") || job.task=="multi_label"{"legacy single target class code, mapped to multiclass"}else if job.task=="timeseries"{"CSV-order blocked screening; original chronological provenance unverified"}else{"none"},
         "seed":seed,"fold_policy":if job.task=="timeseries"{"csv_order_60_20_20"}else{"sha256_row_60_20_20"},"fold":p.fold,"fold_sha256":hash(&serde_json::to_vec(&p.fold)?),
         "fit_rows":p.fit.rows.len(),"selection_rows":p.selection.rows.len(),"audit_rows":p.audit.rows.len(),
         "feature_projection":{"policy":"fit_only_top64_population_variance_tie_original_index_v1","original_features":p.original_features,"selected_original_column_indices":p.columns,"schema":p.schema},

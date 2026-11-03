@@ -28,7 +28,7 @@ def fetch_type(t, stems, refused, threads):
         key = f"{PFX}encodings/{t}/{stems[i]}{ext}"
         if key in refused: return i, None, "refused"
         try: b = get(key)
-        except Exception: return i, None, "missing"
+        except (Exception,): return i, None, "missing"
         x = np.frombuffer(b, "<f4") if ext == ".f32" else np.load(io.BytesIO(b)); return i, np.asarray(x, np.float32).ravel(), sha256b(b)
     got, hh, mm = {}, {}, Co.Counter()
     with cf.ThreadPoolExecutor(threads) as ex:

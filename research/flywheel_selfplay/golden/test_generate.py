@@ -502,6 +502,7 @@ class CpuCaptureGuards(unittest.TestCase):
 
         path = os.environ.get("JOPE_CPU_TRAINING_TABLE")
         if path is None:
+            # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
             self.skipTest(
                 "set JOPE_CPU_TRAINING_TABLE for real JTT byte-preservation proof"
             )

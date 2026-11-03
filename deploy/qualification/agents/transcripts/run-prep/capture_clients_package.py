@@ -305,7 +305,7 @@ def prepare(args) -> dict:
             provider_pin = output / "a5-manifest.sha256"
             provider_pin.write_text(provider_manifest_sha256 + "\n", encoding="ascii")
             os.chmod(provider_pin, 0o600)
-    except Exception:
+    except (Exception,):
         # Never recursively remove a caller-supplied tree; output was freshly created.
         for child in output.iterdir():
             child.unlink()

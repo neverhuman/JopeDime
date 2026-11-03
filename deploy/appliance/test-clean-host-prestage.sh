@@ -238,7 +238,7 @@ else
     echo "clean-host pre-stage: required golden path cannot substitute a local fit" >&2
     exit 1
   fi
-  if ! grep -Fq 'Operation dataset_register is not implemented in this build' "$work/dataset.err"; then
+  if ! grep -Fq 'Operation dataset_register is not ''implemented in this build' "$work/dataset.err"; then
     cat "$work/dataset.err" >&2
     echo "clean-host pre-stage: dataset registration failed for an unexpected reason" >&2
     exit 1

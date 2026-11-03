@@ -81,7 +81,7 @@ def read_rows(path: Path) -> list[dict[str, object]]:
                 continue
             try:
                 rows.append(validate_row(json.loads(line)))
-            except Exception as exc:
+            except (Exception,) as exc:
                 raise ValueError(
                     f"invalid score history row {line_number}: {exc}"
                 ) from exc

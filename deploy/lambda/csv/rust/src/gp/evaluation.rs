@@ -287,7 +287,8 @@ pub(super) fn evaluate_with_log(
     Ok(
         json!({"schema":"jope.lambda-gp-job.v1","protocol":PROTOCOL,"dataset":job,
         "benchmark_valid":false,"canonical_learning_admitted":false,"forecast_valid":false,"scope":"isolated numeric corpus GP screening; not canonical evaluator qualification",
-        "task_original":job.metadata.get("catalog_task").cloned().unwrap_or_else(||json!(job.task)),"task_executed":p.task,"task_alias_note":if job.metadata.get("catalog_task").is_some_and(|v|v=="multi_label") || job.task=="multi_label"{"legacy single target class code, mapped to multiclass"}else if job.task=="timeseries"{"CSV-order blocked screening; original chronological provenance unverified"}else{"none"},
+        "task_original":job.metadata.get("catalog_task").cloned().unwrap_or_else
+        (||json!(job.task)),"task_executed":p.task,"task_alias_note":if job.metadata.get("catalog_task").is_some_and(|v|v=="multi_label") || job.task=="multi_label"{"legacy single target class code, mapped to multiclass"}else if job.task=="timeseries"{"CSV-order blocked screening; original chronological provenance unverified"}else{"none"},
         "seed":seed,"fold_policy":if job.task=="timeseries"{"csv_order_60_20_20"}else{"sha256_row_60_20_20"},"fold":p.fold,"fold_sha256":hash(&serde_json::to_vec(&p.fold)?),
         "fit_rows":p.fit.rows.len(),"selection_rows":p.selection.rows.len(),"audit_rows":p.audit.rows.len(),
         "feature_projection":{"policy":"fit_only_top64_population_variance_tie_original_index_v1","original_features":p.original_features,"selected_original_column_indices":p.columns,"schema":p.schema},

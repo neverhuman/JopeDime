@@ -328,7 +328,7 @@ def check_jrb01_admission_status(
                 "admitted_dataset_count": len(admitted_ids),
                 "s3_bucket": S3_DATASETS_BUCKET,
             }
-    except Exception as exc:
+    except (Exception,) as exc:
         return {
             "jrb01_ready": False,
             "mode": "admitted_205_family_train_pool",

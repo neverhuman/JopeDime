@@ -1499,3 +1499,507 @@ path = "vendor/security/torch-sys-0.26.0/src/c_generated.rs"
 reason = "vendor/security/PROVENANCE.json records the exact candidate and upstream SHA-256 for vendor/security/torch-sys-0.26.0/src/c_generated.rs; bytes remain frozen to preserve upstream provenance and reproducibility."
 receipt = "vendor/security/PROVENANCE.json"
 sha256 = "db7b1ab88fd6c57fd79efa42847438e58c6269695358e155b5b63278697a88fe"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/dashboard/flywheel.js"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 8b029ad183d0e369785b3110ca61f8312ad2c891ef0a251c50b8977d16b2da48 for deploy/dl-flywheel/dashboard/flywheel.js in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "8b029ad183d0e369785b3110ca61f8312ad2c891ef0a251c50b8977d16b2da48"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 36728ba2d84287e908c278439bdd9660694149e125b7ac3933a4625e231abd9c for deploy/dl-flywheel/dashboard/test_dashboard_flywheel.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "36728ba2d84287e908c278439bdd9660694149e125b7ac3933a4625e231abd9c"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/jope_flywheel/queue.py"
+reason = "deploy/maintenance/main-audit-deletions.json records SHA-256 1bdd813757e29c5a3ae46b014a85622f2e4ebf8160b47cffd82db6483718c9af for deploy/dl-flywheel/jope_flywheel/queue.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/maintenance/main-audit-deletions.json"
+sha256 = "1bdd813757e29c5a3ae46b014a85622f2e4ebf8160b47cffd82db6483718c9af"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/jope_flywheel/training_snapshot_core.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 3dde6ddc94ad257c5360920a84ae09d684852de5ad5fcc4f49d05f6eee11748b for deploy/dl-flywheel/jope_flywheel/training_snapshot_core.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "3dde6ddc94ad257c5360920a84ae09d684852de5ad5fcc4f49d05f6eee11748b"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/archive/paper_backup_core.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 3b4c35c7519ebbc1b2f0ba9256c5be77124413e9d9630bdedc31dce26e633429 for deploy/dl-flywheel/pipelines/archive/paper_backup_core.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "3b4c35c7519ebbc1b2f0ba9256c5be77124413e9d9630bdedc31dce26e633429"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/continuous/continuous_cli.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 a282ab11a4a7247fd9ce1a514192a71153e18b5cf5a34533eb7edcdb2edd6e3a for deploy/dl-flywheel/pipelines/continuous/continuous_cli.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "a282ab11a4a7247fd9ce1a514192a71153e18b5cf5a34533eb7edcdb2edd6e3a"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 6db72149a474d04c72b6bea5baadec7c5cc8396bc892692ff1ca082cb8fd05b0 for deploy/dl-flywheel/pipelines/continuous_v6/tests/test_fault_process_death.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "6db72149a474d04c72b6bea5baadec7c5cc8396bc892692ff1ca082cb8fd05b0"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/encoding/next128/run_next128.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 cdfd97c873105220e0febc3d57c9390efa9c11fd1f7bb3a99a17c92c1a7e73e7 for deploy/dl-flywheel/pipelines/encoding/next128/run_next128.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "cdfd97c873105220e0febc3d57c9390efa9c11fd1f7bb3a99a17c92c1a7e73e7"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/hpc_verified_v4/native_failure.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 41138783459d778da1c5618a6c92fb5aacb4c8e095c37976830ee44f2d28cb99 for deploy/dl-flywheel/pipelines/hpc_verified_v4/native_failure.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "41138783459d778da1c5618a6c92fb5aacb4c8e095c37976830ee44f2d28cb99"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 9b46611dfcbf6d6a3553af01e0555304ce4fb709c2e942a6262ae5ebf14d29f4 for deploy/dl-flywheel/pipelines/native_result_overlay_v1/build.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "9b46611dfcbf6d6a3553af01e0555304ce4fb709c2e942a6262ae5ebf14d29f4"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/rlfw/kv_decode.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570 for deploy/dl-flywheel/pipelines/rlfw/kv_decode.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "f2a531ee3108f35500c9d9022f7aa570b51d7427ac92725fb2e7f6cc45056570"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff for deploy/dl-flywheel/pipelines/rlfw/onpolicy/run_onpolicy_offline.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "0176f281f99de61f4b84e707e382989df52af18f518ba71e7da206e361af39ff"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/rlfw/policy_binding.py"
+reason = "docs/rlfw/pr3.md records SHA-256 4cd16b3f5aa84a38f58094f0c0dfe620c2ab72ab81e3320e110035b4da79b0a1 for deploy/dl-flywheel/pipelines/rlfw/policy_binding.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/rlfw/pr3.md"
+sha256 = "4cd16b3f5aa84a38f58094f0c0dfe620c2ab72ab81e3320e110035b4da79b0a1"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_lifecycle.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 a4d74f321b8a1fc5201eb95b0d4dc904691a69376dd9687de659b1650e22f02e for deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_lifecycle.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "a4d74f321b8a1fc5201eb95b0d4dc904691a69376dd9687de659b1650e22f02e"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_score_cache.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 482a936a7b08dd7a1faf7f51a69461a93b88b44aec2c999fe3af747932e4912f for deploy/dl-flywheel/pipelines/rlfw_s3gp/tests/test_score_cache.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "482a936a7b08dd7a1faf7f51a69461a93b88b44aec2c999fe3af747932e4912f"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 8600a79ba1e227d4656e5c5489b07051933091ce59b26d9fa69b1353704723d0 for deploy/dl-flywheel/pipelines/standalone_paper_monitor_v1/budget_preflight_v1/preflight.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "8600a79ba1e227d4656e5c5489b07051933091ce59b26d9fa69b1353704723d0"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/pipelines/variants/variant_dispatch.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 ad5c6caf1a3a86d8651b5766e7677ea565243b90ffdea943487d4da21cc5360b for deploy/dl-flywheel/pipelines/variants/variant_dispatch.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "ad5c6caf1a3a86d8651b5766e7677ea565243b90ffdea943487d4da21cc5360b"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/tests/test_evidence.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 e82a23f62a5fe4aaa0322261397efe578deeebcf8e778f10114d94c7d73e659c for deploy/dl-flywheel/tests/test_evidence.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "e82a23f62a5fe4aaa0322261397efe578deeebcf8e778f10114d94c7d73e659c"
+
+[[evidence_exclusion]]
+path = "deploy/dl-flywheel/tests/test_program_bridge.py"
+reason = "deploy/dl-flywheel/SOURCE_MANIFEST.json records SHA-256 9a592ff97739fc7ec5a36e2badc3b2f3d116b4d7a078dfd5219cc0ff2089af5c for deploy/dl-flywheel/tests/test_program_bridge.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/SOURCE_MANIFEST.json"
+sha256 = "9a592ff97739fc7ec5a36e2badc3b2f3d116b4d7a078dfd5219cc0ff2089af5c"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/epoch.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 a36430ad1c218dce71443286c0cdf6fe63c6f4b6c8041205d06a6703e09c2dee for deploy/dl-trainonly/lane/src/dl_training_v1/dltrain/epoch.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "a36430ad1c218dce71443286c0cdf6fe63c6f4b6c8041205d06a6703e09c2dee"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_target_linear.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 288ad91dbfe7a712a89477645d92df01e13d25675449d8f50b5b92cf74ca2c2f for deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_target_linear.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "288ad91dbfe7a712a89477645d92df01e13d25675449d8f50b5b92cf74ca2c2f"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 32c8da6f92cd9dacc05ac8d2ec69eeed216909fab474aa6654043a6d9005fb29 for deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_provenance.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "32c8da6f92cd9dacc05ac8d2ec69eeed216909fab474aa6654043a6d9005fb29"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fallback.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 c85f4cfe5ddcd29e7fc290bc728fe4f133b1339f9a8b715d7df18526c8fb8d56 for deploy/dl-trainonly/lane/src/dl_training_v1/tests/test_v2_rowsel_build_fallback.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "c85f4cfe5ddcd29e7fc290bc728fe4f133b1339f9a8b715d7df18526c8fb8d56"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tools/source_receipts.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 9f7764cc651ce1721a37dae40450e6c6770f4de70976d09c65b786193b675f3a for deploy/dl-trainonly/lane/src/dl_training_v1/tools/source_receipts.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "9f7764cc651ce1721a37dae40450e6c6770f4de70976d09c65b786193b675f3a"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_dope_run.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 c54c2993abdbc42d37abdb06c0c96740fa0126db764f01407861d32cb45b1d05 for deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_dope_run.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "c54c2993abdbc42d37abdb06c0c96740fa0126db764f01407861d32cb45b1d05"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_g3_append_build.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 8bda4cdee6bfbb80280a65134acf7bc78618bae0cb624b082e40aba1fdaa9d8c for deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_g3_append_build.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "8bda4cdee6bfbb80280a65134acf7bc78618bae0cb624b082e40aba1fdaa9d8c"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_gpu_encode.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 23f4896c5b19dc188d6c999212843bfb975a5da38a8d828908ca6ace16e2a4dc for deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_gpu_encode.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "23f4896c5b19dc188d6c999212843bfb975a5da38a8d828908ca6ace16e2a4dc"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_manifest.py"
+reason = "deploy/dl-trainonly/lane/MANIFEST.json records SHA-256 7550d29c8f959a2a9a003cbe05c08ce8705063ee9306e29dc815812713ae7baf for deploy/dl-trainonly/lane/src/dl_training_v1/tools/v2_rowsel_manifest.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-trainonly/lane/MANIFEST.json"
+sha256 = "7550d29c8f959a2a9a003cbe05c08ce8705063ee9306e29dc815812713ae7baf"
+
+[[evidence_exclusion]]
+path = "deploy/dl-trainonly/research/dlhwm/flatstats/ta_common.py"
+reason = "deploy/dl-flywheel/docs/technical-review.md records SHA-256 0907934bde679ab33b7922cd59d398800ca27b23b6fb17dee3b2f6c0efd7b6e5 for deploy/dl-trainonly/research/dlhwm/flatstats/ta_common.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/docs/technical-review.md"
+sha256 = "0907934bde679ab33b7922cd59d398800ca27b23b6fb17dee3b2f6c0efd7b6e5"
+
+[[evidence_exclusion]]
+path = "deploy/lambda/csv/rust/src/batch.rs"
+reason = "deploy/lambda/SNAPSHOT.json records SHA-256 d5d472dfa93f1b088eb37feb7b474f22bbca7159890eabb58bf1ef2f967c5195 for deploy/lambda/csv/rust/src/batch.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/lambda/SNAPSHOT.json"
+sha256 = "d5d472dfa93f1b088eb37feb7b474f22bbca7159890eabb58bf1ef2f967c5195"
+
+[[evidence_exclusion]]
+path = "deploy/lambda/csv/rust/src/main.rs"
+reason = "deploy/lambda/SNAPSHOT.json records SHA-256 fdf6c7c93c4ece21cf58385d386329305f9a9d30e7a1948fe2c7c347fc3efbcc for deploy/lambda/csv/rust/src/main.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/lambda/SNAPSHOT.json"
+sha256 = "fdf6c7c93c4ece21cf58385d386329305f9a9d30e7a1948fe2c7c347fc3efbcc"
+
+[[evidence_exclusion]]
+path = "deploy/lambda/regression/rust/src/main.rs"
+reason = "deploy/lambda/SNAPSHOT.json records SHA-256 f072c2cf126b22c427dcab26c03e259fc4606f218f0ec61307508691508ae9ab for deploy/lambda/regression/rust/src/main.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/lambda/SNAPSHOT.json"
+sha256 = "f072c2cf126b22c427dcab26c03e259fc4606f218f0ec61307508691508ae9ab"
+
+[[evidence_exclusion]]
+path = "deploy/lambda/training/teacher-v2/qualify_s1.py"
+reason = "deploy/lambda/SNAPSHOT.json records SHA-256 a69ddd123fee0a5a7ad61e027b9247cadc742589fcf80d5d776fc7751956a807 for deploy/lambda/training/teacher-v2/qualify_s1.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/lambda/SNAPSHOT.json"
+sha256 = "a69ddd123fee0a5a7ad61e027b9247cadc742589fcf80d5d776fc7751956a807"
+
+[[evidence_exclusion]]
+path = "deploy/lambda/watch/src/model.rs"
+reason = "deploy/lambda/SNAPSHOT.json records SHA-256 cca67d36c620236659266054ca6965794b7712284e3583beedeef27853b61eae for deploy/lambda/watch/src/model.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/lambda/SNAPSHOT.json"
+sha256 = "cca67d36c620236659266054ca6965794b7712284e3583beedeef27853b61eae"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/dataset_builder.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 c54dac453b762490f51089f74777fcebc982a3d8c94c4f6cf68170daa0fba0f3 for research/flywheel_selfplay/dataset_builder.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "c54dac453b762490f51089f74777fcebc982a3d8c94c4f6cf68170daa0fba0f3"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h163_prediction_ensemble/monitor.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 5ef2442c1f56996464488651e0b9674efa9447c0c93c1e32583732c31c7857b7 for research/flywheel_selfplay/h163_prediction_ensemble/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "5ef2442c1f56996464488651e0b9674efa9447c0c93c1e32583732c31c7857b7"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h163_prediction_ensemble/run.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 a344a7aff13401a46e7be1851a14ce3dff984fe5296b9dd4cdd90a70839cf584 for research/flywheel_selfplay/h163_prediction_ensemble/run.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "a344a7aff13401a46e7be1851a14ce3dff984fe5296b9dd4cdd90a70839cf584"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h168_selector_remedy/monitor.py"
+reason = "research/flywheel_selfplay/h168_selector_remedy/manifest.json records SHA-256 0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7 for research/flywheel_selfplay/h168_selector_remedy/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h168_selector_remedy/manifest.json"
+sha256 = "0895281aa8a4e6073086eb2e4ee99e12245f290ff272ac4ae2617556ac4782e7"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h175_selector_power/power.py"
+reason = "research/flywheel_selfplay/h175_selector_power/manifest.json records SHA-256 c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe for research/flywheel_selfplay/h175_selector_power/power.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h175_selector_power/manifest.json"
+sha256 = "c5e73e8db8aa80a601500c9080c162562824889bf2e29e4a530e13fa89c41dfe"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h177_pooled_selector/runner.py"
+reason = "research/flywheel_selfplay/h177_pooled_selector/manifest.json records SHA-256 214f0fe82d3e81a5a30b380b7057555792a50437ccf82637c3fcfb4c6019a182 for research/flywheel_selfplay/h177_pooled_selector/runner.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h177_pooled_selector/manifest.json"
+sha256 = "214f0fe82d3e81a5a30b380b7057555792a50437ccf82637c3fcfb4c6019a182"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h184_adapter_components/test_h184.py"
+reason = "research/flywheel_selfplay/h184_adapter_components/manifest.json records SHA-256 c9891ed0dd1a2b42a25c0b02ddb8c4d5b34837dbc344a0bca5778f5ed176be96 for research/flywheel_selfplay/h184_adapter_components/test_h184.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h184_adapter_components/manifest.json"
+sha256 = "c9891ed0dd1a2b42a25c0b02ddb8c4d5b34837dbc344a0bca5778f5ed176be96"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py"
+reason = "research/flywheel_selfplay/h205_fresh_vs_static/manifest.json records SHA-256 57eb81f9d16db59f95bd9523bb74bea124b31fcfcdb054e672d8cadef6761fe6 for research/flywheel_selfplay/h205_fresh_vs_static/test_h205.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h205_fresh_vs_static/manifest.json"
+sha256 = "57eb81f9d16db59f95bd9523bb74bea124b31fcfcdb054e672d8cadef6761fe6"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h206_search_distill/test_h206.py"
+reason = "research/flywheel_selfplay/h206_search_distill/manifest.json records SHA-256 b05bfe36bacda31e463b5abd7973e22f7dfd66124d094ad5d6cca63ea138825f for research/flywheel_selfplay/h206_search_distill/test_h206.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h206_search_distill/manifest.json"
+sha256 = "b05bfe36bacda31e463b5abd7973e22f7dfd66124d094ad5d6cca63ea138825f"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h212_pool_width/runner.py"
+reason = "research/flywheel_selfplay/h214_pool_diversity/manifest.json records SHA-256 cf42b33391aee91d6650b72ad46da10ae85ce9ab9b5e1d2758ba44556d91cce6 for research/flywheel_selfplay/h212_pool_width/runner.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h214_pool_diversity/manifest.json"
+sha256 = "cf42b33391aee91d6650b72ad46da10ae85ce9ab9b5e1d2758ba44556d91cce6"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h222_lipschitz_adapter/launcher.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 6d403b2bb9c9e28000ed56f9a4330e04930519a1801dc460df8ea26d09170995 for research/flywheel_selfplay/h222_lipschitz_adapter/launcher.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "6d403b2bb9c9e28000ed56f9a4330e04930519a1801dc460df8ea26d09170995"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h224_learned_switch_gate/monitor.py"
+reason = "research/flywheel_selfplay/h224_learned_switch_gate/manifest.json records SHA-256 3d5062e39aae1c00b619f8096c12fc3b98bbe30a492683f728de01a08811df4a for research/flywheel_selfplay/h224_learned_switch_gate/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h224_learned_switch_gate/manifest.json"
+sha256 = "3d5062e39aae1c00b619f8096c12fc3b98bbe30a492683f728de01a08811df4a"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h225_multistep_regret/monitor.py"
+reason = "research/flywheel_selfplay/h225_multistep_regret/manifest.json records SHA-256 11e13723847533ef7d5ab7824e112d9654a9fea63fe090e1e71e47bc91fcbf34 for research/flywheel_selfplay/h225_multistep_regret/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h225_multistep_regret/manifest.json"
+sha256 = "11e13723847533ef7d5ab7824e112d9654a9fea63fe090e1e71e47bc91fcbf34"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h228_family_invariant/launch.py"
+reason = "research/flywheel_selfplay/h228_family_invariant/manifest.json records SHA-256 144969713280354d6ac2dc95912159a5721e32fc43d66f62c8ea7cbc9b64b306 for research/flywheel_selfplay/h228_family_invariant/launch.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h228_family_invariant/manifest.json"
+sha256 = "144969713280354d6ac2dc95912159a5721e32fc43d66f62c8ea7cbc9b64b306"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h230_coswr_gated025_stack/monitor.py"
+reason = "research/flywheel_selfplay/h230_coswr_gated025_stack/manifest.json records SHA-256 b6f98cb5e54f460cdac0ba6c23db0b9ca55d5d4428a4d60e2073dc80c98d79e3 for research/flywheel_selfplay/h230_coswr_gated025_stack/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h230_coswr_gated025_stack/manifest.json"
+sha256 = "b6f98cb5e54f460cdac0ba6c23db0b9ca55d5d4428a4d60e2073dc80c98d79e3"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py"
+reason = "research/flywheel_selfplay/h231_coswr_gated025_retest/manifest.json records SHA-256 a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546 for research/flywheel_selfplay/h231_coswr_gated025_retest/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h231_coswr_gated025_retest/manifest.json"
+sha256 = "a711a1f1c4a92b580e8bbed5483f5bd99f8e9ff7d046c1fb0630f4d5eca74546"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h236_sfadamw/runner.py"
+reason = "research/flywheel_selfplay/h236_sfadamw/manifest.json records SHA-256 b3a4450ab7f4b56e987066588e0c37ce2e856a0012bbb1234846b059de2bb698 for research/flywheel_selfplay/h236_sfadamw/runner.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h236_sfadamw/manifest.json"
+sha256 = "b3a4450ab7f4b56e987066588e0c37ce2e856a0012bbb1234846b059de2bb698"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h236_sfadamw/treatment.py"
+reason = "research/flywheel_selfplay/h236_sfadamw/manifest.json records SHA-256 ad447c6947c0c1d49224e06f205c439599a17eaaf26a96c5ffd4dce2382b0457 for research/flywheel_selfplay/h236_sfadamw/treatment.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h236_sfadamw/manifest.json"
+sha256 = "ad447c6947c0c1d49224e06f205c439599a17eaaf26a96c5ffd4dce2382b0457"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h238_lowlr/analysis.py"
+reason = "research/flywheel_selfplay/h238_lowlr/manifest.json records SHA-256 aec88c0c6aca2386673ddd56c7c80de9c5ad255495b3330e20d344a01b59e46a for research/flywheel_selfplay/h238_lowlr/analysis.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h238_lowlr/manifest.json"
+sha256 = "aec88c0c6aca2386673ddd56c7c80de9c5ad255495b3330e20d344a01b59e46a"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h238_lowlr/monitor.py"
+reason = "research/flywheel_selfplay/h238_lowlr/manifest.json records SHA-256 3719cd3f3fb1adaba8ee09e16f23888dde4f70bbfb5950ceec060de526549f31 for research/flywheel_selfplay/h238_lowlr/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h238_lowlr/manifest.json"
+sha256 = "3719cd3f3fb1adaba8ee09e16f23888dde4f70bbfb5950ceec060de526549f31"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h238_lowlr/runner.py"
+reason = "research/flywheel_selfplay/h238_lowlr/manifest.json records SHA-256 1984efab61d59fd23d10fee704c6964a2d119666890e510e0b6bb2e5953c97fb for research/flywheel_selfplay/h238_lowlr/runner.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h238_lowlr/manifest.json"
+sha256 = "1984efab61d59fd23d10fee704c6964a2d119666890e510e0b6bb2e5953c97fb"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h238_lowlr/test_h238.py"
+reason = "research/flywheel_selfplay/h238_lowlr/manifest.json records SHA-256 9b6accb70bbf4a5b1ded20754c6964fd6f01a44b445f11f22ae88943670af38a for research/flywheel_selfplay/h238_lowlr/test_h238.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h238_lowlr/manifest.json"
+sha256 = "9b6accb70bbf4a5b1ded20754c6964fd6f01a44b445f11f22ae88943670af38a"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h238_lowlr/treatment.py"
+reason = "research/flywheel_selfplay/h238_lowlr/manifest.json records SHA-256 88aff929e0c5c4401faf61e27cf7332bd72e2f07e7a7d10f1719972eb434ed86 for research/flywheel_selfplay/h238_lowlr/treatment.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h238_lowlr/manifest.json"
+sha256 = "88aff929e0c5c4401faf61e27cf7332bd72e2f07e7a7d10f1719972eb434ed86"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h239_subset/analysis.py"
+reason = "research/flywheel_selfplay/h239_subset/manifest.json records SHA-256 c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc for research/flywheel_selfplay/h239_subset/analysis.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h239_subset/manifest.json"
+sha256 = "c3f39e952238f43bbd6ac94518c6e486afca14942e66d2260c70799a60bb76bc"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h239_subset/monitor.py"
+reason = "research/flywheel_selfplay/h239_subset/manifest.json records SHA-256 5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a for research/flywheel_selfplay/h239_subset/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h239_subset/manifest.json"
+sha256 = "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h239_subset/runner.py"
+reason = "research/flywheel_selfplay/h239_subset/manifest.json records SHA-256 855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b for research/flywheel_selfplay/h239_subset/runner.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h239_subset/manifest.json"
+sha256 = "855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h239_subset/test_h239.py"
+reason = "research/flywheel_selfplay/h239_subset/manifest.json records SHA-256 8c21435fe46c833316f8c554d81467492ec1de27292e4a65cb4a37e497325a32 for research/flywheel_selfplay/h239_subset/test_h239.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h239_subset/manifest.json"
+sha256 = "8c21435fe46c833316f8c554d81467492ec1de27292e4a65cb4a37e497325a32"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h239_subset/treatment.py"
+reason = "research/flywheel_selfplay/h239_subset/manifest.json records SHA-256 97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7 for research/flywheel_selfplay/h239_subset/treatment.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h239_subset/manifest.json"
+sha256 = "97045ebc9673a83c7b58e916862ae7ca4bd06b5508499a19888ae5a8f96ca4b7"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h240_lowlr/analysis.py"
+reason = "research/flywheel_selfplay/h240_lowlr/manifest.json records SHA-256 43f919f4e0b7c8b23e4c33a910245297fa8699d811eebecafb08fda45c791d84 for research/flywheel_selfplay/h240_lowlr/analysis.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h240_lowlr/manifest.json"
+sha256 = "43f919f4e0b7c8b23e4c33a910245297fa8699d811eebecafb08fda45c791d84"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h240_lowlr/launcher.py"
+reason = "research/flywheel_selfplay/h240_lowlr/manifest.json records SHA-256 597c2c6c6cdd9d97259eb180fc7d1c29297becd0d8da95f878992185aa1b3847 for research/flywheel_selfplay/h240_lowlr/launcher.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h240_lowlr/manifest.json"
+sha256 = "597c2c6c6cdd9d97259eb180fc7d1c29297becd0d8da95f878992185aa1b3847"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h240_lowlr/monitor.py"
+reason = "research/flywheel_selfplay/h240_lowlr/manifest.json records SHA-256 2f87d1949540426103d0b6e4e06b2daf7d32f5807dd268e0aaef1b0ae96cfaf5 for research/flywheel_selfplay/h240_lowlr/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h240_lowlr/manifest.json"
+sha256 = "2f87d1949540426103d0b6e4e06b2daf7d32f5807dd268e0aaef1b0ae96cfaf5"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h240_lowlr/runner.py"
+reason = "research/flywheel_selfplay/h240_lowlr/manifest.json records SHA-256 563fed0a78d6a052cbe0d62bf90b910f11b60a3ff2d38086bf19d228fadc0cc9 for research/flywheel_selfplay/h240_lowlr/runner.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h240_lowlr/manifest.json"
+sha256 = "563fed0a78d6a052cbe0d62bf90b910f11b60a3ff2d38086bf19d228fadc0cc9"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h240_lowlr/test_h240.py"
+reason = "research/flywheel_selfplay/h240_lowlr/manifest.json records SHA-256 857db35c63122bcd4df6e96c7febb3c6f497fa6d319843481a603399c5442f54 for research/flywheel_selfplay/h240_lowlr/test_h240.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h240_lowlr/manifest.json"
+sha256 = "857db35c63122bcd4df6e96c7febb3c6f497fa6d319843481a603399c5442f54"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h240_lowlr/treatment.py"
+reason = "research/flywheel_selfplay/h240_lowlr/manifest.json records SHA-256 dd2784138b2a22985c4f620e0430785743c6af255d3a7bb55453c05531c8dfa4 for research/flywheel_selfplay/h240_lowlr/treatment.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h240_lowlr/manifest.json"
+sha256 = "dd2784138b2a22985c4f620e0430785743c6af255d3a7bb55453c05531c8dfa4"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h241_expo/analysis.py"
+reason = "research/flywheel_selfplay/h241_expo/manifest.json records SHA-256 29ce76010c7aeef153934592300709a3ff77b2aef4e28dd0199a8fdf625f19f7 for research/flywheel_selfplay/h241_expo/analysis.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h241_expo/manifest.json"
+sha256 = "29ce76010c7aeef153934592300709a3ff77b2aef4e28dd0199a8fdf625f19f7"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h241_expo/expo.py"
+reason = "research/flywheel_selfplay/h241_expo/manifest.json records SHA-256 bfa2671e8db01af79e03d6a3e8d35e06baa160440cf230962295d7d68942cd27 for research/flywheel_selfplay/h241_expo/expo.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h241_expo/manifest.json"
+sha256 = "bfa2671e8db01af79e03d6a3e8d35e06baa160440cf230962295d7d68942cd27"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h241_expo/monitor.py"
+reason = "research/flywheel_selfplay/h241_expo/manifest.json records SHA-256 b58e86efe3f05bfc2db00c0ae531cc3506e00c60d145379ff961380a972e12a9 for research/flywheel_selfplay/h241_expo/monitor.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h241_expo/manifest.json"
+sha256 = "b58e86efe3f05bfc2db00c0ae531cc3506e00c60d145379ff961380a972e12a9"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h241_expo/runner.py"
+reason = "research/flywheel_selfplay/h241_expo/manifest.json records SHA-256 b0381b21bc2c34759896a084b67b19a5808bf7691cf72311b36a1dcb4fce3127 for research/flywheel_selfplay/h241_expo/runner.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h241_expo/manifest.json"
+sha256 = "b0381b21bc2c34759896a084b67b19a5808bf7691cf72311b36a1dcb4fce3127"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h241_expo/test_h241.py"
+reason = "research/flywheel_selfplay/h241_expo/manifest.json records SHA-256 32d88b635e66d3f9153d5df1cdc0dc5c1c284d78795e470526fb0fe553c46ffc for research/flywheel_selfplay/h241_expo/test_h241.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h241_expo/manifest.json"
+sha256 = "32d88b635e66d3f9153d5df1cdc0dc5c1c284d78795e470526fb0fe553c46ffc"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h55/run_wave.py"
+reason = "docs/research/studies/dope-neural-ranking-20261021/h55/metrics.json records SHA-256 1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238 for research/flywheel_selfplay/h55/run_wave.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "docs/research/studies/dope-neural-ranking-20261021/h55/metrics.json"
+sha256 = "1801e057a744457608b3df7909929bf161262e7954a02214d7212c2210973238"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h61/run_wave.py"
+reason = "research/flywheel_selfplay/h105_shrink_r882/metrics.json records SHA-256 b665589255015d6dcc014ef0b6dd86953d336849914fe5278361bd5d76cda426 for research/flywheel_selfplay/h61/run_wave.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h105_shrink_r882/metrics.json"
+sha256 = "b665589255015d6dcc014ef0b6dd86953d336849914fe5278361bd5d76cda426"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/publish_phase7_addendum_v2.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 d8fa317133216f8d28128f5b02f589f81be53e67c9dbec5d880e7d308efa78cf for research/flywheel_selfplay/publish_phase7_addendum_v2.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "d8fa317133216f8d28128f5b02f589f81be53e67c9dbec5d880e7d308efa78cf"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/publish_phase7_addendum_v3.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 9bc3bf6b182869c7960fbadb7eb8cc1d070c6ef3a97892327138e82bfb777960 for research/flywheel_selfplay/publish_phase7_addendum_v3.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "9bc3bf6b182869c7960fbadb7eb8cc1d070c6ef3a97892327138e82bfb777960"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/publish_phase7_addendum_v4.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 4d54facb7fdc56925be591cd43bd11479afda7e0d1cfb3ed3bfc3af70efb4688 for research/flywheel_selfplay/publish_phase7_addendum_v4.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "4d54facb7fdc56925be591cd43bd11479afda7e0d1cfb3ed3bfc3af70efb4688"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py"
+reason = "research/flywheel_selfplay/h98_w5_provenance/metrics.json records SHA-256 2189499e7c4c087f180f2552cb384657247ac7bc44b586b6d3b1f562775f648f for research/flywheel_selfplay/rd_breakthrough/w5_provenance/verify.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h98_w5_provenance/metrics.json"
+sha256 = "2189499e7c4c087f180f2552cb384657247ac7bc44b586b6d3b1f562775f648f"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/rust_evaluator.py"
+reason = "research/flywheel_selfplay/h204_bigger_proposer/manifest.json records SHA-256 7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45 for research/flywheel_selfplay/rust_evaluator.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/flywheel_selfplay/h204_bigger_proposer/manifest.json"
+sha256 = "7b0cb0ecb98c7836b16a781f632a9fc74683c2ab9facee820790ceebc759cb45"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/s3_persistence.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 3e72363e87806f99774cc195f8623975b2f7df4ead8ad909f237d8bbfb7be86f for research/flywheel_selfplay/s3_persistence.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "3e72363e87806f99774cc195f8623975b2f7df4ead8ad909f237d8bbfb7be86f"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/selfplay_loop.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 e987f9e898a075c0c21fdce92810291af7d8368d8da8dc66ddb5068deba27e5a for research/flywheel_selfplay/selfplay_loop.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "e987f9e898a075c0c21fdce92810291af7d8368d8da8dc66ddb5068deba27e5a"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py"
+reason = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json records SHA-256 2389470aec2e3bb53931af696d7c571d917a242b062bf14e7e6be27bee4bbf0e for research/flywheel_selfplay/verify_flywheel_wider_train_extension_v3.py in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "deploy/dl-flywheel/RESEARCH_SOURCE_CLASSIFICATIONS.json"
+sha256 = "2389470aec2e3bb53931af696d7c571d917a242b062bf14e7e6be27bee4bbf0e"
+
+[[evidence_exclusion]]
+path = "research/mcp-spike/rmcp3/src/main.rs"
+reason = "research/mcp-spike/HANDOFF.json records SHA-256 bd46105ec15c53bcd04fa6a058d0372089b3c789224fce33a0cacb328ee8bc4d for research/mcp-spike/rmcp3/src/main.rs in frozen source or run evidence; any edit invalidates that recorded evidence identity."
+receipt = "research/mcp-spike/HANDOFF.json"
+sha256 = "bd46105ec15c53bcd04fa6a058d0372089b3c789224fce33a0cacb328ee8bc4d"

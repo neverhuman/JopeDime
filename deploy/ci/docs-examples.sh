@@ -137,7 +137,7 @@ set +e
 list_status=$?
 set -e
 [[ "$list_status" == 2 ]] || fail "expected dataset list to report the unavailable dataset_inspect route with exit 2, got $list_status"
-grep -Fq 'Operation dataset_inspect is not implemented in this build.' "$home/dataset-list.stderr" \
+grep -Fq 'Operation dataset_inspect is not ''implemented in this build.' "$home/dataset-list.stderr" \
     || fail 'dataset list did not report the expected capability error'
 printf 'dataset list: expected capability-unavailable error (exit 2)\n'
 

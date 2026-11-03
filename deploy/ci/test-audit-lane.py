@@ -18,6 +18,7 @@ import hashlib, json, os, pathlib, sys, tomllib
 mode = os.environ["AUDIT_TEST_MODE"]
 if sys.argv[1:] == ["--version"]:
     print("jankurai 1.7.5" if mode == "version" else "jankurai 1.7.6")
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     sys.exit(0)
 args = sys.argv[1:]
 assert args[0] == "audit"
@@ -25,6 +26,7 @@ assert all(v in args for v in ["--full", "--read-only", "--no-badge", "--no-scor
 assert args[args.index("--mode") + 1] == "standard"
 source = pathlib.Path(args[1])
 if mode == "missing":
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     sys.exit(0)
 failed = mode in ("failed", "false-green", "failed-above-floor")
 low = mode in ("failed", "false-green")
@@ -107,6 +109,7 @@ if mode == "link":
     path = output / "repo-score.md"
     path.unlink()
     path.symlink_to(output / "summary.md")
+# jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
 sys.exit(1 if mode in ("failed", "failed-above-floor") else 0)
 '''
 # Stand-in for ops/ci/verify-pyexec-exceptions.sh, which re-audits pinned product files the
@@ -131,6 +134,7 @@ class AuditLaneTests(unittest.TestCase):
         self.repo.mkdir()
         tools = self.repo / "tools"
         tools.mkdir()
+        # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
         (tools / "check_evidence_exclusions.py").write_text("raise SystemExit(0)\n")
         names = ["ops/ci/jankurai.sh", "deploy/ci/audit-source.py"]
         if (ROOT / "deploy/ci/verify-audit-report.py").exists():

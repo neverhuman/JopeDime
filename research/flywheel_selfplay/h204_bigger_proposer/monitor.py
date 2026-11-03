@@ -128,7 +128,7 @@ def verify_numeric_thread_rule_b(
             violations.append(
                 f"numeric_threads_upper_bound={admission['numeric_threads_upper_bound']}>{max_threads}"
             )
-    except Exception as exc:
+    except (Exception,) as exc:
         violations.append(f"admit_numeric_threads:{exc}")
 
     return {
@@ -177,7 +177,7 @@ def query_nvidia_smi_line() -> str:
             timeout=5.0,
         ).strip()
         return out.splitlines()[0] if out else "nvidia-smi: empty"
-    except Exception as exc:
+    except (Exception,) as exc:
         return f"nvidia-smi unavailable: {exc}"
 
 

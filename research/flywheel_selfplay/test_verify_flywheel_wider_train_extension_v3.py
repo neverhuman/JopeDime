@@ -562,6 +562,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             self.assertIn("v3b_median_vs_baseline_status", step6)
             self.assertNotIn("comparator_causal_interpretation_guard", step6)
 
+    # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
     def _assert_sigkill_and_worker_exit(self, worker_pid: int, requests: list[dict], states: list[dict]) -> list[dict]:
         worker_requests = [r for r in requests if r["pid"] == worker_pid]
         self.assertEqual({r["api"] for r in worker_requests}, {"killpg", "kill"})
@@ -675,6 +676,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
             # Both requests were recorded, but actual exit is absent: the positive test's
             # evidence validator must reject this broken termination implementation.
             with self.assertRaisesRegex(AssertionError, "worker still alive"):
+                # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
                 self._assert_sigkill_and_worker_exit(processes[0].pid, requests, [{
                     "pid": processes[0].pid,
                     "alive": processes[0].is_alive(),
@@ -940,6 +942,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
         self.assertTrue(worker_pid_file.exists())
         worker_pid = int(worker_pid_file.read_text().strip())
         summary = json.loads(child_summary_file.read_text())
+        # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
         requests = self._assert_sigkill_and_worker_exit(
             worker_pid, summary["signal_requests"], summary["worker_states_at_return"],
         )

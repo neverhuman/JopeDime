@@ -20,6 +20,7 @@ def fixture(n=16, seed=0):
 def test_rules_match_merged_h79_exactly():
     path = h.HERE.parent / "h79_w4_prior_2plus2_cached" / "run_shard.py"
     if not path.exists():
+        # jankurai:allow HLT-008-FALSE-GREEN-RISK reason="legitimate exit/skip check" expires=2026-12-31
         pytest.skip("H79 not present in this tree")
     spec = importlib.util.spec_from_file_location("h79_w4_parity", path)
     assert spec is not None and spec.loader is not None

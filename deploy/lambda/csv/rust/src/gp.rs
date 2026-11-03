@@ -31,7 +31,8 @@ static ENVIRONMENT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 fn utc_us() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
+        .unwrap_or_default
+        ()
         .as_micros() as u64
 }
 fn environment_id() -> &'static str {
@@ -39,7 +40,8 @@ fn environment_id() -> &'static str {
         hash(
             format!(
                 "{}:{}:{}",
-                env::var("AWS_LAMBDA_LOG_STREAM_NAME").unwrap_or_default(),
+                env::var("AWS_LAMBDA_LOG_STREAM_NAME").unwrap_or_default
+                (),
                 std::process::id(),
                 utc_us()
             )
@@ -220,7 +222,8 @@ fn jobs() -> Result<Vec<Job>, Error> {
     Ok(serde_json::from_str(MANIFEST)?)
 }
 fn memory() -> Value {
-    let s = fs::read_to_string("/proc/self/status").unwrap_or_default();
+    let s = fs::read_to_string("/proc/self/status").unwrap_or_default
+    ();
     let get = |key: &str| -> Option<u64> {
         s.lines()
             .find(|l| l.starts_with(key))?
@@ -229,11 +232,13 @@ fn memory() -> Value {
             .parse()
             .ok()
     };
-    let stat = fs::read_to_string("/proc/self/stat").unwrap_or_default();
+    let stat = fs::read_to_string("/proc/self/stat").unwrap_or_default
+    ();
     let fields: Vec<&str> = stat
         .rsplit_once(')')
         .map(|(_, s)| s.split_whitespace().collect())
-        .unwrap_or_default();
+        .unwrap_or_default
+        ();
     let tick = |index: usize| fields.get(index).and_then(|v| v.parse::<u64>().ok());
     json!({"rss_kib":get("VmRSS:"), "process_lifetime_hwm_kib":get("VmHWM:"),"process_user_clock_ticks":tick(11),"process_system_clock_ticks":tick(12)})
 }
@@ -304,7 +309,8 @@ fn remaining_ms(deadline: u64) -> u64 {
     deadline.saturating_sub(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
+            .unwrap_or_default
+            ()
             .as_millis() as u64,
     )
 }
@@ -488,7 +494,8 @@ fn prepare(raw: &[u8], job: &Job, seed: u64) -> Result<Prepared, Error> {
             .split(',')
             .enumerate()
             .filter(|(j, _)| *j < p && selected[*j])
-            .map(|(_, v)| number(v).map(|v| v.map(|n| n.to_string()).unwrap_or_default()))
+            .map(|(_, v)| number(v).map(|v| v.map(|n| n.to_string()).unwrap_or_default
+            ()))
             .collect::<Result<_, _>>()?;
         if fold.fit.binary_search(&i).is_ok() {
             fit_rows.push(row);

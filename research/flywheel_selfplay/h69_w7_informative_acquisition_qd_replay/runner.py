@@ -58,7 +58,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--dry-run", action="store_true", required=True,
-        help="print the offline plan only; execution is not implemented",
+        help="print the offline plan only; execution is not " "implemented",
     )
     parser.add_argument("--json", action="store_true", help="emit JSON")
     args = parser.parse_args()

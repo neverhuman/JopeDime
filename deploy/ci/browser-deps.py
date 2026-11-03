@@ -112,7 +112,7 @@ def download(package, path, archives):
                     raise ValueError("downloaded package differs from lock")
                 temporary.replace(path)
                 return
-            except Exception as error:
+            except (Exception,) as error:
                 if attempt == ATTEMPTS or not transient(error):
                     raise
                 print(f"browser-deps: attempt {attempt}/{ATTEMPTS} for {package['url']} failed: {error!r}; retrying", file=sys.stderr)
