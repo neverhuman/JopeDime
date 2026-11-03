@@ -1,4 +1,5 @@
 use super::*;
+use super::values::sha256_hex;
 
 // Cross-implementation agreement with the reporter, from the files it reads and writes.
 
