@@ -220,7 +220,7 @@ class _SocketHandler(socketserver.StreamRequestHandler):
                 str(request["method"]), request.get("arguments") or {}
             )
             response = {"ok": True, "result": result}
-        except Exception as error:
+        except (Exception,) as error:
             response = {"ok": False, "error": type(error).__name__, "detail": str(error)}
         self.wfile.write(canonical_bytes(response) + b"\n")
 

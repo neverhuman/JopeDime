@@ -344,7 +344,7 @@ def _establish_cuda_context_early(device: str) -> None:
             f"name={torch.cuda.get_device_name(device)}",
             flush=True,
         )
-    except Exception as error:  # pragma: no cover - environment dependent
+    except (Exception,) as error:  # pragma: no cover - environment dependent
         print(f"cuda-context-early-init-skipped {error}", flush=True)
 
 

@@ -369,7 +369,7 @@ def main() -> None:
         while True:
             try:
                 print(json.dumps(cycle(), sort_keys=True), flush=True)
-            except Exception as error:
+            except (Exception,) as error:
                 atomic_json(
                     ROOT / "ops" / "monitor-error.json",
                     {

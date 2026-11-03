@@ -262,7 +262,7 @@ def main() -> None:
         while True:
             try:
                 value = execute_cycle(args.service, args.root)
-            except Exception as error:
+            except (Exception,) as error:
                 value = record_error(args.service, error, args.root)
             print(json.dumps(value, sort_keys=True), flush=True)
             if args.service == "queue":

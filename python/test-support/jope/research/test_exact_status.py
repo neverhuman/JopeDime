@@ -50,7 +50,7 @@ def build_status(root: Path = ROOT) -> dict:
         from test_exact_monitor import trainer_inventory
 
         trainer = trainer_inventory()
-    except Exception as error:
+    except (Exception,) as error:
         trainer = {"error": str(error)}
     learning = pointer(root / "training" / "learning.json")
     milestone = pointer(root / "training" / "milestone.json")

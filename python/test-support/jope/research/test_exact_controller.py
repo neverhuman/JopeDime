@@ -165,7 +165,7 @@ class ActionJournal:
             self.db.commit()
             self._event(key, action, "pending", {"detail": str(error)})
             raise
-        except Exception as error:
+        except (Exception,) as error:
             self.db.execute(
                 "UPDATE actions SET status='failed',updated_at_ms=? WHERE idempotency_key=?",
                 (int(time.time() * 1000), key),
@@ -882,7 +882,7 @@ def _release_abandoned_pair(registry, pair: dict) -> bool:
                 f"gate-scheduler-state-lost:{manifest_sha256}:{job_id}"
             ),
         )
-    except Exception:  # noqa: BLE001 - fail-soft by design, see docstring
+    except (Exception,):  # noqa: BLE001 - fail-soft by design, see docstring
         return False
     return True
 
