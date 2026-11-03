@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 struct Fixture {
     shapes: [Vec<usize>; 7],
     values: [Vec<f32>; 7],
