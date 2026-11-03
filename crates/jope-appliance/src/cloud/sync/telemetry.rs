@@ -38,7 +38,7 @@ fn telemetry_enabled() -> bool {
         .is_some_and(|bytes| bytes == b"basic")
 }
 
-fn telemetry_command(setting: Option<String>) -> Result<String> {
+pub(in crate::cloud) fn telemetry_command(setting: Option<String>) -> Result<String> {
     let path = cloud_root()?.join("telemetry");
     match setting.as_deref() {
         Some("on") => write_private(&path, b"basic")?,
@@ -210,7 +210,7 @@ pub fn sync_events<T: jope_client::Transport>(
 
 /// Record an explicit model publication as an event (and, with telemetry on, its size bucket).
 /// Caller holds the connection lock.
-fn record_publication(
+pub(super) fn record_publication(
     c: &Connection,
     client: &Client,
     run: &str,

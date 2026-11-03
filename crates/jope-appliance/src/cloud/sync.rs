@@ -1,8 +1,8 @@
 use super::*;
 
 pub use telemetry::sync_events;
-pub(crate) use telemetry::{record_publication, telemetry_command};
-pub(crate) use upload::check_upload;
+use telemetry::record_publication;
+pub(super) use telemetry::telemetry_command;
 pub use upload::{publish_file, Upload};
 
 mod telemetry;
