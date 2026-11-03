@@ -82,9 +82,8 @@ pub(crate) fn rust_scalar_library(source: &str) -> Result<String> {
             "    let lo = if a.is_nan() { b } else if b.is_nan() || a < b { a } else { b };\n    let hi = if a.is_nan() { b } else if b.is_nan() || a > b { a } else { b };",
         );
     }
-    // f64 min/max leave zero ties unspecified to the optimizer. These private
-    // expression methods freeze the evaluator's observed right-operand ties.
-    let methods = "\n    trait ScalarExt { fn scalar_min(self,b:f64)->f64; fn scalar_max(self,b:f64)->f64; }\n    impl ScalarExt for f64 {\n        fn scalar_min(self,b:f64)->f64 { if self.is_nan(){b}else if b.is_nan() || self<b{self}else{b} }\n        fn scalar_max(self,b:f64)->f64 { if self.is_nan(){b}else if b.is_nan() || self>b{self}else{b} }\n    }\n";
+    // Keep IEEE signed-zero selection stable through optimized generated code.
+    let methods = "\n    trait ScalarExt { fn scalar_min(self,b:f64)->f64; fn scalar_max(self,b:f64)->f64; }\n    impl ScalarExt for f64 {\n        fn scalar_min(self,b:f64)->f64 { if self.is_nan(){b}else if b.is_nan(){self}else if self==0.0 && b==0.0 { if self.is_sign_negative(){self}else if b.is_sign_negative(){b}else{self} }else if self<b{self}else{b} }\n        fn scalar_max(self,b:f64)->f64 { if self.is_nan(){b}else if b.is_nan(){self}else if self==0.0 && b==0.0 { if !self.is_sign_negative(){self}else if !b.is_sign_negative(){b}else{self} }else if self>b{self}else{b} }\n    }\n";
     library = library.replacen(marker, &format!("{marker}{methods}"), 1);
     library = library
         .lines()
@@ -116,7 +115,10 @@ pub(crate) fn rust_scalar_library(source: &str) -> Result<String> {
 
 // Adapt only these new libraries; the legacy emitters remain byte-identical.
 pub(crate) fn python_scalar_library(source: &str) -> String {
-    let mut library = source.to_owned();
+    let mut library = String::from(
+        "def scalar_min(a, b):\n    if math.isnan(a): return b\n    if math.isnan(b): return a\n    if a == 0.0 and b == 0.0: return -0.0 if math.copysign(1.0, a) < 0.0 or math.copysign(1.0, b) < 0.0 else 0.0\n    return a if a < b else b\n\ndef scalar_max(a, b):\n    if math.isnan(a): return b\n    if math.isnan(b): return a\n    if a == 0.0 and b == 0.0: return 0.0 if math.copysign(1.0, a) > 0.0 or math.copysign(1.0, b) > 0.0 else -0.0\n    return a if a > b else b\n\n",
+    );
+    library.push_str(source);
     for name in ["_row_sum", "_row_mean"] {
         let start = format!("def {name}(row):");
         if let Some((before, body)) = library.split_once(&start) {
@@ -127,6 +129,19 @@ pub(crate) fn python_scalar_library(source: &str) -> String {
         }
     }
     library
+        .lines()
+        .map(|line| {
+            if line.starts_with("    value = ") {
+                line.replace("min(", "scalar_min(")
+                    .replace("row_scalar_min(", "row_min(")
+                    .replace("max(", "scalar_max(")
+                    .replace("row_scalar_max(", "row_max(")
+            } else {
+                line.to_owned()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
         .replace(
             "return float(math.floor(v))",
             "return math.copysign(float(math.floor(v)), v) if v == 0.0 else float(math.floor(v))",
@@ -138,7 +153,7 @@ pub(crate) fn python_scalar_library(source: &str) -> String {
 }
 
 pub(crate) fn cpp_scalar_library(source: &str) -> String {
-    let helpers = "\nstatic double scalar_min(double a,double b){if(std::isnan(a))return b;if(std::isnan(b))return a;return a<b?a:b;}\nstatic double scalar_max(double a,double b){if(std::isnan(a))return b;if(std::isnan(b))return a;return a>b?a:b;}\n";
+    let helpers = "\nstatic double scalar_min(double a,double b){if(std::isnan(a))return b;if(std::isnan(b))return a;if(a==0.0&&b==0.0)return std::signbit(a)?a:(std::signbit(b)?b:a);return a<b?a:b;}\nstatic double scalar_max(double a,double b){if(std::isnan(a))return b;if(std::isnan(b))return a;if(a==0.0&&b==0.0)return !std::signbit(a)?a:(!std::signbit(b)?b:a);return a>b?a:b;}\n";
     source
         .replacen("using V =", &format!("{helpers}\nusing V ="), 1)
         .replace("std::fmin(", "scalar_min(")
