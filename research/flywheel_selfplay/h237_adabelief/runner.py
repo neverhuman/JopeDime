@@ -275,11 +275,11 @@ def main():
     torch.set_num_interop_threads(1)
     torch.use_deterministic_algorithms(True)
     if (
-        os.uname().nodename.split(".")[0] != "xbabe1"
+        os.uname().nodename.split(".")[0] != "xbabe2"
         or os.getpriority(os.PRIO_PROCESS, 0) != 19
         or torch.cuda.is_initialized()
     ):
-        raise RuntimeError("CPU xbabe1 nice19 required")
+        raise RuntimeError("CPU xbabe2 nice19 required")
     out = args.output.resolve()
     out.mkdir()  # Exclusive; never reuse completed/partial study outputs.
     pins = json.loads((HERE / "manifest.json").read_text())

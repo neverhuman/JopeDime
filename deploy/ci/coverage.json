@@ -6303,7 +6303,7 @@
         "research"
       ],
       "lanes": [],
-      "scope": "H237 data-free controls: identical lr/betas/decoupled wd for every arm (schedules.json), optimizer classes (AdamW CONTROL, inline AdaBelief ABEL with eps 1e-16, torch RAdam with decoupled wd), AdaBelief equal to the Zhuang et al. 2020 reference update over 30 steps with None-gradient skipping, larger-than-Adam steps on consistent gradients, every arm moves parameters with the inherited CTRL loss, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe1 monitor (hard: MemAvailable 12 GiB, RSS 4 GiB, free 150 GB, 4 threads, 06:30Z; pause: load5 60/55 and MemAvailable 20/22 GiB hysteresis), launch binding, research-namespace release"
+      "scope": "H237 data-free controls: identical lr/betas/decoupled wd for every arm (schedules.json), optimizer classes (AdamW CONTROL, inline AdaBelief ABEL with eps 1e-16, torch RAdam with decoupled wd), AdaBelief equal to the Zhuang et al. 2020 reference update over 30 steps with None-gradient skipping, larger-than-Adam steps on consistent gradients, every arm moves parameters with the inherited CTRL loss, fresh per-seed family folds and fit-only batch plan, strict inner selector, median family bootstrap with Holm m=2 and the +0.002 advance margin, canonical Elo, pseudoreplication disclosure, xbabe2 monitor per amendment A1 (hard: MemAvailable 12 GiB, RSS 4 GiB, free 300 GB, 4 threads, 06:30Z; pause: load5 108/100 and MemAvailable 20/22 GiB hysteresis), launch binding, research-namespace release"
     },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {

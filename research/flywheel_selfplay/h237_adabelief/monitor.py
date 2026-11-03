@@ -1,14 +1,16 @@
 """H237 terminal CPU guard (merged H234/H232 monitor; adapted from H170): supervisor plus worker tree, one exclusive
 scientific attempt.
 
-hw_t0030 resources, xbabe1 only, nice 19, launched under `taskset` on 4 cores, one math thread. No other process is
+hw_t0030 resources with host amendment A1 (hw_t0036): xbabe2 only, nice 19, launched under `taskset` on 4 cores
+(48-51), one math thread. No other process is
 ever signalled:
-- Host load and host memory PAUSE the worker, never stop it: SIGSTOP to the worker's own process group when load5 > 60
-  or MemAvailable < 20 GiB; SIGCONT once load5 <= 55 AND MemAvailable >= 22 GiB (hysteresis). This replaces H234's hard
+- Host load and host memory PAUSE the worker, never stop it: SIGSTOP to the worker's own process group when
+  load5 > 108 (85% of 128 cores, A1) or MemAvailable < 20 GiB; SIGCONT once load5 <= 100 AND MemAvailable >= 22 GiB
+  (hysteresis). This replaces H234's hard
   20 GiB stop, which ended H234 at 19.92 GiB.
-- Hard stops: MemAvailable < 12 GiB, process-tree RSS >= 4 GiB, disk free < 150 GB, more than 4 tree threads, and the
+- Hard stops: MemAvailable < 12 GiB, process-tree RSS >= 4 GiB, disk free < 300 GB, more than 4 tree threads, and the
   absolute compute stop 2026-11-03T06:30:00Z (a paused worker is continued so it receives SIGTERM).
-- Admission (before any claim): load5 <= 55, MemAvailable >= 22 GiB and every hard limit satisfied. Single attempt,
+- Admission (before any claim): load5 <= 100, MemAvailable >= 22 GiB and every hard limit satisfied. Single attempt,
   no retries."""
 
 import argparse
@@ -24,17 +26,17 @@ import time
 import psutil
 
 HERE = Path(__file__).resolve().parent
-HOST = "xbabe1"
-LOAD5_PAUSE, LOAD5_RESUME = 60.0, 55.0
+HOST = "xbabe2"  # amendment A1 (hw_t0036): xbabe1 MemAvailable 16-17 GiB < gate
+LOAD5_PAUSE, LOAD5_RESUME = 108.0, 100.0  # A1: 85% of 128 cores, as H233/H236
 MEM_PAUSE, MEM_RESUME = 20 * 2**30, 22 * 2**30
 MEM_HARD = 12 * 2**30
 RSS_MAX = 4 * 2**30
-FREE_MIN = 150_000_000_000
+FREE_MIN = 300_000_000_000
 THREADS_MAX = 4
 COMPUTE_STOP = 1793687400.0  # 2026-11-03T06:30:00Z (hw_t0030)
 CLAIMS = Path(
     "/home/ubuntu/jope-data/h237"
-)  # the attempt claim lives on the run host (xbabe1)
+)  # the attempt claim lives on the run host (xbabe2)
 
 
 def violations(sample):
@@ -44,7 +46,7 @@ def violations(sample):
         for bad, reason in [
             (sample["available"] < MEM_HARD, "MemAvailable<12GiB"),
             (sample["rss"] >= RSS_MAX, "aggregate RSS>=4GiB"),
-            (sample["free"] < FREE_MIN, "disk free<150GB"),
+            (sample["free"] < FREE_MIN, "disk free<300GB"),
             (sample["threads"] > THREADS_MAX, "aggregate threads>4"),
             (sample["utc"] >= COMPUTE_STOP, "compute stop 2026-11-03T06:30:00Z"),
         ]
@@ -53,7 +55,7 @@ def violations(sample):
 
 
 def paused(sample, now_paused):
-    """Hysteresis: pause on load5 > 60 or MemAvailable < 20 GiB; once paused, stay paused until load5 <= 55 and
+    """Hysteresis: pause on load5 > 108 or MemAvailable < 20 GiB; once paused, stay paused until load5 <= 100 and
     MemAvailable >= 22 GiB."""
     if now_paused:
         return sample["load5"] > LOAD5_RESUME or sample["available"] < MEM_RESUME
@@ -64,7 +66,7 @@ def admission_refusals(sample):
     return violations(sample) + [
         reason
         for bad, reason in [
-            (sample["load5"] > LOAD5_RESUME, "admission: load5>55"),
+            (sample["load5"] > LOAD5_RESUME, "admission: load5>100"),
             (sample["available"] < MEM_RESUME, "admission: MemAvailable<22GiB"),
         ]
         if bad
@@ -112,7 +114,7 @@ def main():
         or os.getpriority(os.PRIO_PROCESS, 0) != 19
         or len(os.sched_getaffinity(0)) > 4
     ):
-        raise RuntimeError("CPU xbabe1, nice 19, taskset <= 4 cores only")
+        raise RuntimeError("CPU xbabe2, nice 19, taskset <= 4 cores only")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     resources = args.output.with_suffix(".resources.jsonl")
     if resources.exists() or args.output.exists():

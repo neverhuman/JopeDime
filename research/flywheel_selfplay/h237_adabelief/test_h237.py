@@ -250,7 +250,7 @@ def test_hard_resource_boundaries_and_load_and_memory_are_pauses():
         load5=500.0,
         cpu=100.0,
         available=12 * 2**30,
-        free=150_000_000_000,
+        free=300_000_000_000,
         rss=4 * 2**30 - 1,
         threads=4,
         utc=mon.COMPUTE_STOP - 1,
@@ -260,7 +260,7 @@ def test_hard_resource_boundaries_and_load_and_memory_are_pauses():
     )  # load and memory above the 12 GiB floor never stop the attempt
     for key, val in dict(
         available=12 * 2**30 - 1,
-        free=149_999_999_999,
+        free=299_999_999_999,
         rss=4 * 2**30,
         threads=5,
         utc=mon.COMPUTE_STOP,
@@ -269,18 +269,21 @@ def test_hard_resource_boundaries_and_load_and_memory_are_pauses():
     assert mon.COMPUTE_STOP == 1793687400.0  # 2026-11-03T06:30:00Z
     ok = dict(load5=10.0, available=30 * 2**30)
     assert not mon.paused(ok, False)
-    assert mon.paused(dict(ok, load5=60.1), False) and not mon.paused(
-        dict(ok, load5=60.0), False
-    )
+    assert mon.HOST == "xbabe2" and (mon.LOAD5_PAUSE, mon.LOAD5_RESUME) == (
+        108.0,
+        100.0,
+    )  # A1
+    assert mon.paused(dict(ok, load5=108.1), False)
+    assert not mon.paused(dict(ok, load5=108.0), False)
     assert mon.paused(dict(ok, available=20 * 2**30 - 1), False)
     assert not mon.paused(dict(ok, available=20 * 2**30), False)
-    # once paused: resume only when load5 <= 55 AND MemAvailable >= 22 GiB
+    # once paused: resume only when load5 <= 100 AND MemAvailable >= 22 GiB
     assert mon.paused(dict(ok, available=21 * 2**30), True)
-    assert mon.paused(dict(ok, load5=58.0), True)
-    assert not mon.paused(dict(ok, load5=55.0, available=22 * 2**30), True)
-    adm = dict(good, load5=55.0, available=22 * 2**30)
+    assert mon.paused(dict(ok, load5=104.0), True)
+    assert not mon.paused(dict(ok, load5=100.0, available=22 * 2**30), True)
+    adm = dict(good, load5=100.0, available=22 * 2**30)
     assert mon.admission_refusals(adm) == []
-    assert mon.admission_refusals(dict(adm, load5=55.1)) == ["admission: load5>55"]
+    assert mon.admission_refusals(dict(adm, load5=100.1)) == ["admission: load5>100"]
     assert mon.admission_refusals(dict(adm, available=22 * 2**30 - 1)) == [
         "admission: MemAvailable<22GiB"
     ]

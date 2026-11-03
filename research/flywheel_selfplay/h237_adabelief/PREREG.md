@@ -1,4 +1,4 @@
-# H237 — AdaBelief (and RAdam) for the r882 adapter continuation, xbabe1 CPU
+# H237 — AdaBelief (and RAdam) for the r882 adapter continuation, xbabe2 CPU (amendment A1)
 
 **Owner:** rd_opus [OPUS]. **Assignment:** `~/nudges/hw_t0030_opus_h237_adabelief.md` (watcher, 2026-11-03 00:30Z).
 **Claim:** `~/jope_plan/ns/receipts/H237_claim.txt`, taken under `Hwave-admission.lock`. This is a diagnostic only. It
@@ -82,14 +82,15 @@ than +0.002?
 - **Never read.** Sealed, holdout or meta-test data, and the live loop.
 - **Checkpoint.** A read-only r882 copy at `~/jope-data/h237/inputs/round-882.pt` (`0084479a…`).
 - **Frozen state.** DOPE and every non-adapter byte are checked after every update.
-- **Host.** xbabe1 CPU, `taskset` cores 44–47, nice 19, one math thread. No GPU and no qualification lock. Never
-  xbabe0 or xbabe3.
+- **Host (amendment A1).** xbabe2 CPU, `taskset` cores **48–51**, nice 19, one math thread. These avoid H231 (2, 22,
+  67, 104), H233 (0–3) and H236 (40–43). No GPU and no qualification lock. Never xbabe0 or xbabe3. The assignment
+  first named xbabe1; see Deviations.
 - **Memory guard (changed from H234, which a hard 20 GiB stop ended at 19.92 GiB).** MemAvailable < 20 GiB now
-  **pauses** the worker's own process group (SIGSTOP), and it resumes once MemAvailable ≥ 22 GiB and load5 ≤ 55.
-  Load5 > 60 also pauses.
-- **Hard stops** (own process group only): MemAvailable < **12** GiB, RSS ≥ 4 GiB, disk free < 150 GB, more than 4
+  **pauses** the worker's own process group (SIGSTOP), and it resumes once MemAvailable ≥ 22 GiB and load5 ≤ 100.
+  Load5 > 108 (85% of xbabe2's 128 cores, as H233 and H236) also pauses.
+- **Hard stops** (own process group only): MemAvailable < **12** GiB, RSS ≥ 4 GiB, disk free < 300 GB, more than 4
   threads, and the compute stop at **2026-11-03T06:30:00Z**.
-- **Admission.** load5 ≤ 55 and MemAvailable ≥ 22 GiB.
+- **Admission.** load5 ≤ 100 and MemAvailable ≥ 22 GiB.
 - **Order.**
   1. Prereg merged by 01:45Z.
   2. Constructor smoke: 0 updates.
@@ -104,3 +105,21 @@ than +0.002?
 The run root and logs go create-only to
 `s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H237/<run_id>/`, with a manifest. No large
 objects go into git.
+
+## Deviations
+
+### Amendment A1 (pre-outcome, host only): xbabe1 → xbabe2
+
+- **When and who.** Recorded 2026-11-03T00:35:55Z by the H-wave owner (rd_opus) under `~/nudges/hw_t0036_opus_h237_a1_host.md`
+  (sha256 `2d2cb87a42bf11b23d9bd92b50173c94ead33359343086c6a6c0ed93a935d21d`). This was before this prereg merged and
+  before any claim, read, smoke or fit; the xbabe1 pre-merge smoke was refused at admission and never ran.
+- **Why.** xbabe1 MemAvailable was 16–17 GiB (swap full, flywheel writer live), below the 22 GiB admission gate.
+  xbabe2 had about 70 GiB.
+- **Change.**
+  - The host becomes xbabe2, with `taskset` cores 48–51.
+  - The load pause becomes load5 > 108, resuming at ≤ 100: 85% of 128 cores, the same rule as H233 and H236.
+  - The disk floor becomes free ≥ 300 GB.
+  - Inputs are re-pinned to a hash-identical r882 copy at `~/jope-data/h237/inputs` on xbabe2.
+  - The memory pause and stop (20/22/12 GiB), RSS, threads and the 06:30Z compute stop are unchanged.
+- **Unchanged.** Science, seeds, folds, arms, optimizers, the selector and the decision rules.
+- **Cleanup.** The xbabe1 gate unit was stopped and the xbabe1 run lane removed.

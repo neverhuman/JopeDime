@@ -80,17 +80,17 @@
     "research/flywheel_selfplay/h234_lambdaloss/monitor.py": "62947186e8e120eac841343ef0e05234a934b84eee90279306566f18d3a7ce5a"
   },
   "source_sha256": {
-    "test_h237.py": "67899ddebd9115c255cb1b5638ac1cdebde6fcdb3ad7c145f6e0d2a2627a5d4c",
+    "test_h237.py": "810dbc2085fb5edc5885233611bced3f6976660fd6000af69b53d228fabc5c86",
     "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
     "schedules.json": "460cae2c7e9c48eb2d5a16bd0e11700360aa10d058397eb3a700abbbe63dad65",
     "analysis.py": "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909",
     "treatment.py": "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226",
-    "PREREG.md": "8ff3c2b03ef2fe4c7deb20bbd438369cfd5245858788e676956c0e4400c38746",
-    "monitor.py": "7887533e37c83b0030c3949469627ca470ba1e907cf1bd602e78b3ec0733c30a",
+    "PREREG.md": "441c11240950d47b67b7f83a1d3204c35018adbe48ad6114cfb155a875f10b11",
+    "monitor.py": "953812050cfc84872a58dc22f6560558795161922493081ba85e9e713f9419c3",
     "fold_manifest.json": "910f2affd125f3e7b7a521058b104512037d68bac819421a86fea4c5df71f524",
-    "runner.py": "d8b5b1fe9bf3b89e049096acdbc467e29331aba6b6c588a109a83ed2b8b9b877"
+    "runner.py": "7a6b25ada4427c5835734df49b979d1fe620c4da73ada3980870579059323d31"
   },
-  "host": "xbabe1 CPU (taskset cores 44-47, nice 19, 1 math thread)",
+  "host": "xbabe2 CPU (taskset cores 48-51, nice 19, 1 math thread; amendment A1 hw_t0036)",
   "compute_stop": "2026-11-03T06:30:00Z",
   "fold_seeds": {
     "237101": 237141,

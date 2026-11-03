@@ -1,4 +1,4 @@
-# H237 — AdaBelief (and RAdam) for the r882 adapter continuation, xbabe1 CPU
+# H237 — AdaBelief (and RAdam) for the r882 adapter continuation, xbabe2 CPU (A1)
 
 **Status: preregistered; not yet run.** It runs only after this prereg merges. See [PREREG.md](PREREG.md).
 
@@ -15,10 +15,11 @@
 - **Decision.** ADVANCE per arm iff, on DL-Val91, the median seed gain against r882 is > +0.002, the family LCB95 is
   > 0 and Holm p < 0.05. Beating CONTROL alone is descriptive. Elo is reported against r882 and CONTROL, and each arm
   is also compared with the plateau best 1.1389572 (r3175).
-- **Host.** xbabe1 CPU, taskset cores 44–47, nice 19.
-- **Pauses** (own process group only). Load5 > 60 or MemAvailable < 20 GiB pauses the worker; it resumes at
-  load5 ≤ 55 and MemAvailable ≥ 22 GiB.
-- **Hard stops.** MemAvailable < 12 GiB, RSS ≥ 4 GiB, free disk < 150 GB, or the compute stop at 06:30Z. Single
+- **Host (amendment A1, hw_t0036).** xbabe2 CPU, taskset cores 48–51, nice 19. It moved from xbabe1 because xbabe1
+  MemAvailable (16–17 GiB) was below the 22 GiB gate.
+- **Pauses** (own process group only). Load5 > 108 or MemAvailable < 20 GiB pauses the worker; it resumes at
+  load5 ≤ 100 and MemAvailable ≥ 22 GiB.
+- **Hard stops.** MemAvailable < 12 GiB, RSS ≥ 4 GiB, free disk < 300 GB, or the compute stop at 06:30Z. Single
   attempt.
 - **Code.** [runner.py](runner.py), [treatment.py](treatment.py) (AdaBelief, RAdam), [analysis.py](analysis.py),
   [monitor.py](monitor.py) and [test_h237.py](test_h237.py) (15 data-free tests).
