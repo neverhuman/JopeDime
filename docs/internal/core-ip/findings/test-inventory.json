@@ -429,6 +429,10 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
+        "reason": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification.",
+        "role": "research"
+      },
     "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
       "reason": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification.",
       "role": "research"
@@ -463,6 +467,10 @@
     },
     "python:research/flywheel_selfplay/h242_laser/test_h242.py": {
       "reason": "Owner-requested H242 data-free controls for zero-update LASER-style spectral rank reduction of the r882 adapter (energy rank rule, truncation and placebo, frozen spectral census, strict selector, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h243_modsoup/test_h243.py": {
+      "reason": "Owner-requested H243 data-free controls for the zero-update module-wise r882/r782 soup (frozen module groups, group soups and matched placebo, strict selector, Wortsman greedy soup, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, H239 A1 memory guard, manifest pins).",
       "role": "research"
     },
     "python:benchmarks/test_prepare.py": {
