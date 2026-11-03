@@ -1,14 +1,2266 @@
 {
+  "schema": "jope.h240.compact-metrics/v1",
   "wave": "H240",
-  "status": "PREREGISTERED",
-  "verdict": null,
-  "primary_verdict": null,
-  "optimizer_updates": 0,
-  "complete_cells": 0,
-  "scientific_execution": "NOT_STARTED",
-  "dope_before": null,
-  "dope_after": null,
-  "primary_dlval": null,
-  "secondary_oof": null,
-  "source_commit": null
+  "status": "COMPLETE",
+  "verdict": "NO_ADVANCE",
+  "primary_verdict": "NO_ADVANCE",
+  "optimizer_updates": 3000,
+  "complete_cells": 15,
+  "known_complete_cell_trace_updates": 3000,
+  "source_commit": "d3807eefad1d115809a3c5fd20b84ec2cab5de9b",
+  "execution_source_commit": "d3807eefad1d115809a3c5fd20b84ec2cab5de9b",
+  "prereg_pr": 2083,
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "baseline_mean": 1.1377941898164525,
+  "eval_forward_bit_exact": true,
+  "primary_dlval": {
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "LR3E5_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR3E5_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "LR1E5_120_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR1E5_120_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ],
+      [
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245,
+        1.153615276991245
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ],
+      [
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525,
+        1.1377941898164525
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "secondary_oof": {
+    "contexts": 1219,
+    "families": 205,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "LR3E5_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR3E5_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      },
+      "LR1E5_120_minus_r882": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR1E5_120_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "median_gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 1.0
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ],
+      [
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834,
+        1.3853554329931834
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ],
+      [
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298,
+        1.423073434552298
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0,
+        1500.0,
+        1500.0
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1500.0,
+      1500.0
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1500.0,
+        1500.0
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "trainable_parameters": 29211,
+  "smoke_optimizer_updates": 3,
+  "resume_number": 0,
+  "campaign_attempts": [
+    {
+      "launch": {
+        "source_commit": "d3807eefad1d115809a3c5fd20b84ec2cab5de9b",
+        "manifest_sha256": "316aac1693f34c5d14070a88e6d5ea3aa0200d7b7d3b04dcfd3996c3045f268b",
+        "prereg_sha256": "045d2f15bebd234c615fc39b3cac022014da93adf072bbdc7d5b2ccd961cc216",
+        "fold_manifest_sha256": "eb64d36ca65fc0ca650a9ee33a4c9a290202f9c6d2a96e3c9c5bd45404e66ef3",
+        "review_id": 5746849684,
+        "prereg_pr": 2083,
+        "merged_source_verified": true,
+        "authority": "/home/ubuntu/nudges/hw_t0300_res08_h240_lowlr_rerun.md",
+        "execution_capsule": "/home/ubuntu/jope_plan/evidence/H240/res08-t0300/exec-d3807eefad1d",
+        "output": "/home/ubuntu/jope-data/h240/attempt-001",
+        "launch_file": "/home/ubuntu/jope-data/h240/attempt-001.launch.json",
+        "dope_expected": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+        "deadline": "2026-11-03T07:30:00Z",
+        "planned_primary_updates": 3000,
+        "arm_updates": {
+          "CONTROL": 40,
+          "LR3E5": 40,
+          "LR1E5_120": 120
+        },
+        "resume_number": 0,
+        "max_resumes": 2
+      },
+      "resource": {
+        "status": "PASS",
+        "exit_code": 0,
+        "reasons": [],
+        "final_sample": {
+          "utc": 1793679281.6721888,
+          "load5": 46.9501953125,
+          "available": 81406500864,
+          "free": 761947353088,
+          "rss": 16543744,
+          "threads": 2,
+          "affinity": [
+            40,
+            41,
+            42,
+            43
+          ],
+          "elapsed": 2709.2787009739986,
+          "pause_requested": false
+        },
+        "admission": {
+          "utc": 1793676572.3930857,
+          "load5": 89.541015625,
+          "available": 79528591360,
+          "free": 784581853184,
+          "rss": 16031744,
+          "threads": 1,
+          "affinity": [
+            40,
+            41,
+            42,
+            43
+          ]
+        },
+        "elapsed_seconds": 2709.779080264001,
+        "peak": {
+          "rss": 3392389120,
+          "threads": 3
+        },
+        "transitions": [],
+        "pause_requested_seconds": 0.0,
+        "compute_stop": 1793691000.0,
+        "resume_number": 0
+      },
+      "complete_cells": 15
+    }
+  ],
+  "physical_primary_updates": 3000,
+  "physical_new_optimizer_updates": 3000,
+  "recovered_cells": 0,
+  "arm_updates": {
+    "CONTROL": 40,
+    "LR3E5": 40,
+    "LR1E5_120": 120
+  },
+  "candidate_steps": {
+    "CONTROL": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "LR3E5": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "LR1E5_120": [
+      0,
+      30,
+      60,
+      90,
+      120
+    ]
+  },
+  "terminal_drift": {
+    "CONTROL": {
+      "step": 40,
+      "per_cell": [
+        0.363464930340499,
+        0.37297450431459633,
+        0.3803926512313921,
+        0.3693810760273841,
+        0.38065449511285687,
+        0.3897499192207863,
+        0.3791177836460413,
+        0.3830109629504459,
+        0.36033654253097214,
+        0.3919259083405706,
+        0.37672552319798164,
+        0.38835840038498326,
+        0.38781731385660373,
+        0.3852533628649257,
+        0.38000897799037336
+      ],
+      "median": 0.3803926512313921,
+      "min": 0.36033654253097214,
+      "max": 0.3919259083405706
+    },
+    "LR3E5": {
+      "step": 40,
+      "per_cell": [
+        0.10626279604874597,
+        0.10950773360475756,
+        0.11178761034707532,
+        0.10953024135837597,
+        0.11199621358718002,
+        0.11428230784677545,
+        0.11172915849667671,
+        0.11236139660207603,
+        0.10554773060504329,
+        0.11506628237051182,
+        0.1104889172810338,
+        0.11424839919284496,
+        0.1132163145735126,
+        0.11313459514841909,
+        0.1119819789174795
+      ],
+      "median": 0.1119819789174795,
+      "min": 0.10554773060504329,
+      "max": 0.11506628237051182
+    },
+    "LR1E5_120": {
+      "step": 120,
+      "per_cell": [
+        0.10813195638630069,
+        0.10666797217304301,
+        0.10944317276265249,
+        0.10732934089373825,
+        0.11158623010875189,
+        0.10663696419591712,
+        0.10507311777741889,
+        0.11011097534107588,
+        0.1057548043456982,
+        0.10659597818787217,
+        0.10826659371806426,
+        0.10847707503205924,
+        0.10612858070273908,
+        0.10881037756346931,
+        0.10717516660021251
+      ],
+      "median": 0.10732934089373825,
+      "min": 0.10507311777741889,
+      "max": 0.11158623010875189
+    }
+  },
+  "pseudoreplication": {
+    "strict_OOF_identical": [
+      [
+        "seed240101:r882",
+        "seed240101:CONTROL",
+        "seed240101:LR3E5",
+        "seed240101:LR1E5_120",
+        "seed240102:r882",
+        "seed240102:CONTROL",
+        "seed240102:LR3E5",
+        "seed240102:LR1E5_120",
+        "seed240103:r882",
+        "seed240103:CONTROL",
+        "seed240103:LR3E5",
+        "seed240103:LR1E5_120"
+      ]
+    ],
+    "strict_DLVal_identical": [
+      [
+        "seed240101:r882",
+        "seed240101:CONTROL",
+        "seed240101:LR3E5",
+        "seed240101:LR1E5_120",
+        "seed240102:r882",
+        "seed240102:CONTROL",
+        "seed240102:LR3E5",
+        "seed240102:LR1E5_120",
+        "seed240103:r882",
+        "seed240103:CONTROL",
+        "seed240103:LR3E5",
+        "seed240103:LR1E5_120"
+      ]
+    ],
+    "unconstrained_OOF_identical": [
+      [
+        "seed240101:r882",
+        "seed240102:r882",
+        "seed240103:r882"
+      ]
+    ],
+    "unconstrained_DLVal_identical": [
+      [
+        "seed240101:r882",
+        "seed240102:r882",
+        "seed240103:r882"
+      ]
+    ],
+    "terminal_adapter_identical": [],
+    "selected_adapter_identical": [
+      [
+        "A0:seed240101:CONTROL",
+        "A0:seed240101:LR3E5",
+        "A0:seed240101:LR1E5_120",
+        "A0:seed240102:CONTROL",
+        "A0:seed240102:LR3E5",
+        "A0:seed240102:LR1E5_120",
+        "A0:seed240103:CONTROL",
+        "A0:seed240103:LR3E5",
+        "A0:seed240103:LR1E5_120",
+        "A1:seed240101:CONTROL",
+        "A1:seed240101:LR3E5",
+        "A1:seed240101:LR1E5_120",
+        "A1:seed240102:CONTROL",
+        "A1:seed240102:LR3E5",
+        "A1:seed240102:LR1E5_120",
+        "A1:seed240103:CONTROL",
+        "A1:seed240103:LR3E5",
+        "A1:seed240103:LR1E5_120",
+        "A2:seed240101:CONTROL",
+        "A2:seed240101:LR3E5",
+        "A2:seed240101:LR1E5_120",
+        "A2:seed240102:CONTROL",
+        "A2:seed240102:LR3E5",
+        "A2:seed240102:LR1E5_120",
+        "A2:seed240103:CONTROL",
+        "A2:seed240103:LR3E5",
+        "A2:seed240103:LR1E5_120",
+        "A3:seed240101:CONTROL",
+        "A3:seed240101:LR3E5",
+        "A3:seed240101:LR1E5_120",
+        "A3:seed240102:CONTROL",
+        "A3:seed240102:LR3E5",
+        "A3:seed240102:LR1E5_120",
+        "A3:seed240103:CONTROL",
+        "A3:seed240103:LR3E5",
+        "A3:seed240103:LR1E5_120",
+        "A4:seed240101:CONTROL",
+        "A4:seed240101:LR3E5",
+        "A4:seed240101:LR1E5_120",
+        "A4:seed240102:CONTROL",
+        "A4:seed240102:LR3E5",
+        "A4:seed240102:LR1E5_120",
+        "A4:seed240103:CONTROL",
+        "A4:seed240103:LR3E5",
+        "A4:seed240103:LR1E5_120"
+      ]
+    ],
+    "selector_snapshot_identical": [
+      {
+        "outer": 0,
+        "candidate_index": 1,
+        "step_by_arm": {
+          "CONTROL": 10,
+          "LR3E5": 10,
+          "LR1E5_120": 30
+        },
+        "groups": []
+      },
+      {
+        "outer": 0,
+        "candidate_index": 2,
+        "step_by_arm": {
+          "CONTROL": 20,
+          "LR3E5": 20,
+          "LR1E5_120": 60
+        },
+        "groups": []
+      },
+      {
+        "outer": 0,
+        "candidate_index": 3,
+        "step_by_arm": {
+          "CONTROL": 30,
+          "LR3E5": 30,
+          "LR1E5_120": 90
+        },
+        "groups": []
+      },
+      {
+        "outer": 0,
+        "candidate_index": 4,
+        "step_by_arm": {
+          "CONTROL": 40,
+          "LR3E5": 40,
+          "LR1E5_120": 120
+        },
+        "groups": []
+      },
+      {
+        "outer": 1,
+        "candidate_index": 1,
+        "step_by_arm": {
+          "CONTROL": 10,
+          "LR3E5": 10,
+          "LR1E5_120": 30
+        },
+        "groups": []
+      },
+      {
+        "outer": 1,
+        "candidate_index": 2,
+        "step_by_arm": {
+          "CONTROL": 20,
+          "LR3E5": 20,
+          "LR1E5_120": 60
+        },
+        "groups": []
+      },
+      {
+        "outer": 1,
+        "candidate_index": 3,
+        "step_by_arm": {
+          "CONTROL": 30,
+          "LR3E5": 30,
+          "LR1E5_120": 90
+        },
+        "groups": [
+          [
+            "seed240102:LR3E5",
+            "seed240102:LR1E5_120"
+          ],
+          [
+            "seed240103:LR3E5",
+            "seed240103:LR1E5_120"
+          ]
+        ]
+      },
+      {
+        "outer": 1,
+        "candidate_index": 4,
+        "step_by_arm": {
+          "CONTROL": 40,
+          "LR3E5": 40,
+          "LR1E5_120": 120
+        },
+        "groups": []
+      },
+      {
+        "outer": 2,
+        "candidate_index": 1,
+        "step_by_arm": {
+          "CONTROL": 10,
+          "LR3E5": 10,
+          "LR1E5_120": 30
+        },
+        "groups": [
+          [
+            "seed240103:LR3E5",
+            "seed240103:LR1E5_120"
+          ]
+        ]
+      },
+      {
+        "outer": 2,
+        "candidate_index": 2,
+        "step_by_arm": {
+          "CONTROL": 20,
+          "LR3E5": 20,
+          "LR1E5_120": 60
+        },
+        "groups": [
+          [
+            "seed240103:LR3E5",
+            "seed240103:LR1E5_120"
+          ]
+        ]
+      },
+      {
+        "outer": 2,
+        "candidate_index": 3,
+        "step_by_arm": {
+          "CONTROL": 30,
+          "LR3E5": 30,
+          "LR1E5_120": 90
+        },
+        "groups": []
+      },
+      {
+        "outer": 2,
+        "candidate_index": 4,
+        "step_by_arm": {
+          "CONTROL": 40,
+          "LR3E5": 40,
+          "LR1E5_120": 120
+        },
+        "groups": [
+          [
+            "seed240101:LR3E5",
+            "seed240101:LR1E5_120"
+          ]
+        ]
+      },
+      {
+        "outer": 3,
+        "candidate_index": 1,
+        "step_by_arm": {
+          "CONTROL": 10,
+          "LR3E5": 10,
+          "LR1E5_120": 30
+        },
+        "groups": []
+      },
+      {
+        "outer": 3,
+        "candidate_index": 2,
+        "step_by_arm": {
+          "CONTROL": 20,
+          "LR3E5": 20,
+          "LR1E5_120": 60
+        },
+        "groups": []
+      },
+      {
+        "outer": 3,
+        "candidate_index": 3,
+        "step_by_arm": {
+          "CONTROL": 30,
+          "LR3E5": 30,
+          "LR1E5_120": 90
+        },
+        "groups": []
+      },
+      {
+        "outer": 3,
+        "candidate_index": 4,
+        "step_by_arm": {
+          "CONTROL": 40,
+          "LR3E5": 40,
+          "LR1E5_120": 120
+        },
+        "groups": []
+      },
+      {
+        "outer": 4,
+        "candidate_index": 1,
+        "step_by_arm": {
+          "CONTROL": 10,
+          "LR3E5": 10,
+          "LR1E5_120": 30
+        },
+        "groups": [
+          [
+            "seed240102:LR3E5",
+            "seed240102:LR1E5_120"
+          ]
+        ]
+      },
+      {
+        "outer": 4,
+        "candidate_index": 2,
+        "step_by_arm": {
+          "CONTROL": 20,
+          "LR3E5": 20,
+          "LR1E5_120": 60
+        },
+        "groups": []
+      },
+      {
+        "outer": 4,
+        "candidate_index": 3,
+        "step_by_arm": {
+          "CONTROL": 30,
+          "LR3E5": 30,
+          "LR1E5_120": 90
+        },
+        "groups": []
+      },
+      {
+        "outer": 4,
+        "candidate_index": 4,
+        "step_by_arm": {
+          "CONTROL": 40,
+          "LR3E5": 40,
+          "LR1E5_120": 120
+        },
+        "groups": []
+      }
+    ],
+    "note": "Exact vectors on matched ordered contexts only; step0 and fallback r882 duplication is expected. Distinct adapter hashes do not imply independent prediction replication.",
+    "all_arms_candidate_index_panels_identical_to_CONTROL": false
+  },
+  "plateau_best_context_utility": 1.1389572,
+  "context_mean_minus_plateau_by_seed": [
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639
+    ],
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639
+    ],
+    [
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639,
+      -0.0011630101835473639
+    ]
+  ],
+  "resource": {
+    "status": "PASS",
+    "exit_code": 0,
+    "reasons": [],
+    "final_sample": {
+      "utc": 1793679281.6721888,
+      "load5": 46.9501953125,
+      "available": 81406500864,
+      "free": 761947353088,
+      "rss": 16543744,
+      "threads": 2,
+      "affinity": [
+        40,
+        41,
+        42,
+        43
+      ],
+      "elapsed": 2709.2787009739986,
+      "pause_requested": false
+    },
+    "admission": {
+      "utc": 1793676572.3930857,
+      "load5": 89.541015625,
+      "available": 79528591360,
+      "free": 784581853184,
+      "rss": 16031744,
+      "threads": 1,
+      "affinity": [
+        40,
+        41,
+        42,
+        43
+      ]
+    },
+    "elapsed_seconds": 2709.779080264001,
+    "peak": {
+      "rss": 3392389120,
+      "threads": 3
+    },
+    "transitions": [],
+    "pause_requested_seconds": 0.0,
+    "compute_stop": 1793691000.0,
+    "resume_number": 0
+  },
+  "resource_extrema": {
+    "max_cpu_percent": null,
+    "min_MemAvailable": 67139280896,
+    "min_disk_free": 761940684800,
+    "max_RSS": 3392389120,
+    "raw_host_cpu_over85_count": 0
+  },
+  "red_team_checks": {
+    "all15_cells_and_3000_traces": true,
+    "three_smoke_updates_discarded": true,
+    "native91_exact": true,
+    "selection_lock_hashes_and_disjoint_fit": true,
+    "finite_complete_panels": true,
+    "frozen_dope_and_input_audit": true,
+    "arithmetic_replay_primary_and_secondary_family_median_CI_Holm_and_decisions": true,
+    "cooperative_load_and_sustained_memory_event_replay": true,
+    "actual_family_disjoint_train_select_assessment_and_no_DLVal_meta_test": true,
+    "all45_train_selector_best_steps_gains_CIs_and_rejection_replayed": true,
+    "resource_sample_boundaries_and_exit0_no_OOM": true
+  },
+  "metric_direction": "Higher utility=-fitness is better; failed gates have utility -2. Baseline matches all91 pinned native utility values.",
+  "failure": null,
+  "terminal_custody": {
+    "schema": "jope.h240.custody-receipt/v1",
+    "verified_utc": "2026-11-03T04:35:25.556393+00:00",
+    "source_commit": "d3807eefad1d115809a3c5fd20b84ec2cab5de9b",
+    "status": "EXACT_VERSION_OBJECT_AND_MEMBER_REPLAY_PASS",
+    "scientific_status": "COMPLETE",
+    "scientific_verdict": "NO_ADVANCE",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H240/attempt-001/H240-execution-output.zip",
+      "version_id": "CjARLxPHVCCrABD2.e.ME4IjFJuwJl5a",
+      "sha256": "fee1aa3d766cfa7207bbf330f70efb491e150fbfdc0013547ee38e66ac7beeff",
+      "bytes": 29784557
+    },
+    "manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H240/attempt-001/H240-terminal-manifest.json",
+      "version_id": "G9WPjtBJhwXcH56HOv1suX0LX3nm5Jwc",
+      "sha256": "73e34cf229af2f8f667c02862e1ee6eeadcfe6e5cacda85145732eb248e9e1cd",
+      "bytes": 43964
+    },
+    "verified_members": 265,
+    "create_only_if_none_match": "*",
+    "exact_version_archive_and_manifest_bytes_verified": true,
+    "archive_member_sha256s_verified": true,
+    "raw_roots_retained": true,
+    "scientific_retry": false
+  },
+  "full_metrics_sha256": "ebe143cc55cd1f47a491cce903ef2fa0c2f0a44a60181da23f25fd2c0412d17f",
+  "scientific_retry": false,
+  "serving_promotion": false,
+  "raw_roots_retained": true,
+  "hosted_ci": "NOT_RUN/NOT_A_GATE per explicit H240 assignment",
+  "publication_utc": "2026-11-03T04:35:30.491001+00:00",
+  "harm_families": {
+    "strict_selected": {
+      "CONTROL": {
+        "families_below_minus_0_01": 0,
+        "family_mean_deltas": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "LR3E5": {
+        "families_below_minus_0_01": 0,
+        "family_mean_deltas": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "LR1E5_120": {
+        "families_below_minus_0_01": 0,
+        "family_mean_deltas": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "unconstrained_best": {
+      "CONTROL": {
+        "families_below_minus_0_01": 2,
+        "family_mean_deltas": [
+          0.0,
+          0.0,
+          -0.00033678143693178044,
+          0.0,
+          0.0,
+          -0.03745683597730543,
+          -0.006161862878870424,
+          -0.0014269843974511105,
+          0.0,
+          0.0,
+          0.0,
+          0.0032654245269086186,
+          -0.021677832487491562,
+          1.1467825726659461e-05,
+          0.0,
+          0.0,
+          0.005932473009524011,
+          -0.0004338401451063678,
+          0.0
+        ]
+      },
+      "LR3E5": {
+        "families_below_minus_0_01": 2,
+        "family_mean_deltas": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.017422094029784584,
+          -0.00887804942306616,
+          -0.0035275804446148417,
+          0.0,
+          0.0,
+          0.0,
+          0.00234390877135654,
+          -0.03184947832058776,
+          0.0,
+          0.0,
+          0.0,
+          0.010876200517460688,
+          0.0,
+          0.0
+        ]
+      },
+      "LR1E5_120": {
+        "families_below_minus_0_01": 3,
+        "family_mean_deltas": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.01451841169148717,
+          -0.01379765921921419,
+          -0.004115510518717321,
+          0.0,
+          0.0,
+          0.0,
+          0.0022278514157274593,
+          -0.04972706673618011,
+          0.0,
+          0.0,
+          0.0,
+          0.013842437022222692,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  },
+  "fit_phase_best_step_diagnostics": {
+    "status": "PASS",
+    "measurement_role": "Held-out TRAIN selector (41 families); optimizer-fit families are distinct. Best-step CIs are descriptive post-selection bootstrap intervals.",
+    "optimizer_fit_utility_ci": null,
+    "cells": [
+      {
+        "outer_fold": 0,
+        "seed": 240101,
+        "arm": "CONTROL",
+        "best_step": 10,
+        "selected_step": 0,
+        "gain": 0.03181594126077621,
+        "ci95": [
+          -0.014884270597231157,
+          0.09955370900000421
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240101,
+        "arm": "LR3E5",
+        "best_step": 40,
+        "selected_step": 0,
+        "gain": 0.020505948891179328,
+        "ci95": [
+          -0.035142607117121936,
+          0.09275876116644749
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240101,
+        "arm": "LR1E5_120",
+        "best_step": 120,
+        "selected_step": 0,
+        "gain": 0.020989283754452605,
+        "ci95": [
+          -0.03542917013432414,
+          0.09353265411850592
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240102,
+        "arm": "CONTROL",
+        "best_step": 20,
+        "selected_step": 0,
+        "gain": 0.028265142846115344,
+        "ci95": [
+          -0.02334116408583014,
+          0.09842532023857578
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240102,
+        "arm": "LR3E5",
+        "best_step": 40,
+        "selected_step": 0,
+        "gain": 0.04171116254977237,
+        "ci95": [
+          -0.001355654326476196,
+          0.10936457309666943
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240102,
+        "arm": "LR1E5_120",
+        "best_step": 120,
+        "selected_step": 0,
+        "gain": 0.04145469573604909,
+        "ci95": [
+          -0.0013787041575263504,
+          0.10833022559838597
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240103,
+        "arm": "CONTROL",
+        "best_step": 20,
+        "selected_step": 0,
+        "gain": 0.00798931169234203,
+        "ci95": [
+          -0.012492949408830912,
+          0.03926411309214103
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240103,
+        "arm": "LR3E5",
+        "best_step": 40,
+        "selected_step": 0,
+        "gain": 0.013973053516590268,
+        "ci95": [
+          -0.005125953093464312,
+          0.0436566893451514
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 0,
+        "seed": 240103,
+        "arm": "LR1E5_120",
+        "best_step": 120,
+        "selected_step": 0,
+        "gain": 0.014649639474176126,
+        "ci95": [
+          -0.004345455213047816,
+          0.0454203855783057
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240101,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240101,
+        "arm": "LR3E5",
+        "best_step": 10,
+        "selected_step": 0,
+        "gain": 0.0005168117604567949,
+        "ci95": [
+          -5.9764444837398713e-05,
+          0.0015803175037890842
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240101,
+        "arm": "LR1E5_120",
+        "best_step": 30,
+        "selected_step": 0,
+        "gain": 0.0003380149450803517,
+        "ci95": [
+          -0.0005509931475730184,
+          0.001531498065680883
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240102,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240102,
+        "arm": "LR3E5",
+        "best_step": 20,
+        "selected_step": 0,
+        "gain": 0.0018280529457086875,
+        "ci95": [
+          -0.003940275661068799,
+          0.00807871753238234
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240102,
+        "arm": "LR1E5_120",
+        "best_step": 60,
+        "selected_step": 0,
+        "gain": 0.0018196781364352263,
+        "ci95": [
+          -0.003958370032327676,
+          0.008251011603511204
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240103,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240103,
+        "arm": "LR3E5",
+        "best_step": 20,
+        "selected_step": 0,
+        "gain": 0.002868412559981882,
+        "ci95": [
+          -0.0010369616756512178,
+          0.009540604873458432
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 1,
+        "seed": 240103,
+        "arm": "LR1E5_120",
+        "best_step": 60,
+        "selected_step": 0,
+        "gain": 0.00208894783991582,
+        "ci95": [
+          -0.001888169407281629,
+          0.008643446822526784
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240101,
+        "arm": "CONTROL",
+        "best_step": 10,
+        "selected_step": 0,
+        "gain": 0.0022133521238739736,
+        "ci95": [
+          -0.0033249396065509135,
+          0.009850717031805836
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240101,
+        "arm": "LR3E5",
+        "best_step": 20,
+        "selected_step": 0,
+        "gain": 0.0028167121913326315,
+        "ci95": [
+          -0.002887924922913756,
+          0.010418869567776271
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240101,
+        "arm": "LR1E5_120",
+        "best_step": 60,
+        "selected_step": 0,
+        "gain": 0.003933604044050713,
+        "ci95": [
+          -0.0009919360831009253,
+          0.011569754852246376
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240102,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240102,
+        "arm": "LR3E5",
+        "best_step": 10,
+        "selected_step": 0,
+        "gain": 4.1683710034705504e-05,
+        "ci95": [
+          -0.0001068880049586217,
+          0.00023681718384322548
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240102,
+        "arm": "LR1E5_120",
+        "best_step": 30,
+        "selected_step": 0,
+        "gain": 4.4122734424949135e-05,
+        "ci95": [
+          -0.0001068880049586217,
+          0.0002392562082334691
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240103,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240103,
+        "arm": "LR3E5",
+        "best_step": 10,
+        "selected_step": 0,
+        "gain": 8.014240001829611e-05,
+        "ci95": [
+          0.0,
+          0.00021457674150939201
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 2,
+        "seed": 240103,
+        "arm": "LR1E5_120",
+        "best_step": 30,
+        "selected_step": 0,
+        "gain": 8.014240001829611e-05,
+        "ci95": [
+          0.0,
+          0.00021457674150939201
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240101,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240101,
+        "arm": "LR3E5",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240101,
+        "arm": "LR1E5_120",
+        "best_step": 90,
+        "selected_step": 0,
+        "gain": 0.0019321380716897138,
+        "ci95": [
+          -0.004994063135535895,
+          0.010633590360037838
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240102,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240102,
+        "arm": "LR3E5",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240102,
+        "arm": "LR1E5_120",
+        "best_step": 60,
+        "selected_step": 0,
+        "gain": 0.001373629996027577,
+        "ci95": [
+          -0.0012429229594275591,
+          0.005346836996617135
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240103,
+        "arm": "CONTROL",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240103,
+        "arm": "LR3E5",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 3,
+        "seed": 240103,
+        "arm": "LR1E5_120",
+        "best_step": 0,
+        "selected_step": 0,
+        "gain": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240101,
+        "arm": "CONTROL",
+        "best_step": 10,
+        "selected_step": 0,
+        "gain": 0.001371286201317045,
+        "ci95": [
+          -0.0031192497735796363,
+          0.00688129874555955
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240101,
+        "arm": "LR3E5",
+        "best_step": 30,
+        "selected_step": 0,
+        "gain": 0.0018991288837280635,
+        "ci95": [
+          -0.0009943210157073172,
+          0.006621519679433736
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240101,
+        "arm": "LR1E5_120",
+        "best_step": 60,
+        "selected_step": 0,
+        "gain": 0.0016186877973679455,
+        "ci95": [
+          -0.0013207145957026545,
+          0.006294843699510637
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240102,
+        "arm": "CONTROL",
+        "best_step": 30,
+        "selected_step": 0,
+        "gain": 0.010390943720128679,
+        "ci95": [
+          -0.01881382397489355,
+          0.04418219864696512
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240102,
+        "arm": "LR3E5",
+        "best_step": 40,
+        "selected_step": 0,
+        "gain": 0.0028765869797769705,
+        "ci95": [
+          -0.002390560603824085,
+          0.010796276419112776
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240102,
+        "arm": "LR1E5_120",
+        "best_step": 120,
+        "selected_step": 0,
+        "gain": 0.0031100102453952114,
+        "ci95": [
+          -0.0019212627622840694,
+          0.010868259659324695
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240103,
+        "arm": "CONTROL",
+        "best_step": 10,
+        "selected_step": 0,
+        "gain": 0.00752779273582654,
+        "ci95": [
+          -0.04523806558897365,
+          0.07551616301597952
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240103,
+        "arm": "LR3E5",
+        "best_step": 40,
+        "selected_step": 0,
+        "gain": 0.020723007617407266,
+        "ci95": [
+          -0.019267212616636952,
+          0.082457133341222
+        ],
+        "accepted": false
+      },
+      {
+        "outer_fold": 4,
+        "seed": 240103,
+        "arm": "LR1E5_120",
+        "best_step": 120,
+        "selected_step": 0,
+        "gain": 0.020782777097335982,
+        "ci95": [
+          -0.018593106319516894,
+          0.08283220615184553
+        ],
+        "accepted": false
+      }
+    ]
+  },
+  "plateau_elo_comparison": {
+    "value": null,
+    "reason": "Only scalar context utility 1.1389572 is pinned for r3175; paired per-context outcomes required for Elo are unavailable in this wave. No new model/native evaluation authorized."
+  },
+  "selection_summary": {
+    "CONTROL": {
+      "selected_step_counts": {
+        "0": 15,
+        "10": 0,
+        "20": 0,
+        "30": 0,
+        "40": 0
+      },
+      "selected_steps_by_seed": {
+        "240101": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "240102": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "240103": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "LR3E5": {
+      "selected_step_counts": {
+        "0": 15,
+        "10": 0,
+        "20": 0,
+        "30": 0,
+        "40": 0
+      },
+      "selected_steps_by_seed": {
+        "240101": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "240102": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "240103": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "LR1E5_120": {
+      "selected_step_counts": {
+        "0": 15,
+        "30": 0,
+        "60": 0,
+        "90": 0,
+        "120": 0
+      },
+      "selected_steps_by_seed": {
+        "240101": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "240102": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "240103": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "descriptive_unconstrained_val": {
+    "contexts": 91,
+    "families": 19,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          -0.001451958456722232,
+          -0.005524826957658023,
+          -0.0022260733163034785
+        ],
+        "median_gain": -0.0022260733163034785,
+        "ci95": [
+          -0.006162099818945924,
+          0.0005401661436386563
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9079092090790921
+      },
+      "LR3E5_minus_r882": {
+        "per_seed_gain": [
+          -0.0017779718324022389,
+          -0.002304928383464139,
+          -0.0035682197203287334
+        ],
+        "median_gain": -0.002304928383464139,
+        "ci95": [
+          -0.006319431880742133,
+          0.0008328107530685831
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9047095290470953,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR3E5_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.00032601337568000685,
+          0.0032198985741938844,
+          -0.0013421464040252549
+        ],
+        "median_gain": -0.00032601337568000685,
+        "ci95": [
+          -0.001307146662872919,
+          0.0012689647191809947
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.6455354464553544
+      },
+      "LR1E5_120_minus_r882": {
+        "per_seed_gain": [
+          -0.0024044130024403723,
+          -0.004259099370067947,
+          -0.003771491795015087
+        ],
+        "median_gain": -0.003771491795015087,
+        "ci95": [
+          -0.00986537506397464,
+          0.000925637600820095
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.9229077092290771,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR1E5_120_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.0009524545457181405,
+          0.0012657275875900761,
+          -0.0015454184787116086
+        ],
+        "median_gain": -0.0009524545457181405,
+        "ci95": [
+          -0.004510305792876548,
+          0.0014626939147267825
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.7489251074892511
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.153615276991245,
+        1.1521633185345228,
+        1.1518373051588429,
+        1.1512108639888048
+      ],
+      [
+        1.153615276991245,
+        1.1480904500335871,
+        1.151310348607781,
+        1.1493561776211774
+      ],
+      [
+        1.153615276991245,
+        1.1513892036749414,
+        1.150047057270916,
+        1.14984378519623
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.1377941898164525,
+        1.1362784090099842,
+        1.1359380653760325,
+        1.1352840883303883
+      ],
+      [
+        1.1377941898164525,
+        1.1320265133221938,
+        1.135387945899649,
+        1.1333478772872605
+      ],
+      [
+        1.1377941898164525,
+        1.135470267123608,
+        1.134069125273252,
+        1.1338569181623157
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.0,
+        1496.3464943034846,
+        1496.3464943034846
+      ],
+      [
+        1500.0,
+        1480.8055371772255,
+        1496.3431963145874,
+        1486.290806498312
+      ],
+      [
+        1500.0,
+        1503.6559818702774,
+        1490.8626974423948,
+        1487.2067155721174
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1500.0,
+      1496.3431963145874,
+      1487.2067155721174
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1483.5067109444249,
+        1511.878443030098
+      ],
+      [
+        1479.835736160338,
+        1511.87748978757
+      ],
+      [
+        1462.4271428214497,
+        1512.7916603648798
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "descriptive_unconstrained_oof": {
+    "contexts": 1219,
+    "families": 205,
+    "contrasts": {
+      "CONTROL_minus_r882": {
+        "per_seed_gain": [
+          -0.001801973285916217,
+          -0.0049552328040855555,
+          -0.002028773942990113
+        ],
+        "median_gain": -0.002028773942990113,
+        "ci95": [
+          -0.009212145897020626,
+          0.001701620866552519
+        ],
+        "positive_seeds": 0,
+        "p_one_sided": 0.8529147085291471
+      },
+      "LR3E5_minus_r882": {
+        "per_seed_gain": [
+          -0.0013103674829691798,
+          0.0005598821001085452,
+          -0.0022554103547287154
+        ],
+        "median_gain": -0.0013103674829691798,
+        "ci95": [
+          -0.005466639977501585,
+          0.002548131132221215
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.5463453654634537,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR3E5_minus_CONTROL": {
+        "per_seed_gain": [
+          0.0004916058029470373,
+          0.0055151149041941,
+          -0.00022663641173860377
+        ],
+        "median_gain": 0.0004916058029470373,
+        "ci95": [
+          -0.00030440459023125903,
+          0.0015264115242405352
+        ],
+        "positive_seeds": 2,
+        "p_one_sided": 0.11698830116988301
+      },
+      "LR1E5_120_minus_r882": {
+        "per_seed_gain": [
+          -0.0019443918916990073,
+          0.0006103840139827664,
+          -0.002579601258021597
+        ],
+        "median_gain": -0.0019443918916990073,
+        "ci95": [
+          -0.006199673310001006,
+          0.0035244293006470484
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.6414358564143585,
+        "holm_p": 1.0,
+        "advance": false
+      },
+      "LR1E5_120_minus_CONTROL": {
+        "per_seed_gain": [
+          -0.00014241860578279044,
+          0.00556561681806832,
+          -0.0005508273150314856
+        ],
+        "median_gain": -0.00014241860578279044,
+        "ci95": [
+          -0.0013063895458987702,
+          0.0021327515496069806
+        ],
+        "positive_seeds": 1,
+        "p_one_sided": 0.45325467453254675
+      }
+    },
+    "family_utility_by_seed": [
+      [
+        1.3853554329931834,
+        1.3835534597072672,
+        1.384045065510214,
+        1.383411041101484
+      ],
+      [
+        1.3853554329931834,
+        1.3804002001890974,
+        1.3859153150932924,
+        1.385965817007166
+      ],
+      [
+        1.3853554329931834,
+        1.3833266590501936,
+        1.3831000226384549,
+        1.3827758317351617
+      ]
+    ],
+    "context_utility_by_seed": [
+      [
+        1.423073434552298,
+        1.4206492490922378,
+        1.4211147043936232,
+        1.4212390024038408
+      ],
+      [
+        1.423073434552298,
+        1.419682085057722,
+        1.4236547406748177,
+        1.4229544207367137
+      ],
+      [
+        1.423073434552298,
+        1.4186035692236816,
+        1.4184374396459014,
+        1.4179254066940628
+      ]
+    ],
+    "elo_by_seed": [
+      [
+        1500.0,
+        1500.3765876239356,
+        1499.9293898539647,
+        1499.5904609987274
+      ],
+      [
+        1500.0,
+        1497.7380925252612,
+        1499.7387401124959,
+        1500.0988552553365
+      ],
+      [
+        1500.0,
+        1499.9858779771535,
+        1499.7599255798764,
+        1500.1977083459842
+      ]
+    ],
+    "median_elo": [
+      1500.0,
+      1499.9858779771535,
+      1499.7599255798764,
+      1500.0988552553365
+    ],
+    "elo_ci95": [
+      [
+        1500.0,
+        1500.0
+      ],
+      [
+        1496.572475248997,
+        1503.1776349466809
+      ],
+      [
+        1495.8851338294066,
+        1503.2824011649336
+      ],
+      [
+        1495.8231412534328,
+        1503.5788390300033
+      ]
+    ],
+    "utility_bootstrap_draws": 10000,
+    "elo_bootstrap_draws": 1000
+  },
+  "elo_lifts": {
+    "r882": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      }
+    },
+    "CONTROL": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      }
+    },
+    "LR3E5": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      }
+    },
+    "LR1E5_120": {
+      "r882": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      },
+      "CONTROL": {
+        "median": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "bootstrap": "1000 paired family draws, median across3seeds, seed240151; descriptive"
+      }
+    }
+  }
 }
