@@ -161,7 +161,7 @@ impl PrepareArgs {
 }
 
 mod results;
-mod study;
+pub(crate) mod study;
 use results::*;
 use study::*;
 
