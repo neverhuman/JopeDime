@@ -73,7 +73,7 @@ fn finalization_audits_each_real_partition_and_declares_the_refit_and_score_scop
             .unwrap();
         assert_eq!(snapshot.state, RunState::Completed);
         assert_eq!(snapshot.phase, RunPhase::Finalizing);
-        assert_eq!(snapshot.best.unwrap().value, selected.value);
+        assert_eq!(snapshot.best.unwrap().cv_value, selected.value);
         let events = finalizer
             .journal()
             .page(&f.plan.run_id, 0, 256, &[])
