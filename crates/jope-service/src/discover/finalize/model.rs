@@ -18,13 +18,13 @@ pub(crate) fn put_frozen_model(
     }
 }
 
-fn ids(part: &Partition) -> Vec<AuditRowId> {
+pub(super) fn ids(part: &Partition) -> Vec<AuditRowId> {
     part.rows.clone()
 }
-fn digest(bytes: &[u8]) -> String {
+pub(super) fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
-fn is_digest(value: &str) -> bool {
+pub(super) fn is_digest(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
@@ -74,11 +74,11 @@ pub(crate) fn load(part: &Partition, plan: &Plan, maximum: u64) -> Result<CsvTab
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Envelope {
-    attempt: Attempt,
-    model_json: String,
-    model_digest: String,
-    predictions_digest: String,
+pub(super) struct Envelope {
+    pub(super) attempt: Attempt,
+    pub(super) model_json: String,
+    pub(super) model_digest: String,
+    pub(super) predictions_digest: String,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]

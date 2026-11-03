@@ -1,4 +1,15 @@
+use super::model::{digest, ids, is_digest};
 use super::*;
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StoredChampion {
+    candidate: crate::discover::r#loop::Candidate,
+    loss: f64,
+    value: f64,
+    predictions_digest: String,
+    model: BlobRef,
+}
 
 impl Finalizer {
     pub(crate) fn with_journal(store: Arc<Store>, journal: Arc<EventLog>) -> Self {
@@ -87,8 +98,16 @@ impl Finalizer {
         );
         let checkpoint = record.data["checkpoint"].clone();
         let plan: Plan = serde_json::from_value(checkpoint["plan"].clone())?;
-        let champion: Champion = serde_json::from_value(checkpoint["champion"].clone())
-            .context("finite champion missing")?;
+        let stored_champion: StoredChampion =
+            serde_json::from_value(checkpoint["champion"].clone())
+                .context("finite champion missing")?;
+        let champion = Champion {
+            candidate: stored_champion.candidate,
+            loss: stored_champion.loss,
+            value: stored_champion.value,
+            predictions_digest: stored_champion.predictions_digest,
+            model: stored_champion.model,
+        };
         let reason: CompletionReason = serde_json::from_value(checkpoint["completed"].clone())
             .context("search is not complete")?;
         ensure!(
