@@ -125,7 +125,7 @@ pub(crate) fn ablation_kernel2_text_passes_the_shipped_text_lint() {
 
 /// An entry of a directory tree: its kind, its modification time, and a file's bytes or a
 /// link's target.
-type Entry = (&'static str, std::time::SystemTime, Vec<u8>);
+pub(crate) type Entry = (&'static str, std::time::SystemTime, Vec<u8>);
 
 /// Every entry under `root`, symbolic links not followed.
 pub(crate) fn tree(root: &Path) -> BTreeMap<PathBuf, Entry> {

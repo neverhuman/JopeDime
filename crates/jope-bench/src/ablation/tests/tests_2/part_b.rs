@@ -120,7 +120,9 @@ pub(crate) fn ablation_kernel2_refuses_a_scratch_that_is_not_unused() {
         let changed = changed_entries(&before, &after);
         let own = path.strip_prefix(root.path()).unwrap();
         let kind =
-            |entries: &BTreeMap<PathBuf, Entry>, entry: &PathBuf| entries.get(entry).map(|e| e.0);
+            |entries: &BTreeMap<PathBuf, super::part_a::Entry>, entry: &PathBuf| {
+                entries.get(entry).map(|e| e.0)
+            };
         assert!(
             changed.iter().all(|entry| entry.as_path() == own
                 && kind(&before, entry) == Some("dir")
