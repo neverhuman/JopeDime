@@ -21,10 +21,13 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
+#[path = "transfer_independent/values.rs"]
 mod values;
 use values::*;
+#[path = "transfer_independent/score.rs"]
 mod score;
-use score::{score, Score, Unit};
+use score::{score, Score};
+#[path = "transfer_independent/compare.rs"]
 mod compare;
 use compare::compare;
 #[path = "transfer_independent/oracle_tests.rs"]
