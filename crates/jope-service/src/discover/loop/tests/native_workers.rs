@@ -100,7 +100,7 @@ pub(super) fn pool(binary: &Path, workers: usize) -> ProcessExecutor {
     )
     .unwrap()
 }
-pub(super) fn run_store(home: &Path, p: &Plan, binary: &Path, workers: usize) -> (Champion, Value) {
+pub(super) fn run_store(home: &Path, p: &Plan, binary: &Path, workers: usize) -> (Value, Value) {
     let store = Arc::new(Store::open(home).unwrap());
     let mut d = Discovery::open(store, p.clone()).unwrap();
     let pool = pool(binary, workers);
@@ -121,10 +121,20 @@ pub(super) fn run_store(home: &Path, p: &Plan, binary: &Path, workers: usize) ->
             .all(|e| e["kind"] != "experiment.finished" || e["body"]["failure"].is_null()),
         "S2 proof requires zero worker failures"
     );
-    (d.champion().unwrap().clone(), projection)
+    (champion_snapshot(d.champion().unwrap()), projection)
 }
 
-pub(super) fn same(label: &str, expected: &(Champion, Value), actual: &(Champion, Value)) {
+fn champion_snapshot(champion: &Champion) -> Value {
+    json!({
+        "candidate": &champion.candidate,
+        "loss": champion.loss,
+        "value": champion.value,
+        "predictions_digest": &champion.predictions_digest,
+        "model": &champion.model,
+    })
+}
+
+pub(super) fn same(label: &str, expected: &(Value, Value), actual: &(Value, Value)) {
     if let Some(receipt) = std::env::var_os("JOPE_DSC_RECEIPT_DIR") {
         let receipt = PathBuf::from(receipt);
         fs::create_dir_all(&receipt).unwrap();

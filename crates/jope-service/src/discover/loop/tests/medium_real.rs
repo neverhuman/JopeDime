@@ -64,6 +64,6 @@ fn medium_real_qlt05_regression_beats_ridge_cv() {
             receipt.join("quality-fit-source-rows.json"),
         )
         .unwrap();
-        fs::write(receipt.join("quality.json"),serde_json::to_vec_pretty(&json!({"plan":p,"source_train_sha256":TRAIN_SHA,"ridge_scores":baseline.scores,"champion":champion,"admissions":d.admitted(),"completion_reason":d.completed(),"budget_bound_by":d.budget_bound_by(),"nondeterminism":d.nondeterminism(),"projection":d.projection().unwrap()})).unwrap()).unwrap();
+        fs::write(receipt.join("quality.json"),serde_json::to_vec_pretty(&json!({"plan":p,"source_train_sha256":TRAIN_SHA,"ridge_scores":baseline.scores,"champion":{"candidate":&champion.candidate,"loss":champion.loss,"value":champion.value,"predictions_digest":&champion.predictions_digest,"model":&champion.model},"admissions":d.admitted(),"completion_reason":d.completed(),"budget_bound_by":d.budget_bound_by(),"nondeterminism":d.nondeterminism(),"projection":d.projection().unwrap()})).unwrap()).unwrap();
     }
 }
