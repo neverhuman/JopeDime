@@ -239,7 +239,7 @@ struct SelectorConfig {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-struct ScoringConfig {
+pub(super) struct ScoringConfig {
     tie_relative_tolerance: f64,
     bradley_terry_iterations: usize,
     bradley_terry_regularization: f64,
