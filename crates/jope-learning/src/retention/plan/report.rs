@@ -37,7 +37,7 @@ fn row(
         ref_sources_sample,
         roster_contexts: names(&f.ctx_roles),
         pinned_programs: names(&f.prog_roles),
-        index: f.index.map(super::index::GroupIndex::summary),
+        index: f.index.map(super::super::index::GroupIndex::summary),
         tv: d.tv,
         e_rules_fired: Vec::new(),
         e_candidates: d.e_candidates,
