@@ -91,7 +91,7 @@ pub(crate) fn unbound_proposal_with(
 
 fn accepted_vocabulary() -> crate::grammar::BoundVocabulary {
     crate::grammar::bind_vocabulary(
-        include_bytes!("../../../jope-engine/assets/grammar/featmath.json"),
+        include_bytes!("../../../../jope-engine/assets/grammar/featmath.json"),
         crate::CHECKPOINT_VOCABULARY_SHA256,
     )
     .unwrap()
