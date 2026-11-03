@@ -208,6 +208,13 @@ fn compile_cpp(root: &Path, compiler: &str, standard: &str, optimization: &str) 
     run(Command::new(binary).arg(root.join("bits.txt")))
 }
 
+fn compiler_available(compiler: &str) -> bool {
+    Command::new(compiler)
+        .arg("--version")
+        .output()
+        .is_ok_and(|output| output.status.success())
+}
+
 #[test]
 fn emitted_helper_value_and_fault_bits_match_in_all_three_languages() {
     let root = PathBuf::from(env!("CARGO_TARGET_TMPDIR")).join("inverse_links_v2");
@@ -294,7 +301,13 @@ int main(int argc,char** argv) {
             .arg(root.join("bits.txt"))),
         expected.as_bytes()
     );
+    let mut cpp_compilers = 0;
     for compiler in ["g++", "clang++"] {
+        if !compiler_available(compiler) {
+            eprintln!("C++ helper execution skipped: {compiler} is unavailable");
+            continue;
+        }
+        cpp_compilers += 1;
         for (standard, opt) in [
             ("-std=c++17", "-O2"),
             ("-std=c++17", "-O3"),
@@ -306,4 +319,5 @@ int main(int argc,char** argv) {
             );
         }
     }
+    assert!(cpp_compilers > 0, "no C++ compiler is available");
 }
