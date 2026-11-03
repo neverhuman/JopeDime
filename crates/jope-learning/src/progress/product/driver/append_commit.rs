@@ -1,4 +1,5 @@
 use super::*;
+use crate::progress::inventory::{encode, Commit, Head, HEAD_SCHEMA};
 
 impl<'r> Driver<'r> {
     /// Append a mapping: every blob, then every object, staging the objects for the next commit.
