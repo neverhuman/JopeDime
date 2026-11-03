@@ -83,7 +83,7 @@ fn inner_partition_excludes_outer_hold_and_pins_comparison_not_candidate() {
     // User-visible test labels have been burned on the original partition,
     // even though teaching has a distinct inner comparison identity.
     fs::remove_file(
-        burn_path(
+        super::super::freeze::burn_path(
             &f.state,
             &plan.comparison.dataset_hash,
             &partition.original_split_sha256,
