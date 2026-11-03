@@ -183,6 +183,7 @@ pub fn write_json(path: &Path, value: &impl Serialize) -> Result<()> {
 mod tests {
     use super::*;
     use crate::{generate_fixtures, generator::dataset, schema::Task};
+    use anyhow::bail;
     use std::collections::BTreeSet;
 
     #[test]
