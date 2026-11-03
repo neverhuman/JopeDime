@@ -3,9 +3,7 @@ use super::*;
 pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
         #[cfg(feature = "neural")]
-        EngineCmd::GpuWorker { pool, rank } => {
-            jope_parallel::gpu_worker::serve(&root, &pool, rank)?
-        }
+        EngineCmd::GpuWorker { pool, rank } => jope_parallel::gpu_worker::serve(root, &pool, rank)?,
         EngineCmd::Fit {
             train,
             genome,
@@ -16,7 +14,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             cut,
             genome,
             output,
-        } => jope_parallel::gp::fit_view_in_root(&root, &prepared, cut, &genome, &output)?,
+        } => jope_parallel::gp::fit_view_in_root(root, &prepared, cut, &genome, &output)?,
         EngineCmd::FitMemory {
             fd,
             training_sha256,
@@ -49,7 +47,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             cut,
             output,
         } => jope_parallel::gp::search_seeded_with_rng_in_root(
-            &root,
+            root,
             &prepared,
             cut,
             &output,
@@ -73,7 +71,7 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             vocabulary,
             rng_seed,
         } => jope_parallel::gp::search_seeded_with_rng_in_root(
-            &root,
+            root,
             &prepared,
             cut,
             &output,
@@ -91,13 +89,9 @@ pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd
             manifest,
             workers,
             threads,
-        } => jope_parallel::service::run_with_wait(
-            &root,
-            &manifest,
-            workers,
-            threads,
-            wait_for_work,
-        )?,
+        } => {
+            jope_parallel::service::run_with_wait(root, &manifest, workers, threads, wait_for_work)?
+        }
         EngineCmd::EvaluateWorker {
             train,
             validation,
