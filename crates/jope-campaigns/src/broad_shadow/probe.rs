@@ -93,7 +93,7 @@ fn exact_fields(value: &Value, expected: &[&str], name: &str) -> Result<()> {
     Ok(())
 }
 
-fn sha256_field(value: &Value, name: &str) -> Result<&str> {
+fn sha256_field<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
     let digest = text(value, name)?;
     ensure!(
         digest.len() == 64
@@ -105,7 +105,7 @@ fn sha256_field(value: &Value, name: &str) -> Result<&str> {
     Ok(digest)
 }
 
-fn dataset_hash(value: &Value, name: &str) -> Result<&str> {
+fn dataset_hash<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
     let digest = text(value, name)?;
     ensure!(
         matches!(digest.len(), 16 | 64)
@@ -117,7 +117,7 @@ fn dataset_hash(value: &Value, name: &str) -> Result<&str> {
     Ok(digest)
 }
 
-fn slug(value: &Value, name: &str) -> Result<&str> {
+fn slug<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
     let value = text(value, name)?;
     let mut previous_was_alphanumeric = false;
     for byte in value.bytes() {
@@ -237,8 +237,8 @@ pub fn build_probe_slate(
         let mut slots = anchors
             .iter()
             .enumerate()
-            .map(|(index, anchor)| {
-                json!({
+            .map(|(index, anchor)| -> Result<Value> {
+                Ok(json!({
                     "slot": index,
                     "role": "anchor",
                     "engine": field(anchor, "engine")?,
@@ -246,7 +246,7 @@ pub fn build_probe_slate(
                     "canonical_genome": field(anchor, "canonical_genome")?,
                     "source_dataset_hash": null,
                     "anchor_index": index,
-                })
+                }))
             })
             .collect::<Result<Vec<_>>>()?;
         let refill = pools
