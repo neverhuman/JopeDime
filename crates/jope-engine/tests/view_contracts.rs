@@ -90,6 +90,9 @@ fn seeded_search(
         .unwrap()
 }
 
+#[path = "view_contracts/admission.rs"]
 mod admission;
+#[path = "view_contracts/resume.rs"]
 mod resume;
+#[path = "view_contracts/seed.rs"]
 mod seed;
