@@ -1,13 +1,13 @@
 \section{Referee Inventory}\label{app:history}
 
-\Cref{tab:referees} collects the referees that anchor the milestones in
-\cref{sec:anatomy,sec:road}: algorithm selection
-\citep{rice1976algorithm}, typed genetic programming and evolutionary search
-\citep{koza1992genetic,montana1995stgp,real2020automlzero}, self-play and expert
-iteration \citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and
-task-conditioned amortization across tabular problems
-\citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}. A domain enters the innovation
-game only when its referee is reliable and affordable (\cref{sub:game-boards}).
+A reliable, affordable referee is a condition for the innovation game
+(\cref{sub:game-boards}). \Cref{tab:referees} inventories the evaluators
+behind algorithm selection \citep{rice1976algorithm}, typed and
+evolutionary search \citep{koza1992genetic,montana1995stgp,real2020automlzero},
+self-play and expert iteration
+\citep{samuel1959checkers,silver2017mastering,anthony2017expert}, and tabular
+amortization \citep{hollmann2025tabpfn,muller2025mothernet,kumorfm2025}
+discussed in \cref{sec:anatomy,sec:road}.
 
 \begin{table}[htb]
   \caption{\textbf{Each domain in the main text relies on an explicit referee.}
@@ -45,28 +45,28 @@ not establish that a corpus or checkpoint satisfies the split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
-The audit separates documented baseline exclusions from checks still
-required for final evaluation (\cref{sub:method-referee}).
-Artifacts that violate held-out isolation belong in the audit record:
+Test-selected search outcomes are excluded from comparative claims;
+final evaluation requires separate isolation receipts
+(\cref{sub:method-referee}):
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
   \num{63108} evaluations in total across 42 datasets. Selection using test-fold scores biases the reported metric upward
   \citep{cawley2010overfitting}. The entry is therefore excluded from
   all comparative claims.
-  \item \textbf{Input-closure and canary checks.} Before benchmark release,
-  the evaluation protocol requires passing receipts for an inner-fold label-poison test,
-  a sealed canary check and a train-only input-closure audit verifying that
-  held-out test targets and their derived statistics do not enter board
-  encoding or candidate generation. The final pre-registration and audit receipts belong to the evaluation
-  record in \cref{sub:results-protocol}; they are not reproduced here.
+  \item \textbf{Input-closure and canary checks.} Benchmark release requires
+  passing receipts for an inner-fold label-poison test, a sealed canary and
+  a train-only input-closure audit. The audit must exclude held-out targets
+  and derived statistics from board encoding and candidate generation.
+  Final pre-registration and receipts belong to the evaluation record in
+  \cref{sub:results-protocol}.
 \end{itemize}
 
 \section{Training Details}\label{app:training}
 
-This appendix records the historical reference specifications from
-\cref{sec:method} (separate from the adapter record in
-\cref{sec:method-status}); checkpoint qualification remains pending:
+Checkpoint qualification remains pending for the historical reference
+specified in \cref{sec:method}. The inventory below is separate from the
+adapter record in \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
   \num{2048}-value context $z_p = \encP(p)$ joins three blocks:
@@ -130,11 +130,9 @@ This appendix records the historical reference specifications from
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
   on eight A100 GPUs in September 2026 over \num{10214332} scored programs from
   80 training datasets (\num{7877} lists; \num{8894} contexts). Global batch size
-  alone does not establish per-GPU microbatch or accumulation settings. These
-  historical reference specifications are separate from the later adapter
-  snapshot in \cref{sec:method-status}. Checkpoint acceptance evidence and a
-  held-out promotion receipt remain required inputs to the evaluation contract
-  (\cref{sub:results-protocol}).
+  alone does not establish per-GPU microbatch or accumulation settings.
+  Checkpoint acceptance evidence and a held-out promotion receipt remain
+  required by the evaluation contract (\cref{sub:results-protocol}).
   \item \textbf{Execution sandbox and parity (\cref{sub:method-referee}).}
   The final evaluation protocol requires candidate isolation with seccomp
   and Landlock, cgroup memory limits with swap disabled and native versus
@@ -145,12 +143,11 @@ This appendix records the historical reference specifications from
 
 \section{Flywheel Telemetry}\label{app:flywheel-telemetry}
 
-The retained operating records are adaptive training-side observations
-(\cref{sec:method-status}). They include the canonical admission ledger
-(\cref{app:latest-admissions}), adapter-decision windows, program-incumbent
-clocks (\cref{app:round-throughput}) and historical GP diagnostics
-(\cref{app:historical-search}). Captures retain their own dates and
-populations.
+These adaptive training-side records retain separate capture dates and
+populations (\cref{sec:method-status}). They separate the canonical admission
+ledger (\cref{app:latest-admissions}), adapter decisions, program-event counts
+and operating clocks (\cref{app:round-throughput}), and historical GP
+diagnostics (\cref{app:historical-search}).
 
 % Adapter admission records, ordered by their role and capture cutoff.
 \input{sections/appendix_latest_admissions}
