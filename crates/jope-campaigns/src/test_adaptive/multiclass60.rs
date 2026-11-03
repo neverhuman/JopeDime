@@ -298,10 +298,14 @@ mod runtime;
 mod validation;
 
 use self::plan as plan_module;
+#[cfg(test)]
+use self::plan::{bind_frozen_comparator, seed_population};
 use self::plan::{
     multiclass_head_family, read_plan, read_value, ready_dataset_bindings, required_hash,
     rewrite_seed, run_root,
 };
+#[cfg(test)]
+use evolution::genome_complexity;
 use evolution::{
     checkpoint_path, load_checkpoint, next_population, slot_rank_order, slots_from_receipts,
 };
@@ -313,6 +317,8 @@ use ledger::{
 #[cfg(test)]
 use ledger::{initial_budget_complete, next_generation_index};
 use replay::{manage_winner_replay, write_exhausted_ledger};
+#[cfg(test)]
+use replay::{render_replay_spec, replay_role_capability};
 
 pub(crate) fn plan(
     run_id: &str,
