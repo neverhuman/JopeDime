@@ -66,8 +66,8 @@ those stages and the compute spent before each failed attempt stops.
 If 90\% of attempts fail to improve the incumbent, the independent-try
 model requires ten attempts per improvement in expectation. A typed language
 can exclude invalid structures before fitting (\cref{sec:game}). Runtime,
-resource and output failures may consume part or all of the fit, and their
-incurred cost must be counted. The pilot must measure whether also-rans
+resource and output failures can occur after fitting has begun. The pilot
+must measure whether also-rans
 dominate. The matched writer comparison in \cref{sub:results-learning}
 holds the budget, incumbent and referee fixed.
 
@@ -139,9 +139,9 @@ and AlphaZero played 44 million games of chess in about nine hours
 \citep{silver2018general}. An illustrative grid of \num{10000}
 problems, 100 rounds and 8 attempts per problem per round gives 8 million
 attempts, the same order.
-The grid counts work, not learning: the number of problem families matters
-more, and pilot learning curves, read only within their measured range, must
-decide.
+The grid counts attempts. Transfer still requires evidence across
+independent problem families; pilot learning curves support claims only
+within their measured range.
 
 \textbf{Precision to plan the test:} illustratively, 150 independent
 units at a win rate near 60\% give an approximate 95\% interval of
