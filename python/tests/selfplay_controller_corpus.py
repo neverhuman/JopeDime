@@ -10,6 +10,7 @@ import test_exact_packed_corpus as packed_corpus
 import test_exact_train as exact_train
 from test_exact_packed_corpus import materialize, verify
 
+
 def _training_row(dataset, task, score, split):
     return {
         "dataset_id": dataset,
@@ -33,6 +34,7 @@ def _training_row(dataset, task, score, split):
             "split": split,
         },
     }
+
 
 def test_packed_corpus_is_content_bound_reversible_and_parity_checked(tmp_path):
     train = tmp_path / "train.jsonl"
@@ -122,6 +124,7 @@ def test_packed_corpus_is_content_bound_reversible_and_parity_checked(tmp_path):
         },
     )
 
+
 def test_packing_uses_frozen_catalog_binding_after_live_pointer_advances(tmp_path):
     import hashlib
 
@@ -198,6 +201,7 @@ def test_packing_uses_frozen_catalog_binding_after_live_pointer_advances(tmp_pat
     assert packed["catalog_sha256"] == digest(catalog)
     assert packed["catalog_binding_sha256"] == digest(binding)
 
+
 def test_packed_v3_reuses_content_addressed_label_shards(tmp_path, monkeypatch):
     monkeypatch.setattr(packed_corpus, "LABEL_SHARD_ROWS", 1)
     train = tmp_path / "train.jsonl"
@@ -265,6 +269,7 @@ def test_packed_v3_reuses_content_addressed_label_shards(tmp_path, monkeypatch):
     )
     assert first["label_shards"][0]["sha256"] == second["label_shards"][0]["sha256"]
     assert second["label_shards"][0]["reused"] is True
+
 
 def test_packed_corpus_keeps_only_complete_receipt_exact_training_pairs(tmp_path):
     digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -365,6 +370,7 @@ def test_packed_corpus_keeps_only_complete_receipt_exact_training_pairs(tmp_path
         "validity_instability_hard_negatives": 1,
         "completed_descendant_receipts": 1,
     }
+
 
 def test_causal_training_members_require_successful_receipt_exact_pair(tmp_path, monkeypatch):
     root = tmp_path / "runtime"

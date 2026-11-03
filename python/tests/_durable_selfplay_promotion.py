@@ -1,6 +1,19 @@
 """Test group re-exported by test_durable_selfplay for stable test IDs."""
 
-from test_durable_selfplay import *  # noqa: F403
+from test_durable_selfplay import (
+    PARITY_FIXTURE,
+    Path,
+    SealedAuditRegistry,
+    candidate_row,
+    default_handlers,
+    evaluate_gate,
+    gate_evidence,
+    json,
+    os,
+    pytest,
+    wave_seed,
+)
+
 
 def test_dual_tier_promotion_keeps_internal_and_milestone_thresholds_separate():
     internal = evaluate_gate(gate_evidence(0.002))
@@ -10,6 +23,7 @@ def test_dual_tier_promotion_keeps_internal_and_milestone_thresholds_separate():
     milestone = evaluate_gate(gate_evidence(0.01))
     assert milestone["pass"]
     assert milestone["promotion_tier"] == "milestone"
+
 
 def test_a_non_conditional_checkpoint_can_never_be_promoted():
     """val_conditional_advantage <= 0 means the head ignores the dataset."""
@@ -28,6 +42,7 @@ def test_a_non_conditional_checkpoint_can_never_be_promoted():
     zero["candidate"]["val_conditional_advantage"] = 0.0
     assert "candidate_policy_is_not_conditional" in evaluate_gate(zero)["reasons"]
 
+
 def test_conditionality_margins_separate_internal_from_milestone():
     thin = gate_evidence(0.05)
     thin["candidate"]["val_conditional_advantage"] = 0.004
@@ -43,6 +58,7 @@ def test_conditionality_margins_separate_internal_from_milestone():
     assert result["promotion_tier"] == "internal"
     assert result["conditional_advantage_lift"] == pytest.approx(0.01)
     assert "conditional_advantage_lift_below_two_points" in result["milestone_reasons"]
+
 
 def test_unmeasured_conditionality_is_fail_closed_not_zero():
     for side in ("candidate", "baseline"):
@@ -60,6 +76,7 @@ def test_unmeasured_conditionality_is_fail_closed_not_zero():
     null_valued["candidate"]["val_conditional_advantage"] = None
     result = evaluate_gate(null_valued)
     assert "candidate_conditional_advantage_evidence_missing" in result["reasons"]
+
 
 def test_new_task_verdicts_are_advisory_until_anchored():
     """U3: an unanchored branch is recorded (`"advisory": true`) but can never
@@ -96,6 +113,7 @@ def test_new_task_verdicts_are_advisory_until_anchored():
     assert gated["task_verdicts"]["timeseries"]["advisory"] is False
     assert gated["task_verdicts"]["multiclass"]["advisory"] is True
 
+
 def test_conditionality_gate_parity_fixture_matches_python():
     """The Rust port in src/bin/jope_selfplay_promotion.rs asserts the same file.
 
@@ -113,6 +131,7 @@ def test_conditionality_gate_parity_fixture_matches_python():
         assert produced == case["expected_gate_compact_json"], case["name"]
     if regenerate:
         PARITY_FIXTURE.write_text(json.dumps(fixture, indent=2, sort_keys=True) + "\n")
+
 
 def test_every_wave_seed_has_the_exact_256_slot_composition():
     seed = wave_seed(
@@ -134,11 +153,13 @@ def test_every_wave_seed_has_the_exact_256_slot_composition():
         "offspring": 64,
     }
 
+
 def test_controller_has_no_file_waiting_production_phases():
     handlers = default_handlers()
     assert handlers["generate_gate_proposals"].__name__ == "_generate_gate_proposals"
     assert handlers["evaluate_frozen_gate"].__name__ == "_evaluate_frozen_gate"
     assert handlers["run_sotarena_qualification"].__name__ == "_run_sotarena_qualification"
+
 
 def test_sealed_audit_is_one_shot_and_never_training_eligible(tmp_path):
     registry = SealedAuditRegistry(tmp_path / "sealed.sqlite")
@@ -169,6 +190,7 @@ def test_sealed_audit_is_one_shot_and_never_training_eligible(tmp_path):
     assert result["super_human"]
     assert not result["training_ingestion_eligible"]
     registry.close()
+
 
 def test_systemd_services_are_independently_restartable():
     # ADR-0003 (PR #13/#32) turned every unit into a `.service.in` template rendered by
