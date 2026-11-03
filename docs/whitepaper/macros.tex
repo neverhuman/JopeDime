@@ -20,6 +20,7 @@
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
 \raggedbottom
 \makeatletter\@secpenalty=0 \@clubpenalty=10000\makeatother% under \raggedbottom a short column has zero badness, so the default -300 ended columns before headings that fit; setting \@clubpenalty keeps \clubpenalty=10000 after headings and lists
+\makeatletter\@beginparpenalty=0\makeatother% under \raggedbottom the default -51 ended columns between a colon lead-in and its list
 \brokenpenalty=10000% never hyphenate across a column or page break
 \clubpenalty=10000 \widowpenalty=10000 \displaywidowpenalty=10000% no single first or last paragraph lines at a column break
 \doublehyphendemerits=100000% discourage hyphen ladders (consecutive lines ending in a hyphen)
