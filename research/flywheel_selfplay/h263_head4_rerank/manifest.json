@@ -137,5 +137,26 @@
     "pair_loss": "mean softplus(sign(true_cost_i-true_cost_j)*(pred_j-pred_i)); invalid worst; masked context zero if no pairs",
     "anchor_reference_sha256": "d5215234c2659d2a470ac95c0900827bfad79704b7fb5ac7fe952cdb633d4a8e"
   },
-  "harness_source_commit": "2fe50b3131b2ff610e6e2ff9bc1de60a1134f80a"
+  "harness_source_commit": "2fe50b3131b2ff610e6e2ff9bc1de60a1134f80a",
+  "execution_source_commit": "c10815a2d8ef214ebb86ef3422282cb67f1041a0",
+  "closeout": {
+    "status": "COMPLETE",
+    "verdict": "NO_ADVANCE",
+    "primary_verdict": "NO_ADVANCE",
+    "secondary_verdict": "NO_ADVANCE",
+    "metrics_sha256": "09db29c126d68fae1290adffd3ef1b26262a5d8834e5bb0b7da36413d1dc2d8f",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H263/astra-t1635/closeout/runtime.tar.gz",
+      "version_id": "8_w1KijijUGAP_Pl5e8V7LwqXlAIGcW4",
+      "sha256": "a6701b6f9f7c4770269ee04a92b7801521dcfa12458c57d603b8fd0bd8a505d5",
+      "bytes": 406926702
+    },
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H263/astra-t1635/closeout/manifest.json",
+      "version_id": "S8T6EVFZez13tcLNYAx0v1dGU.6i_A7c",
+      "sha256": "550663a934816e08c556b5a41d1200535c9fe1d3274cb349c6deb9602fb6d3c7",
+      "bytes": 128853
+    },
+    "audit_sha256": "23d14763bb5412183297463e94eaab44d9dc2c5b9bf5203d34f7671dc9ed95dc"
+  }
 }
