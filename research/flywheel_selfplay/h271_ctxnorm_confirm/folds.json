@@ -1,0 +1,23 @@
+{
+  "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H271/astra-t1905/prereg/fold_manifest.json",
+  "version_id": "7W5R.V5a.ZXEjemwkCw_m_ILrGpBL2.p",
+  "sha256": "59c5971fade10710fdd9de12c41d3ccb13fdb5766310ff75b287f71d37d3fbae",
+  "bytes": 337690,
+  "exact_version_get_verified": true,
+  "created_epoch": 1793732755.6776218,
+  "algorithm": "Sorted205families -> default_rng(foldseed).permutation -> array_split5; preserve selected.json context order within fold",
+  "fold_seeds": [
+    271140,
+    271141,
+    271142
+  ],
+  "model_seeds": [
+    271101,
+    271102,
+    271103
+  ],
+  "contexts": 1219,
+  "families": 205,
+  "cells": 135,
+  "outcomes_read": 0
+}
