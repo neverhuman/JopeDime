@@ -1,4 +1,5 @@
 use super::*;
+use crate::progress::inventory::Head;
 
 impl<'r> Driver<'r> {
     pub fn init(
