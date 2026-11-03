@@ -69,7 +69,11 @@ impl GeneratedOperatorRegistry {
             serde_json::from_slice(bytes).context("decode generated operator registry")?;
         ensure!(
             !document.registry_version.trim().is_empty()
-                && is_sha256(&document.registry_hash)
+                && document.registry_hash.len() == 64
+                && document
+                    .registry_hash
+                    .bytes()
+                    .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
                 && document.maximum_output_columns > 0
                 && !document.operators.is_empty(),
             "generated operator registry header is invalid"
