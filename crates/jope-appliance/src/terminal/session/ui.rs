@@ -162,6 +162,7 @@ impl super::Session {
                 .snapshot
                 .as_ref()
                 .is_some_and(|snapshot| snapshot.state == RunState::Running)
+                || self.screen.animating()
             {
                 Duration::from_millis(50)
             } else {

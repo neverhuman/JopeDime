@@ -429,6 +429,26 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
+    "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
+      "reason": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
+      "reason": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
+      "reason": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
+      "reason": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification.",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h239_subset/test_h239.py": {
+      "reason": "H239 data-free exact AdamW/subset freezing, prescribed LLRD membership, strict family selection/statistics, source launch binding and A1 cooperative memory guard tests; no live qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h231_coswr_gated025_retest/test_h231.py": {
       "reason": "H231 data-free raw-NPZ loader normalization plus frozen COSWR schedule/sampler/loss, FIT gate boundary, lazy predictor equivalence, four-arm stack, strict bootstrap decisions, source/CPU/S3/deadline guards; no live study qualification.",
       "role": "research"
@@ -451,6 +471,26 @@
     },
     "python:research/flywheel_selfplay/h237_adabelief/test_h237.py": {
       "reason": "Owner-requested H237 data-free controls for the AdaBelief/RAdam vs AdamW r882 adapter continuation (optimizer classes and settings, AdaBelief reference update and belief property, per-seed folds, selector, Holm m=2 with +0.002 margin, Elo, xbabe1 monitor hard limits and load/memory pause hysteresis).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h241_expo/test_h241.py": {
+      "reason": "Owner-requested H241 data-free controls for zero-update adapter extrapolation along the accepted trajectory (alpha=0 bit-exactness, extrapolation formula and distance, strict alpha selector, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, harm/plateau readouts, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h242_laser/test_h242.py": {
+      "reason": "Owner-requested H242 data-free controls for zero-update LASER-style spectral rank reduction of the r882 adapter (energy rank rule, truncation and placebo, frozen spectral census, strict selector, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h243_modsoup/test_h243.py": {
+      "reason": "Owner-requested H243 data-free controls for the zero-update module-wise r882/r782 soup (frozen module groups, group soups and matched placebo, strict selector, Wortsman greedy soup, per-seed folds, four-gate advance rule with Holm m=2 and +0.002 margin, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/test_h247.py": {
+      "reason": "Owner-requested H247 data-free controls for Muon and Grokfast-EMA vs CTRL AdamW r882 adapter continuations (Newton-Schulz-5 and Muon step, parameter split, exact CTRL AdamW, Grokfast EMA filter, frozen settings, folds, strict selector, four-gate advance rule with Holm m=2, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h251_reptile/test_h251.py": {
+      "reason": "Owner-requested H251 data-free controls for first-order Reptile family meta-continuation vs CTRL AdamW r882 adapter continuations (Reptile inner SGD and outer interpolation, k=1 reduction, one-family batch plan, exact CTRL AdamW, frozen settings, folds, strict selector, four-gate advance rule with Holm m=2, H239 A1 memory guard, manifest pins).",
       "role": "research"
     },
     "python:benchmarks/test_prepare.py": {
@@ -5948,6 +5988,26 @@
     "python:deploy/qualification/q1/harness/test_q1_dispatch.py": {
       "role": "infrastructure",
       "reason": "Synthetic infrastructure controls; not a live qualification or product-learning run."
+    },
+    "python:research/flywheel_selfplay/h238_lowlr/test_h238.py": {
+      "role": "research",
+      "reason": "H238 owner-authorized offline r882 AdamW continuation: only LR/update budget differ, CONTROL1e-4x40/LR3E5=3e-5x40/LR1E5_120=1e-5x120; exact H170 loss/batches/clip1; unchanged strict family cross-fit selector with arm-specific candidate labels; data-free controls and H237 memory/load guard; not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h240_lowlr/test_h240.py": {
+      "role": "research",
+      "reason": "H240 owner-authorized fresh-seed H238 science rerun: exact H170 AdamW rates40/40/120, loss/batches/clip1 unchanged; cooperative H239 A1 guard, sustained RAM thresholds, atomic cell checkpoints and at most2 source-bound memory resumes; data-free guard/checkpoint/refusal/authorized-copy tests, not serving qualification."
+    },
+    "python:research/flywheel_selfplay/h245_gated_lambda_nest/test_h245.py": {
+      "role": "research",
+      "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/test_h249.py": {
+      "reason": "Owner-requested H249 data-free controls for zero-init low-rank residual side branch (SIDE4, SIDE16) vs CTRL AdamW r882 adapter continuation (step-0 bit-identity, frozen r882 weights, merged-weight equivalence, exact CTRL AdamW, frozen schedules, fold seed 249140, strict selector, four-gate advance rule with Holm m=2, H239 A1 memory guard, manifest pins).",
+      "role": "research"
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py": {
+      "role": "research",
+      "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

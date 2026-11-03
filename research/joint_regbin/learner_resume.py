@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import datetime
 import contextlib
+import argparse
 import json
 import math
 import os
@@ -24,11 +25,19 @@ import threading
 import time
 
 ROOT = Path("/home/ubuntu/JopeDime/.agent/worktrees/jrb-01-learner")
-OUT = Path("/home/ubuntu/jope_plan/evidence/JRB-01/sol-jrb01-t0415-lock")
+OUT = Path("/home/ubuntu/jope_plan/evidence/JRB-01/sol-jrb01-t1458")
+PRIOR_OUT = OUT.parent / "sol-jrb01-t0415-lock"
 OLD = OUT.parent / "sol-jrb01-t0240"
 PLAN = OLD / "FROZEN-PLAN.json"
 PACKET = Path("/home/ubuntu/jope-data/jrb-01/admitted-study-packet")
 STUDY = Path("/home/ubuntu/jope-data/jrb-01/sol-jrb01-study1")
+ATTEMPTS = STUDY / "recovery-t1458"
+QUALIFIED = STUDY / "qualified-t1458"
+BASELINE = OUT / "RECOVERY-BASELINE.json"
+BASELINE_SHA = "2f5fd89053b604e9b3edeb3d06ac1c2f2ee0e6de8ec884b5dfffed22444566ce"
+QUALIFIED_WORKER_SHA = (
+    "cb6918ca5c0869541acf37375cb1d3ebd47f72a5875b08dbe7f3b1c9caf993f8"
+)
 WORKER = ROOT / "research/joint_regbin/learner.py"
 CHECKPOINT = Path("/home/ubuntu/jope-data/H141-t1815/r882_init.pt")
 RULE = Path("/home/ubuntu/nudges/lanes_t0430_rulings.md")
@@ -36,16 +45,25 @@ RULE_SHA = "9f37306a25cafb0d213625d999c1d255bd8139425794ab2e5e82db15583da038"
 PLAN_SHA = "96310d6916d79c411a0fc4c53d2824ac678140f95b22520d6fd9fc3b0936abb3"
 WORKER_SHA = "558780bb5d91318864991ca398b9c63c4b31a12d1c8f3dd04ae26db7655b9918"
 RESOURCE_WORKER = ROOT / "research/joint_regbin/learner_resource.py"
-RESOURCE_SHA = "e6fc667e4fbc1c20b16bf2edc785eaae4b448ef3baeacc35a74173209795cf31"
-RESOURCE_QUALIFICATION = OUT / "RESOURCE-QUALIFICATION.json"
-RESOURCE_QUALIFICATION_SHA = (
-    "908e3d40cea04201a99482624e312c3554c442a236d4b9a4a4b30b153ca5e40b"
+RESOURCE_SHA = "3c6534979204b98450dac965935e9c019ad4f00f6a25958b0c92475b5298ca5c"
+RESOURCE_QUALIFICATION = Path(
+    "/home/ubuntu/jope_plan/evidence/JRB-01/sol-jrb01-t1450/RESOURCE-QUALIFICATION.json"
 )
+RESOURCE_QUALIFICATION_SHA = (
+    "796f2a80a537ae06b61f52f41c3770743775c43954af56e18fdec1708571df32"
+)
+RESERVATION_SHA = "f59cc7e6e8ec2639c723a21db1f0225a0b304c099d63cf332190dcbe7b870242"
+OWNER_EXTENSION_SHA = "48d45b3a0188d07fac037a2f30cfd216d9f8693006fc137654cea070ac7acd31"
 STORE_MODULE = Path("/home/ubuntu/jope_plan/scores/score_store.py")
 STORE = Path("/home/ubuntu/jope_plan/scores/history.jsonl")
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(ROOT))
-from research.joint_regbin import driver, learner, learner_resource, protocol  # noqa: E402
+from research.joint_regbin import (  # noqa: E402
+    driver,
+    learner_resource,
+    learner_source,
+    protocol,
+)
 from research.flywheel_selfplay import qualification_lock_fifo as fifo  # noqa: E402
 
 QUEUE = Path("/home/ubuntu/jope_plan/qualification.queue")
@@ -66,6 +84,166 @@ def write(path, obj):
 
 def read(path):
     return json.loads(path.read_text())
+
+
+def execution_charge(segments):
+    """Charge every earlier attempt, including rejected work and drain time."""
+    total = 0.0
+    previous_end = None
+    for start, end in segments:
+        start = datetime.datetime.fromisoformat(start)
+        end = datetime.datetime.fromisoformat(end)
+        if (
+            start.tzinfo is None
+            or end.tzinfo is None
+            or end <= start
+            or (previous_end is not None and start < previous_end)
+        ):
+            raise ValueError("invalid or overlapping prior execution interval")
+        total += (end - start).total_seconds()
+        previous_end = end
+    return total
+
+
+def verify_preserved(directory, files):
+    """An audit cannot silently omit, mutate or substitute a prior artifact."""
+    actual = {
+        str(p.relative_to(directory)) for p in directory.rglob("*") if p.is_file()
+    }
+    if actual != set(files):
+        raise ValueError("prior artifact inventory differs")
+    for name, entry in files.items():
+        path = directory / name
+        if (
+            path.is_symlink()
+            or not path.resolve().is_relative_to(directory.resolve())
+            or path.stat().st_size != entry["bytes"]
+            or protocol.file_sha(path) != entry["sha256"]
+        ):
+            raise ValueError("preserved artifact differs: " + name)
+
+
+def require_worker_provenance(receipt, expected):
+    updates = [u for trace in receipt["round_receipts"] for u in trace["updates"]]
+    if not updates or any(u["worker_source_sha256"] != expected for u in updates):
+        raise ValueError("actual worker source provenance differs")
+
+
+def recovery_baseline(plan):
+    if protocol.file_sha(BASELINE) != BASELINE_SHA:
+        raise ValueError("recovery baseline hash differs")
+    baseline = read(BASELINE)
+    pinned = {}
+    for name, pin in baseline["pins"].items():
+        path = Path(pin["path"])
+        if path.is_symlink() or protocol.file_sha(path) != pin["sha256"]:
+            raise ValueError("recovery evidence differs: " + name)
+        pinned[name] = read(path)
+    review = pinned["source_review"]
+    if (
+        review["source_fix_verdict"] != "PASS"
+        or review["qualification_sha256"] != RESOURCE_QUALIFICATION_SHA
+        or review["actual_worker_fingerprint"] != QUALIFIED_WORKER_SHA
+        or review["loader_sha256"] != protocol.file_sha(learner_source.__file__)
+    ):
+        raise ValueError("source review does not bind current recovery closure")
+    files = pinned["preserved_inventory"]["files"]
+    verify_preserved(STUDY, files)
+    rejection = pinned["rejection"]
+    rejected = set(baseline["rejected_job_ids"])
+    finished = set(baseline["qualified_job_ids"])
+    if (
+        rejection["decision"] != "REJECT_SOURCE_CLOSURE_PRESERVE_AND_CHARGE"
+        or {j["job_id"] for j in rejection["jobs"]} != rejected
+        or rejected & finished
+        or len(finished) != 1
+        or len(rejected) != 2
+    ):
+        raise ValueError("rejected/qualified prior job inventory differs")
+    spent = 0
+    observed = set()
+    for job in plan["jobs"]:
+        response = STUDY / f"{job['id']}-evaluate.response.json"
+        if not response.exists():
+            continue
+        job_id = job["id"]
+        observed.add(job_id)
+        train = read(STUDY / f"{job_id}-train.response.json")
+        evaluated = read(response)
+        if evaluated != dict(train, scores=evaluated["scores"]):
+            raise ValueError("prior train/evaluation receipt pair differs")
+        if train["actual_budget"] != protocol.expected_counts(plan["config"]):
+            raise ValueError("prior physical update budget differs")
+        spent += train["actual_budget"]["optimizer_steps"]
+        for phase, previous in (("train", None), ("evaluate", train)):
+            if read(STUDY / f"{job_id}-{phase}.request.json") != driver.request(
+                plan, job, phase, previous
+            ):
+                raise ValueError("prior request differs from frozen job")
+        if job_id in finished:
+            require_worker_provenance(train, QUALIFIED_WORKER_SHA)
+            driver.admit_result(plan, job, evaluated)
+        elif job_id in rejected:
+            require_worker_provenance(train, baseline["rejected_worker_source_sha256"])
+        else:
+            raise ValueError("unclassified prior job")
+    if observed != finished | rejected or spent != 300:
+        raise ValueError("prior physical charges or job inventory differ")
+    if rejection["study_optimizer_updates_spent"] != spent:
+        raise ValueError("rejection changed physical update charges")
+    charge = execution_charge(
+        [
+            (pinned["first_start"]["utc"], pinned["first_end"]["utc"]),
+            (pinned["second_start"]["utc"], pinned["second_end"]["utc"]),
+        ]
+    )
+    return dict(
+        files=files,
+        qualified_job_ids=sorted(finished),
+        rejected_job_ids=sorted(rejected),
+        physical_updates_spent=spent,
+        prior_execution_seconds=charge,
+        remaining_qualified_jobs=len(plan["jobs"]) - len(finished),
+        planned_qualified_updates=len(plan["jobs"]) * 100,
+        planned_physical_updates=spent + (len(plan["jobs"]) - len(finished)) * 100,
+    )
+
+
+def verify_readmission(path, expected_sha):
+    if path.is_symlink() or protocol.file_sha(path) != expected_sha:
+        raise ValueError("TEL readmission receipt hash differs")
+    receipt = read(path)
+    binding = receipt.get("source_binding", {})
+    accounting = receipt.get("recovery_accounting", {})
+    if (
+        receipt.get("decision") != "ADMISSION_PASS"
+        or binding.get("controller_sha256") != protocol.file_sha(__file__)
+        or binding.get("resource_qualification_sha256") != RESOURCE_QUALIFICATION_SHA
+        or binding.get("source_loader_sha256")
+        != protocol.file_sha(learner_source.__file__)
+        or accounting.get("baseline_sha256") != BASELINE_SHA
+        or accounting.get("physical_updates_spent") != 300
+        or accounting.get("planned_physical_updates") != 5600
+        or accounting.get("planned_qualified_updates") != 5400
+    ):
+        raise ValueError("TEL readmission lacks current resumer/accounting binding")
+    return receipt
+
+
+def publish_qualified(job_id, source):
+    """Create an immutable collection view; rejected originals remain untouched."""
+    receipt = read(source)
+    if receipt.get("job_id") != job_id or receipt.get("plan_sha256") != PLAN_SHA:
+        raise ValueError("qualified collection job/plan differs")
+    require_worker_provenance(receipt, QUALIFIED_WORKER_SHA)
+    target = QUALIFIED / f"{job_id}-evaluate.response.json"
+    raw = source.read_bytes()
+    with target.open("xb") as stream:
+        stream.write(raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+    if protocol.file_sha(target) != protocol.file_sha(source):
+        raise ValueError("qualified collection copy differs")
 
 
 def event(kind, **fields):
@@ -143,26 +321,56 @@ def proven_preexecution_refusal(log, response):
 def usage():
     return sum(
         p.stat().st_size
-        for root in (STUDY, OUT)
+        for root in (STUDY, OUT, PRIOR_OUT)
         for p in root.rglob("*")
         if p.is_file()
     )
 
 
+def owner_deadline_extension():
+    path = os.environ.get("JOPE_JRB_DEADLINE_EXTENSION")
+    sha = os.environ.get("JOPE_JRB_DEADLINE_EXTENSION_SHA256")
+    if path is None and sha is None:
+        return None
+    if (
+        not path
+        or sha != OWNER_EXTENSION_SHA
+        or Path(path).is_symlink()
+        or protocol.file_sha(Path(path)) != OWNER_EXTENSION_SHA
+    ):
+        raise ValueError("owner deadline extension hash differs")
+    approval = read(Path(path))
+    if (
+        approval.get("kind") != "OWNER_DEADLINE_EXTENSION_APPROVAL"
+        or approval.get("approval_ref") != "t188s1838"
+        or approval.get("plan_sha256") != PLAN_SHA
+        or approval.get("reservation_sha256") != RESERVATION_SHA
+        or approval.get("computation", {}).get("window_seconds") != 22658
+    ):
+        raise ValueError("owner deadline extension scope differs")
+    return approval
+
+
 def amended_deadline(campaign, prior_execution_seconds, resumed_at):
-    """T0430 permits 30min infrastructure extension, never a new 6h budget."""
+    """T0430 permits bounded infrastructure extension; prior work stays charged."""
     original = campaign["deadline_unix"]
     if (
         campaign["plan_sha256"] != PLAN_SHA
         or campaign["wall_seconds"] != 21600
         or original != campaign["started_unix"] + 21600
         or not 0 < prior_execution_seconds < 21600
+        or resumed_at < campaign["started_unix"] + prior_execution_seconds
     ):
         raise ValueError("original reservation/execution charge differs")
-    effective = original + 1800
-    if prior_execution_seconds + max(0, effective - resumed_at) > 21600:
-        raise ValueError("deadline amendment would reset the active execution budget")
-    return effective
+    extension = owner_deadline_extension()
+    if extension is not None:
+        latest = extension["new_deadline"]["resume_must_occur_before_utc"].split()[0]
+        if resumed_at >= datetime.datetime.fromisoformat(latest).timestamp():
+            raise ValueError(
+                "owner deadline extension requires a fresh receipt after17:30"
+            )
+        return resumed_at + extension["computation"]["window_seconds"]
+    return min(original + 7200, resumed_at + 21600 - prior_execution_seconds)
 
 
 def oldest_ticket():
@@ -211,6 +419,14 @@ def ordered_lock(deadline):
 
 
 def main():
+    global learner, WORKER
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--audit-only", action="store_true")
+    args = parser.parse_args()
+    resumed_at = time.time()
+    run_started = time.monotonic()
+    learner = learner_source.load()
+    WORKER = Path(learner.__file__)
     os.nice(max(0, 19 - os.getpriority(os.PRIO_PROCESS, 0)))
     learner.torch.set_num_threads(1)
     assert protocol.file_sha(RULE) == RULE_SHA
@@ -221,55 +437,68 @@ def main():
     plan = read(PLAN)
     assert plan["sha256"] == PLAN_SHA and read(STUDY / "plan.json") == plan
     campaign_path = driver.CAMPAIGNS / (PLAN_SHA + ".json")
+    assert protocol.file_sha(campaign_path) == RESERVATION_SHA, (
+        "original reservation changed"
+    )
     campaign = read(campaign_path)
     assert campaign["plan_sha256"] == PLAN_SHA and campaign["output"] == str(STUDY)
     assert campaign["wall_seconds"] == plan["config"]["wall_seconds"] == 21600
     assert campaign["deadline_unix"] == campaign["started_unix"] + 21600
-    prior_execution_seconds = (
-        datetime.datetime.fromisoformat(read(OLD / "STUDY-EXIT.json")["utc"])
-        - datetime.datetime.fromisoformat(read(OLD / "DISPATCH.json")["utc"])
-    ).total_seconds()
-    deadline = amended_deadline(campaign, prior_execution_seconds, time.time())
+    audit = recovery_baseline(plan)
+    prior_execution_seconds = audit["prior_execution_seconds"]
+    deadline = amended_deadline(campaign, prior_execution_seconds, resumed_at)
+    extension = owner_deadline_extension()
+    extension_fields = (
+        {}
+        if extension is None
+        else dict(
+            owner_extension_sha256=OWNER_EXTENSION_SHA,
+            owner_extension_receipt=os.environ["JOPE_JRB_DEADLINE_EXTENSION"],
+            owner_extension_window_seconds=extension["computation"]["window_seconds"],
+        )
+    )
     monotonic_deadline = time.monotonic() + max(0, deadline - time.time())
     preflight = driver.preflight(plan, PACKET, WORKER, CHECKPOINT)
-    initial_files = {
-        str(p.relative_to(STUDY)): protocol.file_sha(p)
-        for p in STUDY.rglob("*")
-        if p.is_file()
-    }
-    finished = []
-    for job in plan["jobs"]:
-        response = STUDY / f"{job['id']}-evaluate.response.json"
-        if response.exists():
-            driver.admit_result(plan, job, read(response))
-            train = read(STUDY / f"{job['id']}-train.response.json")
-            evaluated = read(response)
-            assert evaluated == dict(train, scores=evaluated["scores"])
-            assert read(STUDY / f"{job['id']}-train.request.json") == driver.request(
-                plan, job, "train"
-            )
-            assert read(STUDY / f"{job['id']}-evaluate.request.json") == driver.request(
-                plan, job, "evaluate", train
-            )
-            for trace in train["round_receipts"]:
-                assert (
-                    protocol.file_sha(Path(trace["checkpoint_path"]))
-                    == trace["checkpoint_sha256"]
-                )
-            finished.append(job["id"])
-    assert finished == [plan["jobs"][0]["id"]], (
-        "unexpected initial inventory; explicit audit required"
-    )
+    if args.audit_only:
+        print(
+            json.dumps(
+                dict(
+                    status="RECOVERY_INPUTS_VERIFIED_NOT_LAUNCHED",
+                    source_sha256=protocol.file_sha(__file__),
+                    plan_sha256=PLAN_SHA,
+                    qualification_sha256=RESOURCE_QUALIFICATION_SHA,
+                    effective_deadline_unix=deadline,
+                    accounting={k: v for k, v in audit.items() if k != "files"},
+                    preflight=preflight,
+                    **extension_fields,
+                ),
+                indent=2,
+            ),
+            flush=True,
+        )
+        return
+    readmission = Path(os.environ["JOPE_JRB_READMISSION"])
+    readmission_sha = os.environ["JOPE_JRB_READMISSION_SHA256"]
+    verify_readmission(readmission, readmission_sha)
+    if ATTEMPTS.exists() or QUALIFIED.exists():
+        raise ValueError(
+            "recovery attempt/view already exists; explicit audit required"
+        )
+    initial_files = audit["files"]
+    finished = list(audit["qualified_job_ids"])
+    physical_updates = audit["physical_updates_spent"]
     write(
         OUT / "FROZEN-PRIOR-INVENTORY.json",
         dict(
-            files=initial_files,
-            completed_jobs=finished,
+            **audit,
             original_campaign=campaign,
             campaign_sha256=protocol.file_sha(campaign_path),
+            baseline_sha256=BASELINE_SHA,
             frozen_plan_file_sha256=protocol.file_sha(PLAN),
             admission_sha256=protocol.file_sha(OUT.parent / "ADMISSION-PASS.json"),
+            readmission_sha256=readmission_sha,
             authority_sha256=RULE_SHA,
+            **extension_fields,
         ),
     )
     write(
@@ -284,16 +513,35 @@ def main():
             authority=str(RULE),
             authority_sha256=RULE_SHA,
             plan_sha256=PLAN_SHA,
+            qualified_source_commit=learner_source.COMMIT,
+            source_loader_sha256=protocol.file_sha(learner_source.__file__),
             resource_wrapper_sha256=RESOURCE_SHA,
             resource_qualification_sha256=RESOURCE_QUALIFICATION_SHA,
             preflight=preflight,
             original_deadline_unix=campaign["deadline_unix"],
             effective_deadline_unix=deadline,
-            deadline_amendment_seconds=1800,
+            deadline_amendment_seconds=deadline - campaign["deadline_unix"],
+            maximum_deadline_extension_seconds=(
+                7200 if extension is None else deadline - campaign["deadline_unix"]
+            ),
             prior_execution_seconds=prior_execution_seconds,
-            maximum_total_execution_seconds=21600,
+            resumed_started_unix=resumed_at,
+            physical_updates_spent=physical_updates,
+            planned_physical_updates=audit["planned_physical_updates"],
+            planned_qualified_updates=audit["planned_qualified_updates"],
+            rejected_job_ids=audit["rejected_job_ids"],
+            qualified_results=str(QUALIFIED),
+            readmission_sha256=readmission_sha,
+            recovery_baseline_sha256=BASELINE_SHA,
+            maximum_total_execution_seconds=(
+                21600
+                if extension is None
+                else prior_execution_seconds
+                + extension["computation"]["window_seconds"]
+            ),
             original_started_unix=campaign["started_unix"],
             budget_reset=False,
+            **extension_fields,
         ),
     )
     gate = LoadGate()
@@ -345,6 +593,7 @@ def main():
             effective_deadline_unix=deadline,
             completed_frozen_jobs=finished,
             fifo_ticket=str(ticket),
+            **extension_fields,
         )
         write(
             OUT / "LOCK-ACQUIRED.json",
@@ -353,8 +602,13 @@ def main():
                 utc=now(),
                 authority_sha256=RULE_SHA,
                 deadline_unix=deadline,
+                **extension_fields,
             ),
         )
+        ATTEMPTS.mkdir()
+        QUALIFIED.mkdir()
+        for job_id in finished:
+            publish_qualified(job_id, STUDY / f"{job_id}-evaluate.response.json")
         thread = threading.Thread(target=monitor, daemon=True)
         thread.start()
         try:
@@ -365,7 +619,7 @@ def main():
                 train_receipt = None
                 for phase in ("train", "evaluate"):
                     dispatch_ready()
-                    prefix = STUDY / f"{job['id']}-{phase}"
+                    prefix = ATTEMPTS / f"{job['id']}-{phase}"
                     req = prefix.with_suffix(".request.json")
                     response = prefix.with_suffix(".response.json")
                     expected = driver.request(plan, job, phase, train_receipt)
@@ -442,7 +696,8 @@ def main():
                                     plan["config"]["output_bytes"]
                                     - sum(
                                         p.stat().st_size
-                                        for p in OUT.rglob("*")
+                                        for root in (OUT, PRIOR_OUT)
+                                        for p in root.rglob("*")
                                         if p.is_file()
                                     ),
                                 )
@@ -477,6 +732,7 @@ def main():
                         schema="jope.jrb01.resource-amendment-response/v1",
                         base_learner_sha256=WORKER_SHA,
                         wrapper_sha256=RESOURCE_SHA,
+                        source_loader_sha256=protocol.file_sha(learner_source.__file__),
                         qualification_sha256=RESOURCE_QUALIFICATION_SHA,
                         authority_sha256=RULE_SHA,
                         request_sha256=protocol.file_sha(req),
@@ -486,6 +742,7 @@ def main():
                         phase=phase,
                     ), "missing/invalid effective-resource provenance"
                     result = read(response)
+                    require_worker_provenance(result, QUALIFIED_WORKER_SHA)
                     if phase == "train":
                         assert result["actual_budget"] == protocol.expected_counts(
                             plan["config"]
@@ -495,8 +752,14 @@ def main():
                             and result["job_id"] == job["id"]
                         )
                         train_receipt = result
+                        physical_updates += result["actual_budget"]["optimizer_steps"]
+                        if physical_updates > audit["planned_physical_updates"]:
+                            raise ValueError(
+                                "unexpected extra physical optimizer updates"
+                            )
                     else:
                         driver.admit_result(plan, job, result)
+                        publish_qualified(job["id"], response)
                         store_result = driver.append_score_store(
                             plan, driver.job_rows(job, result), STORE_MODULE, STORE
                         )
@@ -524,9 +787,11 @@ def main():
                     completed_jobs=len(finished),
                     expected_jobs=54,
                 )
-            driver.collect(plan, STUDY)  # full inventory/paired-source validation only
-            for relative, sha in initial_files.items():
-                assert protocol.file_sha(STUDY / relative) == sha, (
+            driver.collect(
+                plan, QUALIFIED
+            )  # full inventory/paired-source validation only
+            for relative, entry in initial_files.items():
+                assert protocol.file_sha(STUDY / relative) == entry["sha256"], (
                     "prior artifact changed"
                 )
             assert (
@@ -537,16 +802,27 @@ def main():
             driver.write_new(
                 STUDY / "execution.json",
                 dict(
-                    wall_seconds=time.time() - campaign["started_unix"],
+                    wall_seconds=prior_execution_seconds
+                    + time.monotonic()
+                    - run_started,
+                    elapsed_since_reservation_seconds=time.time()
+                    - campaign["started_unix"],
+                    physical_optimizer_updates=physical_updates,
+                    qualified_optimizer_updates=5400,
+                    rejected_optimizer_updates=200,
+                    qualified_results=str(QUALIFIED),
                     jobs=len(plan["jobs"]),
                     resume_authority_sha256=RULE_SHA,
                     budget_reset=False,
+                    **extension_fields,
                 ),
             )
             event(
                 "ALL_JOBS_COMPLETE",
                 jobs=54,
                 optimizer_steps=5400,
+                physical_optimizer_steps=physical_updates,
+                rejected_optimizer_steps=200,
                 prior_artifacts_unchanged=True,
             )
         finally:
@@ -558,7 +834,7 @@ def main():
         "-m",
         "research.joint_regbin.report",
         str(PLAN),
-        str(STUDY),
+        str(QUALIFIED),
         "--out",
         "/home/ubuntu/jope-data/jrb-01/sol-jrb01-report1",
         "--score-store-module",

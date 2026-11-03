@@ -100,7 +100,7 @@ impl super::Session {
             (
                 self.message
                     .clone()
-                    .unwrap_or_else(|| "ready · no active run".into()),
+                    .unwrap_or_else(|| crate::terminal::screen::IDLE_STATUS.into()),
                 self.activity.clone(),
             )
         }

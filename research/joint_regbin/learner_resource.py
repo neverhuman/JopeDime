@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from research.joint_regbin import driver, learner, protocol  # noqa: E402
+from research.joint_regbin import driver, learner, learner_source, protocol  # noqa: E402
 
 BASE_SHA = "558780bb5d91318864991ca398b9c63c4b31a12d1c8f3dd04ae26db7655b9918"
 AUTHORITY = Path("/home/ubuntu/nudges/lanes_t0430_rulings.md")
@@ -32,6 +32,8 @@ def resource_check(device):
 def install():
     # Deliberate reviewed execution amendment, never a hidden hash substitution.
     # The new callback does no model, gradient, optimizer or RNG computation.
+    global learner
+    learner = learner_source.load()
     learner.resource_check = resource_check
 
 
@@ -43,6 +45,8 @@ def qualification(path, expected_sha):
         evidence.get("status") != "PASS"
         or evidence.get("base_learner_sha256") != BASE_SHA
         or evidence.get("wrapper_sha256") != protocol.file_sha(__file__)
+        or evidence.get("source_loader_sha256")
+        != protocol.file_sha(learner_source.__file__)
         or evidence.get("authority_sha256") != AUTHORITY_SHA
         or evidence.get("numerical_equivalence") is not True
         or evidence.get("finite_gradients") is not True
@@ -55,6 +59,8 @@ def qualification(path, expected_sha):
 
 
 def main():
+    global learner
+    learner = learner_source.load()
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("request", "response", "packet", "initial-checkpoint"):
         parser.add_argument("--" + name, type=Path, required=True)
@@ -76,6 +82,7 @@ def main():
             schema="jope.jrb01.resource-amendment-response/v1",
             base_learner_sha256=BASE_SHA,
             wrapper_sha256=protocol.file_sha(__file__),
+            source_loader_sha256=protocol.file_sha(learner_source.__file__),
             qualification_sha256=receipt_sha,
             authority_sha256=AUTHORITY_SHA,
             request_sha256=protocol.file_sha(request_path),

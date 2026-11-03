@@ -75,17 +75,234 @@ def test_resume_dispatch_load_gate_requires_five_spaced_high_samples():
     assert not gate.blocked()
 
 
-def test_resume_deadline_amendment_carries_old_execution_without_reset():
+def test_resume_deadline_amendment_carries_old_execution_without_reset(monkeypatch):
     from research.joint_regbin.learner_resume import PLAN_SHA, amended_deadline
 
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION", raising=False)
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", raising=False)
     campaign = dict(
         plan_sha256=PLAN_SHA, wall_seconds=21600, started_unix=0, deadline_unix=21600
     )
-    assert amended_deadline(campaign, 330, 3600) == 23400
-    with pytest.raises(ValueError, match="reset"):
-        amended_deadline(campaign, 330, 1000)
+    assert amended_deadline(campaign, 330, 3600) == 24870
+    assert amended_deadline(campaign, 330, 10000) == 28800
+    for resumed in (1000, 3600, 10000):
+        assert amended_deadline(campaign, 330, resumed) - resumed + 330 <= 21600
     with pytest.raises(ValueError, match="charge differs"):
         amended_deadline(dict(campaign, wall_seconds=22000), 330, 3600)
+
+
+def test_resume_owner_deadline_extension_hash_window_and_latest_start(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    approval = dict(
+        kind="OWNER_DEADLINE_EXTENSION_APPROVAL",
+        approval_ref="t188s1838",
+        plan_sha256=resume.PLAN_SHA,
+        reservation_sha256=resume.RESERVATION_SHA,
+        computation=dict(window_seconds=22658),
+        new_deadline=dict(
+            resume_must_occur_before_utc="2026-11-02T17:30:00Z (otherwise re-record)"
+        ),
+    )
+    path = tmp_path / "owner-extension.json"
+    path.write_text(json.dumps(approval))
+    sha = protocol.file_sha(path)
+    # The fixture pin substitutes for the immutable production approval pin.
+    monkeypatch.setattr(resume, "OWNER_EXTENSION_SHA", sha)
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION", str(path))
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", sha)
+    campaign = dict(
+        plan_sha256=resume.PLAN_SHA,
+        wall_seconds=21600,
+        started_unix=0,
+        deadline_unix=21600,
+    )
+    assert resume.amended_deadline(campaign, 925.815489, 10000) == 32658
+    late = resume.datetime.datetime(
+        2026, 11, 2, 17, 30, tzinfo=resume.datetime.UTC
+    ).timestamp()
+    with pytest.raises(ValueError, match="fresh receipt"):
+        resume.amended_deadline(campaign, 925.815489, late)
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", "wrong hash")
+    with pytest.raises(ValueError, match="hash differs"):
+        resume.amended_deadline(campaign, 925.815489, 10000)
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256")
+    with pytest.raises(ValueError, match="hash differs"):
+        resume.amended_deadline(campaign, 925.815489, 10000)
+    monkeypatch.delenv("JOPE_JRB_DEADLINE_EXTENSION")
+    assert resume.amended_deadline(campaign, 925.815489, 10000) == 28800
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("kind", "OTHER_APPROVAL"),
+        ("approval_ref", "wrong reference"),
+        ("plan_sha256", "wrong plan"),
+        ("reservation_sha256", "wrong reservation"),
+        ("window_seconds", 21600),
+        ("window_seconds", 22659),
+    ],
+)
+def test_resume_owner_deadline_extension_refuses_wrong_scope(
+    tmp_path, monkeypatch, field, value
+):
+    from research.joint_regbin import learner_resume as resume
+
+    approval = dict(
+        kind="OWNER_DEADLINE_EXTENSION_APPROVAL",
+        approval_ref="t188s1838",
+        plan_sha256=resume.PLAN_SHA,
+        reservation_sha256=resume.RESERVATION_SHA,
+        computation=dict(window_seconds=22658),
+    )
+    if field == "window_seconds":
+        approval["computation"][field] = value
+    else:
+        approval[field] = value
+    path = tmp_path / "wrong-scope.json"
+    path.write_text(json.dumps(approval))
+    sha = protocol.file_sha(path)
+    monkeypatch.setattr(resume, "OWNER_EXTENSION_SHA", sha)
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION", str(path))
+    monkeypatch.setenv("JOPE_JRB_DEADLINE_EXTENSION_SHA256", sha)
+    with pytest.raises(ValueError, match="scope differs"):
+        resume.owner_deadline_extension()
+
+
+def test_resume_charges_rejected_attempt_and_drain_without_overlap():
+    from research.joint_regbin.learner_resume import execution_charge
+
+    segments = [
+        ("2026-11-02T11:00:24.788852+00:00", "2026-11-02T11:05:55.470557+00:00"),
+        ("2026-11-02T14:27:58.968547+00:00", "2026-11-02T14:37:54.102331+00:00"),
+    ]
+    assert execution_charge(segments) == pytest.approx(925.815489)
+    for invalid in (segments[::-1], [(segments[0][1], segments[0][0])]):
+        with pytest.raises(ValueError, match="interval"):
+            execution_charge(invalid)
+
+
+def test_resume_preservation_rejects_mutation_extra_file_and_symlink(tmp_path):
+    from research.joint_regbin.learner_resume import verify_preserved
+
+    source = tmp_path / "rejected.response.json"
+    source.write_bytes(b"rejected immutable artifact")
+    manifest = {
+        source.name: dict(bytes=source.stat().st_size, sha256=protocol.file_sha(source))
+    }
+    verify_preserved(tmp_path, manifest)
+    source.write_bytes(b"changed immutable artifact!")
+    with pytest.raises(ValueError, match="artifact differs"):
+        verify_preserved(tmp_path, manifest)
+    source.write_bytes(b"rejected immutable artifact")
+    extra = tmp_path / "unexpected"
+    extra.write_text("unclassified work")
+    with pytest.raises(ValueError, match="inventory differs"):
+        verify_preserved(tmp_path, manifest)
+    extra.unlink()
+    backing = tmp_path.parent / (tmp_path.name + "-backing")
+    backing.write_bytes(source.read_bytes())
+    source.unlink()
+    source.symlink_to(backing)
+    with pytest.raises(ValueError, match="artifact differs"):
+        verify_preserved(tmp_path, manifest)
+
+
+def test_resume_qualified_view_preserves_rejected_original_and_is_create_only(
+    tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    rejected = tmp_path / "job-evaluate.response.json"
+    rejected.write_text(
+        json.dumps(
+            dict(
+                job_id="job",
+                plan_sha256=resume.PLAN_SHA,
+                round_receipts=[dict(updates=[dict(worker_source_sha256="rejected")])],
+            )
+        )
+    )
+    rejected_bytes = rejected.read_bytes()
+    replacement = tmp_path / "recovery" / "job-evaluate.response.json"
+    replacement.parent.mkdir()
+    replacement.write_text(
+        json.dumps(
+            dict(
+                job_id="job",
+                plan_sha256=resume.PLAN_SHA,
+                round_receipts=[
+                    dict(
+                        updates=[dict(worker_source_sha256=resume.QUALIFIED_WORKER_SHA)]
+                    )
+                ],
+            )
+        )
+    )
+    view = tmp_path / "qualified"
+    view.mkdir()
+    monkeypatch.setattr(resume, "QUALIFIED", view)
+    with pytest.raises(ValueError, match="provenance"):
+        resume.publish_qualified("job", rejected)
+    assert not list(view.iterdir())
+    resume.publish_qualified("job", replacement)
+    assert rejected.read_bytes() == rejected_bytes
+    assert (view / rejected.name).read_bytes() == replacement.read_bytes()
+    with pytest.raises(FileExistsError):
+        resume.publish_qualified("job", replacement)
+
+
+def test_resume_requires_actual_worker_fingerprint_in_every_update():
+    from research.joint_regbin.learner_resume import require_worker_provenance
+
+    valid = dict(
+        round_receipts=[dict(updates=[dict(worker_source_sha256="qualified")])]
+    )
+    require_worker_provenance(valid, "qualified")
+    valid["round_receipts"][0]["updates"].append(dict(worker_source_sha256="rejected"))
+    with pytest.raises(ValueError, match="provenance"):
+        require_worker_provenance(valid, "qualified")
+    with pytest.raises(ValueError, match="provenance"):
+        require_worker_provenance(dict(round_receipts=[]), "qualified")
+
+
+def test_resume_readmission_binds_new_source_qualification_and_all_charges(tmp_path):
+    from research.joint_regbin import learner_resume as resume
+
+    path = tmp_path / "ADMISSION.json"
+    receipt = dict(
+        decision="ADMISSION_PASS",
+        source_binding=dict(
+            controller_sha256=protocol.file_sha(resume.__file__),
+            resource_qualification_sha256=resume.RESOURCE_QUALIFICATION_SHA,
+            source_loader_sha256=protocol.file_sha(resume.learner_source.__file__),
+        ),
+        recovery_accounting=dict(
+            baseline_sha256=resume.BASELINE_SHA,
+            physical_updates_spent=300,
+            planned_physical_updates=5600,
+            planned_qualified_updates=5400,
+        ),
+    )
+    path.write_text(json.dumps(receipt))
+    assert resume.verify_readmission(path, protocol.file_sha(path)) == receipt
+    for section, key, wrong in (
+        ("source_binding", "controller_sha256", "old controller"),
+        ("source_binding", "resource_qualification_sha256", "old q842"),
+        ("source_binding", "source_loader_sha256", "old loader"),
+        ("recovery_accounting", "physical_updates_spent", 100),
+        ("recovery_accounting", "planned_physical_updates", 5400),
+        ("recovery_accounting", "planned_qualified_updates", 5600),
+        ("recovery_accounting", "baseline_sha256", "unreviewed baseline"),
+    ):
+        damaged = json.loads(json.dumps(receipt))
+        damaged[section][key] = wrong
+        path.write_text(json.dumps(damaged))
+        with pytest.raises(ValueError, match="binding"):
+            resume.verify_readmission(path, protocol.file_sha(path))
 
 
 def test_resume_refusal_requires_proven_preexecution_and_no_artifacts(tmp_path):
@@ -196,15 +413,16 @@ def test_preparation_sampling_and_padding_preserve_only_train_rows():
     padded = gzip.decompress(prepare.padded_native_input(encoded))
     original = gzip.decompress(encoded)
     assert struct.unpack_from("<4sIIIB", padded) == (b"JTT1", 300, 10, 64, 2)
-    assert padded[17 : len(original)] == original[17:]
-    queries = np.frombuffer(padded[len(original) :], dtype="<f8").reshape(10, 65)
+    assert padded == original
+    queries = np.frombuffer(padded, dtype="<f8", offset=17 + 300).reshape(310, 65)[300:]
     assert np.array_equal(queries[:, :-1], selected_x[:10])
     assert np.count_nonzero(queries[:, -1]) == 0
     decoded_x, decoded_y = prepare.decode_train_table(encoded)
     assert np.array_equal(decoded_x, selected_x)
     assert np.array_equal(decoded_y, selected_y)
-    with pytest.raises(ValueError, match="TRAIN-only"):
-        prepare.decode_train_table(padded)
+    padded_x, padded_y = prepare.decode_train_table(padded)
+    assert np.array_equal(padded_x, selected_x)
+    assert np.array_equal(padded_y, selected_y)
     with pytest.raises(ValueError, match="each explicit binary class"):
         prepare.select_input(x, np.zeros(800), "binary", "fixed")
 
@@ -1211,6 +1429,40 @@ def test_result_admission_negative_controls(plan, mutation):
         receipt["learner_sha256"] = "f" * 64
     with pytest.raises(ValueError):
         admit_result(plan, job, receipt)
+
+
+def test_recovery_collection_excludes_rejected_originals_at_same_study_root(
+    plan, tmp_path, monkeypatch
+):
+    from research.joint_regbin import learner_resume as resume
+
+    qualified = tmp_path / "qualified"
+    qualified.mkdir()
+    attempts = tmp_path / "recovery"
+    attempts.mkdir()
+    monkeypatch.setattr(resume, "QUALIFIED", qualified)
+    monkeypatch.setattr(resume, "PLAN_SHA", plan["sha256"])
+    rejected_job = plan["jobs"][1]
+    rejected = receipt_for(plan, rejected_job)
+    for trace in rejected["round_receipts"]:
+        trace["updates"] = [dict(worker_source_sha256="rejected")]
+    original = tmp_path / f"{rejected_job['id']}-evaluate.response.json"
+    original.write_text(json.dumps(rejected))
+    original_hash = protocol.file_sha(original)
+    with pytest.raises(ValueError, match="provenance"):
+        resume.publish_qualified(rejected_job["id"], original)
+    for job in plan["jobs"]:
+        receipt = receipt_for(plan, job)
+        for trace in receipt["round_receipts"]:
+            trace["updates"] = [dict(worker_source_sha256=resume.QUALIFIED_WORKER_SHA)]
+        response = attempts / f"{job['id']}-evaluate.response.json"
+        response.write_text(json.dumps(receipt))
+        resume.publish_qualified(job["id"], response)
+    assert protocol.file_sha(original) == original_hash
+    assert len(list(qualified.glob("*-evaluate.response.json"))) == 54
+    assert collect(plan, qualified)
+    with pytest.raises(ValueError, match="missing/extra"):
+        collect(plan, tmp_path)
 
 
 def test_complete_collection_and_no_partial_inventory(plan, tmp_path):
@@ -2486,6 +2738,7 @@ def test_resource_amendment_defers_cpu_and_preserves_gpu_memory_guard(monkeypatc
     amendment.resource_check(torch.device("cuda:0"))
     old = amendment.learner.resource_check
     monkeypatch.setattr(amendment.learner, "resource_check", old)
+    monkeypatch.setattr(amendment.learner_source, "load", lambda: amendment.learner)
     amendment.install()
     assert amendment.learner.resource_check is amendment.resource_check
 
@@ -2497,6 +2750,7 @@ def test_resource_amendment_requires_exact_qualification_source_binding(tmp_path
         status="PASS",
         base_learner_sha256=amendment.BASE_SHA,
         wrapper_sha256=protocol.file_sha(amendment.__file__),
+        source_loader_sha256=protocol.file_sha(amendment.learner_source.__file__),
         authority_sha256=amendment.AUTHORITY_SHA,
         numerical_equivalence=True,
         finite_gradients=True,
@@ -2511,3 +2765,90 @@ def test_resource_amendment_requires_exact_qualification_source_binding(tmp_path
     path.write_text(json.dumps(receipt))
     with pytest.raises(ValueError, match="qualified source"):
         amendment.qualification(path, protocol.file_sha(path))
+
+
+def test_qualified_source_blob_is_content_addressed_and_rejects_tampering(
+    tmp_path, monkeypatch
+):
+    import hashlib
+
+    from research.joint_regbin import learner_source as source
+
+    raw = b"# immutable source fixture\n"
+    expected = hashlib.sha256(raw).hexdigest()
+    monkeypatch.setattr(source, "CACHE", tmp_path)
+    monkeypatch.setattr(source, "SOURCES", {"fixture": expected})
+    calls = []
+
+    def git_blob(args, **_kwargs):
+        calls.append(args)
+        return raw
+
+    monkeypatch.setattr(source.subprocess, "check_output", git_blob)
+    path = source.source_blob("fixture")
+    assert path.name == expected + ".py" and path.read_bytes() == raw
+    assert path.stat().st_mode & 0o222 == 0
+    assert source.source_blob("fixture") == path and len(calls) == 1
+    path.chmod(0o644)
+    path.write_bytes(b"changed")
+    with pytest.raises(source.runtime.SourcePinError, match="hash mismatch"):
+        source.source_blob("fixture")
+
+
+def test_qualified_source_binds_actual_runtime_consumers_and_rejects_stale_cache(
+    tmp_path,
+):
+    import os
+    import subprocess
+    import sys
+    import textwrap
+
+    builder = tmp_path / "candidate_builder.py"
+    builder.write_text("# isolated immutable builder fixture\n")
+    fixture_learner = tmp_path / "learner.py"
+    pins = {
+        "runtime.py": hashlib.sha256(Path(runtime.__file__).read_bytes()).hexdigest(),
+        "candidate_builder.py": hashlib.sha256(builder.read_bytes()).hexdigest(),
+    }
+    fixture_learner.write_text("SOURCE_PINS = " + repr(pins) + "\n")
+    code = textwrap.dedent("""
+        import hashlib, sys
+        from pathlib import Path
+        from research.joint_regbin import runtime, learner_source
+        root = Path(sys.argv[1])
+        paths = {name: root / (name + '.py') for name in ('candidate_builder', 'learner')}
+        learner_source.SOURCES = {
+            name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for name, path in paths.items()
+        }
+        learner_source.source_blob = paths.__getitem__
+        stale = runtime.candidate_builder
+        learner = learner_source.load()
+        from research import joint_regbin as package
+        qualified = package.candidate_builder
+        consumers = (runtime.SourcePinnedWorker.make_candidate_packer,
+                     runtime._worker_source_sha256)
+        assert stale is not qualified
+        assert all(f.__globals__['candidate_builder'] is qualified for f in consumers)
+        learner.verify_sources()
+        runtime.candidate_builder = stale
+        for check in (learner.verify_sources, learner_source.load):
+            try:
+                check()
+            except ValueError as error:
+                assert 'consumer' in str(error)
+            else:
+                raise AssertionError('stale actual consumer accepted')
+        runtime.candidate_builder = qualified
+        assert learner_source.load() is learner
+        learner.verify_sources()
+    """)
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", code, str(tmp_path)],
+        cwd=Path(__file__).resolve().parents[2],
+        env=dict(os.environ, CUDA_VISIBLE_DEVICES="", OMP_NUM_THREADS="1"),
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

@@ -1,9 +1,23 @@
 #!/usr/bin/env python3
 """Cargo external entry point for the owner's remote CPU dispatcher."""
+
+import argparse
 from pathlib import Path
 import runpy
 import sys
 
 if len(sys.argv) > 1 and sys.argv[1] == "qualification-cpu":
     del sys.argv[1]
-runpy.run_path(str(Path(__file__).resolve().with_name("cpu_gates.py")), run_name="__main__")
+
+selection = argparse.ArgumentParser(add_help=False)
+selection.add_argument("--repo", type=Path, default=Path.cwd())
+options, _ = selection.parse_known_args()
+root = options.repo.resolve()
+controller = root / "deploy/qualification/v1.0/cpu_gates.py"
+if (
+    not controller.is_file()
+    or controller.is_symlink()
+    or not controller.resolve().is_relative_to(root)
+):
+    selection.error("CPU controller must be a regular file inside the --repo checkout")
+runpy.run_path(str(controller), run_name="__main__")

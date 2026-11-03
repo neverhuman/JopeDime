@@ -82,12 +82,14 @@ def decode_train_table(raw):
     magic, n, nq, p, folds = struct.unpack_from("<4sIIIB", raw)
     if (
         magic != b"JTT1"
-        or nq != 0
+        or nq != cb.NATIVE_MIN_QUERY_ROWS
         or folds != 2
-        or len(raw) != 17 + n + 8 * n * (p + 1)
+        or len(raw) != 17 + n + 8 * (n + nq) * (p + 1)
     ):
         raise ValueError("original regression cut is not a TRAIN-only two-fold JTT1")
-    table = np.frombuffer(raw, dtype="<f8", offset=17 + n).reshape(n, p + 1)
+    table = np.frombuffer(raw, dtype="<f8", count=n * (p + 1), offset=17 + n).reshape(
+        n, p + 1
+    )
     return table[:, :-1].copy(), table[:, -1].copy()
 
 
@@ -135,15 +137,16 @@ def select_input(x, y, task, context_id):
 def padded_native_input(encoded):
     raw = gzip.decompress(encoded)
     magic, n, nq, p, folds = struct.unpack_from("<4sIIIB", raw)
-    if magic != b"JTT1" or nq != 0 or folds != 2:
+    if (
+        magic != b"JTT1"
+        or nq != cb.NATIVE_MIN_QUERY_ROWS
+        or folds != 2
+        or len(raw) != 17 + n + 8 * (n + nq) * (p + 1)
+    ):
         raise ValueError("TRAIN-only encoder contract differs")
-    table = np.frombuffer(raw, dtype="<f8", offset=17 + n).reshape(n, p + 1)
-    query = table[:10].copy()
-    query[:, -1] = 0
-    result = (
-        b"JTT1" + struct.pack("<IIIB", n, 10, p, folds) + raw[17:] + query.tobytes()
-    )
-    return gzip.compress(result, mtime=0)
+    # candidate_builder already emits the native minimum query rows from TRAIN.
+    # Preserve the canonical encoding instead of appending a duplicate block.
+    return encoded
 
 
 def dataset_metrics(document, task, expected_targets=None):
