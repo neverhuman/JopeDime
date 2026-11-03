@@ -1,5 +1,3 @@
-use super::*;
-
 /// Keep first/last and each horizontal bucket's extrema; never discard a spike
 /// merely because the full recorded history exceeds the terminal width.
 ///
