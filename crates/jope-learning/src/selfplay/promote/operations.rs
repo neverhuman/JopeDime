@@ -295,12 +295,12 @@ fn compare_and_advance(
     }
 }
 
-fn require_digest(value: &str, name: &str) -> Result<()> {
+pub(super) fn require_digest(value: &str, name: &str) -> Result<()> {
     ensure!(is_digest(value), "{name} must be a lowercase SHA256 digest");
     Ok(())
 }
 
-fn is_digest(value: &str) -> bool {
+pub(super) fn is_digest(value: &str) -> bool {
     value.len() == 64
         && value
             .bytes()
