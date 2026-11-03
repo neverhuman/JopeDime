@@ -1,21 +1,21 @@
 {
   "schema": "whitepaper.retained-best-plateau-figure/v1",
-  "input_csv_sha256": "858ae48c38dbc9496c77b031b5f0cfc8f7f7188378eaaeea3294e6d3d119240d",
-  "source_receipt_sha256": "e69bb32b98ef8ab18b01a48e341a7d8299455601f59b5c2fc0689b268adf460d",
+  "input_csv_sha256": "cf613cba08044493bc1da9722107848c33d02768297aa6c1749077ac2fcca1bc",
+  "source_receipt_sha256": "40b904b6f214d23b8891097e922b6b33566378083a4056702d8388295e400503",
   "generator_sha256": "9c88415c99460dd99c20154fcd220bdc602bc9bdfda57a59993b923a1d5eb71e",
-  "figure_sha256": "d9848da366afd72aa806df301a2d6314c6499faa4d72a211808cf39b4c7b6016",
-  "rows": 822,
+  "figure_sha256": "26e28ff2357d0c443a3df29255685be39bd4e08b09cc922b8a4bc94659367ced",
+  "rows": 866,
   "round_window": [
     3174,
-    3995
+    4039
   ],
   "last_strict_gain_round": 3175,
   "last_admitted_round": 3175,
   "trailing_rejection_rounds": [
     3176,
-    3995
+    4039
   ],
-  "trailing_rejections": 820,
+  "trailing_rejections": 864,
   "final_retained_utility": "1.1389572403748425",
   "best_round": 3175,
   "baseline_retained_utility": "1.1383668110784328",
