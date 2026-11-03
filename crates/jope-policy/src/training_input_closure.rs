@@ -304,24 +304,43 @@ mod tests {
 
     impl Fixture {
         fn new() -> Self {
-            let target_dir = std::env::var_os("CARGO_TARGET_DIR")
-                .map(PathBuf::from)
-                .filter(|path| !path.starts_with("/tmp"))
-                .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../target"));
-            let fixture_dir = target_dir
-                .join("jope-policy-training-closure-tests")
-                .join(format!(
-                    "{}-{}-{}",
-                    std::process::id(),
-                    NEXT.fetch_add(1, Ordering::Relaxed),
-                    std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap()
-                        .as_nanos()
-                ));
-            let root = fixture_dir.join("root");
-            fs::create_dir_all(&root).unwrap();
-            Self(fs::canonicalize(root).unwrap())
+            let id = format!(
+                "{}-{}-{}",
+                std::process::id(),
+                NEXT.fetch_add(1, Ordering::Relaxed),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            );
+            let mut bases = Vec::new();
+            if let Some(home) = std::env::var_os("HOME").map(PathBuf::from) {
+                bases.push(home.join(".cache/jope/policy-closure-fixtures"));
+            }
+            if let Some(target) = std::env::var_os("CARGO_TARGET_DIR").map(PathBuf::from) {
+                bases.push(target.join("jope-policy-training-closure-tests"));
+            }
+            bases.push(
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../target/jope-policy-training-closure-tests"),
+            );
+            for base in bases {
+                if base.starts_with("/tmp") {
+                    continue;
+                }
+                let fixture_dir = base.join(&id);
+                let root = fixture_dir.join("root");
+                if fs::create_dir_all(&root).is_err() {
+                    continue;
+                }
+                if let Ok(root) = fs::canonicalize(root) {
+                    if !root.starts_with("/tmp") {
+                        return Self(root);
+                    }
+                }
+                let _ = fs::remove_dir_all(fixture_dir);
+            }
+            panic!("no writable durable directory for closure test fixture")
         }
 
         fn write(&self, name: &str, bytes: &[u8]) -> Value {
