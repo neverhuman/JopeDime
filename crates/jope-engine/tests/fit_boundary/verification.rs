@@ -107,7 +107,7 @@ fn self_hashed_but_uncommitted_completion_is_rejected_by_cli() {
     data.authority.assert_no_fit_starts();
 }
 
-const ENTRIES: [&str; 5] = [
+pub(super) const ENTRIES: [&str; 5] = [
     "fit",
     "fit-view",
     "evaluate-view",
