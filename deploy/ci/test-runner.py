@@ -310,7 +310,10 @@ class PublicationStatusTests(unittest.TestCase):
         self.assertIn('runner_pool: jope-ci', dispatch_classifier)
         ui = workflow.split('\n  observatory-ui:', 1)[1].split('\n  typescript:', 1)[0]
         self.assertIn('raw_results="$RUNNER_TEMP/jope-observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT/raw"', ui)
-        self.assertIn('node --input-type=module "$raw_results/tests.json"', ui)
+        self.assertIn(
+            'node --input-type=module - "$raw_results/tests.json" "$JOPE_UI_SOURCE_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" > "$bundle/receipt.json" <<\'JS\'',
+            ui,
+        )
         self.assertNotIn('JOPE_UI_EVIDENCE', ui)
         self.assertNotIn('process.env', ui)
         self.assertIn('$GITHUB_WORKSPACE/target/observatory-ui/$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT', ui)
