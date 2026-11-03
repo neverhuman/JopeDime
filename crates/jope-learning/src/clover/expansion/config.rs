@@ -36,6 +36,10 @@ fn string_array(source: &str, declaration: &str, count: usize) -> Result<Vec<Str
 pub fn audit(root: &Path) -> Result<Value> {
     let paths = [
         "crates/jope-engine/src/gp.rs",
+        "crates/jope-engine/src/gp/search_api.rs",
+        "crates/jope-engine/src/gp/search_inner.rs",
+        "crates/jope-engine/src/gp/parent_selection.rs",
+        "crates/jope-engine/src/gp/lineage.rs",
         "crates/jope-engine/src/grammar.rs",
         "crates/jope-engine/src/tournament.rs",
         "crates/jope-engine/src/manifest.rs",
@@ -72,26 +76,57 @@ pub fn audit(root: &Path) -> Result<Value> {
         hashes.insert(path, jope_pipeline::sha256_hex(&bytes));
         sources.insert(path, String::from_utf8(bytes)?);
     }
+    let gp_search = "crates/jope-engine/src/gp/search_inner.rs";
     let gp = "crates/jope-engine/src/gp.rs";
     require(
         &sources[gp],
         &[
-            "while population.len() < 80",
+            "include!(\"gp/search_api.rs\");",
+            "include!(\"gp/search_inner.rs\");",
+            "include!(\"gp/parent_selection.rs\");",
+            "pub mod lineage;",
+        ],
+        gp,
+    )?;
+    require(
+        &sources[gp_search],
+        &[
             "s.candidates.len() == 80",
             "let keep = ranked.len().min(10)",
             "random_word(rng_seed, slot, attempt, \"operator\") % 16",
             "keep == 0 || operator < 2",
             "if operator < 9",
             "feat_math::evolve::random_canonical_pipeline(proposal_seed, 6)",
-            "(random_draw % keep as u64) as usize",
-            "(score - maximum).exp().max(1e-6)",
             "if evaluated_programs.insert(canonical)",
             "evaluations <= 1000",
             "seconds <= 600",
-            "parallel.gp_random_streams.v3",
             "selection_replay::PROPOSAL_CAP_PER_SLOT",
         ],
-        gp,
+        gp_search,
+    )?;
+    let gp_api = "crates/jope-engine/src/gp/search_api.rs";
+    require(
+        &sources[gp_api],
+        &[
+            "while population.len() < 80",
+            "feat_math::evolve::random_canonical_pipeline(seed, 6)",
+        ],
+        gp_api,
+    )?;
+    let parent_selection = "crates/jope-engine/src/gp/parent_selection.rs";
+    require(
+        &sources[parent_selection],
+        &[
+            "(score - maximum).exp().max(1e-6)",
+            "(random_draw % keep as u64) as usize",
+        ],
+        parent_selection,
+    )?;
+    let lineage = "crates/jope-engine/src/gp/lineage.rs";
+    require(
+        &sources[lineage],
+        &["parallel.gp_random_streams.v3"],
+        lineage,
     )?;
     let grammar = "crates/jope-engine/src/grammar.rs";
     require(
@@ -205,7 +240,7 @@ mod tests {
             search::POPULATION
         );
         assert_eq!(receipt["engine_gp"]["per_operator_counts"], Value::Null);
-        assert_eq!(receipt["source_file_sha256"].as_object().unwrap().len(), 12);
+        assert_eq!(receipt["source_file_sha256"].as_object().unwrap().len(), 16);
         if let Some(path) = std::env::var_os("CLOVER_GB06_CONFIG_RECEIPT") {
             std::fs::write(path, serde_json::to_vec_pretty(&receipt).unwrap()).unwrap();
         }
