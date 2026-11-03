@@ -50,7 +50,7 @@ Training and deployment need separate ledgers. Training pays for every
 attempt, including failures. The proposed deployment protocol pays for
 encoding, one proposal and its fit, with no repair. Fixed-weight agent
 loops pay for evaluation during task-specific search. Training a proposer
-may shift some of that cost to earlier tasks; the crossover still needs
+may shift some of that cost to earlier tasks; the crossover point still needs
 measurement (\cref{sec:results}).
 
 \subsection{Wasted moves}\label{sub:price-waste}
@@ -146,7 +146,7 @@ within their measured range.
 \textbf{Precision to plan the test:} illustratively, 150 independent
 units at a win rate near 60\% give an approximate 95\% interval of
 $\pm 8$ points. The actual study must compute uncertainty over independent
-families, rather than treating every dataset as an independent observation.
+families, rather than treating each dataset as \mbox{an independent} observation.
 
 \subsection{Pricing evidence still required}\label{sub:price-run}
 
@@ -170,7 +170,7 @@ operating clocks (\cref{sec:method-status}) still requires an attempt ledger.
   and the probability that it wins.
 \end{keyidea}
 
-Under \cref{eq:bill}'s fixed-probability model, doubling $\winprob$ halves
+Under the fixed-probability model in \cref{eq:bill}, doubling $\winprob$ halves
 expected cost per win only if mean attempt cost stays fixed. Measuring that
 tradeoff requires a common task mix, incumbent and verification rule.
 In the reference protocol, referee-scored attempts supply training targets

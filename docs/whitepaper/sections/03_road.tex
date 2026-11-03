@@ -30,7 +30,7 @@ made the case on images \citep{krizhevsky2012imagenet}, the Transformer
 modeled sequences with attention \citep{vaswani2017attention}, and empirical
 scaling laws related language-model loss to model size, dataset size and
 training compute \citep{kaplan2020scaling,hoffmann2022chinchilla}.
-\citet{sutton2019bitter} drew the lesson: general methods that use
+\citet{sutton2019bitter} drew the lesson: \mbox{general} methods that use
 computation win.
 
 Generative models turned representations into proposals in text, video
@@ -58,7 +58,7 @@ neither condition nor screen the writer; consequently, map-ranking accuracy and
 first-proposal quality require separate tests.
 
 Executable tests connect generated programs to feedback. \EZ{} proposes
-training on that feedback, then measuring first-proposal quality beyond
+training on that feedback, then \mbox{measuring} first-proposal quality beyond
 its training tasks.
 
 % ---------------------------------------------------------------------
@@ -94,9 +94,9 @@ machine-learning engineering tasks \citep{mlevolve2026}.
 
 \EZ{} adopts executable programs as moves inside this generate--judge loop,
 and asks how much of a verified search can transfer into the proposer itself.
-DreamCoder already learns reusable libraries and a search-guiding model across
-tasks \citep{ellis2021dreamcoder}; a single-candidate evaluation tests how
-useful a learned proposal is before additional task-specific search.
+DreamCoder \mbox{already} learns reusable libraries and a search-guiding model across
+tasks \citep{ellis2021dreamcoder}; single-candidate evaluation tests how
+\mbox{useful} a learned proposal is before task-specific search.
 
 % ---------------------------------------------------------------------
 \subsection{Reinforcement learning turned retention into taste}\label{sub:road-rl}
@@ -138,8 +138,8 @@ intuition \citep{anthony2017expert,silver2017mastering}.
 
 \begin{table*}[t]
 \caption{\textbf{Related approaches retain experience in different forms.}
-This qualitative comparison separates output, deployment budget and retained
-state. Exact budgets depend on each study's protocol. The last row states
+This comparison separates output, deployment budget and retained
+experience. Exact budgets depend on each study's protocol. The last row states
 \EZ{}'s design; its proposal quality is still to be tested.}
 \label{tab:roads}
 \centering
@@ -228,7 +228,7 @@ itself, though its authors note: ``Since the language models themselves are
 not altered, this is not full recursive self-improvement''
 \citep{zelikman2024stop}. Similarly, the Darwin G\"odel Machine's self-editing agents
 raised its SWE-bench score from 20.0\% to 50.0\% \citep{zhang2025dgm}, and
-AlphaEvolve cut Gemini's training time by 1\%
+AlphaEvolve cut \mbox{Gemini's} training time by 1\%
 \citep{novikov2025alphaevolve}.
 
 Language models also play themselves. SPIN plays its previous iteration
@@ -269,7 +269,7 @@ Together, these systems motivate two reference requirements: verify an improveme
 before retaining it, and sandbox candidate execution
 (\cref{sub:method-referee}). The proposed learning test compares a trained
 writer against its frozen reference under the same deployment budget,
-separately from the adapter operating record in \cref{sec:method-status}.
+separately from the adapter \mbox{operating} record in \cref{sec:method-status}.
 
 % ---------------------------------------------------------------------
 \subsection{Where the roads meet}\label{sub:road-meet}
@@ -280,7 +280,7 @@ produces and what it spends. Cross-task predictors and network generators
 readable-program output; one candidate does not equalize compute or inputs.
 Absolute Zero and STP use correctness feedback, whereas a declared incumbent
 sets our comparison standard. \Cref{sec:game} defines the resulting game;
-\cref{fig:game-loop} separates reference training from game-day evaluation.
+\cref{fig:game-loop} separates \mbox{reference training} from game-day evaluation.
 
 \begin{keyidea}
 The test is whether experience on earlier discovery tasks improves the first

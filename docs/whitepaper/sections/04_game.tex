@@ -33,8 +33,8 @@ the ultimate goal (checkmate)'' \citep{shannon1950chess}, and checkers showed
 that a program could improve by playing itself \citep{samuel1959checkers}.
 
 Together, these four properties support repeated, reproducible evaluation. People
-scale judgment the same way, through prizes, leaderboards and the common task
-framework's ``scoring referee'' \citep{donoho2017fifty} (\cref{sec:road}).
+scale judgment in the same way (\cref{sec:road}), through prizes, leaderboards and the common task
+framework's ``scoring referee'' \citep{donoho2017fifty}.
 Invention shares the first three properties once the problem and solution are
 specified, within the limits of \cref{sub:game-played}; whether replay becomes cheap is a
 question of evaluation cost (\cref{sec:price}).
@@ -47,13 +47,13 @@ while the referee keeps the incumbent as a separate comparison standard
 (\cref{sub:method-board}); its code and score must stay outside the writer's
 input.
 
-\Cref{fig:game-loop} separates training from game day. Its top row follows
+\Cref{fig:game-loop} separates training from game day. Its top band follows
 the single-candidate contract in \cref{box:searchone}.
 
 \begin{table}[htb]
   \caption{\textbf{Go and the innovation game share structure but differ in move cost.}
   Go's moves are cheap, while each program is costly to judge
-  (\cref{sub:game-played}). Go's game length is
+  (\cref{sub:game-played}). Go's move count is
   from \citet{silver2016mastering}.}
   \label{tab:go-vs-innovation}
   \centering
@@ -87,8 +87,8 @@ ranking map (\cref{sub:method-map}). Game-day generation and the referee
 do not use $\encS$. The referee $\referee$ reports validity and score, the
 reward $\reward$ orders moves, and the opponent $\opp$ supplies the
 incumbent $\inc{p}$. The tuple extends Rice's model of algorithm
-selection \citep{rice1976algorithm}: the player writes the algorithm instead of
-picking it, and a declared incumbent sets the comparison standard.
+selection \citep{rice1976algorithm}: the player writes an algorithm instead of
+\mbox{picking} it, and the incumbent sets the comparison standard.
 
 With one move, the game is a contextual bandit: the board supplies context,
 the program is the action and the
@@ -111,7 +111,7 @@ specifies the reference encoder and its cost limit.
 In the inspected implementation, that encoder consumes prepared numeric training
 rows and targets; the writer's engine and regression-task tokens are
 supplied separately. The objective, metric and budget are protocol
-settings, not additional fields in this encoder call.
+settings, not additional input fields in this encoder call.
 
 A useful board should preserve distinctions relevant to algorithm choice,
 remain stable under irrelevant reorderings, exclude final evaluation
@@ -129,7 +129,7 @@ syntactic variants; it need not identify every functionally equivalent
 implementation. AutoML-Zero
 reused scores when hashes of truncated predictions matched after a short
 training and validation probe \citep{real2020automlzero}. Matching a probe
-does not establish agreement on other inputs (\cref{sub:method-move}).
+does not establish agreement \mbox{on other} inputs (\cref{sub:method-move}).
 
 The language bounds what can be expressed; changing its primitives changes
 that space \citep{boden1990creative}. Structural constraints can prevent invalid programs; their effect on useful proposal
@@ -218,7 +218,7 @@ reads the board can choose its bias board by board. \Cref{sec:results} reserves 
 frontier-designed regressors, with paired outcomes beside Elo summaries
 \citep{elo1978rating}. Non-transitive comparisons are one reason not to
 reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
-A worked game, chosen by a rule fixed before inspection, is to be reported with
+A worked game, chosen by a rule fixed before inspection, is to be reported alongside
 the results (\cref{sub:results-failures}).
 
 The game defines an attempt and a verdict. \Cref{sec:price} accounts for
