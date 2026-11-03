@@ -1,4 +1,8 @@
-use super::*;
+use feat_math::{
+    transpile::{emit, EmitOptions},
+    GenomeIr,
+};
+use std::{fs, process::Command};
 
 #[test]
 fn exp_next_04_tie_plateau_and_representative_pipelines_match_native_partition_point() {
