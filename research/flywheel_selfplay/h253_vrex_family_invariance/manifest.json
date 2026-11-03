@@ -1,0 +1,131 @@
+{
+  "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "assets": {
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt": "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952",
+    "/home/ubuntu/JopeDimeMicro/assets/models/flywheel_winner_pool_v3a_q25_train_only_430.pt": "6f1646afce6be9e88eab289cda0c8b5edec3da13a373518709183dbbfff856b9",
+    "/home/ubuntu/JopeDimeMicro/assets/models/h40b_round2_dope_self_contained_10tok.pt": "3a1b62754b372a2572b5664929bfa8706da654446a35122d3a8b7702fc2b25db",
+    "/home/ubuntu/JopeDimeMicro/assets/projections/frozen_stage1_stage2_inference_params_v3.pt": "136b2381c312fd4bf267249fe0543aa44f5b780a05d57f974d43dd4277588b6d",
+    "/home/ubuntu/JopeDimeMicro/python/rank_prepare.py": "534169af0443122600853ef9e96d734d570cd9d77c2a3d21e7b6456b4b19ab40",
+    "/home/ubuntu/JopeDimeMicro/python/model.py": "0aa76360a7e5e691e420bd5a88a05b343b5b83edcc645e5f50fb33a3d5756f5a",
+    "/home/ubuntu/JopeDimeMicro/python/rust_evaluator.py": "53422343699172b61ed69ed707015558f7cf1a344e5449f30e1eb9d708aef900",
+    "/home/ubuntu/JopeDimeMicro/python/phase12_multimodal_model.py": "7f5d30280de5cd47e8af5aa6787e5cb2bff321d984f9cae7d261eabd0a9c0d7a",
+    "/home/ubuntu/JopeDimeMicro/python/research/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/__init__.py": "4b6481f96986d33139cd5a078a3da50d0b41378b3aa109f5cf85af93d31fd8af",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/scaling.py": "6d592197a5a74afc1a9eddc18e1ca894987de831e0b61ef1c8a9b65e9154ded3",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/budget_planner.py": "ae76dd8c587c00d28e57cb152de6719f77cc516c660819d7990823c6a9ff1e4f",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/building_block_landmarks.py": "fc2cc82ec4c654a512f592211e21a940a2c7a5baf3e002fe5a1e7649fdfb9186",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multiclass_head.py": "d4c9e750330487b4c9c2cd6c702ed58201eb9322735b911e45ec7cff883f4cda",
+    "/home/ubuntu/JopeDimeMicro/python/research/levels/multilevel_model.py": "39ce38d17a87a2f9cf1a02dbad6efb6606100d46c66ab00fcd56c0416e9643b6"
+  },
+  "packages": {
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "psutil": "7.1.0"
+  },
+  "wave": "H253",
+  "authority": "/home/ubuntu/nudges/hw_t1225_res08_h253.md",
+  "checkpoint": "/home/ubuntu/jope-data/h253/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h253/inputs/best_dev_checkpoint.json",
+  "seeds": [
+    253101,
+    253102,
+    253103
+  ],
+  "fold_seed": 253140,
+  "boot_seed": 253150,
+  "steps": [
+    0,
+    10,
+    20,
+    30,
+    40
+  ],
+  "arms": [
+    "CONTROL",
+    "VREX_B1",
+    "VREX_B10"
+  ],
+  "parent_commit": "40f69bc51a43c9289236e6e1cf36e9b847905376",
+  "inputs": {
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h50/input/cpu_exact_fused.py": "b9f1468a61aa4dc888c8f2931f9c759f7d4f057793a77ccb05eed6300fb4f9ab",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h253/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h253/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h253/inputs/archived-r3175-reference.json": "be48f4949001fd859b016cd731847a20dbe3b89fa19ba70cf5e587283e236914"
+  },
+  "parent_sources": {
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h146_lookahead_exec/runtime.py": "82c9c4423e9730be99d0073e81fb061d68d4d66c629cfabe528c45172614264d",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/h156/run.py": "0403256105a0bd6221bf39283b598d6d9ec8b4f7bed132bd885934eec7e0143c",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/h156/analysis.py": "6a7b85de4c44448cff8f006be2ceb5ad950a26a3790aad97cbe19f55fc0f6dc0",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/h148/analysis.py": "912201520712f406252aec5129f4532748571d6911a526be89d1b3a01bcc205a",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h165_gradient_noise_dropout/runner.py": "6430691737b88abbd4923976bf25f95bd4acdc3af1b14eff4653f91646b52d0a",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h165_gradient_noise_dropout/analysis.py": "59352b84a3ef7f9764a6489ad3865e86925de6e2f3c80d23a5c2f9e5453ad1fd",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h165_gradient_noise_dropout/treatment.py": "a532ca1b8a6eb8e0ebbb455a82662bf0a03088b768ada8e285e27222427e8e04",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h165_gradient_noise_dropout/monitor.py": "39c16a4cc75fda51ba370feb44013abd2fa3ca26894e4c87adfc28ff83947602",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h170_onecycle/runner.py": "a76985f7e006005785885429c18582d9063f5e557b06b950cb6d023d91cb3bf8",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h170_onecycle/treatment.py": "45fcb10302c3274482490bf444457993c0025185c4e05cf706d0611df9ae39de",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h170_onecycle/analysis.py": "d0cd7cf8bafe4903509e77d438242ef41b82ed75609674cf7357773f93f07694",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h170_onecycle/monitor.py": "053f758e620b1b40847d9c0c7f5235a75029ad220d33bea7b42f5410dca3d8df",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/runtime_audit.py": "74bb794018acd001a4caa509154c9743a92d50e3891d50495a0cd4095a7cd8a4",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h232_lion/runner.py": "45c1730b73446a5234efeb1600c6c005957784b7019a8a88af2ae2e1e18fa5ce",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h232_lion/treatment.py": "a2aa29abe68f49ea2d0bf53df737c68a64e6b523f425159b0f46949241415d4f",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h232_lion/analysis.py": "9643a2fcef4d5cc4fdc7181ff6a15b806914d4e981fe9dc63bb398e2d8842cf5",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h232_lion/monitor.py": "5de09684efe35e2399fcd2a15208957f9103fb79cb754510c10b69a6a1bf4ea8",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h234_lambdaloss/runner.py": "573ffae88dd282a381a9800dab11e725c95a6c2200dad1396785e9f44c3fa289",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h234_lambdaloss/treatment.py": "e4e8aab640e2d7c6118f60809c601a1876ff2d836dc2c30b6c294f4ce77777e3",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h234_lambdaloss/analysis.py": "7ea925baece47d79db8e57b1f1888e8c6fa3eac638012cdf380326bdee5aa0e1",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h234_lambdaloss/monitor.py": "62947186e8e120eac841343ef0e05234a934b84eee90279306566f18d3a7ce5a",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h237_adabelief/runner.py": "7a6b25ada4427c5835734df49b979d1fe620c4da73ada3980870579059323d31",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h237_adabelief/treatment.py": "18149e4d9fe9fb9895ed4a983e2be4c5d1a9e736da1927058cb5b6a5421d2226",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h237_adabelief/analysis.py": "eec3cf67b107c1aec3b8b71451265bf0541eb90aa6c09404c75d74d96a428909",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h243_modsoup/monitor.py": "fe5ec9ec56f98786330aa1ec146c3a02a256a4f5e2ebf9c0293a9b285fad190a",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h247_muon_grokfast/runner.py": "4af46a634fec6b0836680eedb863a1044de0d9c6a5339d16b611318f9d1fcccc",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h247_muon_grokfast/treatment.py": "56c27da85ced0a96cc32b2a40640cde203722123d99999bb664928ca03b89003",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h247_muon_grokfast/analysis.py": "dc66994350a9b027b8555cf94dcf2581c6d045e6f83ed9df75a60cd9e6b75396",
+    "/home/ubuntu/jope_plan/evidence/H253/res08-t1225/immutable/research/flywheel_selfplay/h247_muon_grokfast/monitor.py": "305ac610811ad85118ef1a51e4470dbc19734b9c48c0786ec253ae83c39caa8e"
+  },
+  "source_sha256": {
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "schedules.json": "1c9307bef7f5ef2f801bafebfee4dd290ba26b56de99081c819bca69466f06e6",
+    "test_h253.py": "49fc688a603ae6f0d7dce12cf848e64312eeb126de0581eb0a545e359468514a",
+    "metrics.schema.json": "a8b3da5c24e011509395f050f9a04b93f56d048744b9e82796fd2ca883346ed5",
+    "analysis.py": "d544c64fa5f014df3dfb87adf005a4220daed6f6a2a51d7c09051ee363e5822d",
+    "treatment.py": "ad7a4c15aba093e0ccdf1faa132b92e9a1aac59b98d795193802b00bc031164d",
+    "PREREG.md": "e804b24f7c0fb1b6878fd13e7d3e9ce02d8111b2fa2e3b0b76880877c72eb357",
+    "launcher.py": "34e74e490af10d2b2e7df5867b815ff8701bf7bb0d618c8e86be0b96a382ba27",
+    "monitor.py": "6474e36c37d6b8e7921daf85f4386bd89e4ce639882e1c1a41e9245a74377725",
+    "fold_manifest.json": "95c08c1a757c6618723887eeb90297199558f6e42a9b043f8ed6d1f1cbf89f28",
+    "runner.py": "6f05768ef1dbe407d506c9fdef76d74f5a3331dbf2d90d4a84fa20995eff5c3d"
+  },
+  "host": "xbabe2 CPU40-43 nice19; one math thread; H239A1 guards; source outside jope-data",
+  "compute_stop": "2026-11-03T15:30:00Z",
+  "fold_seeds": {
+    "253101": 253140,
+    "253102": 253140,
+    "253103": 253140
+  },
+  "archived_plateau_reference": "/home/ubuntu/jope-data/h253/inputs/archived-r3175-reference.json",
+  "total_updates": 1800,
+  "smoke_updates": 3,
+  "prereg_deadline": "2026-11-03T13:30:00Z",
+  "closeout_deadline": "2026-11-03T16:15:00Z",
+  "max_resumes": 0,
+  "vrex": {
+    "beta_multipliers": {
+      "CONTROL": 0,
+      "VREX_B1": 1,
+      "VREX_B10": 10
+    },
+    "scale": "1/max(median over all FIT contexts of population variance across full-pool candidate H170 loss contributions at frozen r882,1e-12); detached, once per outer fold, shared by seeds/arms",
+    "variance": "population variance of four equal-weight FIT-family mean context risks",
+    "family_batch": "four FIT families without replacement, two contexts/family; replacement only for singleton families; fixed shared(seed,fold,step) streams",
+    "primary": "DL-Val context-weighted mean per seed, five cells averaged; median across seeds and shared family bootstrap; Holm m2",
+    "secondary": "TRAIN strict OOF equal-family means"
+  },
+  "fold_manifest_sha256": "95c08c1a757c6618723887eeb90297199558f6e42a9b043f8ed6d1f1cbf89f28",
+  "normalization_and_sampling_frozen_before_outcomes": true,
+  "archived_reference_qualification": "ARCHIVED_ONLY_MATCHED_IDENTITY; H226 CPU parity FAIL; no new native calls"
+}

@@ -430,9 +430,9 @@
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
     "python:research/flywheel_selfplay/h250_ctxz/test_h250.py": {
-        "reason": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
-        "role": "research"
-      },
+      "reason": "H250 data-free z-loss affine/floor gradients, failure cost sign, balanced sampler, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
       "reason": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
       "role": "research"
@@ -6004,6 +6004,10 @@
     "python:research/flywheel_selfplay/h249_side_branch/test_h249.py": {
       "reason": "Owner-requested H249 data-free controls for zero-init low-rank residual side branch (SIDE4, SIDE16) vs CTRL AdamW r882 adapter continuation (step-0 bit-identity, frozen r882 weights, merged-weight equivalence, exact CTRL AdamW, frozen schedules, fold seed 249140, strict selector, four-gate advance rule with Holm m=2, H239 A1 memory guard, manifest pins).",
       "role": "research"
+    },
+    "python:research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py": {
+      "role": "research",
+      "reason": "H253 V-REx family-risk variance penalty vs exact H170 CTRL; FIT-only normalization, paired four-family sampler, strict global-lock selection, frozen DOPE and single CPU run; data-free objective/control/sampler/statistic/guard tests, no serving qualification."
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

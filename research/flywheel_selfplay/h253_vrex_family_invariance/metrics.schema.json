@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "H253 compact metrics",
+  "type": "object",
+  "required": [
+    "wave",
+    "status",
+    "verdict",
+    "optimizer_updates",
+    "primary_dlval",
+    "source_commit"
+  ],
+  "properties": {
+    "wave": {
+      "const": "H253"
+    },
+    "status": {
+      "enum": [
+        "PREREGISTERED",
+        "COMPLETE",
+        "CLOSED_INCOMPLETE"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        null,
+        "ADVANCE",
+        "NO_ADVANCE",
+        "INCOMPLETE"
+      ]
+    },
+    "optimizer_updates": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "primary_dlval": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "source_commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

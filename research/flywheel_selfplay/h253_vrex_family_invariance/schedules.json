@@ -1,0 +1,1097 @@
+{
+  "candidate_steps": [
+    0,
+    10,
+    20,
+    30,
+    40
+  ],
+  "arms": {
+    "CONTROL": [
+      {
+        "step": 1,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 2,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 3,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 4,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 5,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 6,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 7,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 8,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 9,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 10,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 11,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 12,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 13,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 14,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 15,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 16,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 17,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 18,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 19,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 20,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 21,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 22,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 23,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 24,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 25,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 26,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 27,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 28,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 29,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 30,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 31,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 32,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 33,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 34,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 35,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 36,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 37,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 38,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 39,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      },
+      {
+        "step": 40,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 0.0
+      }
+    ],
+    "VREX_B1": [
+      {
+        "step": 1,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 2,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 3,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 4,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 5,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 6,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 7,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 8,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 9,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 10,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 11,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 12,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 13,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 14,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 15,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 16,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 17,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 18,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 19,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 20,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 21,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 22,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 23,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 24,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 25,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 26,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 27,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 28,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 29,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 30,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 31,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 32,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 33,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 34,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 35,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 36,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 37,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 38,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 39,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      },
+      {
+        "step": 40,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 1.0
+      }
+    ],
+    "VREX_B10": [
+      {
+        "step": 1,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 2,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 3,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 4,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 5,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 6,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 7,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 8,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 9,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 10,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 11,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 12,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 13,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 14,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 15,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 16,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 17,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 18,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 19,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 20,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 21,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 22,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 23,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 24,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 25,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 26,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 27,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 28,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 29,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 30,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 31,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 32,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 33,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 34,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 35,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 36,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 37,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 38,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 39,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      },
+      {
+        "step": 40,
+        "optimizer": "AdamW",
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "beta_multiplier": 10.0
+      }
+    ]
+  }
+}
