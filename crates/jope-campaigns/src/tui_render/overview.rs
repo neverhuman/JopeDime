@@ -56,6 +56,7 @@ pub(crate) fn stale_suffix(now_ms_value: u128, fetched_at_ms: u128) -> String {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn sparkline(values: &[f64]) -> String {
     const BARS: [char; 8] = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
     let finite = values
