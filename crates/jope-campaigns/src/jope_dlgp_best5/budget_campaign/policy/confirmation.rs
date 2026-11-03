@@ -200,7 +200,7 @@ impl HyperionConfirmationReportV1 {
     }
 }
 
-fn median_f64(values: &[f64]) -> f64 {
+pub(super) fn median_f64(values: &[f64]) -> f64 {
     let mut sorted = values.to_vec();
     sorted.sort_by(f64::total_cmp);
     if sorted.len().is_multiple_of(2) {
