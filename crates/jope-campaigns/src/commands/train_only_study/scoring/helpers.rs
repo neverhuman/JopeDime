@@ -87,7 +87,7 @@ pub(crate) fn stronger_tabfm(tabfm: Option<f64>, ensemble: f64) -> (&'static str
     }
 }
 
-pub(crate) fn load_or_create_baselines(
+pub(super) fn load_or_create_baselines(
     root: &Path,
     run_id: &str,
     datasets: &[DatasetStudyEntry],
@@ -185,7 +185,7 @@ pub(crate) fn load_or_create_baselines(
     Ok((manifest, digest))
 }
 
-pub(crate) fn score_frozen_champion(
+pub(super) fn score_frozen_champion(
     member: &GenomeMember,
     train: &RegressionData,
     test: &RegressionData,
@@ -219,7 +219,7 @@ pub(crate) fn score_frozen_champion(
     })
 }
 
-pub(crate) fn load_or_create_final_cv_reranks(
+pub(super) fn load_or_create_final_cv_reranks(
     root: &Path,
     manifest: &TrainOnlyStudyManifest,
     validation: &TrainOnlyValidationReceipt,

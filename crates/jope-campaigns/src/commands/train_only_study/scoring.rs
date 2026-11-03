@@ -1,7 +1,7 @@
 use super::*;
 
 mod helpers;
-pub(in super::super) use helpers::{
+use helpers::{
     baseline_metric, load_or_create_baselines, load_or_create_final_cv_reranks,
     optional_baseline_metric, prior_aspfm_metric, score_frozen_champion, stronger_tabfm,
 };
