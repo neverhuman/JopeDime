@@ -1,4 +1,4 @@
-use super::*;
+use super::super::*;
 
 pub(crate) fn render_header(frame: &mut Frame<'_>, dashboard: &Dashboard, area: Rect) {
     let state_color = match dashboard.top_state.as_str() {
