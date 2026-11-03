@@ -4,7 +4,8 @@ mod scoring;
 mod validation;
 
 /// Build [`Columns`] from `(name, values)` pairs.
-pub fn columns_from_pairs(pairs: &[(&str, Vec<f64>)]) -> Columns {
+#[cfg(test)]
+pub(super) fn columns_from_pairs(pairs: &[(&str, Vec<f64>)]) -> Columns {
     pairs
         .iter()
         .map(|(name, values)| ((*name).to_owned(), values.clone()))
