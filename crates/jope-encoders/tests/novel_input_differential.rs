@@ -356,4 +356,5 @@ fn compare_target(name: &str, actual: &FusedTargetEncoding, expected: &TargetOra
     )
 }
 
+#[path = "novel_input_differential/runtime_differential.rs"]
 mod runtime_differential;
