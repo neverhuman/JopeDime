@@ -222,7 +222,7 @@ impl<'a> ContextualSurrogateQHat<'a> {
     pub(crate) fn state_sha256(&self) -> Result<String> {
         // Include every learned component, descriptor projection and filtered external prior.
         canonical_sha256(&(
-            self.ridge.weights.clone(),
+            self.ridge.weights().to_vec(),
             &self.ctx_proj,
             &self.prog_proj,
             &self.tot_stats,
