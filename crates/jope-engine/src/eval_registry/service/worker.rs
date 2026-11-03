@@ -1,9 +1,9 @@
 use super::*;
 
-struct OriginalChild {
-    child: Child,
-    process: ProcessIdentity,
-    reaped: bool,
+pub(super) struct OriginalChild {
+    pub(super) child: Child,
+    pub(super) process: ProcessIdentity,
+    pub(super) reaped: bool,
 }
 impl Drop for OriginalChild {
     fn drop(&mut self) {
@@ -336,6 +336,11 @@ pub struct WorkerPermit {
     custody: OwnedFd,
 }
 impl WorkerPermit {
+    #[cfg(test)]
+    pub(super) fn custody_path(&self) -> &std::path::Path {
+        &self.permission.custody_path
+    }
+
     pub fn verify(&self) -> Result<()> {
         if let Some(p) = &self.permission.native_placement {
             super::super::native_scq::verify_placement(
