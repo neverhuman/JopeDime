@@ -110,6 +110,9 @@ fn once_with_rustc(journals: &Path, state: &Path, rustc: &Path) -> serde_json::V
     serde_json::from_slice(&output.stdout).unwrap()
 }
 
+#[path = "gp_source/ingress.rs"]
 mod ingress;
+#[path = "gp_source/runtime.rs"]
 mod runtime;
+#[path = "gp_source/store.rs"]
 mod store;

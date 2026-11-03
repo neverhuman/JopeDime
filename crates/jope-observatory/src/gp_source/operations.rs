@@ -1,7 +1,6 @@
-use super::line::complete_line;
 use super::prelude::*;
-use super::types::{extension, valid_hash, Artifact, Status};
-use super::{hash, LANGUAGES};
+use super::types::{Artifact, Status, extension, valid_hash};
+use super::{LANGUAGES, hash};
 
 /// Resolve one supported language identifier to its pinned lexer kind.
 pub fn language_kind(language: &str) -> Result<Lang> {
@@ -154,5 +153,16 @@ pub fn check(root: &Path, artifact: &Artifact, timeout_seconds: u64) -> Result<C
         .read_to_end(&mut bytes)?;
     let mut diagnostic = String::from_utf8_lossy(&bytes).into_owned();
     diagnostic.push_str(&format!("\n{error}"));
-    Ok(Check { status:if passed {Status::Passed} else {Status::Failed}, tool:format!("{tool}; version={version:?}; diagnostic_file={diagnostics:?}; validation=syntax-and-types-v1; output_file_limit=4194304; address_space_limit=8589934592; cpu_seconds_limit={timeout_seconds}; timeout={timeout_seconds}s; argv={args:?}"), diagnostic, elapsed_ns:u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX) })
+    Ok(Check {
+        status: if passed {
+            Status::Passed
+        } else {
+            Status::Failed
+        },
+        tool: format!(
+            "{tool}; version={version:?}; diagnostic_file={diagnostics:?}; validation=syntax-and-types-v1; output_file_limit=4194304; address_space_limit=8589934592; cpu_seconds_limit={timeout_seconds}; timeout={timeout_seconds}s; argv={args:?}"
+        ),
+        diagnostic,
+        elapsed_ns: u64::try_from(started.elapsed().as_nanos()).unwrap_or(u64::MAX),
+    })
 }
