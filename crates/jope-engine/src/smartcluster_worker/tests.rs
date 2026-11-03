@@ -161,7 +161,6 @@ fn dataset_manifest_cannot_select_an_unapproved_cpu_packer() {
     assert!(super::execution::validate_dataset_packer(&approved, &request).is_err());
 }
 
-use super::*;
 fn task() -> TaskManifest {
     TaskManifest {
         schema: jain_smartcluster::jope::MANIFEST_SCHEMA.into(),
