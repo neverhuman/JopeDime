@@ -84,15 +84,15 @@ impl RoundState {
 
         // Strictly isolated per-outer-fold training acquisition states for active surrogate and
         // matched-budget passive hash-order control (`folds[j] != k`).
-        let mut active_acquired_by_fold: Vec<Vec<BTreeSet<usize>>> =
+        let active_acquired_by_fold: Vec<Vec<BTreeSet<usize>>> =
             vec![base_acquired.clone(); cfg.eval.folds];
-        let mut passive_acquired_by_fold: Vec<Vec<BTreeSet<usize>>> =
+        let passive_acquired_by_fold: Vec<Vec<BTreeSet<usize>>> =
             vec![base_acquired.clone(); cfg.eval.folds];
 
         // Strictly out-of-fold held-out discovery trajectories per context `i` (updated only by outer
         // fold `k = folds[i]`'s surrogate vs passive hash order; never read by any training fold).
-        let mut heldout_active_acquired: Vec<BTreeSet<usize>> = base_acquired.clone();
-        let mut heldout_passive_acquired: Vec<BTreeSet<usize>> = base_acquired.clone();
+        let heldout_active_acquired: Vec<BTreeSet<usize>> = base_acquired.clone();
+        let heldout_passive_acquired: Vec<BTreeSet<usize>> = base_acquired.clone();
 
         let mut round_summaries = Vec::with_capacity(cfg.rounds);
         let mut round_metrics_by_budget: Vec<BTreeMap<usize, Vec<ContextMetrics>>> =
