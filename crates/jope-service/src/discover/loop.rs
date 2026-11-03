@@ -255,24 +255,27 @@ mod start;
 mod tests;
 
 pub use admission::{
-    Admission, Candidate, HeuristicAdmission, RecordedAdmissionContext, RoundAdmission,
-    RoundContext, RoundMeasurement,
+    Admission, Candidate, HeuristicAdmission, RoundAdmission, RoundContext, RoundMeasurement,
 };
-pub(super) use evaluation::{
+#[cfg(feature = "research")]
+pub use admission::RecordedAdmissionContext;
+use evaluation::{
     add_events, checked_response, discard_pending, parallel_evaluate, public_failure, record_result,
 };
 pub use executor::{Executor, ProcessExecutor, SearchSpace};
 pub(crate) use helpers::evaluation_seed;
-pub(super) use helpers::{
+use helpers::{
     accepted_summary, checkpoint_blobs, evaluation_ordinal, experiment, hex_blob,
-    projected_summary, projector, public_metric, round_rng, rung0_budget_limit, rung0_budget_used,
+    projected_summary, public_metric, round_rng, rung0_budget_limit, rung0_budget_used,
 };
-pub(crate) use native::NativeModel;
 pub use native::{evaluate_native, run_m1, NativeSpace};
-pub(super) use planning::{plan_wave, plan_wave_inner};
+use planning::plan_wave;
+#[cfg(feature = "research")]
+use planning::plan_wave_inner;
 #[cfg(feature = "research")]
 pub(super) use research_helpers::{parallel_evaluate_research, research_response};
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Champion {
     pub candidate: Candidate,
     pub loss: f64,

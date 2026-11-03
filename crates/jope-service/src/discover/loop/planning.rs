@@ -1,6 +1,6 @@
 use super::*;
 
-fn plan_wave(
+pub(super) fn plan_wave(
     state: &mut Checkpoint,
     space: &impl SearchSpace,
     admission: &impl RoundAdmission,

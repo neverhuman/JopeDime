@@ -152,7 +152,6 @@ mod edits;
 mod program;
 
 use edits::{assemble, delete_stage, head_retry_order, index, mutate_parameters};
-#[cfg(test)]
 use program::digest;
 use program::hash_valid;
 pub use program::{memo_key, Program};
