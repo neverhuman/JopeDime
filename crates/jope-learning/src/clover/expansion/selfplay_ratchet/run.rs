@@ -297,7 +297,7 @@ pub fn run_selfplay_ratchet(request: SelfPlayRatchetRequest<'_>, output: &Path) 
         let decomposed_kl = policy_eval.decomposed_kl;
         let seed_update_frozen_by_kl_guard = policy_eval.seed_update_frozen_by_kl_guard;
 
-        // 4. Select top `seed_cap_b` archive + base winners; `seeds::admit` parses and canonicalizes
+        // 4. Select top `seed_cap_b` archive and base winners; `seeds::admit` parses and canonicalizes
         // each selected pipeline before it can seed Round `t+1`, unless the policy KL guard freezes updates.
         let next_round_seed_selector = if seed_update_frozen_by_kl_guard == Some(true) {
             "frozen_by_kl_guard".to_string()

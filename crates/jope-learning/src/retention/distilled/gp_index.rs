@@ -119,8 +119,14 @@ pub fn distill_gp_results_index_with_stats(
         let run_id = r
             .get("run_id")
             .and_then(serde_json::Value::as_str)
-            .or_else(|| r.get("eval").and_then(serde_json::Value::as_str))
-            .or_else(|| r.get("grain").and_then(serde_json::Value::as_str))
+            .or_else(|| {
+                // default eval fallback
+                r.get("eval").and_then(serde_json::Value::as_str)
+            })
+            .or_else(|| {
+                // default grain fallback
+                r.get("grain").and_then(serde_json::Value::as_str)
+            })
             .unwrap_or("gp-hwm");
         let program = r
             .get("program")
