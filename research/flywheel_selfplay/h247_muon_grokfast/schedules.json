@@ -1,0 +1,1212 @@
+{
+  "wave": "H247",
+  "note": "constant settings over 40 updates; MUON uses muon_lr on 2-D matrices (momentum .95 Nesterov, Newton-Schulz-5, decoupled wd 1e-4) and CTRL AdamW on all other tensors; GROKFAST applies the EMA filter (alpha .98, lambda 2.0) after backward and before the inherited global clip 1.0",
+  "arms": {
+    "CONTROL": [
+      {
+        "step": 1,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 2,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 3,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 4,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 5,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 6,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 7,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 8,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 9,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 10,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 11,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 12,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 13,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 14,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 15,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 16,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 17,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 18,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 19,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 20,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 21,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 22,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 23,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 24,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 25,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 26,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 27,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 28,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 29,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 30,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 31,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 32,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 33,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 34,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 35,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 36,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 37,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 38,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 39,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 40,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": null,
+        "grok_lambda": null
+      }
+    ],
+    "MUON": [
+      {
+        "step": 1,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 2,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 3,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 4,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 5,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 6,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 7,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 8,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 9,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 10,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 11,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 12,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 13,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 14,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 15,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 16,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 17,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 18,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 19,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 20,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 21,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 22,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 23,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 24,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 25,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 26,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 27,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 28,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 29,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 30,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 31,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 32,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 33,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 34,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 35,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 36,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 37,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 38,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 39,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      },
+      {
+        "step": 40,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": 0.0002,
+        "grok_alpha": null,
+        "grok_lambda": null
+      }
+    ],
+    "GROKFAST": [
+      {
+        "step": 1,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 2,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 3,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 4,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 5,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 6,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 7,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 8,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 9,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 10,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 11,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 12,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 13,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 14,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 15,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 16,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 17,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 18,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 19,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 20,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 21,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 22,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 23,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 24,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 25,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 26,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 27,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 28,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 29,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 30,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 31,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 32,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 33,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 34,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 35,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 36,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 37,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 38,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 39,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      },
+      {
+        "step": 40,
+        "lr": 0.0001,
+        "beta1": 0.9,
+        "beta2": 0.999,
+        "weight_decay": 0.0001,
+        "muon_lr": null,
+        "grok_alpha": 0.98,
+        "grok_lambda": 2.0
+      }
+    ]
+  }
+}
