@@ -1,3 +1,4 @@
+use super::super::types::BatchPreflight;
 use super::*;
 
 #[test]

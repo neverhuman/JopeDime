@@ -239,11 +239,11 @@ impl WorkerJob {
 /// successful exit still calls `WorkerJob::verify_inputs` with full hashes.
 /// A file may change after this preflight; that later full check must reject it.
 #[derive(Default)]
-struct BatchPreflight {
+pub(super) struct BatchPreflight {
     verified: BTreeSet<(PathBuf, String)>,
 }
 impl BatchPreflight {
-    fn verify(&mut self, job: &WorkerJob) -> Result<()> {
+    pub(super) fn verify(&mut self, job: &WorkerJob) -> Result<()> {
         ensure!(
             !job.command.inputs.is_empty(),
             "worker input closure is empty"
