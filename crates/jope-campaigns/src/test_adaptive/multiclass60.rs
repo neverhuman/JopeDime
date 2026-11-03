@@ -299,28 +299,20 @@ mod validation;
 
 use self::plan as plan_module;
 use self::plan::{
-    bind_frozen_comparator, build_plan, canonical_manifest_sha256, coverage_gate, dataset_entries,
     multiclass_head_family, read_plan, read_value, ready_dataset_bindings, required_hash,
-    rewrite_seed, run_root, seed_population, seed_sources_sha256, validate_coverage_receipt,
-    validate_source_manifest,
+    rewrite_seed, run_root, validate_source_manifest,
 };
 use evolution::{
-    checkpoint_path, evolution_seed, genome_complexity, load_checkpoint, next_population,
-    regression_surrogate, slot_rank_order, slots_from_receipts,
+    checkpoint_path, load_checkpoint, next_population, slot_rank_order, slots_from_receipts,
 };
 use ledger::{
-    comparator_protocol_sha256, dataset_started_at, dataset_terminal, fetch_shard_receipt,
-    find_named_file, ledger_path, read_receipt_values, render_spec, scheduler_preemption, scq_rows,
-    shard_job_id, shard_manifest, spec_job_id, terminal_infrastructure_state,
-    write_multiclass_terminal_report,
+    comparator_protocol_sha256, dataset_terminal, fetch_shard_receipt, ledger_path,
+    read_receipt_values, render_spec, scheduler_preemption, scq_rows, shard_job_id, shard_manifest,
+    spec_job_id, terminal_infrastructure_state, write_multiclass_terminal_report,
 };
 #[cfg(test)]
 use ledger::{initial_budget_complete, next_generation_index};
-use replay::{
-    manage_winner_replay, render_replay_spec, replay_job_id, replay_manifest,
-    replay_role_capability, validate_replay_receipt, write_exhausted_ledger,
-};
-use validation::validate_ledger;
+use replay::{manage_winner_replay, write_exhausted_ledger};
 
 pub(crate) fn plan(
     run_id: &str,
