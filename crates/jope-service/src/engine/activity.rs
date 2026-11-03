@@ -213,7 +213,7 @@ pub(crate) struct TrackedListener {
     pub(crate) activity: Arc<EngineActivity>,
 }
 
-struct TrackedStream {
+pub struct TrackedStream {
     stream: TcpStream,
     _activity: ActivityGuard,
 }
