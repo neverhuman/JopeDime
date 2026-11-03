@@ -2,6 +2,11 @@ use super::*;
 
 type Slot = Option<(usize, Child, Instant)>;
 pub(crate) struct OwnedSlots(Vec<Slot>);
+impl OwnedSlots {
+    pub(crate) fn empty(count: usize) -> Self {
+        Self(std::iter::repeat_with(|| None).take(count).collect())
+    }
+}
 impl std::ops::Deref for OwnedSlots {
     type Target = Vec<Slot>;
     fn deref(&self) -> &Self::Target {
