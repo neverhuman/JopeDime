@@ -156,7 +156,7 @@ pub fn validate_probe_slate(payload: &Value, production: bool) -> Result<(), Str
             let genome = required(slot, "canonical_genome")?
                 .as_str()
                 .filter(|genome| !genome.is_empty());
-            if genome.map_or(true, |genome| digest(genome.as_bytes()) != semantic) {
+            if genome.is_none_or(|genome| digest(genome.as_bytes()) != semantic) {
                 return Err("slot semantic hash does not bind its genome".into());
             }
             if !semantics.insert(semantic) {
@@ -177,9 +177,7 @@ pub fn validate_probe_slate(payload: &Value, production: bool) -> Result<(), Str
                 if !anchor_index.is_null() {
                     return Err("non-anchor slot cannot carry anchor_index".into());
                 }
-                if role == "transfer" {
-                    dataset(source, "source_dataset_hash")?;
-                } else if !source.is_null() {
+                if role == "transfer" || !source.is_null() {
                     dataset(source, "source_dataset_hash")?;
                 }
             }
@@ -311,7 +309,7 @@ fn finite(value: &Value, name: &str, minimum: Option<f64>) -> Result<f64, String
     value
         .as_number()
         .and_then(Number::as_f64)
-        .filter(|number| number.is_finite() && minimum.map_or(true, |minimum| *number >= minimum))
+        .filter(|number| number.is_finite() && minimum.is_none_or(|minimum| *number >= minimum))
         .ok_or_else(|| format!("{name} must be finite"))
 }
 
@@ -375,7 +373,7 @@ fn canonical_json(value: &Value, output: &mut String) -> Result<(), String> {
         Value::Object(values) => {
             output.push('{');
             let mut entries: Vec<_> = values.iter().collect();
-            entries.sort_by(|(left, _), (right, _)| left.cmp(right));
+            entries.sort_by_key(|(key, _)| key.as_str());
             for (index, (key, value)) in entries.into_iter().enumerate() {
                 if index > 0 {
                     output.push(',');
