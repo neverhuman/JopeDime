@@ -30,8 +30,6 @@ use crate::corrections::{Corrections, CorrectionsMeta};
 use crate::elo::Direction;
 use crate::io::{read_bytes, read_json, read_text, resolve_input, sha256_hex};
 use crate::scores::parse_scores;
-#[cfg(test)]
-use crate::scores::ScoreRow;
 
 /// `tracks/<track>/track.json` (the fields the ladder needs; the rest is kept as `extra`).
 #[derive(Clone, Debug, Deserialize)]
