@@ -29,9 +29,8 @@
 \end{table*}
 
 The learning question in \cref{sec:intro} requires separating four roles:
-aim, variation, judgment and retention. They connect what a system
-proposes, how it is evaluated and what the next attempt retains. We call
-judgment learned before a try \emph{taste}.
+aim, variation, judgment and retention. They distinguish a system's proposals, evaluation and retained experience.
+We call judgment learned before a try \emph{taste}.
 
 \subsection{Novelty is free}\label{sub:anatomy-novelty}
 
@@ -71,7 +70,8 @@ Campbell argued that every genuine gain in knowledge needs a mechanism for intro
 game. It can store either an output or a way to propose better outputs.
 Archiving a winning program does the first; using evaluation feedback to
 update the proposer attempts the second. This distinction connects the
-four pillars to the learning question in \cref{sec:intro}.
+four pillars to the learning question in \cref{sec:intro};
+\cref{tab:where} compares where human and machine systems retain feedback.
 
 \subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
 
@@ -95,10 +95,10 @@ proposals need not follow \cref{eq:taste}; independence alone does not say
 whether the approximation overstates or understates their cost. Empirical
 attempt curves are required for those systems.}
 
-The equation prices proposal quality, whether training, structural
-constraints or revealed outcomes provide it. Comparing random generators,
-pretrained models and agent systems therefore requires measured proposal
-quality. In particular, \searchone{} fixes the number of candidates a system
+The equation relates proposal quality to expected attempts, whether
+training, structural constraints or revealed outcomes improve that quality.
+Comparisons of random generators, pretrained models and agent systems
+therefore need measured win probabilities. In particular, \searchone{} fixes the number of candidates a system
 may submit; it does not require the probability of a win to approach certainty.
 A single-candidate system can fail, and every failure must remain in its
 reported results. \Cref{sec:price} uses the same idealization to relate
@@ -124,7 +124,8 @@ improves algorithm invention must be measured in the innovation game.
 
 \subsection{Where the pillars live}\label{sub:anatomy-where}
 
-Machines do not remove the pillars; they move them (\cref{tab:where}). The most ambitious swarm design fits the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, that knowledge archive supplies retention; the model of reality, the twins and the laboratories supply judgment; and the agents supply variation and critique.
+Machines distribute the pillars across different components
+(\cref{tab:where}). Swarm designs fit the same anatomy. In an October 2026 essay drawn from his book, Socher rests the Eureka Machine on ``a living map of all human knowledge'', ``a unified model of physical reality'', ``high-fidelity digital twins'' and ``fully autonomous physical laboratories'' \citep{socher2026bookbite,socher2026eureka}. On top of them, millions of AI agents critique each other's ideas. In our terms, that knowledge archive supplies retention; the model of reality, the twins and the laboratories supply judgment; and the agents supply variation and critique.
 
 Agent search can retain programs, revise its context or update its
 proposer. The label \emph{swarm} does not specify which it does. The

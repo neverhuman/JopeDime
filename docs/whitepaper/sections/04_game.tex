@@ -4,8 +4,8 @@
 % judgment is the inventor), 3 (search = 1)
 % Exhibits: Table 4 (tab:go-vs-innovation), Figure 3 (fig:game-loop)
 
-% Figure 3 is defined here, ahead of its first reference, so that the
-% full-width float can reach the top of the page where it is cited.
+% Figure 3 is introduced at the close of Section 3. Its definition remains
+% early here so the full-width float can reach the next page top.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/fig3_game_loop.pdf}
@@ -22,7 +22,8 @@ An invention attempt is the reference game's unit of play
 the referee checks and scores it, and a declared incumbent is the opponent.
 The encoding supplies a shared interface;
 each task type still needs its own qualified encoding, language and
-evaluation protocol (\cref{sub:game-boards}).
+evaluation protocol (\cref{sub:game-boards}). \Cref{tab:go-vs-innovation}
+makes the comparison with Go explicit.
 
 % ----------------------------------------------------------------------------
 \subsection{Why games came first}\label{sub:game-games}
@@ -43,8 +44,7 @@ question of cost (\cref{sec:price}).
 % ----------------------------------------------------------------------------
 \subsection{The rules}\label{sub:game-rules}
 
-\Cref{tab:go-vs-innovation} sets the game beside Go. An illegal move is
-counted as a failed attempt. The reference writer $\writer$ reads the encoded problem,
+Every submitted program counts as an attempt, including an illegal move. The reference writer $\writer$ reads the encoded problem,
 while the referee keeps the incumbent as a separate comparison standard
 (\cref{sub:method-board}); its code and score must stay outside the writer's
 input.
@@ -199,13 +199,14 @@ to that discipline still needs evidence.
 % ----------------------------------------------------------------------------
 \subsection{The analogy's limits}\label{sub:game-played}
 
-The analogy to board games breaks in four places.
+Four limits qualify the analogy to board games.
 \textbf{The referee is noisy:} picking a
 winner by a noisy validation score biases that score upward
 \citep{cawley2010overfitting}. Strict numerical improvement alone does not
 quantify confidence; independent evaluation and an uncertainty protocol are
 needed to interpret it.
-\textbf{Moves are expensive:} each is a fit and a cross-validation
+\textbf{Attempts consume budget:} fitting, validation and failed execution
+all incur costs; invalid programs may stop before fitting
 (\cref{sec:price}).
 \textbf{The referee can be gamed:} the evaluation harness must resist exploits
 \citep{metr2025rewardhacking}. \Cref{sub:method-referee} specifies the
@@ -222,6 +223,6 @@ reduce the evidence to a single rating \citep{balduzzi2018reevaluating}.
 A worked game, chosen by a rule fixed before inspection, is to be reported with
 the results (\cref{sub:results-failures}).
 
-The referee judges each attempt; cost accounting must also include
-invalid programs and valid attempts that lose. \Cref{sec:price} prices
-the full sequence needed for a verified improvement.
+\Cref{sec:price} carries these limits into the cost model: the full
+sequence of attempts, including invalid programs and valid losses, counts
+toward the cost of a verified improvement.
