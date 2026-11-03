@@ -1,9 +1,9 @@
-use super::super::generation::{GenerationRoleBindingV3, GenerationRoleV3, GprKernelFamilyV3};
-use super::super::state::{
+use super::generation::{GenerationRoleBindingV3, GenerationRoleV3, GprKernelFamilyV3};
+use super::state::{
     GlobalCvFrontierMemberV2, LearningCountersV2, PredictionSnapshotV2, SchedulingMetadataV2,
     SelectionAuthorityV2, StruggleStateV2, TrackHistoryEntryV2,
 };
-use super::super::wave::{
+use super::wave::{
     ArtifactReleaseV1, ModelProposalV2, RetainedModelProposalV2, WaveGateKindV1, WaveGateReceiptV1,
 };
 use super::*;
