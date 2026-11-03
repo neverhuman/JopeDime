@@ -143,6 +143,9 @@ impl CommandRunner for Smi {
     }
 }
 
+#[path = "bounded_launch/admission_tests.rs"]
 mod admission_tests;
+#[path = "bounded_launch/gpu_tests.rs"]
 mod gpu_tests;
+#[path = "bounded_launch/launch_tests.rs"]
 mod launch_tests;
