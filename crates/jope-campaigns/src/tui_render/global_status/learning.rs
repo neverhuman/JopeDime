@@ -1,4 +1,4 @@
-use super::*;
+use super::super::*;
 
 pub(crate) fn render_dl_status(frame: &mut Frame<'_>, trainer: &TrainerDetail, area: Rect) {
     let history = &trainer.history;
