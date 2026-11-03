@@ -1,6 +1,9 @@
 use super::*;
 
-fn v3_language(target: feat_math::artifact_manifest::Target, path: &str) -> &'static str {
+pub(super) fn v3_language(
+    target: feat_math::artifact_manifest::Target,
+    path: &str,
+) -> &'static str {
     use feat_math::artifact_manifest::Target;
     match target {
         Target::Python => "python",
