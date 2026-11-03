@@ -161,19 +161,24 @@ impl<'r> Driver<'r> {
         }
         step.flushed =
             step.due.is_some() && self.staged.is_empty() && self.outbox.pending_entries() == 0;
-        Ok(self.finish(step))
+        step.staged = self.staged.len() as u64;
+        step.head = self.head.clone();
+        Ok(step)
     }
 
     /// Request an urgent flush for `why` and flush now.
     fn urgent(&mut self, why: Urgent, clock: &dyn Clock, step: Step) -> Result<Step> {
         self.cadence.request(why);
         let flushed = self.tick(clock)?;
-        Ok(self.finish(Step {
+        let mut step = Step {
             due: flushed.due,
             publication: flushed.publication,
             tick: flushed.tick,
             flushed: flushed.flushed,
             ..step
-        }))
+        };
+        step.staged = self.staged.len() as u64;
+        step.head = self.head.clone();
+        Ok(step)
     }
 }
