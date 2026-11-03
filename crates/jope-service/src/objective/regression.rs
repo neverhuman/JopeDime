@@ -4,7 +4,7 @@
 //! problem identity. This module defines neither a shared objective trait nor a digest builder.
 
 use anyhow::Result;
-use jope_runtime::fitness::{Columns, Fitness, Score};
+use jope_runtime::fitness::{Columns, ExecutionTelemetry, Fitness, Score};
 
 /// A validated regression fitness specification, including the bounded JSON grammar.
 #[derive(Clone, Debug)]
@@ -40,6 +40,18 @@ impl RegressionObjective {
         columns: &Columns,
     ) -> Result<Score> {
         self.fitness.evaluate_with(targets, predictions, columns)
+    }
+
+    /// Score with aligned numeric auxiliary columns and execution telemetry.
+    pub fn evaluate_with_telemetry(
+        &self,
+        targets: &[f64],
+        predictions: &[f64],
+        columns: &Columns,
+        telemetry: &ExecutionTelemetry,
+    ) -> Result<Score> {
+        self.fitness
+            .evaluate_with_telemetry(targets, predictions, columns, telemetry)
     }
 }
 

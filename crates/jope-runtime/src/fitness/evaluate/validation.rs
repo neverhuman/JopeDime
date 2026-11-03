@@ -16,14 +16,64 @@ impl Fitness {
             | Self::ExpectedShortfall { .. }
             | Self::Kge {}
             | Self::CaptureAt { .. }
+            | Self::Resource { .. }
             | Self::Weighted { .. } => false,
-            Self::Custom { aggregation, .. } => {
-                !matches!(aggregation, RegressionAggregation::Max {})
-            }
+            Self::Custom { aggregation, .. } => !matches!(
+                aggregation,
+                RegressionAggregation::Max {} | RegressionAggregation::Min {}
+            ),
             Self::Composite { terms } => terms.iter().all(|t| t.fitness.supports_weights()),
+            Self::Constrained { fitness, .. } => fitness.supports_weights(),
             _ => true,
         }
     }
+
+    pub(crate) fn collect_resources(&self, out: &mut BTreeSet<ResourceVar>) {
+        match self {
+            Self::Resource { name } => { out.insert(*name); }
+            Self::TrainTimeSeconds {} => { out.insert(ResourceVar::FitSeconds); }
+            Self::InferenceTimeSeconds {} => { out.insert(ResourceVar::PredictSeconds); }
+            Self::TotalTimeSeconds {} => {
+                out.insert(ResourceVar::FitSeconds);
+                out.insert(ResourceVar::PredictSeconds);
+            }
+            Self::InferenceUsPerRow {} => { out.insert(ResourceVar::PredictUsPerRow); }
+            Self::TrainRowsPerSecond {} => {
+                out.insert(ResourceVar::FitSeconds);
+                out.insert(ResourceVar::TrainRows);
+            }
+            Self::InferenceRowsPerSecond {} => { out.insert(ResourceVar::PredictRowsPerSecond); }
+            Self::TrainMemoryBytes {} => { out.insert(ResourceVar::FitPeakHeapBytes); }
+            Self::InferenceMemoryBytes {} => { out.insert(ResourceVar::PredictPeakHeapBytes); }
+            Self::TotalMemoryBytes {} => {
+                out.insert(ResourceVar::FitPeakHeapBytes);
+                out.insert(ResourceVar::PredictPeakHeapBytes);
+            }
+            Self::ModelBytes {} => { out.insert(ResourceVar::ModelBytes); }
+            Self::ComplexityStages {} => { out.insert(ResourceVar::StageCount); }
+            Self::ComplexityParameters {} => { out.insert(ResourceVar::ProgramNodes); }
+            Self::Custom { expression, .. } => expression.collect_resources(out),
+            Self::Weighted { weights, fitness } => {
+                weights.collect_resources(out);
+                fitness.collect_resources(out);
+            }
+            Self::Composite { terms } => {
+                for t in terms { t.fitness.collect_resources(out); }
+            }
+            Self::Constrained { fitness, limits } => {
+                out.extend(limits.iter().map(|l| l.resource));
+                fitness.collect_resources(out);
+            }
+            _ => (),
+        }
+    }
+
+    /// Whether evaluation depends on [`ExecutionTelemetry`] or [`Resources`].
+    pub fn uses_execution_telemetry(&self) -> bool {
+        !self.resources().is_empty()
+            || matches!(self, Self::FeatureCount {} | Self::FoldStd {})
+    }
+
     pub fn validate(&self) -> Result<()> {
         self.validate_at(0, &mut 0, &mut 0, false)?;
         let columns = self.columns();
@@ -37,6 +87,7 @@ impl Fitness {
         );
         Ok(())
     }
+
     fn validate_at(
         &self,
         depth: usize,
@@ -191,14 +242,48 @@ impl Fitness {
                         .validate_at(depth + 1, nodes, expression_nodes, weighted)?;
                 }
             }
+            Self::Constrained { fitness, limits } => {
+                ensure!(
+                    !limits.is_empty() && limits.len() <= 16,
+                    "constrained needs 1..16 resource limits"
+                );
+                for l in limits {
+                    ensure!(
+                        l.min.is_some() || l.max.is_some(),
+                        "limit on {} needs at least one of min or max",
+                        l.resource
+                    );
+                    if let Some(min) = l.min {
+                        ensure!(
+                            min.is_finite() && min >= 0.0,
+                            "limit min on {} must be finite and nonnegative",
+                            l.resource
+                        );
+                    }
+                    if let Some(max) = l.max {
+                        ensure!(
+                            max.is_finite() && max >= 0.0,
+                            "limit max on {} must be finite and nonnegative",
+                            l.resource
+                        );
+                    }
+                    if let (Some(min), Some(max)) = (l.min, l.max) {
+                        ensure!(
+                            min <= max,
+                            "limit on {} has min ({min}) > max ({max})",
+                            l.resource
+                        );
+                    }
+                }
+                fitness.validate_at(depth + 1, nodes, expression_nodes, weighted)?;
+            }
             _ => (),
         }
         Ok(())
     }
+
     pub fn identity(&self) -> Result<String> {
         self.validate()?;
-        // Compact JSON, except that −0.0 is written as 0.0: they score identically, so they are
-        // one objective. Every other specification hashes exactly as `serde_json::to_vec`.
         struct Canonical;
         impl serde_json::ser::Formatter for Canonical {
             fn write_f64<W: ?Sized + std::io::Write>(
@@ -216,5 +301,186 @@ impl Fitness {
             &mut serde_json::Serializer::with_formatter(&mut bytes, Canonical),
         )?;
         Ok(crate::sha256_hex(&bytes))
+    }
+}
+
+impl Expression {
+    pub(super) fn validate(&self, depth: usize, nodes: &mut usize) -> Result<()> {
+        *nodes += 1;
+        ensure!(
+            depth <= 16 && *nodes <= MAX_EXPRESSION_NODES,
+            "fitness expressions exceed depth 16 or {MAX_EXPRESSION_NODES} nodes in one \
+             specification"
+        );
+        match self {
+            Self::Constant { value } => {
+                finite(*value)?;
+            }
+            Self::Column { name } => validate_column_name(name)?,
+            Self::Y {}
+            | Self::Pred {}
+            | Self::Resource { .. }
+            | Self::TrainTimeSeconds {}
+            | Self::InferenceTimeSeconds {}
+            | Self::TotalTimeSeconds {}
+            | Self::InferenceUsPerRow {}
+            | Self::TrainRowsPerSecond {}
+            | Self::InferenceRowsPerSecond {}
+            | Self::TrainMemoryBytes {}
+            | Self::InferenceMemoryBytes {}
+            | Self::TotalMemoryBytes {}
+            | Self::ModelBytes {}
+            | Self::ComplexityStages {}
+            | Self::ComplexityParameters {}
+            | Self::FeatureCount {}
+            | Self::FoldStd {}
+            | Self::PredictionTurnover {}
+            | Self::RowIndex {}
+            | Self::RowFraction {}
+            | Self::RowCount {}
+            | Self::Residual {}
+            | Self::AbsError {}
+            | Self::SquaredError {}
+            | Self::YMean {}
+            | Self::YStd {}
+            | Self::PredMean {}
+            | Self::PredStd {} => (),
+            Self::Abs { arg }
+            | Self::Neg { arg }
+            | Self::Square { arg }
+            | Self::Sqrt { arg }
+            | Self::Ln { arg }
+            | Self::Log1p { arg }
+            | Self::Exp { arg }
+            | Self::Sign { arg }
+            | Self::Tanh { arg }
+            | Self::Sigmoid { arg }
+            | Self::Cbrt { arg }
+            | Self::Step { arg } => arg.validate(depth + 1, nodes)?,
+            Self::Clip { arg, min, max } => {
+                ensure!(
+                    min.is_finite() && max.is_finite() && min <= max,
+                    "clip needs finite min <= max"
+                );
+                arg.validate(depth + 1, nodes)?;
+            }
+            Self::Add { left, right }
+            | Self::Sub { left, right }
+            | Self::Mul { left, right }
+            | Self::Div { left, right }
+            | Self::Min { left, right }
+            | Self::Max { left, right }
+            | Self::Pow { left, right } => {
+                left.validate(depth + 1, nodes)?;
+                right.validate(depth + 1, nodes)?;
+            }
+            Self::Where {
+                condition,
+                then,
+                otherwise,
+            } => {
+                condition.validate(depth + 1, nodes)?;
+                then.validate(depth + 1, nodes)?;
+                otherwise.validate(depth + 1, nodes)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn collect_columns(&self, out: &mut BTreeSet<String>) {
+        match self {
+            Self::Column { name } => {
+                out.insert(name.clone());
+            }
+            Self::Abs { arg }
+            | Self::Neg { arg }
+            | Self::Square { arg }
+            | Self::Sqrt { arg }
+            | Self::Ln { arg }
+            | Self::Log1p { arg }
+            | Self::Exp { arg }
+            | Self::Sign { arg }
+            | Self::Tanh { arg }
+            | Self::Sigmoid { arg }
+            | Self::Cbrt { arg }
+            | Self::Step { arg }
+            | Self::Clip { arg, .. } => arg.collect_columns(out),
+            Self::Add { left, right }
+            | Self::Sub { left, right }
+            | Self::Mul { left, right }
+            | Self::Div { left, right }
+            | Self::Min { left, right }
+            | Self::Max { left, right }
+            | Self::Pow { left, right } => {
+                left.collect_columns(out);
+                right.collect_columns(out);
+            }
+            Self::Where {
+                condition,
+                then,
+                otherwise,
+            } => {
+                condition.collect_columns(out);
+                then.collect_columns(out);
+                otherwise.collect_columns(out);
+            }
+            _ => (),
+        }
+    }
+
+    pub(crate) fn collect_resources(&self, out: &mut BTreeSet<ResourceVar>) {
+        match self {
+            Self::Resource { name } => { out.insert(*name); }
+            Self::TrainTimeSeconds {} => { out.insert(ResourceVar::FitSeconds); }
+            Self::InferenceTimeSeconds {} => { out.insert(ResourceVar::PredictSeconds); }
+            Self::TotalTimeSeconds {} => {
+                out.insert(ResourceVar::FitSeconds);
+                out.insert(ResourceVar::PredictSeconds);
+            }
+            Self::InferenceUsPerRow {} => { out.insert(ResourceVar::PredictUsPerRow); }
+            Self::TrainRowsPerSecond {} => {
+                out.insert(ResourceVar::FitSeconds);
+                out.insert(ResourceVar::TrainRows);
+            }
+            Self::InferenceRowsPerSecond {} => { out.insert(ResourceVar::PredictRowsPerSecond); }
+            Self::TrainMemoryBytes {} => { out.insert(ResourceVar::FitPeakHeapBytes); }
+            Self::InferenceMemoryBytes {} => { out.insert(ResourceVar::PredictPeakHeapBytes); }
+            Self::TotalMemoryBytes {} => {
+                out.insert(ResourceVar::FitPeakHeapBytes);
+                out.insert(ResourceVar::PredictPeakHeapBytes);
+            }
+            Self::ModelBytes {} => { out.insert(ResourceVar::ModelBytes); }
+            Self::ComplexityStages {} => { out.insert(ResourceVar::StageCount); }
+            Self::ComplexityParameters {} => { out.insert(ResourceVar::ProgramNodes); }
+            Self::Abs { arg }
+            | Self::Neg { arg }
+            | Self::Square { arg }
+            | Self::Sqrt { arg }
+            | Self::Ln { arg }
+            | Self::Log1p { arg }
+            | Self::Exp { arg }
+            | Self::Sign { arg }
+            | Self::Tanh { arg }
+            | Self::Sigmoid { arg }
+            | Self::Cbrt { arg }
+            | Self::Step { arg }
+            | Self::Clip { arg, .. } => arg.collect_resources(out),
+            Self::Add { left, right }
+            | Self::Sub { left, right }
+            | Self::Mul { left, right }
+            | Self::Div { left, right }
+            | Self::Min { left, right }
+            | Self::Max { left, right }
+            | Self::Pow { left, right } => {
+                left.collect_resources(out);
+                right.collect_resources(out);
+            }
+            Self::Where { condition, then, otherwise } => {
+                condition.collect_resources(out);
+                then.collect_resources(out);
+                otherwise.collect_resources(out);
+            }
+            _ => (),
+        }
     }
 }

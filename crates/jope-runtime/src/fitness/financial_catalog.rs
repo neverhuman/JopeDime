@@ -124,7 +124,7 @@ fn drawdown_calmar_omega_and_expected_shortfall_follow_their_definitions() {
 #[test]
 fn catalog_and_custom_identities_round_trip_and_bind_every_parameter() {
     let catalog = Fitness::catalog();
-    assert_eq!(catalog.len(), 38);
+    assert_eq!(catalog.len(), 53);
     let names: BTreeSet<_> = catalog.iter().map(|e| e.name).collect();
     assert_eq!(names.len(), catalog.len(), "duplicate catalog name");
     for entry in catalog {
@@ -213,7 +213,13 @@ fn all_checked_in_fitness_examples_parse_and_score() {
                 .into_iter()
                 .map(|name| (name, (0..n).map(|i| 1.0 + (i % 3) as f64).collect()))
                 .collect();
-            f.evaluate_with(&targets, &predictions, &columns)
+            // Readings that satisfy every checked-in limit: tiny costs, a high throughput.
+            let resources: Resources = f
+                .resources()
+                .into_iter()
+                .map(|r| (r, if r.maximized() { 1e6 } else { 1.0 }))
+                .collect();
+            f.evaluate_with_resources(&targets, &predictions, &columns, &resources)
                 .unwrap_or_else(|e| panic!("{}: {e:#}", path.display()));
             count += 1;
         }

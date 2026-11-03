@@ -51,13 +51,17 @@ pub struct Evaluation {
     /// Auxiliary columns the specification reads, aligned with `targets`.
     #[serde(default)]
     pub columns: crate::fitness::Columns,
+    /// Candidate resource readings for objectives that read `ResourceVar` values.
+    #[serde(default)]
+    pub resources: crate::fitness::Resources,
 }
 pub fn evaluate(request: Evaluation) -> Result<Value> {
     let fitness = fitness_from_value(&request.fitness)?;
-    Ok(serde_json::to_value(fitness.evaluate_with(
+    Ok(serde_json::to_value(fitness.evaluate_with_resources(
         &request.targets,
         &request.predictions,
         &request.columns,
+        &request.resources,
     )?)?)
 }
 
@@ -69,12 +73,15 @@ pub fn describe(fitness: &Fitness) -> Result<Value> {
         "direction": fitness.direction(),
         "fitness_sha256": fitness.identity()?,
         "columns": fitness.columns(),
+        "resources": fitness.resources(),
+        "requires_measured_resources": fitness.requires_measured_resources(),
         "requires_chronological_validation": fitness.requires_order(),
         "specification": fitness,
     }))
 }
 
 pub fn catalog() -> Value {
+    use crate::fitness::ResourceVar;
     json!({"schema": crate::fitness::FITNESS_VERSION,
         "fitness": Fitness::catalog().into_iter().map(|entry| json!({
             "name": entry.name,
@@ -82,12 +89,17 @@ pub fn catalog() -> Value {
             "requires_chronological_validation": entry.fitness.requires_order(),
             "description": entry.description,
             "specification": entry.fitness})).collect::<Vec<_>>(),
+        "resources": ResourceVar::ALL.into_iter().map(|var| json!({
+            "name": var,
+            "direction": if var.maximized() { "maximize" } else { "minimize" },
+            "measured": var.is_measured(),
+            "description": var.description()})).collect::<Vec<_>>(),
         "custom": {
-            "expression_operators": ["y", "pred", "constant", "column", "add", "sub", "mul",
-                "div", "min", "max", "pow", "abs", "neg", "square", "sqrt", "ln", "log1p", "exp",
-                "step", "clip", "where"],
+            "expression_operators": ["y", "pred", "constant", "column", "resource", "add", "sub",
+                "mul", "div", "min", "max", "pow", "abs", "neg", "square", "sqrt", "ln", "log1p",
+                "exp", "step", "clip", "where"],
             "aggregations": ["mean", "sum", "max", "quantile", "tail_mean", "root_mean"],
-            "forms": ["custom", "weighted", "composite"],
+            "forms": ["resource", "custom", "weighted", "composite", "constrained"],
             "shorthand": "name:key=value,... overrides a built-in's numeric defaults, e.g. pinball:quantile=0.9"
         },
         "calibration": ["auto", "none", "shift", "affine"]})

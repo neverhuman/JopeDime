@@ -3,11 +3,15 @@
 //! A specification is a strict JSON document (`schemas/jope.regression-fitness.v1.schema.json`):
 //!
 //! - a **built-in** metric with explicit parameters (`{"metric":"pinball","quantile":0.9}`);
-//! - a **custom** bounded row expression over `y`, `pred` and named numeric *auxiliary columns*
-//!   (prices, unit costs, exposures) followed by an aggregation;
+//! - a **resource** metric (`{"metric":"resource","name":"fit_seconds"}`) reading one
+//!   [`ResourceVar`] of the candidate's fit or prediction pass;
+//! - a **custom** bounded row expression over `y`, `pred`, named numeric *auxiliary columns*
+//!   (prices, unit costs, exposures) and [`ResourceVar`] scalars followed by an aggregation;
 //! - a **weighted** form of another specification (`weights` is itself a row expression, so an
 //!   exposure column, a notional or `abs(y)` can weight rows);
-//! - a positive, scaled **composite** of specifications.
+//! - a positive, scaled **composite** of specifications;
+//! - a **constrained** specification (`{"metric":"constrained", ...}`) that scores by an inner
+//!   objective only when every [`ResourceLimit`] holds and fails the candidate otherwise.
 //!
 //! Auxiliary columns are read from the training table, excluded from the model's features and
 //! used only to score held-out predictions. Every parameter, default and expression is part of the
@@ -15,6 +19,9 @@
 use anyhow::{bail, ensure, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+
+pub mod resources;
+pub use resources::{Infeasible, ResourceLimit, ResourceVar, Resources};
 
 pub const FITNESS_VERSION: &str = "jope.regression-fitness/v1";
 pub const MAX_SPEC_BYTES: usize = 32 * 1024;
@@ -155,6 +162,41 @@ pub enum Fitness {
     CaptureAt {
         fraction: f64,
     },
+    /// One resource reading as a metric in its own right (for [`Fitness::Composite`] terms or
+    /// pure cost objectives). Throughput is maximized; every other resource is minimized.
+    Resource {
+        name: ResourceVar,
+    },
+    /// Wall-clock time in seconds spent fitting the candidate model (`>= 0`).
+    TrainTimeSeconds {},
+    /// Wall-clock time in seconds spent running candidate inference (`>= 0`).
+    InferenceTimeSeconds {},
+    /// Combined training and inference wall-clock time in seconds (`>= 0`).
+    TotalTimeSeconds {},
+    /// Per-row inference latency in microseconds (`>= 0`).
+    InferenceUsPerRow {},
+    /// Training throughput in rows per second (`>= 0`, maximize for faster training).
+    TrainRowsPerSecond {},
+    /// Inference throughput in rows per second (`>= 0`, maximize for faster inference).
+    InferenceRowsPerSecond {},
+    /// Peak/working heap memory in bytes used during candidate training (`>= 0`).
+    TrainMemoryBytes {},
+    /// Peak/working heap memory in bytes used during candidate inference (`>= 0`).
+    InferenceMemoryBytes {},
+    /// Combined training and inference memory footprint in bytes (`>= 0`).
+    TotalMemoryBytes {},
+    /// Fitted model artifact footprint in bytes (`>= 0`).
+    ModelBytes {},
+    /// Pipeline stage count of the candidate (`>= 0`).
+    ComplexityStages {},
+    /// Fitted scalar parameter/node count of the candidate (`>= 0`).
+    ComplexityParameters {},
+    /// Active input feature count consumed by the candidate (`>= 0`).
+    FeatureCount {},
+    /// Standard deviation of loss across cross-validation folds or regime cuts (`>= 0`).
+    FoldStd {},
+    /// Mean absolute sequential change `mean(|pred[t] - pred[t-1]|)` (`>= 0`).
+    PredictionTurnover {},
     Custom {
         name: String,
         direction: Direction,
@@ -169,6 +211,11 @@ pub enum Fitness {
     /// Terms are normalized to minimization before the positive weighted sum.
     Composite {
         terms: Vec<Term>,
+    },
+    /// Scores by `fitness` when every resource limit is met; fails with [`Infeasible`] otherwise.
+    Constrained {
+        fitness: Box<Fitness>,
+        limits: Vec<ResourceLimit>,
     },
 }
 
@@ -192,6 +239,66 @@ pub enum Expression {
     Column {
         name: String,
     },
+    /// A scalar resource reading of the candidate, broadcast to every scored row.
+    Resource {
+        name: ResourceVar,
+    },
+    /// Candidate training time in seconds (`>= 0`).
+    #[serde(alias = "train_time")]
+    TrainTimeSeconds {},
+    /// Candidate inference time in seconds (`>= 0`).
+    #[serde(alias = "inference_time")]
+    InferenceTimeSeconds {},
+    /// Candidate combined training + inference time in seconds (`>= 0`).
+    #[serde(alias = "total_time")]
+    TotalTimeSeconds {},
+    /// Candidate per-row inference latency in microseconds (`>= 0`).
+    InferenceUsPerRow {},
+    /// Candidate training throughput in rows per second (`>= 0`).
+    TrainRowsPerSecond {},
+    /// Candidate inference throughput in rows per second (`>= 0`).
+    InferenceRowsPerSecond {},
+    /// Candidate training memory footprint in bytes (`>= 0`).
+    #[serde(alias = "train_memory")]
+    TrainMemoryBytes {},
+    /// Candidate inference memory footprint in bytes (`>= 0`).
+    #[serde(alias = "inference_memory")]
+    InferenceMemoryBytes {},
+    /// Candidate combined training + inference memory footprint in bytes (`>= 0`).
+    #[serde(alias = "total_memory")]
+    TotalMemoryBytes {},
+    /// Candidate fitted model footprint in bytes (`>= 0`).
+    ModelBytes {},
+    /// Candidate pipeline stage count (`>= 0`).
+    ComplexityStages {},
+    /// Candidate fitted parameter count (`>= 0`).
+    ComplexityParameters {},
+    /// Candidate active input feature count (`>= 0`).
+    FeatureCount {},
+    /// Cross-fold loss standard deviation (`>= 0`).
+    FoldStd {},
+    /// Mean sequential prediction turnover `mean(|pred[t] - pred[t-1]|)` (`>= 0`).
+    PredictionTurnover {},
+    /// Zero-based row index `0..n-1`.
+    RowIndex {},
+    /// Normalized row position `row / max(n - 1, 1)` in `[0, 1]` for regime recency weighting.
+    RowFraction {},
+    /// Number of scored rows `n`.
+    RowCount {},
+    /// Signed residual `y - pred`.
+    Residual {},
+    /// Absolute residual `|y - pred|`.
+    AbsError {},
+    /// Squared residual `(y - pred)^2`.
+    SquaredError {},
+    /// Mean of target `y` across scored rows.
+    YMean {},
+    /// Population standard deviation of target `y` across scored rows.
+    YStd {},
+    /// Mean of prediction `pred` across scored rows.
+    PredMean {},
+    /// Population standard deviation of prediction `pred` across scored rows.
+    PredStd {},
     Add {
         left: Box<Self>,
         right: Box<Self>,
@@ -242,6 +349,22 @@ pub enum Expression {
     Exp {
         arg: Box<Self>,
     },
+    /// Sign of `arg` (`-1`, `0`, or `1`).
+    Sign {
+        arg: Box<Self>,
+    },
+    /// Hyperbolic tangent `tanh(arg)`.
+    Tanh {
+        arg: Box<Self>,
+    },
+    /// Logistic sigmoid `1 / (1 + exp(-arg))`.
+    Sigmoid {
+        arg: Box<Self>,
+    },
+    /// Cube root `cbrt(arg)`.
+    Cbrt {
+        arg: Box<Self>,
+    },
     /// 1 when `arg > 0`, otherwise 0.
     Step {
         arg: Box<Self>,
@@ -266,7 +389,11 @@ pub enum Expression {
 pub enum RegressionAggregation {
     Mean {},
     Sum {},
+    Min {},
     Max {},
+    Median {},
+    Std {},
+    Variance {},
     Quantile {
         quantile: f64,
     },
@@ -290,365 +417,6 @@ pub struct Score {
     pub fitness_sha256: String,
 }
 
-fn positive(x: f64) -> bool {
-    x.is_finite() && x > 0.0
-}
-fn probability(x: f64) -> bool {
-    x.is_finite() && x > 0.0 && x < 1.0
-}
-fn finite(x: f64) -> Result<f64> {
-    ensure!(x.is_finite(), "non-finite fitness value");
-    Ok(x)
-}
-fn mean(v: &[f64]) -> f64 {
-    v.iter().map(|x| x / v.len() as f64).sum()
-}
-/// Weighted mean; weights are validated nonnegative with a positive finite total.
-fn wmean(v: &[f64], w: Option<&[f64]>) -> f64 {
-    match w {
-        None => mean(v),
-        Some(w) => {
-            let total: f64 = w.iter().sum();
-            v.iter().zip(w).map(|(x, w)| x * (w / total)).sum()
-        }
-    }
-}
-fn quantile(v: &[f64], q: f64) -> f64 {
-    let mut v = v.to_vec();
-    v.sort_by(f64::total_cmp);
-    let p = q * (v.len() - 1) as f64;
-    let i = p.floor() as usize;
-    v[i] + (v[p.ceil() as usize] - v[i]) * (p - i as f64)
-}
-/// Linear interpolation at `q·(n−1)` over the sorted values. Weighted, each value sits at the
-/// share of weight below it, scaled so the largest value sits at 1: equal weights give exactly the
-/// unweighted quantile. Zero-weight rows are ignored.
-fn wquantile(v: &[f64], w: Option<&[f64]>, q: f64) -> Result<f64> {
-    let Some(w) = w else {
-        return Ok(quantile(v, q));
-    };
-    let mut order: Vec<usize> = (0..v.len()).filter(|&i| w[i] > 0.0).collect();
-    ensure!(!order.is_empty(), "every row has zero weight");
-    order.sort_by(|&a, &b| v[a].total_cmp(&v[b]).then(a.cmp(&b)));
-    let last = order.len() - 1;
-    let span: f64 = order[..last].iter().map(|&i| w[i]).sum();
-    if last == 0 || q <= 0.0 {
-        return Ok(v[order[0]]);
-    }
-    let mut below = 0.0;
-    let positions: Vec<f64> = order
-        .iter()
-        .map(|&i| {
-            let p = below / span;
-            below += w[i];
-            p
-        })
-        .collect();
-    let k = positions.partition_point(|&p| p < q).clamp(1, last);
-    let (p0, p1) = (positions[k - 1], positions[k]);
-    let (v0, v1) = (v[order[k - 1]], v[order[k]]);
-    Ok(v0 + (v1 - v0) * ((q - p0) / (p1 - p0)).min(1.0))
-}
-/// Mean of the largest values that hold `fraction` of the total weight (each row weighs 1 when
-/// unweighted); the boundary row contributes the part of its weight that is needed.
-fn tail_mean(v: &[f64], w: Option<&[f64]>, fraction: f64) -> Result<f64> {
-    let weight = |i: usize| w.map_or(1.0, |w| w[i]);
-    let total: f64 = (0..v.len()).map(weight).sum();
-    let mass = fraction * total;
-    let mut order: Vec<usize> = (0..v.len()).collect();
-    order.sort_by(|&a, &b| v[b].total_cmp(&v[a]).then(a.cmp(&b)));
-    let (mut taken, mut sum) = (0.0, 0.0);
-    for i in order {
-        let take = weight(i).min(mass - taken);
-        if take <= 0.0 {
-            if weight(i) > 0.0 {
-                break;
-            }
-            continue;
-        }
-        sum += take * v[i];
-        taken += take;
-    }
-    ensure!(taken > 0.0, "tail holds no weight");
-    finite(sum / taken)
-}
-fn variance(v: &[f64]) -> f64 {
-    let m = mean(v);
-    mean(&v.iter().map(|x| (x - m).powi(2)).collect::<Vec<_>>())
-}
-fn wvariance(v: &[f64], w: Option<&[f64]>) -> f64 {
-    let m = wmean(v, w);
-    wmean(&v.iter().map(|x| (x - m).powi(2)).collect::<Vec<_>>(), w)
-}
-fn correlation(a: &[f64], b: &[f64], w: Option<&[f64]>) -> Result<f64> {
-    let am = wmean(a, w);
-    let bm = wmean(b, w);
-    let av = wvariance(a, w);
-    let bv = wvariance(b, w);
-    ensure!(
-        av.is_finite() && bv.is_finite(),
-        "correlation overflows: the variance of a vector is not finite"
-    );
-    ensure!(
-        av > 0.0 && bv > 0.0,
-        "correlation undefined for a constant vector"
-    );
-    finite(
-        wmean(
-            &a.iter()
-                .zip(b)
-                .map(|(x, y)| (x - am) * (y - bm))
-                .collect::<Vec<_>>(),
-            w,
-        ) / av.sqrt()
-            / bv.sqrt(),
-    )
-}
-fn ranks(v: &[f64]) -> Vec<f64> {
-    let mut order: Vec<_> = (0..v.len()).collect();
-    order.sort_by(|&a, &b| v[a].partial_cmp(&v[b]).expect("finite inputs"));
-    let mut out = vec![0.0; v.len()];
-    let mut i = 0;
-    while i < order.len() {
-        let mut j = i + 1;
-        while j < order.len() && v[order[i]] == v[order[j]] {
-            j += 1;
-        }
-        for k in i..j {
-            out[order[k]] = (i + j - 1) as f64 / 2.0;
-        }
-        i = j;
-    }
-    out
-}
-/// `(weight, target)` in descending order of `key`. A group of tied keys shares its weighted mean
-/// target, so a tie is one straight segment of a Lorenz or capture curve (unweighted, the expected
-/// curve over every order of the tied rows): the rows' file order never counts as ranking skill.
-fn ranked(y: &[f64], key: &[f64], w: Option<&[f64]>) -> Vec<(f64, f64)> {
-    let weight = |i: usize| w.map_or(1.0, |w| w[i]);
-    let mut order: Vec<usize> = (0..y.len()).collect();
-    order.sort_by(|&a, &b| key[b].total_cmp(&key[a]));
-    let mut out = Vec::with_capacity(order.len());
-    for group in order.chunk_by(|&a, &b| key[a] == key[b]) {
-        let total: f64 = group.iter().map(|&i| weight(i)).sum();
-        let target = if total > 0.0 {
-            group.iter().map(|&i| weight(i) * y[i]).sum::<f64>() / total
-        } else {
-            group.iter().map(|&i| y[i]).sum::<f64>() / group.len() as f64
-        };
-        out.extend(group.iter().map(|&i| (weight(i), target)));
-    }
-    out
-}
-/// Twice the trapezoid area under the cumulative-weight vs cumulative-(w·y) curve, minus one.
-fn lorenz_gini(ranked: &[(f64, f64)]) -> Result<f64> {
-    let total_w: f64 = ranked.iter().map(|(w, _)| w).sum();
-    let total_y: f64 = ranked.iter().map(|(w, y)| w * y).sum();
-    ensure!(
-        total_w > 0.0 && total_y.is_finite() && total_y != 0.0,
-        "Gini needs a nonzero weighted target total"
-    );
-    let (mut x0, mut y0, mut area) = (0.0, 0.0, 0.0);
-    for &(w, y) in ranked {
-        let x1 = x0 + w / total_w;
-        let y1 = y0 + w * y / total_y;
-        area += (x1 - x0) * (y0 + y1) / 2.0;
-        (x0, y0) = (x1, y1);
-    }
-    finite(2.0 * area - 1.0)
-}
-/// Net per-interval returns of the documented position convention.
-fn strategy_returns(y: &[f64], p: &[f64], max_position: f64, cost: f64) -> Result<Vec<f64>> {
-    let mut last = 0.0;
-    let returns: Vec<_> = y
-        .iter()
-        .zip(p)
-        .map(|(y, p)| {
-            let position = p.clamp(-max_position, max_position);
-            let r = position * y - cost * (position - last).abs();
-            last = position;
-            r
-        })
-        .collect();
-    ensure!(
-        returns.iter().all(|x| x.is_finite()),
-        "non-finite strategy return"
-    );
-    Ok(returns)
-}
-/// Compounded equity curve from 1; a period losing everything ends the curve at zero. An
-/// overflowing curve is an error, never a finite score.
-fn equity_curve(returns: &[f64]) -> Result<Vec<f64>> {
-    let mut equity = 1.0f64;
-    let mut curve = Vec::with_capacity(returns.len());
-    for r in returns {
-        let next = equity * (1.0 + r);
-        ensure!(next.is_finite(), "the equity curve overflowed");
-        equity = next.max(0.0);
-        curve.push(equity);
-    }
-    Ok(curve)
-}
-fn max_drawdown(returns: &[f64]) -> Result<f64> {
-    let mut peak = 1.0f64;
-    let mut worst = 0.0f64;
-    for e in equity_curve(returns)? {
-        peak = peak.max(e);
-        worst = worst.max(1.0 - e / peak);
-    }
-    Ok(worst)
-}
-fn validate_column_name(name: &str) -> Result<()> {
-    ensure!(
-        !name.is_empty()
-            && name.len() <= MAX_COLUMN_NAME_BYTES
-            && !name.chars().any(char::is_control),
-        "column names need 1..{MAX_COLUMN_NAME_BYTES} bytes without control characters"
-    );
-    Ok(())
-}
-
-impl Expression {
-    fn validate(&self, depth: usize, nodes: &mut usize) -> Result<()> {
-        *nodes += 1;
-        ensure!(
-            depth <= 16 && *nodes <= MAX_EXPRESSION_NODES,
-            "fitness expressions exceed depth 16 or {MAX_EXPRESSION_NODES} nodes in one \
-             specification"
-        );
-        match self {
-            Self::Constant { value } => {
-                finite(*value)?;
-            }
-            Self::Column { name } => validate_column_name(name)?,
-            Self::Y {} | Self::Pred {} => (),
-            Self::Abs { arg }
-            | Self::Neg { arg }
-            | Self::Square { arg }
-            | Self::Sqrt { arg }
-            | Self::Ln { arg }
-            | Self::Log1p { arg }
-            | Self::Exp { arg }
-            | Self::Step { arg } => arg.validate(depth + 1, nodes)?,
-            Self::Clip { arg, min, max } => {
-                ensure!(
-                    min.is_finite() && max.is_finite() && min <= max,
-                    "clip needs finite min <= max"
-                );
-                arg.validate(depth + 1, nodes)?;
-            }
-            Self::Add { left, right }
-            | Self::Sub { left, right }
-            | Self::Mul { left, right }
-            | Self::Div { left, right }
-            | Self::Min { left, right }
-            | Self::Max { left, right }
-            | Self::Pow { left, right } => {
-                left.validate(depth + 1, nodes)?;
-                right.validate(depth + 1, nodes)?;
-            }
-            Self::Where {
-                condition,
-                then,
-                otherwise,
-            } => {
-                condition.validate(depth + 1, nodes)?;
-                then.validate(depth + 1, nodes)?;
-                otherwise.validate(depth + 1, nodes)?;
-            }
-        }
-        Ok(())
-    }
-    fn collect_columns(&self, out: &mut BTreeSet<String>) {
-        match self {
-            Self::Column { name } => {
-                out.insert(name.clone());
-            }
-            Self::Y {} | Self::Pred {} | Self::Constant { .. } => (),
-            Self::Abs { arg }
-            | Self::Neg { arg }
-            | Self::Square { arg }
-            | Self::Sqrt { arg }
-            | Self::Ln { arg }
-            | Self::Log1p { arg }
-            | Self::Exp { arg }
-            | Self::Step { arg }
-            | Self::Clip { arg, .. } => arg.collect_columns(out),
-            Self::Add { left, right }
-            | Self::Sub { left, right }
-            | Self::Mul { left, right }
-            | Self::Div { left, right }
-            | Self::Min { left, right }
-            | Self::Max { left, right }
-            | Self::Pow { left, right } => {
-                left.collect_columns(out);
-                right.collect_columns(out);
-            }
-            Self::Where {
-                condition,
-                then,
-                otherwise,
-            } => {
-                condition.collect_columns(out);
-                then.collect_columns(out);
-                otherwise.collect_columns(out);
-            }
-        }
-    }
-    fn eval(&self, y: f64, p: f64, row: usize, columns: &Columns) -> Result<f64> {
-        let e = |x: &Self| x.eval(y, p, row, columns);
-        finite(match self {
-            Self::Y {} => y,
-            Self::Pred {} => p,
-            Self::Constant { value } => *value,
-            Self::Column { name } => *columns
-                .get(name)
-                .and_then(|values| values.get(row))
-                .ok_or_else(|| anyhow::anyhow!("fitness column {name:?} is not available"))?,
-            Self::Abs { arg } => e(arg)?.abs(),
-            Self::Neg { arg } => -e(arg)?,
-            Self::Square { arg } => e(arg)?.powi(2),
-            Self::Sqrt { arg } => e(arg)?.sqrt(),
-            Self::Ln { arg } => e(arg)?.ln(),
-            Self::Log1p { arg } => e(arg)?.ln_1p(),
-            Self::Exp { arg } => e(arg)?.exp(),
-            Self::Step { arg } => {
-                if e(arg)? > 0.0 {
-                    1.0
-                } else {
-                    0.0
-                }
-            }
-            Self::Clip { arg, min, max } => e(arg)?.clamp(*min, *max),
-            Self::Add { left, right } => e(left)? + e(right)?,
-            Self::Sub { left, right } => e(left)? - e(right)?,
-            Self::Mul { left, right } => e(left)? * e(right)?,
-            Self::Div { left, right } => e(left)? / e(right)?,
-            Self::Min { left, right } => e(left)?.min(e(right)?),
-            Self::Max { left, right } => e(left)?.max(e(right)?),
-            Self::Pow { left, right } => e(left)?.powf(e(right)?),
-            Self::Where {
-                condition,
-                then,
-                otherwise,
-            } => {
-                if e(condition)? > 0.0 {
-                    e(then)?
-                } else {
-                    e(otherwise)?
-                }
-            }
-        })
-    }
-    fn rows(&self, y: &[f64], p: &[f64], columns: &Columns) -> Result<Vec<f64>> {
-        y.iter()
-            .zip(p)
-            .enumerate()
-            .map(|(row, (&y, &p))| self.eval(y, p, row, columns))
-            .collect()
-    }
-}
-
 /// One catalog entry: its short name, default specification and a one-line description.
 pub struct CatalogEntry {
     pub name: &'static str,
@@ -658,7 +426,9 @@ pub struct CatalogEntry {
 
 mod catalog;
 mod evaluate;
-pub use evaluate::require_no_columns;
+mod math;
+use math::*;
+pub use evaluate::{require_no_columns, require_no_resources, ExecutionTelemetry};
 
 #[cfg(test)]
 mod tests;

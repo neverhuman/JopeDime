@@ -42,11 +42,14 @@ fn objective_score(
     y: &[f64],
     p: &[f64],
     columns: &Columns,
+    telemetry: &ExecutionTelemetry,
     folds_of_scored: &[usize],
     forward: Option<&ForwardRows>,
     budget: &Budget,
 ) -> Result<(Option<f64>, Option<f64>)> {
-    let raw = fitness.evaluate_with(y, p, columns).map(|s| s.loss);
+    let raw = fitness
+        .evaluate_with_telemetry(y, p, columns, telemetry)
+        .map(|s| s.loss);
     if family == Calibration::None {
         return Ok((Some(raw?), None));
     }
@@ -62,7 +65,9 @@ fn objective_score(
         &fit_rows,
         &|| budget.exhausted(),
     )?;
-    let calibrated = fitness.evaluate_with(y, &crossed, columns).map(|s| s.loss);
+    let calibrated = fitness
+        .evaluate_with_telemetry(y, &crossed, columns, telemetry)
+        .map(|s| s.loss);
     match (raw, calibrated) {
         (Err(raw), Err(_)) => Err(raw),
         (raw, calibrated) => Ok((raw.ok(), calibrated.ok())),
@@ -187,7 +192,7 @@ pub fn select_with_fitness(
                 validation,
             )
         })
-        .and_then(|(p, scored)| {
+        .and_then(|(p, scored, telemetry)| {
             anyhow::ensure!(
                 scored == scored_rows,
                 "scored rows differ between candidates"
@@ -205,6 +210,7 @@ pub fn select_with_fitness(
                 &scored_targets,
                 &values,
                 &scored_columns,
+                &telemetry,
                 &scored_folds,
                 forward_rows.as_ref(),
                 budget,

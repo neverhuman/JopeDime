@@ -144,7 +144,7 @@ mod fitness_tests {
                 }
             })
             .collect::<Vec<_>>();
-        let (a, sa) = out_of_fold(
+        let (a, sa, telemetry_a) = out_of_fold(
             &method,
             &train,
             &assignment,
@@ -154,11 +154,16 @@ mod fitness_tests {
             &validation,
         )
         .unwrap();
+        assert!(telemetry_a.model_bytes > 0);
+        assert!(telemetry_a.train_memory_bytes > telemetry_a.model_bytes);
+        assert!(telemetry_a.inference_memory_bytes > telemetry_a.model_bytes);
+        assert!(telemetry_a.complexity_stages >= 1);
+        assert!(telemetry_a.feature_count >= 1);
         // Fold 0 holds rows 15..30; gap rows 13,14 and all rows >=30 are unavailable to it.
         for i in [13, 14, 30, 45, 59] {
             train.targets[i] += 1e6;
         }
-        let (b, sb) = out_of_fold(
+        let (b, sb, _) = out_of_fold(
             &method,
             &train,
             &assignment,

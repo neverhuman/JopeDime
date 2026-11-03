@@ -258,3 +258,140 @@ fn weights_reweight_rows_and_refuse_bad_values() {
     let zero = columns_from_pairs(&[("exposure", vec![0.0; 3])]);
     assert!(mae.evaluate_with(&y, &p, &zero).is_err());
 }
+
+#[test]
+fn execution_telemetry_memory_complexity_and_regime_features_score_and_compose() {
+    let telemetry = ExecutionTelemetry {
+        train_time_seconds: 0.25,
+        inference_time_seconds: 0.05,
+        train_rows: 1000,
+        inference_rows: 200,
+        train_memory_bytes: 4_000_000,
+        inference_memory_bytes: 1_000_000,
+        model_bytes: 32_768,
+        complexity_stages: 4,
+        complexity_parameters: 128,
+        feature_count: 16,
+        fold_std: 0.015,
+    };
+    let y = [1.0, 2.0, 4.0, 5.0];
+    let p = [1.2, 1.8, 3.5, 4.7];
+
+    // Standalone execution & memory metrics
+    near(
+        Fitness::TrainTimeSeconds {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        0.25,
+    );
+    near(
+        Fitness::InferenceTimeSeconds {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        0.05,
+    );
+    near(
+        Fitness::TotalTimeSeconds {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        0.30,
+    );
+    near(
+        Fitness::InferenceUsPerRow {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        250.0,
+    );
+    let train_tput = Fitness::TrainRowsPerSecond {}
+        .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+        .unwrap();
+    assert_eq!(train_tput.direction, Direction::Maximize);
+    near(train_tput.value, 4000.0);
+    near(train_tput.loss, -4000.0);
+
+    let inf_tput = Fitness::InferenceRowsPerSecond {}
+        .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+        .unwrap();
+    assert_eq!(inf_tput.direction, Direction::Maximize);
+    near(inf_tput.value, 4000.0);
+    near(inf_tput.loss, -4000.0);
+
+    near(
+        Fitness::TotalMemoryBytes {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        5_000_000.0,
+    );
+    near(
+        Fitness::ModelBytes {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        32_768.0,
+    );
+    near(
+        Fitness::ComplexityStages {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        4.0,
+    );
+    near(
+        Fitness::ComplexityParameters {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        128.0,
+    );
+    near(
+        Fitness::FeatureCount {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        16.0,
+    );
+    near(
+        Fitness::FoldStd {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        0.015,
+    );
+    // Sequential turnover on p = [1.2, 1.8, 3.5, 4.7] -> (|0.6| + |1.7| + |1.2|) / 3 = 3.5 / 3
+    near(
+        Fitness::PredictionTurnover {}
+            .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+            .unwrap()
+            .loss,
+        3.5 / 3.0,
+    );
+
+    // Custom expression combining business error, recency (row_fraction), train_time, inference_time, and total_memory
+    let custom = Fitness::parse(
+        r#"{"metric":"custom","name":"regime_resource_loss","direction":"minimize",
+            "expression":{"op":"add",
+              "left":{"op":"mul",
+                "left":{"op":"abs_error"},
+                "right":{"op":"add","left":{"op":"constant","value":1.0},"right":{"op":"row_fraction"}}},
+              "right":{"op":"add",
+                "left":{"op":"mul","left":{"op":"constant","value":0.5},"right":{"op":"train_time_seconds"}},
+                "right":{"op":"add",
+                  "left":{"op":"mul","left":{"op":"constant","value":2.0},"right":{"op":"inference_time_seconds"}},
+                  "right":{"op":"mul","left":{"op":"constant","value":1e-7},"right":{"op":"total_memory_bytes"}}}}},
+            "aggregation":{"kind":"mean"}}"#,
+    )
+    .unwrap();
+    assert!(custom.uses_execution_telemetry());
+    let custom_score = custom
+        .evaluate_with_telemetry(&y, &p, &Columns::new(), &telemetry)
+        .unwrap();
+    // abs_error = [0.2, 0.2, 0.5, 0.3], (1 + row_fraction) = [1.0, 4/3, 5/3, 2.0]
+    // weighted abs_error mean = (0.2*1 + 0.2*(4/3) + 0.5*(5/3) + 0.3*2) / 4 = 1.9 / 4 = 0.475
+    // resource term = 0.5*0.25 + 2.0*0.05 + 1e-7*5_000_000 = 0.125 + 0.10 + 0.50 = 0.725
+    near(custom_score.loss, 0.475 + 0.725);
+}
