@@ -52,7 +52,7 @@ pub(super) fn language_name(v: Language) -> &'static str {
         Language::Typescript => "typescript",
     }
 }
-pub(super) async fn get_algorithm(
+pub(in crate::http) async fn get_algorithm(
     Extension(state): Extension<DatasetState>,
     path: std::result::Result<Path<(String, String)>, axum::extract::rejection::PathRejection>,
     query: std::result::Result<Query<AlgorithmQuery>, axum::extract::rejection::QueryRejection>,
@@ -67,7 +67,7 @@ pub(super) async fn get_algorithm(
         tokio::task::spawn_blocking(move || algorithm(&state, run, Some(alg), query, false)).await,
     )
 }
-pub(super) async fn list_algorithms(
+pub(in crate::http) async fn list_algorithms(
     Extension(state): Extension<DatasetState>,
     path: std::result::Result<Path<String>, axum::extract::rejection::PathRejection>,
     query: std::result::Result<Query<AlgorithmQuery>, axum::extract::rejection::QueryRejection>,

@@ -212,7 +212,7 @@ pub(super) fn hex_digest(value: &str) -> Result<[u8; 32]> {
     }
     Ok(bytes)
 }
-pub(super) async fn export_model(
+pub(in crate::http) async fn export_model(
     Extension(state): Extension<DatasetState>,
     path: std::result::Result<Path<String>, axum::extract::rejection::PathRejection>,
     request: Request<Body>,
@@ -300,7 +300,7 @@ pub(super) fn predict(
         Err(e) => e.into_response(),
     }
 }
-pub(super) async fn predict_model(
+pub(in crate::http) async fn predict_model(
     Extension(state): Extension<DatasetState>,
     request: Request<Body>,
 ) -> Response {
@@ -313,7 +313,7 @@ pub(super) async fn predict_model(
         Err(_) => response(&integrity()),
     }
 }
-pub(super) async fn download(
+pub(in crate::http) async fn download(
     Extension(state): Extension<DatasetState>,
     path: std::result::Result<Path<String>, axum::extract::rejection::PathRejection>,
 ) -> Response {
