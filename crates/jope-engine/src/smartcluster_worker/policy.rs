@@ -34,16 +34,19 @@ const FRAME_LIMIT: usize = 1024 * 1024;
 mod auth;
 mod operation;
 mod schema;
+#[cfg(test)]
+use auth::retain_control_descriptor;
 pub use auth::runtime_observation;
 pub(crate) use auth::verify_task_inputs;
 use auth::{
-    authenticate, current_job, load_policy, load_task, read_bounded, retain_control_descriptor,
-    verify_loaded_runtime, Allocation,
+    authenticate, current_job, load_policy, load_task, read_bounded, verify_loaded_runtime,
+    Allocation,
 };
 use operation::{
-    admission_guards, available_storage_bytes, storage_bytes, storage_bytes_from_stats,
-    validate_operation, verify_required_inputs, verify_training_closure,
+    admission_guards, validate_operation, verify_required_inputs, verify_training_closure,
 };
+#[cfg(test)]
+use operation::{available_storage_bytes, storage_bytes, storage_bytes_from_stats};
 use schema::read_closure;
 pub use schema::{
     ClosureManifest, InputManifest, Operation, SubtaskCommand, VerifiedTask, WorkerPolicy,
