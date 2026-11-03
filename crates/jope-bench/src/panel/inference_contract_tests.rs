@@ -21,9 +21,9 @@ mod fixtures;
 #[path = "inference_contract_tests/runner.rs"]
 mod runner;
 
-pub(super) use fixtures::{case, hostile_categories, row, typed};
+pub(super) use fixtures::{case, hostile_categories};
 pub(crate) use fixtures::{
     columns, fit, fit_method, hostile_fixture, raw_cases, Case, HOSTILE_CATEGORIES,
 };
-pub(super) use runner::{assert_tallies, run, rust_literal, scratch};
-pub(crate) use runner::{compare, divergences, execute, Tally};
+pub(super) use runner::{assert_tallies, scratch};
+pub(crate) use runner::{compare, divergences, execute};
