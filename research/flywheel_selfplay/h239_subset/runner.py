@@ -47,11 +47,13 @@ def sha(path):
 
 def save(path, obj):
     path = Path(path)
-    with path.open("w") as f:
+    temporary = path.with_name(path.name + ".tmp")
+    with temporary.open("w") as f:
         json.dump(obj, f, indent=2, allow_nan=False)
         f.write("\n")
         f.flush()
         os.fsync(f.fileno())
+    os.replace(temporary, path)
 
 
 def git_source(path, pins):
@@ -544,6 +546,8 @@ def main():
             ):
                 raise RuntimeError("resume source binding")
             previous_launch = json.loads(source.with_suffix(".launch.json").read_text())
+            if previous_launch.get("resume_number", 0) + 1 != launch["resume_number"]:
+                raise RuntimeError("resume count must increase exactly once")
             for key in [
                 "source_commit",
                 "manifest_sha256",
@@ -681,7 +685,6 @@ def main():
 
                         optimizer.zero_grad(set_to_none=True)
                         pred = engine.forward(kwargs, tok, mask, anchor)
-                        cooperate()
                         objective = arm_loss(arm, rt.loss, pred, fitness, gate)
                         if not torch.isfinite(objective):
                             raise RuntimeError("nonfinite objective")

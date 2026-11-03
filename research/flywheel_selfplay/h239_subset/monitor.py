@@ -225,7 +225,7 @@ def main():
         elapsed_seconds=time.monotonic() - started,
         peak=peak,
         transitions=transitions,
-        paused_seconds=paused_seconds
+        pause_requested_seconds=paused_seconds
         + (time.monotonic() - paused_at if paused_at is not None else 0),
         compute_stop=COMPUTE_STOP,
         resume_number=resume_number,

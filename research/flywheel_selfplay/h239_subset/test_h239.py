@@ -308,3 +308,15 @@ def test_schema_and_input_boundary_without_loading_data():
         and "resume selection hash" in source
         and "resume adapter hash" in source
     )
+
+
+def test_completed_cell_json_is_atomic_on_serialization_failure(tmp_path):
+    path = tmp_path / "A0-239101.json"
+    runner.save(path, dict(complete=True, steps=160))
+    original = path.read_bytes()
+    with pytest.raises(ValueError):
+        runner.save(path, dict(bad=float("nan")))
+    assert path.read_bytes() == original
+    runner.save(path, dict(complete=True, steps=160, verified=True))
+    assert json.loads(path.read_text())["verified"]
+    assert not path.with_name(path.name + ".tmp").exists()

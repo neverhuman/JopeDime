@@ -89,7 +89,7 @@
     "research/flywheel_selfplay/h237_adabelief/monitor.py": "953812050cfc84872a58dc22f6560558795161922493081ba85e9e713f9419c3"
   },
   "source_sha256": {
-    "test_h239.py": "a312ad8d8d13ad5aa6136aad6a4bdd8167691293553f40fe75ea95a418bcab57",
+    "test_h239.py": "8c21435fe46c833316f8c554d81467492ec1de27292e4a65cb4a37e497325a32",
     "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
     "schedules.json": "376b9a1a77c1c7fe268c638d8a94e2d31f7621cc5459cbe529c9ffb7facc09c5",
     "metrics.schema.json": "d65399ef6d7ede3c5ccea635895dafc4ca02e0d0d73bb3dfaa325076aa9e4c47",
@@ -98,9 +98,9 @@
     "trainable_tensors.json": "a0cecfe568faca0eef47c0faacad50d5ab76e06320d2c8e8ca954bec92b43a06",
     "TENSORS.md": "a1f13078bc69366105b77ccb2219142e99b5ae3481014a38b07fefbb93f18e35",
     "PREREG.md": "2d9e2cad40b5fbcd071df1a05fe20473076dfc1d9bc58094fffa41406a6ef020",
-    "monitor.py": "6d253474cb73a5d32722044fe70c7d4d846b3e89adec8ab7d3399db30f459ed7",
+    "monitor.py": "5069631ee41da8da61b3a097c9a82305c5c94c781c2887db75d26da11f77523a",
     "fold_manifest.json": "7c295897296f37bd1041ac3abaf1cea6f3860d62db2f2e830e756ab90bc459df",
-    "runner.py": "a5608fa3497d2d8e90a8860696fdb55c5c8e0984e3a899b6bec5f917526538e6"
+    "runner.py": "855f1b66eedfcc4dd3edf39b6700bc7a968e58de35bf1221f5ce3b763d37004b"
   },
   "host": "xbabe2 CPU48-51 nice19 math1",
   "compute_stop": "2026-11-03T07:30:00Z",
