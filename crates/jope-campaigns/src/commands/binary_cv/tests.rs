@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) mod tests {
+pub(crate) mod binary_cv_tests {
     use super::*;
     use feat_math::Pcg32;
     use std::path::PathBuf;
@@ -286,3 +286,5 @@ pub(crate) mod tests {
         let _ = fs::remove_dir_all(&root);
     }
 }
+
+pub(crate) use binary_cv_tests as tests;
