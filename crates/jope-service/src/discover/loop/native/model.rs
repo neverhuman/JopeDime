@@ -1,3 +1,4 @@
+use super::evaluate::{numeric_rows, UndefinedFitness};
 use super::*;
 
 impl NativeModel {
@@ -110,7 +111,7 @@ impl NativeModel {
 
 // This function is reached only inside the supervised numerical worker.
 // Private scratch output is never a CAS or redb write.
-fn native_refit<B: AsRef<[u8]>>(
+pub(super) fn native_refit<B: AsRef<[u8]>>(
     request: &Request,
     matrix: &Matrix<B>,
     spec: &NativeFolds,

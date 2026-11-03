@@ -1,3 +1,4 @@
+use super::super::admission::sample_index;
 use super::*;
 
 /// Native heuristic grammar. No learned checkpoint or bank is loaded by this
