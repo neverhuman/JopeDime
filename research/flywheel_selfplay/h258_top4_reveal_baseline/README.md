@@ -47,9 +47,20 @@ In `H252` and `H254`, `ACTIVE_2PLUS2_HURDLE` achieved `+0.015174` median family 
    - Checkpoints (`r882`, `r3175`) and DOPE (`c51a56d0...`) SHA256 hashes verified identical before and after execution (`0` optimizer updates, `CUDA_VISIBLE_DEVICES=""`).
 3. **Audit (b) — Exact Reveal-Budget & Snapshot Invariance (`PASS`)**:
    - Across all `3,930` context-seed evaluations (`(91 + 1,219) * 3`), every equal-budget arm (`GATED_025`, `ACTIVE_2PLUS2_HURDLE`, `TOP4_PICK`, `TOP2_RAND2_PICK`, `ACTIVE_2PLUS2_PICK`) used `min = 4, max = 4` unique reveals on all `3,873` gated evaluations (`91 * 3` `DL-Val` + `1,200 * 3` `DL-Train`) and `min = 0, max = 0` reveals on all `57` ungated evaluations (`19 * 3` `DL-Train`).
-   - `ACTIVE_2PLUS2_HURDLE` reproduced `eval_active_2plus2_hurdle` from the frozen `H254` snapshot bit-for-bit on **`3,930 / 3,930`** `r882` evaluations and **`3,930 / 3,930`** `r3175` evaluations.
+   - `ACTIVE_2PLUS2_HURDLE` reproduced `eval_active_2plus2_hurdle` from the frozen `H254` snapshot bit-for-bit on **`273 / 273` `DL-Val` evaluations (`3` seeds × `91` contexts)** for `r882` and **`273 / 273` `DL-Val` evaluations** for `r3175` (`DL-Train` OOF loops called `score_h258_context(verify_snapshot=False)` where `snap_match` defaults `True`, so `DL-Train` OOF was not snapshot-verified).
 4. **Audit (c) — Permuted-Fitness Negative Control (`PASS`)**:
    - When revealed `fitness` / `gate` values are permuted within the `4` revealed candidates on `DL-Val`, `PERM_CONTROL - GATED_025` yields median family gain **`-0.009188`** (`95% CI [-0.033623, +0.001590]`, covers `0`).
+
+### 3.1 Post-prereg code changes (no scoring logic change)
+
+Between the preregistration commit (`df196c1f9e570e544a0002c2651b4ee75847154b`) and the closeout commit (`8869cc439c5f218bdef8b5276254b7acd595dff3`), `runner.py` was updated (`git diff df196c1f9 8869cc439 -- research/flywheel_selfplay/h258_top4_reveal_baseline/runner.py`) with the following infrastructure and memory-envelope fixes while `0` scoring expressions were altered:
+- **(a) Batched pool loading + `malloc_trim` / `cooperate` pauses (memory only)**: Replaced all-at-once `load_pools` with 50-context batches that pop unused `program` (`412`-dim), `pids`, and `proj16` arrays and invoke `gc.collect()` + `libc.malloc_trim(0)` and `cooperate(out_dir)` so peak RSS stayed at `1.43 GiB <= 4.0 GiB`.
+- **(b) `POOL_PRIORS` path fix**: Corrected `CACHE_DIR / "h252" / "pool_priors.npz"` (which did not exist on disk) to `CACHE_DIR / "pool_priors.npz"` (`/home/ubuntu/jope-data/h58/cache/pool_priors.npz`, SHA256 `6db567ef2c10d2c6835be5b4506d3861e6180f231fd75425140423718d12cf00`), which is the exact file pinned in the `H254` manifest.
+- **(c) `DOPE` check**: Changed from hashing a standalone `dope.pt` file path to asserting the `dope_sha256` metadata field (`c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814`) in `r882` / `r3175` plus the split manifest asset SHA (`a36510b9921c7e4e83a4769262328561bf06a7c7a0ba01779a6139c441e91933`); because H258 performs `0` optimizer updates, the checkpoint/backbone freeze is unaffected.
+- **(d) `ref_ctx_map` parsing fix**: Updated `R882_REF_JSON` context parsing to read `[c["cid"] for c in ref_obj["evaluation_contract"]["contexts"]]` (list of dicts rather than bare strings).
+- **(e) Chunked Elo bootstrap**: Computed the `10,000` bootstrap MM Bradley-Terry Elo draws in chunks of `500` instead of a single `(10000, 205, 14, 14)` tensor to avoid a `3.2 GiB` transient allocation.
+- **(f) `verify_snapshot` made optional**: Added `verify_snapshot: bool = True` to `score_h258_context` (`True` on `DL-Val`, `False` on `DL-Train` OOF to avoid redundant double evaluation on `3,657` training context-seed pairs).
+- **Scoring invariance**: The `ACTIVE_2PLUS2_HURDLE`, `GATED_025`, and `TOP4_PICK` scoring expressions are byte-identical (moved, not changed).
 
 ---
 

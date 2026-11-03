@@ -60,8 +60,10 @@
         }
       },
       "pass": true,
-      "snapshot_bit_exact_matches_r3175": 3930,
-      "snapshot_bit_exact_matches_r882": 3930,
+      "snapshot_bit_exact_matches_r3175": 273,
+      "snapshot_bit_exact_matches_r882": 273,
+      "snapshot_verification_note": "273/273 verified on DL-Val (3 seeds x 91 contexts); TRAIN OOF called score_h258_context(verify_snapshot=False) and was not snapshot-verified.",
+      "snapshot_verified_dl_val_evaluations_per_checkpoint": 273,
       "total_context_seed_evaluations": 3930,
       "ungated_contexts_reveal_min_max": {
         "ACTIVE_2PLUS2_HURDLE": {
