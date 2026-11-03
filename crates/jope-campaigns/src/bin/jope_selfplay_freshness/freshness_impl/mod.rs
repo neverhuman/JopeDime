@@ -22,7 +22,7 @@ pub(crate) fn run() -> Result<()> {
         println!("{}", serde_json::to_string(&status)?);
         return Ok(());
     }
-    serve(
+    runtime::serve(
         args.root,
         args.scq,
         socket_path,
