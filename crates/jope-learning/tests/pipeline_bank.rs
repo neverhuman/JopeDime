@@ -7,15 +7,30 @@ use jope_learning::hwm;
 use jope_learning::ledger::Ledger;
 use jope_learning::sources::pipeline;
 use jope_learning::state::State;
-use jope_pipeline::run::{run, Policy, RunOptions};
+use jope_pipeline::run::{Policy, RunOptions, run};
 use jope_pipeline::search::Budget;
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 fn dataset() -> String {
     format!(
         "{}/../../datasets/test/pmlb-229-pwlinear",
         env!("CARGO_MANIFEST_DIR")
     )
+}
+
+fn source_commit() -> String {
+    let output = Command::new("git")
+        .args(["-C", env!("CARGO_MANIFEST_DIR"), "rev-parse", "HEAD"])
+        .output()
+        .expect("read test checkout commit");
+    assert!(output.status.success(), "resolve test checkout commit");
+    let commit = String::from_utf8(output.stdout).expect("git commit is UTF-8");
+    let commit = commit.trim();
+    assert_eq!(commit.len(), 40, "test checkout commit must be complete");
+    commit.to_owned()
 }
 
 fn options(output: &Path, evaluations: usize) -> RunOptions {
@@ -27,7 +42,7 @@ fn options(output: &Path, evaluations: usize) -> RunOptions {
         rng_seed: 7,
         languages: vec![jope_pipeline::emit::Language::Rust],
         policy: Policy::Skip,
-        source_commit: Some("c".repeat(40)),
+        source_commit: Some(source_commit()),
         ..RunOptions::new(dataset(), output)
     }
 }
