@@ -121,7 +121,7 @@ impl WitnessStore {
     ) -> Result<Self> {
         Self::open_mode_transition(root, policy, key_path, read_only, None)
     }
-    fn open_mode_transition(
+    pub(in crate::eval_registry::witness) fn open_mode_transition(
         root: &Path,
         policy: &WitnessPolicy,
         key_path: &Path,
@@ -312,7 +312,7 @@ impl WitnessStore {
         }
         Ok(())
     }
-    fn publish_head(&self) -> Result<()> {
+    pub(in crate::eval_registry::witness) fn publish_head(&self) -> Result<()> {
         let temporary = self.root.join("head.pending");
         // An interrupted head update remains explicit until it is proven to be
         // the exact derived head, then it is safe to finish its rename.
@@ -331,7 +331,7 @@ impl WitnessStore {
         fs::rename(temporary, self.root.join("head.json"))?;
         sync_dir(&self.root)
     }
-    fn verify_custody(&self) -> Result<()> {
+    pub(in crate::eval_registry::witness) fn verify_custody(&self) -> Result<()> {
         for (path, expected) in [
             (&self.root, self.root_identity),
             (&self.root.join("segments"), self.segment_identity),
