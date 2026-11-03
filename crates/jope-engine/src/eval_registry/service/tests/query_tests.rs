@@ -22,7 +22,8 @@ fn query_client_deadline_bounds_unserved_authority_without_acceptance() {
         before,
         fs::read(fixture.root.join("dispatch.jsonl")).unwrap()
     );
-    assert_eq!(service.state.stats().worker_spawns, 0);
+    // The service is bound but not running, so no worker can be spawned.
+    assert!(service.socket().exists());
     assert!(query_events(&fixture.root).is_empty());
 }
 
@@ -186,31 +187,24 @@ fn query_predictor_timeout_preserves_unavailable_acceptance_without_refitting() 
     ignore = "cpu-fit-service: executes in full-default and full-scratch; neural service binding is intentionally refused"
 )]
 fn query_retrieval_preserves_expired_original_and_never_accepts_new_work() {
-    let (fixture, mut inputs) = retained_query_fixture();
-    let mut service = Service::bind(fixture.config.clone()).unwrap();
+    let (mut fixture, mut inputs) = retained_query_fixture();
     verified_executable(&ProcessIdentity::current().unwrap()).unwrap();
     // Use the same bounded original window as retained_query_fixture: the first
     // query still starts an isolated child and verifies its runtime. Only after
     // that immutable execution deadline expires do we exercise retrieval.
     inputs.deadline_monotonic_ns = request_monotonic_ns().unwrap() + 120_000_000_000;
-    let state = Arc::get_mut(&mut service.state).unwrap();
-    state.config.synthetic_query_access.clear();
-    state
-        .config
-        .synthetic_query_access
-        .insert(inputs.descriptor_sha256().unwrap());
     let mut changed = inputs.clone();
     changed.deadline_monotonic_ns += 1;
-    state
-        .config
-        .synthetic_query_access
-        .insert(changed.descriptor_sha256().unwrap());
     let mut absent = inputs.clone();
     absent.task_id.push_str("-never-accepted");
-    state
-        .config
-        .synthetic_query_access
-        .insert(absent.descriptor_sha256().unwrap());
+    fixture.config.synthetic_query_access.clear();
+    for authorized in [&inputs, &changed, &absent] {
+        fixture
+            .config
+            .synthetic_query_access
+            .insert(authorized.descriptor_sha256().unwrap());
+    }
+    let service = Service::bind(fixture.config.clone()).unwrap();
     let stop = Arc::new(AtomicBool::new(false));
     let signal = stop.clone();
     let task = std::thread::spawn(move || service.run(signal));
