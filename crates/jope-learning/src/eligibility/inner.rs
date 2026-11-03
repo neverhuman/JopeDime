@@ -185,7 +185,7 @@ pub fn freeze_inner_optimization(
     plan: &FreezePlan,
     partition: &InnerPartition,
 ) -> Result<FreezeReceipt> {
-    super::freeze_impl(state, plan, Some(partition.clone()))
+    super::freeze::freeze_impl(state, plan, Some(partition.clone()))
 }
 pub(super) struct BoundInner {
     pub selection: SelectionPlan,
@@ -275,7 +275,7 @@ pub(super) fn bind(
     for key in ["inputs", "package_files"] {
         let artifacts: Vec<Artifact> = serde_json::from_value(runtime[key].clone())?;
         for artifact in artifacts {
-            retain_artifact(state, &artifact, live)?;
+            super::decisions::retain_artifact(state, &artifact, live)?;
         }
     }
     let frozen: serde_json::Value = blob(state, &inner.frozen_recipe_sha256)?;
@@ -307,7 +307,7 @@ pub(super) fn bind(
             .any(|o| o["candidate"] == *candidate && o["feedback"] == frozen["selection_feedback"]),
         "frozen candidate absent from actual selection receipt"
     );
-    let marker: CandidateFreeze = blob(state, &inner.candidate_freeze_sha256)?;
+    let marker: candidate::CandidateFreeze = blob(state, &inner.candidate_freeze_sha256)?;
     ensure!(
         marker.schema == "jope.inner-candidate-freeze/v1"
             && marker.comparison_sha256 == evidence.freeze.comparison_sha256
