@@ -1,6 +1,6 @@
 use super::{
     frame::{decode_frame, encode_frame},
-    process::{self, Containment},
+    process::Containment,
     Attempt, Request, Response, WorkerFailure,
 };
 use jope_api::ids::RunId;
