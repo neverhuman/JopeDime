@@ -397,4 +397,4 @@ pub fn result(
 
 #[path = "bounded_fixture/fake_supervisor.rs"]
 mod fake_supervisor;
-pub use fake_supervisor::{FakeState, FakeSupervisor, RetainedWork};
+pub use fake_supervisor::{tree, FakeState, FakeSupervisor, RetainedWork};
