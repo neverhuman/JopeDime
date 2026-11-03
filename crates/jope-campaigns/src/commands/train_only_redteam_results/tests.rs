@@ -1,5 +1,4 @@
 use super::smart_v3::{regression_metrics, smart_v3_aggregate, smart_v3_baseline_aggregate};
-use super::*;
 
 #[test]
 fn regression_metrics_match_fixed_fixture() {
