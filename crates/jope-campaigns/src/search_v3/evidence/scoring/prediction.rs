@@ -148,7 +148,7 @@ pub fn score_prediction(
             }
             let auc = (rank_sum - (positives * (positives + 1) / 2) as f64)
                 / (positives * negatives) as f64;
-            let epsilon = 1e-15;
+            let epsilon = 1e-15_f64;
             let log_loss = predictions
                 .iter()
                 .zip(&truth)
