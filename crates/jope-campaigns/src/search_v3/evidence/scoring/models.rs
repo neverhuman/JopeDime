@@ -87,7 +87,7 @@ impl PredictionObjectV1 {
         canonical_sha256(self)
     }
 
-    fn values(&self) -> Vec<f64> {
+    pub(super) fn values(&self) -> Vec<f64> {
         self.prediction_f64_bits
             .iter()
             .map(|bits| f64::from_bits(*bits))
@@ -154,7 +154,7 @@ impl ScoringTapeV2 {
         canonical_sha256(self)
     }
 
-    fn truth(&self) -> Vec<f64> {
+    pub(super) fn truth(&self) -> Vec<f64> {
         self.truth_f64_bits
             .iter()
             .map(|bits| f64::from_bits(*bits))
