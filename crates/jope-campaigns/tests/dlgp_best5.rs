@@ -333,7 +333,11 @@ for candidate in m['candidates']:
     }
 }
 
+#[path = "dlgp_best5/campaign_tests.rs"]
 mod campaign_tests;
+#[path = "dlgp_best5/evaluation_tests.rs"]
 mod evaluation_tests;
+#[path = "dlgp_best5/search_tests.rs"]
 mod search_tests;
+#[path = "dlgp_best5/worker_tests.rs"]
 mod worker_tests;
