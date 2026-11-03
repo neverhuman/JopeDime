@@ -317,7 +317,7 @@ pub(crate) fn prepare(_registry: &Path, args: PrepareArgs) -> Result<PathBuf> {
     Ok(manifest_path)
 }
 
-pub(super) fn validate_manifest_contract(
+pub(crate) fn validate_manifest_contract(
     manifest_path: &Path,
 ) -> Result<(TrainOnlyStudyManifest, String)> {
     let (manifest, digest): (TrainOnlyStudyManifest, String) = read_receipt(manifest_path)?;
@@ -382,7 +382,7 @@ pub(super) fn validate_manifest_contract(
     Ok((manifest, digest))
 }
 
-pub(super) fn validate_prepared_inputs(manifest: &TrainOnlyStudyManifest) -> Result<()> {
+pub(crate) fn validate_prepared_inputs(manifest: &TrainOnlyStudyManifest) -> Result<()> {
     if sha256_file(&manifest.checkpoint.accepted_pointer_path)?
         != manifest.checkpoint.accepted_pointer_sha256
         || sha256_file(&manifest.checkpoint.checkpoint_path)?
@@ -447,7 +447,7 @@ pub(super) fn validate_prepared_inputs(manifest: &TrainOnlyStudyManifest) -> Res
     Ok(())
 }
 
-pub(super) fn validate_execution_inputs(
+pub(crate) fn validate_execution_inputs(
     manifest: &TrainOnlyStudyManifest,
     dataset: &DatasetStudyEntry,
 ) -> Result<()> {
