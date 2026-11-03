@@ -236,7 +236,7 @@ fn sha256<'a>(value: &'a Value, name: &str) -> Result<&'a str> {
     Ok(text)
 }
 
-fn dataset_hash<'a>(value: &'a Value) -> Result<&'a str> {
+fn dataset_hash(value: &Value) -> Result<&str> {
     let text = value
         .as_str()
         .filter(|text| (text.len() == 16 || text.len() == 64) && valid_hex(text, text.len()))
