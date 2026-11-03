@@ -1,4 +1,5 @@
-use super::*;
+#[cfg(test)]
+use super::{Fixture, PredictCostsInputs};
 
 #[test]
 fn accepts_both_serving_slate_shapes() {
