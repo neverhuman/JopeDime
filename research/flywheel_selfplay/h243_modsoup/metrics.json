@@ -1,0 +1,46 @@
+{
+  "wave": "H243",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "optimizer_updates": 0,
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H243",
+    "status": "COMPLETE",
+    "arms": [
+      "r882",
+      "CONTROL",
+      "MODSWAP_SELECT",
+      "GREEDY_SOUP",
+      "PLACEBO"
+    ],
+    "decision_arms": [
+      "MODSWAP_SELECT",
+      "GREEDY_SOUP"
+    ],
+    "seeds": [
+      243101,
+      243102,
+      243103
+    ],
+    "optimizer_updates": 0,
+    "complete_cells": 15,
+    "baseline_mean": 1.1377941898164525,
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0...",
+    "primary_dlval": "DL-Val91 policy-mixture panel: contrasts {ARM_minus_r882, ARM_minus_CONTROL, PLACEBO_minus_MODSWAP_SELECT} with per_seed_gain, median_gain, ci95, positive_seeds, p_one_sided, harm family counts; holm_p (m=2: MODSWAP_SELECT, GREEDY_SOUP) and advance (median > +0.002, LCB95 > 0, Holm p < .05, >= 2/3 seeds positive); median_elo, elo_ci95 (r882 = 1500), vs_plateau_best_by_seed",
+    "secondary_oof": "same on the 1,219-context/205-family DL-Train out-of-fold panel (descriptive)",
+    "fixed_dlval": "every fixed policy (22 g@beta swaps, 22 PL: placebos, greedy soups) on DL-Val91: gain [CI95], families W/T/L, harm families, Elo, vs plateau best 1.1389572 (descriptive)",
+    "selected_counts": "per arm over 15 cells",
+    "memory_pauses": "cooperative pause/resume events with MemAvailable",
+    "full_metrics": "sha256 + S3 key of the full metrics.json",
+    "verdict": "ADVANCE iff MODSWAP_SELECT or GREEDY_SOUP advances on primary_dlval, else NO_ADVANCE",
+    "betas": [
+      0.5,
+      1.0
+    ],
+    "group_l2": "beta * ||r782_g - r882_g|| per group and beta",
+    "cliff_context": "H152 gate-cliff DL-Val context #27 per policy and per arm mixture (never excluded)",
+    "greedy_traces": "per cell ingredient order, soup values and kept flags"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "wave": "H243",
+  "source": "the 47 trainable adapter tensors of the H40b 10-token adapter (H239 trainable_tensors.json order), partitioned into 11 natural module groups before any outcome read; biases, norms and scalars travel with their module",
+  "groups": {
+    "G01_modality": [
+      "adapter_10tok.modality_type_emb",
+      "adapter_10tok.modality_gate_logits",
+      "adapter_10tok.modality_norm.weight",
+      "adapter_10tok.modality_norm.bias"
+    ],
+    "G02_prog_bottleneck": [
+      "adapter_10tok.prog_412_bottleneck.0.weight",
+      "adapter_10tok.prog_412_bottleneck.0.bias",
+      "adapter_10tok.prog_412_bottleneck.1.weight",
+      "adapter_10tok.prog_412_bottleneck.1.bias"
+    ],
+    "G03_cand_query": [
+      "adapter_10tok.cand_query_proj.0.weight",
+      "adapter_10tok.cand_query_proj.0.bias",
+      "adapter_10tok.cand_query_proj.1.weight",
+      "adapter_10tok.cand_query_proj.1.bias"
+    ],
+    "G04_mm_cross_attn": [
+      "adapter_10tok.mm_cross_attn.in_proj_weight",
+      "adapter_10tok.mm_cross_attn.in_proj_bias",
+      "adapter_10tok.mm_cross_attn.out_proj.weight",
+      "adapter_10tok.mm_cross_attn.out_proj.bias"
+    ],
+    "G05_bilinear": [
+      "adapter_10tok.ctx_bilinear_u.weight",
+      "adapter_10tok.prog_bilinear_v.weight"
+    ],
+    "G06_mm_prior_head": [
+      "adapter_10tok.mm_prior_scale",
+      "adapter_10tok.mm_prior_out.0.weight",
+      "adapter_10tok.mm_prior_out.0.bias",
+      "adapter_10tok.mm_prior_out.2.weight",
+      "adapter_10tok.mm_prior_out.2.bias"
+    ],
+    "G07_hist_token": [
+      "adapter_10tok.null_hist_token",
+      "adapter_10tok.hist_token_proj.0.weight",
+      "adapter_10tok.hist_token_proj.0.bias",
+      "adapter_10tok.hist_token_proj.1.weight",
+      "adapter_10tok.hist_token_proj.1.bias"
+    ],
+    "G08_traj_cross_attn": [
+      "adapter_10tok.traj_attn_scale",
+      "adapter_10tok.traj_cross_attn.in_proj_weight",
+      "adapter_10tok.traj_cross_attn.in_proj_bias",
+      "adapter_10tok.traj_cross_attn.out_proj.weight",
+      "adapter_10tok.traj_cross_attn.out_proj.bias"
+    ],
+    "G09_traj_delta_head": [
+      "adapter_10tok.traj_delta_head.0.weight",
+      "adapter_10tok.traj_delta_head.0.bias",
+      "adapter_10tok.traj_delta_head.2.weight",
+      "adapter_10tok.traj_delta_head.2.bias"
+    ],
+    "G10_parent_delta_net": [
+      "adapter_10tok.parent_delta_net.0.weight",
+      "adapter_10tok.parent_delta_net.0.bias",
+      "adapter_10tok.parent_delta_net.1.weight",
+      "adapter_10tok.parent_delta_net.1.bias",
+      "adapter_10tok.parent_delta_net.3.weight",
+      "adapter_10tok.parent_delta_net.3.bias"
+    ],
+    "G11_kernel_scalars": [
+      "adapter_10tok.null_kernel_w0_raw",
+      "adapter_10tok.sem_kernel_scale_raw",
+      "adapter_10tok.emb_kernel_scale_raw",
+      "adapter_10tok.traj_kernel_blend"
+    ]
+  }
+}
