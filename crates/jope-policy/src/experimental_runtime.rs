@@ -696,10 +696,9 @@ mod tests {
         let output = fixture.0.join("output");
         let result = prepare(&source, &packages, &output, &runtime).unwrap();
         let value: Value = serde_json::from_slice(&fs::read(&result.path).unwrap()).unwrap();
-        let manifest: Value = serde_json::from_slice(
-            &fs::read(&value["manifest"]["path"].as_str().unwrap()).unwrap(),
-        )
-        .unwrap();
+        let manifest: Value =
+            serde_json::from_slice(&fs::read(value["manifest"]["path"].as_str().unwrap()).unwrap())
+                .unwrap();
         assert_eq!(
             value["program"],
             serde_json::to_value(artifact(&executable).unwrap()).unwrap()
