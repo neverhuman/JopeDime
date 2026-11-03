@@ -429,10 +429,14 @@
   ],
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
-    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
-        "reason": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification.",
+    "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
+        "reason": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
         "role": "research"
       },
+    "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
+      "reason": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
       "reason": "H244 data-free RMS noise, mean-cost inference, baseline restoration, strict family selection/Holm1, launch binding and A1 guard tests; no live qualification.",
       "role": "research"
@@ -5988,6 +5992,10 @@
     "python:research/flywheel_selfplay/h245_gated_lambda_nest/test_h245.py": {
       "role": "research",
       "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/test_h249.py": {
+      "reason": "Owner-requested H249 data-free controls for zero-init low-rank residual side branch (SIDE4, SIDE16) vs CTRL AdamW r882 adapter continuation (step-0 bit-identity, frozen r882 weights, merged-weight equivalence, exact CTRL AdamW, frozen schedules, fold seed 249140, strict selector, four-gate advance rule with Holm m=2, H239 A1 memory guard, manifest pins).",
+      "role": "research"
     }
   },
   "note": "Maintained regression test inventory (W0). Classifies every test-bearing CI coverage item; static map only, not collection or execution evidence. Changes require explicit review, like deploy/ci/coverage.json.",

@@ -1,0 +1,68 @@
+{
+  "wave": "H248",
+  "status": "PASS",
+  "optimizer_updates": 0,
+  "utility_outcomes_scored": 0,
+  "DLVal_scored": 0,
+  "fold_manifest_sha256": "2c8234f7107b1708bed089ba20065b7ccb909c1f1c6bc631b9589e4364392563",
+  "spread_sha256": "384c870d356b9b89b944aa4c7538d12018d83b22a646b4fcb914470634627b79",
+  "checkpoint_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+  "parent_commit": "f189e51e0225deba08e7c9a0d820332d34edef99",
+  "calibration_source_sha256": "21d09d26197cf8527dfa5db3fa660eac485b0feff3134ed1bc081627cfc0695e",
+  "by_outer": {
+    "0": {
+      "temperature": 0.9561255339828454,
+      "fit_contexts": 718,
+      "fit_families": 123,
+      "fit_ids_sha256": "f8bbc370434ac470158469cbadda9ecbe900d6ce489e840cec3bdead83fd9b7b",
+      "failure_labels_replaced": 35132,
+      "candidate_labels": 827135,
+      "all_contexts_have_nonfailure": true
+    },
+    "1": {
+      "temperature": 0.9628116501564842,
+      "fit_contexts": 701,
+      "fit_families": 123,
+      "fit_ids_sha256": "f4e136871ff3d31ef62da18007c77adae0992df4c7486574a9ff46e54ef1cbfa",
+      "failure_labels_replaced": 34000,
+      "candidate_labels": 807551,
+      "all_contexts_have_nonfailure": true
+    },
+    "2": {
+      "temperature": 0.9909052500519062,
+      "fit_contexts": 716,
+      "fit_families": 123,
+      "fit_ids_sha256": "5626faa24e4268266b536ffdb60d33f4adb77a39ad8cb4ab3a70cec22b0d29e4",
+      "failure_labels_replaced": 34481,
+      "candidate_labels": 824832,
+      "all_contexts_have_nonfailure": true
+    },
+    "3": {
+      "temperature": 0.9696517949493695,
+      "fit_contexts": 782,
+      "fit_families": 123,
+      "fit_ids_sha256": "a6af0d36d6fd54f69131e9ec834562bde32eed4e18f5b1cb50c5663bfc3bd3ab",
+      "failure_labels_replaced": 38369,
+      "candidate_labels": 900864,
+      "all_contexts_have_nonfailure": true
+    },
+    "4": {
+      "temperature": 0.9527621453584503,
+      "fit_contexts": 740,
+      "fit_families": 123,
+      "fit_ids_sha256": "aee2cb5e30fa42a1273f991782af966042ec04c7c18281fe946364de64282897",
+      "failure_labels_replaced": 37475,
+      "candidate_labels": 852479,
+      "all_contexts_have_nonfailure": true
+    }
+  },
+  "definition": "Median across FIT contexts of float64 population std (ddof=0) of all full-pool frozen-r882 predicted costs, first four native-index reveals; no outcome selection; same partition for all seeds.",
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "initial_adapter_sha256": "9c3ba940d9eb60aa2a39dd57c229c0952927ea1c2f22c372ae9764f43baa8669",
+  "audit_summary": {
+    "protected_reads": 0,
+    "refused": [],
+    "opened_count": 1237
+  }
+}
