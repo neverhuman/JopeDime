@@ -93,10 +93,10 @@ fn complete_scalar_recipes_match_native_features_faults_state_and_predictions() 
             ])
             .arg(format!("-fsanitize={sanitizer}"));
         }
-        run(cmd
-            .arg(directory.join("recipes.cpp"))
+        cmd.arg(directory.join("recipes.cpp"))
             .arg("-o")
-            .arg(&binary));
+            .arg(&binary);
+        run_cpp_with_fallback(&mut cmd, if compiler == "g++" { "clang++" } else { "g++" });
         assert_output(
             run(&mut Command::new(binary)),
             &reference,
@@ -105,6 +105,43 @@ fn complete_scalar_recipes_match_native_features_faults_state_and_predictions() 
         );
     }
 }
+fn run_cpp_with_fallback(cmd: &mut Command, alternate: &str) -> String {
+    let output = match cmd.output() {
+        Ok(output) => output,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            let mut fallback = Command::new(alternate);
+            fallback.args(cmd.get_args());
+            if let Some(directory) = cmd.get_current_dir() {
+                fallback.current_dir(directory);
+            }
+            for (key, value) in cmd.get_envs() {
+                if let Some(value) = value {
+                    fallback.env(key, value);
+                } else {
+                    fallback.env_remove(key);
+                }
+            }
+            fallback.output().unwrap_or_else(|fallback_error| {
+                panic!(
+                    "failed to spawn {} ({error}) or alternate compiler {alternate} ({fallback_error})",
+                    cmd.get_program().to_string_lossy()
+                )
+            })
+        }
+        Err(error) => panic!(
+            "failed to spawn {}: {error}",
+            cmd.get_program().to_string_lossy()
+        ),
+    };
+    assert!(
+        output.status.success(),
+        "{}: {}",
+        cmd.get_program().to_string_lossy(),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    String::from_utf8(output.stdout).unwrap()
+}
+
 #[test]
 fn fitted_scalar_cpp_replays_native_predictions_faults_and_refusals() {
     let directory = Path::new(env!("CARGO_TARGET_TMPDIR")).join("scalar-v2-fitted");
