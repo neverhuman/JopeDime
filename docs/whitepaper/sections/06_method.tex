@@ -63,8 +63,8 @@ evaluation test.
 A move is one program in the typed language of \cref{sec:game}, with a
 401-token training inventory listing 31 transforms and 22 prediction heads; the product runtime restricts executable heads.
 The writer emits a flat operator-and-slot token stream with a fixed
-beginning, engine and regression-task header, rather than parenthesis
-tokens or the \texttt{pipe} wrapper. Its nine-phase grammar mask permits
+start, engine and regression-task header, with no reasoning or
+parenthesis tokens or \texttt{pipe} wrapper. Its nine-phase grammar mask permits
 up to six transform stages and three expression stages; each expression
 tree is bounded at depth four and 15 nodes
 \citep{kusner2017grammar,dai2018sdvae}. After the end token, detokenization

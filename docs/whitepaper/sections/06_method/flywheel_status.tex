@@ -18,8 +18,8 @@ own separate admission path.
 The adapter accepts ties by default, so a recorded best-round identity
 can change without raising utility. Optional strict admission requires
 utility above the retained best plus an explicit nonnegative margin.
-Rejection restores the retained model and optimizer states. GP search
-continues, and the completed-round clock includes rejected adapter work.
+Rejection rolls back the two-step candidate's model and optimizer states. GP
+search continues, and the completed-round clock includes rejected work.
 
 \paragraph{Scope of the telemetry.}
 All records here and in \cref{app:flywheel-telemetry} are adaptive
