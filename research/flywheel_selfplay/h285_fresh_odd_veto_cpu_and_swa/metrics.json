@@ -1,0 +1,18 @@
+{
+  "schema": "jope.h285.metrics/v1",
+  "wave": "H285",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "neural_updates": 0,
+  "forward_calls": 0,
+  "planned_families": 60,
+  "seeds": [
+    278101,
+    278102,
+    278103
+  ],
+  "bootstrap_seed": 285150,
+  "bootstrap_draws": 10000,
+  "git_status": "GIT_COMMITTED",
+  "outcome": null
+}

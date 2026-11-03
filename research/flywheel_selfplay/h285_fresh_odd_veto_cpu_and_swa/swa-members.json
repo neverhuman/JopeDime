@@ -1,0 +1,83 @@
+{
+  "status": "PASS",
+  "round_order": [
+    2750,
+    2795,
+    3100,
+    3175,
+    4330
+  ],
+  "members": [
+    2750,
+    2795,
+    3100,
+    3175
+  ],
+  "unique_adapters": 4,
+  "deduplication": "sorted adapter state tensor names, dtype+shape+bytes sha256; retain first round",
+  "averaging": "uniform float64 sum/mean then cast each floating tensor to original dtype; nonfloating tensors must match",
+  "member_receipts": [
+    {
+      "round": 2750,
+      "checkpoint_sha256": "e9de405105fa1cffe77f8c5bcbf45869540793da3b4d7e0395b93b7c3f25ea2c",
+      "adapter_sha256": "b7c303b6c326b7734944b9a9612d97217c3b7507fc5a6ecf9880c60ce3136378",
+      "duplicate_of": null,
+      "retained": true,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "non_adapter_bit_identical_to_r3175": true
+    },
+    {
+      "round": 2795,
+      "checkpoint_sha256": "5c31bba56a8d39ccd2a04f8ace94e15318cd443da93b5b9fa53432ff2dda77c7",
+      "adapter_sha256": "7bf28a44f9dff6afeb8201b504c0f91293eb379d08d3491229cf4cfd96cbf409",
+      "duplicate_of": null,
+      "retained": true,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "non_adapter_bit_identical_to_r3175": true
+    },
+    {
+      "round": 3100,
+      "checkpoint_sha256": "df0cd494786e48a1d2ebda8b57613081317851f22126950985e19819c27f2854",
+      "adapter_sha256": "c4a90321044101547d345e01d1dad6d204b43e69d8a102ff5dc023aaad673314",
+      "duplicate_of": null,
+      "retained": true,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "non_adapter_bit_identical_to_r3175": true
+    },
+    {
+      "round": 3175,
+      "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+      "adapter_sha256": "bb0dd0bf307f1a80f8ec7194bec6f75ad2dc6fdaebef3784f87e8dea63ee38bb",
+      "duplicate_of": null,
+      "retained": true,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "non_adapter_bit_identical_to_r3175": true
+    },
+    {
+      "round": 4330,
+      "checkpoint_sha256": "fba67e92d5abf38b79b152d251854edc2a800e476b595cd3cf40302e85728b57",
+      "adapter_sha256": "bb0dd0bf307f1a80f8ec7194bec6f75ad2dc6fdaebef3784f87e8dea63ee38bb",
+      "duplicate_of": 3175,
+      "retained": false,
+      "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+      "non_adapter_bit_identical_to_r3175": true
+    }
+  ],
+  "swa_adapter_sha256": "71bfc57284026acbef80f1ade077e40a6ff5c98e8c0eb88e286d902429b1debc",
+  "swa_checkpoint_sha256": "ac41477ff874a26505a73bd18912733bf1e250c4b01e214341a77434c65ca060",
+  "non_adapter_sha256": "a0e6ca3ab008fa12cf5261e684c32ecba75d367ca9a20fd4d1e18606f7a88084",
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "adapter_tensor_count": 116,
+  "adapter_elements": 550820,
+  "forward_calls": 0,
+  "optimizer_updates": 0,
+  "cuda_initialized": false,
+  "full_tensor_inventory": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H285/astra-t2305/prereg/swa-members-full.json",
+    "version_id": "DdF4h_nGTEgmBTQE5FTfsEKdnfJZdlWJ",
+    "sha256": "a9ac701b82b5e0a99fb8c36b8c2e85e94424ad078ece654c3e28f268d316b659",
+    "bytes": 72234,
+    "exact_version_get_verified": true
+  }
+}

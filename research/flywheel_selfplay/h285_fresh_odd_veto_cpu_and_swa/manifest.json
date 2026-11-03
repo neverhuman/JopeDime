@@ -1,0 +1,52 @@
+{
+  "schema": "jope.h285.manifest/v1",
+  "wave_id": "h285-fresh-odd-veto-cpu-and-swa-20261103",
+  "parent_commit": "0b733a590c9cda3a67fa66ede4ded883ca83c5c2",
+  "authority": "hw_t2305_astra_h285.md",
+  "cohort_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+  "selected_cohort_sha256": "25cd07db7de13889598e5b7ce5173f957922953c491291bcee4022f6efaa54fb",
+  "bootstrap_seed": 285150,
+  "bootstrap_draws": 10000,
+  "input_custody": {
+    "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H285/astra-t2305/prereg/inputs-closure.tar.gz",
+    "version_id": ".rKP2Y3kEVtAZCQngvGgfS7svkkKrICb",
+    "sha256": "078151f731898dfdda37ac2ca47e1ec9dc1dc958b6ce400feb63baf9184b8577",
+    "bytes": 98665436,
+    "exact_version_get_verified": true,
+    "members_verified": 225
+  },
+  "resource_limits": {
+    "affinity": [
+      48,
+      50,
+      51,
+      52
+    ],
+    "nice": 19,
+    "numeric_threads": 1,
+    "aggregate_threads": 4,
+    "rss_bytes": 4294967296
+  },
+  "compute_stop_utc": "2026-11-04T02:30:00Z",
+  "source_sha256": {
+    "PREREG.md": "b16ab9feb851124374befe89e47e673c76e280183a4575906e8a12c5173b5206",
+    "analysis_h285.py": "80b0a96b0e1fffd17141a1df62a79922d0e98930338b68449b294574e7e3bd75",
+    "audit.py": "f8d7c9866390d4a3dd4b0c75aeceb04f187fac3bd042947eef8a802d9e563817",
+    "cohort.json": "25cd07db7de13889598e5b7ce5173f957922953c491291bcee4022f6efaa54fb",
+    "cpu_score.py": "4ae73a6c4de55e7300649e23ca66220ded8600354087f2697eac4290e4669e0b",
+    "custody.py": "7177aecb467b96be1445460a6925a8cc638543155104a2f1f00ecc42937c7c88",
+    "data.py": "5b6396d4b75278a3428457f38ae617a9702b12a9d3d1f3fd083ec9ea54cc2428",
+    "dependencies.py": "5cdd13aaa48cbcc3a350a84387df1dceec5f587728a3d2edddbe1cd2b43a834a",
+    "dependency-pins.json": "51426a6b2aca6787b54ae68ac8a548f64ddf284428569f800f939dad876da136",
+    "fresh_features.py": "546f5172e8d3e02762e3fc564274153f8d0782f1261f7672d13cc12d7566e29f",
+    "fresh_inputs.py": "a5f02e0434ba8d71b0aed3b87333b146bf55a9dbadf4e4d0ffa216aa1fcc74d4",
+    "frozen-export.json": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+    "input-custody.json": "6310c174abf8f96b00d6115c31ab8a3d52cefd34ad4c7e16831f0327e28acca4",
+    "monitor.py": "5f42622974b5e4be1706ea044b89d625cb3c9b99ef392f2c0316d25511397ae8",
+    "runner.py": "5e2da64a9b13c581f21332d24d3663f352b606cb8660d3c62768966b00d80128",
+    "runtime-pins.json": "3c27eff31948c09e29de0dad51d6ddfb2a2d3faf2df5b7190bd34a3b6db52dfd",
+    "swa-members.json": "384769120e3692308c6ec399847e2d6698da0dcb1265c577d8dbefef8987c0e9",
+    "swa.py": "29f23e4a8d573469d4cb8900223eef58a38ca33322bbc7709573138beb090590",
+    "test_h285.py": "d6605cced8534a94b15b8aac14be4d0ae5f693574ec5b5ebb0be2e6aaf28eaaa"
+  }
+}
