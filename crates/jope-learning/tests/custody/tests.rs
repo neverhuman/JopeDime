@@ -1,5 +1,12 @@
 use super::*;
 
+fn clear_git_environment(command: &mut Command) {
+    for (key, _) in std::env::vars_os().filter(|(key, _)| key.to_string_lossy().starts_with("GIT_"))
+    {
+        command.env_remove(key);
+    }
+}
+
 #[test]
 fn original_fixture_union_and_hashes_are_preserved() {
     let index = fixture("fixture-index.json");
@@ -301,31 +308,25 @@ fn cli_dry_run_requires_input_body_pins_and_outside_checkout_output() {
     fs::write(&input, &raw).unwrap();
     let checkout = temp.path().join("checkout");
     fs::create_dir(&checkout).unwrap();
-    let initialized = Command::new("git")
-        .args(["init", "--quiet"])
-        .current_dir(&checkout)
-        .env_remove("GIT_DIR")
-        .env_remove("GIT_WORK_TREE")
-        .env_remove("GIT_COMMON_DIR")
-        .output()
-        .unwrap();
+    let mut initialize = Command::new("git");
+    initialize.args(["init", "--quiet"]).current_dir(&checkout);
+    clear_git_environment(&mut initialize);
+    let initialized = initialize.output().unwrap();
     assert!(
         initialized.status.success(),
         "could not initialize checkout fixture: {}",
         String::from_utf8_lossy(&initialized.stderr)
     );
     let execute = |sha: &str, out: &Path| {
-        Command::new(env!("CARGO_BIN_EXE_jope_custody"))
+        let mut command = Command::new(env!("CARGO_BIN_EXE_jope_custody"));
+        command
             .args(["dry-run", "--input"])
             .arg(&input)
             .args(["--input-sha", sha, "--output"])
             .arg(out)
-            .current_dir(&checkout)
-            .env_remove("GIT_DIR")
-            .env_remove("GIT_WORK_TREE")
-            .env_remove("GIT_COMMON_DIR")
-            .output()
-            .unwrap()
+            .current_dir(&checkout);
+        clear_git_environment(&mut command);
+        command.output().unwrap()
     };
     let bad = temp.path().join("bad");
     assert!(!execute(&"a".repeat(64), &bad).status.success());
