@@ -1,5 +1,5 @@
-use super::*;
 use super::fill::{active_claim_manifests, flush_fill};
+use super::*;
 
 fn fixture(root: &Path) -> Result<()> {
     fs::create_dir_all(root.join("ops"))?;
