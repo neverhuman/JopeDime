@@ -1,6 +1,7 @@
 """Synthetic dispatch controls; no evaluator, dataset, daemon or model inputs."""
 
 import json
+import importlib.util
 import subprocess
 import sys
 import tempfile
@@ -14,6 +15,30 @@ import test_production_backend
 
 
 class DispatchTests(unittest.TestCase):
+    def test_retry_uses_signed_order_not_archived_panel_sort_order(self):
+        path = Path(__file__).parent.parent / "attempt10/controller.py"
+        spec = importlib.util.spec_from_file_location("q1_attempt10_controller", path)
+        controller = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(controller)
+        plan = {"datasets": [{"id": "fixture"}], "seeds": [0, 1, 2]}
+        rows = [
+            {"dataset": {"id": "fixture"}, "seed": seed, "guidance": policy}
+            for seed in plan["seeds"]
+            for policy in ["heuristic", "learned"]
+        ]
+        ordered = controller.ordered_retry_rows(plan, rows)
+        self.assertEqual(
+            [(row["seed"], row["guidance"]) for row in ordered],
+            [
+                (0, "heuristic"),
+                (0, "learned"),
+                (1, "learned"),
+                (1, "heuristic"),
+                (2, "heuristic"),
+                (2, "learned"),
+            ],
+        )
+
     def setUp(self):
         fixture = test_production_backend.ProductionBackendTests()
         fixture.setUp()
