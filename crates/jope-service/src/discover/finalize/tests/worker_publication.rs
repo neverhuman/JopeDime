@@ -75,7 +75,7 @@ fn real_appliance_workers_finalize_and_jopedime_predict_loads_the_model_object()
     );
     let f = fixture(false);
     let executor =
-        super::super::r#loop::ProcessExecutor::new(&executable, 1, &f.request.scratch_root)
+        crate::discover::r#loop::ProcessExecutor::new(&executable, 1, &f.request.scratch_root)
             .unwrap();
     search(&f, &executor);
     let receipt = Finalizer::new(Arc::clone(&f.store))
