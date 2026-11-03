@@ -149,7 +149,7 @@ fn parameter_bins_defaults_and_json_fields_match_python_specs() {
     assert_eq!(serialized["transforms"]["branch"]["generate"], false);
     assert_eq!(
         serialized["heads"]["ridge"]["params"][0]["bins"],
-        vec![json!(0.1), json!(0.5), json!(1.0), json!(3.0)]
+        json!([0.1, 0.5, 1.0, 3.0])
     );
     assert_eq!(serialized["expr"]["consts"][0], "-2");
 }
