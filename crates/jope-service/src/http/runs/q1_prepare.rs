@@ -1,7 +1,7 @@
 use super::*;
 
 impl RunService {
-    pub(crate) fn prepare(&self, spec: &RunSpec) -> Result<Prepared> {
+    pub(in crate::http::runs) fn prepare(&self, spec: &RunSpec) -> Result<Prepared> {
         if spec.task != Task::Regression {
             return Err(unavailable("This run backend requires task=regression."));
         }
