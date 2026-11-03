@@ -1,6 +1,4 @@
 use super::canonical::{canonical_json_bytes, content_sha256};
-#[cfg(test)]
-use super::canonical::{python_float, sha256};
 use super::validation::{
     bool_field, receipt_dedup_key, robust_score, string_field, validate_broad_receipt,
     BROAD_RECEIPT_SCHEMA, LABEL_AUTHORITY, STORE_VERIFICATION_SCHEMA,

@@ -1,3 +1,4 @@
+use super::super::canonical::{python_float, sha256};
 use super::*;
 
 fn digest(value: &str) -> String {
