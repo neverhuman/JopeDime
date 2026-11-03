@@ -1,5 +1,4 @@
 use super::*;
-use super::*;
 use serde_json::{json, Value};
 
 fn fixture(task: Task) -> (PanelDataset, Value) {
