@@ -5,14 +5,11 @@ mod types {
     ));
 }
 
-use types::{
-    classic_engine_wire, default_pad_u8, default_quant_scale, projection_alias_wire,
-    state_engine_projection, ManifestFile, WeightProjection,
-};
 pub use types::{
     HyperionAugment, HyperionConfig, HyperionEngine, HyperionFeaturePlacement, HyperionMode,
     HyperionModelIdentity, HyperionQuantileBounds, HyperionState, HyperionSweepSettings,
 };
+use types::{ManifestFile, WeightProjection};
 
 mod transform {
     include!(concat!(
