@@ -241,7 +241,7 @@ def _benchmark_configuration(
     except torch.OutOfMemoryError:
         torch.cuda.empty_cache()
         return {**base, "status": "out_of_memory"}
-    except Exception as error:
+    except (Exception, ArithmeticError) as error:
         return {
             **base,
             "status": "compiler_failed" if mode == "compiled" else "failed",
@@ -350,7 +350,7 @@ def _autotune_training(
                     stage="compiler",
                     mode="compiled",
                 )
-            except Exception as error:
+            except (Exception, ArithmeticError) as error:
                 compiled_record = {
                     "stage": "compiler",
                     "mode": "compiled",

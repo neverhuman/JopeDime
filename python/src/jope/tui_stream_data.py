@@ -86,7 +86,7 @@ class StreamDataMixin:
             return {"supported": False, "errors": ["no gene selected"]}
         try:
             emitted = self.router.emit_one(gene.engine, gene.canonical)
-        except Exception as exc:  # bridge unavailable etc.
+        except (Exception, ArithmeticError) as exc:  # bridge unavailable etc.
             emitted = {"supported": False, "errors": [str(exc)]}
         self._code_cache[key] = emitted
         if len(self._code_cache) > 64:

@@ -151,7 +151,7 @@ def _engine_head_key(engine: str, head: str) -> str:
 def _parse_actions(genome: str) -> dict[str, Any] | None:
     try:
         return parse_pipeline_actions(genome)
-    except Exception:
+    except (Exception, ArithmeticError):
         return None
 
 
