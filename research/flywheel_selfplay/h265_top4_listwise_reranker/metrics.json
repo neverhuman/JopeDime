@@ -1,0 +1,15 @@
+{
+  "schema": "jope.h265.metrics/v1",
+  "wave_id": "h265-top4-listwise-reranker-20261103",
+  "study_path": "research/flywheel_selfplay/h265_top4_listwise_reranker",
+  "status": "PREREGISTERED",
+  "outcomes_read": 0,
+  "verdict": "PENDING_EXECUTION",
+  "claim_scope": "zero-update FIT-only listwise LambdaMART re-ranker of r882 top-4 with 0 test-time reveals (single-pick evaluation)",
+  "fold_seed": 265140,
+  "seeds": [265101, 265102, 265103],
+  "boot_seed": 265150,
+  "holm_m": 2,
+  "primary_contrast": "RERANK4 - CONTROL",
+  "secondary_contrast": "RERANK4_SHUF - CONTROL"
+}
