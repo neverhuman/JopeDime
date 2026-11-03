@@ -1,18 +1,6 @@
 \subsection{Throughput and program-incumbent diagnostics}\label{app:round-throughput}\label{app:program-gain-distribution}\label{app:current-program-clock}
 
-The 20-round 2696--2715 slice in \cref{fig:fw-round-throughput}, captured
-at 06:54 UTC on 1 November 2026, has no adapter admission. Summary and
-admission journals agree on candidate utility, recorded best, acceptance
-and best-round identity. \Cref{fig:fw-live-round-throughput} adds a later
-capture. Completed-round throughput divides distinct training contexts
-by full round time; it differs from presentations per training second and
-does not count \mbox{distinct tasks across} rounds.
-
-The increments in \cref{fig:fw-program-gain-distribution} are logged
-utility changes, not Elo changes or independent performance estimates.
-The event counts in \cref{fig:fw-current-program-clock} are checked
-against the promotion journal.
-
+% Defined before the text, so the figure can head the page after D.18 opens.
 \begin{figure*}[!t]
   \begin{minipage}[t]{\dimexpr.5\textwidth-.5\columnsep\relax}
   \vspace{0pt}
@@ -63,3 +51,16 @@ against the promotion journal.
   \label{fig:fw-current-program-clock}
   \end{minipage}
 \end{figure*}
+
+The 20-round 2696--2715 slice in \cref{fig:fw-round-throughput}, captured
+at 06:54 UTC on 1 November 2026, has no adapter admission. Summary and
+admission journals agree on candidate utility, recorded best, acceptance
+and best-round identity. \Cref{fig:fw-live-round-throughput} adds a later
+capture. Completed-round throughput divides distinct training contexts
+by full round time; it differs from presentations per training second and
+does not count \mbox{distinct tasks across} rounds.
+
+The increments in \cref{fig:fw-program-gain-distribution} are logged
+utility changes, not Elo changes or independent performance estimates.
+The event counts in \cref{fig:fw-current-program-clock} are checked
+against the promotion journal.

@@ -16,9 +16,10 @@
 \setlength{\intextsep}{10pt plus 6pt minus 2pt}
 \setlength{\dbltextfloatsep}{20pt plus 10pt minus 4pt}% article's 20pt default: full-width floats get more room than column floats
 \setlength{\dblfloatsep}{10pt plus 6pt minus 2pt}
-\makeatletter% float pages and float columns start at the top, with the text-page float gaps, instead of spreading each float over the column
-\setlength{\@fptop}{0pt}\setlength{\@fpsep}{10pt}\setlength{\@fpbot}{0pt plus 1fil}
-\setlength{\@dblfptop}{0pt}\setlength{\@dblfpsep}{10pt}\setlength{\@dblfpbot}{0pt plus 1fil}
+\makeatletter% float pages and float columns: a lone float sits at the top; several span the full height, first at the top and last at the bottom
+% (fill in the gap outranks fil at the bottom). Full-width floats keep LaTeX's 8pt natural gap, so four fit on the Section 6.8 page.
+\setlength{\@fptop}{0pt}\setlength{\@fpsep}{10pt plus 1fill}\setlength{\@fpbot}{0pt plus 1fil}
+\setlength{\@dblfptop}{0pt}\setlength{\@dblfpsep}{8pt plus 1fill}\setlength{\@dblfpbot}{0pt plus 1fil}
 \makeatother
 \setlength{\parskip}{0pt plus 3pt}
 % twocolumn implies \flushbottom, which stretches gaps around floats and headings.
