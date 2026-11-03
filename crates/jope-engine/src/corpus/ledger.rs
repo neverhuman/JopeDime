@@ -20,15 +20,15 @@ pub struct ScanCacheStats {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-struct LedgerBinding {
-    schema: String,
-    policy_sha256: String,
-    context_index_sha256: String,
-    vocabulary_sha256: String,
-    qualification: bool,
-    source_path: PathBuf,
-    source_sha256: String,
-    search_sha256: String,
+pub(super) struct LedgerBinding {
+    pub(super) schema: String,
+    pub(super) policy_sha256: String,
+    pub(super) context_index_sha256: String,
+    pub(super) vocabulary_sha256: String,
+    pub(super) qualification: bool,
+    pub(super) source_path: PathBuf,
+    pub(super) source_sha256: String,
+    pub(super) search_sha256: String,
 }
 
 #[derive(Serialize, Deserialize)]

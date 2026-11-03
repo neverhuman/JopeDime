@@ -25,7 +25,7 @@ impl TokenCache {
     fn encode(&mut self, vocab: &Vocab, genome: &str) -> std::result::Result<Vec<usize>, String> {
         self.encode_for_task(vocab, genome, "regression")
     }
-    fn encode_for_task(
+    pub(super) fn encode_for_task(
         &mut self,
         vocab: &Vocab,
         genome: &str,

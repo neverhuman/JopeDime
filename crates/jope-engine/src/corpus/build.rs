@@ -124,12 +124,12 @@ fn build_impl(
                 include_str!("ledger.rs"),
                 include_str!("build.rs"),
                 include_str!("records.rs"),
-                include_str!("grammar.rs"),
-                include_str!("grammar/automaton.rs"),
-                include_str!("task_contract.rs"),
-                include_str!("prepare.rs"),
-                include_str!("encoding.rs"),
-                include_str!("manifest.rs")
+                include_str!("../grammar.rs"),
+                include_str!("../grammar/automaton.rs"),
+                include_str!("../task_contract.rs"),
+                include_str!("../prepare.rs"),
+                include_str!("../encoding.rs"),
+                include_str!("../manifest.rs")
             )
             .as_bytes(),
         ),
