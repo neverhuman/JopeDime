@@ -8,7 +8,7 @@ journals supply the scalar decisions in \cref{fig:fw-live-adapter-decisions}.
   \includegraphics[width=\linewidth]{figures/fig_fw_live_adapter_decisions.pdf}
   \caption{\textbf{All 20 candidates in the window are rejected.}
   Rounds 3931--3950, captured at 23:00 UTC on 2 November 2026.
-  Each point is candidate utility minus the pre-round recorded best;
+  Each point is candidate validation utility minus the pre-decision recorded best;
   zero denotes equality. Markers show logged admission decisions, with
   all 20 candidates rejected. Recorded-best utility remained \num{1.1389572}.
   This adaptive development window does not measure independent
@@ -40,9 +40,10 @@ over the same rounds.
   \caption{\textbf{Pool insertions and adapter rejections count different events.}
   Rounds 3174--4039, from complete journal prefixes captured on
   3 November 2026. Top: 421 logged automatic training-pool insertion
-  events; bottom: 865 rejected adapter candidates out of 866 decisions.
+  events. Bottom: 865 rejected adapter candidates out of 866 decisions.
   Bars sum 20 consecutive completed rounds; the final bar covers six.
-  Program-level insertions and adapter decisions have different units.
+  Program-level insertions (events per window) and adapter rejections
+  (decisions per window) have different units.
   These adaptive counts do not measure independent first-proposal or
   learning gains. Scope: \cref{sec:method-status}.}
   \label{fig:fw-pool-insertions}
