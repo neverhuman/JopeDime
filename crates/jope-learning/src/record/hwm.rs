@@ -234,10 +234,6 @@ impl HwmRecord {
     }
 }
 
-/// Where a score row came from (kept open: benchmark trackers add their own keys).
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[serde(deny_unknown_fields)]
-
 /// A required-but-nullable 64-hex field (schemars drops the null when `required` is set).
 pub(crate) fn nullable_hex64(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({
