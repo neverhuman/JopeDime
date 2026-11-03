@@ -26,8 +26,11 @@ use std::{
 };
 use tower::ServiceExt;
 
+#[path = "no_gp_leak/http.rs"]
 mod http;
+#[path = "no_gp_leak/real_run.rs"]
 mod real_run;
+#[path = "no_gp_leak/scanner.rs"]
 mod scanner;
 
 use scanner::{scan_surfaces, Surface, SENTINELS};

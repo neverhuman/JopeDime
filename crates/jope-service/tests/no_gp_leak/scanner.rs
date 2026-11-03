@@ -1,6 +1,6 @@
 use super::*;
 
-const SENTINELS: [&str; 4] = [
+pub(crate) const SENTINELS: [&str; 4] = [
     "T2_DSL_SENTINEL_8f27",
     "T2_OPERATOR_SENTINEL_19ac",
     "T2_LINEAGE_SENTINEL_43de",
