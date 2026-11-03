@@ -375,4 +375,4 @@ mod tests;
 mod input;
 mod screen;
 pub(super) use input::*;
-pub(super) use screen::Screen;
+use screen::Screen;
