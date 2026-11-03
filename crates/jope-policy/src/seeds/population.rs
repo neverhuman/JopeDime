@@ -1,3 +1,4 @@
+use super::Proposal;
 use crate::context::PolicyContext;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -385,8 +386,9 @@ pub(crate) fn check_population(population: &PopulationFields) -> Result<()> {
 
 /// The bytes jope-dime writes (`serde_json::to_vec_pretty`) for a proposal's population.
 pub fn population_bytes(proposal: &Proposal) -> Result<Vec<u8>> {
-    check_population(&proposal.population.0)?;
-    Ok(serde_json::to_vec_pretty(&proposal.population)?)
+    let population = proposal.population();
+    check_population(&population.0)?;
+    Ok(serde_json::to_vec_pretty(population)?)
 }
 
 /// Write the proposal's population atomically; returns its sha256 (the search's
