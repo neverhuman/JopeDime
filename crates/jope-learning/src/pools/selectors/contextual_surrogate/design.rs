@@ -99,7 +99,10 @@ impl<'a> ContextualSurrogateQHat<'a> {
             .filter(|(p, _, _)| p.parent_id != view.parent_id)
             .map(|(p, t, st)| {
                 (
-                    cosine(z, &self.context_features.rows[&p.context_id]),
+                    super::super::retrieval::cosine(
+                        z,
+                        &self.context_features.rows[&p.context_id],
+                    ),
                     p.context_id.as_str(),
                     *p,
                     t.as_slice(),
