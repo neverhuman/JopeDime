@@ -254,11 +254,11 @@ mod start;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "research")]
+pub use admission::RecordedAdmissionContext;
 pub use admission::{
     Admission, Candidate, HeuristicAdmission, RoundAdmission, RoundContext, RoundMeasurement,
 };
-#[cfg(feature = "research")]
-pub use admission::RecordedAdmissionContext;
 use evaluation::{
     add_events, checked_response, discard_pending, parallel_evaluate, public_failure, record_result,
 };
