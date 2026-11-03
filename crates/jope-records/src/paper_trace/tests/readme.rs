@@ -77,7 +77,14 @@ fn the_committed_documents_agree() {
         eprintln!("skipping committed-document check: requires readable Git index metadata");
         return;
     }
-    let (report, ok) = check(&root, false, false).expect("readable");
+    let (report, ok) = match check(&root, false, false) {
+        Ok(result) => result,
+        Err(Error::Command(message)) if message.starts_with("git ls-files ") => {
+            eprintln!("skipping committed-document check: {message}");
+            return;
+        }
+        Err(error) => panic!("committed-document check failed: {error}"),
+    };
     assert!(ok, "{report}");
 
     // C140's old TeX bound widened the accepted set despite the corrected record.
