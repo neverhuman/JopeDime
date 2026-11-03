@@ -280,7 +280,8 @@ pub(super) fn bool_field(value: &Value, field: &str) -> Result<bool> {
         .with_context(|| format!("{field} must be boolean"))
 }
 
-pub(super) fn string_field<'a>(value: &'a Value, field: &str) -> Result<&'a str> {
+pub(super) fn string_field(value: &Value, field: impl AsRef<str>) -> Result<&str> {
+    let field = field.as_ref();
     value
         .get(field)
         .and_then(Value::as_str)
