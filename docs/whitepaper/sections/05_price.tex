@@ -46,9 +46,9 @@ permits adaptive or correlated attempts; their cost and attempt curves
 still require measurement. A batch with no verified win has no finite
 \mbox{observed cost per win.}
 
-Training and deployment need separate ledgers. Training pays for every
-attempt, including failures. The proposed deployment protocol pays for
-encoding, one proposal and its fit, with no repair. Fixed-weight agent
+Keep training and deployment costs in separate ledgers. Training pays
+for every attempt, including failures; the proposed deployment protocol pays
+for encoding, one proposal and its fit, with no repair. Fixed-weight agent
 loops pay for evaluation during task-specific search. Training a proposer
 may shift some of that cost to earlier tasks; the crossover point \mbox{still needs}
 measurement (\cref{sec:results}).
@@ -151,9 +151,9 @@ families, rather than treating each dataset \mbox{as an independent} observation
 
 \subsection{Pricing evidence still required}\label{sub:price-run}
 
-Turning the per-token scaling comparisons of \cref{sub:price-tax} into a
-hardware bill requires accounting for resident model memory alongside active
-compute. Mixture-of-experts writers spend compute on active parameters but require memory
+A hardware bill must cover resident model memory as well as active
+compute; the per-token comparisons in \cref{sub:price-tax} cover the latter.
+Mixture-of-experts writers spend compute on active parameters but require memory
 for all parameters: Kimi~K2 has 32B active of 1T, while DeepSeek-V3 has 37B
 active of 671B \citep{kimiteam2025k2,deepseekv3}. Resident one-byte weights
 for 1T parameters alone require at least 13 H100 SXM GPUs with 80\,GB each

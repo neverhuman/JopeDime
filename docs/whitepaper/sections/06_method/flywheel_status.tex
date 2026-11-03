@@ -2,8 +2,8 @@
 
 \subsection{A separate adapter admission record}\label{sec:method-status}
 
-Unlike the reference self-play loop in \cref{sub:method-selfplay}, the operating record below tracks
-candidate selection and admission for a cost-ranking adapter; logged adapter utility is a scalar with larger values treated as better.
+The cost-ranking adapter has its own selection and admission record,
+separate from reference self-play (\cref{sub:method-selfplay}). Logged utility is a scalar with larger values treated as better.
 
 \input{sections/adapter_update_scope}
 
@@ -81,10 +81,9 @@ companion operating-rate views for separate retained windows.
 \end{figure*}
 
 \paragraph{A later admission window.}
-\Cref{fig:adapter-validation-trace} shows the latest 200 complete
-admission decisions at a later capture (all rejections), plotting each
-candidate utility and the post-decision retained utility on reused development
-contexts under the same \mbox{source-binding} limits described above.
+\Cref{fig:adapter-validation-trace} records 200 consecutive rejections
+at a later capture. The plot pairs each candidate utility with the
+post-decision retained utility on reused development contexts.
 
 \begin{figure}[tb]
   \centering
@@ -125,14 +124,15 @@ insertions and adapter rejections (\cref{app:current-program-clock} gives
 the program clock; \cref{app:flywheel-telemetry} \mbox{organizes} the full telemetry record).
 
 \paragraph{Aligning the committed event histories.}
-\Cref{fig:event-counters} counts pool insertions and adapter admissions
-over a common round window. Their event meanings remain distinct; this
-alignment does not join evaluation populations or establish a learning gain
-(\cref{app:event-counters}). \Cref{fig:pool-insertion-windows} resolves
-that insertion history into fixed round windows, separating local event
-frequency from the cumulative count (\cref{app:pool-insertion-windows}).
+\Cref{fig:event-counters} aligns pool insertions and adapter admissions
+by logged round while preserving their distinct event meanings
+(\cref{app:event-counters}). \Cref{fig:pool-insertion-windows} then resolves
+local insertion frequency in fixed round windows alongside cumulative counts
+(\cref{app:pool-insertion-windows}).
 \input{sections/current_round_phase_budget}
 
 \input{sections/current_program_24h}
 
 \input{sections/current_adapter_admission_rates}
+
+\input{sections/current_full_cohort_program_rates}

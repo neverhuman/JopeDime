@@ -1,0 +1,53 @@
+{
+  "boot_seed": 275150,
+  "completed_utc": "2026-11-03T21:08:35Z",
+  "created_utc": "2026-11-03T20:44:00Z",
+  "file_checksums_sha256": {
+    "PREREG.md": "3ea54be45cd1920f25b1f14cef7d5f3da3ea9986ce16915f6eb2a0449211807b",
+    "README.md": "666a71e49621436b654f29670d9eecf62f7d5b10f82cb24b52099b26b7ff0a92",
+    "fold_manifest.s3.json": "0f1c606bf3927fb96dec13e22f3b9e2413dfe973d26a7b9ad03daeb6b894d95a",
+    "metrics.json": "224677cc9d9ca6c1ae65abc086c51129a5e39edd48981877b54f144721bc2e4a",
+    "monitor.py": "a1d226572391dc498e6c026ffbe16ebd5181437df35eb8b02a416274a2444301",
+    "runner.py": "c571d186d353190e9297811b3eeba8d5810b36799acb3b296c954cdbfddb9d5c",
+    "test_h275.py": "8a812469c1559f7bd42e930a4ee84777a67345ecb92a76ff92126145ce86b7cc"
+  },
+  "fold_seeds": [
+    275140,
+    275141,
+    275142
+  ],
+  "holm_m": 3,
+  "input_checksums_sha256": {
+    "context_features_npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "dope_backbone": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "h272_fold_manifest_json": "1cfdb1b510e74c3cce2d7977ad6bd78dfa458bb50a7c0faa2334c0813ef00115",
+    "pool_priors_npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe",
+    "r882_ckpt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "selected_json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "source_manifest_json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4"
+  },
+  "model_seeds": [
+    275101,
+    275102,
+    275103
+  ],
+  "owner": "Argon",
+  "prereg_commit": "b19fba9d09683510469abb3099056a3f0763dca1",
+  "s3_full_outputs_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H275/attempt-001/",
+  "schema": "jope.h275.manifest/v1",
+  "secondary_fold_seed": 275140,
+  "soft_lambda_grid": [
+    0.0,
+    0.5,
+    1.0,
+    2.0,
+    4.0,
+    8.0
+  ],
+  "status": "COMPLETED",
+  "study_path": "research/flywheel_selfplay/h275_rerank8_soft_risk",
+  "verdict": "NO_ADVANCE",
+  "wave": "H275",
+  "wave_id": "h275-rerank8-soft-risk-20261103",
+  "winning_arm": null
+}

@@ -1,0 +1,70 @@
+{
+  "wave": "H278",
+  "authority": "/home/ubuntu/nudges/hw_t2140_opus_h278.md",
+  "arm": "RERANK8_VETO",
+  "seeds": [
+    278101,
+    278102,
+    278103
+  ],
+  "boot_seed": 278150,
+  "k_deep": 8,
+  "tau": 0.10,
+  "export_prefix": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H278/export/",
+  "export_schema": "jope.h278.frozen-rerank8-veto/v1",
+  "r3175": {
+    "checkpoint_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "evaluation_identity": "e79a7715c1531ccb8c4055ab96971101cd4034ec3a71d83bca6d25b0e604ca83",
+    "stored_dev_mean": 1.1389572403748425,
+    "p2_status_declared": "BLOCKED (CPU re-score 1.1366829009431036, 90/91; near-tie context 18)"
+  },
+  "checkpoint": "/home/ubuntu/jope-data/h278/inputs/round-882.pt",
+  "reference": "/home/ubuntu/jope-data/h278/inputs/best_dev_checkpoint.json",
+  "dope_composite_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "total_updates": 0,
+  "inputs": {
+    "/home/ubuntu/jope-data/h278/inputs/round-882.pt": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "/home/ubuntu/jope-data/h278/inputs/best_dev_checkpoint.json": "30853cad78d860870338316dfb5a4e869e46dc5c22d42fe4ab9d5f24f31c373a",
+    "/home/ubuntu/jope-data/h278/inputs/r882-train-costs.npz": "57004a91a315b372cde62b126be20edd4eb0f337942e08b19bd85438b520f69f",
+    "/home/ubuntu/jope-data/h278/inputs/r882-secondary-costs.npz": "0e812aa7ea4ce46a85cbe17cb7eba3a58678cf13ec3b215d48a334dd5626f11f",
+    "/home/ubuntu/jope-data/h278/inputs/r3175-secondary-costs.npz": "dd50b71d4fe74b0928951bdd80a07bf4335999219b124ad3d189c014bc988424",
+    "/home/ubuntu/jope-data/h278/inputs/r3175/round-3175.pt": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "/home/ubuntu/jope-data/h278/inputs/r3175/round-3175.json": "7565576d267f83400fee14e369e461d0a177fee097329b41c093420ceb0b6bbc",
+    "/home/ubuntu/jope-data/h278/inputs/snapshot/common_h252.py": "abe974ed10a0cd0d4b08440015a72a7b0adcebb22118c234732b812e9f0b0f92",
+    "/home/ubuntu/jope-data/h278/inputs/h272-F272140-S272101-K0.json": "bb3b9a035c516b8312c10eff7b857be8bbfe3d5b9900ea07f1ba833b0542847f",
+    "/home/ubuntu/jope-data/h50/input/selected.json": "981960ad628f5029f8c54552c7b1cb1d440072e7e9dcffecdea52c6a3493a0f1",
+    "/home/ubuntu/jope-data/h50/input/source_manifest.json": "99a53569fcaf59f9309e69329c830ae1684adff382da3ae22e0b2645c4ebc4d4",
+    "/home/ubuntu/jope-data/h58/cache/context_features.npz": "75704e8279c19fee8a7843ccbea801e3cd4b67e0ee08d282b070ddae7ab82faf",
+    "/home/ubuntu/jope-data/h58/cache/pool_priors.npz": "6db567ef2c10d2c67c375f7500305ec693a700c4e71eb23003b4cd312ee51cbe"
+  },
+  "parent_sources": {
+    "research/flywheel_selfplay/h276_rerank8_cluster_out/topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "research/flywheel_selfplay/h276_rerank8_cluster_out/h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "research/flywheel_selfplay/h276_rerank8_cluster_out/veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "research/flywheel_selfplay/h276_rerank8_cluster_out/runner.py": "0576fd055f56321a3b526432fa691934e0c751460b8cb0e595f1c0b742556f71"
+  },
+  "source_sha256": {
+    "test_h278.py": "096b909ae692f092654703e66100581e25fec6a8d2e832b814dae0c4f139e748",
+    "provenance.json": "dcdad7e43e7677da6ef5a4b68b2da234f5bbf326db72b273e08ed1be60958d9d",
+    "analysis.py": "0151b35374bed298e6841cf9de1f0f27c42248bcd387428653dc178fa1d67208",
+    "analysis_h272.py": "dbf988cf367dbe9181eb025ceeb7cf26c7be12a90143e239c0ee74a9722f8e77",
+    "runner.py": "5f5b3de8b34f797df6acfbab890568a5abf6041e4ecc5c519d77dda5c60d7234",
+    "freeze.py": "b352c488aaf53d2132621c5b5771917892af7924d4c2555d998b5931bbd643ab",
+    "topk.py": "fcd2d100c30d97dfe70fab7b981332f0c8dbffbf8bf7b7badaaef09550983d43",
+    "veto.py": "bf9c06ddd97f793b43f8ddbd31488768be3567db3f485f2d9377248e9b878ec0",
+    "h265_core.py": "5c17ddad3993b5cebb702d2c58882fa2e54dc15572649c663169416f6965de76",
+    "PREREG.md": "6557def65dcef7c93aa14f838697db1f0026abf6217483cb5efc5722c23fd81b",
+    "monitor.py": "d30efba4e5befe2f472f6a8c0eacea749b24d4d35eb9c6edc68ff36a2f4336e5",
+    "fold_manifest.json": "f44691b850156c5d96697c954d7cf063d75fecd8e903cb663d2d719cbcbd3eff"
+  },
+  "packages": {
+    "lightgbm": "4.6.0",
+    "numpy": "1.26.4",
+    "torch": "2.7.0",
+    "scikit-learn": "1.7.2"
+  },
+  "parent_commit": "0ec136e6692102b9abe10480e53012030daaa791",
+  "publication_ref": "v1/next",
+  "host": "xbabe2 CPU (taskset cores 44-47, nice 19, LightGBM n_jobs 1; H239 A1 guard with swap-in-rate pause)",
+  "compute_stop": "2026-11-04T00:30:00Z"
+}

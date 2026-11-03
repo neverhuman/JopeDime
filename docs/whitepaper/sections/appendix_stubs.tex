@@ -12,7 +12,7 @@ discussed in \cref{sec:anatomy,sec:road}.
 \begin{table}[htb]
   \caption{\textbf{Each domain in the main text relies on an explicit referee.}
   Each row restates a referee from \cref{sec:road,sec:game}; the last row
-  states the reference referee for algorithm invention.}
+  \mbox{states the} reference referee for algorithm invention.}
   \label{tab:referees}
   \centering
   \small
@@ -55,13 +55,13 @@ input closure and execution isolation:
   \item \textbf{Excluded test-selected search baseline.} An earlier internal
   leaderboard entry selected each dataset's best test-scored outcome from
   \num{63108} evaluations in total across 42 datasets. Selection using test-fold scores biases the reported metric upward
-  \citep{cawley2010overfitting}. The entry is therefore excluded from
+  \citep{cawley2010overfitting}. The entry is therefore \mbox{excluded from}
   all comparative claims.
   \item \textbf{Input-closure and canary checks.} Benchmark release requires
   passing receipts for an inner-fold label-poison test, a sealed canary and
   a train-only input-closure audit. The audit must exclude held-out targets
   and derived statistics from both board encoding and candidate generation.
-  Final pre-registration and receipts belong to the primary evaluation record in
+  Final pre-registration and receipts belong to the \mbox{primary evaluation record} in
   \cref{sub:results-protocol}.
 \end{itemize}
 
@@ -69,7 +69,7 @@ input closure and execution isolation:
 
 The historical reference in \cref{sec:method} still requires checkpoint
 qualification. Its encoder, training objective and execution requirements
-are inventoried below, separately from the \mbox{adapter record} in
+are inventoried below, separately from \mbox{the adapter record} in
 \cref{sec:method-status}:
 \begin{itemize}[leftmargin=1.4em,itemsep=2pt,topsep=3pt]
   \item \textbf{Board encoder blocks (\cref{sub:method-board}).} The frozen
@@ -82,8 +82,8 @@ are inventoried below, separately from the \mbox{adapter record} in
   rows; third-party provenance pending; restricted; redistribution prohibited); and (iii)~512 values from two
   frozen seed-17 target-summary windows. Each block is normalized before
   concatenation and clipping to $[-32,32]$. Non-finite contexts are refused. Encoding records
-  report wall-clock latency from 11.7\,s to 20.8\,s across eight reference
-  encoding jobs, within the 30\,s cap.
+  report wall-clock latency from 11.7\,s to 20.8\,s across eight \mbox{reference
+  encoding jobs,} within the 30\,s cap.
   \item \textbf{Comparison construction (\cref{sub:method-map,sub:method-selfplay}).}
   Lists $G_p$ require at least eight valid scored programs per problem (excluding
   stillborn draws), with
@@ -98,7 +98,7 @@ are inventoried below, separately from the \mbox{adapter record} in
   identifier. The native helper skips non-finite targets and exact ties,
   $q_w=q_u$, without an exclusion margin or logit rescaling. The trainer
   refuses non-finite supervision before constructing the loss.
-  \Cref{eq:writerLoss,eq:mapLoss} show the list-level form.
+  \mbox{\Cref{eq:writerLoss,eq:mapLoss}} show the list-level form.
   \item \textbf{Sequence supervision (\cref{eq:writerLoss}).} The native decoder
   prepends the projected context token before \texttt{BOS}. The sequence
   loss leaves \texttt{BOS} unsupervised but includes the following non-padding
@@ -107,11 +107,11 @@ are inventoried below, separately from the \mbox{adapter record} in
   over legal tokens; token losses are averaged within each program before
   the normalized rank-weighted mean over programs. The displayed aggregate
   coefficients match the native objective; the checkpoint's objective
-  identity and configuration still belong in its evaluation record.
+  identity and configuration \mbox{still belong} in its evaluation record.
   \item \textbf{Runtime supervision (\cref{eq:totalLoss}).}
   The auxiliary runtime term compares $\ln(1+s)$ with
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
-  for measured seconds $s\geq0$ and raw scalar head output $h$.
+  for measured seconds \mbox{$s\geq0$ and} raw scalar head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
   Here $q_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
   the corpus list's median RMSE. For microbatch normalization,
