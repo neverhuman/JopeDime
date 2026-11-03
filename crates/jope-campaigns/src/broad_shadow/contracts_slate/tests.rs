@@ -1,9 +1,6 @@
 use super::*;
 use serde_json::json;
 
-use super::*;
-use serde_json::json;
-
 fn digest_text(text: &str) -> String {
     digest(text.as_bytes())
 }
