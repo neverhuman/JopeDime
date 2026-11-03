@@ -28,8 +28,6 @@ pub(crate) use alerts::cockpit_state;
 pub(crate) use alerts::collect_alerts;
 pub(crate) use alerts::why_idle_chain;
 
-#[path = "tui_render.rs"]
-mod tui_render;
 pub(super) fn render(frame: &mut Frame<'_>, dashboard: &Dashboard, refresh_ms: u64, ui: UiState) {
-    tui_render::render(frame, dashboard, refresh_ms, ui);
+    super::tui_render::render(frame, dashboard, refresh_ms, ui);
 }
