@@ -129,5 +129,26 @@
     "reference_mean": 1.1389572403748425,
     "role": "Postprocessing only; never worker input; historical archived r3175 with failed H226 CPU parity retained; no new model evaluation",
     "source_H245_metrics_commit": "f189e51e0225deba08e7c9a0d820332d34edef99"
+  },
+  "execution_source_commit": "e93e607a54be801171a72a01896de1c984e7a99f",
+  "closeout": {
+    "status": "COMPLETE",
+    "verdict": "NO_ADVANCE",
+    "primary_verdict": "NO_ADVANCE",
+    "secondary_verdict": "NO_ADVANCE",
+    "metrics_sha256": "0c544ff2d4ad389b6561dd2ef52cdbba78c0f9216d13670207d93f7924649c12",
+    "archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H248/astra-t1035/closeout/runtime.tar.gz",
+      "version_id": "daPmSlgYM.WUBpJqzQul08hYiWsQI8uC",
+      "sha256": "128b5547cc9cfa202d00631617183c4c83e759e4ee175670ab5f3fd0c804c9a1",
+      "bytes": 326647170
+    },
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H248/astra-t1035/closeout/manifest.json",
+      "version_id": "Ukai2cVzINs6WVK1EN.NrzANOsXsDgzi",
+      "sha256": "3f5dc927a89e31a80305f8bf7445783a79b4de8fe2bf13cad91b2befc4a431e1",
+      "bytes": 103204
+    },
+    "audit_sha256": "ce68708c9547c163e54838f6606d5b3cacd61446458e6746920dfa35a34b11f4"
   }
 }
