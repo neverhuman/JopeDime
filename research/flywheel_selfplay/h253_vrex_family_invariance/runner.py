@@ -543,8 +543,6 @@ def main():
                     raise RuntimeError("family leakage")
                 restore(initial)
                 selbase, _ = engine.evaluate(select)
-                # Baseline assessment is frozen r882 only, independent of candidate selection.
-                abase, _ = engine.evaluate(assess)
                 indices = [positions[r["context_sha256"]] for r in assess]
                 orders = {c: np.argsort(engine.pools[c]["fitness"]) for c in fitids}
                 cellname = f"A{outer}-{seed}"

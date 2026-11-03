@@ -96,9 +96,9 @@
     "treatment.py": "ad7a4c15aba093e0ccdf1faa132b92e9a1aac59b98d795193802b00bc031164d",
     "PREREG.md": "e804b24f7c0fb1b6878fd13e7d3e9ce02d8111b2fa2e3b0b76880877c72eb357",
     "launcher.py": "34e74e490af10d2b2e7df5867b815ff8701bf7bb0d618c8e86be0b96a382ba27",
-    "monitor.py": "320d3d64445e51216614c9841c7a3f82dda06dce4f33fee3250d29cfa6f8b5ff",
+    "monitor.py": "6474e36c37d6b8e7921daf85f4386bd89e4ce639882e1c1a41e9245a74377725",
     "fold_manifest.json": "95c08c1a757c6618723887eeb90297199558f6e42a9b043f8ed6d1f1cbf89f28",
-    "runner.py": "36f32e4d55aa1197f19790310f3710a41cee7aa03b907e8bca2c2de77d4471d3"
+    "runner.py": "6f05768ef1dbe407d506c9fdef76d74f5a3331dbf2d90d4a84fa20995eff5c3d"
   },
   "host": "xbabe2 CPU40-43 nice19; one math thread; H239A1 guards; source outside jope-data",
   "compute_stop": "2026-11-03T15:30:00Z",

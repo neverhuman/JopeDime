@@ -184,6 +184,7 @@ def main():
             env=env,
             start_new_session=True,
         )
+        sample = initial
         while child.poll() is None:
             sample = snapshot(child)
             sample["elapsed"] = time.monotonic() - started
