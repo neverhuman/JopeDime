@@ -165,3 +165,4 @@ mod snapshot;
 pub use entries::{publish_best, run_entries};
 pub use models::{fetch_model, publish_model};
 pub use snapshot::{sync_snapshot, sync_snapshot_for};
+pub(crate) use snapshot::{pack_object, unpack_object};
