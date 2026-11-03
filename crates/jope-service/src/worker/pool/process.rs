@@ -19,7 +19,9 @@ impl Process {
         let waiting = Instant::now();
         loop {
             match self.child.try_wait() {
-                Ok(Some(status)) => return status.code() == Some(process::RETIRE_EXIT_CODE),
+                Ok(Some(status)) => {
+                    return status.code() == Some(super::super::process::RETIRE_EXIT_CODE)
+                }
                 Err(_) => return false,
                 Ok(None) => {}
             }
@@ -31,7 +33,7 @@ impl Process {
     }
 
     pub(super) fn retire(mut self) -> io::Result<()> {
-        process::kill(&mut self.child);
+        super::super::process::kill(&mut self.child);
         if self.child.try_wait()?.is_none() {
             return Err(io::Error::other("retired worker was not reaped"));
         }
@@ -86,14 +88,14 @@ impl Process {
                         .stdin(Stdio::piped())
                         .stdout(Stdio::piped())
                         .stderr(Stdio::null());
-                    process::prepare(&mut command);
+                    super::super::process::prepare(&mut command);
                     let mut child = command.spawn()?;
                     // No request precedes Job Object assignment; the executable
                     // only boots and waits for input at this point.
                     let containment = match Containment::assign(&child, cap) {
                         Ok(value) => value,
                         Err(error) => {
-                            process::kill(&mut child);
+                            super::super::process::kill(&mut child);
                             return Err(error);
                         }
                     };
@@ -110,7 +112,7 @@ impl Process {
                 };
                 if let Err(error) = ready_tx.send(Ok((child, containment))) {
                     if let Ok((mut child, _containment)) = error.0 {
-                        process::kill(&mut child);
+                        super::super::process::kill(&mut child);
                     }
                     return;
                 }
@@ -172,7 +174,7 @@ impl Process {
 
 impl Drop for Process {
     fn drop(&mut self) {
-        process::kill(&mut self.child);
+        super::super::process::kill(&mut self.child);
         self.containment.take();
         // A completed pipe thread can be waiting for its next request; disconnect that queue.
         let (closed_tx, _) = mpsc::sync_channel(1);
