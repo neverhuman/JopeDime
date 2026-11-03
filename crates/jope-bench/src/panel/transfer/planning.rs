@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
     io::Read,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 pub(crate) const PROTOCOL: &str = "jope.transfer-procedure-audit/v1";
@@ -29,7 +29,7 @@ pub(crate) fn read_bytes(path: &Path) -> Result<Vec<u8>> {
     ensure!(bytes.len() <= 128 * 1024 * 1024, "artifact exceeds 128 MiB");
     Ok(bytes)
 }
-fn read<T: for<'a> Deserialize<'a>>(path: &Path) -> Result<T> {
+pub(super) fn read<T: for<'a> Deserialize<'a>>(path: &Path) -> Result<T> {
     Ok(serde_json::from_slice(&read_bytes(path)?)?)
 }
 
