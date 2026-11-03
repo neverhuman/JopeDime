@@ -4,9 +4,9 @@ use super::*;
 pub(crate) fn verify_witness_event(
     trust: &policy::NativeWitnessTrust,
     event: &Value,
-    identity: &super::FitIdentity,
-    start: &super::StartToken,
-    witness: &super::witness::WitnessPolicy,
+    identity: &super::super::authority::FitIdentity,
+    start: &super::super::authority::StartToken,
+    witness: &super::super::witness::WitnessPolicy,
 ) -> Result<()> {
     ensure!(
         event["schema"] == "jope.native_fit_authorization.v1",
