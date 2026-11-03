@@ -1,0 +1,37 @@
+{
+  "captured_at": "2026-11-03T10:51:40.644164+00:00",
+  "source_file_basename": "promotions.jsonl",
+  "observed_bytes": 12419151,
+  "complete_prefix_bytes": 12419151,
+  "complete_prefix_sha256": "77cb6e3f364f92d2d502a26b9092fc8097fe852d924570fc03243bd5aece7771",
+  "complete_source_records": 3432,
+  "incomplete_tail_bytes_omitted": 0,
+  "window_byte_offset": 12052356,
+  "window_bytes": 366795,
+  "window_sha256": "86e0c27558c0d7f8c3da1dad529264113022851698ba7a4036f116ad1db7035e",
+  "window_first_source_line": 3332,
+  "window_last_source_line": 3432,
+  "stable_prefix_reread": true,
+  "source_read_only": true,
+  "schema": "whitepaper.pool-insertion-cadence-source/v1",
+  "csv_sha256": "d6612181d46760e20ab006c44b9eb73ccbbb1b71a4fafdbcc563832c67f6ce14",
+  "source_records": 101,
+  "intervals": 100,
+  "round_window": [
+    4051,
+    4280
+  ],
+  "window_policy": "Latest101 complete consecutive promotion-journal records at capture;100 adjacent timestamp differences. Declared before capture; no outcome selection.",
+  "event_definition": "One kind=promotion journal record is one training-pool program/context insertion, distinct from adapter admission or a distinct program across contexts.",
+  "all_selected_records_kind_promotion": true,
+  "all_selected_records_training_cv_gate_passed": true,
+  "zero_gaps": 0,
+  "negative_gaps": 0,
+  "gap_range_seconds": [
+    "0.359587",
+    "1431.038598"
+  ],
+  "derivation": "Exact adjacent UTC timestamp differences in integer microseconds divided by1000000. No gap exclusion, smoothing, clipping or interpolation.",
+  "display": "Symmetric-log vertical axis, linear inside1second, to retain zero gaps and show multiple time scales.",
+  "source_binding": "Logged engineering timestamps only; source/adapter/population/normalization closure remains unqualified. Source file location and exact byte-range record window retained with private custody receipt outside paper tree."
+}
