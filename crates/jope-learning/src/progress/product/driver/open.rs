@@ -220,7 +220,7 @@ impl<'r> Driver<'r> {
         self.checkpoints.uncheckpointed()
     }
 
-    fn finish(&self, mut step: Step) -> Step {
+    pub(super) fn finish(&self, mut step: Step) -> Step {
         step.staged = self.staged.len() as u64;
         step.head = self.head.clone();
         step
