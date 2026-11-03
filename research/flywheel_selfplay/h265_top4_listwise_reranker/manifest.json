@@ -9,7 +9,11 @@
   "outcomes_read": 0,
   "claim_scope": "zero-update FIT-only listwise LambdaMART re-ranker of r882 top-4 with 0 test-time reveals (single-pick evaluation)",
   "fold_seed": 265140,
-  "seeds": [265101, 265102, 265103],
+  "seeds": [
+    265101,
+    265102,
+    265103
+  ],
   "boot_seed": 265150,
   "boot_draws": 10000,
   "holm_m": 2,
@@ -49,9 +53,28 @@
     "max_depth": 3,
     "num_leaves": 7,
     "min_child_samples": 20,
-    "lr_grid": [0.03, 0.05, 0.10],
-    "n_estimators_grid": [50, 100, 200],
-    "margin_grid": [0.0, 0.02, 0.05, 0.10, 0.20, 0.35, 0.50, 0.75, 1.00, "inf"],
+    "lr_grid": [
+      0.03,
+      0.05,
+      0.1
+    ],
+    "n_estimators_grid": [
+      50,
+      100,
+      200
+    ],
+    "margin_grid": [
+      0.0,
+      0.02,
+      0.05,
+      0.1,
+      0.2,
+      0.35,
+      0.5,
+      0.75,
+      1.0,
+      "inf"
+    ],
     "strict_fit_min_gain": 0.001,
     "advance_min_gain": 0.002,
     "elo_anchor_arm": "CONTROL",
@@ -66,5 +89,15 @@
     "monitor.py",
     "runner.py",
     "test_h265.py"
-  ]
+  ],
+  "prereg_commit_sha": "11d8b1f1895f823476a7d9a4f6b9099518cf835d",
+  "file_checksums_sha256": {
+    "PREREG.md": "37b8e137f5a84de279a48cb377683596bc53251341eee4f52c3f8fc47fbab8ce",
+    "README.md": "d23e491b2b03c49888b6871799ddf4ba7c6ddf8e2a899bb0174ec106a09b0d39",
+    "fold_manifest.json": "e3ff8da781fddaceb2bef305dc330dfd4274834bae38700796cfc2cc4b8d0d1b",
+    "metrics.json": "0e8803e26984a19f360e946b645e54e660568f3246072318c7ac6465cc7f42d6",
+    "monitor.py": "17551dd073d14d3a971ae15bd86bbeefae71eaa1b316efe2b28335e0074581a2",
+    "runner.py": "a46e110542480e453382106c8a320dbbdbff508d3fad3cc0f0a7bf8e32b6f198",
+    "test_h265.py": "35eb19251ea92f1c59855cec872cdc5c7aee101d82aa18f51238a0a7eee30307"
+  }
 }
