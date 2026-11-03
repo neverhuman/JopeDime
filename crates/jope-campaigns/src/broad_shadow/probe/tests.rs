@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 fn digest(value: &str) -> String {
     sha256_hex(value.as_bytes())
 }
@@ -9,7 +7,7 @@ fn digest(value: &str) -> String {
 fn anchor(index: usize) -> Value {
     let genome = format!("anchor-{index}");
     json!({
-        "anchor_index": index, "engine": if index % 2 == 0 { "featmath" } else { "newmath" },
+        "anchor_index": index, "engine": if index.is_multiple_of(2) { "featmath" } else { "newmath" },
         "semantic_sha256": digest(&genome), "canonical_genome": genome,
         "algorithm_family": format!("family-{index}"), "performance_quartile": index,
         "median_runtime_seconds": 1.0, "real_dataset_coverage": 100,
