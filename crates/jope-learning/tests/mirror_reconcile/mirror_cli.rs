@@ -4,7 +4,7 @@ use super::*;
 // --------------------------------------------------------------------------------------
 
 /// `champions[skip..skip+take]` copied into a directory of its own.
-fn champion_subset(dest: &Path, skip: usize, take: usize) -> PathBuf {
+pub(super) fn champion_subset(dest: &Path, skip: usize, take: usize) -> PathBuf {
     let src = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/champions");
     fs::create_dir_all(dest).unwrap();
     let mut names: Vec<_> = fs::read_dir(&src)
@@ -20,7 +20,7 @@ fn champion_subset(dest: &Path, skip: usize, take: usize) -> PathBuf {
     dest.to_path_buf()
 }
 
-fn ingest(state: &Path, store: Option<&str>, dir: &Path, bundle: &str) -> Run {
+pub(super) fn ingest(state: &Path, store: Option<&str>, dir: &Path, bundle: &str) -> Run {
     let mut args: Vec<&str> = Vec::new();
     if let Some(url) = store {
         args.extend(["--store", url]);
