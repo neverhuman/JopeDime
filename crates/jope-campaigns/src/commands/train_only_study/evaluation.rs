@@ -288,14 +288,14 @@ pub(crate) fn score_population(
 }
 
 #[derive(Clone, Debug)]
-struct DeterministicRng(u64);
+pub(super) struct DeterministicRng(u64);
 
 impl DeterministicRng {
-    fn new(seed: u64) -> Self {
+    pub(super) fn new(seed: u64) -> Self {
         Self(seed)
     }
 
-    fn next_u64(&mut self) -> u64 {
+    pub(super) fn next_u64(&mut self) -> u64 {
         self.0 = self.0.wrapping_add(0x9e37_79b9_7f4a_7c15);
         let mut value = self.0;
         value = (value ^ (value >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
