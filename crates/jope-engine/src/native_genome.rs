@@ -21,10 +21,12 @@ mod execution;
 mod validation;
 mod verification;
 
+pub(crate) use execution::execute;
 #[cfg(test)]
 use execution::summarize_outcomes;
 pub use execution::target;
-pub(crate) use execution::{execute, training_admission};
+#[cfg(test)]
+pub(crate) use execution::training_admission;
 #[cfg(test)]
 use verification::{artifact_closure, prepared_closure};
 pub(crate) use verification::{direct_parent, required_inputs, verified_rows, verify_result};
