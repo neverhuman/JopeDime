@@ -1,3 +1,4 @@
+use super::operations::{is_digest, require_digest};
 use super::*;
 
 /// Schema identifier for publication values.
