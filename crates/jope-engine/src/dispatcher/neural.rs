@@ -1,6 +1,7 @@
 use super::*;
 
-pub(crate) fn handle(_root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
+#[cfg(feature = "neural")]
+pub(crate) fn handle(root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
     match command {
         #[cfg(feature = "neural")]
         EngineCmd::PolicyParity { directory } => jope_parallel::neural::parity(&directory)?,
@@ -33,7 +34,7 @@ pub(crate) fn handle(_root: &Path, command: EngineCmd) -> Result<Option<EngineCm
             output,
             gpu,
         } => {
-            let e = jope_parallel::encoding::encode(&_root, &prepared, cut, &spec, &output, gpu)?;
+            let e = jope_parallel::encoding::encode(&root, &prepared, cut, &spec, &output, gpu)?;
             println!("{}", serde_json::to_string(&e)?);
         }
         #[cfg(feature = "neural")]
@@ -85,6 +86,10 @@ pub(crate) fn handle(_root: &Path, command: EngineCmd) -> Result<Option<EngineCm
         } => jope_parallel::neural::nccl_probe(rank, world, &directory)?,
         other => return Ok(Some(other)),
     }
-    #[cfg(feature = "neural")]
     Ok(None)
+}
+
+#[cfg(not(feature = "neural"))]
+pub(crate) fn handle(_root: &Path, command: EngineCmd) -> Result<Option<EngineCmd>> {
+    Ok(Some(command))
 }
