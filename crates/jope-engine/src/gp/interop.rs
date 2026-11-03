@@ -13,8 +13,34 @@ use std::path::{Path, PathBuf};
 mod wire;
 use wire::{number, read_jsonl, write_jsonl, NONFINITE_PREFIX};
 
-/// `python/prime.toml` default used by the Python wrapper when no explicit directory is passed.
-pub const DEFAULT_WINNERS_DIR: &str = "/home/ubuntu/jmath/artifacts/newmath/winners";
+/// `[legacy] newmath_winners_dir` from the Python path authority, the default the Python wrapper
+/// uses when no explicit directory is passed. The file is `JOPE_PRIME_CONFIG` when set, otherwise
+/// `python/prime.toml` under [`jope_paths::jope_home`] (ADR-0003: no host paths in code).
+pub fn default_winners_dir() -> Result<PathBuf> {
+    let config = std::env::var_os("JOPE_PRIME_CONFIG")
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| jope_paths::jope_home().join("python").join("prime.toml"));
+    let text = fs::read_to_string(&config)
+        .with_context(|| format!("read prime config {}", config.display()))?;
+    let mut in_legacy = false;
+    for line in text.lines() {
+        let line = line.trim();
+        if line.starts_with('[') {
+            in_legacy = line == "[legacy]";
+            continue;
+        }
+        if !in_legacy {
+            continue;
+        }
+        if let Some((key, value)) = line.split_once('=') {
+            if key.trim() == "newmath_winners_dir" {
+                return Ok(PathBuf::from(value.trim().trim_matches('"')));
+            }
+        }
+    }
+    anyhow::bail!("{} has no [legacy] newmath_winners_dir", config.display())
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct ExportOptions<'a> {
@@ -392,7 +418,14 @@ fn training_row(
 
 /// Port of `gp_harvest`: read sorted `winner-*.json` inputs and emit TrainingRow JSONL.
 pub fn gp_harvest(winners_dir: Option<&Path>, out: &Path) -> Result<Value> {
-    let winners_dir = winners_dir.unwrap_or_else(|| Path::new(DEFAULT_WINNERS_DIR));
+    let default_dir;
+    let winners_dir = match winners_dir {
+        Some(dir) => dir,
+        None => {
+            default_dir = default_winners_dir()?;
+            default_dir.as_path()
+        }
+    };
     let mut paths = Vec::new();
     match fs::read_dir(winners_dir) {
         Ok(entries) => {
