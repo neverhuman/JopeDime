@@ -148,5 +148,32 @@
         "archived": "code-closure/inference/multilevel_model.py"
       }
     ]
+  },
+  "closeout": {
+    "source_commit": "398dab8fcfc6b22348c2f16c2ff791ff65d7e38c",
+    "archive_manifest": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H280/astra-t2205/closeout/manifest.json",
+      "version_id": "c_BSaORLt4HrDeh8bQPghyMv79yCd7tG",
+      "sha256": "6f00941037f9d54ec30616b5ca52461df9bb719eeca114e312b8ee8b0e146c94",
+      "bytes": 83866,
+      "exact_version_get_verified": true
+    },
+    "runtime_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H280/astra-t2205/closeout/runtime.tar.gz",
+      "version_id": "DkJ67C3K.xv3hIZbERPscpQ8mziKf.1G",
+      "sha256": "f5b5abb9a7e806852e22b0ef5ca406bf3f60d67e6e0e82e832d4a6d6609a3868",
+      "bytes": 74082685,
+      "members_verified": 471,
+      "exact_version_get_verified": true
+    },
+    "metrics_archive": {
+      "uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H280/astra-t2205/closeout/metrics.json",
+      "version_id": "YbICpDf40EHqcv5oot9liFyfdLr7ewBo",
+      "sha256": "1c40fa2e7a3122a78ffaabdee824d3a92964b6bfca21540db4e7aa4c5ea82630",
+      "bytes": 28518,
+      "exact_version_get_verified": true
+    },
+    "verdict": "ADVANCE",
+    "audit_status": "PASS"
   }
 }
