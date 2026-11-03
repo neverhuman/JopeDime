@@ -1,6 +1,7 @@
 #[path = "screening.rs"]
 mod screening;
 use screening::build_screening;
+use legacy::DeterministicRng;
 
 fn smart_seed(
     run_id: &str,

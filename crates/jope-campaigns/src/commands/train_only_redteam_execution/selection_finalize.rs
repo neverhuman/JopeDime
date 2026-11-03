@@ -259,7 +259,7 @@ fn finalize_smart_only_selector(
     Ok(Some((output, digest)))
 }
 
-fn finalize_selector(
+pub(crate) fn finalize_selector(
     root: &Path,
     manifest: &TrainOnlyRedteamManifest,
     dataset: &DatasetInput,
