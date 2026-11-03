@@ -1,0 +1,31 @@
+{
+  "captured_at": "2026-11-03T10:19:15.065276+00:00",
+  "source_file_basename": "adapter_admissions.jsonl",
+  "observed_bytes": 1849721,
+  "complete_prefix_bytes": 1849721,
+  "complete_prefix_sha256": "bbdf0024c2895e807610cadb015c64e0230100e14c20ef09b91c620416fe53ff",
+  "incomplete_tail_bytes_omitted": 0,
+  "stable_prefix_reread": true,
+  "source_read_only": true,
+  "schema": "whitepaper.adapter-validation-trace-source/v1",
+  "csv_sha256": "c26909c75ac70eab87b9796a7792807f53e6086deb611e29445a624a440a0839",
+  "complete_source_records": 3489,
+  "window_policy": "Latest 200 complete newline-terminated decisions at capture, declared before reading outcomes; all rows retained.",
+  "rows": 200,
+  "round_window": [
+    4064,
+    4263
+  ],
+  "source_line_window": [
+    3290,
+    3489
+  ],
+  "source_record_hash_convention": "SHA256 of the exact source line including its newline",
+  "raw_numeric_strings_preserved": true,
+  "evaluation_identity_sha256": "b762b216e2265cb2e726fc0acba68470a76a744e057b8a76b25e89837a8fe693",
+  "single_logged_evaluation_identity": true,
+  "admissions": 0,
+  "retained_state_contiguous": true,
+  "source_binding": "Scalar journal projection only; installed loop, adapter, candidate pools, revealed-history population and normalization remain unjoined. Raw prefix and source location retained with custody receipt outside the paper tree.",
+  "transformations": "One row per logged admission decision. Retained utility is the logged post-decision value, not a cumulative maximum; no smoothing, resampling, clipping or outcome selection."
+}
