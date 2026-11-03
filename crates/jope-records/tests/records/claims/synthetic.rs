@@ -111,8 +111,18 @@ fn synthetic_identity_through_a_symlinked_directory_is_still_located() {
     let conformance = fixture
         .root
         .join(Path::new(CONFORMANCE).parent().expect("directory"));
-    std::os::unix::fs::symlink(&conformance, fixture.root.join("evidence/linked"))
-        .expect("symlink");
+    match std::os::unix::fs::symlink(&conformance, fixture.root.join("evidence/linked")) {
+        Ok(()) => {}
+        Err(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::PermissionDenied | std::io::ErrorKind::Unsupported
+            ) =>
+        {
+            return;
+        }
+        Err(error) => panic!("symlink: {error}"),
+    }
     set(
         node(&mut document, "E-root"),
         "path",
