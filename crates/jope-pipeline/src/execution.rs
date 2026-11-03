@@ -415,10 +415,9 @@ mod queue;
 mod supervisor;
 mod types;
 
-use processes::{ProcessFit, Running};
+use processes::Running;
 use queue::{ActiveFits, FairQueue};
 pub use supervisor::Supervisor;
-pub(crate) use types::after_verification;
 #[cfg(all(test, feature = "neural-search"))]
 pub(crate) use types::verification_hook;
 pub use types::*;
