@@ -131,7 +131,7 @@ pub(crate) struct EloRating {
     pub(crate) rating: f64,
 }
 
-pub(crate) fn bradley_terry_elo(
+pub(super) fn bradley_terry_elo(
     scores: &BTreeMap<String, BTreeMap<String, f64>>,
     config: &ScoringConfig,
 ) -> Result<Vec<EloRating>> {
