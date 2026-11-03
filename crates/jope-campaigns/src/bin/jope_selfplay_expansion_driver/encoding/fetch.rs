@@ -1,5 +1,4 @@
 use super::super::super::*;
-use super::*;
 
 /// Exhaustion must be a BACKOFF, never a death sentence. Datasets get parked
 /// after MAX_ENCODE_ATTEMPTS, but placement failures can burn the whole budget
