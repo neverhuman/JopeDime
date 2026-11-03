@@ -430,9 +430,9 @@
   "coverage_map": "deploy/ci/coverage.json",
   "items": {
     "python:research/flywheel_selfplay/h248_dfl/test_h248.py": {
-        "reason": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
-        "role": "research"
-      },
+      "reason": "H248 data-free expected-regret gradients, failure cost sign, equal-family weights, exact CTRL AdamW/loss, FIT folds, strict selector/Holm2, launch and A1 guard tests; no live qualification.",
+      "role": "research"
+    },
     "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
       "reason": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification.",
       "role": "research"
