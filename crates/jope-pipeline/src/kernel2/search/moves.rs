@@ -205,15 +205,15 @@ impl Proposal {
 mod accounting;
 mod rewrite;
 
+#[cfg(test)]
+use accounting::scored;
 pub(crate) use accounting::{check, publish};
 #[cfg(test)]
 use accounting::{not_run_count, pool_count};
 #[cfg(test)]
-use accounting::scored;
+use rewrite::owned;
 pub(crate) use rewrite::propose;
 pub(super) use rewrite::{finish_round, ranked_parents, selected};
-#[cfg(test)]
-use rewrite::owned;
 #[cfg(test)]
 use rewrite::{has_expression_stage, linearize_round, simplify_round};
 
