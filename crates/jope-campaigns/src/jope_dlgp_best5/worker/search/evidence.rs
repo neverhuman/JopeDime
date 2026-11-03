@@ -1,12 +1,8 @@
 use super::*;
-
-use crate::jope_dlgp_best5::strategies::AnchorObservationV1;
 use crate::jope_generalized_gp::{GenomeOriginV1, GenomeV1, PopulationMemberV1};
 use serde::Deserialize;
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs,
-};
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs;
 
 #[derive(Deserialize)]
 #[serde(untagged)]
@@ -300,7 +296,7 @@ pub(super) fn cv7_evidence(
         predictor: predictor.clone(),
         fold_prediction_receipt_sha256s: receipts,
         fold_r2,
-        pooled_oof_r2: if sst == 0.0 { -1.0 } else { 1.0 - sse / sst }.clamp(-1.0, 1.0),
+        pooled_oof_r2: (if sst == 0.0 { -1.0 } else { 1.0 - sse / sst }).clamp(-1.0, 1.0),
         rmse: (sse / actual.len() as f64).sqrt(),
         runtime_seconds: 0.0,
         complexity: predictor.complexity(),

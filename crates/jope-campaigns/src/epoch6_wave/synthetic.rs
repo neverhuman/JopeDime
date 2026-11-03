@@ -1,5 +1,6 @@
 use sha2::{Digest, Sha256};
 use super::*;
+use sha2::{Digest, Sha256};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]

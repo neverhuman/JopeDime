@@ -1,5 +1,4 @@
 use super::*;
-
 #[derive(Clone, Copy, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SupplyIntentStateV2 {
