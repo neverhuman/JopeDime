@@ -141,7 +141,7 @@ impl Admission for HeuristicAdmission {
     }
 }
 
-fn sample_index(rng: &mut ChaCha12Rng, len: usize) -> usize {
+pub(super) fn sample_index(rng: &mut ChaCha12Rng, len: usize) -> usize {
     let limit = u64::MAX - u64::MAX % len as u64;
     loop {
         let value = rng.next_u64();

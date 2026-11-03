@@ -41,7 +41,7 @@ pub fn evaluate_native<B: AsRef<[u8]> + Sync>(
 }
 
 #[derive(Debug)]
-struct UndefinedFitness;
+pub(super) struct UndefinedFitness;
 impl std::fmt::Display for UndefinedFitness {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("candidate has undefined fitness or numerical predictions")
@@ -71,7 +71,7 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     feat_math::GenomeIr::parse(&request.dsl)?;
     match (&spec.refit_output, spec.refit_max_bytes) {
         (Some(path), Some(maximum)) => {
-            return native_refit(request, matrix, &spec, &objective, path, maximum)
+            return super::model::native_refit(request, matrix, &spec, &objective, path, maximum)
         }
         (None, None) => {}
         _ => bail!("incomplete private refit handoff"),
@@ -129,7 +129,7 @@ pub(super) fn native_scores<B: AsRef<[u8]>>(
     })
 }
 
-pub(crate) fn numeric_rows<B: AsRef<[u8]>>(
+pub(super) fn numeric_rows<B: AsRef<[u8]>>(
     matrix: &Matrix<B>,
     target: &str,
     features: &[String],
