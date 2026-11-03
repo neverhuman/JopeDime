@@ -1,4 +1,5 @@
 use super::*;
+use jope_parallel::native_loop::bounded::controller;
 use jope_parallel::native_loop::bounded::rendezvous as rendezvous_api;
 
 /// The fixture plan with each host's certificate digest set to an in-test certificate.
