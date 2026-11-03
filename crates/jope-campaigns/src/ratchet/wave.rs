@@ -101,9 +101,9 @@ pub(crate) use compatibility::{ReadableAdmission, ReadableGeneration0, ReadableT
 pub(crate) use gate::LearningWaveManifestV1;
 #[cfg(test)]
 pub(crate) use gate::{ArtifactReleaseV1, WaveGateKindV1, WaveGateReceiptV1};
-#[cfg(test)]
-pub(crate) use inference::ModelProposalV2;
 pub(crate) use inference::{
     read_seed_inference, ModelRetentionBucketV2, ModelRetentionReceiptV2, ReadableSeedInference,
-    RetainedModelProposalV2, SeedInferenceRequestV2, SeedInferenceResponseV2,
+    SeedInferenceRequestV2, SeedInferenceResponseV2,
 };
+#[cfg(test)]
+pub(crate) use inference::{ModelProposalV2, RetainedModelProposalV2};
