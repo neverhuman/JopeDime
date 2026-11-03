@@ -97,14 +97,14 @@ pub(super) fn distill_round(
                     source_sha256: src_sha,
                 });
             }
-            let batch = distill_selfplay_observations(&spec, &obs, &scores_set)?;
+            let batch = distill_selfplay_observations(&spec, &obs, scores_set)?;
             round_distilled.extend(batch);
         }
     }
 
     let parquet_bytes = distilled::write(
         &round_distilled,
-        &scores_set,
+        scores_set,
         &[("flywheel_round".into(), r.to_string())],
     )?;
     let parquet_sha256 = sha256_hex(&parquet_bytes);
@@ -123,7 +123,7 @@ pub(super) fn distill_round(
         f.write_all(&parquet_bytes)?;
         f.sync_all()?;
     }
-    let reloaded = distilled::read(&parquet_bytes, &scores_set)?;
+    let reloaded = distilled::read(&parquet_bytes, scores_set)?;
     distilled::reconcile(&reloaded, &raw_keys)?;
 
     Ok(DistilledRound {
