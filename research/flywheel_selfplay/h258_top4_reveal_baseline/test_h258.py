@@ -103,3 +103,24 @@ def test_score_h258_context_gated_and_ungated_reveal_budget() -> None:
         assert out_u["reveals_used"][k] == 0
         assert out_u["scores"][k] == out_u["scores"]["R882"]
     assert out_u["reveals_used"]["TOP4_PICK_UNGATED"] == 4
+
+
+def test_completed_metrics_invariants() -> None:
+    metrics = json.loads((STUDY_DIR / "metrics.json").read_text())
+    if metrics.get("status") != "COMPLETE":
+        return
+    assert metrics["verdict"] == "NO_ADVANCE"
+    base = metrics["baseline_regression"]
+    assert base["r882_native91_abs_diff"] == 0.0
+    assert base["r882_bit_exact_context_matches"] == 91
+    assert metrics["audits"]["audit_a_zero_leakage"]["pass"] is True
+    assert metrics["audits"]["audit_b_reveal_budget"]["pass"] is True
+    assert metrics["audits"]["audit_c_permuted_negative_control_dl_val"]["pass"] is True
+    prim = metrics["dl_val_native91"]["contrasts_r882"][
+        "ACTIVE_2PLUS2_HURDLE - TOP4_PICK"
+    ]
+    assert prim["median_family_gain"] < 0.0
+    assert prim["positive_seeds"] == 0
+    sec = metrics["dl_val_native91"]["contrasts_r882"]["TOP4_PICK - GATED_025"]
+    assert sec["median_family_gain"] > 0.09
+    assert sec["positive_seeds"] == 3

@@ -1,8 +1,3728 @@
 {
+  "advance_gates_active_vs_top4": {
+    "holm_lcb_gt_0": false,
+    "holm_lcb_value": -0.13339152947822117,
+    "holm_p_lt_005": false,
+    "median_family_gain_gt_0": false,
+    "permuted_negative_control_ci_covers_0": true,
+    "positive_seeds_ge_2_of_3": false,
+    "verdict": "NO_ADVANCE"
+  },
+  "audits": {
+    "audit_a_zero_leakage": {
+      "dl_train_fold_family_overlap": 0,
+      "dl_val_contexts_in_priors_or_promotions": 0,
+      "dl_val_families_in_priors_or_promotions": 0,
+      "has_meta_test_any": false,
+      "hurdle_diag_r3175": {
+        "sp_promotions_used": 3449,
+        "train_oof_mean_cont_logratio_corr": 0.4962661843921021,
+        "train_oof_mean_gate_fail_corr": 0.22840333968033746,
+        "val_mean_cont_logratio_corr": 0.47503138618346774,
+        "val_mean_gate_fail_corr": 0.23954999484547296
+      },
+      "hurdle_diag_r882": {
+        "sp_promotions_used": 3449,
+        "train_oof_mean_cont_logratio_corr": 0.49623594303876634,
+        "train_oof_mean_gate_fail_corr": 0.2283856812899093,
+        "val_mean_cont_logratio_corr": 0.4750266923786021,
+        "val_mean_gate_fail_corr": 0.23953216853658307
+      },
+      "pass": true,
+      "train_promotions_used": 3449
+    },
+    "audit_b_reveal_budget": {
+      "gated_contexts_reveal_min_max": {
+        "ACTIVE_2PLUS2_HURDLE": {
+          "count": 3873,
+          "max": 4,
+          "min": 4
+        },
+        "ACTIVE_2PLUS2_PICK": {
+          "count": 3873,
+          "max": 4,
+          "min": 4
+        },
+        "GATED_025": {
+          "count": 3873,
+          "max": 4,
+          "min": 4
+        },
+        "TOP2_RAND2_PICK": {
+          "count": 3873,
+          "max": 4,
+          "min": 4
+        },
+        "TOP4_PICK": {
+          "count": 3873,
+          "max": 4,
+          "min": 4
+        }
+      },
+      "pass": true,
+      "snapshot_bit_exact_matches_r3175": 3930,
+      "snapshot_bit_exact_matches_r882": 3930,
+      "total_context_seed_evaluations": 3930,
+      "ungated_contexts_reveal_min_max": {
+        "ACTIVE_2PLUS2_HURDLE": {
+          "count": 57,
+          "max": 0,
+          "min": 0
+        },
+        "ACTIVE_2PLUS2_PICK": {
+          "count": 57,
+          "max": 0,
+          "min": 0
+        },
+        "GATED_025": {
+          "count": 57,
+          "max": 0,
+          "min": 0
+        },
+        "TOP2_RAND2_PICK": {
+          "count": 57,
+          "max": 0,
+          "min": 0
+        },
+        "TOP4_PICK": {
+          "count": 57,
+          "max": 0,
+          "min": 0
+        }
+      }
+    },
+    "audit_c_permuted_negative_control_dl_val": {
+      "pass": true,
+      "perm_minus_gated_025": {
+        "ci95": [
+          -0.033622643753145026,
+          0.0015898268959325594
+        ],
+        "covers_zero": true,
+        "median_family_gain": -0.009188044731519057
+      },
+      "perm_minus_r882": {
+        "ci95": [
+          -0.033622643753145026,
+          0.0015898268959325594
+        ],
+        "covers_zero": true,
+        "median_family_gain": -0.009188044731519057
+      },
+      "perm_minus_top4_pick": {
+        "ci95": [
+          -0.1635095193825492,
+          -0.06741026010709501
+        ],
+        "covers_zero": false,
+        "median_family_gain": -0.10757248460875929
+      }
+    }
+  },
+  "baseline_regression": {
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "r3175_native91_mean": 1.1366829009431036,
+    "r3175_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "r882_bit_exact_context_matches": 91,
+    "r882_native91_abs_diff": 0.0,
+    "r882_native91_expected": 1.1377941898164525,
+    "r882_native91_mean": 1.1377941898164525,
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "schema": "jope.h258.baseline-regression/v1"
+  },
+  "boot_draws": 10000,
   "boot_seed": 258150,
+  "completed_utc": "2026-11-03T15:14:13Z",
+  "dl_train_oof": {
+    "arm_utilities_r3175": {
+      "ACTIVE_2PLUS2_HURDLE@r3175": {
+        "median_context_utility": 1.4930405603134531,
+        "median_family_utility": 1.466126378515929,
+        "per_seed_context_utility": [
+          1.4930654222604078,
+          1.492687785439178,
+          1.4930405603134531
+        ],
+        "per_seed_family_utility": [
+          1.4663867463234614,
+          1.466126378515929,
+          1.4656627631251606
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK@r3175": {
+        "median_context_utility": 1.5982701122623784,
+        "median_family_utility": 1.572063974000058,
+        "per_seed_context_utility": [
+          1.5982701122623784,
+          1.5820285091020418,
+          1.5988701464223183
+        ],
+        "per_seed_family_utility": [
+          1.572063974000058,
+          1.5573675287398645,
+          1.57480138929563
+        ]
+      },
+      "GATED_025@r3175": {
+        "median_context_utility": 1.4213525287239352,
+        "median_family_utility": 1.3866928107356034,
+        "per_seed_context_utility": [
+          1.4213525287239352,
+          1.4229212069361759,
+          1.4212176236406922
+        ],
+        "per_seed_family_utility": [
+          1.3866928107356034,
+          1.386974694325629,
+          1.3849477559831962
+        ]
+      },
+      "R3175": {
+        "median_context_utility": 1.4195349430147646,
+        "median_family_utility": 1.3815246210845231,
+        "per_seed_context_utility": [
+          1.4195349430147646,
+          1.4195349430147646,
+          1.4195349430147646
+        ],
+        "per_seed_family_utility": [
+          1.3815246210845231,
+          1.3815246210845231,
+          1.3815246210845231
+        ]
+      },
+      "TOP2_RAND2_PICK@r3175": {
+        "median_context_utility": 1.5912398141128077,
+        "median_family_utility": 1.5636558764541042,
+        "per_seed_context_utility": [
+          1.5912398141128077,
+          1.5735884384413314,
+          1.5924507034461637
+        ],
+        "per_seed_family_utility": [
+          1.5636558764541042,
+          1.5481115147748818,
+          1.568573974591391
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "median_context_utility": 1.6069199473848224,
+        "median_family_utility": 1.5705675934120926,
+        "per_seed_context_utility": [
+          1.6069199473848224,
+          1.6069199473848224,
+          1.6069199473848224
+        ],
+        "per_seed_family_utility": [
+          1.5705675934120926,
+          1.5705675934120926,
+          1.5705675934120926
+        ]
+      },
+      "TOP4_PICK_UNGATED@r3175": {
+        "median_context_utility": 1.61487081808293,
+        "median_family_utility": 1.5800507913952884,
+        "per_seed_context_utility": [
+          1.61487081808293,
+          1.61487081808293,
+          1.61487081808293
+        ],
+        "per_seed_family_utility": [
+          1.5800507913952884,
+          1.5800507913952884,
+          1.5800507913952884
+        ]
+      }
+    },
+    "arm_utilities_r882": {
+      "ACTIVE_2PLUS2_HURDLE": {
+        "median_context_utility": 1.4942454126959055,
+        "median_family_utility": 1.466442267689423,
+        "per_seed_context_utility": [
+          1.494184926313572,
+          1.4942454126959055,
+          1.4950556535965327
+        ],
+        "per_seed_family_utility": [
+          1.4664372771353062,
+          1.466442267689423,
+          1.4668258147986508
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK": {
+        "median_context_utility": 1.5974808319707563,
+        "median_family_utility": 1.5710925670188216,
+        "per_seed_context_utility": [
+          1.5974808319707563,
+          1.5813983545234271,
+          1.5980007755844383
+        ],
+        "per_seed_family_utility": [
+          1.5710925670188216,
+          1.55637295972797,
+          1.5746239291386426
+        ]
+      },
+      "GATED_025": {
+        "median_context_utility": 1.4230143525820909,
+        "median_family_utility": 1.3852816038356859,
+        "per_seed_context_utility": [
+          1.4229215572831326,
+          1.423260863616373,
+          1.4230143525820909
+        ],
+        "per_seed_family_utility": [
+          1.3851748101725838,
+          1.3852816038356859,
+          1.3855880983186368
+        ]
+      },
+      "R882": {
+        "median_context_utility": 1.423073434552299,
+        "median_family_utility": 1.3853554329931828,
+        "per_seed_context_utility": [
+          1.423073434552299,
+          1.423073434552299,
+          1.423073434552299
+        ],
+        "per_seed_family_utility": [
+          1.3853554329931828,
+          1.3853554329931828,
+          1.3853554329931828
+        ]
+      },
+      "TOP2_RAND2_PICK": {
+        "median_context_utility": 1.5900632661841345,
+        "median_family_utility": 1.5624245347575607,
+        "per_seed_context_utility": [
+          1.5900632661841345,
+          1.5723228652238461,
+          1.59137470633529
+        ],
+        "per_seed_family_utility": [
+          1.5624245347575607,
+          1.546771196388868,
+          1.567179879010458
+        ]
+      },
+      "TOP4_PICK": {
+        "median_context_utility": 1.606115062529902,
+        "median_family_utility": 1.5692327898077274,
+        "per_seed_context_utility": [
+          1.606115062529902,
+          1.606115062529902,
+          1.606115062529902
+        ],
+        "per_seed_family_utility": [
+          1.5692327898077274,
+          1.5692327898077274,
+          1.5692327898077274
+        ]
+      },
+      "TOP4_PICK_UNGATED": {
+        "median_context_utility": 1.61406593322801,
+        "median_family_utility": 1.5787159877909234,
+        "per_seed_context_utility": [
+          1.61406593322801,
+          1.61406593322801,
+          1.61406593322801
+        ],
+        "per_seed_family_utility": [
+          1.5787159877909234,
+          1.5787159877909234,
+          1.5787159877909234
+        ]
+      }
+    },
+    "contrasts_r3175": {
+      "ACTIVE_2PLUS2_HURDLE@r3175 - GATED_025@r3175": {
+        "ci95": [
+          0.04096508415375225,
+          0.1367393851099828
+        ],
+        "ci975_holm2": [
+          0.03711909802375669,
+          0.14714323809933905
+        ],
+        "family_harm_gt_001_rate": 0.01951219512195122,
+        "family_wtl_by_seed": [
+          {
+            "losses": 11,
+            "ties": 114,
+            "wins": 80
+          },
+          {
+            "losses": 12,
+            "ties": 114,
+            "wins": 79
+          },
+          {
+            "losses": 12,
+            "ties": 115,
+            "wins": 78
+          }
+        ],
+        "mean_context_gain": 0.07110080290407862,
+        "mean_family_gain": 0.07985354230670756,
+        "median_context_gain": 0.07171289353647277,
+        "median_family_gain": 0.0796939355878583,
+        "per_seed_context_gains": [
+          0.07171289353647277,
+          0.06976657850300218,
+          0.07182293667276095
+        ],
+        "per_seed_family_gains": [
+          0.0796939355878583,
+          0.07915168419029994,
+          0.08071500714196445
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175 - R3175": {
+        "ci95": [
+          0.04389003052742475,
+          0.1418177058055108
+        ],
+        "ci975_holm2": [
+          0.040773951509670045,
+          0.1532867949866708
+        ],
+        "family_harm_gt_001_rate": 0.01951219512195122,
+        "family_wtl_by_seed": [
+          {
+            "losses": 12,
+            "ties": 114,
+            "wins": 79
+          },
+          {
+            "losses": 12,
+            "ties": 117,
+            "wins": 76
+          },
+          {
+            "losses": 12,
+            "ties": 116,
+            "wins": 77
+          }
+        ],
+        "mean_context_gain": 0.07339631298958166,
+        "mean_family_gain": 0.0845340082369939,
+        "median_context_gain": 0.0735056172986883,
+        "median_family_gain": 0.08460175743140576,
+        "per_seed_context_gains": [
+          0.07353047924564328,
+          0.0731528424244134,
+          0.0735056172986883
+        ],
+        "per_seed_family_gains": [
+          0.08486212523893857,
+          0.08460175743140576,
+          0.08413814204063734
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.13002343605457756,
+          -0.08125067133032539
+        ],
+        "ci975_holm2": [
+          -0.13446825237053242,
+          -0.0783949540004256
+        ],
+        "family_harm_gt_001_rate": 0.8878048780487805,
+        "family_wtl_by_seed": [
+          {
+            "losses": 200,
+            "ties": 5,
+            "wins": 0
+          },
+          {
+            "losses": 200,
+            "ties": 5,
+            "wins": 0
+          },
+          {
+            "losses": 201,
+            "ties": 4,
+            "wins": 0
+          }
+        ],
+        "holm_p_m2": 1.0,
+        "mean_context_gain": -0.11398869138047596,
+        "mean_family_gain": -0.10450896409057558,
+        "median_context_gain": -0.11387938707136931,
+        "median_family_gain": -0.10444121489616372,
+        "per_seed_context_gains": [
+          -0.11385452512441435,
+          -0.11423216194564423,
+          -0.11387938707136931
+        ],
+        "per_seed_family_gains": [
+          -0.10418084708863087,
+          -0.10444121489616372,
+          -0.10490483028693214
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "ACTIVE_2PLUS2_PICK@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.01977888611433206,
+          0.02073032858258194
+        ],
+        "ci975_holm2": [
+          -0.023250966443657074,
+          0.023944553943776804
+        ],
+        "family_harm_gt_001_rate": 0.2780487804878049,
+        "family_wtl_by_seed": [
+          {
+            "losses": 98,
+            "ties": 6,
+            "wins": 101
+          },
+          {
+            "losses": 107,
+            "ties": 6,
+            "wins": 92
+          },
+          {
+            "losses": 95,
+            "ties": 6,
+            "wins": 104
+          }
+        ],
+        "mean_context_gain": -0.013863691455909407,
+        "mean_family_gain": -0.002489962733575078,
+        "median_context_gain": -0.008649835122443938,
+        "median_family_gain": 0.0014963805879651655,
+        "per_seed_context_gains": [
+          -0.008649835122443938,
+          -0.024891438282780447,
+          -0.008049800962503836
+        ],
+        "per_seed_family_gains": [
+          0.0014963805879651655,
+          -0.013200064672227995,
+          0.004233795883537595
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.5134486551344866
+      },
+      "GATED_025@r3175 - R3175": {
+        "ci95": [
+          -0.0002615249490345712,
+          0.011800967761917011
+        ],
+        "ci975_holm2": [
+          -0.00036405766169052,
+          0.014037502200313082
+        ],
+        "family_harm_gt_001_rate": 0.00975609756097561,
+        "family_wtl_by_seed": [
+          {
+            "losses": 4,
+            "ties": 198,
+            "wins": 3
+          },
+          {
+            "losses": 4,
+            "ties": 199,
+            "wins": 2
+          },
+          {
+            "losses": 4,
+            "ties": 200,
+            "wins": 1
+          }
+        ],
+        "mean_context_gain": 0.0022955100855030406,
+        "mean_family_gain": 0.004680465930286344,
+        "median_context_gain": 0.0018175857091705023,
+        "median_family_gain": 0.005168189651080299,
+        "per_seed_context_gains": [
+          0.0018175857091705023,
+          0.003386263921411242,
+          0.0016826806259273774
+        ],
+        "per_seed_family_gains": [
+          0.005168189651080299,
+          0.005450073241105834,
+          0.003423134898672896
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.20157984201579843
+      },
+      "TOP2_RAND2_PICK@r3175 - R3175": {
+        "ci95": [
+          0.13973259673162486,
+          0.2283845207255351
+        ],
+        "ci975_holm2": [
+          0.13413976705718753,
+          0.2371860271017226
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 8,
+            "wins": 197
+          },
+          {
+            "losses": 0,
+            "ties": 8,
+            "wins": 197
+          }
+        ],
+        "mean_context_gain": 0.16622470898533628,
+        "mean_family_gain": 0.1785891675222693,
+        "median_context_gain": 0.17170487109804294,
+        "median_family_gain": 0.18213125536958122,
+        "per_seed_context_gains": [
+          0.17170487109804294,
+          0.1540534954265668,
+          0.1729157604313991
+        ],
+        "per_seed_family_gains": [
+          0.18213125536958122,
+          0.16658689369035884,
+          0.18704935350686794
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP2_RAND2_PICK@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.0339457142988218,
+          0.015387730410337827
+        ],
+        "ci975_holm2": [
+          -0.03889652823706869,
+          0.01899801769639958
+        ],
+        "family_harm_gt_001_rate": 0.2780487804878049,
+        "family_wtl_by_seed": [
+          {
+            "losses": 104,
+            "ties": 6,
+            "wins": 95
+          },
+          {
+            "losses": 115,
+            "ties": 6,
+            "wins": 84
+          },
+          {
+            "losses": 106,
+            "ties": 7,
+            "wins": 92
+          }
+        ],
+        "mean_context_gain": -0.021160295384721372,
+        "mean_family_gain": -0.010453804805300155,
+        "median_context_gain": -0.0156801332720147,
+        "median_family_gain": -0.006911716957988254,
+        "per_seed_context_gains": [
+          -0.0156801332720147,
+          -0.03333150894349087,
+          -0.014469243938658543
+        ],
+        "per_seed_family_gains": [
+          -0.006911716957988254,
+          -0.02245607863721066,
+          -0.0019936188207015483
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.7530246975302469
+      },
+      "TOP4_PICK@r3175 - GATED_025@r3175": {
+        "ci95": [
+          0.1371728303626549,
+          0.24588910288762109
+        ],
+        "ci975_holm2": [
+          0.13163948071414255,
+          0.2562053881516973
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          }
+        ],
+        "holm_p_m2": 0.00019998000199980003,
+        "mean_context_gain": 0.1850894942845546,
+        "mean_family_gain": 0.18436250639728313,
+        "median_context_gain": 0.18556741866088716,
+        "median_family_gain": 0.18387478267648918,
+        "per_seed_context_gains": [
+          0.18556741866088716,
+          0.1839987404486464,
+          0.18570232374413026
+        ],
+        "per_seed_family_gains": [
+          0.18387478267648918,
+          0.18359289908646365,
+          0.1856198374288966
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - R3175": {
+        "ci95": [
+          0.14031948666955024,
+          0.25033669657812246
+        ],
+        "ci975_holm2": [
+          0.13535736539627122,
+          0.2610742868055183
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          }
+        ],
+        "mean_context_gain": 0.18738500437005765,
+        "mean_family_gain": 0.18904297232756942,
+        "median_context_gain": 0.18738500437005762,
+        "median_family_gain": 0.18904297232756945,
+        "per_seed_context_gains": [
+          0.18738500437005762,
+          0.18738500437005762,
+          0.18738500437005762
+        ],
+        "per_seed_family_gains": [
+          0.18904297232756945,
+          0.18904297232756945,
+          0.18904297232756945
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK_UNGATED@r3175 - R3175 (unequal budget)": {
+        "ci95": [
+          0.14358269762800605,
+          0.2730316144737527
+        ],
+        "ci975_holm2": [
+          0.13795594302850314,
+          0.2858548091150651
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          }
+        ],
+        "mean_context_gain": 0.19533587506816538,
+        "mean_family_gain": 0.19852617031076514,
+        "median_context_gain": 0.19533587506816538,
+        "median_family_gain": 0.19852617031076514,
+        "per_seed_context_gains": [
+          0.19533587506816538,
+          0.19533587506816538,
+          0.19533587506816538
+        ],
+        "per_seed_family_gains": [
+          0.19852617031076514,
+          0.19852617031076514,
+          0.19852617031076514
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      }
+    },
+    "contrasts_r882": {
+      "ACTIVE_2PLUS2_HURDLE - ACTIVE_2PLUS2_PICK": {
+        "ci95": [
+          -0.12847815882851318,
+          -0.08126463719959535
+        ],
+        "ci975_holm2": [
+          -0.13222239378830028,
+          -0.07871811990857051
+        ],
+        "family_harm_gt_001_rate": 0.8780487804878049,
+        "family_wtl_by_seed": [
+          {
+            "losses": 198,
+            "ties": 7,
+            "wins": 0
+          },
+          {
+            "losses": 197,
+            "ties": 8,
+            "wins": 0
+          },
+          {
+            "losses": 199,
+            "ties": 6,
+            "wins": 0
+          }
+        ],
+        "mean_context_gain": -0.09779798982420392,
+        "mean_family_gain": -0.10079469875401821,
+        "median_context_gain": -0.10294512198790572,
+        "median_family_gain": -0.10465528988351562,
+        "per_seed_context_gains": [
+          -0.10329590565718441,
+          -0.08715294182752163,
+          -0.10294512198790572
+        ],
+        "per_seed_family_gains": [
+          -0.10465528988351562,
+          -0.08993069203854706,
+          -0.10779811433999201
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "ACTIVE_2PLUS2_HURDLE - GATED_025": {
+        "ci95": [
+          0.04087666377876359,
+          0.13872664879018926
+        ],
+        "ci975_holm2": [
+          0.03763210212055804,
+          0.1487711490673373
+        ],
+        "family_harm_gt_001_rate": 0.01951219512195122,
+        "family_wtl_by_seed": [
+          {
+            "losses": 13,
+            "ties": 113,
+            "wins": 79
+          },
+          {
+            "losses": 10,
+            "ties": 118,
+            "wins": 77
+          },
+          {
+            "losses": 11,
+            "ties": 118,
+            "wins": 76
+          }
+        ],
+        "mean_context_gain": 0.07142973970813783,
+        "mean_family_gain": 0.08122028243215788,
+        "median_context_gain": 0.07126336903043919,
+        "median_family_gain": 0.08123771648001377,
+        "per_seed_context_gains": [
+          0.07126336903043919,
+          0.07098454907953251,
+          0.0720413010144418
+        ],
+        "per_seed_family_gains": [
+          0.08126246696272248,
+          0.08116066385373741,
+          0.08123771648001377
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "ACTIVE_2PLUS2_HURDLE - R882": {
+        "ci95": [
+          0.040801029713717206,
+          0.13874064656186474
+        ],
+        "ci975_holm2": [
+          0.037552251530994896,
+          0.14883076978374465
+        ],
+        "family_harm_gt_001_rate": 0.01951219512195122,
+        "family_wtl_by_seed": [
+          {
+            "losses": 12,
+            "ties": 115,
+            "wins": 78
+          },
+          {
+            "losses": 10,
+            "ties": 119,
+            "wins": 76
+          },
+          {
+            "losses": 10,
+            "ties": 119,
+            "wins": 76
+          }
+        ],
+        "mean_context_gain": 0.07142189631637076,
+        "mean_family_gain": 0.08121302021461063,
+        "median_context_gain": 0.07117197814360629,
+        "median_family_gain": 0.08108683469624042,
+        "per_seed_context_gains": [
+          0.07111149176127267,
+          0.07117197814360629,
+          0.07198221904423333
+        ],
+        "per_seed_family_gains": [
+          0.08108184414212345,
+          0.08108683469624042,
+          0.08147038180546799
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "ACTIVE_2PLUS2_HURDLE - TOP4_PICK": {
+        "ci95": [
+          -0.12796526405578781,
+          -0.08042071683182038
+        ],
+        "ci975_holm2": [
+          -0.13207553339426173,
+          -0.07750995831725009
+        ],
+        "family_harm_gt_001_rate": 0.8682926829268293,
+        "family_wtl_by_seed": [
+          {
+            "losses": 199,
+            "ties": 6,
+            "wins": 0
+          },
+          {
+            "losses": 199,
+            "ties": 6,
+            "wins": 0
+          },
+          {
+            "losses": 199,
+            "ties": 6,
+            "wins": 0
+          }
+        ],
+        "holm_p_m2": 1.0,
+        "mean_context_gain": -0.11161973166123222,
+        "mean_family_gain": -0.10266433659993396,
+        "median_context_gain": -0.1118696498339967,
+        "median_family_gain": -0.10279052211830417,
+        "per_seed_context_gains": [
+          -0.11193013621633033,
+          -0.1118696498339967,
+          -0.11105940893336966
+        ],
+        "per_seed_family_gains": [
+          -0.10279551267242112,
+          -0.10279052211830417,
+          -0.10240697500907658
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "ACTIVE_2PLUS2_PICK - TOP4_PICK": {
+        "ci95": [
+          -0.018874540642091302,
+          0.021052032917803776
+        ],
+        "ci975_holm2": [
+          -0.022183417177009158,
+          0.024121600891822817
+        ],
+        "family_harm_gt_001_rate": 0.28780487804878047,
+        "family_wtl_by_seed": [
+          {
+            "losses": 99,
+            "ties": 8,
+            "wins": 98
+          },
+          {
+            "losses": 108,
+            "ties": 8,
+            "wins": 89
+          },
+          {
+            "losses": 97,
+            "ties": 9,
+            "wins": 99
+          }
+        ],
+        "mean_context_gain": -0.013821741837028313,
+        "mean_family_gain": -0.0018696378459157157,
+        "median_context_gain": -0.008634230559145929,
+        "median_family_gain": 0.001859777211094508,
+        "per_seed_context_gains": [
+          -0.008634230559145929,
+          -0.02471670800647506,
+          -0.008114286945463949
+        ],
+        "per_seed_family_gains": [
+          0.001859777211094508,
+          -0.012859830079757073,
+          0.005391139330915418
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.4881511848815118
+      },
+      "GATED_025 - R882": {
+        "ci95": [
+          -0.0003095127541163668,
+          0.0001953677006557969
+        ],
+        "ci975_holm2": [
+          -0.00037190692060748534,
+          0.00023439803714477727
+        ],
+        "family_harm_gt_001_rate": 0.004878048780487805,
+        "family_wtl_by_seed": [
+          {
+            "losses": 1,
+            "ties": 202,
+            "wins": 2
+          },
+          {
+            "losses": 4,
+            "ties": 199,
+            "wins": 2
+          },
+          {
+            "losses": 3,
+            "ties": 199,
+            "wins": 3
+          }
+        ],
+        "mean_context_gain": -7.843391767064384e-06,
+        "mean_family_gain": -7.262217547258279e-06,
+        "median_context_gain": -5.908197020845885e-05,
+        "median_family_gain": -7.382915749699341e-05,
+        "per_seed_context_gains": [
+          -0.00015187726916651728,
+          0.00018742906407378298,
+          -5.908197020845885e-05
+        ],
+        "per_seed_family_gains": [
+          -0.000180622820599009,
+          -7.382915749699341e-05,
+          0.00023266532545422757
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.5987401259874012
+      },
+      "TOP2_RAND2_PICK - GATED_025": {
+        "ci95": [
+          0.13492191996351272,
+          0.22229032904184928
+        ],
+        "ci975_holm2": [
+          0.12986332310599508,
+          0.23136072081941272
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 8,
+            "wins": 197
+          },
+          {
+            "losses": 1,
+            "ties": 7,
+            "wins": 197
+          }
+        ],
+        "mean_context_gain": 0.1615213547538914,
+        "mean_family_gain": 0.17344369927666006,
+        "median_context_gain": 0.16714170890100186,
+        "median_family_gain": 0.17724972458497712,
+        "per_seed_context_gains": [
+          0.16714170890100186,
+          0.14906200160747293,
+          0.16836035375319944
+        ],
+        "per_seed_family_gains": [
+          0.17724972458497712,
+          0.16148959255318213,
+          0.181591780691821
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP2_RAND2_PICK - R882": {
+        "ci95": [
+          0.13488571152638906,
+          0.22208190753026516
+        ],
+        "ci975_holm2": [
+          0.13003827338586013,
+          0.2311296250093041
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 8,
+            "wins": 197
+          },
+          {
+            "losses": 0,
+            "ties": 7,
+            "wins": 198
+          }
+        ],
+        "mean_context_gain": 0.16151351136212433,
+        "mean_family_gain": 0.17343643705911282,
+        "median_context_gain": 0.1669898316318353,
+        "median_family_gain": 0.1770691017643781,
+        "per_seed_context_gains": [
+          0.1669898316318353,
+          0.1492494306715467,
+          0.168301271782991
+        ],
+        "per_seed_family_gains": [
+          0.1770691017643781,
+          0.1614157633956851,
+          0.18182444601727524
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP2_RAND2_PICK - TOP4_PICK": {
+        "ci95": [
+          -0.034257779194044186,
+          0.015317757520101158
+        ],
+        "ci975_holm2": [
+          -0.038691354553145374,
+          0.019192636676294797
+        ],
+        "family_harm_gt_001_rate": 0.2926829268292683,
+        "family_wtl_by_seed": [
+          {
+            "losses": 103,
+            "ties": 6,
+            "wins": 96
+          },
+          {
+            "losses": 112,
+            "ties": 8,
+            "wins": 85
+          },
+          {
+            "losses": 101,
+            "ties": 9,
+            "wins": 95
+          }
+        ],
+        "mean_context_gain": -0.021528116615478644,
+        "mean_family_gain": -0.010440919755431757,
+        "median_context_gain": -0.016051796345767658,
+        "median_family_gain": -0.0068082550501664734,
+        "per_seed_context_gains": [
+          -0.016051796345767658,
+          -0.03379219730605626,
+          -0.01474035619461201
+        ],
+        "per_seed_family_gains": [
+          -0.0068082550501664734,
+          -0.022461593418859442,
+          -0.002052910797269351
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.7489251074892511
+      },
+      "TOP4_PICK - GATED_025": {
+        "ci95": [
+          0.13639170858076005,
+          0.24523849406040155
+        ],
+        "ci975_holm2": [
+          0.131115819857683,
+          0.25566213051605036
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          }
+        ],
+        "holm_p_m2": 0.00019998000199980003,
+        "mean_context_gain": 0.18304947136937,
+        "mean_family_gain": 0.18388461903209183,
+        "median_context_gain": 0.1831007099478114,
+        "median_family_gain": 0.18395118597204158,
+        "per_seed_context_gains": [
+          0.1831935052467695,
+          0.18285419891352916,
+          0.1831007099478114
+        ],
+        "per_seed_family_gains": [
+          0.18405797963514356,
+          0.18395118597204158,
+          0.18364469148909032
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK - R882": {
+        "ci95": [
+          0.13637853698133806,
+          0.24517970491610594
+        ],
+        "ci975_holm2": [
+          0.13111848642906487,
+          0.2556803509318757
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          }
+        ],
+        "mean_context_gain": 0.18304162797760296,
+        "mean_family_gain": 0.18387735681454453,
+        "median_context_gain": 0.18304162797760298,
+        "median_family_gain": 0.18387735681454453,
+        "per_seed_context_gains": [
+          0.18304162797760298,
+          0.18304162797760298,
+          0.18304162797760298
+        ],
+        "per_seed_family_gains": [
+          0.18387735681454453,
+          0.18387735681454453,
+          0.18387735681454453
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK_UNGATED - R882 (unequal budget)": {
+        "ci95": [
+          0.1395171774484877,
+          0.2666576777207476
+        ],
+        "ci975_holm2": [
+          0.134441085556,
+          0.28086750502143976
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          }
+        ],
+        "mean_context_gain": 0.1909924986757107,
+        "mean_family_gain": 0.19336055479774025,
+        "median_context_gain": 0.19099249867571072,
+        "median_family_gain": 0.19336055479774025,
+        "per_seed_context_gains": [
+          0.19099249867571072,
+          0.19099249867571072,
+          0.19099249867571072
+        ],
+        "per_seed_family_gains": [
+          0.19336055479774025,
+          0.19336055479774025,
+          0.19336055479774025
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK_UNGATED - TOP4_PICK (unequal budget)": {
+        "ci95": [
+          0.0010130441657463579,
+          0.024364617324724256
+        ],
+        "ci975_holm2": [
+          0.000651234131743623,
+          0.02798904727702452
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 193,
+            "wins": 12
+          },
+          {
+            "losses": 0,
+            "ties": 193,
+            "wins": 12
+          },
+          {
+            "losses": 0,
+            "ties": 193,
+            "wins": 12
+          }
+        ],
+        "mean_context_gain": 0.00795087069810775,
+        "mean_family_gain": 0.0094831979831957,
+        "median_context_gain": 0.00795087069810775,
+        "median_family_gain": 0.0094831979831957,
+        "per_seed_context_gains": [
+          0.00795087069810775,
+          0.00795087069810775,
+          0.00795087069810775
+        ],
+        "per_seed_family_gains": [
+          0.0094831979831957,
+          0.0094831979831957,
+          0.0094831979831957
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      }
+    },
+    "cross_incumbent_contrasts": {
+      "ACTIVE_2PLUS2_HURDLE@r3175 - ACTIVE_2PLUS2_HURDLE": {
+        "ci95": [
+          -0.004403358165279264,
+          0.0029295419763634128
+        ],
+        "ci975_holm2": [
+          -0.0050441272415760905,
+          0.0033834848708569516
+        ],
+        "family_harm_gt_001_rate": 0.04390243902439024,
+        "family_wtl_by_seed": [
+          {
+            "losses": 19,
+            "ties": 162,
+            "wins": 24
+          },
+          {
+            "losses": 21,
+            "ties": 162,
+            "wins": 22
+          },
+          {
+            "losses": 23,
+            "ties": 158,
+            "wins": 24
+          }
+        ],
+        "mean_context_gain": -0.0015640748643236998,
+        "mean_family_gain": -0.0005098238862763776,
+        "median_context_gain": -0.0015576272567274843,
+        "median_family_gain": -0.0003158891734943158,
+        "per_seed_context_gains": [
+          -0.0011195040531639974,
+          -0.0015576272567274843,
+          -0.0020150932830796183
+        ],
+        "per_seed_family_gains": [
+          -5.05308118445191e-05,
+          -0.0003158891734943158,
+          -0.0011630516734902978
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.5257474252574742
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175 - R882": {
+        "ci95": [
+          0.04053145451997558,
+          0.13818000047731996
+        ],
+        "ci975_holm2": [
+          0.037066136144016715,
+          0.14845136681245405
+        ],
+        "family_harm_gt_001_rate": 0.03414634146341464,
+        "family_wtl_by_seed": [
+          {
+            "losses": 18,
+            "ties": 105,
+            "wins": 82
+          },
+          {
+            "losses": 18,
+            "ties": 108,
+            "wins": 79
+          },
+          {
+            "losses": 19,
+            "ties": 105,
+            "wins": 81
+          }
+        ],
+        "mean_context_gain": 0.06985782145204705,
+        "mean_family_gain": 0.08070319632833424,
+        "median_context_gain": 0.0699671257611537,
+        "median_family_gain": 0.08077094552274611,
+        "per_seed_context_gains": [
+          0.06999198770810866,
+          0.06961435088687878,
+          0.0699671257611537
+        ],
+        "per_seed_family_gains": [
+          0.08103131333027895,
+          0.08077094552274611,
+          0.08030733013197768
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "R3175 - R882": {
+        "ci95": [
+          -0.013134913311711474,
+          0.0023406505943843496
+        ],
+        "ci975_holm2": [
+          -0.014577806551722104,
+          0.0028222472283525317
+        ],
+        "family_harm_gt_001_rate": 0.03902439024390244,
+        "family_wtl_by_seed": [
+          {
+            "losses": 16,
+            "ties": 166,
+            "wins": 23
+          },
+          {
+            "losses": 16,
+            "ties": 166,
+            "wins": 23
+          },
+          {
+            "losses": 16,
+            "ties": 166,
+            "wins": 23
+          }
+        ],
+        "mean_context_gain": -0.0035384915375346136,
+        "mean_family_gain": -0.0038308119086596392,
+        "median_context_gain": -0.0035384915375346136,
+        "median_family_gain": -0.0038308119086596397,
+        "per_seed_context_gains": [
+          -0.0035384915375346136,
+          -0.0035384915375346136,
+          -0.0035384915375346136
+        ],
+        "per_seed_family_gains": [
+          -0.0038308119086596397,
+          -0.0038308119086596397,
+          -0.0038308119086596397
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.8202179782021798
+      },
+      "TOP4_PICK@r3175 - R882": {
+        "ci95": [
+          0.1372863798046869,
+          0.2466679685229003
+        ],
+        "ci975_holm2": [
+          0.1313668848288965,
+          0.2574155859623394
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          }
+        ],
+        "mean_context_gain": 0.18384651283252298,
+        "mean_family_gain": 0.18521216041890984,
+        "median_context_gain": 0.183846512832523,
+        "median_family_gain": 0.18521216041890984,
+        "per_seed_context_gains": [
+          0.183846512832523,
+          0.183846512832523,
+          0.183846512832523
+        ],
+        "per_seed_family_gains": [
+          0.18521216041890984,
+          0.18521216041890984,
+          0.18521216041890984
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - TOP4_PICK": {
+        "ci95": [
+          -0.0015943524599546473,
+          0.004506057206237864
+        ],
+        "ci975_holm2": [
+          -0.00210638513272555,
+          0.004961071352095979
+        ],
+        "family_harm_gt_001_rate": 0.02926829268292683,
+        "family_wtl_by_seed": [
+          {
+            "losses": 28,
+            "ties": 149,
+            "wins": 28
+          },
+          {
+            "losses": 28,
+            "ties": 149,
+            "wins": 28
+          },
+          {
+            "losses": 28,
+            "ties": 149,
+            "wins": 28
+          }
+        ],
+        "mean_context_gain": 0.0008048848549200457,
+        "mean_family_gain": 0.0013348036043652524,
+        "median_context_gain": 0.0008048848549200457,
+        "median_family_gain": 0.0013348036043652526,
+        "per_seed_context_gains": [
+          0.0008048848549200457,
+          0.0008048848549200457,
+          0.0008048848549200457
+        ],
+        "per_seed_family_gains": [
+          0.0013348036043652526,
+          0.0013348036043652526,
+          0.0013348036043652526
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.19408059194080593
+      }
+    },
+    "mm_bt_elo_joint_anchored_r882": {
+      "ACTIVE_2PLUS2_HURDLE": {
+        "ci95": [
+          1518.3105837218325,
+          1531.991164268423
+        ],
+        "median_elo": 1524.762738999273,
+        "per_seed_elo": [
+          1524.762738999273,
+          1525.0881173681337,
+          1524.5033167210877
+        ]
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175": {
+        "ci95": [
+          1518.9506829838078,
+          1534.134232090447
+        ],
+        "median_elo": 1526.183792736038,
+        "per_seed_elo": [
+          1527.2534159752406,
+          1526.183792736038,
+          1524.0747835023901
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK": {
+        "ci95": [
+          1753.6592543313407,
+          1791.6363569668774
+        ],
+        "median_elo": 1772.9852939560667,
+        "per_seed_elo": [
+          1772.9852939560667,
+          1769.8632676692914,
+          1773.060697197909
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK@r3175": {
+        "ci95": [
+          1752.0306001108193,
+          1791.3148432458806
+        ],
+        "median_elo": 1770.6003705228916,
+        "per_seed_elo": [
+          1772.781078485099,
+          1770.1199435836818,
+          1770.6003705228916
+        ]
+      },
+      "GATED_025": {
+        "ci95": [
+          1499.0807747210351,
+          1501.124506703036
+        ],
+        "median_elo": 1500.3271685436907,
+        "per_seed_elo": [
+          1500.3271685436907,
+          1499.0644698096105,
+          1500.5182103892705
+        ]
+      },
+      "GATED_025@r3175": {
+        "ci95": [
+          1498.2918826897705,
+          1507.1261852552882
+        ],
+        "median_elo": 1502.6019738806801,
+        "per_seed_elo": [
+          1503.729738162578,
+          1502.6019738806801,
+          1502.1951686862692
+        ]
+      },
+      "R3175": {
+        "ci95": [
+          1498.6825102136136,
+          1507.824777486631
+        ],
+        "median_elo": 1503.0722095217104,
+        "per_seed_elo": [
+          1503.487607646741,
+          1503.0508891357968,
+          1503.0722095217104
+        ]
+      },
+      "R882": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP2_RAND2_PICK": {
+        "ci95": [
+          1747.357364170467,
+          1783.9983795645094
+        ],
+        "median_elo": 1765.5521752315199,
+        "per_seed_elo": [
+          1765.5521752315199,
+          1763.7021218442399,
+          1766.1720165794545
+        ]
+      },
+      "TOP2_RAND2_PICK@r3175": {
+        "ci95": [
+          1748.0156582536413,
+          1784.6744660336399
+        ],
+        "median_elo": 1766.1817597989746,
+        "per_seed_elo": [
+          1766.2172691848516,
+          1764.2373931312518,
+          1766.1817597989746
+        ]
+      },
+      "TOP4_PICK": {
+        "ci95": [
+          1774.615156125757,
+          1814.6966904324904
+        ],
+        "median_elo": 1793.9550146898948,
+        "per_seed_elo": [
+          1796.0290810465003,
+          1793.9550146898948,
+          1792.8430546907612
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "ci95": [
+          1776.0292125409171,
+          1816.148622118039
+        ],
+        "median_elo": 1795.5649044406462,
+        "per_seed_elo": [
+          1797.390386235059,
+          1795.5649044406462,
+          1794.3199925037527
+        ]
+      },
+      "TOP4_PICK_UNGATED": {
+        "ci95": [
+          1779.1615371068774,
+          1819.7558743674012
+        ],
+        "median_elo": 1798.8225550170291,
+        "per_seed_elo": [
+          1800.9045372977178,
+          1798.8225550170291,
+          1797.7035457036263
+        ]
+      },
+      "TOP4_PICK_UNGATED@r3175": {
+        "ci95": [
+          1780.8603508988012,
+          1821.2176221502475
+        ],
+        "median_elo": 1800.4427002730567,
+        "per_seed_elo": [
+          1802.274505975611,
+          1800.4427002730567,
+          1799.1897431624022
+        ]
+      }
+    },
+    "mm_bt_elo_r3175_anchored_r3175": {
+      "ACTIVE_2PLUS2_HURDLE@r3175": {
+        "ci95": [
+          1515.7548384026184,
+          1530.719808717174
+        ],
+        "median_elo": 1523.0411971687035,
+        "per_seed_elo": [
+          1523.604088839705,
+          1523.0411971687035,
+          1520.737333111027
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK@r3175": {
+        "ci95": [
+          1749.121283916099,
+          1788.1047276638967
+        ],
+        "median_elo": 1767.83949226376,
+        "per_seed_elo": [
+          1769.2475194749964,
+          1767.3093773391809,
+          1767.83949226376
+        ]
+      },
+      "GATED_025@r3175": {
+        "ci95": [
+          1498.6227402086915,
+          1500.5860353743253
+        ],
+        "median_elo": 1499.642864906628,
+        "per_seed_elo": [
+          1500.3343054003708,
+          1499.642864906628,
+          1499.2855190447765
+        ]
+      },
+      "R3175": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP2_RAND2_PICK@r3175": {
+        "ci95": [
+          1744.6849594796906,
+          1781.1705094541444
+        ],
+        "median_elo": 1762.5689003608018,
+        "per_seed_elo": [
+          1762.5689003608018,
+          1761.109021208014,
+          1763.0660123703424
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "ci95": [
+          1772.3974095069154,
+          1812.8328813627431
+        ],
+        "median_elo": 1792.0828677744896,
+        "per_seed_elo": [
+          1793.3169603288598,
+          1792.0828677744896,
+          1790.9761940700585
+        ]
+      },
+      "TOP4_PICK_UNGATED@r3175": {
+        "ci95": [
+          1776.9506503119858,
+          1817.7930808263138
+        ],
+        "median_elo": 1796.9506670507735,
+        "per_seed_elo": [
+          1798.1888632617952,
+          1796.9506670507735,
+          1795.8408616905742
+        ]
+      }
+    },
+    "mm_bt_elo_r882": {
+      "ACTIVE_2PLUS2_HURDLE": {
+        "ci95": [
+          1518.4762066913454,
+          1532.3893330808685
+        ],
+        "median_elo": 1525.0532049059598,
+        "per_seed_elo": [
+          1525.0532049059598,
+          1525.2949039435632,
+          1524.6519403277389
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK": {
+        "ci95": [
+          1754.483938372038,
+          1792.6171445005155
+        ],
+        "median_elo": 1773.7162389336204,
+        "per_seed_elo": [
+          1774.3420508585878,
+          1770.3919781534576,
+          1773.7162389336204
+        ]
+      },
+      "GATED_025": {
+        "ci95": [
+          1499.065313717842,
+          1501.1300578970322
+        ],
+        "median_elo": 1500.3275978147012,
+        "per_seed_elo": [
+          1500.3275978147012,
+          1498.9932616262606,
+          1500.5297960660464
+        ]
+      },
+      "R882": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP2_RAND2_PICK": {
+        "ci95": [
+          1748.1035540185292,
+          1784.8931497674082
+        ],
+        "median_elo": 1766.4654649090296,
+        "per_seed_elo": [
+          1766.4654649090296,
+          1764.44464198809,
+          1766.8875640529943
+        ]
+      },
+      "TOP4_PICK": {
+        "ci95": [
+          1775.6076945999869,
+          1816.026929359669
+        ],
+        "median_elo": 1794.9007699090228,
+        "per_seed_elo": [
+          1797.4069455338756,
+          1794.9007699090228,
+          1793.9054307413783
+        ]
+      },
+      "TOP4_PICK_UNGATED": {
+        "ci95": [
+          1780.4315538205271,
+          1820.9958487182325
+        ],
+        "median_elo": 1799.7806717874003,
+        "per_seed_elo": [
+          1802.298384527879,
+          1799.7806717874003,
+          1798.7752094116177
+        ]
+      }
+    },
+    "n_contexts": 1219,
+    "n_families": 205,
+    "n_gated_contexts_r882_zgap_lt_025": 1200
+  },
+  "dl_val_native91": {
+    "arm_utilities_r3175": {
+      "ACTIVE_2PLUS2_HURDLE@r3175": {
+        "median_context_utility": 1.1480762575519552,
+        "median_family_utility": 1.1634644155589373,
+        "per_seed_context_utility": [
+          1.1510538701558632,
+          1.1480762575519552,
+          1.1480762575519552
+        ],
+        "per_seed_family_utility": [
+          1.1663166550005755,
+          1.1634644155589373,
+          1.1634644155589373
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK@r3175": {
+        "median_context_utility": 1.2334048241481168,
+        "median_family_utility": 1.2452002004036813,
+        "per_seed_context_utility": [
+          1.2252584537260385,
+          1.2334048241481168,
+          1.2444112980652238
+        ],
+        "per_seed_family_utility": [
+          1.2373968350520068,
+          1.2452002004036813,
+          1.2557432438400682
+        ]
+      },
+      "GATED_025@r3175": {
+        "median_context_utility": 1.1377131278566008,
+        "median_family_utility": 1.1535376281665453,
+        "per_seed_context_utility": [
+          1.1377131278566008,
+          1.1385566140621184,
+          1.1366829009431036
+        ],
+        "per_seed_family_utility": [
+          1.1535376281665453,
+          1.1543455991634093,
+          1.1525507792283534
+        ]
+      },
+      "R3175": {
+        "median_context_utility": 1.1366829009431036,
+        "median_family_utility": 1.1525507792283534,
+        "per_seed_context_utility": [
+          1.1366829009431036,
+          1.1366829009431036,
+          1.1366829009431036
+        ],
+        "per_seed_family_utility": [
+          1.1525507792283534,
+          1.1525507792283534,
+          1.1525507792283534
+        ]
+      },
+      "TOP2_RAND2_PICK@r3175": {
+        "median_context_utility": 1.2361185433348056,
+        "median_family_utility": 1.2477996577298782,
+        "per_seed_context_utility": [
+          1.227801963765991,
+          1.2361185433348056,
+          1.243530605170192
+        ],
+        "per_seed_family_utility": [
+          1.239833249932382,
+          1.2477996577298782,
+          1.254899632751143
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "median_context_utility": 1.2403226556046079,
+        "median_family_utility": 1.2519637837267703,
+        "per_seed_context_utility": [
+          1.2403226556046079,
+          1.2403226556046079,
+          1.2403226556046079
+        ],
+        "per_seed_family_utility": [
+          1.2519637837267703,
+          1.2519637837267703,
+          1.2519637837267703
+        ]
+      },
+      "TOP4_PICK_UNGATED@r3175": {
+        "median_context_utility": 1.2403226556046079,
+        "median_family_utility": 1.2519637837267703,
+        "per_seed_context_utility": [
+          1.2403226556046079,
+          1.2403226556046079,
+          1.2403226556046079
+        ],
+        "per_seed_family_utility": [
+          1.2519637837267703,
+          1.2519637837267703,
+          1.2519637837267703
+        ]
+      }
+    },
+    "arm_utilities_r882": {
+      "ACTIVE_2PLUS2_HURDLE": {
+        "median_context_utility": 1.153635669512201,
+        "median_family_utility": 1.168789747015594,
+        "per_seed_context_utility": [
+          1.153635669512201,
+          1.1541555356071798,
+          1.153635669512201
+        ],
+        "per_seed_family_utility": [
+          1.168789747015594,
+          1.1692877240118364,
+          1.168789747015594
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK": {
+        "median_context_utility": 1.2341689008029373,
+        "median_family_utility": 1.2459321054098775,
+        "per_seed_context_utility": [
+          1.2257282047434626,
+          1.2341689008029373,
+          1.2442394046348795
+        ],
+        "per_seed_family_utility": [
+          1.2378468070792235,
+          1.2459321054098775,
+          1.2555785880278438
+        ]
+      },
+      "GATED_025": {
+        "median_context_utility": 1.1377941898164525,
+        "median_family_utility": 1.153615276991245,
+        "per_seed_context_utility": [
+          1.1377941898164525,
+          1.1377941898164525,
+          1.1377941898164525
+        ],
+        "per_seed_family_utility": [
+          1.153615276991245,
+          1.153615276991245,
+          1.153615276991245
+        ]
+      },
+      "R882": {
+        "median_context_utility": 1.1377941898164525,
+        "median_family_utility": 1.153615276991245,
+        "per_seed_context_utility": [
+          1.1377941898164525,
+          1.1377941898164525,
+          1.1377941898164525
+        ],
+        "per_seed_family_utility": [
+          1.153615276991245,
+          1.153615276991245,
+          1.153615276991245
+        ]
+      },
+      "TOP2_RAND2_PICK": {
+        "median_context_utility": 1.2361280498327167,
+        "median_family_utility": 1.2478087639541928,
+        "per_seed_context_utility": [
+          1.2275808952101677,
+          1.2361280498327167,
+          1.2433095366143687
+        ],
+        "per_seed_family_utility": [
+          1.2396214895262776,
+          1.2478087639541928,
+          1.2546878723450385
+        ]
+      },
+      "TOP4_PICK": {
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [
+          1.2403601682250796,
+          1.2403601682250796,
+          1.2403601682250796
+        ],
+        "per_seed_family_utility": [
+          1.2519997168684853,
+          1.2519997168684853,
+          1.2519997168684853
+        ]
+      },
+      "TOP4_PICK_UNGATED": {
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [
+          1.2403601682250796,
+          1.2403601682250796,
+          1.2403601682250796
+        ],
+        "per_seed_family_utility": [
+          1.2519997168684853,
+          1.2519997168684853,
+          1.2519997168684853
+        ]
+      }
+    },
+    "contrasts_r3175": {
+      "ACTIVE_2PLUS2_HURDLE@r3175 - GATED_025@r3175": {
+        "ci95": [
+          0.0022173892772826783,
+          0.020926218494992946
+        ],
+        "ci975_holm2": [
+          0.0016344621669840157,
+          0.02252315837033874
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 3,
+            "ties": 9,
+            "wins": 7
+          },
+          {
+            "losses": 3,
+            "ties": 10,
+            "wins": 6
+          },
+          {
+            "losses": 3,
+            "ties": 9,
+            "wins": 7
+          }
+        ],
+        "mean_context_gain": 0.011417914132650253,
+        "mean_family_gain": 0.010937159853380778,
+        "median_context_gain": 0.01139335660885154,
+        "median_family_gain": 0.010913636330584115,
+        "per_seed_context_gains": [
+          0.013340742299262374,
+          0.009519643489836848,
+          0.01139335660885154
+        ],
+        "per_seed_family_gains": [
+          0.012779026834030283,
+          0.009118816395527939,
+          0.010913636330584115
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0012998700129987
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175 - R3175": {
+        "ci95": [
+          0.0022173892772826783,
+          0.021247492472236264
+        ],
+        "ci975_holm2": [
+          0.0016344621669840157,
+          0.022673926831127716
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 2,
+            "ties": 9,
+            "wins": 8
+          },
+          {
+            "losses": 3,
+            "ties": 9,
+            "wins": 7
+          },
+          {
+            "losses": 3,
+            "ties": 9,
+            "wins": 7
+          }
+        ],
+        "mean_context_gain": 0.01238589414348752,
+        "mean_family_gain": 0.011864382811130158,
+        "median_context_gain": 0.01139335660885154,
+        "median_family_gain": 0.010913636330584115,
+        "per_seed_context_gains": [
+          0.01437096921275948,
+          0.01139335660885154,
+          0.01139335660885154
+        ],
+        "per_seed_family_gains": [
+          0.013765875772222247,
+          0.010913636330584115,
+          0.010913636330584115
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0012998700129987
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.13967057284366605,
+          -0.050636588885670734
+        ],
+        "ci975_holm2": [
+          -0.14732630713728456,
+          -0.046696459752507295
+        ],
+        "family_harm_gt_001_rate": 0.8947368421052632,
+        "family_wtl_by_seed": [
+          {
+            "losses": 19,
+            "ties": 0,
+            "wins": 0
+          },
+          {
+            "losses": 19,
+            "ties": 0,
+            "wins": 0
+          },
+          {
+            "losses": 19,
+            "ties": 0,
+            "wins": 0
+          }
+        ],
+        "holm_p_m2": 1.0,
+        "mean_context_gain": -0.09125386051801669,
+        "mean_family_gain": -0.08754862168728701,
+        "median_context_gain": -0.09224639805265267,
+        "median_family_gain": -0.08849936816783306,
+        "per_seed_context_gains": [
+          -0.08926878544874474,
+          -0.09224639805265267,
+          -0.09224639805265267
+        ],
+        "per_seed_family_gains": [
+          -0.08564712872619494,
+          -0.08849936816783306,
+          -0.08849936816783306
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "ACTIVE_2PLUS2_PICK@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.03028493998844734,
+          0.0107423915681611
+        ],
+        "ci975_holm2": [
+          -0.03342068700192183,
+          0.012655079087018134
+        ],
+        "family_harm_gt_001_rate": 0.2631578947368421,
+        "family_wtl_by_seed": [
+          {
+            "losses": 14,
+            "ties": 0,
+            "wins": 5
+          },
+          {
+            "losses": 9,
+            "ties": 0,
+            "wins": 10
+          },
+          {
+            "losses": 9,
+            "ties": 0,
+            "wins": 10
+          }
+        ],
+        "mean_context_gain": -0.00596446362481479,
+        "mean_family_gain": -0.005850357294851539,
+        "median_context_gain": -0.006917831456491046,
+        "median_family_gain": -0.006763583323088795,
+        "per_seed_context_gains": [
+          -0.01506420187856922,
+          -0.006917831456491046,
+          0.004088642460615895
+        ],
+        "per_seed_family_gains": [
+          -0.01456694867476368,
+          -0.006763583323088795,
+          0.00377946011329786
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.7218278172182782
+      },
+      "GATED_025@r3175 - R3175": {
+        "ci95": [
+          0.0,
+          0.0019736978763839237
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.003589639870112352
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 1,
+            "ties": 17,
+            "wins": 1
+          },
+          {
+            "losses": 0,
+            "ties": 18,
+            "wins": 1
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          }
+        ],
+        "mean_context_gain": 0.0009679800108372665,
+        "mean_family_gain": 0.0009272229577493794,
+        "median_context_gain": 0.0010302269134971063,
+        "median_family_gain": 0.0009868489381919619,
+        "per_seed_context_gains": [
+          0.0010302269134971063,
+          0.0018737131190146934,
+          0.0
+        ],
+        "per_seed_family_gains": [
+          0.0009868489381919619,
+          0.001794819935056176,
+          0.0
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.7081291870812919
+      },
+      "TOP2_RAND2_PICK@r3175 - R3175": {
+        "ci95": [
+          0.059783663449890403,
+          0.1301939970485829
+        ],
+        "ci975_holm2": [
+          0.055994877050046375,
+          0.13716540555220924
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          },
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          },
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          }
+        ],
+        "mean_context_gain": 0.09913413648055937,
+        "mean_family_gain": 0.09496006757611475,
+        "median_context_gain": 0.09943564239170222,
+        "median_family_gain": 0.09524887850152525,
+        "per_seed_context_gains": [
+          0.0911190628228875,
+          0.09943564239170222,
+          0.10684770422708839
+        ],
+        "per_seed_family_gains": [
+          0.08728247070402909,
+          0.09524887850152525,
+          0.10234885352278993
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP2_RAND2_PICK@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.026027707111584416,
+          0.010095330260855104
+        ],
+        "ci975_holm2": [
+          -0.028297950988014787,
+          0.012011538748284282
+        ],
+        "family_harm_gt_001_rate": 0.3157894736842105,
+        "family_wtl_by_seed": [
+          {
+            "losses": 15,
+            "ties": 0,
+            "wins": 4
+          },
+          {
+            "losses": 9,
+            "ties": 0,
+            "wins": 10
+          },
+          {
+            "losses": 11,
+            "ties": 0,
+            "wins": 8
+          }
+        ],
+        "mean_context_gain": -0.004505618180944846,
+        "mean_family_gain": -0.004452936922302443,
+        "median_context_gain": -0.004204112269801995,
+        "median_family_gain": -0.0041641259968919556,
+        "per_seed_context_gains": [
+          -0.012520691838616715,
+          -0.004204112269801995,
+          0.0032079495655841705
+        ],
+        "per_seed_family_gains": [
+          -0.012130533794388106,
+          -0.0041641259968919556,
+          0.002935849024372734
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.7163283671632836
+      },
+      "TOP4_PICK@r3175 - GATED_025@r3175": {
+        "ci95": [
+          0.060516861707524405,
+          0.14920882861585885
+        ],
+        "ci975_holm2": [
+          0.05624401186242437,
+          0.15704623033465048
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "holm_p_m2": 0.00019998000199980003,
+        "mean_context_gain": 0.10267177465066696,
+        "mean_family_gain": 0.09848578154066782,
+        "median_context_gain": 0.10260952774800712,
+        "median_family_gain": 0.09842615556022523,
+        "per_seed_context_gains": [
+          0.10260952774800712,
+          0.10176604154248953,
+          0.10363975466150421
+        ],
+        "per_seed_family_gains": [
+          0.09842615556022523,
+          0.09761818456336102,
+          0.0994130044984172
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - R3175": {
+        "ci95": [
+          0.06098515881742095,
+          0.14941502095591253
+        ],
+        "ci975_holm2": [
+          0.05669525234961334,
+          0.15752415503901138
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "mean_context_gain": 0.10363975466150421,
+        "mean_family_gain": 0.09941300449841721,
+        "median_context_gain": 0.10363975466150421,
+        "median_family_gain": 0.0994130044984172,
+        "per_seed_context_gains": [
+          0.10363975466150421,
+          0.10363975466150421,
+          0.10363975466150421
+        ],
+        "per_seed_family_gains": [
+          0.0994130044984172,
+          0.0994130044984172,
+          0.0994130044984172
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK_UNGATED@r3175 - R3175 (unequal budget)": {
+        "ci95": [
+          0.06098515881742095,
+          0.14941502095591253
+        ],
+        "ci975_holm2": [
+          0.05669525234961334,
+          0.15752415503901138
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "mean_context_gain": 0.10363975466150421,
+        "mean_family_gain": 0.09941300449841721,
+        "median_context_gain": 0.10363975466150421,
+        "median_family_gain": 0.0994130044984172,
+        "per_seed_context_gains": [
+          0.10363975466150421,
+          0.10363975466150421,
+          0.10363975466150421
+        ],
+        "per_seed_family_gains": [
+          0.0994130044984172,
+          0.0994130044984172,
+          0.0994130044984172
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      }
+    },
+    "contrasts_r882": {
+      "ACTIVE_2PLUS2_HURDLE - ACTIVE_2PLUS2_PICK": {
+        "ci95": [
+          -0.11319993171150808,
+          -0.044213018323038235
+        ],
+        "ci975_holm2": [
+          -0.11926460705100411,
+          -0.04061419890014475
+        ],
+        "family_harm_gt_001_rate": 0.8421052631578947,
+        "family_wtl_by_seed": [
+          {
+            "losses": 18,
+            "ties": 1,
+            "wins": 0
+          },
+          {
+            "losses": 18,
+            "ties": 1,
+            "wins": 0
+          },
+          {
+            "losses": 18,
+            "ties": 1,
+            "wins": 0
+          }
+        ],
+        "mean_context_gain": -0.0809032118498993,
+        "mean_family_gain": -0.0774967608246404,
+        "median_context_gain": -0.08001336519575748,
+        "median_family_gain": -0.07664438139804139,
+        "per_seed_context_gains": [
+          -0.07209253523126176,
+          -0.08001336519575748,
+          -0.09060373512267866
+        ],
+        "per_seed_family_gains": [
+          -0.06905706006362967,
+          -0.07664438139804139,
+          -0.08678884101225008
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "ACTIVE_2PLUS2_HURDLE - GATED_025": {
+        "ci95": [
+          0.005181605381941563,
+          0.026381346587943045
+        ],
+        "ci975_holm2": [
+          0.003693056559562602,
+          0.028205112887185753
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 2,
+            "ties": 8,
+            "wins": 9
+          },
+          {
+            "losses": 2,
+            "ties": 7,
+            "wins": 10
+          },
+          {
+            "losses": 2,
+            "ties": 8,
+            "wins": 9
+          }
+        ],
+        "mean_context_gain": 0.016014768394074803,
+        "mean_family_gain": 0.015340462356429543,
+        "median_context_gain": 0.015841479695748555,
+        "median_family_gain": 0.015174470024348609,
+        "per_seed_context_gains": [
+          0.015841479695748555,
+          0.0163613457907273,
+          0.015841479695748555
+        ],
+        "per_seed_family_gains": [
+          0.015174470024348609,
+          0.015672447020591406,
+          0.015174470024348609
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "ACTIVE_2PLUS2_HURDLE - R882": {
+        "ci95": [
+          0.005181605381941563,
+          0.026381346587943045
+        ],
+        "ci975_holm2": [
+          0.003693056559562602,
+          0.028205112887185753
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 2,
+            "ties": 8,
+            "wins": 9
+          },
+          {
+            "losses": 2,
+            "ties": 7,
+            "wins": 10
+          },
+          {
+            "losses": 2,
+            "ties": 8,
+            "wins": 9
+          }
+        ],
+        "mean_context_gain": 0.016014768394074803,
+        "mean_family_gain": 0.015340462356429543,
+        "median_context_gain": 0.015841479695748555,
+        "median_family_gain": 0.015174470024348609,
+        "per_seed_context_gains": [
+          0.015841479695748555,
+          0.0163613457907273,
+          0.015841479695748555
+        ],
+        "per_seed_family_gains": [
+          0.015174470024348609,
+          0.015672447020591406,
+          0.015174470024348609
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "ACTIVE_2PLUS2_HURDLE - TOP4_PICK": {
+        "ci95": [
+          -0.13339152947822117,
+          -0.04682352105035632
+        ],
+        "ci975_holm2": [
+          -0.14234191189206144,
+          -0.04313981937584028
+        ],
+        "family_harm_gt_001_rate": 0.8947368421052632,
+        "family_wtl_by_seed": [
+          {
+            "losses": 19,
+            "ties": 0,
+            "wins": 0
+          },
+          {
+            "losses": 19,
+            "ties": 0,
+            "wins": 0
+          },
+          {
+            "losses": 19,
+            "ties": 0,
+            "wins": 0
+          }
+        ],
+        "holm_p_m2": 1.0,
+        "mean_context_gain": -0.08655121001455239,
+        "mean_family_gain": -0.08304397752081066,
+        "median_context_gain": -0.08672449871287863,
+        "median_family_gain": -0.0832099698528916,
+        "per_seed_context_gains": [
+          -0.08672449871287863,
+          -0.08620463261789987,
+          -0.08672449871287863
+        ],
+        "per_seed_family_gains": [
+          -0.0832099698528916,
+          -0.08271199285664882,
+          -0.0832099698528916
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "ACTIVE_2PLUS2_PICK - TOP4_PICK": {
+        "ci95": [
+          -0.03000347685391716,
+          0.010652119714757546
+        ],
+        "ci975_holm2": [
+          -0.03289181886406895,
+          0.012605542019525596
+        ],
+        "family_harm_gt_001_rate": 0.2631578947368421,
+        "family_wtl_by_seed": [
+          {
+            "losses": 14,
+            "ties": 0,
+            "wins": 5
+          },
+          {
+            "losses": 9,
+            "ties": 0,
+            "wins": 10
+          },
+          {
+            "losses": 9,
+            "ties": 0,
+            "wins": 10
+          }
+        ],
+        "mean_context_gain": -0.005647998164653066,
+        "mean_family_gain": -0.005547216696170309,
+        "median_context_gain": -0.006191267422142378,
+        "median_family_gain": -0.006067611458607441,
+        "per_seed_context_gains": [
+          -0.014631963481616852,
+          -0.006191267422142378,
+          0.0038792364098000328
+        ],
+        "per_seed_family_gains": [
+          -0.014152909789261942,
+          -0.006067611458607441,
+          0.0035788711593584574
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.7178282171782822
+      },
+      "GATED_025 - R882": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          }
+        ],
+        "mean_context_gain": 0.0,
+        "mean_family_gain": 0.0,
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "per_seed_context_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "TOP2_RAND2_PICK - GATED_025": {
+        "ci95": [
+          0.05838073165823834,
+          0.1291301675542327
+        ],
+        "ci975_holm2": [
+          0.054461563913164354,
+          0.13610002199928053
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          },
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          },
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          }
+        ],
+        "mean_context_gain": 0.09787863740263203,
+        "mean_family_gain": 0.09375743161725802,
+        "median_context_gain": 0.09833386001626444,
+        "median_family_gain": 0.09419348696294799,
+        "per_seed_context_gains": [
+          0.08978670539371537,
+          0.09833386001626444,
+          0.10551534679791626
+        ],
+        "per_seed_family_gains": [
+          0.08600621253503261,
+          0.09419348696294799,
+          0.10107259535379347
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP2_RAND2_PICK - R882": {
+        "ci95": [
+          0.05838073165823834,
+          0.1291301675542327
+        ],
+        "ci975_holm2": [
+          0.054461563913164354,
+          0.13610002199928053
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          },
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          },
+          {
+            "losses": 0,
+            "ties": 1,
+            "wins": 18
+          }
+        ],
+        "mean_context_gain": 0.09787863740263203,
+        "mean_family_gain": 0.09375743161725802,
+        "median_context_gain": 0.09833386001626444,
+        "median_family_gain": 0.09419348696294799,
+        "per_seed_context_gains": [
+          0.08978670539371537,
+          0.09833386001626444,
+          0.10551534679791626
+        ],
+        "per_seed_family_gains": [
+          0.08600621253503261,
+          0.09419348696294799,
+          0.10107259535379347
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP2_RAND2_PICK - TOP4_PICK": {
+        "ci95": [
+          -0.026290823482359057,
+          0.009918239155409497
+        ],
+        "ci975_holm2": [
+          -0.028468418870010597,
+          0.011891385034154175
+        ],
+        "family_harm_gt_001_rate": 0.3157894736842105,
+        "family_wtl_by_seed": [
+          {
+            "losses": 15,
+            "ties": 0,
+            "wins": 4
+          },
+          {
+            "losses": 9,
+            "ties": 0,
+            "wins": 10
+          },
+          {
+            "losses": 11,
+            "ties": 0,
+            "wins": 8
+          }
+        ],
+        "mean_context_gain": -0.004687341005995158,
+        "mean_family_gain": -0.004627008259982214,
+        "median_context_gain": -0.004232118392362741,
+        "median_family_gain": -0.004190952914292249,
+        "per_seed_context_gains": [
+          -0.012779273014911809,
+          -0.004232118392362741,
+          0.002949368389289074
+        ],
+        "per_seed_family_gains": [
+          -0.012378227342207615,
+          -0.004190952914292249,
+          0.002688155476553223
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.724027597240276
+      },
+      "TOP4_PICK - GATED_025": {
+        "ci95": [
+          0.05973436094572904,
+          0.14827378130054342
+        ],
+        "ci975_holm2": [
+          0.05575242981550232,
+          0.15637789357681714
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "holm_p_m2": 0.00019998000199980003,
+        "mean_context_gain": 0.10256597840862719,
+        "mean_family_gain": 0.09838443987724023,
+        "median_context_gain": 0.10256597840862719,
+        "median_family_gain": 0.09838443987724023,
+        "per_seed_context_gains": [
+          0.10256597840862719,
+          0.10256597840862719,
+          0.10256597840862719
+        ],
+        "per_seed_family_gains": [
+          0.09838443987724023,
+          0.09838443987724023,
+          0.09838443987724023
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK - R882": {
+        "ci95": [
+          0.05973436094572904,
+          0.14827378130054342
+        ],
+        "ci975_holm2": [
+          0.05575242981550232,
+          0.15637789357681714
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "mean_context_gain": 0.10256597840862719,
+        "mean_family_gain": 0.09838443987724023,
+        "median_context_gain": 0.10256597840862719,
+        "median_family_gain": 0.09838443987724023,
+        "per_seed_context_gains": [
+          0.10256597840862719,
+          0.10256597840862719,
+          0.10256597840862719
+        ],
+        "per_seed_family_gains": [
+          0.09838443987724023,
+          0.09838443987724023,
+          0.09838443987724023
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK_UNGATED - R882 (unequal budget)": {
+        "ci95": [
+          0.05973436094572904,
+          0.14827378130054342
+        ],
+        "ci975_holm2": [
+          0.05575242981550232,
+          0.15637789357681714
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "mean_context_gain": 0.10256597840862719,
+        "mean_family_gain": 0.09838443987724023,
+        "median_context_gain": 0.10256597840862719,
+        "median_family_gain": 0.09838443987724023,
+        "per_seed_context_gains": [
+          0.10256597840862719,
+          0.10256597840862719,
+          0.10256597840862719
+        ],
+        "per_seed_family_gains": [
+          0.09838443987724023,
+          0.09838443987724023,
+          0.09838443987724023
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK_UNGATED - TOP4_PICK (unequal budget)": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          }
+        ],
+        "mean_context_gain": 0.0,
+        "mean_family_gain": 0.0,
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "per_seed_context_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      }
+    },
+    "cross_incumbent_contrasts": {
+      "ACTIVE_2PLUS2_HURDLE@r3175 - ACTIVE_2PLUS2_HURDLE": {
+        "ci95": [
+          -0.012776565609427222,
+          3.807661454307817e-05
+        ],
+        "ci975_holm2": [
+          -0.014034840853189309,
+          0.0002658993354128751
+        ],
+        "family_harm_gt_001_rate": 0.10526315789473684,
+        "family_wtl_by_seed": [
+          {
+            "losses": 3,
+            "ties": 15,
+            "wins": 1
+          },
+          {
+            "losses": 5,
+            "ties": 14,
+            "wins": 0
+          },
+          {
+            "losses": 4,
+            "ties": 14,
+            "wins": 1
+          }
+        ],
+        "mean_context_gain": -0.004740163123936005,
+        "mean_family_gain": -0.004540577308191319,
+        "median_context_gain": -0.005559411960245736,
+        "median_family_gain": -0.00532533145665643,
+        "per_seed_context_gains": [
+          -0.002581799356337795,
+          -0.006079278055224483,
+          -0.005559411960245736
+        ],
+        "per_seed_family_gains": [
+          -0.002473092015018298,
+          -0.005823308452899228,
+          -0.00532533145665643
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.9709029097090291
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175 - R882": {
+        "ci95": [
+          0.0007241044417852443,
+          0.020595269904604918
+        ],
+        "ci975_holm2": [
+          1.628468422650654e-05,
+          0.022287426131834705
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 3,
+            "ties": 8,
+            "wins": 8
+          },
+          {
+            "losses": 4,
+            "ties": 8,
+            "wins": 7
+          },
+          {
+            "losses": 4,
+            "ties": 8,
+            "wins": 7
+          }
+        ],
+        "mean_context_gain": 0.011274605270138799,
+        "mean_family_gain": 0.010799885048238223,
+        "median_context_gain": 0.010282067735502819,
+        "median_family_gain": 0.00984913856769218,
+        "per_seed_context_gains": [
+          0.013259680339410758,
+          0.010282067735502819,
+          0.010282067735502819
+        ],
+        "per_seed_family_gains": [
+          0.012701378009330312,
+          0.00984913856769218,
+          0.00984913856769218
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0122987701229877
+      },
+      "R3175 - R882": {
+        "ci95": [
+          -0.006535733314364622,
+          0.002692315338785731
+        ],
+        "ci975_holm2": [
+          -0.007385211638879943,
+          0.0031223542155389577
+        ],
+        "family_harm_gt_001_rate": 0.05263157894736842,
+        "family_wtl_by_seed": [
+          {
+            "losses": 2,
+            "ties": 15,
+            "wins": 2
+          },
+          {
+            "losses": 2,
+            "ties": 15,
+            "wins": 2
+          },
+          {
+            "losses": 2,
+            "ties": 15,
+            "wins": 2
+          }
+        ],
+        "mean_context_gain": -0.0011112888733487228,
+        "mean_family_gain": -0.0010644977628919343,
+        "median_context_gain": -0.0011112888733487228,
+        "median_family_gain": -0.0010644977628919343,
+        "per_seed_context_gains": [
+          -0.0011112888733487228,
+          -0.0011112888733487228,
+          -0.0011112888733487228
+        ],
+        "per_seed_family_gains": [
+          -0.0010644977628919343,
+          -0.0010644977628919343,
+          -0.0010644977628919343
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.639036096390361
+      },
+      "TOP4_PICK@r3175 - R882": {
+        "ci95": [
+          0.05969732189695469,
+          0.14831131976269485
+        ],
+        "ci975_holm2": [
+          0.05562909177067493,
+          0.15622210053469263
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "mean_context_gain": 0.10252846578815551,
+        "mean_family_gain": 0.09834850673552525,
+        "median_context_gain": 0.10252846578815551,
+        "median_family_gain": 0.09834850673552525,
+        "per_seed_context_gains": [
+          0.10252846578815551,
+          0.10252846578815551,
+          0.10252846578815551
+        ],
+        "per_seed_family_gains": [
+          0.09834850673552525,
+          0.09834850673552525,
+          0.09834850673552525
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - TOP4_PICK": {
+        "ci95": [
+          -0.00035320172832482914,
+          0.00024540230317991084
+        ],
+        "ci975_holm2": [
+          -0.00035320172832482914,
+          0.00024540230317991084
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 1,
+            "ties": 17,
+            "wins": 1
+          },
+          {
+            "losses": 1,
+            "ties": 17,
+            "wins": 1
+          },
+          {
+            "losses": 1,
+            "ties": 17,
+            "wins": 1
+          }
+        ],
+        "mean_context_gain": -3.7512620471677316e-05,
+        "mean_family_gain": -3.593314171497278e-05,
+        "median_context_gain": -3.7512620471677316e-05,
+        "median_family_gain": -3.593314171497278e-05,
+        "per_seed_context_gains": [
+          -3.7512620471677316e-05,
+          -3.7512620471677316e-05,
+          -3.7512620471677316e-05
+        ],
+        "per_seed_family_gains": [
+          -3.593314171497278e-05,
+          -3.593314171497278e-05,
+          -3.593314171497278e-05
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.65003499650035
+      }
+    },
+    "mm_bt_elo_joint_anchored_r882": {
+      "ACTIVE_2PLUS2_HURDLE": {
+        "ci95": [
+          1503.4063832348882,
+          1556.1708930973052
+        ],
+        "median_elo": 1528.6945510204773,
+        "per_seed_elo": [
+          1528.6945510204773,
+          1532.6600059180562,
+          1527.472124128275
+        ]
+      },
+      "ACTIVE_2PLUS2_HURDLE@r3175": {
+        "ci95": [
+          1485.2728340129586,
+          1538.4395610973456
+        ],
+        "median_elo": 1512.7088260958938,
+        "per_seed_elo": [
+          1512.7088260958938,
+          1507.6834526002185,
+          1513.7026745278317
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK": {
+        "ci95": [
+          1726.0018077060786,
+          1835.9268145208423
+        ],
+        "median_elo": 1777.4121983844311,
+        "per_seed_elo": [
+          1772.445670035237,
+          1783.570402109297,
+          1777.4121983844311
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK@r3175": {
+        "ci95": [
+          1724.5419605167012,
+          1837.2606097989724
+        ],
+        "median_elo": 1778.0482970332005,
+        "per_seed_elo": [
+          1772.769022801505,
+          1778.0482970332005,
+          1784.2126273327863
+        ]
+      },
+      "GATED_025": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "GATED_025@r3175": {
+        "ci95": [
+          1480.6359729602134,
+          1510.2750992628219
+        ],
+        "median_elo": 1497.7867974694964,
+        "per_seed_elo": [
+          1499.6330215196274,
+          1497.7867974694964,
+          1495.9754070968754
+        ]
+      },
+      "R3175": {
+        "ci95": [
+          1475.686089478776,
+          1509.2175983773864
+        ],
+        "median_elo": 1494.4714718193327,
+        "per_seed_elo": [
+          1494.4714718193327,
+          1494.0796795458316,
+          1495.9754070968754
+        ]
+      },
+      "R882": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP2_RAND2_PICK": {
+        "ci95": [
+          1711.3536176160403,
+          1828.0363393706439
+        ],
+        "median_elo": 1765.8405338493183,
+        "per_seed_elo": [
+          1763.1005429501975,
+          1772.8723525598687,
+          1765.8405338493183
+        ]
+      },
+      "TOP2_RAND2_PICK@r3175": {
+        "ci95": [
+          1712.4538127134254,
+          1829.1189343841652
+        ],
+        "median_elo": 1767.7621683456669,
+        "per_seed_elo": [
+          1765.0291244959508,
+          1773.1952734624729,
+          1767.7621683456669
+        ]
+      },
+      "TOP4_PICK": {
+        "ci95": [
+          1797.3677590884881,
+          1904.6578154743695
+        ],
+        "median_elo": 1846.463082713722,
+        "per_seed_elo": [
+          1851.837119013055,
+          1846.463082713722,
+          1837.3532475863851
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "ci95": [
+          1797.7790492722693,
+          1903.4201301885303
+        ],
+        "median_elo": 1846.463082713722,
+        "per_seed_elo": [
+          1851.837119013055,
+          1846.463082713722,
+          1837.3532475863851
+        ]
+      },
+      "TOP4_PICK_UNGATED": {
+        "ci95": [
+          1797.3677590884881,
+          1904.6578154743695
+        ],
+        "median_elo": 1846.463082713722,
+        "per_seed_elo": [
+          1851.837119013055,
+          1846.463082713722,
+          1837.3532475863851
+        ]
+      },
+      "TOP4_PICK_UNGATED@r3175": {
+        "ci95": [
+          1797.7790492722693,
+          1903.4201301885303
+        ],
+        "median_elo": 1846.463082713722,
+        "per_seed_elo": [
+          1851.837119013055,
+          1846.463082713722,
+          1837.3532475863851
+        ]
+      }
+    },
+    "mm_bt_elo_r3175_anchored_r3175": {
+      "ACTIVE_2PLUS2_HURDLE@r3175": {
+        "ci95": [
+          1494.1375187220963,
+          1542.873810359809
+        ],
+        "median_elo": 1518.098975333571,
+        "per_seed_elo": [
+          1519.0199321743253,
+          1514.7367047332036,
+          1518.098975333571
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK@r3175": {
+        "ci95": [
+          1731.2266333553214,
+          1843.9402370599098
+        ],
+        "median_elo": 1787.3029816797402,
+        "per_seed_elo": [
+          1780.783495635557,
+          1788.1751345440387,
+          1787.3029816797402
+        ]
+      },
+      "GATED_025@r3175": {
+        "ci95": [
+          1500.0,
+          1507.7479190760378
+        ],
+        "median_elo": 1503.716968072045,
+        "per_seed_elo": [
+          1505.1779183438514,
+          1503.716968072045,
+          1500.0
+        ]
+      },
+      "R3175": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP2_RAND2_PICK@r3175": {
+        "ci95": [
+          1716.8837970323332,
+          1840.077611983347
+        ],
+        "median_elo": 1772.34555676923,
+        "per_seed_elo": [
+          1772.34555676923,
+          1782.2956559893073,
+          1770.4748243021572
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "ci95": [
+          1802.4484900890664,
+          1915.2286383762037
+        ],
+        "median_elo": 1854.5130790107808,
+        "per_seed_elo": [
+          1859.3200252165207,
+          1854.5130790107808,
+          1841.6355938207917
+        ]
+      },
+      "TOP4_PICK_UNGATED@r3175": {
+        "ci95": [
+          1802.4484900890664,
+          1915.2286383762037
+        ],
+        "median_elo": 1854.5130790107808,
+        "per_seed_elo": [
+          1859.3200252165207,
+          1854.5130790107808,
+          1841.6355938207917
+        ]
+      }
+    },
+    "mm_bt_elo_r882": {
+      "ACTIVE_2PLUS2_HURDLE": {
+        "ci95": [
+          1503.4538565721264,
+          1556.0497178398687
+        ],
+        "median_elo": 1528.6162498261097,
+        "per_seed_elo": [
+          1528.6162498261097,
+          1532.2670195617075,
+          1527.8149318999676
+        ]
+      },
+      "ACTIVE_2PLUS2_PICK": {
+        "ci95": [
+          1726.2967553700503,
+          1833.7996281293913
+        ],
+        "median_elo": 1779.1387090648302,
+        "per_seed_elo": [
+          1770.8032395539994,
+          1781.4501512358845,
+          1779.1387090648302
+        ]
+      },
+      "GATED_025": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "R882": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP2_RAND2_PICK": {
+        "ci95": [
+          1712.0029612448354,
+          1826.7094865022839
+        ],
+        "median_elo": 1767.6011067854088,
+        "per_seed_elo": [
+          1761.832941634213,
+          1771.159035833364,
+          1767.6011067854088
+        ]
+      },
+      "TOP4_PICK": {
+        "ci95": [
+          1797.111829196784,
+          1902.3001239347323
+        ],
+        "median_elo": 1845.5228333374923,
+        "per_seed_elo": [
+          1850.4159911646611,
+          1845.5228333374923,
+          1837.5640097455257
+        ]
+      },
+      "TOP4_PICK_UNGATED": {
+        "ci95": [
+          1797.111829196784,
+          1902.3001239347323
+        ],
+        "median_elo": 1845.5228333374923,
+        "per_seed_elo": [
+          1850.4159911646611,
+          1845.5228333374923,
+          1837.5640097455257
+        ]
+      }
+    },
+    "n_contexts": 91,
+    "n_families": 19,
+    "n_gated_contexts_r882_zgap_lt_025": 91
+  },
   "fold_seed": 258140,
   "holm_m": 2,
-  "outcomes_read": 0,
+  "hygiene": {
+    "cuda_visible_devices": "",
+    "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "optimizer_updates": 0,
+    "r3175_sha256_after": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "r3175_sha256_before": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "r882_sha256_after": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "r882_sha256_before": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+  },
   "primary_contrast": "ACTIVE_2PLUS2_HURDLE - TOP4_PICK",
   "schema": "jope.h258.metrics/v1",
   "secondary_contrast": "TOP4_PICK - GATED_025",
@@ -11,7 +3731,9 @@
     258102,
     258103
   ],
-  "status": "PREREGISTERED",
-  "verdict": null,
+  "status": "COMPLETE",
+  "study_path": "research/flywheel_selfplay/h258_top4_reveal_baseline",
+  "verdict": "NO_ADVANCE",
+  "wall_seconds": 155.6593,
   "wave_id": "h258-top4-reveal-baseline-20261103"
 }

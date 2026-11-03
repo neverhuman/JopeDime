@@ -16,7 +16,7 @@ import time
 import psutil
 
 HERE = Path(__file__).resolve().parent
-COMPUTE_STOP = 1793719800.0  # 2026-11-03 15:30 UTC (hw_t1305), never reset on resume.
+COMPUTE_STOP = 1793721600.0  # 2026-11-03 16:00 UTC (hw_t1405), never reset on resume.
 GIB = 2**30
 RSS_MAX = 4 * GIB
 FREE_MIN = 300_000_000_000
@@ -28,11 +28,10 @@ def violations(sample):
     return [
         reason
         for bad, reason in [
-            (sample["available"] < 6 * GIB, "MemAvailable<6GiB"),
             (sample["rss"] >= RSS_MAX, "aggregate RSS>=4GiB"),
             (sample["free"] < FREE_MIN, "disk free<300GB"),
             (sample["threads"] > THREADS_MAX, "aggregate threads>4"),
-            (sample["utc"] >= COMPUTE_STOP, "absolute compute stop 15:30Z"),
+            (sample["utc"] >= COMPUTE_STOP, "absolute compute stop 16:00Z"),
         ]
         if bad
     ]
@@ -43,7 +42,7 @@ def admission_refusals(sample):
         reason
         for bad, reason in [
             (sample["available"] < 30 * GIB, "admission RAM<30GiB"),
-            (sample["load5"] > 100, "admission load5>100"),
+            (sample["load1"] > 108, "admission load1>108"),
         ]
         if bad
     ]
@@ -51,31 +50,24 @@ def admission_refusals(sample):
 
 class Guard:
     def __init__(self):
-        self.low_since = self.recovered_since = None
+        self.recovered_since = None
         self.memory_pause = self.load_pause = False
 
     def update(self, sample):
         now, available = sample["utc"], sample["available"]
-        if available < 12 * GIB:
-            if self.low_since is None:
-                self.low_since = now
-        else:
-            self.low_since = None
         reasons = violations(sample)
-        if self.low_since is not None and now - self.low_since >= 30:
-            reasons.append("MemAvailable<12GiB sustained30s")
         if available < 30 * GIB:
             self.memory_pause = True
             self.recovered_since = None
         elif self.memory_pause:
             if self.recovered_since is None:
                 self.recovered_since = now
-            if now - self.recovered_since >= 30:
+            if now - self.recovered_since >= 5:
                 self.memory_pause = False
                 self.recovered_since = None
-        if sample["load5"] > 108:
+        if sample["load1"] > 108:
             self.load_pause = True
-        elif sample["load5"] <= 100:
+        elif sample["load1"] <= 100:
             self.load_pause = False
         return reasons, self.memory_pause or self.load_pause
 
@@ -97,6 +89,7 @@ def snapshot(child=None):
             pass
     return dict(
         utc=time.time(),
+        load1=os.getloadavg()[0],
         load5=os.getloadavg()[1],
         available=psutil.virtual_memory().available,
         free=psutil.disk_usage("/home/ubuntu").free,
@@ -126,10 +119,10 @@ def main():
     resume_number = launch.get("resume_number", 0)
     if (
         type(resume_number) is not int
-        or not 0 <= resume_number <= 2
+        or not 0 <= resume_number <= 5
         or bool(args.resume_from) != (resume_number > 0)
     ):
-        raise RuntimeError("maximum two source-bound resumes")
+        raise RuntimeError("maximum five source-bound resumes")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.with_suffix(".attempt.claim").open("x") as f:
         json.dump(

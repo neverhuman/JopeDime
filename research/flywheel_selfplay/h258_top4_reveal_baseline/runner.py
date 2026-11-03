@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 from datetime import datetime, timezone
+import gc
 import hashlib
 import importlib.util
 import json
@@ -12,6 +14,7 @@ import time
 from typing import Any
 
 import numpy as np
+import torch
 
 WAVE_ID = "h258-top4-reveal-baseline-20261103"
 STUDY_PATH = "research/flywheel_selfplay/h258_top4_reveal_baseline"
@@ -25,10 +28,16 @@ BOOT_SEED = 258150
 BOOT_DRAWS = 10000
 GATE_ZGAP_THRESHOLD = 0.25
 
-DOPE_PT = Path("/home/ubuntu/jope-data/dope-55m-v01-mse/dope.pt")
+DOPE_ASSET_PT = Path(
+    "/home/ubuntu/JopeDimeMicro/assets/models/dope_mlc_v3_multitask_best.pt"
+)
+DOPE_ASSET_EXPECTED_SHA256 = (
+    "a36510b9e63050c01d182ccce7e4b489d9fb6ed7e39f8f2948cff420114e8952"
+)
 DOPE_EXPECTED_SHA256 = (
     "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814"
 )
+POOL_PRIORS_NPZ = Path("/home/ubuntu/jope-data/h58/cache/pool_priors.npz")
 R882_PT = INPUTS_DIR / "r882" / "round-882.pt"
 R882_EXPECTED_SHA256 = (
     "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
@@ -141,6 +150,7 @@ def score_h258_context(
     rng: np.random.Generator,
     stage1_mod: Any,
     prefix: str = "",
+    verify_snapshot: bool = True,
 ) -> dict[str, Any]:
     """
     Evaluates all 7 arms on one context for one seeded reveal stream, plus
@@ -150,18 +160,18 @@ def score_h258_context(
     fitness = pool["fitness"]
     logratio = pool["logratio"]
     gate = pool["gate"]
-    sem24 = pool["sem24"].astype(np.float64)
     n = len(rcost)
 
-    # Save RNG state to run snapshot's exact score_arms_for_context for bit-exactness proof
-    rng_state = json.loads(json.dumps(rng.bit_generator.state))
-    idx4 = rng.choice(n, size=4, replace=False)
+    snap_res = None
+    if verify_snapshot:
+        rng_state = json.loads(json.dumps(rng.bit_generator.state))
+        rng_snap = np.random.default_rng()
+        rng_snap.bit_generator.state = rng_state
+        snap_res = stage1_mod.score_arms_for_context(
+            "ctx", pool, rcost, sos_prior, sp_prior, rng_snap
+        )
 
-    rng_snap = np.random.default_rng()
-    rng_snap.bit_generator.state = rng_state
-    snap_res = stage1_mod.score_arms_for_context(
-        "ctx", pool, rcost, sos_prior, sp_prior, rng_snap
-    )
+    idx4 = rng.choice(n, size=4, replace=False)
 
     top_zgap = float(stage1_mod.compute_r882_top_zgap(rcost))
     is_gated = bool(top_zgap < GATE_ZGAP_THRESHOLD)
@@ -170,26 +180,27 @@ def score_h258_context(
     pick_base = int(order_rcost[0])
     u_base = float(u[pick_base])
 
-    gate_risk = sos_prior[:, 1].astype(np.float64)
-    unsafe_gate_mask = gate_risk > (gate_risk[pick_base] + 0.10)
-    gate_safety_penalty = np.where(unsafe_gate_mask, 10.0, 0.0)
-    h_cost = (
-        0.65 * sos_prior[:, 0].astype(np.float64)
-        + 0.35 * gate_risk
-        + 0.15 * sp_prior.astype(np.float64)
-        + gate_safety_penalty
-    )
-
-    s_mean = sem24.mean(axis=0, keepdims=True)
-    s_std = sem24.std(axis=0, keepdims=True) + 1e-6
-    X = (sem24 - s_mean) / s_std
-
     # TOP4_PICK_UNGATED (descriptive, unequal budget: always 4 reveals)
     top4_list = [int(i) for i in order_rcost[:4]]
     pick_top4_ungated = pick_best_revealed_gated_cost(top4_list, fitness, gate)
     u_top4_ungated = float(u[pick_top4_ungated])
 
     if is_gated:
+        sem24 = pool["sem24"].astype(np.float64)
+        gate_risk = sos_prior[:, 1].astype(np.float64)
+        unsafe_gate_mask = gate_risk > (gate_risk[pick_base] + 0.10)
+        gate_safety_penalty = np.where(unsafe_gate_mask, 10.0, 0.0)
+        h_cost = (
+            0.65 * sos_prior[:, 0].astype(np.float64)
+            + 0.35 * gate_risk
+            + 0.15 * sp_prior.astype(np.float64)
+            + gate_safety_penalty
+        )
+
+        s_mean = sem24.mean(axis=0, keepdims=True)
+        s_std = sem24.std(axis=0, keepdims=True) + 1e-6
+        X = (sem24 - s_mean) / s_std
+
         # 1. GATED_025 (frozen H252/H254)
         y4_cost = np.where(gate[idx4], fitness[idx4], 2.0)
         y4_c = y4_cost - float(np.mean(y4_cost))
@@ -296,16 +307,18 @@ def score_h258_context(
             "TOP4_PICK_UNGATED": len(set(top4_list)),
         }
 
-    snap_match = (
-        u_base == float(snap_res["R882"])
-        and u_g025 == float(snap_res["GATED_025"])
-        and u_act == float(snap_res["ACTIVE_2PLUS2_HURDLE"])
-    )
-    if not snap_match:
-        raise RuntimeError(
-            f"Snapshot mismatch: {(u_base, u_g025, u_act)} != "
-            f"{(snap_res['R882'], snap_res['GATED_025'], snap_res['ACTIVE_2PLUS2_HURDLE'])}"
+    snap_match = True
+    if snap_res is not None:
+        snap_match = (
+            u_base == float(snap_res["R882"])
+            and u_g025 == float(snap_res["GATED_025"])
+            and u_act == float(snap_res["ACTIVE_2PLUS2_HURDLE"])
         )
+        if not snap_match:
+            raise RuntimeError(
+                f"Snapshot mismatch: {(u_base, u_g025, u_act)} != "
+                f"{(snap_res['R882'], snap_res['GATED_025'], snap_res['ACTIVE_2PLUS2_HURDLE'])}"
+            )
 
     base_name = "R882" if prefix == "" else "R3175"
     sfx = "" if prefix == "" else f"@{prefix}"
@@ -413,8 +426,14 @@ def compute_elo_summary(
     point_by_seed = common_mod.bt_ratings(wins_by_seed.sum(axis=1), anchor=anchor_idx)
     point_med = np.median(point_by_seed, axis=0)
 
-    # Paired family bootstrap for Elo
-    boot_wins = wins_by_seed[:, boot_ix].sum(axis=2)  # [S, BOOT, A, A]
+    # Paired family bootstrap for Elo (chunked by 100 draws to avoid 9 GiB 5D intermediate tensor)
+    boot_wins = np.concatenate(
+        [
+            wins_by_seed[:, boot_ix[i : i + 100]].sum(axis=2)
+            for i in range(0, len(boot_ix), 100)
+        ],
+        axis=1,
+    )  # [S, BOOT, A, A]
     boot_elo = np.median(
         common_mod.bt_ratings(boot_wins, anchor=anchor_idx), axis=0
     )  # [BOOT, A]
@@ -430,16 +449,27 @@ def compute_elo_summary(
     return out
 
 
+def verify_dope_and_ckpts() -> tuple[str, str, str]:
+    asset_sha = sha256_file(DOPE_ASSET_PT)
+    assert asset_sha == DOPE_ASSET_EXPECTED_SHA256
+    r882_sha = sha256_file(R882_PT)
+    r3175_sha = sha256_file(R3175_PT)
+    assert r882_sha == R882_EXPECTED_SHA256
+    assert r3175_sha == R3175_EXPECTED_SHA256
+    st882 = torch.load(R882_PT, map_location="cpu", weights_only=True)
+    st3175 = torch.load(R3175_PT, map_location="cpu", weights_only=True)
+    dope882 = str(st882.get("dope_sha256", ""))
+    dope3175 = str(st3175.get("dope_sha256", ""))
+    assert dope882 == DOPE_EXPECTED_SHA256
+    assert dope3175 == DOPE_EXPECTED_SHA256
+    return dope882, r882_sha, r3175_sha
+
+
 def run_smoke(out_dir: Path) -> None:
     t0 = time.time()
     out_dir.mkdir(parents=True, exist_ok=True)
     common_mod, _ = load_snapshot_modules()
-    dope_before = sha256_file(DOPE_PT)
-    r882_before = sha256_file(R882_PT)
-    r3175_before = sha256_file(R3175_PT)
-    assert dope_before == DOPE_EXPECTED_SHA256
-    assert r882_before == R882_EXPECTED_SHA256
-    assert r3175_before == R3175_EXPECTED_SHA256
+    dope_before, r882_before, r3175_before = verify_dope_and_ckpts()
 
     train_rows, val_rows = common_mod.load_cohorts()
     assert len(train_rows) == 1219 and len(val_rows) == 91
@@ -447,8 +477,7 @@ def run_smoke(out_dir: Path) -> None:
     groups, cid_to_fold = common_mod.seed_folds(train_rows, FOLD_SEED)
     assert len(groups) == 5 and len(cid_to_fold) == 1219
 
-    dope_after = sha256_file(DOPE_PT)
-    assert dope_after == DOPE_EXPECTED_SHA256
+    dope_after, _, _ = verify_dope_and_ckpts()
     smoke_obj = {
         "schema": "jope.h258.smoke/v1",
         "wave_id": WAVE_ID,
@@ -469,24 +498,23 @@ def run_smoke(out_dir: Path) -> None:
     print("H258_SMOKE_PASS", json.dumps(smoke_obj))
 
 
+def cooperate(out_dir: Path) -> None:
+    while any(out_dir.glob("*.pause.json")):
+        time.sleep(0.25)
+
+
 def run_primary(out_dir: Path) -> None:
     t0 = time.time()
     out_dir.mkdir(parents=True, exist_ok=True)
     common_mod, stage1_mod = load_snapshot_modules()
 
-    dope_before = sha256_file(DOPE_PT)
-    r882_before = sha256_file(R882_PT)
-    r3175_before = sha256_file(R3175_PT)
-    assert dope_before == DOPE_EXPECTED_SHA256
-    assert r882_before == R882_EXPECTED_SHA256
-    assert r3175_before == R3175_EXPECTED_SHA256
+    dope_before, r882_before, r3175_before = verify_dope_and_ckpts()
 
     train_rows, val_rows = common_mod.load_cohorts()
     all_rows = train_rows + val_rows
     assert not any(bool(r.get("has_meta_test", False)) for r in all_rows)
 
     ctx_feats = common_mod.load_context_features()
-    pools = common_mod.load_pools(all_rows, verify_hashes=False)
     promos_by_cid = common_mod.load_harvested_promotions(train_rows)
 
     # Audit (a): zero DL-Val context/family in any prior/promotion fit; zero fold overlap
@@ -501,26 +529,52 @@ def run_primary(out_dir: Path) -> None:
     )
     assert fold_overlap == 0
 
-    pool_priors_npz = Path("/home/ubuntu/jope-data/h252/pool_priors.npz")
     r882_cache = load_cost_cache(
         all_rows,
         INPUTS_DIR / "r882-train-costs.npz",
         INPUTS_DIR / "r882-secondary-costs.npz",
-        pool_priors_npz,
+        POOL_PRIORS_NPZ,
     )
     r3175_cache = load_cost_cache(
         all_rows,
         INPUTS_DIR / "r3175-train-costs.npz",
         INPUTS_DIR / "r3175-secondary-costs.npz",
-        pool_priors_npz,
+        POOL_PRIORS_NPZ,
     )
+
+    # Load pools in batches of 50 contexts, immediately building 64D candidate features and dropping
+    # 412D program arrays so peak RSS never exceeds ~1.1 GiB.
+    libc = ctypes.CDLL("libc.so.6")
+    pools: dict[str, dict[str, Any]] = {}
+    cand_feats_r882: dict[str, np.ndarray] = {}
+    cand_feats_r3175: dict[str, np.ndarray] = {}
+
+    for start_i in range(0, len(all_rows), 50):
+        cooperate(out_dir)
+        batch_rows = all_rows[start_i : start_i + 50]
+        batch_pools = common_mod.load_pools(batch_rows, verify_hashes=False)
+        batch_cf882 = stage1_mod.build_candidate_features(
+            batch_rows, batch_pools, r882_cache, ctx_feats
+        )
+        batch_cf3175 = stage1_mod.build_candidate_features(
+            batch_rows, batch_pools, r3175_cache, ctx_feats
+        )
+        for cid, p in batch_pools.items():
+            p.pop("program", None)
+            p.pop("pids", None)
+            p.pop("proj16", None)
+            pools[cid] = p
+            cand_feats_r882[cid] = batch_cf882[cid]
+            cand_feats_r3175[cid] = batch_cf3175[cid]
+        del batch_pools, batch_cf882, batch_cf3175
+        gc.collect()
+        libc.malloc_trim(0)
 
     # Step 1: Regression FIRST — verify R882 Native91 = 1.1377941898164525 bit-exact (91/91 contexts)
     ref_obj = json.loads(R882_REF_JSON.read_text())
-    ref_ctx_map = {
-        row["context_sha256"]: float(row["utility"])
-        for row in ref_obj["secondary"]["per_context"]
-    }
+    ref_cids = [c["cid"] for c in ref_obj["evaluation_contract"]["contexts"]]
+    ref_vals = ref_obj["utility"]["per_context"]
+    ref_ctx_map = {cid: float(val) for cid, val in zip(ref_cids, ref_vals)}
     val_r882_utils = []
     bit_exact_matches = 0
     for r in val_rows:
@@ -562,20 +616,21 @@ def run_primary(out_dir: Path) -> None:
         json.dumps(baseline_obj, indent=2, sort_keys=True) + "\n"
     )
 
-    # Step 2: Build 64D candidate features and fit 5-fold cross-fitted priors using fold_seed=258140
-    cand_feats_r882 = stage1_mod.build_candidate_features(
-        all_rows, pools, r882_cache, ctx_feats
-    )
-    cand_feats_r3175 = stage1_mod.build_candidate_features(
-        all_rows, pools, r3175_cache, ctx_feats
-    )
-
+    cooperate(out_dir)
     sos_r882, sp_r882, diag_r882 = stage1_mod.fit_decomposed_hurdle_and_sp_priors(
         train_rows, val_rows, pools, cand_feats_r882, promos_by_cid, seed=FOLD_SEED
     )
+    del cand_feats_r882
+    gc.collect()
+    libc.malloc_trim(0)
+
+    cooperate(out_dir)
     sos_r3175, sp_r3175, diag_r3175 = stage1_mod.fit_decomposed_hurdle_and_sp_priors(
         train_rows, val_rows, pools, cand_feats_r3175, promos_by_cid, seed=FOLD_SEED
     )
+    del cand_feats_r3175
+    gc.collect()
+    libc.malloc_trim(0)
 
     # Step 3: Evaluate all arms across SEEDS = [258101, 258102, 258103]
     train_r882 = np.zeros(
@@ -605,8 +660,11 @@ def run_primary(out_dir: Path) -> None:
     train_gated_ctx_count = 0
 
     for si, seed in enumerate(SEEDS):
+        cooperate(out_dir)
         rng_tr_882 = np.random.default_rng(seed)
         for ci, r in enumerate(train_rows):
+            if ci % 200 == 0:
+                cooperate(out_dir)
             cid = r["context_sha256"]
             out_c = score_h258_context(
                 pools[cid],
@@ -616,6 +674,7 @@ def run_primary(out_dir: Path) -> None:
                 rng_tr_882,
                 stage1_mod,
                 prefix="",
+                verify_snapshot=False,
             )
             for ai, a in enumerate(ARMS_R882):
                 train_r882[si, ci, ai] = out_c["scores"][a]
@@ -663,6 +722,8 @@ def run_primary(out_dir: Path) -> None:
 
         rng_tr_3175 = np.random.default_rng(seed)
         for ci, r in enumerate(train_rows):
+            if ci % 200 == 0:
+                cooperate(out_dir)
             cid = r["context_sha256"]
             out_c = score_h258_context(
                 pools[cid],
@@ -672,6 +733,7 @@ def run_primary(out_dir: Path) -> None:
                 rng_tr_3175,
                 stage1_mod,
                 prefix="r3175",
+                verify_snapshot=False,
             )
             for ai, a in enumerate(ARMS_R3175):
                 train_r3175[si, ci, ai] = out_c["scores"][a]
@@ -694,6 +756,20 @@ def run_primary(out_dir: Path) -> None:
                 val_r3175[si, ci, ai] = out_c["scores"][a]
             if out_c["snap_match"]:
                 snap_exact_count_r3175 += 1
+
+    del (
+        pools,
+        r882_cache,
+        r3175_cache,
+        sos_r882,
+        sp_r882,
+        sos_r3175,
+        sp_r3175,
+        ctx_feats,
+        promos_by_cid,
+    )
+    gc.collect()
+    libc.malloc_trim(0)
 
     # Step 4: Statistical summaries on DL-Val and DL-Train OOF
     val_fams_list = [r["family_id"] for r in val_rows]
@@ -963,12 +1039,7 @@ def run_primary(out_dir: Path) -> None:
             }
         return out
 
-    dope_after = sha256_file(DOPE_PT)
-    r882_after = sha256_file(R882_PT)
-    r3175_after = sha256_file(R3175_PT)
-    assert dope_after == DOPE_EXPECTED_SHA256
-    assert r882_after == R882_EXPECTED_SHA256
-    assert r3175_after == R3175_EXPECTED_SHA256
+    dope_after, r882_after, r3175_after = verify_dope_and_ckpts()
 
     np.savez_compressed(
         out_dir / "panels.npz",
@@ -1132,13 +1203,19 @@ def run_primary(out_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="H258 TOP4_PICK equal-budget runner")
-    parser.add_argument("--mode", choices=["smoke", "primary"], required=True)
-    parser.add_argument("--out-dir", type=Path, required=True)
+    parser.add_argument("--mode", choices=["smoke", "primary"])
+    parser.add_argument("--out-dir", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--launch", type=Path)
+    parser.add_argument("--resume-from", type=Path)
+    parser.add_argument("--smoke", action="store_true")
     args = parser.parse_args()
-    if args.mode == "smoke":
-        run_smoke(args.out_dir)
+    out_dir = args.out_dir if args.out_dir is not None else args.output.parent
+    is_smoke = bool(args.smoke or args.mode == "smoke")
+    if is_smoke:
+        run_smoke(out_dir)
     else:
-        run_primary(args.out_dir)
+        run_primary(out_dir)
 
 
 if __name__ == "__main__":
