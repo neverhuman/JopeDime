@@ -1,5 +1,22 @@
 use super::*;
 
+fn collect_retention_sources(directory: &Path, root: &Path, files: &mut Vec<String>) {
+    for entry in fs::read_dir(directory).unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+        if entry.file_type().unwrap().is_dir() {
+            collect_retention_sources(&path, root, files);
+        } else if path.extension().is_some_and(|extension| extension == "rs") {
+            files.push(
+                path.strip_prefix(root)
+                    .unwrap()
+                    .to_string_lossy()
+                    .into_owned(),
+            );
+        }
+    }
+}
+
 #[test]
 fn retention_sources_have_no_s3_write_or_delete_path() {
     // The brain and the write-side library are read-only/offline by construction: no S3 client,
@@ -56,12 +73,9 @@ fn retention_sources_have_no_s3_write_or_delete_path() {
         ),
     ];
     // Every module of the retention tree is in the list, so a new file cannot dodge the guard.
-    let mut on_disk: Vec<String> =
-        fs::read_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/src/retention"))
-            .unwrap()
-            .map(|e| e.unwrap().file_name().to_string_lossy().to_string())
-            .filter(|n| n.ends_with(".rs"))
-            .collect();
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/retention");
+    let mut on_disk = Vec::new();
+    collect_retention_sources(&root, &root, &mut on_disk);
     on_disk.sort();
     let mut listed: Vec<String> = sources
         .iter()
