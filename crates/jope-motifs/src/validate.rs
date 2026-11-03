@@ -38,6 +38,10 @@ use analysis::*;
 use run::check_motif;
 pub use types::*;
 
+/// Verify that every recorded motif occurrence still matches the qualified source set.
+///
+/// Returns `None` when all recorded occurrences are current, or a reason when they are not or
+/// when the table contains no occurrences.
 pub fn verify_source(
     validation: &mut Validation,
     table: &MotifTable,
