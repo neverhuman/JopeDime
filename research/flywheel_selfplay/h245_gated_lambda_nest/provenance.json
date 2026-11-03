@@ -13,6 +13,7 @@
     "H239A1 cooperative pause guard; four-core CPU affinity",
     "Sole primary DL-Val seed-median context gain with explicit H245 acceptance gate; pooled-A harm gate retained",
     "Placebo copies primary lambda/tau and permutes zgap so gate rate matches exactly",
-    "Immutable source capsule binding instead of mutable checkout; no smoke refits; single45-fit run"
+    "Immutable source capsule binding instead of mutable checkout; no smoke refits; single45-fit run",
+    "Omit unused pre-lock B native diagnostic; all gate choices remain FIT-only, and no A/B outer assessment occurs before the global lock"
   ]
 }

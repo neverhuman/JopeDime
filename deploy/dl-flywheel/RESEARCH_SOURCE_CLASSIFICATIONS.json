@@ -6551,8 +6551,8 @@
       }
     },
     "python:research/flywheel_selfplay/h245_gated_lambda_nest/runner.py": {
-      "bytes": 44177,
-      "sha256": "d6de0396c89976a0d3913fa28f8b999daad0505fb15eb83e0b26d007440fe3f9",
+      "bytes": 43659,
+      "sha256": "c40092447ad1588565ca6d753ba70c8560bb55150dda15641d136adc11a4dfa1",
       "classification": {
         "role": "research",
         "reason": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."

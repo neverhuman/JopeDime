@@ -40,6 +40,8 @@ harm <=5% (family mean delta <−0.01). Ties choose smaller tau, then smaller
 lambda; absence of positive safe gain keeps closed r882. zgap uses cost only,
 first argmins, and r882 standard deviation. All 15 cell lambda/tau choices
 are fsync-locked in stage1_lock.json before any trained A or DL-Val assessment.
+The unused H218 pre-lock B native diagnostic is omitted; it never entered any
+fit, calibration or gate choice.
 Native91 baseline and FIT outcomes are the explicit pre-lock exceptions;
 rotating cross-fit raw pools are loaded for fitting but each cell's A/B labels
 are excluded from its fit/calibration/selection. Every policy is assessed once.

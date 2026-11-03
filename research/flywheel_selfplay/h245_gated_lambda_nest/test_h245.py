@@ -377,3 +377,53 @@ def test_cooperative_pause_acknowledges_and_resumes_same_process(tmp_path, monke
         for s in (tmp_path / "run-x.cooperative-events.jsonl").read_text().splitlines()
     ]
     assert events == ["paused_safe_point", "resumed_same_state"]
+
+
+def test_stage1_never_reads_outer_A_or_B_outcomes():
+    from types import SimpleNamespace
+
+    seed = stat.SEEDS[0]
+    ids = ["c" + str(k) for k in range(5)]
+    rows = [dict(context_sha256=c, family_id="f" + str(k)) for k, c in enumerate(ids)]
+    mapping = {seed: {c: k for k, c in enumerate(ids)}}
+
+    class Forbidden(dict):
+        def __getitem__(self, key):
+            raise AssertionError("pre-lock outer outcome read: " + key)
+
+    pools = {
+        c: (
+            Forbidden()
+            if k < 2
+            else dict(fitness=np.arange(8.0), gate=np.ones(8, bool))
+        )
+        for k, c in enumerate(ids)
+    }
+    costs = {c: np.arange(8.0) for c in ids}
+
+    def predictions(tag, seed, exclusion):
+        return {c: -np.arange(8.0) for c in ids}
+
+    def native(cost, fitness, gate):
+        i = int(np.argmin(cost))
+        return float(-fitness[i] if gate[i] else -2.0)
+
+    outer, inner = stat.fit_plan()
+    fits = {
+        ("BLEND", seed, ex): dict(prediction_sha256="pinned") for ex in outer + inner
+    }
+    result = runner.compute_cell_stage1(
+        seed,
+        0,
+        rows,
+        mapping,
+        costs,
+        pools,
+        {c: "f" + str(k) for k, c in enumerate(ids)},
+        predictions,
+        SimpleNamespace(calibration=lambda *a: (0.0, 1.0)),
+        SimpleNamespace(native=native),
+        fits,
+    )
+    assert result["A"] == 0 and result["B"] == 1 and result["FIT"] == [2, 3, 4]
+    assert result["b_panel_blend025_native_sha256"] is None

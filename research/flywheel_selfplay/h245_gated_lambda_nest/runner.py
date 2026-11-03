@@ -469,22 +469,6 @@ def compute_cell_stage1(
         GATED_NEST_SHUF=shuf_choice,
         GATED_025=g025_choice,
     )
-    outer = preds_fn("BLEND", seed, tuple(sorted((a, b))))
-    b_rows = [r for r in rows if mapping[seed][r["context_sha256"]] == b]
-    b_native = np.array(
-        [
-            h139.native(
-                stat.blend(
-                    base[r["context_sha256"]],
-                    cal["BLEND"][0] - cal["BLEND"][1] * outer[r["context_sha256"]],
-                    0.25,
-                ),
-                pools[r["context_sha256"]]["fitness"],
-                pools[r["context_sha256"]]["gate"],
-            )
-            for r in b_rows
-        ]
-    )
     return dict(
         seed=seed,
         outer=k,
@@ -494,7 +478,8 @@ def compute_cell_stage1(
         calibration=cal,
         gate_choice=gate_choice,
         fit_contexts=len(fit_ids),
-        b_panel_blend025_native_sha256=hashlib.sha256(b_native.tobytes()).hexdigest(),
+        b_panel_blend025_native_sha256=None,
+        b_panel_reason="Unused H218 B diagnostic omitted before global outcome lock",
         fit_prediction_sha256={
             f"{t}-{''.join(map(str, ex))}": fits[(t, seed, ex)]["prediction_sha256"]
             for t in tags
