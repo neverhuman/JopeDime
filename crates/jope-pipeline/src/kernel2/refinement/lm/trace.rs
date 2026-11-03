@@ -97,7 +97,7 @@ pub struct PipelineCheck {
 }
 
 impl SurrogateTrace {
-    fn record(trace: &LmTrace) -> Self {
+    pub(super) fn record(trace: &LmTrace) -> Self {
         Self {
             status: trace.status.as_str().into(),
             changed: trace.changed,
