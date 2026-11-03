@@ -1,4 +1,4 @@
-use super::{migrate_vocab_v4, SOURCE_GRAMMARS};
+use super::{default_tasks, default_true, migrate_vocab_v4, SOURCE_GRAMMARS};
 use serde_json::{json, Value};
 use std::fs;
 
@@ -53,8 +53,16 @@ fn dry_run_replaces_expr_bins_and_repairs_legacy_task_fields() {
     let patched = &migrated_op["params"][index];
     assert_eq!(patched["bins"], json!(bins));
     let source_op = &source[&engine][&field][&name];
-    assert_eq!(migrated_op["tasks"], source_op["tasks"]);
-    assert_eq!(migrated_op["generate"], source_op["generate"]);
+    let expected_tasks = source_op
+        .get("tasks")
+        .cloned()
+        .unwrap_or_else(|| json!(default_tasks()));
+    let expected_generate = source_op
+        .get("generate")
+        .cloned()
+        .unwrap_or_else(|| json!(default_true()));
+    assert_eq!(migrated_op["tasks"], expected_tasks);
+    assert_eq!(migrated_op["generate"], expected_generate);
 }
 
 #[test]
