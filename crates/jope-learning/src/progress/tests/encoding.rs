@@ -19,5 +19,6 @@ fn with(value: &impl serde::Serialize, edit: impl FnOnce(&mut Value)) -> Vec<u8>
 
 mod canonical;
 mod domains;
-mod hwm;
+#[path = "encoding/hwm.rs"]
+mod hwm_tests;
 mod identity;
