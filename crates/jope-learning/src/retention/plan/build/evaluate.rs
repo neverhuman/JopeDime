@@ -15,7 +15,7 @@ pub(crate) fn evaluate(cfg: &Config, loaded: Loaded) -> Result<Evaluated> {
         Some(d) => Lifecycles::load_dir(d)?,
         None => Lifecycles::default(),
     };
-    let mut classes = assign_classes(&ledger, &policy);
+    let mut classes = assign_classes(ledger, policy);
 
     // S3 Inventory: object-level facts per group, pin existence, E1 overlap.
     let inv: Option<Inventory> = if cfg.inventories.is_empty() {
@@ -48,7 +48,7 @@ pub(crate) fn evaluate(cfg: &Config, loaded: Loaded) -> Result<Evaluated> {
             .collect();
         Some(inventory::aggregate(
             reports,
-            &lookup,
+            lookup,
             ledger.groups.len(),
             &pinned,
             &e1_pairs,
@@ -141,7 +141,7 @@ pub(crate) fn evaluate(cfg: &Config, loaded: Loaded) -> Result<Evaluated> {
                     .find(|o| o.bucket == g.bucket && o.prefix == c.prefix)
             }),
         };
-        let d: Decision = decide(&facts, &policy)?;
+        let d: Decision = decide(&facts, policy)?;
         if d.action == Action::Expire {
             bail!(
                 "internal: EXPIRE reached for {} without object-level evidence",
