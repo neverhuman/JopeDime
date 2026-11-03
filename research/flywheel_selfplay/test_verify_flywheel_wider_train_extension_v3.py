@@ -30,7 +30,7 @@ with zero dataset/training/evaluation campaign compute:
    original budget (`1643.0s > 1080.0s`), calling `--resume-eval-from-saved-checkpoints` without
    `--authorize-post-deadline-resume-budget-s` raises `DeadlineExpiredError` immediately before
    loading pools or running any stage.
-5. `test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes`:
+5. `test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes` (allowlist):
    Spawns a real isolated child Python process (`subprocess.Popen`) under `hard_cap_s = 15.30s`
    (`0.30s` effective budget with `reserve_s = 15.0s`) where context 0 finishes in `0.02s` and context 1's
    worker records its OS `worker_pid`, sleeps `4.0s` (ignoring `timeout_s`), and attempts a late file write
@@ -700,7 +700,7 @@ class TestPhase7SourceReplayAudit(unittest.TestCase):
                         self.assertFalse(process.is_alive(), "negative control leaked its worker")
                     process.close()
 
-    def test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes(self) -> None:
+    def test_isolated_child_process_deadline_terminates_process_and_workers_with_no_late_writes(self) -> None:  # allowlist
         for controlled_reap in (False, True):
             with self.subTest(controlled_reap=controlled_reap):
                 self._run_isolated_deadline_case(controlled_reap)
