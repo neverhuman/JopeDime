@@ -14,10 +14,10 @@ the writer and commits one proposal. The adapter record in
 
 \subsection{The player in one picture}\label{sub:method-picture}
 
-A frozen encoder reads the board (\cref{fig:network}); the reference writer
-emits a complete program under the contract in \cref{box:searchone}, as
+A frozen encoder reads the problem board (\cref{fig:network}); the reference
+writer emits a complete program under the contract in \cref{box:searchone}, as
 AlphaGo's policy proposed a move
-\citep{silver2016mastering}. The separate map enters training search
+\citep{silver2016mastering}. The separate ranking map enters training search
 through the routes described in \cref{sub:method-map}.
 
 \begin{figure*}[t]
@@ -54,8 +54,9 @@ statistics must stay outside the input closure. A context's recorded
 declaration that no final target was used establishes neither input closure
 nor numerical qualification. CPU contexts require native replay and bounded-execution receipts before accepted-policy use.
 
-Whether problems with similar best programs sit together requires a
-separate representation study; \cref{sub:results-ablation} reserves that test.
+Whether problems with similar best programs sit together in that space requires
+a separate representation study; \cref{sub:results-ablation} reserves that
+evaluation test.
 
 \subsection{Describing the move}\label{sub:method-move}
 
@@ -134,7 +135,7 @@ test the validity rate $q_{\mathrm{run}}$ in \cref{sub:price-bill}.
 
 \begin{keyidea}
 The reference game-day protocol omits the ranking map. Matched first
-proposals test whether training improved the writer.
+proposals therefore test whether training improved the program writer.
 \end{keyidea}
 
 In the reference native implementation, the writer and map use separate context
@@ -143,7 +144,7 @@ or screening the writer. One native GP route matches map-derived weights
 by program identity to ranked survivors for parent selection. The bounded
 search driver instead cycles among up to four parents chosen by measured
 loss. These are different influence paths, not evidence of trained-map lift;
-an evaluation must bind the route it used.
+any evaluation must bind the exact route that it used.
 
 Only the 64 neural or fallback seeds receive normalized rank weights;
 the 16 tail seeds enter unscored. Unscored survivors share the lowest
@@ -158,7 +159,7 @@ Search-parent weights and writer-loss weights act at different stages;
 the latter use referee rank. Whether map-guided targets improve later
 proposals requires the matched ablation in \cref{sub:results-ablation}.
 The historical diagnostics in \cref{fig:fw-target-progress,fig:fw-target-history}
-do not supply that comparison.
+do not supply that controlled comparison.
 
 In the proposed offline loop, referee-scored search outcomes supply
 training targets.
@@ -188,12 +189,12 @@ The native proposal sampler seeks 64 distinct parseable programs at $T=1$,
 scheduling at most eight batches of 128 neural draws (\num{1024} total).
 To fill a shortfall, it tries up to \num{10000} seeded random canonical
 pipelines and projects them through the grammar. It refuses an incomplete
-pool. These are training-search budgets, separate from the one-draw
-protocol in \cref{sub:method-gameday}.
+candidate pool. These are training-search budgets, separate from the
+single-draw game-day protocol in \cref{sub:method-gameday}.
 
 The reference rule is expert iteration \citep{anthony2017expert}.
 The writer term weights sampled programs from $G_p$ by referee rank;
-it joins the map and auxiliary terms in the combined objective
+it joins the map and auxiliary terms in the full combined training objective
 (\cref{app:training}):
 \begin{align}
   \mathcal{L}_{\mathrm{writer}}(p) &= -\sum_{w\in G_p}\bigl(0.05+\rho_w^{4}\bigr)\log\writer(w\mid z_p),
@@ -203,9 +204,9 @@ it joins the map and auxiliary terms in the combined objective
   &\quad + 0.1\,\mathcal{L}_{\mathrm{runtime}} + 0.05\,\mathcal{L}_{\mathrm{prog}}.
   \label{eq:totalLoss}
 \end{align}
-The writer loss in \cref{eq:writerLoss} is schematic: it displays the rank
+The writer loss in \cref{eq:writerLoss} is schematic: it displays the referee rank
 weights. The native implementation also smooths grammar-legal targets,
-averages token losses within each program and normalizes by the sum of
+averages token losses within each program and normalizes by the total sum of
 program weights (\cref{app:training}).
 
 Here $\mathcal{L}_{\mathrm{BT}}$ is a Bradley--Terry loss on the same lists,
@@ -284,6 +285,6 @@ draw with a frozen reference under matched conditions.
 \end{algorithmic}
 \end{algorithm}
 
-Report later search separately, as \citet{silver2017mastering} reported
-AlphaGo Zero's raw network apart from its search (\cref{sec:method-status}).
+Report any later search separately, as \citet{silver2017mastering} reported
+AlphaGo Zero's raw network apart from its lookahead search (\cref{sec:method-status}).
 \input{sections/06_method/flywheel_status}

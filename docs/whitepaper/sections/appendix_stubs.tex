@@ -44,7 +44,7 @@ family ordering assigns the meta-training, meta-validation and meta-test
 partitions.
 
 This code path does not establish that a corpus or checkpoint satisfies
-the split.
+the required partition split.
 
 \section{Incident Log and Audit Safeguards}\label{app:incidents}
 
@@ -60,8 +60,8 @@ input closure and execution isolation:
   \item \textbf{Input-closure and canary checks.} Benchmark release requires
   passing receipts for an inner-fold label-poison test, a sealed canary and
   a train-only input-closure audit. The audit must exclude held-out targets
-  and derived statistics from board encoding and candidate generation.
-  Final pre-registration and receipts belong to the evaluation record in
+  and derived statistics from both board encoding and candidate generation.
+  Final pre-registration and receipts belong to the primary evaluation record in
   \cref{sub:results-protocol}.
 \end{itemize}
 
@@ -90,7 +90,7 @@ are inventoried below, separately from the adapter record in
   $0.05 + \rho_w^4$. The base native sampler balances families and takes
   the best program plus one draw from each of seven rank bands of the rest.
   Fresh-program replay can replace a comparator to include a newly admitted
-  program.
+  candidate program.
 
   Pairs stay within each comparison, keyed by corpus context and
   comparison index. The Python ranking helpers instead group by dataset
@@ -108,9 +108,9 @@ are inventoried below, separately from the adapter record in
   coefficients match the native objective; the checkpoint's objective
   identity and configuration still belong in its evaluation record.
   \item \textbf{Runtime supervision (\cref{eq:totalLoss}).}
-  The runtime term compares $\ln(1+s)$ with
+  The auxiliary runtime term compares $\ln(1+s)$ with
   $\ln(1+\operatorname{softplus}(h))$ by Huber loss with threshold~1,
-  for measured seconds $s\geq0$ and raw head output $h$.
+  for measured seconds $s\geq0$ and raw scalar head output $h$.
   \item \textbf{Ranking targets (\cref{eq:mapLoss,eq:totalLoss}).}
   Here $q_w=1/(1+\mathrm{RMSE}_w/m_p)$ (\cref{eq:totalLoss}), with $m_p$
   the corpus list's median RMSE. For microbatch normalization,
@@ -131,8 +131,8 @@ are inventoried below, separately from the adapter record in
   The registered total also
   includes zero-weight stability and loss-scale terms, so it does not
   measure learned or exercised capacity. Approximately 6.90 million parameters lie outside the writer's token
-  generation path. Decoding bypasses them, but the native checkpoint loader
-  still requires them.
+  generation path. Game-day decoding bypasses them, but the native checkpoint loader
+  still requires all of them.
   \item \textbf{Optimization notes (\cref{sub:method-selfplay}).}
   The records describe AdamW training (learning rate $10^{-4}$,
   weight decay $0.01$, gradient-norm clip $1.0$, global batch size \num{2048})
@@ -153,7 +153,7 @@ are inventoried below, separately from the adapter record in
 
 Each capture keeps its own date, population scope and event units
 (\cref{sec:method-status}). \Cref{app:latest-admissions} gives the canonical
-admission chronology.
+adapter-admission chronology.
 
 The exhibits distinguish adapter decisions from program-incumbent events
 and operating clocks (\cref{app:round-throughput}). Historical GP
