@@ -138,7 +138,7 @@ impl ShadowStatusV2 {
         self.regression_front.validate(Task::Regression)?;
         ensure!(
             self.frontier_contexts + self.hard_contexts + self.anchor_contexts
-                == super::DATASETS_PER_COHORT,
+                == super::super::DATASETS_PER_COHORT,
             "status cohort accounting does not total 64"
         );
         ensure!(
