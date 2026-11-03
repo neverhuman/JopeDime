@@ -320,7 +320,7 @@ impl Authority {
         sync_dir(&authority.root)?;
         Ok(body.new_epoch.clone())
     }
-    pub(super) fn native_held_start_allowed(&self) -> Result<()> {
+    pub(in crate::eval_registry::authority) fn native_held_start_allowed(&self) -> Result<()> {
         ensure!(
             self.manifest.schema == NATIVE_SCHEMA,
             "legacy unresolved work remains blocked"
