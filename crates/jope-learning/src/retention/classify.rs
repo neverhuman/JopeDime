@@ -154,7 +154,8 @@ pub struct Decision {
 mod costing;
 mod decision;
 
+use costing::exact_max;
 pub(super) use costing::{
-    cost, e_candidates, exact_max, human_bytes, is_live, roles_str, storage_now, tv_for,
+    cost, e_candidates, human_bytes, is_live, roles_str, storage_now, tv_for,
 };
 pub use decision::decide;
