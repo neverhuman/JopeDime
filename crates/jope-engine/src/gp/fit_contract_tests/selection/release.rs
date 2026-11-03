@@ -172,7 +172,7 @@ pub(crate) fn search_proposals_fits_and_scores_depend_only_on_their_permitted_ro
 pub(crate) const SEALED_TEST: &str = "12,136\n13,139\n14,142.5\n";
 
 /// A completed search of the view fixture and its exported selected predictor.
-pub(super) fn exported_subject(
+pub(in crate::gp::fit_contract_tests) fn exported_subject(
     authority: &Fixture,
     root: &Path,
     prepared: &Path,
