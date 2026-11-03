@@ -71,7 +71,7 @@ pub(super) fn value_f64(value: &Value) -> Option<f64> {
     }
 }
 
-fn value_string<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
+pub(super) fn value_string<'a>(value: &'a Value, key: &str) -> Result<&'a str> {
     value
         .get(key)
         .and_then(Value::as_str)

@@ -7,7 +7,7 @@
 
 use anyhow::{bail, Context, Result};
 use serde_json::{json, Value};
-use std::fs;
+use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
