@@ -7,9 +7,7 @@
 //! the real recovery receipt the driver maps.
 
 use super::fixture::{snapshot, Fault, Faulty, PUBLISHER, SOURCE_COMMIT};
-use jope_learning::canon::sha256_hex;
 use crate::hwm::{self, Candidate};
-use jope_learning::mirror::Mirror;
 use crate::progress::cadence::{CheckpointDue, Clock, FlushDue, Policy, Urgent};
 use crate::progress::census::Disposition;
 use crate::progress::engine::{self, CHECKPOINT_SCHEMA, CORPUS_PUBLICATION_SCHEMA, CORPUS_SCHEMA};
@@ -20,6 +18,8 @@ use crate::progress::product::{
 };
 use crate::progress::publish::{reusable, Publication};
 use crate::progress::rebuild::summarize;
+use jope_learning::canon::sha256_hex;
+use jope_learning::mirror::Mirror;
 use jope_learning::state::State;
 use serde_json::json;
 use std::cell::Cell;
