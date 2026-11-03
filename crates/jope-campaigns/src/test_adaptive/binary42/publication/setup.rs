@@ -1,3 +1,4 @@
+use super::super::member_models::{SeedManifest, StagingReceipt};
 use super::*;
 
 pub(in crate::test_adaptive::binary42) fn existing_confirmation(
