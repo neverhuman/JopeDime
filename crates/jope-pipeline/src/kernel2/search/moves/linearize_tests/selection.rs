@@ -1,3 +1,4 @@
+use super::super::linearize_round;
 use super::*;
 
 #[test]
