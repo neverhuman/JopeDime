@@ -11,6 +11,9 @@ fn error_expr() -> Expression {
 fn value(f: &Fitness, y: &[f64], p: &[f64]) -> f64 {
     f.evaluate(y, p).unwrap().value
 }
+#[path = "custom_expressions.rs"]
 mod custom_expressions;
+#[path = "financial_catalog.rs"]
 mod financial_catalog;
+#[path = "metric_semantics.rs"]
 mod metric_semantics;
