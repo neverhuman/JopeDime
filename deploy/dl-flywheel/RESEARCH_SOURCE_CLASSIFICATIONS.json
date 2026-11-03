@@ -6393,12 +6393,12 @@
       "sha256": "731d8b0e612f57c7eaee2eccae623a215a4fe345d1e89acdf4f04734e436de6d"
     },
     "python:research/flywheel_selfplay/h249_side_branch/runner.py": {
-      "bytes": 40920,
+      "bytes": 41680,
       "classification": {
         "reason": "H249 preregistered CPU-only diagnostic: zero-init low-rank residual side branch (LoRA-style, delta = B@A * (alpha/r), A ~ Kaiming-uniform seeded, B = 0, alpha = r, decoupled wd 1e-2 on branch only, all 47 r882 adapter tensors requires_grad=False) on the 16 2-D adapter matrices (SIDE4 rank 4 primary, 6,232 params; SIDE16 rank 16 secondary, 24,928 params) vs exact H170 CTRL full-adapter AdamW (CONTROL, 29,211 params), Holm m=2; identical CTRL loss, batches and data order; fresh fold seed 249140, seeds 249101-249103, 15 cells/arm, 1,800 updates; update-0 bit-exact to r882 on Native91; strict inner selector locked before assessment; unconstrained step-40 diagnostic, branch norm and merged-weight drift, cliff context #27 reported separately; DOPE c51a56d0 frozen; H239 A1 cooperative pauses on xbabe2 CPU 52-55.",
         "role": "research"
       },
-      "sha256": "ba9d6924321f22235b34e316460f171649aff12dd4a076cc33ba8e6983d49ad6"
+      "sha256": "0d7d5746c3000934bf577605ef7e16443451024d9b60459d4a174666c36ebf53"
     },
     "python:research/flywheel_selfplay/h249_side_branch/treatment.py": {
       "bytes": 9992,
