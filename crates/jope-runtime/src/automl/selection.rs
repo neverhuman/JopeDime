@@ -9,18 +9,18 @@ struct Scored {
 
 /// Where the scored rows sit in a forward-validated table, so a fold's output map obeys the
 /// same embargo as its model.
-struct ForwardRows<'a> {
+pub(super) struct ForwardRows<'a> {
     /// Table row of each scored row.
-    positions: &'a [usize],
+    pub(super) positions: &'a [usize],
     /// First table row of each fold.
-    starts: Vec<usize>,
-    gap: usize,
+    pub(super) starts: Vec<usize>,
+    pub(super) gap: usize,
 }
 
 /// Scored rows whose out-of-fold predictions may teach the map applied to `fold`: every other
 /// fold, or with forward validation only the rows the fold's model could have trained on (rows
 /// more than `gap` before the fold starts; none for the first fold).
-fn calibration_rows(
+pub(super) fn calibration_rows(
     folds_of_scored: &[usize],
     fold: usize,
     forward: Option<&ForwardRows>,
