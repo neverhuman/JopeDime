@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::jope_generalized_gp::ArtifactStoreV1;
+
 use std::path::Path;
 
 pub fn run_sealed_one(
