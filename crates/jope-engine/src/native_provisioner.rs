@@ -329,6 +329,7 @@ fn validate_intent(
 
 mod finish;
 use finish::finish_acknowledged;
+pub use finish::provision;
 
 #[cfg(test)]
 mod tests;
