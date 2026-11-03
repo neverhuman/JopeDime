@@ -1,15 +1,4892 @@
 {
-  "schema": "jope.h261.metrics/v1",
-  "wave_id": "h261-diverse-reveal-set-20261103",
-  "study_path": "research/flywheel_selfplay/h261_diverse_reveal_set",
-  "status": "PREREGISTERED",
-  "outcomes_read": 0,
-  "verdict": "PENDING_EXECUTION",
-  "claim_scope": "equal-budget 4-reveal test-time search policy comparison (NOT checkpoint lift; 0 optimizer updates)",
-  "fold_seed": 261140,
-  "seeds": [261101, 261102, 261103],
+  "advance_gates_primary_mmr4_cv_vs_top4": {
+    "holm_lcb_gt_0": false,
+    "holm_lcb_value": -0.0025731874297057517,
+    "holm_p_lt_005": false,
+    "median_family_gain_gt_0002": false,
+    "permuted_negative_control_ci_covers_0": true,
+    "positive_seeds_ge_2_of_3": false,
+    "verdict": "NO_ADVANCE"
+  },
+  "advance_gates_secondary_struct4_vs_top4": {
+    "holm_lcb_gt_0": false,
+    "holm_lcb_value": -0.019507315234364202,
+    "holm_p_lt_005": false,
+    "median_family_gain_gt_0002": false,
+    "permuted_negative_control_ci_covers_0": true,
+    "positive_seeds_ge_2_of_3": false,
+    "verdict": "NO_ADVANCE"
+  },
+  "audits": {
+    "audit_a_zero_leakage": {
+      "dl_train_fold_family_overlap": 0,
+      "dl_train_val_family_overlap": 0,
+      "dl_val_in_lambda_selection": false,
+      "has_meta_test_any": false,
+      "pass": true
+    },
+    "audit_b_reveal_budget": {
+      "dl_train_reveal_counts": {
+        "MMR4@r3175": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 3600,
+          "ungated_max": 0,
+          "ungated_min": 0,
+          "ungated_n": 57
+        },
+        "MMR4_CV": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 3600,
+          "ungated_max": 0,
+          "ungated_min": 0,
+          "ungated_n": 57
+        },
+        "RAND4_OF16": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 3600,
+          "ungated_max": 0,
+          "ungated_min": 0,
+          "ungated_n": 57
+        },
+        "STRUCT4": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 3600,
+          "ungated_max": 0,
+          "ungated_min": 0,
+          "ungated_n": 57
+        },
+        "STRUCT4@r3175": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 3600,
+          "ungated_max": 0,
+          "ungated_min": 0,
+          "ungated_n": 57
+        },
+        "TOP4_PICK": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 3600,
+          "ungated_max": 0,
+          "ungated_min": 0,
+          "ungated_n": 57
+        },
+        "TOP4_PICK@r3175": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 3600,
+          "ungated_max": 0,
+          "ungated_min": 0,
+          "ungated_n": 57
+        }
+      },
+      "dl_val_reveal_counts": {
+        "MMR4@r3175": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 273,
+          "ungated_max": 0,
+          "ungated_min": 99,
+          "ungated_n": 0
+        },
+        "MMR4_CV": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 273,
+          "ungated_max": 0,
+          "ungated_min": 99,
+          "ungated_n": 0
+        },
+        "RAND4_OF16": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 273,
+          "ungated_max": 0,
+          "ungated_min": 99,
+          "ungated_n": 0
+        },
+        "STRUCT4": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 273,
+          "ungated_max": 0,
+          "ungated_min": 99,
+          "ungated_n": 0
+        },
+        "STRUCT4@r3175": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 273,
+          "ungated_max": 0,
+          "ungated_min": 99,
+          "ungated_n": 0
+        },
+        "TOP4_PICK": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 273,
+          "ungated_max": 0,
+          "ungated_min": 99,
+          "ungated_n": 0
+        },
+        "TOP4_PICK@r3175": {
+          "gated_max": 4,
+          "gated_min": 4,
+          "gated_n": 273,
+          "ungated_max": 0,
+          "ungated_min": 99,
+          "ungated_n": 0
+        }
+      },
+      "pass": true
+    },
+    "audit_c_permuted_negative_control_dl_val": {
+      "pass": true,
+      "permuted_fitness_within_rev4_mmr4_minus_r882": {
+        "ci95": [
+          -0.06615590234261946,
+          0.006163056892673137
+        ],
+        "median_family_gain": -0.037183999737349246
+      },
+      "permuted_fitness_within_rev4_mmr4_minus_top4": {
+        "ci95": [
+          -0.18569741641910428,
+          -0.06913463458755902
+        ],
+        "median_family_gain": -0.13556843961458953
+      },
+      "permuted_fitness_within_rev4_struct4_minus_top4": {
+        "ci95": [
+          -0.3852125121499577,
+          -0.1845403286264168
+        ],
+        "median_family_gain": -0.2730699993872273
+      },
+      "sign_perm_null_mmr4_minus_top4": {
+        "ci95": [
+          -0.0018856416940235287,
+          0.0018856416940235287
+        ],
+        "covers_zero": true,
+        "median_gain": 2.3075485997973367e-05
+      }
+    }
+  },
+  "baseline_regression": {
+    "dope_sha256": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "r3175_native91_mean": 1.1366829009431036,
+    "r3175_sha256": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "r882_bit_exact_context_matches": 91,
+    "r882_native91_abs_diff": 0.0,
+    "r882_native91_expected": 1.1377941898164525,
+    "r882_native91_mean": 1.1377941898164525,
+    "r882_sha256": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "schema": "jope.h261.baseline-regression/v1",
+    "top4_pick_val_ctx_abs_diff": 0.0,
+    "top4_pick_val_ctx_expected": 1.2403601682250796,
+    "top4_pick_val_ctx_mean": 1.2403601682250796,
+    "top4_pick_val_fam_abs_diff": 0.0,
+    "top4_pick_val_fam_expected": 1.2519997168684853,
+    "top4_pick_val_fam_mean": 1.2519997168684853
+  },
+  "boot_draws": 10000,
   "boot_seed": 261150,
+  "claim_scope": "equal-budget 4-reveal test-time search policy comparison (NOT checkpoint lift; 0 optimizer updates)",
+  "completed_utc": "2026-11-03T15:51:24Z",
+  "dl_train_oof": {
+    "arm_utilities": {
+      "MMR4@r3175": {
+        "median_context_utility": 1.609634748077887,
+        "median_family_utility": 1.5731973083892634,
+        "per_seed_context_utility": [
+          1.609634748077887,
+          1.609634748077887,
+          1.609634748077887
+        ],
+        "per_seed_family_utility": [
+          1.5731973083892634,
+          1.5731973083892634,
+          1.5731973083892634
+        ]
+      },
+      "MMR4_CV": {
+        "median_context_utility": 1.6109595254734528,
+        "median_family_utility": 1.5753595092731763,
+        "per_seed_context_utility": [
+          1.6109595254734528,
+          1.6109595254734528,
+          1.6109595254734528
+        ],
+        "per_seed_family_utility": [
+          1.5753595092731763,
+          1.5753595092731763,
+          1.5753595092731763
+        ]
+      },
+      "MMR4_L0.1": {
+        "median_context_utility": 1.6069197544918385,
+        "median_family_utility": 1.5703281137771237,
+        "per_seed_context_utility": [
+          1.6069197544918385,
+          1.6069197544918385,
+          1.6069197544918385
+        ],
+        "per_seed_family_utility": [
+          1.5703281137771237,
+          1.5703281137771237,
+          1.5703281137771237
+        ]
+      },
+      "MMR4_L0.2": {
+        "median_context_utility": 1.606607772833147,
+        "median_family_utility": 1.5700028451647567,
+        "per_seed_context_utility": [
+          1.606607772833147,
+          1.606607772833147,
+          1.606607772833147
+        ],
+        "per_seed_family_utility": [
+          1.5700028451647567,
+          1.5700028451647567,
+          1.5700028451647567
+        ]
+      },
+      "MMR4_L0.3": {
+        "median_context_utility": 1.6063492794284728,
+        "median_family_utility": 1.5695899940959153,
+        "per_seed_context_utility": [
+          1.6063492794284728,
+          1.6063492794284728,
+          1.6063492794284728
+        ],
+        "per_seed_family_utility": [
+          1.5695899940959153,
+          1.5695899940959153,
+          1.5695899940959153
+        ]
+      },
+      "MMR4_L0.5": {
+        "median_context_utility": 1.6075979054218754,
+        "median_family_utility": 1.5704134532798784,
+        "per_seed_context_utility": [
+          1.6075979054218754,
+          1.6075979054218754,
+          1.6075979054218754
+        ],
+        "per_seed_family_utility": [
+          1.5704134532798784,
+          1.5704134532798784,
+          1.5704134532798784
+        ]
+      },
+      "MMR4_L1.0": {
+        "median_context_utility": 1.6109595254734528,
+        "median_family_utility": 1.5753595092731763,
+        "per_seed_context_utility": [
+          1.6109595254734528,
+          1.6109595254734528,
+          1.6109595254734528
+        ],
+        "per_seed_family_utility": [
+          1.5753595092731763,
+          1.5753595092731763,
+          1.5753595092731763
+        ]
+      },
+      "R3175": {
+        "median_context_utility": 1.4195349430147646,
+        "median_family_utility": 1.3815246210845231,
+        "per_seed_context_utility": [
+          1.4195349430147646,
+          1.4195349430147646,
+          1.4195349430147646
+        ],
+        "per_seed_family_utility": [
+          1.3815246210845231,
+          1.3815246210845231,
+          1.3815246210845231
+        ]
+      },
+      "R882": {
+        "median_context_utility": 1.423073434552299,
+        "median_family_utility": 1.3853554329931828,
+        "per_seed_context_utility": [
+          1.423073434552299,
+          1.423073434552299,
+          1.423073434552299
+        ],
+        "per_seed_family_utility": [
+          1.3853554329931828,
+          1.3853554329931828,
+          1.3853554329931828
+        ]
+      },
+      "RAND4_OF16": {
+        "median_context_utility": 1.6182545835441478,
+        "median_family_utility": 1.5772056226740216,
+        "per_seed_context_utility": [
+          1.6054744504820468,
+          1.6182545835441478,
+          1.6199381988368717
+        ],
+        "per_seed_family_utility": [
+          1.5674142736313543,
+          1.5870138589356506,
+          1.5772056226740216
+        ]
+      },
+      "STRUCT4": {
+        "median_context_utility": 1.6336975862295209,
+        "median_family_utility": 1.5950438850868067,
+        "per_seed_context_utility": [
+          1.6336975862295209,
+          1.6336975862295209,
+          1.6336975862295209
+        ],
+        "per_seed_family_utility": [
+          1.5950438850868067,
+          1.5950438850868067,
+          1.5950438850868067
+        ]
+      },
+      "STRUCT4@r3175": {
+        "median_context_utility": 1.633657676916652,
+        "median_family_utility": 1.5960533915610284,
+        "per_seed_context_utility": [
+          1.633657676916652,
+          1.633657676916652,
+          1.633657676916652
+        ],
+        "per_seed_family_utility": [
+          1.5960533915610284,
+          1.5960533915610284,
+          1.5960533915610284
+        ]
+      },
+      "STRUCT4_EST_ONLY": {
+        "median_context_utility": 1.6181842051357944,
+        "median_family_utility": 1.5806789160581185,
+        "per_seed_context_utility": [
+          1.6181842051357944,
+          1.6181842051357944,
+          1.6181842051357944
+        ],
+        "per_seed_family_utility": [
+          1.5806789160581185,
+          1.5806789160581185,
+          1.5806789160581185
+        ]
+      },
+      "TOP4_PICK": {
+        "median_context_utility": 1.606115062529902,
+        "median_family_utility": 1.5692327898077274,
+        "per_seed_context_utility": [
+          1.606115062529902,
+          1.606115062529902,
+          1.606115062529902
+        ],
+        "per_seed_family_utility": [
+          1.5692327898077274,
+          1.5692327898077274,
+          1.5692327898077274
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "median_context_utility": 1.6069199473848224,
+        "median_family_utility": 1.5705675934120926,
+        "per_seed_context_utility": [
+          1.6069199473848224,
+          1.6069199473848224,
+          1.6069199473848224
+        ],
+        "per_seed_family_utility": [
+          1.5705675934120926,
+          1.5705675934120926,
+          1.5705675934120926
+        ]
+      }
+    },
+    "contrasts": {
+      "MMR4@r3175 - MMR4_CV": {
+        "ci95": [
+          -0.005649552984820331,
+          0.0008334636234608294
+        ],
+        "ci975_holm2": [
+          -0.006159782028739345,
+          0.0011802816413327146
+        ],
+        "family_harm_gt_001_rate": 0.04878048780487805,
+        "family_wtl_by_seed": [
+          {
+            "losses": 41,
+            "ties": 141,
+            "wins": 23
+          },
+          {
+            "losses": 41,
+            "ties": 141,
+            "wins": 23
+          },
+          {
+            "losses": 41,
+            "ties": 141,
+            "wins": 23
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.14753870313724926,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.032323405260084516,
+            "family_id": "fam-0dc613646c1bf32b873217fab79e6ef2cda524b1d8c167e17d24b046b6d0803d"
+          },
+          {
+            "delta": -0.016995123900473853,
+            "family_id": "fam-2f4648fe987cb9bb89527e02874ef39697d0ca58b439e9931633d844a0ce0ff4"
+          },
+          {
+            "delta": -0.01878799511004327,
+            "family_id": "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a"
+          },
+          {
+            "delta": -0.015339267374737564,
+            "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9"
+          },
+          {
+            "delta": -0.010031122411673069,
+            "family_id": "fam-686ee2f2704083effae26085e4e7f3b1821a268566e34c5032699b404c86bf05"
+          },
+          {
+            "delta": -0.10890469758945669,
+            "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60"
+          },
+          {
+            "delta": -0.1351546491128972,
+            "family_id": "fam-b00cdfa3fbddcebc223fe8fc94984c80039fda7702ca11f45142bb4a759de0c1"
+          },
+          {
+            "delta": -0.034977808763104995,
+            "family_id": "fam-cb6aac7f22ec1d37618e6d0c92b27661d0d5c1bc9077544a1e7e9f857caac890"
+          },
+          {
+            "delta": -0.19767864525552017,
+            "family_id": "fam-fbfb81c7a84f67486915ba2ff316aa396484bd9c8fab7764873b7afb10e0061b"
+          }
+        ],
+        "mean_context_gain": -0.0013247773955656148,
+        "mean_family_gain": -0.0021622008839128704,
+        "median_context_gain": -0.0013247773955656148,
+        "median_family_gain": -0.0021622008839128704,
+        "per_seed_context_gains": [
+          -0.0013247773955656148,
+          -0.0013247773955656148,
+          -0.0013247773955656148
+        ],
+        "per_seed_family_gains": [
+          -0.0021622008839128704,
+          -0.0021622008839128704,
+          -0.0021622008839128704
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.9118088191180882
+      },
+      "MMR4@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.0002885221769217178,
+          0.005714430288442986
+        ],
+        "ci975_holm2": [
+          -0.0006975665572862239,
+          0.006185561845875232
+        ],
+        "family_harm_gt_001_rate": 0.06341463414634146,
+        "family_wtl_by_seed": [
+          {
+            "losses": 54,
+            "ties": 87,
+            "wins": 64
+          },
+          {
+            "losses": 54,
+            "ties": 87,
+            "wins": 64
+          },
+          {
+            "losses": 54,
+            "ties": 87,
+            "wins": 64
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.027033777679525972,
+            "family_id": "fam-00cf8b3d9a7356ea40a9ce15cb45db7ebef16d9051de7cd108735d092edfebde"
+          },
+          {
+            "delta": -0.13320085189733488,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.032323405260084516,
+            "family_id": "fam-0dc613646c1bf32b873217fab79e6ef2cda524b1d8c167e17d24b046b6d0803d"
+          },
+          {
+            "delta": -0.027591791184602144,
+            "family_id": "fam-18488bf343c6c6bee9e4205b6ccd689bfddb94ebeeef3700697e41ecca491def"
+          },
+          {
+            "delta": -0.021593295606709344,
+            "family_id": "fam-2f4648fe987cb9bb89527e02874ef39697d0ca58b439e9931633d844a0ce0ff4"
+          },
+          {
+            "delta": -0.015339267374737564,
+            "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9"
+          },
+          {
+            "delta": -0.010318172267431347,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.010031122411673069,
+            "family_id": "fam-686ee2f2704083effae26085e4e7f3b1821a268566e34c5032699b404c86bf05"
+          },
+          {
+            "delta": -0.03870958631006509,
+            "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672"
+          },
+          {
+            "delta": -0.045226833341470575,
+            "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60"
+          },
+          {
+            "delta": -0.08159851007448263,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          },
+          {
+            "delta": -0.0369802437958032,
+            "family_id": "fam-cb6aac7f22ec1d37618e6d0c92b27661d0d5c1bc9077544a1e7e9f857caac890"
+          },
+          {
+            "delta": -0.024895195164641625,
+            "family_id": "fam-de0fe0b21dea79222688c4ce4ac02e67ee4b3f996947c151e9ed4208b0faac5d"
+          }
+        ],
+        "mean_context_gain": 0.0027148006930647183,
+        "mean_family_gain": 0.002629714977170705,
+        "median_context_gain": 0.0027148006930647183,
+        "median_family_gain": 0.002629714977170705,
+        "per_seed_context_gains": [
+          0.0027148006930647183,
+          0.0027148006930647183,
+          0.0027148006930647183
+        ],
+        "per_seed_family_gains": [
+          0.002629714977170705,
+          0.002629714977170705,
+          0.002629714977170705
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.038696130386961305
+      },
+      "MMR4_CV - R882": {
+        "ci95": [
+          0.14280091024287708,
+          0.25178465955819296
+        ],
+        "ci975_holm2": [
+          0.13812414995316374,
+          0.2616840232551227
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          },
+          {
+            "losses": 0,
+            "ties": 5,
+            "wins": 200
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.18788609092115335,
+        "mean_family_gain": 0.19000407627999347,
+        "median_context_gain": 0.18788609092115333,
+        "median_family_gain": 0.19000407627999347,
+        "per_seed_context_gains": [
+          0.18788609092115333,
+          0.18788609092115333,
+          0.18788609092115333
+        ],
+        "per_seed_family_gains": [
+          0.19000407627999347,
+          0.19000407627999347,
+          0.19000407627999347
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "MMR4_CV - RAND4_OF16": {
+        "ci95": [
+          -0.02228250027665357,
+          0.02007215947010375
+        ],
+        "ci975_holm2": [
+          -0.02516525539023338,
+          0.02338192289401064
+        ],
+        "family_harm_gt_001_rate": 0.32195121951219513,
+        "family_wtl_by_seed": [
+          {
+            "losses": 123,
+            "ties": 3,
+            "wins": 79
+          },
+          {
+            "losses": 125,
+            "ties": 3,
+            "wins": 77
+          },
+          {
+            "losses": 128,
+            "ties": 0,
+            "wins": 77
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.043542243329842835,
+            "family_id": "fam-00cf8b3d9a7356ea40a9ce15cb45db7ebef16d9051de7cd108735d092edfebde"
+          },
+          {
+            "delta": -0.15533787842757588,
+            "family_id": "fam-0287dafa15cdbdcc1de09f4b5d7e79a6286320ffaf59d1c8d853a311d3adc011"
+          },
+          {
+            "delta": -0.023347999618405887,
+            "family_id": "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d"
+          },
+          {
+            "delta": -0.01923314648566485,
+            "family_id": "fam-0658c26b9cc16e3035b5d23d26609a6da9d404a9abe307ad86b866e5456dcf2a"
+          },
+          {
+            "delta": -0.0412680218158907,
+            "family_id": "fam-0a69146ebabe741e99e8d95cac1718c2878c00851f13f343b3f9b8f79704b364"
+          },
+          {
+            "delta": -0.02052170892442932,
+            "family_id": "fam-0eac99bc03f2c05db7072200b0431036f48d404696acb298ff93766f6207b646"
+          },
+          {
+            "delta": -0.01843665491381876,
+            "family_id": "fam-1270a79a707da5883fb2a9631a665beb340e520396d23a177a87ba98c1323fb2"
+          },
+          {
+            "delta": -0.034218941174459415,
+            "family_id": "fam-13a5431ab60796b93570f3a26ee0978011cf86a9e1a335781a1e2e98bb3f6ceb"
+          },
+          {
+            "delta": -0.055852145841465216,
+            "family_id": "fam-181126abbead632960a8e391893d12216856d60d0ae533282df3b639fc53ac1c"
+          },
+          {
+            "delta": -0.04671286856091581,
+            "family_id": "fam-18488bf343c6c6bee9e4205b6ccd689bfddb94ebeeef3700697e41ecca491def"
+          },
+          {
+            "delta": -0.04652562066049467,
+            "family_id": "fam-19957714b6b2c679b5e74c1d8959d3dcf37c29da96b848c3ad9b370ea000beb4"
+          },
+          {
+            "delta": -0.03603871807235599,
+            "family_id": "fam-1aa2d092abae51975f0bb6dcb2bbe087204ddca3bde75a631d1a2f4d6c7a5bf2"
+          },
+          {
+            "delta": -0.023027530271802463,
+            "family_id": "fam-1f6e0c5687c96e94e4d59ddeb9d4eded60bb0da1895fa35839a01ae4e88e87b7"
+          },
+          {
+            "delta": -1.13538114731745,
+            "family_id": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e"
+          },
+          {
+            "delta": -0.29974270512194345,
+            "family_id": "fam-39919d901d79ea2e9bb2b4bb9bb4b69654dfe3605d1403243e2d99b10a4dc247"
+          },
+          {
+            "delta": -0.03805544381328113,
+            "family_id": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66"
+          },
+          {
+            "delta": -0.11624701633984802,
+            "family_id": "fam-43d51469e86f13dbff5975680ed8709053f611018cf34d4d286fc78227c2e7d9"
+          },
+          {
+            "delta": -0.011855119290507645,
+            "family_id": "fam-44632284758bb937a16cd32cc077a1d55084b5d339b3e630c9ffb943a795cedc"
+          },
+          {
+            "delta": -0.02184517333442396,
+            "family_id": "fam-45a4ed654c5a11a2fef01a6e03741476813005e20fe9deb55559ef9956ef1705"
+          },
+          {
+            "delta": -0.052437016851385854,
+            "family_id": "fam-48736ed57cb21533cb5ab46282959a62479d97f0cdda85414e3258d8d395f451"
+          },
+          {
+            "delta": -0.017808618994596122,
+            "family_id": "fam-50ab2c0b9a1c11360517fd56327ee9e5551923cac94d17e9a348994da8bb9431"
+          },
+          {
+            "delta": -0.015397446019956717,
+            "family_id": "fam-52de12ffd502a3a6706ac7db86572e217a9ba7820d114f6ef4934110c9b4c515"
+          },
+          {
+            "delta": -0.05200290751765807,
+            "family_id": "fam-5bedf71581b2fe53dae607892c7f05c84b7b43fa76c0fec069d0b260e83a909d"
+          },
+          {
+            "delta": -0.01063862220975386,
+            "family_id": "fam-65e9a1feefccedcabfbb090915ea74ef327e9820344fee36ed245a5c8a04278c"
+          },
+          {
+            "delta": -0.019989341508533195,
+            "family_id": "fam-686ee2f2704083effae26085e4e7f3b1821a268566e34c5032699b404c86bf05"
+          },
+          {
+            "delta": -0.030382828932584798,
+            "family_id": "fam-6c30f848fa8c9879de873be6de3a7e0d36395df08484e5b97ecf5ef79715c0b1"
+          },
+          {
+            "delta": -0.14240480217064025,
+            "family_id": "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962"
+          },
+          {
+            "delta": -0.019625438599883277,
+            "family_id": "fam-73d48fef318cb22cbd7a58dfbdefeffbac2b3f42885df1cca5b16b4a179ca3d9"
+          },
+          {
+            "delta": -0.0924597113336263,
+            "family_id": "fam-75a4e0e64f76afc55a299ad8c39e2c5518a4a77da18b163f6e7d40320ccfcf8f"
+          },
+          {
+            "delta": -0.027055432754304307,
+            "family_id": "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9"
+          },
+          {
+            "delta": -0.11321158445808137,
+            "family_id": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc"
+          },
+          {
+            "delta": -0.0889798031201805,
+            "family_id": "fam-7bfa740016f6f7f2d139a1deabe40ff3eebc59f1e16a376bda46035265e60e5f"
+          },
+          {
+            "delta": -0.060158574457213114,
+            "family_id": "fam-7cc0d25b2e13eb9a16eb9ef776a2dae4c799ba25d98edf3db9378da58be5e59e"
+          },
+          {
+            "delta": -0.034995638737380826,
+            "family_id": "fam-7f54a8ff301ec074e88082b63daab74585b3d33f7229894b138402a780c5e174"
+          },
+          {
+            "delta": -0.015308047390464133,
+            "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672"
+          },
+          {
+            "delta": -0.335722539578164,
+            "family_id": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e"
+          },
+          {
+            "delta": -0.043885260033267516,
+            "family_id": "fam-86f4a6774e495a9b5ade2ea44951dcd0a405d5d227f040992a35229db723230f"
+          },
+          {
+            "delta": -0.01839857673897045,
+            "family_id": "fam-8a07d0e0dd74b85349ebd7057781f55febc13349afe8acd617071d070ee0357d"
+          },
+          {
+            "delta": -0.31772749593977884,
+            "family_id": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc"
+          },
+          {
+            "delta": -0.09522476983088494,
+            "family_id": "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d"
+          },
+          {
+            "delta": -0.16320102633465372,
+            "family_id": "fam-9b2bb9fe35853aec5d1778896dfb3f15ff9531ee4a0c4a9b1d043fb7f3e8d489"
+          },
+          {
+            "delta": -0.012193830072819446,
+            "family_id": "fam-9ca37505b2b230c244d56e60a30e478ffa9d55375de4b9dfdfc6994ec952ac84"
+          },
+          {
+            "delta": -0.03045162123513077,
+            "family_id": "fam-9d401960b74664cce5959ef1416545475436313dc7d42ad9bbd1b0cc377bb633"
+          },
+          {
+            "delta": -0.03678687533694378,
+            "family_id": "fam-9eae9c8522478e56c0b08ea983440a956b86feb86f3f74e98f6c9770bc97e6b8"
+          },
+          {
+            "delta": -0.08648218745923696,
+            "family_id": "fam-9edb3f03aae58f2892410d11bf1de23baca710f56c4c7f012ea6e3e31d6cb5bd"
+          },
+          {
+            "delta": -0.03900157418694373,
+            "family_id": "fam-9fc180b59e89d084fcaba795a067c157e02fb2642f14b9b2bac9c2bc87276945"
+          },
+          {
+            "delta": -0.018622021931767985,
+            "family_id": "fam-a06483c562afb05dc631d1cd32210937a2c6a7e0b0a60b0a91c467833e0f0b60"
+          },
+          {
+            "delta": -0.10112761052752155,
+            "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60"
+          },
+          {
+            "delta": -0.019903180593254088,
+            "family_id": "fam-a19ac1bf55d93df0f2e5a86682a8486ac7c7964d56f2e2ce9cab66ef2aba2922"
+          },
+          {
+            "delta": -0.16715913483555347,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          },
+          {
+            "delta": -0.02406483842230811,
+            "family_id": "fam-a65fb3b9b04801144d1868fc624c2d8e49efc51ecafd2a442c9bbb930a7c39fe"
+          },
+          {
+            "delta": -0.022165933342505596,
+            "family_id": "fam-b188b0edb66def92838f07aaa04802592b660f5450c4268d5ad0288ce8437652"
+          },
+          {
+            "delta": -0.23962546996352838,
+            "family_id": "fam-bc48bce7bb551b3a67095b0f41bf6951be54ffabe6d202b680a7bae0f9c0e9bb"
+          },
+          {
+            "delta": -0.035456251316613084,
+            "family_id": "fam-be71762e2eaec4f4d74c98443bd318ecd61c7bca5896be219724cdac878bac63"
+          },
+          {
+            "delta": -0.03700149908431135,
+            "family_id": "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa"
+          },
+          {
+            "delta": -0.019255677691520205,
+            "family_id": "fam-cd93da9af7a45cf69c45e77c9cc90bdda013cd3640470b41b370667a0b08ff0f"
+          },
+          {
+            "delta": -0.026881945474235752,
+            "family_id": "fam-d379d22a98b5ee7c50d557d9e2538a18428370b1544886fa27a25d3d793c9272"
+          },
+          {
+            "delta": -0.2727057063962642,
+            "family_id": "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa"
+          },
+          {
+            "delta": -0.02411103733195409,
+            "family_id": "fam-d9f4e2288d3155146bd22f810f15b8e7dfdd40e4d85d4059ebba9f1293f166a9"
+          },
+          {
+            "delta": -0.245000769289455,
+            "family_id": "fam-e37a104589f0fdbc8a10035abed14b4b9d6d55ee116de1ed8bb294257d9ecffd"
+          },
+          {
+            "delta": -0.010555308085243053,
+            "family_id": "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+          },
+          {
+            "delta": -0.036593842897890284,
+            "family_id": "fam-e7bfe4d76227ee81f821f85e5ba001c4417bcc8efec6997e31e8f402f08ef5cb"
+          },
+          {
+            "delta": -0.11757344221234217,
+            "family_id": "fam-ebdf0bb10b87cf025f2efbbd2c730fcf375393d3d7fb93d95c42562d927f53df"
+          },
+          {
+            "delta": -0.024449851968152924,
+            "family_id": "fam-efa9cfb7f4985c4021c84c1649b4caa64f3dc4e15e4ad83135e2784999c08931"
+          },
+          {
+            "delta": -0.026452662900756357,
+            "family_id": "fam-f55e4b753b25bf8d8d7cbc0ace3737bdda8816f8f7ddc9032d7a8ae3d89ed449"
+          },
+          {
+            "delta": -0.04313984896251669,
+            "family_id": "fam-f8d77f25147b1e9bac6e6f82d09b61c76d21ae0bc44642415d229c3893648e40"
+          }
+        ],
+        "mean_context_gain": -0.0035962188142360566,
+        "mean_family_gain": -0.0018517424738327508,
+        "median_context_gain": -0.007295058070694932,
+        "median_family_gain": -0.0018461134008456116,
+        "per_seed_context_gains": [
+          0.005485074991405761,
+          -0.007295058070694932,
+          -0.008978673363418998
+        ],
+        "per_seed_family_gains": [
+          0.007945235641821936,
+          -0.011654349662474577,
+          -0.0018461134008456116
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.5706429357064293
+      },
+      "MMR4_CV - STRUCT4": {
+        "ci95": [
+          -0.03785127796706183,
+          -0.0036499344567559066
+        ],
+        "ci975_holm2": [
+          -0.04033355490940291,
+          -0.001567350141892618
+        ],
+        "family_harm_gt_001_rate": 0.2682926829268293,
+        "family_wtl_by_seed": [
+          {
+            "losses": 103,
+            "ties": 20,
+            "wins": 82
+          },
+          {
+            "losses": 103,
+            "ties": 20,
+            "wins": 82
+          },
+          {
+            "losses": 103,
+            "ties": 20,
+            "wins": 82
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.09870354689336273,
+            "family_id": "fam-00cf8b3d9a7356ea40a9ce15cb45db7ebef16d9051de7cd108735d092edfebde"
+          },
+          {
+            "delta": -0.1410565337013129,
+            "family_id": "fam-0287dafa15cdbdcc1de09f4b5d7e79a6286320ffaf59d1c8d853a311d3adc011"
+          },
+          {
+            "delta": -0.06478577579356481,
+            "family_id": "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d"
+          },
+          {
+            "delta": -0.017777703997664006,
+            "family_id": "fam-0a69146ebabe741e99e8d95cac1718c2878c00851f13f343b3f9b8f79704b364"
+          },
+          {
+            "delta": -0.32373262523810425,
+            "family_id": "fam-0abe9eee187aefbac6527304f5479abc447463422bd34dc1161f43ecdb81e128"
+          },
+          {
+            "delta": -0.31512510850190056,
+            "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d"
+          },
+          {
+            "delta": -0.06335871872334979,
+            "family_id": "fam-181126abbead632960a8e391893d12216856d60d0ae533282df3b639fc53ac1c"
+          },
+          {
+            "delta": -0.027591791184602144,
+            "family_id": "fam-18488bf343c6c6bee9e4205b6ccd689bfddb94ebeeef3700697e41ecca491def"
+          },
+          {
+            "delta": -0.01750296692511233,
+            "family_id": "fam-19957714b6b2c679b5e74c1d8959d3dcf37c29da96b848c3ad9b370ea000beb4"
+          },
+          {
+            "delta": -0.03508306526025984,
+            "family_id": "fam-1aa2d092abae51975f0bb6dcb2bbe087204ddca3bde75a631d1a2f4d6c7a5bf2"
+          },
+          {
+            "delta": -0.018029888300198405,
+            "family_id": "fam-1f6e0c5687c96e94e4d59ddeb9d4eded60bb0da1895fa35839a01ae4e88e87b7"
+          },
+          {
+            "delta": -0.13781826447833218,
+            "family_id": "fam-37f9e67be184439511ba7b76d189201834b8e82476f44aeee864cd641398783a"
+          },
+          {
+            "delta": -1.2645010318717431,
+            "family_id": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e"
+          },
+          {
+            "delta": -0.2855170589458885,
+            "family_id": "fam-39919d901d79ea2e9bb2b4bb9bb4b69654dfe3605d1403243e2d99b10a4dc247"
+          },
+          {
+            "delta": -0.180504743607501,
+            "family_id": "fam-43d51469e86f13dbff5975680ed8709053f611018cf34d4d286fc78227c2e7d9"
+          },
+          {
+            "delta": -0.011516758181647999,
+            "family_id": "fam-44632284758bb937a16cd32cc077a1d55084b5d339b3e630c9ffb943a795cedc"
+          },
+          {
+            "delta": -0.02021219054067942,
+            "family_id": "fam-46da6921e5ca0f07eac9d0f925a4d00b8df22c9998f441b4b7b2b3466fb3ac7f"
+          },
+          {
+            "delta": -0.24844658700929045,
+            "family_id": "fam-4bdc9517ed7674a151a36ccb90786685f719d8c009935539f9f21fab2d4ecf4c"
+          },
+          {
+            "delta": -0.01156996631755528,
+            "family_id": "fam-50ab2c0b9a1c11360517fd56327ee9e5551923cac94d17e9a348994da8bb9431"
+          },
+          {
+            "delta": -0.03878138203663317,
+            "family_id": "fam-5b6d543446786a5981a2cb45c7ec9e81ce060e71c75257525df87cc89e9cda4b"
+          },
+          {
+            "delta": -0.07212899486354887,
+            "family_id": "fam-5bedf71581b2fe53dae607892c7f05c84b7b43fa76c0fec069d0b260e83a909d"
+          },
+          {
+            "delta": -0.013685896570315931,
+            "family_id": "fam-5db7578b81770605bbb292b76baaaf3d69413aa3887c0872f30bb397d1089e14"
+          },
+          {
+            "delta": -0.04944264708857773,
+            "family_id": "fam-67e0e94977a0925fe3e49d18e63554b3c67740496ae0dea93b1adeaa19159c50"
+          },
+          {
+            "delta": -0.010163698174058534,
+            "family_id": "fam-68aa5ae4593cb23fe9a0790da73a2425006abf316e6685c75e6ed14ca69b2ce9"
+          },
+          {
+            "delta": -0.014147215667007848,
+            "family_id": "fam-6dc333006592f3999732f14ab3f219a15fc2a84ec031234cacb2492e4eb74840"
+          },
+          {
+            "delta": -0.1867229448214783,
+            "family_id": "fam-73335129ebdbf39d251b5a7bff3064bdb202e8947f328789216b6de72cf56962"
+          },
+          {
+            "delta": -0.09381781949042363,
+            "family_id": "fam-7afaa04505f68d33b05b3d8c1cc293e14806e17b05fdd78fce1bc514a94f2597"
+          },
+          {
+            "delta": -0.040257806765169324,
+            "family_id": "fam-7bfa740016f6f7f2d139a1deabe40ff3eebc59f1e16a376bda46035265e60e5f"
+          },
+          {
+            "delta": -0.0584762876447954,
+            "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672"
+          },
+          {
+            "delta": -0.06519597894032256,
+            "family_id": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e"
+          },
+          {
+            "delta": -0.02984996037513486,
+            "family_id": "fam-87ef120d857fcc3450b7a4a7844ea3f388582596a047a880f3b26bbefb44c89d"
+          },
+          {
+            "delta": -0.035043462296590985,
+            "family_id": "fam-8a07d0e0dd74b85349ebd7057781f55febc13349afe8acd617071d070ee0357d"
+          },
+          {
+            "delta": -0.26873288724456396,
+            "family_id": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc"
+          },
+          {
+            "delta": -0.14243646665661708,
+            "family_id": "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d"
+          },
+          {
+            "delta": -0.03129988472961585,
+            "family_id": "fam-8cfdaf9e5e0d64a956a6ad5d79ef2e9aec66fe6c8d781c4e4e1b1a367248bd20"
+          },
+          {
+            "delta": -0.21333242698089486,
+            "family_id": "fam-9b2bb9fe35853aec5d1778896dfb3f15ff9531ee4a0c4a9b1d043fb7f3e8d489"
+          },
+          {
+            "delta": -0.010106031903153156,
+            "family_id": "fam-9d401960b74664cce5959ef1416545475436313dc7d42ad9bbd1b0cc377bb633"
+          },
+          {
+            "delta": -0.02543996400307137,
+            "family_id": "fam-9eae9c8522478e56c0b08ea983440a956b86feb86f3f74e98f6c9770bc97e6b8"
+          },
+          {
+            "delta": -0.3196242147776182,
+            "family_id": "fam-9edb3f03aae58f2892410d11bf1de23baca710f56c4c7f012ea6e3e31d6cb5bd"
+          },
+          {
+            "delta": -0.07014518820758524,
+            "family_id": "fam-9fc180b59e89d084fcaba795a067c157e02fb2642f14b9b2bac9c2bc87276945"
+          },
+          {
+            "delta": -0.09039592249750524,
+            "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60"
+          },
+          {
+            "delta": -0.1167775248372056,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          },
+          {
+            "delta": -0.032675069815103486,
+            "family_id": "fam-a65fb3b9b04801144d1868fc624c2d8e49efc51ecafd2a442c9bbb930a7c39fe"
+          },
+          {
+            "delta": -0.04112101412373814,
+            "family_id": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3"
+          },
+          {
+            "delta": -0.04524395704017244,
+            "family_id": "fam-b8515bbd9b5fd7bfdcc3bdf7419bb6bf2f0178be17d581a8dab59a702e063a7b"
+          },
+          {
+            "delta": -0.2060362825416616,
+            "family_id": "fam-be71762e2eaec4f4d74c98443bd318ecd61c7bca5896be219724cdac878bac63"
+          },
+          {
+            "delta": -0.010319288323139464,
+            "family_id": "fam-c9d79f1acf3213cd45ffc21994537daeeb5d304ed2fb411f725315ebec35ccef"
+          },
+          {
+            "delta": -0.014112175022385676,
+            "family_id": "fam-d5bdedc95b609435f6abc4bf24e692cc79571a3e5d4485c7b9d2a88a06ab48e4"
+          },
+          {
+            "delta": -0.25537858843496636,
+            "family_id": "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa"
+          },
+          {
+            "delta": -0.3020425229583493,
+            "family_id": "fam-e37a104589f0fdbc8a10035abed14b4b9d6d55ee116de1ed8bb294257d9ecffd"
+          },
+          {
+            "delta": -0.033012870875012666,
+            "family_id": "fam-e7bfe4d76227ee81f821f85e5ba001c4417bcc8efec6997e31e8f402f08ef5cb"
+          },
+          {
+            "delta": -0.10233377093845275,
+            "family_id": "fam-ebdf0bb10b87cf025f2efbbd2c730fcf375393d3d7fb93d95c42562d927f53df"
+          },
+          {
+            "delta": -0.01101611509144034,
+            "family_id": "fam-f0471858c2bb7a18ea3327b97d7c6acead36bf40c6eb72f4325eee857718a6e0"
+          },
+          {
+            "delta": -0.025439835240668396,
+            "family_id": "fam-f8d77f25147b1e9bac6e6f82d09b61c76d21ae0bc44642415d229c3893648e40"
+          },
+          {
+            "delta": -0.017923257129435967,
+            "family_id": "fam-fa876affd2eda55b92eac9ce9cb8e078434b969fd1638b2026610cd324893de4"
+          }
+        ],
+        "mean_context_gain": -0.022738060756068115,
+        "mean_family_gain": -0.019684375813630823,
+        "median_context_gain": -0.022738060756068115,
+        "median_family_gain": -0.019684375813630823,
+        "per_seed_context_gains": [
+          -0.022738060756068115,
+          -0.022738060756068115,
+          -0.022738060756068115
+        ],
+        "per_seed_family_gains": [
+          -0.019684375813630823,
+          -0.019684375813630823,
+          -0.019684375813630823
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.9924007599240076
+      },
+      "MMR4_CV - TOP4_PICK": {
+        "ci95": [
+          0.002950603744770085,
+          0.0098813893764111
+        ],
+        "ci975_holm2": [
+          0.0025907172890398266,
+          0.010514366417056872
+        ],
+        "family_harm_gt_001_rate": 0.024390243902439025,
+        "family_wtl_by_seed": [
+          {
+            "losses": 46,
+            "ties": 90,
+            "wins": 69
+          },
+          {
+            "losses": 46,
+            "ties": 90,
+            "wins": 69
+          },
+          {
+            "losses": 46,
+            "ties": 90,
+            "wins": 69
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.024775604040709664,
+            "family_id": "fam-00cf8b3d9a7356ea40a9ce15cb45db7ebef16d9051de7cd108735d092edfebde"
+          },
+          {
+            "delta": -0.010318172267431347,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.03870958631006509,
+            "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672"
+          },
+          {
+            "delta": -0.023115306977200767,
+            "family_id": "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d"
+          },
+          {
+            "delta": -0.04166986686379106,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          }
+        ],
+        "holm_p_m2": 0.00019998000199980003,
+        "mean_context_gain": 0.004844462943550378,
+        "mean_family_gain": 0.006126719465448852,
+        "median_context_gain": 0.004844462943550378,
+        "median_family_gain": 0.006126719465448852,
+        "per_seed_context_gains": [
+          0.004844462943550378,
+          0.004844462943550378,
+          0.004844462943550378
+        ],
+        "per_seed_family_gains": [
+          0.006126719465448852,
+          0.006126719465448852,
+          0.006126719465448852
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "MMR4_L0.1 - TOP4_PICK": {
+        "ci95": [
+          -6.42437450893508e-05,
+          0.003215718925743092
+        ],
+        "ci975_holm2": [
+          -9.72814498961784e-05,
+          0.004072138520876683
+        ],
+        "family_harm_gt_001_rate": 0.004878048780487805,
+        "family_wtl_by_seed": [
+          {
+            "losses": 7,
+            "ties": 189,
+            "wins": 9
+          },
+          {
+            "losses": 7,
+            "ties": 189,
+            "wins": 9
+          },
+          {
+            "losses": 7,
+            "ties": 189,
+            "wins": 9
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.012358963205907939,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          }
+        ],
+        "mean_context_gain": 0.0008046919619362826,
+        "mean_family_gain": 0.0010953239693963048,
+        "median_context_gain": 0.0008046919619362826,
+        "median_family_gain": 0.0010953239693963048,
+        "per_seed_context_gains": [
+          0.0008046919619362826,
+          0.0008046919619362826,
+          0.0008046919619362826
+        ],
+        "per_seed_family_gains": [
+          0.0010953239693963048,
+          0.0010953239693963048,
+          0.0010953239693963048
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.06939306069393061
+      },
+      "MMR4_L0.2 - TOP4_PICK": {
+        "ci95": [
+          -0.001021033996032458,
+          0.0032579204117788455
+        ],
+        "ci975_holm2": [
+          -0.001197263655169367,
+          0.003780481644244437
+        ],
+        "family_harm_gt_001_rate": 0.00975609756097561,
+        "family_wtl_by_seed": [
+          {
+            "losses": 19,
+            "ties": 174,
+            "wins": 12
+          },
+          {
+            "losses": 19,
+            "ties": 174,
+            "wins": 12
+          },
+          {
+            "losses": 19,
+            "ties": 174,
+            "wins": 12
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.08159851007448263,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          },
+          {
+            "delta": -0.012358963205907939,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          }
+        ],
+        "mean_context_gain": 0.0004927103032446627,
+        "mean_family_gain": 0.0007700553570294499,
+        "median_context_gain": 0.0004927103032446627,
+        "median_family_gain": 0.0007700553570294499,
+        "per_seed_context_gains": [
+          0.0004927103032446627,
+          0.0004927103032446627,
+          0.0004927103032446627
+        ],
+        "per_seed_family_gains": [
+          0.0007700553570294499,
+          0.0007700553570294499,
+          0.0007700553570294499
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.2742725727427257
+      },
+      "MMR4_L0.3 - TOP4_PICK": {
+        "ci95": [
+          -0.0025391723343623183,
+          0.0033503476317929136
+        ],
+        "ci975_holm2": [
+          -0.0029836187845038754,
+          0.003795884031239293
+        ],
+        "family_harm_gt_001_rate": 0.024390243902439025,
+        "family_wtl_by_seed": [
+          {
+            "losses": 25,
+            "ties": 157,
+            "wins": 23
+          },
+          {
+            "losses": 25,
+            "ties": 157,
+            "wins": 23
+          },
+          {
+            "losses": 25,
+            "ties": 157,
+            "wins": 23
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.18242978260563344,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.05987301534476971,
+            "family_id": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e"
+          },
+          {
+            "delta": -0.023115306977200767,
+            "family_id": "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d"
+          },
+          {
+            "delta": -0.04166986686379106,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          },
+          {
+            "delta": -0.012358963205907939,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          }
+        ],
+        "mean_context_gain": 0.00023421689857055375,
+        "mean_family_gain": 0.00035720428818805677,
+        "median_context_gain": 0.00023421689857055372,
+        "median_family_gain": 0.0003572042881880567,
+        "per_seed_context_gains": [
+          0.00023421689857055372,
+          0.00023421689857055372,
+          0.00023421689857055372
+        ],
+        "per_seed_family_gains": [
+          0.0003572042881880567,
+          0.0003572042881880567,
+          0.0003572042881880567
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.4062593740625937
+      },
+      "MMR4_L0.5 - TOP4_PICK": {
+        "ci95": [
+          -0.0018617688674039355,
+          0.0043474514551758965
+        ],
+        "ci975_holm2": [
+          -0.0023244573220745027,
+          0.0048689181808290365
+        ],
+        "family_harm_gt_001_rate": 0.024390243902439025,
+        "family_wtl_by_seed": [
+          {
+            "losses": 30,
+            "ties": 139,
+            "wins": 36
+          },
+          {
+            "losses": 30,
+            "ties": 139,
+            "wins": 36
+          },
+          {
+            "losses": 30,
+            "ties": 139,
+            "wins": 36
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.18242978260563344,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.05987301534476971,
+            "family_id": "fam-39432f3da372099de889463a6ef563dabfed66f25094f9f7dfe91d622b435c2e"
+          },
+          {
+            "delta": -0.04415127948387809,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.023115306977200767,
+            "family_id": "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d"
+          },
+          {
+            "delta": -0.04166986686379106,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          }
+        ],
+        "mean_context_gain": 0.0014828428919730458,
+        "mean_family_gain": 0.0011806634721512662,
+        "median_context_gain": 0.0014828428919730458,
+        "median_family_gain": 0.0011806634721512662,
+        "per_seed_context_gains": [
+          0.0014828428919730458,
+          0.0014828428919730458,
+          0.0014828428919730458
+        ],
+        "per_seed_family_gains": [
+          0.0011806634721512662,
+          0.0011806634721512662,
+          0.0011806634721512662
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.21707829217078292
+      },
+      "MMR4_L1.0 - TOP4_PICK": {
+        "ci95": [
+          0.002950603744770085,
+          0.0098813893764111
+        ],
+        "ci975_holm2": [
+          0.0025907172890398266,
+          0.010514366417056872
+        ],
+        "family_harm_gt_001_rate": 0.024390243902439025,
+        "family_wtl_by_seed": [
+          {
+            "losses": 46,
+            "ties": 90,
+            "wins": 69
+          },
+          {
+            "losses": 46,
+            "ties": 90,
+            "wins": 69
+          },
+          {
+            "losses": 46,
+            "ties": 90,
+            "wins": 69
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.024775604040709664,
+            "family_id": "fam-00cf8b3d9a7356ea40a9ce15cb45db7ebef16d9051de7cd108735d092edfebde"
+          },
+          {
+            "delta": -0.010318172267431347,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.03870958631006509,
+            "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672"
+          },
+          {
+            "delta": -0.023115306977200767,
+            "family_id": "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d"
+          },
+          {
+            "delta": -0.04166986686379106,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          }
+        ],
+        "mean_context_gain": 0.004844462943550378,
+        "mean_family_gain": 0.006126719465448852,
+        "median_context_gain": 0.004844462943550378,
+        "median_family_gain": 0.006126719465448852,
+        "per_seed_context_gains": [
+          0.004844462943550378,
+          0.004844462943550378,
+          0.004844462943550378
+        ],
+        "per_seed_family_gains": [
+          0.006126719465448852,
+          0.006126719465448852,
+          0.006126719465448852
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "R3175 - R882": {
+        "ci95": [
+          -0.012911509383209605,
+          0.0023718132910960335
+        ],
+        "ci975_holm2": [
+          -0.014712025412340842,
+          0.002874198057936386
+        ],
+        "family_harm_gt_001_rate": 0.03902439024390244,
+        "family_wtl_by_seed": [
+          {
+            "losses": 16,
+            "ties": 166,
+            "wins": 23
+          },
+          {
+            "losses": 16,
+            "ties": 166,
+            "wins": 23
+          },
+          {
+            "losses": 16,
+            "ties": 166,
+            "wins": 23
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.7346097741326578,
+            "family_id": "fam-0524644998aa86a8ae3a50efe411f95ebc51c007c09cf8a34a70bddcf9ee418d"
+          },
+          {
+            "delta": -0.01780449485512804,
+            "family_id": "fam-0dc613646c1bf32b873217fab79e6ef2cda524b1d8c167e17d24b046b6d0803d"
+          },
+          {
+            "delta": -0.019269815490648858,
+            "family_id": "fam-1cce237bd2a118df311b18ea548373aa643769fcf7d21512e2f6ea6185349ecb"
+          },
+          {
+            "delta": -0.018038691102890823,
+            "family_id": "fam-86f4a6774e495a9b5ade2ea44951dcd0a405d5d227f040992a35229db723230f"
+          },
+          {
+            "delta": -0.04695570739374214,
+            "family_id": "fam-9b2bb9fe35853aec5d1778896dfb3f15ff9531ee4a0c4a9b1d043fb7f3e8d489"
+          },
+          {
+            "delta": -0.31234046907833346,
+            "family_id": "fam-b8515bbd9b5fd7bfdcc3bdf7419bb6bf2f0178be17d581a8dab59a702e063a7b"
+          },
+          {
+            "delta": -0.0764453794897138,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          },
+          {
+            "delta": -0.010200406440669843,
+            "family_id": "fam-de391c14a598584f796c7aa4a7d1d035eb27f5762bb454be8e1f225ba9848132"
+          }
+        ],
+        "mean_context_gain": -0.0035384915375346136,
+        "mean_family_gain": -0.0038308119086596423,
+        "median_context_gain": -0.0035384915375346136,
+        "median_family_gain": -0.0038308119086596423,
+        "per_seed_context_gains": [
+          -0.0035384915375346136,
+          -0.0035384915375346136,
+          -0.0035384915375346136
+        ],
+        "per_seed_family_gains": [
+          -0.0038308119086596423,
+          -0.0038308119086596423,
+          -0.0038308119086596423
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.8222177782221778
+      },
+      "RAND4_OF16 - TOP4_PICK": {
+        "ci95": [
+          -0.013455569626512634,
+          0.02851960140907682
+        ],
+        "ci975_holm2": [
+          -0.016902127089413934,
+          0.03129106801207889
+        ],
+        "family_harm_gt_001_rate": 0.2146341463414634,
+        "family_wtl_by_seed": [
+          {
+            "losses": 75,
+            "ties": 3,
+            "wins": 127
+          },
+          {
+            "losses": 74,
+            "ties": 4,
+            "wins": 127
+          },
+          {
+            "losses": 74,
+            "ties": 0,
+            "wins": 131
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.015141384834441225,
+            "family_id": "fam-05f1db1bdd534b918923f63a394105a92581ab2da55f8c4fe11df0ec23195e70"
+          },
+          {
+            "delta": -0.27134840371830476,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.036523888870378975,
+            "family_id": "fam-0abe9eee187aefbac6527304f5479abc447463422bd34dc1161f43ecdb81e128"
+          },
+          {
+            "delta": -0.07099389368208481,
+            "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d"
+          },
+          {
+            "delta": -0.6593268791628617,
+            "family_id": "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7"
+          },
+          {
+            "delta": -0.013997982082665533,
+            "family_id": "fam-40a5ecdcc69595149e7eb9cda497163c18014a9060b4ca91985d36f20066b9a1"
+          },
+          {
+            "delta": -0.04255681897986605,
+            "family_id": "fam-4134351419d2fcf066a10b6e2c7e43fa5270f4355f33c7e7476704c7ed522dcd"
+          },
+          {
+            "delta": -0.03477836765671851,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.3255635605748954,
+            "family_id": "fam-4bdc9517ed7674a151a36ccb90786685f719d8c009935539f9f21fab2d4ecf4c"
+          },
+          {
+            "delta": -0.010580428262564607,
+            "family_id": "fam-51a20e2322f149368a1393d370f00e2d8b0f669d142cfeaf246fbd44138791a5"
+          },
+          {
+            "delta": -0.01717632683506602,
+            "family_id": "fam-69405f7499b3af4517ea1fefa95323238eb2ab359adf5bb8ca003ec5559af8b1"
+          },
+          {
+            "delta": -0.2147869167918881,
+            "family_id": "fam-6a7fd96029f91bfa7a72104090df21aa5ed2b15293bfb8b8b939f6bfcab63a8e"
+          },
+          {
+            "delta": -0.03192539062896628,
+            "family_id": "fam-6e1e9c4fc764546aec8e4716742e6d12536a961b77ad6ed7b0dcf1af3d057071"
+          },
+          {
+            "delta": -0.227582804111101,
+            "family_id": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493"
+          },
+          {
+            "delta": -0.17429400433303985,
+            "family_id": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517"
+          },
+          {
+            "delta": -0.08323286022270417,
+            "family_id": "fam-7afaa04505f68d33b05b3d8c1cc293e14806e17b05fdd78fce1bc514a94f2597"
+          },
+          {
+            "delta": -0.02340153891960096,
+            "family_id": "fam-7ffc5b26f669485d5887599c3f159ad4a8cb5af844c8dd090e058b58c46eb672"
+          },
+          {
+            "delta": -0.041023103611220905,
+            "family_id": "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c"
+          },
+          {
+            "delta": -0.020659161453220717,
+            "family_id": "fam-8610b4fa2d0d57d43645dac5c88fb410b1aafb0a7007d8a5dd16b4739395bbba"
+          },
+          {
+            "delta": -0.05602141561948839,
+            "family_id": "fam-87ef120d857fcc3450b7a4a7844ea3f388582596a047a880f3b26bbefb44c89d"
+          },
+          {
+            "delta": -0.10303530752149297,
+            "family_id": "fam-890fcd287bf096f27c549aa1e31829e14da0e2ee10fd7fad2624313b345c7e13"
+          },
+          {
+            "delta": -0.01799687174576678,
+            "family_id": "fam-8c30e4e2ab4819883c99637319c517c599ac07153a224d820726298684335f68"
+          },
+          {
+            "delta": -0.02249655224646689,
+            "family_id": "fam-8cfdaf9e5e0d64a956a6ad5d79ef2e9aec66fe6c8d781c4e4e1b1a367248bd20"
+          },
+          {
+            "delta": -0.04567068947787675,
+            "family_id": "fam-9cc257b4147af4e37c06e67e051c44026d65ac2bbf895c13698f34fc16a43b07"
+          },
+          {
+            "delta": -0.03617234997766099,
+            "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0"
+          },
+          {
+            "delta": -0.02366014664209189,
+            "family_id": "fam-aa0d77168aad23aa544a65612f7e7b02d2193949c87340e883207ed92f87c6d3"
+          },
+          {
+            "delta": -0.02679193821879521,
+            "family_id": "fam-abe2d72e6117cfd4b80dd6512fd26c37303704600588cedeeed9b55490111b7f"
+          },
+          {
+            "delta": -0.2995769284874577,
+            "family_id": "fam-b00cdfa3fbddcebc223fe8fc94984c80039fda7702ca11f45142bb4a759de0c1"
+          },
+          {
+            "delta": -0.01818407346984464,
+            "family_id": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5"
+          },
+          {
+            "delta": -0.031085942617012325,
+            "family_id": "fam-b8515bbd9b5fd7bfdcc3bdf7419bb6bf2f0178be17d581a8dab59a702e063a7b"
+          },
+          {
+            "delta": -0.2434243022720146,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          },
+          {
+            "delta": -0.053756842905965975,
+            "family_id": "fam-bf25cff285cdb21e0a61921447d2627d84727b63f5af36f20483ec60baf46dd3"
+          },
+          {
+            "delta": -1.2790414347760894,
+            "family_id": "fam-ccf8d821cf801986c51ed3707c8d0c0049632990996dbaf1fe379aedef8d1c68"
+          },
+          {
+            "delta": -0.02192690425537815,
+            "family_id": "fam-d4af786ed09bd008cf9247590ff584a2e11f1a9c12b9f0a350b65ac64dcfe959"
+          },
+          {
+            "delta": -0.018472295889640847,
+            "family_id": "fam-d5bdedc95b609435f6abc4bf24e692cc79571a3e5d4485c7b9d2a88a06ab48e4"
+          },
+          {
+            "delta": -0.056622504666656,
+            "family_id": "fam-d72e3007270435bd850c9bd47407f126569a028e98666739fdb9c4069c22fa02"
+          },
+          {
+            "delta": -0.040443154467926797,
+            "family_id": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e"
+          },
+          {
+            "delta": -0.016680305774875944,
+            "family_id": "fam-e58771a27817077069f050ba04ffc531e075d6be46c119a03bb1a6899f186800"
+          },
+          {
+            "delta": -0.01954182304027244,
+            "family_id": "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243"
+          },
+          {
+            "delta": -0.06202860091938179,
+            "family_id": "fam-f0471858c2bb7a18ea3327b97d7c6acead36bf40c6eb72f4325eee857718a6e0"
+          },
+          {
+            "delta": -0.021591417237543292,
+            "family_id": "fam-f0ecfb25bb8ab6313c1df8b43ac7c6d5b2f274ef63bb0cbbbe497697006f52da"
+          },
+          {
+            "delta": -0.04209251008120179,
+            "family_id": "fam-f3dabbc88d07fc0ad26a29ae0a8df36750a5763d2bd8cd38c132604bb7ea9de9"
+          },
+          {
+            "delta": -0.04852554189006345,
+            "family_id": "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b"
+          },
+          {
+            "delta": -0.011799898130119496,
+            "family_id": "fam-f74d10b5ada631e8fddaf216c742d8dfcaaf2efa6c8d593812a4e738d94cf964"
+          }
+        ],
+        "mean_context_gain": 0.008440681757786436,
+        "mean_family_gain": 0.007978461939281603,
+        "median_context_gain": 0.01213952101424531,
+        "median_family_gain": 0.007972832866294464,
+        "per_seed_context_gains": [
+          -0.0006406120478553829,
+          0.01213952101424531,
+          0.01382313630696938
+        ],
+        "per_seed_family_gains": [
+          -0.0018185161763730885,
+          0.017781069127923432,
+          0.007972832866294464
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.22807719228077192
+      },
+      "STRUCT4 - R882": {
+        "ci95": [
+          0.1596578570020296,
+          0.27183037830833734
+        ],
+        "ci975_holm2": [
+          0.1543939851569895,
+          0.2817838307187498
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 8,
+            "wins": 197
+          },
+          {
+            "losses": 0,
+            "ties": 8,
+            "wins": 197
+          },
+          {
+            "losses": 0,
+            "ties": 8,
+            "wins": 197
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.21062415167722148,
+        "mean_family_gain": 0.20968845209362427,
+        "median_context_gain": 0.21062415167722148,
+        "median_family_gain": 0.20968845209362427,
+        "per_seed_context_gains": [
+          0.21062415167722148,
+          0.21062415167722148,
+          0.21062415167722148
+        ],
+        "per_seed_family_gains": [
+          0.20968845209362427,
+          0.20968845209362427,
+          0.20968845209362427
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "STRUCT4 - RAND4_OF16": {
+        "ci95": [
+          0.0031102260627920673,
+          0.03601211695547145
+        ],
+        "ci975_holm2": [
+          0.0016197656957029473,
+          0.038883008138849
+        ],
+        "family_harm_gt_001_rate": 0.28780487804878047,
+        "family_wtl_by_seed": [
+          {
+            "losses": 110,
+            "ties": 3,
+            "wins": 92
+          },
+          {
+            "losses": 112,
+            "ties": 2,
+            "wins": 91
+          },
+          {
+            "losses": 114,
+            "ties": 3,
+            "wins": 88
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.01428134472626299,
+            "family_id": "fam-0287dafa15cdbdcc1de09f4b5d7e79a6286320ffaf59d1c8d853a311d3adc011"
+          },
+          {
+            "delta": -0.018293004450638892,
+            "family_id": "fam-0658c26b9cc16e3035b5d23d26609a6da9d404a9abe307ad86b866e5456dcf2a"
+          },
+          {
+            "delta": -0.02349031781822669,
+            "family_id": "fam-0a69146ebabe741e99e8d95cac1718c2878c00851f13f343b3f9b8f79704b364"
+          },
+          {
+            "delta": -0.020019592907842537,
+            "family_id": "fam-0eac99bc03f2c05db7072200b0431036f48d404696acb298ff93766f6207b646"
+          },
+          {
+            "delta": -0.013162714889693873,
+            "family_id": "fam-1270a79a707da5883fb2a9631a665beb340e520396d23a177a87ba98c1323fb2"
+          },
+          {
+            "delta": -0.02604645154473274,
+            "family_id": "fam-13a5431ab60796b93570f3a26ee0978011cf86a9e1a335781a1e2e98bb3f6ceb"
+          },
+          {
+            "delta": -0.01912107737631367,
+            "family_id": "fam-18488bf343c6c6bee9e4205b6ccd689bfddb94ebeeef3700697e41ecca491def"
+          },
+          {
+            "delta": -0.029022653735382337,
+            "family_id": "fam-19957714b6b2c679b5e74c1d8959d3dcf37c29da96b848c3ad9b370ea000beb4"
+          },
+          {
+            "delta": -0.018104038790715246,
+            "family_id": "fam-2079537c93fa0797b4c387e7c22744035fca42383fcc57e6516565574713676d"
+          },
+          {
+            "delta": -0.07838035485363233,
+            "family_id": "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7"
+          },
+          {
+            "delta": -0.014225646176054983,
+            "family_id": "fam-39919d901d79ea2e9bb2b4bb9bb4b69654dfe3605d1403243e2d99b10a4dc247"
+          },
+          {
+            "delta": -0.1131836519140743,
+            "family_id": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66"
+          },
+          {
+            "delta": -0.01837057857069434,
+            "family_id": "fam-45a4ed654c5a11a2fef01a6e03741476813005e20fe9deb55559ef9956ef1705"
+          },
+          {
+            "delta": -0.013689315740967685,
+            "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9"
+          },
+          {
+            "delta": -0.05687961091311594,
+            "family_id": "fam-48736ed57cb21533cb5ab46282959a62479d97f0cdda85414e3258d8d395f451"
+          },
+          {
+            "delta": -0.03006649841216985,
+            "family_id": "fam-4f51b7da0cd27665d76b526bc198568f7c7052a0f34bb6aa294694c25c8a4792"
+          },
+          {
+            "delta": -0.016738689478074952,
+            "family_id": "fam-5f376837d73da7b1263bd0ef7b2c642bf5d002de508a346ef6a01a6faf74a10e"
+          },
+          {
+            "delta": -0.03297176143676552,
+            "family_id": "fam-686ee2f2704083effae26085e4e7f3b1821a268566e34c5032699b404c86bf05"
+          },
+          {
+            "delta": -0.022409273342390307,
+            "family_id": "fam-6c30f848fa8c9879de873be6de3a7e0d36395df08484e5b97ecf5ef79715c0b1"
+          },
+          {
+            "delta": -0.025854415393450403,
+            "family_id": "fam-6c740f1d2707fd1599f03edadc0dc1da80cfe396ee3777a9e7c60bc41ab39aae"
+          },
+          {
+            "delta": -0.013437440423779262,
+            "family_id": "fam-7236df8f62604f9fd4f624a378619d64fa491eb8f06237123e9912fce79c3db0"
+          },
+          {
+            "delta": -0.054991181070434714,
+            "family_id": "fam-73d48fef318cb22cbd7a58dfbdefeffbac2b3f42885df1cca5b16b4a179ca3d9"
+          },
+          {
+            "delta": -0.09232301602745441,
+            "family_id": "fam-75a4e0e64f76afc55a299ad8c39e2c5518a4a77da18b163f6e7d40320ccfcf8f"
+          },
+          {
+            "delta": -0.029416197927274058,
+            "family_id": "fam-7a021840777fdcf769b4f1e52d4b6bcc6b407c8d88dde00fc76a2deccded63c9"
+          },
+          {
+            "delta": -0.12265920420202037,
+            "family_id": "fam-7a1037d6fd6905369f7f066792fab262e806cf261a8f6ec783068530c67531dc"
+          },
+          {
+            "delta": -0.04872199635501118,
+            "family_id": "fam-7bfa740016f6f7f2d139a1deabe40ff3eebc59f1e16a376bda46035265e60e5f"
+          },
+          {
+            "delta": -0.08591789811038963,
+            "family_id": "fam-7cc0d25b2e13eb9a16eb9ef776a2dae4c799ba25d98edf3db9378da58be5e59e"
+          },
+          {
+            "delta": -0.03506962878333723,
+            "family_id": "fam-7f54a8ff301ec074e88082b63daab74585b3d33f7229894b138402a780c5e174"
+          },
+          {
+            "delta": -0.27052656063784153,
+            "family_id": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e"
+          },
+          {
+            "delta": -0.04066223882899406,
+            "family_id": "fam-86168798b0342fec9d7c77fe91ab4b3dd9a0937737a4dbf2dcd98bbca252746c"
+          },
+          {
+            "delta": -0.044817546854101754,
+            "family_id": "fam-86f4a6774e495a9b5ade2ea44951dcd0a405d5d227f040992a35229db723230f"
+          },
+          {
+            "delta": -0.011994299355685694,
+            "family_id": "fam-871e23c39ba79f59609ef2cfc0e2aa78e0f60374bbfb1d8e25db08d183b65c24"
+          },
+          {
+            "delta": -0.048994608695214825,
+            "family_id": "fam-8a2f464e547bb9717bab153fa0fe1200a7544562c7e5c79a43e68d7bb3f41dcc"
+          },
+          {
+            "delta": -0.0206428887819234,
+            "family_id": "fam-9ca37505b2b230c244d56e60a30e478ffa9d55375de4b9dfdfc6994ec952ac84"
+          },
+          {
+            "delta": -0.02034558933197762,
+            "family_id": "fam-9d401960b74664cce5959ef1416545475436313dc7d42ad9bbd1b0cc377bb633"
+          },
+          {
+            "delta": -0.011346911333872408,
+            "family_id": "fam-9eae9c8522478e56c0b08ea983440a956b86feb86f3f74e98f6c9770bc97e6b8"
+          },
+          {
+            "delta": -0.013386281142467859,
+            "family_id": "fam-a0b09887a6c3dfbdb010e6a310cae1fa792ed4d8b291d50298565afddb7eaef0"
+          },
+          {
+            "delta": -0.010731688030016312,
+            "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60"
+          },
+          {
+            "delta": -0.01815701592403993,
+            "family_id": "fam-a19ac1bf55d93df0f2e5a86682a8486ac7c7964d56f2e2ce9cab66ef2aba2922"
+          },
+          {
+            "delta": -0.022689228901564246,
+            "family_id": "fam-a222dd2487acbb0247fe4b1467dec39fdb52275aace0906656efbdcc1854bcd8"
+          },
+          {
+            "delta": -0.03598096545926647,
+            "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0"
+          },
+          {
+            "delta": -0.05038160999834789,
+            "family_id": "fam-a6370aec4cfc9c8e4023530a9905c0354efc58e9a7813e89249c703bed9e1e43"
+          },
+          {
+            "delta": -0.0313268861434951,
+            "family_id": "fam-b188b0edb66def92838f07aaa04802592b660f5450c4268d5ad0288ce8437652"
+          },
+          {
+            "delta": -0.12172959035668372,
+            "family_id": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5"
+          },
+          {
+            "delta": -0.23962546996352838,
+            "family_id": "fam-bc48bce7bb551b3a67095b0f41bf6951be54ffabe6d202b680a7bae0f9c0e9bb"
+          },
+          {
+            "delta": -0.04005245988176361,
+            "family_id": "fam-c0387cd570ed363b76be94f93960ab0a8adbd89ffdb67ca115fa0770828142fa"
+          },
+          {
+            "delta": -0.017517353476259104,
+            "family_id": "fam-cd93da9af7a45cf69c45e77c9cc90bdda013cd3640470b41b370667a0b08ff0f"
+          },
+          {
+            "delta": -0.02695603719176723,
+            "family_id": "fam-d379d22a98b5ee7c50d557d9e2538a18428370b1544886fa27a25d3d793c9272"
+          },
+          {
+            "delta": -0.017327117961297822,
+            "family_id": "fam-d95734c761e0f763d53f134ff916029df0fc5ab8abdfe018bf95291dae6f8efa"
+          },
+          {
+            "delta": -0.025431660346926777,
+            "family_id": "fam-d9f4e2288d3155146bd22f810f15b8e7dfdd40e4d85d4059ebba9f1293f166a9"
+          },
+          {
+            "delta": -0.012322178670515965,
+            "family_id": "fam-daf8cca3e42984804cb59d12b9b7802545644abef920443b2088c24cacb25ab5"
+          },
+          {
+            "delta": -0.12994817048689292,
+            "family_id": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e"
+          },
+          {
+            "delta": -0.0442753687428584,
+            "family_id": "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+          },
+          {
+            "delta": -0.01523967127388943,
+            "family_id": "fam-ebdf0bb10b87cf025f2efbbd2c730fcf375393d3d7fb93d95c42562d927f53df"
+          },
+          {
+            "delta": -0.03525209932545275,
+            "family_id": "fam-efa9cfb7f4985c4021c84c1649b4caa64f3dc4e15e4ad83135e2784999c08931"
+          },
+          {
+            "delta": -0.03373441087131982,
+            "family_id": "fam-f55e4b753b25bf8d8d7cbc0ace3737bdda8816f8f7ddc9032d7a8ae3d89ed449"
+          },
+          {
+            "delta": -0.0177000137218483,
+            "family_id": "fam-f8d77f25147b1e9bac6e6f82d09b61c76d21ae0bc44642415d229c3893648e40"
+          },
+          {
+            "delta": -0.015163140313342588,
+            "family_id": "fam-fd389e0e7bdfaa45d9c1505628ba8a4af2cb7117840264734149f16686e9a4cf"
+          },
+          {
+            "delta": -0.03402893972279305,
+            "family_id": "fam-ff04cd6235b55c24abd1f09dc5e8a78d604eaf48fa23cf8c0a9e367ba2a52ffa"
+          }
+        ],
+        "mean_context_gain": 0.019141841941832063,
+        "mean_family_gain": 0.017832633339798076,
+        "median_context_gain": 0.01544300268537319,
+        "median_family_gain": 0.017838262412785213,
+        "per_seed_context_gains": [
+          0.02822313574747388,
+          0.01544300268537319,
+          0.013759387392649116
+        ],
+        "per_seed_family_gains": [
+          0.027629611455452764,
+          0.008030026151156245,
+          0.017838262412785213
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0064993500649935
+      },
+      "STRUCT4 - TOP4_PICK": {
+        "ci95": [
+          0.009538101934423256,
+          0.044202113747227226
+        ],
+        "ci975_holm2": [
+          0.007362331472776316,
+          0.04664623028445311
+        ],
+        "family_harm_gt_001_rate": 0.14634146341463414,
+        "family_wtl_by_seed": [
+          {
+            "losses": 83,
+            "ties": 11,
+            "wins": 111
+          },
+          {
+            "losses": 83,
+            "ties": 11,
+            "wins": 111
+          },
+          {
+            "losses": 83,
+            "ties": 11,
+            "wins": 111
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.12156553397508248,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.0275222074586698,
+            "family_id": "fam-2079537c93fa0797b4c387e7c22744035fca42383fcc57e6516565574713676d"
+          },
+          {
+            "delta": -0.7377072340164941,
+            "family_id": "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7"
+          },
+          {
+            "delta": -0.06983658486600497,
+            "family_id": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66"
+          },
+          {
+            "delta": -0.013045728446780513,
+            "family_id": "fam-4134351419d2fcf066a10b6e2c7e43fa5270f4355f33c7e7476704c7ed522dcd"
+          },
+          {
+            "delta": -0.011040997171767675,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.023721733903716218,
+            "family_id": "fam-4f51b7da0cd27665d76b526bc198568f7c7052a0f34bb6aa294694c25c8a4792"
+          },
+          {
+            "delta": -0.012982419928232325,
+            "family_id": "fam-686ee2f2704083effae26085e4e7f3b1821a268566e34c5032699b404c86bf05"
+          },
+          {
+            "delta": -0.015929096499148733,
+            "family_id": "fam-69405f7499b3af4517ea1fefa95323238eb2ab359adf5bb8ca003ec5559af8b1"
+          },
+          {
+            "delta": -0.12460735709692594,
+            "family_id": "fam-6a7fd96029f91bfa7a72104090df21aa5ed2b15293bfb8b8b939f6bfcab63a8e"
+          },
+          {
+            "delta": -0.02259027780851301,
+            "family_id": "fam-6c740f1d2707fd1599f03edadc0dc1da80cfe396ee3777a9e7c60bc41ab39aae"
+          },
+          {
+            "delta": -0.03678640961859258,
+            "family_id": "fam-73d48fef318cb22cbd7a58dfbdefeffbac2b3f42885df1cca5b16b4a179ca3d9"
+          },
+          {
+            "delta": -0.054712279878151894,
+            "family_id": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517"
+          },
+          {
+            "delta": -0.04878944851884626,
+            "family_id": "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c"
+          },
+          {
+            "delta": -0.03281460576719482,
+            "family_id": "fam-86168798b0342fec9d7c77fe91ab4b3dd9a0937737a4dbf2dcd98bbca252746c"
+          },
+          {
+            "delta": -0.018557258369523922,
+            "family_id": "fam-a0b09887a6c3dfbdb010e6a310cae1fa792ed4d8b291d50298565afddb7eaef0"
+          },
+          {
+            "delta": -0.01346314794129846,
+            "family_id": "fam-a222dd2487acbb0247fe4b1467dec39fdb52275aace0906656efbdcc1854bcd8"
+          },
+          {
+            "delta": -0.07215331543692746,
+            "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0"
+          },
+          {
+            "delta": -0.12428255840726381,
+            "family_id": "fam-b00cdfa3fbddcebc223fe8fc94984c80039fda7702ca11f45142bb4a759de0c1"
+          },
+          {
+            "delta": -0.13991366382652837,
+            "family_id": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5"
+          },
+          {
+            "delta": -0.016899616979327365,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          },
+          {
+            "delta": -0.03676325728162766,
+            "family_id": "fam-bf25cff285cdb21e0a61921447d2627d84727b63f5af36f20483ec60baf46dd3"
+          },
+          {
+            "delta": -0.015885807269617393,
+            "family_id": "fam-ccf8d821cf801986c51ed3707c8d0c0049632990996dbaf1fe379aedef8d1c68"
+          },
+          {
+            "delta": -0.01397068942634041,
+            "family_id": "fam-d72e3007270435bd850c9bd47407f126569a028e98666739fdb9c4069c22fa02"
+          },
+          {
+            "delta": -0.17039132495481976,
+            "family_id": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e"
+          },
+          {
+            "delta": -0.034860516716536914,
+            "family_id": "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+          },
+          {
+            "delta": -0.013682768228466502,
+            "family_id": "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243"
+          },
+          {
+            "delta": -0.014824906776176183,
+            "family_id": "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b"
+          },
+          {
+            "delta": -0.010539076410548473,
+            "family_id": "fam-fd389e0e7bdfaa45d9c1505628ba8a4af2cb7117840264734149f16686e9a4cf"
+          },
+          {
+            "delta": -0.025987035994940677,
+            "family_id": "fam-ff04cd6235b55c24abd1f09dc5e8a78d604eaf48fa23cf8c0a9e367ba2a52ffa"
+          }
+        ],
+        "holm_p_m2": 0.00029997000299970003,
+        "mean_context_gain": 0.027582523699618496,
+        "mean_family_gain": 0.02581109527907968,
+        "median_context_gain": 0.027582523699618496,
+        "median_family_gain": 0.02581109527907968,
+        "per_seed_context_gains": [
+          0.027582523699618496,
+          0.027582523699618496,
+          0.027582523699618496
+        ],
+        "per_seed_family_gains": [
+          0.02581109527907968,
+          0.02581109527907968,
+          0.02581109527907968
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.00029997000299970003
+      },
+      "STRUCT4@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          0.011421049405641587,
+          0.042849119956596585
+        ],
+        "ci975_holm2": [
+          0.009725630215385984,
+          0.04540337476611884
+        ],
+        "family_harm_gt_001_rate": 0.16097560975609757,
+        "family_wtl_by_seed": [
+          {
+            "losses": 87,
+            "ties": 13,
+            "wins": 105
+          },
+          {
+            "losses": 87,
+            "ties": 13,
+            "wins": 105
+          },
+          {
+            "losses": 87,
+            "ties": 13,
+            "wins": 105
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.12156553397508248,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.028231587335650288,
+            "family_id": "fam-2079537c93fa0797b4c387e7c22744035fca42383fcc57e6516565574713676d"
+          },
+          {
+            "delta": -0.3549958602723464,
+            "family_id": "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7"
+          },
+          {
+            "delta": -0.06983658486600497,
+            "family_id": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66"
+          },
+          {
+            "delta": -0.013423724518803715,
+            "family_id": "fam-4134351419d2fcf066a10b6e2c7e43fa5270f4355f33c7e7476704c7ed522dcd"
+          },
+          {
+            "delta": -0.03573128239016732,
+            "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9"
+          },
+          {
+            "delta": -0.012443864593984921,
+            "family_id": "fam-471303cca1cebc63dcec0f2d0041b680a0af4abea91aa110a6f5e64e3010da86"
+          },
+          {
+            "delta": -0.011040997171767675,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.013120442278821453,
+            "family_id": "fam-686ee2f2704083effae26085e4e7f3b1821a268566e34c5032699b404c86bf05"
+          },
+          {
+            "delta": -0.015929096499148733,
+            "family_id": "fam-69405f7499b3af4517ea1fefa95323238eb2ab359adf5bb8ca003ec5559af8b1"
+          },
+          {
+            "delta": -0.12460735709692594,
+            "family_id": "fam-6a7fd96029f91bfa7a72104090df21aa5ed2b15293bfb8b8b939f6bfcab63a8e"
+          },
+          {
+            "delta": -0.02259027780851301,
+            "family_id": "fam-6c740f1d2707fd1599f03edadc0dc1da80cfe396ee3777a9e7c60bc41ab39aae"
+          },
+          {
+            "delta": -0.03678640961859258,
+            "family_id": "fam-73d48fef318cb22cbd7a58dfbdefeffbac2b3f42885df1cca5b16b4a179ca3d9"
+          },
+          {
+            "delta": -0.054712279878151894,
+            "family_id": "fam-755e6802e36825eb3862b52e575524d48c0f614513efa17de271073df05a7517"
+          },
+          {
+            "delta": -0.05869972381417101,
+            "family_id": "fam-75a4e0e64f76afc55a299ad8c39e2c5518a4a77da18b163f6e7d40320ccfcf8f"
+          },
+          {
+            "delta": -0.03636213522921814,
+            "family_id": "fam-825cd454ee48a7bb85fc56769bb00f6700acfff7fccf782c08e8307197c16a3e"
+          },
+          {
+            "delta": -0.04878944851884626,
+            "family_id": "fam-85ca69949bbbb573d4d29a0bd7159ab52c370a82261efc78c40397634e15067c"
+          },
+          {
+            "delta": -0.03281460576719482,
+            "family_id": "fam-86168798b0342fec9d7c77fe91ab4b3dd9a0937737a4dbf2dcd98bbca252746c"
+          },
+          {
+            "delta": -0.045873349006850694,
+            "family_id": "fam-9eae9c8522478e56c0b08ea983440a956b86feb86f3f74e98f6c9770bc97e6b8"
+          },
+          {
+            "delta": -0.012416642714741475,
+            "family_id": "fam-a0b09887a6c3dfbdb010e6a310cae1fa792ed4d8b291d50298565afddb7eaef0"
+          },
+          {
+            "delta": -0.013481873910055819,
+            "family_id": "fam-a222dd2487acbb0247fe4b1467dec39fdb52275aace0906656efbdcc1854bcd8"
+          },
+          {
+            "delta": -0.07215331543692746,
+            "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0"
+          },
+          {
+            "delta": -0.04982909143909451,
+            "family_id": "fam-b00cdfa3fbddcebc223fe8fc94984c80039fda7702ca11f45142bb4a759de0c1"
+          },
+          {
+            "delta": -0.13991366382652837,
+            "family_id": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5"
+          },
+          {
+            "delta": -0.03676325728162766,
+            "family_id": "fam-bf25cff285cdb21e0a61921447d2627d84727b63f5af36f20483ec60baf46dd3"
+          },
+          {
+            "delta": -0.015885807269617393,
+            "family_id": "fam-ccf8d821cf801986c51ed3707c8d0c0049632990996dbaf1fe379aedef8d1c68"
+          },
+          {
+            "delta": -0.01397068942634041,
+            "family_id": "fam-d72e3007270435bd850c9bd47407f126569a028e98666739fdb9c4069c22fa02"
+          },
+          {
+            "delta": -0.017083893591735278,
+            "family_id": "fam-de0fe0b21dea79222688c4ce4ac02e67ee4b3f996947c151e9ed4208b0faac5d"
+          },
+          {
+            "delta": -0.02115425573834449,
+            "family_id": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e"
+          },
+          {
+            "delta": -0.034860516716536914,
+            "family_id": "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+          },
+          {
+            "delta": -0.012930069364634145,
+            "family_id": "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243"
+          },
+          {
+            "delta": -0.021201433045056017,
+            "family_id": "fam-f72ced8b1d81696bc004de89b364b20147896839136102d0e5241e700e32b37b"
+          },
+          {
+            "delta": -0.025987035994940677,
+            "family_id": "fam-ff04cd6235b55c24abd1f09dc5e8a78d604eaf48fa23cf8c0a9e367ba2a52ffa"
+          }
+        ],
+        "mean_context_gain": 0.026737729531829763,
+        "mean_family_gain": 0.02548579814893621,
+        "median_context_gain": 0.026737729531829763,
+        "median_family_gain": 0.02548579814893621,
+        "per_seed_context_gains": [
+          0.026737729531829763,
+          0.026737729531829763,
+          0.026737729531829763
+        ],
+        "per_seed_family_gains": [
+          0.02548579814893621,
+          0.02548579814893621,
+          0.02548579814893621
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "STRUCT4_EST_ONLY - TOP4_PICK": {
+        "ci95": [
+          -0.0003926849016233513,
+          0.027843568746696603
+        ],
+        "ci975_holm2": [
+          -0.001387125385864031,
+          0.030473729082987306
+        ],
+        "family_harm_gt_001_rate": 0.13658536585365855,
+        "family_wtl_by_seed": [
+          {
+            "losses": 73,
+            "ties": 67,
+            "wins": 65
+          },
+          {
+            "losses": 73,
+            "ties": 67,
+            "wins": 65
+          },
+          {
+            "losses": 73,
+            "ties": 67,
+            "wins": 65
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.26390336729915137,
+            "family_id": "fam-09b21046ef90997178157068853799f8b15bbb9f8d61b51b6d71e5361d2527a7"
+          },
+          {
+            "delta": -0.05880199276363873,
+            "family_id": "fam-13d0d5b99eda2e40cb57dd8cbce45267633877bba8f0bd367d0101600c3e387d"
+          },
+          {
+            "delta": -0.025418129388382355,
+            "family_id": "fam-2079537c93fa0797b4c387e7c22744035fca42383fcc57e6516565574713676d"
+          },
+          {
+            "delta": -0.022413809739733014,
+            "family_id": "fam-256a259efacff0e41ff106076e2527c1ba318810a0990c7074928d0e66d3b6d7"
+          },
+          {
+            "delta": -0.021593295606709344,
+            "family_id": "fam-2f4648fe987cb9bb89527e02874ef39697d0ca58b439e9931633d844a0ce0ff4"
+          },
+          {
+            "delta": -0.01788301279242672,
+            "family_id": "fam-3cd35051092ea6d71b2a415d708aa92642eb00f65215bc4744933e75d97e6a66"
+          },
+          {
+            "delta": -0.013045728446780513,
+            "family_id": "fam-4134351419d2fcf066a10b6e2c7e43fa5270f4355f33c7e7476704c7ed522dcd"
+          },
+          {
+            "delta": -0.049964530300700395,
+            "family_id": "fam-462953f4374a440b2c6aa821537af1dd1e98b30db3778c8489c335c4358571d9"
+          },
+          {
+            "delta": -0.010318172267431347,
+            "family_id": "fam-49a93059f7e322d5243055e050891c7baf4d021ccf7767cfa83c8cfb6e13f96d"
+          },
+          {
+            "delta": -0.016443138191164497,
+            "family_id": "fam-4f51b7da0cd27665d76b526bc198568f7c7052a0f34bb6aa294694c25c8a4792"
+          },
+          {
+            "delta": -0.12460735709692594,
+            "family_id": "fam-6a7fd96029f91bfa7a72104090df21aa5ed2b15293bfb8b8b939f6bfcab63a8e"
+          },
+          {
+            "delta": -0.024837456153467264,
+            "family_id": "fam-6ed8ae431d7ebd22d17ebadba29f8ad779ef64845ffba66911789a35434e0493"
+          },
+          {
+            "delta": -0.011094455294034028,
+            "family_id": "fam-73d48fef318cb22cbd7a58dfbdefeffbac2b3f42885df1cca5b16b4a179ca3d9"
+          },
+          {
+            "delta": -0.058836419120342875,
+            "family_id": "fam-75a4e0e64f76afc55a299ad8c39e2c5518a4a77da18b163f6e7d40320ccfcf8f"
+          },
+          {
+            "delta": -0.013802665628437965,
+            "family_id": "fam-9ca37505b2b230c244d56e60a30e478ffa9d55375de4b9dfdfc6994ec952ac84"
+          },
+          {
+            "delta": -0.017601567257198823,
+            "family_id": "fam-a0b09887a6c3dfbdb010e6a310cae1fa792ed4d8b291d50298565afddb7eaef0"
+          },
+          {
+            "delta": -0.045226833341470575,
+            "family_id": "fam-a0fc30a995a47c8ec73fbdd3b0dfc78becdfe101de0c274d4d98db895c6e2d60"
+          },
+          {
+            "delta": -0.06935905192032854,
+            "family_id": "fam-a559743d80534db11a02f4e6e6c456e9604c06b19943bc26ee74eab600829aa0"
+          },
+          {
+            "delta": -0.10975297484966902,
+            "family_id": "fam-b00cdfa3fbddcebc223fe8fc94984c80039fda7702ca11f45142bb4a759de0c1"
+          },
+          {
+            "delta": -0.1464773791442166,
+            "family_id": "fam-b2d1b3fd3df57852a05cbe824a238259d52097e55aac5cd714894d7f5d23c7d5"
+          },
+          {
+            "delta": -0.013170969375794784,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          },
+          {
+            "delta": -0.015885807269617393,
+            "family_id": "fam-ccf8d821cf801986c51ed3707c8d0c0049632990996dbaf1fe379aedef8d1c68"
+          },
+          {
+            "delta": -0.14923706921647523,
+            "family_id": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e"
+          },
+          {
+            "delta": -0.048023537146633634,
+            "family_id": "fam-e537aeee64087707f0f9a742ac6944ddefc885984717e553d59bdcdfc77b4583"
+          },
+          {
+            "delta": -0.010303228725342839,
+            "family_id": "fam-ec4835624ef87c3f903ec21d14ca9866812afea7e6fb0ce1397bc56c89c62243"
+          },
+          {
+            "delta": -0.07658481611076673,
+            "family_id": "fam-f0ecfb25bb8ab6313c1df8b43ac7c6d5b2f274ef63bb0cbbbe497697006f52da"
+          },
+          {
+            "delta": -0.028676382739924743,
+            "family_id": "fam-fa876affd2eda55b92eac9ce9cb8e078434b969fd1638b2026610cd324893de4"
+          },
+          {
+            "delta": -0.025987035994940677,
+            "family_id": "fam-ff04cd6235b55c24abd1f09dc5e8a78d604eaf48fa23cf8c0a9e367ba2a52ffa"
+          }
+        ],
+        "mean_context_gain": 0.012069142605892152,
+        "mean_family_gain": 0.01144612625039159,
+        "median_context_gain": 0.01206914260589215,
+        "median_family_gain": 0.01144612625039159,
+        "per_seed_context_gains": [
+          0.01206914260589215,
+          0.01206914260589215,
+          0.01206914260589215
+        ],
+        "per_seed_family_gains": [
+          0.01144612625039159,
+          0.01144612625039159,
+          0.01144612625039159
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.0314968503149685
+      },
+      "TOP4_PICK - R882": {
+        "ci95": [
+          0.13692326054753765,
+          0.24539282784941055
+        ],
+        "ci975_holm2": [
+          0.13240178712751421,
+          0.2552461963716379
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 7,
+            "wins": 198
+          },
+          {
+            "losses": 0,
+            "ties": 7,
+            "wins": 198
+          },
+          {
+            "losses": 0,
+            "ties": 7,
+            "wins": 198
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.18304162797760296,
+        "mean_family_gain": 0.18387735681454462,
+        "median_context_gain": 0.18304162797760298,
+        "median_family_gain": 0.18387735681454462,
+        "per_seed_context_gains": [
+          0.18304162797760298,
+          0.18304162797760298,
+          0.18304162797760298
+        ],
+        "per_seed_family_gains": [
+          0.18387735681454462,
+          0.18387735681454462,
+          0.18387735681454462
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - R3175": {
+        "ci95": [
+          0.14119727349076072,
+          0.25119098452461475
+        ],
+        "ci975_holm2": [
+          0.13607647732845796,
+          0.26191571369413846
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          },
+          {
+            "losses": 0,
+            "ties": 6,
+            "wins": 199
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.18738500437005765,
+        "mean_family_gain": 0.1890429723275695,
+        "median_context_gain": 0.18738500437005762,
+        "median_family_gain": 0.1890429723275695,
+        "per_seed_context_gains": [
+          0.18738500437005762,
+          0.18738500437005762,
+          0.18738500437005762
+        ],
+        "per_seed_family_gains": [
+          0.1890429723275695,
+          0.1890429723275695,
+          0.1890429723275695
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - TOP4_PICK": {
+        "ci95": [
+          -0.0016518658993287094,
+          0.004613893737338583
+        ],
+        "ci975_holm2": [
+          -0.002070611866170561,
+          0.005157427824461864
+        ],
+        "family_harm_gt_001_rate": 0.02926829268292683,
+        "family_wtl_by_seed": [
+          {
+            "losses": 25,
+            "ties": 152,
+            "wins": 28
+          },
+          {
+            "losses": 25,
+            "ties": 152,
+            "wins": 28
+          },
+          {
+            "losses": 25,
+            "ties": 152,
+            "wins": 28
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.022076862480704885,
+            "family_id": "fam-51a20e2322f149368a1393d370f00e2d8b0f669d142cfeaf246fbd44138791a5"
+          },
+          {
+            "delta": -0.062411589386825374,
+            "family_id": "fam-8aaefbb83b7767cbf20d022191edd88d59d99ba72c3df7991397f0737dc3860d"
+          },
+          {
+            "delta": -0.0744534669681693,
+            "family_id": "fam-b00cdfa3fbddcebc223fe8fc94984c80039fda7702ca11f45142bb4a759de0c1"
+          },
+          {
+            "delta": -0.012358963205907939,
+            "family_id": "fam-b9317a3cbd35c91c86b4b91d88f82be35912f3fbab33def868eaac3dabe67619"
+          },
+          {
+            "delta": -0.14923706921647523,
+            "family_id": "fam-e248cdbc660112705ea16b0e6049b97a95786923b4fd92b695a4ab49fc9e295e"
+          },
+          {
+            "delta": -0.013477521038872004,
+            "family_id": "fam-efa9a4eb58672dc60c978bfc1e99d9d9f698e41e619b3edf05efc79383f2fb05"
+          }
+        ],
+        "mean_context_gain": 0.0008048848549200457,
+        "mean_family_gain": 0.0013348036043652764,
+        "median_context_gain": 0.0008048848549200457,
+        "median_family_gain": 0.0013348036043652764,
+        "per_seed_context_gains": [
+          0.0008048848549200457,
+          0.0008048848549200457,
+          0.0008048848549200457
+        ],
+        "per_seed_family_gains": [
+          0.0013348036043652764,
+          0.0013348036043652764,
+          0.0013348036043652764
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.19958004199580043
+      }
+    },
+    "mm_bt_elo_anchored_top4_pick": {
+      "MMR4@r3175": {
+        "ci95": [
+          1489.9759610957253,
+          1507.2433592213677
+        ],
+        "median_elo": 1498.5411346668775,
+        "per_seed_elo": [
+          1498.5411346668775,
+          1498.082774024508,
+          1498.8323540210117
+        ]
+      },
+      "MMR4_CV": {
+        "ci95": [
+          1497.8958045565307,
+          1512.757733777915
+        ],
+        "median_elo": 1505.1790392046735,
+        "per_seed_elo": [
+          1505.1790392046735,
+          1505.1143523041872,
+          1505.3797473270808
+        ]
+      },
+      "MMR4_L0.1": {
+        "ci95": [
+          1499.7961143020634,
+          1504.072509711526
+        ],
+        "median_elo": 1501.7973599885956,
+        "per_seed_elo": [
+          1501.7973599885956,
+          1501.8444215919037,
+          1501.782674914566
+        ]
+      },
+      "MMR4_L0.2": {
+        "ci95": [
+          1496.5396824266984,
+          1502.3575270172323
+        ],
+        "median_elo": 1499.4232212172471,
+        "per_seed_elo": [
+          1499.3893596993696,
+          1499.4442800829843,
+          1499.4232212172471
+        ]
+      },
+      "MMR4_L0.3": {
+        "ci95": [
+          1495.9729787164256,
+          1503.8880424244578
+        ],
+        "median_elo": 1499.9561156333157,
+        "per_seed_elo": [
+          1499.953114955372,
+          1499.9561156333157,
+          1499.9956143341699
+        ]
+      },
+      "MMR4_L0.5": {
+        "ci95": [
+          1496.0823626100726,
+          1505.508252445902
+        ],
+        "median_elo": 1500.7895046077533,
+        "per_seed_elo": [
+          1500.7895046077533,
+          1500.7270886342035,
+          1500.7975240583205
+        ]
+      },
+      "MMR4_L1.0": {
+        "ci95": [
+          1497.8958045565307,
+          1512.757733777915
+        ],
+        "median_elo": 1505.1790392046735,
+        "per_seed_elo": [
+          1505.1790392046735,
+          1505.1143523041872,
+          1505.3797473270808
+        ]
+      },
+      "R3175": {
+        "ci95": [
+          1207.1446843092074,
+          1245.0458408671102
+        ],
+        "median_elo": 1226.2796786127192,
+        "per_seed_elo": [
+          1226.2560707185562,
+          1226.7852926179667,
+          1226.2796786127192
+        ]
+      },
+      "R882": {
+        "ci95": [
+          1201.5179945704615,
+          1239.555698359324
+        ],
+        "median_elo": 1220.9221517367266,
+        "per_seed_elo": [
+          1220.9221517367266,
+          1221.2771571728408,
+          1220.8764127090267
+        ]
+      },
+      "RAND4_OF16": {
+        "ci95": [
+          1498.2962184229546,
+          1530.1392896349819
+        ],
+        "median_elo": 1515.527142874007,
+        "per_seed_elo": [
+          1505.826572439155,
+          1515.527142874007,
+          1521.7274126580046
+        ]
+      },
+      "STRUCT4": {
+        "ci95": [
+          1467.3977773586298,
+          1499.3067271180016
+        ],
+        "median_elo": 1483.3024018307315,
+        "per_seed_elo": [
+          1483.2027936067757,
+          1483.3024018307315,
+          1484.0352794041896
+        ]
+      },
+      "STRUCT4@r3175": {
+        "ci95": [
+          1467.4683642144432,
+          1498.7731172497142
+        ],
+        "median_elo": 1482.9726427579742,
+        "per_seed_elo": [
+          1482.832044234163,
+          1482.9726427579742,
+          1483.5684561855062
+        ]
+      },
+      "STRUCT4_EST_ONLY": {
+        "ci95": [
+          1475.6819909849455,
+          1498.3384051317391
+        ],
+        "median_elo": 1486.8710889943102,
+        "per_seed_elo": [
+          1486.8710889943102,
+          1486.7283014643929,
+          1487.4143627866506
+        ]
+      },
+      "TOP4_PICK": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "ci95": [
+          1496.554783773598,
+          1505.06481116615
+        ],
+        "median_elo": 1500.8972300187781,
+        "per_seed_elo": [
+          1500.8972300187781,
+          1500.6238345136205,
+          1500.9641498695898
+        ]
+      }
+    },
+    "n_contexts": 1219,
+    "n_families": 205,
+    "n_gated_contexts_r882_zgap_lt_025": 1200,
+    "redundancy_diagnostics": {
+      "MMR4_CV": {
+        "mean_distinct_dsl_heads": 2.78,
+        "mean_distinct_learner_families": 1.5325,
+        "mean_pairwise_cos_emb40": 0.5286190586594227,
+        "mean_pairwise_cos_sem24": 0.9991479713017869,
+        "mean_top16_oracle_regret": 0.10728712673373086,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.01,
+        "oracle_top16_recall_at_4": 0.25833333333333336
+      },
+      "MMR4_L0.1": {
+        "mean_distinct_dsl_heads": 2.6083333333333334,
+        "mean_distinct_learner_families": 1.4375,
+        "mean_pairwise_cos_emb40": 0.5990586768931285,
+        "mean_pairwise_cos_sem24": 0.9992528176468145,
+        "mean_top16_oracle_regret": 0.11139086075588717,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.01,
+        "oracle_top16_recall_at_4": 0.27166666666666667
+      },
+      "MMR4_L0.2": {
+        "mean_distinct_dsl_heads": 2.6233333333333335,
+        "mean_distinct_learner_families": 1.4458333333333333,
+        "mean_pairwise_cos_emb40": 0.59372834728247,
+        "mean_pairwise_cos_sem24": 0.9992443346103869,
+        "mean_top16_oracle_regret": 0.11170778212417475,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.01,
+        "oracle_top16_recall_at_4": 0.2658333333333333
+      },
+      "MMR4_L0.3": {
+        "mean_distinct_dsl_heads": 2.6433333333333335,
+        "mean_distinct_learner_families": 1.4525,
+        "mean_pairwise_cos_emb40": 0.586366905967242,
+        "mean_pairwise_cos_sem24": 0.9992328188088114,
+        "mean_top16_oracle_regret": 0.11197036834108952,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.01,
+        "oracle_top16_recall_at_4": 0.2658333333333333
+      },
+      "MMR4_L0.5": {
+        "mean_distinct_dsl_heads": 2.68,
+        "mean_distinct_learner_families": 1.4716666666666667,
+        "mean_pairwise_cos_emb40": 0.5718041674322444,
+        "mean_pairwise_cos_sem24": 0.9992083211446625,
+        "mean_top16_oracle_regret": 0.11070197243612484,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.010833333333333334,
+        "oracle_top16_recall_at_4": 0.2675
+      },
+      "MMR4_L1.0": {
+        "mean_distinct_dsl_heads": 2.78,
+        "mean_distinct_learner_families": 1.5325,
+        "mean_pairwise_cos_emb40": 0.5286190586594227,
+        "mean_pairwise_cos_sem24": 0.9991479713017869,
+        "mean_top16_oracle_regret": 0.10728712673373086,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.01,
+        "oracle_top16_recall_at_4": 0.25833333333333336
+      },
+      "RAND4_OF16": {
+        "mean_distinct_dsl_heads": 3.173611111111111,
+        "mean_distinct_learner_families": 1.5866666666666667,
+        "mean_pairwise_cos_emb40": 0.47868878995167646,
+        "mean_pairwise_cos_sem24": 0.9990589950324721,
+        "mean_top16_oracle_regret": 0.1036339677882694,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.014444444444444444,
+        "oracle_top16_recall_at_4": 0.26055555555555554
+      },
+      "STRUCT4": {
+        "mean_distinct_dsl_heads": 3.8641666666666667,
+        "mean_distinct_learner_families": 2.1508333333333334,
+        "mean_pairwise_cos_emb40": 0.4002649363447518,
+        "mean_pairwise_cos_sem24": 0.9988727737533033,
+        "mean_top16_oracle_regret": 0.08418904668235833,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.008333333333333333,
+        "oracle_top16_recall_at_4": 0.2275
+      },
+      "STRUCT4_EST_ONLY": {
+        "mean_distinct_dsl_heads": 2.9466666666666668,
+        "mean_distinct_learner_families": 2.1508333333333334,
+        "mean_pairwise_cos_emb40": 0.4891949701569581,
+        "mean_pairwise_cos_sem24": 0.9990304683280368,
+        "mean_top16_oracle_regret": 0.09994805631006867,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.008333333333333333,
+        "oracle_top16_recall_at_4": 0.24583333333333332
+      },
+      "TOP4_PICK": {
+        "mean_distinct_dsl_heads": 2.5883333333333334,
+        "mean_distinct_learner_families": 1.43,
+        "mean_pairwise_cos_emb40": 0.6063673272961876,
+        "mean_pairwise_cos_sem24": 0.9992630000208537,
+        "mean_top16_oracle_regret": 0.11220829367388746,
+        "n_gated_contexts": 1200,
+        "oracle_pool_recall_at_4": 0.009166666666666667,
+        "oracle_top16_recall_at_4": 0.27
+      }
+    }
+  },
+  "dl_val_native91": {
+    "arm_utilities": {
+      "MMR4@r3175": {
+        "median_context_utility": 1.2402814077902553,
+        "median_family_utility": 1.251924272662496,
+        "per_seed_context_utility": [
+          1.2402814077902553,
+          1.2402814077902553,
+          1.2402814077902553
+        ],
+        "per_seed_family_utility": [
+          1.251924272662496,
+          1.251924272662496,
+          1.251924272662496
+        ]
+      },
+      "MMR4_CV": {
+        "median_context_utility": 1.240025920046075,
+        "median_family_utility": 1.2516795422970177,
+        "per_seed_context_utility": [
+          1.240025920046075,
+          1.240025920046075,
+          1.240025920046075
+        ],
+        "per_seed_family_utility": [
+          1.2516795422970177,
+          1.2516795422970177,
+          1.2516795422970177
+        ]
+      },
+      "MMR4_L0.1": {
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [
+          1.2403601682250796,
+          1.2403601682250796,
+          1.2403601682250796
+        ],
+        "per_seed_family_utility": [
+          1.2519997168684853,
+          1.2519997168684853,
+          1.2519997168684853
+        ]
+      },
+      "MMR4_L0.2": {
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [
+          1.2403601682250796,
+          1.2403601682250796,
+          1.2403601682250796
+        ],
+        "per_seed_family_utility": [
+          1.2519997168684853,
+          1.2519997168684853,
+          1.2519997168684853
+        ]
+      },
+      "MMR4_L0.3": {
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [
+          1.2403601682250796,
+          1.2403601682250796,
+          1.2403601682250796
+        ],
+        "per_seed_family_utility": [
+          1.2519997168684853,
+          1.2519997168684853,
+          1.2519997168684853
+        ]
+      },
+      "MMR4_L0.5": {
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [
+          1.2403601682250796,
+          1.2403601682250796,
+          1.2403601682250796
+        ],
+        "per_seed_family_utility": [
+          1.2519997168684853,
+          1.2519997168684853,
+          1.2519997168684853
+        ]
+      },
+      "MMR4_L1.0": {
+        "median_context_utility": 1.240025920046075,
+        "median_family_utility": 1.2516795422970177,
+        "per_seed_context_utility": [
+          1.240025920046075,
+          1.240025920046075,
+          1.240025920046075
+        ],
+        "per_seed_family_utility": [
+          1.2516795422970177,
+          1.2516795422970177,
+          1.2516795422970177
+        ]
+      },
+      "R3175": {
+        "median_context_utility": 1.1366829009431036,
+        "median_family_utility": 1.1525507792283534,
+        "per_seed_context_utility": [
+          1.1366829009431036,
+          1.1366829009431036,
+          1.1366829009431036
+        ],
+        "per_seed_family_utility": [
+          1.1525507792283534,
+          1.1525507792283534,
+          1.1525507792283534
+        ]
+      },
+      "R882": {
+        "median_context_utility": 1.1377941898164525,
+        "median_family_utility": 1.153615276991245,
+        "per_seed_context_utility": [
+          1.1377941898164525,
+          1.1377941898164525,
+          1.1377941898164525
+        ],
+        "per_seed_family_utility": [
+          1.153615276991245,
+          1.153615276991245,
+          1.153615276991245
+        ]
+      },
+      "RAND4_OF16": {
+        "median_context_utility": 1.2375698145758462,
+        "median_family_utility": 1.2492983671856333,
+        "per_seed_context_utility": [
+          1.2332084379284494,
+          1.2375698145758462,
+          1.2567711173384803
+        ],
+        "per_seed_family_utility": [
+          1.245225144434701,
+          1.2492983671856333,
+          1.2677196786507958
+        ]
+      },
+      "STRUCT4": {
+        "median_context_utility": 1.2368471764234736,
+        "median_family_utility": 1.2486338499816463,
+        "per_seed_context_utility": [
+          1.2368471764234736,
+          1.2368471764234736,
+          1.2368471764234736
+        ],
+        "per_seed_family_utility": [
+          1.2486338499816463,
+          1.2486338499816463,
+          1.2486338499816463
+        ]
+      },
+      "STRUCT4@r3175": {
+        "median_context_utility": 1.2411088917100648,
+        "median_family_utility": 1.252716124624592,
+        "per_seed_context_utility": [
+          1.2411088917100648,
+          1.2411088917100648,
+          1.2411088917100648
+        ],
+        "per_seed_family_utility": [
+          1.252716124624592,
+          1.252716124624592,
+          1.252716124624592
+        ]
+      },
+      "STRUCT4_EST_ONLY": {
+        "median_context_utility": 1.2390068971406674,
+        "median_family_utility": 1.2506749410108826,
+        "per_seed_context_utility": [
+          1.2390068971406674,
+          1.2390068971406674,
+          1.2390068971406674
+        ],
+        "per_seed_family_utility": [
+          1.2506749410108826,
+          1.2506749410108826,
+          1.2506749410108826
+        ]
+      },
+      "TOP4_PICK": {
+        "median_context_utility": 1.2403601682250796,
+        "median_family_utility": 1.2519997168684853,
+        "per_seed_context_utility": [
+          1.2403601682250796,
+          1.2403601682250796,
+          1.2403601682250796
+        ],
+        "per_seed_family_utility": [
+          1.2519997168684853,
+          1.2519997168684853,
+          1.2519997168684853
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "median_context_utility": 1.2403226556046079,
+        "median_family_utility": 1.2519637837267703,
+        "per_seed_context_utility": [
+          1.2403226556046079,
+          1.2403226556046079,
+          1.2403226556046079
+        ],
+        "per_seed_family_utility": [
+          1.2519637837267703,
+          1.2519637837267703,
+          1.2519637837267703
+        ]
+      }
+    },
+    "contrasts": {
+      "MMR4@r3175 - MMR4_CV": {
+        "ci95": [
+          -0.0013905412745796415,
+          0.002124060433311921
+        ],
+        "ci975_holm2": [
+          -0.0015534708723310524,
+          0.0022869900310633316
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 1,
+            "ties": 16,
+            "wins": 2
+          },
+          {
+            "losses": 1,
+            "ties": 16,
+            "wins": 2
+          },
+          {
+            "losses": 1,
+            "ties": 16,
+            "wins": 2
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.0002554877441803784,
+        "mean_family_gain": 0.0002447303654780467,
+        "median_context_gain": 0.0002554877441803784,
+        "median_family_gain": 0.0002447303654780467,
+        "per_seed_context_gains": [
+          0.0002554877441803784,
+          0.0002554877441803784,
+          0.0002554877441803784
+        ],
+        "per_seed_family_gains": [
+          0.0002447303654780467,
+          0.0002447303654780467,
+          0.0002447303654780467
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.39236076392360764
+      },
+      "MMR4@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.001472864222372247,
+          0.0014408524921303855
+        ],
+        "ci975_holm2": [
+          -0.001663467773127904,
+          0.0016571277858053683
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 3,
+            "ties": 14,
+            "wins": 2
+          },
+          {
+            "losses": 3,
+            "ties": 14,
+            "wins": 2
+          },
+          {
+            "losses": 3,
+            "ties": 14,
+            "wins": 2
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": -4.12478143524744e-05,
+        "mean_family_gain": -3.9511064274475473e-05,
+        "median_context_gain": -4.12478143524744e-05,
+        "median_family_gain": -3.9511064274475473e-05,
+        "per_seed_context_gains": [
+          -4.12478143524744e-05,
+          -4.12478143524744e-05,
+          -4.12478143524744e-05
+        ],
+        "per_seed_family_gains": [
+          -3.9511064274475473e-05,
+          -3.9511064274475473e-05,
+          -3.9511064274475473e-05
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.5318468153184681
+      },
+      "MMR4_CV - R882": {
+        "ci95": [
+          0.059336238157878335,
+          0.1464401838516179
+        ],
+        "ci975_holm2": [
+          0.05507256896792055,
+          0.15378407216855985
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.10223173022962263,
+        "mean_family_gain": 0.0980642653057728,
+        "median_context_gain": 0.10223173022962263,
+        "median_family_gain": 0.09806426530577281,
+        "per_seed_context_gains": [
+          0.10223173022962263,
+          0.10223173022962263,
+          0.10223173022962263
+        ],
+        "per_seed_family_gains": [
+          0.09806426530577281,
+          0.09806426530577281,
+          0.09806426530577281
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "MMR4_CV - RAND4_OF16": {
+        "ci95": [
+          -0.01700981708300398,
+          0.015186764771011054
+        ],
+        "ci975_holm2": [
+          -0.01890805001906336,
+          0.018032950856295683
+        ],
+        "family_harm_gt_001_rate": 0.2631578947368421,
+        "family_wtl_by_seed": [
+          {
+            "losses": 10,
+            "ties": 0,
+            "wins": 9
+          },
+          {
+            "losses": 9,
+            "ties": 0,
+            "wins": 10
+          },
+          {
+            "losses": 10,
+            "ties": 1,
+            "wins": 8
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.015115337989000674,
+            "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7"
+          },
+          {
+            "delta": -0.07263566547437673,
+            "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119"
+          },
+          {
+            "delta": -0.03656058139069786,
+            "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9"
+          },
+          {
+            "delta": -0.035217784658628286,
+            "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+          },
+          {
+            "delta": -0.04201926370621998,
+            "family_id": "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4"
+          }
+        ],
+        "mean_context_gain": -0.0024905365681837303,
+        "mean_family_gain": -0.0024015211266921704,
+        "median_context_gain": 0.002456105470228721,
+        "median_family_gain": 0.0023811751113845723,
+        "per_seed_context_gains": [
+          0.006817482117625685,
+          0.002456105470228721,
+          -0.016745197292405596
+        ],
+        "per_seed_family_gains": [
+          0.006454397862316906,
+          0.0023811751113845723,
+          -0.01604013635377799
+        ],
+        "positive_seeds": 2,
+        "raw_p_one_sided": 0.630936906309369
+      },
+      "MMR4_CV - STRUCT4": {
+        "ci95": [
+          -0.009115474709410522,
+          0.01690108716381898
+        ],
+        "ci975_holm2": [
+          -0.010665153695629146,
+          0.01917692381319104
+        ],
+        "family_harm_gt_001_rate": 0.21052631578947367,
+        "family_wtl_by_seed": [
+          {
+            "losses": 9,
+            "ties": 2,
+            "wins": 8
+          },
+          {
+            "losses": 9,
+            "ties": 2,
+            "wins": 8
+          },
+          {
+            "losses": 9,
+            "ties": 2,
+            "wins": 8
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.047101248545377894,
+            "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7"
+          },
+          {
+            "delta": -0.012351183690530565,
+            "family_id": "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103"
+          },
+          {
+            "delta": -0.0324463576547509,
+            "family_id": "fam-538e64066794582b82e32501f5ec76663b2f7945f24a5d985c9a0e204bac7426"
+          },
+          {
+            "delta": -0.03667984040416141,
+            "family_id": "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4"
+          }
+        ],
+        "mean_context_gain": 0.0031787436226017197,
+        "mean_family_gain": 0.0030456923153713684,
+        "median_context_gain": 0.0031787436226017197,
+        "median_family_gain": 0.003045692315371368,
+        "per_seed_context_gains": [
+          0.0031787436226017197,
+          0.0031787436226017197,
+          0.0031787436226017197
+        ],
+        "per_seed_family_gains": [
+          0.003045692315371368,
+          0.003045692315371368,
+          0.003045692315371368
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.32936706329367066
+      },
+      "MMR4_CV - TOP4_PICK": {
+        "ci95": [
+          -0.0022401306356586623,
+          0.001406567695153076
+        ],
+        "ci975_holm2": [
+          -0.0025731874297057517,
+          0.0016423455206815557
+        ],
+        "family_harm_gt_001_rate": 0.05263157894736842,
+        "family_wtl_by_seed": [
+          {
+            "losses": 3,
+            "ties": 13,
+            "wins": 3
+          },
+          {
+            "losses": 3,
+            "ties": 13,
+            "wins": 3
+          },
+          {
+            "losses": 3,
+            "ties": 13,
+            "wins": 3
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.012934311215373473,
+            "family_id": "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4"
+          }
+        ],
+        "holm_p_m2": 1.0,
+        "mean_context_gain": -0.0003342481790045301,
+        "mean_family_gain": -0.00032017457146749724,
+        "median_context_gain": -0.0003342481790045301,
+        "median_family_gain": -0.00032017457146749724,
+        "per_seed_context_gains": [
+          -0.0003342481790045301,
+          -0.0003342481790045301,
+          -0.0003342481790045301
+        ],
+        "per_seed_family_gains": [
+          -0.00032017457146749724,
+          -0.00032017457146749724,
+          -0.00032017457146749724
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.6241375862413758
+      },
+      "MMR4_L0.1 - TOP4_PICK": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.0,
+        "mean_family_gain": 0.0,
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "per_seed_context_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "MMR4_L0.2 - TOP4_PICK": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.0,
+        "mean_family_gain": 0.0,
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "per_seed_context_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "MMR4_L0.3 - TOP4_PICK": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.0,
+        "mean_family_gain": 0.0,
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "per_seed_context_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "MMR4_L0.5 - TOP4_PICK": {
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci975_holm2": [
+          0.0,
+          0.0
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          },
+          {
+            "losses": 0,
+            "ties": 19,
+            "wins": 0
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.0,
+        "mean_family_gain": 0.0,
+        "median_context_gain": 0.0,
+        "median_family_gain": 0.0,
+        "per_seed_context_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "per_seed_family_gains": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 1.0
+      },
+      "MMR4_L1.0 - TOP4_PICK": {
+        "ci95": [
+          -0.0022401306356586623,
+          0.001406567695153076
+        ],
+        "ci975_holm2": [
+          -0.0025731874297057517,
+          0.0016423455206815557
+        ],
+        "family_harm_gt_001_rate": 0.05263157894736842,
+        "family_wtl_by_seed": [
+          {
+            "losses": 3,
+            "ties": 13,
+            "wins": 3
+          },
+          {
+            "losses": 3,
+            "ties": 13,
+            "wins": 3
+          },
+          {
+            "losses": 3,
+            "ties": 13,
+            "wins": 3
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.012934311215373473,
+            "family_id": "fam-f8fd51f35678f2c68a7b99cc0dfdbd9ed0e9556bb029cb24c8df3ba1b5c030b4"
+          }
+        ],
+        "mean_context_gain": -0.0003342481790045301,
+        "mean_family_gain": -0.00032017457146749724,
+        "median_context_gain": -0.0003342481790045301,
+        "median_family_gain": -0.00032017457146749724,
+        "per_seed_context_gains": [
+          -0.0003342481790045301,
+          -0.0003342481790045301,
+          -0.0003342481790045301
+        ],
+        "per_seed_family_gains": [
+          -0.00032017457146749724,
+          -0.00032017457146749724,
+          -0.00032017457146749724
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.6241375862413758
+      },
+      "R3175 - R882": {
+        "ci95": [
+          -0.00653573331436462,
+          0.0026948506836318963
+        ],
+        "ci975_holm2": [
+          -0.007600231077256553,
+          0.0032408262318405407
+        ],
+        "family_harm_gt_001_rate": 0.05263157894736842,
+        "family_wtl_by_seed": [
+          {
+            "losses": 2,
+            "ties": 15,
+            "wins": 2
+          },
+          {
+            "losses": 2,
+            "ties": 15,
+            "wins": 2
+          },
+          {
+            "losses": 2,
+            "ties": 15,
+            "wins": 2
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.04139297765764259,
+            "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564"
+          }
+        ],
+        "mean_context_gain": -0.0011112888733487228,
+        "mean_family_gain": -0.001064497762891934,
+        "median_context_gain": -0.0011112888733487228,
+        "median_family_gain": -0.001064497762891934,
+        "per_seed_context_gains": [
+          -0.0011112888733487228,
+          -0.0011112888733487228,
+          -0.0011112888733487228
+        ],
+        "per_seed_family_gains": [
+          -0.001064497762891934,
+          -0.001064497762891934,
+          -0.001064497762891934
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.6322367763223677
+      },
+      "RAND4_OF16 - TOP4_PICK": {
+        "ci95": [
+          -0.015408524245213117,
+          0.016473942621537577
+        ],
+        "ci975_holm2": [
+          -0.01835349038326581,
+          0.018135023746704653
+        ],
+        "family_harm_gt_001_rate": 0.21052631578947367,
+        "family_wtl_by_seed": [
+          {
+            "losses": 8,
+            "ties": 0,
+            "wins": 11
+          },
+          {
+            "losses": 11,
+            "ties": 0,
+            "wins": 8
+          },
+          {
+            "losses": 7,
+            "ties": 1,
+            "wins": 11
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.025443955053225203,
+            "family_id": "fam-280b1a133e098dea8ae2dc71cb0c19fa2560533c1e9c3fcbdb64ef1d56007103"
+          },
+          {
+            "delta": -0.013430614862488888,
+            "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564"
+          },
+          {
+            "delta": -0.11626858531023289,
+            "family_id": "fam-769243ee920953f082bd6784c94795f919abe67c243fae912657abc080863c0c"
+          },
+          {
+            "delta": -0.0157695210802088,
+            "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          }
+        ],
+        "mean_context_gain": 0.0021562883891792003,
+        "mean_family_gain": 0.0020813465552246735,
+        "median_context_gain": -0.0027903536492332494,
+        "median_family_gain": -0.0027013496828520688,
+        "per_seed_context_gains": [
+          -0.007151730296630217,
+          -0.0027903536492332494,
+          0.016410949113401067
+        ],
+        "per_seed_family_gains": [
+          -0.006774572433784402,
+          -0.0027013496828520688,
+          0.015719961782310492
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.3815618438156184
+      },
+      "STRUCT4 - R882": {
+        "ci95": [
+          0.060311916313784575,
+          0.13439709359743773
+        ],
+        "ci975_holm2": [
+          0.05631178771169551,
+          0.14058704673937034
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.09905298660702096,
+        "mean_family_gain": 0.09501857299040144,
+        "median_context_gain": 0.09905298660702096,
+        "median_family_gain": 0.09501857299040144,
+        "per_seed_context_gains": [
+          0.09905298660702096,
+          0.09905298660702096,
+          0.09905298660702096
+        ],
+        "per_seed_family_gains": [
+          0.09501857299040144,
+          0.09501857299040144,
+          0.09501857299040144
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "STRUCT4 - RAND4_OF16": {
+        "ci95": [
+          -0.029636129121377818,
+          0.016097659286886713
+        ],
+        "ci975_holm2": [
+          -0.03338032655636524,
+          0.019658882014715773
+        ],
+        "family_harm_gt_001_rate": 0.2631578947368421,
+        "family_wtl_by_seed": [
+          {
+            "losses": 12,
+            "ties": 0,
+            "wins": 7
+          },
+          {
+            "losses": 8,
+            "ties": 0,
+            "wins": 11
+          },
+          {
+            "losses": 11,
+            "ties": 1,
+            "wins": 7
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.16860416191329683,
+            "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119"
+          },
+          {
+            "delta": -0.01662614762052154,
+            "family_id": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279"
+          },
+          {
+            "delta": -0.033335262812309044,
+            "family_id": "fam-9f338db6fe23a306a80c2da914c0559d59141dc994a36845249de140ceeeb8c9"
+          },
+          {
+            "delta": -0.06447026113661525,
+            "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+          },
+          {
+            "delta": -0.0170418385575971,
+            "family_id": "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345"
+          }
+        ],
+        "mean_context_gain": -0.005669280190785449,
+        "mean_family_gain": -0.0054472134420635405,
+        "median_context_gain": -0.0007226381523729989,
+        "median_family_gain": -0.0006645172039867968,
+        "per_seed_context_gains": [
+          0.003638738495023967,
+          -0.0007226381523729989,
+          -0.019923940915007314
+        ],
+        "per_seed_family_gains": [
+          0.0034087055469455394,
+          -0.0006645172039867968,
+          -0.019085828669149364
+        ],
+        "positive_seeds": 1,
+        "raw_p_one_sided": 0.6672332766723328
+      },
+      "STRUCT4 - TOP4_PICK": {
+        "ci95": [
+          -0.017231344056140407,
+          0.008492365076769816
+        ],
+        "ci975_holm2": [
+          -0.019507315234364202,
+          0.01011126711543859
+        ],
+        "family_harm_gt_001_rate": 0.3157894736842105,
+        "family_wtl_by_seed": [
+          {
+            "losses": 7,
+            "ties": 2,
+            "wins": 10
+          },
+          {
+            "losses": 7,
+            "ties": 2,
+            "wins": 10
+          },
+          {
+            "losses": 7,
+            "ties": 2,
+            "wins": 10
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.09596849643892007,
+            "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119"
+          },
+          {
+            "delta": -0.021135782879473947,
+            "family_id": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279"
+          },
+          {
+            "delta": -0.017868725404086905,
+            "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564"
+          },
+          {
+            "delta": -0.029252476477986965,
+            "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+          },
+          {
+            "delta": -0.011153796735072654,
+            "family_id": "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345"
+          },
+          {
+            "delta": -0.014763412559022493,
+            "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          }
+        ],
+        "holm_p_m2": 1.0,
+        "mean_context_gain": -0.00351299180160625,
+        "mean_family_gain": -0.0033658668868388666,
+        "median_context_gain": -0.00351299180160625,
+        "median_family_gain": -0.0033658668868388666,
+        "per_seed_context_gains": [
+          -0.00351299180160625,
+          -0.00351299180160625,
+          -0.00351299180160625
+        ],
+        "per_seed_family_gains": [
+          -0.0033658668868388666,
+          -0.0033658668868388666,
+          -0.0033658668868388666
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.6888311168883112
+      },
+      "STRUCT4@r3175 - TOP4_PICK@r3175": {
+        "ci95": [
+          -0.0161510356720096,
+          0.01774235091450345
+        ],
+        "ci975_holm2": [
+          -0.0184093333347167,
+          0.020547815086423345
+        ],
+        "family_harm_gt_001_rate": 0.3157894736842105,
+        "family_wtl_by_seed": [
+          {
+            "losses": 8,
+            "ties": 2,
+            "wins": 9
+          },
+          {
+            "losses": 8,
+            "ties": 2,
+            "wins": 9
+          },
+          {
+            "losses": 8,
+            "ties": 2,
+            "wins": 9
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.09596849643892007,
+            "family_id": "fam-4286560c96be5851db4c5bf4aac54628b3ab70b486dc9e07194494cedced3119"
+          },
+          {
+            "delta": -0.021135782879473947,
+            "family_id": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279"
+          },
+          {
+            "delta": -0.0186688020418862,
+            "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564"
+          },
+          {
+            "delta": -0.029252476477986965,
+            "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+          },
+          {
+            "delta": -0.011153796735072654,
+            "family_id": "fam-d73e184e897f6a38d8c2c209d47a30b67973a0bb23bc42e666cedee394e7d345"
+          },
+          {
+            "delta": -0.02810416968519953,
+            "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          }
+        ],
+        "mean_context_gain": 0.0007862361054568875,
+        "mean_family_gain": 0.0007523408978216136,
+        "median_context_gain": 0.0007862361054568874,
+        "median_family_gain": 0.0007523408978216136,
+        "per_seed_context_gains": [
+          0.0007862361054568874,
+          0.0007862361054568874,
+          0.0007862361054568874
+        ],
+        "per_seed_family_gains": [
+          0.0007523408978216136,
+          0.0007523408978216136,
+          0.0007523408978216136
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 0.47295270472952705
+      },
+      "STRUCT4_EST_ONLY - TOP4_PICK": {
+        "ci95": [
+          -0.008118374875589926,
+          0.0062441408410876835
+        ],
+        "ci975_holm2": [
+          -0.009047787109188634,
+          0.007400388454203275
+        ],
+        "family_harm_gt_001_rate": 0.2631578947368421,
+        "family_wtl_by_seed": [
+          {
+            "losses": 9,
+            "ties": 4,
+            "wins": 6
+          },
+          {
+            "losses": 9,
+            "ties": 4,
+            "wins": 6
+          },
+          {
+            "losses": 9,
+            "ties": 4,
+            "wins": 6
+          }
+        ],
+        "harmed_families_gt_001": [
+          {
+            "delta": -0.015098806009158494,
+            "family_id": "fam-08c91457a57ac0c7c6de69a0e39afcaa8c6ce4b2e894337532504a779f2f4cb7"
+          },
+          {
+            "delta": -0.015399743635868157,
+            "family_id": "fam-469b72b7c8b4fe39c95e136c0ba59f4264e5eb1ed572d53f9e5f131e9c21c279"
+          },
+          {
+            "delta": -0.01711458745508012,
+            "family_id": "fam-598bbb77441667f9a37a8f024d6675afd597dec08fef83af86f36d67ee2f9564"
+          },
+          {
+            "delta": -0.029252476477986965,
+            "family_id": "fam-ce33f2a80401fcbce3a2dcc2893def3b6c4bc9a79ca87d50b7ddee9c5f6edc8f"
+          },
+          {
+            "delta": -0.018449869947967025,
+            "family_id": "fam-f2893c3826727688de2b8b3e01c0ed4a169813c644c9ce2b496e77844a0c7a02"
+          }
+        ],
+        "mean_context_gain": -0.0013532710844121655,
+        "mean_family_gain": -0.0013247758576023967,
+        "median_context_gain": -0.0013532710844121655,
+        "median_family_gain": -0.001324775857602397,
+        "per_seed_context_gains": [
+          -0.0013532710844121655,
+          -0.0013532710844121655,
+          -0.0013532710844121655
+        ],
+        "per_seed_family_gains": [
+          -0.001324775857602397,
+          -0.001324775857602397,
+          -0.001324775857602397
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.6621337866213378
+      },
+      "TOP4_PICK - R882": {
+        "ci95": [
+          0.0597113807133946,
+          0.14676929364643507
+        ],
+        "ci975_holm2": [
+          0.05556040049346959,
+          0.15395039123095108
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.10256597840862719,
+        "mean_family_gain": 0.09838443987724031,
+        "median_context_gain": 0.10256597840862719,
+        "median_family_gain": 0.09838443987724031,
+        "per_seed_context_gains": [
+          0.10256597840862719,
+          0.10256597840862719,
+          0.10256597840862719
+        ],
+        "per_seed_family_gains": [
+          0.09838443987724031,
+          0.09838443987724031,
+          0.09838443987724031
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - R3175": {
+        "ci95": [
+          0.06071746687098711,
+          0.14749119942250394
+        ],
+        "ci975_holm2": [
+          0.05621159684883451,
+          0.15489287442857305
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          },
+          {
+            "losses": 0,
+            "ties": 0,
+            "wins": 19
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": 0.10363975466150421,
+        "mean_family_gain": 0.09941300449841728,
+        "median_context_gain": 0.10363975466150421,
+        "median_family_gain": 0.09941300449841728,
+        "per_seed_context_gains": [
+          0.10363975466150421,
+          0.10363975466150421,
+          0.10363975466150421
+        ],
+        "per_seed_family_gains": [
+          0.09941300449841728,
+          0.09941300449841728,
+          0.09941300449841728
+        ],
+        "positive_seeds": 3,
+        "raw_p_one_sided": 9.999000099990002e-05
+      },
+      "TOP4_PICK@r3175 - TOP4_PICK": {
+        "ci95": [
+          -0.0003532017283248326,
+          0.0002454023031799074
+        ],
+        "ci975_holm2": [
+          -0.00038913487003980774,
+          0.0002454023031799074
+        ],
+        "family_harm_gt_001_rate": 0.0,
+        "family_wtl_by_seed": [
+          {
+            "losses": 1,
+            "ties": 17,
+            "wins": 1
+          },
+          {
+            "losses": 1,
+            "ties": 17,
+            "wins": 1
+          },
+          {
+            "losses": 1,
+            "ties": 17,
+            "wins": 1
+          }
+        ],
+        "harmed_families_gt_001": [],
+        "mean_context_gain": -3.7512620471677316e-05,
+        "mean_family_gain": -3.5933141714975105e-05,
+        "median_context_gain": -3.7512620471677316e-05,
+        "median_family_gain": -3.5933141714975105e-05,
+        "per_seed_context_gains": [
+          -3.7512620471677316e-05,
+          -3.7512620471677316e-05,
+          -3.7512620471677316e-05
+        ],
+        "per_seed_family_gains": [
+          -3.5933141714975105e-05,
+          -3.5933141714975105e-05,
+          -3.5933141714975105e-05
+        ],
+        "positive_seeds": 0,
+        "raw_p_one_sided": 0.6588341165883411
+      }
+    },
+    "mm_bt_elo_anchored_top4_pick": {
+      "MMR4@r3175": {
+        "ci95": [
+          1481.1075231646485,
+          1514.4829504634267
+        ],
+        "median_elo": 1498.1815084391483,
+        "per_seed_elo": [
+          1498.442061398266,
+          1498.1815084391483,
+          1498.1799183384023
+        ]
+      },
+      "MMR4_CV": {
+        "ci95": [
+          1485.1568647940842,
+          1514.0276973570617
+        ],
+        "median_elo": 1499.4805794263746,
+        "per_seed_elo": [
+          1499.4805794263746,
+          1499.7401244140035,
+          1499.2198072155861
+        ]
+      },
+      "MMR4_L0.1": {
+        "ci95": [
+          1499.9999999999998,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "MMR4_L0.2": {
+        "ci95": [
+          1499.9999999999998,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "MMR4_L0.3": {
+        "ci95": [
+          1499.9999999999998,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "MMR4_L0.5": {
+        "ci95": [
+          1499.9999999999998,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "MMR4_L1.0": {
+        "ci95": [
+          1485.1568647940842,
+          1514.0276973570617
+        ],
+        "median_elo": 1499.4805794263748,
+        "per_seed_elo": [
+          1499.4805794263748,
+          1499.7401244140035,
+          1499.2198072155861
+        ]
+      },
+      "R3175": {
+        "ci95": [
+          1080.300932399203,
+          1206.6150927635542
+        ],
+        "median_elo": 1152.1450661013537,
+        "per_seed_elo": [
+          1153.3327786474092,
+          1152.1450661013537,
+          1148.0560204270596
+        ]
+      },
+      "R882": {
+        "ci95": [
+          1088.7645364530429,
+          1209.2523978903034
+        ],
+        "median_elo": 1158.0925786456203,
+        "per_seed_elo": [
+          1158.4052653313297,
+          1158.0925786456203,
+          1154.1477894078382
+        ]
+      },
+      "RAND4_OF16": {
+        "ci95": [
+          1457.4337425423666,
+          1538.8831856090064
+        ],
+        "median_elo": 1512.242834661739,
+        "per_seed_elo": [
+          1512.242834661739,
+          1463.2843460728811,
+          1517.764128755147
+        ]
+      },
+      "STRUCT4": {
+        "ci95": [
+          1424.434135766649,
+          1495.8911343405236
+        ],
+        "median_elo": 1459.1365047983074,
+        "per_seed_elo": [
+          1459.1365047983074,
+          1462.251949347999,
+          1459.0723502365179
+        ]
+      },
+      "STRUCT4@r3175": {
+        "ci95": [
+          1411.750881915531,
+          1492.302557181877
+        ],
+        "median_elo": 1452.926526848575,
+        "per_seed_elo": [
+          1452.926526848575,
+          1455.538237840689,
+          1452.8514187649246
+        ]
+      },
+      "STRUCT4_EST_ONLY": {
+        "ci95": [
+          1415.4386437615344,
+          1492.3512885050804
+        ],
+        "median_elo": 1457.5848183036533,
+        "per_seed_elo": [
+          1457.5848183036533,
+          1458.379446536734,
+          1456.9997137160672
+        ]
+      },
+      "TOP4_PICK": {
+        "ci95": [
+          1500.0,
+          1500.0
+        ],
+        "median_elo": 1500.0,
+        "per_seed_elo": [
+          1500.0,
+          1500.0,
+          1500.0
+        ]
+      },
+      "TOP4_PICK@r3175": {
+        "ci95": [
+          1493.7982056698131,
+          1509.1633070055818
+        ],
+        "median_elo": 1501.0391748701707,
+        "per_seed_elo": [
+          1501.0391748701707,
+          1500.779814261784,
+          1501.0406388583197
+        ]
+      }
+    },
+    "n_contexts": 91,
+    "n_families": 19,
+    "n_gated_contexts_r882_zgap_lt_025": 91,
+    "redundancy_diagnostics": {
+      "MMR4_CV": {
+        "mean_distinct_dsl_heads": 2.8461538461538463,
+        "mean_distinct_learner_families": 1.5604395604395604,
+        "mean_pairwise_cos_emb40": 0.5138240102596799,
+        "mean_pairwise_cos_sem24": 0.9991925600287381,
+        "mean_top16_oracle_regret": 0.0626066969034678,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.32967032967032966
+      },
+      "MMR4_L0.1": {
+        "mean_distinct_dsl_heads": 2.659340659340659,
+        "mean_distinct_learner_families": 1.4835164835164836,
+        "mean_pairwise_cos_emb40": 0.5802888579284415,
+        "mean_pairwise_cos_sem24": 0.9992964110257819,
+        "mean_top16_oracle_regret": 0.06227244872446328,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.32967032967032966
+      },
+      "MMR4_L0.2": {
+        "mean_distinct_dsl_heads": 2.681318681318681,
+        "mean_distinct_learner_families": 1.4945054945054945,
+        "mean_pairwise_cos_emb40": 0.5706548193837557,
+        "mean_pairwise_cos_sem24": 0.9992807815636923,
+        "mean_top16_oracle_regret": 0.06227244872446328,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.32967032967032966
+      },
+      "MMR4_L0.3": {
+        "mean_distinct_dsl_heads": 2.7252747252747254,
+        "mean_distinct_learner_families": 1.5274725274725274,
+        "mean_pairwise_cos_emb40": 0.5591845711244268,
+        "mean_pairwise_cos_sem24": 0.9992599445299065,
+        "mean_top16_oracle_regret": 0.06227244872446328,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.32967032967032966
+      },
+      "MMR4_L0.5": {
+        "mean_distinct_dsl_heads": 2.7362637362637363,
+        "mean_distinct_learner_families": 1.5384615384615385,
+        "mean_pairwise_cos_emb40": 0.555031078105337,
+        "mean_pairwise_cos_sem24": 0.9992515099493797,
+        "mean_top16_oracle_regret": 0.06227244872446328,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.32967032967032966
+      },
+      "MMR4_L1.0": {
+        "mean_distinct_dsl_heads": 2.8461538461538463,
+        "mean_distinct_learner_families": 1.5604395604395604,
+        "mean_pairwise_cos_emb40": 0.5138240102596799,
+        "mean_pairwise_cos_sem24": 0.9991925600287381,
+        "mean_top16_oracle_regret": 0.0626066969034678,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.32967032967032966
+      },
+      "RAND4_OF16": {
+        "mean_distinct_dsl_heads": 3.2124542124542126,
+        "mean_distinct_learner_families": 1.5604395604395604,
+        "mean_pairwise_cos_emb40": 0.45613628212663465,
+        "mean_pairwise_cos_sem24": 0.999082786263051,
+        "mean_top16_oracle_regret": 0.06011616033528407,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.02197802197802198,
+        "oracle_top16_recall_at_4": 0.26373626373626374
+      },
+      "STRUCT4": {
+        "mean_distinct_dsl_heads": 3.8461538461538463,
+        "mean_distinct_learner_families": 2.2637362637362637,
+        "mean_pairwise_cos_emb40": 0.40094775435904667,
+        "mean_pairwise_cos_sem24": 0.9989454897535575,
+        "mean_top16_oracle_regret": 0.06578544052606952,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.04395604395604396,
+        "oracle_top16_recall_at_4": 0.25274725274725274
+      },
+      "STRUCT4_EST_ONLY": {
+        "mean_distinct_dsl_heads": 3.032967032967033,
+        "mean_distinct_learner_families": 2.2637362637362637,
+        "mean_pairwise_cos_emb40": 0.44783356994226237,
+        "mean_pairwise_cos_sem24": 0.9990555839189773,
+        "mean_top16_oracle_regret": 0.06362571980887545,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.27472527472527475
+      },
+      "TOP4_PICK": {
+        "mean_distinct_dsl_heads": 2.659340659340659,
+        "mean_distinct_learner_families": 1.4725274725274726,
+        "mean_pairwise_cos_emb40": 0.583296607977035,
+        "mean_pairwise_cos_sem24": 0.9993133784651109,
+        "mean_top16_oracle_regret": 0.06227244872446328,
+        "n_gated_contexts": 91,
+        "oracle_pool_recall_at_4": 0.06593406593406594,
+        "oracle_top16_recall_at_4": 0.32967032967032966
+      }
+    }
+  },
+  "fold_seed": 261140,
   "holm_m": 2,
+  "hygiene": {
+    "cuda_visible_devices": "",
+    "dope_sha256_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_sha256_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "optimizer_updates": 0,
+    "r3175_sha256_after": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "r3175_sha256_before": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "r882_sha256_after": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64",
+    "r882_sha256_before": "0084479aa0703667a0f3ccfe2beda60741c204795ec57b7c08542401ec6cdb64"
+  },
+  "lambda_grid": [
+    0.1,
+    0.2,
+    0.3,
+    0.5,
+    1.0
+  ],
+  "mmr4_cv_selection": {
+    "dl_train_folds": [
+      {
+        "fit_mean_family_utility_by_lambda": {
+          "0.1": 1.6280206850128527,
+          "0.2": 1.6276883957584358,
+          "0.3": 1.6269488274429387,
+          "0.5": 1.6280448462002082,
+          "1.0": 1.633964496417332
+        },
+        "fold": 0,
+        "n_fit_families": 164,
+        "n_val_families": 41,
+        "selected_lambda": 1.0
+      },
+      {
+        "fit_mean_family_utility_by_lambda": {
+          "0.1": 1.5665618705520816,
+          "0.2": 1.5659132087129828,
+          "0.3": 1.5657276619333675,
+          "0.5": 1.5669599254432756,
+          "1.0": 1.5714815678418907
+        },
+        "fold": 1,
+        "n_fit_families": 164,
+        "n_val_families": 41,
+        "selected_lambda": 1.0
+      },
+      {
+        "fit_mean_family_utility_by_lambda": {
+          "0.1": 1.4604511673099054,
+          "0.2": 1.4605783479462668,
+          "0.3": 1.4596539975436185,
+          "0.5": 1.4600451541323578,
+          "1.0": 1.464164198539715
+        },
+        "fold": 2,
+        "n_fit_families": 164,
+        "n_val_families": 41,
+        "selected_lambda": 1.0
+      },
+      {
+        "fit_mean_family_utility_by_lambda": {
+          "0.1": 1.5782380982465516,
+          "0.2": 1.5778422715767315,
+          "0.3": 1.5774203281798198,
+          "0.5": 1.5783614249411733,
+          "1.0": 1.5845619185453381
+        },
+        "fold": 3,
+        "n_fit_families": 164,
+        "n_val_families": 41,
+        "selected_lambda": 1.0
+      },
+      {
+        "fit_mean_family_utility_by_lambda": {
+          "0.1": 1.6183687477642268,
+          "0.2": 1.6179920018293668,
+          "0.3": 1.618199155379832,
+          "0.5": 1.618655915682378,
+          "1.0": 1.6226253650216045
+        },
+        "fold": 4,
+        "n_fit_families": 164,
+        "n_val_families": 41,
+        "selected_lambda": 1.0
+      }
+    ],
+    "dl_train_full_mean_family_utility_by_lambda": {
+      "0.1": 1.5703281137771237,
+      "0.2": 1.5700028451647567,
+      "0.3": 1.5695899940959153,
+      "0.5": 1.5704134532798784,
+      "1.0": 1.5753595092731763
+    },
+    "dl_val_used_in_lambda_selection": false,
+    "frozen_dl_val_lambda_r3175": 1.0,
+    "frozen_dl_val_lambda_r882": 1.0
+  },
   "primary_contrast": "MMR4_CV - TOP4_PICK",
-  "secondary_contrast": "STRUCT4 - TOP4_PICK"
+  "schema": "jope.h261.metrics/v1",
+  "secondary_contrast": "STRUCT4 - TOP4_PICK",
+  "seed_caveat": "Seeds 261101-261103 vary only RAND4_OF16 and permutation RNG; TOP4_PICK, MMR4_CV, and STRUCT4 are deterministic given rcost and frozen embeddings, so 3/3 seeds on deterministic arms is weak seed evidence.",
+  "seeds": [
+    261101,
+    261102,
+    261103
+  ],
+  "status": "COMPLETE",
+  "study_path": "research/flywheel_selfplay/h261_diverse_reveal_set",
+  "verdict": "NO_ADVANCE",
+  "wall_seconds": 32.0431,
+  "wave_id": "h261-diverse-reveal-set-20261103"
 }
