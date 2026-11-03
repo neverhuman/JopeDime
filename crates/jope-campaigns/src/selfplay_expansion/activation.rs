@@ -1,6 +1,6 @@
 use super::prelude::*;
 use super::{
-    cache::{encoder_protocol_sha256, validate_cache},
+    cache::validate_cache,
     context::encode_context,
     inventory::{cache_path, compare_mirror, valid_dataset_id},
     model::{
