@@ -1,0 +1,33 @@
+# Pinned research experiment harness copy-code allowlist for Jankurai 1.7.6.
+# Each entry corresponds to an immutable preregistered flywheel_selfplay experiment
+# harness where manifest.json / metrics.json pins the exact file SHA-256.
+
+[[entries]]
+fingerprint = "c54619fded0a767c"
+owner = "research"
+reason = "Immutable preregistered research harness unit `pseudoreplication` across h234_lambdaloss/analysis.py and h235_betanll/analysis.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "a6a2a1642e1bcc87"
+owner = "research"
+reason = "Immutable preregistered research harness unit `summarize` across h234_lambdaloss/analysis.py and h235_betanll/analysis.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "4f7142942a3ef68a"
+owner = "research"
+reason = "Immutable preregistered research harness unit `cohorts` across h165_gradient_noise_dropout/runner.py, h234_lambdaloss/runner.py, and h235_betanll/runner.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "0ea428f9f64f7edc"
+owner = "research"
+reason = "Immutable preregistered research harness unit `choose` across h165_gradient_noise_dropout/analysis.py, h234_lambdaloss/analysis.py, and h235_betanll/analysis.py (manifest-pinned SHA-256)."
+expires = "2027-12-31"
+
+[[entries]]
+fingerprint = "922e52d554228be9"
+owner = "research"
+reason = "Immutable preregistered research harness unit `bind_source` across h195_blend025_kernel_confirm/runner.py and h233_stable_g025/runner.py (metrics/manifest-pinned SHA-256)."
+expires = "2027-12-31"

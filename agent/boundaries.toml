@@ -10,6 +10,7 @@ version = "1.0.0"
 [python]
 allowed_non_product_paths = [
   "crates/feat-math/tests/portable/full_ref.py",
+  "crates/jope-appliance/tests/system/live_driver",
   "crates/jope-bench/adapters/_panel.py",
   "crates/jope-bench/adapters/catboost_adapter.py",
   "crates/jope-bench/adapters/lightgbm_adapter.py",
@@ -20,7 +21,9 @@ allowed_non_product_paths = [
   "crates/jope-bench/src/panel/inference_cpp_boundary.py",
   "deploy",
   "ops/s3_shard_cache/s3_shard_cache.py",
+  "python",
   "python/ai-service",
+  "research",
   "test-support",
 ]
 
