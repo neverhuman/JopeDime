@@ -287,6 +287,6 @@ fn canonical_metadata_wins_over_earlier_acquisition_stubs() {
     );
 }
 
-use crate::families_growth_support::*;
+use crate::growth_support::*;
 #[path = "growth.rs"]
 mod growth;
