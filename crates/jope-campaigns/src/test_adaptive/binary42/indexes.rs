@@ -1,3 +1,4 @@
+use super::worker_models::GenerationCheckpoint;
 use super::*;
 
 pub(crate) fn load_checkpoints(root: &Path) -> Result<Vec<GenerationCheckpoint>> {

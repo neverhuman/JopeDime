@@ -1,3 +1,4 @@
+use super::member_models::CandidateReceipt;
 use super::*;
 
 pub(crate) fn scq_spec(manifest: &ShardManifest) -> Result<String> {

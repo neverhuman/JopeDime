@@ -1,4 +1,8 @@
 use super::*;
+use super::{
+    member_models::{SeedManifest, StagingReceipt},
+    worker_models::GenerationCheckpoint,
+};
 
 pub(crate) fn winner_seed_path(path: &Path) -> Result<String> {
     Ok(path
