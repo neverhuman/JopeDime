@@ -12,7 +12,7 @@ use super::inventory::{E1Overlap, GroupInv};
 use super::lifecycle::Coverage;
 use super::policy::{Kind, Policy};
 use super::refs::Role;
-use super::{Action, round4};
+use super::{round4, Action};
 use anyhow::Result;
 use serde::Serialize;
 use std::collections::BTreeMap;
