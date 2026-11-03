@@ -27,7 +27,7 @@ pub(crate) fn absolute_path(path: &Path) -> Result<PathBuf> {
     }
 }
 
-pub(crate) fn resolve_checkpoint_provenance(args: &PrepareArgs) -> Result<CheckpointProvenance> {
+pub(super) fn resolve_checkpoint_provenance(args: &PrepareArgs) -> Result<CheckpointProvenance> {
     let pointer_bytes = fs::read(&args.checkpoint_pointer).with_context(|| {
         format!(
             "read accepted regression checkpoint pointer {}",
@@ -167,7 +167,7 @@ pub(crate) fn corpus_dataset_ids(paths: &[&Path]) -> Result<BTreeSet<String>> {
     Ok(result)
 }
 
-pub(crate) fn load_catalog(pointer_path: &Path) -> Result<(CatalogPointer, Catalog)> {
+pub(super) fn load_catalog(pointer_path: &Path) -> Result<(CatalogPointer, Catalog)> {
     let pointer_bytes = fs::read(pointer_path)?;
     let pointer: CatalogPointer = serde_json::from_slice(&pointer_bytes)?;
     validate_sha256(&pointer.catalog_sha256, "catalog")?;
@@ -197,7 +197,7 @@ pub(crate) fn load_catalog(pointer_path: &Path) -> Result<(CatalogPointer, Catal
     ))
 }
 
-pub(crate) fn checkpoint_exclusions(
+pub(super) fn checkpoint_exclusions(
     run_id: &str,
     registry: &Path,
     checkpoint: &CheckpointProvenance,
@@ -289,7 +289,7 @@ pub(crate) fn completed_baseline_report(
     Ok(sha256_bytes(&bytes))
 }
 
-pub(crate) fn sotarena_report_hashes(
+pub(super) fn sotarena_report_hashes(
     sotarena_root: &Path,
     dataset_hash: &str,
 ) -> Result<SotarenaReportHashes> {
