@@ -1,9 +1,9 @@
 use super::{
-    planning::{asset, build, digest, hash, read, read_bytes, verify_asset, PROTOCOL},
+    planning::{asset, build, digest, hash, hex, read_bytes, verify_asset, PROTOCOL},
     types::*,
 };
 use anyhow::{ensure, Context, Result};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -73,13 +73,15 @@ pub fn report(
         Err(error) => {
             // Preserve coverage even when authentication or numerical validation fails.
             // Counts here are explicitly untrusted until the whole plan verifies.
-            let claimed: Option<Plan> = read(plan_path).ok();
+            let claimed: Option<Plan> = read_bytes(plan_path)
+                .ok()
+                .and_then(|bytes| serde_json::from_slice(&bytes).ok());
             let failure = json!({"schema":"jope.transfer-report/v1","ok":false,
                 "kpi_percentage_points":null,"status":"invalid evidence",
                 "claimed_planned_units_unverified":claimed.as_ref().map(|p|p.planned_units),
                 "failures":[format!("{error:#}")],"scores_released":false,"fits":0});
             if !output.exists() {
-                super::worker::write_private(output, &failure)?;
+                super::super::worker::write_private(output, &failure)?;
             }
             Err(error)
         }
@@ -234,7 +236,7 @@ fn report_validated(
     }
     if !failures.is_empty() {
         let result = json!({"schema":"jope.transfer-report/v1","ok":false,"kpi_percentage_points":null,"status":"not yet measured","planned_units":plan.planned_units,"planned_predictions":expected,"committed_predictions":predictions.len(),"terminal_outcomes":terminal_slots.len(),"unavailable":unavailable,"failures":failures,"scores_released":false,"fits":0});
-        super::worker::write_private(output, &result)?;
+        super::super::worker::write_private(output, &result)?;
         return Ok(result);
     }
     let mut losses = BTreeMap::new();
@@ -314,7 +316,7 @@ fn report_validated(
     let global = complete.then(|| average(&family_means.values().copied().collect::<Vec<_>>()));
     let scatter: Vec<_> = units.iter().filter_map(|u| u.get("gains").filter(|v| !v.is_null()).map(|g| json!({"dataset":u["dataset"],"family":u["family"],"seed":u["seed"],"outer":u["outer"],"x_audit":g["audit"],"y_outer":g["outer"]}))).collect();
     let result = json!({"schema":"jope.transfer-report/v1","ok":complete,"plan_sha256":plan_hash,"release_sha256":release_sha256,"status":if complete {"retained-evidence descriptive score"} else {"incomplete"},"kpi_percentage_points":global.map(|g|100.0*g.contribution),"global":global,"absolute_skill_statement":if global.is_some_and(|g|g.audit_skill>0.0 && g.outer_skill>0.0){"positive mean absolute skill on audit and outer"}else{"no absolute skill demonstrated"},"worst_family_outer_gain":family_means.values().map(|g|g.outer).reduce(f64::min),"worst_family_contribution":family_means.values().map(|g|g.contribution).reduce(f64::min),"sign_agreement":if scatter.is_empty(){None}else{Some(scatter.iter().filter(|g|sign(g["x_audit"].as_f64().unwrap())==sign(g["y_outer"].as_f64().unwrap())).count() as f64/scatter.len() as f64)},"planned_units":plan.planned_units,"valid_units":scatter.len(),"planned_families":plan.specification.datasets.iter().map(|d|&d.family).collect::<BTreeSet<_>>().len(),"families":family_means,"units":units,"paired_audit_outer_scatter":scatter,"scatter_svg":scatter_svg(&scatter),"sign_agreement_convention":"negative, zero, positive; zero agrees only with zero","losses":losses.iter().map(|((search,arm),(rmse,baseline))|json!({"search_sha256":search,"arm":arm,"rmse":rmse,"training_mean_rmse":baseline})).collect::<Vec<_>>(),"failures":failures,"fits":0,"controls":"reported separately as losses; never pooled with parent contrast","interpretation":"conservative descriptive score, not a confidence bound or causal proof; folds and seeds are not independent samples","subsequent_use":"released outcomes are exposed development evidence for subsequent rounds","provenance_limit":"hashes authenticate bytes; executor isolation requires independent admission and verification outside this reporter","teacher_admission":false});
-    super::worker::write_private(output, &result)?;
+    super::super::worker::write_private(output, &result)?;
     Ok(result)
 }
 pub(crate) fn average(gs: &[Gains]) -> Gains {
