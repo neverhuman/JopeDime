@@ -297,6 +297,12 @@ mod replay;
 mod runtime;
 mod validation;
 
+use self::plan::{
+    bind_frozen_comparator, build_plan, canonical_manifest_sha256, coverage_gate, dataset_entries,
+    multiclass_head_family, read_plan, read_value, ready_dataset_bindings, required_hash,
+    rewrite_seed, run_root, seed_population, seed_sources_sha256, validate_coverage_receipt,
+    validate_source_manifest,
+};
 use evolution::{
     checkpoint_path, evolution_seed, genome_complexity, load_checkpoint, next_population,
     regression_surrogate, slot_rank_order, slots_from_receipts,
@@ -309,12 +315,6 @@ use ledger::{
 };
 #[cfg(test)]
 use ledger::{initial_budget_complete, next_generation_index};
-use plan::{
-    bind_frozen_comparator, build_plan, canonical_manifest_sha256, coverage_gate, dataset_entries,
-    multiclass_head_family, read_plan, read_value, ready_dataset_bindings, required_hash,
-    rewrite_seed, run_root, seed_population, seed_sources_sha256, validate_coverage_receipt,
-    validate_source_manifest,
-};
 use replay::{
     manage_winner_replay, render_replay_spec, replay_job_id, replay_manifest,
     replay_role_capability, validate_replay_receipt, write_exhausted_ledger,
@@ -328,7 +328,7 @@ pub(crate) fn plan(
     comparator_root: &Path,
     seed_catalog: &Path,
 ) -> Result<()> {
-    plan::plan(
+    self::plan::plan(
         run_id,
         campaign_root,
         corpus_manifest,
