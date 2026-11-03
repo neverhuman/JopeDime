@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import json
-import math
 import os
-import random
 import time
 from collections.abc import Iterable, Iterator
-from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
@@ -18,11 +15,11 @@ from .corpus import (
     PAD,
     DatasetUniformBatchSampler,
     TokenizedCorpus,
-    prepare_corpus,
     sha256_file,
 )
-from .model import DimeScoreModel, partial_warm_start, score_losses
 
+if TYPE_CHECKING:
+    from .train import TrainConfig
 
 AUTOTUNE_WORKERS = (0, 2, 4, 8)
 AUTOTUNE_BATCH_SIZES = (256, 512, 1024, 2048)

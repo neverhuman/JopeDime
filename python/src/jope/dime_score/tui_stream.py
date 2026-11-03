@@ -6,6 +6,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any, BinaryIO
 
+
 def _read_json(path: Path) -> dict[str, Any]:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))

@@ -12,6 +12,7 @@ import numpy as np
 
 from .embeddings import EMBEDDING_DIM, EMBEDDING_VERSION, FrozenContract, sha256_file
 
+
 def _finite_float(value: str) -> float | None:
     try:
         parsed = float(value)

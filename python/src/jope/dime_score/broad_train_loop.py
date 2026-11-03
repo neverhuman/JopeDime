@@ -2,24 +2,34 @@
 
 from __future__ import annotations
 
-import json
 import math
 import time
-from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
 
 from jope.broad_shadow.corpus import BroadCorpus, ExactOnceBatchSampler
+
+from .broad_train import (
+    BroadTrainConfig,
+    _append_jsonl,
+    _atomic_json,
+    _atomic_torch_save,
+    _autotune_broad_batch,
+    _checkpoint,
+    _collate,
+    _configure_vram_cap,
+    _forward,
+    _metric_gap,
+    _metric_set,
+    _retain_latest_three,
+    broad_quality_metrics,
+    evaluate_broad,
+)
 from .model import DimeBroadCritic, broad_critic_losses, broad_partial_warm_start
 from .train import MINIMUM_VRAM_HEADROOM_MIB
-from .broad_train import (
-    BroadTrainConfig, _append_jsonl, _atomic_json, _atomic_torch_save,
-    _autotune_broad_batch, _checkpoint, _collate, _configure_vram_cap,
-    _forward, _metric_gap, _metric_set, _retain_latest_three,
-    broad_quality_metrics, evaluate_broad,
-)
+
 
 def train_broad_critic(config: BroadTrainConfig) -> dict[str, Any]:
     if (

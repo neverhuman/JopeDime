@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
-import io
 import json
-import math
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -138,6 +135,8 @@ def encode_tabarena_train(
     seed: int = SUBSAMPLE_SEED,
 ) -> tuple[np.ndarray, dict[str, Any]]:
     """Reproduce Dime's train-only categorical/median encoding, then min-max and cap."""
+    from .cache_helpers import _finite_float
+
     metadata = json.loads(Path(metadata_json).read_text(encoding="utf-8"))
     categorical = metadata.get("categorical_indicator")
     if not isinstance(categorical, list) or not all(isinstance(value, bool) for value in categorical):
@@ -229,6 +228,14 @@ def cache_dime_embeddings(
     config: PrimeConfig | None = None,
     expected_contract: FrozenContract | None = None,
 ) -> dict[str, Any]:
+    from .cache_helpers import (
+        _csv_bytes,
+        _npy_bytes,
+        _sidecar,
+        _verify_cached_vector,
+        _write_new_or_equal,
+    )
+
     config = config or load_config()
     output_base = prime_owned_path(output_root or config.cache, config)
     output = output_base / "dime_score" / "embeddings" / EMBEDDING_VERSION
@@ -346,7 +353,7 @@ def cache_dime_embeddings(
             if expert is None:
                 try:
                     expert = load_expert(device)
-                except (Exception,):
+                except Exception:
                     expert = load_expert("cpu")
             raw = encode_dataset(expert, encoded_dir)
             raw_path = encoded_dir / "foundation-raw.npy"
@@ -407,11 +414,20 @@ def cache_dime_embeddings(
         "frozen": contract.as_dict(),
     }
 
-from .cache_helpers import (
-    _csv_bytes,
-    _finite_float,
-    _npy_bytes,
-    _sidecar,
-    _verify_cached_vector,
-    _write_new_or_equal,
-)
+
+_CACHE_HELPER_EXPORTS = {
+    "_csv_bytes",
+    "_finite_float",
+    "_npy_bytes",
+    "_sidecar",
+    "_verify_cached_vector",
+    "_write_new_or_equal",
+}
+
+
+def __getattr__(name: str) -> Any:
+    if name in _CACHE_HELPER_EXPORTS:
+        from . import cache_helpers
+
+        return getattr(cache_helpers, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
