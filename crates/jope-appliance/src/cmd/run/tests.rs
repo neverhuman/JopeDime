@@ -3,7 +3,7 @@ use super::*;
 use super::args::parse_value;
 use clap::Parser;
 use serde_json::json;
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 struct Args {
