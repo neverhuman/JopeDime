@@ -71,7 +71,7 @@ pub(super) fn python_float(value: f64) -> String {
         };
     }
     let raw = value.to_string();
-    let (mantissa, exponent) = match raw.find(|character| character == 'e' || character == 'E') {
+    let (mantissa, exponent) = match raw.find(['e', 'E']) {
         Some(index) => (&raw[..index], raw[index + 1..].parse::<i32>().unwrap_or(0)),
         None => (raw.as_str(), 0_i32),
     };
@@ -89,7 +89,7 @@ pub(super) fn python_float(value: f64) -> String {
         digits.pop();
     }
     let sign = if negative { "-" } else { "" };
-    if power < -4 || power >= 16 {
+    if !(-4..16).contains(&power) {
         let fraction = &digits[1..];
         let exponent_sign = if power >= 0 { "+" } else { "-" };
         let exponent_digits = power.unsigned_abs().to_string();
