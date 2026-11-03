@@ -1,0 +1,41 @@
+{
+  "wave": "H260",
+  "status": "PREREGISTERED_NOT_EXECUTED",
+  "scored_contexts": 0,
+  "verdict": null,
+  "schema_on_completion": {
+    "wave": "H260",
+    "status": "COMPLETE",
+    "arms": [
+      "r882",
+      "CONTROL",
+      "T4_HINGE",
+      "T4_PL"
+    ],
+    "seeds": [
+      260101,
+      260102,
+      260103
+    ],
+    "complete_cells": 15,
+    "baseline_mean": 1.1377941898164525,
+    "dope_before": "c51a56d0...",
+    "dope_after": "c51a56d0...",
+    "primary_dlval": "DL-Val91 TOP4_PICK policy-mixture panel: contrasts {ARM_minus_r882, ARM_minus_CONTROL}; holm_p (m=2: T4_HINGE, T4_PL) and advance (median > +0.002, LCB95 > 0, Holm p < .05, 3/3 seeds positive, single-pick median gain >= -0.002); median_elo, elo_ci95 (TOP4_PICK@r882 = 1500), vs_plateau_best_by_seed, harm families",
+    "secondary_oof": "same on the 1,219-context/205-family TRAIN OOF panel",
+    "harm": "families with per-seed delta < -1e-4",
+    "plateau_best_r3175": "each arm DL-Val91 context mean vs 1.1389572 (descriptive)",
+    "memory_pauses": "pause/resume events with MemAvailable",
+    "full_metrics": "sha256 + S3 key of the full metrics.json",
+    "verdict": "ADVANCE iff T4_HINGE or T4_PL advances on primary_dlval, else NO_ADVANCE",
+    "diagnostic_step40": "the same summaries for every arm step-40 adapter before strict fallback (DL-Val91 and OOF)",
+    "cliff_context": "H152 gate-cliff DL-Val context #27, strict and step-40 mixtures (never excluded)",
+    "step40_drift": "L2 from r882 per cell and arm",
+    "optimizer_updates": 1800,
+    "top4_pick_r882_dlval": "must reproduce H258 1.2403601682250796",
+    "recall4": "share of contexts whose predicted top-4 contains the oracle-best gated cost, per arm and seed (strict, step-40; DL-Val91 and OOF)",
+    "single_pick_dlval": "the same summaries on single-pick utility",
+    "hinge_margin_by_cell": "m per cell"
+  },
+  "optimizer_updates": 0
+}
