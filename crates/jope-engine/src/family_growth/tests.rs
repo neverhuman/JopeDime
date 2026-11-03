@@ -1,6 +1,6 @@
 use super::{
-    compare_digest, contains, hmac_sha256_hex, iterate, parse, py_eq, py_strip, stable_assignment_v2,
-    truthy, GrowthError, ASSIGNMENT_SCHEMA,
+    compare_digest, contains, hmac_sha256_hex, iterate, parse, py_eq, py_strip,
+    stable_assignment_v2, truthy, GrowthError, ASSIGNMENT_SCHEMA,
 };
 use serde_json::json;
 
