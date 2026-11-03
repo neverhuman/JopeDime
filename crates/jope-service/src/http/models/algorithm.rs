@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Default, serde::Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct AlgorithmQuery {
+pub(in crate::http) struct AlgorithmQuery {
     language: Option<Language>,
     diff_from: Option<AlgorithmId>,
     after: Option<AlgorithmId>,
