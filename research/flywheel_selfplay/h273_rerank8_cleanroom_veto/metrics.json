@@ -1,0 +1,34 @@
+{
+  "schema": "jope.h273.metrics/v1",
+  "wave": "H273",
+  "wave_id": "h273-rerank8-cleanroom-veto-20261103",
+  "study_path": "research/flywheel_selfplay/h273_rerank8_cleanroom_veto",
+  "owner": "Argon",
+  "status": "PREREGISTERED",
+  "verdict": null,
+  "winning_arm": null,
+  "outcomes_read": 0,
+  "stage1_fold_seeds": [
+    270140,
+    270141,
+    270142
+  ],
+  "stage1_model_seeds": [
+    270101,
+    270102,
+    270103
+  ],
+  "stage1_boot_seed": 270150,
+  "stage2_fold_seeds": [
+    273140,
+    273141,
+    273142
+  ],
+  "stage2_model_seeds": [
+    273101,
+    273102,
+    273103
+  ],
+  "stage2_boot_seed": 273150,
+  "holm_m": 2
+}
