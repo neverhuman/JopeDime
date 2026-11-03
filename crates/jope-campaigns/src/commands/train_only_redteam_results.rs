@@ -239,5 +239,7 @@ pub(super) use report::report_run;
 pub(super) use scoring::score_run;
 pub(super) use smart_v3::score_smart_v3_run;
 #[cfg(test)]
-pub(super) use smart_v3::{regression_metrics, smart_v3_aggregate, smart_v3_baseline_aggregate};
+pub(super) use smart_v3::regression_metrics;
+#[cfg(test)]
+use smart_v3::{smart_v3_aggregate, smart_v3_baseline_aggregate};
 pub(super) use validation::{selector_path, validate_run, validation_shard_path};
