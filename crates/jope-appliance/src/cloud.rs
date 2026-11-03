@@ -9,7 +9,7 @@ pub use sync::{
     sync_snapshot, sync_snapshot_for, Upload,
 };
 #[cfg(test)]
-pub(super) use sync::{pack_object, unpack_object};
+use sync::{pack_object, unpack_object};
 
 use anyhow::{Context, Result};
 use clap::Subcommand;
