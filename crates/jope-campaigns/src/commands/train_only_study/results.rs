@@ -159,7 +159,7 @@ pub(super) struct TrainOnlyFinalCvRerank {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct TrainOnlyPosthocScore {
+pub(crate) struct TrainOnlyPosthocScore {
     pub(super) schema: String,
     pub(super) run_id: String,
     pub(super) dataset_hash: String,
@@ -204,7 +204,7 @@ pub(super) struct TrainOnlyPosthocIndex {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub(super) struct DatasetReport {
+pub(crate) struct DatasetReport {
     pub(super) dataset_hash: String,
     pub(super) generation_zero_validation_fitness: f64,
     pub(super) generation_nine_validation_fitness: f64,

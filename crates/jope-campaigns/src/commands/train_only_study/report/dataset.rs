@@ -1,6 +1,5 @@
 use super::*;
 
-#[allow(private_interfaces)]
 pub(crate) fn report_dataset(
     root: &Path,
     dataset: &DatasetStudyEntry,
