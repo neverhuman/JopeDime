@@ -36,8 +36,8 @@ discovery'' \citep{patel2023question}. In January 2025, Demis Hassabis posed
 the hardest version as a benchmark for general intelligence: today's systems
 ``can play a game of Go at a world champion level. But could a system invent
 Go?'' \citep{hassabis2025bigtech}. These challenges concern both proposing
-solutions and choosing new questions; our test concerns only algorithm
-proposals under human-defined tasks and metrics (\cref{sec:meaning}).
+solutions and choosing new questions; our test concerns only candidate algorithm
+proposals under human-defined tasks and evaluation metrics (\cref{sec:meaning}).
 
 Predicting historical text does not directly reward improvement over an
 incumbent. That motivates a different training signal; it does not establish
@@ -59,8 +59,8 @@ can execution feedback help a proposer depart usefully from familiar ideas?
 Tests can select a better candidate without teaching the next proposer.
 Automated research systems already couple proposals to tests
 \citep{lu2024aiscientist,gottweis2025coscientist,novikov2025alphaevolve,karpathy2026autoresearch,socher2026bookbite,socher2026eureka}.
-\Cref{sub:anatomy-where,sec:road} distinguish retained solutions from
-proposer updates.
+\Cref{sub:anatomy-where,sec:road} distinguish retained candidate solutions from
+learned proposer updates.
 
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{keyidea}
@@ -133,9 +133,9 @@ and retained state are specified for audit. Pretrained components still supply p
 \begin{figure}[tb]% floats so the text above can fill the column
 \begin{explainer}[label=box:searchone]{What ``search = 1'' means}
 \begin{itemize}[leftmargin=*,nosep]
-  \item \textbf{One inference, one candidate.} For a new problem, the program
+  \item \textbf{One inference, one candidate.} For each new problem, the program
     writer emits one complete program ($\budget = 1$), with no retries, repairs,
-    best-of-$N$, reranking or weight updates.
+    best-of-$N$ selection, reranking or parameter weight updates.
   \item \textbf{Everything is counted.} This includes reasoning tokens and
     problem encoding. One inference is one generation, not one forward pass.
   \item \textbf{Declare the fitting procedure.} Fitting the emitted algorithm
@@ -159,12 +159,12 @@ reference whose moves are typed programs of learning primitives.
     quality and the number of attempts (\cref{sec:anatomy}).
   \item \textbf{The innovation game:} a board, move, referee and opponent,
     with a reward ordering and two reference admission rules; each task
-    type needs a qualified encoding and referee (\cref{sec:game}).
+    type requires a qualified board encoding and referee (\cref{sec:game}).
   \item \textbf{The economics of algorithmic self-play:} a cost model for
-    training and for the cost per verified improvement (\cref{sec:price}).
+    self-play training and for the expected cost per verified improvement (\cref{sec:price}).
   \item \textbf{\EZ{}:} a reference learner with a frozen problem encoder,
     a grammar-constrained program writer and a problem--program ranking map,
-    plus an expert-\hspace{0pt}iteration procedure and safeguards against reward hacking
+    plus an expert-\hspace{0pt}iteration training procedure and audit safeguards against referee reward hacking
     (\cref{sec:method}).
   \item \textbf{An evaluation protocol for the single-proposal claim:}
     paired comparisons with frozen algorithms whose receipts record the
@@ -177,10 +177,10 @@ reference whose moves are typed programs of learning primitives.
 The adapter records in \cref{sec:method-status} establish neither neural
 writer updates nor a training gain in the separate ranking map. Independent
 first-proposal comparisons remain pending; \cref{sec:method,sec:results}
-specify the reference design and its tests.
+specify the full reference design and its evaluation tests.
 
 \Cref{sec:anatomy,sec:road} identify the roles and components;
 \cref{sec:game} defines an attempt. \Cref{sec:price,sec:method} account
 for its cost and specify how attempts supply reference training targets.
-The tests in \cref{sec:results} bound the conclusions in
+The empirical tests in \cref{sec:results} then bound the scope and conclusions in
 \cref{sec:meaning,sec:conclusion}.

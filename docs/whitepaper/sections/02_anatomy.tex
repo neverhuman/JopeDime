@@ -62,7 +62,7 @@ Campbell argued that every genuine gain in knowledge needs a mechanism for intro
 
 \textbf{Variation} proposes candidates. Peirce called abduction ``the only logical operation which introduces any new idea'' \citep[CP~5.171]{peirce1934cp}. Campbell modeled creative thought as blind variation \citep{campbell1960bvsr,simonton2011bvsr}. Koestler located creative acts in bisociation, joining two unrelated frames of thought \citep{koestler1964act}. Boden named three routes to a new idea: combining familiar ideas, exploring a conceptual space and transforming it \citep{boden1998creativity}.
 
-\textbf{Judgment} tests a candidate against something outside the mind that proposed it: the attempted refutation \citep{popper1959logic}, the experiment, peer review and the referee of the common task framework, which scores every entry on data the competitors never see \citep{donoho2017fifty}.
+\textbf{Judgment} tests a candidate against something outside the mind that proposed it: the attempted refutation \citep{popper1959logic}, the experiment, peer review and the referee of the common task framework, which scores every submitted entry on held-out data that the competitors never see \citep{donoho2017fifty}.
 
 \textbf{Retention} preserves what survives: inheritance for
 \citet{darwin1859origin}, selective retention for
@@ -75,11 +75,11 @@ four pillars to the learning question in \cref{sec:intro};
 
 \subsection{Taste is judgment moved upstream}\label{sub:anatomy-taste}
 
-Skill in invention is judgment that arrives before the try. For Poincaré, creating meant not making the useless combinations: ``Invention is discernment, choice.'' The sterile combinations, he added, do not even present themselves to the inventor \citep[pp.~324--325]{poincare1910creation}.
+Skill in invention is judgment that arrives before the try. For Poincaré, creating meant not making the useless combinations: ``Invention is discernment, choice.'' The sterile combinations, he added, do not even present themselves to the mind of the inventor \citep[pp.~324--325]{poincare1910creation}.
 
 Chess masters show the same economy: in de Groot's think-aloud studies they considered about as many moves as weaker players but found the right ones \citep{degroot1965thought}. Chase and Simon studied chunks through perception and recall tasks \citep{chase1973perception}. Much of that knowledge is tacit; experts know more than they can say \citep{polanyi1966tacit}.
-AlphaGo's policy network learned to select moves from human expert games,
-then refined that judgment through self-play \citep{silver2016mastering}.
+AlphaGo's policy network first learned to select candidate moves from human expert games,
+and then refined that move judgment through self-play \citep{silver2016mastering}.
 
 Taste has a price we can state. Suppose each try beats the incumbent with a fixed, nonzero probability
 $\winprob$, independently of the others. The number of tries up to and including the first win is then geometric, with mean
@@ -110,17 +110,17 @@ Novelty is free. Judgment is the inventor.
 
 \subsection{Learning from a referee}\label{sub:anatomy-history}
 
-People learn much of their taste from the record of their field. Normal science, in Kuhn's account, solves puzzles inside a reigning paradigm \citep{kuhn1962structure}. The record also holds people in place: when a star life scientist dies prematurely, articles by outsiders to the star's collaborators flow into the field, draw on different literature and are disproportionately likely to be highly cited \citep{azoulay2019funeral}.
+People learn much of their taste from the record of their field. Normal science, in Kuhn's account, solves puzzles inside a reigning paradigm \citep{kuhn1962structure}. The record also holds people in place: when a star life scientist dies prematurely, articles by outsiders to the star's collaborators flow into the field, draw upon different prior literature and are disproportionately likely to be highly cited \citep{azoulay2019funeral}.
 
 A model trained to predict text receives a signal about what was written,
 rather than a direct score for improving an algorithm. That does not prevent
 novel generalization. It motivates supplementing the historical record with
-feedback from execution, so a useful departure from precedent can be rewarded.
+feedback from execution, so that a useful departure from historical precedent can be rewarded.
 
 A referee offers such an additional teacher. AlphaGo Zero learned with no human data, from the rules and the outcomes of its own games, and found strategies outside traditional Go knowledge \citep{silver2017mastering}. Its predecessor had already made such a move. As David Silver told Wired in March 2016, AlphaGo put the chance that a human would play its Move~37 against Lee Sedol at one in ten thousand, and it won that game \citep{metz2016twomoves}.
 
-The knowledge then flowed back to people. In more than 5.8 million moves by professionals from 1950 to 2021, previously unseen moves grew more frequent once superhuman programs arrived, and came with better decisions \citep{shin2023superhuman}. These results establish the possibility in Go. Whether an analogous signal
-improves algorithm invention must be measured in the innovation game.
+The knowledge then flowed back to people. In more than 5.8 million moves by professionals from 1950 to 2021, previously unseen moves grew more frequent once superhuman programs arrived, and came with better decisions \citep{shin2023superhuman}. These results establish the possibility in Go. Whether an analogous execution-feedback signal
+improves algorithm invention must be measured directly in the innovation game.
 
 \subsection{Where the pillars live}\label{sub:anatomy-where}
 
@@ -137,8 +137,8 @@ in any account of deployment savings.
 \begin{table}[t]
   \caption{\textbf{Each approach retains feedback in a different place.} The agent-search column describes
 fixed-weight deployment loops, not every agent system. The \EZ{} column
-states the proposed training and deployment protocol. In every column,
-people still set the aim.}
+states the proposed training and deployment protocol. Across every column,
+human researchers still set the aim.}
   \label{tab:where}
   \centering
   \footnotesize
