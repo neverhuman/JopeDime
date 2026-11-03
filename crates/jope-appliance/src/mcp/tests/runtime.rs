@@ -227,7 +227,7 @@ async fn native_fitting_and_slow_requests_do_not_block_status_or_cancel_p95() {
     eprintln!("{report}");
 }
 
-fn proof_dir() -> std::path::PathBuf {
+pub(super) fn proof_dir() -> std::path::PathBuf {
     if let Some(path) = std::env::var_os("JOPE_MCP02_PROOF_DIR") {
         return path.into();
     }
