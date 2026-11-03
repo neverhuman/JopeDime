@@ -1,7 +1,7 @@
 use super::*;
 
 impl ModelObject {
-    fn unsupported(&self) -> Vec<String> {
+    pub(super) fn unsupported(&self) -> Vec<String> {
         let mut out: Vec<_> = self
             .manifest
             .required_capabilities
