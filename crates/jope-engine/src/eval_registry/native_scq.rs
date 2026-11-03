@@ -53,6 +53,8 @@ mod auth;
 mod witness;
 
 pub(crate) use admission::{verify_placement, verify_request};
+#[cfg(test)]
+pub(super) use auth::inspected_process;
 pub(crate) use auth::{active_process, authenticated_exchange};
 pub(super) use auth::{
     attempt_path, cgroup, current_job, exchange, live, monotonic_ns, native_leader, service,
