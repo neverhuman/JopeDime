@@ -220,7 +220,7 @@ pub(crate) fn checkpoint_path(root: &Path, generation: usize) -> PathBuf {
         .join(format!("generation-{generation:06}.v1.json"))
 }
 
-pub(crate) fn load_checkpoints(
+pub(super) fn load_checkpoints(
     root: &Path,
     identity: &CampaignIdentity,
 ) -> Result<Vec<(TabArenaCheckpoint, String)>> {
@@ -253,7 +253,7 @@ pub(crate) fn load_checkpoints(
     Ok(checkpoints)
 }
 
-pub(crate) fn load_cache(
+pub(super) fn load_cache(
     root: &Path,
     checkpoints: &[(TabArenaCheckpoint, String)],
 ) -> Result<HashMap<String, CachedEvaluation>> {
@@ -284,7 +284,7 @@ pub(crate) fn load_cache(
     Ok(cache)
 }
 
-pub(crate) fn make_checkpoint(
+pub(super) fn make_checkpoint(
     identity: &CampaignIdentity,
     generation: usize,
     previous: Option<String>,
