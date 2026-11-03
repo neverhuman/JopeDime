@@ -1,4 +1,3 @@
-use crate::context::PolicyContext;
 use anyhow::{ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -6,16 +5,9 @@ use std::io::Write;
 use std::path::Path;
 
 use super::proposal::Proposal;
-use crate::config::{ChallengerIdentity, CheckpointBinding};
-use crate::decode::{self, PurePool, SamplingOptions, EXPLORATION_SIZE, POOL_SIZE};
-use crate::grammar::BoundVocabulary;
-use crate::model::PolicyModel;
-use crate::proposal_ledger::{self, ProposalLedger};
-use crate::ranking::{self, Bindings, Ranking, SELECTION_ID};
-use crate::{
-    context_sha256, is_sha256_hex, refuse_rejected_checkpoint, require_accepted_policy,
-    require_accepted_vocabulary, sha256_hex, CHECKPOINT_VOCABULARY_SHA256,
-};
+use crate::decode::{EXPLORATION_SIZE, POOL_SIZE};
+use crate::ranking::{Ranking, SELECTION_ID};
+use crate::{is_sha256_hex, refuse_rejected_checkpoint, sha256_hex};
 
 /// Schema identifier accepted by jope-dime's `search --seeds` reader.
 pub const SEED_SCHEMA: &str = "parallel.seed_population.v1";
@@ -44,7 +36,7 @@ pub struct SeedCandidate {
     )]
     pub(crate) rank_log_weight: Option<f64>,
     /// W4-T07: identity of this slot's record in the proposal ledger
-    /// ([`ProposalLedger::slot_record_sha256`]): the draw it came from, its original tokens,
+    /// (`ProposalLedger::slot_record_sha256`): the draw it came from, its original tokens,
     /// scores, parser result and adaptations. Absent in files written before the join; a
     /// population names it for every slot or for none.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -169,7 +161,7 @@ impl PartialEq<SeedPopulation> for SeedFile {
 }
 
 /// The run identity a seed file is bound to. The checkpoint state is not part of it: it is taken
-/// from the [`CheckpointBinding`] that [`propose`] or [`propose_challenger`] verifies against the
+/// from the `CheckpointBinding` that [`propose`] or [`propose_challenger`] verifies against the
 /// loaded policy.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SeedBinding {
