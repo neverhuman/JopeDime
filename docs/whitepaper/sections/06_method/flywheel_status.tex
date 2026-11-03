@@ -12,8 +12,8 @@ Program candidates use two training-side folds; the historical reference
 uses five. Evaluation logging does not imply pool admission: failed gates
 and non-improving candidates are dropped (not kept as negatives), and
 a lower score must beat the context incumbent by more than $10^{-6}$
-(\cref{fig:program-promotion-margins}). Historical programs retain their
-own separate admission path.
+(\cref{fig:program-promotion-margins}). Historical programs retain
+\mbox{their own separate} admission path.
 
 The adapter accepts ties by default, so a recorded best-round identity
 can change without raising utility. Optional strict admission requires
@@ -31,7 +31,7 @@ improvement or deployment throughput. The aggregate records do not yet bind
 an exact loop source, adapter, evaluation population or normalization, so
 cross-model comparisons and transfer remain unqualified. Retained windows
 are separate; unobserved gaps are not filled or joined into a learning curve.
-Independent model \mbox{comparisons} belong to \cref{sec:results}.
+Independent \mbox{model comparisons belong} to \cref{sec:results}.
 
 \TBD{Bind the retained snapshot to the exact loop source, adapter, candidate
 pools, revealed-history inputs and utility normalization.}
@@ -62,7 +62,7 @@ companion operating-rate views for separate retained windows.
   \setlength{\abovecaptionskip}{4pt}
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_promotions_per_hour.pdf}
-  \caption{\textbf{Training-program promotions continue while the retained adapter holds flat.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, with zero \mbox{adapter admissions). Scope:} \cref{sec:method-status}.}
+  \caption{\textbf{Training-program promotions continue while the retained adapter holds flat.} Left: logged rolling and per-round strict training-program promotions per hour. Right: candidate and recorded-best adapter validation-pool utility. Both panels cover the 20 consecutive completed rounds 2644--2663 (21 strict promotions over \num{1994.54}\,s of logged wall time, or 37.90 promotions per hour, \mbox{with zero adapter admissions). Scope:} \cref{sec:method-status}.}
   \label{fig:fw-promotions-per-hour}\label{fig:fw-program-promotions}
 \end{figure*}
 
@@ -71,7 +71,7 @@ companion operating-rate views for separate retained windows.
   \centering
   \includegraphics[width=\linewidth,height=1.50in,keepaspectratio]{figures/fig_fw_round_throughput.pdf}
   \caption{\textbf{Whole-round throughput varies while retained adapter utility holds flat.}
-  Left: candidate adapter validation utility and the recorded best.
+  Left: candidate adapter validation-pool utility and the recorded best.
   Right: distinct training contexts divided by the full wall time of each
   completed round (contexts per second). The rates include all work and waits
   inside that interval. Both panels cover the same 20 completed summaries,
@@ -96,14 +96,14 @@ contexts under the same \mbox{source-binding} limits described above.
   preferred). Every point maps to one journal line; no smoothing or cumulative
   maximum is applied. The captured window has zero admissions. This adaptive
   engineering telemetry does not measure independent first-proposal
-  performance or a \mbox{learning} gain. Scope: \cref{sec:method-status}.}
+  performance \mbox{or a learning gain. Scope:} \cref{sec:method-status}.}
   \label{fig:adapter-validation-trace}
 \end{figure}
 
 \paragraph{Pool-insertion cadence.}
 \Cref{fig:pool-insertion-cadence} measures the timestamp gaps between
 logged training-pool insertions (distinct from adapter admissions),
-including intervening work and waits rather than single-proposal runtime.
+including intervening work and \mbox{waits rather than} single-proposal runtime.
 
 \begin{figure}[tb]
   \centering
