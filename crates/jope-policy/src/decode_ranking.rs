@@ -20,7 +20,7 @@ where
     let Some(&top) = ranked_order.first() else {
         return ranked_order;
     };
-    let engines: BTreeSet<String> = valid.iter().map(|row| engine(row)).collect();
+    let engines: BTreeSet<String> = valid.iter().map(engine).collect();
     let mut floor = Vec::new();
     if n >= engines.len() as i64 {
         for target_engine in engines {
@@ -143,9 +143,7 @@ pub fn rank_candidates_with_reranker(
     if let Some(&i) = base_order.iter().find(|&&i| {
         !selected_set.contains(&i)
             && safe(i)
-            && valid[i]
-                .get("novel_vs_historical")
-                .map_or(true, truthy_value)
+            && valid[i].get("novel_vs_historical").is_none_or(truthy_value)
             && !seen_diversity.contains(&coalesced_string(valid[i].get("candidate_diversity_key")))
     }) {
         if add(i, &mut selected, &mut selected_set) {
