@@ -176,8 +176,8 @@ fn synthetic_worker() {
     }
     if program.contains("alpha=5") {
         let old = permit.custody_path().with_extension("old");
-        fs::rename(&permit.custody_path(), &old).unwrap();
-        fs::write(&permit.custody_path(), b"replacement").unwrap();
+        fs::rename(permit.custody_path(), &old).unwrap();
+        fs::write(permit.custody_path(), b"replacement").unwrap();
         assert!(permit.verify().is_err());
         panic!("injected synthetic worker failure after custody tampering");
     }
