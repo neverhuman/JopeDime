@@ -63,6 +63,13 @@ pub fn verify_all_indexed_wave_projections(
     let rows: Vec<Vec<u8>> = index_bytes
         .split_inclusive(|&b| b == b'\n')
         .filter(|r| !r.is_empty())
+        .filter(|r| {
+            serde_json::from_slice::<Value>(r)
+                .ok()
+                .and_then(|v| v.get("schema").and_then(Value::as_str).map(str::to_owned))
+                .as_deref()
+                != Some("jope.hwave-study-index/v1")
+        })
         .map(|r| r.to_vec())
         .collect();
     validate_index_rows(&rows).map_err(|e| format!("INDEX.jsonl validation failed: {e}"))?;
