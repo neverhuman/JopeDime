@@ -280,7 +280,7 @@ pub fn receive_artifact(root: &Path, entry: &ClosureEntry, bytes: &[u8]) -> Resu
     publish_immutable(root, &entry.path, bytes)
 }
 pub(crate) fn publish_immutable(root: &Path, relative: &Path, bytes: &[u8]) -> Result<()> {
-    ensure!(super::is_relative(relative), "unsafe artifact path");
+    ensure!(super::super::is_relative(relative), "unsafe artifact path");
     let path = root.join(relative);
     let parent = path.parent().context("artifact parent")?;
     fs::create_dir_all(parent)?;
