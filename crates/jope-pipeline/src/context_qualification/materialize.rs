@@ -369,6 +369,6 @@ mod inputs;
 #[cfg(test)]
 mod tests;
 
-use inputs::{
-    indices, load_training_rows, numeric_csv, resolve, string, NativeColumn, NativePreprocessing,
-};
+#[cfg(test)]
+use inputs::NativeColumn;
+use inputs::{indices, load_training_rows, numeric_csv, resolve, string, NativePreprocessing};
