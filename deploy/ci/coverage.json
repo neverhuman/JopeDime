@@ -6365,6 +6365,16 @@
       "lanes": [],
       "scope": "H243 data-free controls: frozen constants, groups.json partitions the 47 adapter tensors (11 groups), soups touch only recipe groups (beta 1 copies r782 bits, beta .5 float64 blend), per-group L2 and matched-L2 seeded placebo, policy labels, strict selector and tie order, greedy soup (gain-ordered ingredients above .001, cap 5, strict +0.001 additions, strict LCB final check, fallback to r882), fresh per-seed folds and fold manifest, four-gate advance rule with Holm over MODSWAP_SELECT and GREEDY_SOUP only (placebo never advances), launch binding, H239 A1 memory guard and 07:30Z stop, manifest pins of r882/r782."
     },
+    "python:research/flywheel_selfplay/h247_muon_grokfast/test_h247.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H247 data-free controls: frozen arms and hyperparameters, schedule table identity, Newton-Schulz-5 polar-factor approximation and transposition, Muon step formula with Nesterov momentum, weight decay and rows/cols scaling, MUON parameter split (2-D to Muon, others to CTRL AdamW, None gradients skipped), CONTROL equal to torch AdamW, Grokfast-EMA filter equal to the reference (first-step init, None skipped), CTRL loss for every arm and drift, shared fold-seed partition and fold manifest, strict selector, four-gate advance rule with Holm m=2 and harm/plateau reporting, launch binding, H239 A1 memory guard and 09:30Z stop, manifest pins."
+    },
     "python:research/flywheel_selfplay/h46/test_analyze.py": {
       "discovery": {
         "kind": "python-family"
