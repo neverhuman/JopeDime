@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 
 /// Python's `json.dumps(value, sort_keys=True, separators=(",", ":"))` (with `ensure_ascii`)
 /// for the values these fixtures hold. They hold no floats.
-fn py_compact(value: &Value) -> String {
+pub(crate) fn py_compact(value: &Value) -> String {
     fn string(s: &str, out: &mut String) {
         out.push('"');
         for c in s.chars() {
@@ -68,9 +68,9 @@ fn py_compact(value: &Value) -> String {
 
 /// Files of one scenario root, referenced relative to it or (as the Python fixture did)
 /// absolutely.
-struct World {
-    root: PathBuf,
-    absolute: bool,
+pub(crate) struct World {
+    pub(super) root: PathBuf,
+    pub(super) absolute: bool,
 }
 
 impl World {
@@ -81,14 +81,14 @@ impl World {
             rel.to_owned()
         }
     }
-    fn put_bytes(&self, rel: &str, bytes: &[u8]) -> Value {
+    pub(super) fn put_bytes(&self, rel: &str, bytes: &[u8]) -> Value {
         let path = self.root.join(rel);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(&path, bytes).unwrap();
         json!({"path": self.reference(rel), "sha256": hash(bytes)})
     }
     /// `GrowthFixture.put`: compact sorted JSON plus a newline.
-    fn put(&self, rel: &str, value: &Value) -> Value {
+    pub(crate) fn put(&self, rel: &str, value: &Value) -> Value {
         self.put_bytes(rel, format!("{}\n", py_compact(value)).as_bytes())
     }
 }
