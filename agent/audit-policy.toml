@@ -1082,7 +1082,13 @@ extra_excluded_paths = [
   "vendor/security/torch-sys-0.26.0/build.rs",
   "vendor/security/torch-sys-0.26.0/libtch/torch_api.cpp",
   "vendor/security/torch-sys-0.26.0/src/c_generated.rs",
-# END EVEXCL t2320 managed exact-path entries.
+"research/flywheel_selfplay/h253_vrex_family_invariance/analysis.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/launcher.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/monitor.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/runner.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py",
+  "research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py",
+  # END EVEXCL t2320 managed exact-path entries.
 ]
 extra_excluded_globs = ["**/__pycache__/**", "**/*.pyc"]
 

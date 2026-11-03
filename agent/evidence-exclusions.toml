@@ -2771,3 +2771,39 @@ path = "research/flywheel_selfplay/h251_reptile/treatment.py"
 sha256 = "7ae109d80451176ed98ab968967e3d61af1082860d204763440106270138612b"
 receipt = "research/flywheel_selfplay/h251_reptile/manifest.json"
 reason = "Frozen research study file pinned by sha256 in study manifest receipt."
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h253_vrex_family_invariance/analysis.py"
+reason = "H253 V-REx family invariance study script pinned by source_sha256 in manifest.json."
+receipt = "research/flywheel_selfplay/h253_vrex_family_invariance/manifest.json"
+sha256 = "d544c64fa5f014df3dfb87adf005a4220daed6f6a2a51d7c09051ee363e5822d"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h253_vrex_family_invariance/launcher.py"
+reason = "H253 V-REx family invariance study script pinned by source_sha256 in manifest.json."
+receipt = "research/flywheel_selfplay/h253_vrex_family_invariance/manifest.json"
+sha256 = "34e74e490af10d2b2e7df5867b815ff8701bf7bb0d618c8e86be0b96a382ba27"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h253_vrex_family_invariance/monitor.py"
+reason = "H253 V-REx family invariance study script pinned by source_sha256 in manifest.json."
+receipt = "research/flywheel_selfplay/h253_vrex_family_invariance/manifest.json"
+sha256 = "6474e36c37d6b8e7921daf85f4386bd89e4ce639882e1c1a41e9245a74377725"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h253_vrex_family_invariance/runner.py"
+reason = "H253 V-REx family invariance study script pinned by source_sha256 in manifest.json."
+receipt = "research/flywheel_selfplay/h253_vrex_family_invariance/manifest.json"
+sha256 = "6f05768ef1dbe407d506c9fdef76d74f5a3331dbf2d90d4a84fa20995eff5c3d"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h253_vrex_family_invariance/test_h253.py"
+reason = "H253 V-REx family invariance study script pinned by source_sha256 in manifest.json."
+receipt = "research/flywheel_selfplay/h253_vrex_family_invariance/manifest.json"
+sha256 = "49fc688a603ae6f0d7dce12cf848e64312eeb126de0581eb0a545e359468514a"
+
+[[evidence_exclusion]]
+path = "research/flywheel_selfplay/h253_vrex_family_invariance/treatment.py"
+reason = "H253 V-REx family invariance study script pinned by source_sha256 in manifest.json."
+receipt = "research/flywheel_selfplay/h253_vrex_family_invariance/manifest.json"
+sha256 = "ad7a4c15aba093e0ccdf1faa132b92e9a1aac59b98d795193802b00bc031164d"
