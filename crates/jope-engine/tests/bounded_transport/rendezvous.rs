@@ -1,4 +1,5 @@
 use super::*;
+use jope_parallel::native_loop::bounded::rendezvous as rendezvous_api;
 
 /// The fixture plan with each host's certificate digest set to an in-test certificate.
 fn planned_hosts(k: &Keys) -> (BoundedRunContract, Vec<TestCertificate>) {
@@ -65,7 +66,7 @@ fn run_tls_rendezvous(cert_of_rank: [usize; 3]) -> (Result<Vec<u32>>, controller
         .open_rendezvous(
             &k.coordinator,
             "fixture-coordinator-boot",
-            &rendezvous::fresh_nonce().unwrap(),
+            &rendezvous_api::fresh_nonce().unwrap(),
             now,
         )
         .unwrap();
@@ -78,7 +79,7 @@ fn run_tls_rendezvous(cert_of_rank: [usize; 3]) -> (Result<Vec<u32>>, controller
     .unwrap();
     let addr = acceptor.local_addr().unwrap();
     let pin = transport::coordinator_certificate(&c).unwrap();
-    let closure = rendezvous::closure_digest(&c.artifact_closure).unwrap();
+    let closure = rendezvous_api::closure_digest(&c.artifact_closure).unwrap();
     let threads: Vec<_> = (0..3u32)
         .map(|rank| {
             let cred = credential(&certs[cert_of_rank[rank as usize]]);
@@ -91,7 +92,7 @@ fn run_tls_rendezvous(cert_of_rank: [usize; 3]) -> (Result<Vec<u32>>, controller
                     (&pin.0, &pin.1),
                     Timeouts::from_plan(&contract),
                 )?;
-                rendezvous::join(
+                rendezvous_api::join(
                     &mut s,
                     &contract,
                     &sha,
@@ -103,7 +104,7 @@ fn run_tls_rendezvous(cert_of_rank: [usize; 3]) -> (Result<Vec<u32>>, controller
             })
         })
         .collect();
-    let joined = match rendezvous::gather(&mut acceptor, &mut rv, &k.coordinator, &now_ms) {
+    let joined = match rendezvous_api::gather(&mut acceptor, &mut rv, &k.coordinator, &now_ms) {
         Ok((admission, mut connected)) => {
             let persisted = co.record_admission(admission, now_ms()).unwrap();
             co.deliver_admission(&persisted, &mut connected, now_ms())
@@ -156,14 +157,14 @@ fn a_hello_replayed_over_a_fresh_authenticated_connection_is_refused() {
     let k = keys(3);
     let (c, certs) = planned_hosts(&k);
     let sha = sha(&bytes(&c));
-    let closure = rendezvous::closure_digest(&c.artifact_closure).unwrap();
+    let closure = rendezvous_api::closure_digest(&c.artifact_closure).unwrap();
     let open = || {
-        rendezvous::Rendezvous::open(
+        rendezvous_api::Rendezvous::open(
             &c,
             &sha,
             &k.coordinator,
             "fixture-coordinator-boot",
-            &rendezvous::fresh_nonce().unwrap(),
+            &rendezvous_api::fresh_nonce().unwrap(),
             now,
         )
         .unwrap()
