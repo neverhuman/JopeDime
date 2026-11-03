@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 
 mod validation;
-use validation::{estimated_event_bytes, safe_segment, validate, validate_event_order};
+use validation::{estimated_event_bytes, validate, validate_event_order};
 
 /// Schema identifier for  values.
 pub const SCHEMA: &str = "jope.wave-evidence/v1";
