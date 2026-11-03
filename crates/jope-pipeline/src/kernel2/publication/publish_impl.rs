@@ -53,10 +53,10 @@ pub fn publish(
     let observations_sha256 = write("observations.json", &serde_json::to_value(&measurements)?)?;
     let refinements_sha256 = write("refinements.json", &serde_json::to_value(&refinements)?)?;
     // laneD:B18-pareto-archive begin
-    let engine_selection = super::archive::publish(searched, root)?;
+    let engine_selection = super::super::archive::publish(searched, root)?;
     // laneD:B18-pareto-archive end
     // laneD:B20-rewrite-simplify begin
-    let engine_selection = super::search::moves::publish(searched, root, engine_selection)?;
+    let engine_selection = super::super::search::moves::publish(searched, root, engine_selection)?;
     // laneD:B20-rewrite-simplify end
     let record = Search {
         engine: receipt::ENGINE.into(),
