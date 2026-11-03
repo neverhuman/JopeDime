@@ -101,7 +101,11 @@ mod tests {
         note_alloc(500);
         note_dealloc(1500);
         note_alloc(200);
-        assert_eq!(window.close(), 0, "growth never exceeded the starting level");
+        assert_eq!(
+            window.close(),
+            0,
+            "growth never exceeded the starting level"
+        );
         let window = HeapWindow::open().unwrap();
         note_alloc(1000);
         note_alloc(500);
