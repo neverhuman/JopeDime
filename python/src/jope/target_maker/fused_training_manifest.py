@@ -70,6 +70,7 @@ def _write_bundle_manifest(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
+
 def _copy_checkpoints(bundle_dir: Path, best_checkpoint: Path, final_checkpoint: Path) -> tuple[str, str]:
     neural_dir = bundle_dir / "neural"
     neural_dir.mkdir(parents=True, exist_ok=True)
@@ -79,6 +80,6 @@ def _copy_checkpoints(bundle_dir: Path, best_checkpoint: Path, final_checkpoint:
     shutil.copy2(final_checkpoint, final_dest)
     return os.path.relpath(best_dest, bundle_dir), os.path.relpath(final_dest, bundle_dir)
 
+
 def _relative_artifact(bundle_dir: Path, path: Path) -> str:
     return os.path.relpath(str(path), str(bundle_dir))
-

@@ -1,10 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
-import os
-import shutil
-import time
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -12,45 +8,38 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch.nn import functional as F
+from typing import TYPE_CHECKING
 
-from .artifact_pins import artifact_sha256, load_joblib_pinned
+if TYPE_CHECKING:
+    from .fused_meta import _meta_features, _meta_features_for_two, _meta_retrieval
+    from .fused_scoring import (
+        _cosine_scores,
+        _model_pair_scores_for_batch,
+        _model_retrieval_for_batch,
+        _retrieval_from_vectors,
+    )
+    from .fused_windows import (
+        _batch_from_components,
+        _encode_neural_windows,
+        _raw_signature_from_values,
+        _signature_from_feature_stack,
+        _transform_signatures,
+    )
+
+from .artifact_pins import load_joblib_pinned
 from .classical import (
     PairIndex,
     RetrievalQuery,
-    WeightedScoreEnsemble,
-    WindowFeature,
     _best_f1_threshold,
     _classification_metrics,
-    _ensemble_members,
-    _ensemble_requested,
-    _limit_records,
-    _model_artifact_name,
-    _model_specs,
     _score_model,
-    _split_records,
-    _validation_weights,
-    build_pair_indices,
-    build_retrieval_queries,
-    pair_feature_names,
     pair_features,
-    retrieval_metrics_from_scores,
-    select_window_features,
-    summarize_target_window,
 )
 from .data import (
-    TASK_BINARY,
-    DatasetRecord,
-    bits_at_indices,
-    compute_profile,
     deterministic_shuffle,
-    load_manifest,
     read_target_input,
-    sample_indices,
-    stable_seed,
 )
 from .encode import encode_values, load_encoder, normalize_task
-from .model import build_model_from_checkpoint
 
 BUNDLE_FORMAT = "target_maker_fused_bundle"
 BUNDLE_VERSION = 1
@@ -207,76 +196,6 @@ def _score_report_with_retrieval(
         "validation_score": _combined_score(val_metrics, val_retrieval),
         "test_score": _combined_score(test_metrics, test_retrieval),
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class FusedTargetEncoder:
@@ -681,49 +600,153 @@ def _fused_retrieval(
     )
 
 
-from .fused_windows import (
-    _window_features,
-    _values_from_npz,
-    _sample_windows,
-    _signature_from_feature_stack,
-    _record_signatures,
-    _raw_signature_from_values,
-    _fit_signature_vectorizer,
-    _transform_signatures,
-    _encode_neural_windows,
-    _batch_from_components,
-)
+def _export_split_functions() -> None:
+    from .fused_meta import (
+        _fit_meta_candidates as _fit_meta_candidates,
+    )
+    from .fused_meta import (
+        _fit_meta_model as _fit_meta_model,
+    )
+    from .fused_meta import (
+        _flatten_retrieval_pairs as _flatten_retrieval_pairs,
+    )
+    from .fused_meta import (
+        _meta_feature_names as _meta_feature_names,
+    )
+    from .fused_meta import (
+        _meta_features as _meta_features,
+    )
+    from .fused_meta import (
+        _meta_features_for_two as _meta_features_for_two,
+    )
+    from .fused_meta import (
+        _meta_retrieval as _meta_retrieval,
+    )
+    from .fused_meta import (
+        _meta_retrieval_from_flat as _meta_retrieval_from_flat,
+    )
+    from .fused_meta import (
+        _weight_grid as _weight_grid,
+    )
+    from .fused_scoring import (
+        _classical_retrieval_from_features as _classical_retrieval_from_features,
+    )
+    from .fused_scoring import (
+        _cosine_scores as _cosine_scores,
+    )
+    from .fused_scoring import (
+        _fit_classical_models as _fit_classical_models,
+    )
+    from .fused_scoring import (
+        _fit_classical_models_all as _fit_classical_models_all,
+    )
+    from .fused_scoring import (
+        _model_pair_scores_for_batch as _model_pair_scores_for_batch,
+    )
+    from .fused_scoring import (
+        _model_retrieval_for_batch as _model_retrieval_for_batch,
+    )
+    from .fused_scoring import (
+        _pair_features_matrix as _pair_features_matrix,
+    )
+    from .fused_scoring import (
+        _pair_matrix_from_feature_matrix as _pair_matrix_from_feature_matrix,
+    )
+    from .fused_scoring import (
+        _retrieval_from_vectors as _retrieval_from_vectors,
+    )
+    from .fused_scoring import (
+        _score_pairs_from_feature_matrix as _score_pairs_from_feature_matrix,
+    )
+    from .fused_training import (
+        _copy_checkpoints as _copy_checkpoints,
+    )
+    from .fused_training import (
+        _relative_artifact as _relative_artifact,
+    )
+    from .fused_training import (
+        _train_best_bundle as _train_best_bundle,
+    )
+    from .fused_training import (
+        _train_final_bundle as _train_final_bundle,
+    )
+    from .fused_training import (
+        _write_bundle_manifest as _write_bundle_manifest,
+    )
+    from .fused_training import (
+        train_fusion as train_fusion,
+    )
+    from .fused_windows import (
+        _batch_from_components as _batch_from_components,
+    )
+    from .fused_windows import (
+        _encode_neural_windows as _encode_neural_windows,
+    )
+    from .fused_windows import (
+        _fit_signature_vectorizer as _fit_signature_vectorizer,
+    )
+    from .fused_windows import (
+        _raw_signature_from_values as _raw_signature_from_values,
+    )
+    from .fused_windows import (
+        _record_signatures as _record_signatures,
+    )
+    from .fused_windows import (
+        _sample_windows as _sample_windows,
+    )
+    from .fused_windows import (
+        _signature_from_feature_stack as _signature_from_feature_stack,
+    )
+    from .fused_windows import (
+        _transform_signatures as _transform_signatures,
+    )
+    from .fused_windows import (
+        _values_from_npz as _values_from_npz,
+    )
+    from .fused_windows import (
+        _window_features as _window_features,
+    )
 
-from .fused_scoring import (
-    _cosine_scores,
-    _pair_features_matrix,
-    _pair_matrix_from_feature_matrix,
-    _score_pairs_from_feature_matrix,
-    _retrieval_from_vectors,
-    _model_pair_scores_for_batch,
-    _model_retrieval_for_batch,
-    _classical_retrieval_from_features,
-    _fit_classical_models,
-    _fit_classical_models_all,
-)
+    globals().update({name: value for name, value in locals().copy().items() if name in _SPLIT_EXPORTS})
 
-from .fused_meta import (
-    _meta_feature_names,
-    _meta_features,
-    _meta_features_for_two,
-    _fit_meta_model,
-    _fit_meta_candidates,
-    _meta_retrieval,
-    _flatten_retrieval_pairs,
-    _meta_retrieval_from_flat,
-    _weight_grid,
-)
 
-from .fused_training import (
-    _write_bundle_manifest,
-    _copy_checkpoints,
-    _relative_artifact,
-    _train_best_bundle,
-    _train_final_bundle,
-    train_fusion,
-)
+_SPLIT_EXPORTS = {
+    "_batch_from_components",
+    "_classical_retrieval_from_features",
+    "_copy_checkpoints",
+    "_cosine_scores",
+    "_encode_neural_windows",
+    "_fit_classical_models",
+    "_fit_classical_models_all",
+    "_fit_meta_candidates",
+    "_fit_meta_model",
+    "_fit_signature_vectorizer",
+    "_flatten_retrieval_pairs",
+    "_meta_feature_names",
+    "_meta_features",
+    "_meta_features_for_two",
+    "_meta_retrieval",
+    "_meta_retrieval_from_flat",
+    "_model_pair_scores_for_batch",
+    "_model_retrieval_for_batch",
+    "_pair_features_matrix",
+    "_pair_matrix_from_feature_matrix",
+    "_raw_signature_from_values",
+    "_record_signatures",
+    "_relative_artifact",
+    "_retrieval_from_vectors",
+    "_sample_windows",
+    "_score_pairs_from_feature_matrix",
+    "_signature_from_feature_stack",
+    "_train_best_bundle",
+    "_train_final_bundle",
+    "_transform_signatures",
+    "_values_from_npz",
+    "_weight_grid",
+    "_window_features",
+    "_write_bundle_manifest",
+    "train_fusion",
+}
+
+_export_split_functions()
+del _export_split_functions

@@ -1,61 +1,28 @@
 from __future__ import annotations
 
 import json
-import math
 import time
-from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 import numpy as np
-import torch
-from torch.nn import functional as F
 
-from .artifact_pins import load_joblib_pinned
 from .classical import (
-    PairIndex,
-    RetrievalQuery,
-    WeightedScoreEnsemble,
-    WindowFeature,
-    _best_f1_threshold,
-    _classification_metrics,
-    _ensemble_members,
-    _ensemble_requested,
     _limit_records,
-    _model_artifact_name,
-    _model_specs,
-    _score_model,
     _split_records,
-    _validation_weights,
     build_pair_indices,
     build_retrieval_queries,
-    pair_feature_names,
-    pair_features,
-    retrieval_metrics_from_scores,
-    select_window_features,
-    summarize_target_window,
 )
 from .data import (
-    TASK_BINARY,
     DatasetRecord,
-    bits_at_indices,
-    compute_profile,
-    deterministic_shuffle,
     load_manifest,
-    read_target_input,
-    sample_indices,
     stable_seed,
 )
-from .encode import encode_values, load_encoder, normalize_task
-from .model import build_model_from_checkpoint
-
 from .fused import (
-    BUNDLE_FORMAT,
-    BUNDLE_VERSION,
     FusedTrainingConfig,
     FusedWindow,
-    _BatchEncoding,
     _batch_from_components,
+    _BatchEncoding,
     _cosine_scores,
     _encode_neural_windows,
     _fit_classical_models,
@@ -75,7 +42,6 @@ from .fused import (
     _weight_grid,
     _window_features,
 )
-
 from .fused_training_manifest import (
     _copy_checkpoints,
     _relative_artifact,
@@ -285,6 +251,7 @@ def _train_best_bundle(
     )
     return report
 
+
 def _train_final_bundle(
     cfg: FusedTrainingConfig,
     records: Sequence[DatasetRecord],
@@ -399,6 +366,7 @@ def _train_final_bundle(
         report=report,
     )
     return report
+
 
 def train_fusion(cfg: FusedTrainingConfig) -> dict[str, object]:
     started = time.time()

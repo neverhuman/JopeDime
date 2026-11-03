@@ -1,41 +1,14 @@
 from __future__ import annotations
 
-import json
-import math
-import os
-import shutil
-import time
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
 import torch
 from torch.nn import functional as F
 
-from .artifact_pins import artifact_sha256, load_joblib_pinned
 from .classical import (
-    PairIndex,
-    RetrievalQuery,
-    WeightedScoreEnsemble,
     WindowFeature,
-    _best_f1_threshold,
-    _classification_metrics,
-    _ensemble_members,
-    _ensemble_requested,
-    _limit_records,
-    _model_artifact_name,
-    _model_specs,
-    _score_model,
-    _split_records,
-    _validation_weights,
-    build_pair_indices,
-    build_retrieval_queries,
-    pair_feature_names,
-    pair_features,
-    retrieval_metrics_from_scores,
-    select_window_features,
     summarize_target_window,
 )
 from .data import (
@@ -43,15 +16,10 @@ from .data import (
     DatasetRecord,
     bits_at_indices,
     compute_profile,
-    deterministic_shuffle,
-    load_manifest,
-    read_target_input,
     sample_indices,
     stable_seed,
 )
-from .encode import encode_values, load_encoder, normalize_task
-from .model import build_model_from_checkpoint
-
+from .encode import normalize_task
 from .fused import (
     FusedTrainingConfig,
     FusedWindow,
@@ -59,14 +27,18 @@ from .fused import (
     _component_pad,
     _weighted_fused_vector,
 )
+from .model import build_model_from_checkpoint
+
 
 def _window_features(windows: Sequence[FusedWindow]) -> list[WindowFeature]:
     return [WindowFeature(window.dataset_id, window.task, window.features) for window in windows]
+
 
 def _values_from_npz(record: DatasetRecord, npz: Mapping[str, np.ndarray], indices: np.ndarray) -> np.ndarray:
     if record.task == TASK_BINARY:
         return bits_at_indices(npz["bits"], indices)
     return np.asarray(npz["values"], dtype=np.float32)[indices]
+
 
 def _sample_windows(
     records: Sequence[DatasetRecord], cfg: FusedTrainingConfig
@@ -114,11 +86,13 @@ def _sample_windows(
         raise ValueError("No fused windows sampled")
     return windows, feature_names
 
+
 def _signature_from_feature_stack(stack: np.ndarray) -> np.ndarray:
     x = np.nan_to_num(np.asarray(stack, dtype=np.float32), nan=0.0, posinf=0.0, neginf=0.0)
     return np.concatenate([x.mean(axis=0), x.std(axis=0), x.min(axis=0), x.max(axis=0)]).astype(
         np.float32, copy=False
     )
+
 
 def _record_signatures(
     records: Sequence[DatasetRecord],
@@ -161,6 +135,7 @@ def _record_signatures(
     if feature_names is None:
         raise ValueError("No fused signatures sampled")
     return signatures, mean_features, feature_names
+
 
 def _raw_signature_from_values(
     values: Iterable[float] | np.ndarray,
@@ -220,6 +195,7 @@ def _raw_signature_from_values(
         float(np.mean(replacement_values)),
     )
 
+
 def _fit_signature_vectorizer(
     signatures: Mapping[str, np.ndarray], component_dim: int, seed: int
 ) -> dict[str, object]:
@@ -247,6 +223,7 @@ def _fit_signature_vectorizer(
         "fit_records": keys,
     }
 
+
 def _transform_signatures(
     vectorizer: Mapping[str, object], signatures: Mapping[str, np.ndarray]
 ) -> dict[str, np.ndarray]:
@@ -263,6 +240,7 @@ def _transform_signatures(
     else:
         reduced = np.asarray(reducer.transform(scaled), dtype=np.float32)
     return {key: _component_pad(reduced[row], component_dim) for row, key in enumerate(keys)}
+
 
 @torch.no_grad()
 def _encode_neural_windows(
@@ -305,6 +283,7 @@ def _encode_neural_windows(
         )
         embeddings.append(F.normalize(out.float(), dim=1).cpu())
     return torch.cat(embeddings, dim=0).numpy().astype(np.float32, copy=False)
+
 
 def _batch_from_components(
     windows: Sequence[FusedWindow],
