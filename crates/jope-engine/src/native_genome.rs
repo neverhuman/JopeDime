@@ -26,8 +26,6 @@ pub(crate) use execution::execute;
 use execution::summarize_outcomes;
 pub use execution::target;
 #[cfg(test)]
-pub(crate) use execution::training_admission;
-#[cfg(test)]
 use verification::{artifact_closure, prepared_closure};
 pub(crate) use verification::{direct_parent, required_inputs, verified_rows, verify_result};
 
