@@ -1,15 +1,352 @@
 {
   "wave": "H283",
-  "status": "PREREGISTERED_NOT_EXECUTED",
+  "status": "COMPLETE",
+  "verdict": "NOT_TRANSFERRED_FRESH",
   "optimizer_updates": 0,
-  "verdict": null,
-  "cohort_sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
-  "schema_on_completion": {
-    "verdict": "FRESH_TRANSFER_PASS / NOT_TRANSFERRED_FRESH / INSUFFICIENT_FRESH / BLOCKED_GPU_LOCK",
-    "build": "families built / unbuilt (pool < 8)",
-    "gpu": "r3175 DL-Val91 regression (A_EXACT), fresh contexts scored, DOPE before/after, writer state, peak VRAM",
-    "frozen": "per seed family mean/median gain, CI95, W/T/L, harmed share and families, Elo, invalid, changed; median + pooled CI over seeds; criteria",
-    "null": "same for SEEDED_RANDOM_VALID_SLOT",
-    "slot0_fresh_utility_mean": "report only"
+  "cohort": {
+    "sha256": "12d2b1f37bf0e3c48ee61a24949b4f504251fe56b9b26b3081398623982f323c",
+    "version_id": "IFA1R_jOLs0Dw7HfbyMzuAxVgfsvv_Ps",
+    "eligible_families": 2729,
+    "buildable_families": 1972,
+    "even_buildable": 964,
+    "odd_buildable": 1008,
+    "h283_assigned": 60
+  },
+  "build": {
+    "built_families": 29,
+    "unbuilt_families": 31,
+    "unbuilt_reason": "0 candidates in the S1 summary (pool < 8)",
+    "regression": "10 DL-Val91 contexts bit-exact (tables, pools, H58 features, priors)",
+    "n_candidates": [
+      1152,
+      1152
+    ]
+  },
+  "gpu": {
+    "outcome": "A_EXACT",
+    "gpu_mean": 1.1389572403748425,
+    "stored_mean": 1.1389572403748425,
+    "abs_mean_residual": 0.0,
+    "per_context_equal": 91,
+    "picks_equal": 91,
+    "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+    "ckpt_sha256_after": "1d6ea900ebed8d2a05c3b3f37576adc15aadd2b53c585bfd5cb71a103e9ff97b",
+    "peak_gpu": {
+      "allocated": 28423680,
+      "reserved": 54525952
+    },
+    "writer_before": {
+      "alive": true,
+      "state": "S",
+      "on_gpu": true,
+      "ok": true
+    },
+    "writer_after": {
+      "alive": true,
+      "state": "R",
+      "on_gpu": true,
+      "ok": true
+    },
+    "fresh": {
+      "status": "COMPLETE",
+      "contexts": 29,
+      "costs_sha256": "c06f412d204a78db214d68b8dc03e7f3d7474867b9a7deaefb5b68e59568fde8",
+      "slot0_mean": 1.4857802960114652,
+      "writer_after_fresh": {
+        "alive": true,
+        "state": "R",
+        "on_gpu": true,
+        "ok": true
+      }
+    },
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "gpu_name": "NVIDIA GeForce RTX 4090"
+  },
+  "regression_h281_panel_exact": true,
+  "slot0_fresh_utility_mean": 1.4857802960114652,
+  "oracle_top8_mean": 1.752902477216519,
+  "frozen": {
+    "families": 29,
+    "per_seed_family_mean_gain": [
+      0.017242882071835462,
+      0.012933050059924435,
+      0.0003736545233567651
+    ],
+    "per_seed_family_median_gain": [
+      0.0024829174157834366,
+      0.0,
+      0.0
+    ],
+    "per_seed_ci95": [
+      [
+        -0.11044947032115893,
+        0.14161064639678306
+      ],
+      [
+        -0.1424712291502652,
+        0.15159667723784084
+      ],
+      [
+        -0.1748002336093146,
+        0.15942969302414048
+      ]
+    ],
+    "median_gain_across_seeds": 0.012933050059924435,
+    "pooled_ci95": [
+      -0.1412901125923301,
+      0.14086726238009972
+    ],
+    "wtl_by_seed": [
+      [
+        15,
+        8,
+        6
+      ],
+      [
+        12,
+        15,
+        2
+      ],
+      [
+        14,
+        10,
+        5
+      ]
+    ],
+    "elo_by_seed": [
+      1659.0024880962123,
+      1810.5387799929667,
+      1678.6401637674114
+    ],
+    "harmed_share_by_seed": [
+      0.20689655172413793,
+      0.06896551724137931,
+      0.1724137931034483
+    ],
+    "harmed_families_by_seed": [
+      [
+        "fresh:03088c09c97b54669e3d6df492c9bba8d3bdb02f",
+        "fresh:47f0ab26433704a9aefaf85250cace13e1137214",
+        "fresh:4ef6fccb69eef9e17122e0e1c581536412e780d1",
+        "fresh:7aa5fbc1c3ea66ef34d32b17ec8a2edee575df09",
+        "fresh:83367a7f8503dd381f7e37693054b100212bb3d3",
+        "fresh:srcfile:fishcatch"
+      ],
+      [
+        "fresh:0d6229e1c6f9a13f62cfa2ca2b25c76ed542c94b",
+        "fresh:srcfile:fishcatch"
+      ],
+      [
+        "fresh:03088c09c97b54669e3d6df492c9bba8d3bdb02f",
+        "fresh:0d6229e1c6f9a13f62cfa2ca2b25c76ed542c94b",
+        "fresh:4ef6fccb69eef9e17122e0e1c581536412e780d1",
+        "fresh:83367a7f8503dd381f7e37693054b100212bb3d3",
+        "fresh:srcfile:fishcatch"
+      ]
+    ],
+    "invalid_by_seed": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "changed_picks_by_seed": [
+      21,
+      15,
+      19
+    ],
+    "slot0_context_mean": 1.4857802960114652,
+    "challenger_context_mean_by_seed": [
+      1.5030231780833008,
+      1.49871334607139,
+      1.4861539505348222
+    ],
+    "criteria": {
+      "lcb_positive_3of3": false,
+      "median_above_min": true,
+      "harmed_share_ok": true,
+      "invalid_ok": true
+    },
+    "passes": false
+  },
+  "null_random_valid_slot": {
+    "families": 29,
+    "per_seed_family_mean_gain": [
+      0.044583466256290956,
+      -0.11359390284466107,
+      -0.13462749067408117
+    ],
+    "per_seed_family_median_gain": [
+      0.0028836158438392268,
+      0.0,
+      0.0
+    ],
+    "per_seed_ci95": [
+      [
+        -0.10509705735338701,
+        0.18712821262898838
+      ],
+      [
+        -0.3106568889886743,
+        0.06483941171320624
+      ],
+      [
+        -0.423809781704127,
+        0.07618353801507058
+      ]
+    ],
+    "median_gain_across_seeds": -0.11359390284466107,
+    "pooled_ci95": [
+      -0.2995594130715706,
+      0.08421653060426026
+    ],
+    "wtl_by_seed": [
+      [
+        16,
+        3,
+        10
+      ],
+      [
+        14,
+        3,
+        12
+      ],
+      [
+        14,
+        2,
+        13
+      ]
+    ],
+    "elo_by_seed": [
+      1581.5829017759925,
+      1526.7580511531473,
+      1512.8643354896753
+    ],
+    "harmed_share_by_seed": [
+      0.3448275862068966,
+      0.41379310344827586,
+      0.41379310344827586
+    ],
+    "harmed_families_by_seed": [
+      [
+        "fresh:03088c09c97b54669e3d6df492c9bba8d3bdb02f",
+        "fresh:47f0ab26433704a9aefaf85250cace13e1137214",
+        "fresh:4ef6fccb69eef9e17122e0e1c581536412e780d1",
+        "fresh:83367a7f8503dd381f7e37693054b100212bb3d3",
+        "fresh:9021daf97e2896206d99453c64ed540b4894525f",
+        "fresh:c2ad3a6380f21bb184a1b278fb4e8e8378f99b62",
+        "fresh:srcfile:eda-home-mortgage-ny-sampled-dataset",
+        "fresh:srcfile:employee-salaries",
+        "fresh:srcfile:fishcatch",
+        "fresh:srcfile:rdatasets-wooldridge-vote"
+      ],
+      [
+        "fresh:03088c09c97b54669e3d6df492c9bba8d3bdb02f",
+        "fresh:0d6229e1c6f9a13f62cfa2ca2b25c76ed542c94b",
+        "fresh:2c8e59479419ec0f13593daa6815acea252b0e79",
+        "fresh:389699eb89a0ea751b3c4d537b551e5f56b05ac6",
+        "fresh:4ef6fccb69eef9e17122e0e1c581536412e780d1",
+        "fresh:7aa5fbc1c3ea66ef34d32b17ec8a2edee575df09",
+        "fresh:810c2b605c86ca10dfe80664220cabd2da96ac51",
+        "fresh:83367a7f8503dd381f7e37693054b100212bb3d3",
+        "fresh:fb130dce577b0ea643a53d033c6a8fcb0c2fb8db",
+        "fresh:srcfile:eda-home-mortgage-ny-sampled-dataset",
+        "fresh:srcfile:fishcatch",
+        "fresh:srcfile:rdatasets-wooldridge-vote"
+      ],
+      [
+        "fresh:03088c09c97b54669e3d6df492c9bba8d3bdb02f",
+        "fresh:0d6229e1c6f9a13f62cfa2ca2b25c76ed542c94b",
+        "fresh:2c8e59479419ec0f13593daa6815acea252b0e79",
+        "fresh:4ef6fccb69eef9e17122e0e1c581536412e780d1",
+        "fresh:7aa5fbc1c3ea66ef34d32b17ec8a2edee575df09",
+        "fresh:83367a7f8503dd381f7e37693054b100212bb3d3",
+        "fresh:86cb7c779f54b72e4403b09fba0bff4229806168",
+        "fresh:c2ad3a6380f21bb184a1b278fb4e8e8378f99b62",
+        "fresh:srcfile:eda-home-mortgage-ny-sampled-dataset",
+        "fresh:srcfile:employee-salaries",
+        "fresh:srcfile:rdatasets-agridat-vargas-wheat1-traits",
+        "fresh:srcfile:rdatasets-wooldridge-vote"
+      ]
+    ],
+    "invalid_by_seed": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "changed_picks_by_seed": [
+      29,
+      29,
+      29
+    ],
+    "slot0_context_mean": 1.4857802960114652,
+    "challenger_context_mean_by_seed": [
+      1.5303637622677566,
+      1.3721863931668041,
+      1.3511528053373845
+    ],
+    "criteria": {
+      "lcb_positive_3of3": false,
+      "median_above_min": false,
+      "harmed_share_ok": false,
+      "invalid_ok": true
+    },
+    "passes": false
+  },
+  "fresh_pools": {
+    "receipt": "~/jope_plan/ns/receipts/fresh_pools_H283.json",
+    "objects": [
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H283/fresh_pools/fresh-build.tar.gz",
+        "sha256": "2c723b0321bf332165384d8ca704c5cd1ba09cf6502fd47495ad669126656a91",
+        "version_id": "1C.WHs4nOifut6lWLwKOBkN8JYCDHJwL"
+      },
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H283/fresh_pools/fresh_top8_packets.npz",
+        "sha256": "8841e8520d60af0724049c2b84126feac996e5dd8251ecfa759588075665b186",
+        "version_id": "8_ZHsSqRsNFjOKLg0_1Itd9m8qMZLNFu"
+      },
+      {
+        "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H283/fresh_pools/fresh-r3175-gpu-costs.npz",
+        "sha256": "c06f412d204a78db214d68b8dc03e7f3d7474867b9a7deaefb5b68e59568fde8",
+        "version_id": "CWop5i2jx6Fhz9Hb61a5juTs77y.Cvjf"
+      }
+    ]
+  },
+  "prereg": {
+    "publication_ref": "v1/next",
+    "commit": "b8724c840cb2fdd7c446059ef393aa40b807e28d",
+    "review_receipt_sha256": "a1915ed69fad80ac1d510b2618846c5650ef4c61ac2f96a9ecd88c348d377ae9"
+  },
+  "frozen_models": {
+    "export_manifest_version_id": "S_PoMNCZ0jiAYru1vEligisesVuKDuPf",
+    "export_manifest_sha256": "2fce784a959179e0522dce7221c9e1bc73c9d994672af91cd7637b9ad12e9643",
+    "refit": false
+  },
+  "dope_before": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "dope_after": "c51a56d031a4af40cb2b2661e6230109db684fc5cf80743dcad5c2fc770ba814",
+  "s3_manifest": {
+    "s3_uri": "s3://veox-jopedime-learning-use2/experiments/rd_breakthrough_20261030/H283/attempt-001/s3_manifest.json",
+    "sha256": "50242bca3d0bfbac41a236dfc9f8dd2dd376d545b345b2c9d62c06c1c08563a2",
+    "version_id": "GUw9UKy4pZCs_7B0S._5YhZSq8PQBtRV"
   }
 }
