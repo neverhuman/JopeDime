@@ -1,6 +1,6 @@
 use super::*;
 
-pub(super) fn branch_facts() -> Vec<(LineageFact, Links)> {
+pub(crate) fn branch_facts() -> Vec<(LineageFact, Links)> {
     let mut rows = Vec::new();
     let mut add = |name: &str, parent: &str, child: &str| {
         let mut fact = draw(parent, child);
@@ -148,7 +148,7 @@ pub(super) fn branch_facts() -> Vec<(LineageFact, Links)> {
     rows
 }
 
-pub(super) fn branch_fixture() {
+pub(crate) fn branch_fixture() {
     let fixture =
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/renderer-v1-branches.jsonl");
     let page = read_journal(&fixture, None, 1024, 16 << 20).unwrap();
