@@ -318,13 +318,21 @@ impl CpuAdapter {
     }
     fn linear(&self, x: &Tensor, name: &str) -> Result<Tensor> {
         let y = x.matmul(&self.p(&format!("{name}.weight")).t()?.contiguous()?)?;
-        Ok(
-            if let Some(bias) = self.parameters.get(&format!("{name}.bias")) {
-                y.broadcast_add(bias)?
-            } else {
-                y
-            },
-        )
+        let output = if let Some(bias) = self.parameters.get(&format!("{name}.bias")) {
+            y.broadcast_add(bias)?
+        } else {
+            y
+        };
+        #[cfg(feature = "visual-trace")]
+        crate::visual_trace::affine(
+            "jope",
+            name,
+            x,
+            self.p(&format!("{name}.weight")),
+            self.parameters.get(&format!("{name}.bias")),
+            &output,
+        )?;
+        Ok(output)
     }
     fn norm(&self, x: &Tensor, name: &str) -> Result<Tensor> {
         let output_dtype = x.dtype();

@@ -12,6 +12,8 @@ description = "JopeDime v1 engine service"
 failpoints = []
 # Internal research tooling; excluded from the default production graph.
 research = []
+# Internal, opt-in observation of the existing frozen inference graph.
+visual-trace = []
 # Optional frozen fused-ranker execution; defaults and native evaluation stay CPU.
 fused-cuda = ["candle_core_0_11_0/cuda"]
 
@@ -65,3 +67,11 @@ path = "tests/support/golden.rs"
 
 [lints]
 workspace = true
+
+[[example]]
+name = "visual_trace"
+required-features = ["visual-trace"]
+
+[[example]]
+name = "visual_emit_metric"
+required-features = ["visual-trace"]
