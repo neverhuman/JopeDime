@@ -1,6 +1,3 @@
-use std::cell::RefCell;
-
-use super::support::*;
 use super::*;
 
 #[test]
@@ -23,49 +20,6 @@ fn delete_uses_one_unbiased_draw_from_the_shared_proposer_stream() {
     assert!(!actual_stages
         .iter()
         .any(|stage| stage.op == expected_removed));
-}
-
-struct Bank {
-    role: BankRole,
-    records: Vec<Retrieved>,
-    called: RefCell<Vec<([f64; 12], String, usize)>>,
-}
-
-impl Bank {
-    fn new() -> Self {
-        Self {
-            role: BankRole::Proposer,
-            records: vec![
-                Retrieved {
-                    program: Program::from_dsl("(pipe X (quantile_bins bins=16) (ridge))"),
-                    family_id: "other-a".into(),
-                    dl_train: true,
-                    distance_squared: 1.0,
-                },
-                Retrieved {
-                    program: Program::from_dsl("(pipe X (winsor_clip q=0.1) (ridge))"),
-                    family_id: "other-b".into(),
-                    dl_train: true,
-                    distance_squared: 2.0,
-                },
-            ],
-            called: RefCell::new(vec![]),
-        }
-    }
-}
-
-impl ChampionBank for Bank {
-    fn contract(&self) -> Option<BankContract> {
-        Some(BankContract {
-            role: self.role,
-            coordinate_space: RAW_COORDINATES.into(),
-            snapshot_sha256: "1".repeat(64),
-        })
-    }
-    fn nearest(&self, raw: &[f64; 12], family: &str, limit: usize) -> Result<Vec<Retrieved>> {
-        self.called.borrow_mut().push((*raw, family.into(), limit));
-        Ok(self.records.iter().take(limit).cloned().collect())
-    }
 }
 
 #[test]
