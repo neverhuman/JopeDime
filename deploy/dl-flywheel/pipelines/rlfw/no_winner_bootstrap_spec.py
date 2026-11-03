@@ -1,8 +1,16 @@
 """Immutable preregistered no-winner bootstrap specification."""
 
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from rlfw.arena.game_spec import ArmSpec, GameSpec, digest, local_path, require_sha
+from rlfw.arena.game_spec import (
+    R5_KPI_VERSION,
+    ArmSpec,
+    GameSpec,
+    digest,
+    local_path,
+    require_sha,
+)
 from rlfw.research_hwm import HWMKey
 from rlfw.no_winner_bootstrap import CampaignWindow, TrainingContext
 
