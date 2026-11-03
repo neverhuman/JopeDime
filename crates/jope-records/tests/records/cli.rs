@@ -11,9 +11,16 @@ use jope_records::{
 use crate::{repo, scratch};
 
 fn run(args: &[&str], cwd: &Path) -> Output {
+    let repo = repo();
     Command::new(env!("CARGO_BIN_EXE_jope-records"))
         .args(args)
         .current_dir(cwd)
+        // CI may check out the repository as a different uid from the test process. Keep the
+        // child CLI's git discovery scoped to this test checkout instead of weakening global
+        // safe.directory configuration.
+        .env("GIT_CONFIG_COUNT", "1")
+        .env("GIT_CONFIG_KEY_0", "safe.directory")
+        .env("GIT_CONFIG_VALUE_0", repo)
         .output()
         .expect("run jope-records")
 }
