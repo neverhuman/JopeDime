@@ -161,15 +161,15 @@
   },
   "items": {
     "python:research/flywheel_selfplay/h246_stable_g025_rerun/test_h246.py": {
-        "discovery": {
-          "kind": "python-family"
-        },
-        "dispositions": [
-          "research"
-        ],
-        "lanes": [],
-        "scope": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification."
+      "discovery": {
+        "kind": "python-family"
       },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H246 synthetic data-free tests for fresh-seed STABLE_G025 unanimity vote gate, STABLE_SHUF permutation, sequential fit_unit, DL-Val/pooled-A admission verdict, and cooperative H239 A1 memory/load guard; no live qualification."
+    },
     "python:research/flywheel_selfplay/h244_wsmooth/test_h244.py": {
       "discovery": {
         "kind": "python-family"
@@ -15346,6 +15346,16 @@
       ],
       "lanes": [],
       "scope": "H245 owner-authorized fresh H218 nested lambda+zgap rerun: exact FIT-only recipe, matched-rate context-permuted placebo, fresh245 folds, zero NN updates; sole DLVal primary and pooled-A harm gate; H239A1 cooperative memory/load guards; data-free recipe/lock/statistic/placebo/guard tests, no serving qualification."
+    },
+    "python:research/flywheel_selfplay/h249_side_branch/test_h249.py": {
+      "discovery": {
+        "kind": "python-family"
+      },
+      "dispositions": [
+        "research"
+      ],
+      "lanes": [],
+      "scope": "H249 data-free controls: frozen arms and hyperparameters, schedule table identity, zero-init low-rank residual side branch (SIDE4 rank 4, SIDE16 rank 16) step-0 bit-identity and Kaiming-uniform A / zero B init, applied forward training with frozen r882 weights untouched and exact equivalence to merged weights, CONTROL equal to torch AdamW, CTRL loss and drift, shared fold-seed 249140 partition and fold manifest, strict selector, four-gate advance rule with Holm m=2, launch binding, H239 A1 memory guard and 15:00Z stop, manifest pins."
     }
   },
   "lanes": {
