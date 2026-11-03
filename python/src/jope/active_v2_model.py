@@ -23,6 +23,7 @@ from .data.active import ACTIVE_MAX_TRANSFORMS, TARGET_SUMMARY_DIM
 from .model import FAMILY_LIST, LOSS_COMPONENT_NAMES
 from .schema import EMBEDDING_DIM
 
+
 class JopeActiveModelV2(nn.Module):
     def __init__(
         self,
@@ -247,4 +248,3 @@ class JopeActiveModelV2(nn.Module):
         if not losses:
             return batch.embedding.sum() * 0.0
         return self.weighted_loss(losses)
-

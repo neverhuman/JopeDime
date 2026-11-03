@@ -4,6 +4,7 @@ import math
 
 import torch
 
+
 def sort_valid_values_radix_f64(
     x: torch.Tensor,
     r_mask_bool: torch.Tensor,
@@ -14,6 +15,7 @@ def sort_valid_values_radix_f64(
     x_bpn = x_masked.permute(0, 2, 1).contiguous()
     sorted_bpn = torch.sort(x_bpn, dim=-1, stable=True).values
     return sorted_bpn.permute(0, 2, 1).contiguous()
+
 
 def sort_valid_rows_radix_f64(
     x: torch.Tensor,
@@ -32,6 +34,7 @@ def sort_valid_rows_radix_f64(
     sorted_bpn, order_bpn = torch.sort(x_bpn, dim=-1, stable=True)
     return sorted_bpn.permute(0, 2, 1).contiguous(), order_bpn.permute(0, 2, 1).contiguous()
 
+
 def reuse_monotone_sort_order_f64(
     x_transformed: torch.Tensor,
     order_x: torch.Tensor,
@@ -49,6 +52,7 @@ def reuse_monotone_sort_order_f64(
     sorted_vals = torch.where(rm, gathered, torch.full_like(gathered, 1e300))
     return sorted_vals, order_x
 
+
 def erf_approx_f64(x: torch.Tensor) -> torch.Tensor:
     """Abramowitz-Stegun 7.1.26 polynomial ``erf`` approximation matching Stage 1A."""
     sign = torch.sign(x)
@@ -56,6 +60,7 @@ def erf_approx_f64(x: torch.Tensor) -> torch.Tensor:
     t = 1.0 / (1.0 + 0.3275911 * ax)
     poly = t * (0.254829592 + t * (-0.284496736 + t * (1.421413741 + t * (-1.453152027 + t * 1.061405429))))
     return sign * (1.0 - poly * torch.exp(-(ax * ax)))
+
 
 def exact_corr_with_yz_f64(
     f_col: torch.Tensor,
@@ -74,6 +79,7 @@ def exact_corr_with_yz_f64(
     prod = ((df / std_safe.unsqueeze(1)) * (y_z * r_mask).unsqueeze(-1)).sum(dim=1) / dn
     out = torch.abs(prod)
     return torch.where(valid & torch.isfinite(out), out, torch.zeros_like(out))
+
 
 def fused_14_probe_corrs_with_yz_f64(
     z_clp: torch.Tensor,

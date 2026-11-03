@@ -14,6 +14,7 @@ from rich.text import Text
 
 from .tui_stream import _bar, _sparkline, _tail_jsonl
 
+
 class StreamPanelsMixin:
     def _footer(self) -> Any:
         from rich.layout import Layout
@@ -343,4 +344,3 @@ class StreamPanelsMixin:
                 lanes,
             )
         return Panel(table, title="cluster · GPU / cores / eval lanes", border_style="blue", box=box.ROUNDED)
-

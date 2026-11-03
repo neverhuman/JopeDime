@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import torch
 
+
 class PinnedBatchBufferPool:
     """Reusable page-locked host buffer pool for asynchronous H2D batch staging.
 
@@ -117,6 +118,7 @@ class PinnedBatchBufferPool:
             "col_mask": col_m_s.to(device=device, non_blocking=non_blocking),
         }
 
+
 def parallel_load_dataset_splits(
     items: Sequence[Any],
     loader_fn: Callable[[Any], Any],
@@ -129,6 +131,7 @@ def parallel_load_dataset_splits(
     bounded_workers = min(max(1, int(max_workers)), 8, len(items))
     with ThreadPoolExecutor(max_workers=bounded_workers) as pool:
         return list(pool.map(loader_fn, items))
+
 
 def count_rust_tokens_out_of_loop(
     rust_sources: Sequence[str],
@@ -166,6 +169,6 @@ def count_rust_tokens_out_of_loop(
             disallowed_special=(),
         )
         return [len(t) for t in tok_lists]
-    except (Exception,):
+    except Exception:
         # Deterministic byte/whitespace token fallback when tiktoken is not installed
         return [len(s.split()) for s in src_list]

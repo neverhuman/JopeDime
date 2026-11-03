@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
-from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
-from .engines import EngineRouter
-from .tui_stream_state import Gene, JsonlTailer, StreamState
-from .tui_stream import INITIAL_TAIL_BYTES, MAX_GENES
+from .engines import EngineRouter as EngineRouter
+from .tui_stream import INITIAL_TAIL_BYTES as INITIAL_TAIL_BYTES
+from .tui_stream import MAX_GENES
+from .tui_stream_state import Gene
+from .tui_stream_state import JsonlTailer as JsonlTailer
+from .tui_stream_state import StreamState as StreamState
+
 
 class StreamDataMixin:
     def _auto_train_metrics(self) -> Path | None:
@@ -83,7 +86,7 @@ class StreamDataMixin:
             return {"supported": False, "errors": ["no gene selected"]}
         try:
             emitted = self.router.emit_one(gene.engine, gene.canonical)
-        except (Exception,) as exc:  # bridge unavailable etc.
+        except Exception as exc:  # bridge unavailable etc.
             emitted = {"supported": False, "errors": [str(exc)]}
         self._code_cache[key] = emitted
         if len(self._code_cache) > 64:

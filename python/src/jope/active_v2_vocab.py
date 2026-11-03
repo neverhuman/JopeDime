@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -8,6 +9,7 @@ import torch
 from .data.active import ACTIVE_MAX_TRANSFORMS
 from .grammar import HEADS, TRANSFORMS
 from .model import FAMILY_LIST, NONE_TOKEN
+
 
 @dataclass
 class ActiveV2Batch:
@@ -138,7 +140,6 @@ def genome_features_from_actions(
     return tvec + hvec + fam + scalars
 
 
-
 def _normalize_param_vocab(raw: dict[str, Any], ops: list[str]) -> dict[str, dict[str, list[str]]]:
     out: dict[str, dict[str, list[str]]] = {}
     for op in ops:
@@ -159,4 +160,3 @@ def _param_key(kind: str, slot: int, op: str, param: str) -> str:
 
 def _safe_key(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]", "_", value)
-

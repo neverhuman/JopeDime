@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import re
 from collections import defaultdict
 from typing import Any
 
@@ -10,6 +9,7 @@ from torch.nn import functional as F
 
 from .active_v2_vocab import ActiveV2Batch, _param_key
 from .data.active import TARGET_SUMMARY_DIM, parse_param_token, parse_pipeline_actions
+
 
 def _row_target_summary(row) -> list[float]:
     values = row.target_embedding[:TARGET_SUMMARY_DIM] if row.target_embedding is not None else []

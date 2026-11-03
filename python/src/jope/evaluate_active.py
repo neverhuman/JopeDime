@@ -1,14 +1,34 @@
 from __future__ import annotations
 
 import json
-import math
-from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
-from .data.active import parse_pipeline_actions
+from ._evaluate_active_summary import (
+    _correlation as _correlation,
+)
+from ._evaluate_active_summary import (
+    _head_from_genome as _head_from_genome,
+)
+from ._evaluate_active_summary import (
+    _head_outcomes as _head_outcomes,
+)
+from ._evaluate_active_summary import (
+    _mean as _mean,
+)
+from ._evaluate_active_summary import (
+    _median as _median,
+)
+from ._evaluate_active_summary import (
+    _per_engine_summary as _per_engine_summary,
+)
+from ._evaluate_active_summary import (
+    _summary,
+)
+from ._evaluate_active_summary import (
+    _worst_reward_outliers as _worst_reward_outliers,
+)
+from .data.active import parse_pipeline_actions as parse_pipeline_actions
 from .engines import EngineRouter
 from .eval_ledger import EVALUATOR_VERSION, iter_eval_regression_with_ledger
 from .io import read_jsonl
@@ -24,16 +44,6 @@ from .schema import TrainingRow
 from .selector_calibration import load_selector_calibration
 from .status import artifact_freshness
 from .validator import RustValidator
-from ._evaluate_active_summary import (
-    _correlation,
-    _head_from_genome,
-    _head_outcomes,
-    _mean,
-    _median,
-    _per_engine_summary,
-    _summary,
-    _worst_reward_outliers,
-)
 
 
 def evaluate_active_v2(
@@ -348,12 +358,6 @@ def _incumbent_for(
         return float(value)
     value = historical.get(dataset_hash, {}).get("best")
     return float(value) if isinstance(value, (int, float)) else None
-
-
-
-
-
-
 
 
 def _read_json(path: Path) -> dict[str, Any]:
