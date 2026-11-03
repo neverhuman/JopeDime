@@ -7,7 +7,6 @@ use super::{
 };
 use anyhow::{ensure, Result};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest as _, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
