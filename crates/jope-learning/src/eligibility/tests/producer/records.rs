@@ -165,10 +165,10 @@ fn a_pre_handoff_qualification_is_not_upgraded_by_the_product_path() {
     old.context_handoff_sha256 = None;
     let mut old_evidence = evidence.clone();
     old_evidence.context.as_mut().unwrap().handoff = None;
-    let bytes = canonical_json(&StoredQualification {
-        evidence: old_evidence,
-        qualification: old,
-    })
+    let bytes = canonical_json(&serde_json::json!({
+        "evidence": old_evidence,
+        "qualification": old,
+    }))
     .unwrap();
     let path = qualification_path(&f.state, &f.record);
     fs::write(&path, &bytes).unwrap();
