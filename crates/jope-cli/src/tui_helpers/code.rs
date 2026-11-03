@@ -173,9 +173,7 @@ pub fn stage_params(raw: &str) -> Vec<(String, String)> {
     params
 }
 
-pub fn split_transforms_head(
-    row: &Map<String, Value>,
-) -> (Vec<GenomeStage>, GenomeStage) {
+pub fn split_transforms_head(row: &Map<String, Value>) -> (Vec<GenomeStage>, GenomeStage) {
     let genome = row_genome(row);
     let stages = genome_stages(&genome);
     if stages.is_empty() {
