@@ -44,10 +44,14 @@ mod tests;
 use activity::TrackedListener;
 pub use activity::{ActivityGuard, EngineActivity};
 pub use cli::run_cli;
+#[cfg(test)]
+use cli::{parse_duration, request_daemon_async};
 pub use locking::{EngineError, EngineLock};
 #[cfg(feature = "research")]
 use serve::open_q1_engine;
 pub use serve::serve;
+#[cfg(test)]
+use serve::{serve_locked, serve_with_activity};
 #[cfg(feature = "research")]
 pub use serve::{serve_q1_infra_retry, serve_q1_qualification};
 
