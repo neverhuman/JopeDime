@@ -1,4 +1,10 @@
+use super::transition::{
+    descendant_policy, validate_descendant_transition, validate_descendant_window,
+    validate_transition_with_key,
+};
 use super::*;
+use crate::native_loop::lineage::DescendantLineagePolicy;
+
 fn lineage_fixture() -> DescendantLineagePolicy {
     use crate::native_loop::lineage::*;
     fn put(b: &mut LineageBundle, schema: &str, value: &Value) -> String {

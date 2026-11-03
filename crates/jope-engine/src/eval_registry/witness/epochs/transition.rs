@@ -105,7 +105,7 @@ pub(super) fn validate_effective_shape(policy: &WitnessPolicy) -> Result<()> {
 // Coordinator adds ONLY this optional field to the signed WitnessPolicy DTO.
 // Until that hunk is integrated, its strict reader refuses opt-ins and this
 // adapter always returns None. Source/executable rotation cannot enable it.
-fn descendant_policy(policy: &WitnessPolicy) -> Result<Option<DescendantLineagePolicy>> {
+pub(super) fn descendant_policy(policy: &WitnessPolicy) -> Result<Option<DescendantLineagePolicy>> {
     serde_json::to_value(policy)?
         .get("descendant_lineage_policy")
         .filter(|v| !v.is_null())
@@ -115,7 +115,7 @@ fn descendant_policy(policy: &WitnessPolicy) -> Result<Option<DescendantLineageP
         .map_err(Into::into)
 }
 
-fn validate_descendant_window(
+pub(super) fn validate_descendant_window(
     policy: &DescendantLineagePolicy,
     delegation: &NativeGrantDelegation,
 ) -> Result<crate::native_loop::lineage::VerifiedLineage> {
@@ -135,7 +135,7 @@ fn validate_descendant_window(
     Ok(verified)
 }
 
-fn validate_descendant_transition(
+pub(super) fn validate_descendant_transition(
     next: &DescendantLineagePolicy,
     prior: Option<&DescendantLineagePolicy>,
     d: &NativeGrantDelegation,
@@ -199,7 +199,7 @@ fn artifact(a: &NativeGrantArtifact) -> Result<()> {
     );
     Ok(())
 }
-fn validate_transition_with_key(
+pub(super) fn validate_transition_with_key(
     base: &WitnessPolicy,
     previous: &WitnessPolicy,
     request: &SignedWitnessEpochTransition,
